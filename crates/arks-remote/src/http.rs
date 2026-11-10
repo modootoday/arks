@@ -263,6 +263,9 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     let (status, content_length, content_type) = parse_cleartext_headers(&buf[..header_end])?;
     let body = if let Some(len) = content_length {
         let need = header_end.saturating_add(len);
+        if need > buf.capacity() {
+            buf.reserve(need - buf.capacity());
+        }
         while buf.len() < need {
             let n = stream
                 .read(&mut scratch)

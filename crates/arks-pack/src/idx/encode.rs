@@ -26,7 +26,10 @@ impl PackIndex {
             return Err(PackError::Fanout);
         }
 
-        let mut buf = Vec::new();
+        // Fanout(256×4) + names + crc + offsets + checksums — pre-size for clone ingest.
+        let n = self.entries.len();
+        let oid_len = self.format.digest_len();
+        let mut buf = Vec::with_capacity(8 + 256 * 4 + n * (oid_len + 4 + 4) + 64);
         buf.extend_from_slice(&IDX_MAGIC);
         buf.extend_from_slice(&VERSION.to_be_bytes());
         for count in fanout {
