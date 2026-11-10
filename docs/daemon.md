@@ -38,7 +38,7 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 
 ## Honesty
 
-Daemon flag inventory is largely present as **Partial** deepen: `--inetd` / `--pid-file` / upload-archive **arg-drain** are Partial. Still **Missing**: `--detach`, archive stream Claimed body (ACK/ustar/sideband), `--access-hook`, user/group/syslog. **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
+Daemon flag inventory is largely present as **Partial** deepen: `--inetd` / `--pid-file` / `--detach` (OS-limited re-exec, not classic double-fork Claimed) / upload-archive **ACK + raw ustar** are Partial. Still **Missing**: Claimed sideband/format-flag archive parity, `--access-hook`, user/group/syslog. **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
 
 Owning SoTs: [daemon product intent](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-daemon-product-intent.sot.md), [daemon command matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-daemon-git-command-matrix.sot.md).
 
