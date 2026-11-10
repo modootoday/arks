@@ -488,12 +488,19 @@ Keys (design): bind, transports, Basic auth refs, TLS notes, SSH key paths, allo
 fn print_daemon_help() {
     print!(
         "\
-arks daemon — git:// TCP daemon (Wave Sv2 / M25)
+arks daemon — git:// TCP daemon (git-daemon peer; Wave Sv2 / M25)
 
 Usage:
-  arks daemon [--listen ADDR] [--export-all] [--enable=receive-pack] <base-path>
+  arks daemon [--listen HOST[:PORT]|--listen=…] [--export-all]
+              [--enable=receive-pack] <base-path>
 
-Requires git-daemon-export-ok in each repo unless --export-all.
+Default listen 127.0.0.1:9418. Requires git-daemon-export-ok unless --export-all.
+Claimed today: bind + export-all + optional receive-pack via arks-server daemon.
+Not claimed yet (fail-closed if passed): --port --base-path --strict-paths
+  --timeout --init-timeout --max-connections --verbose --reuseaddr
+  --enable=upload-archive --disable=* --detach --inetd --pid-file
+  --user/--group --syslog --access-hook multi-base positionals.
+Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
 }
