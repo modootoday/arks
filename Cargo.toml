@@ -14,6 +14,7 @@ members = [
     "crates/arks-lease",
     "crates/arks-server",
     "crates/arks-hub",
+    "crates/arks-agent",
     "crates/arks",
     # arks-hostfs kept in-tree as non-default (trimmed from product surface).
     "crates/arks-hostfs",
@@ -32,6 +33,7 @@ default-members = [
     "crates/arks-lease",
     "crates/arks-server",
     "crates/arks-hub",
+    "crates/arks-agent",
     "crates/arks",
 ]
 
@@ -56,6 +58,7 @@ arks-remote = { path = "crates/arks-remote" }
 arks-lease = { path = "crates/arks-lease" }
 arks-server = { path = "crates/arks-server" }
 arks-hub = { path = "crates/arks-hub" }
+arks-agent = { path = "crates/arks-agent" }
 arks-hostfs = { path = "crates/arks-hostfs" }
 arks = { path = "crates/arks" }
 crc32fast = "1.4"

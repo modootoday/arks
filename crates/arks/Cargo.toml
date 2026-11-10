@@ -23,6 +23,7 @@ arks-repo = { workspace = true }
 arks-remote = { workspace = true }
 arks-server = { workspace = true }
 arks-hub = { workspace = true }
+arks-agent = { workspace = true }
 arks-pack = { workspace = true }
 arks-lease = { workspace = true }
 thiserror = { workspace = true }

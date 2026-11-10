@@ -1,8 +1,8 @@
 //! CommandLayer Registry skeleton — personality → exclusive / overlap dispatch.
 //! Cite: `.spec/sot/arks-cli-personality-factory.sot.md`
 //!
-//! Flat forge leaves forward to `arks-hub` Partial stubs (exit 2). Agent remains
-//! an in-tree refuse stub until the agent crate lands. Design ≠ Claimed.
+//! Flat forge leaves forward to `arks-hub` Partial stubs (exit 2). Agent
+//! forwards to `arks-agent` Partial stubs. Design ≠ Claimed.
 
 use super::exit_code::{ExitClass, ExitCodePolicy, LayerOutcome};
 use super::git_dispatch::{
@@ -36,7 +36,7 @@ Serve: arks serve [--no-http|--no-ssh|--no-forge] …  (forge/SSH Missing → fa
   Transitional: arks serve-http ≡ serve --no-ssh --no-forge
 
 Git porcelain/plumbing: historical inventory (Claimed rows unchanged).
-Agent: arks agent … (Partial stub)
+Agent: arks agent … → arks-agent lib (Partial stubs; not Claimed)
 ";
 
 /// Top-level argv dispatch after personality resolution.
@@ -73,9 +73,9 @@ pub fn dispatch_argv() -> ExitCode {
     if cmd == "hub" {
         return arks_hub::run_from_args(&args);
     }
-    // AgentLayer (stub until agent crate commit).
+    // AgentLayer → arks-agent Partial stubs.
     if cmd == "agent" {
-        return stub_agent(&args);
+        return arks_agent::run_from_args(&args);
     }
 
     if cmd == "help" {
@@ -113,21 +113,6 @@ pub fn dispatch_argv() -> ExitCode {
 
     // GitPorcelainLayer (+ daemon and remaining inventory).
     run_git_preserving(&cmd, &args)
-}
-
-fn stub_agent(args: &[String]) -> ExitCode {
-    if args.first().map(String::as_str) == Some("--help")
-        || args.first().map(String::as_str) == Some("-h")
-        || args.first().map(String::as_str) == Some("help")
-    {
-        eprintln!("arks agent: Partial skeleton stub (not Claimed); agent crate lands later");
-        return ExitCode::SUCCESS;
-    }
-    eprintln!(
-        "error: arks agent: Partial stub — refuse (exit 2); design ≠ Claimed \
-         ([[sot:root/arks-cli-personality-factory]])"
-    );
-    ExitCodePolicy::from_class(ExitClass::StubOrUsage)
 }
 
 fn dispatch_forge(personality: Personality, leaf: &str, args: &[String]) -> ExitCode {
