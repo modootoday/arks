@@ -52,12 +52,12 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 |---------|-------|-------|
 | Personality / Registry / OverlapFacade | **Partial** | Env/argv0 dispatch exists as shell; not Claimed peer drop-in proof |
 | `arks serve --no-ssh --no-forge` | HTTP wire **Claimed** where evidenced | Practical Claimed hosting path today |
-| In-process SSH under `arks serve` | **Partial** | Bind + key paths + optional RFC4253 id exchange; fail-closed (KEX/auth **Missing**). Ops SSHD + `upload-pack`/`receive-pack` remains valid |
-| Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; no in-process TLS / HTTPS remote Claimed |
-| `arks serve config` | **Partial** | File seeds defaults + `runtime_*` live-bind sync; clap wins; ≠ Claimed sync |
-| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Many local-API Partial leaves; OUT groups still refuse; HTTPS remote **Missing** |
-| `arks daemon` deepen | **Partial** | `--inetd` / `--pid-file` / `--detach` re-exec / archive ACK+ustar Partial; still **Missing**: Claimed sideband archive, hooks/user/group |
-| `arks agent` | **Partial** | provider/config/doctor + review/cev/run + long-running health serve/bot Partial; Claimed LLM chatbot e2e **Missing** |
+| In-process SSH under `arks serve` | **Partial** | Bind + key paths + RFC4253 id exchange + KEXINIT scaffold + key probes; fail-closed (KEX **crypto**/auth/channel **Missing**). Ops SSHD + `upload-pack`/`receive-pack` remains valid |
+| Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; no in-process TLS Claimed |
+| `arks serve config` | **Partial** | File seeds + `runtime_*` / `runtime_probe_*` live-bind sync; clap wins; ≠ Claimed sync e2e |
+| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Many local-API Partial leaves; HTTPS remote via ureq Partial; remaining OUT groups refuse |
+| `arks daemon` deepen | **Partial** | `--inetd` / `--pid-file` / `--detach` (unix setsid) / archive ACK+sideband-64k ustar Partial; still **Missing**: Claimed archive parity, hooks/user/group |
+| `arks agent` | **Partial** | provider/config/doctor + review/cev/run + serve/bot health + openai-compat chat proxy Partial; Claimed LLM chatbot e2e **Missing** |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 
 Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES** where receipts carry — residuals are Impossible / advisory / owner-policy, not casual N/A. That does **not** promote forge/SSH/agent Partial rows to Claimed.
