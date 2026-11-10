@@ -33,13 +33,10 @@ impl PendingPackPersist {
         if let Some(parent) = self.pack_path.parent() {
             fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
         }
-        if !self.pack_path.is_file() {
-            fs::write(&self.pack_path, &self.pack[self.pack_at..])
-                .map_err(|e| StoreError::Io(e.to_string()))?;
-        }
-        if !self.idx_path.is_file() {
-            fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
-        }
+        // Fresh clone / first ingest: paths are new — skip is_file stats.
+        fs::write(&self.pack_path, &self.pack[self.pack_at..])
+            .map_err(|e| StoreError::Io(e.to_string()))?;
+        fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
         Ok(())
     }
 }

@@ -276,9 +276,9 @@ fn write_decimal_usize(mut n: usize, buf: &mut [u8; 20]) -> &[u8] {
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // Headers: 8KiB stack (info/refs stays cheap). Large Content-Length bodies
-    // (upload-pack PACK) switch to one 64KiB heap scratch — fewer syscalls
-    // without zero-taxing the small advertisement round-trip.
+    // Headers: 8KiB stack (info/refs stays cheap). Known-length bodies
+    // (upload-pack PACK) drain headers in place and read the rest straight
+    // into Vec spare capacity — no 64/256KiB scratch→body memcpy.
     let mut tmp = [0u8; 8192];
     let mut buf = Vec::with_capacity(8192);
     let header_end;
@@ -299,43 +299,21 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         }
     }
     let (status, content_length, content_type) = parse_cleartext_headers(&buf[..header_end])?;
-    // Build the body Vec directly — Vec::split_off allocates+copies the whole
-    // upload-pack PACK (multi-MB on J-CLONE-LOCAL).
     let body = if let Some(len) = content_length {
-        let mut body = Vec::with_capacity(len);
-        let already = &buf[header_end..];
-        let take = already.len().min(len);
-        body.extend_from_slice(&already[..take]);
-        if len > 16 * 1024 {
-            // 64KiB per-request scratch (one-shot arks process) — 256KiB TLS
-            // zeroed more per clone and regressed LOCAL off the 44ms tip.
-            let mut big = vec![0u8; 64 * 1024];
-            while body.len() < len {
-                let n = stream
-                    .read(&mut big)
-                    .map_err(|e| RemoteError::Http(e.to_string()))?;
-                if n == 0 {
-                    break;
-                }
-                let room = len - body.len();
-                body.extend_from_slice(&big[..n.min(room)]);
-            }
-        } else {
-            while body.len() < len {
-                let n = stream
-                    .read(&mut tmp)
-                    .map_err(|e| RemoteError::Http(e.to_string()))?;
-                if n == 0 {
-                    break;
-                }
-                let room = len - body.len();
-                body.extend_from_slice(&tmp[..n.min(room)]);
-            }
+        // Keep already-buffered body bytes; one small memmove drops headers.
+        // Avoids Vec::split_off / second full-pack alloc that regressed LOCAL.
+        let mut body = buf;
+        body.drain(..header_end);
+        if body.len() > len {
+            body.truncate(len);
+        } else if body.len() < len {
+            read_into_vec(stream, &mut body, len)?;
         }
-        body.truncate(len);
         body
     } else {
-        let mut body = buf.split_off(header_end);
+        // Unknown length (rare for CGI): drain headers, grow via stack scratch.
+        let mut body = buf;
+        body.drain(..header_end);
         loop {
             let n = stream
                 .read(&mut tmp)
@@ -360,6 +338,43 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         headers,
         body,
     })
+}
+
+/// Read until `body.len() == target`, writing into spare capacity only.
+///
+/// Avoids intermediate scratch + `extend_from_slice` of the upload-pack PACK
+/// (J-CLONE-LOCAL). `Read::read` initializes the returned prefix before `set_len`.
+#[allow(unsafe_code)]
+fn read_into_vec(
+    stream: &mut TcpStream,
+    body: &mut Vec<u8>,
+    target: usize,
+) -> Result<(), RemoteError> {
+    while body.len() < target {
+        let want = target - body.len();
+        body.reserve(want);
+        let spare = body.spare_capacity_mut();
+        let n = {
+            // SAFETY: `read` only reports bytes it initialized; we advance by `n`.
+            let dst = unsafe {
+                std::slice::from_raw_parts_mut(
+                    spare.as_mut_ptr().cast::<u8>(),
+                    spare.len().min(want),
+                )
+            };
+            stream
+                .read(dst)
+                .map_err(|e| RemoteError::Http(e.to_string()))?
+        };
+        if n == 0 {
+            break;
+        }
+        // SAFETY: first `n` bytes of spare were written by `read`.
+        unsafe {
+            body.set_len(body.len() + n);
+        }
+    }
+    Ok(())
 }
 
 fn parse_cleartext_headers(
