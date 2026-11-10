@@ -33,12 +33,12 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 |--|---------------|--------------|
 | Peer | `git-daemon` | GitHub-class self-host |
 | Transports | `git://` | HTTP (+ SSH + forge API modules) |
-| Auth story | Weak / usually none | HTTP Basic + ops TLS; SSH keys (when Claimed) |
+| Auth story | Weak / usually none | HTTP Basic + ops TLS; SSH keys (Partial bind+paths; handshake Claimed later) |
 | Required for git alias DoD? | No | No |
 
 ## Honesty
 
-Daemon flag inventory is largely present as **Partial** deepen (some flags still Missing: e.g. `--detach`, `--inetd`, `--pid-file`, `--access-hook`, upload-archive body). **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
+Daemon flag inventory is largely present as **Partial** deepen: `--inetd` / `--pid-file` / upload-archive **arg-drain** are Partial. Still **Missing**: `--detach`, archive stream Claimed body (ACK/ustar/sideband), `--access-hook`, user/group/syslog. **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
 
 Owning SoTs: [daemon product intent](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-daemon-product-intent.sot.md), [daemon command matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-daemon-git-command-matrix.sot.md).
 

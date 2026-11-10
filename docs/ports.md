@@ -28,13 +28,13 @@ Operator-facing clone URLs and docs prefer **IANA / Git-documented** ports. Unpr
 1. Teach **22 / 80 / 443 / 9418** as the product story when the operator can arrange privileged bind, capability, or an ops front (reverse proxy / NAT / publish map).
 2. Label **2222 / 8080** as **demo / alternate** in help and docs.
 3. Process clap defaults may stay loopback-friendly demos until a coordinated code + test + docs flip — defaults must **not** be described as more normative than 22/80.
-4. Port policy ≠ Claimed for in-process SSH, in-process TLS, or WAN-safe hosting.
+4. Port policy ≠ Claimed for in-process SSH handshake, in-process TLS, or WAN-safe hosting. SSH demo bind (**2222**) may be **Partial**; binding a port is not handshake Claimed.
 
 Full self-host bind/auth story: [Self-host](../self-host/). Research: [ports survey](https://github.com/modootoday/arks/blob/main/.spec/research/20261111055609-git-transport-standard-ports.research.md). SoT: [arks-self-host-server](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-self-host-server.sot.md).
 
 ## Honesty
 
-Binding a port does not invent Claimed module readiness. If SSH or forge modules are enabled and not ready, `arks serve` **fails closed**.
+Binding a port does not invent Claimed module readiness. In-process SSH may prove bind + key paths (**Partial**) and still **fail closed** before handshake. If SSH or forge modules are enabled and not ready past their Partial wire, `arks serve` **fails closed**. **HTTPS** / in-process TLS remote remains **Missing**.
 
 ## Next
 

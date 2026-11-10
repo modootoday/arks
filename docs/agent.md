@@ -31,8 +31,8 @@ arks agent doctor
 | Leaf / area | Class |
 |-------------|-------|
 | provider / config / doctor | **Partial** |
-| review / cev-check / run / serve / bot bodies | **Refuse or Missing** until wired + evidenced |
-| Full LLM wire | **Missing** — no Claimed review quality bar from docs alone |
+| review / cev-check / run / serve / bot | **Partial** (minimal paths; not Claimed review quality) |
+| Long-running bot / Claimed LLM e2e | **Missing** — no Claimed review quality bar from docs alone |
 
 Treat everything on this page as **design / Partial** unless a clean-room receipt says otherwise. See [Completeness](../completion/).
 

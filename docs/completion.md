@@ -42,7 +42,7 @@ Public clean-room Definition of Done is **three peer pillars**. Self-host is **a
 | **2. Daemon** | `git-daemon` | `arks daemon` | Flag surface **Partial** deepen; not the GitHub-class host story |
 | **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | **Partial** (stubs/forwards); nested `arks hub …` transitional only |
 
-**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **fail-closed Missing/Partial**; forge-in-serve **Partial**; dedicated LAN/WAN hosting e2e **scaffold / not Claimed**. See [Self-host](../self-host/) and [Ports](../ports/).
+**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **Partial** (bind + key-path fail-closed; handshake still **Missing** — not handshake Claimed); forge-in-serve **Partial**; dedicated LAN/WAN hosting e2e **scaffold / not Claimed**. See [Self-host](../self-host/) and [Ports](../ports/).
 
 Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/verify-cleanroom-symmetry-matrix.sot.md). Residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Program ladder: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md).
 
@@ -52,12 +52,12 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 |---------|-------|-------|
 | Personality / Registry / OverlapFacade | **Partial** | Env/argv0 dispatch exists as shell; not Claimed peer drop-in proof |
 | `arks serve --no-ssh --no-forge` | HTTP wire **Claimed** where evidenced | Practical Claimed hosting path today |
-| In-process SSH under `arks serve` | **Missing / fail-closed** | Ops SSHD + `upload-pack`/`receive-pack` remains valid |
-| Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e |
-| `arks serve config` | **Partial** | Server config ≠ `arks config` ≠ client forge settings |
-| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Depth varies by leaf; refuse stubs remain |
-| `arks daemon` deepen | **Partial** | Some flags still Missing (`--detach`, `--inetd`, …) |
-| `arks agent` | **Partial** | provider/config/doctor Partial; review/CEV/run bodies still refuse or Missing |
+| In-process SSH under `arks serve` | **Partial** | Bind + host_key/`authorized_keys` path resolve; fail-closed (no handshake Claimed). Ops SSHD + `upload-pack`/`receive-pack` remains valid |
+| Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; no in-process TLS / HTTPS remote Claimed |
+| `arks serve config` | **Partial** | File seeds runtime defaults; clap wins; ≠ Claimed sync |
+| Flat forge leaves (`pr`, `issue`, …) | **Partial** | `release` / `run` / `workflow` local-API Partial; other GROUPS may still refuse; HTTPS remote **Missing** |
+| `arks daemon` deepen | **Partial** | `--inetd` / `--pid-file` / archive arg-drain Partial; still **Missing**: `--detach`, archive stream Claimed body, hooks/user/group |
+| `arks agent` | **Partial** | provider/config/doctor + review/cev-check/run/serve·bot Partial; long-running bot + Claimed LLM e2e **Missing** |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 
 Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES** where receipts carry — residuals are Impossible / advisory / owner-policy, not casual N/A. That does **not** promote forge/SSH/agent Partial rows to Claimed.
