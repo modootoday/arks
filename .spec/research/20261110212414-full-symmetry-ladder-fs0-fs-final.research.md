@@ -147,7 +147,7 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 | **FS6** | LFS closest + shadow-ref ordinary refs | `filter.*.clean` honor; scalar refuse+reason; ordinary refs already store `refs/pull` | **Done** (smudge/server residual) |
 | **FS7** | GUI/OAuth closest slices | External `gui`/`gitk`/`citool` handoff; OAuth via external helper; forge UX impossible | **Done** |
 | **FS8** | Hostile catalog edges | Documented impossibles + HOOK-008/NET-006/OBJ-004 remain reopen harness rows | **Done** (harness residual honest) |
-| **FS_final** | Symmetry currency | No *casual* N/A; remaining rows are Claimed, Impossible, or explicit reopen harness | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213330]] / [[evidence:root/20261110213530]]; **L9**/G8 non-FS) |
+| **FS_final** | Symmetry currency | No *casual* N/A; remaining rows are Claimed, Impossible, or explicit reopen harness | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]; **L9**/G8 non-FS) |
 
 ### Non-goals (still)
 
