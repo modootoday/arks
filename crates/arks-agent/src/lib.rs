@@ -110,7 +110,7 @@ COMMANDS (Partial honesty):
     review        Review stdin/file via openai-compat chat (Partial; HTTP loopback)
     cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
     run           One-shot job: review|cev-check|doctor (Partial)
-    serve / bot   Loopback health + POST /v1/chat/completions proxy (Partial; not Claimed chatbot)
+    serve / bot   Loopback health + chat completions proxy (JSON + stream SSE Partial; Claimed LLM e2e Missing)
 
 NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
@@ -850,8 +850,9 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
             "arks agent {kind} [--listen HOST:PORT] [--once] — loopback health + \
-             POST /v1/chat/completions openai-compat proxy Partial (review/bot path; \
-             not a Claimed general chatbot)"
+             POST /v1/chat/completions openai-compat proxy Partial (JSON body pass-through + \
+             stream=true SSE Partial). Claimed LLM chatbot / review e2e is Missing — \
+             design ≠ Claimed."
         );
         return ExitCode::SUCCESS;
     }
@@ -891,7 +892,7 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
         .unwrap_or_else(|| "llama3.2".into());
     eprintln!(
         "arks agent {kind} listening on http://{}/ (Partial health + chat proxy → {base}; \
-         design ≠ Claimed chatbot; {} )",
+         stream SSE Partial OK; Claimed LLM e2e Missing; {} )",
         listener
             .local_addr()
             .map(|a| a.to_string())
@@ -907,63 +908,66 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
         match listener.accept() {
             Ok((mut stream, peer)) => {
                 let req = read_http_request_limited(&mut stream, 256 * 1024);
-                let (status, ctype, body) = match req {
+                match req {
                     Ok((method, path, req_body)) => {
                         let path_only = path.split('?').next().unwrap_or(path.as_str());
                         if method == "POST"
                             && (path_only == "/v1/chat/completions"
                                 || path_only == "/chat/completions")
                         {
-                            match proxy_chat_completion(&base, &default_model, &req_body) {
-                                Ok((code, resp)) => {
-                                    let st = if code == 0 { 502 } else { code };
-                                    (st, "application/json", resp)
+                            if chat_body_wants_stream(&req_body) {
+                                match proxy_chat_completion_stream(
+                                    &mut stream,
+                                    &base,
+                                    &default_model,
+                                    &req_body,
+                                ) {
+                                    Ok(()) => {}
+                                    Err(e) => {
+                                        let body = format!(
+                                            "{{\"error\":\"partial stream proxy failed\",\"detail\":{},\"partial\":true,\"claimed_e2e\":\"Missing\"}}",
+                                            json_escape(&e)
+                                        );
+                                        let _ = write_http_json(&mut stream, 502, &body);
+                                    }
                                 }
-                                Err(e) => (
-                                    502,
-                                    "application/json",
-                                    format!(
-                                        "{{\"error\":\"partial proxy failed\",\"detail\":{},\"partial\":true}}",
-                                        json_escape(&e)
-                                    ),
-                                ),
+                            } else {
+                                match proxy_chat_completion(&base, &default_model, &req_body) {
+                                    Ok((code, resp)) => {
+                                        let st = if code == 0 { 502 } else { code };
+                                        let _ = write_http_json(&mut stream, st, &resp);
+                                    }
+                                    Err(e) => {
+                                        let body = format!(
+                                            "{{\"error\":\"partial proxy failed\",\"detail\":{},\"partial\":true,\"claimed_e2e\":\"Missing\"}}",
+                                            json_escape(&e)
+                                        );
+                                        let _ = write_http_json(&mut stream, 502, &body);
+                                    }
+                                }
                             }
                         } else {
-                            // Health / any other path — Partial JSON status.
-                            (
-                                200,
-                                "application/json",
-                                format!(
-                                    "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\
-                                     \"partial\":true,\"peer\":\"{peer}\",\"served\":{},\
-                                     \"provider\":\"{provider_id}\",\"upstream\":{},\
-                                     \"chat\":\"POST /v1/chat/completions\"}}",
-                                    served + 1,
-                                    json_escape(&base)
-                                ),
-                            )
+                            let body = format!(
+                                "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\
+                                 \"partial\":true,\"peer\":\"{peer}\",\"served\":{},\
+                                 \"provider\":\"{provider_id}\",\"upstream\":{},\
+                                 \"chat\":\"POST /v1/chat/completions\",\
+                                 \"stream\":\"Partial SSE when stream=true\",\
+                                 \"claimed_e2e\":\"Missing\"}}",
+                                served + 1,
+                                json_escape(&base)
+                            );
+                            let _ = write_http_json(&mut stream, 200, &body);
                         }
                     }
-                    Err(e) => (
-                        400,
-                        "application/json",
-                        format!(
+                    Err(e) => {
+                        let body = format!(
                             "{{\"error\":\"bad request\",\"detail\":{},\"partial\":true}}",
                             json_escape(&e)
-                        ),
-                    ),
-                };
-                let reason = match status {
-                    200 => "OK",
-                    400 => "Bad Request",
-                    502 => "Bad Gateway",
-                    _ => "OK",
-                };
-                let resp = format!(
-                    "HTTP/1.1 {status} {reason}\r\nContent-Type: {ctype}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                    body.len()
-                );
-                let _ = stream.write_all(resp.as_bytes());
+                        );
+                        let _ = write_http_json(&mut stream, 400, &body);
+                    }
+                }
                 served += 1;
                 if once {
                     eprintln!(
@@ -974,7 +978,7 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
                 if served == 1 {
                     eprintln!(
                         "arks agent {kind}: long-running Partial health+chat proxy (Ctrl-C to stop; \
-                         general chatbot product out of scope — design ≠ Claimed)"
+                         Claimed LLM chatbot e2e Missing — design ≠ Claimed)"
                     );
                 }
             }
@@ -984,6 +988,28 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
             }
         }
     }
+}
+
+fn write_http_json(stream: &mut impl Write, status: u16, body: &str) -> std::io::Result<()> {
+    let reason = match status {
+        200 => "OK",
+        400 => "Bad Request",
+        502 => "Bad Gateway",
+        _ => "OK",
+    };
+    let resp = format!(
+        "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    );
+    stream.write_all(resp.as_bytes())
+}
+
+fn chat_body_wants_stream(body: &str) -> bool {
+    // Partial JSON sniff — not a Claimed parser.
+    body.contains("\"stream\"")
+        && (body.contains("\"stream\":true")
+            || body.contains("\"stream\": true")
+            || body.contains("\"stream\":1"))
 }
 
 /// Minimal HTTP/1.1 request read for agent serve (Partial; size-capped).
@@ -1041,16 +1067,229 @@ fn read_http_request_limited(
 }
 
 /// Forward openai-compat chat body to configured upstream (Partial proxy).
+/// Prefer raw JSON pass-through; fall back to synthesized single-turn body.
 fn proxy_chat_completion(
     base_url: &str,
     default_model: &str,
     req_body: &str,
 ) -> Result<(u16, String), String> {
-    // Prefer caller model; fall back to serve default.
+    let body = ensure_chat_body(req_body, default_model, false);
+    http_post_chat_raw(base_url, &body)
+}
+
+/// Streaming Partial: relay upstream SSE/`text/event-stream` bytes to client.
+/// Not Claimed LLM e2e — best-effort chunk forward with size/time caps.
+fn proxy_chat_completion_stream(
+    client: &mut impl Write,
+    base_url: &str,
+    default_model: &str,
+    req_body: &str,
+) -> Result<(), String> {
+    if base_url.starts_with("https://") {
+        return Err(
+            "HTTPS stream Partial — TCP/HTTP loopback only today; use http:// provider or ops TLS front"
+                .into(),
+        );
+    }
+    let body = ensure_chat_body(req_body, default_model, true);
+    let (host, port) = parse_host_port(base_url)?;
+    let path = chat_completions_path(base_url);
+    let mut upstream = TcpStream::connect((host.as_str(), port))
+        .map_err(|e| format!("connect {host}:{port}: {e}"))?;
+    upstream
+        .set_read_timeout(Some(Duration::from_secs(60)))
+        .ok();
+    upstream
+        .set_write_timeout(Some(Duration::from_secs(30)))
+        .ok();
+    let mut headers = format!(
+        "POST {path} HTTP/1.1\r\nHost: {host}:{port}\r\nContent-Type: application/json\r\nAccept: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n",
+        body.len()
+    );
+    if let Some(key) = resolve_api_key() {
+        headers.push_str(&format!("Authorization: Bearer {key}\r\n"));
+    }
+    headers.push_str("\r\n");
+    upstream
+        .write_all(headers.as_bytes())
+        .map_err(|e| e.to_string())?;
+    upstream
+        .write_all(body.as_bytes())
+        .map_err(|e| e.to_string())?;
+
+    // Read upstream status line + headers, then relay body as SSE Partial.
+    let mut head = Vec::new();
+    let mut tmp = [0u8; 2048];
+    loop {
+        let n = upstream.read(&mut tmp).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        head.extend_from_slice(&tmp[..n]);
+        if head.windows(4).any(|w| w == b"\r\n\r\n") {
+            break;
+        }
+        if head.len() > 64 * 1024 {
+            return Err("upstream headers too large".into());
+        }
+    }
+    let split = head
+        .windows(4)
+        .position(|w| w == b"\r\n\r\n")
+        .ok_or_else(|| "incomplete upstream response".to_string())?;
+    let (hdr, rest) = head.split_at(split + 4);
+    let hdr_str = String::from_utf8_lossy(hdr);
+    let status = hdr_str
+        .lines()
+        .next()
+        .and_then(|l| l.split_whitespace().nth(1))
+        .and_then(|s| s.parse::<u16>().ok())
+        .unwrap_or(0);
+    if status == 0 || status >= 400 {
+        let preview = String::from_utf8_lossy(rest);
+        return Err(format!(
+            "upstream HTTP {status}: {}",
+            preview.chars().take(400).collect::<String>()
+        ));
+    }
+    let out_head = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\nX-Arks-Partial: stream\r\nX-Arks-Claimed-E2E: Missing\r\n\r\n";
+    client
+        .write_all(out_head.as_bytes())
+        .map_err(|e| e.to_string())?;
+    if !rest.is_empty() {
+        client.write_all(rest).map_err(|e| e.to_string())?;
+    }
+    let mut total = rest.len();
+    let mut buf = [0u8; 4096];
+    loop {
+        match upstream.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => {
+                client.write_all(&buf[..n]).map_err(|e| e.to_string())?;
+                total += n;
+                if total > 8 * 1024 * 1024 {
+                    let _ = client.write_all(b"\ndata: [DONE]\n\n");
+                    break;
+                }
+            }
+            Err(e)
+                if e.kind() == std::io::ErrorKind::WouldBlock
+                    || e.kind() == std::io::ErrorKind::TimedOut =>
+            {
+                break;
+            }
+            Err(e) => return Err(e.to_string()),
+        }
+    }
+    let _ = client.flush();
+    Ok(())
+}
+
+fn ensure_chat_body(req_body: &str, default_model: &str, stream: bool) -> String {
+    let trimmed = req_body.trim();
+    if trimmed.starts_with('{') && trimmed.contains("\"messages\"") {
+        // Pass-through Partial: ensure model + stream flags when absent.
+        let mut body = trimmed.to_string();
+        if extract_json_string_field(&body, "model").is_none() {
+            // Inject model after opening brace.
+            body.insert_str(
+                1,
+                &format!("\"model\":{},", json_escape(default_model)),
+            );
+        }
+        if stream && !chat_body_wants_stream(&body) {
+            if body.ends_with('}') {
+                body.pop();
+                if !body.trim_end().ends_with(',') && body.len() > 1 {
+                    body.push(',');
+                }
+                body.push_str("\"stream\":true}");
+            }
+        }
+        if !stream && chat_body_wants_stream(&body) {
+            body = body.replace("\"stream\":true", "\"stream\":false");
+            body = body.replace("\"stream\": true", "\"stream\":false");
+        }
+        return body;
+    }
     let model = extract_json_string_field(req_body, "model").unwrap_or_else(|| default_model.into());
     let prompt = extract_chat_user_content(req_body)
         .unwrap_or_else(|| req_body.chars().take(12_000).collect());
-    http_post_chat(base_url, &model, &prompt)
+    format!(
+        r#"{{"model":{},"messages":[{{"role":"user","content":{}}}],"stream":{}}}"#,
+        json_escape(&model),
+        json_escape(&truncate_chars(&prompt, 12_000)),
+        if stream { "true" } else { "false" }
+    )
+}
+
+fn chat_completions_path(base_url: &str) -> String {
+    let root = base_url.trim_end_matches('/');
+    if root.ends_with("/v1") {
+        return "/v1/chat/completions".to_string();
+    }
+    if let Some(rest) = base_url
+        .strip_prefix("http://")
+        .and_then(|r| r.split_once('/').map(|(_, p)| p))
+    {
+        let rest = rest.trim_end_matches('/');
+        if rest.is_empty() {
+            return "/v1/chat/completions".into();
+        } else if rest.ends_with("/v1") {
+            return format!("/{rest}/chat/completions");
+        } else {
+            return format!("/{rest}/chat/completions");
+        }
+    }
+    "/v1/chat/completions".into()
+}
+
+fn http_post_chat_raw(base_url: &str, body: &str) -> Result<(u16, String), String> {
+    if base_url.starts_with("https://") {
+        return Err(
+            "HTTPS chat Partial — TCP/HTTP loopback only today; use http:// provider or ops TLS front"
+                .into(),
+        );
+    }
+    let (host, port) = parse_host_port(base_url)?;
+    let path = chat_completions_path(base_url);
+    let mut stream = TcpStream::connect((host.as_str(), port))
+        .map_err(|e| format!("connect {host}:{port}: {e}"))?;
+    stream
+        .set_read_timeout(Some(Duration::from_secs(60)))
+        .ok();
+    stream
+        .set_write_timeout(Some(Duration::from_secs(30)))
+        .ok();
+    let mut headers = format!(
+        "POST {path} HTTP/1.1\r\nHost: {host}:{port}\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n",
+        body.len()
+    );
+    if let Some(key) = resolve_api_key() {
+        headers.push_str(&format!("Authorization: Bearer {key}\r\n"));
+    }
+    headers.push_str("\r\n");
+    stream
+        .write_all(headers.as_bytes())
+        .map_err(|e| e.to_string())?;
+    stream.write_all(body.as_bytes()).map_err(|e| e.to_string())?;
+    let mut buf = Vec::new();
+    stream.read_to_end(&mut buf).map_err(|e| e.to_string())?;
+    let text = String::from_utf8_lossy(&buf);
+    let status = text
+        .lines()
+        .next()
+        .and_then(|l| l.split_whitespace().nth(1))
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    let resp_body = text
+        .split("\r\n\r\n")
+        .nth(1)
+        .unwrap_or("")
+        .chars()
+        .take(32_768)
+        .collect::<String>();
+    Ok((status, resp_body))
 }
 
 fn extract_json_string_field(raw: &str, key: &str) -> Option<String> {
