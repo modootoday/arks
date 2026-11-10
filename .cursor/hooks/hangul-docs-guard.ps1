@@ -1,4 +1,4 @@
-﻿# After-edit Hangul guard for tracked docs / Spec / agent trees.
+﻿# After-edit Hangul guard for tracked docs / Spec / agent / verify trees.
 # Rule 05-english-only — chat Korean OK; committed Hangul is not.
 $ErrorActionPreference = 'Stop'
 try {
@@ -21,7 +21,7 @@ try {
   }
 
   $norm = $path -replace '\\', '/'
-  $watched = $norm -match '(?i)(^|/)\.spec/|(^|/)docs/|(^|/)AGENTS\.md$|(^|/)\.agents/|(^|/)README\.md$|(^|/)CONTRIBUTING\.md$|(^|/)SECURITY\.md$'
+  $watched = $norm -match '(?i)(^|/)\.spec/|(^|/)docs/|(^|/)AGENTS\.md$|(^|/)\.agents/|(^|/)README\.md$|(^|/)CONTRIBUTING\.md$|(^|/)SECURITY\.md$|(^|/)LICENSE|(^|/)verify/|(^|/)\.cursor/|(^|/)\.github/'
   if (-not $watched) {
     exit 0
   }
