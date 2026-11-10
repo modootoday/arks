@@ -72,6 +72,10 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         .unwrap_or_else(|| "127.0.0.1:3920".into());
     let mut forge_data: Option<PathBuf> = file_cfg.get("forge_data").map(PathBuf::from);
     let mut listen_from_cfg = file_cfg.get("bind").cloned();
+    let mut ssh_listen_cfg = file_cfg
+        .get("ssh_listen")
+        .cloned()
+        .unwrap_or_else(|| "127.0.0.1:2222".into());
     let mut ssh_host_key = file_cfg
         .get("ssh_host_key")
         .map(PathBuf::from)
@@ -139,6 +143,13 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
                         .ok_or_else(|| CliError::Usage("serve --authorized-keys needs PATH".into()))?,
                 );
             }
+            "--ssh-listen" => {
+                i += 1;
+                ssh_listen_cfg = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("serve --ssh-listen needs ADDR".into()))?
+                    .clone();
+            }
             "--basic-auth" | "--basic-auth-file" => {
                 if a == "--basic-auth-file" {
                     // Drop seeded basic_auth_file pair so CLI wins.
@@ -174,6 +185,9 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             other if other.starts_with("--authorized-keys=") => {
                 ssh_authorized_keys = PathBuf::from(&other[18..]);
             }
+            other if other.starts_with("--ssh-listen=") => {
+                ssh_listen_cfg = other[13..].to_string();
+            }
             other if other.starts_with('-') => {
                 return Err(CliError::NotImplemented(format!(
                     "serve option not claimed: {other}"
@@ -207,13 +221,13 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
 
     // Fail-closed: SSH enabled but in-process listener Missing/Partial — do not silent-degrade.
     if enable_ssh {
-        let ssh_listen: SocketAddr = "127.0.0.1:2222"
+        let ssh_listen: SocketAddr = ssh_listen_cfg
             .parse()
-            .expect("default ssh listen parses");
+            .map_err(|e| CliError::Usage(format!("serve ssh_listen bad ADDR: {e}")))?;
         sync_serve_runtime_to_file(
             enable_http.then_some(http_bind_for_sync.as_str()),
             enable_forge.then_some(forge_listen.as_str()),
-            Some("127.0.0.1:2222"),
+            Some(ssh_listen_cfg.as_str()),
         );
         // Directory is optional here — Missing path refuses before bind.
         let dir = forwarded
@@ -380,19 +394,56 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
                 }
             }
             // Stronger live bind probe (Partial): briefly bind configured listen addrs.
-            for key in ["bind", "forge_listen"] {
-                if let Some(addr) = map.get(key) {
-                    match probe_bind_addr(addr) {
-                        Ok(local) => eprintln!("{key}: live_bind_probe=ok local={local}"),
-                        Err(e) => {
-                            eprintln!("{key}: live_bind_probe=fail ({e})");
-                            ok = false;
-                        }
+            let mut probe_notes = std::collections::BTreeMap::new();
+            let ssh_on = config_bool(&map, "ssh", true);
+            let mut probe_keys: Vec<(&str, String)> = Vec::new();
+            if let Some(addr) = map.get("bind") {
+                probe_keys.push(("bind", addr.clone()));
+            }
+            if let Some(addr) = map.get("forge_listen") {
+                probe_keys.push(("forge_listen", addr.clone()));
+            }
+            let ssh_addr = map
+                .get("ssh_listen")
+                .cloned()
+                .unwrap_or_else(|| "127.0.0.1:2222".into());
+            if ssh_on {
+                probe_keys.push(("ssh_listen", ssh_addr));
+            }
+            for (key, addr) in probe_keys {
+                match probe_bind_addr(&addr) {
+                    Ok(local) => {
+                        eprintln!("{key}: live_bind_probe=ok local={local}");
+                        probe_notes.insert(format!("runtime_probe_{key}"), format!("ok:{local}"));
+                    }
+                    Err(e) => {
+                        eprintln!("{key}: live_bind_probe=fail ({e})");
+                        probe_notes.insert(format!("runtime_probe_{key}"), format!("fail:{e}"));
+                        ok = false;
                     }
                 }
             }
+            // Persist probe results for e2e-ready Partial honesty (clap still wins at serve).
+            if !probe_notes.is_empty() {
+                let mut map2 = map.clone();
+                for (k, v) in probe_notes {
+                    map2.insert(k, v);
+                }
+                let _ = record_runtime_bind_sync(
+                    &mut map2,
+                    map.get("bind").map(String::as_str),
+                    map.get("forge_listen").map(String::as_str),
+                    map.get("ssh_listen")
+                        .map(String::as_str)
+                        .or(Some("127.0.0.1:2222")),
+                );
+                let _ = save_serve_config_map(&map2);
+            }
             if ok {
-                eprintln!("arks serve config validate: ok (Partial schema + live bind probe)");
+                eprintln!(
+                    "arks serve config validate: ok (Partial schema + live bind probe; \
+                     runtime_probe_* written — not Claimed sync e2e)"
+                );
                 Ok(())
             } else {
                 Err(CliError::Msg(
@@ -409,6 +460,9 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
             if !map.contains_key("forge_listen") {
                 map.insert("forge_listen".into(), "127.0.0.1:3920".into());
             }
+            if !map.contains_key("ssh_listen") {
+                map.insert("ssh_listen".into(), "127.0.0.1:2222".into());
+            }
             if !map.contains_key("http") {
                 map.insert("http".into(), "on".into());
             }
@@ -423,11 +477,32 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
                 .get("forge_listen")
                 .cloned()
                 .unwrap_or_else(|| "127.0.0.1:3920".into());
-            record_runtime_bind_sync(&mut map, Some(&bind), Some(&forge), Some("127.0.0.1:2222"))?;
+            let ssh = map
+                .get("ssh_listen")
+                .cloned()
+                .unwrap_or_else(|| "127.0.0.1:2222".into());
+            // e2e-ready Partial: probe binds during sync and record runtime_probe_*.
+            for (key, addr) in [
+                ("bind", bind.as_str()),
+                ("forge_listen", forge.as_str()),
+                ("ssh_listen", ssh.as_str()),
+            ] {
+                match probe_bind_addr(addr) {
+                    Ok(local) => {
+                        map.insert(format!("runtime_probe_{key}"), format!("ok:{local}"));
+                        eprintln!("sync probe {key}=ok local={local}");
+                    }
+                    Err(e) => {
+                        map.insert(format!("runtime_probe_{key}"), format!("fail:{e}"));
+                        eprintln!("sync probe {key}=fail ({e})");
+                    }
+                }
+            }
+            record_runtime_bind_sync(&mut map, Some(&bind), Some(&forge), Some(&ssh))?;
             save_serve_config_map(&map)?;
             eprintln!(
-                "arks serve config sync: wrote effective defaults + runtime_* → {} (Partial; \
-                 not Claimed live listener sync)",
+                "arks serve config sync: wrote effective defaults + runtime_* + runtime_probe_* → {} \
+                 (Partial e2e-ready bind honesty; clap still wins; not Claimed sync e2e)",
                 serve_config_path().display()
             );
             Ok(())
@@ -444,6 +519,7 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "ssh",
     "forge",
     "forge_listen",
+    "ssh_listen",
     "forge_data",
     "basic_auth_file",
     "ssh_host_key",
@@ -455,6 +531,9 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "runtime_forge_listen",
     "runtime_ssh_listen",
     "runtime_synced_at",
+    "runtime_probe_bind",
+    "runtime_probe_forge_listen",
+    "runtime_probe_ssh_listen",
 ];
 
 fn config_bool(
@@ -524,7 +603,8 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
             "on" | "off" | "true" | "false" | "1" | "0" => Ok(()),
             _ => Err("expected on|off".into()),
         },
-        "bind" | "forge_listen" | "runtime_bind" | "runtime_forge_listen" | "runtime_ssh_listen" => {
+        "bind" | "forge_listen" | "ssh_listen" | "runtime_bind" | "runtime_forge_listen"
+        | "runtime_ssh_listen" => {
             if value.parse::<SocketAddr>().is_ok() {
                 Ok(())
             } else {
@@ -532,7 +612,8 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
             }
         }
         "forge_data" | "basic_auth_file" | "ssh_host_key" | "ssh_authorized_keys"
-        | "allow_paths" | "tls_note" | "runtime_synced_at" => {
+        | "allow_paths" | "tls_note" | "runtime_synced_at" | "runtime_probe_bind"
+        | "runtime_probe_forge_listen" | "runtime_probe_ssh_listen" => {
             if value.is_empty() {
                 Err("value must not be empty".into())
             } else {
@@ -606,6 +687,7 @@ fn print_serve_config_defaults() {
     println!("ssh=on");
     println!("forge=on");
     println!("forge_listen=127.0.0.1:3920");
+    println!("ssh_listen=127.0.0.1:2222");
 }
 
 fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
@@ -1118,13 +1200,13 @@ Usage:
 
 Not `arks config` (git-repo config). Not hub forge settings.
 File: ~/.config/arks/serve.conf (or ARKS_SERVE_CONFIG).
-Keys (Partial): bind, http, ssh, forge, forge_listen, forge_data,
+Keys (Partial): bind, http, ssh, forge, forge_listen, ssh_listen, forge_data,
   basic_auth_file, ssh_host_key, allow_paths, tls_note,
   ssh_authorized_keys, runtime_bind, runtime_forge_listen,
-  runtime_ssh_listen, runtime_synced_at.
+  runtime_ssh_listen, runtime_synced_at, runtime_probe_*.
 Partial: file store seeds `arks serve` defaults; clap flags still win;
-  `serve` / `config sync` write runtime_* live-bind honesty keys.
-  validate probes configured bind/forge_listen briefly. Design ≠ Claimed.
+  `serve` / `config sync` write runtime_* + runtime_probe_* live-bind honesty;
+  validate probes bind/forge_listen/ssh_listen. Design ≠ Claimed sync e2e.
 "
     );
 }
@@ -1146,8 +1228,8 @@ Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
 Requires git-daemon-export-ok unless --export-all.
 Multiple positionals / repeated --base-path = allow-list (Partial).
 Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
-  enable/disable upload-pack/receive-pack; upload-archive ACK+raw ustar Partial
-  (ACK + sideband-64k ustar Partial; --format beyond tar Missing); --inetd Partial;
+  enable/disable upload-pack/receive-pack; upload-archive ACK+sideband-64k ustar
+  Partial (--format beyond tar Missing; --raw-ustar opt-out); --inetd Partial;
   --pid-file writes pid; --detach Partial re-exec (unix setsid / win DETACHED_PROCESS).
 Fail-closed Missing: --user/--group --syslog --access-hook
   --interpolated-path --user-path overrides; Claimed archive parity.
