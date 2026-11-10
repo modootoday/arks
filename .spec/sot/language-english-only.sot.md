@@ -3,8 +3,8 @@ id: sot:root/language-english-only
 title: Language — English only
 status: active
 created: 2026-11-08T08:25:00Z
-updated: 2026-11-11T06:10:00Z
-tags: [language, english, hangul-ban, conventions, agents, public]
+updated: 2026-11-11T06:15:00Z
+tags: [language, english, hangul-ban, conventions, agents, public, hooks]
 verify: manual
 rel:
   depends_on: [sot:root/conventions-inherit]
@@ -48,6 +48,7 @@ Version 0.1.1. Top-level principle for **arks**: all authored project documents 
 12. Router: root `AGENTS.md` hard constraint **English only** → this SoT.
 13. Pointer row: [[sot:root/conventions-inherit]].
 14. Public Pages / README / crate metadata English lock also sits under [[sot:root/public-surface]] (placement + secrets); this SoT owns the language rule itself.
+15. **Hooks (process aids):** `.cursor/hooks/hangul-docs-guard.ps1` watches `.spec/`, `docs/`, `AGENTS.md`, `.agents/`, README/CONTRIBUTING/SECURITY/LICENSE*, `verify/`, `.cursor/`, `.github/` after edits; `.cursor/hooks/governance-shell-guard.ps1` denies Hangul in `git commit` messages and staged watched paths. Chat Korean remains allowed.
 
 ## Why
 

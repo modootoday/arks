@@ -3,8 +3,8 @@ id: sot:root/agent-governance
 title: Agent governance
 status: active
 created: 2026-11-08T08:20:00Z
-updated: 2026-11-11T06:10:00Z
-tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, m24, g28, deferred-zero, l3]
+updated: 2026-11-11T06:15:00Z
+tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, ports, symmetry, hooks, m24, g28, deferred-zero, l3]
 verify: manual
 rel:
   depends_on:
@@ -25,21 +25,29 @@ rel:
     - sot:root/arks-hub-product-intent
     - sot:root/arks-daemon-product-intent
     - sot:root/arks-agent-product-intent
+    - sot:root/arks-self-host-server
+    - sot:root/verify-cleanroom-symmetry-matrix
+    - sot:root/release-symmetry-precheck
     - research:root/20261111034556
     - research:root/20261111035700
+    - research:root/20261111055609
+    - research:root/20261111061037
   governs:
     - AGENTS.md
     - .agents/
     - .spec/README.md
+    - .cursor/hooks.json
 ---
 
 # Agent governance
 
-Version **0.3.1**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
+Version **0.3.2**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
 
 Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classification.md`.
 
 **0.3.1 addendum (process rules — not product Claimed):** always-on rules now also cover Hangul ban (`05`), SoT Version≠release (`26`), Spec-first commit order (`27`), evidence honesty (`28`), no git/gh subprocess (`30`), CLI personality (`32`), serve≠hub (`33`), and commit hygiene (`91`), plus skills `guard-cli-surface` / `commit-governance` and optional Cursor hooks under `.cursor/`.
+
+**0.3.2 addendum (gap fill — not product Claimed):** deep audit [[research:root/20261111061037]] closed process gaps G1–G14 with rules `29` (stub vs Claimed), `34` (ports normative vs demo), `35` (`.spec.local` journey), `61` (Cross-OS / pin honesty); skills `review-product-subprocess`, `run-symmetry-matrix`, `release-symmetry-gate`, `self-host-serve`, `research-to-sot`; and hardened Cursor hooks (force-push deny to main/master, `.spec.local`/secrets stage deny, destructive git ask, Hangul + Claimed invent scans on `git commit`, broader Hangul after-edit paths).
 
 ## Rule
 
@@ -100,8 +108,12 @@ Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classificati
 22. **Bottom-up build order** — inner modules first (rule `.agents/rules/70-bottom-up-build-order.md`; skill `implement-sot-slice`). Program ladder **M0–M26** lives in [[sot:root/program-roadmap]].
 23. **Structural conventions** — [[sot:root/structural-conventions]]; rule `.agents/rules/15-structural-conventions.md`.
 24. **Public surface** — [[sot:root/public-surface]]; rules `.agents/rules/80-public-surface.md` and `.agents/rules/25-spec-classification.md`.
-24a. **Spec-first commit order** — public SoT meaning changes commit before related code; SoT `Version` ≠ product release — rules `.agents/rules/27-spec-first-commit-order.md`, `.agents/rules/26-sot-version-vs-release.md`, `.agents/rules/91-commit-hygiene.md`; skill `commit-governance`.
-24b. **CLI process boundaries** — no stock `git`/`gh` subprocess on product paths; personalities `git|gh|arks`; **`arks serve` ≠ `arks hub`** — rules `.agents/rules/30-no-git-gh-subprocess.md`, `.agents/rules/32-cli-personality.md`, `.agents/rules/33-serve-vs-hub.md`; skill `guard-cli-surface`. Product CLI semantics remain owned by [[sot:root/arks-cli-personality-factory]] / [[sot:root/arks-self-host-server]] / hub SoTs — this SoT only routes the always-on rules.
+24a. **Spec-first commit order** — public SoT meaning changes commit before related code; SoT `Version` ≠ product release — rules `.agents/rules/27-spec-first-commit-order.md`, `.agents/rules/26-sot-version-vs-release.md`, `.agents/rules/91-commit-hygiene.md`; skill `commit-governance`. Machine journey notes stay in `.spec.local/` (rule `.agents/rules/35-spec-local-journey.md`) — never public Claimed.
+24b. **CLI process boundaries** — no stock `git`/`gh` subprocess on product paths; personalities `git|gh|arks`; **`arks serve` ≠ `arks hub`**; ports normative vs demo — rules `.agents/rules/30-no-git-gh-subprocess.md`, `.agents/rules/32-cli-personality.md`, `.agents/rules/33-serve-vs-hub.md`, `.agents/rules/34-ports-normative-vs-demo.md`; skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve`. Product CLI semantics remain owned by [[sot:root/arks-cli-personality-factory]] / [[sot:root/arks-self-host-server]] / hub SoTs — this SoT only routes the always-on rules.
+24c. **Stub vs Claimed wording** — help/commits MUST use design/Partial/Missing vs Claimed/Verified honestly — rule `.agents/rules/29-stub-vs-claimed.md`.
+24d. **Cross-OS / pin honesty** — Docker clean-room authority; pin ≠ latest — rule `.agents/rules/61-cross-os-pin-honesty.md`; skills `run-symmetry-matrix`, `release-symmetry-gate`, `verify-clean-room`.
+24e. **Research → SoT** — promote surveys via skill `research-to-sot` (English, Spec-first, no invent Claimed).
+24f. **Cursor hooks (enforceable aids)** — `.cursor/hooks.json` + `.cursor/hooks/*.ps1` MAY deny force-push to main/master, deny staging `.spec.local`/secrets, ask on push/blind-add/destructive git/`gh`, and scan Hangul / invent-Claimed on `git commit`. Hooks do not replace owning SoTs.
 
 ### Current program honesty (router pointers — not a second ledger)
 
@@ -132,7 +144,21 @@ Manual:
 1. `spec check` clean for this document and related assets.
 2. `spec assets` lists instructions, rules, skills, and agents roots.
 3. AGENTS.md contains no normative Git wire/object semantics that are absent from owning SoTs.
-4. Rules/skills named in AGENTS exist on disk (including `25`–`28`, `30`, `32`, `33`, `91`, and skills `guard-cli-surface` / `commit-governance`).
+4. Rules/skills named in AGENTS exist on disk (including `25`–`29`, `30`, `32`–`35`, `61`, `91`, and skills `guard-cli-surface` / `commit-governance` / `review-product-subprocess` / `run-symmetry-matrix` / `release-symmetry-gate` / `self-host-serve` / `research-to-sot`).
 5. `.gitignore` excludes `.spec.local/` and `.specfold/`.
-6. Progressive-disclosure pointers name the triad, M0–M26 historical ladder, residual honesty after trim, Hangul ban, Spec-first/commit hygiene, CLI serve≠hub/personality guards, and push-deferred note without dumping gate catalogs into AGENTS.
-7. Optional `.cursor/hooks.json` guards remain advisory process aids — they do not replace owning SoTs.
+6. Progressive-disclosure pointers name the triad, M0–M26 historical ladder, residual honesty after trim, Hangul ban, Spec-first/commit hygiene, CLI serve≠hub/personality/ports guards, symmetry skills, and push-deferred note without dumping gate catalogs into AGENTS.
+7. `.cursor/hooks.json` guards are enforceable process aids (deny/ask) — they do not replace owning SoTs or invent product Claimed.
+8. Gap matrix [[research:root/20261111061037]] stays aligned when future process debt appears.
+
+### Appendix — gap matrix (short)
+
+Process gaps after first-pass hooks (`27399c9`) and fills in **0.3.2** (detail: [[research:root/20261111061037]]):
+
+| ID | Gap | Fill |
+|----|-----|------|
+| G1–G3, G13–G14 | Hook depth (Hangul/commit/danger/push/local) | Hardened `.cursor/hooks/*` |
+| G4 | Subprocess review skill | `review-product-subprocess` |
+| G5 | `.spec.local` journey | rule `35` |
+| G6–G7 | Ports + stub wording | rules `34`, `29` |
+| G8 | Cross-OS / pin | rule `61` |
+| G9–G12 | Symmetry / release / self-host / research→SoT skills | four skills above |

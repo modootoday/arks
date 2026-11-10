@@ -99,10 +99,13 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 |------|------|
 | Router | `/AGENTS.md` |
 | Classification | this file + rule `25-spec-classification` |
-| Process | [[sot:root/agent-governance]] |
-| Hangul / English-only | rule `05-english-only` + [[sot:root/language-english-only]] |
-| Spec-first / Version≠release / evidence | rules `26`–`28` + skill `commit-governance` |
-| Personality / serve≠hub / no git-gh | rules `30`, `32`, `33` + skill `guard-cli-surface` |
+| Process | [[sot:root/agent-governance]] (v0.3.2+ gap fill) |
+| Governance gap matrix | [[research:root/20261111061037]] |
+| Hangul / English-only | rule `05-english-only` + [[sot:root/language-english-only]] + `.cursor/hooks/*` |
+| Spec-first / Version≠release / evidence / stub wording | rules `26`–`29`, `35` + skill `commit-governance` |
+| Personality / serve≠hub / ports / no git-gh | rules `30`, `32`–`34` + skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve` |
+| Symmetry / release gate / Cross-OS pin | rules `60`–`61` + skills `run-symmetry-matrix`, `release-symmetry-gate` |
+| Research → SoT | skill `research-to-sot` |
 | Public vs private | [[sot:root/public-surface]] |
 | `arks` intent | [[sot:root/product-intent]] |
 | Daemon (`arks daemon`) | [[sot:root/arks-daemon-product-intent]] |
