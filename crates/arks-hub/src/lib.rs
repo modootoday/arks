@@ -84,6 +84,9 @@ COMMANDS:
     issue         Issues (local hub REST Partial)
     repo          Repositories (local hub REST Partial)
     label         Labels (local hub REST Partial)
+    release       Releases list|create (local Partial)
+    run           Actions runs list|create (local Partial; not CI Claimed)
+    workflow      Actions workflows list (local Partial)
     org           Organizations list (local Partial)
     search        Search repos|issues|prs (local Partial)
     api           Raw HTTP against ARKS_HUB_API
@@ -130,6 +133,9 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "issue" => cmd_issue(&args[1..]),
         "repo" => cmd_repo(&args[1..]),
         "label" => cmd_label(&args[1..]),
+        "release" => cmd_release(&args[1..]),
+        "run" => cmd_run(&args[1..]),
+        "workflow" => cmd_workflow(&args[1..]),
         "org" => cmd_org(&args[1..]),
         "search" => cmd_search(&args[1..]),
         "api" => cmd_api(&args[1..]),
@@ -930,6 +936,221 @@ fn cmd_api(args: &[String]) -> ExitCode {
         Err(e) => {
             eprintln!("arks hub api: {e}");
             ExitCode::from(1)
+        }
+    }
+}
+
+fn cmd_release(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    match sub {
+        "" | "-h" | "--help" => {
+            eprintln!("arks hub release — list|create (local hub REST Partial)");
+            ExitCode::SUCCESS
+        }
+        "list" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub release list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub release list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let path = format!("/repos/{owner}/{repo}/releases");
+            match http_exchange(&base, "GET", &path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub release list: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "create" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub release create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub release create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let tag = flag_value(args, &["--tag", "-t"]).unwrap_or("v0.0.0");
+            let name = flag_value(args, &["--title", "--name"]).unwrap_or(tag);
+            let body = flag_value(args, &["--notes", "-n", "--body"]).unwrap_or("");
+            let payload = format!(
+                r#"{{"tag_name":{},"name":{},"body":{}}}"#,
+                serde_json::to_string(tag).unwrap(),
+                serde_json::to_string(name).unwrap(),
+                serde_json::to_string(body).unwrap()
+            );
+            let path = format!("/repos/{owner}/{repo}/releases");
+            match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub release create: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub release {other}: not claimed beyond list/create Partial");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_run(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    match sub {
+        "" | "-h" | "--help" => {
+            eprintln!(
+                "arks hub run — list|create (local actions runs Partial; not CI Claimed)"
+            );
+            ExitCode::SUCCESS
+        }
+        "list" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub run list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub run list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let path = format!("/repos/{owner}/{repo}/actions/runs");
+            match http_exchange(&base, "GET", &path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub run list: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "create" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub run create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub run create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let name = flag_value(args, &["--name", "-n"]).unwrap_or("manual");
+            let branch = flag_value(args, &["--branch", "-b"]).unwrap_or("main");
+            let payload = format!(
+                r#"{{"name":{},"head_branch":{}}}"#,
+                serde_json::to_string(name).unwrap(),
+                serde_json::to_string(branch).unwrap()
+            );
+            let path = format!("/repos/{owner}/{repo}/actions/runs");
+            match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub run create: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub run {other}: not claimed beyond list/create Partial");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_workflow(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("list");
+    match sub {
+        "" | "list" | "-h" | "--help" => {
+            if matches!(sub, "-h" | "--help") {
+                eprintln!("arks hub workflow — list (local Partial; not CI Claimed)");
+                return ExitCode::SUCCESS;
+            }
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub workflow list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub workflow list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let path = format!("/repos/{owner}/{repo}/actions/workflows");
+            match http_exchange(&base, "GET", &path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub workflow list: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub workflow {other}: not claimed beyond list Partial");
+            ExitCode::from(2)
         }
     }
 }

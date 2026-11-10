@@ -444,6 +444,124 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     );
                 }
             }
+            // Releases (Partial local forge).
+            if parts.len() == 3 && parts[2] == "releases" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .releases
+                        .iter()
+                        .filter(|r| r.owner == owner && r.repo == repo)
+                        .map(|r| {
+                            json!({
+                                "id": r.id,
+                                "tag_name": r.tag_name,
+                                "name": r.name,
+                                "body": r.body,
+                                "draft": r.draft,
+                                "prerelease": r.prerelease,
+                            })
+                        })
+                        .collect();
+                    return respond(&mut stream, 200, &Value::Array(items));
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let tag = v
+                        .get("tag_name")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("v0.0.0");
+                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("");
+                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
+                    let rel = st.create_release(owner, repo, tag, name, body);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "id": rel.id,
+                            "tag_name": rel.tag_name,
+                            "name": rel.name,
+                            "body": rel.body,
+                            "draft": rel.draft,
+                            "prerelease": rel.prerelease,
+                        }),
+                    );
+                }
+            }
+            // Actions workflows / runs (Partial local forge — not CI Claimed).
+            if parts.len() == 4 && parts[2] == "actions" && parts[3] == "workflows" {
+                if req.method == "GET" {
+                    st.ensure_default_workflow(owner, repo);
+                    st.save()?;
+                    let items: Vec<Value> = st
+                        .db
+                        .workflows
+                        .iter()
+                        .filter(|w| w.owner == owner && w.repo == repo)
+                        .map(|w| {
+                            json!({
+                                "id": w.id,
+                                "name": w.name,
+                                "path": w.path,
+                                "state": w.state,
+                            })
+                        })
+                        .collect();
+                    return respond(
+                        &mut stream,
+                        200,
+                        &json!({"total_count": items.len(), "workflows": items}),
+                    );
+                }
+            }
+            if parts.len() == 4 && parts[2] == "actions" && parts[3] == "runs" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .runs
+                        .iter()
+                        .filter(|r| r.owner == owner && r.repo == repo)
+                        .map(|r| {
+                            json!({
+                                "id": r.id,
+                                "name": r.name,
+                                "status": r.status,
+                                "conclusion": r.conclusion,
+                                "workflow_id": r.workflow_id,
+                                "head_branch": r.head_branch,
+                            })
+                        })
+                        .collect();
+                    return respond(
+                        &mut stream,
+                        200,
+                        &json!({"total_count": items.len(), "workflow_runs": items}),
+                    );
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("manual");
+                    let branch = v
+                        .get("head_branch")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("main");
+                    let run = st.create_run(owner, repo, name, branch);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "id": run.id,
+                            "name": run.name,
+                            "status": run.status,
+                            "conclusion": run.conclusion,
+                            "workflow_id": run.workflow_id,
+                            "head_branch": run.head_branch,
+                        }),
+                    );
+                }
+            }
         }
     }
 

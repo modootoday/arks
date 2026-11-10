@@ -11,6 +11,12 @@ pub struct HubDb {
     pub next_pr: u64,
     pub next_repo: u64,
     pub next_label: u64,
+    #[serde(default)]
+    pub next_release: u64,
+    #[serde(default)]
+    pub next_run: u64,
+    #[serde(default)]
+    pub next_workflow: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
@@ -18,6 +24,12 @@ pub struct HubDb {
     pub pulls: Vec<Pull>,
     #[serde(default)]
     pub labels: Vec<Label>,
+    #[serde(default)]
+    pub releases: Vec<Release>,
+    #[serde(default)]
+    pub runs: Vec<WorkflowRun>,
+    #[serde(default)]
+    pub workflows: Vec<Workflow>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,6 +75,40 @@ pub struct Label {
     pub description: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Release {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub tag_name: String,
+    pub name: String,
+    pub body: String,
+    pub draft: bool,
+    pub prerelease: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Workflow {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+    pub path: String,
+    pub state: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowRun {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+    pub status: String,
+    pub conclusion: String,
+    pub workflow_id: u64,
+    pub head_branch: String,
+}
+
 pub struct HubStore {
     path: PathBuf,
     pub db: HubDb,
@@ -92,6 +138,9 @@ impl HubStore {
                 next_pr: 1,
                 next_repo: 1,
                 next_label: 1,
+                next_release: 1,
+                next_run: 1,
+                next_workflow: 1,
                 tokens: vec!["local-dev-token".into()],
                 user_login: "local".into(),
                 ..HubDb::default()
@@ -214,6 +263,90 @@ impl HubStore {
         };
         self.db.labels.push(label.clone());
         label
+    }
+
+    pub fn create_release(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        tag_name: &str,
+        name: &str,
+        body: &str,
+    ) -> Release {
+        if self.db.next_release == 0 {
+            self.db.next_release = 1;
+        }
+        let id = self.db.next_release;
+        self.db.next_release += 1;
+        let release = Release {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            tag_name: tag_name.into(),
+            name: if name.is_empty() {
+                tag_name.into()
+            } else {
+                name.into()
+            },
+            body: body.into(),
+            draft: false,
+            prerelease: false,
+        };
+        self.db.releases.push(release.clone());
+        release
+    }
+
+    pub fn ensure_default_workflow(&mut self, owner: &str, repo: &str) -> Workflow {
+        if let Some(w) = self
+            .db
+            .workflows
+            .iter()
+            .find(|w| w.owner == owner && w.repo == repo)
+        {
+            return w.clone();
+        }
+        if self.db.next_workflow == 0 {
+            self.db.next_workflow = 1;
+        }
+        let id = self.db.next_workflow;
+        self.db.next_workflow += 1;
+        let wf = Workflow {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: "ci".into(),
+            path: ".arks/workflows/ci.yml".into(),
+            state: "active".into(),
+        };
+        self.db.workflows.push(wf.clone());
+        wf
+    }
+
+    pub fn create_run(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        name: &str,
+        head_branch: &str,
+    ) -> WorkflowRun {
+        let wf = self.ensure_default_workflow(owner, repo);
+        if self.db.next_run == 0 {
+            self.db.next_run = 1;
+        }
+        let id = self.db.next_run;
+        self.db.next_run += 1;
+        let run = WorkflowRun {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: name.into(),
+            status: "completed".into(),
+            conclusion: "success".into(),
+            workflow_id: wf.id,
+            head_branch: head_branch.into(),
+        };
+        self.db.runs.push(run.clone());
+        run
     }
 }
 
