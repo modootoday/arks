@@ -111,8 +111,14 @@ struct EntryMeta {
 enum Slot {
     Ready(RawObject),
     /// `base_idx` is the earlier pack slot (ofs-delta bases always precede).
-    Ofs { base_idx: usize, delta: Vec<u8> },
-    Ref { base: Oid, delta: Vec<u8> },
+    Ofs {
+        base_idx: usize,
+        delta: Vec<u8>,
+    },
+    Ref {
+        base: Oid,
+        delta: Vec<u8>,
+    },
 }
 
 #[allow(clippy::too_many_arguments)]

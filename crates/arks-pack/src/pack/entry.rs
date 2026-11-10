@@ -151,6 +151,9 @@ pub(crate) fn zlib_compress(data: &[u8]) -> Result<Vec<u8>, PackError> {
 }
 
 /// Inflate one zlib stream. Returns `(bytes, input_consumed)`.
+///
+/// Thin wrapper for tests / one-shot callers; pack decode uses [`inflate_with`].
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn inflate(input: &[u8], expected: usize) -> Result<(Vec<u8>, usize), PackError> {
     let mut dec = Decompress::new(true);
     inflate_with(&mut dec, input, expected)
