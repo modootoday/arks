@@ -9,9 +9,9 @@ use crate::error::{CliError, CliResult};
 use arks_hub::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
 use arks_repo::Repository;
 use arks_server::{
-    BasicAuthConfig, DaemonOptions, HttpRequest, ServeHttpOptions, handle_smart_http_auth,
-    receive_pack_session, serve_daemon, serve_http_with_opts, update_server_info,
-    upload_pack_session,
+    BasicAuthConfig, DaemonOptions, HttpRequest, ServeHttpOptions, ServeSshOptions,
+    handle_smart_http_auth, receive_pack_session, serve_daemon, serve_http_with_opts,
+    serve_ssh_listener, update_server_info, upload_pack_session,
 };
 use std::io::{self, Read, Write};
 use std::net::SocketAddr;
@@ -132,12 +132,23 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
 
     // Fail-closed: SSH enabled but in-process listener Missing/Partial — do not silent-degrade.
     if enable_ssh {
-        return Err(CliError::NotImplemented(
-            "arks serve: SSH listener enabled by default but not Claimed yet \
-             ([[sot:root/arks-self-host-server]]); fail-closed — use `arks serve --no-ssh` \
-             (HTTP and/or Partial forge); or ops SSHD + `arks upload-pack`/`receive-pack` today"
-                .into(),
-        ));
+        let ssh_listen: SocketAddr = "127.0.0.1:2222"
+            .parse()
+            .expect("default ssh listen parses");
+        // Directory is optional here — Missing path refuses before bind.
+        let dir = forwarded
+            .iter()
+            .find(|a| !a.starts_with('-'))
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("."));
+        return serve_ssh_listener(
+            ServeSshOptions {
+                listen: ssh_listen,
+                path: dir,
+            },
+            Arc::new(AtomicBool::new(false)),
+        )
+        .map_err(|e| CliError::NotImplemented(e.to_string()));
     }
 
     let forge_opts = if enable_forge {
@@ -497,7 +508,7 @@ Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-fo
 
 Honesty ([[sot:root/arks-self-host-server]]):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
-  - In-process SSH listener: Missing/Partial — fail-closed if SSH stays enabled
+  - In-process SSH listener: Missing/Partial — fail-closed via serve_ssh_listener
   - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
   - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
   - Ops SSHD + upload-pack/receive-pack remains valid SSH remotes today

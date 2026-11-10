@@ -14,6 +14,7 @@ mod hooks;
 mod http;
 mod receive;
 mod serve;
+mod ssh_serve;
 mod stdio;
 mod upload;
 mod v2;
@@ -29,6 +30,7 @@ pub use receive::{receive_advertisement, receive_pack, receive_pack_advertisemen
 pub use serve::{
     ServeHttpOptions, serve_http, serve_http_with_opts, spawn_loopback, spawn_loopback_with_opts,
 };
+pub use ssh_serve::{ServeSshOptions, serve_ssh_listener};
 pub use stdio::{
     receive_pack_session, receive_pack_stream, upload_pack_session, upload_pack_stream,
 };
