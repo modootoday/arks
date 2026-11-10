@@ -1,4 +1,4 @@
-﻿# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G38 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s).
+﻿# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G40 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes).
 # Engine: Linux (Docker Desktop desktop-linux on Windows). Fresh `compose run` per gate.
 name: arks-verify-m1
 
@@ -419,3 +419,17 @@ services:
     depends_on:
       - toolchain
     command: ["/bin/bash", "verify/scripts/run-g38.sh"]
+
+  # R3 blob:none clean-room twin (S6).
+  g39:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    command: ["/bin/bash", "verify/scripts/run-g39.sh"]
+
+  # S3 dumb HTTP push deletes clean-room twin (S6).
+  g40:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    command: ["/bin/bash", "verify/scripts/run-g40.sh"]

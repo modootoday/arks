@@ -66,7 +66,7 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 | Other §F protocol narrows (Apache DAV, force-with-lease, push-options) | Still N/A / honest defer | Inventory; no invent Claimed | **S3 inventory closed** |
 | Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | N/A (agent non-interactive bar) | Honest Specfold defer (no invent TUI Claimed) | **S4 Done** ([[evidence:root/20261110113200]]) |
 | **R5** live forge scale / G8 live PASS | Ops readiness Done | **Live only if secrets**; else structural + documented block (**≠** fake PASS) | **S5 Done** (secrets-block [[evidence:root/20261110113300]]) |
-| Symmetry e2e matrix (git vs arks clean-room) | L8 = g14/g16/g20/g21 | **Expand** for each newly Claimed surface | **S6** |
+| Symmetry e2e matrix (git vs arks clean-room) | L8 = g14/g16/g20/g21 | **Expand** for each newly Claimed surface | **S6 Done** ([[evidence:root/20261110114000]]) |
 | `docs/git-vs-arks.md` + residual register | L_final Done | Refresh Claimed/PASS with evidence only | **S7** |
 | **R6** Git pin advance | Process-closed | **Still process-closed** (not expanded DoD) | — |
 | **L9** crates.io / docs.rs timing | Owner-closed | **Owner-closed** (do not reopen) | — |
@@ -85,9 +85,9 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 | **S3** | Protocol narrows (dumb HTTP deletes / other implementable §F rows) | Git asymmetry | Per-row ADR + SoT amend; host/clean-room evidence; no invent Claimed | **Done** ([[adr:root/20261110112600]] + [[evidence:root/20261110112600]]; Apache DAV / lease / push-options honest defer) |
 | **S4** | Interactive / patch flows | CLI | Specfold allows → implement + e2e; else SoT reason + honest defer (**≠** fake PASS) | **Done (honest defer)** ([[adr:root/20261110113200]] + [[evidence:root/20261110113200]]) |
 | **S5** | **R5** live forge scale | Secrets-gated | Secrets present → measured receipt; else documented structural block; never invent latency PASS | **Done (secrets-block)** ([[adr:root/20261110113300]] + [[evidence:root/20261110113300]]) |
-| **S6** | Symmetry e2e matrix | Verify DoD | Clean-room Docker git vs arks for each newly Claimed surface; expand beyond L8; suite green; halt on OOM/stampede | **Next** |
-| **S7** | Comparison + residual currency | Docs / DoD | `docs/git-vs-arks.md` + [[sot:root/production-residual-register]] match new Claimed/PASS with evidence ids | Open |
-| **S_final** | Expanded DoD met | Product | Implementable residuals closed with evidence; symmetry suite green; comparison table current; **L9** still closed | Open |
+| **S6** | Symmetry e2e matrix | Verify DoD | Clean-room Docker git vs arks for each newly Claimed surface; expand beyond L8; suite green; halt on OOM/stampede | **Done** ([[evidence:root/20261110114000]]; g38/g39/g40; L8 cited) |
+| **S7** | Comparison + residual currency | Docs / DoD | `docs/git-vs-arks.md` + [[sot:root/production-residual-register]] match new Claimed/PASS with evidence ids | **Done** ([[evidence:root/20261110114100]]) |
+| **S_final** | Expanded DoD met | Product | Implementable residuals closed with evidence; symmetry suite green; comparison table current; **L9** still closed | **Done** ([[evidence:root/20261110114100]]; **L9** closed) |
 
 ### Non-goals
 
@@ -99,7 +99,7 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 
 ### Execution note (this round)
 
-**S0–S5 Done** on tip: inventory lock + R3 `blob:none` + R4 OpenPGP/X.509/`tag -s` (G38) + dumb HTTP push deletes + S4 interactive TUI **honest defer** + S5 live forge **secrets-block**. Next **S6** (symmetry e2e matrix expansion). Prior L-ladder remains historical; this **S-*** ladder is the active expanded DoD order.
+**S0–S_final Done** on tip: inventory lock + R3/R4/S3 Claimed + S4 defer + S5 secrets-block + **S6** clean-room symmetry (`g38`/`g39`/`g40`; L8 cited) + **S7** comparison/residual currency. **L9** stays closed. Prior L-ladder remains historical; this **S-*** ladder is complete for the expanded DoD.
 
 ## Verification
 

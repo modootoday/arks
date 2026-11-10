@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g40-cleanroom"
+description = "G40 clean-room dumb HTTP push deletes symmetry (S3 / S6)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

@@ -77,8 +77,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 
 | Residual | Disposition | Reopen requires |
 |----------|-------------|-----------------|
-| R3 filter / promisor | **Claimed `blob:none` (S1 host wire)**; other specs N/A | Symmetry e2e twin (**S6**); expand filter-specs via SoT |
-| R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38)** | Re-verify G38 after crypto wire change |
+| R3 filter / promisor | **Claimed `blob:none` (S1 + S6 G39 twin)**; other specs N/A | Expand filter-specs via SoT |
+| R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38; S6 re-PASS)** | Re-verify G38 after crypto wire change |
 | R5 live forge scale PASS | Harness Claimed; **S5 secrets-block** Done; live remasure open | Secrets + receipt; never invent latency |
 | R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | crates.io / docs.rs timing | Closed owner policy (L9) | Owner decision |
@@ -101,9 +101,9 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | **S3** | Protocol narrows (dumb HTTP deletes) | **Done** (host wire) |
 | **S4** | Interactive / patch flows or honest defer | **Done (honest defer)** |
 | **S5** | R5 live forge (secrets) or documented block | **Done (secrets-block)** |
-| **S6** | Symmetry e2e matrix (git vs arks) | Next |
-| **S7** | Refresh this table + residual register | Open |
-| **S_final** | Expanded DoD met; **L9** still closed | Open |
+| **S6** | Symmetry e2e matrix (git vs arks) | **Done** (g38/g39/g40; L8 cited) |
+| **S7** | Refresh this table + residual register | **Done** |
+| **S_final** | Expanded DoD met; **L9** still closed | **Done** |
 
 See: [symmetry ladder S0–S_final](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md) · historical [L-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110095142-product-completion-goal-ladder.research.md). Limits: [Limits](../limits/).
 
