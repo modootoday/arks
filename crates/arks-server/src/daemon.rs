@@ -5,14 +5,17 @@
 //!
 //! Claimed: upload-pack service; optional receive-pack when `allow_receive` is set.
 //! Requires `git-daemon-export-ok` unless `export_all`.
-//! Upload-archive: Partial — drains client argument pkt-lines; archive stream not Claimed.
+//! Upload-archive: Partial — drains args, sends ACK, streams raw ustar of treeish
+//! (sideband multiplex / format flags not Claimed).
 //! `--inetd` one-shot stdio peer is Partial (no TCP bind).
 //! Never spawns `git` or `gh`.
 
 use crate::error::ServerError;
 use crate::stdio::{receive_pack_stream, upload_pack_stream};
+use arks_object::{Commit, ObjectKind};
+use arks_oid::Oid;
 use arks_protocol::{Packet, encode_packet};
-use arks_repo::Repository;
+use arks_repo::{Repository, flatten_tree_entries};
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
@@ -186,14 +189,22 @@ pub fn serve_daemon_inetd<R: Read, W: Write>(
         if opts.verbose {
             eprintln!("arks daemon --inetd: upload-archive args={args:?}");
         }
-        return write_err_pkt(
-            &mut output,
-            &format!(
-                "upload-archive Partial (inetd): drained args={args:?}; \
-                 archive byte stream not Claimed — use `arks upload-archive` local helper \
-                 or TCP daemon once archive pkt-line body is evidenced"
-            ),
-        );
+        let repo_path = match resolve_repo_path(opts, &req.path) {
+            Ok(p) => p,
+            Err(e) => return write_err_pkt(&mut output, &e.to_string()),
+        };
+        if !opts.export_all {
+            let marker = repo_path.join("git-daemon-export-ok");
+            let marker_git = repo_path.join(".git/git-daemon-export-ok");
+            if !marker.is_file() && !marker_git.is_file() {
+                return write_err_pkt(&mut output, "access denied");
+            }
+        }
+        let repo = match open_repo(&repo_path) {
+            Ok(r) => r,
+            Err(e) => return write_err_pkt(&mut output, &format!("access denied: {e}")),
+        };
+        return serve_upload_archive_partial(&repo, &args, &mut output, opts.verbose);
     }
     write_err_pkt(
         &mut output,
@@ -289,14 +300,7 @@ fn handle_daemon_connection(
                     repo.git_dir().display()
                 );
             }
-            write_err_pkt(
-                &mut stream,
-                &format!(
-                    "upload-archive Partial: drained args={args:?}; \
-                     ACK+ustar/sideband body not Claimed on git:// — \
-                     local `arks upload-archive` helper remains the Partial stdio path"
-                ),
-            )
+            serve_upload_archive_partial(&repo, &args, &mut stream, opts.verbose)
         }
         "git-upload-archive" => {
             write_err_pkt(&mut stream, "upload-archive not enabled")?;
@@ -311,6 +315,165 @@ fn handle_daemon_connection(
         let _ = write_err_pkt(&mut stream, &e.to_string());
     }
     result
+}
+
+/// Partial upload-archive body: ACK pkt-line + raw ustar of treeish (default HEAD).
+/// Sideband multiplex / `--format=` / path filters are **not** Claimed.
+fn serve_upload_archive_partial<W: Write>(
+    repo: &Repository,
+    args: &[String],
+    out: &mut W,
+    verbose: bool,
+) -> Result<(), ServerError> {
+    let treeish = args
+        .iter()
+        .find(|a| !a.starts_with('-') && !a.is_empty())
+        .map(String::as_str)
+        .unwrap_or("HEAD");
+    if verbose {
+        eprintln!("arks daemon: upload-archive Partial treeish={treeish} (ACK+raw ustar)");
+    }
+    let tree_oid = match resolve_treeish(repo, treeish) {
+        Ok(o) => o,
+        Err(e) => return write_err_pkt(out, &e),
+    };
+    let ack = encode_packet(&Packet::Data(b"ACK\n".to_vec()))
+        .map_err(|e| ServerError::Protocol(e.to_string()))?;
+    out.write_all(&ack)?;
+    match write_ustar_tree(repo, &tree_oid, out) {
+        Ok(()) => {
+            out.flush()?;
+            Ok(())
+        }
+        Err(e) => {
+            // After ACK, clients expect archive bytes; best-effort note on stderr only.
+            eprintln!("arks daemon: upload-archive Partial ustar err: {e}");
+            Err(e)
+        }
+    }
+}
+
+fn resolve_treeish(repo: &Repository, treeish: &str) -> Result<Oid, String> {
+    let oid = if treeish == "HEAD" {
+        repo.head_oid().map_err(|e| e.to_string())?
+    } else if let Ok(o) = Oid::from_hex(treeish) {
+        o
+    } else {
+        repo.refs()
+            .resolve(treeish)
+            .or_else(|_| repo.refs().resolve(&format!("refs/heads/{treeish}")))
+            .or_else(|_| repo.refs().resolve(&format!("refs/tags/{treeish}")))
+            .map_err(|e| e.to_string())?
+    };
+    tree_for_oid(repo, &oid)
+}
+
+fn tree_for_oid(repo: &Repository, oid: &Oid) -> Result<Oid, String> {
+    let obj = repo.get_object(oid).map_err(|e| e.to_string())?;
+    match obj.kind {
+        ObjectKind::Commit => {
+            let c = Commit::decode(&obj.payload).map_err(|e| e.to_string())?;
+            Ok(c.tree)
+        }
+        ObjectKind::Tree => Ok(*oid),
+        ObjectKind::Tag => {
+            let text = std::str::from_utf8(&obj.payload).map_err(|_| "tag not utf-8")?;
+            let mut target = None;
+            let mut typ = None;
+            for line in text.lines() {
+                if line.is_empty() {
+                    break;
+                }
+                if let Some(rest) = line.strip_prefix("object ") {
+                    target = Some(Oid::from_hex(rest.trim()).map_err(|e| e.to_string())?);
+                } else if let Some(rest) = line.strip_prefix("type ") {
+                    typ = Some(rest.trim().to_owned());
+                }
+            }
+            let target = target.ok_or_else(|| "tag missing object".to_string())?;
+            if typ.as_deref() == Some("tree") {
+                Ok(target)
+            } else {
+                tree_for_oid(repo, &target)
+            }
+        }
+        ObjectKind::Blob => Err("cannot archive a blob".into()),
+    }
+}
+
+fn write_ustar_tree<W: Write>(
+    repo: &Repository,
+    tree_oid: &Oid,
+    out: &mut W,
+) -> Result<(), ServerError> {
+    let mut entries: Vec<(String, Oid)> = Vec::new();
+    flatten_tree_entries(repo, tree_oid, "", &mut entries)
+        .map_err(|e| ServerError::Msg(e.to_string()))?;
+    entries.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
+    for (path, oid) in entries {
+        if path.len() > 100 {
+            continue; // Partial: long paths skipped (not Claimed pax).
+        }
+        let obj = repo
+            .get_object(&oid)
+            .map_err(|e| ServerError::Msg(e.to_string()))?;
+        if obj.kind != ObjectKind::Blob {
+            continue;
+        }
+        write_ustar_entry(out, &path, &obj.payload, 0o644)?;
+    }
+    out.write_all(&[0u8; 1024])?;
+    Ok(())
+}
+
+fn write_ustar_entry<W: Write>(
+    out: &mut W,
+    path: &str,
+    data: &[u8],
+    mode: u32,
+) -> Result<(), ServerError> {
+    let mut header = [0u8; 512];
+    header[..path.len()].copy_from_slice(path.as_bytes());
+    write_octal(&mut header[100..108], mode as u64);
+    write_octal(&mut header[108..116], 0);
+    write_octal(&mut header[116..124], 0);
+    write_octal(&mut header[124..136], data.len() as u64);
+    write_octal(&mut header[136..148], 0);
+    header[148..156].fill(b' ');
+    header[156] = b'0';
+    header[257..262].copy_from_slice(b"ustar");
+    header[262] = 0;
+    header[263..265].copy_from_slice(b"00");
+    let sum: u32 = header.iter().map(|&b| u32::from(b)).sum();
+    write_octal(&mut header[148..156], u64::from(sum));
+    out.write_all(&header)?;
+    out.write_all(data)?;
+    let pad = (512 - (data.len() % 512)) % 512;
+    if pad > 0 {
+        out.write_all(&vec![0u8; pad])?;
+    }
+    Ok(())
+}
+
+fn write_octal(dst: &mut [u8], value: u64) {
+    dst.fill(b'0');
+    let end = dst.len().saturating_sub(1);
+    if end == 0 {
+        return;
+    }
+    let mut v = value;
+    let mut i = end;
+    if v == 0 {
+        dst[end - 1] = b'0';
+        dst[end] = 0;
+        return;
+    }
+    while v > 0 && i > 0 {
+        i -= 1;
+        dst[i] = b'0' + (v % 8) as u8;
+        v /= 8;
+    }
+    dst[end] = 0;
 }
 
 fn drain_upload_archive_args<R: Read>(input: &mut R) -> Result<Vec<String>, ServerError> {
