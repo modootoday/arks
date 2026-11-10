@@ -6,6 +6,8 @@
     - {title: Getting started, url: /getting-started/}
     - {title: Alias git → arks, url: /alias-git-arks/}
     - {title: Workflows, url: /workflows/}
+    - {title: Self-host, url: /self-host/}
+    - {title: arks-hub (optional), url: /arks-hub/}
 - title: Honesty
   items:
     - {title: Git vs arks, url: /git-vs-arks/}

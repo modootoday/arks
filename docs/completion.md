@@ -49,7 +49,7 @@ Detail: [G-ladder plan](https://github.com/modootoday/arks/blob/main/.spec/plan/
 
 ## How maintainers verify
 
-Clean-room Docker only — L8 (`g14`→`g16`→`g20`→`g21`) and S6 (`g38`→`g39`→`g40`) plus the compose matrix. Host CI is advisory. Receipts live under `.spec/evidence/`. Never invent PASS for secrets-absent live gates.
+Clean-room Docker only — L8 (`g14`→`g16`→`g20`→`g21`) and S6 (`g38`→`g39`→`g40`) plus the compose matrix. Host CI is advisory. Pre-release CLI symmetry (git / daemon / gh inventory) is the `release-symmetry` gate before tagged `dist` — see the Specfold SoT `release-symmetry-precheck`. Receipts live under `.spec/evidence/`. Never invent PASS for secrets-absent live gates.
 
 ## Next
 

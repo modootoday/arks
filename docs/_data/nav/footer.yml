@@ -7,6 +7,7 @@ columns:
       - {title: Getting started, url: /getting-started/}
       - {title: Alias git → arks, url: /alias-git-arks/}
       - {title: Workflows, url: /workflows/}
+      - {title: Self-host, url: /self-host/}
   - title: Honesty
     items:
       - {title: Performance, url: /performance/}

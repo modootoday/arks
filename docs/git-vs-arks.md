@@ -46,7 +46,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed (**FS5**); server v2 **`bundle-uri` advertise** (**G3**) | **Claimed** (FS5 / NET-006 / G3) |
 | Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse + **sha1cd detect+refuse** (**OBJ-004**); `init --object-format=sha256` porcelain e2e | **Claimed** (detect+refuse) / **Impossible** (crypto immunity) |
 | Cloud sync on `.git` / OneDrive placeholders | Host hazard | **Trimmed** `arks host-env` / `arks-hostfs` product surface; host tooling only | **Trimmed** (not git); full sync **Impossible** |
-| Forge Checks / PR / Issues UX | Not-git | **Trimmed** `arks forge` / `forge recipe`; use host `gh` directly | **Trimmed** (not git); forge host UX **Non-goal** |
+| Forge Checks / PR / Issues UX | Not-git | **Trimmed** `arks forge`; design home **`arks hub …`** (same binary; not Claimed) | **Trimmed** thin-wrap; hub design ≠ Claimed; no separate hub release |
 
 ## Remotes and server
 
@@ -142,7 +142,7 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | Operator one-word | **PARTIAL** — see [Completeness](../completion/) |
 | Clean-room re-stamp of all Docker gates on this tip | See evidence pack under `.spec/evidence/*-full-cleanroom-matrix/` (maintainer); host CI ≠ Verified |
 
-**Documented non-goals / trimmed over-design:** absolute SHA-1 collision immunity; forge Checks/merge-queue/Issues product UX (`arks forge` **trimmed** — use host `gh`); embedded forge OAuth browser UX; cloud-sync / hostfs product CLI (`arks host-env` **trimmed**); in-process LFS client/server productization (**trimmed** — use `git-lfs`); CELIR index feature is ops/CI opt-in only (default OFF, not product Claimed path); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy).
+**Documented non-goals / trimmed over-design:** absolute SHA-1 collision immunity; forge Checks/merge-queue/Issues product UX (`arks forge` **trimmed** — design under `arks hub …` on the same `arks` binary, not Claimed, no separate hub release); embedded forge OAuth browser UX; cloud-sync / hostfs product CLI (`arks host-env` **trimmed**); in-process LFS client/server productization (**trimmed** — use `git-lfs`); CELIR index feature is ops/CI opt-in only (default OFF, not product Claimed path); live G8 latency PASS without secrets (ops harness ≠ product DoD); **L9** crates.io/docs.rs timing (owner policy; single publish = `arks`).
 
 See: [program roadmap tip currency](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) · [partial unblock research](https://github.com/modootoday/arks/blob/main/.spec/research/20261111001816-partial-completion-unblock-roadmap.research.md) · [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 
