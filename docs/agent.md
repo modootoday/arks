@@ -25,7 +25,8 @@ Agent features are **not** required for `git`→`arks` alias DoD, daemon symmetr
 arks agent --help
 arks agent doctor
 arks agent provider smoke ollama   # optional local Ollama Partial; Claimed e2e Missing
-arks agent review --smoke          # fixture review Partial; Claimed e2e Missing
+arks agent provider smoke --mock   # in-process openai-compat mock Partial
+arks agent review --smoke --mock   # fixture + mock chat Partial; Claimed e2e Missing
 ```
 
 ## Honesty (tip)
@@ -33,8 +34,8 @@ arks agent review --smoke          # fixture review Partial; Claimed e2e Missing
 | Leaf / area | Class |
 |-------------|-------|
 | provider / config / doctor | **Partial** (TCP/connect retry + error class; Claimed LLM e2e **Missing**) |
-| `provider smoke [ollama]` | **Partial** optional local openai-compat chat when daemon up; documents Missing if absent — never spawns `ollama` CLI |
-| `review --smoke` | **Partial** built-in fixture chat; documents Missing if daemon absent — never invents Claimed |
+| `provider smoke [ollama\|--mock]` | **Partial** optional local chat or in-process openai-compat mock; documents Missing if daemon absent — never spawns `ollama` CLI |
+| `review --smoke [--mock]` | **Partial** built-in fixture (+ optional mock server); documents Missing if daemon absent without `--mock` — never invents Claimed |
 | review / cev-check / run / serve / bot | **Partial** (health + openai-compat chat proxy; JSON + stream SSE; connect retry Partial; `--once` OK) |
 | Claimed LLM chatbot / review e2e | **Missing** — smoke ≠ Claimed e2e; no invented Claimed |
 

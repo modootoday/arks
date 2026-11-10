@@ -3,7 +3,7 @@ id: research:root/20261111072342
 title: Remaining CLI-stub Missing inventory (post bf2b01f deepen)
 status: active
 created: 2026-11-10T22:23:42Z
-updated: 2026-11-10T22:23:42Z
+updated: 2026-11-10T22:50:00Z
 tags: [cli-stubs, missing, partial, ssh, hub, agent, daemon, serve-config, residual, no-invent-claimed, ffi, os-limits]
 verify: manual
 rel:
@@ -40,11 +40,11 @@ Tip surveyed: **`bf2b01f`** (canon `C:\workspaces\gir`). English-only. **Design 
 
 | # | Area | Tip wiring | Still Missing (Claimed / exact) | Deps / FFI / OS |
 |---|------|------------|----------------------------------|-----------------|
-| 1 | SSH OpenSSH-exact / git-over-SSH e2e | Partial: bind + id + KEXINIT + curve25519 + ed25519 sign/NEWKEYS + **chacha20-poly1305 AEAD Partial** + authorized_keys ed25519 verify + session exec→pack dispatch; `serve ssh-smoke` banner Partial | OpenSSH-exact `chacha20-poly1305@openssh.com` / `aes256-gcm@openssh.com` **packet** interop; durable listener + rebind; Claimed SSH git e2e | `chacha20poly1305`, `x25519-dalek`, `ed25519-dalek`; **no** russh/libssh; `arks-server` `forbid(unsafe_code)`; OpenSSH client e2e needs Docker + keys + durable path |
-| 2 | Hub HTTPS Claimed-path e2e + residual OUT | `hub smoke` HTTPS ureq Partial; local http fallback documents Missing; `extension`/`copilot` OUT refuse | Claimed forge remote HTTPS e2e; asset upload; CI execute; OUT residual **harness** (refuse proof) thin | `ureq` TLS; no `gh` spawn; in-process TLS terminate still Missing (ops reverse-proxy) |
-| 3 | Agent LLM chatbot/review e2e | `provider smoke [ollama]` Partial; review/cev/serve proxy Partial | Claimed LLM chatbot / review e2e; HTTPS chat Partial not wired | Native TCP/HTTP only; never spawn `ollama` CLI; local daemon optional |
-| 4 | Daemon archive / user / group / syslog | upload-archive path-filter **in stream** + tar/ustar honesty + protocol-body tests; `--user`/`--group`/`--syslog` **honest Missing refuse** | Claimed archive format parity vs stock `git-daemon`; classic double-fork detach; syslog facility parity; setuid/setgid Claimed | Unix: `libc` openlog/syslog + setuid/setgid (CLI crate); Windows: no setuid; Event Log ≠ syslog |
-| 5 | Serve config Windows reload / SSH durable / zero-downtime | Unix SIGHUP + same-process HTTP/forge live rebind Partial; Windows signal **Missing**; SSH durable rebind **Missing** (probe-then-fail-closed) | Windows SIGHUP (N/A OS); Claimed zero-downtime hot-rebind; SSH durable listen rebind under SoT §17 tension | Unix `sigaction(SIGHUP)`; Windows: file-mtime in-process / console ctrl Partial possible; SSH durable conflicts with fail-closed-while-Partial unless SoT honesty amend |
+| 1 | SSH OpenSSH-exact / git-over-SSH e2e | Partial durable (§17(c)): accept loop + live rebind + chacha20-poly1305 + auth + pack; `ssh-smoke --git-pack` Partial | OpenSSH-exact cipher **packet** interop; Claimed SSH git e2e; Claimed zero-downtime | `chacha20poly1305`, `x25519-dalek`, `ed25519-dalek`; **no** russh/libssh; OpenSSH client e2e needs Docker + keys + Claimed stack |
+| 2 | Hub HTTPS Claimed-path e2e + residual OUT | `hub smoke` HTTPS + `--local-tls` self-signed client path Partial + `--out-refuse` | Claimed forge remote HTTPS e2e; asset upload; CI execute; product in-process TLS | `ureq` + smoke `rustls`; no `gh` spawn; ops reverse-proxy still product HTTPS pattern |
+| 3 | Agent LLM chatbot/review e2e | `provider smoke` / `review --smoke [--mock]` openai-compat mock Partial | Claimed LLM chatbot / review e2e; HTTPS chat Partial not wired | Native TCP/HTTP only; never spawn `ollama` CLI |
+| 4 | Daemon archive / user / group / syslog | path-filter + expanded protocol-body tests; unix syslog/user/group Partial; Windows honest Missing refuse | Claimed archive format parity; classic double-fork; syslog facility parity Claimed | Unix `libc`; Windows: Event Log ≠ syslog (documented) |
+| 5 | Serve config Windows reload / SSH durable / zero-downtime | Unix SIGHUP + Win file-mtime; HTTP/forge/**SSH** live rebind Partial | Windows SIGHUP (N/A); Claimed zero-downtime hot-rebind | §17(c) allows labeled Partial durable SSH rebind |
 
 ## Classification
 
@@ -67,7 +67,7 @@ Tip surveyed: **`bf2b01f`** (canon `C:\workspaces\gir`). English-only. **Design 
 | B3 | Claimed hub forge remote HTTPS e2e | Needs real HTTPS forge + receipt; smoke ≠ Claimed | Residual / docs honesty |
 | B4 | Claimed agent LLM chatbot/review e2e | Needs evidenced multi-turn product path; one-shot smoke ≠ e2e | Residual / docs honesty |
 | B5 | Claimed daemon archive parity | Needs stock git-daemon upload-archive byte/stream compare gate | Residual / docs honesty |
-| B6 | SSH **durable** listen + rebind | [[sot:root/arks-self-host-server]] §Fail-closed: enabled module not Claimed/ready → process fail-closed. Tip SSH is **probe-then-fail-closed** (2s). Durable Partial listen would change that valve — **needs SoT honesty amend** before code | SoT/docs residual only this wave unless amend lands |
+| B6 | SSH **durable** listen + rebind | Was blocked on §17 tension; **addressed** by SoT v0.2.2 §17(c) + tip Partial durable accept/rebind (`ddffef0`). Claimed zero-downtime / OpenSSH e2e still B2/B7 | Partial landed; Claimed rows remain Missing |
 | B7 | Claimed zero-downtime hot-rebind | Needs connection-drain / dual-bind evidence | Keep Missing |
 | B8 | Windows **SIGHUP** | OS has no SIGHUP | Document N/A; I1 is the Partial substitute |
 | B9 | In-process TLS terminate | Ops reverse-proxy pattern; no Claimed in-process TLS | Keep Missing |
