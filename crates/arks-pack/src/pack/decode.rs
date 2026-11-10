@@ -191,11 +191,15 @@ fn resolve_slots(
             if oids[base_idx].is_none() {
                 continue;
             }
-            // Clone delta only (small); borrow base payload (often large).
-            let delta = delta_bytes(&slots[i])?;
+            // Take delta ownership (no clone); borrow base payload (often large).
+            let delta = take_delta(&mut slots[i])?;
             let (kind, base_payload) = match &slots[base_idx] {
                 Slot::Ready(obj) => (obj.kind, obj.payload.as_slice()),
-                _ => continue,
+                _ => {
+                    // Base not ready — put delta back and retry later.
+                    restore_delta(&mut slots[i], delta);
+                    continue;
+                }
             };
             let payload = apply_delta(base_payload, &delta)?;
             let obj = RawObject::new(kind, payload);
@@ -252,10 +256,17 @@ fn base_index(
     }
 }
 
-fn delta_bytes(slot: &Slot) -> Result<Vec<u8>, PackError> {
+fn take_delta(slot: &mut Slot) -> Result<Vec<u8>, PackError> {
     match slot {
-        Slot::Ofs { delta, .. } | Slot::Ref { delta, .. } => Ok(delta.clone()),
+        Slot::Ofs { delta, .. } | Slot::Ref { delta, .. } => Ok(std::mem::take(delta)),
         Slot::Ready(_) => Err(PackError::BadDelta("resolver stalled")),
+    }
+}
+
+fn restore_delta(slot: &mut Slot, bytes: Vec<u8>) {
+    match slot {
+        Slot::Ofs { delta, .. } | Slot::Ref { delta, .. } => *delta = bytes,
+        Slot::Ready(_) => {}
     }
 }
 
