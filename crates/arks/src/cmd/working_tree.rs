@@ -224,7 +224,7 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-fn print_maps_summary(
+pub(crate) fn print_maps_summary(
     a: &HashMap<String, Oid>,
     b: &HashMap<String, Oid>,
     name_only: bool,
@@ -435,7 +435,7 @@ fn remove_untracked_dirs(
     Ok(())
 }
 
-fn print_maps_diff(
+pub(crate) fn print_maps_diff(
     repo: &Repository,
     a: &HashMap<String, Oid>,
     b: &HashMap<String, Oid>,

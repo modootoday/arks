@@ -39,6 +39,7 @@ mod fetch;
 mod git;
 mod http;
 mod lfs;
+mod ls_remote;
 mod push;
 mod shallow;
 mod ssh;
@@ -66,6 +67,7 @@ pub use fetch::{
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
 pub use http::http_get;
+pub use ls_remote::{RemoteRef, ls_remote};
 pub use lfs::{
     LfsLock, LfsPointer, discover_lfs_endpoint, lfs_batch_download, lfs_batch_upload,
     lfs_lock_create, lfs_lock_unlock, lfs_locks_list, lfs_locks_verify, lfs_object_path,

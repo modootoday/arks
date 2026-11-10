@@ -16,6 +16,7 @@ pub mod interactive_patch;
 pub mod lease;
 pub mod lock;
 pub mod maint;
+pub mod matrix_cmds;
 pub mod merge;
 pub mod merge_engine;
 pub mod notes;
@@ -53,6 +54,10 @@ pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
+pub use matrix_cmds::{
+    cmd_apply, cmd_check_ref_format, cmd_cherry, cmd_diff_files, cmd_diff_index, cmd_ls_remote,
+    cmd_mktag, cmd_mktree, cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_stripspace, cmd_var,
+};
 pub use merge::{cmd_merge, cmd_pull};
 pub use notes::cmd_notes;
 pub use patch::{cmd_am, cmd_format_patch};

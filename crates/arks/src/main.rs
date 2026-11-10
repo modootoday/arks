@@ -47,6 +47,19 @@ Commands:
   restore       Restore working-tree / index paths
   reset         Reset HEAD (--soft/--mixed/--hard)
   diff          Show changes
+  diff-files    Worktree vs index (plumbing)
+  diff-index    Index/tree vs tree-ish (plumbing)
+  apply         Apply a format-patch mailbox to the worktree
+  ls-remote     List refs on a remote
+  prune         Delete unreachable loose objects
+  prune-packed  Delete loose objects already in packs
+  cherry        List commits on HEAD not in upstream
+  check-ref-format  Validate a refname
+  stripspace    Trim trailing whitespace (stdin)
+  mktag         Write a tag object from stdin
+  mktree        Build a tree from ls-tree lines
+  var           Print GIT_DIR / related variables
+  patch-id      Stable id for a patch on stdin
   merge         Fast-forward merge [--ff-only]
   rm            Remove from index / working tree
   mv            Move / rename
@@ -151,19 +164,32 @@ fn run() -> CliResult<()> {
             print_version();
             Ok(())
         }
-        "init" => cmd::cmd_init(&args),
+        "init" | "init-db" => cmd::cmd_init(&args),
         "hash-object" => cmd::cmd_hash_object(&args),
         "cat-file" => cmd::cmd_cat_file(&args),
         "update-ref" => cmd::cmd_update_ref(&args),
         "rev-parse" => cmd::cmd_rev_parse(&args),
-        "add" => cmd::cmd_add(&args),
+        "add" | "stage" => cmd::cmd_add(&args),
         "status" => cmd::cmd_status(&args),
         "lock" => cmd::cmd_lock(&args),
         "lease" => cmd::cmd_lease(&args),
         "commit" => cmd::cmd_commit(&args),
         "verify-commit" => cmd::cmd_verify_commit(&args),
-        "log" => cmd::cmd_log(&args),
+        "log" | "whatchanged" => cmd::cmd_log(&args),
         "show" => cmd::cmd_show(&args),
+        "apply" => cmd::cmd_apply(&args),
+        "ls-remote" => cmd::cmd_ls_remote(&args),
+        "prune" => cmd::cmd_prune(&args),
+        "prune-packed" => cmd::cmd_prune_packed(&args),
+        "cherry" => cmd::cmd_cherry(&args),
+        "check-ref-format" => cmd::cmd_check_ref_format(&args),
+        "stripspace" => cmd::cmd_stripspace(&args),
+        "mktag" => cmd::cmd_mktag(&args),
+        "mktree" => cmd::cmd_mktree(&args),
+        "diff-files" => cmd::cmd_diff_files(&args),
+        "diff-index" => cmd::cmd_diff_index(&args),
+        "var" => cmd::cmd_var(&args),
+        "patch-id" => cmd::cmd_patch_id(&args),
         "remote" => cmd::cmd_remote(&args),
         "fetch" => cmd::cmd_fetch(&args),
         "push" => cmd::cmd_push(&args),
@@ -232,7 +258,7 @@ fn run() -> CliResult<()> {
         "range-diff" => cmd::cmd_range_diff(&args),
         "blame" => cmd::cmd_blame(&args),
         "annotate" => cmd::cmd_annotate(&args),
-        "fsck" => cmd::cmd_fsck(&args),
+        "fsck" | "fsck-objects" => cmd::cmd_fsck(&args),
         "count-objects" => cmd::cmd_count_objects(&args),
         "pack-refs" => cmd::cmd_pack_refs(&args),
         "verify-tag" => cmd::cmd_verify_tag(&args),
@@ -249,7 +275,7 @@ fn run() -> CliResult<()> {
         )),
         // Trimmed over-design (not stock git / git-daemon): forge, host-env, in-process lfs.
         "forge" | "host-env" | "lfs" => Err(CliError::NotImplemented(format!(
-            "{cmd}: trimmed from product CLI (not git/git-daemon); use host gh / git-lfs externally if needed"
+            "{cmd}: trimmed from product CLI (not git/git-daemon); arks never invokes git/gh — use external tools outside arks if needed"
         ))),
         other => Err(CliError::NotImplemented(format!(
             "command not implemented: {other}"
