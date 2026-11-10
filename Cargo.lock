@@ -113,6 +113,7 @@ dependencies = [
  "arks-refs",
  "arks-repo",
  "arks-store",
+ "libc",
  "tempfile",
  "thiserror",
  "ureq",

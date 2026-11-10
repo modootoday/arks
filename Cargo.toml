@@ -53,6 +53,7 @@ arks-lease = { path = "crates/arks-lease" }
 arks-server = { path = "crates/arks-server" }
 arks = { path = "crates/arks" }
 crc32fast = "1.4"
+libc = "0.2"
 # zlib-rs: faster pack inflate than miniz on the smart-HTTP clone hot path
 # (J-CLONE-LOCAL); keep default-features off (no C zlib).
 flate2 = { version = "1.1", default-features = false, features = ["zlib-rs"] }

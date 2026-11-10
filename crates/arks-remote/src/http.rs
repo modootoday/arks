@@ -17,7 +17,7 @@ use crate::credential::{CredentialSource, resolve_authorization};
 use crate::error::RemoteError;
 use crate::transport::{HttpRequest, HttpResponse, Transport};
 use crate::url::prepare_url_with_source;
-use std::io::{Read, Write};
+use std::io::{IoSlice, Read, Write};
 use std::net::TcpStream;
 use std::time::Duration;
 
@@ -153,6 +153,7 @@ fn exchange_cleartext(
     stream
         .set_nodelay(true)
         .map_err(|e| RemoteError::Http(e.to_string()))?;
+    tune_cleartext_socket(&stream);
     let _ = stream.set_read_timeout(Some(Duration::from_secs(120)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(120)));
     write_http_request(
@@ -165,6 +166,43 @@ fn exchange_cleartext(
     )?;
     read_http_response(&mut stream)
 }
+
+/// Loopback CGI (Linux clean-room): larger RCVBUF absorbs upload-pack in fewer
+/// reads; QUICKACK cuts delayed-ACK stalls on info/refs → upload-pack RTs.
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code)] // setsockopt for SOL_SOCKET / TCP_QUICKACK only.
+fn tune_cleartext_socket(stream: &TcpStream) {
+    use std::os::fd::AsRawFd;
+    let fd = stream.as_raw_fd();
+    let buf: libc::c_int = 512 * 1024;
+    let on: libc::c_int = 1;
+    unsafe {
+        libc::setsockopt(
+            fd,
+            libc::SOL_SOCKET,
+            libc::SO_RCVBUF,
+            (&buf as *const libc::c_int).cast(),
+            std::mem::size_of_val(&buf) as libc::socklen_t,
+        );
+        libc::setsockopt(
+            fd,
+            libc::SOL_SOCKET,
+            libc::SO_SNDBUF,
+            (&buf as *const libc::c_int).cast(),
+            std::mem::size_of_val(&buf) as libc::socklen_t,
+        );
+        libc::setsockopt(
+            fd,
+            libc::IPPROTO_TCP,
+            libc::TCP_QUICKACK,
+            (&on as *const libc::c_int).cast(),
+            std::mem::size_of_val(&on) as libc::socklen_t,
+        );
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn tune_cleartext_socket(_stream: &TcpStream) {}
 
 fn split_http_url(url: &str) -> Result<(String, u16, String), RemoteError> {
     let rest = url
@@ -236,15 +274,29 @@ fn write_http_request(
         hdr.extend_from_slice(b"\r\n");
     }
     hdr.extend_from_slice(b"\r\n");
-    stream
-        .write_all(&hdr)
-        .map_err(|e| RemoteError::Http(e.to_string()))?;
-    if !request.body.is_empty() {
+    if request.body.is_empty() {
         stream
-            .write_all(&request.body)
+            .write_all(&hdr)
             .map_err(|e| RemoteError::Http(e.to_string()))?;
+        return Ok(());
     }
-    Ok(())
+    // One syscall for headers+POST body when the kernel accepts both (loopback).
+    let bufs = [IoSlice::new(&hdr), IoSlice::new(&request.body)];
+    match stream.write_vectored(&bufs) {
+        Ok(n) if n == hdr.len() + request.body.len() => Ok(()),
+        Ok(n) if n >= hdr.len() => stream
+            .write_all(&request.body[n - hdr.len()..])
+            .map_err(|e| RemoteError::Http(e.to_string())),
+        Ok(n) => {
+            stream
+                .write_all(&hdr[n..])
+                .map_err(|e| RemoteError::Http(e.to_string()))?;
+            stream
+                .write_all(&request.body)
+                .map_err(|e| RemoteError::Http(e.to_string()))
+        }
+        Err(e) => Err(RemoteError::Http(e.to_string())),
+    }
 }
 
 fn write_decimal_u16(mut n: u16, buf: &mut [u8; 5]) -> &[u8] {

@@ -51,7 +51,9 @@ impl DecodedPack {
         let mut pos = HEADER_LEN;
         let mut slots = Vec::with_capacity(count as usize);
         let mut meta = Vec::with_capacity(count as usize);
-        let mut offset_index: HashMap<u64, usize> = HashMap::with_capacity(count as usize);
+        // Pack order offsets — ofs-delta bases precede; rposition beats HashMap
+        // alloc/probe on the compact J-CLONE-LOCAL seed (~220 entries).
+        let mut offsets: Vec<u64> = Vec::with_capacity(count as usize);
         // One zlib state for the whole pack — J-CLONE-LOCAL inflate wall.
         let mut inflator = Decompress::new(true);
 
@@ -71,11 +73,11 @@ impl DecodedPack {
                 type_id,
                 declared,
                 entry_offset,
-                &offset_index,
+                &offsets,
                 &mut inflator,
             )?;
             let crc32 = crc32fast::hash(&bytes[entry_offset as usize..pos]);
-            offset_index.insert(entry_offset, slots.len());
+            offsets.push(entry_offset);
             meta.push(EntryMeta {
                 offset: entry_offset,
                 crc32,
@@ -130,7 +132,7 @@ fn read_body(
     type_id: u8,
     declared: u64,
     entry_offset: u64,
-    offset_index: &HashMap<u64, usize>,
+    offsets: &[u64],
     inflator: &mut Decompress,
 ) -> Result<Slot, PackError> {
     if type_id == OBJ_OFS_DELTA {
@@ -143,9 +145,10 @@ fn read_body(
             return Err(PackError::BadOfsOffset);
         }
         let base_offset = entry_offset - rel;
-        let base_idx = offset_index
-            .get(&base_offset)
-            .copied()
+        // Recent bases dominate; scan from the end of pack order.
+        let base_idx = offsets
+            .iter()
+            .rposition(|&o| o == base_offset)
             .ok_or(PackError::BadOfsOffset)?;
         let delta = inflate_declared(bytes, pos, body_limit, declared, inflator)?;
         return Ok(Slot::Ofs { base_idx, delta });

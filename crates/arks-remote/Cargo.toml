@@ -20,5 +20,8 @@ arks-index = { workspace = true }
 thiserror = { workspace = true }
 ureq = { workspace = true }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = { workspace = true }
+
 [dev-dependencies]
 tempfile = { workspace = true }

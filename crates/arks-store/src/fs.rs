@@ -31,7 +31,10 @@ impl PendingPackPersist {
     /// Write pack + idx to `objects/pack/` (gitrepository-layout).
     pub fn persist(self) -> Result<(), StoreError> {
         if let Some(parent) = self.pack_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
+            // objects/ already exists on clone; skip create_dir_all when present.
+            if !parent.is_dir() {
+                fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
+            }
         }
         if !self.pack_path.is_file() {
             fs::write(&self.pack_path, &self.pack[self.pack_at..])
