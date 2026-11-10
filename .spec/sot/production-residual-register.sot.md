@@ -250,7 +250,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; **O1 secrets hard-block** ([[evidence:root/20261110210200]]; Environment `g8-live` secrets=0); live remasure still needs secrets+receipt (**≠** fake PASS) | Secrets + receipt for any live samples; never invent latency |
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | — | Optional O-ladder O1–O_final | Historical Done in [[research:root/20261110205403]]; superseded for feature DoD by Full Symmetry ladder | Keep evidence current |
-| — | Full Symmetry ladder FS0–FS_final | **Active DoD** [[research:root/20261110212414]]; **FS0–FS8 Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]); **FS_final pending** (HOOK-008 / NET-006 HTTP / OBJ-004 / smudge reopen); **L9** closed; G8 secrets operator | No casual N/A; harness residuals explicit |
+| — | Full Symmetry ladder FS0–FS_final | **DoD met** [[research:root/20261110212414]]; **FS0–FS_final Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]); remaining = explicit reopen harnesses (NET-006 HTTP bundle / OBJ-004 / in-process LFS smudge) — not casual N/A; HOOK-008 closest = proc-receive.lock; **L9** closed; G8 secrets operator | Keep evidence current |
 
 ## Why
 
