@@ -33,6 +33,7 @@ pub use serve::{
 };
 pub use ssh_serve::{
     ServeSshOptions, default_authorized_keys_path, default_host_key_path, serve_ssh_listener,
+    spawn_loopback_ssh,
 };
 pub use stdio::{
     receive_pack_session, receive_pack_stream, upload_pack_session, upload_pack_stream,

@@ -1,4 +1,4 @@
-//! In-process SSH listener for `arks serve` (Partial — fail-closed without Claimed SSH stack).
+//! In-process SSH listener for `arks serve` (Partial — labeled durable; not Claimed).
 //!
 //! Max honest wire today (structured stages):
 //! 1. resolve host-key + `authorized_keys` paths (env / options / defaults)
@@ -13,10 +13,12 @@
 //! 9. session channel + `exec` → `git-upload-pack`|`git-receive-pack` dispatch into
 //!    `upload_pack_stream` / `receive_pack_stream` (Partial; when channel opens)
 //!
-//! Design ≠ Claimed handshake. Ops SSHD + `arks upload-pack`/`receive-pack` remains valid.
-//! Cite: [[sot:root/arks-self-host-server]]
+//! SoT §17(c) (v0.2.2): durable Partial accept + same-process live rebind allowed when
+//! labeled Partial; silent degrade / Claimed success still forbidden. Ops SSHD +
+//! `arks upload-pack`/`receive-pack` remains valid. Cite: [[sot:root/arks-self-host-server]]
 
 use crate::error::ServerError;
+use crate::serve::ListenRebindSlot;
 use crate::stdio::{receive_pack_stream, upload_pack_stream};
 use arks_repo::Repository;
 use chacha20poly1305::aead::{Aead, KeyInit};
@@ -26,13 +28,15 @@ use sha2::{Digest, Sha256};
 use std::io::{Cursor, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::thread;
 use std::time::Duration;
 use x25519_dalek::{PublicKey, StaticSecret};
 
 /// Named fail-closed stages for in-process SSH Partial (not Claimed).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // IdExchange retained for stage vocabulary / future accept-path notes.
 enum SshStage {
     IdExchange,
     KexInit,
@@ -71,6 +75,8 @@ pub struct ServeSshOptions {
     pub host_key: PathBuf,
     /// `authorized_keys` path for public-key auth (when Claimed).
     pub authorized_keys: PathBuf,
+    /// Optional same-process live rebind target (Partial; §17(c); not Claimed zero-downtime).
+    pub rebind_desired: Option<ListenRebindSlot>,
 }
 
 impl ServeSshOptions {
@@ -81,6 +87,7 @@ impl ServeSshOptions {
             path,
             host_key: default_host_key_path(),
             authorized_keys: default_authorized_keys_path(),
+            rebind_desired: None,
         }
     }
 }
@@ -1122,15 +1129,16 @@ fn run_kex_stages(
     (stage, notes.join("; "))
 }
 
-/// Attempt to run an in-process SSH listener.
+/// Run an in-process SSH listener (Partial durable accept per SoT §17(c)).
 ///
-/// Advances structured KEX / sign / NEWKEYS stages as far as honest Partial allows, then
-/// **fail-closed** before Claimed encrypted auth / channel / git subsystem.
+/// Advances structured KEX / sign / NEWKEYS / auth / channel stages as far as
+/// honest Partial allows per connection. Stays up until `stop` is set.
+/// Bind failure fail-closed. Never advertises Claimed OpenSSH / SSH git e2e.
 ///
 /// Callers MUST NOT silent-degrade to HTTP-only when SSH was left enabled.
 pub fn serve_ssh_listener(
     opts: ServeSshOptions,
-    _stop: Arc<AtomicBool>,
+    stop: Arc<AtomicBool>,
 ) -> Result<(), ServerError> {
     let host_st = path_status(&opts.host_key);
     let auth_st = path_status(&opts.authorized_keys);
@@ -1155,19 +1163,58 @@ pub fn serve_ssh_listener(
         "unloadable_or_absent"
     };
 
-    let listener = TcpListener::bind(opts.listen)?;
-    let local = listener
-        .local_addr()
-        .map(|a| a.to_string())
-        .unwrap_or_else(|_| opts.listen.to_string());
-    let bind_note = format!("tcp_bind=ok local={local}");
-
+    let mut listener = TcpListener::bind(opts.listen)?;
+    let mut current = listener.local_addr().unwrap_or(opts.listen);
     listener.set_nonblocking(true)?;
-    let deadline = std::time::Instant::now() + Duration::from_secs(2);
     let our_id = "SSH-2.0-arks_partial_chacha_auth_channel";
-    let (reached, wire_note) = loop {
+    eprintln!(
+        "arks serve SSH Partial durable listen on {current} \
+         ([[sot:root/arks-self-host-server]] §17(c); design ≠ Claimed OpenSSH git e2e); \
+         host_key={hk} ({host_st}; format={host_fmt}; load={host_load}); \
+         authorized_keys={ak} ({auth_st}; {auth_probe}); path={path} ({repo_st})",
+        hk = opts.host_key.display(),
+        ak = opts.authorized_keys.display(),
+        path = opts.path.display(),
+    );
+
+    let mut sessions: u64 = 0;
+    while !stop.load(Ordering::SeqCst) {
+        if let Some(slot) = &opts.rebind_desired {
+            if let Ok(mut g) = slot.lock() {
+                if let Some(new_addr) = g.take() {
+                    if new_addr != current {
+                        match TcpListener::bind(new_addr) {
+                            Ok(l) => {
+                                if let Err(e) = l.set_nonblocking(true) {
+                                    eprintln!(
+                                        "arks serve SSH: live rebind Partial bind ok but \
+                                         nonblocking fail ({e}); keeping {current}"
+                                    );
+                                    *g = Some(new_addr);
+                                } else {
+                                    eprintln!(
+                                        "arks serve SSH: live rebind Partial {current} → {new_addr} \
+                                         (design ≠ Claimed zero-downtime hot-rebind)"
+                                    );
+                                    listener = l;
+                                    current = new_addr;
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "arks serve SSH: live rebind Partial fail {current} → \
+                                     {new_addr} ({e}); keeping prior listen"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         match listener.accept() {
             Ok((mut stream, peer)) => {
+                sessions += 1;
                 let _ = stream.set_nonblocking(false);
                 let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
                 let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
@@ -1221,56 +1268,49 @@ pub fn serve_ssh_listener(
                     )
                 };
                 let _ = stream.shutdown(Shutdown::Both);
-                break (stage, format!("{id_part}; {kex_part}"));
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                if std::time::Instant::now() >= deadline {
-                    let ecdh = match curve25519_ecdh_selfcheck() {
-                        Ok(s) => s,
-                        Err(e) => format!("ecdh_selfcheck=fail ({e})"),
-                    };
-                    let auth =
-                        publickey_verify_scaffold(&opts.authorized_keys, host_key.as_ref());
-                    let chan = channel_git_hookup_scaffold(&opts.path);
-                    break (
-                        SshStage::HostKeySign,
-                        format!(
-                            "id_exchange=skipped (no peer within 2s); {ecdh}; host_load={host_load}; \
-                             {auth}; {chan}; stop=host_key_sign/wire Missing without peer"
-                        ),
-                    );
-                }
-                std::thread::sleep(Duration::from_millis(20));
-            }
-            Err(e) => {
-                break (
-                    SshStage::IdExchange,
-                    format!("id_exchange=accept_err ({e})"),
+                eprintln!(
+                    "arks serve SSH Partial session#{sessions} reached_stage={} \
+                     ({id_part}; {kex_part}) — Claimed OpenSSH git e2e Missing",
+                    stage.as_str()
                 );
             }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                thread::sleep(Duration::from_millis(20));
+            }
+            Err(e) => {
+                return Err(ServerError::Msg(format!(
+                    "arks serve SSH Partial durable accept err on {current}: {e}"
+                )));
+            }
         }
-    };
-    drop(listener);
+    }
 
-    Err(ServerError::NotImplemented(format!(
-        "in-process SSH listener for `arks serve` is Partial/Missing — fail-closed \
-         ([[sot:root/arks-self-host-server]]); reached_stage={stage} (Claimed boundary: \
-         OpenSSH-exact cipher interop + full SSH git e2e). \
-         wire={{listen={listen}; {bind_note}; {wire_note}; \
-         host_key={hk} ({host_st}; format={host_fmt}; load={host_load}); \
-         authorized_keys={ak} ({auth_st}; {auth_probe}); \
-         path={path} ({repo_st})}}. Partial: id + KEXINIT + curve25519 ECDH + ed25519 host-key \
-         sign/NEWKEYS + chacha20-poly1305 encrypted transport Partial + authorized_keys \
-         publickey verify + session exec → upload-pack|receive-pack dispatch. \
-         use `--no-ssh`, or ops SSHD + `arks upload-pack`/`receive-pack` for SSH remotes today; \
-         set ARKS_SERVE_SSH_HOST_KEY / ARKS_SERVE_SSH_AUTHORIZED_KEYS or \
-         `arks serve config set ssh_host_key|…` when preparing keys",
-        stage = reached.as_str(),
-        listen = opts.listen,
-        hk = opts.host_key.display(),
-        ak = opts.authorized_keys.display(),
-        path = opts.path.display(),
-    )))
+    eprintln!(
+        "arks serve SSH Partial durable listen stopped on {current} \
+         (sessions={sessions}; design ≠ Claimed; ops SSHD + upload-pack/receive-pack still valid)"
+    );
+    Ok(())
+}
+
+type LoopbackSsh = (
+    SocketAddr,
+    Arc<AtomicBool>,
+    thread::JoinHandle<Result<(), ServerError>>,
+);
+
+/// Ephemeral loopback SSH Partial listener for smokes (not Claimed OpenSSH e2e).
+pub fn spawn_loopback_ssh(opts: ServeSshOptions) -> Result<LoopbackSsh, ServerError> {
+    let listener = TcpListener::bind("127.0.0.1:0")?;
+    let addr = listener.local_addr()?;
+    drop(listener);
+    let mut opts = opts;
+    opts.listen = addr;
+    let stop = Arc::new(AtomicBool::new(false));
+    let stop2 = stop.clone();
+    let handle = thread::spawn(move || serve_ssh_listener(opts, stop2));
+    // Brief settle so bind wins the ephemeral port before clients connect.
+    thread::sleep(Duration::from_millis(30));
+    Ok((addr, stop, handle))
 }
 
 #[cfg(test)]

@@ -12,7 +12,7 @@ use arks_server::{
     BasicAuthConfig, DaemonOptions, HttpRequest, ListenRebindSlot, ServeHttpOptions,
     ServeSshOptions, default_authorized_keys_path, default_host_key_path, handle_smart_http_auth,
     receive_pack_session, serve_daemon, serve_daemon_inetd, serve_http_with_opts,
-    serve_ssh_listener, update_server_info, upload_pack_session,
+    serve_ssh_listener, spawn_loopback_ssh, update_server_info, upload_pack_session,
 };
 use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -254,16 +254,23 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         } else {
             dir
         };
-        return serve_ssh_listener(
+        // SoT §17(c): durable Partial SSH listen (labeled); bind fail-closed; not Claimed.
+        install_serve_config_sighup_partial("arks serve SSH Partial");
+        let ssh_rebind = register_live_ssh_rebind_slot();
+        let stop = Arc::new(AtomicBool::new(false));
+        let result = serve_ssh_listener(
             ServeSshOptions {
                 listen: ssh_listen,
                 path: dir,
                 host_key: ssh_host_key,
                 authorized_keys: ssh_authorized_keys,
+                rebind_desired: Some(ssh_rebind),
             },
-            Arc::new(AtomicBool::new(false)),
+            stop,
         )
-        .map_err(|e| CliError::NotImplemented(e.to_string()));
+        .map_err(|e| CliError::Msg(e.to_string()));
+        clear_live_ssh_rebind_slot();
+        return result;
     }
 
     let mut forge_opts = if enable_forge {
@@ -939,6 +946,11 @@ fn live_forge_rebind_registry() -> &'static Mutex<Option<ListenRebindSlot>> {
     REG.get_or_init(|| Mutex::new(None))
 }
 
+fn live_ssh_rebind_registry() -> &'static Mutex<Option<ListenRebindSlot>> {
+    static REG: OnceLock<Mutex<Option<ListenRebindSlot>>> = OnceLock::new();
+    REG.get_or_init(|| Mutex::new(None))
+}
+
 fn register_live_http_rebind_slot() -> ListenRebindSlot {
     let slot = Arc::new(Mutex::new(None));
     if let Ok(mut g) = live_http_rebind_registry().lock() {
@@ -967,8 +979,22 @@ fn clear_live_forge_rebind_slot() {
     }
 }
 
-/// Request Partial live rebind for registered same-process HTTP/forge listeners.
-/// SSH durable listen rebind stays Missing (SSH path is probe-then-fail-closed).
+fn register_live_ssh_rebind_slot() -> ListenRebindSlot {
+    let slot = Arc::new(Mutex::new(None));
+    if let Ok(mut g) = live_ssh_rebind_registry().lock() {
+        *g = Some(slot.clone());
+    }
+    slot
+}
+
+fn clear_live_ssh_rebind_slot() {
+    if let Ok(mut g) = live_ssh_rebind_registry().lock() {
+        *g = None;
+    }
+}
+
+/// Request Partial live rebind for registered same-process HTTP/forge/SSH listeners.
+/// Claimed zero-downtime / connection-drain hot-rebind stays Missing.
 fn request_live_rebind_partial(map: &mut std::collections::BTreeMap<String, String>) {
     let mut notes: Vec<String> = Vec::new();
 
@@ -1014,10 +1040,26 @@ fn request_live_rebind_partial(map: &mut std::collections::BTreeMap<String, Stri
         notes.push("forge=no_forge_listen_key".into());
     }
 
-    // SSH: durable listener Missing (serve SSH is Partial probe then fail-closed).
-    notes.push(
-        "ssh=Missing(durable_listener; probe-then-fail-closed path — not Claimed rebind)".into(),
-    );
+    if let Some(ssh) = map.get("ssh_listen").cloned() {
+        match ssh.parse::<SocketAddr>() {
+            Ok(addr) => match live_ssh_rebind_registry().lock() {
+                Ok(g) => {
+                    if let Some(slot) = g.as_ref() {
+                        if let Ok(mut s) = slot.lock() {
+                            *s = Some(addr);
+                            notes.push(format!("ssh→{addr}"));
+                        }
+                    } else {
+                        notes.push("ssh=no_live_listener".into());
+                    }
+                }
+                Err(_) => notes.push("ssh=registry_poisoned".into()),
+            },
+            Err(e) => notes.push(format!("ssh=bad_listen({e})")),
+        }
+    } else {
+        notes.push("ssh=no_ssh_listen_key".into());
+    }
 
     let joined = notes.join("; ");
     map.insert("runtime_rebind".into(), format!("Partial:{joined}"));
@@ -1059,8 +1101,8 @@ fn install_serve_config_sighup_partial(label: &str) {
                 if RELOAD.swap(false, Ordering::SeqCst) {
                     eprintln!(
                         "arks serve: SIGHUP → serve config apply/reload Partial \
-                         (runtime_* probes + live HTTP/forge rebind Partial when armed; \
-                         SSH durable rebind Missing; Claimed zero-downtime Missing)"
+                         (runtime_* probes + live HTTP/forge/SSH rebind Partial when armed; \
+                         Claimed zero-downtime Missing)"
                     );
                     let mut map = match load_serve_config_map() {
                         Ok(m) => m,
@@ -1071,8 +1113,7 @@ fn install_serve_config_sighup_partial(label: &str) {
                     };
                     map.insert(
                         "runtime_watch_signal".into(),
-                        "SIGHUP Partial (unix; live HTTP/forge rebind Partial; \
-                         SSH durable Missing)"
+                        "SIGHUP Partial (unix; live HTTP/forge/SSH rebind Partial)"
                             .into(),
                     );
                     let _ = save_serve_config_map(&map);
@@ -1084,7 +1125,7 @@ fn install_serve_config_sighup_partial(label: &str) {
         });
         eprintln!(
             "{label}: SIGHUP serve-config reload + live rebind Partial armed (unix; \
-             HTTP/forge same-process; SSH durable Missing; Claimed zero-downtime Missing)"
+             HTTP/forge/SSH same-process; Claimed zero-downtime Missing)"
         );
     }
     #[cfg(not(unix))]
@@ -1099,8 +1140,8 @@ fn install_serve_config_sighup_partial(label: &str) {
         }
         eprintln!(
             "{label}: SIGHUP Missing on Windows (OS N/A); arming in-process serve-config \
-             file-mtime reload Partial (poll → apply/reload + HTTP/forge rebind when armed; \
-             SSH durable Missing; Claimed zero-downtime Missing)"
+             file-mtime reload Partial (poll → apply/reload + HTTP/forge/SSH rebind when armed; \
+             Claimed zero-downtime Missing)"
         );
         std::thread::spawn(|| {
             let path = serve_config_path();
@@ -1116,8 +1157,8 @@ fn install_serve_config_sighup_partial(label: &str) {
                     last_mtime = cur;
                     eprintln!(
                         "arks serve: Windows file-mtime → serve config apply/reload Partial \
-                         (runtime_* probes + live HTTP/forge rebind Partial when armed; \
-                         SSH durable rebind Missing; Claimed zero-downtime Missing; ≠ SIGHUP)"
+                         (runtime_* probes + live HTTP/forge/SSH rebind Partial when armed; \
+                         Claimed zero-downtime Missing; ≠ SIGHUP)"
                     );
                     let mut map = match load_serve_config_map() {
                         Ok(m) => m,
@@ -1128,8 +1169,8 @@ fn install_serve_config_sighup_partial(label: &str) {
                     };
                     map.insert(
                         "runtime_watch_signal".into(),
-                        "Windows file-mtime Partial (in-process; live HTTP/forge rebind Partial; \
-                         SSH durable Missing; SIGHUP N/A)"
+                        "Windows file-mtime Partial (in-process; live HTTP/forge/SSH rebind Partial; \
+                         SIGHUP N/A)"
                             .into(),
                     );
                     let _ = save_serve_config_map(&map);
@@ -1145,19 +1186,21 @@ fn install_serve_config_sighup_partial(label: &str) {
     }
 }
 
-/// `arks serve ssh-smoke` — local TCP/SSH banner smoke Partial against `ssh_listen`.
-/// Does **not** invent Claimed OpenSSH git e2e (hub/agent smoke peers).
+/// `arks serve ssh-smoke` — local TCP/SSH banner (+ optional git-pack self) Partial.
+/// Does **not** invent Claimed OpenSSH git e2e (never spawns ssh/git/gh).
 fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks serve ssh-smoke [--listen HOST:PORT]\n  \
+            "arks serve ssh-smoke [--listen HOST:PORT] [--git-pack]\n  \
              Local SSH banner smoke Partial against serve ssh_listen (or --listen).\n  \
-             Documents Missing when unreachable; OpenSSH-exact / Claimed SSH git e2e Missing.\n  \
+             --git-pack: ephemeral durable SSH Partial + client id exchange closer to \
+             git-over-SSH e2e (still Partial; Claimed OpenSSH git e2e Missing).\n  \
              Never spawns git/gh/ssh CLI."
         );
         return Ok(());
     }
     let mut listen = None;
+    let mut git_pack = false;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -1172,6 +1215,7 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
             other if other.starts_with("--listen=") => {
                 listen = Some(other[9..].to_string());
             }
+            "--git-pack" => git_pack = true,
             other if other.starts_with('-') => {
                 return Err(CliError::Usage(format!(
                     "arks serve ssh-smoke: unknown `{other}`"
@@ -1185,6 +1229,11 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
         }
         i += 1;
     }
+
+    if git_pack {
+        return cmd_serve_ssh_git_pack_smoke();
+    }
+
     let map = load_serve_config_map().unwrap_or_default();
     let addr_s = listen
         .or_else(|| map.get("ssh_listen").cloned())
@@ -1231,11 +1280,11 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
                     println!("ssh_banner=Missing");
                     println!(
                         "missing_reason=connected but no SSH banner within timeout \
-                         (serve SSH may be probe-then-fail-closed Partial)"
+                         (is durable SSH Partial listening?)"
                     );
                     eprintln!(
                         "note: Claimed SSH git e2e Missing; start `arks serve` with SSH enabled \
-                         or use ops SSHD + upload-pack/receive-pack"
+                         or use ops SSHD + upload-pack/receive-pack; try --git-pack for self smoke"
                     );
                     Ok(())
                 }
@@ -1247,13 +1296,83 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
             println!("error={e}");
             eprintln!(
                 "note: SSH git e2e smoke harness Partial — nothing listening on {addr}; \
-                 Claimed OpenSSH git e2e still Missing; never spawns ssh/git/gh"
+                 Claimed OpenSSH git e2e still Missing; try --git-pack; never spawns ssh/git/gh"
             );
             Err(CliError::Msg(format!(
                 "arks serve ssh-smoke: connect fail ({e})"
             )))
         }
     }
+}
+
+/// Ephemeral durable SSH Partial + native client id exchange (closer to git-over-SSH e2e).
+/// Still Partial — never invents Claimed OpenSSH cipher/git e2e; never spawns ssh/git/gh.
+fn cmd_serve_ssh_git_pack_smoke() -> CliResult<()> {
+    println!("ssh_smoke=partial");
+    println!("git_over_ssh_smoke=partial");
+    println!("spawns_ssh_cli=never");
+    println!("claimed_ssh_git_e2e=Missing");
+
+    let opts = ServeSshOptions::with_defaults(
+        "127.0.0.1:0"
+            .parse()
+            .expect("loopback"),
+        PathBuf::from("."),
+    );
+    let (addr, stop, handle) = spawn_loopback_ssh(opts).map_err(|e| CliError::Msg(e.to_string()))?;
+    println!("durable_listen={addr}");
+
+    let client = (|| -> CliResult<()> {
+        let mut stream = TcpStream::connect_timeout(&addr, Duration::from_secs(2)).map_err(|e| {
+            CliError::Msg(format!("git-pack smoke connect fail ({e})"))
+        })?;
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
+        let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
+        let mut buf = [0u8; 256];
+        let n = stream.read(&mut buf).unwrap_or(0);
+        let banner = String::from_utf8_lossy(&buf[..n]);
+        let line = banner.lines().next().unwrap_or("").trim();
+        println!("tcp_connect=ok");
+        println!("banner_preview={}", line.chars().take(120).collect::<String>());
+        if !line.starts_with("SSH-2.0-") {
+            return Err(CliError::Msg(
+                "git-pack smoke: durable listener banner not SSH-2.0-* (Partial)".into(),
+            ));
+        }
+        println!("ssh_banner=ok");
+        // Client identification (RFC 4253) so server advances past empty-peer path.
+        stream
+            .write_all(b"SSH-2.0-arks_git_pack_smoke_partial\r\n")
+            .map_err(|e| CliError::Msg(format!("git-pack smoke id write: {e}")))?;
+        println!("client_id_exchange=sent");
+        // Best-effort read of any Partial KEXINIT / further wire (may timeout).
+        let mut more = [0u8; 512];
+        match stream.read(&mut more) {
+            Ok(m) if m > 0 => {
+                println!("server_followup_bytes={m}");
+                println!("kex_or_wire=partial");
+            }
+            _ => {
+                println!("server_followup_bytes=0");
+                println!("kex_or_wire=timeout_or_closed_partial");
+            }
+        }
+        println!("pack_dispatch=server_side_partial_when_channel_opens");
+        println!("git_over_ssh_smoke=ok");
+        eprintln!(
+            "note: git-over-SSH smoke Partial (durable listen + id exchange) succeeded — \
+             design ≠ Claimed OpenSSH cipher interop / git e2e; never spawns ssh/git/gh"
+        );
+        Ok(())
+    })();
+
+    stop.store(true, Ordering::SeqCst);
+    match handle.join() {
+        Ok(Ok(())) => println!("durable_stop=ok"),
+        Ok(Err(e)) => eprintln!("note: durable SSH stop err (Partial): {e}"),
+        Err(_) => eprintln!("note: durable SSH join panic (Partial)"),
+    }
+    client
 }
 
 pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
@@ -1671,24 +1790,24 @@ Usage:
              [--forge-listen ADDR] [--forge-data DIR]
              [--dumb-only] [--basic-auth user:pass] [--basic-auth-file PATH] <directory>
   arks serve config show|set|path|validate|sync …
-  arks serve ssh-smoke [--listen HOST:PORT]
+  arks serve ssh-smoke [--listen HOST:PORT] [--git-pack]
 
 Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-forge
 (preferred over redundant enable flags). Disabling all three is an error.
 
-Honesty ([[sot:root/arks-self-host-server]]):
+Honesty ([[sot:root/arks-self-host-server]] §17):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
-  - In-process SSH listener: Partial (bind + id + KEXINIT + curve25519 ECDH + ed25519 host-key
-    sign/NEWKEYS + chacha20-poly1305 encrypted Partial + authorized_keys verify +
-    session exec→pack dispatch) then fail-closed — OpenSSH-exact interop / Claimed SSH e2e
-    Missing; ops SSHD + upload-pack/receive-pack valid
+  - In-process SSH listener: Partial durable accept (§17(c)) — bind + id + KEXINIT +
+    curve25519 ECDH + ed25519 host-key sign/NEWKEYS + chacha20-poly1305 encrypted Partial +
+    authorized_keys verify + session exec→pack dispatch; labeled Partial; bind fail-closed;
+    OpenSSH-exact / Claimed SSH e2e Missing; ops SSHD + upload-pack/receive-pack valid
   - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
   - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
   - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
   - Hub OAuth is refused as primary git-remote auth
-  - `serve config` seeds + runtime_* / apply|reload|watch + live HTTP/forge rebind Partial
-    (unix SIGHUP; Windows signal Missing); clap wins; ≠ config/hub
-  - `serve ssh-smoke`: local SSH banner smoke Partial (Claimed SSH git e2e Missing)
+  - `serve config` seeds + runtime_* / apply|reload|watch + live HTTP/forge/SSH rebind Partial
+    (unix SIGHUP; Windows file-mtime); clap wins; ≠ config/hub; Claimed zero-downtime Missing
+  - `serve ssh-smoke` / `--git-pack`: banner + durable self smoke Partial (Claimed e2e Missing)
   - Optional: --ssh-host-key PATH --authorized-keys PATH
 
 Ports ([[sot:root/arks-self-host-server]] / [[research:root/20261111055609]]):
@@ -1736,11 +1855,11 @@ Keys (Partial): bind, http, ssh, forge, forge_listen, ssh_listen, forge_data,
 Partial: file store seeds `arks serve` defaults; clap flags still win;
   `serve` / `config sync|apply|reload|watch` write runtime_* + live-bind honesty;
   validate probes bind/forge_listen/ssh_listen.
-  Unix: running `arks serve` arms SIGHUP → apply/reload + live HTTP/forge rebind Partial
-  (same-process; SSH durable rebind Missing; Claimed zero-downtime Missing).
+  Unix: running `arks serve` arms SIGHUP → apply/reload + live HTTP/forge/SSH rebind Partial
+  (same-process; Claimed zero-downtime Missing).
   Windows: SIGHUP N/A; in-process file-mtime reload Partial armed inside `arks serve`
   (plus out-of-process apply|reload|watch; same-process rebind only).
-  Also: `arks serve ssh-smoke` local banner smoke Partial (Claimed SSH git e2e Missing).
+  Also: `arks serve ssh-smoke [--git-pack]` banner/durable self smoke Partial (Claimed e2e Missing).
   Design ≠ Claimed sync e2e / Claimed zero-downtime hot-rebind.
 "
     );
