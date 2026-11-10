@@ -24,4 +24,4 @@ where `H` is SHA-1 or SHA-256 per repository object format.
 | `tree` | `tree <n>\0` | mode SP name NUL hex-oid … (see tree plumbing) |
 | `commit` | `commit <n>\0` | tree / parents / author / committer / message |
 
-When `arks-object` claims tree/commit encode-decode, add sibling files under `verify/fixtures/m1/` with oracle hex from stock Git or clean-room — not before.
+When `arks-object` claims tree/commit encode-decode, add sibling files under `verify/fixtures/m001-clean-room-g0-g1/` with oracle hex from stock Git or clean-room — not before.

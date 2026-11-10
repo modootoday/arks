@@ -1,6 +1,6 @@
 # M11 clean-room matrix (G15 git-server / production-server)
 
-Roadmap **v0.3.1+** M11 (Git server / Phase Sv). Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Service `g15` (`verify/scripts/run-g15.sh`). Unit SoT: [[sot:root/arks-server]]. Receipt: [[evidence:root/20261108231300]]; githooks honor list [[evidence:root/20261110200000]]. **Claimed transport: smart HTTP**; **M11-C14** Claimed honor list `pre-receive` / `update` / `post-receive`.
+Roadmap **v0.3.1+** M11 (Git server / Phase Sv). Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Service `g015-smart-http` (`verify/scripts/run-g015-smart-http.sh`). Unit SoT: [[sot:root/arks-server]]. Receipt: [[evidence:root/20261108231300]]; githooks honor list [[evidence:root/20261110200000]]. **Claimed transport: smart HTTP**; **M11-C14** Claimed honor list `pre-receive` / `update` / `post-receive`.
 
 | ID | Scenario | Gate | Automated | Expect |
 |----|----------|------|-----------|--------|
