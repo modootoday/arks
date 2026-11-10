@@ -37,7 +37,7 @@ Secrets-gated live forge smoke / scale harness: [Forge scale harness](../forge-s
 
 Partial-clone `--filter=blob:none` / promisor is claimed on pack transports; other filter-specs remain out of claim — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/). Shallow `--depth` remains claimed.
 
-OpenPGP / X.509 / signed tags remain out of product claim; SSH commit `-S` / `verify-commit` is the claimed signing subset. See [Limits](../limits/).
+SSH, OpenPGP, and X.509 commit signing plus `tag -s` / `verify-tag` are claimed (SSH **G37**; OpenPGP/X.509/`tag -s` **G38**). Forge signature UX remains out of claim — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
 
 Honest feature comparison: [Git vs arks](../git-vs-arks/). Clean-room Docker e2e (L8) is maintainer verification — not the end-user install path.
 

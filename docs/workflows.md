@@ -51,19 +51,24 @@ These are common day-to-day flows with the **native** `arks` binary — the same
 | Worktree | `arks worktree add` / `list` / `move` / `remove` |
 | Submodule (claimed forms) | `arks submodule add` / `status` / `deinit` / `init` / `update` |
 
-## SSH-signed commits
+## Signed commits and tags
 
 With `gpg.format=ssh` configured:
-
-`file:sign.sh`
 
 ```bash
 arks commit -S -m "Signed change"
 arks verify-commit HEAD
 ```
 
+With `gpg.format=openpgp` (or `x509`) and a local GnuPG/`gpgsm` program:
+
+```bash
+arks tag -s v1.0 -m "Signed tag"
+arks verify-tag v1.0
+```
+
 > [!NOTE]
-> OpenPGP / X.509 / `tag -s` / `verify-tag` are not claimed (CLI refuses) — see [Limits](../limits/).
+> OpenPGP / X.509 commit signing and `tag -s` / `verify-tag` are claimed via spawned `gpg` / `gpgsm` (clean-room **G38**). Forge signature UX is not claimed — see [Limits](../limits/).
 
 ## Next
 
