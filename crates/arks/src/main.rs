@@ -15,6 +15,9 @@ use error::{CliError, CliResult};
 use std::env;
 use std::process::ExitCode;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 const HELP: &str = "\
 arks — Wave L+H+Pa+Pb+Pc + Sv
 
