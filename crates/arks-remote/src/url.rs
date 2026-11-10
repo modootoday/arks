@@ -96,8 +96,8 @@ impl GitDaemonUrl {
         if authority.is_empty() || path.is_empty() || path == "/" {
             return Err(RemoteError::UnsupportedUrl(raw.to_string()));
         }
-        let (host, port) =
-            split_host_port(authority).ok_or_else(|| RemoteError::UnsupportedUrl(raw.to_string()))?;
+        let (host, port) = split_host_port(authority)
+            .ok_or_else(|| RemoteError::UnsupportedUrl(raw.to_string()))?;
         if host.is_empty() {
             return Err(RemoteError::UnsupportedUrl(raw.to_string()));
         }

@@ -132,8 +132,8 @@ fn write_service_request(
     payload.extend_from_slice(b"host=");
     payload.extend_from_slice(host.as_bytes());
     payload.push(0);
-    let pkt = encode_packet(&Packet::Data(payload))
-        .map_err(|e| RemoteError::Protocol(e.to_string()))?;
+    let pkt =
+        encode_packet(&Packet::Data(payload)).map_err(|e| RemoteError::Protocol(e.to_string()))?;
     stream
         .write_all(&pkt)
         .map_err(|e| RemoteError::Msg(format!("git:// service request: {e}")))?;

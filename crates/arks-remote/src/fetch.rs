@@ -22,9 +22,9 @@ use crate::advertise::{
 };
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
+use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::http::UreqTransport;
 use crate::shallow::{apply_shallow_update, read_shallow, write_shallow};
-use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::ssh::{SshService, SshSession};
 use crate::transport::{HttpRequest, Transport, header, require_success};
 use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};

@@ -10,8 +10,8 @@
 
 use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
 use crate::error::RemoteError;
-use crate::http::UreqTransport;
 use crate::git::{GitDaemonService, GitDaemonSession};
+use crate::http::UreqTransport;
 use crate::ssh::{SshService, SshSession};
 use crate::transport::{HttpRequest, Transport, header, require_success};
 use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
