@@ -74,7 +74,7 @@ Default scaffold / SKIP exit 0; `ARKS_DOD_STRICT=1` fails closed — smoke ≠ C
 
 | Artifact | Path |
 |----------|------|
-| Entrypoint | `verify/scripts/run-g19.sh` → `run-g16.sh` + `g19_eval.py` |
+| Entrypoint | `verify/scripts/run-g19.sh` → `run-g16.sh` + `g19-eval.py` |
 | Journey suite | `verify/gates/g16/` |
 | Metrics | `verify/gates/g16/out/metrics.json` |
 | Receipt / lock | `verify/gates/g19/out/receipt.json`, `verify/gates/g19/.run.lock.dir` |

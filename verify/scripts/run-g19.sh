@@ -55,6 +55,6 @@ export ARKS_G19_STOCK_GIT="$(git --version)"
 
 echo "G19: evaluate Pf3 allow-list = all G16 journeys (arks_median <= 0.8 * git_median)"
 # External evaluator avoids bash-heredoc races on bind-mounted Windows hosts.
-python3 /workspace/verify/scripts/g19_eval.py
+python3 /workspace/verify/scripts/g19-eval.py
 
 echo "G19: PASS"

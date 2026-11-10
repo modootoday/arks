@@ -3,7 +3,7 @@ id: sot:root/verify-directory-conventions
 title: Verify directory conventions and consistency
 status: active
 created: 2026-11-10T23:25:00Z
-updated: 2026-11-11T00:05:00Z
+updated: 2026-11-11T00:10:00Z
 tags: [verify, clean-room, docker, conventions, layout, naming, folders, filenames, numeric, zero-pad, skip, strict, matrices, claimed-residual, design, no-invent-claimed]
 verify: manual
 rel:
@@ -490,8 +490,8 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 | Current | Preferred | Status |
 |---------|-----------|--------|
 | `verify/scripts/run-g11l3.sh` | `run-g11-l3.sh` | **Migrated** with Appendix A |
-| `verify/scripts/g19_eval.py` | `g19-eval.py` (or fold into `run-g19.sh` only) | **Skew** — underscore; rename with `run-g19.sh` argv update |
-| `verify/fixtures/openai_compat_fixture.py` | `openai-compat-fixture.py` | **Skew** — snake_case fixture helper; rename when callers updated |
+| `verify/scripts/g19_eval.py` | `g19-eval.py` (or fold into `run-g19.sh` only) | **Migrated** — `run-g19.sh` / `run-g19-eval-only.sh` updated |
+| `verify/fixtures/openai_compat_fixture.py` | `openai-compat-fixture.py` | **Migrated on disk** — B4 WIP callers updated; fixture may remain untracked until B4 lands |
 | `verify/matrices/matrix-l3.md` | `matrix-g11-l3.md` (after id unjam) **or** keep as L3 milestone alias with README note | **Advisory** — milestone “L3” token predates `g11-l3` |
 | `verify/matrices/matrix-l8-e2e.md` / `run-l8-e2e.sh` | Keep L8 milestone names **or** document as milestone alias beside G-series | **Keep** unless milestone SoT retires L8 label |
 | `verify/matrices/matrix-s6-symmetry.md` / `run-s6-symmetry.sh` | Prefer `symmetry` / DoD family names already in §2 | **Advisory** — S6 historical label |
@@ -503,12 +503,12 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | From | To | Notes |
 |------|----|-------|
-| `scripts/g19_eval.py` | `scripts/g19-eval.py` | Update `run-g19.sh` / compose references; trivial when no parallel WIP on g19 |
-| `fixtures/openai_compat_fixture.py` | `fixtures/openai-compat-fixture.py` | Update importers; coordinate with Claimed agent-llm WIP if dirty |
+| `scripts/g19_eval.py` | `scripts/g19-eval.py` | **Done** — `run-g19.sh` / eval-only argv updated |
+| `fixtures/openai_compat_fixture.py` | `fixtures/openai-compat-fixture.py` | **Done on disk** — coordinated with dirty B4 caller; do not invent Claimed |
 | `scripts/run-g11l3.sh` | `scripts/run-g11-l3.sh` | **Done** with Appendix A |
 | Stable multi-artifact names already compliant | *(none)* | `offline-clones-receipt.json`, living `*-matrix.csv`, root `docker-compose.yml` / `images.lock.json` / `README.md` match §2a |
 
-**Survey snapshot (filenames, tip ≥ `4a99f8e`):** root files = `Dockerfile` `docker-compose.yml` `images.lock.json` `README.md` `.gitattributes`; scripts dominated by `run-*.sh` + few `*.ps1` / `g19_eval.py` / `probe-*.sh`; matrices = `matrix-*.md` + three `*-matrix.csv`; primary receipts = `receipt.json` / `metrics.json` / `summary.txt` with local sha/debug variants under gate `out/`; compose filename singular.
+**Survey snapshot (filenames, tip ≥ `4a99f8e`; Migration post-tip):** root files = `Dockerfile` `docker-compose.yml` `images.lock.json` `README.md` `.gitattributes`; scripts dominated by `run-*.sh` + few `*.ps1` / `g19-eval.py` / `probe-*.sh`; matrices = `matrix-*.md` + three `*-matrix.csv`; primary receipts = `receipt.json` / `metrics.json` / `summary.txt` with local sha/debug variants under gate `out/`; compose filename singular.
 
 ## Appendix C — Numeric notation skew and recommended migration
 

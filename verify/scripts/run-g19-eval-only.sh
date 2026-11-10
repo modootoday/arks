@@ -14,5 +14,5 @@ export ARKS_G19_REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo
 export ARKS_G19_IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"
 export ARKS_G19_IMAGE_DIGEST="${ARKS_JOURNEY_IMAGE_DIGEST:-}"
 export ARKS_G19_STOCK_GIT="$(git --version)"
-python3 /workspace/verify/scripts/g19_eval.py
+python3 /workspace/verify/scripts/g19-eval.py
 echo "G19: PASS (eval-only)"
