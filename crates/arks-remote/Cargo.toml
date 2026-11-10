@@ -26,3 +26,4 @@ libc = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 arks-server = { path = "../arks-server" }
+arks-daemon = { path = "../arks-daemon" }
