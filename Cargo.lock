@@ -6,6 +6,7 @@ version = 4
 name = "arks"
 version = "0.0.0"
 dependencies = [
+ "arks-agent",
  "arks-hash",
  "arks-hub",
  "arks-index",
@@ -23,15 +24,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "arks-daemon"
+name = "arks-agent"
 version = "0.0.0"
-dependencies = [
- "arks-protocol",
- "arks-repo",
- "arks-server",
- "tempfile",
- "thiserror",
-]
 
 [[package]]
 name = "arks-hash"
@@ -129,7 +123,6 @@ dependencies = [
 name = "arks-remote"
 version = "0.0.0"
 dependencies = [
- "arks-daemon",
  "arks-index",
  "arks-object",
  "arks-oid",
