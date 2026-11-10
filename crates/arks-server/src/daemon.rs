@@ -1071,4 +1071,146 @@ mod archive_path_filter_tests {
             "format/filter honesty in sideband progress Partial"
         );
     }
+
+    #[test]
+    fn path_filter_nested_include_exclude_partial() {
+        let filter = ArchivePathFilter {
+            prefix: "rel/".into(),
+            includes: vec!["src".into(), "docs/readme".into()],
+            excludes: vec!["src/vendor".into(), ".git".into()],
+        };
+        assert!(path_allowed("src/lib.rs", &filter));
+        assert!(path_allowed("docs/readme", &filter));
+        assert!(!path_allowed("src/vendor/dep.rs", &filter));
+        assert!(!path_allowed("other/file", &filter));
+        assert!(!path_allowed("docs/.git/config", &filter));
+    }
+
+    #[test]
+    fn parse_archive_unknown_option_refuse_partial() {
+        let err = parse_archive_path_filter(&["HEAD".into(), "--remote=origin".into()])
+            .expect_err("unknown option must refuse");
+        assert!(
+            err.contains("unknown option") || err.contains("not Claimed"),
+            "honest refuse: {err}"
+        );
+    }
+
+    #[test]
+    fn parse_archive_exclude_only_keeps_default_treeish() {
+        let (treeish, filter) =
+            parse_archive_path_filter(&["--exclude=tmp".into(), "--prefix=out/".into()]).unwrap();
+        assert_eq!(treeish, "HEAD");
+        assert_eq!(filter.prefix, "out/");
+        assert!(filter.includes.is_empty());
+        assert_eq!(filter.excludes, vec!["tmp".to_string()]);
+    }
+
+    #[test]
+    fn upload_archive_zip_format_refuse_partial() {
+        use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree};
+        use arks_store::{ObjectFormat, ObjectStore};
+        use tempfile::TempDir;
+
+        let dir = TempDir::new().unwrap();
+        let git = dir.path().to_path_buf();
+        std::fs::create_dir_all(git.join("objects")).unwrap();
+        std::fs::create_dir_all(git.join("refs/heads")).unwrap();
+        std::fs::write(git.join("HEAD"), b"ref: refs/heads/main\n").unwrap();
+        let mut repo = Repository::open(&git).unwrap();
+        let tree = Tree::new(vec![]).unwrap();
+        let tree_obj = RawObject::new(ObjectKind::Tree, tree.encode().unwrap());
+        let tree_oid = repo.store_mut().put(ObjectFormat::Sha1, &tree_obj).unwrap();
+        let sig = Signature {
+            name: "arks".into(),
+            email: "arks@example.com".into(),
+            timestamp: 1_700_000_000,
+            timezone: "+0000".into(),
+        };
+        let commit = Commit {
+            tree: tree_oid,
+            parents: Vec::new(),
+            author: sig.clone(),
+            committer: sig,
+            gpgsig: None,
+            message: "empty tree\n".into(),
+        };
+        let commit_obj = RawObject::new(ObjectKind::Commit, commit.encode().unwrap());
+        let commit_oid = repo
+            .store_mut()
+            .put(ObjectFormat::Sha1, &commit_obj)
+            .unwrap();
+        repo.refs_mut()
+            .update("refs/heads/main", &commit_oid, None)
+            .unwrap();
+
+        let mut body = Vec::new();
+        serve_upload_archive_partial(
+            &repo,
+            &["HEAD".into(), "--format=zip".into()],
+            &mut body,
+            false,
+        )
+        .unwrap();
+        let text = String::from_utf8_lossy(&body);
+        assert!(
+            text.contains("ERR")
+                && (text.contains("zip") || text.contains("Missing") || text.contains("not wired")),
+            "zip must refuse via ERR pkt-line Partial: {text}"
+        );
+        assert!(
+            !text.contains("ACK"),
+            "zip refuse must not ACK a Claimed archive body"
+        );
+    }
+
+    #[test]
+    fn upload_archive_empty_tree_ustar_partial() {
+        use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree};
+        use arks_store::{ObjectFormat, ObjectStore};
+        use tempfile::TempDir;
+
+        let dir = TempDir::new().unwrap();
+        let git = dir.path().to_path_buf();
+        std::fs::create_dir_all(git.join("objects")).unwrap();
+        std::fs::create_dir_all(git.join("refs/heads")).unwrap();
+        std::fs::write(git.join("HEAD"), b"ref: refs/heads/main\n").unwrap();
+        let mut repo = Repository::open(&git).unwrap();
+        let tree = Tree::new(vec![]).unwrap();
+        let tree_obj = RawObject::new(ObjectKind::Tree, tree.encode().unwrap());
+        let tree_oid = repo.store_mut().put(ObjectFormat::Sha1, &tree_obj).unwrap();
+        let sig = Signature {
+            name: "arks".into(),
+            email: "arks@example.com".into(),
+            timestamp: 1_700_000_000,
+            timezone: "+0000".into(),
+        };
+        let commit = Commit {
+            tree: tree_oid,
+            parents: Vec::new(),
+            author: sig.clone(),
+            committer: sig,
+            gpgsig: None,
+            message: "empty\n".into(),
+        };
+        let commit_obj = RawObject::new(ObjectKind::Commit, commit.encode().unwrap());
+        let commit_oid = repo
+            .store_mut()
+            .put(ObjectFormat::Sha1, &commit_obj)
+            .unwrap();
+        repo.refs_mut()
+            .update("refs/heads/main", &commit_oid, None)
+            .unwrap();
+
+        let mut body = Vec::new();
+        serve_upload_archive_partial(&repo, &["HEAD".into(), "--format=ustar".into()], &mut body, false)
+            .unwrap();
+        let text = String::from_utf8_lossy(&body);
+        assert!(text.contains("ACK"), "empty-tree archive still ACKs Partial");
+        // ustar ends with two 512-byte zero blocks; Claimed stock parity still Missing.
+        assert!(
+            body.len() >= 512,
+            "ustar Partial body should carry trailer/padding bytes"
+        );
+    }
 }

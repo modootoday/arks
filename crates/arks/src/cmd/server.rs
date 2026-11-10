@@ -1889,7 +1889,8 @@ Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
   opt-out); --inetd Partial; --pid-file writes pid; --detach Partial re-exec
   (unix setsid / win DETACHED_PROCESS; parent may write --pid-file).
   Unix Partial: --syslog (openlog/syslog sink); --user/--group (setgid then setuid).
-  Windows: --syslog/--user/--group documented Missing (no syslog/setuid).
+  Windows: --syslog/--user/--group honest Missing refuse (no POSIX syslog; Event Log ≠
+  syslog and not wired; no setuid/setgid — do not invent Partial).
 Fail-closed Missing (honest): --interpolated-path/--user-path overrides;
   Claimed archive format parity still Missing; Claimed syslog/user/group parity Missing.
   --access-hook=PATH Partial stub body (spawn; exit 0 allow).
@@ -1899,6 +1900,22 @@ Fail-closed Missing (honest): --interpolated-path/--user-path overrides;
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
+}
+
+/// Honest Windows refuse text for `--syslog` (Event Log ≠ syslog; not Partial-wired).
+#[cfg(not(unix))]
+fn daemon_windows_syslog_refuse() -> &'static str {
+    "daemon --syslog Missing on Windows (honest): no POSIX syslog/openlog facility; \
+     Windows Event Log is not a Partial substitute and is not wired; use foreground stderr; \
+     Claimed git-daemon syslog facility/priority parity Missing on all platforms"
+}
+
+/// Honest Windows refuse text for `--user`/`--group` (no setuid/setgid).
+#[cfg(not(unix))]
+fn daemon_windows_user_group_refuse() -> &'static str {
+    "daemon --user/--group Missing on Windows (honest): no setuid/setgid / privilege-drop APIs \
+     equivalent to unix git-daemon; refuse fail-closed — do not invent Partial; \
+     Claimed privilege-drop / capability model Missing"
 }
 
 /// Unix Partial: openlog + one INFO syslog line. Windows: honest Missing.
@@ -1930,11 +1947,7 @@ fn daemon_enable_syslog_partial() -> CliResult<()> {
     }
     #[cfg(not(unix))]
     {
-        Err(CliError::NotImplemented(
-            "daemon --syslog Missing on Windows (honest): no syslog facility sink; \
-             use foreground stderr — Event Log not Partial-wired; not Claimed"
-                .into(),
-        ))
+        Err(CliError::NotImplemented(daemon_windows_syslog_refuse().into()))
     }
 }
 
@@ -1976,9 +1989,7 @@ fn daemon_apply_user_group_partial(user: Option<&str>, group: Option<&str>) -> C
     {
         let _ = (user, group);
         Err(CliError::NotImplemented(
-            "daemon --user/--group Missing on Windows (honest): no setuid/setgid; \
-             refuse fail-closed — not Claimed privilege drop"
-                .into(),
+            daemon_windows_user_group_refuse().into(),
         ))
     }
 }
@@ -2100,5 +2111,27 @@ fn daemon_detach_reexec(args: &[String]) -> CliResult<()> {
         Err(e) => Err(CliError::Msg(format!(
             "daemon --detach: Partial re-exec failed: {e}"
         ))),
+    }
+}
+
+#[cfg(all(test, not(unix)))]
+mod windows_daemon_refuse_tests {
+    use super::{daemon_windows_syslog_refuse, daemon_windows_user_group_refuse};
+
+    #[test]
+    fn windows_syslog_refuse_names_event_log_honesty() {
+        let s = daemon_windows_syslog_refuse();
+        assert!(s.contains("Missing"));
+        assert!(s.contains("Event Log"));
+        assert!(s.contains("syslog"));
+        assert!(!s.to_ascii_lowercase().contains("claimed ok"));
+    }
+
+    #[test]
+    fn windows_user_group_refuse_names_setuid_honesty() {
+        let s = daemon_windows_user_group_refuse();
+        assert!(s.contains("Missing"));
+        assert!(s.contains("setuid") || s.contains("setgid"));
+        assert!(s.contains("refuse"));
     }
 }
