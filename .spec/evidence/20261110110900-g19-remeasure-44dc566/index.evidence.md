@@ -9,8 +9,8 @@ rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110014600]
   evidence: []
 files:
-  - {path: receipt.json, sha256: e15f2847d54f7c24f2e2c2e98c7c7839dbb47da7f0dfe543c86e4417edee19b9, bytes: 6685, store: repo}
-  - {path: arks-pf5-rm-44dc566b.log, sha256: 0d4f5ef7fe13a945c0c7c121e0050a63e2f4de3d545c1ad2a3a1ee98f2bcada2, bytes: 13519, store: repo}
+  - {path: receipt.json, sha256: 4f984865f0209a4578c47af9b06af55f3018eb7636efd8e80e6b5c8e2d330b34, bytes: 6958, store: repo}
+  - {path: arks-pf5-rm-44dc566b.log, sha256: d8e165332fa9f29a99b922a41921d101525fdb8d2cb0d3b44039495ff2d8fd94, bytes: 13793, store: repo}
 ---
 
 # G19 sole-runner remeasure — tip `44dc566` (PF5 7/8; A not flipped)
@@ -59,4 +59,5 @@ Authoritative **best complete** sole Docker `g19` (`--name arks-pf5-rm-44dc566b`
 ## Honesty
 
 - **A (CLONE-LOCAL ≤0.5×):** not flipped — keep `aggressive_na`; PF5 stays **7/8**.
+- **Tip honesty** uses [[evidence:root/20261110111700]] (`91fbf64`: LOCAL **0.7262** / PATH **0.4928**). This receipt remains the historical best-better-LOCAL sample only.
 - Receipt rebuilt into Specfold from the complete sole log (`arks-pf5-rm-44dc566b.log`); gate `out/` was later overwritten by tip churn.
