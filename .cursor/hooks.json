@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "pwsh -NoProfile -File .cursor/hooks/governance-shell-guard.ps1",
+        "matcher": "git\\s+push|git\\s+add\\s+(-A|\\.|--all)|gh\\s+"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "pwsh -NoProfile -File .cursor/hooks/hangul-docs-guard.ps1"
+      }
+    ]
+  }
+}

@@ -12,15 +12,16 @@ Build **arks** (`arks for Git`; working expansion **Agent Revision Kinetic Syste
 
 ## Hard constraints
 
-1. **English only** — all authored project text (Specfold docs, AGENTS, `.agents/**`, `docs/`, comments, commit/PR prose) is English. Proper nouns (`arks`, `CELIR`, `humanymous`) stay. Korean (and other languages) may appear in chat/coordinator briefings only — never in committed Specfold or `docs/`. SoT: `.spec/sot/language-english-only.sot.md`; rule `05-english-only`.
+1. **English only / Hangul ban** — all authored project text (Specfold docs, AGENTS, `.agents/**`, `docs/`, comments, commit/PR prose) is English. Proper nouns (`arks`, `CELIR`, `humanymous`) stay. Korean/Hangul (and other languages) may appear in chat/coordinator briefings only — never in committed Specfold or `docs/`. SoT: `.spec/sot/language-english-only.sot.md`; rule `05-english-only`.
 2. **Standards-first** — object/pack/ref/index/protocol behavior from primary docs only (`git-compat-surface` + research catalog).
-3. **Clean-room authoritative** — product “verified” claims require Docker clean-room; host runs are advisory (`.spec/sot/product-verification-clean-room.sot.md`).
+3. **Clean-room authoritative** — product “verified” claims require Docker clean-room; host runs are advisory (`.spec/sot/product-verification-clean-room.sot.md`). **No invent Claimed/PASS** — rule `28-evidence-honesty`.
 4. **No literal competing SoT** — do not restate or fork humanymous convention ledgers in this repo; cite live paths under `C:\workspaces\humanymous`.
 5. **CELIR / lease boundary** — filesystem `.git` is the sole Git-compat **object store**; CELIR index feature is ops/CI-only (default OFF) — not product Claimed path. Lease/concurrency has its own SoT. Never silently replace Git object-store semantics in Git-compat mode (`.spec/sot/storage-celir-boundary.sot.md`, `.spec/adr/20261110052030-celir-index-optional-product-path-dep.adr.md`).
 6. **Public surface** — repo will be public; no secrets in tracked paths; **human** (`docs/`, README, LICENSE, SECURITY) vs **agent** (`AGENTS.md`, `.agents/`, `.spec/`, `verify/` matrices) vocabulary split; thin Pages vs Specfold brain; English-only public copy; no “faster than Git” marketing outside receipts. SoT: `.spec/sot/public-surface.sot.md`; rules `80-public-surface`, `25-spec-classification`. `.spec.local/` stays gitignored.
 7. **Structural conventions** — SRP, modularization, no flat dumps, naming compliance, context-based dirs, anti-fragmentation, and language-standard layouts (Rust Cargo workspace / crates members first; Specfold, docs, and agents are overlays). SoT: `.spec/sot/structural-conventions.sot.md`; rule `15-structural-conventions`.
-8. **No folklore** — prefer updating `.spec/` over chat-only process invention. **No push** while remote is empty / push-deferred unless the owner explicitly authorizes.
-9. **Commit order** — Specfold SoT canonization (`.spec/sot/**`, `.spec/README.md`) lands **first** in history; implementation (CLI skeleton, crates, workflows, viz) comes **later**, stepwise — do not mix into Spec canonization commits. SoT body `Version` / document revision ≠ product/crate release until the first intentional tag (details: `.spec/README.md`).
+8. **No folklore** — prefer updating `.spec/` over chat-only process invention. **No push** while remote is empty / push-deferred unless the owner explicitly authorizes (rule `91-commit-hygiene`).
+9. **Commit order** — Specfold SoT meaning changes land **first**; implementation later, one concern per commit — rules `27-spec-first-commit-order`, `91-commit-hygiene`. SoT body `Version` ≠ product/crate release — rule `26-sot-version-vs-release` (details: `.spec/README.md`).
+10. **CLI surface** — single bin `arks`; personalities `git|gh|arks`; never spawn stock `git`/`gh` on product paths; **`arks serve` ≠ `arks hub`** — rules `30`, `32`, `33`; skill `guard-cli-surface`.
 
 ## Progressive disclosure (read more only when needed)
 
@@ -64,17 +65,22 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Agent governance / AGENTS role | `.spec/sot/agent-governance.sot.md` |
 | Agent / Specfold readiness | `.spec/sot/agent-dev-readiness.sot.md` |
 | Inherited conventions map | `.spec/sot/conventions-inherit.sot.md` |
-| English-only language lock | `.spec/sot/language-english-only.sot.md` + rule `05-english-only` |
+| English-only / Hangul ban | `.spec/sot/language-english-only.sot.md` + rule `05-english-only` |
+| SoT Version ≠ product release | `.spec/README.md` + rule `26-sot-version-vs-release` |
+| Spec-first commit order | `.spec/README.md` + rule `27-spec-first-commit-order` + skill `commit-governance` |
+| Evidence honesty (no invent Claimed) | rule `28-evidence-honesty` + residual register |
 | Spec / design before code | skill `design-sot` → `.spec/sot/`, `.spec/plan/` |
 | Implement accepted SoT slice | skill `implement-sot-slice` (bottom-up) + rule `70-bottom-up-build-order` |
+| CLI personality / serve≠hub / no git-gh spawn | rules `30`, `32`, `33` + skill `guard-cli-surface` + `.spec/sot/arks-cli-personality-factory.sot.md` |
 | Review Git-compat claims | skill `review-git-compat` |
 | Review CELIR / lease seams | skills `review-celir-boundary`, `review-lease` |
 | Rust style | rule `10-rust-conventions` → cite humanymous (no fork) |
-| Session overlap (light) | rule `90-session-overlap` |
+| Session overlap + commit hygiene | rules `90-session-overlap`, `91-commit-hygiene` |
 | Public surface / human vs agent vocabulary | `.spec/sot/public-surface.sot.md` + rule `80-public-surface`; site `docs/` (`remote_theme: modootoday/jekyll-theme-modootoday`) |
 | Spec classification (`.spec` vs `.spec.local`) | `.spec/README.md` + rule `25-spec-classification` + `.spec/sot/agent-governance.sot.md` |
-| `arks hub` / `arks daemon` / `arks agent` intent | `.spec/sot/arks-hub-product-intent.sot.md` · `.spec/sot/arks-daemon-product-intent.sot.md` · `.spec/sot/arks-agent-product-intent.sot.md` |
+| `arks hub` / `arks daemon` / `arks agent` / self-host | `.spec/sot/arks-hub-product-intent.sot.md` · `.spec/sot/arks-daemon-product-intent.sot.md` · `.spec/sot/arks-agent-product-intent.sot.md` · `.spec/sot/arks-self-host-server.sot.md` |
 | Role perspectives | `.agents/agents/` |
+| Cursor hooks (optional guards) | `.cursor/hooks.json` |
 
 ## Done means
 
