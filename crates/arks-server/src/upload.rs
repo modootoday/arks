@@ -61,6 +61,16 @@ pub fn upload_pack_result_with_nak(
             raw_pack_result(&[], include_nak)
         };
     }
+    // J-CLONE-LOCAL / bare clone: tips already live in objects/pack/*.pack.
+    // Reuse the on-disk pack instead of re-walking + zlib re-encoding undeltified
+    // (profile: cgi_wait ≈26ms was almost entirely pack generate).
+    if let Some(pack) = try_reuse_on_disk_pack(repo, &wants)? {
+        return if want_sideband {
+            sideband_pack(&pack, include_nak)
+        } else {
+            raw_pack_result(&pack, include_nak)
+        };
+    }
     let get = |oid: &Oid| match repo.store().get(oid) {
         Ok(obj) => Ok(Some(obj)),
         Err(arks_store::StoreError::NotFound(_)) => Ok(None),
@@ -74,6 +84,50 @@ pub fn upload_pack_result_with_nak(
     } else {
         raw_pack_result(&pack.pack, include_nak)
     }
+}
+
+
+/// When every `want` is present in a single on-disk pack+idx, return that pack's
+/// bytes. Extra objects in the pack are fine (client did not request thin-pack).
+fn try_reuse_on_disk_pack(repo: &Repository, wants: &[Oid]) -> Result<Option<Vec<u8>>, ServerError> {
+    let pack_dir = repo.store().objects_dir().join("pack");
+    if !pack_dir.is_dir() {
+        return Ok(None);
+    }
+    let entries = std::fs::read_dir(&pack_dir).map_err(|e| ServerError::Msg(e.to_string()))?;
+    for entry in entries {
+        let entry = entry.map_err(|e| ServerError::Msg(e.to_string()))?;
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        if !name.ends_with(".pack") {
+            continue;
+        }
+        let pack_path = entry.path();
+        let idx_path = pack_path.with_extension("idx");
+        if !idx_path.is_file() {
+            continue;
+        }
+        let idx_bytes =
+            std::fs::read(&idx_path).map_err(|e| ServerError::Msg(e.to_string()))?;
+        let idx = match arks_pack::PackIndex::decode(&idx_bytes, FORMAT) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        if wants.iter().all(|w| idx.lookup(w).is_some()) {
+            let pack =
+                std::fs::read(&pack_path).map_err(|e| ServerError::Msg(e.to_string()))?;
+            if std::env::var_os("ARKS_SERVER_PROFILE").is_some() {
+                eprintln!(
+                    "UPLOAD_PACK_REUSE path={} wants={} bytes={}",
+                    pack_path.display(),
+                    wants.len(),
+                    pack.len()
+                );
+            }
+            return Ok(Some(pack));
+        }
+    }
+    Ok(None)
 }
 
 fn list_refs_and_head(repo: &Repository) -> Result<RefsAndHead, ServerError> {

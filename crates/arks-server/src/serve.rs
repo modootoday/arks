@@ -54,7 +54,7 @@ pub fn serve_http_with_opts(
                 });
             }
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                thread::sleep(std::time::Duration::from_millis(20));
+                thread::sleep(std::time::Duration::from_millis(1));
             }
             Err(e) => return Err(e.into()),
         }
@@ -87,7 +87,7 @@ pub fn spawn_loopback_with_opts(
                     });
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    thread::sleep(std::time::Duration::from_millis(20));
+                    thread::sleep(std::time::Duration::from_millis(1));
                 }
                 Err(e) => return Err(e.into()),
             }

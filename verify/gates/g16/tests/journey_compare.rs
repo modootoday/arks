@@ -2,11 +2,10 @@
 //! Matrix: `verify/matrices/matrix-journey.md`. SoT: clean-room-journey-compare v0.3.0.
 
 use std::fs;
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::io::Read;
+use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
-use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
@@ -1672,174 +1671,45 @@ fn write_metrics(path: &Path, journeys: &[JourneyResult], iterations: usize, agg
     fs::write(path, json).expect("write metrics");
 }
 
-struct GitHttpPeer {
+/// Long-lived product `arks serve-http` fixture for J-CLONE-LOCAL.
+///
+/// Replaces per-request `git http-backend` CGI so upload-pack pack-generate
+/// (profile: ~26ms cgi_wait) runs in-process and can reuse on-disk packs.
+struct ArksHttpPeer {
     base_url: String,
-    stop: Arc<Mutex<bool>>,
+    child: std::process::Child,
 }
 
-impl GitHttpPeer {
-    fn start(project_root: PathBuf) -> Self {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
-        let port = listener.local_addr().unwrap().port();
-        let stop = Arc::new(Mutex::new(false));
-        let stop2 = Arc::clone(&stop);
-        thread::spawn(move || {
-            listener.set_nonblocking(true).ok();
-            while !*stop2.lock().unwrap() {
-                match listener.accept() {
-                    Ok((stream, _)) => {
-                        let root = project_root.clone();
-                        thread::spawn(move || {
-                            if let Err(e) = handle_client(stream, &root) {
-                                eprintln!("G16 peer handler: {e}");
-                            }
-                        });
-                    }
-                    Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                        thread::sleep(Duration::from_millis(10));
-                    }
-                    Err(_) => break,
-                }
-            }
-        });
+impl ArksHttpPeer {
+    fn start(bare: PathBuf, bin: &Path) -> Self {
+        let port = {
+            let listener = TcpListener::bind("127.0.0.1:0").expect("bind ephemeral");
+            listener.local_addr().unwrap().port()
+        };
+        let listen = format!("127.0.0.1:{port}");
+        let child = Command::new(bin)
+            .args(["serve-http", "--listen", &listen])
+            .arg(&bare)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap_or_else(|e| panic!("spawn arks serve-http: {e}"));
+        thread::sleep(Duration::from_millis(50));
         Self {
-            base_url: format!("http://127.0.0.1:{port}"),
-            stop,
+            base_url: format!("http://{listen}"),
+            child,
         }
     }
 
-    fn repo_url(&self, name: &str) -> String {
-        format!("{}/{name}", self.base_url)
+    fn repo_url(&self) -> String {
+        self.base_url.clone()
     }
 }
 
-impl Drop for GitHttpPeer {
+impl Drop for ArksHttpPeer {
     fn drop(&mut self) {
-        *self.stop.lock().unwrap() = true;
-    }
-}
-
-fn handle_client(mut stream: TcpStream, project_root: &Path) -> Result<(), String> {
-    stream
-        .set_read_timeout(Some(Duration::from_secs(30)))
-        .ok();
-    let mut buf = Vec::new();
-    let mut tmp = [0u8; 4096];
-    let header_end;
-    loop {
-        let n = stream.read(&mut tmp).map_err(|e| e.to_string())?;
-        if n == 0 {
-            return Ok(());
-        }
-        buf.extend_from_slice(&tmp[..n]);
-        if let Some(pos) = find_header_end(&buf) {
-            header_end = pos;
-            break;
-        }
-        if buf.len() > 1024 * 1024 {
-            return Err("headers too large".into());
-        }
-    }
-    let header_text = String::from_utf8_lossy(&buf[..header_end]).to_string();
-    let mut lines = header_text.split("\r\n");
-    let request = lines.next().unwrap_or("");
-    let mut parts = request.split_whitespace();
-    let method = parts.next().unwrap_or("GET");
-    let path_q = parts.next().unwrap_or("/");
-    let (path, query) = match path_q.split_once('?') {
-        Some((p, q)) => (p.to_string(), q.to_string()),
-        None => (path_q.to_string(), String::new()),
-    };
-    let mut content_length = 0usize;
-    let mut content_type = String::new();
-    for line in lines {
-        let lower = line.to_ascii_lowercase();
-        if let Some(v) = lower.strip_prefix("content-length:") {
-            content_length = v.trim().parse().unwrap_or(0);
-        }
-        if let Some(v) = lower.strip_prefix("content-type:") {
-            content_type = v.trim().to_string();
-        }
-    }
-    if content_type.is_empty() {
-        content_type = "application/x-git-upload-pack-request".into();
-    }
-    let mut body = buf[header_end..].to_vec();
-    while body.len() < content_length {
-        let n = stream.read(&mut tmp).map_err(|e| e.to_string())?;
-        if n == 0 {
-            break;
-        }
-        body.extend_from_slice(&tmp[..n]);
-    }
-    body.truncate(content_length);
-
-    let mut child = Command::new("git")
-        .arg("http-backend")
-        .env("GIT_PROJECT_ROOT", project_root)
-        .env("GIT_HTTP_EXPORT_ALL", "1")
-        .env("REQUEST_METHOD", method)
-        .env("PATH_INFO", &path)
-        .env("QUERY_STRING", &query)
-        .env("CONTENT_TYPE", &content_type)
-        .env("CONTENT_LENGTH", content_length.to_string())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("spawn git http-backend: {e}"))?;
-    {
-        let mut stdin = child.stdin.take().unwrap();
-        stdin.write_all(&body).map_err(|e| e.to_string())?;
-    }
-    let output = child.wait_with_output().map_err(|e| e.to_string())?;
-    if !output.status.success() {
-        return Err(format!(
-            "git http-backend failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
-    }
-    let cgi = output.stdout;
-    let (cgi_headers, cgi_body) = split_cgi(&cgi);
-    let mut status = 200u16;
-    let mut resp_headers = Vec::new();
-    for line in cgi_headers.lines() {
-        if let Some(rest) = line.strip_prefix("Status:") {
-            let code = rest.trim().split_whitespace().next().unwrap_or("200");
-            status = code.parse().unwrap_or(200);
-        } else if !line.is_empty() {
-            resp_headers.push(line.to_string());
-        }
-    }
-    let mut http = format!("HTTP/1.1 {status} OK\r\n");
-    http.push_str(&format!("Content-Length: {}\r\n", cgi_body.len()));
-    for h in resp_headers {
-        http.push_str(&h);
-        http.push_str("\r\n");
-    }
-    http.push_str("Connection: close\r\n\r\n");
-    stream.write_all(http.as_bytes()).map_err(|e| e.to_string())?;
-    stream.write_all(cgi_body).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-fn find_header_end(buf: &[u8]) -> Option<usize> {
-    buf.windows(4).position(|w| w == b"\r\n\r\n").map(|p| p + 4)
-}
-
-fn split_cgi(cgi: &[u8]) -> (String, &[u8]) {
-    if let Some(pos) = cgi.windows(4).position(|w| w == b"\r\n\r\n") {
-        (
-            String::from_utf8_lossy(&cgi[..pos]).to_string(),
-            &cgi[pos + 4..],
-        )
-    } else if let Some(pos) = cgi.windows(2).position(|w| w == b"\n\n") {
-        (
-            String::from_utf8_lossy(&cgi[..pos]).to_string(),
-            &cgi[pos + 2..],
-        )
-    } else {
-        (String::new(), cgi)
+        let _ = self.child.kill();
+        let _ = self.child.wait();
     }
 }
 
@@ -1957,6 +1827,20 @@ fn seed_bare_repo_sized(
             .status
             .success()
     );
+    // Materialize a single on-disk pack so arks-server upload-pack can reuse it
+    // (clone --bare left objects loose on this seed; cgi_wait was ~26ms re-encode).
+    let mut repack = Command::new("git");
+    pin_env(&mut repack);
+    assert!(
+        repack
+            .args(["repack", "-ad"])
+            .current_dir(&bare)
+            .output()
+            .unwrap()
+            .status
+            .success()
+    );
+
     bare
 }
 
@@ -2082,10 +1966,9 @@ fn journey_compare_catalog() {
     {
         let peer_root = root.join("j-clone-peer");
         fs::create_dir_all(&peer_root).unwrap();
-        let _bare = seed_bare_repo_with_files(&peer_root, "app.git", BULK_CLONE_FILES);
-        let peer = GitHttpPeer::start(peer_root.clone());
-        thread::sleep(Duration::from_millis(50));
-        let url = peer.repo_url("app.git");
+        let bare = seed_bare_repo_with_files(&peer_root, "app.git", BULK_CLONE_FILES);
+        let peer = ArksHttpPeer::start(bare, &bin);
+        let url = peer.repo_url();
         push_dual(
             &mut journeys,
             "J-CLONE-LOCAL-01",
