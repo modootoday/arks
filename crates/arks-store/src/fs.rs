@@ -19,7 +19,10 @@ use std::sync::{Arc, RwLock};
 #[derive(Debug)]
 pub struct PendingPackPersist {
     pack_path: PathBuf,
+    /// HTTP body (or pack bytes); pack file starts at [`Self::pack_at`].
     pack: Vec<u8>,
+    /// Byte offset of `PACK` magic inside [`Self::pack`] (0 when already sliced).
+    pack_at: usize,
     idx_path: PathBuf,
     idx: Vec<u8>,
 }
@@ -31,7 +34,8 @@ impl PendingPackPersist {
             fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
         }
         if !self.pack_path.is_file() {
-            fs::write(&self.pack_path, &self.pack).map_err(|e| StoreError::Io(e.to_string()))?;
+            fs::write(&self.pack_path, &self.pack[self.pack_at..])
+                .map_err(|e| StoreError::Io(e.to_string()))?;
         }
         if !self.idx_path.is_file() {
             fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
@@ -175,8 +179,22 @@ impl FilesystemGitStore {
         pack: Vec<u8>,
         format: ObjectFormat,
     ) -> Result<(), StoreError> {
-        let decoded =
-            DecodedPack::decode(&pack, format).map_err(|e| StoreError::Io(e.to_string()))?;
+        self.ingest_pack_bytes_deferred_at(pack, 0, format)
+    }
+
+    /// Decode+cache pack bytes starting at `pack_at` inside `buf` (NAK prefix
+    /// stays in the buffer; persist writes only the PACK suffix — no memmove).
+    pub fn ingest_pack_bytes_deferred_at(
+        &mut self,
+        buf: Vec<u8>,
+        pack_at: usize,
+        format: ObjectFormat,
+    ) -> Result<(), StoreError> {
+        if pack_at > buf.len() {
+            return Err(StoreError::Io("pack offset past end of buffer".into()));
+        }
+        let decoded = DecodedPack::decode(&buf[pack_at..], format)
+            .map_err(|e| StoreError::Io(e.to_string()))?;
         let pack_dir = self.objects_dir.join("pack");
         let hex = checksum_hex(&decoded.checksum);
         let pack_path = pack_dir.join(format!("pack-{hex}.pack"));
@@ -197,7 +215,8 @@ impl FilesystemGitStore {
         self.flush_pending_pack()?;
         self.pending_pack = Some(PendingPackPersist {
             pack_path,
-            pack,
+            pack: buf,
+            pack_at,
             idx_path,
             idx,
         });
@@ -248,6 +267,7 @@ impl FilesystemGitStore {
             self.pending_pack = Some(PendingPackPersist {
                 pack_path,
                 pack: pack.to_vec(),
+                pack_at: 0,
                 idx_path,
                 idx,
             });

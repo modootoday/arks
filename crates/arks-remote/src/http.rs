@@ -299,37 +299,41 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         }
     }
     let (status, content_length, content_type) = parse_cleartext_headers(&buf[..header_end])?;
+    // Build the body Vec directly — Vec::split_off allocates+copies the whole
+    // upload-pack PACK (multi-MB on J-CLONE-LOCAL).
     let body = if let Some(len) = content_length {
-        let need = header_end.saturating_add(len);
-        if need > buf.capacity() {
-            buf.reserve(need - buf.capacity());
-        }
+        let mut body = Vec::with_capacity(len);
+        let already = &buf[header_end..];
+        let take = already.len().min(len);
+        body.extend_from_slice(&already[..take]);
         if len > 16 * 1024 {
             let mut big = vec![0u8; 64 * 1024];
-            while buf.len() < need {
+            while body.len() < len {
                 let n = stream
                     .read(&mut big)
                     .map_err(|e| RemoteError::Http(e.to_string()))?;
                 if n == 0 {
                     break;
                 }
-                buf.extend_from_slice(&big[..n]);
+                let room = len - body.len();
+                body.extend_from_slice(&big[..n.min(room)]);
             }
         } else {
-            while buf.len() < need {
+            while body.len() < len {
                 let n = stream
                     .read(&mut tmp)
                     .map_err(|e| RemoteError::Http(e.to_string()))?;
                 if n == 0 {
                     break;
                 }
-                buf.extend_from_slice(&tmp[..n]);
+                let room = len - body.len();
+                body.extend_from_slice(&tmp[..n.min(room)]);
             }
         }
-        let mut body = buf.split_off(header_end);
         body.truncate(len);
         body
     } else {
+        let mut body = buf.split_off(header_end);
         loop {
             let n = stream
                 .read(&mut tmp)
@@ -337,9 +341,9 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
             if n == 0 {
                 break;
             }
-            buf.extend_from_slice(&tmp[..n]);
+            body.extend_from_slice(&tmp[..n]);
         }
-        buf.split_off(header_end)
+        body
     };
     if !(200..300).contains(&status) {
         let snippet = String::from_utf8_lossy(&body[..body.len().min(512)]);

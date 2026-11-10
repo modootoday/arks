@@ -247,17 +247,17 @@ where
     let (pack_opt, update) = extract_pack_and_shallow(response_body, sideband)?;
     let mut ingested_pack = false;
     match pack_opt {
-        Some(pack) => {
+        Some((buf, pack_at)) => {
             // Keep the received pack as pack+idx (Git layout) instead of
             // exploding every object to loose — fetch/clone hot path for M14.
-            // Clone defers disk via owned move (no second pack.to_vec).
+            // Clone defers disk via owned move; pack_at skips NAK prefix copy.
             if opts.defer_pack_disk {
                 repo.store_mut()
-                    .ingest_pack_bytes_deferred_owned(pack, FORMAT)
+                    .ingest_pack_bytes_deferred_at(buf, pack_at, FORMAT)
                     .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
             } else {
                 repo.store_mut()
-                    .ingest_pack_bytes(&pack, FORMAT)
+                    .ingest_pack_bytes(&buf[pack_at..], FORMAT)
                     .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
             }
             ingested_pack = true;
@@ -434,15 +434,23 @@ fn encode_fetch_request(
 #[allow(dead_code)]
 pub(crate) fn extract_pack(body: Vec<u8>, sideband: bool) -> Result<Option<Vec<u8>>, RemoteError> {
     let (pack, _) = extract_pack_and_shallow(body, sideband)?;
-    Ok(pack)
+    Ok(pack.map(|(buf, at)| {
+        if at == 0 {
+            buf
+        } else {
+            buf[at..].to_vec()
+        }
+    }))
 }
 
+/// Returns `(buf, pack_at)` where `buf[pack_at..]` is the raw PACK (or a
+/// side-band-demuxed pack with `pack_at == 0`).
 fn extract_pack_and_shallow(
-    mut body: Vec<u8>,
+    body: Vec<u8>,
     sideband: bool,
-) -> Result<(Option<Vec<u8>>, ShallowUpdate), RemoteError> {
+) -> Result<(Option<(Vec<u8>, usize)>, ShallowUpdate), RemoteError> {
     let mut offset = 0;
-    // Side-band demux still accumulates; raw PACK after NAK is split_off (no copy).
+    // Side-band demux still accumulates; raw PACK keeps offset into `body`.
     let mut pack = Vec::new();
     let mut saw_status = false;
     let mut update = ShallowUpdate::default();
@@ -511,26 +519,29 @@ fn extract_pack_and_shallow(
             }
         }
     }
-    let pack = if let Some(at) = raw_pack_at {
-        // Move trailing PACK out of the HTTP body — J-CLONE-LOCAL hot path.
-        body.split_off(at)
-    } else {
-        pack
-    };
-    if pack.is_empty() {
-        if saw_status {
-            return Ok((None, update));
+    let extracted = if let Some(at) = raw_pack_at {
+        if at >= body.len() || !body[at..].starts_with(b"PACK") {
+            return Err(RemoteError::Protocol(
+                "demultiplexed payload is not a pack".into(),
+            ));
         }
-        return Err(RemoteError::Protocol(
-            "upload-pack response did not contain a pack".into(),
-        ));
-    }
-    if !pack.starts_with(b"PACK") {
+        Some((body, at))
+    } else if pack.is_empty() {
+        if saw_status {
+            None
+        } else {
+            return Err(RemoteError::Protocol(
+                "upload-pack response did not contain a pack".into(),
+            ));
+        }
+    } else if !pack.starts_with(b"PACK") {
         return Err(RemoteError::Protocol(
             "demultiplexed payload is not a pack".into(),
         ));
-    }
-    Ok((Some(pack), update))
+    } else {
+        Some((pack, 0))
+    };
+    Ok((extracted, update))
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -576,6 +587,7 @@ mod shallow_wire_tests {
         body.extend_from_slice(&pack);
         let (got, update) = extract_pack_and_shallow(body, false).unwrap();
         assert_eq!(update.shallow, vec![tip]);
-        assert!(got.unwrap().starts_with(b"PACK"));
+        let (buf, at) = got.unwrap();
+        assert!(buf[at..].starts_with(b"PACK"));
     }
 }
