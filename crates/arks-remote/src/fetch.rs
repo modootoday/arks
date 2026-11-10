@@ -18,17 +18,17 @@
 //! <https://git-scm.com/docs/gitprotocol-pack>
 
 use crate::advertise::{
-    Advertisement, cap_advertised, content_type_is, parse_advertisement, symref_target,
+    cap_advertised, content_type_is, parse_advertisement, symref_target, Advertisement,
 };
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
 use crate::http::UreqTransport;
 use crate::shallow::{apply_shallow_update, read_shallow, write_shallow};
 use crate::ssh::{SshService, SshSession};
-use crate::transport::{HttpRequest, Transport, header, require_success};
-use crate::url::{SshRemoteUrl, join_url};
+use crate::transport::{header, require_success, HttpRequest, Transport};
+use crate::url::{join_url, SshRemoteUrl};
 use arks_oid::Oid;
-use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
+use arks_protocol::{decode_packet, decode_text_line, encode_packet, encode_text_line, Packet};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;
@@ -434,13 +434,7 @@ fn encode_fetch_request(
 #[allow(dead_code)]
 pub(crate) fn extract_pack(body: Vec<u8>, sideband: bool) -> Result<Option<Vec<u8>>, RemoteError> {
     let (pack, _) = extract_pack_and_shallow(body, sideband)?;
-    Ok(pack.map(|(buf, at)| {
-        if at == 0 {
-            buf
-        } else {
-            buf[at..].to_vec()
-        }
-    }))
+    Ok(pack.map(|(buf, at)| if at == 0 { buf } else { buf[at..].to_vec() }))
 }
 
 /// Returns `(buf, pack_at)` where `buf[pack_at..]` is the raw PACK (or a
