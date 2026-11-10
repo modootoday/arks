@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-10T19:00:00Z
+updated: 2026-11-10T19:15:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential]
 verify: manual
 rel:
@@ -236,7 +236,7 @@ L3 ship is **M23** under [[adr:root/20261109194200]]. M21 catalog **Deferred=0**
 
 ### Post-terminal next-queue (reopen-only; not development Opens)
 
-After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (L0–L2 Done; **L3/R2 dumb push Claimed**; next **L4** release-channel ops). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
+After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (**L0–L4 Done**; L4 = OIDC/Environments dry-run ops readiness, **not** live registry publish PASS; next **L5** / **R5** secrets-gated live scale). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
 
 | Priority | Candidate | Disposition today | Reopen requires |
 |----------|-----------|-------------------|-----------------|

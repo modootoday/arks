@@ -3,7 +3,7 @@ id: research:root/20261110085731
 title: GitHub Actions CI, Cross-OS, perf honesty, and OIDC multi-registry release
 status: active
 created: 2026-11-10T08:57:31Z
-updated: 2026-11-10T00:35:00Z
+updated: 2026-11-10T19:15:00Z
 tags:
   [
     github-actions,
@@ -45,7 +45,7 @@ rel:
 
 Design research for **arks** (Rust CLI) continuous integration expansion, Cross-OS native testing, honest performance measurement venues, and **OIDC / trusted-publishing** release to language registries. Normative “verified” remains Docker clean-room ([[sot:root/product-verification-clean-room]]); GHA is CI/release machinery, not a substitute oracle.
 
-**Implementation status (2026-11-10):** Workflows landed — `.github/workflows/ci.yml`, `.github/workflows/release.yml`. Publish jobs use Environments `crates` / `npm` / `pypi` / `rubygems` (required reviewer `myso-kr`, tag policy `v*`). Runner pins avoid deprecated Annotation labels — see [Runner-image Annotations](#runner-image-annotations-2026-11). Signing channels remain OUT. Registry publish steps fail-closed / skip when packaging or OIDC trust is not ready (no long-lived tokens).
+**Implementation status (2026-11-10):** Workflows landed — `.github/workflows/ci.yml`, `.github/workflows/release.yml`. Publish jobs use Environments `crates` / `npm` / `pypi` / `rubygems` (required reviewer `myso-kr`, tag policy `v*`). **L4 ops dry-run landed:** `workflow_dispatch` dry-run (dist + `scripts/release-channel-readiness.sh` + `docs/release.md`); dry-run is **not** a live registry publish PASS. Runner pins avoid deprecated Annotation labels — see [Runner-image Annotations](#runner-image-annotations-2026-11). Signing channels remain OUT. Registry publish steps fail-closed / skip when packaging or OIDC trust is not ready (no long-lived tokens).
 
 **Scope honesty (2026-11-10):** Channels that require **certificate signing / code signing / publisher identity / notarization / paid publisher certs / long-lived package-repo GPG** are **OUT of current release-channel scope** (Deferred). Near-term publish surface is OIDC registries + GitHub Releases with **unsigned or checksum-only** artifacts. See [Current release-channel scope](#current-release-channel-scope).
 
@@ -252,13 +252,19 @@ PR / push (main) — ci.yml:
   clean-room-smoke (image build)     [ubuntu-24.04 + Docker]  ← NOT product-verified
   # No perf.yml: G16/G19 Verified stays sole-runner Docker (research §B)
 
-Tag v* — release.yml:
+Tag v* — release.yml (live path):
   dist-binaries (os/arch matrix)     [ungated]
   github-release (draft + SHA256SUMS)[ungated; checksum/unsigned assets]
   publish-crates   (OIDC)  [environment: crates]     # skip if publish=false
   publish-npm      (OIDC)  [environment: npm]        # skip until npm/ tree exists
   publish-pypi     (OIDC)  [environment: pypi]       # skip until PyPI packaging exists
   publish-rubygems (OIDC)  [environment: rubygems]   # skip until gemspec exists
+
+workflow_dispatch — release.yml (L4 dry-run; default dry_run=true):
+  dist-binaries (same matrix)        [ungated]
+  dry-run-report (checksums + scripts/release-channel-readiness.sh)
+  # no github-release; no Environment OIDC publish; not a Verified PASS
+
   # OUT / Deferred (signing-constrained): submit-winget, apt-repo, chocolatey,
   # Authenticode MSI/EXE, Apple notarized installers
   # Deferred (non-cert): homebrew-tap if demand

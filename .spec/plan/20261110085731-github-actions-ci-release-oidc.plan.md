@@ -3,7 +3,7 @@ id: plan:root/20261110085731
 title: GitHub Actions Cross-OS CI and OIDC release (pointer)
 status: active
 created: 2026-11-10T08:57:31Z
-updated: 2026-11-10T00:35:00Z
+updated: 2026-11-10T19:15:00Z
 tags: [github-actions, ci, cross-os, oidc, release, perf-ci, plan, pointer]
 rel:
   depends_on:
@@ -64,6 +64,8 @@ Also present (unchanged): `github-pages`. Settings: https://github.com/modootoda
 
 **Human residual:** configure trusted publishers on crates.io / npm / PyPI / RubyGems bound to `release.yml` + matching Environment name; flip `publish = false` / land wrapper trees before first real publish; Environment reviewers already set (`myso-kr`).
 
+**L4 ops dry-run (2026-11-10):** `workflow_dispatch` dry-run path on `release.yml` + `scripts/release-channel-readiness.sh` + thin Pages `docs/release.md`. Dry-run success is **ops readiness only** — never a Verified registry publish PASS. Live path remains tag `v*` → draft Release → Environment-approved OIDC jobs.
+
 ## Research topics (Phase 0 exit checklist)
 
 | Topic | Disposition | Cite |
@@ -75,6 +77,7 @@ Also present (unchanged): `github-pages`. Settings: https://github.com/modootoda
 
 ## Next
 
-1. Resolve open naming/musl/Release-asset decisions in a future SoT if product intent requires.
-2. Land npm / PyPI / gem wrapper packaging when product is publish-ready; enable `cargo publish` for crates.
-3. Optional later: `gha-advisory` journey exit-0 / trend jobs only under research §B labels — never as Verified.
+1. Operator: bind trusted publishers per registry when ready to cut a real `v*` tag; approve Environments deliberately.
+2. Land npm / PyPI / gem wrapper packaging when product is publish-ready; flip `publish = false` only then.
+3. Product-completion ladder next: **L5** / **R5** secrets-gated live forge scale (never invent PASS); **L9** remains closed owner policy.
+4. Optional later: `gha-advisory` journey exit-0 / trend jobs only under research §B labels — never as Verified.

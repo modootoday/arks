@@ -31,6 +31,8 @@ Human-facing Pages live under `docs/`. Prefer short product language over dumpin
 
 Start from [`AGENTS.md`](https://github.com/modootoday/arks/blob/main/AGENTS.md). Clean-room Docker runs prove claims; they are not the end-user install path. See [Performance](../performance/) and [Concurrent sessions](../concurrent-sessions/) for how verification framing is explained publicly.
 
+Release-channel ops (OIDC Environments, tag dry-run, draft Releases): [Release channels](../release/). Dry-run readiness is not a registry publish PASS.
+
 ## Next
 
-[Getting started](../getting-started/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)
+[Getting started](../getting-started/) [Release channels](../release/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)

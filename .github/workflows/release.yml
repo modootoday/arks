@@ -1,7 +1,8 @@
-# Tag-triggered release for arks (Rust CLI).
+# Tag-triggered release for arks (Rust CLI) + workflow_dispatch dry-run.
 #
-# Flow: v* tag → ungated dist build → draft GitHub Release (checksum/unsigned)
+# Live: v* tag → ungated dist → draft GitHub Release (checksum/unsigned)
 #       → per-channel OIDC publish jobs, each gated by its GitHub Environment.
+# Dry-run: workflow_dispatch → dist + readiness report only (no Release/publish).
 #
 # Environments (live on modootoday/arks; required reviewer myso-kr; tag policy v*):
 #   crates | npm | pypi | rubygems
@@ -29,12 +30,20 @@ name: release
 on:
   push:
     tags: ["v*"]
+  # Dry-run readiness: dist + structural report only. Never publishes from
+  # workflow_dispatch alone (Environments require tag policy v*).
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dist + readiness only (no draft Release, no OIDC publish)"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: false
 
 env:
@@ -102,9 +111,51 @@ jobs:
           path: artifacts/*
           if-no-files-found: error
 
+  # --- Dry-run only: readiness report (no Release, no OIDC, no Environment) ---
+  dry-run-report:
+    name: release-channel dry-run report
+    if: github.event_name == 'workflow_dispatch'
+    needs: dist
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Checksums + readiness (not a publish PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## Dry-run artifacts"
+            echo
+            echo "workflow_dispatch dry-run does **not** create a GitHub Release"
+            echo "and does **not** claim crates.io / npm / PyPI / RubyGems publish PASS."
+            echo
+            cd artifacts
+            ls -la
+            echo
+            echo "### SHA256"
+            if command -v sha256sum >/dev/null; then
+              sha256sum *
+            else
+              shasum -a 256 *
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          cd "$GITHUB_WORKSPACE"
+          bash scripts/release-channel-readiness.sh | tee -a "$GITHUB_STEP_SUMMARY"
+
   # --- Ungated: draft GitHub Release + attach assets (checksum / unsigned) ---
   github-release:
     name: GitHub Release (draft)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: dist
     runs-on: ubuntu-24.04
     permissions:
@@ -151,6 +202,7 @@ jobs:
   # --- Approve-gated OIDC: crates.io ---
   publish-crates:
     name: publish crates.io (OIDC)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: github-release
     runs-on: ubuntu-24.04
     # Human approval via Environment protection (required reviewers).
@@ -199,6 +251,7 @@ jobs:
   # --- Approve-gated OIDC: npm ---
   publish-npm:
     name: publish npm (OIDC)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: github-release
     runs-on: ubuntu-24.04
     environment: npm
@@ -243,6 +296,7 @@ jobs:
   # --- Approve-gated OIDC: PyPI ---
   publish-pypi:
     name: publish PyPI (OIDC)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: github-release
     runs-on: ubuntu-24.04
     environment: pypi
@@ -277,6 +331,7 @@ jobs:
   # --- Approve-gated OIDC: RubyGems (Phase 2 shape; skip until gemspec exists) ---
   publish-rubygems:
     name: publish RubyGems (OIDC)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: github-release
     runs-on: ubuntu-24.04
     environment: rubygems
