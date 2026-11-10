@@ -47,7 +47,9 @@ mod walk;
 #[allow(unsafe_code)] // Windows Cred* FFI for first-party wincred helper only.
 mod wallet;
 
-pub use checkout::{checkout_commit, checkout_tree, missing_blob_oids, missing_checkout_oids};
+pub use checkout::{
+    checkout_commit, checkout_tree, missing_blob_oids, missing_checkout_oids, smudge_worktree_blob,
+};
 pub use clone::{
     clone_git, clone_git_with, clone_http, clone_http_with, clone_local, clone_local_with,
     clone_ssh, clone_ssh_with,
@@ -62,6 +64,7 @@ pub use fetch::{
     FetchOptions, FetchOutcome, fetch_git, fetch_git_with, fetch_http, fetch_http_with,
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
+pub use http::http_get;
 pub use push::{
     PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,
     push_remote_with, push_ssh, push_ssh_with,

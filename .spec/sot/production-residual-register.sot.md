@@ -208,18 +208,18 @@ Every row is **Claimed / Refuse-closed / N/A / Closed** — **no bare Deferred**
 | **P2** | **FW-PIN** | **Closed (process)** — pin advance hygiene; pin **2.39.5** | [[sot:root/clean-room-git-pin-advance]], `verify/images.lock.json` | Deliberate pin bump + G14-class re-prove |
 | **P2** | **FW-SLO** | **Closed** — M17 ≤0.8× + M18/Pf5 evidence; no new host SLOs | [[evidence:root/20261109090000]], [[evidence:root/20261109143000]], [[sot:root/clean-room-journey-compare]] | Clean-room gate only; no laptop marketing SLO |
 | **P3** | **FW-CELIR-OS** | **Refuse-closed (terminal)** — CELIR ObjectStore | [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]], [[adr:root/20261109204916]] | ObjectStore reverse ADR (forbidden product path) |
-| **P4** | **FW-GUI** | **Open (FS7)** — closest external-tool handoff; not embed Tcl/Tk | [[research:root/20261110212414]], [[sot:root/product-intent]] | FS7 Claimed slice + evidence |
-| **P4** | **FW-SCALAR** | **Open (FS6 note)** — closest parity or written impossible | [[research:root/20261110212414]] | FS6 disposition |
-| **P4** | **FW-LFS** | **Open (FS6)** — filter-process / pointer closest parity | [[research:root/20261110212414]] | FS6 SoT + evidence |
+| **P4** | **FW-GUI** | **Claimed (FS7 handoff)** — external `gui`/`gitk`/`citool` refuse+reason; not embed Tcl/Tk | [[research:root/20261110212414]], [[adr:root/20261110213500]] | Re-verify after GUI wire change |
+| **P4** | **FW-SCALAR** | **Claimed (FS6 refuse)** — `scalar` refuse with reason (≠ core git porcelain) | [[research:root/20261110212414]] | Documented closest |
+| **P4** | **FW-LFS** | **Claimed (FS6 closest)** — `arks lfs`→`git-lfs`; filter clean/smudge; in-process pointer→`.git/lfs/objects` | [[adr:root/20261110214000]], [[evidence:root/20261110214100]] | Full LFS server / network fetch remain non-claim |
 | **P4** | **FW-FORGE-B** | **Impossible (not a git feature)** — host PR/Checks UX; use `gh` | [[sot:root/product-intent]], [[sot:root/remote-host-compatibility-surface]] scope (B) | Documented impossible under FS DoD |
 | **P5** | **FW-CAT-FS-007** | **Impossible (host env)** — cloud sync on `.git` | Catalog FS-007 | Document + detect when SoTable |
 | **P5** | **FW-CAT-FS-014** | **Impossible (host policy)** — SELinux/AppArmor deny `.lock` rename | Catalog FS-014 | Errno honesty closest |
-| **P5** | **FW-CAT-HOOK-008** | **Open (FS8)** — proc-receive / push-options races; **FS2** protocol Claimed | Catalog HOOK-008, [[adr:root/20261110212500]] | Hostile harness SoT |
-| **P5** | **FW-CAT-MAINT-004** | **Open (FS5)** — dumb HTTP `update-server-info` races | Catalog MAINT-004 | FS5 |
-| **P5** | **FW-CAT-MISC-006** | **Open (FS6)** — shadow refs as ordinary refs honesty | Catalog MISC-006 | FS6 |
-| **P5** | **FW-CAT-NET-006** | **Open (FS5)** — bundle URI clone | Catalog NET-006, [git bundle](https://git-scm.com/docs/git-bundle) | FS5 |
-| **P5** | **FW-CAT-OBJ-004** | **Open (FS8)** — SHA-1 collision / sha256 hostile | Catalog OBJ-004 | FS8 |
-| **P5** | **FW-CAT-REF-017** | **Open (FS5)** — `git replace` concurrent edit | Catalog REF-017, [git-replace](https://git-scm.com/docs/git-replace) | FS5 |
+| **P5** | **FW-CAT-HOOK-008** | **Claimed (FS8 closest)** — `proc-receive.lock` concurrent refuse; FS2 protocol Claimed | Catalog HOOK-008, [[adr:root/20261110212500]] | Full race-freedom without hostile gate still non-claim |
+| **P5** | **FW-CAT-MAINT-004** | **Claimed (FS5 closest)** — `update-server-info` refuses under `info/refs.lock` | Catalog MAINT-004 | Re-verify after server-info wire change |
+| **P5** | **FW-CAT-MISC-006** | **Claimed (FS6)** — shadow refs as ordinary refs under `refs/` | Catalog MISC-006 | Forge UX still out |
+| **P5** | **FW-CAT-NET-006** | **Claimed (FS5/NET-006)** — HTTP(S)+local `--bundle-uri`; lock + Content-Length refuse | Catalog NET-006, [[adr:root/20261110214000]], [[evidence:root/20261110214100]] | Server `bundle-uri` advertise still non-claim |
+| **P5** | **FW-CAT-OBJ-004** | **Claimed closest (FS8)** — fsck OidMismatch refuse; sha256 CLI refuse; crypto immunity Impossible | Catalog OBJ-004, [[adr:root/20261110214000]], [[evidence:root/20261110214100]] | Full sha256 porcelain CLI still non-claim |
+| **P5** | **FW-CAT-REF-017** | **Claimed (FS5 closest)** — `arks replace` + `replace.lock` refuse | Catalog REF-017, [git-replace](https://git-scm.com/docs/git-replace) | Re-verify after replace wire change |
 | **P5** | **FW-CAT-WIN-003** | **Impossible (host OS)** — OneDrive placeholders | Catalog WIN-003 | Errno / stub honesty |
 | **P6** | **FW-PF5-J-BRANCH** | **Claimed (≤0.5×)** — J-BRANCH-01 (under umbrella **8/8**) | [[sot:root/pf5-journey-seed-amortization]], [[evidence:root/20261110224500]], [[evidence:root/20261110142500]], [[adr:root/20261110162000]] | G19 regress after amortization change |
 | **P6** | **FW-PF5-J-BUNDLE** | **Claimed (≤0.5×)** — J-BUNDLE-01 (under umbrella **8/8**) | Same | Same |
@@ -250,7 +250,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; **O1 secrets hard-block** ([[evidence:root/20261110210200]]; Environment `g8-live` secrets=0); live remasure still needs secrets+receipt (**≠** fake PASS) | Secrets + receipt for any live samples; never invent latency |
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | — | Optional O-ladder O1–O_final | Historical Done in [[research:root/20261110205403]]; superseded for feature DoD by Full Symmetry ladder | Keep evidence current |
-| — | Full Symmetry ladder FS0–FS_final | **DoD met** [[research:root/20261110212414]]; **FS0–FS_final Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]); remaining = explicit reopen harnesses (NET-006 HTTP bundle / OBJ-004 / in-process LFS smudge) — not casual N/A; HOOK-008 closest = proc-receive.lock; **L9** closed; G8 secrets operator | Keep evidence current |
+| — | Full Symmetry ladder FS0–FS_final | **DoD met** [[research:root/20261110212414]]; **FS0–FS_final Done**; harness reopen closed [[adr:root/20261110214000]] + [[evidence:root/20261110214100]] (NET-006 / OBJ-004 / LFS smudge Claimed closest); remaining = documented Impossible (host/env/forge) + non-claims (full LFS server, sha256 porcelain, crypto collision immunity); **L9** closed; G8 secrets operator | Keep evidence current |
 
 ## Why
 

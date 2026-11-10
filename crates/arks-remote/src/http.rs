@@ -434,6 +434,9 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         return Err(RemoteError::Http(format!("HTTP {status}: {snippet}")));
     }
     let mut headers = Vec::new();
+    if let Some(len) = content_length {
+        headers.push(("content-length".into(), len.to_string()));
+    }
     if let Some(ct) = content_type {
         headers.push(("content-type".into(), ct));
     }
@@ -444,6 +447,17 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         status,
         headers,
         body,
+    })
+}
+
+/// Plain HTTP(S) GET for claimed client helpers (e.g. `--bundle-uri` download).
+pub fn http_get(url: &str) -> Result<HttpResponse, RemoteError> {
+    let mut transport = UreqTransport::new();
+    transport.exchange(&HttpRequest {
+        method: "GET".into(),
+        url: url.to_string(),
+        headers: Vec::new(),
+        body: Vec::new(),
     })
 }
 
@@ -487,6 +501,9 @@ fn find_header_end(buf: &[u8]) -> Option<usize> {
 fn read_ureq_response(response: ureq::Response) -> Result<HttpResponse, RemoteError> {
     let status = response.status();
     let mut headers = Vec::new();
+    if let Some(cl) = response.header("content-length") {
+        headers.push(("content-length".into(), cl.to_string()));
+    }
     if let Some(ct) = response.header("content-type") {
         headers.push(("content-type".into(), ct.to_string()));
     }

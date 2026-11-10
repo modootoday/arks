@@ -98,9 +98,11 @@ Every catalog ID has exactly one disposition. **Dispose ≠ “all Git races fix
 
 Honesty: `Deferred=0 Claimed=212 Refuse=0 N/A=9` (catalog rows; L3 product valve remains refuse-closed separately).
 
-#### N/A-out-of-scope (9)
+#### N/A-out-of-scope (9) — historical M21 exit list
 
 `FS-007`, `FS-014`, `HOOK-008`, `MAINT-004`, `MISC-006`, `NET-006`, `OBJ-004`, `REF-017`, `WIN-003`
+
+**FS reopen honesty (does not invent M21 gate PASS):** residual [[sot:root/production-residual-register]] + [[adr:root/20261110214000]] Claimed-closest slices for `HOOK-008` / `MAINT-004` / `MISC-006` / `NET-006` / `OBJ-004` / `REF-017` (and related FW-LFS smudge). Remaining true host/env **Impossible**: `FS-007`, `FS-014`, `WIN-003`. M21 arithmetic above stays historical.
 
 #### M21 work queue remaining
 
@@ -355,7 +357,7 @@ Honesty: `Deferred=0 Claimed=212 Refuse=0 N/A=9` (catalog rows; L3 product valve
 | NET-003 | network | HTTP keep-alive / connection pool exhaustion | Hundreds of agents open smart HTTP sessions | 429/503; TLS handshake storms | HTTP transport; host limits | S2 | common | CI matrix hammer same host | mitigate-with-compat |
 | NET-004 | network | SSH multiplexing races | ControlMaster socket contention | ssh failures; hung mux | ssh ControlPath practices | S2 | occasional | N ssh fetches with shared ControlMaster | mitigate-with-compat |
 | NET-005 | network | Protocol v2 ls-refs vs concurrent tip move | Advertisement stale by apply time | Negotiation mismatch; empty fetch | gitprotocol-v2 | S3 | common | ls-refs then long gap then fetch-pack | mitigate-with-compat |
-| NET-006 | network | Bundle URI / clone bundle races | Parallel clones hit same bundle source | Partial downloads; checksum fails | bundle URI docs | S2 | occasional | N clones with bundle URI | out-of-scope |
+| NET-006 | network | Bundle URI / clone bundle races | Parallel clones hit same bundle source | Partial downloads; checksum fails | bundle URI docs | S2 | occasional | N clones with bundle URI | mitigate-with-compat |
 | NET-007 | network | Credential helper cache stampede | Many helpers fill/ask concurrently | Auth prompts; helper lock files; token thrash | gitcredentials / helper protocols | S2 | common | N agents fetch private remote first time | differentiate-beyond-git |
 | NET-008 | network | askPass / interactive credential under agents | No TTY; hung waits | Processes block forever | GIT_ASKPASS / core.askPass | S2 | common | Agent without helper hits HTTPS auth | mitigate-with-compat |
 
@@ -366,7 +368,7 @@ Honesty: `Deferred=0 Claimed=212 Refuse=0 N/A=9` (catalog rows; L3 product valve
 | OBJ-001 | object | Concurrent loose object create same OID | Identical content hashed by many agents | Usually OK (same bytes); rare create races on Windows | objects/xx/… loose create | S3 | common | N agents hash identical blob | mitigate-with-compat |
 | OBJ-002 | object | Concurrent distinct loose creates fan-out dir pressure | Hundreds of writers create many loose objects | Directory entry storms; auto-gc threshold hit | layout objects/[0-9a-f]{2} | S4 | dominant | N agents commit unique blobs without packing | differentiate-beyond-git |
 | OBJ-003 | object | Object write without reachable ref then prune | Writer creates objects; gc prunes before ref update | Missing object; corruption if ref added later | git-gc NOTES concurrent prune risk | S0 | occasional | Long-running writer; concurrent gc --prune | differentiate-beyond-git |
-| OBJ-004 | object | Hash collision pretends (SHA-1 ecosystem) | Theoretical collision attacks / mismatched content | Wrong object accepted | SHA-1 transition / sha256 repos | S0 | rare | Hostile content in multi-agent untrusted inputs | out-of-scope |
+| OBJ-004 | object | Hash collision pretends (SHA-1 ecosystem) | Theoretical collision attacks / mismatched content | Wrong object accepted | SHA-1 transition / sha256 repos | S0 | rare | Hostile content in multi-agent untrusted inputs | mitigate-with-compat |
 | OBJ-005 | object | Partial object file on crash | Writer dies mid-loose write | Corrupt loose object; fsck errors | Write then rename patterns vary by path | S0 | occasional | Kill mid-hash-object write | mitigate-with-compat |
 | OBJ-006 | object | Alternates borrow race | Alternate store packs/prunes while borrower reads | Missing object from alternates | objects/info/alternates | S1 | occasional | Shared alternate ODB; gc on donor; read on borrower | mitigate-with-compat |
 | OBJ-007 | object | Quarantine dir (receive-pack) vs premature advertise | Objects in quarantine not yet promoted | Concurrent local readers miss quarantine objects | receive-pack quarantine | S1 | rare | Push in quarantine; local fsck concurrently | mitigate-with-compat |

@@ -2,7 +2,9 @@
 //!
 //! arks does not embed an LFS server. When `git-lfs` is on PATH, `arks lfs …`
 //! re-executes it with the same argv so muscle-memory `git lfs` → `arks lfs`
-//! works. Pointer smudge/clean remains via configured `filter.lfs.*` helpers.
+//! works. Checkout materialize also: honors `filter.*.smudge`, and **in-process**
+//! resolves Git LFS pointer blobs from `.git/lfs/objects/…` when present
+//! ([[adr:root/20261110214000]]). Network LFS transfer remains `git-lfs` / helpers.
 //!
 //! Cite: <https://git-lfs.com/>, Full Symmetry FS6.
 

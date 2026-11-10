@@ -130,6 +130,27 @@ fn walk_check(
             return Ok(());
         }
     };
+    // OBJ-004: recompute content OID — refuse collision pretends / mismatched content.
+    let format = match oid.kind() {
+        arks_oid::OidKind::Sha1 => arks_store::ObjectFormat::Sha1,
+        arks_oid::OidKind::Sha256 => arks_store::ObjectFormat::Sha256,
+    };
+    match obj.oid(format) {
+        Ok(got) if got == *oid => {}
+        Ok(got) => {
+            return Err(CliError::Msg(format!(
+                "fsck: OID mismatch expected {} got {} (OBJ-004 — hostile/corrupt object refuse; sha1 collision pretend or mismatched content)",
+                oid.to_hex(),
+                got.to_hex()
+            )));
+        }
+        Err(e) => {
+            return Err(CliError::Msg(format!(
+                "fsck: cannot recompute OID for {}: {e} (OBJ-004)",
+                oid.to_hex()
+            )));
+        }
+    }
     match obj.kind {
         ObjectKind::Commit => {
             let c = Commit::decode(&obj.payload)?;

@@ -3,7 +3,7 @@ id: sot:root/arks-remote
 title: arks-remote unit
 status: active
 created: 2026-11-08T11:05:00Z
-updated: 2026-11-10T21:00:00Z
+updated: 2026-11-10T21:41:00Z
 tags: [m6, m16, unit, remote, client, smart-http, dumb-http, webdav, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow, r1, r2, r3, filter, promisor, s1, s3, o2, tree-0]
 verify: manual
 rel:
@@ -79,6 +79,8 @@ Version **0.5.5**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 8a. **Clone composition (local path / `file://`).** Resolve path; discover source `$GIT_DIR`; init dest layout; hardlink-or-copy `objects/` from source (prefer hardlink; packs kept; pack-aware store); copy heads/tags + set `HEAD` / `origin` tracking; baseline checkout. Refuse non-local `file://` hosts and non-path schemes outside this table.
 8b. **Clone composition (SSH).** Init + SSH fetch + baseline checkout (same as HTTP composition after objects arrive).
 8c. **Clone composition (`git://`).** Init + `git://` fetch + baseline checkout (same as HTTP composition after objects arrive).
+8d. **`--bundle-uri` (FS5 / NET-006).** Client MAY seed objects after clone from a **local** bundle file or an **`http(s)://`** GET ([[adr:root/20261110214000]]). HTTP download MUST use an exclusive cache lock (concurrent clones sharing the URI refuse), MUST refuse empty/truncated bodies when `Content-Length` mismatches, then unbundle. Server `bundle-uri` capability advertise remains non-claim.
+8e. **Checkout smudge (FS6).** Worktree materialize MUST honor configured `filter.<name>.smudge` and MUST in-process resolve Git LFS pointer blobs from `$GIT_DIR/lfs/objects/…` when present (size-checked). Network LFS transfer remains external `git-lfs` / helper.
 9. **Capability honesty.** Prefer protocol v1 for M6 product claim (v2 MAY be parsed later). Never advertise unimplemented caps on the client want line beyond the negotiated subset. Unknown optional peer caps MAY be ignored.
 10. **Auth.** HTTPS: optional credentials via URL userinfo; `ARKS_REMOTE_USERNAME`/`ARKS_REMOTE_PASSWORD`; configured `credential.helper` (including first-party `wincred` / `libsecret` / `osxkeychain`); `GIT_ASKPASS`/`core.askPass`/`SSH_ASKPASS`; and TTY terminal prompt when `GIT_TERMINAL_PROMPT`≠`0` — [[sot:root/credential-helper-askpass]]. No forge OAuth UX. SSH: OpenSSH agent / key files / `GIT_SSH_COMMAND`. Secrets MUST NOT enter the tree or fixtures. Recorded/local peers MAY need no auth.
 11. **Pull.** Incomplete `pull` (fetch+merge without Pa merge) MUST refuse non-zero without mutating remote state. SSH URLs are claimed under Sy-4 (not refuse).

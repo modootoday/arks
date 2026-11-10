@@ -44,6 +44,7 @@ fn refuse_unknown_repo_extensions(repo: &Repository) -> CliResult<()> {
     let mut in_extensions = false;
     let mut in_core = false;
     let mut unknown = Vec::new();
+    let mut object_format: Option<String> = None;
     for raw in text.lines() {
         let line = raw.trim();
         if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
@@ -57,9 +58,12 @@ fn refuse_unknown_repo_extensions(repo: &Repository) -> CliResult<()> {
         }
         if let Some((k, v)) = line.split_once('=') {
             let key = k.trim().to_ascii_lowercase();
-            let val = v.trim();
+            let val = v.trim().trim_matches('"');
             if in_core && key == "repositoryformatversion" {
                 format_v1 = val == "1";
+            }
+            if in_extensions && key == "objectformat" {
+                object_format = Some(val.to_ascii_lowercase());
             }
             if in_extensions && !KNOWN_EXTENSIONS.contains(&key.as_str()) {
                 unknown.push(key);
@@ -71,6 +75,13 @@ fn refuse_unknown_repo_extensions(repo: &Repository) -> CliResult<()> {
             "unknown repository extension(s): {} (CFG-004 — format v1 unknown extensions.* hard refuse; MUST NOT proceed)",
             unknown.join(", ")
         )));
+    }
+    // OBJ-004 closest: CLI porcelain remains Sha1; refuse sha256 repos fail-closed
+    // (library sha256 Claimed in arks-hash/store/pack — not casual N/A).
+    if matches!(object_format.as_deref(), Some("sha256")) {
+        return Err(CliError::Msg(
+            "extensions.objectFormat=sha256 (OBJ-004 — CLI porcelain remains Sha1; sha256 object format is library-Claimed in arks-hash/store/pack; full sha256 repo product not claimed on CLI; refuse rather than casual N/A)".into(),
+        ));
     }
     Ok(())
 }

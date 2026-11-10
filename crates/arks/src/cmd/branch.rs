@@ -341,7 +341,9 @@ pub(crate) fn restore_paths(
             if let Some(parent) = abs.parent() {
                 fs::create_dir_all(parent)?;
             }
-            fs::write(&abs, &blob.payload)?;
+            let payload = arks_remote::smudge_worktree_blob(&repo, &work, &rel, &blob.payload)
+                .map_err(|e| CliError::Msg(e.to_string()))?;
+            fs::write(&abs, &payload)?;
         }
         if staged {
             let meta_size = blob.payload.len().min(u32::MAX as usize) as u32;

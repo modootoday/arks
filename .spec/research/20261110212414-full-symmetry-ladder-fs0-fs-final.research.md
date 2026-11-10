@@ -91,7 +91,7 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 | force-with-lease on dumb WebDAV | Not generally meaningful on dumb | N/A | Closest = keep smart-pack lease Claimed; document dumb non-applicability | **FS2** note |
 | Full Apache litmus / every DAV class | Broader than git-http-push | G41 subset Claimed | Expand litmus only if SoTable | **FS5** |
 | Extra filter-specs beyond `blob:none`/`tree:0` | Many filter forms | Refuse remainder | **SoT-amend → implement** per-spec | **FS4** |
-| Bundle URI clone | `bundle-uri` capability | Catalog NET-006 N/A | **Implement** client/server subset | **FS5** |
+| Bundle URI clone | `bundle-uri` capability | Catalog NET-006 | **Claimed** HTTP(S)+local `--bundle-uri` + race/truncation refuse; server advertise still non-claim | **FS5** |
 | `git replace` / replace refs | First-class | Catalog REF-017 N/A concurrent; CLI may be partial | **Implement** CLI + concurrent honesty | **FS5** |
 | Shadow refs (`refs/pull/…`) | Host convention; git stores ordinary refs | Catalog MISC-006 N/A | Closest = ordinary ref read/write under `refs/`; forge UX still out | **FS6** |
 | `update-server-info` races | Dumb HTTP helper | Catalog MAINT-004 N/A | **Implement** `update-server-info` + race harness | **FS5** |
@@ -100,7 +100,7 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 
 | Gap | Git | arks today | FS class | Ladder |
 |-----|-----|------------|----------|--------|
-| Git LFS | Separate `git-lfs` + filter process; `git lfs` UX | Product OOS exclusion | Closest = long-running filter process + pointer smudge/clean parity; full LFS server optional | **FS6** |
+| Git LFS | Separate `git-lfs` + filter process; `git lfs` UX | Product OOS exclusion | **Claimed closest** = `arks lfs` handoff + filter clean/smudge + in-process pointer→`.git/lfs/objects`; full LFS server non-claim | **FS6** |
 | `scalar` | Microsoft VFS helper | OOS | Closest = document N/A with reason (not required for git porcelain parity; scalar ≠ core git feature set) **or** minimal enlistment stubs if owner insists | **FS6** note |
 | `gitk` / `git-gui` / citool | Tcl/Tk GUIs invoked via git | OOS | **Closest parity**: not embeddable as CLI engine duty; ship refuse + documented external-tool handoff; full GUI = separate product SoT | **FS7** |
 
@@ -118,7 +118,7 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 |-----|-------|--------|
 | FS-007 cloud sync on `.git` | Environmental hazard, not a git feature | **Impossible** (document) + closest = refuse/detect when known sync markers |
 | FS-014 SELinux/AppArmor deny lock rename | Host policy | **Impossible** to “implement SELinux”; closest = clear errno honesty |
-| OBJ-004 SHA-1 collision / sha256 transition hostile | Research/hostile inputs | **FS8** dedicated harness after sha256 product claim (if any) |
+| OBJ-004 SHA-1 collision / sha256 transition hostile | Research/hostile inputs | **Claimed closest** = fsck OidMismatch refuse + sha256 CLI refuse (library sha256 Claimed); crypto collision immunity **Impossible** |
 | WIN-003 OneDrive placeholders | Host OS | **Impossible** as feature; closest = errno / stub detection honesty |
 
 ### F. Explicitly out of *this* ladder (not feature symmetry)
@@ -143,11 +143,11 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 | **FS2** | `proc-receive` | Advertise when hook present; spawn proc-receive; honor rewrite commands; report-status-v2 option lines as claimed; ≠ HOOK-008 race Claimed yet | **Done** ([[adr:root/20261110212500]] + [[evidence:root/20261110212545]]) |
 | **FS3** | Patch siblings | `add -i` menu subset; `add -e`; hunk-level `-p`; `stash -p` / related `-p` | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]) |
 | **FS4** | Extra filter-specs | `tree:<depth>` + `blob:limit=<n>`; refuse unlisted | **Done** (same ADR/evidence) |
-| **FS5** | Bundle URI / replace / update-server-info | `replace` CLI; local `--bundle-uri`; info/refs.lock refuse | **Done** (HTTP bundle race → residual) |
-| **FS6** | LFS closest + shadow-ref ordinary refs | `filter.*.clean` honor; scalar refuse+reason; ordinary refs already store `refs/pull` | **Done** (smudge/server residual) |
+| **FS5** | Bundle URI / replace / update-server-info | `replace` CLI; local + **HTTP(S)** `--bundle-uri` with NET-006 lock/truncation honesty; info/refs.lock refuse | **Done** ([[adr:root/20261110214000]] + [[evidence:root/20261110214100]]) |
+| **FS6** | LFS closest + shadow-ref ordinary refs | `filter.*.clean` + **smudge**; **in-process** LFS pointer → `.git/lfs/objects`; scalar refuse; ordinary `refs/pull` | **Done** (full LFS server still non-claim) |
 | **FS7** | GUI/OAuth closest slices | External `gui`/`gitk`/`citool` handoff; OAuth via external helper; forge UX impossible | **Done** |
-| **FS8** | Hostile catalog edges | Documented impossibles + HOOK-008/NET-006/OBJ-004 remain reopen harness rows | **Done** (harness residual honest) |
-| **FS_final** | Symmetry currency | No *casual* N/A; remaining rows are Claimed, Impossible, or explicit reopen harness | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]; **L9**/G8 non-FS) |
+| **FS8** | Hostile catalog edges | Host/env impossibles; HOOK-008=`proc-receive.lock`; **OBJ-004** fsck OidMismatch + sha256 CLI refuse | **Done** ([[adr:root/20261110214000]]) |
+| **FS_final** | Symmetry currency | No *casual* N/A; remaining = Claimed / Impossible+closest (no open harness rows) | **Done** ([[adr:root/20261110214000]] + [[evidence:root/20261110214100]]; **L9**/G8 non-FS) |
 
 ### Non-goals (still)
 

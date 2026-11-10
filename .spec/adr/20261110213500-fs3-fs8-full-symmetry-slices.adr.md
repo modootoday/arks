@@ -23,11 +23,11 @@ rel:
 |------|---------------|----------------------------------|
 | **FS3** | Hunk-level `add -p` (y/n/a/d/q/s/e); `add -e`; `add -i` menu (status/update/patch/quit); `stash -p` | Pixel curses chrome identity |
 | **FS4** | Filter specs `tree:<depth>`, `blob:limit=<n>` (+k/m/g) in addition to `blob:none`/`tree:0` | Unlisted combine:/sparse: forms until SoT |
-| **FS5** | `replace` CLI; `update-server-info` refuses under `info/refs.lock`; local `--bundle-uri` seed | HTTP bundle-uri race harness (NET-006 → FS8 residual) |
-| **FS6** | Honor `filter.<name>.clean` when `.gitattributes` sets `filter=`; `scalar` refuse with reason | Full LFS server product; smudge on checkout (next reopen) |
+| **FS5** | `replace` CLI; `update-server-info` refuses under `info/refs.lock`; local `--bundle-uri` seed | HTTP bundle-uri race harness → closed in [[adr:root/20261110214000]] |
+| **FS6** | Honor `filter.<name>.clean` when `.gitattributes` sets `filter=`; `scalar` refuse with reason | Smudge + in-process LFS → closed in [[adr:root/20261110214000]]; full LFS server still non-claim |
 | **FS7** | `gui`/`gitk`/`citool` external-tool handoff refuse; credential helper may be OAuth-capable externally | Embedded Tcl/Tk; in-arks browser OAuth UX |
-| **FS8** | Host/env impossibles documented; HOOK-008 closest = `proc-receive.lock` serialize | Full race-freedom Claimed without hostile gate |
+| **FS8** | Host/env impossibles documented; HOOK-008 closest = `proc-receive.lock` serialize | OBJ-004 → closed in [[adr:root/20261110214000]]; full race-freedom without hostile gate still non-claim |
 
 ## Consequences
 
-Public comparison + residual flip rows to Claimed / Impossible+slice. **FS_final Done** when no *casual* N/A remains — NET-006 HTTP bundle races / OBJ-004 / in-process LFS smudge stay **explicit reopen harnesses**, not convenience N/A. **L9** + live G8 remain non-FS.
+Public comparison + residual flip rows to Claimed / Impossible+slice. Harness reopen closed by [[adr:root/20261110214000]]. **L9** + live G8 remain non-FS.

@@ -143,7 +143,7 @@ pub fn checkout_tree(repo: &Repository, work: &Path, tree: &Oid) -> Result<(), R
             let _ = fs::remove_file(&p);
         }
     }
-    let mut entries = materialize_jobs(repo, jobs)?;
+    let mut entries = materialize_jobs(repo, work, jobs)?;
     sort_entries(&mut entries);
     let index = Index {
         version: 2,
@@ -286,6 +286,7 @@ fn collect_jobs(
 
 fn materialize_jobs(
     repo: &Repository,
+    work: &Path,
     jobs: Vec<CheckoutJob>,
 ) -> Result<Vec<IndexEntry>, RemoteError> {
     let mut entries = Vec::with_capacity(jobs.len());
@@ -320,9 +321,9 @@ fn materialize_jobs(
             .zip(blobs)
             .map(|((i, rel, path, oid, mode), blob)| (i, rel, path, oid, mode, blob))
             .collect();
-        materialize_cached(prepared, stamp, cpus)?
+        materialize_cached(repo, work, prepared, stamp, cpus)?
     } else {
-        materialize_uncached(repo, writes, stamp, cpus)?
+        materialize_uncached(repo, work, writes, stamp, cpus)?
     };
     entries.extend(written);
     entries.sort_by_key(|(i, _)| *i);
@@ -345,6 +346,8 @@ fn checkout_workers(cpus: usize, jobs: usize) -> usize {
 }
 
 fn materialize_cached(
+    repo: &Repository,
+    work: &Path,
     prepared: Vec<(usize, String, PathBuf, Oid, u32, Arc<RawObject>)>,
     stamp: (u32, u32),
     cpus: usize,
@@ -353,7 +356,10 @@ fn materialize_cached(
     if workers <= 1 {
         let mut out = Vec::with_capacity(prepared.len());
         for (i, rel, path, oid, mode, blob) in prepared {
-            out.push((i, write_cached_blob(&rel, &path, &oid, mode, &blob, stamp)?));
+            out.push((
+                i,
+                write_cached_blob(repo, work, &rel, &path, &oid, mode, &blob, stamp)?,
+            ));
         }
         return Ok(out);
     }
@@ -367,7 +373,10 @@ fn materialize_cached(
                 scope.spawn(move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
                     let mut local = Vec::with_capacity(piece.len());
                     for (i, rel, path, oid, mode, blob) in piece {
-                        local.push((*i, write_cached_blob(rel, path, oid, *mode, blob, stamp)?));
+                        local.push((
+                            *i,
+                            write_cached_blob(repo, work, rel, path, oid, *mode, blob, stamp)?,
+                        ));
                     }
                     Ok(local)
                 }),
@@ -395,6 +404,7 @@ fn materialize_cached(
 
 fn materialize_uncached(
     repo: &Repository,
+    work: &Path,
     writes: Vec<(usize, String, PathBuf, Oid, u32)>,
     stamp: (u32, u32),
     cpus: usize,
@@ -403,7 +413,10 @@ fn materialize_uncached(
     if workers <= 1 {
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
-            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode, stamp)?));
+            out.push((
+                i,
+                write_one_blob(repo, work, &rel, &path, &oid, mode, stamp)?,
+            ));
         }
         return Ok(out);
     }
@@ -417,7 +430,10 @@ fn materialize_uncached(
                 scope.spawn(move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
                     let mut local = Vec::with_capacity(piece.len());
                     for (i, rel, path, oid, mode) in piece {
-                        local.push((*i, write_one_blob(repo, rel, path, oid, *mode, stamp)?));
+                        local.push((
+                            *i,
+                            write_one_blob(repo, work, rel, path, oid, *mode, stamp)?,
+                        ));
                     }
                     Ok(local)
                 }),
@@ -443,7 +459,10 @@ fn materialize_uncached(
     Ok(out)
 }
 
+#[allow(clippy::too_many_arguments)] // checkout write job fields + smudge context
 fn write_cached_blob(
+    repo: &Repository,
+    work: &Path,
     rel: &str,
     path: &Path,
     oid: &Oid,
@@ -454,8 +473,9 @@ fn write_cached_blob(
     if blob.kind != ObjectKind::Blob {
         return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
     }
-    fs::write(path, &blob.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
-    let size = u32::try_from(blob.payload.len()).unwrap_or(u32::MAX);
+    let payload = apply_smudge(repo, work, rel, &blob.payload)?;
+    fs::write(path, &payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    let size = u32::try_from(payload.len()).unwrap_or(u32::MAX);
     let (sec, nsec) = stamp;
     Ok(IndexEntry {
         ctime_sec: sec,
@@ -477,6 +497,7 @@ fn write_cached_blob(
 
 fn write_one_blob(
     repo: &Repository,
+    work: &Path,
     rel: &str,
     path: &Path,
     oid: &Oid,
@@ -488,7 +509,255 @@ fn write_one_blob(
         .store()
         .get_shared(oid)
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
-    write_cached_blob(rel, path, oid, mode, &blob, stamp)
+    write_cached_blob(repo, work, rel, path, oid, mode, &blob, stamp)
+}
+
+/// Apply claimed smudge to blob bytes for worktree materialize (LFS in-process + filter).
+pub fn smudge_worktree_blob(
+    repo: &Repository,
+    work: &Path,
+    rel: &str,
+    payload: &[u8],
+) -> Result<Vec<u8>, RemoteError> {
+    apply_smudge(repo, work, rel, payload)
+}
+
+/// FS6 reopen: smudge on checkout — in-process LFS pointer resolve, then `filter.*.smudge`.
+fn apply_smudge(
+    repo: &Repository,
+    work: &Path,
+    rel: &str,
+    payload: &[u8],
+) -> Result<Vec<u8>, RemoteError> {
+    if let Some(bytes) = resolve_lfs_pointer_local(repo, payload)? {
+        return Ok(bytes);
+    }
+    let Some(name) = attribute_filter_name(work, rel) else {
+        return Ok(payload.to_vec());
+    };
+    let cfg = fs::read_to_string(repo.git_dir().join("config")).unwrap_or_default();
+    let key = format!("filter.{name}.smudge");
+    let Some(cmd) = config_value(&cfg, &key) else {
+        return Ok(payload.to_vec());
+    };
+    run_filter_command(&cmd, work, rel, payload, &key)
+}
+
+/// In-process Git LFS pointer → `.git/lfs/objects/aa/bb/<oid>` when present.
+fn resolve_lfs_pointer_local(
+    repo: &Repository,
+    payload: &[u8],
+) -> Result<Option<Vec<u8>>, RemoteError> {
+    let Ok(text) = std::str::from_utf8(payload) else {
+        return Ok(None);
+    };
+    if !text.starts_with("version https://git-lfs.github.com/spec/v1\n")
+        && !text.starts_with("version https://git-lfs.github.com/spec/v1\r\n")
+    {
+        return Ok(None);
+    }
+    let mut oid_hex: Option<&str> = None;
+    let mut size: Option<u64> = None;
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("oid sha256:") {
+            oid_hex = Some(rest.trim());
+        } else if let Some(rest) = line.strip_prefix("size ") {
+            size = rest.trim().parse().ok();
+        }
+    }
+    let Some(oid_hex) = oid_hex else {
+        return Ok(None);
+    };
+    if oid_hex.len() != 64 || !oid_hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Ok(None);
+    }
+    let path = repo
+        .git_dir()
+        .join("lfs")
+        .join("objects")
+        .join(&oid_hex[..2])
+        .join(&oid_hex[2..4])
+        .join(oid_hex);
+    if !path.is_file() {
+        // Missing local object: leave pointer bytes (network LFS fetch remains git-lfs).
+        return Ok(None);
+    }
+    let bytes = fs::read(&path).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    if let Some(sz) = size {
+        if bytes.len() as u64 != sz {
+            return Err(RemoteError::Msg(format!(
+                "lfs in-process smudge: size mismatch for {oid_hex} (got {} want {sz})",
+                bytes.len()
+            )));
+        }
+    }
+    Ok(Some(bytes))
+}
+
+fn attribute_filter_name(work: &Path, rel: &str) -> Option<String> {
+    let attr = work.join(".gitattributes");
+    let text = fs::read_to_string(attr).ok()?;
+    let file = Path::new(rel)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or(rel);
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.split_whitespace();
+        let pattern = parts.next().unwrap_or("");
+        let matches = pattern == "*"
+            || pattern == rel
+            || pattern == file
+            || (pattern.starts_with("*.") && file.ends_with(&pattern[1..]));
+        if !matches {
+            continue;
+        }
+        for a in parts {
+            if let Some(name) = a.strip_prefix("filter=") {
+                return Some(name.to_string());
+            }
+        }
+    }
+    None
+}
+
+fn config_value(text: &str, key: &str) -> Option<String> {
+    let key = key.to_ascii_lowercase();
+    let mut section = String::new();
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+        if line.starts_with('[') {
+            section = line
+                .trim_matches(|c| c == '[' || c == ']')
+                .to_ascii_lowercase()
+                .replace('"', "");
+            continue;
+        }
+        let Some((k, v)) = line.split_once('=') else {
+            continue;
+        };
+        let full = if section.contains(' ') {
+            let mut bits = section.split_whitespace();
+            let head = bits.next().unwrap_or("");
+            let name = bits.next().unwrap_or("");
+            format!("{head}.{name}.{}", k.trim().to_ascii_lowercase())
+        } else {
+            format!("{section}.{}", k.trim().to_ascii_lowercase())
+        };
+        if full == key {
+            return Some(v.trim().trim_matches('"').to_string());
+        }
+    }
+    None
+}
+
+fn run_filter_command(
+    cmd: &str,
+    work: &Path,
+    rel: &str,
+    payload: &[u8],
+    key: &str,
+) -> Result<Vec<u8>, RemoteError> {
+    let mut argv: Vec<String> = cmd.split_whitespace().map(|s| s.to_string()).collect();
+    if argv.is_empty() {
+        return Ok(payload.to_vec());
+    }
+    for a in &mut argv {
+        *a = a.replace("%f", rel);
+    }
+    let mut child = std::process::Command::new(&argv[0])
+        .args(&argv[1..])
+        .current_dir(work)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .map_err(|e| RemoteError::Msg(format!("{key}: {e}")))?;
+    if let Some(mut stdin) = child.stdin.take() {
+        use std::io::Write;
+        stdin
+            .write_all(payload)
+            .map_err(|e| RemoteError::Msg(format!("{key} stdin: {e}")))?;
+    }
+    let out = child
+        .wait_with_output()
+        .map_err(|e| RemoteError::Msg(format!("{key}: {e}")))?;
+    if !out.status.success() {
+        return Err(RemoteError::Msg(format!(
+            "{key} exited {}",
+            out.status.code().unwrap_or(-1)
+        )));
+    }
+    Ok(out.stdout)
+}
+
+#[cfg(test)]
+mod lfs_smudge_tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn in_process_lfs_pointer_resolves_local_object() {
+        let dir = TempDir::new().unwrap();
+        let git = dir.path().join(".git");
+        fs::create_dir_all(git.join("objects")).unwrap();
+        fs::create_dir_all(git.join("refs/heads")).unwrap();
+        fs::write(git.join("HEAD"), "ref: refs/heads/main\n").unwrap();
+        fs::write(
+            git.join("config"),
+            "[core]\n\trepositoryformatversion = 0\n",
+        )
+        .unwrap();
+        let content = b"hello-from-lfs-storage";
+        let oid_hex = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        let obj_path = git
+            .join("lfs/objects")
+            .join(&oid_hex[..2])
+            .join(&oid_hex[2..4]);
+        fs::create_dir_all(&obj_path).unwrap();
+        fs::write(obj_path.join(oid_hex), content).unwrap();
+        let repo = Repository::open(&git).unwrap();
+        let pointer = format!(
+            "version https://git-lfs.github.com/spec/v1\noid sha256:{oid_hex}\nsize {}\n",
+            content.len()
+        );
+        let got = resolve_lfs_pointer_local(&repo, pointer.as_bytes())
+            .unwrap()
+            .expect("resolved");
+        assert_eq!(got, content);
+    }
+
+    #[test]
+    fn in_process_lfs_size_mismatch_refuses() {
+        let dir = TempDir::new().unwrap();
+        let git = dir.path().join(".git");
+        fs::create_dir_all(git.join("objects")).unwrap();
+        fs::create_dir_all(git.join("refs/heads")).unwrap();
+        fs::write(git.join("HEAD"), "ref: refs/heads/main\n").unwrap();
+        fs::write(
+            git.join("config"),
+            "[core]\n\trepositoryformatversion = 0\n",
+        )
+        .unwrap();
+        let oid_hex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let obj_path = git
+            .join("lfs/objects")
+            .join(&oid_hex[..2])
+            .join(&oid_hex[2..4]);
+        fs::create_dir_all(&obj_path).unwrap();
+        fs::write(obj_path.join(oid_hex), b"xx").unwrap();
+        let repo = Repository::open(&git).unwrap();
+        let pointer =
+            format!("version https://git-lfs.github.com/spec/v1\noid sha256:{oid_hex}\nsize 99\n");
+        let err = resolve_lfs_pointer_local(&repo, pointer.as_bytes()).unwrap_err();
+        assert!(err.to_string().contains("size mismatch"), "{err}");
+    }
 }
 
 fn ensure_dir(path: &Path, made: &mut HashSet<PathBuf>) -> Result<(), RemoteError> {

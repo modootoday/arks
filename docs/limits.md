@@ -52,7 +52,7 @@ Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxk
 
 ### Interactive / patch?
 
-**FS1/FS3 Claimed:** hunk-level `add -p` (TTY or `ARKS_ADD_PATCH_ANSWERS`), `add -i` menu, `add -e`, `stash -p`, and `rebase -i` via sequence/editor fallback. See [Git vs arks](../git-vs-arks/).
+**FS1/FS3 Claimed:** hunk-level `add -p` (TTY or `ARKS_ADD_PATCH_ANSWERS`), `add -i` menu, `add -e`, `stash -p`, and `rebase -i` via sequence/editor fallback. **FS5/NET-006:** `clone --bundle-uri` accepts local paths and `http(s)://` with concurrent-lock and Content-Length honesty. **FS6:** checkout honors `filter.*.smudge` and in-process Git LFS pointers under `.git/lfs/objects`. **OBJ-004:** `fsck` refuses OID mismatches; sha256 repo CLI refuses (library sha256 remains). See [Git vs arks](../git-vs-arks/).
 
 ### Alias coverage?
 

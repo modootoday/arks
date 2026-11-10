@@ -2,6 +2,7 @@
 
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags};
+use std::fs;
 use std::path::PathBuf;
 pub fn cmd_remote(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &[])?;
@@ -357,26 +358,104 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
         )));
     }
     if let Some(bundle) = &bundle_uri {
-        // FS5 closest: local bundle path only (HTTP bundle-uri races → FS8/NET-006).
-        if !bundle.is_file() {
-            return Err(CliError::NotImplemented(format!(
-                "clone --bundle-uri: only local bundle files are claimed (got '{}')",
-                bundle.display()
-            )));
-        }
+        // FS5 + NET-006: local file or http(s) download with race/truncation honesty.
+        let uri = bundle.display().to_string();
+        let local_bundle = resolve_bundle_uri(&uri)?;
         let cwd = std::env::current_dir().map_err(|e| CliError::Msg(e.to_string()))?;
         std::env::set_current_dir(&dest).map_err(|e| CliError::Msg(e.to_string()))?;
-        let unbundle_args = vec!["unbundle".into(), bundle.display().to_string()];
+        let unbundle_args = vec!["unbundle".into(), local_bundle.display().to_string()];
         let res = crate::cmd::bundle::cmd_bundle(&unbundle_args);
         let _ = std::env::set_current_dir(&cwd);
         res?;
-        eprintln!(
-            "note: FS5 — seeded objects from local --bundle-uri {}",
-            bundle.display()
-        );
+        eprintln!("note: FS5/NET-006 — seeded objects from --bundle-uri {uri}");
     }
     println!("Cloned into '{}'", dest.display());
     Ok(())
+}
+
+/// Resolve `--bundle-uri` to a local file (download http(s) atomically; NET-006).
+fn resolve_bundle_uri(uri: &str) -> CliResult<PathBuf> {
+    if uri.starts_with("http://") || uri.starts_with("https://") {
+        return download_http_bundle(uri);
+    }
+    let path = PathBuf::from(uri);
+    if !path.is_file() {
+        return Err(CliError::Msg(format!(
+            "clone --bundle-uri: not a local file or http(s) URL ('{}')",
+            path.display()
+        )));
+    }
+    Ok(path)
+}
+
+fn download_http_bundle(url: &str) -> CliResult<PathBuf> {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    let key = format!("{:016x}", hasher.finish());
+    let cache = std::env::temp_dir().join("arks-bundle-uri");
+    fs::create_dir_all(&cache).map_err(|e| CliError::Msg(e.to_string()))?;
+    let lock = cache.join(format!("{key}.lock"));
+    let part = cache.join(format!("{key}.part"));
+    let final_path = cache.join(format!("{key}.bundle"));
+    // NET-006: concurrent clones sharing this URI serialize via exclusive lock file.
+    if lock.is_file() {
+        return Err(CliError::Msg(format!(
+            "{} (NET-006 — concurrent HTTP bundle-uri download refuse; serialize clones sharing this URI; lease ≠ skip)",
+            lock.display()
+        )));
+    }
+    fs::write(&lock, b"arks-bundle-uri\n").map_err(|e| CliError::Msg(e.to_string()))?;
+    let cleanup = |part: &PathBuf, lock: &PathBuf| {
+        let _ = fs::remove_file(part);
+        let _ = fs::remove_file(lock);
+    };
+    let response = match arks_remote::http_get(url) {
+        Ok(r) => r,
+        Err(e) => {
+            cleanup(&part, &lock);
+            return Err(CliError::Msg(format!("bundle-uri GET {url}: {e}")));
+        }
+    };
+    if response.status != 200 {
+        cleanup(&part, &lock);
+        return Err(CliError::Msg(format!(
+            "bundle-uri GET {url}: HTTP {}",
+            response.status
+        )));
+    }
+    if response.body.is_empty() {
+        cleanup(&part, &lock);
+        return Err(CliError::Msg(
+            "NET-006 — empty HTTP bundle-uri body; refuse unbundle".into(),
+        ));
+    }
+    if let Some((_, cl)) = response
+        .headers
+        .iter()
+        .find(|(n, _)| n.eq_ignore_ascii_case("content-length"))
+    {
+        if let Ok(expected) = cl.parse::<usize>() {
+            if response.body.len() != expected {
+                cleanup(&part, &lock);
+                return Err(CliError::Msg(format!(
+                    "NET-006 — truncated HTTP bundle-uri body (got {} bytes, Content-Length {expected}); refuse unbundle",
+                    response.body.len()
+                )));
+            }
+        }
+    }
+    if let Err(e) = fs::write(&part, &response.body) {
+        cleanup(&part, &lock);
+        return Err(CliError::Msg(e.to_string()));
+    }
+    if let Err(e) = fs::rename(&part, &final_path) {
+        cleanup(&part, &lock);
+        return Err(CliError::Msg(e.to_string()));
+    }
+    let _ = fs::remove_file(&lock);
+    Ok(final_path)
 }
 
 fn parse_depth(raw: &str) -> CliResult<u32> {
