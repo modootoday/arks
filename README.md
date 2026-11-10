@@ -2,23 +2,25 @@
 
 **arks** — **Agent Revision Kinetic System** — is a Git-compatible revision CLI and infra, written in Rust, for environments where **many concurrent sessions** (agents, orchestrators, humans) hit the same repositories.
 
-When tens to hundreds of sessions commit, check out, merge, or move worktrees at once, stock Git’s revision contention becomes the bottleneck. arks keeps the **same `.git` on disk** and a **fully symmetric CLI**, so you can adopt with `alias git=arks` and keep muscle memory while the engine addresses diverse contention scenarios.
+When tens to hundreds of sessions commit, check out, merge, or move worktrees at once, stock Git’s revision contention becomes the bottleneck. arks keeps the **same `.git` on disk** and a **symmetric CLI**, so you can adopt with `alias git=arks` (or `alias gh=arks`) and keep muscle memory while the engine addresses diverse contention scenarios.
 
 Compatibility with documented Git formats and commands comes first. Clean-room timings exist as evidence ([Performance](docs/performance.md)); this README does not market a blanket “faster than Git” slogan.
 
 > **Runtime vs verification:** End users run native `arks`. Docker clean-room compose is for **maintainer verification** of compatibility and timing claims — not the product install path.
+>
+> **Honesty:** Design intent and CLI shells are **not** automatic **Claimed**. Surfaces marked **Partial** / **Missing** fail closed or document stubs — this README does not invent PASS.
 
 ## Why arks
 
 | Pain | Response |
 |------|----------|
 | Multi-agent / multi-session orchestration piles onto one revision system | Native Rust engine + product leases and optional high-concurrency shapes aimed at that load |
-| Switching tools breaks habits | Git-symmetric CLI; adopt via alias or PATH shim |
+| Switching tools breaks habits | Git-symmetric CLI; forge client leaves flattened beside porcelain; adopt via alias or PATH shim |
 | Parallel proprietary stores break Git tooling | Same filesystem `.git` in Git-compatible mode — stock Git remains a peer |
 
-arks is **not** an agent framework. It is the **revision layer** those environments share.
+arks is **not** an agent framework. It is the **revision layer** those environments share. Optional `arks agent …` is an explicit extension on the **same** binary — not the core product story.
 
-More narrative: [docs/](docs/) — especially [Concurrent sessions](docs/concurrent-sessions.md) and [Overview](docs/overview.md).
+More narrative: [docs/](docs/) — especially [Concurrent sessions](docs/concurrent-sessions.md), [Completeness](docs/completion.md), and [Overview](docs/overview.md).
 
 ## Install / build
 
@@ -30,11 +32,13 @@ cd arks
 cargo build -p arks --release
 ```
 
-The binary is `arks` (debug: `target/debug/arks`, release: `target/release/arks`). Put it on your `PATH`, or invoke it with `cargo run -p arks -- …`.
+The published binary is **`arks` only** (debug: `target/debug/arks`, release: `target/release/arks`). Put it on your `PATH`, or invoke it with `cargo run -p arks -- …`.
 
 ```bash
 cargo run -p arks -- --help
 ```
+
+There is no separate `arks-hub` / `arks-daemon` / `arks-agent` product binary.
 
 ## Quick start
 
@@ -59,23 +63,69 @@ arks push
 
 Same repository as Git: you can inspect the tree with stock `git` anytime — arks does not invent a separate object store for Git-compatible mode.
 
-## Alias `git` → `arks`
+### Personalities (`git` | `gh` | `arks`)
 
-The published binary stays **`arks`**. Drop-in usage is a shell alias or a PATH shim, not a renamed binary:
+One binary; three muscle memories (design / Partial — not Claimed drop-in proof):
+
+| How you invoke | Personality | Expectation |
+|----------------|-------------|-------------|
+| `alias git=arks` / basename `git` / `ARKS_PERSONALITY=git` | **git** | Peer-pure Git argv, stdout, exit codes |
+| `alias gh=arks` / basename `gh` / `ARKS_PERSONALITY=gh` | **gh** | Peer-pure forge-client argv, stdout, exit codes |
+| Bare `arks` (default) | **arks** | Git-first merged surface; flat forge leaves (`pr`, `issue`, …); unified overlap where designed |
+
+CI that today calls `git` / `gh` should prefer the peer personalities. Details: [CLI personality](docs/cli-personality.md).
+
+### Alias sketch
 
 ```bash
 alias git=arks
+# optional forge peer:
+alias gh=arks
 ```
-
-Then familiar commands (`git status`, `git commit -m …`) invoke arks with the same arguments.
 
 **Honesty:**
 
-- Treat the alias as the adoption path for claimed commands — not as a promise that every Git subcommand and flag is covered today.
-- Commands or flags that are unimplemented or explicitly out of scope exit **non-zero** and must not mutate the repository.
-- Shell aliases do not apply inside many scripts; use a PATH shim named `git` when you need non-interactive drop-in behavior.
+- Treat aliases as the adoption path for claimed commands — not as a promise that every Git/`gh` subcommand and flag is covered today.
+- Unimplemented or out-of-scope commands exit **non-zero** and must not mutate the repository.
+- Shell aliases do not apply inside many scripts; use a PATH shim named `git` / `gh` when you need non-interactive drop-in behavior.
 
 More detail: [docs/alias-git-arks.md](docs/alias-git-arks.md).
+
+## Self-host (`arks serve`)
+
+Product hosting umbrella — **one** process intended for Git HTTP + SSH + forge API (GitHub-class self-host). **`arks serve` ≠ forge client.** Flat client leaves (`arks pr`, `arks issue`, …) talk *to* a forge base URL; they do not start the host.
+
+```bash
+# Claimed HTTP git wire today — opt out of Missing/Partial modules:
+arks serve --no-ssh --no-forge /path/to/repos
+
+# Product default shape (HTTP+SSH+forge) fails closed while SSH / forge-in-serve are Partial:
+# arks serve /path/to/repos
+```
+
+| Surface | Role | Tip honesty |
+|---------|------|-------------|
+| `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH listener **fail-closed Partial/Missing**; forge-in-serve **Partial** |
+| `arks serve config …` | Server config store | **Partial** (≠ `arks config`, ≠ hub client settings) |
+| `arks daemon` | `git://` peer (`git-daemon` symmetry) | **Partial** flag deepen — **not** the GitHub-class host story |
+| Flat `arks pr` / `issue` / `auth` / … | Forge **client** | **Partial** stubs/forwards; nested `arks hub …` transitional only |
+| `arks agent …` | Optional review / CEV extension | **Partial** (provider/config/doctor); not git-alias DoD |
+
+Ports: prefer **22 / 80 / 443 / 9418**; label **2222 / 8080** as demo/alternate — [Ports](docs/ports.md), [Self-host](docs/self-host.md).
+
+## Symmetry DoD pillars
+
+Public clean-room Definition of Done is **three peer-symmetry pillars** (plus adjacent self-host e2e — not a fourth Claimed pillar):
+
+| Pillar | Stock peer | Product entry |
+|--------|------------|---------------|
+| **1. CLI** | `git` | `arks <cmd>` / personality `git` |
+| **2. Daemon** | `git-daemon` | `arks daemon` |
+| **3. Forge client** | `gh` | flat `arks pr` / `issue` / … (transitional `arks hub …`) |
+
+**Completion milestone** for this docs pass means: owning design SoTs + CLI shell (personality / serve umbrella / flat leaves) are coherent and Partial surfaces are documented honestly — **not** that every forge/SSH/agent body is Claimed. See [Completeness](docs/completion.md).
+
+Product paths **never** spawn `git` or `gh`. Stock peers are oracles for clean-room only.
 
 ## Common workflows
 
@@ -87,6 +137,8 @@ More detail: [docs/alias-git-arks.md](docs/alias-git-arks.md).
 | Branches | `arks branch`, `arks checkout` / `arks switch`, `arks merge` |
 | Remotes | `arks remote`, `arks fetch`, `arks pull`, `arks push`, `arks clone` |
 | Sign / verify (SSH) | `arks commit -S` with `gpg.format=ssh`; `arks verify-commit` |
+| Self-host (HTTP git) | `arks serve --no-ssh --no-forge <dir>` |
+| Forge client (Partial) | `arks pr list`, `arks issue list`, `arks auth status` |
 
 Fuller tables: [docs/workflows.md](docs/workflows.md). For a command list, run `arks --help`.
 
@@ -111,10 +163,12 @@ Charts and honesty labels: [docs/performance.md](docs/performance.md). Prefer **
 
 Short and honest — see [docs/limits.md](docs/limits.md) and [Git vs arks](docs/git-vs-arks.md):
 
-- **Not** a GUI embed (`gitk`/`git-gui` handoff only), `scalar` product, forge host API tool (Issues/PRs/Checks — use `gh`), or agent orchestrator.
-- The Git **object store** remains ordinary filesystem `.git`. An optional index sidecar may sit beside it for product queries; arks does not replace `.git` objects with a different store in Git-compatible mode.
-- **Claimed** (with receipts): `--depth` shallow; partial-clone `blob:none` / `tree:0` / related filter subset; OpenPGP / X.509 / `tag -s` / `verify-tag`; in-process Git LFS fetch/push + smudge; credential helper / askpass / TTY / first-party OS wallets.
-- **Advisory / Impossible / blocked:** `arks host-env` is **detect + opt-in refuse** (full multi-device sync safety Impossible); FS-014 LSM detect≠bypass; absolute SHA-1 collision **immunity** Impossible (detect+refuse Claimed); `arks forge` is Claimed-closest `gh` thin-wrap (full forge UX Non-goal); live G8 latency SLO needs secrets + receipt (never invent PASS); crates.io timing (**L9**) remains owner policy (reopen pack only).
+- **Not** a GUI embed (`gitk`/`git-gui` handoff only), `scalar` product, agent orchestrator, or “WAN-safe by default” host.
+- The Git **object store** remains ordinary filesystem `.git`. Optional index sidecar may sit beside it; arks does not replace `.git` objects in Git-compatible mode.
+- Forge **client** (`arks pr` / …) and self-host forge-in-serve are **design / Partial** until evidenced — not git-alias DoD.
+- In-process **SSH listener** under `arks serve` is **fail-closed Missing/Partial** (ops SSHD + stdio pack remains valid).
+- **Claimed** (with receipts): everyday porcelain inventory where matrices say so; `--depth` shallow; partial-clone filter subset; OpenPGP / X.509 / `tag -s` / `verify-tag`; credential helper / askpass / TTY / first-party OS wallets; smart HTTP server wire (G15 / G29–G32 / G36 Basic).
+- **Advisory / Impossible / blocked:** absolute SHA-1 collision **immunity** Impossible (detect+refuse Claimed); full multi-device sync safety Impossible; live G8 latency SLO needs secrets + receipt (never invent PASS); crates.io timing (**L9**) owner policy; trimmed over-design (`arks host-env` product path, in-process LFS, CELIR as product Claimed path).
 
 ## Documentation
 
@@ -124,16 +178,21 @@ Human-facing site (GitHub Pages): [`docs/`](docs/)
 |------|--------|
 | [Home](docs/index.md) | Motive + product intro |
 | [Overview](docs/overview.md) | What arks is (and is not) |
+| [Completeness](docs/completion.md) | Completion milestone — what “done” means (honest Partial) |
 | [Getting started](docs/getting-started.md) | Native build and first commands |
+| [CLI personality](docs/cli-personality.md) | `git` / `gh` / `arks` dispatch |
 | [Alias `git` → `arks`](docs/alias-git-arks.md) | Drop-in adoption path |
 | [Workflows](docs/workflows.md) | Everyday command map |
+| [Self-host](docs/self-host.md) | `arks serve` GitHub-class host |
+| [Ports](docs/ports.md) | Normative **22/80/443/9418** vs demo **2222/8080** |
+| [Forge client](docs/arks-hub.md) | Flat `arks pr` / … (≠ host) |
+| [Daemon](docs/daemon.md) | `arks daemon` ↔ `git-daemon` |
+| [Agent](docs/agent.md) | Optional `arks agent …` Partial |
 | [Concurrent sessions](docs/concurrent-sessions.md) | Contention motive and concurrency honesty |
-| [Git vs arks](docs/git-vs-arks.md) | Honest feature comparison (Claimed / N/A / reopen) |
-| [Completeness](docs/completion.md) | FS_final YES vs documented non-goals (PARTIAL overall) |
+| [Git vs arks](docs/git-vs-arks.md) | Honest feature comparison |
 | [Performance](docs/performance.md) | Clean-room git vs arks timings |
 | [Limits](docs/limits.md) | What is not claimed |
 | [Contribute](docs/contribute.md) | Bugs, docs, maintainer pointers |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Root pointer to contribute guidance |
 
 Design specs, verification matrices, and agent routing live under [`.spec/`](.spec/), [`verify/`](verify/), and [`AGENTS.md`](AGENTS.md) — they are for maintainers, not the default product read.
 

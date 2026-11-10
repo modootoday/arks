@@ -4,16 +4,19 @@
     - {title: Overview, url: /overview/}
     - {title: Concurrent sessions, url: /concurrent-sessions/}
     - {title: Getting started, url: /getting-started/}
+    - {title: CLI personality, url: /cli-personality/}
     - {title: Alias git → arks, url: /alias-git-arks/}
     - {title: Workflows, url: /workflows/}
     - {title: Self-host, url: /self-host/}
-    - {title: arks-hub (optional), url: /arks-hub/}
+    - {title: Ports, url: /ports/}
+    - {title: Daemon, url: /daemon/}
+    - {title: Forge client, url: /arks-hub/}
+    - {title: Agent, url: /agent/}
 - title: Honesty
   items:
-    - {title: Git vs arks, url: /git-vs-arks/}
     - {title: Completeness, url: /completion/}
+    - {title: Git vs arks, url: /git-vs-arks/}
     - {title: Performance, url: /performance/}
     - {title: Limits, url: /limits/}
 - {title: Contribute, url: /contribute/}
 - {title: Search, url: /search/}
-

@@ -107,4 +107,4 @@ Wire transports (smart HTTP, dumb HTTP, SSH stdio, `git://`) may already be clai
 
 ## Next
 
-[Getting started](../getting-started/) · [Limits](../limits/) · [arks hub](../arks-hub/) · [Git vs arks](../git-vs-arks/)
+[Ports](../ports/) · [Daemon](../daemon/) · [Forge client](../arks-hub/) · [Completeness](../completion/) · [Getting started](../getting-started/) · [Limits](../limits/) · [Git vs arks](../git-vs-arks/)

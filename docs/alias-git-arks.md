@@ -12,7 +12,7 @@ sections:
 
 # Alias `git` → `arks`
 
-arks ships a native binary named **`arks`**. The product goal is a **fully symmetric CLI** so anyone can adopt immediately: keep muscle memory, change the binary underneath. Drop-in usage is a **shell alias** or a **PATH shim**, not a renamed binary and not a container.
+arks ships a native binary named **`arks`**. The product goal is a **fully symmetric CLI** so anyone can adopt immediately: keep muscle memory, change the binary underneath. Drop-in usage is a **shell alias** or a **PATH shim**, not a renamed binary and not a container. Optional `alias gh=arks` selects the **gh** personality for forge-client muscle memory — see [CLI personality](../cli-personality/).
 
 ## Why alias matters here
 
@@ -57,7 +57,7 @@ The alias is for evaluation and everyday claimed commands — not a warranty tha
 
 ### Out of the client alias story
 
-GUI tools (`gitk` / `gui` / `citool`), Git LFS, `scalar`, and forge host APIs are not part of the client alias story.
+GUI tools (`gitk` / `gui` / `citool`), Git LFS, `scalar`, and forge **host** UX are not part of the Git client alias story. Flat forge **client** leaves (`arks pr`, …) are additive Partial surfaces — not required for `git`→`arks` DoD.
 
 ### Credentials
 
@@ -69,4 +69,4 @@ Optional concurrency leases and the Git **server** role are separate capabilitie
 
 ## Next
 
-[Getting started](../getting-started/) [Workflows](../workflows/) [Limits](../limits/)
+[Getting started](../getting-started/) [CLI personality](../cli-personality/) [Workflows](../workflows/) [Completeness](../completion/) [Limits](../limits/)

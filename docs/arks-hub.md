@@ -1,6 +1,6 @@
 ---
 title: Forge client (flat on arks)
-description: gh-shaped forge client flattened onto arks — same binary as git; host via arks serve
+description: gh-shaped forge client flattened onto arks — same binary; host via arks serve
 nav_order: 45
 sections:
   - what
@@ -13,9 +13,9 @@ sections:
 
 # Forge client (flat on arks)
 
-Forge collaboration (pull requests, issues, releases, Actions runs, and related host APIs) lives as **top-level** commands on the **same** `arks` CLI — a **`gh`-like client** merged with git porcelain. There is **no** separate `arks-hub` release binary. Nested `arks hub …` is transitional only.
+Forge collaboration (pull requests, issues, releases, Actions runs, and related host APIs) lives as **top-level** commands on the **same** `arks` CLI — a **`gh`-like client** beside git porcelain. There is **no** separate `arks-hub` release binary. Nested `arks hub …` is **transitional** only (forwards to flat leaves or serve).
 
-You do **not** need forge client features for everyday Git work (`git`→`arks`). To **host** a local GitHub-class forge, use **`arks serve`** ([Self-host](../self-host/)).
+You do **not** need forge client features for everyday Git work (`git`→`arks`). To **host** a local GitHub-class forge, use **`arks serve`** ([Self-host](../self-host/)) — **not** `arks hub serve` as the primary story.
 
 ## What it is
 
@@ -31,39 +31,44 @@ You do **not** need forge client features for everyday Git work (`git`→`arks`)
 # Git porcelain (required product story):
 alias git=arks
 
-# Forge UX (when implemented) — same binary, flat:
+# Forge peer personality (optional):
+alias gh=arks
+# or flat on bare arks:
 arks pr list
 arks issue create
 arks auth status
 ```
 
-Optional: a personal shell function can forward `gh …` to `arks …`. That is convenience only — **not** a second product release.
-
 Example: `gh pr merge 12` muscle memory maps to `arks pr merge 12` (host API). That is **not** the same as `arks merge` (Git merge).
+
+Personality details: [CLI personality](../cli-personality/).
 
 ## Versus core Git commands
 
 | | **Git on `arks`** | **Forge client on `arks`** |
 |--|-------------------|----------------------------|
-| Job | Git CLI, remotes, `arks daemon`, leases | PRs, issues, releases, Actions, forge auth |
+| Job | Git CLI, remotes, leases | PRs, issues, releases, Actions, forge auth |
 | Familiar peer | `git` | `gh` (mapped rows → flat `arks …`) |
 | Required for Git DoD? | Yes | **No** |
 | Separate release binary? | — | **No** (same `arks`) |
+| Host process | — | **`arks serve`** (client is not the host) |
 
-**Collisions (design):** `arks status` / `arks config` stay **git**. Forge `gh status` → `arks inbox`; forge `gh config` → `arks forge-config`. `arks repo` uses subcommand dispatch (git skew `info` vs forge create/list/…). `arks auth` ≠ `arks credential*`.
+**Overlap nouns (design):** under personality `arks`, `status` / `config` / `repo` use git-first parse + unified Git+Forge output/exit — not hard-renames as the primary story. Optional `inbox` / `forge-config` MAY exist as demoted aliases only. `arks auth` ≠ `arks credential*`.
 
 ## Command groups (design)
 
 Surveyed against `gh` help; phases live in Specfold. **v1-shaped** flat groups include:
 
-`auth` · `pr` · `issue` · `release` · `repo` · `label` · `run` · `workflow` · `search` · `inbox` · `api` · `org` · `forge-config` · `alias` · `completion`
+`auth` · `pr` · `issue` · `release` · `repo` · `label` · `run` · `workflow` · `search` · `api` · `org` · `alias` · `completion`
+
+(Plus other matrix rows as they leave refuse stubs.)
 
 Normative matrix: [arks hub gh command matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-hub-gh-command-matrix.sot.md) · [CSV](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-hub-gh-command-matrix.csv) (logical pillar; argv is flat).
 
 ## Honesty
 
-Until a feature has implementation evidence, treat forge client capability as **design intent**, not **Claimed**. Core Git symmetry does not depend on forge client. Do not expect a separate crates.io `arks-hub` binary.
+Until a feature has implementation evidence, treat forge client capability as **design / Partial**, not **Claimed**. Many leaves are stubs or local-API Partial only. Core Git symmetry does not depend on forge client. Do not expect a separate crates.io `arks-hub` binary. Transitional `arks hub serve` does **not** invent forge-in-serve Claimed — see [Self-host](../self-host/) and [Completeness](../completion/).
 
 ## Next
 
-[Self-host](../self-host/) · [Limits](../limits/) · [Git vs arks](../git-vs-arks/) · [Getting started](../getting-started/)
+[Self-host](../self-host/) [CLI personality](../cli-personality/) [Agent](../agent/) [Limits](../limits/) [Git vs arks](../git-vs-arks/) [Getting started](../getting-started/)

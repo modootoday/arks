@@ -35,11 +35,11 @@ Release-channel ops (OIDC Environments, tag dry-run, draft Releases): [Release c
 
 Secrets-gated live forge smoke / scale harness: [Forge scale harness](../forge-scale/). Dry-run readiness is not a live latency PASS.
 
-Partial-clone `--filter=blob:none` / `tree:0` / related FS4 filters + G6 `object:type` / `combine:` + `sparse:oid=<hex>` + promisor are claimed on pack transports; other unlisted exotic specs remain refuse-with-reason — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/). Shallow `--depth` remains claimed. In-process Git LFS / `arks forge` / `arks host-env` are **trimmed** over-design (use `git-lfs` / `gh` / host tooling); `scalar` stays refuse.
+Partial-clone `--filter=blob:none` / `tree:0` / related FS4 filters + G6 `object:type` / `combine:` + `sparse:oid=<hex>` + promisor are claimed on pack transports; other unlisted exotic specs remain refuse-with-reason — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/). Shallow `--depth` remains claimed. In-process Git LFS / `arks host-env` product paths are **trimmed** over-design (use `git-lfs` / host tooling); forge client is flat Partial on `arks` (not a `git`/`gh` subprocess); `scalar` stays refuse.
 
 SSH, OpenPGP, and X.509 commit signing plus `tag -s` / `verify-tag` are claimed (SSH **G37**; OpenPGP/X.509/`tag -s` **G38**). Forge signature UX remains Impossible — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
 
-Honest feature comparison: [Git vs arks](../git-vs-arks/). Full Symmetry **FS_final** is Done for git feature symmetry DoD; operator summary stays **PARTIAL** — see [Completeness](../completion/). Remaining non-goals are documented Impossible / trimmed / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, forge/host-env/LFS product CLI). Clean-room Docker e2e (L8 / S6) is maintainer verification — not the end-user install path.
+Honest feature comparison: [Git vs arks](../git-vs-arks/). Completion milestone = design + CLI shell coherent with honest Partial — **not** all Claimed; see [Completeness](../completion/). Git feature-symmetry **FS_final** stays Yes where receipts carry; forge/SSH/agent bodies remain Partial/Missing. Remaining non-goals are Impossible / trimmed / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, host-env/LFS product CLI). Clean-room Docker e2e (L8 / S6 / symmetry pillars) is maintainer verification — not the end-user install path.
 
 ## Next
 

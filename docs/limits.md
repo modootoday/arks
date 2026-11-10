@@ -22,8 +22,9 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 - Agent frameworks, orchestrators, and IDE products (arks is the **revision** layer those systems call)
 - Embedding full GUI front-ends (`gitk`, `git-gui`) inside the CLI binary — **FS7** external handoff Claimed (refuse+reason); not an embed
 - Git LFS — **trimmed** from arks product CLI/server; use external `git-lfs` (stock git has no LFS builtin)
-- Forge host APIs (issues, PRs, Checks) — not part of git-alias DoD; design home is [`arks hub`](../arks-hub/) on the **same** `arks` binary (gh-shaped command group, native API — design intent, not Claimed; **no** separate hub release)
-- Claiming WAN “secure by default” self-host without TLS/ops — see [Self-host](../self-host/) (`arks serve` default HTTP+SSH; ops owns firewall/DNS/TLS; in-process SSH/TLS not Claimed)
+- Forge client APIs (issues, PRs, Checks) — not part of git-alias DoD; design home is **flat** [`arks pr` / …](../arks-hub/) on the **same** `arks` binary (native API — **Partial**, not Claimed; nested `arks hub …` transitional; **no** separate hub release)
+- Claiming WAN “secure by default” self-host without TLS/ops — see [Self-host](../self-host/) (`arks serve` umbrella; ops owns firewall/DNS/TLS; in-process SSH/TLS not Claimed)
+- Treating `arks hub serve` as the primary host, or inventing Claimed from Partial forge/SSH/agent shells — see [Completeness](../completion/)
 - Shipping arks as a Docker-based end-user runtime — the product is the **native CLI**
 - Absolute SHA-1 collision **immunity**, full cloud-sync safety on `.git`, embedded forge OAuth UX, and crates.io timing (**L9**) — documented Impossible / advisory / owner-policy (see [Git vs arks](../git-vs-arks/))
 
@@ -81,4 +82,4 @@ Source: [modootoday/arks](https://github.com/modootoday/arks)
 
 ## Next
 
-[Self-host](../self-host/) [Git vs arks](../git-vs-arks/) [Getting started](../getting-started/) [Concurrent sessions](../concurrent-sessions/) [Contribute](../contribute/)
+[Completeness](../completion/) [Self-host](../self-host/) [Ports](../ports/) [Git vs arks](../git-vs-arks/) [Getting started](../getting-started/) [Concurrent sessions](../concurrent-sessions/) [Contribute](../contribute/)

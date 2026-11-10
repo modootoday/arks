@@ -28,11 +28,12 @@ arks improves that **revision system**: native engine for performance inside a s
 |----|--------|
 | Git-compatible CLI + claimed server role | An agent framework, IDE, or orchestrator |
 | Same filesystem `.git` in Git-compatible mode | A parallel proprietary object store for day-to-day Git work |
-| Alias-ready argv where claimed | A warranty that every Git flag ships today |
+| Alias-ready argv where claimed (`git` / optional `gh` personalities) | A warranty that every Git/`gh` flag ships today |
+| `arks serve` self-host umbrella + flat forge client leaves | `hub serve` as the primary host; a separate hub/daemon/agent binary |
 | Product leases + optional high-concurrency modes | “All races fixed” marketing |
 
 > [!IMPORTANT]
-> Public copy separates **Claimed** (with clean-room receipts) from **Verified** host folklore. This site does not invent PASS results or blanket “faster than Git” slogans.
+> Public copy separates **Claimed** (with clean-room receipts) from **Partial** shells and host folklore. This site does not invent PASS results or blanket “faster than Git” slogans. See [Completeness](../completion/).
 
 ## Priorities
 
@@ -50,4 +51,4 @@ arks improves that **revision system**: native engine for performance inside a s
 
 ## Next
 
-[Getting started](../getting-started/) [Concurrent sessions](../concurrent-sessions/) [Alias `git` → `arks`](../alias-git-arks/) [Limits](../limits/)
+[Getting started](../getting-started/) [Completeness](../completion/) [CLI personality](../cli-personality/) [Self-host](../self-host/) [Concurrent sessions](../concurrent-sessions/) [Limits](../limits/)

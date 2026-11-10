@@ -5,14 +5,20 @@ columns:
       - {title: Overview, url: /overview/}
       - {title: Concurrent sessions, url: /concurrent-sessions/}
       - {title: Getting started, url: /getting-started/}
+      - {title: CLI personality, url: /cli-personality/}
       - {title: Alias git → arks, url: /alias-git-arks/}
       - {title: Workflows, url: /workflows/}
       - {title: Self-host, url: /self-host/}
+      - {title: Ports, url: /ports/}
+      - {title: Daemon, url: /daemon/}
+      - {title: Forge client, url: /arks-hub/}
+      - {title: Agent, url: /agent/}
   - title: Honesty
     items:
-      - {title: Performance, url: /performance/}
       - {title: Completeness, url: /completion/}
+      - {title: Performance, url: /performance/}
       - {title: Limits, url: /limits/}
+      - {title: Git vs arks, url: /git-vs-arks/}
       - {title: Search, url: /search/}
   - title: Project
     items:

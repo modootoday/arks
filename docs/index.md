@@ -26,15 +26,15 @@ alias git=arks
 arks status
 ```
 
-arks keeps the **same `.git` on disk**, a **symmetric CLI**, and an adopt path of `alias git=arks`. It is the revision layer for those environments — **not** an agent framework.
+arks keeps the **same `.git` on disk**, a **symmetric CLI**, and an adopt path of `alias git=arks` (optional `alias gh=arks`). Self-host via **`arks serve`**; forge client leaves are flat (`arks pr`, …). It is the revision layer for those environments — **not** an agent framework.
 
-[Getting started](getting-started/) [Concurrent sessions](concurrent-sessions/) [Alias `git` → `arks`](alias-git-arks/) [Source](https://github.com/modootoday/arks)
+[Getting started](getting-started/) [Completeness](completion/) [Self-host](self-host/) [Concurrent sessions](concurrent-sessions/) [Source](https://github.com/modootoday/arks)
 
 ## Why try arks
 
 - **Built for contention** — Many concurrent sessions committing, checking out, merging, and moving worktrees. Product leases and claimed high-concurrency shapes target that load without abandoning Git interchange. `status:available`
 - **Same repositories** — Everyday init, add, commit, branch, fetch, and push target ordinary Git object, ref, and index formats. `status:available`
-- **Adopt by alias** — Familiar argv where claimed. Alias `git` to `arks` (or use a PATH shim) while you evaluate. Native binary — Docker is for maintainer clean-room verification only. `status:partial`
+- **Adopt by alias** — Familiar argv where claimed. Alias `git` / `gh` to `arks` (or use a PATH shim) while you evaluate. Native binary — Docker is for maintainer clean-room verification only. `status:partial`
 
 ## Clean-room timings (sample)
 
@@ -42,9 +42,9 @@ Selected medians from a Docker clean-room receipt (stock Git 2.39.5 vs release `
 
 *Median wall-clock ms — selected journeys (clean-room G19 remeasure at tip `c1b0b24`)*
 
-Full table, ratio honesty (M17 **19/19** ≤0.8×; tip PF5 **Claimed(partial)** with honest `aggressive_na`), and evidence links: [Performance](performance/). Feature Claimed vs advisory vs Impossible: [Git vs arks](git-vs-arks/).
+Full table, ratio honesty (M17 **19/19** ≤0.8×; tip PF5 **Claimed(partial)** with honest `aggressive_na`), and evidence links: [Performance](performance/). Feature Claimed vs advisory vs Impossible: [Git vs arks](git-vs-arks/). Completion milestone (design + shell, honest Partial): [Completeness](completion/).
 
 
 ## Next
 
-[Build and try it](getting-started/) [Read the contention story](concurrent-sessions/) [See the limits](limits/)
+[Build and try it](getting-started/) [Read the contention story](concurrent-sessions/) [See completeness](completion/) [See the limits](limits/)

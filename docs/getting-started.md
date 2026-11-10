@@ -79,14 +79,27 @@ arks push
 
 1. Prefer a shell alias for interactive evaluation.
 2. Prefer a PATH shim when scripts or agent runners shell out to `git`.
-3. Treat unfinished commands as fail-closed — see [Alias `git` → `arks`](../alias-git-arks/).
+3. Optional forge peer: `alias gh=arks` (personality `gh`) — see [CLI personality](../cli-personality/).
+4. Treat unfinished commands as fail-closed — see [Alias `git` → `arks`](../alias-git-arks/).
 
 `file:alias.sh`
 
 ```bash
 alias git=arks
+# optional:
+alias gh=arks
 ```
+
+## Self-host (optional)
+
+HTTP git wire that is Claimed today (opt out of Partial modules):
+
+```bash
+arks serve --no-ssh --no-forge /path/to/repos
+```
+
+Full story: [Self-host](../self-host/) · [Ports](../ports/) · honesty bar: [Completeness](../completion/).
 
 ## Next
 
-[Common workflows](../workflows/) [Concurrent sessions](../concurrent-sessions/) [Limits](../limits/)
+[Common workflows](../workflows/) [CLI personality](../cli-personality/) [Concurrent sessions](../concurrent-sessions/) [Limits](../limits/)

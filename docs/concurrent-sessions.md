@@ -70,4 +70,4 @@ Deep IDs, matrices, and residual registers live under `.spec/` and `verify/` for
 
 ## Next
 
-[Alias `git` → `arks`](../alias-git-arks/) [Getting started](../getting-started/) [Performance](../performance/)
+[Alias `git` → `arks`](../alias-git-arks/) [Completeness](../completion/) [Getting started](../getting-started/) [Performance](../performance/)
