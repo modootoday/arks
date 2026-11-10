@@ -13,9 +13,12 @@
 use std::env;
 use std::fs;
 use std::io::{Read, Write};
-use std::net::TcpStream;
+use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
 use std::time::Duration;
 
 /// Top-level groups shown in help.
@@ -107,7 +110,7 @@ COMMANDS (Partial honesty):
     provider      list|show|test|set|smoke LLM endpoints (openai-compat first; ollama smoke Partial)
     config        show|path agent config (secrets redacted)
     doctor        Config + TCP reachability sanity check
-    review        Review stdin/file via openai-compat chat (Partial; --smoke fixture OK)
+    review        Review stdin/file via openai-compat chat (Partial; --smoke [--mock])
     cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
     run           One-shot job: review|cev-check|doctor (Partial)
     serve / bot   Loopback health + chat completions proxy (JSON + stream SSE Partial; Claimed LLM e2e Missing)
@@ -116,11 +119,107 @@ NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
     Not required for git alias DoD. Not a general chatbot.
     Local Ollama default: http://127.0.0.1:11434/v1
-    `provider smoke [ollama]` — optional local chat Partial when daemon up; Claimed e2e Missing
+    `provider smoke [ollama|--mock]` — local chat Partial (daemon or in-process mock)
+    `review --smoke --mock` — fixture + openai-compat mock server Partial
     Native HTTP / TCP only — never spawns git / gh / vendor CLIs (including ollama CLI).
     Design ≠ Claimed ([[sot:root/arks-agent-cli-surface]]).
 "
     );
+}
+
+/// Ephemeral openai-compat mock (Partial): `/v1/models` + `/v1/chat/completions`.
+/// Never invents Claimed LLM e2e; never spawns ollama/openai CLIs.
+fn spawn_openai_compat_mock() -> Result<(SocketAddr, Arc<AtomicBool>, thread::JoinHandle<()>), String>
+{
+    let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
+    let addr = listener.local_addr().map_err(|e| e.to_string())?;
+    let _ = listener.set_nonblocking(true);
+    let stop = Arc::new(AtomicBool::new(false));
+    let stop2 = stop.clone();
+    let handle = thread::spawn(move || {
+        while !stop2.load(Ordering::SeqCst) {
+            match listener.accept() {
+                Ok((mut stream, _)) => {
+                    let _ = stream.set_nonblocking(false);
+                    let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
+                    let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
+                    let mut buf = Vec::new();
+                    let mut tmp = [0u8; 1024];
+                    loop {
+                        match stream.read(&mut tmp) {
+                            Ok(0) => break,
+                            Ok(n) => {
+                                buf.extend_from_slice(&tmp[..n]);
+                                if buf.windows(4).any(|w| w == b"\r\n\r\n") {
+                                    // Drain declared content-length if present (Partial).
+                                    let head = String::from_utf8_lossy(&buf);
+                                    let cl = head.lines().find_map(|l| {
+                                        l.split_once(':').and_then(|(k, v)| {
+                                            if k.eq_ignore_ascii_case("content-length") {
+                                                v.trim().parse::<usize>().ok()
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                    });
+                                    if let Some(need) = cl {
+                                        if let Some(i) = buf.windows(4).position(|w| w == b"\r\n\r\n")
+                                        {
+                                            let body_start = i + 4;
+                                            if buf.len().saturating_sub(body_start) >= need {
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                if buf.len() > 256 * 1024 {
+                                    break;
+                                }
+                            }
+                            Err(_) => break,
+                        }
+                    }
+                    let req = String::from_utf8_lossy(&buf);
+                    let start = req.lines().next().unwrap_or("");
+                    let path = start.split_whitespace().nth(1).unwrap_or("/");
+                    let (status, ctype, body) = if path.contains("/models") {
+                        (
+                            200,
+                            "application/json",
+                            r#"{"object":"list","data":[{"id":"arks-mock","object":"model"}]}"#
+                                .to_string(),
+                        )
+                    } else if path.contains("/chat/completions") {
+                        (
+                            200,
+                            "application/json",
+                            r#"{"id":"chatcmpl-arks-mock","object":"chat.completion","choices":[{"index":0,"message":{"role":"assistant","content":"arks agent openai-compat mock Partial: LGTM (design ≠ Claimed LLM e2e)"},"finish_reason":"stop"}]}"#
+                                .to_string(),
+                        )
+                    } else {
+                        (
+                            404,
+                            "application/json",
+                            r#"{"error":"arks mock Partial unknown path"}"#.to_string(),
+                        )
+                    };
+                    let resp = format!(
+                        "HTTP/1.1 {status} OK\r\nContent-Type: {ctype}\r\nContent-Length: {}\r\nConnection: close\r\nX-Arks-Agent-Mock: partial\r\n\r\n{body}",
+                        body.len()
+                    );
+                    let _ = stream.write_all(resp.as_bytes());
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(5));
+                }
+                Err(_) => break,
+            }
+        }
+    });
+    thread::sleep(Duration::from_millis(20));
+    Ok((addr, stop, handle))
 }
 
 /// Run agent subcommand args (everything after `arks agent`).
@@ -403,9 +502,9 @@ fn cmd_provider(args: &[String]) -> ExitCode {
     match sub {
         "" | "-h" | "--help" | "help" => {
             eprintln!(
-                "arks agent provider — list|show <id>|test <id>|set <id>|smoke [ollama] \
+                "arks agent provider — list|show <id>|test <id>|set <id>|smoke [ollama|--mock] \
                  [--base-url …] [--api-key-env VAR] [--model NAME]\n  \
-                 smoke: optional local ollama openai-compat chat Partial (no CLI spawn); \
+                 smoke: optional local ollama or --mock openai-compat chat Partial (no CLI spawn); \
                  Claimed LLM chatbot e2e Missing unless real evidence"
             );
             ExitCode::SUCCESS
@@ -530,34 +629,56 @@ fn cmd_provider(args: &[String]) -> ExitCode {
     }
 }
 
-/// Optional local Ollama smoke Partial: TCP + `/models` + tiny chat/completions.
+/// Optional local Ollama / openai-compat mock smoke Partial: TCP + `/models` + chat.
 /// Never spawns the `ollama` CLI. Claimed LLM chatbot e2e remains Missing without evidence.
 fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
+    let want_mock = args.iter().any(|a| a == "--mock");
     let id = args
-        .get(1)
+        .iter()
+        .skip(1)
         .map(String::as_str)
-        .filter(|s| !s.starts_with('-'))
-        .unwrap_or("ollama");
+        .find(|s| !s.starts_with('-'))
+        .unwrap_or(if want_mock { "openai-compat" } else { "ollama" });
     if id != "ollama" && id != "openai-compat" {
         eprintln!(
-            "arks agent provider smoke: optional local path is ollama|openai-compat (got `{id}`); \
-             Claimed vendor e2e Missing"
+            "arks agent provider smoke: optional local path is ollama|openai-compat [--mock] \
+             (got `{id}`); Claimed vendor e2e Missing"
         );
         return ExitCode::from(2);
     }
-    let base = effective_base_url(id, flag_value(args, &["--base-url"]));
     let model = flag_value(args, &["--model"])
         .map(str::to_string)
         .or_else(|| load_config_map().ok().and_then(|m| m.get("model").cloned()))
         .unwrap_or_else(|| "llama3.2".into());
+
+    let mut mock_stop: Option<Arc<AtomicBool>> = None;
+    let mut mock_handle: Option<thread::JoinHandle<()>> = None;
+    let base = if want_mock {
+        match spawn_openai_compat_mock() {
+            Ok((addr, stop, handle)) => {
+                mock_stop = Some(stop);
+                mock_handle = Some(handle);
+                println!("openai_compat_mock=partial");
+                format!("http://{addr}/v1")
+            }
+            Err(e) => {
+                eprintln!("arks agent provider smoke --mock: {e}");
+                return ExitCode::from(1);
+            }
+        }
+    } else {
+        effective_base_url(id, flag_value(args, &["--base-url"]))
+    };
+
     println!("provider_smoke=partial");
     println!("provider={id}");
     println!("base_url={base}");
     println!("model={model}");
     println!("spawns_ollama_cli=never");
-    if base.starts_with("https://") {
+    println!("claimed_llm_chatbot_e2e=Missing");
+    if !want_mock && base.starts_with("https://") {
         println!("ollama_smoke=Missing");
-        println!("missing_reason=HTTPS provider smoke Partial not wired; use http://127.0.0.1:11434/v1");
+        println!("missing_reason=HTTPS provider smoke Partial not wired; use http://127.0.0.1:11434/v1 or --mock");
         eprintln!("note: Claimed LLM chatbot e2e Missing");
         return ExitCode::from(2);
     }
@@ -566,12 +687,18 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
         Err(e) => {
             println!("tcp=fail");
             println!("ollama_smoke=Missing");
-            println!("missing_reason=local ollama not reachable ({e})");
+            println!("missing_reason=local provider not reachable ({e})");
             println!("error_class={}", classify_provider_err(&e));
             eprintln!(
-                "note: optional local ollama smoke Partial — daemon absent; \
+                "note: optional local provider smoke Partial — daemon absent; try --mock; \
                  Claimed LLM chatbot e2e still Missing (not invented Claimed)"
             );
+            if let Some(stop) = mock_stop {
+                stop.store(true, Ordering::SeqCst);
+            }
+            if let Some(h) = mock_handle {
+                let _ = h.join();
+            }
             return ExitCode::from(1);
         }
     }
@@ -589,7 +716,7 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
             eprintln!("{e}");
         }
     }
-    match http_post_chat(&base, &model, "arks agent provider smoke Partial ping") {
+    let code = match http_post_chat(&base, &model, "arks agent provider smoke Partial ping") {
         Ok((code, body)) => {
             println!("chat_http={code}");
             let preview: String = body.chars().take(200).collect();
@@ -597,32 +724,48 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
                 println!("chat_preview={preview}");
             }
             if (200..300).contains(&code) {
-                println!("ollama_smoke=ok");
+                if want_mock {
+                    println!("mock_smoke=ok");
+                } else {
+                    println!("ollama_smoke=ok");
+                }
                 eprintln!(
-                    "note: local ollama smoke Partial succeeded — Claimed LLM chatbot e2e still Missing \
-                     (one-shot smoke ≠ product e2e)"
+                    "note: local {} smoke Partial succeeded — Claimed LLM chatbot e2e still Missing \
+                     (one-shot smoke ≠ product e2e)",
+                    if want_mock { "openai-compat mock" } else { "ollama" }
                 );
                 ExitCode::SUCCESS
             } else {
-                println!("ollama_smoke=partial_http_{code}");
+                println!("provider_smoke=partial_http_{code}");
                 eprintln!(
-                    "note: ollama reachable but chat HTTP {code}; Claimed e2e Missing"
+                    "note: provider reachable but chat HTTP {code}; Claimed e2e Missing"
                 );
                 ExitCode::from(1)
             }
         }
         Err(e) => {
             println!("chat_http=fail");
-            println!("ollama_smoke=Missing");
+            if want_mock {
+                println!("mock_smoke=fail");
+            } else {
+                println!("ollama_smoke=Missing");
+            }
             println!("error={}", e);
             println!("error_class={}", classify_provider_err(&e));
             eprintln!(
-                "note: optional local ollama smoke Partial — chat path failed; \
+                "note: optional local provider smoke Partial — chat path failed; \
                  Claimed LLM chatbot e2e Missing"
             );
             ExitCode::from(1)
         }
+    };
+    if let Some(stop) = mock_stop {
+        stop.store(true, Ordering::SeqCst);
     }
+    if let Some(h) = mock_handle {
+        let _ = h.join();
+    }
+    code
 }
 
 fn redact_key_present() -> &'static str {
@@ -898,22 +1041,47 @@ fn resolve_api_key() -> Option<String> {
 fn cmd_review(args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks agent review [--file PATH] [--smoke] — openai-compat chat Partial \
-             (stdin or --file; --smoke uses built-in fixture)"
+            "arks agent review [--file PATH] [--smoke] [--mock] — openai-compat chat Partial \
+             (stdin or --file; --smoke fixture; --mock = in-process openai-compat stub)"
         );
         return ExitCode::SUCCESS;
     }
     let smoke = args.iter().any(|a| a == "--smoke");
+    let want_mock = args.iter().any(|a| a == "--mock");
+    if want_mock && !smoke {
+        eprintln!("arks agent review: --mock requires --smoke (Partial mock harness)");
+        return ExitCode::from(2);
+    }
     let map = load_config_map().unwrap_or_default();
     let id = env::var("ARKS_AGENT_PROVIDER")
         .ok()
         .or_else(|| map.get("provider").cloned())
         .unwrap_or_else(|| "ollama".into());
-    let base = effective_base_url(&id, flag_value(args, &["--base-url"]));
     let model = flag_value(args, &["--model"])
         .map(str::to_string)
         .or_else(|| map.get("model").cloned())
         .unwrap_or_else(|| "llama3.2".into());
+
+    let mut mock_stop: Option<Arc<AtomicBool>> = None;
+    let mut mock_handle: Option<thread::JoinHandle<()>> = None;
+    let base = if want_mock {
+        match spawn_openai_compat_mock() {
+            Ok((addr, stop, handle)) => {
+                mock_stop = Some(stop);
+                mock_handle = Some(handle);
+                println!("openai_compat_mock=partial");
+                println!("mock_listen=http://{addr}/v1");
+                format!("http://{addr}/v1")
+            }
+            Err(e) => {
+                eprintln!("arks agent review --smoke --mock: {e}");
+                return ExitCode::from(1);
+            }
+        }
+    } else {
+        effective_base_url(&id, flag_value(args, &["--base-url"]))
+    };
+
     if smoke {
         println!("review_smoke=partial");
         println!("spawns_ollama_cli=never");
@@ -937,11 +1105,11 @@ fn cmd_review(args: &[String]) -> ExitCode {
     let prompt = format!(
         "You are arks agent review (Partial; not Claimed). Review the following diff/text briefly:\n\n{input}"
     );
-    println!("provider={id}");
+    println!("provider={}", if want_mock { "openai-compat-mock" } else { id.as_str() });
     println!("base_url={base}");
     println!("model={model}");
     println!("input_bytes={}", input.len());
-    match http_post_chat(&base, &model, &prompt) {
+    let code = match http_post_chat(&base, &model, &prompt) {
         Ok((code, body)) => {
             println!("chat_http={code}");
             if smoke {
@@ -951,9 +1119,13 @@ fn cmd_review(args: &[String]) -> ExitCode {
                 }
                 if code > 0 && code < 400 {
                     println!("review_smoke=ok");
+                    if want_mock {
+                        println!("review_mock_smoke=ok");
+                    }
                     eprintln!(
-                        "note: review --smoke Partial succeeded — Claimed LLM review e2e still Missing \
-                         (one-shot fixture ≠ product e2e)"
+                        "note: review --smoke{} Partial succeeded — Claimed LLM review e2e still Missing \
+                         (one-shot fixture ≠ product e2e)",
+                        if want_mock { " --mock" } else { "" }
                     );
                     ExitCode::SUCCESS
                 } else {
@@ -976,12 +1148,20 @@ fn cmd_review(args: &[String]) -> ExitCode {
         Err(e) => {
             println!("chat_http=skipped");
             eprintln!("{e}");
-            if smoke {
+            if smoke && want_mock {
+                println!("review_smoke=fail");
+                println!("review_mock_smoke=fail");
+                eprintln!(
+                    "note: review --smoke --mock Partial failed against in-process stub; \
+                     Claimed LLM review e2e Missing"
+                );
+                ExitCode::from(1)
+            } else if smoke {
                 println!("review_smoke=Missing");
                 println!("missing_reason=provider unreachable for fixture smoke");
                 eprintln!(
-                    "note: review --smoke Partial — daemon absent; Claimed LLM review e2e Missing \
-                     (not invented Claimed); never spawns ollama CLI"
+                    "note: review --smoke Partial — daemon absent; try --mock; \
+                     Claimed LLM review e2e Missing (not invented Claimed); never spawns ollama CLI"
                 );
                 ExitCode::SUCCESS
             } else {
@@ -992,7 +1172,14 @@ fn cmd_review(args: &[String]) -> ExitCode {
                 ExitCode::from(2)
             }
         }
+    };
+    if let Some(stop) = mock_stop {
+        stop.store(true, Ordering::SeqCst);
     }
+    if let Some(h) = mock_handle {
+        let _ = h.join();
+    }
+    code
 }
 
 fn cmd_cev_check(args: &[String]) -> ExitCode {
