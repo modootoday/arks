@@ -3,7 +3,7 @@ id: sot:root/clean-room-journey-compare
 title: Clean-room journey compare
 status: active
 created: 2026-11-08T18:24:57Z
-updated: 2026-11-10T00:38:36Z
+updated: 2026-11-10T11:18:00Z
 tags: [verification, docker, clean-room, journey, timing, perf, git-compat, observability, worktree, submodule, g17, g19]
 verify: manual
 rel:
@@ -21,7 +21,7 @@ rel:
     - adr:root/20261108083507
     - research:root/20261108073650
     - research:root/20261108071916
-  evidence: [evidence:root/20261108183045, evidence:root/20261108200811, evidence:root/20261109065018, evidence:root/20261108233610, evidence:root/20261109114207, evidence:root/20261111001400, evidence:root/20261110003836]
+  evidence: [evidence:root/20261108183045, evidence:root/20261108200811, evidence:root/20261109065018, evidence:root/20261108233610, evidence:root/20261109114207, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110110900]
 ---
 
 # Clean-room journey compare
@@ -203,4 +203,4 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 | Live-remote journeys (G8) | **Claimed (default-on when secrets)** | [[adr:root/20261110220000]]; live when token+URL; SKIP when absent; prefer offline/local peer for ladder |
 | Path/`file://` clone lane | **Closed (v0.3.0; hardlink-prefer v0.4.0)** | **J-CLONE-PATH-01**; local path + same-host `file://` via hardlink-or-copy (not `--shared`; not piped upload-pack) |
 | Public Pages perf summary | **Closed (honesty)** | Allowed only with receipt + public-surface honesty; default keep under `.spec/evidence/` |
-| Pf5 aggressive ≤0.5× leftovers | **Claimed(partial 7/8) + Verified** | Claim amortization [[evidence:root/20261111001400]]; sole Docker remeasure Verified at tip `c1b0b24` [[evidence:root/20261110003836]] (18/19 ≤0.5× measured; CLONE-LOCAL `aggressive_na`); prior 6/8 [[evidence:root/20261110234600]]; no silent keep-at-0.8 |
+| Pf5 aggressive ≤0.5× leftovers | **Claimed(partial 7/8) + Verified** | Claim amortization [[evidence:root/20261111001400]]; **best complete** sole pin tip `44dc566` [[evidence:root/20261110110900]] (PATH **0.4675** ≤0.5 PASS; LOCAL **0.6556** `aggressive_na`; miss=[]); prior Verified `c1b0b24` [[evidence:root/20261110003836]] / `e466d56` [[evidence:root/20261110014600]]; prior 6/8 [[evidence:root/20261110234600]]; no silent keep-at-0.8 |
