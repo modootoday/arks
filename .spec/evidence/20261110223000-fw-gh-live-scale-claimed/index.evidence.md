@@ -3,7 +3,7 @@ id: evidence:root/20261110223000
 title: FW-GH-LIVE-SCALE Claimed (harness ready; no-measurement without secrets)
 status: active
 created: 2026-11-10T22:30:00Z
-updated: 2026-11-10T00:00:20Z
+updated: 2026-11-10T22:30:00Z
 tags: [g8, fw-gh-live-scale, claimed, harness, skip, no-measurement]
 rel:
   depends_on: [adr:root/20261110221000, adr:root/20261110220000, sot:root/interop-test-matrix, sot:root/production-residual-register]

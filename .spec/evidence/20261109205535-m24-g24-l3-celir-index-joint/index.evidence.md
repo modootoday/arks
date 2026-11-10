@@ -3,12 +3,12 @@ id: evidence:root/20261109205535
 title: M24 G24 L3 plus CELIR index joint clean-room
 status: active
 created: 2026-11-09T20:55:35Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [m24, g24, celir, l3, highconcurrency, clean-room, verified, joint]
 rel:
   depends_on: [sot:root/l3-celir-index-joint-clean-room, plan:root/20261109204935, adr:root/20261109194200, sot:root/product-verification-clean-room, sot:root/celir-index-dual-path, evidence:root/20261109204428]
 files:
-  - {path: receipt.json, sha256: 5cc5dfc0677ac7f0c6f6981a43b2481e70fe636fa8b7cbcdb17f13161016b241, bytes: 364, store: repo}
+  - {path: receipt.json, sha256: 934bd75821b2c12bb46c1246563d4a2ef5590d3e590feae73a683c2723c6d047, bytes: 349, store: repo}
 ---
 
 # M24 — G24 L3 HighConcurrency + CELIR index joint

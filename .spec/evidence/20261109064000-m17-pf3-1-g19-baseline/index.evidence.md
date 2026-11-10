@@ -3,13 +3,13 @@ id: evidence:root/20261109064000
 title: M17 Pf3-1 G19 full-allow-list baseline (failers identified)
 status: active
 created: 2026-11-09T06:40:00Z
-updated: 2026-11-09T22:48:32Z
+updated: 2026-11-10T00:57:42Z
 tags: [g19, m17, pf3, baseline, clean-room, perf]
 rel:
   depends_on: [plan:root/20261109043916, sot:root/clean-room-journey-compare, sot:root/interop-test-matrix, evidence:root/20261109213000, evidence:root/20261109063000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 49313f20927eba103e276105ff311ee486aa7ec5cc52257b2739951220f2c1b4, bytes: 4160, store: repo}
+  - {path: receipt.json, sha256: b15879511b537ab15afef817cd784fc18658d8208bcaeb2e88f91cf544b4d582, bytes: 3972, store: repo}
 ---
 
 # M17 Pf3-1 — G19 full allow-list baseline

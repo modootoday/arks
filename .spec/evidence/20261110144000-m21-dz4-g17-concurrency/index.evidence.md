@@ -9,7 +9,7 @@ rel:
   depends_on: [plan:root/20261110140000, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110143000, research:root/20261110021546]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 8dcd9c6cf454a03e4cfd65f62f78213124efb6f93f2433bf99c2f5250e82bd04, bytes: 28799, store: repo}
+  - {path: receipt.json, sha256: 822f9a2bedb7bd08b16e985e950b4b12fb3bb9dd674e265511283ccd9f64ae51, bytes: 27918, store: repo}
 ---
 
 # M21 Dz-4 — clean-room G17 Deferred=0 close

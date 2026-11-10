@@ -3,14 +3,14 @@ id: evidence:root/20261109073100
 title: M17 exit — full G19 journey allow-list PASS
 status: active
 created: 2026-11-09T07:31:00Z
-updated: 2026-11-09T22:48:32Z
+updated: 2026-11-10T00:57:42Z
 tags: [g19, m17, pf3, exit, comparative-perf, clean-room, verified]
 rel:
   depends_on: [plan:root/20261109043916, sot:root/program-roadmap, sot:root/clean-room-journey-compare, evidence:root/20261109064500, evidence:root/20261109070000, evidence:root/20261109213000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: c40fbdef13edcbde83ddfd3820735f4024706dd2e3f56eadee014e278cb26f4f, bytes: 5054, store: repo}
-  - {path: metrics.json, sha256: bb5086d7f07f8a3a79a7d947c3e173f5062e965cb37748e535929cb0b2194573, bytes: 36304, store: repo}
+  - {path: receipt.json, sha256: 59f57208ee500ab82ded362d1a94b807854f17b644ae7097ab14050aa80a5178, bytes: 4861, store: repo}
+  - {path: metrics.json, sha256: 5d254a8da3c42282be4c827d86108295c53aed842e2762542754a98b25402f4b, bytes: 34848, store: repo}
 ---
 
 # M17 exit — full G19 journey allow-list

@@ -9,7 +9,7 @@ rel:
   depends_on: [plan:root/20261110150000, adr:root/20261110151000, sot:root/interop-test-matrix, sot:root/product-verification-clean-room, sot:root/production-residual-register]
   evidence: []
 files:
-  - {path: receipt.json, sha256: f7e17313993f5cd25706ee0e933655ea1804912cf12a9d75cca2fb3147dba186, bytes: 465, store: repo}
+  - {path: receipt.json, sha256: 0cd8563e5852970bdfa40341069629e4fe39966b85b458d1891c49acd95711f7, bytes: 449, store: repo}
 ---
 
 # M22 Rc-1 — G8 default Refuse-closed

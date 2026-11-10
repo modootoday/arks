@@ -3,12 +3,12 @@ id: evidence:root/20261108233610
 title: Clean-room G16 journey-compare tip re-run (Wave-1–3 catalog)
 status: active
 created: 2026-11-08T23:36:10Z
-updated: 2026-11-09T22:48:31Z
+updated: 2026-11-10T00:57:42Z
 tags: [g16, clean-room, journey-compare, timing, metrics, verified, additive, tip-rerun]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, plan:root/20261108182457, sot:root/arks-remote, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/cli-surface, sot:root/public-surface, adr:root/20261108083507, evidence:root/20261109065018]
 files:
-  - {path: metrics.json, sha256: c4e07ce75a1039107fa83f3488444cad45a032bec151dce00b90171dd1b7f857, bytes: 39157, store: repo}
+  - {path: metrics.json, sha256: fc1bca53bef377c8e701ed98640d61aeac95c94dc2c3b38c9e4da714192cb5a6, bytes: 37590, store: repo}
 ---
 
 # Clean-room G16 journey-compare receipts (tip re-run)

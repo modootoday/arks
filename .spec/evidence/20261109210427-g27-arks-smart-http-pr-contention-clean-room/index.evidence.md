@@ -3,13 +3,13 @@ id: evidence:root/20261109210427
 title: G27 arks smart HTTP PR contention clean-room
 status: active
 created: 2026-11-09T21:04:27Z
-updated: 2026-11-09T22:48:41Z
+updated: 2026-11-10T00:57:44Z
 tags: [g27, clean-room, smart-http, server, branch, pr-sim, contention, verified]
 rel:
   depends_on: [sot:root/arks-smart-http-pr-contention-clean-room, plan:root/20261109210427, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/arks-server, sot:root/program-roadmap, sot:root/production-residual-register]
 files:
-  - {path: receipt.json, sha256: 92023c86a4a18da0e00e38221e9287a689f39203c7af8d847e50c28fce448947, bytes: 388, store: repo}
-  - {path: scale.json, sha256: f7f8299678b0db265cb5470c214e6028d90518d7e8e0ad5de93dcd698b41ee22, bytes: 63, store: repo}
+  - {path: receipt.json, sha256: a090cd99d30f139a62c3d1b3d7d7cc5c44da1c5680553df061a064751df4bbf6, bytes: 376, store: repo}
+  - {path: scale.json, sha256: 0ab5e566000144b8e1b7c5546059958744df5995ff57dc5d68bc5419b4090472, bytes: 58, store: repo}
 ---
 
 # G27 — arks smart HTTP + synthetic PR contention clean-room

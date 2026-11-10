@@ -3,13 +3,13 @@ id: evidence:root/20261109193000
 title: M15 Fs-3 clean-room G20 former refuse-closed porcelain
 status: active
 created: 2026-11-09T19:30:00Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [g20, m15, fs-3, clean-room, notes, sparse-checkout, repack, gc, verified]
 rel:
   depends_on: [plan:root/20261109035335, sot:root/cli-flag-parity-full, evidence:root/20261109190000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 216923e212fd9486128612302e77031e0f4d8a648eb427fd39e80846a0db236a, bytes: 1147, store: repo}
+  - {path: receipt.json, sha256: 2a7161bdb3e7860138a3f7c7191e81af6b4f2290757828c85439b205c1f995d0, bytes: 1080, store: repo}
 ---
 
 # M15 Fs-3 — former refuse-closed porcelain

@@ -93,8 +93,8 @@ GIR’s mission is Git-compatible replacement with GitHub-class remote interop. 
 
 ## Verification
 
-1. `spec check` clean for this SoT and [[research:root/20261108073650]].
-2. M1–M4 gates: `docker compose -f verify/docker-compose.yml run --rm g0` / `g1` / `g10` / `g2` / `g4` / `g5` with digests matching `verify/images.lock.json`. Journey-compare: `run --rm g16` per [[sot:root/clean-room-journey-compare]] (timings authoritative only in clean-room).
+1. `spec check` clean for this SoT, [[research:root/20261108073650]], and [[research:root/20261110095355]].
+2. M1–M4 gates: `docker compose -f verify/docker-compose.yml run --rm g0` / `g1` / `g10` / `g2` / `g4` / `g5` with digests matching `verify/images.lock.json`. Journey-compare: `run --rm g16` (suite under `verify/gates/g16/`, matrix `verify/matrices/matrix-journey.md`) per [[sot:root/clean-room-journey-compare]] (timings authoritative only in clean-room). G19 sole run uses `verify/gates/g19/` receipts over G16 metrics.
 3. Any PR that adds a product gate labels it **clean-room** or **host-advisory** per the matrix research; clean-room gates name the intended compose/service.
 4. Same image digest/tag in local clean-room and CI; stock Git version printed in gate evidence matches the lock.
 5. Do not mark release or interop “verified” from host-only runs.

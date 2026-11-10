@@ -3,13 +3,13 @@ id: evidence:root/20261109203000
 title: M15 exit — full CLI symmetric parity (G20 Fs-1..Fs-5)
 status: active
 created: 2026-11-09T20:30:00Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [g20, m15, exit, full-cli, clean-room, verified]
 rel:
   depends_on: [plan:root/20261109035335, sot:root/cli-flag-parity-full, sot:root/program-roadmap, sot:root/production-residual-register, evidence:root/20261109180000, evidence:root/20261109183000, evidence:root/20261109190000, evidence:root/20261109193000, evidence:root/20261109200000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 6107b5e2cd5b5f1709ca30a8a76a8b5c7aef807b066579570c81835ba397a2f8, bytes: 1407, store: repo}
+  - {path: receipt.json, sha256: 14d08a0131139b5ccc1bec4e4ca816020f019bde97915bd3467c814e51456910, bytes: 1325, store: repo}
 ---
 
 # M15 exit — full CLI symmetric parity

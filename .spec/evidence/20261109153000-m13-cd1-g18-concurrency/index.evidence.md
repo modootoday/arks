@@ -3,13 +3,13 @@ id: evidence:root/20261109153000
 title: M13 Cd-1 clean-room G18 concurrency issue-compare
 status: active
 created: 2026-11-09T15:30:00Z
-updated: 2026-11-09T22:48:33Z
+updated: 2026-11-10T00:57:43Z
 tags: [g18, m13, cd-1, clean-room, concurrency, differentiate-beyond-git, lease, issue-resolution, verified]
 rel:
   depends_on: [plan:root/20261109024635, adr:root/20261109032955, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/lease-concurrency-intent, sot:root/arks-lease, sot:root/product-verification-clean-room, evidence:root/20261108231249, evidence:root/20261109140000, research:root/20261109023117]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 077ee1b65b4f73c5059937e6e2fe31fff9da1e041b3435bfea1a921102e017fd, bytes: 1221, store: repo}
+  - {path: receipt.json, sha256: 30978117e9039dafe0a47d1adea7d5fb7650f61d5a2910b9786088fc35e6d662, bytes: 1186, store: repo}
 ---
 
 # M13 Cd-1 — clean-room G18 concurrency issue-compare

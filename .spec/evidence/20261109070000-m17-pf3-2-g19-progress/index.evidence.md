@@ -3,13 +3,13 @@ id: evidence:root/20261109070000
 title: M17 Pf3-2 G19 progress (partial allow-list)
 status: active
 created: 2026-11-09T07:00:00Z
-updated: 2026-11-09T22:48:32Z
+updated: 2026-11-10T00:57:42Z
 tags: [g19, m17, pf3, progress, clean-room, perf]
 rel:
   depends_on: [plan:root/20261109043916, evidence:root/20261109064500]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 2ab7015c3d6732227e980f5933e7d23f2d148fc361f3854faa3654054e301615, bytes: 4541, store: repo}
+  - {path: receipt.json, sha256: 64a99601cac8f8037dc163b8587e7e6729a23b0530f0d2b177df57fbd8b7ba1e, bytes: 4350, store: repo}
 ---
 
 # M17 Pf3-2 — G19 progress (not full exit)

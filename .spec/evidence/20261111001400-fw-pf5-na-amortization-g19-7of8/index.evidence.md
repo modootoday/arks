@@ -3,14 +3,14 @@ id: evidence:root/20261111001400
 title: FW-PF5-NA seed amortization G19 remeasure (Claimed partial 7/8)
 status: active
 created: 2026-11-11T00:14:00Z
-updated: 2026-11-11T00:14:00Z
+updated: 2026-11-11T00:57:46Z
 tags: [g19, pf5, clean-room, perf, aggressive, amortization, verified]
 rel:
   depends_on: [sot:root/pf5-journey-seed-amortization, sot:root/clean-room-journey-compare, sot:root/production-residual-register, adr:root/20261110162000, plan:root/20261110220000, evidence:root/20261110234600]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 31c9efc4525bed088f0b850fbb86014a545f852ae0c2e00a47b3bbdadeee3c2e, bytes: 7534, store: repo}
-  - {path: metrics.json, sha256: 5ceac9b6fea16cc46693cdbc3b1738c1f70935929a2813a50efe18f4f88eb545, bytes: 237031, store: repo}
+  - {path: receipt.json, sha256: ddb6257dad93dea96032184a635ea1a0fed6f63d642ddadabcd29f193068e09f, bytes: 7257, store: repo}
+  - {path: metrics.json, sha256: fc42648efa985062a9e5afd60ac98a0e5189ec982c53f0e97fced59b5719fc31, bytes: 228255, store: repo}
 ---
 
 # FW-PF5-NA — seed amortization G19 remeasure (7/8)

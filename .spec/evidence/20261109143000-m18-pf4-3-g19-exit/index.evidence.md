@@ -3,14 +3,14 @@ id: evidence:root/20261109143000
 title: M18 Pf4-3 / M18 exit — G19 sole run (19/19 ≤0.8×; 11/19 ≤0.5×; journey-class residuals)
 status: active
 created: 2026-11-09T14:30:00Z
-updated: 2026-11-09T22:48:33Z
+updated: 2026-11-10T00:57:43Z
 tags: [g19, m18, pf4, comparative-perf, clean-room, verified, na-free, exit]
 rel:
   depends_on: [plan:root/20261109125438, research:root/20261109125438, sot:root/program-roadmap, sot:root/clean-room-journey-compare, sot:root/production-residual-register, evidence:root/20261109090000, evidence:root/20261109130000, evidence:root/20261109141500]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 1022b584554f2093758ea2c8aaf055548515f04a7ee1f4d4eb6bf0f5d0d33b53, bytes: 5238, store: repo}
-  - {path: metrics.json, sha256: 8db14c2c2c47a33451bf663d775aaff29baf71984e42dc9aea43c01cd8a3c4c6, bytes: 51526, store: repo}
+  - {path: receipt.json, sha256: 1f6d6402a81638081c3078c437806623bcb1f16aa2dedf77fe9c9b44c89fe716, bytes: 5007, store: repo}
+  - {path: metrics.json, sha256: 77e34486a231a6a77b2378ff494f7bf04d5780b0448690a5c322f162275daf35, bytes: 49470, store: repo}
 ---
 
 # M18 Pf4-3 / M18 exit — sole Docker G19

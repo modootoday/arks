@@ -9,7 +9,7 @@ rel:
   depends_on: [plan:root/20261110140000, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/product-verification-clean-room, evidence:root/20261110080000, research:root/20261110021546]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 9a53ae9989a70e79395f455113f42517f05bd5f9215782f2bd2217251afbae62, bytes: 23878, store: repo}
+  - {path: receipt.json, sha256: 5895a4671357fa71405d6df9e5f2cb3d4de03b2af7afe5f666d077cbea5ff221, bytes: 23153, store: repo}
 ---
 
 # M21 Dz-1 — clean-room G17 host-FS / platform claims

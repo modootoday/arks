@@ -3,12 +3,12 @@ id: evidence:root/20261109204428
 title: M24 G22 CELIR index contention clean-room
 status: active
 created: 2026-11-09T20:44:28Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [m24, g22, celir, indexing-service, clean-room, contention, verified, dual-path]
 rel:
   depends_on: [sot:root/celir-index-contention-clean-room, sot:root/celir-index-dual-path, plan:root/20261109203949, plan:root/20261109203430, sot:root/storage-celir-boundary, adr:root/20261110052030, sot:root/lease-concurrency-intent, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/program-roadmap, sot:root/production-residual-register, evidence:root/20261109203236]
 files:
-  - {path: receipt.json, sha256: 40716219d1dfe94093fb74a6414ef455e2776b8b8d5132946051140baea071a7, bytes: 334, store: repo}
+  - {path: receipt.json, sha256: d905a13727a4e9451fec8c02a52d68a839b9f0f2b3a27767caba20c6011947fd, bytes: 320, store: repo}
 ---
 
 # M24 — G22 CELIR index contention clean-room

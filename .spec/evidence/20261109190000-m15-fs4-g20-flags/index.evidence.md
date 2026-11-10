@@ -3,13 +3,13 @@ id: evidence:root/20261109190000
 title: M15 Fs-4 clean-room G20 add -A and status --porcelain
 status: active
 created: 2026-11-09T19:00:00Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [g20, m15, fs-4, clean-room, flags, verified]
 rel:
   depends_on: [plan:root/20261109035335, evidence:root/20261109183000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 4110abd4e6f8b2a376d1fe087c569bd66e764ea75e41c219e8e9d27ce5092d69, bytes: 712, store: repo}
+  - {path: receipt.json, sha256: cb984e8c8e3ec4c280b0062973924df43321e5d7aceaad20a7302e6143e3a783, bytes: 670, store: repo}
 ---
 
 # M15 Fs-4 — add -A + status --porcelain

@@ -1,10 +1,12 @@
-# arks clean-room verification harness (M1–M11 + G16 + G17)
+# arks clean-room verification harness
 
-**Authoritative:** Linux Docker containers from pinned images in `images.lock.json`, entered via `verify/scripts/run-g*.sh` (including `run-g6.sh`…`run-g15.sh`, `run-g16.sh`, `run-g17.sh`).
+**Authoritative:** Linux Docker containers from pinned images in `images.lock.json`, entered via `verify/scripts/run-g*.sh`.
 
-**Advisory:** `cargo test` on the host (including Windows) speeds iteration; it is not product-verified unless the same gate is green in clean-room. SoT: `.spec/sot/product-verification-clean-room.sot.md`.
+**Advisory:** `cargo test` on the host (including Windows) speeds iteration; it is not product-verified unless the same gate is green in clean-room.
 
-**CLI-parity production** = **M9** / **G14** when evidenced. **G16** journey-compare is additive observability (func + timing); not a production unlock. **G17** is M12 concurrency issue-repro compare (git pathology vs arks resolved); Done only with clean-room per-ID PASS. SoT: `.spec/sot/clean-room-journey-compare.sot.md`, `.spec/sot/interop-test-matrix.sot.md`.
+SoTs: `.spec/sot/product-verification-clean-room.sot.md`, `.spec/sot/structural-conventions.sot.md` §7, research `.spec/research/20261110095355-verify-fixtures-rust-layout.research.md`.
+
+**CLI-parity production** = **M9** / **G14** when evidenced. **G16** journey-compare is additive observability (func + timing). **G19** enforces comparative allow-list bars on G16 metrics. **G17** is M12 concurrency issue-repro compare. SoT: `.spec/sot/clean-room-journey-compare.sot.md`, `.spec/sot/interop-test-matrix.sot.md`.
 
 ## Engine affinity (Windows)
 
@@ -24,7 +26,42 @@ docker compose -f verify/docker-compose.yml build
 
 Refresh lock digests after rebuild: `docker inspect arks-verify-m1:0.1.0 --format '{{index .RepoDigests 0}}'`.
 
-## Gates
+## Layout (matrix ownership)
+
+```text
+verify/
+  Dockerfile
+  docker-compose.yml
+  images.lock.json
+  README.md
+  scripts/                 # deterministic entrypoints (compose commands)
+  matrices/                # matrix-m*.md / matrix-g*.md / matrix-journey.md
+  gates/gN/                # per-gate oracles, locks, out/ receipts (not workspace members)
+  fixtures/                # shared oracle intent/bytes (no secrets); m1 OID docs
+```
+
+| Tree | Owns | Does not own |
+|------|------|--------------|
+| `verify/scripts/` | Compose argv entrypoints, evaluators | Crate unit tests |
+| `verify/matrices/` | Gate/milestone claim matrices | Specfold SoTs |
+| `verify/gates/gN/` | Multi-crate / stock-Git / journey clean-room oracles + receipts | Default host `cargo test -p` |
+| `verify/fixtures/` | Clean-room shared fixture intent | Crate-private `testdata/` |
+| `crates/arks-*/tests/` | Single-crate integration (host-advisory; scripts may invoke) | Docker image pins |
+| `crates/arks-*/testdata/` | Crate-owned binary/json fixtures | Product matrices |
+
+`verify/gates/g*` harness crates stay **outside** the root workspace so host default builds stay small; oracles run via `--manifest-path verify/gates/gN/Cargo.toml` or `cargo test -p …` from scripts.
+
+### G19 paths (sole Docker run)
+
+| Artifact | Path |
+|----------|------|
+| Entrypoint | `verify/scripts/run-g19.sh` → `run-g16.sh` + `g19_eval.py` |
+| Journey suite | `verify/gates/g16/` |
+| Metrics | `verify/gates/g16/out/metrics.json` |
+| Receipt / lock | `verify/gates/g19/out/receipt.json`, `verify/gates/g19/.run.lock.dir` |
+| Matrices | `verify/matrices/matrix-g19.md`, `verify/matrices/matrix-journey.md` |
+
+## Gates (selected)
 
 | Gate | Intent | Compose |
 |------|--------|---------|
@@ -43,6 +80,7 @@ Refresh lock digests after rebuild: `docker inspect arks-verify-m1:0.1.0 --forma
 | **G15** | Git server (M11) | `g15` |
 | **G16** | Journey-compare catalog (func + timing metrics); additive | `g16` |
 | **G17** | Concurrency issue-repro compare (M12 claimed set / Cm-1) | `g17` |
+| **G19** | Comparative allow-list bars on G16 metrics | `g19` |
 
 Each authoritative run should use a **fresh** container (`compose run --rm`, not a reused shell).
 
@@ -52,7 +90,7 @@ docker compose -f verify/docker-compose.yml run --rm g0
 docker compose -f verify/docker-compose.yml run --rm g4
 docker compose -f verify/docker-compose.yml run --rm g5
 docker compose -f verify/docker-compose.yml run --rm g16
-docker compose -f verify/docker-compose.yml run --rm g17
+docker compose -f verify/docker-compose.yml run --rm g19
 ```
 
 ### Resource note
@@ -70,17 +108,3 @@ Compose sets `CARGO_TARGET_DIR=/workspace/target-cleanroom` so clean-room artifa
 - Prefer `target/release/arks.exe` for advisory runs (`ARKS_BIN=...`).
 - **Do not** `Select-String`, `Get-Content`, or `findstr` binaries — dumps abort shells (`exit -1` / `4294967295`).
 - Locate with metadata only: `pwsh -File verify/scripts/locate-arks.ps1` or `Get-Item` on known paths.
-
-## Layout
-
-```
-verify/
-  Dockerfile
-  docker-compose.yml
-  images.lock.json
-  matrix-m1.md … matrix-m4.md
-  scripts/run-g0.sh … run-g5.sh
-  g1/ g2/ g4/ g5/ g10/   # gate oracles (not workspace members)
-```
-
-`verify/g*` harness crates are intentionally **outside** the root workspace so host default builds stay small; oracles run via their manifest paths.

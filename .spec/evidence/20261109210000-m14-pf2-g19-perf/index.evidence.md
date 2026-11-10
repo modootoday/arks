@@ -3,13 +3,13 @@ id: evidence:root/20261109210000
 title: M14 Pf-2 clean-room G19 comparative performance
 status: active
 created: 2026-11-09T21:00:00Z
-updated: 2026-11-09T22:48:41Z
+updated: 2026-11-10T00:57:44Z
 tags: [g19, m14, pf-2, clean-room, comparative-perf, verified]
 rel:
   depends_on: [plan:root/20261109024636, evidence:root/20261109170000, evidence:root/20261109203000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 6245e7f6135f1165332f68b573150099b4640302c9692e1aef663f0cdf6ee9f8, bytes: 821, store: repo}
+  - {path: receipt.json, sha256: 91a16777681d3cb99a861eeba854b7e3d6b1a369a1e9cfce680a851430d7eb04, bytes: 789, store: repo}
 ---
 
 # M14 Pf-2 — clean-room G19 comparative ≥20%

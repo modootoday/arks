@@ -3,12 +3,12 @@ id: evidence:root/20261108200811
 title: Clean-room G16 journey-compare Wave-2 + median/p95
 status: active
 created: 2026-11-08T20:08:11Z
-updated: 2026-11-09T22:48:31Z
+updated: 2026-11-10T00:57:42Z
 tags: [g16, clean-room, journey-compare, timing, metrics, verified, additive, median-p95]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, plan:root/20261108182457, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/cli-surface, sot:root/public-surface, adr:root/20261108083507, evidence:root/20261108183045]
 files:
-  - {path: metrics.json, sha256: 797761f3dd83b3ea8bd55d6d18354db643e6f78138674eb9bba7a952e3e1caac, bytes: 33170, store: repo}
+  - {path: metrics.json, sha256: 8fcec9ac8ab658b769af85fb14026a468a50022f2f55856cbfc4277766c24032, bytes: 31810, store: repo}
 ---
 
 # Clean-room G16 journey-compare receipts (Wave-2 + median/p95)

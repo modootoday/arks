@@ -3,7 +3,7 @@ id: evidence:root/20261110222000
 title: FW-G8-DEFAULT Claimed (default-on when secrets; SKIP receipt without secrets)
 status: active
 created: 2026-11-10T22:20:00Z
-updated: 2026-11-10T00:00:20Z
+updated: 2026-11-10T22:20:00Z
 tags: [g8, fw-g8-default, claimed, clean-room, skip, live-forge]
 rel:
   depends_on: [adr:root/20261110220000, sot:root/interop-test-matrix, sot:root/product-verification-clean-room, sot:root/production-residual-register]

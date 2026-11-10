@@ -3,12 +3,12 @@ id: evidence:root/20261109205534
 title: M24 G23 CELIR dual-path Git verified clean-room
 status: active
 created: 2026-11-09T20:55:34Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [m24, g23, celir, dual-path, clean-room, verified, porcelain]
 rel:
   depends_on: [sot:root/celir-dual-path-git-verified, adr:root/20261109204916, plan:root/20261109204933, sot:root/product-verification-clean-room, sot:root/celir-index-dual-path, sot:root/storage-celir-boundary, evidence:root/20261109204428]
 files:
-  - {path: receipt.json, sha256: 66854ce3e7dd7a3f3ce5ad4f1da999303ddd3bec052cf84b375a73b319cbd421, bytes: 457, store: repo}
+  - {path: receipt.json, sha256: 27eaa8fb6842b751b4f0b1d459849ee0e26e936ac8e7329846a018ebb4c297a4, bytes: 443, store: repo}
 ---
 
 # M24 — G23 CELIR dual-path Git verified

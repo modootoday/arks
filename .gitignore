@@ -3,24 +3,8 @@
 .specfold/
 target/
 target-cleanroom/
-verify/gates/g1/target/
-verify/gates/g2/target/
-verify/gates/g4/target/
-verify/gates/g5/target/
-verify/gates/g10/target/
-verify/gates/g16/target/
-verify/gates/g8/out/
-verify/gates/g8-live-scale/out/
-verify/gates/g16/out/
-verify/gates/g17/out/
-verify/gates/g18/out/
-verify/gates/g19/out/
-verify/gates/g20/out/
-verify/gates/g21/out/
-verify/gates/g22/out/
-verify/gates/g23/out/
-verify/gates/g24/out/
-verify/gates/g25/out/
+verify/gates/*/target/
+verify/gates/*/out/
 
 # Secrets / credentials (public-surface: never commit)
 .env
@@ -40,6 +24,3 @@ Thumbs.db
 *~
 .idea/
 .vscode/
-verify/gates/g27/out/
-verify/gates/g28/out/
-verify/gates/g34/out/

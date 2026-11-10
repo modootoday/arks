@@ -9,7 +9,7 @@ rel:
   depends_on: [plan:root/20261110010000, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/product-verification-clean-room, sot:root/production-residual-register, evidence:root/20261109140000, research:root/20261109023117]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 6bde2820f48a5ddab318d08f2aa5535c450114150bf1df825f46cd436a152349, bytes: 5256, store: repo}
+  - {path: receipt.json, sha256: 6d3048a5bb425a67f1a2daadf02aaf58993af062b021fabfd8a6bde6ad53f602, bytes: 5107, store: repo}
 ---
 
 # M19 Cx-1 — clean-room G17 concurrency claim expansion

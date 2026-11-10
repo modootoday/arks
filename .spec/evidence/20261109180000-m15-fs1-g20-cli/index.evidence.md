@@ -3,13 +3,13 @@ id: evidence:root/20261109180000
 title: M15 Fs-1 clean-room G20 full CLI symmetric (amend/hooks/merge-no-ff/plumbing)
 status: active
 created: 2026-11-09T18:00:00Z
-updated: 2026-11-09T22:48:33Z
+updated: 2026-11-10T00:57:43Z
 tags: [g20, m15, fs-1, clean-room, cli-full-parity, verified]
 rel:
   depends_on: [plan:root/20261109035335, sot:root/cli-surface, sot:root/cli-flag-parity-full, sot:root/interop-test-matrix, sot:root/program-roadmap, evidence:root/20261108150000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 73af1f6626f20e89302df323774295c0794035376fca39bf07f9f3690f82730c, bytes: 452, store: repo}
+  - {path: receipt.json, sha256: 22fb2e378482962182fa5bebcf31db8a5d0934bfba570fc07399d82ee535d2d4, bytes: 425, store: repo}
 ---
 
 # M15 Fs-1 — clean-room G20 full CLI symmetric (wave 1)

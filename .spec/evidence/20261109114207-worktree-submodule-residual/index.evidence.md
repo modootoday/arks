@@ -3,13 +3,13 @@ id: evidence:root/20261109114207
 title: Post-M9 residual worktree + submodule implement (G16 + G14)
 status: active
 created: 2026-11-09T11:42:07Z
-updated: 2026-11-09T22:48:32Z
+updated: 2026-11-10T00:57:43Z
 tags: [g16, g14, clean-room, worktree, submodule, residual, verified]
 rel:
   depends_on: [plan:root/20261109022956, sot:root/production-residual-register, sot:root/clean-room-journey-compare, sot:root/cli-flag-parity-m9, sot:root/cli-surface, sot:root/arks-repo, sot:root/arks, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, adr:root/20261108083507, evidence:root/20261108150000, evidence:root/20261109065018]
   evidence: []
 files:
-  - {path: metrics.json, sha256: 5c66ef5a0ca26612de07da02c87a26df6716a3219921b1f7a9a8157f50825e46, bytes: 42652, store: repo}
+  - {path: metrics.json, sha256: 13c5bfc47352938ba52496feaec627a85aa42a3aca7a0bbd5777b588eb4e6cf0, bytes: 40955, store: repo}
 ---
 
 # Post-M9 residual — `worktree` + `submodule` implement receipts

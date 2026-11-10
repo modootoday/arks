@@ -3,12 +3,12 @@ id: evidence:root/20261109212500
 title: G28 live private arks journeys
 status: active
 created: 2026-11-09T21:25:00Z
-updated: 2026-11-09T22:48:41Z
+updated: 2026-11-10T00:57:44Z
 tags: [g28, clean-room, journey, live, github, private, verified]
 rel:
   depends_on: [sot:root/g28-live-private-arks-journeys, plan:root/20261109212020, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/clean-room-journey-compare, sot:root/production-residual-register, adr:root/20261110151000]
 files:
-  - {path: receipt.json, sha256: fed9583d2e2c6d5410c969c65dc65b1da0f4b38cadd8c87fe23c7af850c5c46a, bytes: 3149, store: repo}
+  - {path: receipt.json, sha256: cdf58199f4e6d1e4492d37fd66316638c1cf9b6a4995406fda9a66ed96d5f05e, bytes: 3004, store: repo}
 ---
 
 # G28 — live private arks journeys

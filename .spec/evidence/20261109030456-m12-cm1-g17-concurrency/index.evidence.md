@@ -3,13 +3,13 @@ id: evidence:root/20261109030456
 title: M12 Cm-1 clean-room G17 concurrency issue-compare
 status: active
 created: 2026-11-09T03:04:56Z
-updated: 2026-11-09T22:48:31Z
+updated: 2026-11-10T00:57:42Z
 tags: [g17, m12, cm-1, clean-room, concurrency, issue-resolution, verified]
 rel:
   depends_on: [plan:root/20261109024634, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/product-verification-clean-room, sot:root/production-residual-register, evidence:root/20261109114207, research:root/20261109023117]
   evidence: []
 files:
-  - {path: receipt.json, sha256: e2609c730dd61f0115dff54346275c3662327aedc2656ca8819eb8e65c6bbcc7, bytes: 1255, store: repo}
+  - {path: receipt.json, sha256: fb134ae780e6309870985a2edf4ffebba5c83501bc6dbb138f3b4d7f041b5dc8, bytes: 1220, store: repo}
 ---
 
 # M12 Cm-1 — clean-room G17 concurrency issue-compare

@@ -9,7 +9,7 @@ rel:
   depends_on: [plan:root/20261110100000, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/lease-concurrency-intent, sot:root/product-verification-clean-room, evidence:root/20261110090000, adr:root/20261109032955, research:root/20261110021546]
   evidence: []
 files:
-  - {path: receipt.json, sha256: b2426c6771e45dcd5d0134576f26e6b89eb44010c46d0a7728a7371f9972307a, bytes: 7777, store: repo}
+  - {path: receipt.json, sha256: c1db59e2e8aa6adc987de490cccdcdb2ae38aa2c599a8734018eac369e9ec149, bytes: 7550, store: repo}
 ---
 
 # M20 Cd-5 — clean-room G18 concurrency claim expansion

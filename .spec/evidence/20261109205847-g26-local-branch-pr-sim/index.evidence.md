@@ -3,12 +3,12 @@ id: evidence:root/20261109205847
 title: G26 local branch + synthetic PR-env clean-room
 status: active
 created: 2026-11-09T20:58:47Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [g26, clean-room, branch, pr-sim, lease, verified, stream-b]
 rel:
   depends_on: [sot:root/local-branch-pr-sim-clean-room, plan:root/20261109205507, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/lease-concurrency-intent, sot:root/program-roadmap, sot:root/production-residual-register]
 files:
-  - {path: receipt.json, sha256: 2265c9eff0cf78e4615b0dcbc7bcb2eab03aef4e32b4e2689ad58e644da704c7, bytes: 331, store: repo}
+  - {path: receipt.json, sha256: 5a7e745db8b51ba03fcd0da99469184a16b3f6102bb2b4c69185654c804f8149, bytes: 319, store: repo}
 ---
 
 # G26 — Local branch + synthetic PR-env clean-room

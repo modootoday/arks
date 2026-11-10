@@ -28,7 +28,7 @@ Convention cites (do not fork): humanymous `rust-migration.sot.md` Structure and
 |------|---------|-----|
 | Workspace crates under `crates/arks-*` | Yes | Y |
 | Crate `tests/` for single-crate integration | Sparse (`arks-object`, `arks-protocol`, `arks-lease`); many gates only under `verify/g*` | Partial |
-| Crate `testdata/` / context fixtures | Absent; root `verify/fixtures/m1/` is advisory OID docs | N |
+| Crate `testdata/` / context fixtures | Absent; former repo-root `fixtures/m1/` was advisory OID docs (now `verify/fixtures/m1/`) | was N |
 | Product clean-room under `verify/` | Compose + scripts + lock present | Y (role) |
 | Flat dump of `verify/g*` + `matrix-*.md` | ~35 siblings each | N (SRP / flat-list ban) |
 | Duplicate G1/G5 oracles | Crate `tests/` **and** `verify/g{1,5}` mini-crates | N (anti-fragmentation) |
@@ -91,12 +91,15 @@ crates/arks-<ctx>/
 |-----|-----|
 | `verify/scripts/run-g19.sh` | unchanged path |
 | `verify/scripts/run-g16.sh` | unchanged path; internals → `verify/gates/g16` |
-| `verify/gates/g16/` | `verify/gates/g16/` |
-| `verify/gates/g16/out/metrics.json` | `verify/gates/g16/out/metrics.json` |
-| `verify/gates/g19/` | `verify/gates/g19/` |
-| `verify/gates/g19/out/receipt.json` | `verify/gates/g19/out/receipt.json` |
-| `verify/matrices/matrix-g19.md` | `verify/matrices/matrix-g19.md` |
-| `verify/matrices/matrix-journey.md` | `verify/matrices/matrix-journey.md` |
+| `verify/g16/` | `verify/gates/g16/` |
+| `verify/g16/out/metrics.json` | `verify/gates/g16/out/metrics.json` |
+| `verify/g19/` | `verify/gates/g19/` |
+| `verify/g19/out/receipt.json` | `verify/gates/g19/out/receipt.json` |
+| `verify/matrix-g19.md` | `verify/matrices/matrix-g19.md` |
+| `verify/matrix-journey.md` | `verify/matrices/matrix-journey.md` |
+| `fixtures/m1/` | `verify/fixtures/m1/` |
+| `verify/gN/` (all gates) | `verify/gates/gN/` |
+| `verify/matrix-*.md` | `verify/matrices/matrix-*.md` |
 
 No half-moved paths: scripts, compose argv (still `verify/scripts/…`), SoT cites, gitignore, and AGENTS pointers update in the same change.
 

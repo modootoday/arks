@@ -3,12 +3,12 @@ id: evidence:root/20261109205536
 title: M24 G25 CELIR index scale clean-room
 status: active
 created: 2026-11-09T20:55:36Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:44Z
 tags: [m24, g25, celir, scale, clean-room, verified, contention, oom]
 rel:
   depends_on: [sot:root/celir-index-scale-clean-room, plan:root/20261109204934, evidence:root/20261109204428, sot:root/product-verification-clean-room, sot:root/celir-index-contention-clean-room]
 files:
-  - {path: receipt.json, sha256: b72426743a2345e35d4e1ce694c85d6b31ad0549856da23b4fd2dd298f8fa193, bytes: 428, store: repo}
+  - {path: receipt.json, sha256: 67aea2aa4a2324acd75d1c8ed8c7780ef5b2840bd83dacb4791a9d0df2fb4d8a, bytes: 408, store: repo}
 ---
 
 # M24 — G25 CELIR index scale

@@ -3,12 +3,12 @@ id: evidence:root/20261109065018
 title: Clean-room G16 journey-compare Wave-3 path/file:// + optional RSS/CPU
 status: active
 created: 2026-11-09T06:50:18Z
-updated: 2026-11-09T22:48:32Z
+updated: 2026-11-10T00:57:42Z
 tags: [g16, clean-room, journey-compare, timing, metrics, verified, additive, path-clone, rss-cpu]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, plan:root/20261108182457, sot:root/arks-remote, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/cli-surface, sot:root/public-surface, adr:root/20261108083507, evidence:root/20261108200811]
 files:
-  - {path: metrics.json, sha256: 4e3ebe1b9be30c04265008a58bb8577f88608d657745aab5a58531727f24867e, bytes: 39135, store: repo}
+  - {path: metrics.json, sha256: 318ccf8dcb403e2bdc26c75d95bd59925d7ccf4556870bfbd17faba327513165, bytes: 37568, store: repo}
 ---
 
 # Clean-room G16 journey-compare receipts (Wave-3 path/`file://` + optional RSS/CPU)

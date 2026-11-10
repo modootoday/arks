@@ -3,12 +3,12 @@ id: evidence:root/20261108183045
 title: Clean-room G16 journey-compare (func + timing)
 status: active
 created: 2026-11-08T18:30:45Z
-updated: 2026-11-09T22:48:31Z
+updated: 2026-11-10T00:57:42Z
 tags: [g16, clean-room, journey-compare, timing, metrics, verified, additive]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, plan:root/20261108182457, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/cli-surface, sot:root/public-surface, adr:root/20261108083507]
 files:
-  - {path: metrics.json, sha256: e8a771f8503ec7516b00e9ba35e61d2757975fac88a7238effa6fb5137f988ef, bytes: 14440, store: repo}
+  - {path: metrics.json, sha256: e6e816c04f0ad3530b0f20f7635deca1aea21630b2b30e049e32102d9fcb84f6, bytes: 13816, store: repo}
 ---
 
 # Clean-room G16 journey-compare receipts

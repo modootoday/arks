@@ -3,13 +3,13 @@ id: evidence:root/20261109122512
 title: Development residual close — version CODEOWNERS allocator dispositions
 status: active
 created: 2026-11-09T12:25:12Z
-updated: 2026-11-09T22:48:32Z
+updated: 2026-11-10T00:57:43Z
 tags: [residual, g21, version, codeowners, allocator, m16, m17, development-close, verified]
 rel:
   depends_on: [sot:root/production-residual-register, sot:root/program-roadmap, sot:root/cli-flag-parity-complete, sot:root/public-surface, sot:root/crate-architecture, adr:root/20261109122126, adr:root/20261108232800, evidence:root/20261109090000, evidence:root/20261109061600, evidence:root/20261109063000]
   evidence: []
 files:
-  - {path: receipt-g21-sy5.json, sha256: 687be2624b60b8dc0d5f335d0b187243909d0ad5c0919d6bf164390ba0b9dbca, bytes: 414, store: repo}
+  - {path: receipt-g21-sy5.json, sha256: 4e46a795037deffdd8864653dd6126e24333c648100e0e8507d1ed38f30ef2b8, bytes: 387, store: repo}
 ---
 
 # Development residual close — version / CODEOWNERS / allocator / dispositions

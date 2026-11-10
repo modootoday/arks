@@ -3,13 +3,13 @@ id: evidence:root/20261109063000
 title: M16 Sy-5 G21 cover-letter and am --3way
 status: active
 created: 2026-11-09T06:30:00Z
-updated: 2026-11-09T22:48:31Z
+updated: 2026-11-10T00:57:42Z
 tags: [g21, m16, sy-5, clean-room, verified, complete-symmetry, cover-letter, am]
 rel:
   depends_on: [plan:root/20261109043910, sot:root/cli-flag-parity-complete, sot:root/interop-test-matrix, evidence:root/20261109061600]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 88b60ac669d6a2df852747dc9a3996786d2c4b7157529e6f4dac025c92eae158, bytes: 633, store: repo}
+  - {path: receipt.json, sha256: 9109159442126d4053b656f7618b8839d08b8ed8b68919cff5d23751b65fc7bd, bytes: 614, store: repo}
 ---
 
 # M16 Sy-5 follow-up — format-patch --cover-letter / am --3way

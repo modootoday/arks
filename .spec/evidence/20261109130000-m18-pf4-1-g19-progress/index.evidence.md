@@ -3,14 +3,14 @@ id: evidence:root/20261109130000
 title: M18 Pf4-1 progress — G19 sole run (19/19 ≤0.8×; 9/19 ≤0.5×)
 status: active
 created: 2026-11-09T13:00:00Z
-updated: 2026-11-09T22:48:33Z
+updated: 2026-11-10T00:57:43Z
 tags: [g19, m18, pf4, comparative-perf, clean-room, verified, na-free, progress]
 rel:
   depends_on: [plan:root/20261109125438, research:root/20261109125438, sot:root/program-roadmap, sot:root/clean-room-journey-compare, evidence:root/20261109090000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 9f89a9ee9cb21a4615e67fd0e6050fd56d10467ffdf455c11799bf39f07d2289, bytes: 5241, store: repo}
-  - {path: metrics.json, sha256: 53902cba577256c671cd617d90f05fc2fecba48fc231fd7f1d284d4dd0544713, bytes: 51511, store: repo}
+  - {path: receipt.json, sha256: fd0f412244d5439e174a6650728297870ff577bc496ab72fccb821447ed9f445, bytes: 5010, store: repo}
+  - {path: metrics.json, sha256: 7e36b20ddf81fbee99366667371db815288ce9d0d9dce6f539810f3a9055349e, bytes: 49455, store: repo}
 ---
 
 # M18 Pf4-1 progress — sole Docker G19

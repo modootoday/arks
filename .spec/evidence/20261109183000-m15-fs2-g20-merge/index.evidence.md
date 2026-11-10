@@ -3,13 +3,13 @@ id: evidence:root/20261109183000
 title: M15 Fs-2 clean-room G20 diverged three-way merge
 status: active
 created: 2026-11-09T18:30:00Z
-updated: 2026-11-09T22:48:40Z
+updated: 2026-11-10T00:57:43Z
 tags: [g20, m15, fs-2, clean-room, merge, verified]
 rel:
   depends_on: [plan:root/20261109035335, sot:root/cli-flag-parity-full, evidence:root/20261109180000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 96abc92ef52f48d2028e66cf68009647f0e6f28ab0bb9d503e66ed6ea9943067, bytes: 627, store: repo}
+  - {path: receipt.json, sha256: 23202c5085bb6c7aacc3ed46648a8ba7a87dd9b7b865ecf26e029f53fb8c19ac, bytes: 590, store: repo}
 ---
 
 # M15 Fs-2 — clean-room G20 diverged three-way merge

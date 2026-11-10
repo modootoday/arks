@@ -9,8 +9,8 @@ rel:
   depends_on: [plan:root/20261110150000, sot:root/clean-room-journey-compare, sot:root/interop-test-matrix, sot:root/production-residual-register, evidence:root/20261109143000]
   evidence: []
 files:
-  - {path: receipt.json, sha256: a87cadc201fff4c156b6cda826cfdf769b5be148c9b5653e9cf9466ecb9115a4, bytes: 8441, store: repo}
-  - {path: metrics.json, sha256: 5061b2824b7433de344c5cf475551d80c102a2a4cd4db5922be8b937895224dd, bytes: 51508, store: repo}
+  - {path: receipt.json, sha256: 628682c29c0791fa41fd4543725bf2f377b2127fdbea877e1d73be03304894dc, bytes: 8161, store: repo}
+  - {path: metrics.json, sha256: 9169d63e4055edd15e46adc5bc987788e8c61517f714f49f0d1d493f81315efd, bytes: 49452, store: repo}
 ---
 
 # M22 Rc-3 — Pf5 G19 aggressive leftovers terminal
