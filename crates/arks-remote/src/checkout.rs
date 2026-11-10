@@ -13,11 +13,29 @@ use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode};
 use arks_oid::{Oid, OidKind};
 use arks_repo::Repository;
+use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread;
+
+thread_local! {
+    /// Optional hard cap on checkout workers for the current clone path.
+    /// Smart-HTTP sets `Some(1)` — Docker 2-way still taxes J-CLONE-LOCAL;
+    /// path/file:// leave this `None` and keep the high-CPU cap of 3.
+    static WORKER_CAP: Cell<Option<usize>> = const { Cell::new(None) };
+}
+
+/// Run `f` with a temporary checkout worker cap (smart-HTTP clone hot path).
+pub(crate) fn with_worker_cap<R>(cap: usize, f: impl FnOnce() -> R) -> R {
+    WORKER_CAP.with(|c| {
+        let prev = c.replace(Some(cap));
+        let out = f();
+        c.set(prev);
+        out
+    })
+}
 
 /// Write `commit`'s tree into `work` and replace the index to match.
 pub fn checkout_commit(repo: &Repository, work: &Path, commit: &Oid) -> Result<(), RemoteError> {
@@ -250,17 +268,22 @@ fn materialize_jobs(
 /// Worker count for checkout writes.
 ///
 /// Threshold stays 8 (jobs < 8 → serial). Docker Desktop often advertises ≥8
-/// host CPUs; 8-way thrash regressed J-CLONE-LOCAL, but pure serial left
-/// J-CLONE-PATH on a 0.52 knife-edge — cap at 2 recovers PATH headroom without
-/// the old full-parallel tax.
+/// host CPUs; 8-way thrash regressed J-CLONE-LOCAL. Default high-CPU cap is 3
+/// for J-CLONE-PATH headroom; smart-HTTP clone forces serial via
+/// [`with_worker_cap`].
 fn checkout_workers(cpus: usize, jobs: usize) -> usize {
     if jobs < 8 || cpus <= 1 {
         return 1;
     }
-    if cpus >= 8 {
-        return 2.min(jobs);
-    }
-    cpus.clamp(2, 8).min(jobs)
+    let capped = if cpus >= 8 {
+        3.min(jobs)
+    } else {
+        cpus.clamp(2, 8).min(jobs)
+    };
+    WORKER_CAP
+        .with(|c| c.get())
+        .map(|cap| capped.min(cap).max(1))
+        .unwrap_or(capped)
 }
 
 fn materialize_cached(

@@ -77,7 +77,11 @@ where
         repo.refs_mut()
             .set_symbolic("HEAD", &branch)
             .map_err(|e| RemoteError::Msg(e.to_string()))?;
-        crate::checkout::checkout_commit(&repo, dest, &oid)?;
+        // Smart-HTTP: serial checkout (worker cap 1). Path clones use the
+        // default high-CPU cap — see checkout::checkout_workers.
+        crate::checkout::with_worker_cap(1, || {
+            crate::checkout::checkout_commit(&repo, dest, &oid)
+        })?;
     }
     if let Some(pending) = pending {
         pending
