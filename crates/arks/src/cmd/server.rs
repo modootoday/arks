@@ -10,7 +10,8 @@ use arks_hub::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
 use arks_repo::Repository;
 use arks_server::{
     BasicAuthConfig, DaemonOptions, HttpRequest, ServeHttpOptions, ServeSshOptions,
-    handle_smart_http_auth, receive_pack_session, serve_daemon, serve_http_with_opts,
+    default_authorized_keys_path, default_host_key_path, handle_smart_http_auth,
+    receive_pack_session, serve_daemon, serve_daemon_inetd, serve_http_with_opts,
     serve_ssh_listener, update_server_info, upload_pack_session,
 };
 use std::io::{self, Read, Write};
@@ -59,12 +60,35 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         return cmd_serve_config(&args[1..]);
     }
 
-    let mut enable_http = true;
-    let mut enable_ssh = true;
-    let mut enable_forge = true;
-    let mut forge_listen = "127.0.0.1:3920".to_string();
-    let mut forge_data: Option<PathBuf> = None;
+    // Partial: file store seeds defaults; clap flags still win when present.
+    let file_cfg = load_serve_config_map().unwrap_or_default();
+    let mut enable_http = config_bool(&file_cfg, "http", true);
+    let mut enable_ssh = config_bool(&file_cfg, "ssh", true);
+    let mut enable_forge = config_bool(&file_cfg, "forge", true);
+    let mut forge_listen = file_cfg
+        .get("forge_listen")
+        .cloned()
+        .unwrap_or_else(|| "127.0.0.1:3920".into());
+    let mut forge_data: Option<PathBuf> = file_cfg.get("forge_data").map(PathBuf::from);
+    let mut listen_from_cfg = file_cfg.get("bind").cloned();
+    let mut ssh_host_key = file_cfg
+        .get("ssh_host_key")
+        .map(PathBuf::from)
+        .unwrap_or_else(default_host_key_path);
+    let mut ssh_authorized_keys = file_cfg
+        .get("ssh_authorized_keys")
+        .map(PathBuf::from)
+        .unwrap_or_else(default_authorized_keys_path);
     let mut forwarded = Vec::new();
+    if let Some(ref bind) = listen_from_cfg {
+        // Seed HTTP listen from file; explicit --listen later overrides via forwarded.
+        forwarded.push("--listen".into());
+        forwarded.push(bind.clone());
+    }
+    if let Some(auth_file) = file_cfg.get("basic_auth_file") {
+        forwarded.push("--basic-auth-file".into());
+        forwarded.push(auth_file.clone());
+    }
     let mut i = 0;
     while i < args.len() {
         let a = args[i].as_str();
@@ -76,6 +100,9 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             "--ssh" => enable_ssh = true,
             "--forge" => enable_forge = true,
             "--listen" => {
+                // Replace any seeded --listen from file store.
+                forwarded.retain(|x| x != "--listen" && !listen_from_cfg.as_ref().is_some_and(|b| b == x));
+                listen_from_cfg = None;
                 forwarded.push(args[i].clone());
                 i += 1;
                 let v = args
@@ -97,7 +124,30 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
                         .ok_or_else(|| CliError::Usage("serve --forge-data needs DIR".into()))?,
                 ));
             }
+            "--ssh-host-key" => {
+                i += 1;
+                ssh_host_key = PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("serve --ssh-host-key needs PATH".into()))?,
+                );
+            }
+            "--authorized-keys" => {
+                i += 1;
+                ssh_authorized_keys = PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("serve --authorized-keys needs PATH".into()))?,
+                );
+            }
             "--basic-auth" | "--basic-auth-file" => {
+                if a == "--basic-auth-file" {
+                    // Drop seeded basic_auth_file pair so CLI wins.
+                    if let Some(pos) = forwarded.iter().position(|x| x == "--basic-auth-file") {
+                        forwarded.remove(pos);
+                        if pos < forwarded.len() {
+                            forwarded.remove(pos);
+                        }
+                    }
+                }
                 forwarded.push(args[i].clone());
                 i += 1;
                 let v = args
@@ -106,12 +156,22 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
                 forwarded.push(v.clone());
             }
             "--dumb-only" => forwarded.push(args[i].clone()),
-            other if other.starts_with("--listen=") => forwarded.push(args[i].clone()),
+            other if other.starts_with("--listen=") => {
+                forwarded.retain(|x| x != "--listen" && !listen_from_cfg.as_ref().is_some_and(|b| b == x));
+                listen_from_cfg = None;
+                forwarded.push(args[i].clone());
+            }
             other if other.starts_with("--forge-listen=") => {
                 forge_listen = other[15..].to_string();
             }
             other if other.starts_with("--forge-data=") => {
                 forge_data = Some(PathBuf::from(&other[13..]));
+            }
+            other if other.starts_with("--ssh-host-key=") => {
+                ssh_host_key = PathBuf::from(&other[15..]);
+            }
+            other if other.starts_with("--authorized-keys=") => {
+                ssh_authorized_keys = PathBuf::from(&other[18..]);
             }
             other if other.starts_with('-') => {
                 return Err(CliError::NotImplemented(format!(
@@ -138,13 +198,30 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         // Directory is optional here — Missing path refuses before bind.
         let dir = forwarded
             .iter()
-            .find(|a| !a.starts_with('-'))
+            .find(|a| !a.starts_with('-') && *a != "--listen" && !a.contains(':'))
+            .cloned()
+            // Prefer last positional (directory); skip seeded listen values.
+            .or_else(|| {
+                forwarded
+                    .iter()
+                    .rev()
+                    .find(|a| !a.starts_with('-'))
+                    .cloned()
+            })
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("."));
+        // If dir accidentally captured a HOST:PORT from --listen value, fall back.
+        let dir = if dir.to_string_lossy().parse::<SocketAddr>().is_ok() {
+            PathBuf::from(".")
+        } else {
+            dir
+        };
         return serve_ssh_listener(
             ServeSshOptions {
                 listen: ssh_listen,
                 path: dir,
+                host_key: ssh_host_key,
+                authorized_keys: ssh_authorized_keys,
             },
             Arc::new(AtomicBool::new(false)),
         )
@@ -300,9 +377,22 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "forge_data",
     "basic_auth_file",
     "ssh_host_key",
+    "ssh_authorized_keys",
     "allow_paths",
     "tls_note",
 ];
+
+fn config_bool(
+    map: &std::collections::BTreeMap<String, String>,
+    key: &str,
+    default: bool,
+) -> bool {
+    match map.get(key).map(String::as_str) {
+        Some("on" | "true" | "1") => true,
+        Some("off" | "false" | "0") => false,
+        _ => default,
+    }
+}
 
 fn serve_config_path() -> PathBuf {
     if let Ok(p) = std::env::var("ARKS_SERVE_CONFIG") {
@@ -366,7 +456,8 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
                 Err("expected HOST:PORT socket address".into())
             }
         }
-        "forge_data" | "basic_auth_file" | "ssh_host_key" | "allow_paths" | "tls_note" => {
+        "forge_data" | "basic_auth_file" | "ssh_host_key" | "ssh_authorized_keys"
+        | "allow_paths" | "tls_note" => {
             if value.is_empty() {
                 Err("value must not be empty".into())
             } else {
@@ -580,6 +671,8 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     let mut max_connections: usize = 0;
     let mut verbose = false;
     let mut reuseaddr = true;
+    let mut inetd = false;
+    let mut pid_file: Option<PathBuf> = None;
     let mut bases: Vec<PathBuf> = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -674,15 +767,33 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
                 print_daemon_help();
                 return Ok(());
             }
-            "--detach" | "--inetd" | "--syslog" | "--informative-errors"
-            | "--no-informative-errors" | "--base-path-relaxed" => {
+            "--inetd" => inetd = true,
+            "--detach" => {
+                return Err(CliError::NotImplemented(
+                    "daemon --detach: Missing/Partial — no fork/daemonize Claimed on product path \
+                     (Windows host + clean-room Linux); run foreground or ops supervisor \
+                     (systemd/nssm); --pid-file alone writes pid without detaching"
+                        .into(),
+                ));
+            }
+            "--pid-file" => {
+                i += 1;
+                pid_file = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("daemon --pid-file needs PATH".into()))?,
+                ));
+            }
+            other if other.starts_with("--pid-file=") => {
+                pid_file = Some(PathBuf::from(&other[11..]));
+            }
+            "--syslog" | "--informative-errors" | "--no-informative-errors"
+            | "--base-path-relaxed" => {
                 return Err(CliError::NotImplemented(format!(
                     "daemon option not claimed: {a}"
                 )));
             }
             other
-                if other.starts_with("--pid-file")
-                    || other.starts_with("--user")
+                if other.starts_with("--user")
                     || other.starts_with("--group")
                     || other.starts_with("--access-hook")
                     || other.starts_with("--interpolated-path")
@@ -711,6 +822,40 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     }
     let base_path = bases[0].clone();
     let allowed_bases = bases[1..].to_vec();
+    let opts = DaemonOptions {
+        base_path,
+        allowed_bases,
+        export_all,
+        allow_receive,
+        allow_upload_archive,
+        allow_upload_pack,
+        strict_paths,
+        timeout_secs,
+        init_timeout_secs,
+        max_connections,
+        verbose,
+        reuseaddr,
+    };
+    if let Some(ref path) = pid_file {
+        // Partial honesty: write pid while remaining foreground (no --detach).
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let pid = std::process::id();
+        std::fs::write(path, format!("{pid}\n")).map_err(|e| CliError::Msg(e.to_string()))?;
+        eprintln!(
+            "arks daemon: wrote pid {pid} → {} (Partial; process stays foreground — no --detach)",
+            path.display()
+        );
+    }
+    if inetd {
+        eprintln!(
+            "arks daemon --inetd: Partial one-shot stdio peer (export_all={export_all}; \
+             upload-archive={allow_upload_archive}); pack Claimed on TCP path only"
+        );
+        return serve_daemon_inetd(io::stdin(), io::stdout(), &opts)
+            .map_err(|e| CliError::Msg(e.to_string()));
+    }
     let listen = format!("{listen_host}:{port}");
     let addr: SocketAddr = listen
         .parse()
@@ -728,25 +873,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
         bases.len()
     );
     let stop = Arc::new(AtomicBool::new(false));
-    serve_daemon(
-        addr,
-        DaemonOptions {
-            base_path,
-            allowed_bases,
-            export_all,
-            allow_receive,
-            allow_upload_archive,
-            allow_upload_pack,
-            strict_paths,
-            timeout_secs,
-            init_timeout_secs,
-            max_connections,
-            verbose,
-            reuseaddr,
-        },
-        stop,
-    )
-    .map_err(|e| CliError::Msg(e.to_string()))
+    serve_daemon(addr, opts, stop).map_err(|e| CliError::Msg(e.to_string()))
 }
 
 fn parse_daemon_listen_value(v: &str, host: &mut String, port: &mut u16) -> CliResult<()> {
@@ -814,13 +941,14 @@ Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-fo
 
 Honesty ([[sot:root/arks-self-host-server]]):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
-  - In-process SSH listener: Missing/Partial — fail-closed via serve_ssh_listener
+  - In-process SSH listener: Partial wire (bind + host_key/authorized_keys paths) then
+    fail-closed — SSH FFI/russh Missing; ops SSHD + upload-pack/receive-pack remains valid
   - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
   - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
-  - Ops SSHD + upload-pack/receive-pack remains valid SSH remotes today
   - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
   - Hub OAuth is refused as primary git-remote auth
-  - `serve config` is server config (Partial) — not `arks config`, not hub
+  - `serve config` seeds runtime defaults (Partial); clap flags win; ≠ `arks config` / hub
+  - Optional: --ssh-host-key PATH --authorized-keys PATH
 
 Ports ([[sot:root/arks-self-host-server]] / [[research:root/20261111055609]]):
   Normative targets (clone URLs / dedicated host): SSH 22, HTTP 80, HTTPS 443, git:// 9418
@@ -858,7 +986,9 @@ Not `arks config` (git-repo config). Not hub forge settings.
 File: ~/.config/arks/serve.conf (or ARKS_SERVE_CONFIG).
 Keys (Partial): bind, http, ssh, forge, forge_listen, forge_data,
   basic_auth_file, ssh_host_key, allow_paths, tls_note.
-Note: clap flags still win at runtime today; file store is Partial persistence only.
+Keys also: ssh_authorized_keys.
+Partial: file store seeds `arks serve` defaults (bind/http/ssh/forge/forge_*/basic_auth_file/
+  ssh_host_key); clap flags still win when present. Design ≠ Claimed.
 "
     );
 }
@@ -880,9 +1010,10 @@ Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
 Requires git-daemon-export-ok unless --export-all.
 Multiple positionals / repeated --base-path = allow-list (Partial).
 Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
-  enable/disable upload-pack/receive-pack; upload-archive flag accepts but
-  protocol body remains Partial refuse.
-Not claimed (fail-closed): --detach --inetd --pid-file --user/--group --syslog
+  enable/disable upload-pack/receive-pack; upload-archive drains argument pkt-lines
+  then Partial refuse (archive stream not Claimed); --inetd one-shot stdio Partial;
+  --pid-file writes pid in foreground (no detach).
+Fail-closed Missing: --detach (no fork Claimed); --user/--group --syslog
   --access-hook --interpolated-path --user-path overrides.
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
