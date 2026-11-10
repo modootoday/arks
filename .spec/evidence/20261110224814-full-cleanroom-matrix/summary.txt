@@ -1,0 +1,9 @@
+tip=54c9dc2eef001af9c39ee31def5029829d8096b8
+venue=Docker arks-verify-m1:0.1.0 sequential compose run
+l8=PASS (g14 g16 g20 g21)
+s6=PASS (g38 g39 g40)
+g19=PASS M17 19/19 <=0.8; PF5 Claimed(partial) 17 + aggressive_na J-ALIAS-01 J-REVERT-01
+live_skip=g8 g8-live-scale g28 (secrets absent)
+fixes_mid_run=G20 FS1 editor honesty; G11/G11L3/G18 celir tree scan; G15 push-options O4; G19 aggressive_na tip honesty
+verdict_fs_final=YES
+verdict_everything=PARTIAL (L9 / live G8 latency / crypto immunity / forge UX / full host-env sync remain non-goals)
