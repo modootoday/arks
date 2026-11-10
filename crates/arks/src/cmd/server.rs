@@ -1147,17 +1147,18 @@ Requires git-daemon-export-ok unless --export-all.
 Multiple positionals / repeated --base-path = allow-list (Partial).
 Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
   enable/disable upload-pack/receive-pack; upload-archive ACK+raw ustar Partial
-  (sideband/format flags not Claimed); --inetd one-shot stdio Partial;
-  --pid-file writes pid; --detach Partial re-exec (OS-limited; not classic double-fork).
+  (ACK + sideband-64k ustar Partial; --format beyond tar Missing); --inetd Partial;
+  --pid-file writes pid; --detach Partial re-exec (unix setsid / win DETACHED_PROCESS).
 Fail-closed Missing: --user/--group --syslog --access-hook
-  --interpolated-path --user-path overrides; Claimed sideband archive.
+  --interpolated-path --user-path overrides; Claimed archive parity.
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
 }
 
 /// Partial `--detach`: re-exec this binary without `--detach` as a background child.
-/// Not classic Unix double-fork/setsid Claimed — OS-limited spawn honesty.
+/// Windows: DETACHED_PROCESS. Unix: `setsid` via `pre_exec` (Partial — not classic
+/// double-fork/chdir/`/` Claimed). Ops supervisors remain preferred.
 fn daemon_detach_reexec(args: &[String]) -> CliResult<()> {
     let exe = std::env::current_exe().map_err(|e| CliError::Msg(e.to_string()))?;
     let child_args: Vec<String> = args
@@ -1180,14 +1181,23 @@ fn daemon_detach_reexec(args: &[String]) -> CliResult<()> {
     }
     #[cfg(unix)]
     {
-        // Partial: spawn and return; no setsid/double-fork Claimed without unsafe FFI.
-        // Ops supervisors (systemd) remain the preferred long-running path.
+        use std::os::unix::process::CommandExt;
+        // Partial: new session via setsid; still not full SysV double-fork Claimed.
+        unsafe {
+            cmd.pre_exec(|| {
+                if libc::setsid() == -1 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
+        }
     }
     match cmd.spawn() {
         Ok(child) => {
             eprintln!(
                 "arks daemon --detach: Partial re-exec pid={} (OS-limited background spawn; \
-                 classic daemonize/setsid not Claimed; child argv omits --detach)",
+                 unix setsid Partial / windows DETACHED_PROCESS; classic double-fork not Claimed; \
+                 child argv omits --detach)",
                 child.id()
             );
             Ok(())

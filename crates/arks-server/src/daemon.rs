@@ -5,8 +5,9 @@
 //!
 //! Claimed: upload-pack service; optional receive-pack when `allow_receive` is set.
 //! Requires `git-daemon-export-ok` unless `export_all`.
-//! Upload-archive: Partial — drains args, sends ACK, streams raw ustar of treeish
-//! (sideband multiplex / format flags not Claimed).
+//! Upload-archive: Partial — drains args, sends ACK, streams ustar of treeish as
+//! sideband-64k band-1 pkt-lines (closer to git-daemon multiplex; `--format=` /
+//! path filters / Claimed archive parity still Missing).
 //! `--inetd` one-shot stdio peer is Partial (no TCP bind).
 //! Never spawns `git` or `gh`.
 
@@ -317,21 +318,55 @@ fn handle_daemon_connection(
     result
 }
 
-/// Partial upload-archive body: ACK pkt-line + raw ustar of treeish (default HEAD).
-/// Sideband multiplex / `--format=` / path filters are **not** Claimed.
+/// Partial upload-archive body: ACK pkt-line + ustar of treeish (default HEAD)
+/// multiplexed as sideband-64k band-1 (Partial; closer to git-daemon stream).
+/// `--format=` beyond tar / path filters / Claimed archive parity remain Missing.
 fn serve_upload_archive_partial<W: Write>(
     repo: &Repository,
     args: &[String],
     out: &mut W,
     verbose: bool,
 ) -> Result<(), ServerError> {
+    // Honor `--format=` honestly: only tar (default) Partial; others fail-closed.
+    if let Some(fmt) = args
+        .iter()
+        .find_map(|a| a.strip_prefix("--format=").map(str::to_string))
+        .or_else(|| {
+            args.windows(2).find_map(|w| {
+                if w[0] == "--format" {
+                    Some(w[1].clone())
+                } else {
+                    None
+                }
+            })
+        })
+    {
+        let fmt = fmt.to_ascii_lowercase();
+        if fmt != "tar" && fmt != "ustar" {
+            return write_err_pkt(
+                out,
+                &format!(
+                    "upload-archive Partial: --format={fmt} not wired (tar/ustar only; \
+                     zip/others Missing — design ≠ Claimed)"
+                ),
+            );
+        }
+    }
+    let want_raw = args.iter().any(|a| a == "--no-sideband" || a == "--raw-ustar");
     let treeish = args
         .iter()
         .find(|a| !a.starts_with('-') && !a.is_empty())
         .map(String::as_str)
         .unwrap_or("HEAD");
     if verbose {
-        eprintln!("arks daemon: upload-archive Partial treeish={treeish} (ACK+raw ustar)");
+        eprintln!(
+            "arks daemon: upload-archive Partial treeish={treeish} (ACK+{}; format flags Claimed Missing)",
+            if want_raw {
+                "raw ustar"
+            } else {
+                "sideband-64k ustar"
+            }
+        );
     }
     let tree_oid = match resolve_treeish(repo, treeish) {
         Ok(o) => o,
@@ -340,17 +375,47 @@ fn serve_upload_archive_partial<W: Write>(
     let ack = encode_packet(&Packet::Data(b"ACK\n".to_vec()))
         .map_err(|e| ServerError::Protocol(e.to_string()))?;
     out.write_all(&ack)?;
-    match write_ustar_tree(repo, &tree_oid, out) {
-        Ok(()) => {
-            out.flush()?;
-            Ok(())
+    if want_raw {
+        match write_ustar_tree(repo, &tree_oid, out) {
+            Ok(()) => {
+                out.flush()?;
+                Ok(())
+            }
+            Err(e) => {
+                eprintln!("arks daemon: upload-archive Partial ustar err: {e}");
+                Err(e)
+            }
         }
-        Err(e) => {
-            // After ACK, clients expect archive bytes; best-effort note on stderr only.
-            eprintln!("arks daemon: upload-archive Partial ustar err: {e}");
-            Err(e)
+    } else {
+        // Buffer ustar then emit sideband band-1 chunks + flush (Partial stream).
+        let mut archive = Vec::new();
+        match write_ustar_tree(repo, &tree_oid, &mut archive) {
+            Ok(()) => write_sideband_stream(out, &archive),
+            Err(e) => {
+                eprintln!("arks daemon: upload-archive Partial ustar err: {e}");
+                Err(e)
+            }
         }
     }
+}
+
+/// Sideband-64k data stream: pkt-lines with leading band byte `1`, then flush.
+/// Cite gitprotocol-common / upload-pack sideband shape (archive Partial reuse).
+fn write_sideband_stream<W: Write>(out: &mut W, data: &[u8]) -> Result<(), ServerError> {
+    // gitprotocol-common max data 65516; one byte is the sideband designator.
+    const CHUNK: usize = 65_515;
+    for chunk in data.chunks(CHUNK) {
+        let mut payload = Vec::with_capacity(1 + chunk.len());
+        payload.push(1); // band 1 = data
+        payload.extend_from_slice(chunk);
+        let pkt = encode_packet(&Packet::Data(payload))
+            .map_err(|e| ServerError::Protocol(e.to_string()))?;
+        out.write_all(&pkt)?;
+    }
+    let flush = encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?;
+    out.write_all(&flush)?;
+    out.flush()?;
+    Ok(())
 }
 
 fn resolve_treeish(repo: &Repository, treeish: &str) -> Result<Oid, String> {
