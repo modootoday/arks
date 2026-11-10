@@ -1,10 +1,10 @@
 ---
 id: research:root/20261111034141
 title: Symmetry intent vs over-design inventory
-status: active
+status: archival
 created: 2026-11-10T18:41:41Z
-updated: 2026-11-10T18:41:41Z
-tags: [intent, symmetry, alias, lease, performance, overdesign, forge, inventory]
+updated: 2026-11-10T19:21:00Z
+tags: [intent, symmetry, alias, lease, performance, overdesign, forge, inventory, archival]
 verify: manual
 rel:
   depends_on:
@@ -16,12 +16,16 @@ rel:
     - sot:root/remote-host-compatibility-surface
     - sot:root/storage-celir-boundary
     - research:root/20261111033936
+  superseded_by:
+    - research:root/20261111034556
+    - research:root/20261111035700
+    - sot:root/product-intent
   evidence: []
 ---
 
 # Symmetry intent vs over-design inventory
 
-Tip: **`953be57`** (canon `C:\workspaces\gir`). Research-only; **no invent PASS/Claimed**.
+**Archival.** Tip at write: **`953be57`**. Superseded for active honesty by exhaustive C-list + trim + single-`arks` release SoTs. Keep as historical inventory only — **no invent PASS/Claimed**.
 
 ## Clarified product lens (owner Won — supersedes GitHub-only framing)
 

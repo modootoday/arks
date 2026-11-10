@@ -1,10 +1,10 @@
 ---
 id: research:root/20261111034556
 title: Over-design candidates exhaustive (clarified triad)
-status: active
+status: archival
 created: 2026-11-10T18:45:56Z
-updated: 2026-11-10T18:45:56Z
-tags: [intent, symmetry, overdesign, daemon, lfs, forge, celir, inventory, exhaustive]
+updated: 2026-11-10T19:21:00Z
+tags: [intent, symmetry, overdesign, daemon, lfs, forge, celir, inventory, exhaustive, archival]
 verify: manual
 rel:
   depends_on:
@@ -15,12 +15,17 @@ rel:
     - sot:root/public-surface
     - sot:root/remote-host-compatibility-surface
     - sot:root/storage-celir-boundary
+  superseded_by:
+    - research:root/20261111035700
+    - sot:root/product-intent
+    - sot:root/arks-hub-product-intent
+    - sot:root/arks-daemon-product-intent
   evidence: []
 ---
 
 # Over-design candidates exhaustive (clarified triad)
 
-Tip: **`c45f85e`** (`C:\workspaces\gir`, `origin/main`). Addendum / superseding **C-list completeness** for [[research:root/20261111034141]]. Research-only; **no invent PASS/Claimed**.
+**Archival.** Tip at write: **`c45f85e`**. C-list informed trim [[research:root/20261111035700]] and single-release shape (tip ≥ `9df7fb9`: one `arks` binary; `arks hub` / `arks daemon` via internal libs). Active Claimed honesty lives in tip SoTs — do not re-Claim trimmed rows from this note.
 
 ## Clarified product lens (owner Won)
 
