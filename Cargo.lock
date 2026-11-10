@@ -7,6 +7,7 @@ name = "arks"
 version = "0.0.0"
 dependencies = [
  "arks-hash",
+ "arks-hub",
  "arks-index",
  "arks-lease",
  "arks-object",
@@ -17,6 +18,17 @@ dependencies = [
  "arks-repo",
  "arks-server",
  "arks-store",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "arks-daemon"
+version = "0.0.0"
+dependencies = [
+ "arks-protocol",
+ "arks-repo",
+ "arks-server",
  "tempfile",
  "thiserror",
 ]
@@ -37,6 +49,10 @@ dependencies = [
  "thiserror",
  "windows",
 ]
+
+[[package]]
+name = "arks-hub"
+version = "0.0.0"
 
 [[package]]
 name = "arks-index"
@@ -113,6 +129,7 @@ dependencies = [
 name = "arks-remote"
 version = "0.0.0"
 dependencies = [
+ "arks-daemon",
  "arks-index",
  "arks-object",
  "arks-oid",
