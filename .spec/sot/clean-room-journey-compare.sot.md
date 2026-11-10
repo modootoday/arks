@@ -3,7 +3,7 @@ id: sot:root/clean-room-journey-compare
 title: Clean-room journey compare
 status: active
 created: 2026-11-08T18:24:57Z
-updated: 2026-11-10T03:54:00Z
+updated: 2026-11-10T04:40:00Z
 tags: [verification, docker, clean-room, journey, timing, perf, git-compat, observability, worktree, submodule, g17, g19]
 verify: manual
 rel:
@@ -203,4 +203,4 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 | Live-remote journeys (G8) | **Claimed (default-on when secrets)** | [[adr:root/20261110220000]]; live when token+URL; SKIP when absent; prefer offline/local peer for ladder |
 | Path/`file://` clone lane | **Closed (v0.3.0; hardlink-prefer v0.4.0)** | **J-CLONE-PATH-01**; local path + same-host `file://` via hardlink-or-copy (not `--shared`; not piped upload-pack) |
 | Public Pages perf summary | **Closed (honesty)** | Allowed only with receipt + public-surface honesty; default keep under `.spec/evidence/` |
-| Pf5 aggressive ≤0.5× leftovers | **Claimed 8/8 + Verified** | Tip remasure `875359e` [[evidence:root/20261110131600]] (LOCAL **0.1875** / PATH **0.2424**; miss=[]); prior partial 7/8 [[evidence:root/20261111001400]]; historical tip packs [[evidence:root/20261110113900]] / [[evidence:root/20261110135100]] / [[evidence:root/20261110114200]] / [[evidence:root/20261110110900]] |
+| Pf5 aggressive ≤0.5× leftovers | **Claimed 8/8 + Verified** | Tip remasure `79fc9bf` [[evidence:root/20261110142500]] (LOCAL **0.1579** / PATH **0.1739**; miss=[]); prior carrying [[evidence:root/20261110131600]]; prior partial 7/8 [[evidence:root/20261111001400]]; historical tip packs [[evidence:root/20261110113900]] / [[evidence:root/20261110135100]] / [[evidence:root/20261110114200]] / [[evidence:root/20261110110900]] |

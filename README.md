@@ -103,7 +103,7 @@ Clean-room Docker verification compared stock Git **2.39.5** to release `arks` o
 | Bar | Result | Evidence |
 |-----|--------|----------|
 | ≤0.8× median wall-clock on all journeys | **19/19** | [G19 remeasure `c1b0b24`](.spec/evidence/20261110003836-g19-remeasure-c1b0b24/) · historical [M17](.spec/evidence/20261109090000-m17-exit-g19-measured-19/) |
-| Aggressive ≤0.5× | **19** journeys ≤0.5× (**Claimed 8/8**; Clone HTTP flipped) | [PF5 8/8 remasure](.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8/) · prior [7/8 notes](.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8/) · historical [M18](.spec/evidence/20261109143000-m18-pf4-3-g19-exit/) |
+| Aggressive ≤0.5× | **19** journeys ≤0.5× (**Claimed 8/8**; Clone HTTP **0.1579**) | [PF5 8/8 remasure](.spec/evidence/20261110142500-g19-remeasure-pf5-8of8/) · prior [875359e](.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8/) · [7/8 notes](.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8/) · historical [M18](.spec/evidence/20261109143000-m18-pf4-3-g19-exit/) |
 
 Charts and honesty labels: [docs/performance.md](docs/performance.md). Prefer **ratios** over absolute ms across receipts (seeds change). Host-only timings are advisory only.
 

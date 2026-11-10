@@ -46,7 +46,7 @@ Version **0.1.11**. Normative harness rules that reopen [[adr:root/2026111016200
 | J-CHERRY-01 | quantum (flicker) | Keep catalog cherry-pick; classify `aggressive_na` when measured >0.5× on short walls |
 | J-LOCAL-01 | process-tax | Larger timed add/commit payloads (arks commit ≪ git) |
 | J-ALIAS-01 | process-tax | Same as J-LOCAL-01 under alias shim |
-| J-CLONE-LOCAL-01 | mid | Seed inflation **exhausted**; flipped ≤0.5× via product `arks serve-http` + on-disk pack reuse ([[evidence:root/20261110131600]]) |
+| J-CLONE-LOCAL-01 | mid | Seed inflation **exhausted**; flipped ≤0.5× via product `arks serve-http` + on-disk pack reuse ([[evidence:root/20261110142500]]; prior [[evidence:root/20261110131600]]) |
 | J-WORKTREE-01 | mid | Modest tree (avoid checkout regression) + timed commit amortization |
 
 ## Verification

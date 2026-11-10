@@ -1,6 +1,6 @@
-# Clean-room G19 remeasure at tip c1b0b24 — median wall-clock ms (git vs arks).
-# Source: .spec/evidence/20261110003836-g19-remeasure-c1b0b24/receipt.json
-# Absolute ms rose vs M18 on seed-amortized journeys; prefer ratios for honesty.
+# Clean-room G19 remasure at tip 79fc9bf — median wall-clock ms (git vs arks).
+# Source: .spec/evidence/20261110142500-g19-remeasure-pf5-8of8/receipt.json
+# Prefer ratios for honesty across receipts (seeds change).
 label: Journey
 labels:
   - Local
@@ -24,6 +24,6 @@ labels:
   - Submodule
 series:
   - name: Git
-    values: [380, 350, 4, 29, 353, 86, 67, 380, 515, 194, 553, 70, 167, 732, 32, 8, 6, 29, 98]
+    values: [320, 334, 6, 31, 388, 38, 46, 320, 540, 194, 529, 74, 185, 690, 32, 8, 8, 33, 132]
   - name: arks
-    values: [154, 150, 2, 8, 150, 57, 28, 152, 206, 64, 223, 30, 77, 262, 12, 4, 2, 10, 16]
+    values: [152, 148, 2, 6, 148, 6, 8, 152, 206, 64, 214, 30, 75, 262, 16, 4, 2, 6, 16]

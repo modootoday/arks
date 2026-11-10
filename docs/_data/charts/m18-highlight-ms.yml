@@ -1,9 +1,9 @@
-# Highlight subset from G19 remeasure at tip c1b0b24 (same receipt as m18-journey-ms).
-# Source: .spec/evidence/20261110003836-g19-remeasure-c1b0b24/receipt.json
+# Highlight subset from G19 remasure at tip 79fc9bf (same receipt as m18-journey-ms).
+# Source: .spec/evidence/20261110142500-g19-remeasure-pf5-8of8/receipt.json
 label: Journey
 labels: [Tag, Diff, Submodule, Clone path, Repack, Local]
 series:
   - name: Git
-    values: [194, 167, 98, 67, 29, 380]
+    values: [194, 185, 132, 46, 33, 320]
   - name: arks
-    values: [64, 77, 16, 28, 10, 154]
+    values: [64, 75, 16, 8, 6, 152]
