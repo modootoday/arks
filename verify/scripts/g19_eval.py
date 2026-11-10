@@ -46,7 +46,6 @@ na = {}
 aggressive_na = {
     "J-RM-MV-01": "quantum-timer-floor: ≤0.5× N/A unless seed amortization clears bar (sot:root/pf5-journey-seed-amortization)",
     "J-STASH-01": "quantum-timer-floor: ≤0.5× N/A unless seed amortization clears bar (sot:root/pf5-journey-seed-amortization)",
-    "J-CLONE-LOCAL-01": "mid-residual: HTTP seed amortization exhausted (larger seeds worsened ratio); ≤0.5× needs product smart-HTTP clone work (sot:root/pf5-journey-seed-amortization)",
     "J-WORKTREE-01": "mid-residual: ≤0.5× N/A unless seed amortization clears bar (sot:root/pf5-journey-seed-amortization)",
     "J-CHERRY-01": "quantum-timer-floor: short-wall flicker; ≤0.5× N/A when measured >0.5 (sot:root/pf5-journey-seed-amortization)",
 }
