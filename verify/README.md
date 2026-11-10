@@ -95,9 +95,23 @@ docker compose -f verify/docker-compose.yml run --rm g16
 docker compose -f verify/docker-compose.yml run --rm g19
 ```
 
+### Product-completion e2e (L8)
+
+Sequential suite (do not parallelize with `g16`/`g19`):
+
+```bash
+# from repo root — mkdir out/ first on Windows before host Tee/redirects
+mkdir -p verify/gates/g14/out verify/gates/g16/out
+bash verify/scripts/run-l8-e2e.sh
+# or: docker compose -f verify/docker-compose.yml run --rm g14
+# then: docker compose -f verify/docker-compose.yml run --rm g16
+```
+
+Matrix: `verify/matrices/matrix-l8-e2e.md`. Comparison Pages draft: `docs/git-vs-arks.md`.
+
 ### Resource note
 
-Set **`CARGO_BUILD_JOBS=2`** when sharing agents or CI runners (default in compose). Override only deliberately.
+Compose defaults **`CARGO_BUILD_JOBS=1`**. Raise only deliberately. On Windows hosts, create `verify/gates/<gate>/out/` before `Tee-Object` / file redirects — missing dirs abort the wrapper with exit `4294967295` before Docker evidence lands.
 
 **Docker Desktop RAM (G16/G19):** journey-compare builds many temp repos per iteration. Give the Linux engine **≥8 GiB** RAM (Settings → Resources); **16 GiB** preferred when running G19. Do **not** overlap multiple `compose run … g16`/`g19` containers — concurrent catalogs OOMed hosts (exit **137**). Journey seeds in `verify/gates/g16/tests/journey_compare.rs` are capped for a **single** catalog under that floor; raise seeds only after raising Docker RAM.
 

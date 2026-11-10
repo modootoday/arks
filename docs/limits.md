@@ -75,4 +75,4 @@ Source: [modootoday/arks](https://github.com/modootoday/arks)
 
 ## Next
 
-[Getting started](../getting-started/) [Concurrent sessions](../concurrent-sessions/) [Contribute](../contribute/)
+[Git vs arks](../git-vs-arks/) [Getting started](../getting-started/) [Concurrent sessions](../concurrent-sessions/) [Contribute](../contribute/)

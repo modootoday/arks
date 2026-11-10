@@ -39,6 +39,8 @@ Partial-clone filter / promisor remains out of product claim; see [Limits](../li
 
 OpenPGP / X.509 / signed tags remain out of product claim; SSH commit `-S` / `verify-commit` is the claimed signing subset. See [Limits](../limits/).
 
+Honest feature comparison: [Git vs arks](../git-vs-arks/). Clean-room Docker e2e (L8) is maintainer verification — not the end-user install path.
+
 ## Next
 
-[Getting started](../getting-started/) [Release channels](../release/) [Forge scale harness](../forge-scale/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)
+[Getting started](../getting-started/) [Git vs arks](../git-vs-arks/) [Release channels](../release/) [Forge scale harness](../forge-scale/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)

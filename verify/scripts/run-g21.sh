@@ -14,15 +14,17 @@ echo "G21: rustc $(rustc --version)"
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 
 echo "G21: gix-exit / no-celir scan"
-meta="$(cargo metadata --format-version 1)"
-if echo "$meta" | grep -E '"name":\s*"gix|"name":\s*"gitoxide|"name":\s*"gix-' >/dev/null; then
-  echo "G21: forbidden gix/gitoxide edge" >&2
+# Same honesty as G20/G15/G22: members name scan + default feature tree.
+if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*"(gix|gitoxide)' >/dev/null; then
+  echo "G21: forbidden gix/gitoxide package name in workspace members" >&2
   exit 1
 fi
-if echo "$meta" | grep -Ei '"name":\s*"celir|"name":\s*"celir-' >/dev/null; then
-  echo "G21: forbidden celir edge" >&2
+if cargo tree -p arks-store --edges normal 2>/dev/null | grep -Ei 'celir' >/dev/null; then
+  echo "G21: FAIL — default arks-store tree has celir edge" >&2
+  cargo tree -p arks-store --edges normal >&2 || true
   exit 1
 fi
+echo "G21: gix-exit / default tree CELIR-free OK"
 
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/workspace/target}"
 

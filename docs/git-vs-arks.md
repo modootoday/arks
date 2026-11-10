@@ -1,0 +1,93 @@
+---
+title: Git vs arks
+description: Honest feature comparison — Claimed, N/A, and reopen-only residuals
+nav_order: 65
+schema: {faq: auto}
+sections:
+  - how
+  - core
+  - remotes
+  - signing
+  - out
+  - {c: faq, name: reading}
+  - {c: cta, name: next}
+---
+
+# Git vs arks
+
+Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Specfold-backed — **Claimed** only with receipts, **N/A** when out of claim, **reopen-only** when a residual may return via SoT amend. This page does **not** invent PASS or Claimed.
+
+> [!NOTE]
+> Authoritative ledgers live in the source tree under `.spec/` (especially the [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md) and [CLI surface](https://github.com/modootoday/arks/blob/main/.spec/sot/cli-surface.sot.md)). Clean-room Docker gates prove Verified claims — host CI alone does not.
+
+## How to read status
+
+| Label | Meaning |
+|-------|---------|
+| **Claimed** | Product surface with carrying evidence / clean-room receipt |
+| **Done (ops)** | Maintainer readiness landed; not a live publish / latency PASS |
+| **N/A** | Explicitly out of claim; refuse-closed or excluded |
+| **Reopen-only** | Residual may return only via SoT amend + re-verify |
+| **Closed (policy)** | Owner / process closed; not a development Open |
+
+## Core CLI and same-`.git`
+
+| Area | Git | arks | Status |
+|------|-----|------|--------|
+| Native CLI on same `.git` | Yes | Yes (in-engine; no product-path `git` wrapper) | **Claimed** (M9 / G14) |
+| Everyday porcelain (`add`/`commit`/`status`/`log`/branch/checkout/…) | Yes | Yes for claimed inventory | **Claimed** (M9–M16) |
+| `git` → `arks` alias drop-in | N/A | Documented alias; muscle-memory argv | **Claimed** (M16 / G21) |
+| Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | Yes | Out of non-interactive agent bar | **N/A** |
+| GUI (`gitk`, `git-gui`) / Git LFS / `scalar` | Available as separate tools | Out of product | **N/A** |
+
+## Remotes and server
+
+| Area | Git | arks | Status |
+|------|-----|------|--------|
+| Smart HTTP clone/fetch/push | Yes | Yes | **Claimed** |
+| SSH clone/fetch/push (OpenSSH helper) | Yes | Yes | **Claimed** |
+| Client `git://` | Yes | Yes | **Claimed** (host wire; ladder L2) |
+| Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE subset) | **Claimed** (host wire; ladder L3) |
+| `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
+| Partial-clone `--filter` / promisor | Yes | Refused; not claimed | **N/A** (R3 / L6 honest N/A) |
+| Forge OAuth / Checks / merge-queue UX | Via host tools | Out of product | **N/A** / **Refuse** |
+
+## Signing and credentials
+
+| Area | Git | arks | Status |
+|------|-----|------|--------|
+| SSH commit sign / verify (`gpg.format=ssh`) | Yes | Yes (`commit -S` / `verify-commit`) | **Claimed** (G37) |
+| OpenPGP / X.509 commit signing | Yes | Refused | **N/A** (R4 / L7 honest N/A) |
+| Signed tags (`tag -s`) / `verify-tag` | Yes | Refused | **N/A** (R4 / L7 honest N/A) |
+| Credential helper / askpass / TTY / OS wallets | Yes | Claimed first-party subset | **Claimed** (G33) |
+
+## Performance and concurrency
+
+| Area | Git | arks | Status |
+|------|-----|------|--------|
+| Clean-room journey ≤0.8× allow-list | Oracle | Measured 19/19 | **Claimed** (M17 / G19) |
+| Aggressive ≤0.5× journeys | Oracle | **Claimed 8/8** (incl. Clone HTTP) | **Claimed** (PF5) |
+| Product leases / high-concurrency shape | N/A (stock) | Claimed with receipts | **Claimed** (M10 / M23 / M26) |
+| Live forge latency SLO | N/A | Harness ready; no invented live PASS | **Done (ops)** (L5) ≠ live PASS |
+
+## Out of claim / reopen-only
+
+| Residual | Disposition | Reopen requires |
+|----------|-------------|-----------------|
+| R3 filter / promisor | **N/A** (L6) | SoT amend beyond `--depth` + wire + G35-class re-verify |
+| R4 OpenPGP / X.509 / `tag -s` | **N/A** (L7) | Dedicated crypto harness SoT + wire + G37-class re-verify |
+| R5 live forge scale PASS | Harness Claimed; ops dry-run Done | Secrets + receipt; never invent latency |
+| R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
+| crates.io / docs.rs timing | Closed owner policy (L9) | Owner decision |
+
+## Product-completion DoD (ladder)
+
+1. **L8** — Clean-room Docker multi-scenario git↔arks e2e suite fully green (not host-only smoke).
+2. **L_final** — This comparison matrix finished and kept honest against Specfold.
+3. **L9** — Remains closed owner policy unless the owner opens it.
+
+See the ladder research in-tree: [product-completion-goal-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110095142-product-completion-goal-ladder.research.md). Limits summary: [Limits](../limits/).
+
+## Next
+
+[Limits](../limits/) [Performance](../performance/) [Alias `git` → `arks`](../alias-git-arks/) [Contribute](../contribute/)
