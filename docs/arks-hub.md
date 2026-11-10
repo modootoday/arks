@@ -67,7 +67,7 @@ Normative matrix: [arks hub gh command matrix](https://github.com/modootoday/ark
 
 ## Honesty
 
-Until a feature has implementation evidence, treat forge client capability as **design / Partial**, not **Claimed**. Tip honesty: many flat leaves (`release` / `run` / `workflow` / `milestone` / `gist` / `project` / `discussion` / `secret` / `variable` / `ssh-key` / `gpg-key` / `browse` / `alias` / `completion` / …) are **Partial** against local forge API; OUT groups (`extension` / `copilot` / …) still refuse; **HTTPS remote** client remains **Missing**. Core Git symmetry does not depend on forge client. Do not expect a separate crates.io `arks-hub` binary. Transitional `arks hub serve` does **not** invent forge-in-serve Claimed — see [Self-host](../self-host/) and [Completeness](../completion/).
+Until a feature has implementation evidence, treat forge client capability as **design / Partial**, not **Claimed**. Tip honesty: many flat leaves (`release` / `run` / `workflow` / `milestone` / `gist` / `project` / `discussion` / `secret` / `variable` / `ssh-key` / `gpg-key` / `licenses` / `browse` / `alias` / `completion` / …) are **Partial** against local forge API (and **HTTPS remote** via ureq Partial — not Claimed e2e; never spawns `gh`); remaining OUT groups (`extension` / `copilot` / …) still refuse. Core Git symmetry does not depend on forge client. Do not expect a separate crates.io `arks-hub` binary. Transitional `arks hub serve` does **not** invent forge-in-serve Claimed — see [Self-host](../self-host/) and [Completeness](../completion/).
 
 ## Next
 

@@ -42,7 +42,7 @@ Public clean-room Definition of Done is **three peer pillars**. Self-host is **a
 | **2. Daemon** | `git-daemon` | `arks daemon` | Flag surface **Partial** deepen; not the GitHub-class host story |
 | **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | **Partial** (stubs/forwards); nested `arks hub …` transitional only |
 
-**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **Partial** (bind + key-path fail-closed; handshake still **Missing** — not handshake Claimed); forge-in-serve **Partial**; dedicated LAN/WAN hosting e2e **scaffold / not Claimed**. See [Self-host](../self-host/) and [Ports](../ports/).
+**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **Partial** (bind + keys + id/KEXINIT scaffold fail-closed; KEX crypto/auth still **Missing** — not handshake Claimed); forge-in-serve **Partial**; dedicated LAN/WAN hosting e2e **scaffold / not Claimed**. See [Self-host](../self-host/) and [Ports](../ports/).
 
 Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/verify-cleanroom-symmetry-matrix.sot.md). Residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Program ladder: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md).
 
