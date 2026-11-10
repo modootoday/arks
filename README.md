@@ -130,6 +130,7 @@ Human-facing site (GitHub Pages): [`docs/`](docs/)
 | [Alias `git` → `arks`](docs/alias-git-arks.md) | Drop-in adoption path |
 | [Workflows](docs/workflows.md) | Everyday command map |
 | [Concurrent sessions](docs/concurrent-sessions.md) | Contention motive and concurrency honesty |
+| [Git vs arks](docs/git-vs-arks.md) | Honest feature comparison (Claimed / N/A / reopen) |
 | [Performance](docs/performance.md) | Clean-room git vs arks timings |
 | [Limits](docs/limits.md) | What is not claimed |
 | [Contribute](docs/contribute.md) | Bugs, docs, maintainer pointers |
