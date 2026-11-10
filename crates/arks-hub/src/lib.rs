@@ -12,6 +12,7 @@
 #![forbid(unsafe_code)]
 
 mod http_min;
+mod local_tls_smoke;
 pub mod serve;
 mod store;
 
@@ -118,7 +119,7 @@ COMMANDS:
     org           Organizations list (local Partial)
     search        Search repos|issues|prs (local Partial)
     api           Raw HTTP against ARKS_HUB_API
-    smoke         HTTPS forge e2e harness Partial (+ --out-refuse residual OUT; no gh)
+    smoke         HTTPS forge e2e harness Partial (+ --local-tls / --out-refuse; no gh)
     status        Aggregated status (Partial)
     co            Alias for pr checkout
     extension     OUT refuse (marketplace; not local forge)
@@ -995,16 +996,20 @@ fn cmd_search(args: &[String]) -> ExitCode {
 fn cmd_https_smoke(args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks hub smoke [--url URL] [--path /user] [--out-refuse]\n  \
+            "arks hub smoke [--url URL] [--path /user] [--out-refuse] [--local-tls]\n  \
              HTTPS forge e2e harness Partial (ureq TLS). Prefer https:// ARKS_HUB_API.\n  \
              Without a reachable https endpoint: documents Missing (not Claimed).\n  \
+             --local-tls: ephemeral self-signed HTTPS stub + insecure ureq client path Partial.\n  \
              --out-refuse: residual OUT harness Partial (extension/copilot exit 2; never gh).\n  \
-             Optional local http:// fallback probe — never spawns gh."
+             Optional local http:// fallback probe — never spawns gh. Claimed forge e2e Missing."
         );
         return ExitCode::SUCCESS;
     }
     if args.iter().any(|a| a == "--out-refuse") {
         return cmd_hub_out_refuse_smoke();
+    }
+    if args.iter().any(|a| a == "--local-tls") {
+        return cmd_hub_local_tls_smoke(args);
     }
     let path = flag_value(args, &["--path"]).unwrap_or("/user");
     let path = if path.starts_with('/') {
@@ -1645,6 +1650,49 @@ fn cmd_gpg_key(args: &[String]) -> ExitCode {
         None
     };
     local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
+}
+
+/// Local self-signed HTTPS + remote-client path smoke Partial (not Claimed TLS / forge e2e).
+fn cmd_hub_local_tls_smoke(args: &[String]) -> ExitCode {
+    let path = flag_value(args, &["--path"]).unwrap_or("/user");
+    println!("hub_smoke=partial");
+    println!("local_tls_smoke=partial");
+    println!("spawns_gh=never");
+    println!("claimed_forge_remote_e2e=Missing");
+    println!("claimed_in_process_tls=Missing");
+    match local_tls_smoke::run_local_https_smoke(path) {
+        Ok((addr, status, body)) => {
+            println!("listen=https://{addr}");
+            println!("http_status={status}");
+            let preview: String = body.chars().take(240).collect();
+            if !preview.is_empty() {
+                println!("body_preview={preview}");
+            }
+            if (200..300).contains(&status) {
+                println!("local_tls_smoke=ok");
+                eprintln!(
+                    "note: local HTTPS self-signed smoke Partial (ureq insecure client path) ok — \
+                     design ≠ Claimed forge remote e2e / in-process TLS product; never spawns gh"
+                );
+                ExitCode::SUCCESS
+            } else {
+                println!("local_tls_smoke=partial_http_{status}");
+                eprintln!(
+                    "note: local TLS stub reachable but HTTP {status}; Claimed forge e2e Missing"
+                );
+                ExitCode::from(1)
+            }
+        }
+        Err(e) => {
+            println!("local_tls_smoke=fail");
+            println!("error={e}");
+            eprintln!(
+                "note: local HTTPS smoke Partial failed; Claimed forge remote e2e Missing; \
+                 never spawns gh"
+            );
+            ExitCode::from(1)
+        }
+    }
 }
 
 /// Residual OUT refuse smoke Partial: prove `extension`/`copilot` stay OUT exit 2.

@@ -15,3 +15,5 @@ path = "src/lib.rs"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ureq = { workspace = true }
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }

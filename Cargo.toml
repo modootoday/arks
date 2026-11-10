@@ -85,6 +85,9 @@ windows = { version = "0.58", default-features = false, features = [
 ] }
 tempfile = "3"
 ureq = { version = "2.12", default-features = false, features = ["tls"] }
+# Hub local HTTPS smoke Partial (self-signed); not Claimed in-process TLS product.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pemfile = "2"
 
 [profile.dev]
 # Keep host advisory builds light when many agents share the machine.
