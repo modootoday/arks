@@ -3,8 +3,8 @@ id: sot:root/verify-directory-conventions
 title: Verify directory conventions and consistency
 status: active
 created: 2026-11-10T23:25:00Z
-updated: 2026-11-11T08:45:00Z
-tags: [verify, clean-room, docker, conventions, layout, naming, folders, filenames, skip, strict, matrices, claimed-residual, design, no-invent-claimed]
+updated: 2026-11-11T08:55:00Z
+tags: [verify, clean-room, docker, conventions, layout, naming, folders, filenames, numeric, zero-pad, skip, strict, matrices, claimed-residual, design, no-invent-claimed]
 verify: manual
 rel:
   depends_on:
@@ -33,7 +33,7 @@ rel:
 
 # Verify directory conventions and consistency
 
-Document revision **0.3.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for how the product clean-room tree under `verify/` is laid out, named, and extended — including **internal folder naming** (0.2.0) and **filename naming** (this revision). Complements [[sot:root/product-verification-clean-room]] (authority) and [[sot:root/structural-conventions]] §7 (grouped overlay). Survey pain: [[research:root/20261111082440]].
+Document revision **0.4.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for how the product clean-room tree under `verify/` is laid out, named, and extended — including **internal folder naming** (0.2.0), **filename naming** (0.3.0), and **numeric notation** (this revision). Complements [[sot:root/product-verification-clean-room]] (authority) and [[sot:root/structural-conventions]] §7 (grouped overlay). Survey pain: [[research:root/20261111082440]].
 
 **Honesty:** This SoT is **ops/harness convention** — **not** product Claimed. Scaffold / SKIP greens **MUST NOT** invent PASS/Claimed. English-only Specfold ([[sot:root/language-english-only]]). Document revision ≠ crates.io / `v*` product release.
 
@@ -264,6 +264,105 @@ When adding a gate or residual slot, **all** of the following that exist **MUST*
 
 Folder rules remain §1a–§1d; this subsection only freezes **filenames**.
 
+### 2b. Numeric notation conventions
+
+Normative **digit width / zero-padding** for ids that appear in gate folders, compose services, scripts, matrices, and Specfold evidence. Complements §1b (id patterns) and §2a (filenames). Survey snapshot at tip ≥ `f9ebcf4` (committed tree; sibling B-gate WIP may add dirty evidence dirs — do not treat dirty paths as Claimed).
+
+#### 2b.1 Survey — families in use
+
+| Family | Shape at tip | Width / pad | Examples |
+|--------|--------------|-------------|----------|
+| G-series product / milestone gates | `g` + **unpadded** decimal | Variable; **no** leading zero except literal `g0` | `g0`, `g1`, `g8`, `g11`, `g19`, `g41` |
+| G-series variants | `gN-<kebab>` | Same unpadded `N` as parent | `g8-live-scale`, `g8-local-forge`, `g28-offline-clones` |
+| Legacy jammed G-token | `g11l3` | Unpadded digits, no hyphen | Prefer `g11-l3` — Appendix A / C |
+| Host-advisory FS slots | `fs` + **three-digit** decimal + `-<kebab>-advisory` | Fixed width **3**, zero-pad | `fs007-host-advisory`, `fs014-lsm-advisory` |
+| Milestone matrix ids | `matrix-mN.md` | Unpadded `N` | `matrix-m1.md` … `matrix-m11.md` |
+| Gate claim matrices | `matrix-gN.md` / `matrix-gN-<kebab>.md` | Same digits as gate id | `matrix-g19.md`, `matrix-g8-live-scale.md` |
+| Milestone aliases (historical) | `matrix-l3.md`, `matrix-l8-e2e.md`, `matrix-s6-symmetry.md` | Letter + unpadded / historical label | Not a pad family — Appendix B |
+| Compose services | Same token as gate / DoD / FS id | Inherit family pad rule | `g11`, `g11l3`, `fs007-host-advisory`, `dod-claimed-tls` |
+| Specfold evidence dirs | `YYYYMMDDHHmmss-<kebab>` | **14-digit** compact UTC timestamp (fixed calendar fields), then kebab | `20261110231959-claimed-agent-llm` |
+| DoD / Claimed residual | `dod-<concern>` / `dod-claimed-<concern>` | **No** series number pad (kebab concerns) | `dod-symmetry`, `dod-claimed-ssh` |
+
+**Observed G range (committed):** `g0`–`g8`, `g10`–`g41` (no `g9` dir at tip); max unpadded width today is **two** decimal digits (`g10`…`g41`). **FS range:** `fs007`, `fs014` only.
+
+#### 2b.2 Width rules (choose one family; do not mix)
+
+| Width class | Digits | Pad? | Use under `verify/` / Specfold |
+|-------------|--------|------|--------------------------------|
+| **Unpadded decimal** | `0`…∞ as needed | **MUST NOT** zero-pad | **Default** for G-series (`gN`), milestone `mN`, matrix stems that mirror those ids, and any new product-gate number |
+| **Two-digit fixed** `01`–`99` | Always 2 | Zero-pad to 2 | **Only** when a series is **explicitly declared** in this SoT (or an owning SoT) as two-digit. **Not** used for G-series gate ids at tip |
+| **Three-digit fixed** `001`–`999` | Always 3 | Zero-pad to 3 | **Host-advisory `fsNNN`** family — always `fs007`, never `fs7` / `fs07` |
+| **Timestamp fixed** | 14 (`YYYYMMDDHHmmss`) | Calendar zero-fill by format | `.spec/evidence/<id>/` directory prefix only — **not** a gate / compose series |
+
+**Prose shorthand:** In this SoT, `gN` means “`g` + unpadded decimal of any length.” Informal `gNN` / `gNNN` in chat mean “a gate whose number happens to have two / three digits” (`g11`, future `g100`) — **not** zero-padded `g011` / fixed-width families.
+
+#### 2b.3 Gate ids — `gN` vs variants
+
+| Form | Norm | Example |
+|------|------|---------|
+| `gN` | Primary gate; `N` = unpadded non-negative decimal | `g0`, `g11`, `g41` |
+| `gN-<kebab>` | Variant / sibling of the same numeric family | `g28-offline-clones` |
+| `gNN` / `gNNN` as **separate** id families | **MUST NOT** invent | Do not treat `g11` and `g011` as distinct slots |
+| Future `g100+` | Still **unpadded** (`g100`, not `g0100`) | Extend digit count; do not switch G-series to fixed-3 |
+
+**MUST:**
+
+1. New G-series ids use unpadded decimal — `g1` not `g01`; `g11` not `g011`.
+2. Variant suffixes use a hyphen: `gN-<kebab>` — never jam letters onto digits for **new** work (`g11l3` is legacy only).
+3. The **same digit string** appears in folder basename, compose service name, `run-*.sh` stem, and `matrix-*.md` stem when those artifacts exist (`gates/g11/` ↔ `g11` ↔ `run-g11.sh` ↔ `matrix-g11.md` if present).
+
+**MUST NOT:**
+
+1. Zero-pad G-series to force lexical sort (`g01`…`g09`).
+2. Re-pad an existing unpadded id when crossing 9 → 10 or 99 → 100.
+3. Mix widths for the same logical gate (`g11` folder + `run-g011.sh`).
+
+#### 2b.4 When **not** to zero-pad
+
+| Context | Rule |
+|---------|------|
+| G-series gates / scripts / matrices | Unpadded always (§2b.3) |
+| Milestone `mN` / `matrix-mN.md` | Unpadded (`m1`, `m11` — not `m01`, `m011`) |
+| Embedding a gate ref inside evidence kebab | Use the live gate token (`…-g11-…`, not `…-g011-…`) |
+| DoD / Claimed concern tokens | No numeric pad (`claimed-tls`, not `claimed-01-tls`) |
+| Document revision / crate semver | Semver rules — **out of scope** for this subsection |
+| Human prose (“gate eleven”) | Prefer the canonical token `g11` when citing paths |
+
+Zero-pad **only** for families that declare a fixed width (`fsNNN`, evidence `YYYYMMDDHHmmss`).
+
+#### 2b.5 `fsNNN` (three-digit denser series)
+
+| Rule | Norm |
+|------|------|
+| Width | Always **3** decimal digits after `fs` |
+| Range | `001`–`999` (tip uses sparse ids `007`, `014`) |
+| Suffix | `-<kebab>-advisory` on dirs / compose / scripts |
+| Script | `run-fsNNN-*-advisory.sh` matching the id |
+| Why fixed-3 | Host-advisory slots are a denser, non-G namespace; lexical order ≈ numeric order within 001–999 |
+
+**MUST NOT:** introduce `fs7`, `fs07`, or a second advisory family with a different pad width without amending this SoT.
+
+#### 2b.6 Evidence timestamps
+
+| Rule | Norm |
+|------|------|
+| Prefix | `YYYYMMDDHHmmss` (14 digits, UTC wall components zero-filled by the timestamp format) |
+| Suffix | `-<kebab>` concern / gate label |
+| Relation to gate pad | Timestamp width is **orthogonal** to `gN` / `fsNNN` padding — do not “correct” gate digits inside the kebab to a different width |
+
+#### 2b.7 Consistency checklist (numeric)
+
+When adding or renaming a numbered slot, **all** of the following that exist **MUST** share the **identical** digit spelling (same pad / same unpadded form):
+
+1. `verify/gates/<id>/` basename
+2. Compose service name
+3. `verify/scripts/run-….sh` stem
+4. `verify/matrices/matrix-….md` stem (when dedicated)
+5. Evidence kebab substrings that cite the live gate id
+6. Matrix / README prose path citations for that slot
+
+Folder orthography remains §1; filenames §2a; this subsection only freezes **how numbers are written**.
+
 ### 3. Artifact output locations
 
 | Kind | Normative path | Git |
@@ -338,7 +437,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 | Release pin / untracked precheck | [[sot:root/release-symmetry-precheck]] | `dod-symmetry-prerelease` |
 | Claimed residual B-slots | [[sot:root/arks-claimed-residual-gates]] | `dod-claimed-*` |
 | Honesty ledger | [[sot:root/production-residual-register]] | *(citations only)* |
-| Directory consistency (this doc) | **this SoT** | folder + **filename** naming / out / SKIP / registration |
+| Directory consistency (this doc) | **this SoT** | folder + filename + **numeric** naming / out / SKIP / registration |
 
 ## Appendix A — Forbidden / legacy aliases and recommended migration (folders)
 
@@ -411,15 +510,50 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 **Survey snapshot (filenames, tip ≥ `4a99f8e`):** root files = `Dockerfile` `docker-compose.yml` `images.lock.json` `README.md` `.gitattributes`; scripts dominated by `run-*.sh` + few `*.ps1` / `g19_eval.py` / `probe-*.sh`; matrices = `matrix-*.md` + three `*-matrix.csv`; primary receipts = `receipt.json` / `metrics.json` / `summary.txt` with local sha/debug variants under gate `out/`; compose filename singular.
 
+## Appendix C — Numeric notation skew and recommended migration
+
+**Recommend only** unless a row is marked trivial **MUST**. Spec-only commits **MUST NOT** re-pad or mass-rename numbered ids; do **not** clobber dirty B-gate WIP.
+
+### Forbidden going forward (new numeric forms)
+
+| Form | Why |
+|------|-----|
+| Zero-padded G-series (`g01`, `g011`, `g041`) | §2b.3 — G-series is unpadded |
+| Unpadded or 2-digit FS ids (`fs7`, `fs07`) | §2b.5 — `fsNNN` is fixed-3 |
+| New jammed digit+letter tokens (`g11l3`-style) | Prefer `gN-<kebab>` (Appendix A) |
+| Declaring a new fixed-width series without amending this SoT | Width class must be explicit (§2b.2) |
+| Mixing pad spellings for one slot across folder / compose / script / matrix | §2b.7 consistency |
+
+### Legacy / skew (grandfathered)
+
+| Current | Preferred | Status |
+|---------|-----------|--------|
+| `g11l3` (dir + compose + `run-g11l3.sh`) | `g11-l3` (unpadded `11`, hyphen variant) | **Legacy** — same as Appendix A/B; **not** a padding issue |
+| `matrix-l3.md` / L8 / S6 milestone labels | Keep alias **or** align after `g11-l3` rename | **Advisory** — Appendix B |
+| Evidence dirs with live unpadded gate tokens (`…-g11`, `…-g19`) | Keep unpadded | **Compliant** — do not rewrite historical blobs to padded forms |
+| `fs007` / `fs014` | Keep three-digit | **Compliant** |
+
+### Recommended renames / non-changes (numeric Migration backlog)
+
+| From | To | Notes |
+|------|----|-------|
+| `g11l3` family | `g11-l3` family | Hyphen unjam only — **do not** change digit pad; coordinate with Appendix A/B |
+| Hypothetical future `g01`-style mistake | `g1` (strip pad) | Only if such an id is ever introduced; **none** at tip ≥ `f9ebcf4` |
+| G-series `g10`…`g41` | *(no change)* | Already unpadded — **MUST NOT** “normalize” to `g010`…`g041` |
+| `fs007` / `fs014` | *(no change)* | Already fixed-3 — **MUST NOT** shorten to `fs7` |
+| Milestone `m1`…`m11` | *(no change)* | Unpadded — do not introduce `m01` |
+
+**Survey snapshot (numeric, tip ≥ `f9ebcf4`):** G-gates unpadded `g0`–`g41` (gap at `g9`); variants `g8-*`, `g28-offline-clones`; one jammed legacy `g11l3`; FS advisory `fs007` + `fs014` only; matrices mirror unpadded `gN` / `mN` plus L3/L8/S6 aliases; evidence prefixes are 14-digit timestamps; no committed zero-padded G-ids. **Padding migration required at tip: none** beyond the existing `g11l3` → `g11-l3` hyphen backlog.
+
 ## Why
 
-`verify/` accumulated G-gates, symmetry DoD, release precheck, self-host scaffold, and Claimed residual slots under one tree. Without a single convention SoT, agents duplicate out paths, mix host and pin authority, invent folder or **file** orthography, or register new residuals without Spec/residual cross-links. This document freezes the directory, **folder-naming**, and **filename-naming** contract so Spec-first waves stay consistent and fail-closed.
+`verify/` accumulated G-gates, symmetry DoD, release precheck, self-host scaffold, and Claimed residual slots under one tree. Without a single convention SoT, agents duplicate out paths, mix host and pin authority, invent folder, **file**, or **numeric** orthography, or register new residuals without Spec/residual cross-links. This document freezes the directory, folder-naming, filename-naming, and **numeric-notation** contract so Spec-first waves stay consistent and fail-closed.
 
 ## Verification
 
 1. `spec check` clean for this SoT and [[research:root/20261111082440]] when Spec CLI is available; otherwise peer review of links.
 2. Cross-links from [[sot:root/verify-cleanroom-symmetry-matrix]], [[sot:root/arks-claimed-residual-gates]], [[sot:root/release-symmetry-precheck]], [[sot:root/production-residual-register]], [[sot:root/product-verification-clean-room]], [[sot:root/structural-conventions]], and `.spec/README.md`.
-3. `verify/README.md` English map matches §1–§5 and folder/filename pointers (§1a–§1d / §2a / Appendix A–B).
+3. `verify/README.md` English map matches §1–§5 and folder/filename/numeric pointers (§1a–§1d / §2a–§2b / Appendix A–C).
 4. Clean-room pin check: container reports stock Git matching `verify/images.lock.json` (`git version 2.39.5`).
 5. No product Claimed language added to public `docs/` from this design-only wave.
-6. No mass rename of `gates/` or harness filenames in the Spec-only wave that lands §1a–§1d / §2a — Migration backlog only unless a tiny MUST row is explicitly executed.
+6. No mass rename of `gates/`, harness filenames, or **numeric pad spellings** in the Spec-only wave that lands §1a–§1d / §2a–§2b — Migration backlog only unless a tiny MUST row is explicitly executed.
