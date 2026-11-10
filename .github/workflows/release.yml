@@ -50,9 +50,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # --- Ungated: build release binaries + checksums ---
+  # --- Hard gate: pin DoD + latest git/gh inventory continuity ---
+  # Cite: .spec/sot/release-symmetry-precheck.sot.md
+  # Fails closed on Missing (CLI/daemon) / untracked leaves; Partial + hub v1
+  # Missing are advisory by default (no invent Claimed).
+  symmetry-precheck:
+    name: release symmetry precheck
+    uses: ./.github/workflows/release-symmetry.yml
+    with:
+      block_hub_missing: false
+
+  # --- Ungated only after symmetry-precheck: build release binaries + checksums ---
   dist:
     name: dist (${{ matrix.target }})
+    needs: [symmetry-precheck]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

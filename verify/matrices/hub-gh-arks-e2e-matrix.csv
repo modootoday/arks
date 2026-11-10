@@ -1,0 +1,249 @@
+gh_command,arks_hub_target,status_now,phase,notes
+auth,auth,Partial,v1,Group help wired via arks hub
+auth login,auth login,Partial,v1,token store + local POST /login
+auth logout,auth logout,Partial,v1,hub auth logout Partial — clears stored token
+auth status,auth status,Partial,v1,token file + local GET /user probe
+auth token,auth token,Partial,v1,hub auth token Partial — prints/redacts stored token
+auth refresh,auth refresh,Missing,v1,Refresh stored hub creds via API
+auth switch,auth switch,Deferred,later,Multi-account
+auth setup-git,OUT,Refuse/N/A,out-of-scope,gh configures git to use gh helper; arks-hub MUST NOT spawn git/gh
+pr,pr,Partial,v1,Group help
+pr create,pr create,Partial,v1,local POST /repos/.../pulls
+pr list,pr list,Partial,v1,local GET /repos/.../pulls
+pr status,pr status,Missing,v1,Same name as gh; native API
+pr view,pr view,Partial,v1,local GET /repos/.../pulls/{n}
+pr diff,pr diff,Missing,v1,Same name as gh; native API
+pr edit,pr edit,Missing,v1,Same name as gh; native API
+pr close,pr close,Missing,v1,Same name as gh; native API
+pr reopen,pr reopen,Missing,v1,Same name as gh; native API
+pr comment,pr comment,Missing,v1,Same name as gh; native API
+pr merge,pr merge,Missing,v1,Same name as gh; native API
+pr ready,pr ready,Missing,v1,Same name as gh; native API
+pr review,pr review,Missing,v1,Same name as gh; native API
+pr checks,pr checks,Missing,v1,Same name as gh; native API
+pr lock,pr lock,Missing,v1,Same name as gh; native API
+pr unlock,pr unlock,Missing,v1,Same name as gh; native API
+pr update-branch,pr update-branch,Missing,v1,Same name as gh; native API
+pr revert,pr revert,Missing,v1,Same name as gh; native API
+pr checkout,pr checkout,Missing,v1,Resolve PR head via API; local worktree via arks in-process or printed arks cmds — NEVER spawn git/gh
+co,co,Partial,v1,alias → pr checkout stub
+issue,issue,Partial,v1,Group help
+issue create,issue create,Partial,v1,local POST /repos/.../issues
+issue list,issue list,Partial,v1,local GET /repos/.../issues
+issue status,issue status,Missing,v1,
+issue view,issue view,Partial,v1,local GET /repos/.../issues/{n}
+issue close,issue close,Missing,v1,
+issue reopen,issue reopen,Missing,v1,
+issue comment,issue comment,Missing,v1,
+issue edit,issue edit,Missing,v1,
+issue delete,issue delete,Missing,v1,
+issue lock,issue lock,Missing,v1,
+issue unlock,issue unlock,Missing,v1,
+issue pin,issue pin,Missing,v1,
+issue unpin,issue unpin,Missing,v1,
+issue transfer,issue transfer,Missing,v1,
+issue develop,issue develop,Deferred,later,Linked branches metadata via API
+issue artifact,issue artifact,Deferred,later,Preview; GitHub-shaped artifacts
+issue artifact create,issue artifact create,Deferred,later,Preview
+issue artifact delete,issue artifact delete,Deferred,later,Preview
+issue artifact download,issue artifact download,Deferred,later,Preview
+issue artifact edit,issue artifact edit,Deferred,later,Preview
+issue artifact list,issue artifact list,Deferred,later,Preview
+issue artifact view,issue artifact view,Deferred,later,Preview
+release,release,Missing,v1,Group
+release create,release create,Missing,v1,
+release list,release list,Missing,v1,
+release view,release view,Missing,v1,
+release upload,release upload,Missing,v1,
+release download,release download,Missing,v1,
+release edit,release edit,Missing,v1,
+release delete,release delete,Missing,v1,
+release delete-asset,release delete-asset,Missing,v1,
+release verify,release verify,Deferred,later,Attestation-related
+release verify-asset,release verify-asset,Deferred,later,Attestation-related
+repo,repo,Partial,v1,Group help
+repo view,repo view,Partial,v1,local GET /repos/{owner}/{repo}
+repo list,repo list,Partial,v1,local GET /user/repos
+repo create,repo create,Partial,v1,local POST /user/repos
+repo edit,repo edit,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo delete,repo delete,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo fork,repo fork,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo rename,repo rename,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo archive,repo archive,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo unarchive,repo unarchive,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo set-default,repo set-default,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo clone,repo clone,Deferred,later,MUST NOT spawn git/gh; later: in-process arks clone helper or print arks clone URL
+repo sync,repo sync,Deferred,later,API+arks fetch/push orchestration; no git/gh spawn
+repo read-dir,repo read-dir,Deferred,later,Contents API preview
+repo read-file,repo read-file,Deferred,later,Contents API preview
+repo gitignore,repo gitignore,Deferred,later,Template catalog
+repo gitignore list,repo gitignore list,Deferred,later,
+repo gitignore view,repo gitignore view,Deferred,later,
+repo license,repo license,Deferred,later,License template catalog
+repo license list,repo license list,Deferred,later,
+repo license view,repo license view,Deferred,later,
+repo autolink,repo autolink,Deferred,later,
+repo autolink create,repo autolink create,Deferred,later,
+repo autolink delete,repo autolink delete,Deferred,later,
+repo autolink list,repo autolink list,Deferred,later,
+repo autolink view,repo autolink view,Deferred,later,
+repo deploy-key,repo deploy-key,Deferred,later,
+repo deploy-key add,repo deploy-key add,Deferred,later,
+repo deploy-key delete,repo deploy-key delete,Deferred,later,
+repo deploy-key list,repo deploy-key list,Deferred,later,
+label,label,Missing,v1,Group
+label list,label list,Missing,v1,
+label create,label create,Missing,v1,
+label edit,label edit,Missing,v1,
+label delete,label delete,Missing,v1,
+label clone,label clone,Missing,v1,
+run,run,Missing,v1,Actions runs; match gh name
+run list,run list,Missing,v1,Poll/download via API; no gh spawn
+run view,run view,Missing,v1,Poll/download via API; no gh spawn
+run watch,run watch,Missing,v1,Poll/download via API; no gh spawn
+run cancel,run cancel,Missing,v1,Poll/download via API; no gh spawn
+run rerun,run rerun,Missing,v1,Poll/download via API; no gh spawn
+run download,run download,Missing,v1,Poll/download via API; no gh spawn
+run delete,run delete,Missing,v1,Poll/download via API; no gh spawn
+workflow,workflow,Missing,v1,Match gh
+workflow list,workflow list,Missing,v1,
+workflow view,workflow view,Missing,v1,
+workflow run,workflow run,Missing,v1,
+workflow enable,workflow enable,Missing,v1,
+workflow disable,workflow disable,Missing,v1,
+cache,cache,Deferred,later,Actions caches
+cache list,cache list,Deferred,later,
+cache delete,cache delete,Deferred,later,
+secret,secret,Deferred,later,Actions/env secrets
+secret list,secret list,Deferred,later,
+secret set,secret set,Deferred,later,
+secret delete,secret delete,Deferred,later,
+variable,variable,Deferred,later,
+variable list,variable list,Deferred,later,
+variable get,variable get,Deferred,later,
+variable set,variable set,Deferred,later,
+variable delete,variable delete,Deferred,later,
+search,search,Missing,v1,Group
+search issues,search issues,Missing,v1,
+search prs,search prs,Missing,v1,
+search repos,search repos,Missing,v1,
+search code,search code,Deferred,later,Host code search
+search commits,search commits,Deferred,later,
+status,status,Partial,v1,hub status Partial — aggregated issues/PRs stub
+api,api,Partial,v1,local HTTP GET passthrough
+org,org,Missing,v1,Group
+org list,org list,Missing,v1,
+config,config,Missing,v1,arks-hub config (not gh config file)
+config get,config get,Missing,v1,
+config set,config set,Missing,v1,
+config list,config list,Missing,v1,
+config clear-cache,config clear-cache,Missing,v1,
+alias,alias,Missing,v1,arks-hub command aliases
+alias set,alias set,Missing,v1,
+alias list,alias list,Missing,v1,
+alias delete,alias delete,Missing,v1,
+alias import,alias import,Missing,v1,
+completion,completion,Missing,v1,Shell completion for arks-hub
+browse,browse,Deferred,later,Open browser URLs from API; no web UI product
+gist,gist,Deferred,later,May be GitHub-shaped; hub API later
+gist list,gist list,Deferred,later,
+gist view,gist view,Deferred,later,
+gist create,gist create,Deferred,later,
+gist edit,gist edit,Deferred,later,
+gist delete,gist delete,Deferred,later,
+gist rename,gist rename,Deferred,later,
+gist clone,gist clone,Deferred,later,No git/gh spawn; arks or URL print
+discussion,discussion,Deferred,later,Preview on gh; hub-shaped forums later
+discussion create,discussion create,Deferred,later,
+discussion list,discussion list,Deferred,later,
+discussion view,discussion view,Deferred,later,
+discussion edit,discussion edit,Deferred,later,
+discussion comment,discussion comment,Deferred,later,
+project,project,Deferred,later,Projects v2; large surface
+project list,project list,Deferred,later,
+project view,project view,Deferred,later,
+project create,project create,Deferred,later,
+project edit,project edit,Deferred,later,
+project delete,project delete,Deferred,later,
+project close,project close,Deferred,later,
+project copy,project copy,Deferred,later,
+project link,project link,Deferred,later,
+project unlink,project unlink,Deferred,later,
+project mark-template,project mark-template,Deferred,later,
+project field-create,project field-create,Deferred,later,
+project field-delete,project field-delete,Deferred,later,
+project field-list,project field-list,Deferred,later,
+project item-add,project item-add,Deferred,later,
+project item-archive,project item-archive,Deferred,later,
+project item-create,project item-create,Deferred,later,
+project item-delete,project item-delete,Deferred,later,
+project item-edit,project item-edit,Deferred,later,
+project item-list,project item-list,Deferred,later,
+ssh-key,ssh-key,Deferred,later,Account SSH keys via API
+ssh-key list,ssh-key list,Deferred,later,
+ssh-key add,ssh-key add,Deferred,later,
+ssh-key delete,ssh-key delete,Deferred,later,
+gpg-key,gpg-key,Deferred,later,
+gpg-key list,gpg-key list,Deferred,later,
+gpg-key add,gpg-key add,Deferred,later,
+gpg-key delete,gpg-key delete,Deferred,later,
+ruleset,ruleset,Deferred,later,gh alias rs
+rs,rs,Deferred,later,Alias of ruleset
+ruleset list,ruleset list,Deferred,later,
+ruleset view,ruleset view,Deferred,later,
+ruleset check,ruleset check,Deferred,later,
+attestation,attestation,Deferred,later,
+attestation verify,attestation verify,Deferred,later,
+attestation download,attestation download,Deferred,later,
+attestation trusted-root,attestation trusted-root,Deferred,later,
+codespace,codespace,Deferred,later,GitHub Codespaces-shaped; may stay GitHub-host-specific
+codespace list,codespace list,Deferred,later,Host-specific
+codespace create,codespace create,Deferred,later,Host-specific
+codespace delete,codespace delete,Deferred,later,Host-specific
+codespace view,codespace view,Deferred,later,Host-specific
+codespace edit,codespace edit,Deferred,later,Host-specific
+codespace stop,codespace stop,Deferred,later,Host-specific
+codespace code,codespace code,Deferred,later,Host-specific
+codespace cp,codespace cp,Deferred,later,Host-specific
+codespace jupyter,codespace jupyter,Deferred,later,Host-specific
+codespace logs,codespace logs,Deferred,later,Host-specific
+codespace rebuild,codespace rebuild,Deferred,later,Host-specific
+codespace ssh,codespace ssh,Deferred,later,Host-specific
+codespace ports,codespace ports,Deferred,later,Host-specific
+codespace ports forward,codespace ports forward,Deferred,later,
+codespace ports visibility,codespace ports visibility,Deferred,later,
+extension,OUT,Refuse/N/A,out-of-scope,gh extension marketplace; not hub product
+extension browse,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension create,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension exec,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension install,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension list,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension remove,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension search,OUT,Refuse/N/A,out-of-scope,gh-specific
+extension upgrade,OUT,Refuse/N/A,out-of-scope,gh-specific
+copilot,OUT,Refuse/N/A,out-of-scope,GitHub Copilot CLI product
+skill,OUT,Refuse/N/A,out-of-scope,gh agent skills preview
+skill install,OUT,Refuse/N/A,out-of-scope,
+skill list,OUT,Refuse/N/A,out-of-scope,
+skill preview,OUT,Refuse/N/A,out-of-scope,
+skill publish,OUT,Refuse/N/A,out-of-scope,
+skill search,OUT,Refuse/N/A,out-of-scope,
+skill update,OUT,Refuse/N/A,out-of-scope,
+agent-task,OUT,Refuse/N/A,out-of-scope,GitHub agent tasks preview
+agent-task create,OUT,Refuse/N/A,out-of-scope,
+agent-task list,OUT,Refuse/N/A,out-of-scope,
+agent-task view,OUT,Refuse/N/A,out-of-scope,
+agent-tasks,OUT,Refuse/N/A,out-of-scope,Alias of agent-task
+agent,OUT,Refuse/N/A,out-of-scope,Alias of agent-task
+agents,OUT,Refuse/N/A,out-of-scope,Alias of agent-task
+licenses,OUT,Refuse/N/A,out-of-scope,gh third-party license dump for gh itself
+preview,OUT,Refuse/N/A,out-of-scope,gh internal prompter preview
+preview prompter,OUT,Refuse/N/A,out-of-scope,
+(none),milestone,Deferred,later,Hub first-class; gh uses issue/pr flags not top-level milestone
+(none),milestone list,Deferred,later,
+(none),milestone create,Deferred,later,
+(none),milestone edit,Deferred,later,
+(none),milestone close,Deferred,later,
+(none),milestone delete,Deferred,later,
+(none),serve,Partial,later,arks hub serve listen/bind Partial (default 127.0.0.1:3920; LAN 0.0.0.0 Partial; sibling self-host SoT not v1)
+(none),review,Deferred,later,Optional richer review group; v1 uses pr review (gh-identical)

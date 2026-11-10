@@ -1,0 +1,139 @@
+# Pre-release CLI symmetry gate (git ↔ arks, git-daemon ↔ arks daemon, gh ↔ arks hub).
+# Cite: .spec/sot/release-symmetry-precheck.sot.md
+#       .spec/sot/verify-cleanroom-symmetry-matrix.sot.md
+#
+# Pin DoD = clean-room Git 2.39.5 (Docker). Latest inventory = runner git + gh
+# continuity (untracked leaves FAIL; Partial / hub Missing advisory by default).
+# Does not invent Claimed/PASS. Product paths never spawn git/gh.
+#
+# Runner pins: ubuntu-24.04 (same family as ci.yml / release.yml).
+
+name: release-symmetry
+
+on:
+  workflow_dispatch:
+    inputs:
+      block_hub_missing:
+        description: "Fail when hub v1 CSV Missing > 0 (default advisory)"
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      block_hub_missing:
+        description: "Fail when hub v1 CSV Missing > 0 (default advisory)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-symmetry-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  pin-symmetry:
+    name: pin DoD symmetry (clean-room 2.39.5)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Stub discrete-circuit path-deps
+        run: |
+          bash scripts/ci-stub-discrete-circuit.sh
+          mkdir -p "$GITHUB_WORKSPACE/../../discrete-circuit"
+
+      - name: Build clean-room image
+        run: docker compose -f verify/docker-compose.yml build toolchain
+
+      - name: Run dod-symmetry-prerelease
+        env:
+          ARKS_RELEASE_BLOCK_HUB_MISSING: ${{ inputs.block_hub_missing == true && '1' || '0' }}
+        run: |
+          set -euo pipefail
+          docker compose -f verify/docker-compose.yml run --rm \
+            -e ARKS_RELEASE_BLOCK_HUB_MISSING \
+            dod-symmetry-prerelease
+
+      - name: Pin job summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "## Pin symmetry summary" >> "$GITHUB_STEP_SUMMARY"
+          echo
+          echo "Normative oracle: clean-room Git **2.39.5**. Smoke ≠ Claimed."
+          echo
+          if [[ -f verify/out/symmetry-prerelease/prerelease-summary.txt ]]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat verify/out/symmetry-prerelease/prerelease-summary.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Pin summary missing (container may have failed before write)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: release-symmetry-pin
+          path: verify/out/symmetry-prerelease/**
+          if-no-files-found: warn
+
+  latest-inventory:
+    name: latest git/gh inventory continuity
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show oracle versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git --version
+          gh --version
+          # Ensure gh is present (ubuntu runners ship gh; fail closed if not).
+          command -v gh >/dev/null
+
+      - name: Run latest inventory continuity
+        env:
+          ARKS_INVENTORY_MODE: latest
+          ARKS_INVENTORY_OUT: verify/out/symmetry-inventory-latest
+          ARKS_RELEASE_BLOCK_HUB_MISSING: ${{ inputs.block_hub_missing == true && '1' || '0' }}
+        run: bash verify/scripts/run-symmetry-latest-inventory.sh
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "## Latest inventory summary" >> "$GITHUB_STEP_SUMMARY"
+          echo
+          echo "This job tracks runner/latest git + gh leaves. It is **not** a pin-DoD Claimed stamp."
+          echo "Normative Git pin remains clean-room **2.39.5**."
+          echo
+          if [[ -f verify/out/symmetry-inventory-latest/summary.txt ]]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat verify/out/symmetry-inventory-latest/summary.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: release-symmetry-latest-inventory
+          path: verify/out/symmetry-inventory-latest/**
+          if-no-files-found: warn
+
+  gate:
+    name: release symmetry gate
+    needs: [pin-symmetry, latest-inventory]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Both legs green
+        run: |
+          echo "Pin DoD + latest inventory continuity passed."
+          echo "Partial rows and (by default) hub v1 Missing remain advisory — not invent Claimed."
+          echo "Release packaging may proceed only when this reusable workflow succeeds."
