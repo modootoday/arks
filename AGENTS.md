@@ -21,7 +21,9 @@ Build **arks** (`arks for Git`; working expansion **Agent Revision Kinetic Syste
 7. **Structural conventions** — SRP, modularization, no flat dumps, naming compliance, context-based dirs, anti-fragmentation, and language-standard layouts (Rust Cargo workspace / crates members first; Specfold, docs, and agents are overlays). SoT: `.spec/sot/structural-conventions.sot.md`; rule `15-structural-conventions`.
 8. **No folklore** — prefer updating `.spec/` over chat-only process invention. **No push** while remote is empty / push-deferred unless the owner explicitly authorizes (rule `91-commit-hygiene`).
 9. **Commit order** — Specfold SoT meaning changes land **first**; implementation later, one concern per commit — rules `27-spec-first-commit-order`, `91-commit-hygiene`. SoT body `Version` ≠ product/crate release — rule `26-sot-version-vs-release` (details: `.spec/README.md`).
-10. **CLI surface** — single bin `arks`; personalities `git|gh|arks`; never spawn stock `git`/`gh` on product paths; **`arks serve` ≠ `arks hub`** — rules `30`, `32`, `33`; skill `guard-cli-surface`.
+10. **CLI surface** — single bin `arks`; personalities `git|gh|arks`; never spawn stock `git`/`gh` on product paths; **`arks serve` ≠ `arks hub`**; ports normative≠demo — rules `30`, `32`, `33`, `34`; skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve`.
+11. **Honesty wording** — stubs/Partial ≠ Claimed/Verified/PASS — rules `28`, `29`; hooks scan commit messages.
+12. **Hooks** — `.cursor/hooks.json` denies force-push to main/master and staging `.spec.local`/secrets; asks on push / blind add / destructive git / `gh`; Hangul guards on edit + commit (rule `05`).
 
 ## Progressive disclosure (read more only when needed)
 
@@ -77,10 +79,18 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Rust style | rule `10-rust-conventions` → cite humanymous (no fork) |
 | Session overlap + commit hygiene | rules `90-session-overlap`, `91-commit-hygiene` |
 | Public surface / human vs agent vocabulary | `.spec/sot/public-surface.sot.md` + rule `80-public-surface`; site `docs/` (`remote_theme: modootoday/jekyll-theme-modootoday`) |
-| Spec classification (`.spec` vs `.spec.local`) | `.spec/README.md` + rule `25-spec-classification` + `.spec/sot/agent-governance.sot.md` |
+| Spec classification (`.spec` vs `.spec.local`) | `.spec/README.md` + rules `25-spec-classification`, `35-spec-local-journey` + `.spec/sot/agent-governance.sot.md` |
+| Stub vs Claimed wording | rule `29-stub-vs-claimed` |
+| Ports normative vs demo | rule `34-ports-normative-vs-demo` + `.spec/sot/arks-self-host-server.sot.md` + research `20261111055609` |
+| Cross-OS / pin honesty | rule `61-cross-os-pin-honesty` |
+| Symmetry matrices / release gate | skills `run-symmetry-matrix`, `release-symmetry-gate` + `.spec/sot/verify-cleanroom-symmetry-matrix.sot.md` + `.spec/sot/release-symmetry-precheck.sot.md` |
+| Self-host serve lane | skill `self-host-serve` + rules `33`, `34` |
+| Research → SoT pipeline | skill `research-to-sot` |
+| Product git/gh spawn review | skill `review-product-subprocess` + rule `30` |
+| Governance gap matrix | `.spec/research/20261111061037-agent-governance-gap-matrix.research.md` |
 | `arks hub` / `arks daemon` / `arks agent` / self-host | `.spec/sot/arks-hub-product-intent.sot.md` · `.spec/sot/arks-daemon-product-intent.sot.md` · `.spec/sot/arks-agent-product-intent.sot.md` · `.spec/sot/arks-self-host-server.sot.md` |
 | Role perspectives | `.agents/agents/` |
-| Cursor hooks (optional guards) | `.cursor/hooks.json` |
+| Cursor hooks (enforceable guards) | `.cursor/hooks.json` + `.cursor/hooks/*.ps1` |
 
 ## Done means
 
