@@ -68,6 +68,20 @@ pub const GROUPS: &[&str] = &[
     "serve",
 ];
 
+/// Matrix groups kept as discoverability refuse (OUT / later depth not wired).
+pub const HUB_OUT_GROUPS: &[&str] = &[
+    "cache",
+    "ruleset",
+    "skill",
+    "agent-task",
+    "preview",
+    "licenses",
+    "attestation",
+    "codespace",
+    "extension",
+    "copilot",
+];
+
 pub fn print_help() {
     eprintln!(
         "\
@@ -87,12 +101,25 @@ COMMANDS:
     release       Releases list|create (local Partial)
     run           Actions runs list|create (local Partial; not CI Claimed)
     workflow      Actions workflows list (local Partial)
+    milestone     Milestones list|create (local Partial)
+    gist          Gists list|create (local Partial)
+    project       Projects list|create (local Partial)
+    discussion    Discussions list|create (local Partial)
+    secret        Actions secrets list|create meta (local Partial; no value store)
+    variable      Actions variables list|create (local Partial)
+    ssh-key       User SSH keys list|create (local Partial)
+    gpg-key       User GPG keys list|create (local Partial)
+    browse        Print forge URL (Partial; no browser spawn)
+    inbox         Alias → status forge facet (Partial)
+    forge-config  Hub client path/token note (Partial; ≠ arks config)
+    alias         Local shell alias snippet (Partial)
+    completion    Shell completion stub (Partial)
     org           Organizations list (local Partial)
     search        Search repos|issues|prs (local Partial)
     api           Raw HTTP against ARKS_HUB_API
     status        Aggregated status (Partial)
     co            Alias for pr checkout
-    …             Other matrix groups: discoverability refuse until evidenced
+    …             OUT matrix groups: discoverability refuse (extension/copilot/…)
 
 ENV:
     ARKS_HUB_API         default http://127.0.0.1:3920 for local mode
@@ -136,6 +163,22 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "release" => cmd_release(&args[1..]),
         "run" => cmd_run(&args[1..]),
         "workflow" => cmd_workflow(&args[1..]),
+        "milestone" => cmd_milestone(&args[1..]),
+        "gist" => cmd_gist(&args[1..]),
+        "project" => cmd_project(&args[1..]),
+        "discussion" => cmd_discussion(&args[1..]),
+        "secret" => cmd_secret(&args[1..]),
+        "variable" => cmd_variable(&args[1..]),
+        "ssh-key" => cmd_ssh_key(&args[1..]),
+        "gpg-key" => cmd_gpg_key(&args[1..]),
+        "browse" => cmd_browse(&args[1..]),
+        "inbox" => {
+            eprintln!("arks hub inbox → status (demoted alias; Partial)");
+            cmd_status(&args[1..])
+        }
+        "forge-config" => cmd_forge_config(&args[1..]),
+        "alias" => cmd_alias(&args[1..]),
+        "completion" => cmd_completion(&args[1..]),
         "org" => cmd_org(&args[1..]),
         "search" => cmd_search(&args[1..]),
         "api" => cmd_api(&args[1..]),
@@ -143,6 +186,23 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "co" => {
             eprintln!("arks hub co → pr checkout (alias; checkout worktree not claimed)");
             cmd_pr(&["checkout".into()])
+        }
+        cmd if HUB_OUT_GROUPS.contains(&cmd) => {
+            if args.get(1).map(String::as_str) == Some("--help")
+                || args.get(1).map(String::as_str) == Some("-h")
+                || args.get(1).map(String::as_str) == Some("help")
+            {
+                eprintln!(
+                    "arks hub {cmd}: OUT/later matrix group — Partial stub help; refuse depth \
+                     ([[sot:root/arks-hub-cli-surface]])"
+                );
+                return ExitCode::SUCCESS;
+            }
+            eprintln!(
+                "arks hub: `{cmd}` OUT/later (Partial/Missing stub); refuse exit 2 — \
+                 design ≠ Claimed ([[sot:root/arks-hub-cli-surface]])"
+            );
+            ExitCode::from(2)
         }
         cmd if GROUPS.contains(&cmd) => {
             if args.get(1).map(String::as_str) == Some("--help")
@@ -1193,5 +1253,371 @@ fn cmd_status(_args: &[String]) -> ExitCode {
     } else {
         println!("note: set ARKS_HUB_REPO and start forge serve for aggregation");
     }
+    ExitCode::SUCCESS
+}
+
+fn local_list_create(
+    noun: &str,
+    args: &[String],
+    list_path: &str,
+    create_path: &str,
+    create_payload: Option<String>,
+) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    match sub {
+        "" | "-h" | "--help" => {
+            eprintln!("arks hub {noun} — list|create (local hub REST Partial)");
+            ExitCode::SUCCESS
+        }
+        "list" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub {noun} list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            match http_exchange(&base, "GET", list_path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub {noun} list: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "create" => {
+            let Some(payload) = create_payload else {
+                eprintln!("arks hub {noun} create: missing payload builder");
+                return ExitCode::from(2);
+            };
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub {noun} create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            match http_exchange(&base, "POST", create_path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub {noun} create: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub {noun} {other}: not claimed beyond list/create Partial");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_milestone(args: &[String]) -> ExitCode {
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            if matches!(
+                args.first().map(String::as_str),
+                Some("" | "-h" | "--help") | None
+            ) {
+                eprintln!("arks hub milestone — list|create (local Partial); needs --repo");
+                return ExitCode::SUCCESS;
+            }
+            eprintln!("arks hub milestone: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let path = format!("/repos/{owner}/{repo}/milestones");
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let title = flag_value(args, &["--title", "-t"]).unwrap_or("milestone");
+        let desc = flag_value(args, &["--description", "-d"]).unwrap_or("");
+        Some(format!(
+            r#"{{"title":{},"description":{}}}"#,
+            serde_json::to_string(title).unwrap(),
+            serde_json::to_string(desc).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("milestone", args, &path, &path, payload)
+}
+
+fn cmd_gist(args: &[String]) -> ExitCode {
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let desc = flag_value(args, &["--desc", "--description"]).unwrap_or("");
+        let file = flag_value(args, &["--filename", "-f"]).unwrap_or("gist.txt");
+        Some(format!(
+            r#"{{"description":{},"public":true,"files":[{}]}}"#,
+            serde_json::to_string(desc).unwrap(),
+            serde_json::to_string(file).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("gist", args, "/gists", "/gists", payload)
+}
+
+fn cmd_project(args: &[String]) -> ExitCode {
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            if matches!(
+                args.first().map(String::as_str),
+                Some("" | "-h" | "--help") | None
+            ) {
+                eprintln!("arks hub project — list|create (local Partial); needs --repo");
+                return ExitCode::SUCCESS;
+            }
+            eprintln!("arks hub project: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let path = format!("/repos/{owner}/{repo}/projects");
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let title = flag_value(args, &["--title", "-t"]).unwrap_or("project");
+        let body = flag_value(args, &["--body", "-b"]).unwrap_or("");
+        Some(format!(
+            r#"{{"title":{},"body":{}}}"#,
+            serde_json::to_string(title).unwrap(),
+            serde_json::to_string(body).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("project", args, &path, &path, payload)
+}
+
+fn cmd_discussion(args: &[String]) -> ExitCode {
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            if matches!(
+                args.first().map(String::as_str),
+                Some("" | "-h" | "--help") | None
+            ) {
+                eprintln!("arks hub discussion — list|create (local Partial); needs --repo");
+                return ExitCode::SUCCESS;
+            }
+            eprintln!("arks hub discussion: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let path = format!("/repos/{owner}/{repo}/discussions");
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let title = flag_value(args, &["--title", "-t"]).unwrap_or("discussion");
+        let body = flag_value(args, &["--body", "-b"]).unwrap_or("");
+        let cat = flag_value(args, &["--category", "-c"]).unwrap_or("General");
+        Some(format!(
+            r#"{{"title":{},"body":{},"category":{}}}"#,
+            serde_json::to_string(title).unwrap(),
+            serde_json::to_string(body).unwrap(),
+            serde_json::to_string(cat).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("discussion", args, &path, &path, payload)
+}
+
+fn cmd_secret(args: &[String]) -> ExitCode {
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            if matches!(
+                args.first().map(String::as_str),
+                Some("" | "-h" | "--help") | None
+            ) {
+                eprintln!(
+                    "arks hub secret — list|create (local meta Partial; values never stored)"
+                );
+                return ExitCode::SUCCESS;
+            }
+            eprintln!("arks hub secret: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let path = format!("/repos/{owner}/{repo}/actions/secrets");
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let name = flag_value(args, &["--name", "-n"]).unwrap_or("SECRET");
+        Some(format!(
+            r#"{{"name":{}}}"#,
+            serde_json::to_string(name).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("secret", args, &path, &path, payload)
+}
+
+fn cmd_variable(args: &[String]) -> ExitCode {
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            if matches!(
+                args.first().map(String::as_str),
+                Some("" | "-h" | "--help") | None
+            ) {
+                eprintln!("arks hub variable — list|create (local Partial); needs --repo");
+                return ExitCode::SUCCESS;
+            }
+            eprintln!("arks hub variable: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let path = format!("/repos/{owner}/{repo}/actions/variables");
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let name = flag_value(args, &["--name", "-n"]).unwrap_or("VAR");
+        let value = flag_value(args, &["--value", "-v"]).unwrap_or("");
+        Some(format!(
+            r#"{{"name":{},"value":{}}}"#,
+            serde_json::to_string(name).unwrap(),
+            serde_json::to_string(value).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("variable", args, &path, &path, payload)
+}
+
+fn cmd_ssh_key(args: &[String]) -> ExitCode {
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let title = flag_value(args, &["--title", "-t"]).unwrap_or("key");
+        let key = flag_value(args, &["--key", "-k"]).unwrap_or("ssh-ed25519 AAAA Partial");
+        Some(format!(
+            r#"{{"title":{},"key":{}}}"#,
+            serde_json::to_string(title).unwrap(),
+            serde_json::to_string(key).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("ssh-key", args, "/user/keys", "/user/keys", payload)
+}
+
+fn cmd_gpg_key(args: &[String]) -> ExitCode {
+    let payload = if args.first().map(String::as_str) == Some("create") {
+        let name = flag_value(args, &["--name", "-n"]).unwrap_or("gpg");
+        let key_id = flag_value(args, &["--key-id"]).unwrap_or("00000000");
+        Some(format!(
+            r#"{{"name":{},"key_id":{}}}"#,
+            serde_json::to_string(name).unwrap(),
+            serde_json::to_string(key_id).unwrap()
+        ))
+    } else {
+        None
+    };
+    local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
+}
+
+fn cmd_browse(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks hub browse [PATH] — print forge URL (Partial; never spawns a browser)"
+        );
+        return ExitCode::SUCCESS;
+    }
+    let base = api_base();
+    let path = args
+        .iter()
+        .find(|a| !a.starts_with('-'))
+        .cloned()
+        .unwrap_or_else(|| {
+            repo_slug(args)
+                .map(|(o, n)| format!("/{o}/{n}"))
+                .unwrap_or_else(|_| "/".into())
+        });
+    let path = if path.starts_with('/') {
+        path
+    } else {
+        format!("/{path}")
+    };
+    println!("{base}{path}");
+    eprintln!("note: browse Partial — URL printed only; no browser spawn Claimed");
+    ExitCode::SUCCESS
+}
+
+fn cmd_forge_config(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks hub forge-config — show hub client paths (Partial; ≠ arks config / serve config)"
+        );
+        return ExitCode::SUCCESS;
+    }
+    println!("api={}", api_base());
+    println!("token_file={}", token_path().display());
+    println!("data_dir={}", store::HubStore::data_dir().display());
+    eprintln!("note: forge-config Partial client facet — design ≠ Claimed");
+    ExitCode::SUCCESS
+}
+
+fn cmd_alias(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!("arks hub alias — print local shell alias snippets (Partial)");
+        return ExitCode::SUCCESS;
+    }
+    println!("# Partial shell aliases (paste manually; not Claimed installer)");
+    println!("alias gh='arks'");
+    println!("alias pr='arks pr'");
+    println!("alias issue='arks issue'");
+    eprintln!("note: alias Partial — no shell profile mutation Claimed");
+    ExitCode::SUCCESS
+}
+
+fn cmd_completion(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!("arks hub completion [bash|zsh|fish|powershell] — stub snippets (Partial)");
+        return ExitCode::SUCCESS;
+    }
+    let shell = args
+        .iter()
+        .find(|a| !a.starts_with('-'))
+        .map(String::as_str)
+        .unwrap_or("bash");
+    match shell {
+        "bash" => {
+            println!("# Partial bash completion for arks hub leaves");
+            println!("complete -W \"{}\" arks", GROUPS.join(" "));
+        }
+        "zsh" => {
+            println!("#compdef arks");
+            println!(
+                "_arks() {{ _arguments '1: :({})' }}",
+                GROUPS.join(" ")
+            );
+        }
+        "fish" => {
+            println!("# Partial fish completion");
+            println!(
+                "complete -c arks -a \"{}\"",
+                GROUPS.join(" ")
+            );
+        }
+        "powershell" | "pwsh" => {
+            println!("# Partial PowerShell Register-ArgumentCompleter stub");
+            println!(
+                "# leaves: {}",
+                GROUPS.join(" ")
+            );
+        }
+        other => {
+            eprintln!("arks hub completion: shell `{other}` not claimed (bash|zsh|fish|powershell)");
+            return ExitCode::from(2);
+        }
+    }
+    eprintln!("note: completion Partial stub — not Claimed installer");
     ExitCode::SUCCESS
 }

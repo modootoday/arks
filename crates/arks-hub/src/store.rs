@@ -17,6 +17,22 @@ pub struct HubDb {
     pub next_run: u64,
     #[serde(default)]
     pub next_workflow: u64,
+    #[serde(default)]
+    pub next_milestone: u64,
+    #[serde(default)]
+    pub next_gist: u64,
+    #[serde(default)]
+    pub next_project: u64,
+    #[serde(default)]
+    pub next_secret: u64,
+    #[serde(default)]
+    pub next_variable: u64,
+    #[serde(default)]
+    pub next_ssh_key: u64,
+    #[serde(default)]
+    pub next_gpg_key: u64,
+    #[serde(default)]
+    pub next_discussion: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
@@ -30,6 +46,22 @@ pub struct HubDb {
     pub runs: Vec<WorkflowRun>,
     #[serde(default)]
     pub workflows: Vec<Workflow>,
+    #[serde(default)]
+    pub milestones: Vec<Milestone>,
+    #[serde(default)]
+    pub gists: Vec<Gist>,
+    #[serde(default)]
+    pub projects: Vec<Project>,
+    #[serde(default)]
+    pub secrets: Vec<SecretMeta>,
+    #[serde(default)]
+    pub variables: Vec<Variable>,
+    #[serde(default)]
+    pub ssh_keys: Vec<SshKey>,
+    #[serde(default)]
+    pub gpg_keys: Vec<GpgKey>,
+    #[serde(default)]
+    pub discussions: Vec<Discussion>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -109,6 +141,76 @@ pub struct WorkflowRun {
     pub head_branch: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Milestone {
+    pub number: u64,
+    pub owner: String,
+    pub repo: String,
+    pub title: String,
+    pub description: String,
+    pub state: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gist {
+    pub id: String,
+    pub description: String,
+    pub public: bool,
+    pub files: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Project {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub title: String,
+    pub body: String,
+    pub state: String,
+}
+
+/// Secret metadata only — never persist plaintext values (Partial).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecretMeta {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Variable {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SshKey {
+    pub id: u64,
+    pub title: String,
+    pub key: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpgKey {
+    pub id: u64,
+    pub name: String,
+    pub key_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Discussion {
+    pub number: u64,
+    pub owner: String,
+    pub repo: String,
+    pub title: String,
+    pub body: String,
+    pub category: String,
+}
+
 pub struct HubStore {
     path: PathBuf,
     pub db: HubDb,
@@ -141,6 +243,14 @@ impl HubStore {
                 next_release: 1,
                 next_run: 1,
                 next_workflow: 1,
+                next_milestone: 1,
+                next_gist: 1,
+                next_project: 1,
+                next_secret: 1,
+                next_variable: 1,
+                next_ssh_key: 1,
+                next_gpg_key: 1,
+                next_discussion: 1,
                 tokens: vec!["local-dev-token".into()],
                 user_login: "local".into(),
                 ..HubDb::default()
@@ -347,6 +457,164 @@ impl HubStore {
         };
         self.db.runs.push(run.clone());
         run
+    }
+
+    pub fn create_milestone(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        title: &str,
+        description: &str,
+    ) -> Milestone {
+        if self.db.next_milestone == 0 {
+            self.db.next_milestone = 1;
+        }
+        let number = self.db.next_milestone;
+        self.db.next_milestone += 1;
+        let m = Milestone {
+            number,
+            owner: owner.into(),
+            repo: repo.into(),
+            title: title.into(),
+            description: description.into(),
+            state: "open".into(),
+        };
+        self.db.milestones.push(m.clone());
+        m
+    }
+
+    pub fn create_gist(&mut self, description: &str, public: bool, files: Vec<String>) -> Gist {
+        if self.db.next_gist == 0 {
+            self.db.next_gist = 1;
+        }
+        let id = format!("gist{}", self.db.next_gist);
+        self.db.next_gist += 1;
+        let g = Gist {
+            id,
+            description: description.into(),
+            public,
+            files,
+        };
+        self.db.gists.push(g.clone());
+        g
+    }
+
+    pub fn create_project(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        title: &str,
+        body: &str,
+    ) -> Project {
+        if self.db.next_project == 0 {
+            self.db.next_project = 1;
+        }
+        let id = self.db.next_project;
+        self.db.next_project += 1;
+        let p = Project {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            title: title.into(),
+            body: body.into(),
+            state: "open".into(),
+        };
+        self.db.projects.push(p.clone());
+        p
+    }
+
+    pub fn create_secret_meta(&mut self, owner: &str, repo: &str, name: &str) -> SecretMeta {
+        if self.db.next_secret == 0 {
+            self.db.next_secret = 1;
+        }
+        let id = self.db.next_secret;
+        self.db.next_secret += 1;
+        let s = SecretMeta {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: name.into(),
+        };
+        self.db.secrets.push(s.clone());
+        s
+    }
+
+    pub fn create_variable(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        name: &str,
+        value: &str,
+    ) -> Variable {
+        if self.db.next_variable == 0 {
+            self.db.next_variable = 1;
+        }
+        let id = self.db.next_variable;
+        self.db.next_variable += 1;
+        let v = Variable {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: name.into(),
+            value: value.into(),
+        };
+        self.db.variables.push(v.clone());
+        v
+    }
+
+    pub fn create_ssh_key(&mut self, title: &str, key: &str) -> SshKey {
+        if self.db.next_ssh_key == 0 {
+            self.db.next_ssh_key = 1;
+        }
+        let id = self.db.next_ssh_key;
+        self.db.next_ssh_key += 1;
+        let k = SshKey {
+            id,
+            title: title.into(),
+            key: key.into(),
+        };
+        self.db.ssh_keys.push(k.clone());
+        k
+    }
+
+    pub fn create_gpg_key(&mut self, name: &str, key_id: &str) -> GpgKey {
+        if self.db.next_gpg_key == 0 {
+            self.db.next_gpg_key = 1;
+        }
+        let id = self.db.next_gpg_key;
+        self.db.next_gpg_key += 1;
+        let k = GpgKey {
+            id,
+            name: name.into(),
+            key_id: key_id.into(),
+        };
+        self.db.gpg_keys.push(k.clone());
+        k
+    }
+
+    pub fn create_discussion(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        title: &str,
+        body: &str,
+        category: &str,
+    ) -> Discussion {
+        if self.db.next_discussion == 0 {
+            self.db.next_discussion = 1;
+        }
+        let number = self.db.next_discussion;
+        self.db.next_discussion += 1;
+        let d = Discussion {
+            number,
+            owner: owner.into(),
+            repo: repo.into(),
+            title: title.into(),
+            body: body.into(),
+            category: category.into(),
+        };
+        self.db.discussions.push(d.clone());
+        d
     }
 }
 

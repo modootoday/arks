@@ -562,6 +562,270 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     );
                 }
             }
+            // Milestones / projects / secrets / variables / discussions (Partial local forge).
+            if parts.len() == 3 && parts[2] == "milestones" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .milestones
+                        .iter()
+                        .filter(|m| m.owner == owner && m.repo == repo)
+                        .map(|m| {
+                            json!({
+                                "number": m.number,
+                                "title": m.title,
+                                "description": m.description,
+                                "state": m.state,
+                            })
+                        })
+                        .collect();
+                    return respond(&mut stream, 200, &Value::Array(items));
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("milestone");
+                    let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
+                    let m = st.create_milestone(owner, repo, title, desc);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "number": m.number,
+                            "title": m.title,
+                            "description": m.description,
+                            "state": m.state,
+                        }),
+                    );
+                }
+            }
+            if parts.len() == 3 && parts[2] == "projects" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .projects
+                        .iter()
+                        .filter(|p| p.owner == owner && p.repo == repo)
+                        .map(|p| {
+                            json!({
+                                "id": p.id,
+                                "title": p.title,
+                                "body": p.body,
+                                "state": p.state,
+                            })
+                        })
+                        .collect();
+                    return respond(&mut stream, 200, &Value::Array(items));
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("project");
+                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
+                    let p = st.create_project(owner, repo, title, body);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "id": p.id,
+                            "title": p.title,
+                            "body": p.body,
+                            "state": p.state,
+                        }),
+                    );
+                }
+            }
+            if parts.len() == 4 && parts[2] == "actions" && parts[3] == "secrets" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .secrets
+                        .iter()
+                        .filter(|s| s.owner == owner && s.repo == repo)
+                        .map(|s| json!({"id": s.id, "name": s.name}))
+                        .collect();
+                    return respond(
+                        &mut stream,
+                        200,
+                        &json!({"total_count": items.len(), "secrets": items}),
+                    );
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("SECRET");
+                    // Values are never stored — metadata only (Partial).
+                    let s = st.create_secret_meta(owner, repo, name);
+                    st.save()?;
+                    return respond(&mut stream, 201, &json!({"id": s.id, "name": s.name}));
+                }
+            }
+            if parts.len() == 4 && parts[2] == "actions" && parts[3] == "variables" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .variables
+                        .iter()
+                        .filter(|x| x.owner == owner && x.repo == repo)
+                        .map(|x| {
+                            json!({
+                                "id": x.id,
+                                "name": x.name,
+                                "value": x.value,
+                            })
+                        })
+                        .collect();
+                    return respond(
+                        &mut stream,
+                        200,
+                        &json!({"total_count": items.len(), "variables": items}),
+                    );
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("VAR");
+                    let value = v.get("value").and_then(|x| x.as_str()).unwrap_or("");
+                    let var = st.create_variable(owner, repo, name, value);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "id": var.id,
+                            "name": var.name,
+                            "value": var.value,
+                        }),
+                    );
+                }
+            }
+            if parts.len() == 3 && parts[2] == "discussions" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .discussions
+                        .iter()
+                        .filter(|d| d.owner == owner && d.repo == repo)
+                        .map(|d| {
+                            json!({
+                                "number": d.number,
+                                "title": d.title,
+                                "body": d.body,
+                                "category": d.category,
+                            })
+                        })
+                        .collect();
+                    return respond(&mut stream, 200, &Value::Array(items));
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("discussion");
+                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
+                    let cat = v.get("category").and_then(|x| x.as_str()).unwrap_or("General");
+                    let d = st.create_discussion(owner, repo, title, body, cat);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "number": d.number,
+                            "title": d.title,
+                            "body": d.body,
+                            "category": d.category,
+                        }),
+                    );
+                }
+            }
+        }
+    }
+
+    // Gists / user keys (Partial local forge).
+    if path == "/gists" {
+        if req.method == "GET" {
+            let items: Vec<Value> = st
+                .db
+                .gists
+                .iter()
+                .map(|g| {
+                    json!({
+                        "id": g.id,
+                        "description": g.description,
+                        "public": g.public,
+                        "files": g.files,
+                    })
+                })
+                .collect();
+            return respond(&mut stream, 200, &Value::Array(items));
+        }
+        if req.method == "POST" {
+            let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+            let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
+            let public = v.get("public").and_then(|x| x.as_bool()).unwrap_or(true);
+            let files = v
+                .get("files")
+                .and_then(|x| x.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|f| f.as_str().map(str::to_string))
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            let g = st.create_gist(desc, public, files);
+            st.save()?;
+            return respond(
+                &mut stream,
+                201,
+                &json!({
+                    "id": g.id,
+                    "description": g.description,
+                    "public": g.public,
+                    "files": g.files,
+                }),
+            );
+        }
+    }
+    if path == "/user/keys" {
+        if req.method == "GET" {
+            let items: Vec<Value> = st
+                .db
+                .ssh_keys
+                .iter()
+                .map(|k| json!({"id": k.id, "title": k.title, "key": k.key}))
+                .collect();
+            return respond(&mut stream, 200, &Value::Array(items));
+        }
+        if req.method == "POST" {
+            let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+            let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("key");
+            let key = v.get("key").and_then(|x| x.as_str()).unwrap_or("");
+            let k = st.create_ssh_key(title, key);
+            st.save()?;
+            return respond(
+                &mut stream,
+                201,
+                &json!({"id": k.id, "title": k.title, "key": k.key}),
+            );
+        }
+    }
+    if path == "/user/gpg_keys" {
+        if req.method == "GET" {
+            let items: Vec<Value> = st
+                .db
+                .gpg_keys
+                .iter()
+                .map(|k| json!({"id": k.id, "name": k.name, "key_id": k.key_id}))
+                .collect();
+            return respond(&mut stream, 200, &Value::Array(items));
+        }
+        if req.method == "POST" {
+            let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+            let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("gpg");
+            let key_id = v.get("key_id").and_then(|x| x.as_str()).unwrap_or("00000000");
+            let k = st.create_gpg_key(name, key_id);
+            st.save()?;
+            return respond(
+                &mut stream,
+                201,
+                &json!({"id": k.id, "name": k.name, "key_id": k.key_id}),
+            );
         }
     }
 
