@@ -459,11 +459,8 @@ fn validate_claimed_filter_inner(spec: &str, depth: u8) -> Result<(), RemoteErro
             return Ok(());
         }
     }
-    if let Some(rest) = spec.strip_prefix("object:type=") {
-        match rest {
-            "blob" | "tree" | "commit" | "tag" => return Ok(()),
-            _ => {}
-        }
+    if let Some("blob" | "tree" | "commit" | "tag") = spec.strip_prefix("object:type=") {
+        return Ok(());
     }
     if let Some(rest) = spec.strip_prefix("combine:") {
         if rest.is_empty() {
