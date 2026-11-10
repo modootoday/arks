@@ -239,20 +239,19 @@ fn write_http_request(
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // Grow one heap buffer (no stack 64KiB + no header→body memcpy). 64KiB
-    // read chunks match upload-pack frames on J-CLONE-LOCAL.
+    // Heap scratch + extend (no per-read 64KiB zero-fill — that regressed
+    // J-CLONE-LOCAL to ~0.75–0.80). split_off still avoids a second body copy.
+    let mut scratch = vec![0u8; 64 * 1024];
     let mut buf = Vec::with_capacity(64 * 1024);
     let header_end;
     loop {
-        let start = buf.len();
-        buf.resize(start + 64 * 1024, 0);
         let n = stream
-            .read(&mut buf[start..])
+            .read(&mut scratch)
             .map_err(|e| RemoteError::Http(e.to_string()))?;
-        buf.truncate(start + n);
         if n == 0 {
             return Err(RemoteError::Http("cleartext EOF before headers".into()));
         }
+        buf.extend_from_slice(&scratch[..n]);
         if let Some(pos) = find_header_end(&buf) {
             header_end = pos;
             break;
@@ -265,31 +264,26 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     let body = if let Some(len) = content_length {
         let need = header_end.saturating_add(len);
         while buf.len() < need {
-            let start = buf.len();
-            let chunk = (need - start).clamp(8 * 1024, 64 * 1024);
-            buf.resize(start + chunk, 0);
             let n = stream
-                .read(&mut buf[start..])
+                .read(&mut scratch)
                 .map_err(|e| RemoteError::Http(e.to_string()))?;
-            buf.truncate(start + n);
             if n == 0 {
                 break;
             }
+            buf.extend_from_slice(&scratch[..n]);
         }
         let mut body = buf.split_off(header_end);
         body.truncate(len);
         body
     } else {
         loop {
-            let start = buf.len();
-            buf.resize(start + 64 * 1024, 0);
             let n = stream
-                .read(&mut buf[start..])
+                .read(&mut scratch)
                 .map_err(|e| RemoteError::Http(e.to_string()))?;
-            buf.truncate(start + n);
             if n == 0 {
                 break;
             }
+            buf.extend_from_slice(&scratch[..n]);
         }
         buf.split_off(header_end)
     };
