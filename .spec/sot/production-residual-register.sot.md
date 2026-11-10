@@ -240,5 +240,5 @@ After M0–M17 claimed exits, agents otherwise re-litigate closed bars or treat 
 
 1. `spec check` clean for this SoT and linked residual updates.
 2. Every row above is either proven by carrying evidence, refuse-closed / N/A in owning SoT/ADR, or process-closed — **no bare development Opens** and **no Closed-deferred work items** after M22 ([[plan:root/20261110150000]] / [[evidence:root/20261110154000]]).
-3. Public copy MAY cite G29–G32 / G33 / G34 / G35 / G36 / G37 only with matching Claimed evidence; MUST keep filter/promisor **N/A**, forge OAuth **Refuse**, OpenPGP/X.509 **N/A**, and PF5 honesty current (**8/8** Claimed ≤0.5×; [[evidence:root/20261110131600]]). G33 MAY claim TTY + first-party OS wallets; MUST NOT claim forge OAuth under CRED.
+3. Public copy MAY cite G29–G32 / G33 / G34 / G35 / G36 / G37 only with matching Claimed evidence; MUST keep filter/promisor **N/A**, forge OAuth **Refuse**, OpenPGP/X.509 **N/A**, and PF5 residual `aggressive_na` honest (partial **7/8**; CLONE-LOCAL NA). G33 MAY claim TTY + first-party OS wallets; MUST NOT claim forge OAuth under CRED.
 4. M17 cites [[evidence:root/20261109090000]] (not the TAG/DIFF N/A-era receipt alone).
