@@ -396,6 +396,10 @@ fn askpass_fill(desc: &mut Credential, program: &Path) -> Result<(), RemoteError
     Ok(())
 }
 
+fn askpass_etxtbsy(err: &std::io::Error) -> bool {
+    err.kind() == std::io::ErrorKind::ExecutableFileBusy || err.raw_os_error() == Some(26)
+}
+
 fn run_askpass(program: &Path, prompt: &str) -> Result<String, RemoteError> {
     // ETXTBSY can race right after writing an executable script (CI tmpfs).
     let mut attempt = 0u32;
@@ -408,13 +412,38 @@ fn run_askpass(program: &Path, prompt: &str) -> Result<String, RemoteError> {
             .output()
         {
             Ok(out) => break out,
-            Err(e)
-                if attempt < 8
-                    && (e.kind() == std::io::ErrorKind::ExecutableFileBusy
-                        || e.raw_os_error() == Some(26)) =>
-            {
+            Err(e) if askpass_etxtbsy(&e) && attempt < 16 => {
                 attempt += 1;
-                std::thread::sleep(std::time::Duration::from_millis(10 * u64::from(attempt)));
+                std::thread::sleep(std::time::Duration::from_millis(20 * u64::from(attempt)));
+            }
+            Err(e) if askpass_etxtbsy(&e) => {
+                // Last resort on Unix: run via sh so exec does not need the script inode.
+                #[cfg(unix)]
+                {
+                    match Command::new("/bin/sh")
+                        .arg(program)
+                        .arg(prompt)
+                        .stdin(Stdio::null())
+                        .stdout(Stdio::piped())
+                        .stderr(Stdio::piped())
+                        .output()
+                    {
+                        Ok(out) => break out,
+                        Err(e2) => {
+                            return Err(RemoteError::Msg(format!(
+                                "askpass spawn {} (sh fallback): {e2}",
+                                program.display()
+                            )));
+                        }
+                    }
+                }
+                #[cfg(not(unix))]
+                {
+                    return Err(RemoteError::Msg(format!(
+                        "askpass spawn {}: {e}",
+                        program.display()
+                    )));
+                }
             }
             Err(e) => {
                 return Err(RemoteError::Msg(format!(
@@ -702,15 +731,17 @@ mod tests {
         let script = {
             use std::io::Write as _;
             use std::os::unix::fs::PermissionsExt;
+            let tmp = dir.path().join("askpass.sh.tmp");
             let p = dir.path().join("askpass.sh");
             {
-                let mut f = fs::File::create(&p).unwrap();
+                let mut f = fs::File::create(&tmp).unwrap();
                 f.write_all(
                     b"#!/bin/sh\ncase \"$1\" in\n  *sername*) echo askuser ;;\n  *) echo askpass ;;\nesac\n",
                 )
                 .unwrap();
                 f.sync_all().unwrap();
             }
+            fs::rename(&tmp, &p).unwrap();
             let mut perms = fs::metadata(&p).unwrap().permissions();
             perms.set_mode(0o755);
             fs::set_permissions(&p, perms).unwrap();
@@ -747,15 +778,17 @@ mod tests {
         let helper = {
             use std::io::Write as _;
             use std::os::unix::fs::PermissionsExt;
+            let tmp = dir.path().join("helper.sh.tmp");
             let p = dir.path().join("helper.sh");
             {
-                let mut f = fs::File::create(&p).unwrap();
+                let mut f = fs::File::create(&tmp).unwrap();
                 f.write_all(
                     b"#!/bin/sh\nif [ \"$1\" = get ]; then\n  printf 'username=huser\\npassword=hpass\\n\\n'\nfi\n",
                 )
                 .unwrap();
                 f.sync_all().unwrap();
             }
+            fs::rename(&tmp, &p).unwrap();
             let mut perms = fs::metadata(&p).unwrap().permissions();
             perms.set_mode(0o755);
             fs::set_permissions(&p, perms).unwrap();
