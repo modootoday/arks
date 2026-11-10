@@ -429,14 +429,47 @@ where
     })
 }
 
-/// Claimed filter-spec gate (`blob:none` + `tree:0` for S1 / O2).
+/// Claimed filter-spec gate (S1/O2 + FS4).
+///
+/// Claimed: `blob:none`, `tree:0`, `tree:<depth>` (non-neg int), `blob:limit=<n>`
+/// (`n` bytes, optional `k`/`m`/`g` suffix). Other specs refuse fail-closed.
 pub fn validate_claimed_filter(spec: &str) -> Result<(), RemoteError> {
-    match spec {
-        "blob:none" | "tree:0" => Ok(()),
-        _ => Err(RemoteError::NotImplemented(format!(
-            "clone/fetch --filter={spec} not claimed; claimed subset: blob:none, tree:0"
-        ))),
+    if spec == "blob:none" || spec == "tree:0" {
+        return Ok(());
     }
+    if let Some(rest) = spec.strip_prefix("tree:") {
+        if rest.chars().all(|c| c.is_ascii_digit()) && !rest.is_empty() {
+            return Ok(());
+        }
+    }
+    if let Some(rest) = spec.strip_prefix("blob:limit=") {
+        if parse_blob_limit(rest).is_some() {
+            return Ok(());
+        }
+    }
+    Err(RemoteError::NotImplemented(format!(
+        "clone/fetch --filter={spec} not claimed; claimed: blob:none, tree:0, tree:<depth>, blob:limit=<n>"
+    )))
+}
+
+fn parse_blob_limit(raw: &str) -> Option<u64> {
+    if raw.is_empty() {
+        return None;
+    }
+    let (num, mul) = match raw.as_bytes().last().map(|b| b.to_ascii_lowercase()) {
+        Some(b @ (b'k' | b'm' | b'g')) => {
+            let n = raw[..raw.len() - 1].parse::<u64>().ok()?;
+            let m = match b {
+                b'k' => 1024u64,
+                b'm' => 1024 * 1024,
+                b'g' => 1024 * 1024 * 1024,
+                _ => 1,
+            };
+            (n, m)
+        }
+        _ => (raw.parse::<u64>().ok()?, 1),
+    };
+    num.checked_mul(mul)
 }
 
 fn head_from_ad(ad: &Advertisement) -> (Option<String>, Option<Oid>) {

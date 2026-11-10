@@ -235,18 +235,15 @@ pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_add(args: &[String]) -> CliResult<()> {
     // Fs-4 + M16 Sy-1: `-A`/`-u`/`--chmod=+x|-x` (git-add). Cite: https://git-scm.com/docs/git-add
-    // O3/FS1: `add -p` scripted + TTY prompt (file-granularity); `-i`/`-e` remain FS3.
-    if args
-        .iter()
-        .any(|a| a == "-i" || a == "--interactive" || a == "-e")
-    {
-        return Err(CliError::NotImplemented(
-            "add -i/-e not claimed yet (FS3); use add -p (TTY or ARKS_ADD_PATCH_ANSWERS) or non-interactive add"
-                .into(),
-        ));
+    // FS3: hunk-level `-p`, `-e` edit, `-i` menu (plus FS1 scripted/TTY answers).
+    if args.iter().any(|a| a == "-i" || a == "--interactive") {
+        return crate::cmd::interactive_patch::cmd_add_interactive(args);
+    }
+    if args.iter().any(|a| a == "-e" || a == "--edit") {
+        return crate::cmd::interactive_patch::cmd_add_edit(args);
     }
     if args.iter().any(|a| a == "-p" || a == "--patch") {
-        return cmd_add_patch(args);
+        return crate::cmd::interactive_patch::cmd_add_patch_hunks(args);
     }
     refuse_unknown_flags(args, &["-A", "--all", "-u", "--update", "--chmod"])?;
     // HOOK-005 (M20 Cx-4): nested index write under held lock (hook/agent) refuse-closed.
@@ -499,7 +496,12 @@ fn stage_blob_entry(
 ) -> CliResult<IndexEntry> {
     let abs = work.join(rel);
     let meta = fs::metadata(&abs)?;
-    let payload = fs::read(&abs)?;
+    let mut payload = fs::read(&abs)?;
+    // FS6 closest: honor configured `filter.<name>.clean` when `.gitattributes` sets filter=.
+    if let Some(filtered) = apply_clean_filter(work, rel, &payload)? {
+        payload = filtered;
+    }
+    let size = payload.len().min(u32::MAX as usize) as u32;
     let obj = RawObject::new(ObjectKind::Blob, payload);
     let oid = write_loose(objects_dir, FORMAT, &obj)?;
     let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec) = file_times(&meta);
@@ -514,7 +516,7 @@ fn stage_blob_entry(
         mode,
         uid: 0,
         gid: 0,
-        size: meta.len().min(u32::MAX as u64) as u32,
+        size,
         oid,
         flags: (rel.len().min(0x0fff)) as u16,
         flags_extended: None,
@@ -1077,132 +1079,112 @@ fn run_editor_cmd(editor: &str, path: &Path) -> CliResult<()> {
     Ok(())
 }
 
-/// O3/FS1 `add -p`: file-granularity y/n/a/d/q from `ARKS_ADD_PATCH_ANSWERS`,
-/// non-TTY stdin, or interactive TTY prompts (FS1 human+agent parity).
-fn cmd_add_patch(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-p", "--patch"])?;
-    let mode = patch_answer_mode()?;
+/// FS6: run `filter.<name>.clean` when `.gitattributes` assigns `filter=<name>` (LFS closest).
+fn apply_clean_filter(work: &Path, rel: &str, payload: &[u8]) -> CliResult<Option<Vec<u8>>> {
+    let Some(name) = attribute_filter_name(work, rel)? else {
+        return Ok(None);
+    };
     let repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let index = read_index(&repo)?;
-    let head_map = head_blob_map(&repo).unwrap_or_default();
-    let mut candidates: Vec<String> = Vec::new();
-    let stage0: HashMap<&str, &IndexEntry> = index
-        .entries
-        .iter()
-        .filter(|e| e.stage() == 0)
-        .map(|e| (e.path.as_str(), e))
-        .collect();
-    for (path, entry) in &stage0 {
-        let abs = work.join(path);
-        if !abs.is_file() {
-            candidates.push((*path).to_string());
+    let cfg = fs::read_to_string(repo.git_dir().join("config")).unwrap_or_default();
+    let key = format!("filter.{name}.clean");
+    let Some(cmd) = config_value(&cfg, &key) else {
+        return Ok(None);
+    };
+    let mut argv: Vec<String> = cmd.split_whitespace().map(|s| s.to_string()).collect();
+    if argv.is_empty() {
+        return Ok(None);
+    }
+    for a in &mut argv {
+        *a = a.replace("%f", rel);
+    }
+    let mut child = std::process::Command::new(&argv[0])
+        .args(&argv[1..])
+        .current_dir(work)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .map_err(|e| CliError::Msg(format!("filter.{name}.clean: {e}")))?;
+    if let Some(mut stdin) = child.stdin.take() {
+        use std::io::Write;
+        stdin
+            .write_all(payload)
+            .map_err(|e| CliError::Msg(format!("filter clean stdin: {e}")))?;
+    }
+    let out = child
+        .wait_with_output()
+        .map_err(|e| CliError::Msg(format!("filter clean: {e}")))?;
+    if !out.status.success() {
+        return Err(CliError::Msg(format!(
+            "filter.{name}.clean exited {}",
+            out.status.code().unwrap_or(-1)
+        )));
+    }
+    Ok(Some(out.stdout))
+}
+
+fn attribute_filter_name(work: &Path, rel: &str) -> CliResult<Option<String>> {
+    let attr = work.join(".gitattributes");
+    if !attr.is_file() {
+        return Ok(None);
+    }
+    let text = fs::read_to_string(&attr)?;
+    let file = Path::new(rel)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or(rel);
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let meta = fs::metadata(&abs)?;
-        if !index_stat_matches(entry, &meta) {
-            candidates.push((*path).to_string());
+        let mut parts = line.split_whitespace();
+        let pattern = parts.next().unwrap_or("");
+        let matches = pattern == "*"
+            || pattern == rel
+            || pattern == file
+            || (pattern.starts_with("*.") && file.ends_with(&pattern[1..]));
+        if !matches {
+            continue;
+        }
+        for attr in parts {
+            if let Some(name) = attr.strip_prefix("filter=") {
+                return Ok(Some(name.to_string()));
+            }
         }
     }
-    let indexed: HashSet<_> = stage0.keys().map(|s| (*s).to_string()).collect();
-    let mut untracked = Vec::new();
-    collect_untracked(&work, &work, &indexed, &mut untracked)?;
-    candidates.extend(untracked);
-    candidates.sort();
-    candidates.dedup();
-    if candidates.is_empty() {
-        println!("No changes.");
-        return Ok(());
-    }
-    let mut accept_rest = false;
-    let mut decline_rest = false;
-    let mut answer_i = 0;
-    let mut to_add: Vec<String> = Vec::new();
-    for path in candidates {
-        let ans = if accept_rest {
-            'a'
-        } else if decline_rest {
-            'd'
-        } else {
-            match &mode {
-                PatchAnswerMode::Scripted(answers) => {
-                    let ch = answers.get(answer_i).copied().unwrap_or('n');
-                    answer_i += 1;
-                    ch
-                }
-                PatchAnswerMode::Tty => prompt_patch_answer(&path)?,
-            }
+    Ok(None)
+}
+
+fn config_value(text: &str, key: &str) -> Option<String> {
+    let key = key.to_ascii_lowercase();
+    let mut section = String::new();
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+        if line.starts_with('[') {
+            section = line
+                .trim_matches(|c| c == '[' || c == ']')
+                .to_ascii_lowercase()
+                .replace('"', "");
+            continue;
+        }
+        let Some((k, v)) = line.split_once('=') else {
+            continue;
         };
-        match ans {
-            'y' | 'Y' => to_add.push(path),
-            'n' | 'N' => {}
-            'a' | 'A' => {
-                to_add.push(path);
-                accept_rest = true;
-            }
-            'd' | 'D' => {
-                decline_rest = true;
-            }
-            'q' | 'Q' => break,
-            other => {
-                return Err(CliError::Usage(format!(
-                    "add -p: unknown answer '{other}' (claimed: y/n/a/d/q)"
-                )));
-            }
-        }
-        let _ = &head_map; // keep head probe wired for future hunk mode (FS3)
-    }
-    drop(repo);
-    if to_add.is_empty() {
-        return Ok(());
-    }
-    cmd_add(&to_add)
-}
-
-enum PatchAnswerMode {
-    Scripted(Vec<char>),
-    Tty,
-}
-
-fn patch_answer_mode() -> CliResult<PatchAnswerMode> {
-    if let Ok(raw) = std::env::var("ARKS_ADD_PATCH_ANSWERS") {
-        return Ok(PatchAnswerMode::Scripted(
-            raw.chars().filter(|c| !c.is_whitespace()).collect(),
-        ));
-    }
-    use std::io::IsTerminal;
-    if io::stdin().is_terminal() {
-        return Ok(PatchAnswerMode::Tty);
-    }
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    Ok(PatchAnswerMode::Scripted(
-        buf.chars().filter(|c| !c.is_whitespace()).collect(),
-    ))
-}
-
-fn prompt_patch_answer(path: &str) -> CliResult<char> {
-    use std::io::Write;
-    loop {
-        print!("Stage '{path}' [y,n,a,d,q]? ");
-        io::stdout()
-            .flush()
-            .map_err(|e| CliError::Msg(format!("flush prompt: {e}")))?;
-        let mut line = String::new();
-        io::stdin()
-            .read_line(&mut line)
-            .map_err(|e| CliError::Msg(format!("read prompt: {e}")))?;
-        let ch = line.chars().find(|c| !c.is_whitespace());
-        match ch {
-            Some(c @ ('y' | 'Y' | 'n' | 'N' | 'a' | 'A' | 'd' | 'D' | 'q' | 'Q')) => return Ok(c),
-            Some(_) => {
-                eprintln!("Please answer y, n, a, d, or q");
-            }
-            None => {
-                // Empty line → decline (git-ish default for unclear input: re-prompt;
-                // treat bare enter as 'n' for non-interactive pipe safety).
-                return Ok('n');
-            }
+        let full = if section.contains(' ') {
+            let mut bits = section.split_whitespace();
+            let head = bits.next().unwrap_or("");
+            let name = bits.next().unwrap_or("");
+            format!("{head}.{name}.{}", k.trim().to_ascii_lowercase())
+        } else {
+            format!("{section}.{}", k.trim().to_ascii_lowercase())
+        };
+        if full == key {
+            return Some(v.trim().trim_matches('"').to_string());
         }
     }
+    None
 }

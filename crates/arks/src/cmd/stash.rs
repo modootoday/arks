@@ -1,5 +1,6 @@
-//! Minimal stash (push/list/pop).
+//! Stash (push/list/pop/show/apply/drop/clear) + FS3 `stash -p`.
 
+use crate::cmd::interactive_patch::cmd_stash_patch;
 use crate::cmd::shared::commit_signature;
 use crate::error::{CliError, CliResult};
 use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
@@ -8,8 +9,12 @@ use arks_index::Index;
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_store::ObjectStore;
 use std::fs;
+
 pub fn cmd_stash(args: &[String]) -> CliResult<()> {
-    // M16 Sy-5: show/apply/drop/clear claimed (git-stash). `-p` interactive remains N/A.
+    // FS3: `-p` / `--patch` on bare `stash` or `stash push -p`.
+    if args.iter().any(|a| a == "-p" || a == "--patch") {
+        return cmd_stash_patch(args);
+    }
     let sub = args.first().map(String::as_str).unwrap_or("push");
     match sub {
         "push" | "save" => {
@@ -41,14 +46,18 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
             stash_clear()
         }
         other => Err(CliError::NotImplemented(format!(
-            "stash {other} not claimed (Sy-5: push/list/pop/show/apply/drop/clear; -p N/A)"
+            "stash {other} not claimed (Sy-5 + FS3 -p: push/list/pop/show/apply/drop/clear/patch)"
         ))),
     }
 }
 
+/// Public for FS3 `stash -p`.
+pub(crate) fn stash_push_public() -> CliResult<()> {
+    stash_push()
+}
+
 fn stash_push() -> CliResult<()> {
     let mut repo = open_repo()?;
-    // STASH-001 (M19 Cx-2): concurrent stash push contends on refs/stash lock.
     if repo.git_dir().join("refs").join("stash.lock").is_file() {
         return Err(CliError::Msg(
             "Unable to create refs/stash.lock (STASH-001 — concurrent stash push fail-closed; lease ≠ skip)"
@@ -63,7 +72,6 @@ fn stash_push() -> CliResult<()> {
     } else {
         write_tree_from_index(repo.store_mut(), &index.entries)?
     };
-    // Also capture dirty worktree into index temporarily for stash tree.
     let mut dirty = index.clone();
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
         let abs = work.join(&e.path);
@@ -91,9 +99,7 @@ fn stash_push() -> CliResult<()> {
     };
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
     let coid = repo.store_mut().put(FORMAT, &cobj)?;
-    // Stack: keep previous stash as parent chain via refs/stash only (single tip).
     repo.refs_mut().update("refs/stash", &coid, None)?;
-    // Reset WT+index to HEAD tree (like stash push).
     if let Some(h) = parent {
         arks_remote::checkout_commit(&repo, &work, &h)?;
     } else {
@@ -137,7 +143,6 @@ fn stash_show() -> CliResult<()> {
 
 fn stash_apply(drop_after: bool) -> CliResult<()> {
     let mut repo = open_repo()?;
-    // STASH-002 (M19 Cx-2): stash pop/apply against moving index — honor index.lock.
     {
         let mut lock = repo.index_path().into_os_string();
         lock.push(".lock");

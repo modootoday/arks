@@ -172,6 +172,15 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
     }
 
     if !diverted.is_empty() {
+        // FS8 / HOOK-008 closest: refuse concurrent proc-receive under lock.
+        let pr_lock = repo.git_dir().join("hooks").join("proc-receive.lock");
+        if pr_lock.is_file() {
+            return Err(ServerError::Msg(format!(
+                "{} (HOOK-008 — concurrent proc-receive refuse; serialize push-options/proc-receive; lease ≠ skip)",
+                pr_lock.display()
+            )));
+        }
+        let _ = fs::write(&pr_lock, b"arks-proc-receive\n");
         let pr_cmds: Vec<ProcReceiveCmd> = diverted
             .iter()
             .map(|c| ProcReceiveCmd {
@@ -180,7 +189,16 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
                 name: c.name.clone(),
             })
             .collect();
-        let pr_results = run_proc_receive(repo.git_dir(), &pr_cmds, &hook_env)?;
+        let pr_results = match run_proc_receive(repo.git_dir(), &pr_cmds, &hook_env) {
+            Ok(r) => {
+                let _ = fs::remove_file(&pr_lock);
+                r
+            }
+            Err(e) => {
+                let _ = fs::remove_file(&pr_lock);
+                return Err(e);
+            }
+        };
         for pr in pr_results {
             if !pr.ok {
                 results.push((

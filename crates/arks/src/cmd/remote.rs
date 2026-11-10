@@ -244,11 +244,16 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_clone(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--reference", "--depth", "--filter"])?;
+    refuse_unknown_flags(
+        args,
+        &["--reference", "--depth", "--filter", "--bundle-uri"],
+    )?;
     // MISC-009 (M20 Cx-8): clone --reference while donor under gc/maintenance.
     let mut reference: Option<PathBuf> = None;
     let mut depth: Option<u32> = None;
     let mut filter: Option<String> = None;
+    // FS5: local-file `--bundle-uri` seeds objects via unbundle after clone.
+    let mut bundle_uri: Option<PathBuf> = None;
     let mut positional = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -276,6 +281,14 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
             filter = Some(parse_filter(spec)?);
         } else if let Some(rest) = args[i].strip_prefix("--filter=") {
             filter = Some(parse_filter(rest)?);
+        } else if args[i] == "--bundle-uri" {
+            i += 1;
+            let p = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("clone --bundle-uri <path>".into()))?;
+            bundle_uri = Some(PathBuf::from(p));
+        } else if let Some(rest) = args[i].strip_prefix("--bundle-uri=") {
+            bundle_uri = Some(PathBuf::from(rest));
         } else {
             positional.push(args[i].clone());
         }
@@ -343,6 +356,25 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
             "unsupported clone URL '{url}' (claimed: http(s), ssh://, user@host:path, git://, local path, same-host file://)"
         )));
     }
+    if let Some(bundle) = &bundle_uri {
+        // FS5 closest: local bundle path only (HTTP bundle-uri races → FS8/NET-006).
+        if !bundle.is_file() {
+            return Err(CliError::NotImplemented(format!(
+                "clone --bundle-uri: only local bundle files are claimed (got '{}')",
+                bundle.display()
+            )));
+        }
+        let cwd = std::env::current_dir().map_err(|e| CliError::Msg(e.to_string()))?;
+        std::env::set_current_dir(&dest).map_err(|e| CliError::Msg(e.to_string()))?;
+        let unbundle_args = vec!["unbundle".into(), bundle.display().to_string()];
+        let res = crate::cmd::bundle::cmd_bundle(&unbundle_args);
+        let _ = std::env::set_current_dir(&cwd);
+        res?;
+        eprintln!(
+            "note: FS5 — seeded objects from local --bundle-uri {}",
+            bundle.display()
+        );
+    }
     println!("Cloned into '{}'", dest.display());
     Ok(())
 }
@@ -408,20 +440,22 @@ mod tests {
     #[test]
     fn clone_refuses_unclaimed_filter_spec() {
         let err = cmd_clone(&[
-            "--filter=blob:limit=1k".into(),
+            "--filter=sparse:oid=abc".into(),
             "https://example.invalid/repo.git".into(),
         ])
-        .expect_err("blob:limit must refuse");
+        .expect_err("sparse:oid must refuse");
         let s = err.to_string();
         assert!(
-            s.contains("blob:limit") && s.contains("not claimed"),
+            s.contains("sparse:oid") && s.contains("not claimed"),
             "unexpected refuse text: {s}"
         );
     }
 
     #[test]
-    fn parse_filter_accepts_blob_none_and_tree_0() {
+    fn parse_filter_accepts_blob_none_tree_0_and_blob_limit() {
         assert_eq!(parse_filter("blob:none").unwrap(), "blob:none");
         assert_eq!(parse_filter("tree:0").unwrap(), "tree:0");
+        assert_eq!(parse_filter("blob:limit=1k").unwrap(), "blob:limit=1k");
+        assert_eq!(parse_filter("blob:limit=1024").unwrap(), "blob:limit=1024");
     }
 }

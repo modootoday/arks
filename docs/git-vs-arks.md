@@ -39,9 +39,11 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Full CLI inventory + flag symmetry (pin) | Yes | Implement or N/A exclusion (M16 bar) | **Claimed** (G20 / G21) |
 | `git` → `arks` alias drop-in | N/A | Documented alias; muscle-memory argv | **Claimed** (M16 / G21) |
 | Clean-room journey catalog (19 scenarios) | Oracle peer | Func PASS in Docker G16 | **Claimed** (G16 / G19 venue) |
-| Interactive (`rebase -i`, `add -p`, editor commit) | Yes | TTY `add -p` prompts + `rebase -i` editor fallback (**FS1**); scripted env retained (O3); hunk/`add -i`/`-e` → FS3 | **Claimed** (FS1 / O3) |
-| `proc-receive` (server) | Yes | Advertise when hook present; divert `receive.procReceiveRefs`; ok/ng + option rewrite (**FS2**) | **Claimed** (FS2) |
-| GUI (`gitk`, `git-gui`) / Git LFS / `scalar` | Separate tools / companion | Closest parity scheduled under FS6/FS7 (not casual forever-N/A) | **Open (FS ladder)** |
+| Interactive (`rebase -i`, `add -p`/`-i`/`-e`, `stash -p`, editor commit) | Yes | TTY + hunk `-p`, `-i` menu, `-e`, `stash -p` (**FS1/FS3**); scripted env retained | **Claimed** (FS1 / FS3) |
+| `proc-receive` (server) | Yes | Advertise when hook present; divert; ok/ng + rewrite; concurrent lock (**FS2/FS8**) | **Claimed** (FS2 / FS8 closest) |
+| GUI (`gitk`, `git-gui`) | Separate tools | External handoff refuse (**FS7**) | **Claimed** (handoff) |
+| Git LFS / `scalar` | Companion tools | `arks lfs` → `git-lfs`; `filter.*.clean` honor; `scalar` refuse (**FS6**) | **Claimed** (closest) |
+| `replace` / local `--bundle-uri` | Yes | `arks replace`; local bundle seed (**FS5**) | **Claimed** (FS5) |
 
 ## Remotes and server
 
@@ -54,8 +56,9 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | `push --force-with-lease` / `--push-option` | Yes | Yes on smart pack (lease + options→hooks); not on dumb | **Claimed** (O4 host wire) |
 | Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
-| Partial-clone `--filter=blob:none`/`tree:0` / promisor | Yes | Yes (`blob:none` + `tree:0`; other specs refuse) | **Claimed** (R3 / S1 / O2 host wire) |
-| Forge OAuth / Checks / merge-queue UX | Via host tools | Out of product | **N/A** / **Refuse** |
+| Partial-clone filters / promisor | Yes | `blob:none`, `tree:0`, `tree:<n>`, `blob:limit=<n>[kmg]` (**FS4**); exotic specs refuse with reason | **Claimed** (R3 / S1 / O2 / FS4) |
+| Forge Checks / merge-queue / Issues UX | Host APIs | Not a git CLI feature — use `gh` | **Impossible** (documented) |
+| Forge OAuth browser UX | Via helpers | External `credential.helper` MAY speak OAuth; no in-arks browser UX | **Claimed** (helper honor) / **Impossible** (embedded OAuth) |
 
 ## Signing and credentials
 
@@ -79,7 +82,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 
 | Residual | Disposition | Reopen requires |
 |----------|-------------|-----------------|
-| R3 filter / promisor | **Claimed `blob:none` + `tree:0` (S1 / O2)**; other specs N/A | Expand further filter-specs via SoT |
+| R3 filter / promisor | **Claimed `blob:none` + `tree:0` + FS4 `blob:limit`/`tree:<n>`**; exotic refuse | SoT amend for further specs |
 | R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38; S6 re-PASS)** | Re-verify G38 after crypto wire change |
 | R5 live forge scale PASS | Harness Claimed; **O1 secrets hard-block** (Environment `g8-live` secret count=0) | Secrets + receipt; never invent latency |
 | Apache DAV dumb twin | **Claimed (G41 PASS)** | Re-verify after DAV/wire change |
@@ -117,10 +120,15 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | Goal | Focus | Status |
 |------|-------|--------|
 | **FS0** | Inventory all asymmetric rows | **Done** |
-| **FS1** | TTY `add -p` + `rebase -i` editor fallback | **Done** (Claimed) |
-| **FS2** | `proc-receive` advertise + divert | **Done** (Claimed; HOOK-008 → FS8) |
-| **FS3** | Hunk `-p` / `add -i`/`-e` / `stash -p` | Pending |
-| **FS4**–**FS8** / **FS_final** | Filters, bundle URI, LFS closest, GUI/OAuth closest, hostile edges, table clean | Pending |
+| **FS1** | TTY `add -p` + `rebase -i` editor fallback | **Done** |
+| **FS2** | `proc-receive` advertise + divert | **Done** |
+| **FS3** | Hunk `-p` / `add -i`/`-e` / `stash -p` | **Done** |
+| **FS4** | Extra filter-specs | **Done** |
+| **FS5** | replace / local bundle-uri / info lock | **Done** |
+| **FS6** | filter clean / scalar honesty | **Done** |
+| **FS7** | GUI handoff / OAuth helper | **Done** |
+| **FS8** | Hostile/impossible docs | **Done** (harness residuals remain) |
+| **FS_final** | No casual N/A for real git features | **Done** — remaining = Impossible / explicit reopen harness (not convenience N/A); **L9** + live G8 non-FS |
 
 See: [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 

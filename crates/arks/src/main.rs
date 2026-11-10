@@ -58,7 +58,8 @@ Commands:
   credential    Fill / approve / reject credentials (plumbing)
   credential-wincred|libsecret|osxkeychain  First-party OS wallet helpers
   grep          Search tracked files
-  stash         Stash push/list/pop/show/apply/drop/clear
+  stash         Stash push/list/pop/show/apply/drop/clear (-p FS3)
+  lfs           Hand off to external git-lfs (FS6 closest)
   cherry-pick   Apply commit or A..B (--continue/--abort)
   revert        Revert commit or A..B (clean inverse)
   rebase        Replay onto upstream (non-interactive)
@@ -68,6 +69,7 @@ Commands:
   bundle        create / list-heads / unbundle / verify
   archive       Tar archive of a tree (--format=tar)
   reflog        Show ref logs (show)
+  replace       Create/list/delete refs/replace (FS5)
   worktree      Linked worktrees (add/list/remove/prune/move)
   submodule     Submodules (add/init/update/status/deinit)
   notes         Notes add/show/append/remove/list
@@ -197,6 +199,7 @@ fn run() -> CliResult<()> {
         "bundle" => cmd::cmd_bundle(&args),
         "archive" => cmd::cmd_archive(&args),
         "reflog" => cmd::cmd_reflog(&args),
+        "replace" => cmd::cmd_replace(&args),
         "worktree" => cmd::cmd_worktree(&args),
         "submodule" => cmd::cmd_submodule(&args),
         "write-tree" => cmd::cmd_write_tree(&args),
@@ -237,6 +240,16 @@ fn run() -> CliResult<()> {
         "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
+        // FS7 closest: GUI tools are external; do not embed Tcl/Tk.
+        "gui" | "citool" | "gitk" => Err(CliError::NotImplemented(format!(
+            "{cmd}: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)"
+        ))),
+        // FS6 note: scalar is a separate enlistment helper — not core porcelain.
+        "scalar" => Err(CliError::NotImplemented(
+            "scalar: separate large-repo helper (FS6); not claimed as arks porcelain".into(),
+        )),
+        // FS6 closest: hand off to external git-lfs when present.
+        "lfs" => cmd::cmd_lfs(&args),
         other => Err(CliError::NotImplemented(format!(
             "command not implemented: {other}"
         ))),

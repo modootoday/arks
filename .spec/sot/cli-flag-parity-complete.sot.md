@@ -63,7 +63,7 @@ Primary inventory: [git(1) 2.39.0](https://git-scm.com/docs/git/2.39.0) porcelai
 | Forge OAuth UX + Git Credential Manager as bundled first-party binary | External GCM/OAuth helpers MAY still be configured by path/name; product ships first-party `wincred`/`libsecret`/`osxkeychain` + TTY (G33) | [[sot:root/credential-helper-askpass]] |
 | Product SSHD / key CA (arks as sshd) | Ops wrap ForceCommand / `git-shell`; arks speaks pack protocol on stdio only | [[sot:root/arks-server]] |
 | Dumb-HTTP-**only** as sole claimed server path | Forbidden — smart HTTP remains required; dumb is additive (**G29 Claimed**) | [[sot:root/arks-server]], [[evidence:root/20261109221500]] |
-| Full curses chrome / `add -i` menu / `add -e` / `stash -p` / mergetool **GUI** identity | FS3+ / FS7 under [[research:root/20261110212414]]; **FS1 Claimed**: TTY `add -p` prompts + `rebase -i` editor fallback (not a lasting agent-N/A) | gitcli(7); [[adr:root/20261110212430]], [[adr:root/20261110210300]] |
+| Mergetool/difftool **GUI** pixel identity / embedded gitk | FS7 handoff Claimed; embedded GUI impossible | gitcli(7); [[adr:root/20261110213500]] |
 | GPG/SSH **signing** beyond claimed SSH commit subset (`tag -s`/`-u`; `verify-tag`; OpenPGP/`gpg.format=openpgp` + X.509 `commit -S` / `verify-commit`) | External crypto UX outside claimed `gpg.format=ssh` commit create/verify ([[sot:root/arks-object]] FW-GPGSIG) | git-tag / git-commit / git-verify-commit / gitformat-signature |
 | Foreign SCM bridges (`svn`, `p4`, `cvs*`, `archimport`, `quiltimport`, `imap-send`, `send-email` SMTP identity) | Not Git core object/CLI symmetry | git(1) interacting-with-others |
 | `filter-branch` | Successor honesty — external history rewrite | git-filter-branch; M15 exclude |
@@ -85,7 +85,7 @@ Wave Done = Docker **G21** PASS for that wave’s matrix IDs + G14/G20 regressio
 | `status` | human; `-s`/`--porcelain` (v1); **`-b`** (branch header / porcelain `##`) | porcelain v2 full schema extras beyond claimed |
 | `log` / `show` | default; **`--oneline`**; **`--graph`** (ASCII); `-n`/`-<n>`; path limiters as already claimed | `--pretty=format:` full custom; pager identity |
 | `branch` | existing + **`-a`/`--all`**; **`-r`/`--remotes`**; `-v` short | `--sort` exotic; `--format` full |
-| `add` | paths; `-A`/`-u`; **`--chmod=+x`/`--chmod=-x`**; **`-p`/`--patch`** file-granularity (**TTY prompts** + `ARKS_ADD_PATCH_ANSWERS` / non-TTY stdin; FS1) | `-i` menu; `-e` hunk edit; hunk-level `-p` (FS3) |
+| `add` | paths; `-A`/`-u`; **`--chmod`**; **`-p` hunk** / **`-i`** / **`-e`** (FS3) + scripted answers | mergetool GUI identity |
 | `clean` | `-f` `-d`; **`-x`** (ignore ignore rules) | `-e` exclude pathspec extras beyond pin subset |
 | `describe` | `--tags`; **`--dirty[=<mark>]`** | `--match` globs beyond claimed |
 | `switch` | `-c`/`-C`; **`--detach`** | `--orphan` (→ Sy-2 with checkout) |
@@ -142,7 +142,7 @@ Primary: [git-clone](https://git-scm.com/docs/git-clone), [gitprotocol-pack](htt
 
 | Command / form | Implement | N/A |
 |----------------|-----------|-----|
-| `stash` | push/list/pop + **`show`/`apply`/`drop`/`clear`** | `-p` interactive |
+| `stash` | push/list/pop + **`show`/`apply`/`drop`/`clear`** + **`-p`** (FS3) | — |
 | `cherry-pick` / `revert` | single + **`A..B` ranges** (clean applies); **`--no-commit`** | conflicted continue/abort sequencer full → must implement or N/A with reason; prefer implement clean range + refuse only true conflict needing editor |
 | `bisect` | start/bad/good/reset + **`run <cmd>`** | `visualize` GUI (**N/A**) |
 | `notes` | add/show + **`append`/`remove`/`list`** | `merge`/`edit` interactive |

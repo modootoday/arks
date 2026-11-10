@@ -12,7 +12,9 @@ pub mod grep;
 pub mod history;
 pub mod hooks;
 pub mod inspect;
+pub mod interactive_patch;
 pub mod lease;
+pub mod lfs;
 pub mod lock;
 pub mod maint;
 pub mod merge;
@@ -22,6 +24,7 @@ pub mod patch;
 pub mod plumbing;
 pub mod range_diff;
 pub mod remote;
+pub mod replace;
 pub mod replay;
 pub mod server;
 pub mod shared;
@@ -49,6 +52,7 @@ pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
+pub use lfs::cmd_lfs;
 pub use lock::cmd_lock;
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use merge::{cmd_merge, cmd_pull};
@@ -61,6 +65,7 @@ pub use plumbing::{
 };
 pub use range_diff::cmd_range_diff;
 pub use remote::{cmd_clone, cmd_fetch, cmd_push, cmd_remote};
+pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use server::{
     cmd_daemon, cmd_http_backend, cmd_receive_pack, cmd_serve_http, cmd_update_server_info,

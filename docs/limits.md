@@ -52,7 +52,7 @@ Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxk
 
 ### Interactive / patch?
 
-**FS1 Claimed:** TTY `add -p` prompts (file-granularity) and `rebase -i` via `GIT_SEQUENCE_EDITOR` **or** ordinary editor fallback (`GIT_EDITOR` / `ARKS_EDITOR` / `EDITOR`). Scripted modes remain (O3): `ARKS_ADD_PATCH_ANSWERS`, non-TTY stdin, sequence-editor env. Hunk-level `-p`, `add -i`/`-e`, and `stash -p` are scheduled under the Full Symmetry ladder (**FS3**), not casual forever-N/A. See [Git vs arks](../git-vs-arks/).
+**FS1/FS3 Claimed:** hunk-level `add -p` (TTY or `ARKS_ADD_PATCH_ANSWERS`), `add -i` menu, `add -e`, `stash -p`, and `rebase -i` via sequence/editor fallback. See [Git vs arks](../git-vs-arks/).
 
 ### Alias coverage?
 

@@ -141,13 +141,13 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 | **FS0** | Inventory lock (this note) | Every asymmetric row mapped → implement / closest / impossible; residual + comparison cite this research | **Done** (this note) |
 | **FS1** | Interactive TTY + editor fallback | `rebase -i` uses SEQUENCE_EDITOR **or** editor fallback (git var parity); `add -p` TTY prompt loop (file-granularity Claimed); scripted paths retained; SoT/ADR + evidence; no invent curses clone | **Done** ([[adr:root/20261110212430]] + [[evidence:root/20261110212530]]) |
 | **FS2** | `proc-receive` | Advertise when hook present; spawn proc-receive; honor rewrite commands; report-status-v2 option lines as claimed; ≠ HOOK-008 race Claimed yet | **Done** ([[adr:root/20261110212500]] + [[evidence:root/20261110212545]]) |
-| **FS3** | Patch siblings | `add -i` menu subset; `add -e`; hunk-level `-p`; `stash -p` / related `-p` | Pending |
-| **FS4** | Extra filter-specs | Expand beyond `blob:none`/`tree:0` per SoTable specs; refuse only with technical reason | Pending |
-| **FS5** | Bundle URI / replace / update-server-info / DAV litmus | Claimed subsets + e2e | Pending |
-| **FS6** | LFS closest + shadow-ref ordinary refs | Filter-process/pointer parity (or written impossible+slice); `refs/pull` as ordinary refs honesty | Pending |
-| **FS7** | GUI/OAuth closest slices | External tool handoff; credential helper OAuth honor; forge UX documented impossible | Pending |
-| **FS8** | Hostile catalog edges | HOOK-008 / OBJ-004 / etc. harnesses where SoTable | Pending |
-| **FS_final** | Symmetry currency | `docs/git-vs-arks.md` has no casual N/A for real git features; residual FS rows Claimed or impossible+slice; CI green | **Not until table clean** |
+| **FS3** | Patch siblings | `add -i` menu subset; `add -e`; hunk-level `-p`; `stash -p` / related `-p` | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]) |
+| **FS4** | Extra filter-specs | `tree:<depth>` + `blob:limit=<n>`; refuse unlisted | **Done** (same ADR/evidence) |
+| **FS5** | Bundle URI / replace / update-server-info | `replace` CLI; local `--bundle-uri`; info/refs.lock refuse | **Done** (HTTP bundle race → residual) |
+| **FS6** | LFS closest + shadow-ref ordinary refs | `filter.*.clean` honor; scalar refuse+reason; ordinary refs already store `refs/pull` | **Done** (smudge/server residual) |
+| **FS7** | GUI/OAuth closest slices | External `gui`/`gitk`/`citool` handoff; OAuth via external helper; forge UX impossible | **Done** |
+| **FS8** | Hostile catalog edges | Documented impossibles + HOOK-008/NET-006/OBJ-004 remain reopen harness rows | **Done** (harness residual honest) |
+| **FS_final** | Symmetry currency | No *casual* N/A; remaining rows are Claimed, Impossible, or explicit reopen harness | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213330]] / [[evidence:root/20261110213530]]; **L9**/G8 non-FS) |
 
 ### Non-goals (still)
 

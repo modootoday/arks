@@ -193,6 +193,14 @@ fn resolve_basic_auth(
 pub fn cmd_update_server_info(args: &[String]) -> CliResult<()> {
     let dir = require_dir_optional_cwd(args)?;
     let repo = Repository::open(&dir).or_else(|_| Repository::discover(&dir))?;
+    // FS5 / MAINT-004 closest: refuse under info lock rather than racing writers.
+    let info_lock = repo.git_dir().join("info").join("refs.lock");
+    if info_lock.is_file() {
+        return Err(CliError::Msg(format!(
+            "{} (MAINT-004 — update-server-info race refuse while info/refs.lock held; lease ≠ skip)",
+            info_lock.display()
+        )));
+    }
     update_server_info(&repo).map_err(|e| CliError::Msg(e.to_string()))
 }
 
