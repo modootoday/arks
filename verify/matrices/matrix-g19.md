@@ -87,7 +87,7 @@ Owning plan: `.spec/plan/20261110150000-m22-residual-terminal-close.plan.md`.
 | Regression | Full allow-list stays ≤**0.8×** (M17; N/A-free measured) |
 | Aggressive claimed | Prior Pf4 ≤**0.5×** IDs + Pf5 flips LOCAL/BRANCH/BUNDLE/ALIAS — [[evidence:root/20261110224500]] |
 | Aggressive N/A (residual) | CHERRY short-wall flicker guard; STASH/RM-MV/WORKTREE remain NA-capable if measured >0.5× — SoT [[sot:root/pf5-journey-seed-amortization]] (CLONE-LOCAL flipped ≤0.5×) |
-| Done | Every journey ≤0.5× **or** `aggressive_na` with cite; umbrella **Claimed 8/8** ([[evidence:root/20261110131600]] tip `875359e`; LOCAL **0.1875** / PATH **0.2424**; miss=[]); prior partial 7/8 [[evidence:root/20261111001400]]; historical tip remasures [[evidence:root/20261110113900]] / [[evidence:root/20261110135100]] / [[evidence:root/20261110114200]] / [[evidence:root/20261110110900]] |
+| Done | Every journey ≤0.5× **or** `aggressive_na` with cite; umbrella **Claimed 8/8** ([[evidence:root/20261110142500]] tip `79fc9bf`; LOCAL **0.1579** (6/38) / PATH **0.1739** (8/46); miss=[]); prior [[evidence:root/20261110131600]] `875359e`; partial 7/8 [[evidence:root/20261111001400]]; historical tip remasures [[evidence:root/20261110113900]] / [[evidence:root/20261110135100]] / [[evidence:root/20261110114200]] / [[evidence:root/20261110110900]] |
 
 ## Evidence schema
 
