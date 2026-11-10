@@ -1,0 +1,8 @@
+# Highlight subset from M18 / G19 for the homepage (same receipt as m18-journey-ms).
+label: Journey
+labels: [Tag, Diff, Submodule, Clone path, Repack, Local]
+series:
+  - name: Git
+    values: [177, 199, 92, 37, 29, 60]
+  - name: arks
+    values: [64, 74, 16, 12, 10, 40]

@@ -1,0 +1,26 @@
+title: arks
+description: arks for Git — Agent Revision Kinetic System; Git-compatible revision CLI for multi-session contention.
+lang: en
+url: https://modootoday.github.io
+baseurl: /arks
+repository: modootoday/arks
+remote_theme: modootoday/jekyll-theme-modootoday@v1.6.0
+plugins: [jekyll-remote-theme, jekyll-optional-front-matter, jekyll-titles-from-headings, jekyll-sitemap]
+markdown: kramdown
+kramdown: {input: GFM, syntax_highlighter: rouge}
+sass: {style: compressed, silence_deprecations: [import, global-builtin]}
+permalink: pretty
+exclude: [Gemfile, Gemfile.lock, README.md, vendor]
+modootoday:
+  nav: main
+  twins: source
+  languages: [en]
+  logo: brand
+  favicon: brand
+  edit_url: https://github.com/modootoday/arks/edit/main/docs/
+  chart:
+    enabled: true
+    src: /assets/js/chart/chart.umd.min.js
+    integrity: sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ
+defaults:
+  - {scope: {path: ""}, values: {layout: doc}}

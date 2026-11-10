@@ -1,0 +1,17 @@
+copyright: "arks for Git — Apache-2.0 OR MIT"
+columns:
+  - title: Product
+    items:
+      - {title: Overview, url: /overview/}
+      - {title: Getting started, url: /getting-started/}
+      - {title: Alias git → arks, url: /alias-git-arks/}
+      - {title: Concurrent sessions, url: /concurrent-sessions/}
+      - {title: Workflows, url: /workflows/}
+      - {title: Performance, url: /performance/}
+      - {title: Limits, url: /limits/}
+  - title: Project
+    items:
+      - {title: Source, url: https://github.com/modootoday/arks}
+      - {title: Contribute, url: /contribute/}
+      - {title: Security, url: https://github.com/modootoday/arks/blob/main/SECURITY.md}
+      - {title: License, url: https://github.com/modootoday/arks/blob/main/LICENSE}

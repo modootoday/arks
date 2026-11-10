@@ -1,0 +1,26 @@
+# Clean-room M18 / G19 — arks_median / git_median (lower means arks used less wall-clock).
+# Source: .spec/evidence/20261109143000-m18-pf4-3-g19-exit/
+label: Journey
+labels:
+  - Local
+  - Branch
+  - Merge FF
+  - Rebase
+  - Bundle
+  - Clone HTTP
+  - Clone path
+  - Alias
+  - Worktree
+  - Tag
+  - Stash
+  - Cherry-pick
+  - Diff
+  - rm / mv
+  - Archive
+  - Reflog
+  - Revert
+  - Repack
+  - Submodule
+series:
+  - name: arks / Git
+    values: [0.67, 0.67, 0.50, 0.38, 0.67, 0.56, 0.32, 0.67, 0.58, 0.36, 0.67, 0.29, 0.37, 0.75, 0.50, 0.50, 0.33, 0.34, 0.17]

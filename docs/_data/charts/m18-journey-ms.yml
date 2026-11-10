@@ -1,0 +1,28 @@
+# Clean-room M18 / G19 sole run — median wall-clock ms (git vs arks).
+# Source: .spec/evidence/20261109143000-m18-pf4-3-g19-exit/
+label: Journey
+labels:
+  - Local
+  - Branch
+  - Merge FF
+  - Rebase
+  - Bundle
+  - Clone HTTP
+  - Clone path
+  - Alias
+  - Worktree
+  - Tag
+  - Stash
+  - Cherry-pick
+  - Diff
+  - rm / mv
+  - Archive
+  - Reflog
+  - Revert
+  - Repack
+  - Submodule
+series:
+  - name: Git
+    values: [60, 6, 4, 21, 6, 55, 37, 60, 24, 177, 12, 21, 199, 8, 32, 8, 6, 29, 92]
+  - name: arks
+    values: [40, 4, 2, 8, 4, 31, 12, 40, 14, 64, 8, 6, 74, 6, 16, 4, 2, 10, 16]

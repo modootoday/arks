@@ -1,0 +1,6 @@
+# Reproduce the classic GitHub Pages build locally.
+# Theme pin: remote_theme modootoday/jekyll-theme-modootoday@v1.6.0 in _config.yml
+# (RubyGems latest matching release: jekyll-theme-modootoday 1.6.0).
+source "https://rubygems.org"
+
+gem "github-pages", "~> 232", group: :jekyll_plugins
