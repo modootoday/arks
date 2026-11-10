@@ -28,7 +28,8 @@ pub use error::ServerError;
 pub use http::{HttpRequest, HttpResponse, handle_smart_http, handle_smart_http_auth};
 pub use receive::{receive_advertisement, receive_pack, receive_pack_advertisement};
 pub use serve::{
-    ServeHttpOptions, serve_http, serve_http_with_opts, spawn_loopback, spawn_loopback_with_opts,
+    ListenRebindSlot, ServeHttpOptions, serve_http, serve_http_with_opts, spawn_loopback,
+    spawn_loopback_with_opts,
 };
 pub use ssh_serve::{
     ServeSshOptions, default_authorized_keys_path, default_host_key_path, serve_ssh_listener,

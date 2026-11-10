@@ -7,8 +7,8 @@ use arks_repo::Repository;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 type LoopbackHttp = (
@@ -17,6 +17,10 @@ type LoopbackHttp = (
     thread::JoinHandle<Result<(), ServerError>>,
 );
 
+/// Shared slot: when set to `Some(addr)`, the HTTP accept loop attempts live rebind
+/// (Partial; Claimed zero-downtime / OpenSSH-class hot-rebind Missing).
+pub type ListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
+
 #[derive(Debug, Clone, Default)]
 pub struct ServeHttpOptions {
     /// When true, answer `info/refs` (even with `service=`) as dumb text/plain so
@@ -24,6 +28,8 @@ pub struct ServeHttpOptions {
     pub dumb_only: bool,
     /// Optional in-process HTTP Basic (G36). Unset = unauthenticated (G15).
     pub basic_auth: Option<BasicAuthConfig>,
+    /// Optional live listen rebind target (Partial; polled in accept loop).
+    pub rebind_desired: Option<ListenRebindSlot>,
 }
 
 /// Bind `addr` and serve `git_dir` over smart HTTP until `stop` is set or accept fails.
@@ -42,9 +48,42 @@ pub fn serve_http_with_opts(
     opts: ServeHttpOptions,
 ) -> Result<(), ServerError> {
     let git_dir = git_dir.as_ref().to_path_buf();
-    let listener = TcpListener::bind(addr)?;
+    let mut listener = TcpListener::bind(addr)?;
     listener.set_nonblocking(true)?;
+    let mut current = addr;
     while !stop.load(Ordering::SeqCst) {
+        if let Some(slot) = &opts.rebind_desired {
+            if let Ok(mut g) = slot.lock() {
+                if let Some(new_addr) = g.take() {
+                    if new_addr != current {
+                        match TcpListener::bind(new_addr) {
+                            Ok(l) => {
+                                if let Err(e) = l.set_nonblocking(true) {
+                                    eprintln!(
+                                        "arks serve-http: live rebind Partial bind ok but \
+                                         nonblocking fail ({e}); keeping {current}"
+                                    );
+                                    *g = Some(new_addr);
+                                } else {
+                                    eprintln!(
+                                        "arks serve-http: live rebind Partial {current} → {new_addr} \
+                                         (design ≠ Claimed zero-downtime hot-rebind)"
+                                    );
+                                    listener = l;
+                                    current = new_addr;
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "arks serve-http: live rebind Partial fail {current} → \
+                                     {new_addr} ({e}); keeping prior listen"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
         match listener.accept() {
             Ok((stream, _)) => {
                 let dir = git_dir.clone();

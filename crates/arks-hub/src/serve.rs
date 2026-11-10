@@ -14,11 +14,16 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
+/// Shared slot for Partial live listen rebind (polled in forge accept loop).
+pub type ForgeListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
+
 /// Options for the in-process local forge API listener (Partial).
 #[derive(Debug, Clone)]
 pub struct ForgeServeOptions {
     pub listen: SocketAddr,
     pub data_dir: PathBuf,
+    /// Optional live listen rebind target (Partial; not Claimed zero-downtime).
+    pub rebind_desired: Option<ForgeListenRebindSlot>,
 }
 
 impl Default for ForgeServeOptions {
@@ -28,6 +33,7 @@ impl Default for ForgeServeOptions {
                 .parse()
                 .expect("default forge listen parses"),
             data_dir: default_forge_data_dir(),
+            rebind_desired: None,
         }
     }
 }
@@ -80,6 +86,7 @@ pub fn run_serve(args: &[String]) -> Result<(), String> {
         ForgeServeOptions {
             listen: addr,
             data_dir: data,
+            rebind_desired: None,
         },
         stop,
     )
@@ -94,16 +101,50 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
         );
     }
     let store = Arc::new(Mutex::new(HubStore::open(&opts.data_dir)?));
-    let listener = TcpListener::bind(opts.listen).map_err(|e| e.to_string())?;
+    let mut listener = TcpListener::bind(opts.listen).map_err(|e| e.to_string())?;
     listener
         .set_nonblocking(true)
         .map_err(|e| e.to_string())?;
+    let mut current = opts.listen;
     eprintln!(
         "arks forge API listening on http://{}/ (data={}; Partial local API — not Claimed)",
         listener.local_addr().map_err(|e| e.to_string())?,
         opts.data_dir.display()
     );
     while !stop.load(Ordering::SeqCst) {
+        if let Some(slot) = &opts.rebind_desired {
+            if let Ok(mut g) = slot.lock() {
+                if let Some(new_addr) = g.take() {
+                    if new_addr != current {
+                        match TcpListener::bind(new_addr) {
+                            Ok(l) => match l.set_nonblocking(true) {
+                                Ok(()) => {
+                                    eprintln!(
+                                        "arks forge API: live rebind Partial {current} → {new_addr} \
+                                         (design ≠ Claimed zero-downtime hot-rebind)"
+                                    );
+                                    listener = l;
+                                    current = new_addr;
+                                }
+                                Err(e) => {
+                                    eprintln!(
+                                        "arks forge API: live rebind Partial nonblocking fail \
+                                         ({e}); keeping {current}"
+                                    );
+                                    *g = Some(new_addr);
+                                }
+                            },
+                            Err(e) => {
+                                eprintln!(
+                                    "arks forge API: live rebind Partial fail {current} → \
+                                     {new_addr} ({e}); keeping prior listen"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
         match listener.accept() {
             Ok((stream, _)) => {
                 let store = store.clone();
