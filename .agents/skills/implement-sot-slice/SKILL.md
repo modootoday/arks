@@ -13,6 +13,7 @@ description: >
 - Accepted SoT/plan (or user-pasted design).
 - Read rule `70-bottom-up-build-order` and rule `10-rust-conventions` (humanymous cite).
 - Confirm CELIR/lease work is in-scope via its own SoT (else rule `50-celir-boundary`). CELIR product path is index-only `celir-index` (default OFF) — never ObjectStore.
+- If this slice changes public SoT **meaning**, land Spec first (rule `27`; skill `commit-governance`) before code commits.
 
 ## Steps
 
@@ -20,9 +21,10 @@ description: >
 2. Implement **inner first**: pure format/parser/state + unit tests before protocol, CLI, or product compose.
 3. Do not invent Git semantics — every byte/capability claim needs a primary citation path via `git-compat-surface` / research.
 4. Wire outer layers only after inner fixtures/tests exist for the claimed subset.
-5. Run scoped Cargo test/fmt/clippy when code exists; host green is advisory for product claims.
-6. Product “verified” → skill `verify-clean-room` (rule `60-clean-room-verify`).
-7. `spec check` for touched documents.
+5. CLI nouns: honor personality / serve≠hub / no git-gh spawn (skill `guard-cli-surface`; rules `30`–`33`).
+6. Run scoped Cargo test/fmt/clippy when code exists; host green is advisory for product claims.
+7. Product “verified” → skill `verify-clean-room` (rule `60-clean-room-verify`). Do not invent Claimed (rule `28`).
+8. `spec check` for touched documents. Commit stepwise — one concern; leave sibling dirt unstaged (rule `91`).
 
 ## Gotchas
 
