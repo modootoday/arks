@@ -209,4 +209,6 @@ After tip ≥ **`60f33c2`** (clean-room matrix currency ≥ `54c9dc2`), with **F
 | `docs/completion.md` / `docs/git-vs-arks.md` | Public PARTIAL honesty |
 | [[research:root/20261110225000]] | FS_final currency verdict |
 | [[research:root/20261110222000]] | FFI / external package paths |
+| [[research:root/20261111012840]] | Post-U-ladder still-blocked + external-deps unblock options |
 | [[evidence:root/20261110224814]] | Clean-room matrix re-stamp |
+| [[evidence:root/20261111003444]] | U-ladder partial-gap close |

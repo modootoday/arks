@@ -252,7 +252,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | — | Optional O-ladder O1–O_final | Historical Done in [[research:root/20261110205403]]; superseded for feature DoD by Full Symmetry ladder | Keep evidence current |
 | — | Full Symmetry ladder FS0–FS_final | **DoD met** [[research:root/20261110212414]]; **FS0–FS_final Done**; harness reopen closed; LFS **network/server** + **sha256 porcelain** Claimed [[adr:root/20261110214800]] + [[evidence:root/20261110214830]]; remaining = documented Impossible only (crypto collision immunity, forge Checks/PR UX, host FS-007/FS-014/WIN-003, **L9**, live G8); G8 secrets operator | Keep evidence current |
-| — | Tip currency / operator “fully complete?” | **PARTIAL** — FS_final **YES**; U-ladder [[evidence:root/20261111003444]]: host-env Claimed(detect+refuse)/FS-014 detect; forge Claimed-closest thin-wrap; Pf5 U1 sole remasure; live G8 latency + **L9** Blocked; crypto immunity Impossible ([[sot:root/program-roadmap]] v0.15.3; [[research:root/20261111001816]]; [[research:root/20261111003444]]) | No invent PASS; no G19 stampede; no unauthorized L9 |
+| — | Tip currency / operator “fully complete?” | **PARTIAL** — FS_final **YES**; U-ladder [[evidence:root/20261111003444]]: host-env Claimed(detect+refuse)/FS-014 detect; forge Claimed-closest thin-wrap; Pf5 U1 sole remasure; live G8 latency + **L9** Blocked; crypto immunity Impossible ([[sot:root/program-roadmap]] v0.15.3; [[research:root/20261111001816]]; [[research:root/20261111003444]]; [[research:root/20261111012840]]) | No invent PASS; no G19 stampede; no unauthorized L9 |
 
 ## Why
 

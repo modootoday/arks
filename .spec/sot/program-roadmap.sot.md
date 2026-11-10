@@ -145,7 +145,7 @@ Carrying tip class ≥ `307d509` + U-ladder pack [[evidence:root/20261111003444]
 4. **L9** — owner SoT reopen pack only ([[research:root/20261111003444]]); no agent publish.
 5. **Forge** — keep Claimed-closest thin-wrap; do not market full forge UX.
 
-Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]].
+Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]]. External-deps still-blocked options: [[research:root/20261111012840]].
 
 ## Rule
 
