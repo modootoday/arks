@@ -9,7 +9,7 @@
 //! Pf5: pack-cache `get_shared` (Arc) + cheap fresh-write stamps; 1-CPU-safe workers.
 
 use crate::error::RemoteError;
-use arks_index::{sort_entries, Index, IndexEntry};
+use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode};
 use arks_oid::{Oid, OidKind};
 use arks_repo::Repository;

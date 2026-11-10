@@ -22,7 +22,7 @@
 //! <https://git-scm.com/docs/gitprotocol-pack>
 
 use crate::advertise::{
-    cap_advertised, content_type_is, parse_advertisement, symref_target, Advertisement,
+    Advertisement, cap_advertised, content_type_is, parse_advertisement, symref_target,
 };
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
@@ -30,10 +30,10 @@ use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::http::UreqTransport;
 use crate::shallow::{apply_shallow_update, read_shallow, write_shallow};
 use crate::ssh::{SshService, SshSession};
-use crate::transport::{header, require_success, HttpRequest, Transport};
-use crate::url::{join_url, GitDaemonUrl, SshRemoteUrl};
+use crate::transport::{HttpRequest, Transport, header, require_success};
+use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
 use arks_oid::Oid;
-use arks_protocol::{decode_packet, decode_text_line, encode_packet, encode_text_line, Packet};
+use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;

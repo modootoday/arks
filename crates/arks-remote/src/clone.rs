@@ -11,7 +11,7 @@
 
 use crate::config::add_remote;
 use crate::error::RemoteError;
-use crate::fetch::{fetch_git_with, fetch_http_with, fetch_ssh_with, FetchOptions};
+use crate::fetch::{FetchOptions, fetch_git_with, fetch_http_with, fetch_ssh_with};
 use crate::url::{GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
 use arks_refs::RefTarget;
 use arks_repo::Repository;

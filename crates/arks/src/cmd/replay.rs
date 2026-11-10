@@ -16,9 +16,9 @@ use crate::cmd::shared::{
     resolve_rev,
 };
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index, FORMAT};
+use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use crate::write_tree::write_tree_from_index;
-use arks_index::{sort_entries, Index, IndexEntry};
+use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Signature};
 use arks_oid::Oid;
 use arks_refs::RefTarget;

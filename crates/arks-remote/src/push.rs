@@ -13,18 +13,18 @@
 //! <https://git-scm.com/docs/gitprotocol-http>,
 //! <https://git-scm.com/docs/git-http-push>
 
-use crate::advertise::{cap_advertised, content_type_is, parse_advertisement, Advertisement};
+use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
 use crate::error::RemoteError;
 use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::http::UreqTransport;
 use crate::ssh::{SshService, SshSession};
-use crate::transport::{header, require_success, HttpRequest, Transport};
-use crate::url::{join_url, GitDaemonUrl, SshRemoteUrl};
+use crate::transport::{HttpRequest, Transport, header, require_success};
+use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
 use crate::walk::collect_closure;
 use arks_object::RawObject;
 use arks_oid::Oid;
 use arks_pack::EncodedPack;
-use arks_protocol::{decode_packet, decode_text_line, encode_packet, encode_text_line, Packet};
+use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;

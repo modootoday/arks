@@ -7,12 +7,12 @@ use crate::cmd::shared::{
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
-    cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
-    write_index, FORMAT, OID_KIND,
+    FORMAT, OID_KIND, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
+    work_tree, write_index,
 };
 use crate::write_tree::write_tree_from_index;
-use arks_index::{sort_entries, IndexEntry};
-use arks_object::{write_loose, Commit, ObjectKind, RawObject};
+use arks_index::{IndexEntry, sort_entries};
+use arks_object::{Commit, ObjectKind, RawObject, write_loose};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
