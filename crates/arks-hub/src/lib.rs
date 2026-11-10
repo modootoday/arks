@@ -68,13 +68,10 @@ pub const GROUPS: &[&str] = &[
     "serve",
 ];
 
-/// Matrix groups kept as discoverability refuse (OUT / later depth not wired).
-/// Graduated cheap local Partials: `licenses`, `cache`, `ruleset`, `skill`,
-/// `preview`, `attestation`, `codespace`, `agent-task` (see cmd_* below).
-pub const HUB_OUT_GROUPS: &[&str] = &[
-    "extension",
-    "copilot",
-];
+/// Matrix groups kept as explicit OUT refuse (marketplace / vendor depth).
+/// Prefer `cmd_out_refuse` over silent ignore. Graduated local Partials live
+/// elsewhere (`licenses`, `cache`, …); extension/copilot stay OUT refuse.
+pub const HUB_OUT_GROUPS: &[&str] = &["extension", "copilot"];
 
 pub fn print_help() {
     eprintln!(
@@ -121,7 +118,9 @@ COMMANDS:
     api           Raw HTTP against ARKS_HUB_API
     status        Aggregated status (Partial)
     co            Alias for pr checkout
-    …             OUT matrix groups: discoverability refuse (extension/copilot)
+    extension     OUT refuse (marketplace; not local forge)
+    copilot       OUT refuse (vendor Copilot; not local forge)
+    …             other leaves: see GROUPS / local Partial list helpers
 
 ENV:
     ARKS_HUB_API         default http://127.0.0.1:3920 for local mode
@@ -217,23 +216,8 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             eprintln!("arks hub co → pr checkout (alias; checkout worktree not claimed)");
             cmd_pr(&["checkout".into()])
         }
-        cmd if HUB_OUT_GROUPS.contains(&cmd) => {
-            if args.get(1).map(String::as_str) == Some("--help")
-                || args.get(1).map(String::as_str) == Some("-h")
-                || args.get(1).map(String::as_str) == Some("help")
-            {
-                eprintln!(
-                    "arks hub {cmd}: OUT/later matrix group — Partial stub help; refuse depth \
-                     ([[sot:root/arks-hub-cli-surface]])"
-                );
-                return ExitCode::SUCCESS;
-            }
-            eprintln!(
-                "arks hub: `{cmd}` OUT/later (Partial/Missing stub); refuse exit 2 — \
-                 design ≠ Claimed ([[sot:root/arks-hub-cli-surface]])"
-            );
-            ExitCode::from(2)
-        }
+        "extension" | "copilot" => cmd_out_explicit_refuse(first.as_str(), &args[1..]),
+        cmd if HUB_OUT_GROUPS.contains(&cmd) => cmd_out_explicit_refuse(cmd, &args[1..]),
         cmd if GROUPS.contains(&cmd) => {
             if args.get(1).map(String::as_str) == Some("--help")
                 || args.get(1).map(String::as_str) == Some("-h")
@@ -1561,6 +1545,34 @@ fn cmd_gpg_key(args: &[String]) -> ExitCode {
         None
     };
     local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
+}
+
+/// Explicit OUT refuse for marketplace/vendor leaves (`extension` / `copilot`).
+/// Not graduated to local forge list — product boundary is refuse, not empty invent.
+fn cmd_out_explicit_refuse(name: &str, args: &[String]) -> ExitCode {
+    if args.first().map(String::as_str) == Some("--help")
+        || args.first().map(String::as_str) == Some("-h")
+        || args.first().map(String::as_str) == Some("help")
+    {
+        eprintln!(
+            "arks hub {name}: OUT matrix leaf — explicit refuse (not local-forge Partial list). \
+             Marketplace/vendor depth is out of self-host forge scope \
+             ([[sot:root/arks-hub-cli-surface]]). Design ≠ Claimed."
+        );
+        return ExitCode::SUCCESS;
+    }
+    let why = match name {
+        "extension" => {
+            "GitHub Marketplace / IDE extensions are OUT — no local forge inventory invent"
+        }
+        "copilot" => "GitHub Copilot / vendor assistant APIs are OUT — not a local forge leaf",
+        _ => "OUT/later matrix group — refuse depth",
+    };
+    eprintln!(
+        "arks hub: `{name}` OUT explicit refuse exit 2 — {why} \
+         ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed"
+    );
+    ExitCode::from(2)
 }
 
 /// Cheap OUT→local graduation: list against local forge path or empty JSON array.

@@ -161,8 +161,50 @@ pub fn http_exchange(
 }
 
 /// Partial HTTPS remote client via workspace `ureq` (TLS feature). Not Claimed e2e.
-/// Hardening Partial: connect/read timeouts, redirect cap, User-Agent, size cap.
+/// Hardening Partial: timeouts, redirect cap, User-Agent, size cap, transport retry.
 fn http_exchange_https(
+    url: &str,
+    method: &str,
+    token: Option<&str>,
+    body: Option<&str>,
+) -> Result<(u16, String), String> {
+    const MAX_ATTEMPTS: u32 = 3;
+    let mut last_err = None;
+    for attempt in 1..=MAX_ATTEMPTS {
+        match http_exchange_https_once(url, method, token, body) {
+            Ok(v) => {
+                if attempt > 1 {
+                    eprintln!(
+                        "note: https Partial retry succeeded on attempt {attempt}/{MAX_ATTEMPTS} \
+                         (transport backoff; design ≠ Claimed forge remote e2e)"
+                    );
+                }
+                return Ok(v);
+            }
+            Err(e) if is_https_transport_retryable(&e) && attempt < MAX_ATTEMPTS => {
+                eprintln!(
+                    "note: https Partial transport retry {attempt}/{MAX_ATTEMPTS}: {e}"
+                );
+                last_err = Some(e);
+                std::thread::sleep(Duration::from_millis(50 * u64::from(attempt)));
+            }
+            Err(e) => return Err(e),
+        }
+    }
+    Err(last_err.unwrap_or_else(|| "https Partial retry exhausted".into()))
+}
+
+fn is_https_transport_retryable(err: &str) -> bool {
+    let e = err.to_ascii_lowercase();
+    e.contains("transport")
+        || e.contains("timed out")
+        || e.contains("timeout")
+        || e.contains("connection reset")
+        || e.contains("connection refused")
+        || e.contains("broken pipe")
+}
+
+fn http_exchange_https_once(
     url: &str,
     method: &str,
     token: Option<&str>,
@@ -179,7 +221,8 @@ fn http_exchange_https(
     let mut req = agent
         .request(method, url)
         .set("Accept", "application/json")
-        .set("Accept-Encoding", "identity");
+        .set("Accept-Encoding", "identity")
+        .set("X-Arks-Hub-Client", "partial-https");
     if let Some(t) = token {
         req = req.set("Authorization", &format!("Bearer {t}"));
     }
@@ -197,6 +240,7 @@ fn http_exchange_https(
         req.call().map_err(|e| format_https_err("request", e))?
     };
     let status = resp.status();
+    // Prefer charset-safe into_string; size-cap after read (Partial; not Claimed streaming).
     let text = resp
         .into_string()
         .map_err(|e| format!("https Partial body read: {e}"))?;
@@ -205,6 +249,12 @@ fn http_exchange_https(
             "https Partial refuse: response body {} > 4MiB (Partial size cap; not Claimed streaming)",
             text.len()
         ));
+    }
+    if (500..600).contains(&status) {
+        // Surface server errors clearly; caller decides exit — not auto-retry (non-idempotent POST).
+        eprintln!(
+            "note: https Partial upstream HTTP {status} (no auto-retry on 5xx; design ≠ Claimed)"
+        );
     }
     Ok((status, text))
 }
