@@ -284,7 +284,8 @@ fn parse_depth(raw: &str) -> CliResult<u32> {
 
 /// Claimed partial-clone filter-spec (`blob:none` only; residual R3 / S1).
 fn parse_filter(raw: &str) -> CliResult<String> {
-    arks_remote::validate_claimed_filter(raw).map_err(|e| CliError::NotImplemented(e.to_string()))?;
+    arks_remote::validate_claimed_filter(raw)
+        .map_err(|e| CliError::NotImplemented(e.to_string()))?;
     Ok(raw.to_string())
 }
 

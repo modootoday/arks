@@ -414,11 +414,7 @@ fn stock_git_http_backend_partial_clone_blob_none() {
     let promisor = std::fs::read_dir(&pack_dir)
         .unwrap()
         .filter_map(|e| e.ok())
-        .any(|e| {
-            e.path()
-                .extension()
-                .is_some_and(|ext| ext == "promisor")
-        });
+        .any(|e| e.path().extension().is_some_and(|ext| ext == "promisor"));
     assert!(promisor, "expected at least one .promisor pack marker");
 }
 
