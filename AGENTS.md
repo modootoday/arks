@@ -40,6 +40,7 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Optional residuals O-ladder (O1–O_final; historical Done) | `.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md` |
 | Full Symmetry ladder (FS0–FS_final; **active git feature DoD**) | `.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md` |
 | Tip PARTIAL completion / per-gap unblock | `.spec/research/20261111001816-partial-completion-unblock-roadmap.research.md` + `.spec/research/20261110225000-fs-final-completion-currency.research.md` + `docs/completion.md` |
+| Gap classification + **G-ladder** (G1…G_final Best ROI) | `.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md` + `.spec/research/20261111012840-still-blocked-external-deps-unblock.research.md` + `.spec/plan/20261111024440-gap-classification-g-ladder.plan.md` + `.spec/plan/20261111024441-g-ladder-goal-directive.plan.md` + roadmap tip table |
 | Git CLI symmetric compatibility | `.spec/sot/cli-surface.sot.md` |
 | Crate architecture | `.spec/sot/crate-architecture.sot.md` |
 | Native engine vs wrapper; zero-gix end state | `.spec/adr/20261108083507-native-rust-git-engine-versus-wrapper-and-gix.adr.md` |
