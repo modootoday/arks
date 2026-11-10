@@ -1,23 +1,48 @@
-//! In-process SSH listener for `arks serve` (Partial — fail-closed without SSH FFI).
+//! In-process SSH listener for `arks serve` (Partial — fail-closed without Claimed SSH stack).
 //!
-//! Max honest wire today:
-//! - resolve host-key + `authorized_keys` paths (env / options / defaults)
-//! - prove TCP bind on the requested listen address
-//! - optional one-shot identification exchange (RFC 4253 banners)
-//! - optional SSH_MSG_KEXINIT binary-packet scaffold (algorithm lists advertise Missing)
-//! - host-key / authorized_keys file-format probes (auth scaffolding; no crypto Claimed)
-//! - refuse closed: no russh/libssh/OpenSSL SSH stack in-tree (KEX crypto / auth / channel Missing)
+//! Max honest wire today (structured stages):
+//! 1. resolve host-key + `authorized_keys` paths (env / options / defaults)
+//! 2. prove TCP bind on the requested listen address
+//! 3. optional RFC 4253 identification exchange
+//! 4. optional SSH_MSG_KEXINIT exchange + peer name-list parse
+//! 5. local curve25519-sha256 ECDH self-check (+ peer ECDH INIT when offered)
+//! 6. host-key sign / publickey auth / channel / git subsystem — **Missing** (fail-closed)
 //!
-//! Ops SSHD + `arks upload-pack`/`receive-pack` remains the valid SSH remote path.
+//! Design ≠ Claimed handshake. Ops SSHD + `arks upload-pack`/`receive-pack` remains valid.
 //! Cite: [[sot:root/arks-self-host-server]]
 
 use crate::error::ServerError;
+use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::time::Duration;
+use x25519_dalek::{PublicKey, StaticSecret};
+
+/// Named fail-closed stages for in-process SSH Partial (not Claimed).
+/// `AuthPublickey` / `ChannelSession` are scaffolding labels in refuse text only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SshStage {
+    IdExchange,
+    KexInit,
+    AlgoSelect,
+    Ecdh,
+    HostKeySign,
+}
+
+impl SshStage {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::IdExchange => "id_exchange",
+            Self::KexInit => "kexinit",
+            Self::AlgoSelect => "algo_select",
+            Self::Ecdh => "ecdh_curve25519",
+            Self::HostKeySign => "host_key_sign",
+        }
+    }
+}
 
 /// Options for the in-process SSH git listener (Partial; not Claimed).
 #[derive(Debug, Clone)]
@@ -135,29 +160,49 @@ fn ssh_name_list(names: &[&str]) -> Vec<u8> {
     out
 }
 
-/// RFC 4253 SSH_MSG_KEXINIT payload with algorithms that advertise Missing crypto.
-/// This is scaffolding only — must not be read as negotiated KEX Claimed.
+fn read_ssh_name_list(buf: &[u8], off: &mut usize) -> Option<Vec<String>> {
+    if *off + 4 > buf.len() {
+        return None;
+    }
+    let len = u32::from_be_bytes(buf[*off..*off + 4].try_into().ok()?) as usize;
+    *off += 4;
+    if *off + len > buf.len() {
+        return None;
+    }
+    let s = std::str::from_utf8(&buf[*off..*off + len]).ok()?;
+    *off += len;
+    if s.is_empty() {
+        return Some(Vec::new());
+    }
+    Some(s.split(',').map(|x| x.to_string()).collect())
+}
+
+/// RFC 4253 SSH_MSG_KEXINIT — advertise real curve25519 KEX name; hostkey/enc remain Missing.
+/// Host-key **sign** is not Claimed — do not advertise `ssh-ed25519` as if sign works.
 fn build_kexinit_payload() -> Vec<u8> {
     let mut p = Vec::with_capacity(256);
     p.push(20); // SSH_MSG_KEXINIT
-    p.extend_from_slice(&[0u8; 16]); // cookie (zeros; Partial)
-    // Explicit Missing names — do not advertise curve25519/ssh-ed25519 as if supported.
-    p.extend(ssh_name_list(&["arks-partial-missing-kex"]));
-    p.extend(ssh_name_list(&["arks-partial-missing-hostkey"]));
+    // Non-zero cookie from SHA-256 of a fixed label (deterministic Partial; not CSPRNG Claimed).
+    let cookie = Sha256::digest(b"arks-ssh-partial-kexinit-cookie");
+    p.extend_from_slice(&cookie[..16]);
+    p.extend(ssh_name_list(&[
+        "curve25519-sha256",
+        "curve25519-sha256@libssh.org",
+    ]));
+    // Honest Missing hostkey name — algo select fail-closed vs stock OpenSSH is expected.
+    p.extend(ssh_name_list(&["arks-partial-missing-hostkey-sign"]));
     for _ in 0..6 {
-        // encryption / mac / compression × direction
         p.extend(ssh_name_list(&["arks-partial-missing"]));
     }
-    p.extend(ssh_name_list(&[])); // languages c→s
-    p.extend(ssh_name_list(&[])); // languages s→c
+    p.extend(ssh_name_list(&[]));
+    p.extend(ssh_name_list(&[]));
     p.push(0); // first_kex_packet_follows = false
-    p.extend_from_slice(&0u32.to_be_bytes()); // reserved
+    p.extend_from_slice(&0u32.to_be_bytes());
     p
 }
 
 /// Write one unencrypted SSH binary packet (no MAC — pre-NEWKEYS).
 fn write_ssh_packet(stream: &mut TcpStream, payload: &[u8]) -> std::io::Result<()> {
-    // Unencrypted: (packet_length + 4) must be multiple of 8; padding ≥ 4.
     let mut padding_len = 4usize;
     while (4 + 1 + payload.len() + padding_len) % 8 != 0 {
         padding_len += 1;
@@ -170,37 +215,184 @@ fn write_ssh_packet(stream: &mut TcpStream, payload: &[u8]) -> std::io::Result<(
     Ok(())
 }
 
-fn try_kexinit_scaffold(stream: &mut TcpStream) -> String {
-    let payload = build_kexinit_payload();
-    if let Err(e) = write_ssh_packet(stream, &payload) {
-        return format!("kexinit_scaffold=write_err ({e})");
-    }
-    // Best-effort peer binary packet length peek (may be peer KEXINIT).
+fn read_ssh_packet(stream: &mut TcpStream, max_payload: usize) -> std::io::Result<Vec<u8>> {
     let mut lenbuf = [0u8; 4];
-    match stream.read(&mut lenbuf) {
-        Ok(0) => "kexinit_scaffold=sent peer_pkt=(eof)".into(),
-        Ok(n) if n < 4 => format!("kexinit_scaffold=sent peer_pkt=(short {n})"),
-        Ok(_) => {
-            let peer_len = u32::from_be_bytes(lenbuf);
-            // Drain a little so we do not leave a half-open peer spinning; then close.
-            let drain = (peer_len as usize).min(256);
-            let mut sink = vec![0u8; drain];
-            let _ = stream.read(&mut sink);
-            format!("kexinit_scaffold=sent peer_pkt_len={peer_len}")
+    stream.read_exact(&mut lenbuf)?;
+    let packet_length = u32::from_be_bytes(lenbuf) as usize;
+    if packet_length < 5 || packet_length > max_payload + 256 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("ssh packet_length out of range ({packet_length})"),
+        ));
+    }
+    let mut rest = vec![0u8; packet_length];
+    stream.read_exact(&mut rest)?;
+    let padding_len = rest[0] as usize;
+    if padding_len + 1 > rest.len() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "ssh padding_length invalid",
+        ));
+    }
+    let payload_end = rest.len() - padding_len;
+    Ok(rest[1..payload_end].to_vec())
+}
+
+/// Local curve25519 ECDH self-check (Partial crypto evidence; not peer handshake Claimed).
+fn curve25519_ecdh_selfcheck() -> Result<String, String> {
+    let a_secret = StaticSecret::random();
+    let a_public = PublicKey::from(&a_secret);
+    let b_secret = StaticSecret::random();
+    let b_public = PublicKey::from(&b_secret);
+    let shared_a = a_secret.diffie_hellman(&b_public);
+    let shared_b = b_secret.diffie_hellman(&a_public);
+    if shared_a.as_bytes() != shared_b.as_bytes() {
+        return Err("shared secret mismatch".into());
+    }
+    let mut h = Sha256::new();
+    h.update(b"arks-ssh-partial-ecdh");
+    h.update(shared_a.as_bytes());
+    let digest = h.finalize();
+    Ok(format!(
+        "ecdh_selfcheck=ok shared_sha256={:02x}{:02x}…",
+        digest[0], digest[1]
+    ))
+}
+
+/// Attempt peer ECDH INIT after mutual curve25519 select (Partial; no host-key reply Claimed).
+fn try_peer_ecdh(stream: &mut TcpStream, peer_kex: &[String]) -> String {
+    let want = peer_kex.iter().any(|n| {
+        n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org"
+    });
+    if !want {
+        return "ecdh_peer=skipped (no common curve25519-sha256)".into();
+    }
+    match read_ssh_packet(stream, 4096) {
+        Ok(payload) if !payload.is_empty() && payload[0] == 30 => {
+            // SSH_MSG_KEX_ECDH_INIT: byte + string(q_c)
+            if payload.len() < 5 {
+                return "ecdh_peer=init_short".into();
+            }
+            let qlen = u32::from_be_bytes(payload[1..5].try_into().unwrap_or([0; 4])) as usize;
+            if qlen != 32 || payload.len() < 5 + qlen {
+                return format!("ecdh_peer=bad_q_c_len ({qlen})");
+            }
+            let mut q_c = [0u8; 32];
+            q_c.copy_from_slice(&payload[5..5 + 32]);
+            let peer_pk = PublicKey::from(q_c);
+            let secret = StaticSecret::random();
+            let q_s = PublicKey::from(&secret);
+            let shared = secret.diffie_hellman(&peer_pk);
+            let mut h = Sha256::new();
+            h.update(b"arks-ssh-partial-peer-ecdh");
+            h.update(shared.as_bytes());
+            h.update(q_s.as_bytes());
+            let digest = h.finalize();
+            // Do **not** emit SSH_MSG_KEX_ECDH_REPLY — host-key sign Missing (fail-closed next).
+            format!(
+                "ecdh_peer=shared_ok q_s_ready=1 shared_sha256={:02x}{:02x}… (KEX_ECDH_REPLY withheld — host_key_sign Missing)",
+                digest[0], digest[1]
+            )
+        }
+        Ok(payload) => {
+            let mt = payload.first().copied().unwrap_or(0);
+            format!("ecdh_peer=unexpected_msg={mt}")
         }
         Err(e) if e.kind() == std::io::ErrorKind::WouldBlock || e.kind() == std::io::ErrorKind::TimedOut => {
-            "kexinit_scaffold=sent peer_pkt=(timeout)".into()
+            "ecdh_peer=timeout (no ECDH_INIT)".into()
         }
-        Err(e) => format!("kexinit_scaffold=sent peer_pkt=(err {e})"),
+        Err(e) => format!("ecdh_peer=err ({e})"),
     }
+}
+
+fn parse_peer_kexinit(payload: &[u8]) -> Option<(Vec<String>, Vec<String>)> {
+    if payload.first().copied()? != 20 {
+        return None;
+    }
+    let mut off = 1 + 16; // type + cookie
+    let kex = read_ssh_name_list(payload, &mut off)?;
+    let hostkey = read_ssh_name_list(payload, &mut off)?;
+    Some((kex, hostkey))
+}
+
+fn run_kex_stages(stream: &mut TcpStream) -> (SshStage, String) {
+    let mut notes = Vec::new();
+
+    // Stage: KexInit
+    let payload = build_kexinit_payload();
+    if let Err(e) = write_ssh_packet(stream, &payload) {
+        return (
+            SshStage::KexInit,
+            format!("kexinit=write_err ({e})"),
+        );
+    }
+    let peer_payload = match read_ssh_packet(stream, 16_384) {
+        Ok(p) => p,
+        Err(e) if e.kind() == std::io::ErrorKind::WouldBlock || e.kind() == std::io::ErrorKind::TimedOut => {
+            notes.push("kexinit=sent peer=(timeout)".into());
+            match curve25519_ecdh_selfcheck() {
+                Ok(s) => notes.push(s),
+                Err(e) => notes.push(format!("ecdh_selfcheck=fail ({e})")),
+            }
+            notes.push("stop=host_key_sign Missing (no peer KEXINIT)".into());
+            return (SshStage::HostKeySign, notes.join("; "));
+        }
+        Err(e) => {
+            return (SshStage::KexInit, format!("kexinit=sent peer_err ({e})"));
+        }
+    };
+    notes.push(format!("kexinit=sent peer_payload_len={}", peer_payload.len()));
+
+    // Stage: AlgoSelect
+    let (peer_kex, peer_hostkey) = match parse_peer_kexinit(&peer_payload) {
+        Some(v) => v,
+        None => {
+            notes.push("algo_select=peer_kexinit_parse_fail".into());
+            match curve25519_ecdh_selfcheck() {
+                Ok(s) => notes.push(s),
+                Err(e) => notes.push(format!("ecdh_selfcheck=fail ({e})")),
+            }
+            notes.push("stop=host_key_sign Missing".into());
+            return (SshStage::HostKeySign, notes.join("; "));
+        }
+    };
+    let kex_ok = peer_kex.iter().any(|n| {
+        n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org"
+    });
+    let hostkey_common = peer_hostkey
+        .iter()
+        .any(|n| n == "arks-partial-missing-hostkey-sign");
+    notes.push(format!(
+        "algo_select=kex_curve25519={} hostkey_common_missing_name={} peer_kex_n={} peer_hostkey_n={}",
+        kex_ok,
+        hostkey_common,
+        peer_kex.len(),
+        peer_hostkey.len()
+    ));
+    if !kex_ok {
+        notes.push("stop=algo_select (no common curve25519-sha256)".into());
+        return (SshStage::AlgoSelect, notes.join("; "));
+    }
+
+    // Stage: Ecdh (local self-check always; peer INIT best-effort)
+    match curve25519_ecdh_selfcheck() {
+        Ok(s) => notes.push(s),
+        Err(e) => {
+            notes.push(format!("ecdh_selfcheck=fail ({e})"));
+            return (SshStage::Ecdh, notes.join("; "));
+        }
+    }
+    notes.push(try_peer_ecdh(stream, &peer_kex));
+
+    // Stage: HostKeySign — Missing (OpenSSH key parse/sign not wired)
+    notes.push("stop=host_key_sign Missing (no KEX_ECDH_REPLY / NEWKEYS); auth_publickey+channel_session scaffolding only".into());
+    (SshStage::HostKeySign, notes.join("; "))
 }
 
 /// Attempt to run an in-process SSH listener.
 ///
-/// Advances as far as honest wire without inventing Claimed SSH:
-/// validates key paths, proves `TcpListener::bind`, optionally exchanges
-/// RFC 4253 identification + KEXINIT scaffold with one peer, then **fail-closed**
-/// because KEX crypto / auth / channel mux (SSH FFI) is Missing.
+/// Advances structured KEX stages as far as honest Partial allows, then **fail-closed**
+/// before Claimed handshake (host-key sign / auth / channel / git subsystem).
 ///
 /// Callers MUST NOT silent-degrade to HTTP-only when SSH was left enabled.
 pub fn serve_ssh_listener(
@@ -224,18 +416,15 @@ pub fn serve_ssh_listener(
         .unwrap_or_else(|_| opts.listen.to_string());
     let bind_note = format!("tcp_bind=ok local={local}");
 
-    // Identification + KEXINIT scaffold are plaintext (RFC 4253 §4–§7). Proving we
-    // can emit banners / KEXINIT shape does **not** invent crypto/auth Claimed.
     listener.set_nonblocking(true)?;
     let deadline = std::time::Instant::now() + Duration::from_secs(2);
-    let id_note = loop {
+    let (reached, wire_note) = loop {
         match listener.accept() {
             Ok((mut stream, peer)) => {
                 let _ = stream.set_nonblocking(false);
                 let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
                 let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
-                // Server identification (Partial softwareversion — not a Claimed SSH stack).
-                let ours = b"SSH-2.0-arks_partial_Missing_crypto\r\n";
+                let ours = b"SSH-2.0-arks_partial_curve25519_Missing_sign\r\n";
                 let _ = stream.write_all(ours);
                 let mut buf = [0u8; 256];
                 let n = stream.read(&mut buf).unwrap_or(0);
@@ -248,41 +437,68 @@ pub fn serve_ssh_listener(
                     .chars()
                     .take(80)
                     .collect::<String>();
-                let kex_note = if peer_id.is_empty() {
-                    "kexinit_scaffold=skipped (no peer id)".into()
-                } else {
-                    try_kexinit_scaffold(&mut stream)
-                };
-                let _ = stream.shutdown(Shutdown::Both);
                 let id_part = if peer_id.is_empty() {
                     format!("id_exchange=partial peer={peer} peer_id=(empty/timeout)")
                 } else {
                     format!("id_exchange=partial peer={peer} peer_id={peer_id}")
                 };
-                break format!("{id_part}; {kex_note}");
+                let (stage, kex_part) = if peer_id.is_empty() {
+                    // Still prove local ECDH path without a peer.
+                    match curve25519_ecdh_selfcheck() {
+                        Ok(s) => (
+                            SshStage::HostKeySign,
+                            format!("kex=skipped_no_peer_id; {s}; stop=host_key_sign Missing"),
+                        ),
+                        Err(e) => (
+                            SshStage::Ecdh,
+                            format!("kex=skipped_no_peer_id; ecdh_selfcheck=fail ({e})"),
+                        ),
+                    }
+                } else {
+                    run_kex_stages(&mut stream)
+                };
+                let _ = stream.shutdown(Shutdown::Both);
+                break (stage, format!("{id_part}; {kex_part}"));
             }
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 if std::time::Instant::now() >= deadline {
-                    break "id_exchange=skipped (no peer within 2s accept timeout); kexinit_scaffold=skipped".into();
+                    // No peer: still record local ECDH Partial evidence.
+                    let ecdh = match curve25519_ecdh_selfcheck() {
+                        Ok(s) => s,
+                        Err(e) => format!("ecdh_selfcheck=fail ({e})"),
+                    };
+                    break (
+                        SshStage::HostKeySign,
+                        format!(
+                            "id_exchange=skipped (no peer within 2s); {ecdh}; stop=host_key_sign Missing"
+                        ),
+                    );
                 }
                 std::thread::sleep(Duration::from_millis(20));
             }
-            Err(e) => break format!("id_exchange=accept_err ({e}); kexinit_scaffold=skipped"),
+            Err(e) => {
+                break (
+                    SshStage::IdExchange,
+                    format!("id_exchange=accept_err ({e})"),
+                );
+            }
         }
     };
     drop(listener);
 
     Err(ServerError::NotImplemented(format!(
         "in-process SSH listener for `arks serve` is Partial/Missing — fail-closed \
-         ([[sot:root/arks-self-host-server]]); SSH KEX crypto/auth/channel FFI not in-tree \
-         (no russh/libssh Claimed). wire={{listen={listen}; {bind_note}; {id_note}; \
+         ([[sot:root/arks-self-host-server]]); reached_stage={stage} (Claimed boundary: \
+         host-key cryptographic load/sign, NEWKEYS, publickey auth verify, session/channel, \
+         git subsystem). wire={{listen={listen}; {bind_note}; {wire_note}; \
          host_key={hk} ({host_st}; format={host_fmt}); authorized_keys={ak} ({auth_st}; {auth_probe}); \
-         path={path} ({repo_st})}}. Claimed boundary: KEX algorithm negotiation + host-key \
-         cryptographic load/sign, publickey auth verify, session/channel, git subsystem — \
-         Partial scaffolding only (id exchange + KEXINIT name-lists + key-path probes). \
+         path={path} ({repo_st})}}. Partial: id exchange + KEXINIT + curve25519-sha256 ECDH \
+         self-check/peer shared-secret when offered; later stages auth_publickey + \
+         channel_session remain Missing scaffolding only. \
          use `--no-ssh`, or ops SSHD + `arks upload-pack`/`receive-pack` for SSH remotes today; \
          set ARKS_SERVE_SSH_HOST_KEY / ARKS_SERVE_SSH_AUTHORIZED_KEYS or \
          `arks serve config set ssh_host_key|…` when preparing keys",
+        stage = reached.as_str(),
         listen = opts.listen,
         hk = opts.host_key.display(),
         ak = opts.authorized_keys.display(),
