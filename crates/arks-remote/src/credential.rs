@@ -548,9 +548,16 @@ fn run_helper(
             .stdin
             .take()
             .ok_or_else(|| RemoteError::Msg("credential helper stdin".into()))?;
-        stdin
-            .write_all(desc.format_attributes().as_bytes())
-            .map_err(|e| RemoteError::Msg(format!("credential helper stdin write: {e}")))?;
+        // Helper may exit before consuming stdin (macOS/race); BrokenPipe is not fatal.
+        match stdin.write_all(desc.format_attributes().as_bytes()) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => {}
+            Err(e) => {
+                return Err(RemoteError::Msg(format!(
+                    "credential helper stdin write: {e}"
+                )));
+            }
+        }
     }
     let output = child
         .wait_with_output()
