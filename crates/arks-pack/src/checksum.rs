@@ -14,12 +14,14 @@ pub(crate) fn oid_kind(format: ObjectFormat) -> OidKind {
 }
 
 pub(crate) fn append_checksum(buf: &mut Vec<u8>, format: ObjectFormat) {
-    let digest = hash_bytes(format, buf);
+    let digest = hash_bytes(format, buf).expect("pack checksum hash");
     buf.extend_from_slice(digest.as_bytes());
 }
 
 pub(crate) fn checksum_matches(body: &[u8], sum: &[u8], format: ObjectFormat) -> bool {
-    hash_bytes(format, body).as_bytes() == sum
+    hash_bytes(format, body)
+        .map(|d| d.as_bytes() == sum)
+        .unwrap_or(false)
 }
 
 pub(crate) fn require_digest_len(bytes: &[u8], format: ObjectFormat) -> Result<(), PackError> {

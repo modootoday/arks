@@ -572,6 +572,8 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
     let repo = open_repo()?;
+    // FS-007 / WIN-003 advisory (detect only; never Claimed full cloud-sync).
+    crate::cmd::host_env::emit_cloud_advisory(repo.git_dir());
     // FSM-002 (M20 Cx-7): concurrent FSM transition refuse.
     let fsm_transition = repo.git_dir().join(".arks-fsm-transition");
     if fsm_transition.is_file() {

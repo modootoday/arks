@@ -135,6 +135,7 @@ fn roundtrip_undeltified_pack_and_idx() {
             ObjectFormat::Sha1,
             &encoded.pack[..encoded.pack.len() - hash_len]
         )
+        .unwrap()
         .as_bytes(),
         decoded.checksum
     );

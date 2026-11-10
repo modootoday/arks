@@ -101,12 +101,18 @@ echo "G8: clone throwaway peer (URL redacted)"
 
 BRANCH="arks-g8-smoke-$(date +%s)"
 cd "${CLONE_DIR}"
+export GIT_AUTHOR_NAME=arks-g8 GIT_AUTHOR_EMAIL=arks-g8@example.com
+export GIT_COMMITTER_NAME=arks-g8 GIT_COMMITTER_EMAIL=arks-g8@example.com
+git config user.name arks-g8
+git config user.email arks-g8@example.com
 echo "g8-smoke $(date -Iseconds)" > g8-smoke.txt
 "${ARKS_BIN}" add g8-smoke.txt
-"${ARKS_BIN}" -c user.name=arks-g8 -c user.email=arks-g8@example.com commit -m "g8 smoke"
-"${ARKS_BIN}" push -u origin "HEAD:refs/heads/${BRANCH}"
+"${ARKS_BIN}" commit -m "g8 smoke"
+# arks push: no `-u`, no src:dst Claimed — named branch then push.
+"${ARKS_BIN}" branch "${BRANCH}"
+"${ARKS_BIN}" push origin "${BRANCH}"
 "${ARKS_BIN}" fetch origin "${BRANCH}"
-TIP="$("${ARKS_BIN}" rev-parse "FETCH_HEAD")"
+TIP="$("${ARKS_BIN}" rev-parse "refs/remotes/origin/${BRANCH}")"
 echo "G8: live push/fetch tip ${TIP} on ${BRANCH}"
 
 write_receipt "closed-implement" "live clone/push/fetch ok branch=${BRANCH} tip=${TIP}"

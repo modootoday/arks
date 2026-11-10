@@ -111,6 +111,30 @@ services:
       ARKS_G8_SCALE_SAMPLES: "${ARKS_G8_SCALE_SAMPLES:-5}"
     command: ["/bin/bash", "verify/scripts/run-g8-live-scale.sh"]
 
+  # FS-007 / WIN-003 host advisory — detect-only; ≠ Claimed full cloud-sync.
+  fs007-host-advisory:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_FS007_PROBE_ROOT: "${ARKS_FS007_PROBE_ROOT:-.}"
+    command: ["/bin/bash", "verify/scripts/run-fs007-host-advisory.sh"]
+
+  # G8 local-forge wire substitute — loopback smart-HTTP peer; ≠ GitHub live PASS.
+  g8-local-forge:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_G8_LOCAL_FORGE_SAMPLES: "${ARKS_G8_LOCAL_FORGE_SAMPLES:-3}"
+    command: ["/bin/bash", "verify/scripts/run-g8-local-forge.sh"]
+
   g10:
     <<: *cleanroom
     depends_on:

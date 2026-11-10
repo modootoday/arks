@@ -44,7 +44,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | GUI (`gitk`, `git-gui`) | Separate tools | External handoff refuse (**FS7**) | **Claimed** (handoff) |
 | Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT; other argv handoff to `git-lfs`; `scalar` refuse | **Claimed** |
 | `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed with NET-006 lock/truncation honesty (**FS5**) | **Claimed** (FS5 / NET-006) |
-| Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse (**OBJ-004**); `init --object-format=sha256` porcelain end-to-end where Git supports it | **Claimed** / **Impossible** (crypto SHA-1 collision immunity) |
+| Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse + **sha1cd detect+refuse** (**OBJ-004**); `init --object-format=sha256` porcelain e2e | **Claimed** (detect+refuse) / **Impossible** (crypto immunity) |
+| Cloud sync on `.git` / OneDrive placeholders | Host hazard | `arks host-env` DriveFS/OneDrive/Dropbox/Syncthing **detect + advisory**; CfAPI `RECALL_ON_DATA_ACCESS` detect | **Advisory** (FS-007 / WIN-003); full sync safety **Impossible** |
 
 ## Remotes and server
 

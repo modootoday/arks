@@ -11,6 +11,7 @@ pub mod credential;
 pub mod grep;
 pub mod history;
 pub mod hooks;
+pub mod host_env;
 pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
@@ -50,6 +51,7 @@ pub use credential::{
 };
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
+pub use host_env::cmd_host_env;
 pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
 pub use lfs::cmd_lfs;

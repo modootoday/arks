@@ -130,7 +130,8 @@ fn walk_check(
             return Ok(());
         }
     };
-    // OBJ-004: recompute content OID — refuse collision pretends / mismatched content.
+    // OBJ-004: recompute content OID — refuse collision pretends / mismatched content /
+    // sha1cd-detected cryptanalytic collision attacks (detect+refuse; immunity Impossible).
     match obj.oid(repo.object_format()) {
         Ok(got) if got == *oid => {}
         Ok(got) => {
@@ -141,6 +142,13 @@ fn walk_check(
             )));
         }
         Err(e) => {
+            let msg = e.to_string();
+            if msg.contains("SHA-1 collision") || msg.contains("Sha1Collision") {
+                return Err(CliError::Msg(format!(
+                    "fsck: SHA-1 collision attack detected for {} (OBJ-004 detect+refuse; immunity Impossible)",
+                    oid.to_hex()
+                )));
+            }
             return Err(CliError::Msg(format!(
                 "fsck: cannot recompute OID for {}: {e} (OBJ-004)",
                 oid.to_hex()

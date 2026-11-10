@@ -193,7 +193,7 @@ mod tests {
         raw.extend_from_slice(&0u32.to_be_bytes());
         let mut h = arks_hash::Hasher::new(arks_hash::ObjectFormat::Sha1);
         h.update(&raw);
-        raw.extend_from_slice(h.finalize().as_bytes());
+        raw.extend_from_slice(h.finalize().unwrap().as_bytes());
         assert_eq!(
             Index::read(&raw, OidKind::Sha1),
             Err(IndexError::UnsupportedVersion(1))

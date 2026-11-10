@@ -1,0 +1,22 @@
+{
+  "samples": [
+    {
+      "i": 0,
+      "op": "ls-remote-HEAD",
+      "wall_ms": 27.861
+    },
+    {
+      "i": 1,
+      "op": "ls-remote-HEAD",
+      "wall_ms": 6.617
+    },
+    {
+      "i": 2,
+      "op": "ls-remote-HEAD",
+      "wall_ms": 8.555
+    }
+  ],
+  "op": "ls-remote-HEAD",
+  "n": 3,
+  "venue": "loopback"
+}

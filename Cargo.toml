@@ -13,6 +13,7 @@ members = [
     "crates/arks-remote",
     "crates/arks-lease",
     "crates/arks-server",
+    "crates/arks-hostfs",
     "crates/arks",
 ]
 default-members = [
@@ -28,6 +29,7 @@ default-members = [
     "crates/arks-remote",
     "crates/arks-lease",
     "crates/arks-server",
+    "crates/arks-hostfs",
     "crates/arks",
 ]
 
@@ -51,6 +53,7 @@ arks-pack = { path = "crates/arks-pack" }
 arks-remote = { path = "crates/arks-remote" }
 arks-lease = { path = "crates/arks-lease" }
 arks-server = { path = "crates/arks-server" }
+arks-hostfs = { path = "crates/arks-hostfs" }
 arks = { path = "crates/arks" }
 crc32fast = "1.4"
 libc = "0.2"
@@ -58,8 +61,14 @@ libc = "0.2"
 # (J-CLONE-LOCAL); keep default-features off (no C zlib).
 flate2 = { version = "1.1", default-features = false, features = ["zlib-rs"] }
 sha1 = { version = "0.10", default-features = false, features = ["asm"] }
+# OBJ-004 detect+refuse (Claimed); cryptographic immunity remains Impossible.
+sha1collisiondetection = { version = "0.3.4", default-features = false, features = ["digest-trait"] }
 sha2 = { version = "0.10", default-features = false }
 thiserror = "2.0"
+windows = { version = "0.58", default-features = false, features = [
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+] }
 tempfile = "3"
 ureq = { version = "2.12", default-features = false, features = ["tls"] }
 

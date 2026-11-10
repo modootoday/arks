@@ -37,8 +37,9 @@ require_file() {
 echo "### Structural files"
 require_file "verify/scripts/run-g8.sh" "G8 live smoke entrypoint"
 require_file "verify/scripts/run-g8-live-scale.sh" "G8-live-scale entrypoint"
+require_file "verify/scripts/run-g8-local-forge.sh" "G8 local-forge wire substitute (≠ GitHub live)"
 require_file "verify/matrices/matrix-g8-live-scale.md" "scale matrix / honesty"
-require_file "verify/docker-compose.yml" "compose services g8 / g8-live-scale"
+require_file "verify/docker-compose.yml" "compose services g8 / g8-live-scale / g8-local-forge"
 require_file ".github/workflows/g8-forge-scale.yml" "workflow_dispatch dry-run + secrets-gated live"
 require_file "scripts/g8-live-operator-path.sh" "O1 fail-closed operator path"
 require_file "docs/forge-scale.md" "maintainer Pages"
@@ -48,10 +49,11 @@ echo
 
 echo "### Compose services (names only)"
 if grep -qE '^[[:space:]]*g8:[[:space:]]*$' verify/docker-compose.yml \
-  && grep -qE '^[[:space:]]*g8-live-scale:[[:space:]]*$' verify/docker-compose.yml; then
-  echo "- OK  services \`g8\` and \`g8-live-scale\` present"
+  && grep -qE '^[[:space:]]*g8-live-scale:[[:space:]]*$' verify/docker-compose.yml \
+  && grep -qE '^[[:space:]]*g8-local-forge:[[:space:]]*$' verify/docker-compose.yml; then
+  echo "- OK  services \`g8\`, \`g8-live-scale\`, and \`g8-local-forge\` present"
 else
-  echo "- MISSING compose service \`g8\` and/or \`g8-live-scale\`"
+  echo "- MISSING compose service \`g8\` / \`g8-live-scale\` / \`g8-local-forge\`"
   missing=$((missing + 1))
 fi
 echo
@@ -62,15 +64,22 @@ echo "- \`ARKS_G8_TOKEN\` or \`GITHUB_TOKEN\` — throwaway PAT; scrub from logs
 echo "- \`ARKS_G8_REPO_URL\` — HTTPS URL of a throwaway peer repo"
 echo "- Optional force-off: \`ARKS_G8_LIVE=0\` (smoke), \`ARKS_G8_SCALE_MEASURE=0\` (scale)"
 echo "- Absent secrets ⇒ honest SKIP / no-measurement receipt (exit 0); **not** a PASS"
+echo "- Local wire substitute (no GitHub secrets): compose \`g8-local-forge\` /"
+echo "  \`bash verify/scripts/run-g8-local-forge.sh\` — disposition \`claimed-wire\` only;"
+echo "  **never** treat as GitHub-hosted live PASS"
 echo
+
 
 echo "### Receipt schemas (operator-local)"
 echo "- G8 smoke: \`arks-g8-live-smoke/v1\` → \`verify/gates/g8/out/receipt.json\`"
 echo "- G8 scale: \`arks-g8-live-scale/v1\` → \`verify/gates/g8-live-scale/out/receipt.json\`"
-echo "- Samples (scale only): \`samples.json\` durations; never tokens"
+echo "- G8 local-forge: \`arks-g8-local-forge-wire/v1\` → \`verify/gates/g8-local-forge/out/receipt.json\`"
+echo "- Samples (scale / local-forge): \`samples.json\` durations; never tokens"
 echo "- Attach receipts under \`.spec/evidence/\` only when real samples exist;"
 echo "  do **not** invent medians or product SLOs from empty SKIP runs"
+echo "- Local-forge \`claimed-wire\` ≠ GitHub Environment live remasure PASS"
 echo
+
 
 echo "### Workflow triggers"
 echo "- \`workflow_dispatch\` dry-run (default): this report + harness SKIP paths —"

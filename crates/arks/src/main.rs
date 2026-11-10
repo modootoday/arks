@@ -31,6 +31,7 @@ Commands:
   add           Stage file paths
   status        Show working-tree / index / HEAD summary
   lock          Inspect / clear stale Git *.lock files
+  host-env      Advisory cloud-sync / OneDrive CfAPI detect (FS-007 / WIN-003)
   lease         Grant / release / inspect durable product leases (M13)
   commit        Record index as a commit (-m; -S SSH sign)
   verify-commit Verify SSH gpgsig on a commit
@@ -160,6 +161,7 @@ fn run() -> CliResult<()> {
         "add" => cmd::cmd_add(&args),
         "status" => cmd::cmd_status(&args),
         "lock" => cmd::cmd_lock(&args),
+        "host-env" => cmd::cmd_host_env(&args),
         "lease" => cmd::cmd_lease(&args),
         "commit" => cmd::cmd_commit(&args),
         "verify-commit" => cmd::cmd_verify_commit(&args),

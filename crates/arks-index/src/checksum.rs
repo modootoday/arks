@@ -27,7 +27,8 @@ pub(crate) fn read_and_verify_checksum(
         }
         return Err(IndexError::Corrupt("trailing bytes after checksum".into()));
     }
-    let digest = hash_bytes(object_format(hash_kind), &data[..content_end]);
+    let digest = hash_bytes(object_format(hash_kind), &data[..content_end])
+        .map_err(|e| IndexError::Corrupt(e.to_string()))?;
     if digest.as_bytes() != &data[content_end..] {
         return Err(IndexError::Checksum);
     }
@@ -35,6 +36,6 @@ pub(crate) fn read_and_verify_checksum(
 }
 
 pub(crate) fn append_checksum(buf: &mut Vec<u8>, hash_kind: OidKind) {
-    let digest = hash_bytes(object_format(hash_kind), buf);
+    let digest = hash_bytes(object_format(hash_kind), buf).expect("index checksum hash");
     buf.extend_from_slice(digest.as_bytes());
 }

@@ -854,7 +854,8 @@ fn has_local_modifications(path: &Path) -> CliResult<bool> {
             return Ok(true);
         }
         let bytes = fs::read(&p)?;
-        let digest = arks_hash::hash_object(arks_hash::ObjectFormat::Sha1, "blob", &bytes);
+        let digest = arks_hash::hash_object(arks_hash::ObjectFormat::Sha1, "blob", &bytes)
+            .map_err(|err| CliError::Msg(err.to_string()))?;
         let oid = Oid::from_bytes(repo.oid_kind(), digest.as_bytes())
             .map_err(|err| CliError::Msg(err.to_string()))?;
         if oid != e.oid {

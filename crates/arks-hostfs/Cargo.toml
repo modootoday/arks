@@ -1,0 +1,17 @@
+[package]
+name = "arks-hostfs"
+description = "Host FS honesty helpers — DriveFS / OneDrive CfAPI / sync-root detect (advisory)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+thiserror = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true }
+
+[dev-dependencies]

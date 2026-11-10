@@ -1,6 +1,6 @@
 [package]
 name = "arks-hash"
-description = "In-engine Git object-format hashing (SHA-1 / SHA-256)"
+description = "In-engine Git object-format hashing (SHA-1-CD / SHA-256)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,7 +9,9 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-sha1 = { workspace = true }
+# Marc Stevens / Sequoia collision-detecting SHA-1 (git.git equivalent).
+# Detect+refuse on cryptanalytic collision attacks (OBJ-004); immunity still Impossible.
+sha1collisiondetection = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 

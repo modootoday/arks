@@ -84,8 +84,15 @@ mkdir -p "$ARKS_G8_SCALE_OUT"
 bash verify/scripts/run-g8.sh | tee "$OUT_DIR/run-g8.log"
 bash verify/scripts/run-g8-live-scale.sh | tee "$OUT_DIR/run-g8-live-scale.log"
 
+echo
+echo "### Local-forge wire substitute (optional; ≠ GitHub live PASS)"
+echo "When secrets remain absent, prove HTTPS git wire on loopback via:"
+echo "  docker compose -f verify/docker-compose.yml run --rm g8-local-forge"
+echo "  # or: bash verify/scripts/run-g8-local-forge.sh"
+echo "Disposition \`claimed-wire\` must never be rewritten as GitHub live PASS."
+
 cat >"$OUT_DIR/operator-disposition.json" <<EOF
-{"schema":"arks-g8-operator-path/v1","disposition":"secrets-block","secret_count":"${SECRET_COUNT}","has_token":false,"has_repo_url":false,"live_pass":false,"note":"Environment g8-live empty or process env absent; SKIP receipts only; not a live PASS"}
+{"schema":"arks-g8-operator-path/v1","disposition":"secrets-block","secret_count":"${SECRET_COUNT}","has_token":false,"has_repo_url":false,"live_pass":false,"local_forge_substitute":"g8-local-forge","note":"Environment g8-live empty or process env absent; SKIP receipts only; not a live PASS; local-forge wire ≠ GitHub remasure"}
 EOF
 
 echo

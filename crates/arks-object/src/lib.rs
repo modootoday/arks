@@ -23,7 +23,7 @@ pub use tree::{
     tree_sort_key,
 };
 
-use arks_hash::{Digest, ObjectFormat, hash_object};
+use arks_hash::{Digest, HashError, ObjectFormat, hash_object};
 use arks_oid::{Oid, OidError, OidKind};
 use flate2::Compression;
 use flate2::read::ZlibDecoder;
@@ -111,12 +111,12 @@ impl RawObject {
         })
     }
 
-    pub fn digest(&self, format: ObjectFormat) -> Digest {
-        hash_object(format, self.kind.as_str(), &self.payload)
+    pub fn digest(&self, format: ObjectFormat) -> Result<Digest, ObjectError> {
+        hash_object(format, self.kind.as_str(), &self.payload).map_err(ObjectError::from)
     }
 
     pub fn oid(&self, format: ObjectFormat) -> Result<Oid, ObjectError> {
-        let d = self.digest(format);
+        let d = self.digest(format)?;
         let kind = match format {
             ObjectFormat::Sha1 => OidKind::Sha1,
             ObjectFormat::Sha256 => OidKind::Sha256,
@@ -263,6 +263,9 @@ pub enum ObjectError {
     Oid(#[from] OidError),
     #[error("OID mismatch: expected {expected}, got {actual}")]
     OidMismatch { expected: String, actual: String },
+    /// OBJ-004 SHA-1 collision detect+refuse (from arks-hash).
+    #[error(transparent)]
+    Hash(#[from] HashError),
     #[error("I/O: {0}")]
     Io(String),
     #[error("bad tree mode: {0}")]

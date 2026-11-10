@@ -1,0 +1,15 @@
+{
+  "schema": "arks-fs007-host-advisory/v1",
+  "gate": "FS007-host-advisory",
+  "disposition": "advisory-host-probe",
+  "claimed": false,
+  "fs007_full_sync_claimed": false,
+  "win003_hydration_claimed": false,
+  "probe_root": ".",
+  "host_env_exit": 0,
+  "cloud_kind": null,
+  "onedrive_placeholder": false,
+  "hazard": "none",
+  "timestamp": "2026-11-10T13:36:09Z",
+  "note": "Detect/warn only; multi-device sync races and OneDrive hydration remain unclaimed"
+}

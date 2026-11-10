@@ -1,0 +1,98 @@
+{
+    "schema":  "arks-fs007-gdrive-host-advisory/v1",
+    "disposition":  "advisory-host-probe",
+    "claimed":  false,
+    "live_pass":  false,
+    "note":  "Single-host Google Drive for desktop (DriveFS streaming G:) bounded probe; NOT Claimed FS-007; does not prove multi-device sync races or OneDrive Cloud Filter placeholders",
+    "tip":  "04f40bc44df09d2e0b85e2f5da29131aeada7167",
+    "probe_root":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919",
+    "cleaned":  true,
+    "observations":  {
+                         "google_drive_fs_running":  true,
+                         "filesystem":  "FAT32",
+                         "volume_name":  "Google Drive",
+                         "likely_mode":  "streaming (virtual Drive letter; empty mirror_item)",
+                         "drive_type":  3,
+                         "g_root_is_reparse_point":  false,
+                         "mirror_item_rows":  0,
+                         "google_drive_fs_versions_observed":  [
+                                                                   "132.0.0.0",
+                                                                   "133.0.2.0"
+                                                               ],
+                         "win003_cloud_filter_placeholders":  "not observed (DriveFS != OneDrive CfAPI)"
+                     },
+    "snaps":  [
+                  {
+                      "label":  "probe-root-after-mkdir",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919",
+                      "exists":  true,
+                      "attributes":  "Directory",
+                      "reparsePoint":  false,
+                      "length":  1,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "dot-git-dir",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git",
+                      "exists":  true,
+                      "attributes":  "Hidden, Directory",
+                      "reparsePoint":  false,
+                      "length":  1,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "dot-git-HEAD",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\HEAD",
+                      "exists":  true,
+                      "attributes":  "Normal",
+                      "reparsePoint":  false,
+                      "length":  23,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "dot-git-config",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\config",
+                      "exists":  true,
+                      "attributes":  "Normal",
+                      "reparsePoint":  false,
+                      "length":  130,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "dot-git-index-after-add",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\index",
+                      "exists":  true,
+                      "attributes":  "Normal",
+                      "reparsePoint":  false,
+                      "length":  104,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "dot-git-objects",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\objects",
+                      "exists":  true,
+                      "attributes":  "Directory",
+                      "reparsePoint":  false,
+                      "length":  1,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "dot-git-refs-heads",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\refs\\heads",
+                      "exists":  true,
+                      "attributes":  "Directory",
+                      "reparsePoint":  false,
+                      "length":  1,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  },
+                  {
+                      "label":  "fake-loose-object",
+                      "path":  "G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\objects\\aa\\bb20261110221919",
+                      "exists":  true,
+                      "attributes":  "Normal",
+                      "reparsePoint":  false,
+                      "length":  17,
+                      "reparseQuery":  "Error 4390: The file or directory is not a reparse point."
+                  }
+              ]
+}

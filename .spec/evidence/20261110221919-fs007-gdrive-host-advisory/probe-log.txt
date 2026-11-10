@@ -1,0 +1,42 @@
+2026-11-10T22:19:19.7081824+09:00 probe_root=G:\내 드라이브\.arks-fs007-probe-20261110221919
+2026-11-10T22:19:19.7132608+09:00 drivefs=Google Drive File Stream (G: VolumeName=Google Drive FAT32 DriveType=3)
+2026-11-10T22:19:19.7175377+09:00 g_root_reparse=Error4390_not_reparse_point
+2026-11-10T22:19:19.7251611+09:00 mirror_item_empty=true (streaming-likely)
+2026-11-10T22:19:19.7818919+09:00 ATTR {"label":"probe-root-after-mkdir","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919","exists":true,"attributes":"Directory","reparsePoint":false,"length":1,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:19.7874510+09:00 stock_git=C:\Program Files\Git\cmd\git.exe 2.54.0.1
+2026-11-10T22:19:20.2435883+09:00 git_init_exit=0
+2026-11-10T22:19:20.2452923+09:00 git_init_out=Initialized empty Git repository in G:/내 드라이브/.arks-fs007-probe-20261110221919/.git/
+2026-11-10T22:19:20.2805826+09:00 ATTR {"label":"dot-git-dir","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git","exists":true,"attributes":"Hidden, Directory","reparsePoint":false,"length":1,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:20.3129775+09:00 ATTR {"label":"dot-git-HEAD","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\HEAD","exists":true,"attributes":"Normal","reparsePoint":false,"length":23,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:20.3406418+09:00 ATTR {"label":"dot-git-config","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\config","exists":true,"attributes":"Normal","reparsePoint":false,"length":130,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:20.5572371+09:00 git_add_exit=0 out=
+2026-11-10T22:19:20.5863479+09:00 ATTR {"label":"dot-git-index-after-add","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\index","exists":true,"attributes":"Normal","reparsePoint":false,"length":104,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:20.6017554+09:00 index_lock_create_ok=true
+2026-11-10T22:19:20.6555677+09:00 git_status_with_lock_exit=0
+2026-11-10T22:19:20.6571153+09:00 git_status_with_lock_out=On branch master
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+	new file:   probe.txt
+2026-11-10T22:19:20.6709049+09:00 index_lock_removed=true
+2026-11-10T22:19:21.0012399+09:00 git_commit_exit=0 out=[master (root-commit) ac80048] fs007 probe
+ 1 file changed, 1 insertion(+)
+ create mode 100644 probe.txt
+2026-11-10T22:19:21.0320558+09:00 ATTR {"label":"dot-git-objects","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\objects","exists":true,"attributes":"Directory","reparsePoint":false,"length":1,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:21.0597158+09:00 ATTR {"label":"dot-git-refs-heads","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\refs\\heads","exists":true,"attributes":"Directory","reparsePoint":false,"length":1,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:21.0997159+09:00 rename_tmp_to_lock_ok=true
+2026-11-10T22:19:21.1073586+09:00 rename_lock_ok=true
+2026-11-10T22:19:21.1625341+09:00 ATTR {"label":"fake-loose-object","path":"G:\\내 드라이브\\.arks-fs007-probe-20261110221919\\.git\\objects\\aa\\bb20261110221919","exists":true,"attributes":"Normal","reparsePoint":false,"length":17,"reparseQuery":"Error 4390: The file or directory is not a reparse point."}
+2026-11-10T22:19:21.3765896+09:00 git_fsck_exit=0 out=git.exe : bad sha1 file: .git/objects/aa/bb20261110221919
+위치 줄:103 문자:3
++   & git fsck 2>&1 | Tee-Object -Variable fsckOut | Out-Null
++   ~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (bad sha1 file: ...b20261110221919:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+2026-11-10T22:19:21.3931971+09:00 cleanup_start
+2026-11-10T22:19:21.5554883+09:00 cleanup_ok=True
+2026-11-10T22:19:21.6298433+09:00 receipt=C:\workspaces\gir\.spec\evidence\20261110221919-fs007-gdrive-host-advisory\probe-receipt.json

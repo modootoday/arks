@@ -1,0 +1,3 @@
+﻿sha1cd: G0 cargo test -p arks-hash refuses_shattered_pdf_fixture_when_present PASS (fixture present)
+hostfs: G0 cargo test -p arks-hostfs 5/5 PASS (Dropbox/Syncthing/OneDrive path heuristics; placeholder false on temp)
+fs007-host-advisory: compose/script disposition=advisory-host-probe claimed=false

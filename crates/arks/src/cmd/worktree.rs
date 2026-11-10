@@ -672,7 +672,8 @@ fn is_clean_worktree(path: &Path) -> CliResult<bool> {
             return Ok(false);
         }
         let bytes = fs::read(&p)?;
-        let digest = arks_hash::hash_object(arks_hash::ObjectFormat::Sha1, "blob", &bytes);
+        let digest = arks_hash::hash_object(arks_hash::ObjectFormat::Sha1, "blob", &bytes)
+            .map_err(|err| CliError::Msg(err.to_string()))?;
         let oid = Oid::from_bytes(arks_oid::OidKind::Sha1, digest.as_bytes())
             .map_err(|err| CliError::Msg(err.to_string()))?;
         if oid != e.oid {

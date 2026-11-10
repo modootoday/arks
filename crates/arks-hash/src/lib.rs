@@ -4,17 +4,22 @@
 //! (`type SP size NUL` + payload) matching stock Git for the claimed
 //! object formats. No I/O. No `gix`. No `git` subprocess.
 //!
+//! SHA-1 uses Marc Stevens collision detection (`sha1collisiondetection`) —
+//! **detect+refuse** on cryptanalytic collision attacks (OBJ-004 Claimed
+//! slice). Absolute cryptographic **immunity** remains Impossible.
+//!
 //! Primary: <https://git-scm.com/docs/gitformat-loose>
 //! Cite: `.spec/research/20261108071913-git-objects-pack.research.md`
+//!       `.spec/research/20261110222000-remaining-gaps-ffi-external-unblock.research.md`
 
 #![forbid(unsafe_code)]
 
 /// Repository object-format hash algorithm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ObjectFormat {
-    /// Classic SHA-1 (20-byte OID). M1 claimed interop format.
+    /// Classic SHA-1 (20-byte OID) with collision detection (OBJ-004).
     Sha1,
-    /// SHA-256 (32-byte OID). API present; G1 fixtures claim Sha1 first.
+    /// SHA-256 (32-byte OID).
     Sha256,
 }
 
@@ -81,17 +86,28 @@ pub struct Hasher {
 
 #[derive(Clone)]
 enum HasherInner {
-    Sha1(sha1::Sha1),
+    /// Collision-detecting SHA-1 (safe_hash off → explicit refuse via Err).
+    /// Boxed: Sha1CD state is large (~2KiB); avoid `large_enum_variant`.
+    Sha1(Box<sha1collisiondetection::Sha1CD>),
     Sha256(sha2::Sha256),
+}
+
+fn new_sha1cd() -> Box<sha1collisiondetection::Sha1CD> {
+    // safe_hash(false): do not silently rewrite digests; callers refuse via Err.
+    // detect_collisions(true): Claimed OBJ-004 detect path.
+    Box::new(
+        sha1collisiondetection::Builder::default()
+            .safe_hash(false)
+            .detect_collisions(true)
+            .use_ubc(true)
+            .build(),
+    )
 }
 
 impl Hasher {
     pub fn new(format: ObjectFormat) -> Self {
         let inner = match format {
-            ObjectFormat::Sha1 => {
-                use sha1::Digest as _;
-                HasherInner::Sha1(sha1::Sha1::new())
-            }
+            ObjectFormat::Sha1 => HasherInner::Sha1(new_sha1cd()),
             ObjectFormat::Sha256 => {
                 use sha2::Digest as _;
                 HasherInner::Sha256(sha2::Sha256::new())
@@ -103,8 +119,7 @@ impl Hasher {
     pub fn update(&mut self, data: &[u8]) {
         match &mut self.inner {
             HasherInner::Sha1(h) => {
-                use sha1::Digest as _;
-                h.update(data);
+                sha1collisiondetection::Digest::update(h.as_mut(), data);
             }
             HasherInner::Sha256(h) => {
                 use sha2::Digest as _;
@@ -113,24 +128,24 @@ impl Hasher {
         }
     }
 
-    pub fn finalize(self) -> Digest {
+    /// Finalize digest; **refuse** on detected SHA-1 collision attack (OBJ-004).
+    pub fn finalize(self) -> Result<Digest, HashError> {
         match self.inner {
             HasherInner::Sha1(h) => {
-                use sha1::Digest as _;
-                let out = h.finalize();
-                Digest::from_bytes(ObjectFormat::Sha1, out.as_slice()).expect("sha1 len")
+                let out = h.finalize_cd().map_err(|_| HashError::Sha1Collision)?;
+                Digest::from_bytes(ObjectFormat::Sha1, out.as_slice())
             }
             HasherInner::Sha256(h) => {
                 use sha2::Digest as _;
                 let out = h.finalize();
-                Digest::from_bytes(ObjectFormat::Sha256, out.as_slice()).expect("sha256 len")
+                Digest::from_bytes(ObjectFormat::Sha256, out.as_slice())
             }
         }
     }
 }
 
 /// Hash arbitrary bytes with the given object format.
-pub fn hash_bytes(format: ObjectFormat, data: &[u8]) -> Digest {
+pub fn hash_bytes(format: ObjectFormat, data: &[u8]) -> Result<Digest, HashError> {
     let mut h = Hasher::new(format);
     h.update(data);
     h.finalize()
@@ -140,42 +155,23 @@ pub fn hash_bytes(format: ObjectFormat, data: &[u8]) -> Digest {
 ///
 /// `type_name` is the ASCII type token (`blob`, `tree`, `commit`, `tag`).
 /// `payload` is the raw object body (not zlib-wrapped).
-pub fn hash_object(format: ObjectFormat, type_name: &str, payload: &[u8]) -> Digest {
-    // Reuse one SHA-1 state across pack ingest (220+ objects on J-CLONE-LOCAL).
-    if format == ObjectFormat::Sha1 {
-        return SHA1_TLS.with(|cell| {
-            use sha1::Digest as _;
-            let mut h = cell.borrow_mut();
-            h.reset();
-            h.update(type_name.as_bytes());
-            h.update(b" ");
-            let mut size_buf = [0u8; 20];
-            let size = write_decimal(payload.len() as u64, &mut size_buf);
-            h.update(size);
-            h.update([0]);
-            h.update(payload);
-            let out = h.finalize_reset();
-            Digest::from_bytes(ObjectFormat::Sha1, out.as_slice()).expect("sha1 len")
-        });
-    }
+///
+/// Refuses with [`HashError::Sha1Collision`] when a cryptanalytic SHA-1
+/// collision attack is detected in the hashed stream (OBJ-004 Claimed detect).
+pub fn hash_object(
+    format: ObjectFormat,
+    type_name: &str,
+    payload: &[u8],
+) -> Result<Digest, HashError> {
     let mut h = Hasher::new(format);
     h.update(type_name.as_bytes());
     h.update(b" ");
-    // Stack decimal — pack ingest hashes every object; avoid `to_string` allocs.
     let mut size_buf = [0u8; 20];
     let size = write_decimal(payload.len() as u64, &mut size_buf);
     h.update(size);
     h.update(&[0]);
     h.update(payload);
     h.finalize()
-}
-
-std::thread_local! {
-    static SHA1_TLS: std::cell::RefCell<sha1::Sha1> =
-        std::cell::RefCell::new({
-            use sha1::Digest as _;
-            sha1::Sha1::new()
-        });
 }
 
 fn write_decimal(mut n: u64, buf: &mut [u8; 20]) -> &[u8] {
@@ -196,6 +192,12 @@ fn write_decimal(mut n: u64, buf: &mut [u8; 20]) -> &[u8] {
 pub enum HashError {
     #[error("digest length mismatch: expected {expected}, got {actual}")]
     DigestLength { expected: usize, actual: usize },
+    /// Cryptanalytic SHA-1 collision attack detected (OBJ-004 detect+refuse).
+    /// Not a claim of absolute collision immunity.
+    #[error(
+        "SHA-1 collision attack detected (OBJ-004 detect+refuse; immunity Impossible — use sha256 repos for transition)"
+    )]
+    Sha1Collision,
 }
 
 #[cfg(test)]
@@ -209,16 +211,13 @@ mod tests {
 
     #[test]
     fn empty_blob_sha1_matches_known_oid() {
-        // `git hash-object --stdin </dev/null` → e69de29…
-        let d = hash_object(ObjectFormat::Sha1, "blob", b"");
+        let d = hash_object(ObjectFormat::Sha1, "blob", b"").unwrap();
         assert_eq!(d.as_bytes(), &EMPTY_BLOB_SHA1);
     }
 
     #[test]
     fn hello_blob_sha1() {
-        // echo -n 'hello' | git hash-object --stdin
-        // → b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0
-        let d = hash_object(ObjectFormat::Sha1, "blob", b"hello");
+        let d = hash_object(ObjectFormat::Sha1, "blob", b"hello").unwrap();
         assert_eq!(
             hex::encode_lower(d.as_bytes()),
             "b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0"
@@ -227,7 +226,7 @@ mod tests {
 
     #[test]
     fn empty_blob_sha256_length_and_oid() {
-        let d = hash_object(ObjectFormat::Sha256, "blob", b"");
+        let d = hash_object(ObjectFormat::Sha256, "blob", b"").unwrap();
         assert_eq!(d.format(), ObjectFormat::Sha256);
         assert_eq!(d.as_bytes().len(), 32);
         assert_eq!(
@@ -239,19 +238,19 @@ mod tests {
     #[test]
     fn hasher_incremental_matches_one_shot() {
         let payload = b"incremental hashing must match one-shot";
-        let one_shot = hash_bytes(ObjectFormat::Sha1, payload);
+        let one_shot = hash_bytes(ObjectFormat::Sha1, payload).unwrap();
 
         let mut h = Hasher::new(ObjectFormat::Sha1);
         h.update(&payload[..10]);
         h.update(&payload[10..20]);
         h.update(&payload[20..]);
-        assert_eq!(h.finalize(), one_shot);
+        assert_eq!(h.finalize().unwrap(), one_shot);
     }
 
     #[test]
     fn hash_object_incremental_matches_one_shot() {
         let payload = b"split header and body updates";
-        let whole = hash_object(ObjectFormat::Sha1, "blob", payload);
+        let whole = hash_object(ObjectFormat::Sha1, "blob", payload).unwrap();
 
         let mut h = Hasher::new(ObjectFormat::Sha1);
         h.update(b"blob");
@@ -260,7 +259,7 @@ mod tests {
         h.update(&[0]);
         h.update(&payload[..payload.len() / 2]);
         h.update(&payload[payload.len() / 2..]);
-        assert_eq!(h.finalize(), whole);
+        assert_eq!(h.finalize().unwrap(), whole);
     }
 
     #[test]
@@ -285,22 +284,28 @@ mod tests {
     #[test]
     fn nul_bytes_in_payload_are_hashed_as_payload() {
         let payload = b"before\x00after";
-        let d = hash_object(ObjectFormat::Sha1, "blob", payload);
+        let d = hash_object(ObjectFormat::Sha1, "blob", payload).unwrap();
         let mut h = Hasher::new(ObjectFormat::Sha1);
         h.update(b"blob");
         h.update(b" ");
         h.update(payload.len().to_string().as_bytes());
         h.update(&[0]);
         h.update(payload);
-        assert_eq!(d, h.finalize());
-        assert_ne!(d, hash_object(ObjectFormat::Sha1, "blob", b"before"));
-        assert_ne!(d, hash_object(ObjectFormat::Sha1, "blob", b"beforeafter"));
+        assert_eq!(d, h.finalize().unwrap());
+        assert_ne!(
+            d,
+            hash_object(ObjectFormat::Sha1, "blob", b"before").unwrap()
+        );
+        assert_ne!(
+            d,
+            hash_object(ObjectFormat::Sha1, "blob", b"beforeafter").unwrap()
+        );
     }
 
     #[test]
     fn large_payload_stress() {
         let payload: Vec<u8> = (0..64 * 1024).map(|i| (i % 251) as u8).collect();
-        let whole = hash_object(ObjectFormat::Sha1, "blob", &payload);
+        let whole = hash_object(ObjectFormat::Sha1, "blob", &payload).unwrap();
 
         let mut h = Hasher::new(ObjectFormat::Sha1);
         h.update(b"blob");
@@ -310,7 +315,7 @@ mod tests {
         for chunk in payload.chunks(4096) {
             h.update(chunk);
         }
-        assert_eq!(h.finalize(), whole);
+        assert_eq!(h.finalize().unwrap(), whole);
     }
 
     #[test]
@@ -322,10 +327,10 @@ mod tests {
     #[test]
     fn type_token_changes_oid() {
         let payload = b"same-bytes";
-        let blob = hash_object(ObjectFormat::Sha1, "blob", payload);
-        let tree = hash_object(ObjectFormat::Sha1, "tree", payload);
-        let commit = hash_object(ObjectFormat::Sha1, "commit", payload);
-        let tag = hash_object(ObjectFormat::Sha1, "tag", payload);
+        let blob = hash_object(ObjectFormat::Sha1, "blob", payload).unwrap();
+        let tree = hash_object(ObjectFormat::Sha1, "tree", payload).unwrap();
+        let commit = hash_object(ObjectFormat::Sha1, "commit", payload).unwrap();
+        let tag = hash_object(ObjectFormat::Sha1, "tag", payload).unwrap();
         assert_ne!(blob, tree);
         assert_ne!(blob, commit);
         assert_ne!(blob, tag);
@@ -335,11 +340,11 @@ mod tests {
     #[test]
     fn sha256_incremental_matches_one_shot() {
         let payload = b"sha256 split updates";
-        let one = hash_bytes(ObjectFormat::Sha256, payload);
+        let one = hash_bytes(ObjectFormat::Sha256, payload).unwrap();
         let mut h = Hasher::new(ObjectFormat::Sha256);
         h.update(&payload[..5]);
         h.update(&payload[5..]);
-        assert_eq!(h.finalize(), one);
+        assert_eq!(h.finalize().unwrap(), one);
         assert_eq!(one.as_bytes().len(), 32);
     }
 
@@ -348,9 +353,37 @@ mod tests {
         assert!(Digest::from_bytes(ObjectFormat::Sha1, &[0u8; 32]).is_err());
         assert!(Digest::from_bytes(ObjectFormat::Sha256, &[0u8; 20]).is_err());
     }
+
+    #[test]
+    fn sha1_collision_error_message_names_obj004() {
+        let msg = HashError::Sha1Collision.to_string();
+        assert!(msg.contains("OBJ-004"));
+        assert!(msg.contains("detect+refuse"));
+        assert!(msg.contains("Impossible"));
+    }
+
+    /// SHAttered PDF (file-level identical-prefix attack) must trip detect+refuse
+    /// on the raw byte stream — proves `sha1collisiondetection` is wired.
+    ///
+    /// Honesty: wrapping the same PDF as `blob <size>\\0` + payload shifts
+    /// SHA-1 block alignment, so this particular *file* collision may not flag
+    /// as a *git-object* collision (and the two SHAttered PDFs also cease to
+    /// share an OID once a common header is prefixed). Object-format attacks
+    /// crafted against the header||payload stream are still refused when CD
+    /// fires on that stream — same engine, Claimed detect+refuse.
+    #[test]
+    fn refuses_shattered_pdf_fixture_when_present() {
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/shattered-1.pdf");
+        if !path.is_file() {
+            return;
+        }
+        let bytes = std::fs::read(&path).expect("read shattered fixture");
+        let err = hash_bytes(ObjectFormat::Sha1, &bytes).expect_err("must detect collision");
+        assert_eq!(err, HashError::Sha1Collision);
+    }
 }
 
-// Tiny hex helper for tests only (avoid extra dep in unit tests of known vectors).
 #[cfg(test)]
 mod hex {
     pub fn encode_lower(bytes: &[u8]) -> String {
