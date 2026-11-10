@@ -1,8 +1,8 @@
 //! Existing git porcelain/plumbing match — preserved wiring for Claimed gates.
 //! Invoked by the Registry GitPorcelainLayer (and OverlapFacade git rank-0).
 //!
-//! Inventory matches Spec tip `c5f977a` CLI surface; later matrix leaves land
-//! in separate commits (not factory skeleton).
+//! Inventory tracks the CLI matrix / host-skew Partial leaves; factory skeleton
+//! stays separate from matrix body fills.
 
 use crate::cmd;
 use crate::error::{CliError, CliResult};
@@ -62,6 +62,7 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "shortlog" => cmd::cmd_shortlog(args),
         "config" => cmd::cmd_config(args),
         "credential" => cmd::cmd_credential(args),
+        "credential-store" => cmd::cmd_credential_store(args),
         "credential-wincred" => cmd::cmd_credential_wincred(args),
         "credential-libsecret" => cmd::cmd_credential_libsecret(args),
         "credential-osxkeychain" => cmd::cmd_credential_osxkeychain(args),
@@ -115,6 +116,50 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "count-objects" => cmd::cmd_count_objects(args),
         "pack-refs" => cmd::cmd_pack_refs(args),
         "verify-tag" => cmd::cmd_verify_tag(args),
+        // Pin matrix Partial fills (help + refuse depth; design ≠ Claimed).
+        "show-index" => cmd::cmd_show_index(args),
+        "check-attr" => cmd::cmd_check_attr(args),
+        "merge-file" => cmd::cmd_merge_file(args),
+        "merge-tree" => cmd::cmd_merge_tree(args),
+        "hook" => cmd::cmd_hook(args),
+        "unpack-objects" => cmd::cmd_unpack_objects(args),
+        "verify-pack" => cmd::cmd_verify_pack(args),
+        "show-branch" => cmd::cmd_show_branch(args),
+        "check-mailmap" => cmd::cmd_check_mailmap(args),
+        "column" => cmd::cmd_column(args),
+        "for-each-repo" => cmd::cmd_for_each_repo(args),
+        "fmt-merge-msg" => cmd::cmd_fmt_merge_msg(args),
+        "interpret-trailers" => cmd::cmd_interpret_trailers(args),
+        "mailinfo" => cmd::cmd_mailinfo(args),
+        "mailsplit" => cmd::cmd_mailsplit(args),
+        "get-tar-commit-id" => cmd::cmd_get_tar_commit_id(args),
+        "unpack-file" => cmd::cmd_unpack_file(args),
+        "request-pull" => cmd::cmd_request_pull(args),
+        "bugreport" => cmd::cmd_bugreport(args),
+        "diagnose" => cmd::cmd_diagnose(args),
+        "pack-redundant" => cmd::cmd_pack_redundant(args),
+        "shell" => cmd::cmd_shell(args),
+        "upload-archive" => cmd::cmd_upload_archive(args),
+        "commit-graph" => cmd::cmd_commit_graph(args),
+        "multi-pack-index" => cmd::cmd_multi_pack_index(args),
+        "rerere" => cmd::cmd_rerere(args),
+        "subtree" => cmd::cmd_subtree(args),
+        "fast-export" => cmd::cmd_fast_export(args),
+        "fast-import" => cmd::cmd_fast_import(args),
+        "fetch-pack" => cmd::cmd_fetch_pack(args),
+        "send-pack" => cmd::cmd_send_pack(args),
+        "http-fetch" => cmd::cmd_http_fetch(args),
+        "http-push" => cmd::cmd_http_push(args),
+        // Host-skew Partial (newer Git-for-Windows; pin 2.39.5 lacked these).
+        // Note: `repo` stays OverlapFacade (not host-skew git-repo info).
+        "refs" => cmd::cmd_refs(args),
+        "survey" => cmd::cmd_survey(args),
+        "last-modified" => cmd::cmd_last_modified(args),
+        "history" => cmd::cmd_history(args),
+        "replay-exp" => cmd::cmd_replay_exp(args),
+        "diff-pairs" => cmd::cmd_diff_pairs(args),
+        "format-rev" => cmd::cmd_format_rev(args),
+        "url-parse" => cmd::cmd_url_parse(args),
         "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
