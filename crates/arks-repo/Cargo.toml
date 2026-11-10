@@ -1,0 +1,19 @@
+[package]
+name = "arks-repo"
+description = "Repository discovery/layout; composes store + refs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+arks-store = { workspace = true }
+arks-refs = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

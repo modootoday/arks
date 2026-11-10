@@ -1,0 +1,33 @@
+[package]
+name = "arks-lease"
+description = "Default product lease runtime (L1/L2) + L3 claimed-shape + M26 shared-index path"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[features]
+default = []
+# Opt-in L3 valve — enabling the feature alone does not force HighConcurrency as sole path.
+# WriterMode::HighConcurrency remains refused until M23 unlock receipts.
+high-concurrency = []
+# G22 clean-room stress: enable arks-store celir-index companion (default OFF).
+# Does NOT enable CELIR as ObjectStore. Cite sot:root/celir-index-contention-clean-room.
+celir-index-stress = ["arks-store/celir-index"]
+
+[dependencies]
+thiserror = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+arks-hash = { workspace = true }
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+arks-index = { workspace = true }
+arks-store = { workspace = true }
+arks-refs = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+arks-index = { workspace = true }

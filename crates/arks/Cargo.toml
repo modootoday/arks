@@ -1,0 +1,30 @@
+[package]
+name = "arks"
+description = "arks for Git — Wave L+H+Pa+Pb CLI (not production; production = M9)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "arks"
+path = "src/main.rs"
+
+[dependencies]
+arks-hash = { workspace = true }
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+arks-store = { workspace = true }
+arks-refs = { workspace = true }
+arks-index = { workspace = true }
+arks-repo = { workspace = true }
+arks-remote = { workspace = true }
+arks-server = { workspace = true }
+arks-pack = { workspace = true }
+arks-lease = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -1,0 +1,17 @@
+[package]
+name = "arks-pack"
+description = "Git pack and idx version 2 encode/decode for the claimed subset"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+arks-hash = { workspace = true }
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+crc32fast = { workspace = true }
+flate2 = { workspace = true }
+thiserror = { workspace = true }

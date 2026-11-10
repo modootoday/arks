@@ -1,0 +1,17 @@
+[package]
+name = "arks-index"
+description = "Git index file (gitformat-index) read/write for claimed versions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+arks-hash = { workspace = true }
+arks-oid = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

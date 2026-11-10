@@ -1,0 +1,74 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/arks-hash",
+    "crates/arks-oid",
+    "crates/arks-object",
+    "crates/arks-store",
+    "crates/arks-refs",
+    "crates/arks-index",
+    "crates/arks-repo",
+    "crates/arks-protocol",
+    "crates/arks-pack",
+    "crates/arks-remote",
+    "crates/arks-lease",
+    "crates/arks-server",
+    "crates/arks",
+]
+default-members = [
+    "crates/arks-hash",
+    "crates/arks-oid",
+    "crates/arks-object",
+    "crates/arks-store",
+    "crates/arks-refs",
+    "crates/arks-index",
+    "crates/arks-repo",
+    "crates/arks-protocol",
+    "crates/arks-pack",
+    "crates/arks-remote",
+    "crates/arks-lease",
+    "crates/arks-server",
+    "crates/arks",
+]
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+rust-version = "1.85"
+version = "0.0.0"
+repository = "https://github.com/humanymous/gir"
+
+[workspace.dependencies]
+arks-hash = { path = "crates/arks-hash" }
+arks-oid = { path = "crates/arks-oid" }
+arks-object = { path = "crates/arks-object" }
+arks-store = { path = "crates/arks-store" }
+arks-refs = { path = "crates/arks-refs" }
+arks-index = { path = "crates/arks-index" }
+arks-repo = { path = "crates/arks-repo" }
+arks-protocol = { path = "crates/arks-protocol" }
+arks-pack = { path = "crates/arks-pack" }
+arks-remote = { path = "crates/arks-remote" }
+arks-lease = { path = "crates/arks-lease" }
+arks-server = { path = "crates/arks-server" }
+arks = { path = "crates/arks" }
+crc32fast = "1.4"
+flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
+sha1 = { version = "0.10", default-features = false, features = ["asm"] }
+sha2 = { version = "0.10", default-features = false }
+thiserror = "2.0"
+tempfile = "3"
+ureq = { version = "2.12", default-features = false, features = ["tls"] }
+
+[profile.dev]
+# Keep host advisory builds light when many agents share the machine.
+incremental = true
+
+[profile.release]
+# M17 / G19: tighten release codegen for clean-room comparative timings.
+# thin LTO: fat LTO + codegen-units=1 SIGKILL (137) under Docker Desktop peak RSS.
+lto = "thin"
+codegen-units = 8
+opt-level = 3
+strip = true
+panic = "abort"

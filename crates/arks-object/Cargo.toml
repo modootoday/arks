@@ -1,0 +1,17 @@
+[package]
+name = "arks-object"
+description = "Loose Git object encode/decode for claimed object kinds"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+arks-hash = { workspace = true }
+arks-oid = { workspace = true }
+flate2 = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]

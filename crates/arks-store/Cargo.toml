@@ -1,0 +1,30 @@
+[package]
+name = "arks-store"
+description = "Git-first object-store facade (put/get/exists); optional CELIR index companion"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[features]
+default = []
+# Optional indexing-service path-deps (product-private indexes only). Default OFF.
+# Does NOT enable a CELIR ObjectStore backend.
+celir-index = ["dep:celir-index", "dep:celir-index-runtime", "dep:celir-data"]
+
+[dependencies]
+arks-hash = { workspace = true }
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+arks-pack = { workspace = true }
+thiserror = { workspace = true }
+# discrete-circuit local tree (index-only). Paths verified against packages/celir-index
+# and crates/celir-index-runtime. Cite pin ef6ca5af… / tip retaining indexing-service.md.
+celir-index = { path = "../../../discrete-circuit/packages/celir-index", optional = true }
+celir-index-runtime = { path = "../../../discrete-circuit/crates/celir-index-runtime", optional = true }
+celir-data = { path = "../../../discrete-circuit/packages/celir-data", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
