@@ -9,10 +9,10 @@ cd "$ROOT"
 
 COMPOSE=(docker compose -f verify/docker-compose.yml)
 # Required core; expand list only when matrix-l8-e2e.md says so.
-GATES=(g14 g16)
+GATES=(g14 g16 g20 g21)
 
 # Host Tee/redirects on Windows fail with exit 4294967295 if out/ is missing.
-mkdir -p verify/gates/g14/out verify/gates/g16/out
+mkdir -p verify/gates/g14/out verify/gates/g16/out verify/gates/g20/out verify/gates/g21/out
 
 echo "L8 e2e: sequential clean-room gates: ${GATES[*]}"
 echo "L8 e2e: CARGO_BUILD_JOBS stays compose default (1); one gate at a time"
@@ -34,4 +34,4 @@ for g in "${GATES[@]}"; do
 done
 
 echo "L8 e2e: ALL REQUIRED PASS (${pass}/${#GATES[@]})"
-echo "L8 e2e: next expand per matrix-l8-e2e.md (g20/g21) when ready"
+echo "L8 e2e: optional later layers per matrix-l8-e2e.md (g7/g15/g35/g37) — sequential only"

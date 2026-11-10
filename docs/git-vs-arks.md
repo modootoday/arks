@@ -36,7 +36,9 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 |------|-----|------|--------|
 | Native CLI on same `.git` | Yes | Yes (in-engine; no product-path `git` wrapper) | **Claimed** (M9 / G14) |
 | Everyday porcelain (`add`/`commit`/`status`/`log`/branch/checkout/…) | Yes | Yes for claimed inventory | **Claimed** (M9–M16) |
+| Full CLI inventory + flag symmetry (pin) | Yes | Implement or N/A exclusion (M16 bar) | **Claimed** (G20 / G21) |
 | `git` → `arks` alias drop-in | N/A | Documented alias; muscle-memory argv | **Claimed** (M16 / G21) |
+| Clean-room journey catalog (19 scenarios) | Oracle peer | Func PASS in Docker G16 | **Claimed** (G16 / G19 venue) |
 | Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | Yes | Out of non-interactive agent bar | **N/A** |
 | GUI (`gitk`, `git-gui`) / Git LFS / `scalar` | Available as separate tools | Out of product | **N/A** |
 
@@ -48,6 +50,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | SSH clone/fetch/push (OpenSSH helper) | Yes | Yes | **Claimed** |
 | Client `git://` | Yes | Yes | **Claimed** (host wire; ladder L2) |
 | Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE subset) | **Claimed** (host wire; ladder L3) |
+| Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
 | Partial-clone `--filter` / promisor | Yes | Refused; not claimed | **N/A** (R3 / L6 honest N/A) |
 | Forge OAuth / Checks / merge-queue UX | Via host tools | Out of product | **N/A** / **Refuse** |
@@ -82,8 +85,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 
 ## Product-completion DoD (ladder)
 
-1. **L8** — Clean-room Docker multi-scenario git↔arks e2e suite fully green (not host-only smoke).
-2. **L_final** — This comparison matrix finished and kept honest against Specfold.
+1. **L8** — **Done**: clean-room Docker suite `g14`→`g16`→`g20`→`g21` PASS (see [matrix-l8-e2e](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-l8-e2e.md)).
+2. **L_final** — **Done**: this comparison matrix ships on Pages; keep honest against Specfold residuals (never invent Claimed).
 3. **L9** — Remains closed owner policy unless the owner opens it.
 
 See the ladder research in-tree: [product-completion-goal-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110095142-product-completion-goal-ladder.research.md). Limits summary: [Limits](../limits/).

@@ -70,7 +70,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 | **L6** | Partial-clone filter/promisor (**R3**) | N/A | **Done (honest N/A)** — SoT remains `--depth` only; CLI refuses `--filter`; **no** filter/promisor Claimed/PASS; reopen = SoT amend beyond `--depth` + wire + G35-class re-verify | Ladder close ≠ product claim |
 | **L7** | OpenPGP / X.509 / `tag -s` (**R4**) | N/A | **Done (honest N/A)** — FW-GPGSIG stays SSH commit create/verify only; CLI refuses `tag -s`/`-u`, OpenPGP/`gpg.format=openpgp`, X.509, and `verify-tag`; **no** signed-tag / OpenPGP / X.509 Claimed/PASS; reopen = dedicated crypto harness SoT + wire + G37-class re-verify | Ladder close ≠ product claim |
 | **L8** | Clean-room Docker multi-scenario git↔arks e2e | Verify DoD | **Done** — sequential Docker PASS: `g14`, `g16` (19 journeys), `g20`, `g21` per `verify/matrices/matrix-l8-e2e.md` / `verify/scripts/run-l8-e2e.sh`; host CI ≠ Verified substitute; no invent PASS | True product-completion bar |
-| **L_final** | Finished git↔arks feature comparison matrix | Docs / DoD | **In progress** — public `docs/git-vs-arks.md` + Specfold-backed Claimed/N/A/reopen rows; must stay honest vs residual register | Human deliverable |
+| **L_final** | Finished git↔arks feature comparison matrix | Docs / DoD | **Done** — public `docs/git-vs-arks.md` + nav + Specfold-backed Claimed/N/A/reopen rows; must stay honest vs residual register (never invent Claimed) | Human deliverable |
 | **R6 note** | Clean-room Git pin (**2.39.5**) | Process | Remains **process-closed** ([[sot:root/clean-room-git-pin-advance]]); deliberate pin bump + G14-class re-prove when advancing — **not** the L8 product DoD | Residual reopen-only |
 | **L9** | crates.io / docs.rs publish timing | Owner policy | Closed default in [[sot:root/public-surface]] | Not a residual Open |
 
@@ -84,7 +84,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 
 ### Execution note (this round)
 
-**L0–L8 Done.** L8 = clean-room Docker multi-scenario e2e green (`g14`+`g16`+`g20`+`g21`). **Next:** **L_final** finish/polish honest git↔arks comparison (`docs/git-vs-arks.md` + Specfold parity). **L9** closed. **R6** pin process-closed.
+**L0–L8 + L_final Done.** L8 = clean-room Docker multi-scenario e2e green (`g14`+`g16`+`g20`+`g21`). L_final = honest public comparison (`docs/git-vs-arks.md`). **L9** stays closed owner policy. **R6** pin process-closed. Product-completion ladder DoD met without inventing Claimed/PASS.
 
 ## Verification
 
