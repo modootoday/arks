@@ -10,8 +10,9 @@ description: >
 
 ## Preconditions
 
-- Read rules `30-no-git-gh-subprocess`, `32-cli-personality`, `33-serve-vs-hub`, `28-evidence-honesty`.
+- Read rules `30-no-git-gh-subprocess`, `32-cli-personality`, `33-serve-vs-hub`, `34-ports-normative-vs-demo`, `28-evidence-honesty`, `29-stub-vs-claimed`.
 - Owning SoTs: `arks-cli-personality-factory`, `arks-cli-output-exit-contract`, `arks-self-host-server`, `arks-hub-product-intent`, `arks-daemon-product-intent`.
+- Related skills: `review-product-subprocess`, `self-host-serve`.
 
 ## Checklist
 
