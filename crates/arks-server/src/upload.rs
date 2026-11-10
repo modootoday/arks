@@ -86,10 +86,12 @@ pub fn upload_pack_result_with_nak(
     }
 }
 
-
 /// When every `want` is present in a single on-disk pack+idx, return that pack's
 /// bytes. Extra objects in the pack are fine (client did not request thin-pack).
-fn try_reuse_on_disk_pack(repo: &Repository, wants: &[Oid]) -> Result<Option<Vec<u8>>, ServerError> {
+fn try_reuse_on_disk_pack(
+    repo: &Repository,
+    wants: &[Oid],
+) -> Result<Option<Vec<u8>>, ServerError> {
     let pack_dir = repo.store().objects_dir().join("pack");
     if !pack_dir.is_dir() {
         return Ok(None);
