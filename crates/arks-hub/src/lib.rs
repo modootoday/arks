@@ -83,6 +83,9 @@ COMMANDS:
     pr            Pull requests (local hub REST Partial)
     issue         Issues (local hub REST Partial)
     repo          Repositories (local hub REST Partial)
+    label         Labels (local hub REST Partial)
+    org           Organizations list (local Partial)
+    search        Search repos|issues|prs (local Partial)
     api           Raw HTTP against ARKS_HUB_API
     status        Aggregated status (Partial)
     co            Alias for pr checkout
@@ -126,6 +129,9 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "pr" => cmd_pr(&args[1..]),
         "issue" => cmd_issue(&args[1..]),
         "repo" => cmd_repo(&args[1..]),
+        "label" => cmd_label(&args[1..]),
+        "org" => cmd_org(&args[1..]),
+        "search" => cmd_search(&args[1..]),
         "api" => cmd_api(&args[1..]),
         "status" => cmd_status(&args[1..]),
         "co" => {
@@ -700,6 +706,190 @@ fn cmd_repo(args: &[String]) -> ExitCode {
         }
         other => {
             eprintln!("arks hub repo {other}: not claimed beyond list/view/create Partial");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_label(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    match sub {
+        "" | "-h" | "--help" => {
+            eprintln!("arks hub label — list|create (local hub REST Partial)");
+            ExitCode::SUCCESS
+        }
+        "list" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub label list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub label list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let path = format!("/repos/{owner}/{repo}/labels");
+            match http_exchange(&base, "GET", &path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub label list: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "create" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub label create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub label create: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let name = flag_value(args, &["--name", "-n"])
+                .or_else(|| {
+                    args.iter()
+                        .skip(1)
+                        .find(|a| !a.starts_with('-'))
+                        .map(String::as_str)
+                })
+                .unwrap_or("label");
+            let color = flag_value(args, &["--color"]).unwrap_or("ededed");
+            let desc = flag_value(args, &["--description", "-d"]).unwrap_or("");
+            let payload = format!(
+                r#"{{"name":{},"color":{},"description":{}}}"#,
+                serde_json::to_string(name).unwrap(),
+                serde_json::to_string(color).unwrap(),
+                serde_json::to_string(desc).unwrap()
+            );
+            let path = format!("/repos/{owner}/{repo}/labels");
+            match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub label create: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub label {other}: not claimed beyond list/create Partial");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_org(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("list");
+    match sub {
+        "" | "list" | "-h" | "--help" => {
+            if matches!(sub, "-h" | "--help") {
+                eprintln!("arks hub org — list (local Partial; unique owners from /orgs)");
+                return ExitCode::SUCCESS;
+            }
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub org list: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            match http_exchange(&base, "GET", "/orgs", Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub org list: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub org {other}: not claimed beyond list Partial");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_search(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    match sub {
+        "" | "-h" | "--help" => {
+            eprintln!("arks hub search — repos|issues|prs <query> (local Partial)");
+            ExitCode::SUCCESS
+        }
+        "repos" | "issues" | "prs" | "pulls" => {
+            let kind = if sub == "prs" { "pulls" } else { sub };
+            let q = args
+                .iter()
+                .skip(1)
+                .find(|a| !a.starts_with('-'))
+                .cloned()
+                .unwrap_or_default();
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub search: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let enc: String = q
+                .bytes()
+                .map(|b| match b {
+                    b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' => {
+                        (b as char).to_string()
+                    }
+                    b' ' => "+".into(),
+                    _ => format!("%{b:02X}"),
+                })
+                .collect();
+            let path = format!("/search/{kind}?q={enc}");
+            match http_exchange(&base, "GET", &path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    println!("{body}");
+                    if code >= 400 {
+                        ExitCode::from(1)
+                    } else {
+                        ExitCode::SUCCESS
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub search: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        other => {
+            eprintln!("arks hub search {other}: use repos|issues|prs (Partial)");
             ExitCode::from(2)
         }
     }

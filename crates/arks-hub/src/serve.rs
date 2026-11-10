@@ -5,7 +5,7 @@
 //! `127.0.0.1:3920`. Never spawns git/gh. No TLS Claimed.
 
 use crate::http_min::{bearer_token, read_http_request, write_http_response};
-use crate::store::{HubStore, now_secs};
+use crate::store::HubStore;
 use serde_json::{Value, json};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
@@ -164,8 +164,18 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
         .split_once('?')
         .map(|(p, q)| (p.to_string(), q.to_string()))
         .unwrap_or((req.path.clone(), String::new()));
-    let _ = query;
-    let _ = now_secs;
+    let query_q = query
+        .split('&')
+        .filter_map(|pair| {
+            let (k, v) = pair.split_once('=')?;
+            if k == "q" {
+                Some(urlencoding_lite_decode(v))
+            } else {
+                None
+            }
+        })
+        .next()
+        .unwrap_or_default();
 
     let mut st = store.lock().map_err(|_| "store lock poisoned".to_string())?;
     // Health is unauthenticated.
@@ -397,7 +407,136 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                 }
                 return respond(&mut stream, 404, &json!({"message":"Not Found"}));
             }
+            if parts.len() == 3 && parts[2] == "labels" {
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .labels
+                        .iter()
+                        .filter(|l| l.owner == owner && l.repo == repo)
+                        .map(|l| {
+                            json!({
+                                "id": l.id,
+                                "name": l.name,
+                                "color": l.color,
+                                "description": l.description,
+                            })
+                        })
+                        .collect();
+                    return respond(&mut stream, 200, &Value::Array(items));
+                }
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("label");
+                    let color = v.get("color").and_then(|x| x.as_str()).unwrap_or("ededed");
+                    let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
+                    let label = st.create_label(owner, repo, name, color, desc);
+                    st.save()?;
+                    return respond(
+                        &mut stream,
+                        201,
+                        &json!({
+                            "id": label.id,
+                            "name": label.name,
+                            "color": label.color,
+                            "description": label.description,
+                        }),
+                    );
+                }
+            }
         }
+    }
+
+    // GET /orgs — unique owners from local repos (Partial).
+    if req.method == "GET" && path == "/orgs" {
+        let mut owners: Vec<String> = st.db.repos.iter().map(|r| r.owner.clone()).collect();
+        owners.sort();
+        owners.dedup();
+        let items: Vec<Value> = owners
+            .into_iter()
+            .map(|login| json!({"login": login, "type": "Organization"}))
+            .collect();
+        return respond(&mut stream, 200, &Value::Array(items));
+    }
+
+    // GET /search/{repos|issues|pulls}?q=… — local substring filter (Partial).
+    if req.method == "GET" && path.starts_with("/search/") {
+        let kind = path.trim_start_matches("/search/");
+        let q = query_q.to_ascii_lowercase();
+        let items = match kind {
+            "repos" => {
+                let arr: Vec<Value> = st
+                    .db
+                    .repos
+                    .iter()
+                    .filter(|r| {
+                        q.is_empty()
+                            || r.name.to_ascii_lowercase().contains(&q)
+                            || r.description.to_ascii_lowercase().contains(&q)
+                            || r.owner.to_ascii_lowercase().contains(&q)
+                    })
+                    .map(|r| {
+                        json!({
+                            "id": r.id,
+                            "name": r.name,
+                            "full_name": format!("{}/{}", r.owner, r.name),
+                            "description": r.description,
+                        })
+                    })
+                    .collect();
+                json!({"total_count": arr.len(), "items": arr})
+            }
+            "issues" => {
+                let arr: Vec<Value> = st
+                    .db
+                    .issues
+                    .iter()
+                    .filter(|i| {
+                        q.is_empty()
+                            || i.title.to_ascii_lowercase().contains(&q)
+                            || i.body.to_ascii_lowercase().contains(&q)
+                    })
+                    .map(|i| {
+                        json!({
+                            "number": i.number,
+                            "title": i.title,
+                            "state": i.state,
+                            "repository_url": format!("/repos/{}/{}", i.owner, i.repo),
+                        })
+                    })
+                    .collect();
+                json!({"total_count": arr.len(), "items": arr})
+            }
+            "pulls" | "prs" => {
+                let arr: Vec<Value> = st
+                    .db
+                    .pulls
+                    .iter()
+                    .filter(|p| {
+                        q.is_empty()
+                            || p.title.to_ascii_lowercase().contains(&q)
+                            || p.body.to_ascii_lowercase().contains(&q)
+                    })
+                    .map(|p| {
+                        json!({
+                            "number": p.number,
+                            "title": p.title,
+                            "state": p.state,
+                            "repository_url": format!("/repos/{}/{}", p.owner, p.repo),
+                        })
+                    })
+                    .collect();
+                json!({"total_count": arr.len(), "items": arr})
+            }
+            other => {
+                return respond(
+                    &mut stream,
+                    404,
+                    &json!({"message": format!("search kind `{other}` not claimed (Partial)")}),
+                );
+            }
+        };
+        return respond(&mut stream, 200, &items);
     }
 
     respond(
@@ -405,6 +544,43 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
         404,
         &json!({"message":"Not Found","path": path, "method": req.method}),
     )
+}
+
+/// Minimal percent-decode for `q=` (Partial; spaces via `+` or `%20`).
+fn urlencoding_lite_decode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'+' => {
+                out.push(' ');
+                i += 1;
+            }
+            b'%' if i + 2 < bytes.len() => {
+                let h = |c: u8| -> Option<u8> {
+                    match c {
+                        b'0'..=b'9' => Some(c - b'0'),
+                        b'a'..=b'f' => Some(c - b'a' + 10),
+                        b'A'..=b'F' => Some(c - b'A' + 10),
+                        _ => None,
+                    }
+                };
+                if let (Some(hi), Some(lo)) = (h(bytes[i + 1]), h(bytes[i + 2])) {
+                    out.push((hi << 4 | lo) as char);
+                    i += 3;
+                } else {
+                    out.push('%');
+                    i += 1;
+                }
+            }
+            c => {
+                out.push(c as char);
+                i += 1;
+            }
+        }
+    }
+    out
 }
 
 fn respond(stream: &mut TcpStream, status: u16, body: &serde_json::Value) -> Result<(), String> {

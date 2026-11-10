@@ -10,11 +10,14 @@ pub struct HubDb {
     pub next_issue: u64,
     pub next_pr: u64,
     pub next_repo: u64,
+    pub next_label: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
     pub issues: Vec<Issue>,
     pub pulls: Vec<Pull>,
+    #[serde(default)]
+    pub labels: Vec<Label>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,6 +53,16 @@ pub struct Pull {
     pub user: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Label {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+    pub color: String,
+    pub description: String,
+}
+
 pub struct HubStore {
     path: PathBuf,
     pub db: HubDb,
@@ -78,6 +91,7 @@ impl HubStore {
                 next_issue: 1,
                 next_pr: 1,
                 next_repo: 1,
+                next_label: 1,
                 tokens: vec!["local-dev-token".into()],
                 user_login: "local".into(),
                 ..HubDb::default()
@@ -176,8 +190,34 @@ impl HubStore {
         self.db.repos.push(repo.clone());
         repo
     }
+
+    pub fn create_label(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        name: &str,
+        color: &str,
+        description: &str,
+    ) -> Label {
+        if self.db.next_label == 0 {
+            self.db.next_label = 1;
+        }
+        let id = self.db.next_label;
+        self.db.next_label += 1;
+        let label = Label {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: name.into(),
+            color: color.into(),
+            description: description.into(),
+        };
+        self.db.labels.push(label.clone());
+        label
+    }
 }
 
+#[allow(dead_code)] // reserved for future Partial timestamps on forge resources
 pub fn now_secs() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
