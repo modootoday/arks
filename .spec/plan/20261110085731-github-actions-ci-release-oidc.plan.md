@@ -79,5 +79,5 @@ Also present (unchanged): `github-pages`. Settings: https://github.com/modootoda
 
 1. Operator: bind trusted publishers per registry when ready to cut a real `v*` tag; approve Environments deliberately.
 2. Land npm / PyPI / gem wrapper packaging when product is publish-ready; flip `publish = false` only then.
-3. Product-completion ladder: **L6** / **R3** honest N/A closed (filter/promisor still N/A; CLI `--filter` refuse; never invent Claimed). Next **L7** / **R4** OpenPGP / X.509 / `tag -s` N/A unless crypto harness SoT amends; **L9** remains closed owner policy.
+3. Product-completion ladder: **L7** / **R4** honest N/A closed (OpenPGP / X.509 / `tag -s` still N/A; CLI refuse; never invent Claimed). Next **L8** / **R6** clean-room Git pin advance (process-closed at 2.39.5 until deliberate bump); **L9** remains closed owner policy.
 4. Optional later: `gha-advisory` journey exit-0 / trend jobs only under research §B labels — never as Verified.

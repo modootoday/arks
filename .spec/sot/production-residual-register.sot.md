@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-10T19:25:00Z
+updated: 2026-11-10T19:35:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential]
 verify: manual
 rel:
@@ -236,7 +236,7 @@ L3 ship is **M23** under [[adr:root/20261109194200]]. M21 catalog **Deferred=0**
 
 ### Post-terminal next-queue (reopen-only; not development Opens)
 
-After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (**L0–L6 Done**; L4 = OIDC/Environments dry-run ops readiness, **not** live registry publish PASS; L5 = secrets-gated forge-scale ops readiness / dry-run, **not** live forge latency PASS; L6 = **R3** honest N/A close — filter/promisor still **N/A**, CLI refuses `--filter`, **not** a partial-clone Claimed/PASS; next **L7** / **R4**). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
+After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (**L0–L7 Done**; L4 = OIDC/Environments dry-run ops readiness, **not** live registry publish PASS; L5 = secrets-gated forge-scale ops readiness / dry-run, **not** live forge latency PASS; L6 = **R3** honest N/A close — filter/promisor still **N/A**, CLI refuses `--filter`, **not** a partial-clone Claimed/PASS; L7 = **R4** honest N/A close — OpenPGP / X.509 / `tag -s` still **N/A**, CLI refuses signed-tag / non-SSH format / `verify-tag`, **not** a crypto Claimed/PASS; next **L8** / **R6**). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
 
 | Priority | Candidate | Disposition today | Reopen requires |
 |----------|-----------|-------------------|-----------------|
@@ -245,7 +245,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R1 | Client `git://` clone/fetch/push | **Claimed (host wire)** — [[sot:root/arks-remote]] v0.5.1; clone/fetch/push vs `arks daemon`; ladder **L2** | Optional clean-room matrix twin of G32 client lane; re-verify after wire change |
 | R2 | Dumb HTTP **push** | **Claimed (host wire)** — WebDAV write subset [[adr:root/20261110190000]]; [[sot:root/arks-remote]] v0.5.2 + [[sot:root/arks-server]] v0.3.1; ladder **L3** | Optional clean-room twin; re-verify after DAV/wire change |
 | R3 | Partial-clone filter / promisor | **N/A** (FW-G9); ladder **L6** Done as honest N/A (CLI `--filter` refuse; **≠** Claimed) | SoT amend beyond `--depth` + filter/promisor wire + G35-class re-verify |
-| R4 | OpenPGP / X.509 / `tag -s` | **N/A** (FW-GPGSIG) | Dedicated crypto harness SoT |
+| R4 | OpenPGP / X.509 / `tag -s` | **N/A** (FW-GPGSIG); ladder **L7** Done as honest N/A (CLI refuses `tag -s`/`-u`, OpenPGP/X.509 `commit -S`, `verify-tag`; **≠** Claimed) | Dedicated crypto harness SoT + wire + G37-class re-verify |
 | R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; ladder **L5** ops dry-run / readiness Done (Environment `g8-live` + workflow); **≠** live remasure PASS / product SLO | Secrets + receipt for any live samples; never invent latency |
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 

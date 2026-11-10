@@ -20,12 +20,8 @@ fn tag_positionals(args: &[String]) -> Vec<String> {
 }
 
 pub fn cmd_tag(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-d", "-a", "-s", "-m"])?;
-    if args.iter().any(|a| a == "-s") {
-        return Err(CliError::NotImplemented(
-            "signed tags (-s) not claimed".into(),
-        ));
-    }
+    refuse_unknown_flags(args, &["-d", "-a", "-s", "-m", "-u", "--local-user"])?;
+    refuse_signed_tag(args)?;
     let annotated = args.iter().any(|a| a == "-a");
     let mut message: Option<String> = None;
     let mut i = 0;
@@ -234,6 +230,24 @@ fn collect_loose_tag_names(
     Ok(())
 }
 
+/// Signed tags (`-s` / `-u`) remain N/A (residual R4 / FW-GPGSIG).
+/// Claimed signing subset is SSH commit `gpgsig` only ([[sot:root/arks-object]]).
+fn refuse_signed_tag(args: &[String]) -> CliResult<()> {
+    if args.iter().any(|a| {
+        *a == "-s"
+            || *a == "-u"
+            || *a == "--local-user"
+            || a.starts_with("--local-user=")
+            || a.starts_with("-u=")
+    }) {
+        return Err(CliError::NotImplemented(
+            "tag -s / -u (OpenPGP / X.509 signed tags) not claimed; SSH commit -S / verify-commit only"
+                .into(),
+        ));
+    }
+    Ok(())
+}
+
 fn peel_tag_target(repo: &arks_repo::Repository, oid: &arks_oid::Oid) -> CliResult<arks_oid::Oid> {
     let obj = repo.get_object(oid)?;
     if obj.kind != ObjectKind::Tag {
@@ -282,4 +296,30 @@ pub(crate) fn worktree_dirty(repo: &arks_repo::Repository) -> CliResult<bool> {
     let mut untracked = Vec::new();
     collect_untracked(&work, &work, &indexed, &mut untracked)?;
     Ok(!untracked.is_empty())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tag_refuses_signed_s_flag() {
+        let err = cmd_tag(&["-s".into(), "v1".into()]).expect_err("signed tag must refuse");
+        let s = err.to_string();
+        assert!(
+            s.contains("not claimed") && (s.contains("-s") || s.contains("signed")),
+            "unexpected refuse text: {s}"
+        );
+    }
+
+    #[test]
+    fn tag_refuses_local_user_flag() {
+        let err = cmd_tag(&["-u".into(), "alice@example.com".into(), "v1".into()])
+            .expect_err("-u must refuse");
+        let s = err.to_string();
+        assert!(
+            s.contains("not claimed") && s.contains("-u"),
+            "unexpected refuse text: {s}"
+        );
+    }
 }

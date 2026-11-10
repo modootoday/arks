@@ -44,7 +44,7 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ### Commit and tag signing?
 
-SSH create/verify for commit `gpgsig` may be used; OpenPGP, X.509, and `tag -s` are not claimed.
+SSH create/verify for commit `gpgsig` may be used; OpenPGP, X.509, and `tag -s` / `verify-tag` are not claimed (CLI refuses those paths).
 
 ### Credentials?
 

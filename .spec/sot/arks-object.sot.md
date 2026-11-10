@@ -3,7 +3,7 @@ id: sot:root/arks-object
 title: arks-object unit
 status: active
 created: 2026-11-08T09:18:28Z
-updated: 2026-11-10T08:00:00Z
+updated: 2026-11-10T19:35:00Z
 tags: [m1, m5, unit, objects, loose, tree, commit, ring-1, gpgsig, fw-gpgsig]
 verify: manual
 rel:
@@ -44,4 +44,5 @@ SSH signing is claimed via OpenSSH already pinned in the clean-room image.
 1. Host `cargo test -p arks-object` — advisory.
 2. Clean-room G0/G1 as before.
 3. FW-GPGSIG SSH create/verify: G37 evidence [[evidence:root/20261110073800]].
-4. `spec check` clean for this SoT.
+4. CLI MUST refuse `tag -s` / `-u`, `gpg.format=openpgp`/`x509` on `commit -S`, OpenPGP/X.509 armor on `verify-commit`, and `verify-tag` fail-closed (residual **R4** / ladder **L7** honest N/A). Refusing is **not** an OpenPGP / X.509 / signed-tag product claim.
+5. `spec check` clean for this SoT.

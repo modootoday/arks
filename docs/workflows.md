@@ -63,7 +63,7 @@ arks verify-commit HEAD
 ```
 
 > [!NOTE]
-> OpenPGP / X.509 / `tag -s` are not claimed — see [Limits](../limits/).
+> OpenPGP / X.509 / `tag -s` / `verify-tag` are not claimed (CLI refuses) — see [Limits](../limits/).
 
 ## Next
 
