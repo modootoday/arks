@@ -3,7 +3,7 @@ id: sot:root/clean-room-journey-compare
 title: Clean-room journey compare
 status: active
 created: 2026-11-08T18:24:57Z
-updated: 2026-11-10T02:47:00Z
+updated: 2026-11-10T03:54:00Z
 tags: [verification, docker, clean-room, journey, timing, perf, git-compat, observability, worktree, submodule, g17, g19]
 verify: manual
 rel:
@@ -21,7 +21,7 @@ rel:
     - adr:root/20261108083507
     - research:root/20261108073650
     - research:root/20261108071916
-  evidence: [evidence:root/20261108183045, evidence:root/20261108200811, evidence:root/20261109065018, evidence:root/20261108233610, evidence:root/20261109114207, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110110900, evidence:root/20261110111700, evidence:root/20261110113900, evidence:root/20261110114200]
+  evidence: [evidence:root/20261108183045, evidence:root/20261108200811, evidence:root/20261109065018, evidence:root/20261108233610, evidence:root/20261109114207, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110110900, evidence:root/20261110111700, evidence:root/20261110113900, evidence:root/20261110114200, evidence:root/20261110135100]
 ---
 
 # Clean-room journey compare
@@ -203,4 +203,4 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 | Live-remote journeys (G8) | **Claimed (default-on when secrets)** | [[adr:root/20261110220000]]; live when token+URL; SKIP when absent; prefer offline/local peer for ladder |
 | Path/`file://` clone lane | **Closed (v0.3.0; hardlink-prefer v0.4.0)** | **J-CLONE-PATH-01**; local path + same-host `file://` via hardlink-or-copy (not `--shared`; not piped upload-pack) |
 | Public Pages perf summary | **Closed (honesty)** | Allowed only with receipt + public-surface honesty; default keep under `.spec/evidence/` |
-| Pf5 aggressive ≤0.5× leftovers | **Claimed(partial 7/8) + Verified** | Claim amortization [[evidence:root/20261111001400]]; **tip remasure** (primary) `7a3d2dc` [[evidence:root/20261110113900]] (LOCAL **0.6703** / PATH **0.4615**); secondary/historical mimalloc tip remasure `97daecd` [[evidence:root/20261110114200]] (LOCAL **0.7363** / PATH **0.4789**; worse LOCAL; REVERT miss 0.6667; **NOT** primary); historical best-better-LOCAL `44dc566` [[evidence:root/20261110110900]] (LOCAL **0.6556** / PATH **0.4675**); prior tip `91fbf64` [[evidence:root/20261110111700]]; prior Verified `c1b0b24` [[evidence:root/20261110003836]] / `e466d56` [[evidence:root/20261110014600]]; prior 6/8 [[evidence:root/20261110234600]]; no silent keep-at-0.8 |
+| Pf5 aggressive ≤0.5× leftovers | **Claimed(partial 7/8) + Verified** | Claim amortization [[evidence:root/20261111001400]]; **tip remasure** (primary / carrying) `7a3d2dc` [[evidence:root/20261110113900]] (LOCAL **0.6703** / PATH **0.4615**); superseded-tip remasure `7305bb6` [[evidence:root/20261110135100]] (LOCAL **0.6818** / PATH **0.4627**; tip later `1a02559`); secondary/historical mimalloc tip remasure `97daecd` [[evidence:root/20261110114200]] (LOCAL **0.7363** / PATH **0.4789**; worse LOCAL; REVERT miss 0.6667; **NOT** primary); historical best-better-LOCAL `44dc566` [[evidence:root/20261110110900]] (LOCAL **0.6556** / PATH **0.4675**); prior tip `91fbf64` [[evidence:root/20261110111700]]; prior Verified `c1b0b24` [[evidence:root/20261110003836]] / `e466d56` [[evidence:root/20261110014600]]; prior 6/8 [[evidence:root/20261110234600]]; no silent keep-at-0.8 |

@@ -1,0 +1,284 @@
+G19: running G16 functional+timing baseline (iterations>=3, release)
+G16: stock git git version 2.39.5
+G16: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G16: CARGO_BUILD_JOBS=1
+G16: gix-exit scan
+G16: gix-exit OK
+G16: build arks binary (release; compile excluded from timings)
+G16: ARKS_JOURNEY_ITERATIONS=3
+G16: journey-compare suite (verify/gates/g16; release harness — lower RSS vs debug)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+G16 journey-compare functional PASS; iterations=3 aggregation=median_p95; metrics -> /workspace/verify/gates/g16/out/metrics.json
+  J-LOCAL-01 / git: functional=pass wall_ms_total=377 wall_ms_p95_total=Some(398) peak_rss_kb=Some(4760) cpu_ms=Some(0)
+  J-LOCAL-01 / arks: functional=pass wall_ms_total=152 wall_ms_p95_total=Some(154) peak_rss_kb=Some(6292) cpu_ms=Some(0)
+  J-BRANCH-01 / git: functional=pass wall_ms_total=344 wall_ms_p95_total=Some(358) peak_rss_kb=Some(4788) cpu_ms=Some(0)
+  J-BRANCH-01 / arks: functional=pass wall_ms_total=148 wall_ms_p95_total=Some(150) peak_rss_kb=Some(560) cpu_ms=Some(0)
+  J-MERGE-FF-01 / git: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(9) peak_rss_kb=Some(4572) cpu_ms=Some(0)
+  J-MERGE-FF-01 / arks: functional=pass wall_ms_total=2 wall_ms_p95_total=Some(4) peak_rss_kb=Some(228) cpu_ms=Some(0)
+  J-REBASE-01 / git: functional=pass wall_ms_total=23 wall_ms_p95_total=Some(27) peak_rss_kb=Some(5124) cpu_ms=Some(0)
+  J-REBASE-01 / arks: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(6) peak_rss_kb=Some(4504) cpu_ms=Some(0)
+  J-BUNDLE-01 / git: functional=pass wall_ms_total=350 wall_ms_p95_total=Some(357) peak_rss_kb=Some(4736) cpu_ms=Some(0)
+  J-BUNDLE-01 / arks: functional=pass wall_ms_total=148 wall_ms_p95_total=Some(148) peak_rss_kb=Some(416) cpu_ms=Some(0)
+  J-CLONE-LOCAL-01 / git: functional=pass wall_ms_total=88 wall_ms_p95_total=Some(119) peak_rss_kb=Some(4664) cpu_ms=Some(0)
+  J-CLONE-LOCAL-01 / arks: functional=pass wall_ms_total=60 wall_ms_p95_total=Some(76) peak_rss_kb=Some(4372) cpu_ms=Some(0)
+  J-CLONE-PATH-01 / git: functional=pass wall_ms_total=67 wall_ms_p95_total=Some(67) peak_rss_kb=Some(4816) cpu_ms=Some(10)
+  J-CLONE-PATH-01 / arks: functional=pass wall_ms_total=31 wall_ms_p95_total=Some(34) peak_rss_kb=Some(4644) cpu_ms=Some(20)
+  J-ALIAS-01 / alias: functional=pass wall_ms_total=152 wall_ms_p95_total=Some(153) peak_rss_kb=Some(6564) cpu_ms=Some(0)
+  J-WORKTREE-01 / git: functional=pass wall_ms_total=488 wall_ms_p95_total=Some(498) peak_rss_kb=Some(4780) cpu_ms=Some(0)
+  J-WORKTREE-01 / arks: functional=pass wall_ms_total=206 wall_ms_p95_total=Some(208) peak_rss_kb=Some(608) cpu_ms=Some(0)
+  J-TAG-01 / git: functional=pass wall_ms_total=198 wall_ms_p95_total=Some(219) peak_rss_kb=Some(24028) cpu_ms=Some(80)
+  J-TAG-01 / arks: functional=pass wall_ms_total=64 wall_ms_p95_total=Some(66) peak_rss_kb=Some(6800) cpu_ms=Some(0)
+  J-STASH-01 / git: functional=pass wall_ms_total=498 wall_ms_p95_total=Some(505) peak_rss_kb=Some(4968) cpu_ms=Some(10)
+  J-STASH-01 / arks: functional=pass wall_ms_total=212 wall_ms_p95_total=Some(215) peak_rss_kb=Some(5448) cpu_ms=Some(10)
+  J-CHERRY-01 / git: functional=pass wall_ms_total=86 wall_ms_p95_total=Some(99) peak_rss_kb=Some(4864) cpu_ms=Some(10)
+  J-CHERRY-01 / arks: functional=pass wall_ms_total=30 wall_ms_p95_total=Some(30) peak_rss_kb=Some(4144) cpu_ms=Some(0)
+  J-DIFF-01 / git: functional=pass wall_ms_total=173 wall_ms_p95_total=Some(175) peak_rss_kb=Some(4716) cpu_ms=Some(20)
+  J-DIFF-01 / arks: functional=pass wall_ms_total=75 wall_ms_p95_total=Some(77) peak_rss_kb=Some(6560) cpu_ms=Some(10)
+  J-RM-MV-01 / git: functional=pass wall_ms_total=650 wall_ms_p95_total=Some(776) peak_rss_kb=Some(4796) cpu_ms=Some(0)
+  J-RM-MV-01 / arks: functional=pass wall_ms_total=264 wall_ms_p95_total=Some(266) peak_rss_kb=Some(4484) cpu_ms=Some(0)
+  J-ARCHIVE-01 / git: functional=pass wall_ms_total=32 wall_ms_p95_total=Some(32) peak_rss_kb=Some(4436) cpu_ms=Some(0)
+  J-ARCHIVE-01 / arks: functional=pass wall_ms_total=16 wall_ms_p95_total=Some(16) peak_rss_kb=Some(5456) cpu_ms=Some(0)
+  J-REFLOG-01 / git: functional=pass wall_ms_total=8 wall_ms_p95_total=Some(8) peak_rss_kb=Some(4936) cpu_ms=Some(0)
+  J-REFLOG-01 / arks: functional=pass wall_ms_total=4 wall_ms_p95_total=Some(4) peak_rss_kb=Some(332) cpu_ms=Some(0)
+  J-REVERT-01 / git: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(6) peak_rss_kb=Some(4720) cpu_ms=Some(0)
+  J-REVERT-01 / arks: functional=pass wall_ms_total=2 wall_ms_p95_total=Some(2) peak_rss_kb=Some(232) cpu_ms=Some(0)
+  J-REPACK-01 / git: functional=pass wall_ms_total=35 wall_ms_p95_total=Some(42) peak_rss_kb=Some(4040) cpu_ms=Some(0)
+  J-REPACK-01 / arks: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(6) peak_rss_kb=Some(4636) cpu_ms=Some(0)
+  J-SUBMODULE-01 / git: functional=pass wall_ms_total=105 wall_ms_p95_total=Some(112) peak_rss_kb=Some(3776) cpu_ms=Some(0)
+  J-SUBMODULE-01 / arks: functional=pass wall_ms_total=16 wall_ms_p95_total=Some(16) peak_rss_kb=Some(352) cpu_ms=Some(0)
+test journey_compare_catalog ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.11s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G16: metrics written to /workspace/verify/gates/g16/out/metrics.json
+{
+  "schema": "arks-journey-metrics/v1",
+  "run": {
+    "venue": "clean-room",
+    "image_tag": "arks-verify-m1:0.1.0",
+    "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+    "stock_git_version": "git version 2.39.5",
+    "arks_revision": "7305bb645bb98db232189fa60a78b51fe805685a",
+    "arks_profile": "release",
+    "iterations": 3,
+    "warm_policy": "cold-workdir-per-lane",
+    "aggregation": "median_p95"
+  },
+  "journeys": [
+    {
+      "id": "J-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 377,
+          "wall_ms_p95_total": 398,
+          "peak_rss_kb": 4760,
+          "peak_rss_kb_p95": 4772,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "add",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+G16: PASS
+G19: evaluate Pf3 allow-list = all G16 journeys (arks_median <= 0.8 * git_median)
+G19 J-LOCAL-01: git=377 arks=152 ratio=0.4032 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-BRANCH-01: git=344 arks=148 ratio=0.4302 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-MERGE-FF-01: git=6 arks=2 ratio=0.3333 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REBASE-01: git=23 arks=6 ratio=0.2609 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-BUNDLE-01: git=350 arks=148 ratio=0.4229 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-CLONE-LOCAL-01: git=88 arks=60 ratio=0.6818 pass(<=0.8)=True aggressive_na (mid-residual: HTTP seed amortization exhausted (larger seeds worsened ratio); ≤0.5× needs product smart-HTTP clone work (sot:root/pf5-journey-seed-amortization))
+G19 J-CLONE-PATH-01: git=67 arks=31 ratio=0.4627 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-ALIAS-01: git=377 arks=152 ratio=0.4032 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-WORKTREE-01: git=488 arks=206 ratio=0.4221 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-TAG-01: git=198 arks=64 ratio=0.3232 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-STASH-01: git=498 arks=212 ratio=0.4257 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-CHERRY-01: git=86 arks=30 ratio=0.3488 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-DIFF-01: git=173 arks=75 ratio=0.4335 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-RM-MV-01: git=650 arks=264 ratio=0.4062 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-ARCHIVE-01: git=32 arks=16 ratio=0.5000 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REFLOG-01: git=8 arks=4 ratio=0.5000 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REVERT-01: git=6 arks=2 ratio=0.3333 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REPACK-01: git=35 arks=6 ratio=0.1714 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-SUBMODULE-01: git=105 arks=16 ratio=0.1524 pass(<=0.8)=True aggressive(<=0.5)=True
+G19: receipt written to /workspace/verify/gates/g19/out/receipt.json
+G19: Pf5 aggressive ≤0.5× claimed=18 aggressive_na=1 terminal=19/19 miss=[]
+G19: Pf5 allow-list PASS (regression bar ≤0.8×)
+G19: PASS
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded base64 v0.22.1
+  Downloaded fastrand v2.5.0
+  Downloaded errno v0.3.14
+  Downloaded bitflags v2.13.2
+  Downloaded displaydoc v0.2.7
+  Downloaded idna_adapter v1.2.2
+  Downloaded generic-array v0.14.7
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded icu_collections v2.4.0
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded percent-encoding v2.3.2
+  Downloaded icu_properties v2.4.0
+  Downloaded serde v1.0.229
+  Downloaded sha1 v0.10.7
+  Downloaded block-buffer v0.10.4
+  Downloaded sha2 v0.10.9
+  Downloaded windows-targets v0.52.6
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded webpki-roots v0.26.11
+  Downloaded potential_utf v0.1.6
+  Downloaded crypto-common v0.1.7
+  Downloaded itoa v1.0.18
+  Downloaded zerofrom v0.1.8
+  Downloaded cpufeatures v0.2.17
+  Downloaded cfg-if v1.0.5
+  Downloaded litemap v0.8.3
+  Downloaded utf8_iter v1.1.0
+  Downloaded windows-link v0.2.1
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded untrusted v0.9.0
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded subtle v2.6.1
+  Downloaded version_check v0.9.5
+  Downloaded yoke-derive v0.8.4
+  Downloaded zerovec-derive v0.11.7
+  Downloaded zeroize v1.9.1
+  Downloaded form_urlencoded v1.2.2
+  Downloaded quote v1.0.47
+  Downloaded crc32fast v1.5.4
+  Downloaded log v0.4.35
+  Downloaded thiserror v2.0.21
+  Downloaded writeable v0.6.4
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded synstructure v0.14.0
+  Downloaded tinystr v0.8.5
+  Downloaded zmij v1.0.23
+  Downloaded getrandom v0.4.3
+  Downloaded once_cell v1.21.4
+  Downloaded getrandom v0.2.17
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.27
+  Downloaded icu_locale_core v2.4.0
+  Downloaded r-efi v6.0.0
+  Downloaded shlex v2.0.1
+  Downloaded yoke v0.8.4
+  Downloaded thiserror-impl v2.0.21
+  Downloaded utf_types v1.0.0
+  Downloaded tempfile v3.27.0
+  Downloaded digest v0.10.7
+  Downloaded icu_provider v2.4.0
+  Downloaded serde_derive v1.0.229
+  Downloaded smallvec v1.16.5
+  Downloaded flate2 v1.1.11
+  Downloaded serde_core v1.0.229
+  Downloaded zerotrie v0.2.5
+  Downloaded rustls-webpki v0.103.16
+  Downloaded url v2.5.8
+  Downloaded memchr v2.8.3
+  Downloaded typenum v1.20.1
+  Downloaded ureq v2.12.1
+  Downloaded idna v1.1.0
+  Downloaded zerovec v0.11.9
+  Downloaded cc v1.11.1
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded rustix v1.1.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+   Compiling arks-oid v0.0.0 (/workspace/crates/arks-oid)
+   Compiling arks-hash v0.0.0 (/workspace/crates/arks-hash)
+   Compiling arks-object v0.0.0 (/workspace/crates/arks-object)
+   Compiling arks-pack v0.0.0 (/workspace/crates/arks-pack)
+   Compiling arks-store v0.0.0 (/workspace/crates/arks-store)
+   Compiling arks-refs v0.0.0 (/workspace/crates/arks-refs)
+   Compiling arks-repo v0.0.0 (/workspace/crates/arks-repo)
+   Compiling arks-index v0.0.0 (/workspace/crates/arks-index)
+   Compiling arks-protocol v0.0.0 (/workspace/crates/arks-protocol)
+   Compiling arks-lease v0.0.0 (/workspace/crates/arks-lease)
+   Compiling arks-remote v0.0.0 (/workspace/crates/arks-remote)
+   Compiling arks-server v0.0.0 (/workspace/crates/arks-server)
+   Compiling arks v0.0.0 (/workspace/crates/arks)
+    Finished `release` profile [optimized] target(s) in 33.65s
+   Compiling arks-g16-cleanroom v0.0.0 (/workspace/verify/gates/g16)
+warning: function `run_refuse_cmd_journey` is never used
+    --> tests/journey_compare.rs:1141:4
+     |
+1141 | fn run_refuse_cmd_journey(
+     |    ^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `snapshot_git_dir` is never used
+    --> tests/journey_compare.rs:1387:4
+     |
+1387 | fn snapshot_git_dir(repo: &Path) -> Vec<(String, u64)> {
+     |    ^^^^^^^^^^^^^^^^
+
+warning: function `seed_bare_repo` is never used
+    --> tests/journey_compare.rs:1846:4
+     |
+1846 | fn seed_bare_repo(parent: &Path, name: &str) -> PathBuf {
+     |    ^^^^^^^^^^^^^^
+
+warning: `arks-g16-cleanroom` (test "journey_compare") generated 3 warnings
+    Finished `release` profile [optimized] target(s) in 2.46s
+     Running unittests src/lib.rs (/cargo-target/release/deps/arks_g16_cleanroom-b5d4972bd7c55728)
+     Running tests/journey_compare.rs (/cargo-target/release/deps/journey_compare-4ac159e34f118d11)
+G16 journey done: J-LOCAL-01
+G16 journey done: J-BRANCH-01
+G16 journey done: J-MERGE-FF-01
+G16 journey done: J-REBASE-01
+G16 journey done: J-BUNDLE-01
+G16 journey done: J-CLONE-LOCAL-01
+G16 journey done: J-CLONE-PATH-01
+G16 journey done: J-ALIAS-01
+G16 journey done: J-WORKTREE-01
+G16 journey done: J-TAG-01
+G16 journey done: J-STASH-01
+G16 journey done: J-CHERRY-01
+G16 journey done: J-DIFF-01
+G16 journey done: J-RM-MV-01
+G16 journey done: J-ARCHIVE-01
+G16 journey done: J-REFLOG-01
+G16 journey done: J-REVERT-01
+G16 journey done: J-REPACK-01
+G16 journey done: J-SUBMODULE-01
+   Doc-tests arks_g16_cleanroom

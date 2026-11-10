@@ -3,7 +3,7 @@ id: sot:root/pf5-journey-seed-amortization
 title: Pf5 journey seed amortization (≤0.5× reopen)
 status: active
 created: 2026-11-10T22:00:00Z
-updated: 2026-11-10T02:47:00Z
+updated: 2026-11-10T03:54:00Z
 tags: [g19, pf5, perf, amortization, journey, verification]
 verify: manual
 rel:
@@ -15,12 +15,12 @@ rel:
     - adr:root/20261110162000
     - plan:root/20261110150000
     - evidence:root/20261110153000
-  evidence: [evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600, evidence:root/20261110110900, evidence:root/20261110111700, evidence:root/20261110113900, evidence:root/20261110114200]
+  evidence: [evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600, evidence:root/20261110110900, evidence:root/20261110111700, evidence:root/20261110113900, evidence:root/20261110114200, evidence:root/20261110135100]
 ---
 
 # Pf5 journey seed amortization (≤0.5× reopen)
 
-Version **0.1.9**. Normative harness rules that reopen [[adr:root/20261110162000]] for the eight Pf5 `aggressive_na` journeys without inventing Git semantics. Claim amortization receipt [[evidence:root/20261111001400]] — **Claimed(partial 7/8)** (prior [[evidence:root/20261110234600]] 6/8; [[evidence:root/20261110224500]] 4/8). **Tip remasure** (primary) [[evidence:root/20261110113900]] at `7a3d2dc` — LOCAL **0.6703** `aggressive_na`, PATH **0.4615** ≤0.5 PASS (no 8/8). **Secondary/historical mimalloc tip remasure** [[evidence:root/20261110114200]] at `97daecd` — LOCAL **0.7363** / PATH **0.4789** (worse LOCAL; REVERT short-wall miss 0.6667; **NOT** primary tip pin; mimalloc later reverted). Historical best-better-LOCAL [[evidence:root/20261110110900]] at `44dc566` (LOCAL **0.6556** / PATH **0.4675**); prior tip pin [[evidence:root/20261110111700]] (`91fbf64` @ 0.7262); prior pin [[evidence:root/20261110014600]] (`e466d56` @ 0.6705).
+Version **0.1.10**. Normative harness rules that reopen [[adr:root/20261110162000]] for the eight Pf5 `aggressive_na` journeys without inventing Git semantics. Claim amortization receipt [[evidence:root/20261111001400]] — **Claimed(partial 7/8)** (prior [[evidence:root/20261110234600]] 6/8; [[evidence:root/20261110224500]] 4/8). **Tip remasure** (primary / carrying) [[evidence:root/20261110113900]] at `7a3d2dc` — LOCAL **0.6703** `aggressive_na`, PATH **0.4615** ≤0.5 PASS (no 8/8). Superseded-tip remasure [[evidence:root/20261110135100]] at `7305bb6` — LOCAL **0.6818** / PATH **0.4627** (tip later moved to `1a02559`; not live tip pin). **Secondary/historical mimalloc tip remasure** [[evidence:root/20261110114200]] at `97daecd` — LOCAL **0.7363** / PATH **0.4789** (worse LOCAL; REVERT short-wall miss 0.6667; **NOT** primary tip pin; mimalloc later reverted). Historical best-better-LOCAL [[evidence:root/20261110110900]] at `44dc566` (LOCAL **0.6556** / PATH **0.4675**); prior tip pin [[evidence:root/20261110111700]] (`91fbf64` @ 0.7262); prior pin [[evidence:root/20261110014600]] (`e466d56` @ 0.6705).
 
 ## Rule
 
