@@ -123,6 +123,18 @@ services:
       ARKS_FS007_PROBE_ROOT: "${ARKS_FS007_PROBE_ROOT:-.}"
     command: ["/bin/bash", "verify/scripts/run-fs007-host-advisory.sh"]
 
+  # FS-014 LSM detect + errno honesty — advisory; ≠ Claimed host-policy bypass.
+  fs014-lsm-advisory:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_FS014_PROBE_ROOT: "${ARKS_FS014_PROBE_ROOT:-.}"
+    command: ["/bin/bash", "verify/scripts/run-fs014-lsm-advisory.sh"]
+
   # G8 local-forge wire substitute — loopback smart-HTTP peer; ≠ GitHub live PASS.
   g8-local-forge:
     <<: *cleanroom

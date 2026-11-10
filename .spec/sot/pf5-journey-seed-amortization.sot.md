@@ -20,7 +20,7 @@ rel:
 
 # Pf5 journey seed amortization (≤0.5× reopen)
 
-Version **0.1.11**. Normative harness rules that reopen [[adr:root/20261110162000]] for Pf5 `aggressive_na` journeys without inventing Git semantics. **Tip remasure** (primary / carrying) [[evidence:root/20261110142500]] at `79fc9bf` — **Claimed 8/8** (LOCAL **0.1579** (6/38) / PATH **0.1739** (8/46); miss=[]; aggressive_na=[]). Prior carrying [[evidence:root/20261110131600]] at `875359e`. Prior claim amortization [[evidence:root/20261111001400]] remains historical **Claimed(partial 7/8)**. Historical tip remasures: `7a3d2dc` [[evidence:root/20261110113900]], `7305bb6` [[evidence:root/20261110135100]], mimalloc `97daecd` [[evidence:root/20261110114200]] (NOT primary), best-better-LOCAL `44dc566` [[evidence:root/20261110110900]].
+Version **0.1.12**. Normative harness rules that reopen [[adr:root/20261110162000]] for Pf5 `aggressive_na` journeys without inventing Git semantics. **U1 residual wave** ([[evidence:root/20261111003444]]): ALIAS `PF5_RESIDUAL_AMORTIZE_COMMITS=56`; REVERT +`PF5_REVERT_AMORTIZE_COMMITS=12` timed amortize — **one** sole G19 remasure only (no stampede / mega-seed OOM). Historical primary **Claimed 8/8** [[evidence:root/20261110142500]] at `79fc9bf`. Prior tip partial [[evidence:root/20261110224814]]. Prior claim amortization [[evidence:root/20261111001400]] remains historical **Claimed(partial 7/8)**.
 
 ## Rule
 

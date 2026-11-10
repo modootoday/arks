@@ -1,0 +1,14 @@
+{
+  "schema": "arks-fs014-lsm-advisory/v1",
+  "gate": "FS014-lsm-advisory",
+  "disposition": "advisory-lsm-detect",
+  "claimed": false,
+  "fs014_lsm_bypass_claimed": false,
+  "probe_root": ".",
+  "host_env_exit": 0,
+  "sysfs_selinux_enforce": "absent",
+  "sysfs_apparmor_enabled": "N",
+  "lsm_kind": null,
+  "timestamp": "2026-11-10T15:39:11Z",
+  "note": "Detect + errno honesty only; host LSM policy cannot be implemented/bypassed inside arks"
+}

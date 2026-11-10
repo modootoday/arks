@@ -279,6 +279,8 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
     // Keep LOCK-001/LOCK-004 + retry guidance so Cm-2/Cx-2 regressions stay honest.
     {
         let repo = open_repo()?;
+        // FS-007 opt-in refuse when .git under sync root (ARKS_HOST_ENV_REFUSE_SYNC=1).
+        crate::cmd::host_env::refuse_if_sync_writers(repo.git_dir())?;
         // IDX-004 (M20 Cx-5): split-index sharedindex.lock race refuse.
         let shared = repo.git_dir().join("sharedindex.lock");
         if shared.is_file() {
@@ -572,8 +574,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
     let repo = open_repo()?;
-    // FS-007 / WIN-003 advisory (detect only; never Claimed full cloud-sync).
+    // FS-007 / WIN-003 / FS-014 advisory (detect only; never Claimed full cloud-sync).
     crate::cmd::host_env::emit_cloud_advisory(repo.git_dir());
+    crate::cmd::host_env::refuse_if_sync_writers(repo.git_dir())?;
     // FSM-002 (M20 Cx-7): concurrent FSM transition refuse.
     let fsm_transition = repo.git_dir().join(".arks-fsm-transition");
     if fsm_transition.is_file() {

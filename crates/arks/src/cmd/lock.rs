@@ -279,9 +279,20 @@ fn print_lock_honesty_notes(repo: &arks_repo::Repository, reports: &[LockReport]
     println!(
         "note: FS-007 — cloud sync (DriveFS/OneDrive/Dropbox) on .git: detect sync roots when SoTable; refuse multi-writer claims; single-host smoke ≠ multi-device conflict Claimed"
     );
-    println!(
-        "note: FS-014 — SELinux/AppArmor deny .lock rename → clear EACCES/EPERM honesty; cannot implement host LSM policy inside arks"
-    );
+    {
+        let lsm = arks_hostfs::detect_lsm();
+        if lsm.is_empty() {
+            println!(
+                "note: FS-014 — SELinux/AppArmor deny .lock rename → clear EACCES/EPERM honesty; cannot implement host LSM policy inside arks (no LSM detected on this host)"
+            );
+        } else {
+            let names: Vec<&str> = lsm.iter().map(|l| l.as_str()).collect();
+            println!(
+                "note: FS-014 — host LSM detected ({}); .lock rename PermissionDenied → name LSM in errno honesty; cannot bypass policy inside arks",
+                names.join(",")
+            );
+        }
+    }
     println!(
         "note: WIN-001 — Win32 MAX_PATH deep worktree/LFS temps fail CreateFile; enable long paths or shorten nesting"
     );

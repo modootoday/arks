@@ -1,0 +1,18 @@
+{
+  "schema": "arks-fs007-host-advisory/v2",
+  "gate": "FS007-host-advisory",
+  "disposition": "advisory-host-probe",
+  "claimed": false,
+  "fs007_full_sync_claimed": false,
+  "fs007_detect_refuse_opt_in": false,
+  "win003_hydration_claimed": false,
+  "fs014_lsm_bypass_claimed": false,
+  "probe_root": ".",
+  "host_env_exit": 0,
+  "cloud_kind": null,
+  "onedrive_placeholder": false,
+  "lsm_kind": null,
+  "hazard": "none",
+  "timestamp": "2026-11-10T15:38:59Z",
+  "note": "Detect/warn + optional refuse-sync; multi-device sync races, hydration, LSM bypass remain unclaimed"
+}

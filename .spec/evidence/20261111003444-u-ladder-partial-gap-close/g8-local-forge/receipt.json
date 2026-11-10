@@ -1,0 +1,15 @@
+{
+  "schema": "arks-g8-local-forge-wire/v1",
+  "gate": "G8-local-forge",
+  "disposition": "claimed-wire",
+  "detail": "loopback smart-HTTP clone/push/fetch ok branch=arks-g8-local-1794325134 tip=6fdea3819e64228829f5ff4257d5e0685439037d; not GitHub live PASS",
+  "timestamp": "2026-11-10T15:38:54Z",
+  "venue": "loopback-smart-http",
+  "revision": "307d509621fc6c49419876bd3368cb0f73c86d26",
+  "stock_git": "git version 2.39.5",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "github_live_pass": false,
+  "product_slo": false,
+  "adr": "adr:root/20261110220000",
+  "note": "Proves HTTPS git wire on local peer only; never invents GitHub Environment live PASS"
+}

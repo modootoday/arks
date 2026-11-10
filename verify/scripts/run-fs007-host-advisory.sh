@@ -41,21 +41,29 @@ m = re.search(r"^cloud\.kind:\s+(\S+)", text, re.M)
 if m and m.group(1) != "(none)":
     kind = m.group(1)
 placeholder = bool(re.search(r"^onedrive\.placeholder:\s+true", text, re.M))
+lsm = None
+lm = re.search(r"^lsm\.kind:\s+(\S+)", text, re.M)
+if lm and lm.group(1) != "(none)":
+    lsm = lm.group(1)
+refuse_req = bool(re.search(r"^refuse\.sync\.requested:\s+true", text, re.M))
 hazard = "advisory" if (kind or placeholder) else "none"
 receipt = {
-    "schema": "arks-fs007-host-advisory/v1",
+    "schema": "arks-fs007-host-advisory/v2",
     "gate": "FS007-host-advisory",
     "disposition": "advisory-host-probe",
     "claimed": False,
     "fs007_full_sync_claimed": False,
+    "fs007_detect_refuse_opt_in": refuse_req,
     "win003_hydration_claimed": False,
+    "fs014_lsm_bypass_claimed": False,
     "probe_root": probe,
     "host_env_exit": int(ec),
     "cloud_kind": kind,
     "onedrive_placeholder": placeholder,
+    "lsm_kind": lsm,
     "hazard": hazard,
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    "note": "Detect/warn only; multi-device sync races and OneDrive hydration remain unclaimed",
+    "note": "Detect/warn + optional refuse-sync; multi-device sync races, hydration, LSM bypass remain unclaimed",
 }
 with open(out, "w", encoding="utf-8") as f:
     json.dump(receipt, f, indent=2)

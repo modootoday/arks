@@ -8,6 +8,7 @@ pub mod bundle;
 pub mod config;
 pub mod core;
 pub mod credential;
+pub mod forge;
 pub mod grep;
 pub mod history;
 pub mod hooks;
@@ -49,6 +50,7 @@ pub use core::{
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
+pub use forge::cmd_forge;
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use host_env::cmd_host_env;

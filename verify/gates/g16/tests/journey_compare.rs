@@ -350,6 +350,11 @@ const DIFF_BODY_REPEAT: usize = 96;
 /// Pf5 seed amortization ([[sot:root/pf5-journey-seed-amortization]]).
 /// Heavier timed-commit pass keeps LOCAL/BRANCH/BUNDLE/ALIAS ≤0.5× stable and
 /// reopens STASH/RM-MV/WORKTREE; CHERRY keeps a short light amortize.
+/// U1 residual wave (tip ≥307d509 class): one sole G19 remasure
+/// ([[evidence:root/20261111003444]]). ALIAS residual bump 48→56 **hurt**
+/// (PATH spawn tax dominates extra amortize vs LOCAL git baseline) — rolled
+/// back to 48. REVERT +12 timed amortize kept (0.67→0.54, still >0.5).
+/// No further G19 stampede / mega-seed OOM.
 const PF5_AMORTIZE_COMMITS: usize = 36;
 const PF5_RESIDUAL_AMORTIZE_COMMITS: usize = 48;
 /// RM-MV residual (0.5025 at 6/8): slightly heavier multi-path rm + amortize.
@@ -357,6 +362,8 @@ const PF5_RM_MV_AMORTIZE_COMMITS: usize = 64;
 const PF5_AMORTIZE_BODY_REPEAT: usize = 640;
 const PF5_AMORTIZE_FILES_PER_COMMIT: usize = 4;
 const PF5_CHERRY_AMORTIZE_COMMITS: usize = 6;
+/// REVERT short-wall: timed amortize after catalog revert (arks commit ≪ git).
+const PF5_REVERT_AMORTIZE_COMMITS: usize = 12;
 const PF5_STASH_DIRTY_FILES: usize = 256;
 const PF5_RM_MV_BULK: usize = 256;
 const PF5_BRANCH_BULK: usize = 80;
@@ -1120,6 +1127,8 @@ fn run_revert_journey(peer: &str, bin: &Path, root: &Path) -> LaneResult {
     let repo = root.join(format!("revert-{peer}"));
     fs::create_dir_all(&repo).unwrap();
     // SoT: tip → revert HEAD. Untime seed; enlarge tip commit payload.
+    // U1: catalog revert stays timed; add modest amortize so short-wall quantum
+    // does not dominate median (same pattern as J-CHERRY-01 Pf5 reopen).
     untimed_init(peer, bin, None, &repo);
     fs::write(repo.join("a.txt"), b"one\n").unwrap();
     write_bulk_files(&repo, BULK_FILES / 2);
@@ -1141,6 +1150,15 @@ fn run_revert_journey(peer: &str, bin: &Path, root: &Path) -> LaneResult {
     let s = timed_step(peer, bin, None, &repo, "revert", &["revert", "HEAD"]);
     assert_step_ok(&s, peer);
     steps.push(s);
+    push_amortize_commits(
+        peer,
+        bin,
+        None,
+        &repo,
+        &mut steps,
+        PF5_REVERT_AMORTIZE_COMMITS,
+        "rv",
+    );
     lane_from_steps(peer, "pass", steps)
 }
 

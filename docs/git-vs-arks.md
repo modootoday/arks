@@ -45,7 +45,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT; other argv handoff to `git-lfs`; `scalar` refuse | **Claimed** |
 | `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed with NET-006 lock/truncation honesty (**FS5**) | **Claimed** (FS5 / NET-006) |
 | Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse + **sha1cd detect+refuse** (**OBJ-004**); `init --object-format=sha256` porcelain e2e | **Claimed** (detect+refuse) / **Impossible** (crypto immunity) |
-| Cloud sync on `.git` / OneDrive placeholders | Host hazard | `arks host-env` DriveFS/OneDrive/Dropbox/Syncthing **detect + advisory**; CfAPI `RECALL_ON_DATA_ACCESS` detect | **Advisory** (FS-007 / WIN-003); full sync safety **Impossible** |
+| Cloud sync on `.git` / OneDrive placeholders | Host hazard | `arks host-env` DriveFS/OneDrive/Dropbox/Syncthing **detect + opt-in refuse**; CfAPI `RECALL_ON_DATA_ACCESS` detect; FS-014 LSM detect | **Claimed(advisory+refuse)** detect (FS-007 / WIN-003 / FS-014); full sync / hydration / LSM bypass **Impossible** |
+| Forge Checks / PR / Issues UX | Not-git | `arks forge` thin wrap → host `gh`; `arks forge recipe`; credential.helper OAuth | **Claimed-closest** thin-wrap; full forge host UX **Non-goal** |
 
 ## Remotes and server
 
@@ -141,7 +142,7 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | Operator one-word | **PARTIAL** — see [Completeness](../completion/) |
 | Clean-room re-stamp of all Docker gates on this tip | See evidence pack under `.spec/evidence/*-full-cleanroom-matrix/` (maintainer); host CI ≠ Verified |
 
-**Documented non-goals (not FS gaps):** absolute SHA-1 collision immunity; forge Checks/merge-queue/Issues UX; embedded forge OAuth browser UX; full multi-device cloud-sync safety on `.git` (FS-007/WIN-003 advisory detect only); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy).
+**Documented non-goals / blocked (not FS gaps):** absolute SHA-1 collision immunity; full forge Checks/merge-queue/Issues product UX (thin `arks forge`→`gh` is Claimed-closest only); embedded forge OAuth browser UX; full multi-device cloud-sync safety on `.git` (FS-007/WIN-003/FS-014 detect+opt-in refuse only); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy — reopen pack only).
 
 See: [program roadmap tip currency](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) · [partial unblock research](https://github.com/modootoday/arks/blob/main/.spec/research/20261111001816-partial-completion-unblock-roadmap.research.md) · [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 

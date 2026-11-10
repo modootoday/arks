@@ -3,7 +3,7 @@ id: research:root/20261111001816
 title: Partial completion — per-gap unblock roadmap
 status: active
 created: 2026-11-10T15:18:16Z
-updated: 2026-11-10T15:18:16Z
+updated: 2026-11-10T15:34:44Z
 tags:
   [
     partial-completion,
@@ -53,13 +53,26 @@ After tip ≥ **`60f33c2`** (clean-room matrix currency ≥ `54c9dc2`), with **F
 
 | Item | Value |
 |------|-------|
-| Tip (this note) | ≥ `60f33c2` / carrying evidence tip `54c9dc2` |
+| Tip (this note) | ≥ `307d509` + U-ladder [[evidence:root/20261111003444]] |
 | FS_final git feature DoD | **YES** |
 | Operator one-word | **PARTIAL** |
 | G19 M17 ≤0.8× | **19/19 PASS** |
-| Pf5 ≤0.5× tip | **Claimed(partial)** — ALIAS + REVERT `aggressive_na` |
-| `g8-live` secret count | **0** (re-probed 2026-11-10) |
-| L9 | Owner-closed |
+| Pf5 ≤0.5× tip | U1 one amortize wave → sole remasure; else **Claimed(partial)** |
+| `g8-live` secret count | **0** (re-probed 2026-11-11) |
+| L9 | Owner-closed — reopen pack [[research:root/20261111003444]] |
+| Forge UX | Claimed-closest `arks forge` thin-wrap (was Non-goal) |
+| Host-env | Claimed detect+opt-in refuse / FS-014 LSM detect |
+
+## U-ladder (2026-11-11)
+
+| Step | Result |
+|------|--------|
+| U1 Pf5 | Amortize path landed; one sole G19 only |
+| U2 host-env | Deepened FS-007/WIN-003/FS-014 |
+| U3 live G8 | Secrets absent → local-forge wire; no invent PASS |
+| U4 L9 | Reopen pack only; no publish |
+| U5 forge | `arks forge` Claimed-closest |
+| U6 sha1cd | Immunity Impossible (docs) |
 
 ---
 

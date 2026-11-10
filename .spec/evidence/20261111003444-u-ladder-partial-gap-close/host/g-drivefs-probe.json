@@ -1,0 +1,12 @@
+{
+    "install":  true,
+    "description":  "Google Drive",
+    "note":  "Host PowerShell re-probe; DriveFS ≠ WIN-003 OneDrive; advisory only",
+    "schema":  "arks-drivefs-host-advisory/v1",
+    "claimed":  false,
+    "volume":  "G:",
+    "drivefs_processes":  [
+                              "132.0.0.0",
+                              "133.0.2.0"
+                          ]
+}

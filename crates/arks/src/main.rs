@@ -3,7 +3,7 @@
 //! M9 = CLI-parity production (client). M10 leases via `arks-lease`. M11
 //! production-server via Wave Sv (`upload-pack` / `receive-pack` / `serve-http`).
 //! Cite: `.spec/sot/arks.sot.md`, `.spec/sot/cli-surface.sot.md`
-//! No CELIR. No `gix`. No forge.
+//! No CELIR. No `gix`. No first-party forge host UX (thin `arks forge` → `gh` wrap only).
 
 mod cmd;
 mod error;
@@ -31,7 +31,8 @@ Commands:
   add           Stage file paths
   status        Show working-tree / index / HEAD summary
   lock          Inspect / clear stale Git *.lock files
-  host-env      Advisory cloud-sync / OneDrive CfAPI detect (FS-007 / WIN-003)
+  host-env      Advisory cloud-sync / CfAPI / LSM detect (FS-007 / WIN-003 / FS-014)
+  forge         Thin wrap of host `gh` (Claimed-closest; not forge product UX)
   lease         Grant / release / inspect durable product leases (M13)
   commit        Record index as a commit (-m; -S SSH sign)
   verify-commit Verify SSH gpgsig on a commit
@@ -162,6 +163,7 @@ fn run() -> CliResult<()> {
         "status" => cmd::cmd_status(&args),
         "lock" => cmd::cmd_lock(&args),
         "host-env" => cmd::cmd_host_env(&args),
+        "forge" => cmd::cmd_forge(&args),
         "lease" => cmd::cmd_lease(&args),
         "commit" => cmd::cmd_commit(&args),
         "verify-commit" => cmd::cmd_verify_commit(&args),
