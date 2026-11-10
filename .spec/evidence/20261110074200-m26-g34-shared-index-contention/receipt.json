@@ -1,0 +1,16 @@
+{
+  "gate": "G34",
+  "name": "shared-index-contention",
+  "result": "PASS",
+  "n_floor": 2,
+  "stock_git": "git version 2.39.5",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "ts": "2026-11-09T22:49:24Z",
+  "milestone": "M26",
+  "not_substitute": [
+    "M24",
+    "G22",
+    "G24",
+    "G33"
+  ]
+}

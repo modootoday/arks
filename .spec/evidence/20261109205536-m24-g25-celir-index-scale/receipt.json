@@ -1,0 +1,20 @@
+{
+  "gate": "G25",
+  "name": "celir-index-scale",
+  "result": "PASS",
+  "n_required": 256,
+  "n_tiers_pass": [
+    256,
+    384,
+    512
+  ],
+  "stretch": {
+    "384": "PASS",
+    "512": "PASS"
+  },
+  "stock_git": "git version 2.39.5",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "ts": "2026-11-09T20:55:26Z",
+  "feature": "celir-index-stress",
+  "discrete_circuit": "/workspaces/discrete-circuit"
+}

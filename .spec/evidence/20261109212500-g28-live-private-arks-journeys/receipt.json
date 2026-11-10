@@ -1,0 +1,145 @@
+{
+  "schema": "arks-g28-live-private-journeys/v1",
+  "gate": "G28",
+  "name": "live-private-arks-journeys",
+  "disposition": "closed-implement",
+  "detail": "all non-N/A live journeys PASS or SKIP",
+  "venue": "clean-room",
+  "network": "opt-in-live",
+  "revision": "244df7306110b2f77ae58485bb86b5792e870b09",
+  "stock_git": "git version 2.39.5",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "repo_url_public": "https://github.com/myso-kr/arks-g28-live-journeys-20261110062418.git",
+  "opt_in": {
+    "ARKS_G28_LIVE": "1",
+    "has_token": true,
+    "has_repo_url": true
+  },
+  "counts": {
+    "PASS": 21,
+    "FAIL": 0,
+    "N/A": 2,
+    "SKIP": 0,
+    "total": 23
+  },
+  "journeys": [
+    {
+      "id": "J-CLONE-LOCAL-01",
+      "status": "N/A",
+      "detail": "offline G16 smart-HTTP local \u2014 not live forge"
+    },
+    {
+      "id": "J-CLONE-PATH-01",
+      "status": "N/A",
+      "detail": "offline G16 path/file:// \u2014 not live forge"
+    },
+    {
+      "id": "J-REMOTE-CLONE-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-LOCAL-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-BRANCH-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-PUSH-FETCH-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-MERGE-FF-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-PULL-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-TAG-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-STASH-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-DIFF-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-RM-MV-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-CHERRY-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-REBASE-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-REVERT-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-REFLOG-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-BUNDLE-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-ARCHIVE-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-REPACK-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-WORKTREE-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-SUBMODULE-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-PR-GH-01",
+      "status": "PASS",
+      "detail": "ok"
+    },
+    {
+      "id": "J-ALIAS-01",
+      "status": "PASS",
+      "detail": "ok"
+    }
+  ],
+  "honesty": "functional journeys on live private forge; != G16 timing; != G26/G27 scale/contention; != Checks/merge-queue; unsigned seed (gpgsig unclaimed)",
+  "adr_affinity": "adr:root/20261110151000",
+  "sot": "sot:root/g28-live-private-arks-journeys"
+}

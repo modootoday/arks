@@ -1,0 +1,15 @@
+{
+  "gate": "g11l3",
+  "result": "PASS",
+  "stock_git": "git version 2.39.5",
+  "rustc": "1.99.1",
+  "arks_lease_tests": 10,
+  "verify_g11_tests": 2,
+  "gix_edges": 0,
+  "celir_edges": 0,
+  "claimed_shape": "lease+batch-apply+worktree/ref-shard",
+  "shared_index_nway": "OUT",
+  "export_import": "identity",
+  "adr": "adr:root/20261109194200",
+  "plan": "plan:root/20261109194208"
+}

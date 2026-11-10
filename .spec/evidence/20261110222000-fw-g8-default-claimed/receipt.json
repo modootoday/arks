@@ -1,0 +1,16 @@
+{
+  "schema": "arks-g8-live-smoke/v1",
+  "gate": "G8",
+  "disposition": "skip-secrets-absent",
+  "detail": "token/URL absent; G7 remains default offline remote proof; not a live PASS",
+  "venue": "clean-room",
+  "revision": "unknown",
+  "stock_git": "git version 2.39.5",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "secrets": {
+    "ARKS_G8_LIVE": "",
+    "has_token": false,
+    "has_repo_url": false
+  },
+  "adr": "adr:root/20261110220000"
+}

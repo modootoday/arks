@@ -1,0 +1,35 @@
+# specfold configuration. Run `spec explain config` for every key.
+# Shape follows humanymous lightly; Git standards docs live under .spec/.
+[spec]
+schema = 1
+
+[owners]
+root = "root"
+
+[local]
+path = ".spec.local"
+
+[files]
+inline_max_bytes = 4194304
+scan_max_bytes = 4194304
+
+# Plain markdown outside documents whose <!-- spec:count --> markers N1 keeps current.
+# [check]
+# count_paths = ["README.md", "docs/**/*.md"]
+
+# Agent assets (Specfold 0.7.2): discoverable via `spec assets`; checked by A1/A2.
+[[assets]]
+kind = "instructions"
+path = "AGENTS.md"
+
+[[assets]]
+kind = "rule"
+path = ".agents/rules"
+
+[[assets]]
+kind = "skill"
+path = ".agents/skills"
+
+[[assets]]
+kind = "agent"
+path = ".agents/agents"

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "J-CLONE-LOCAL-01",
+    "status": "PASS",
+    "detail": "arks clone smart-HTTP local peer (G16-aligned seed)"
+  },
+  {
+    "id": "J-CLONE-PATH-01",
+    "status": "PASS",
+    "detail": "arks path + file:// clone (G16-aligned seed)"
+  }
+]

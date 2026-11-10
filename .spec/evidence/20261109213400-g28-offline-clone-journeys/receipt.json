@@ -1,0 +1,33 @@
+{
+  "schema": "arks-g28-offline-clone-journeys/v1",
+  "gate": "G28",
+  "name": "g28-offline-clone-journeys",
+  "disposition": "closed-implement",
+  "detail": "J-CLONE-LOCAL-01 + J-CLONE-PATH-01 PASS offline with arks",
+  "venue": "clean-room",
+  "network": "offline",
+  "revision": "a60e82ee73794f235c4cc50eaa017e327d357e68",
+  "stock_git": "git version 2.39.5",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "seed_align": "G16 J-CLONE-LOCAL-01 / J-CLONE-PATH-01 (git http-backend peer; path + file://; README+bulk bare)",
+  "counts": {
+    "PASS": 2,
+    "FAIL": 0,
+    "total": 2
+  },
+  "journeys": [
+    {
+      "id": "J-CLONE-LOCAL-01",
+      "status": "PASS",
+      "detail": "arks clone smart-HTTP local peer (G16-aligned seed)"
+    },
+    {
+      "id": "J-CLONE-PATH-01",
+      "status": "PASS",
+      "detail": "arks path + file:// clone (G16-aligned seed)"
+    }
+  ],
+  "honesty": "offline functional clone closure for G28 N/A rows; != G16 timing; != live forge; != G26/G27 scale",
+  "sot": "sot:root/g28-live-private-arks-journeys",
+  "catalog": "sot:root/clean-room-journey-compare"
+}

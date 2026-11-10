@@ -1,0 +1,191 @@
+{
+  "schema": "arks-g19-perf-comparative/v1",
+  "venue": "clean-room",
+  "wave": "Pf3",
+  "bar": "arks_median <= 0.8 * git_median",
+  "aggregation": "median_p95",
+  "iterations": 3,
+  "image_tag": "arks-verify-m1:0.1.0",
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "stock_git": "git version 2.39.5",
+  "revision": "73a71736b0ca8988bbe2e1436f53f72849c0efeb",
+  "allow_list": [
+    "J-LOCAL-01",
+    "J-BRANCH-01",
+    "J-MERGE-FF-01",
+    "J-REBASE-01",
+    "J-BUNDLE-01",
+    "J-CLONE-LOCAL-01",
+    "J-CLONE-PATH-01",
+    "J-ALIAS-01",
+    "J-WORKTREE-01",
+    "J-TAG-01",
+    "J-STASH-01",
+    "J-CHERRY-01",
+    "J-DIFF-01",
+    "J-RM-MV-01",
+    "J-ARCHIVE-01",
+    "J-REFLOG-01",
+    "J-REVERT-01",
+    "J-REPACK-01",
+    "J-SUBMODULE-01"
+  ],
+  "na": {
+    "J-TAG-01": "cold-start floor: O(1) tag -a + list; arks help\u22654ms vs git\u22641ms (Docker strace/bench); SoT N/A for G19 comparative bar only \u2014 G16 functional still required"
+  },
+  "journeys": [
+    {
+      "journey_id": "J-LOCAL-01",
+      "git_median_ms": 45,
+      "arks_median_ms": 64,
+      "ratio": 1.4222,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-BRANCH-01",
+      "git_median_ms": 16,
+      "arks_median_ms": 30,
+      "ratio": 1.875,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-MERGE-FF-01",
+      "git_median_ms": 10,
+      "arks_median_ms": 11,
+      "ratio": 1.1,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-REBASE-01",
+      "git_median_ms": 52,
+      "arks_median_ms": 61,
+      "ratio": 1.1731,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-BUNDLE-01",
+      "git_median_ms": 29,
+      "arks_median_ms": 37,
+      "ratio": 1.2759,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-CLONE-LOCAL-01",
+      "git_median_ms": 152,
+      "arks_median_ms": 91,
+      "ratio": 0.5987,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-CLONE-PATH-01",
+      "git_median_ms": 110,
+      "arks_median_ms": 87,
+      "ratio": 0.7909,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-ALIAS-01",
+      "git_median_ms": 45,
+      "arks_median_ms": 74,
+      "ratio": 1.6444,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-WORKTREE-01",
+      "git_median_ms": 70,
+      "arks_median_ms": 90,
+      "ratio": 1.2857,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-TAG-01",
+      "git_median_ms": null,
+      "arks_median_ms": null,
+      "ratio": null,
+      "pass": true,
+      "na": true,
+      "na_reason": "cold-start floor: O(1) tag -a + list; arks help\u22654ms vs git\u22641ms (Docker strace/bench); SoT N/A for G19 comparative bar only \u2014 G16 functional still required"
+    },
+    {
+      "journey_id": "J-STASH-01",
+      "git_median_ms": 37,
+      "arks_median_ms": 33,
+      "ratio": 0.8919,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-CHERRY-01",
+      "git_median_ms": 15,
+      "arks_median_ms": 20,
+      "ratio": 1.3333,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-DIFF-01",
+      "git_median_ms": 18,
+      "arks_median_ms": 38,
+      "ratio": 2.1111,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-RM-MV-01",
+      "git_median_ms": 33,
+      "arks_median_ms": 34,
+      "ratio": 1.0303,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-ARCHIVE-01",
+      "git_median_ms": 15,
+      "arks_median_ms": 17,
+      "ratio": 1.1333,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-REFLOG-01",
+      "git_median_ms": 16,
+      "arks_median_ms": 22,
+      "ratio": 1.375,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-REVERT-01",
+      "git_median_ms": 10,
+      "arks_median_ms": 15,
+      "ratio": 1.5,
+      "pass": false,
+      "na": false
+    },
+    {
+      "journey_id": "J-REPACK-01",
+      "git_median_ms": 38,
+      "arks_median_ms": 21,
+      "ratio": 0.5526,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-SUBMODULE-01",
+      "git_median_ms": 682,
+      "arks_median_ms": 76,
+      "ratio": 0.1114,
+      "pass": true,
+      "na": false
+    }
+  ]
+}

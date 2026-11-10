@@ -1,0 +1,16 @@
+{
+  "schema": "arks-g8-live-smoke/v1",
+  "gate": "G8",
+  "disposition": "refuse-closed",
+  "detail": "opt-in secrets absent; G7 remains default remote proof",
+  "venue": "clean-room",
+  "revision": "ff6701498d0d1ad0b79c820b3db35125673facfa",
+  "stock_git": "git version 2.39.5",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "opt_in": {
+    "ARKS_G8_LIVE": "0",
+    "has_token": false,
+    "has_repo_url": false
+  },
+  "adr": "adr:root/20261110151000"
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "arks-g19-perf-comparative/v1",
+  "venue": "clean-room",
+  "wave": "Pf-2",
+  "bar": "arks_median <= 0.8 * git_median",
+  "aggregation": "median_p95",
+  "iterations": 3,
+  "image_tag": "arks-verify-m1:0.1.0",
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "stock_git": "git version 2.39.5",
+  "revision": "8e4f24805606bbcd4d9c6715733ad2418939d7ef",
+  "allow_list": [
+    "J-SUBMODULE-01",
+    "J-REPACK-01"
+  ],
+  "journeys": [
+    {
+      "journey_id": "J-SUBMODULE-01",
+      "git_median_ms": 464,
+      "arks_median_ms": 153,
+      "ratio": 0.3297,
+      "pass": true
+    },
+    {
+      "journey_id": "J-REPACK-01",
+      "git_median_ms": 33,
+      "arks_median_ms": 26,
+      "ratio": 0.7879,
+      "pass": true
+    }
+  ]
+}

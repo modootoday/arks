@@ -1,0 +1,28 @@
+{
+  "compose_service": "g21",
+  "gate": "G21",
+  "pass": true,
+  "rows": [
+    {
+      "id": "M16-SY5-05",
+      "pass": true
+    },
+    {
+      "id": "M16-SY5-04",
+      "pass": true
+    },
+    {
+      "id": "M16-SY5-01",
+      "pass": true
+    },
+    {
+      "id": "M16-SY5-02",
+      "pass": true
+    },
+    {
+      "id": "M16-SY5-03",
+      "pass": true
+    }
+  ],
+  "wave": "Sy-5"
+}

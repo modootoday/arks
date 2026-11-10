@@ -1,0 +1,624 @@
+{
+  "schema": "arks-journey-metrics/v1",
+  "run": {
+    "venue": "clean-room",
+    "image_tag": "arks-verify-m1:0.1.0",
+    "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+    "stock_git_version": "git version 2.39.5",
+    "arks_revision": "b51e900dd56d55068a1c6afbabef38a3bb38d4ad",
+    "arks_profile": "release",
+    "iterations": 1,
+    "warm_policy": "cold-workdir-per-lane",
+    "aggregation": "raw"
+  },
+  "journeys": [
+    {
+      "id": "J-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 81,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 40,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 16,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 14,
+              "exit": 0
+            },
+            {
+              "name": "status",
+              "wall_ms": 5,
+              "exit": 0
+            },
+            {
+              "name": "log",
+              "wall_ms": 6,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 71,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 11,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 20,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 21,
+              "exit": 0
+            },
+            {
+              "name": "status",
+              "wall_ms": 11,
+              "exit": 0
+            },
+            {
+              "name": "log",
+              "wall_ms": 8,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-BRANCH-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 36,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "switch",
+              "wall_ms": 3,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 130,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 14,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 16,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 17,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 22,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 16,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 17,
+              "exit": 0
+            },
+            {
+              "name": "switch",
+              "wall_ms": 21,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-MERGE-FF-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 51,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 16,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 4,
+              "exit": 0
+            },
+            {
+              "name": "merge-ff",
+              "wall_ms": 7,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 164,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 18,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 15,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 14,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 30,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 19,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 16,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 22,
+              "exit": 0
+            },
+            {
+              "name": "merge-ff",
+              "wall_ms": 22,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REBASE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 68,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 7,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 4,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature",
+              "wall_ms": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-feat",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit-feat",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "add-main",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit-main",
+              "wall_ms": 9,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature2",
+              "wall_ms": 4,
+              "exit": 0
+            },
+            {
+              "name": "rebase",
+              "wall_ms": 15,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 252,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 15,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 21,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 15,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature",
+              "wall_ms": 30,
+              "exit": 0
+            },
+            {
+              "name": "add-feat",
+              "wall_ms": 19,
+              "exit": 0
+            },
+            {
+              "name": "commit-feat",
+              "wall_ms": 15,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 25,
+              "exit": 0
+            },
+            {
+              "name": "add-main",
+              "wall_ms": 15,
+              "exit": 0
+            },
+            {
+              "name": "commit-main",
+              "wall_ms": 18,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature2",
+              "wall_ms": 34,
+              "exit": 0
+            },
+            {
+              "name": "rebase",
+              "wall_ms": 38,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-BUNDLE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 27,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "bundle-create",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "bundle-verify",
+              "wall_ms": 3,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 57,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 14,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 18,
+              "exit": 0
+            },
+            {
+              "name": "bundle-create",
+              "wall_ms": 9,
+              "exit": 0
+            },
+            {
+              "name": "bundle-verify",
+              "wall_ms": 8,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-CLONE-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 103,
+          "steps": [
+            {
+              "name": "clone",
+              "wall_ms": 103,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 184,
+          "steps": [
+            {
+              "name": "clone",
+              "wall_ms": 184,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-ALIAS-01",
+      "lanes": [
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 77,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 12,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 21,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 18,
+              "exit": 0
+            },
+            {
+              "name": "status",
+              "wall_ms": 13,
+              "exit": 0
+            },
+            {
+              "name": "log",
+              "wall_ms": 13,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REFUSE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "peer_implements",
+          "exit_overall": 0,
+          "wall_ms_total": 5,
+          "steps": [
+            {
+              "name": "worktree-list",
+              "wall_ms": 5,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 8,
+          "steps": [
+            {
+              "name": "worktree-list",
+              "wall_ms": 8,
+              "exit": 1
+            }
+          ]
+        },
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 12,
+          "steps": [
+            {
+              "name": "worktree-list",
+              "wall_ms": 12,
+              "exit": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "gate": "G22",
+  "name": "celir-index-contention",
+  "result": "PASS",
+  "n_tiers": [
+    32,
+    128
+  ],
+  "stock_git": "git version 2.39.5",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "ts": "2026-11-09T20:44:28Z",
+  "feature": "celir-index-stress",
+  "discrete_circuit": "/workspaces/discrete-circuit"
+}

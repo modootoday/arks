@@ -1,0 +1,45 @@
+# Specfold local / build
+.spec.local/
+.specfold/
+target/
+target-cleanroom/
+verify/g1/target/
+verify/g2/target/
+verify/g4/target/
+verify/g5/target/
+verify/g10/target/
+verify/g16/target/
+verify/g8/out/
+verify/g8-live-scale/out/
+verify/g16/out/
+verify/g17/out/
+verify/g18/out/
+verify/g19/out/
+verify/g20/out/
+verify/g21/out/
+verify/g22/out/
+verify/g23/out/
+verify/g24/out/
+verify/g25/out/
+
+# Secrets / credentials (public-surface: never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+id_rsa
+id_ed25519
+credentials.json
+**/secrets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+verify/g27/out/
+verify/g28/out/
+verify/g34/out/

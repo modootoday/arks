@@ -1,0 +1,90 @@
+{
+  "generated_unix": 1794194674,
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "c97a0a17161e4189e5be2661f762ea8e1fad412e",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "optional-lock reader vs writer; agent/--no-optional-locks status creates no index.lock",
+      "scenario_id": "AGENT-006/IDX-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "inspect + clear --stale; refuse live PID; no skip on write path",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "submodule index.lock domain fail-closed; super status separate domain",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "common-dir ref lock fail-closed; locked worktree remove refuse",
+      "scenario_id": "WT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "backoff/retry guidance on lock fail; no M12 lease scheduler",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse inventing async hooks; --no-verify claimed escape; sync-critical honesty",
+      "scenario_id": "HOOK-001/HOOK-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive index.lock fail-closed + retry guidance; no sharded writer",
+      "scenario_id": "IDX-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse auto-gc/detach/repack under writers; safer than concurrent prune",
+      "scenario_id": "PACK-004/MAINT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "evicted/dead PID stale lock inspect+clear; write path honors locks",
+      "scenario_id": "AGENT-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "worktree+submodule multi-domain fail-closed; AGENT-007 inspect honesty",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse gc/repack/maintenance incl. prune=now under writers (CORR-001)",
+      "scenario_id": "CORR-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "bind-mount dual-writer honesty; inspect FS-006; honor locks; clear only dead",
+      "scenario_id": "FS-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "background/optional status lock class; default arks status takes no optional locks",
+      "scenario_id": "IDX-002"
+    }
+  ],
+  "schema": "arks-g17-issue-compare/v1",
+  "stock_git": "git version 2.39.5",
+  "venue": "clean-room",
+  "wave": "Cm-3"
+}

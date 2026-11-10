@@ -1,0 +1,14 @@
+{
+  "umbrella": "roadmap-open-zero",
+  "tip": "90c8b880a5d0251057fdfb1535ee4a0162546484",
+  "roadmap_open": 0,
+  "residual_bare_open": 0,
+  "m23": "Claimed",
+  "shared_index_nway": "deferred-non-blocking",
+  "gates_this_wave": {
+    "g11l3": "PASS",
+    "g11_with_g14_g7": "PASS"
+  },
+  "l3_evidence": "evidence:root/20261109194858",
+  "celir": "excluded"
+}

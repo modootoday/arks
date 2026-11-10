@@ -1,0 +1,22 @@
+{
+  "gate": "G21",
+  "wave": "Sy-1",
+  "pass": true,
+  "compose_service": "g21",
+  "image": "arks-verify-m1:0.1.0",
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "stock_git": "git version 2.39.5",
+  "rows": [
+    {"id": "M16-SY1-01", "pass": true},
+    {"id": "M16-SY1-02", "pass": true},
+    {"id": "M16-SY1-03", "pass": true},
+    {"id": "M16-SY1-04", "pass": true},
+    {"id": "M16-SY1-05", "pass": true},
+    {"id": "M16-SY1-06", "pass": true},
+    {"id": "M16-SY1-07", "pass": true, "notes": "G20+G14 regression in run-g21.sh"}
+  ],
+  "g20_regression": true,
+  "g14_regression": true,
+  "base_tip_before_land": "c90f1bb10e9416cac5ad3f1099aeaf6bd23f6e00",
+  "land_tip_sha": "abe0e93a92aa758d9027bb576864ed24e76651eb"
+}

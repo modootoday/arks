@@ -1,0 +1,1360 @@
+{
+  "schema": "arks-journey-metrics/v1",
+  "run": {
+    "venue": "clean-room",
+    "image_tag": "arks-verify-m1:0.1.0",
+    "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+    "stock_git_version": "git version 2.39.5",
+    "arks_revision": "74fc493675dbb20bee51a805c5c866530bb2df29",
+    "arks_profile": "release",
+    "iterations": 3,
+    "warm_policy": "cold-workdir-per-lane",
+    "aggregation": "median_p95"
+  },
+  "journeys": [
+    {
+      "id": "J-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 22,
+          "wall_ms_p95_total": 22,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 7,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "status",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            },
+            {
+              "name": "log",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 59,
+          "wall_ms_p95_total": 62,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 18,
+              "wall_ms_p95": 18,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 17,
+              "wall_ms_p95": 20,
+              "exit": 0
+            },
+            {
+              "name": "status",
+              "wall_ms": 9,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "log",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-BRANCH-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 39,
+          "wall_ms_p95_total": 45,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 4,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "switch",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 155,
+          "wall_ms_p95_total": 504,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 19,
+              "wall_ms_p95": 20,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 16,
+              "wall_ms_p95": 22,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 16,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 24,
+              "wall_ms_p95": 28,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 18,
+              "wall_ms_p95": 374,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 19,
+              "wall_ms_p95": 25,
+              "exit": 0
+            },
+            {
+              "name": "switch",
+              "wall_ms": 27,
+              "wall_ms_p95": 27,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-MERGE-FF-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 52,
+          "wall_ms_p95_total": 53,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 5,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "merge-ff",
+              "wall_ms": 9,
+              "wall_ms_p95": 11,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 174,
+          "wall_ms_p95_total": 868,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 16,
+              "wall_ms_p95": 22,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 16,
+              "wall_ms_p95": 17,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 15,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "checkout",
+              "wall_ms": 25,
+              "wall_ms_p95": 25,
+              "exit": 0
+            },
+            {
+              "name": "add2",
+              "wall_ms": 18,
+              "wall_ms_p95": 19,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 18,
+              "wall_ms_p95": 19,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 28,
+              "wall_ms_p95": 38,
+              "exit": 0
+            },
+            {
+              "name": "merge-ff",
+              "wall_ms": 28,
+              "wall_ms_p95": 716,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REBASE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 68,
+          "wall_ms_p95_total": 68,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 5,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 3,
+              "wall_ms_p95": 7,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-feat",
+              "wall_ms": 3,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit-feat",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 4,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "add-main",
+              "wall_ms": 3,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit-main",
+              "wall_ms": 7,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature2",
+              "wall_ms": 5,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "rebase",
+              "wall_ms": 10,
+              "wall_ms_p95": 11,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 252,
+          "wall_ms_p95_total": 258,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 10,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 16,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 16,
+              "wall_ms_p95": 17,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 14,
+              "wall_ms_p95": 15,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature",
+              "wall_ms": 27,
+              "wall_ms_p95": 31,
+              "exit": 0
+            },
+            {
+              "name": "add-feat",
+              "wall_ms": 18,
+              "wall_ms_p95": 23,
+              "exit": 0
+            },
+            {
+              "name": "commit-feat",
+              "wall_ms": 21,
+              "wall_ms_p95": 24,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 24,
+              "wall_ms_p95": 24,
+              "exit": 0
+            },
+            {
+              "name": "add-main",
+              "wall_ms": 21,
+              "wall_ms_p95": 23,
+              "exit": 0
+            },
+            {
+              "name": "commit-main",
+              "wall_ms": 17,
+              "wall_ms_p95": 17,
+              "exit": 0
+            },
+            {
+              "name": "checkout-feature2",
+              "wall_ms": 22,
+              "wall_ms_p95": 33,
+              "exit": 0
+            },
+            {
+              "name": "rebase",
+              "wall_ms": 37,
+              "wall_ms_p95": 49,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-BUNDLE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 27,
+          "wall_ms_p95_total": 61,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 8,
+              "wall_ms_p95": 42,
+              "exit": 0
+            },
+            {
+              "name": "bundle-create",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "bundle-verify",
+              "wall_ms": 3,
+              "wall_ms_p95": 5,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 57,
+          "wall_ms_p95_total": 59,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 15,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 15,
+              "wall_ms_p95": 15,
+              "exit": 0
+            },
+            {
+              "name": "bundle-create",
+              "wall_ms": 9,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "bundle-verify",
+              "wall_ms": 9,
+              "wall_ms_p95": 10,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-CLONE-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 101,
+          "wall_ms_p95_total": 149,
+          "steps": [
+            {
+              "name": "clone",
+              "wall_ms": 101,
+              "wall_ms_p95": 149,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 108,
+          "wall_ms_p95_total": 202,
+          "steps": [
+            {
+              "name": "clone",
+              "wall_ms": 108,
+              "wall_ms_p95": 202,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-ALIAS-01",
+      "lanes": [
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 75,
+          "wall_ms_p95_total": 77,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 11,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 20,
+              "wall_ms_p95": 20,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 18,
+              "wall_ms_p95": 20,
+              "exit": 0
+            },
+            {
+              "name": "status",
+              "wall_ms": 12,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "log",
+              "wall_ms": 12,
+              "wall_ms_p95": 12,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REFUSE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "peer_implements",
+          "exit_overall": 0,
+          "wall_ms_total": 3,
+          "wall_ms_p95_total": 4,
+          "steps": [
+            {
+              "name": "worktree-list",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 6,
+          "steps": [
+            {
+              "name": "worktree-list",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 1
+            }
+          ]
+        },
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 9,
+          "wall_ms_p95_total": 9,
+          "steps": [
+            {
+              "name": "worktree-list",
+              "wall_ms": 9,
+              "wall_ms_p95": 9,
+              "exit": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-TAG-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 12,
+          "wall_ms_p95_total": 17,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "tag-annotated",
+              "wall_ms": 4,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "tag-list",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 32,
+          "wall_ms_p95_total": 35,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "tag-annotated",
+              "wall_ms": 18,
+              "wall_ms_p95": 18,
+              "exit": 0
+            },
+            {
+              "name": "tag-list",
+              "wall_ms": 10,
+              "wall_ms_p95": 10,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-STASH-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 31,
+          "wall_ms_p95_total": 39,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "stash-push",
+              "wall_ms": 13,
+              "wall_ms_p95": 14,
+              "exit": 0
+            },
+            {
+              "name": "stash-list",
+              "wall_ms": 6,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "stash-pop",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 65,
+          "wall_ms_p95_total": 126,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "stash-push",
+              "wall_ms": 27,
+              "wall_ms_p95": 32,
+              "exit": 0
+            },
+            {
+              "name": "stash-list",
+              "wall_ms": 10,
+              "wall_ms_p95": 13,
+              "exit": 0
+            },
+            {
+              "name": "stash-pop",
+              "wall_ms": 16,
+              "wall_ms_p95": 81,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-CHERRY-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 19,
+          "wall_ms_p95_total": 21,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            },
+            {
+              "name": "checkout-topic",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "cherry-pick",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 96,
+          "wall_ms_p95_total": 96,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "branch",
+              "wall_ms": 14,
+              "wall_ms_p95": 15,
+              "exit": 0
+            },
+            {
+              "name": "checkout-topic",
+              "wall_ms": 26,
+              "wall_ms_p95": 28,
+              "exit": 0
+            },
+            {
+              "name": "checkout-main",
+              "wall_ms": 22,
+              "wall_ms_p95": 23,
+              "exit": 0
+            },
+            {
+              "name": "cherry-pick",
+              "wall_ms": 25,
+              "wall_ms_p95": 27,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-DIFF-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 13,
+          "wall_ms_p95_total": 17,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "diff",
+              "wall_ms": 3,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            },
+            {
+              "name": "diff-cached",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 39,
+          "wall_ms_p95_total": 104,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "wall_ms_p95": 71,
+              "exit": 0
+            },
+            {
+              "name": "diff",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 15,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "diff-cached",
+              "wall_ms": 9,
+              "wall_ms_p95": 9,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-RM-MV-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 32,
+          "wall_ms_p95_total": 32,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "wall_ms_p95": 5,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 9,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "mv",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "rm",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 92,
+          "wall_ms_p95_total": 97,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 9,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 17,
+              "wall_ms_p95": 19,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 18,
+              "wall_ms_p95": 22,
+              "exit": 0
+            },
+            {
+              "name": "mv",
+              "wall_ms": 15,
+              "wall_ms_p95": 17,
+              "exit": 0
+            },
+            {
+              "name": "rm",
+              "wall_ms": 15,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 17,
+              "wall_ms_p95": 17,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-ARCHIVE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 7,
+          "wall_ms_p95_total": 10,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 7,
+              "exit": 0
+            },
+            {
+              "name": "archive",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 18,
+          "wall_ms_p95_total": 18,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 8,
+              "wall_ms_p95": 10,
+              "exit": 0
+            },
+            {
+              "name": "archive",
+              "wall_ms": 8,
+              "wall_ms_p95": 10,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REFLOG-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 11,
+          "wall_ms_p95_total": 23,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 5,
+              "wall_ms_p95": 16,
+              "exit": 0
+            },
+            {
+              "name": "reflog",
+              "wall_ms": 3,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "reflog-show",
+              "wall_ms": 3,
+              "wall_ms_p95": 3,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 23,
+          "wall_ms_p95_total": 36,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "reflog",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "reflog-show",
+              "wall_ms": 8,
+              "wall_ms_p95": 22,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REVERT-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 9,
+          "wall_ms_p95_total": 10,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "revert",
+              "wall_ms": 4,
+              "wall_ms_p95": 5,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 31,
+          "wall_ms_p95_total": 32,
+          "steps": [
+            {
+              "name": "init",
+              "wall_ms": 7,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "revert",
+              "wall_ms": 24,
+              "wall_ms_p95": 25,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REFUSE-02",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "peer_implements",
+          "exit_overall": 0,
+          "wall_ms_total": 8,
+          "wall_ms_p95_total": 10,
+          "steps": [
+            {
+              "name": "repack",
+              "wall_ms": 8,
+              "wall_ms_p95": 10,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 8,
+          "steps": [
+            {
+              "name": "repack",
+              "wall_ms": 6,
+              "wall_ms_p95": 8,
+              "exit": 1
+            }
+          ]
+        },
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 10,
+          "wall_ms_p95_total": 10,
+          "steps": [
+            {
+              "name": "repack",
+              "wall_ms": 10,
+              "wall_ms_p95": 10,
+              "exit": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REFUSE-03",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "peer_implements",
+          "exit_overall": 0,
+          "wall_ms_total": 60,
+          "wall_ms_p95_total": 64,
+          "steps": [
+            {
+              "name": "submodule-status",
+              "wall_ms": 60,
+              "wall_ms_p95": 64,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 7,
+          "steps": [
+            {
+              "name": "submodule-status",
+              "wall_ms": 6,
+              "wall_ms_p95": 7,
+              "exit": 1
+            }
+          ]
+        },
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 9,
+          "wall_ms_p95_total": 11,
+          "steps": [
+            {
+              "name": "submodule-status",
+              "wall_ms": 9,
+              "wall_ms_p95": 11,
+              "exit": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

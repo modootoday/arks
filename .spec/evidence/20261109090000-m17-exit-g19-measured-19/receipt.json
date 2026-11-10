@@ -1,0 +1,188 @@
+{
+  "schema": "arks-g19-perf-comparative/v1",
+  "venue": "clean-room",
+  "wave": "Pf3",
+  "bar": "arks_median <= 0.8 * git_median",
+  "aggregation": "median_p95",
+  "iterations": 3,
+  "image_tag": "arks-verify-m1:0.1.0",
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "stock_git": "git version 2.39.5",
+  "revision": "704a4b352ceb72f4ffa33413d0cf9d53d5e2737a",
+  "allow_list": [
+    "J-LOCAL-01",
+    "J-BRANCH-01",
+    "J-MERGE-FF-01",
+    "J-REBASE-01",
+    "J-BUNDLE-01",
+    "J-CLONE-LOCAL-01",
+    "J-CLONE-PATH-01",
+    "J-ALIAS-01",
+    "J-WORKTREE-01",
+    "J-TAG-01",
+    "J-STASH-01",
+    "J-CHERRY-01",
+    "J-DIFF-01",
+    "J-RM-MV-01",
+    "J-ARCHIVE-01",
+    "J-REFLOG-01",
+    "J-REVERT-01",
+    "J-REPACK-01",
+    "J-SUBMODULE-01"
+  ],
+  "na": {},
+  "journeys": [
+    {
+      "journey_id": "J-LOCAL-01",
+      "git_median_ms": 62,
+      "arks_median_ms": 42,
+      "ratio": 0.6774,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-BRANCH-01",
+      "git_median_ms": 6,
+      "arks_median_ms": 4,
+      "ratio": 0.6667,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-MERGE-FF-01",
+      "git_median_ms": 6,
+      "arks_median_ms": 2,
+      "ratio": 0.3333,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-REBASE-01",
+      "git_median_ms": 19,
+      "arks_median_ms": 8,
+      "ratio": 0.4211,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-BUNDLE-01",
+      "git_median_ms": 6,
+      "arks_median_ms": 4,
+      "ratio": 0.6667,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-CLONE-LOCAL-01",
+      "git_median_ms": 54,
+      "arks_median_ms": 29,
+      "ratio": 0.537,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-CLONE-PATH-01",
+      "git_median_ms": 37,
+      "arks_median_ms": 12,
+      "ratio": 0.3243,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-ALIAS-01",
+      "git_median_ms": 62,
+      "arks_median_ms": 40,
+      "ratio": 0.6452,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-WORKTREE-01",
+      "git_median_ms": 24,
+      "arks_median_ms": 14,
+      "ratio": 0.5833,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-TAG-01",
+      "git_median_ms": 174,
+      "arks_median_ms": 64,
+      "ratio": 0.3678,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-STASH-01",
+      "git_median_ms": 12,
+      "arks_median_ms": 6,
+      "ratio": 0.5,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-CHERRY-01",
+      "git_median_ms": 12,
+      "arks_median_ms": 8,
+      "ratio": 0.6667,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-DIFF-01",
+      "git_median_ms": 173,
+      "arks_median_ms": 111,
+      "ratio": 0.6416,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-RM-MV-01",
+      "git_median_ms": 8,
+      "arks_median_ms": 6,
+      "ratio": 0.75,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-ARCHIVE-01",
+      "git_median_ms": 32,
+      "arks_median_ms": 24,
+      "ratio": 0.75,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-REFLOG-01",
+      "git_median_ms": 8,
+      "arks_median_ms": 4,
+      "ratio": 0.5,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-REVERT-01",
+      "git_median_ms": 6,
+      "arks_median_ms": 4,
+      "ratio": 0.6667,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-REPACK-01",
+      "git_median_ms": 29,
+      "arks_median_ms": 10,
+      "ratio": 0.3448,
+      "pass": true,
+      "na": false
+    },
+    {
+      "journey_id": "J-SUBMODULE-01",
+      "git_median_ms": 97,
+      "arks_median_ms": 16,
+      "ratio": 0.1649,
+      "pass": true,
+      "na": false
+    }
+  ]
+}

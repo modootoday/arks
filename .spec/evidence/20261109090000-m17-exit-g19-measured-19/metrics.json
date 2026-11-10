@@ -1,0 +1,2056 @@
+{
+  "schema": "arks-journey-metrics/v1",
+  "run": {
+    "venue": "clean-room",
+    "image_tag": "arks-verify-m1:0.1.0",
+    "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+    "stock_git_version": "git version 2.39.5",
+    "arks_revision": "704a4b352ceb72f4ffa33413d0cf9d53d5e2737a",
+    "arks_profile": "release",
+    "iterations": 3,
+    "warm_policy": "cold-workdir-per-lane",
+    "aggregation": "median_p95"
+  },
+  "journeys": [
+    {
+      "id": "J-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 62,
+          "wall_ms_p95_total": 66,
+          "peak_rss_kb": 4704,
+          "peak_rss_kb_p95": 4704,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "add",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 42,
+          "wall_ms_p95_total": 42,
+          "peak_rss_kb": 3784,
+          "peak_rss_kb_p95": 3976,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "add",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-BRANCH-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 8,
+          "peak_rss_kb": 4548,
+          "peak_rss_kb_p95": 4568,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "switch-topic",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "switch-main",
+              "wall_ms": 2,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 4,
+          "wall_ms_p95_total": 4,
+          "peak_rss_kb": 204,
+          "peak_rss_kb_p95": 300,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "switch-topic",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "switch-main",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-MERGE-FF-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 6,
+          "peak_rss_kb": 4652,
+          "peak_rss_kb_p95": 4680,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "merge-ff",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 2,
+          "wall_ms_p95_total": 2,
+          "peak_rss_kb": 292,
+          "peak_rss_kb_p95": 332,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "merge-ff",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REBASE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 19,
+          "wall_ms_p95_total": 21,
+          "peak_rss_kb": 5076,
+          "peak_rss_kb_p95": 5144,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "rebase",
+              "wall_ms": 19,
+              "wall_ms_p95": 21,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 8,
+          "wall_ms_p95_total": 8,
+          "peak_rss_kb": 3932,
+          "peak_rss_kb_p95": 4144,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "rebase",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-BUNDLE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 6,
+          "peak_rss_kb": 4408,
+          "peak_rss_kb_p95": 4472,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "bundle-create",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "bundle-verify",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 4,
+          "wall_ms_p95_total": 4,
+          "peak_rss_kb": 336,
+          "peak_rss_kb_p95": 348,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "bundle-create",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "bundle-verify",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-CLONE-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 54,
+          "wall_ms_p95_total": 67,
+          "peak_rss_kb": 4592,
+          "peak_rss_kb_p95": 4656,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "clone",
+              "wall_ms": 54,
+              "wall_ms_p95": 67,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 29,
+          "wall_ms_p95_total": 31,
+          "peak_rss_kb": 3888,
+          "peak_rss_kb_p95": 4204,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "clone",
+              "wall_ms": 29,
+              "wall_ms_p95": 31,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-CLONE-PATH-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 37,
+          "wall_ms_p95_total": 39,
+          "peak_rss_kb": 4652,
+          "peak_rss_kb_p95": 4704,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "clone-path",
+              "wall_ms": 10,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "clone-file",
+              "wall_ms": 27,
+              "wall_ms_p95": 27,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 12,
+          "wall_ms_p95_total": 12,
+          "peak_rss_kb": 3168,
+          "peak_rss_kb_p95": 3244,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "clone-path",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "clone-file",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-ALIAS-01",
+      "lanes": [
+        {
+          "peer": "alias",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 40,
+          "wall_ms_p95_total": 40,
+          "peak_rss_kb": 4088,
+          "peak_rss_kb_p95": 4216,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "add",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-WORKTREE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 128,
+          "wall_ms_total": 24,
+          "wall_ms_p95_total": 24,
+          "peak_rss_kb": 4184,
+          "peak_rss_kb_p95": 4260,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "worktree-add",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "worktree-list",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-move",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-remove-locked",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 128
+            },
+            {
+              "name": "worktree-remove",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "worktree-add2",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "worktree-prune",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 1,
+          "wall_ms_total": 14,
+          "wall_ms_p95_total": 14,
+          "peak_rss_kb": 332,
+          "peak_rss_kb_p95": 352,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "worktree-add",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-list",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-move",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-remove-locked",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 1
+            },
+            {
+              "name": "worktree-remove",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-add2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "worktree-prune",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-TAG-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 174,
+          "wall_ms_p95_total": 176,
+          "peak_rss_kb": 24004,
+          "peak_rss_kb_p95": 24036,
+          "cpu_ms": 70,
+          "cpu_ms_p95": 80,
+          "steps": [
+            {
+              "name": "tag-list",
+              "wall_ms": 25,
+              "wall_ms_p95": 27,
+              "exit": 0
+            },
+            {
+              "name": "tag-list-2",
+              "wall_ms": 25,
+              "wall_ms_p95": 25,
+              "exit": 0
+            },
+            {
+              "name": "tag-list-3",
+              "wall_ms": 25,
+              "wall_ms_p95": 27,
+              "exit": 0
+            },
+            {
+              "name": "tag-list-4",
+              "wall_ms": 25,
+              "wall_ms_p95": 25,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-8",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-8",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-9",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-9",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-10",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-10",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-11",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-11",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 64,
+          "wall_ms_p95_total": 64,
+          "peak_rss_kb": 6764,
+          "peak_rss_kb_p95": 6792,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "tag-list",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "tag-list-2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "tag-list-3",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "tag-list-4",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-8",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-8",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-9",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-9",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-10",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-10",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-11",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-11",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-STASH-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 12,
+          "wall_ms_p95_total": 14,
+          "peak_rss_kb": 4728,
+          "peak_rss_kb_p95": 4760,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "stash-push",
+              "wall_ms": 6,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "stash-list",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "stash-pop",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 6,
+          "peak_rss_kb": 344,
+          "peak_rss_kb_p95": 348,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "stash-push",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "stash-list",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "stash-pop",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-CHERRY-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 12,
+          "wall_ms_p95_total": 12,
+          "peak_rss_kb": 4832,
+          "peak_rss_kb_p95": 4940,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "cherry-pick",
+              "wall_ms": 12,
+              "wall_ms_p95": 12,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 8,
+          "wall_ms_p95_total": 8,
+          "peak_rss_kb": 3940,
+          "peak_rss_kb_p95": 4068,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "cherry-pick",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-DIFF-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 173,
+          "wall_ms_p95_total": 173,
+          "peak_rss_kb": 4788,
+          "peak_rss_kb_p95": 4848,
+          "cpu_ms": 20,
+          "cpu_ms_p95": 20,
+          "steps": [
+            {
+              "name": "diff",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "diff-2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 27,
+              "wall_ms_p95": 29,
+              "exit": 0
+            },
+            {
+              "name": "diff-cached",
+              "wall_ms": 12,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 10,
+              "wall_ms_p95": 10,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 4,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-8",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-8",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-9",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-9",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-10",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-10",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "add-11",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "commit-11",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 111,
+          "wall_ms_p95_total": 113,
+          "peak_rss_kb": 3996,
+          "peak_rss_kb_p95": 4072,
+          "cpu_ms": 40,
+          "cpu_ms_p95": 40,
+          "steps": [
+            {
+              "name": "diff",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "diff-2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "add",
+              "wall_ms": 32,
+              "wall_ms_p95": 32,
+              "exit": 0
+            },
+            {
+              "name": "diff-cached",
+              "wall_ms": 23,
+              "wall_ms_p95": 25,
+              "exit": 0
+            },
+            {
+              "name": "add-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-0",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-1",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-3",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-4",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-5",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-6",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-7",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-8",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-8",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-9",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-9",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-10",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-10",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "add-11",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit-11",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-RM-MV-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 8,
+          "wall_ms_p95_total": 8,
+          "peak_rss_kb": 4576,
+          "peak_rss_kb_p95": 4700,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "mv",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "rm",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 6,
+          "peak_rss_kb": 348,
+          "peak_rss_kb_p95": 360,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "mv",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "rm",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "commit2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-ARCHIVE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 32,
+          "wall_ms_p95_total": 32,
+          "peak_rss_kb": 4376,
+          "peak_rss_kb_p95": 4468,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "archive",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "archive-2",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "archive-3",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "archive-4",
+              "wall_ms": 8,
+              "wall_ms_p95": 8,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 24,
+          "wall_ms_p95_total": 24,
+          "peak_rss_kb": 3892,
+          "peak_rss_kb_p95": 3912,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "archive",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "archive-2",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "archive-3",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            },
+            {
+              "name": "archive-4",
+              "wall_ms": 6,
+              "wall_ms_p95": 6,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REFLOG-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 8,
+          "wall_ms_p95_total": 8,
+          "peak_rss_kb": 4992,
+          "peak_rss_kb_p95": 5032,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "reflog",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+            {
+              "name": "reflog-show",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 4,
+          "wall_ms_p95_total": 4,
+          "peak_rss_kb": 316,
+          "peak_rss_kb_p95": 336,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "reflog",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "reflog-show",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REVERT-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 6,
+          "wall_ms_p95_total": 10,
+          "peak_rss_kb": 4752,
+          "peak_rss_kb_p95": 4792,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "revert",
+              "wall_ms": 6,
+              "wall_ms_p95": 10,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 4,
+          "wall_ms_p95_total": 4,
+          "peak_rss_kb": 3944,
+          "peak_rss_kb_p95": 4044,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "revert",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-REPACK-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 29,
+          "wall_ms_p95_total": 29,
+          "peak_rss_kb": 3976,
+          "peak_rss_kb_p95": 4040,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "repack",
+              "wall_ms": 29,
+              "wall_ms_p95": 29,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 10,
+          "wall_ms_p95_total": 10,
+          "peak_rss_kb": 4256,
+          "peak_rss_kb_p95": 4368,
+          "cpu_ms": 10,
+          "cpu_ms_p95": 10,
+          "steps": [
+            {
+              "name": "repack",
+              "wall_ms": 10,
+              "wall_ms_p95": 10,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J-SUBMODULE-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 97,
+          "wall_ms_p95_total": 100,
+          "peak_rss_kb": 3724,
+          "peak_rss_kb_p95": 3740,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "sub-init",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "init",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-add",
+              "wall_ms": 21,
+              "wall_ms_p95": 23,
+              "exit": 0
+            },
+            {
+              "name": "submodule-status",
+              "wall_ms": 16,
+              "wall_ms_p95": 21,
+              "exit": 0
+            },
+            {
+              "name": "submodule-deinit",
+              "wall_ms": 12,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "submodule-init",
+              "wall_ms": 12,
+              "wall_ms_p95": 12,
+              "exit": 0
+            },
+            {
+              "name": "submodule-update",
+              "wall_ms": 16,
+              "wall_ms_p95": 17,
+              "exit": 0
+            },
+            {
+              "name": "submodule-status2",
+              "wall_ms": 14,
+              "wall_ms_p95": 17,
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "peer": "arks",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 16,
+          "wall_ms_p95_total": 16,
+          "peak_rss_kb": 340,
+          "peak_rss_kb_p95": 344,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "sub-init",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "init",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-add",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-status",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-deinit",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-init",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-update",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            },
+            {
+              "name": "submodule-status2",
+              "wall_ms": 2,
+              "wall_ms_p95": 2,
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

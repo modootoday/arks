@@ -1,0 +1,82 @@
+{
+  "rows": [
+    {
+      "id": "M15-FS3-05",
+      "pass": true,
+      "wave": "Fs-3"
+    },
+    {
+      "id": "M15-FS3-02",
+      "pass": true,
+      "wave": "Fs-3"
+    },
+    {
+      "id": "M15-FS5-03",
+      "pass": true,
+      "wave": "Fs-5"
+    },
+    {
+      "id": "M15-FS3-01",
+      "pass": true,
+      "wave": "Fs-3"
+    },
+    {
+      "id": "M15-FS5-02",
+      "pass": true,
+      "wave": "Fs-5"
+    },
+    {
+      "id": "M15-FS3-04",
+      "pass": true,
+      "wave": "Fs-3"
+    },
+    {
+      "id": "M15-FS1-02",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS1-01",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS4-01",
+      "pass": true,
+      "wave": "Fs-4"
+    },
+    {
+      "id": "M15-FS1-04",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS3-03",
+      "pass": true,
+      "wave": "Fs-3"
+    },
+    {
+      "id": "M15-FS1-03",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS2-02",
+      "pass": true,
+      "wave": "Fs-2"
+    },
+    {
+      "id": "M15-FS2-01",
+      "pass": true,
+      "wave": "Fs-2"
+    },
+    {
+      "id": "M15-FS5-01",
+      "pass": true,
+      "wave": "Fs-5"
+    }
+  ],
+  "schema": "arks-g20-cli-full-parity/v1",
+  "venue": "clean-room",
+  "wave": "Fs-1+Fs-2+Fs-3+Fs-4+Fs-5"
+}

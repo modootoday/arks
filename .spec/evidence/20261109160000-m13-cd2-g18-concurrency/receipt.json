@@ -1,0 +1,60 @@
+{
+  "generated_unix": 1794195570,
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "29ac2a8aa2357cb3928f4c81e822721bb09f784b",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "M13 lease AlreadyHeld wait/backoff; write path honors live locks",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns lease coordinates tip writers; lease ≠ skip Git locks",
+      "scenario_id": "REF-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "lease serializes tip writers before CAS; wait honesty for loser",
+      "scenario_id": "REF-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "partitioned refns agent namespaces; overlapping prefix AlreadyHeld",
+      "scenario_id": "REF-011"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "composed domain:worktree + domain:submodule leases; locks honored",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "TTL fencing via lease expire; write path honors Git locks",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule lease; Git locks still honored",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree lease; Git locks still honored",
+      "scenario_id": "WT-001"
+    }
+  ],
+  "schema": "arks-g18-issue-compare/v1",
+  "stock_git": "git version 2.39.5",
+  "venue": "clean-room",
+  "wave": "Cd-2"
+}

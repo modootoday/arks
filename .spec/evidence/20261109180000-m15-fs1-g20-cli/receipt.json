@@ -1,0 +1,27 @@
+{
+  "rows": [
+    {
+      "id": "M15-FS1-01",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS1-02",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS1-04",
+      "pass": true,
+      "wave": "Fs-1"
+    },
+    {
+      "id": "M15-FS1-03",
+      "pass": true,
+      "wave": "Fs-1"
+    }
+  ],
+  "schema": "arks-g20-cli-full-parity/v1",
+  "venue": "clean-room",
+  "wave": "Fs-1"
+}

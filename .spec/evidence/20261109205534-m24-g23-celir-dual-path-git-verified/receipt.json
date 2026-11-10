@@ -1,0 +1,14 @@
+{
+  "gate": "G23",
+  "name": "celir-dual-path-git",
+  "result": "PASS",
+  "claim": "CELIR dual-path Git verified",
+  "object_store": "filesystem-.git",
+  "celir_role": "index-sidecar-only",
+  "stock_git": "git version 2.39.5",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "ts": "2026-11-09T20:55:08Z",
+  "feature": "celir-index-stress",
+  "discrete_circuit": "/workspaces/discrete-circuit",
+  "arks_bin": "/cargo-target/release/arks"
+}

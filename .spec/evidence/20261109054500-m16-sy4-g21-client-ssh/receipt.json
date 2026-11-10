@@ -1,0 +1,18 @@
+{
+  "gate": "G21",
+  "wave": "Sy-4",
+  "pass": true,
+  "compose_service": "g21",
+  "image": "arks-verify-m1:0.1.0",
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "stock_git": "git version 2.39.5",
+  "openssh": "OpenSSH_9.2p1 Debian-2+deb12u10, OpenSSL 3.0.22 25 Aug 2026",
+  "rows": [
+    {"id": "M16-SY4-01", "pass": true},
+    {"id": "M16-SY4-02", "pass": true}
+  ],
+  "g20_regression": true,
+  "g14_regression": true,
+  "base_tip_before_land": "b0288b57db8e9ed36226771a562184b37678c281",
+  "land_tip_sha": "3143484eeb794c50fa77543bef4d264e9b91ae3e"
+}

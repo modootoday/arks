@@ -1,0 +1,84 @@
+{
+  "generated_unix": 1794195713,
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "68d0deee7cd73081e73e3dc484be898c09a7e4ff",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "M13 lease AlreadyHeld wait/backoff; write path honors live locks",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns lease coordinates tip writers; lease ≠ skip Git locks",
+      "scenario_id": "REF-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "lease serializes tip writers before CAS; wait honesty for loser",
+      "scenario_id": "REF-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "partitioned refns agent namespaces; overlapping prefix AlreadyHeld",
+      "scenario_id": "REF-011"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "composed domain:worktree + domain:submodule leases; locks honored",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "TTL fencing via lease expire; write path honors Git locks",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule lease; Git locks still honored",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree lease; Git locks still honored",
+      "scenario_id": "WT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "agent refns partitions + main merge coordinator lease",
+      "scenario_id": "AGENT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:critical lease budget; no invented async hook runners",
+      "scenario_id": "HOOK-001/HOOK-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:default path-set lease; Git locks honored",
+      "scenario_id": "IDX-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:gc lease; arks gc refuse-closed",
+      "scenario_id": "PACK-004/MAINT-003"
+    }
+  ],
+  "schema": "arks-g18-issue-compare/v1",
+  "stock_git": "git version 2.39.5",
+  "venue": "clean-room",
+  "wave": "Cd-3"
+}

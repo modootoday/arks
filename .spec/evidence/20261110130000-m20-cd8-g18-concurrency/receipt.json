@@ -1,0 +1,444 @@
+{
+  "generated_unix": 1794248163,
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "2b2e3844a700dae90557cceba0fa3f31e01f92dd",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "M13 lease AlreadyHeld wait/backoff; write path honors live locks",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns lease coordinates tip writers; lease ≠ skip Git locks",
+      "scenario_id": "REF-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "lease serializes tip writers before CAS; wait honesty for loser",
+      "scenario_id": "REF-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "partitioned refns agent namespaces; overlapping prefix AlreadyHeld",
+      "scenario_id": "REF-011"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "composed domain:worktree + domain:submodule leases; locks honored",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "TTL fencing via lease expire; write path honors Git locks",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule lease; Git locks still honored",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree lease; Git locks still honored",
+      "scenario_id": "WT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "agent refns partitions + main merge coordinator lease",
+      "scenario_id": "AGENT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:critical lease budget; no invented async hook runners",
+      "scenario_id": "HOOK-001/HOOK-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:default path-set lease; Git locks honored",
+      "scenario_id": "IDX-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:gc lease; arks gc refuse-closed",
+      "scenario_id": "PACK-004/MAINT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "agent:blackboard exclusive lease; lease ≠ skip index.lock",
+      "scenario_id": "AGENT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "AlreadyHeld taxonomy vs blind-retry all fatals (AGENT-010)",
+      "scenario_id": "AGENT-010"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:formatter lease; locks honored",
+      "scenario_id": "AGENT-011"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:private:agent lease; shared default index contamination refuse",
+      "scenario_id": "IDX-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:same lease for parallel same-path add",
+      "scenario_id": "IDX-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:background lease; gc prune remains refuse-closed",
+      "scenario_id": "MAINT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:packed-refs lease; packed-refs.lock still honored",
+      "scenario_id": "REF-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:txn:multi lease for multi-ref prepare abort-all class",
+      "scenario_id": "REF-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:HEAD lease; HEAD.lock still honored",
+      "scenario_id": "REF-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive refns for identical new-ref create",
+      "scenario_id": "REF-010"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "seq:conflict:path exclusive lease for dual conflict edits",
+      "scenario_id": "SEQ-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:prune lease before prune vs live agent",
+      "scenario_id": "WT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:policy exclusive lease; lease ≠ skip index.lock",
+      "scenario_id": "AGENT-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:refs/heads/agents/ + refns:bare:coord; tip locks still honored",
+      "scenario_id": "AGENT-009"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:secret-scan exclusive lease under secret-scan × N",
+      "scenario_id": "AGENT-012"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "config:local exclusive lease; no invented config.lock dialect; lease ≠ skip Git locks",
+      "scenario_id": "CFG-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:critical + index:paths:default composition; locks honored",
+      "scenario_id": "IDX-009"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:worktree lease; shared tip/refns remain separate",
+      "scenario_id": "IDX-012"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:txn:snapshot lease honesty; no invented snapshot wire bytes",
+      "scenario_id": "REF-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:refs/remotes/ lease; packed-refs.lock still honored",
+      "scenario_id": "REF-014"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:receive-pack lease; tip locks still honored",
+      "scenario_id": "REF-015"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "toctou:status-commit lease-before-lock; no invented porcelain snapshot txn",
+      "scenario_id": "TOCTOU-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:hooks lease before shared pre-commit storm",
+      "scenario_id": "WT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:add exclusive lease before worktree add name collide",
+      "scenario_id": "WT-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "config:global exclusive lease; no invented config.lock dialect",
+      "scenario_id": "CFG-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:update exclusive lease; tip locks still honored",
+      "scenario_id": "HOOK-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "misc:clean exclusive lease; lease ≠ skip index.lock",
+      "scenario_id": "MISC-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "obj:loose:write exclusive lease before loose fan-out storms",
+      "scenario_id": "OBJ-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "obj:write-before-ref + maint:gc honesty; prune remains refuse-closed",
+      "scenario_id": "OBJ-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:common lease before shared tip moves across worktrees",
+      "scenario_id": "REF-019"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:rename lease; tip locks still honored",
+      "scenario_id": "REF-023"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule:update exclusive lease for same-path update",
+      "scenario_id": "SUB-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule:status lease; no absolute PERF SLO claim",
+      "scenario_id": "SUB-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule:modules exclusive lease before modules/ create race",
+      "scenario_id": "SUB-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "toctou:tip-cas lease-before-lock; prefer expected OID CAS",
+      "scenario_id": "TOCTOU-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "toctou:fetch-rebase exclusive lease; no invented onto snapshot",
+      "scenario_id": "TOCTOU-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "ci:fixture-bare exclusive lease for shared fixture push CAS",
+      "scenario_id": "CI-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:refs/heads/bot/ partition lease for bot temp branches",
+      "scenario_id": "CI-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "lfs:path-lock honesty; LFS locks ≠ index.lock; lease ≠ skip Git locks",
+      "scenario_id": "LFS-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "misc:identity-env exclusive lease before identity-sensitive writes",
+      "scenario_id": "MISC-010"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:add-from-bare exclusive lease",
+      "scenario_id": "MISC-015"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:txn:stdin lease; tip locks still honored",
+      "scenario_id": "MISC-016"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "net:fetch:origin lease; packed-refs.lock still honored",
+      "scenario_id": "NET-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "net:push:branch exclusive lease; tip locks still honored",
+      "scenario_id": "NET-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "net:credential lease honesty; no invented helper protocol",
+      "scenario_id": "NET-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "pack:promisor:fetch exclusive lease",
+      "scenario_id": "PACK-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "shallow:promisor lease; no absolute PERF SLO claim",
+      "scenario_id": "SHAL-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule:deinit exclusive lease",
+      "scenario_id": "SUB-010"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "agent:nfs:refuse honesty — do not green multi-host shared WT on NFS",
+      "scenario_id": "AGENT-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "config:includeIf lease; no invented config.lock dialect",
+      "scenario_id": "CFG-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:lock:serialize lease; no absolute ms SLO (M14/G19 separated)",
+      "scenario_id": "PERF-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:status:walk lease; no absolute ms SLO",
+      "scenario_id": "PERF-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:fsmonitor lease; no invented daemon; no absolute ms SLO",
+      "scenario_id": "PERF-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:commit-graph lease; no absolute ms SLO",
+      "scenario_id": "PERF-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:loose:burst lease; no absolute ms SLO",
+      "scenario_id": "PERF-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:process:spawn lease; no absolute ms SLO",
+      "scenario_id": "PERF-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:pack:mmap lease; no absolute ms SLO",
+      "scenario_id": "PERF-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:blame lease; no absolute ms SLO",
+      "scenario_id": "PERF-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:grep lease; no absolute ms SLO",
+      "scenario_id": "PERF-009"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "perf:diff:stat lease; no absolute ms SLO",
+      "scenario_id": "PERF-010"
+    }
+  ],
+  "schema": "arks-g18-issue-compare/v1",
+  "stock_git": "git version 2.39.5",
+  "venue": "clean-room",
+  "wave": "Cd-8"
+}

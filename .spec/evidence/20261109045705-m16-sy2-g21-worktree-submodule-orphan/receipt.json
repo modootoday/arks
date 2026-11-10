@@ -1,0 +1,18 @@
+{
+  "gate": "G21",
+  "wave": "Sy-2",
+  "pass": true,
+  "compose_service": "g21",
+  "image": "arks-verify-m1:0.1.0",
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "stock_git": "git version 2.39.5",
+  "rows": [
+    {"id": "M16-SY2-01", "pass": true, "notes": "worktree list --porcelain; lock/unlock; add --detach"},
+    {"id": "M16-SY2-02", "pass": true, "notes": "submodule update --init --recursive; status --recursive; update --remote"},
+    {"id": "M16-SY2-03", "pass": true, "notes": "checkout --orphan unborn branch; first commit zero parents"}
+  ],
+  "g20_regression": true,
+  "g14_regression": true,
+  "base_tip_before_land": "b379baacb588763dde4dbbad58545a3e77be7c9a",
+  "land_tip_sha": "79ac0ebb75b843009e7067ca3da28e57c7eda14a"
+}

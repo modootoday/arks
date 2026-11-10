@@ -1,0 +1,222 @@
+{
+  "generated_unix": 1794242943,
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "e2a7931044781bc89e4243f9426367d72f120a75",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "optional-lock reader vs writer; agent/--no-optional-locks status creates no index.lock",
+      "scenario_id": "AGENT-006/IDX-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "inspect + clear --stale; refuse live PID; no skip on write path",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "submodule index.lock domain fail-closed; super status separate domain",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "common-dir ref lock fail-closed; locked worktree remove refuse",
+      "scenario_id": "WT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "backoff/retry guidance on lock fail; no M12 lease scheduler",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "sync hooks claimed; refuse inventing async; --no-verify escape",
+      "scenario_id": "HOOK-001/HOOK-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive index.lock fail-closed + retry guidance; no sharded writer",
+      "scenario_id": "IDX-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now refuse",
+      "scenario_id": "PACK-004/MAINT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "evicted/dead PID stale lock inspect+clear; write path honors locks",
+      "scenario_id": "AGENT-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "worktree+submodule multi-domain fail-closed; AGENT-007 inspect honesty",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse gc --prune=now (CORR-001); lease-honest repack/maintenance remain",
+      "scenario_id": "CORR-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "bind-mount dual-writer honesty; inspect FS-006; honor locks; clear only dead",
+      "scenario_id": "FS-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "background/optional status lock class; default arks status takes no optional locks",
+      "scenario_id": "IDX-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive O_CREAT lock fail-closed; LOCK-001 inspect honesty",
+      "scenario_id": "LOCK-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "update-index --refresh honors index.lock (MISC-012)",
+      "scenario_id": "MISC-012"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "HEAD.lock fail-closed; inspect REF-007; lease ≠ skip",
+      "scenario_id": "REF-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "MERGE_HEAD pseudoref → refuse conflicting porcelain (REF-018)",
+      "scenario_id": "REF-018"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "rebase-merge present → refuse concurrent rebase (SEQ-001)",
+      "scenario_id": "SEQ-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "MERGE_HEAD present → refuse rebase (SEQ-002)",
+      "scenario_id": "SEQ-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "CHERRY_PICK_HEAD present → refuse concurrent cherry-pick (SEQ-003)",
+      "scenario_id": "SEQ-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "no poll-then-skip; inspect TOCTOU-005; exclusive create honored",
+      "scenario_id": "TOCTOU-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "same branch two worktrees fail-closed",
+      "scenario_id": "WT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "locked worktree remove refuse; unlock then remove",
+      "scenario_id": "WT-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "stock clobbers bisect session; arks exclusive refuse (BISECT-001)",
+      "scenario_id": "BISECT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "dirty mid-bisect refuse (BISECT-002)",
+      "scenario_id": "BISECT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse gc --force (CORR-002 overlapping gc honesty)",
+      "scenario_id": "CORR-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "porcelain die-class under lock (LOCK-004); no soft-skip dialect",
+      "scenario_id": "LOCK-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index.lock → refuse reset --hard (MISC-005)",
+      "scenario_id": "MISC-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "parallel am / shared apply state refuse (MISC-007)",
+      "scenario_id": "MISC-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "HEAD.lock → refuse symbolic-ref retarget (REF-021)",
+      "scenario_id": "REF-021"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "interactive rebase todo → refuse concurrent rebase (SEQ-006)",
+      "scenario_id": "SEQ-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "rebase-apply present → refuse concurrent am (SEQ-007)",
+      "scenario_id": "SEQ-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refs/stash.lock → refuse concurrent stash push (STASH-001)",
+      "scenario_id": "STASH-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index.lock → refuse stash pop (STASH-002)",
+      "scenario_id": "STASH-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "dirty worktree → refuse checkout overwrite (TOCTOU-003)",
+      "scenario_id": "TOCTOU-003"
+    }
+  ],
+  "schema": "arks-g17-issue-compare/v1",
+  "stock_git": "git version 2.39.5",
+  "venue": "clean-room",
+  "wave": "Cx-2"
+}

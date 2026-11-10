@@ -1,0 +1,36 @@
+{
+  "generated_unix": 1794193443,
+  "image_digest": "sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "3c4c54734d89e9c704732cca9c5391168c1e2705",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "optional-lock reader vs writer; agent/--no-optional-locks status creates no index.lock",
+      "scenario_id": "AGENT-006/IDX-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "inspect + clear --stale; refuse live PID; no skip on write path",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "submodule index.lock domain fail-closed; super status separate domain",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "common-dir ref lock fail-closed; locked worktree remove refuse",
+      "scenario_id": "WT-001"
+    }
+  ],
+  "schema": "arks-g17-issue-compare/v1",
+  "stock_git": "git version 2.39.5",
+  "venue": "clean-room",
+  "wave": "Cm-1"
+}
