@@ -64,14 +64,12 @@ pub fn dispatch_overlap(
             outcomes.push(run_forge(leaf, &rest));
         }
         PeerMode::Unified => {
-            // Skeleton honesty: run Git (Claimed paths). Forge unified facet is
-            // honestly **Skipped** until Claimed — do not fail-closed the git exit
-            // with a Partial stub (would regress status/config gates).
-            // `--forge-only` / personality=gh still hit the stub path.
-            println!("=== Git ===");
+            // status|config|repo under arks: Git Claimed path + honest Forge skip.
+            // Do not OR a Partial forge stub into the git exit (would regress gates).
+            println!("=== Git ({leaf}) ===");
             let g = run_git(leaf, &rest);
             outcomes.push(g);
-            println!("=== Forge ===");
+            println!("=== Forge ({leaf}) ===");
             eprintln!(
                 "note: arks {leaf}: forge unified section Partial — skipped (not Claimed); \
                  use --forge-only or ARKS_PERSONALITY=gh for hub facet \
@@ -83,6 +81,23 @@ pub fn dispatch_overlap(
 
     let exit = super::exit_code::ExitCodePolicy::map(personality, &outcomes);
     FacadeOutcome { exit }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn peer_mode_flags() {
+        let args = vec!["--git-only".into(), "-sb".into()];
+        assert_eq!(PeerMode::from_args(&args).0, PeerMode::GitOnly);
+        let args = vec!["--forge-only".into(), "list".into()];
+        assert_eq!(PeerMode::from_args(&args).0, PeerMode::ForgeOnly);
+        let args = vec!["--porcelain".into()];
+        let (m, rest) = PeerMode::from_args(&args);
+        assert_eq!(m, PeerMode::GitOnly);
+        assert_eq!(rest, vec!["--porcelain".to_string()]);
+    }
 }
 
 fn run_git(leaf: &str, args: &[String]) -> LayerOutcome {

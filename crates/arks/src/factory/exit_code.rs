@@ -77,3 +77,38 @@ impl ExitCodePolicy {
         ExitCode::from(c as u8)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn arks_skips_do_not_fail_git_success() {
+        let code = ExitCodePolicy::map(
+            Personality::Arks,
+            &[LayerOutcome::Success, LayerOutcome::Skipped],
+        );
+        assert_eq!(code, ExitCode::SUCCESS);
+    }
+
+    #[test]
+    fn arks_forge_stub_wins_over_git_success() {
+        let code = ExitCodePolicy::map(
+            Personality::Arks,
+            &[LayerOutcome::Success, LayerOutcome::StubOrUsage],
+        );
+        assert_eq!(code, ExitCode::from(2));
+    }
+
+    #[test]
+    fn git_personality_collapses_stub_to_one() {
+        let code = ExitCodePolicy::map(Personality::Git, &[LayerOutcome::StubOrUsage]);
+        assert_eq!(code, ExitCode::from(1));
+    }
+
+    #[test]
+    fn gh_personality_preserves_stub_two() {
+        let code = ExitCodePolicy::map(Personality::Gh, &[LayerOutcome::StubOrUsage]);
+        assert_eq!(code, ExitCode::from(2));
+    }
+}
