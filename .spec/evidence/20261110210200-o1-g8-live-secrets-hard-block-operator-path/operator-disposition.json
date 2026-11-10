@@ -1,0 +1,9 @@
+{
+  "schema": "arks-g8-operator-path/v1",
+  "disposition": "secrets-block",
+  "secret_count": 0,
+  "has_token": false,
+  "has_repo_url": false,
+  "live_pass": false,
+  "note": "Environment g8-live secret count=0 (API probe); process env absent; SKIP receipts only; not a live PASS"
+}

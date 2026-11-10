@@ -26,6 +26,8 @@ pub(crate) enum HookGate {
 pub(crate) struct HookEnv {
     /// Absolute path to the quarantine objects directory (`GIT_QUARANTINE_PATH`).
     pub quarantine_path: Option<PathBuf>,
+    /// Negotiated push-options (O4) → `GIT_PUSH_OPTION_COUNT` / `GIT_PUSH_OPTION_<n>`.
+    pub push_options: Vec<String>,
 }
 
 /// Run `$GIT_DIR/hooks/pre-receive` once with stdin lines of proposed updates.
@@ -177,6 +179,11 @@ fn run_named_hook(
         if let Some(q) = &env.quarantine_path {
             cmd.env("GIT_QUARANTINE_PATH", q);
         }
+    }
+    // O4 push-options → githooks environment (git-receive-pack).
+    cmd.env("GIT_PUSH_OPTION_COUNT", env.push_options.len().to_string());
+    for (i, opt) in env.push_options.iter().enumerate() {
+        cmd.env(format!("GIT_PUSH_OPTION_{i}"), opt);
     }
     cmd.current_dir(git_dir);
     if stdin.is_some() {

@@ -50,9 +50,9 @@ bash scripts/forge-scale-readiness.sh
 
 How a claim would be earned: **receipt-only**. Harness Claimed (ready) is already separate from any future live remasure or product SLO. Never publish medians as product SLOs without explicit gate governance.
 
-## Symmetry S5 disposition
+## Symmetry S5 / optional O1 disposition
 
-Expanded DoD **S5** closed as a **documented secrets-block** when live samples are absent ([[evidence:root/20261110113300]]): harness remains Claimed-ready; structural readiness OK; live remasure PASS requires operator secrets + real receipts. Never invent latency from dry-run / SKIP.
+Expanded DoD **S5** closed as a **documented secrets-block** ([[evidence:root/20261110113300]]). Optional **O1** re-probed Environment `g8-live` (**secret count = 0**) and shipped `scripts/g8-live-operator-path.sh` fail-closed operator path ([[evidence:root/20261110210200]]): harness remains Claimed-ready; live remasure PASS requires operator secrets + real receipts. Never invent latency from dry-run / SKIP.
 
 ## Honesty
 

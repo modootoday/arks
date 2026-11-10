@@ -302,6 +302,71 @@ fn g39_arks_clone_filter_blob_none_vs_stock_peer() {
 }
 
 #[test]
+fn g39_arks_clone_filter_tree_0_vs_stock_peer() {
+    require_git();
+    let root = TempDir::new().unwrap();
+    let work = root.path().join("src");
+    fs::create_dir_all(work.join("nested")).unwrap();
+    assert_ok(&git(&work, &["init", "-b", "main"]), "init");
+    assert_ok(
+        &git(&work, &["config", "user.email", "arks@example.com"]),
+        "email",
+    );
+    assert_ok(&git(&work, &["config", "user.name", "arks"]), "name");
+    fs::write(work.join("README"), b"root-readme\n").unwrap();
+    fs::write(work.join("nested/deep.txt"), b"nested-blob\n").unwrap();
+    assert_ok(&git(&work, &["add", "README", "nested/deep.txt"]), "add");
+    assert_ok(&git(&work, &["commit", "-m", "c1-nested"]), "commit");
+    let _bare = {
+        let parent = root.path();
+        assert_ok(
+            &git(
+                parent,
+                &["clone", "--bare", work.to_str().unwrap(), "app.git"],
+            ),
+            "bare",
+        );
+        let bare = parent.join("app.git");
+        assert_ok(
+            &git(&bare, &["config", "http.receivepack", "true"]),
+            "receivepack",
+        );
+        assert_ok(
+            &git(&bare, &["config", "uploadpack.allowFilter", "true"]),
+            "allowFilter",
+        );
+        assert_ok(
+            &git(&bare, &["config", "uploadpack.allowAnySHA1InWant", "true"]),
+            "allowAnySHA1InWant",
+        );
+        bare
+    };
+    let peer = GitHttpPeer::start(root.path().to_path_buf());
+    let dest = root.path().join("partial-tree0");
+    let url = peer.repo_url("app.git");
+    let out = arks(
+        root.path(),
+        &[
+            "clone",
+            "--filter=tree:0",
+            &url,
+            dest.to_str().unwrap(),
+        ],
+    );
+    assert_ok(&out, "arks clone --filter=tree:0");
+    assert_eq!(fs::read(dest.join("README")).unwrap(), b"root-readme\n");
+    assert_eq!(
+        fs::read(dest.join("nested/deep.txt")).unwrap(),
+        b"nested-blob\n"
+    );
+    let cfg = fs::read_to_string(dest.join(".git/config")).unwrap();
+    assert!(
+        cfg.to_ascii_lowercase().contains("partialclone"),
+        "expected extensions.partialClone: {cfg}"
+    );
+}
+
+#[test]
 fn g39_refuse_unclaimed_filter_spec() {
     require_git();
     let root = TempDir::new().unwrap();
@@ -310,7 +375,7 @@ fn g39_refuse_unclaimed_filter_spec() {
         root.path(),
         &[
             "clone",
-            "--filter=tree:0",
+            "--filter=blob:limit=1k",
             "http://127.0.0.1:9/nope.git",
             dest.to_str().unwrap(),
         ],

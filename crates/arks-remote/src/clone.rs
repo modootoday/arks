@@ -11,7 +11,7 @@
 
 use crate::config::add_remote;
 use crate::error::RemoteError;
-use crate::fetch::{FetchOptions, fetch_git_with, fetch_http_with, fetch_ssh_with};
+use crate::fetch::{fetch_git_with, fetch_http_with, fetch_ssh_with, FetchOptions};
 use crate::url::{GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
 use arks_refs::RefTarget;
 use arks_repo::Repository;
@@ -91,8 +91,8 @@ where
         repo.refs_mut()
             .set_symbolic("HEAD", &branch)
             .map_err(|e| RemoteError::Msg(e.to_string()))?;
-        // Partial-clone: demand-fetch missing HEAD-tree blobs before materializing.
-        backfill_head_blobs_if_needed(&mut repo, url, &oid)?;
+        // Partial-clone: demand-fetch missing HEAD trees/blobs before materializing.
+        backfill_head_objects_if_needed(&mut repo, url, &oid)?;
         crate::checkout::checkout_commit(&repo, dest, &oid)?;
     }
     if let Some(pending) = pending {
@@ -103,8 +103,11 @@ where
     Ok(())
 }
 
-/// When `extensions.partialClone` is set, fetch missing blobs for `commit`'s tree.
-fn backfill_head_blobs_if_needed(
+/// When `extensions.partialClone` is set, fetch missing trees/blobs for `commit`.
+///
+/// Iterates because `tree:0` may omit nested trees; each round reveals more
+/// missing child OIDs until the HEAD tree is complete.
+fn backfill_head_objects_if_needed(
     repo: &mut Repository,
     url: &str,
     commit: &arks_oid::Oid,
@@ -113,18 +116,23 @@ fn backfill_head_blobs_if_needed(
     if !config.to_ascii_lowercase().contains("partialclone") {
         return Ok(());
     }
-    let missing = crate::checkout::missing_blob_oids(repo, commit)?;
-    if missing.is_empty() {
-        return Ok(());
+    // Bound rounds: nested depth + blob round is enough for claimed subset.
+    for _ in 0..64 {
+        let missing = crate::checkout::missing_checkout_oids(repo, commit)?;
+        if missing.is_empty() {
+            return Ok(());
+        }
+        let opts = FetchOptions {
+            want_oids: Some(missing),
+            mark_promisor: true,
+            defer_pack_disk: false,
+            ..Default::default()
+        };
+        crate::fetch::fetch_remote_with(repo, url, "origin", &opts)?;
     }
-    let opts = FetchOptions {
-        want_oids: Some(missing),
-        mark_promisor: true,
-        defer_pack_disk: false,
-        ..Default::default()
-    };
-    crate::fetch::fetch_remote_with(repo, url, "origin", &opts)?;
-    Ok(())
+    Err(RemoteError::Protocol(
+        "partial-clone checkout backfill did not converge".into(),
+    ))
 }
 
 /// Clone from a local filesystem path or same-host `file://` URL.

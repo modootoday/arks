@@ -1,0 +1,14 @@
+{
+  "schema": "arks-g8-live-scale/v1",
+  "gate": "G8-live-scale",
+  "disposition": "skip-no-measurement",
+  "detail": "harness Claimed ready; no live scale samples without secrets; not a product SLO",
+  "timestamp": "2026-11-10T11:57:48Z",
+  "adr": "adr:root/20261110221000",
+  "secrets": {
+    "ARKS_G8_LIVE": "",
+    "ARKS_G8_SCALE_MEASURE": "",
+    "has_token": false,
+    "has_repo_url": false
+  }
+}

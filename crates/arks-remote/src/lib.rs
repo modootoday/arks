@@ -9,7 +9,7 @@
 //! `delete-refs` when advertised, remote config, additive local path /
 //! same-host `file://` clone via object-directory copy, G9/G35
 //! `--depth N` shallow on pack transports, and R3/S1
-//! `--filter=blob:none` partial-clone (promisor + extensions.partialClone).
+//! `--filter=blob:none|tree:0` partial-clone (promisor + extensions.partialClone).
 //! GitHub-class hosts are a verify-peer label, not a special code path.
 //!
 //! Primary:
@@ -47,7 +47,7 @@ mod walk;
 #[allow(unsafe_code)] // Windows Cred* FFI for first-party wincred helper only.
 mod wallet;
 
-pub use checkout::{checkout_commit, checkout_tree};
+pub use checkout::{checkout_commit, checkout_tree, missing_blob_oids, missing_checkout_oids};
 pub use clone::{
     clone_git, clone_git_with, clone_http, clone_http_with, clone_local, clone_local_with,
     clone_ssh, clone_ssh_with,
@@ -62,7 +62,10 @@ pub use fetch::{
     FetchOptions, FetchOutcome, fetch_git, fetch_git_with, fetch_http, fetch_http_with,
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
-pub use push::{PushUpdate, push_git, push_http, push_remote, push_ssh};
+pub use push::{
+    PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,
+    push_remote_with, push_ssh, push_ssh_with,
+};
 pub use transport::{HttpRequest, HttpResponse, RecordedExchange, RecordedTransport, Transport};
 pub use url::{GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
 pub use wallet::{WalletKind, cmd_wallet_helper, is_os_wallet_helper, wallet_helper_kind};

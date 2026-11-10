@@ -7,12 +7,12 @@ use crate::cmd::shared::{
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
-    FORMAT, OID_KIND, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
-    work_tree, write_index,
+    cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
+    write_index, FORMAT, OID_KIND,
 };
 use crate::write_tree::write_tree_from_index;
-use arks_index::{IndexEntry, sort_entries};
-use arks_object::{Commit, ObjectKind, RawObject, write_loose};
+use arks_index::{sort_entries, IndexEntry};
+use arks_object::{write_loose, Commit, ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
@@ -235,15 +235,18 @@ pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_add(args: &[String]) -> CliResult<()> {
     // Fs-4 + M16 Sy-1: `-A`/`-u`/`--chmod=+x|-x` (git-add). Cite: https://git-scm.com/docs/git-add
-    // S4: interactive patch/add remains Specfold N/A (agent non-interactive bar).
+    // O3: scripted `add -p` / `--patch` (file-granularity); `-i`/`-e` remain N/A.
     if args
         .iter()
-        .any(|a| a == "-p" || a == "--patch" || a == "-i" || a == "--interactive" || a == "-e")
+        .any(|a| a == "-i" || a == "--interactive" || a == "-e")
     {
         return Err(CliError::NotImplemented(
-            "add -p/-i/-e excluded (interactive/TUI); use non-interactive add paths (S4 / Fs-5)"
+            "add -i/-e excluded (interactive/TUI menu); use add -p scripted or non-interactive add (O3 / Fs-5)"
                 .into(),
         ));
+    }
+    if args.iter().any(|a| a == "-p" || a == "--patch") {
+        return cmd_add_patch(args);
     }
     refuse_unknown_flags(args, &["-A", "--all", "-u", "--update", "--chmod"])?;
     // HOOK-005 (M20 Cx-4): nested index write under held lock (hook/agent) refuse-closed.
@@ -682,6 +685,10 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         &flag_args,
         &[
             "-m",
+            "-F",
+            "--file",
+            "-t",
+            "--template",
             "--allow-empty",
             "--no-verify",
             "--amend",
@@ -702,6 +709,8 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         }
     }
     let mut message: Option<String> = None;
+    let mut file_msg: Option<PathBuf> = None;
+    let mut template: Option<PathBuf> = None;
     let mut i = 0;
     while i < args.len() {
         if args[i] == "-m" {
@@ -717,14 +726,35 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
                 }
                 None => part.clone(),
             });
+        } else if args[i] == "-F" || args[i] == "--file" {
+            i += 1;
+            let p = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("commit -F <file>".into()))?;
+            file_msg = Some(PathBuf::from(p));
+        } else if let Some(rest) = args[i].strip_prefix("--file=") {
+            file_msg = Some(PathBuf::from(rest));
+        } else if args[i] == "-t" || args[i] == "--template" {
+            i += 1;
+            let p = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("commit -t <file>".into()))?;
+            template = Some(PathBuf::from(p));
+        } else if let Some(rest) = args[i].strip_prefix("--template=") {
+            template = Some(PathBuf::from(rest));
         }
         i += 1;
     }
-    // Fs-5: editor-driven commit without `-m` remains explicit exclude (agent-friendly).
+    if message.is_none() {
+        if let Some(path) = file_msg {
+            let text = fs::read_to_string(&path)
+                .map_err(|e| CliError::Msg(format!("commit -F {}: {e}", path.display())))?;
+            message = Some(text);
+        }
+    }
+    // O3: editor-driven commit when GIT_EDITOR / ARKS_EDITOR / EDITOR is set (scripted OK).
     if message.is_none() && !amend {
-        return Err(CliError::NotImplemented(
-            "commit without -m excluded (editor/TUI message path); pass -m <msg> (Fs-5)".into(),
-        ));
+        message = Some(commit_message_via_editor(template.as_deref())?);
     }
 
     // Fs-5: `-a` / `--all` stages tracked updates then commits (git-commit).
@@ -985,4 +1015,157 @@ pub fn cmd_show(args: &[String]) -> CliResult<()> {
         }
     }
     Ok(())
+}
+
+/// O3: editor-required commit message via `-t` template + GIT_EDITOR / ARKS_EDITOR / EDITOR.
+fn commit_message_via_editor(template: Option<&Path>) -> CliResult<String> {
+    let editor = std::env::var("ARKS_EDITOR")
+        .or_else(|_| std::env::var("GIT_EDITOR"))
+        .or_else(|_| std::env::var("EDITOR"))
+        .map_err(|_| {
+            CliError::NotImplemented(
+                "commit without -m/-F requires GIT_EDITOR / ARKS_EDITOR / EDITOR (O3 scripted); pass -m or set editor"
+                    .into(),
+            )
+        })?;
+    let repo = open_repo()?;
+    let msg_path = repo.git_dir().join("COMMIT_EDITMSG");
+    let mut seed = String::new();
+    if let Some(t) = template {
+        seed = fs::read_to_string(t)
+            .map_err(|e| CliError::Msg(format!("commit -t {}: {e}", t.display())))?;
+    }
+    if !seed.ends_with('\n') && !seed.is_empty() {
+        seed.push('\n');
+    }
+    seed.push_str(
+        "\n# Please enter the commit message for your changes.\n# Lines starting with '#' are ignored (O3 scripted editor).\n",
+    );
+    fs::write(&msg_path, &seed)?;
+    drop(repo);
+    run_editor_cmd(&editor, &msg_path)?;
+    let text = fs::read_to_string(&msg_path)?;
+    let cleaned = text
+        .lines()
+        .filter(|l| !l.starts_with('#'))
+        .collect::<Vec<_>>()
+        .join("\n");
+    if cleaned.trim().is_empty() {
+        return Err(CliError::Msg(
+            "aborting commit due to empty commit message".into(),
+        ));
+    }
+    Ok(cleaned)
+}
+
+fn run_editor_cmd(editor: &str, path: &Path) -> CliResult<()> {
+    let mut argv: Vec<String> = editor.split_whitespace().map(|s| s.to_string()).collect();
+    if argv.is_empty() {
+        return Err(CliError::Usage("empty editor command".into()));
+    }
+    argv.push(path.display().to_string());
+    let status = std::process::Command::new(&argv[0])
+        .args(&argv[1..])
+        .status()
+        .map_err(|e| CliError::Msg(format!("spawn editor '{editor}': {e}")))?;
+    if !status.success() {
+        return Err(CliError::Msg(format!(
+            "editor '{editor}' exited {}",
+            status.code().unwrap_or(-1)
+        )));
+    }
+    Ok(())
+}
+
+/// O3 scripted `add -p`: file-granularity y/n/a/d/q from `ARKS_ADD_PATCH_ANSWERS` or non-TTY stdin.
+fn cmd_add_patch(args: &[String]) -> CliResult<()> {
+    refuse_unknown_flags(args, &["-p", "--patch"])?;
+    let answers = patch_answers()?;
+    let repo = open_repo()?;
+    let work = work_tree(&repo)?;
+    let index = read_index(&repo)?;
+    let head_map = head_blob_map(&repo).unwrap_or_default();
+    let mut candidates: Vec<String> = Vec::new();
+    let stage0: HashMap<&str, &IndexEntry> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.as_str(), e))
+        .collect();
+    for (path, entry) in &stage0 {
+        let abs = work.join(path);
+        if !abs.is_file() {
+            candidates.push((*path).to_string());
+            continue;
+        }
+        let meta = fs::metadata(&abs)?;
+        if !index_stat_matches(entry, &meta) {
+            candidates.push((*path).to_string());
+        }
+    }
+    let indexed: HashSet<_> = stage0.keys().map(|s| (*s).to_string()).collect();
+    let mut untracked = Vec::new();
+    collect_untracked(&work, &work, &indexed, &mut untracked)?;
+    candidates.extend(untracked);
+    candidates.sort();
+    candidates.dedup();
+    if candidates.is_empty() {
+        println!("No changes.");
+        return Ok(());
+    }
+    let mut accept_rest = false;
+    let mut decline_rest = false;
+    let mut answer_i = 0;
+    let mut to_add: Vec<String> = Vec::new();
+    for path in candidates {
+        let ans = if accept_rest {
+            'a'
+        } else if decline_rest {
+            'd'
+        } else {
+            let ch = answers.get(answer_i).copied().unwrap_or('n');
+            answer_i += 1;
+            ch
+        };
+        match ans {
+            'y' | 'Y' => to_add.push(path),
+            'n' | 'N' => {}
+            'a' | 'A' => {
+                to_add.push(path);
+                accept_rest = true;
+            }
+            'd' | 'D' => {
+                decline_rest = true;
+            }
+            'q' | 'Q' => break,
+            other => {
+                return Err(CliError::Usage(format!(
+                    "add -p: unknown answer '{other}' (claimed: y/n/a/d/q)"
+                )));
+            }
+        }
+        let _ = &head_map; // keep head probe wired for future hunk mode
+    }
+    drop(repo);
+    if to_add.is_empty() {
+        return Ok(());
+    }
+    cmd_add(&to_add)
+}
+
+fn patch_answers() -> CliResult<Vec<char>> {
+    if let Ok(raw) = std::env::var("ARKS_ADD_PATCH_ANSWERS") {
+        return Ok(raw.chars().filter(|c| !c.is_whitespace()).collect());
+    }
+    // Non-TTY stdin: read answer characters. TTY without env → honest refuse (no pixel TUI).
+    use std::io::IsTerminal;
+    if io::stdin().is_terminal() {
+        return Err(CliError::NotImplemented(
+            "add -p TTY interactive UI not claimed; set ARKS_ADD_PATCH_ANSWERS or pipe answers on non-TTY stdin (O3)"
+                .into(),
+        ));
+    }
+    let mut buf = String::new();
+    io::stdin().read_to_string(&mut buf)?;
+    Ok(buf.chars().filter(|c| !c.is_whitespace()).collect())
 }

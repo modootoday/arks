@@ -80,7 +80,8 @@ Version **0.3.2**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) und
 | Product SSHD / key CA | **Not claimed** | Operators wrap ForceCommand / `git-shell`; arks speaks pack protocol on stdio |
 | `delete-refs` / `report-status-v2` | **Claimed** | Advertise + implement; v2 uses classic ok/ng until proc-receive rewrite options are claimed; MUST NOT invent option lines |
 | Server-side [githooks](https://git-scm.com/docs/githooks) on receive-pack | **Claimed (honor list)** — see §Receive-pack githooks | Sync honor of `pre-receive`, `update`, `post-receive`, `post-update`; residual **FW-SRV-HOOKS** |
-| `proc-receive` / push-options | **N/A (unclaimed)** | Catalog HOOK-008; MUST NOT advertise `push-options` / proc-receive |
+| `push-options` (advertise + hook env) | **Claimed (O4)** | Advertise; parse `push-option` lines; set `GIT_PUSH_OPTION_*` for honor-list hooks; **not** proc-receive / HOOK-008 race Claimed |
+| `proc-receive` | **N/A (unclaimed)** | Catalog HOOK-008; MUST NOT advertise `proc-receive` |
 | Quarantine object dir (`GIT_QUARANTINE_PATH`) | **Claimed** | Incoming objects land under `$GIT_DIR/objects/incoming-*` and migrate only after `pre-receive` succeeds ([git-receive-pack](https://git-scm.com/docs/git-receive-pack#_quarantine_environment)) |
 | Dumb-HTTP-only as sole server | **Forbidden** | Smart HTTP remains required |
 
@@ -114,8 +115,9 @@ Hooks run only when `$GIT_DIR/hooks/<name>` exists and is executable (Unix mode 
 
 - Forge (B); CELIR ObjectStore; requiring leases; inventing protocol caps; product credential / OAuth server.
 - Folding into M9; calling M25 “CLI-parity production.”
-- `proc-receive`, push-options (until SoT amend + real advertise).
+- `proc-receive` (until SoT amend + real advertise).
 - Lease-over-wire (until lease SoT claims it).
+- HOOK-008 concurrent push-options race Claimed (catalog N/A retained).
 
 ## Why
 

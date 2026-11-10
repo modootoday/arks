@@ -9,7 +9,7 @@
 //! Pf5: pack-cache `get_shared` (Arc) + cheap fresh-write stamps; 1-CPU-safe workers.
 
 use crate::error::RemoteError;
-use arks_index::{Index, IndexEntry, sort_entries};
+use arks_index::{sort_entries, Index, IndexEntry};
 use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode};
 use arks_oid::{Oid, OidKind};
 use arks_repo::Repository;
@@ -36,10 +36,20 @@ pub fn checkout_commit(repo: &Repository, work: &Path, commit: &Oid) -> Result<(
     checkout_tree(repo, work, &parsed.tree)
 }
 
-/// Collect blob OIDs reachable from `commit`'s tree that are not present locally.
+/// Collect missing object OIDs needed to materialize `commit`'s HEAD tree.
 ///
-/// Used by partial-clone checkout backfill (`blob:none`).
+/// Historical name retained; for `tree:0` this may include nested trees.
+/// Prefer [`missing_checkout_oids`] at new call sites.
 pub fn missing_blob_oids(repo: &Repository, commit: &Oid) -> Result<Vec<Oid>, RemoteError> {
+    missing_checkout_oids(repo, commit)
+}
+
+/// Collect missing tree + blob OIDs needed to materialize `commit`'s HEAD tree.
+///
+/// Used by partial-clone checkout backfill for `blob:none` and `tree:0`.
+/// When a nested tree is absent, its OID is listed and recursion stops there
+/// until a later demand-fetch round.
+pub fn missing_checkout_oids(repo: &Repository, commit: &Oid) -> Result<Vec<Oid>, RemoteError> {
     let obj = repo
         .store()
         .get_shared(commit)
@@ -53,17 +63,25 @@ pub fn missing_blob_oids(repo: &Repository, commit: &Oid) -> Result<Vec<Oid>, Re
     let parsed = Commit::decode(&obj.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
     let mut missing = Vec::new();
     let mut seen = HashSet::new();
-    collect_missing_blobs(repo, &parsed.tree, &mut missing, &mut seen)?;
+    collect_missing_checkout_oids(repo, &parsed.tree, &mut missing, &mut seen)?;
     Ok(missing)
 }
 
-fn collect_missing_blobs(
+fn collect_missing_checkout_oids(
     repo: &Repository,
     tree_oid: &Oid,
     missing: &mut Vec<Oid>,
     seen: &mut HashSet<Oid>,
 ) -> Result<(), RemoteError> {
     if !seen.insert(*tree_oid) {
+        return Ok(());
+    }
+    let present = repo
+        .store()
+        .exists(tree_oid)
+        .map_err(|e| RemoteError::Msg(e.to_string()))?;
+    if !present {
+        missing.push(*tree_oid);
         return Ok(());
     }
     let obj = repo
@@ -80,16 +98,16 @@ fn collect_missing_blobs(
         Tree::decode(&obj.payload, OidKind::Sha1).map_err(|e| RemoteError::Msg(e.to_string()))?;
     for entry in tree.entries {
         match entry.mode {
-            TreeMode::Tree => collect_missing_blobs(repo, &entry.oid, missing, seen)?,
+            TreeMode::Tree => collect_missing_checkout_oids(repo, &entry.oid, missing, seen)?,
             TreeMode::File | TreeMode::Executable | TreeMode::Symlink => {
                 if !seen.insert(entry.oid) {
                     continue;
                 }
-                let present = repo
+                let blob_present = repo
                     .store()
                     .exists(&entry.oid)
                     .map_err(|e| RemoteError::Msg(e.to_string()))?;
-                if !present {
+                if !blob_present {
                     missing.push(entry.oid);
                 }
             }

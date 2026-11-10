@@ -1,18 +1,19 @@
 //! receive-pack service (push path).
 //!
 //! Claimed caps: `report-status`, `report-status-v2` (classic ok/ng; option
-//! lines reserved for future proc-receive rewrites), `delete-refs`, `agent`.
+//! lines reserved for future proc-receive rewrites), `delete-refs`,
+//! `push-options` (O4; forward to hooks — not proc-receive), `agent`.
 //! Cite: <https://git-scm.com/docs/gitprotocol-capabilities>,
 //! <https://git-scm.com/docs/git-receive-pack> (quarantine environment).
 
 use crate::advertise::{encode_http_advertisement, encode_pack_advertisement};
 use crate::error::ServerError;
 use crate::hooks::{
-    HookEnv, HookGate, run_post_receive, run_post_update, run_pre_receive, run_update,
+    run_post_receive, run_post_update, run_pre_receive, run_update, HookEnv, HookGate,
 };
 use arks_oid::Oid;
 use arks_pack::DecodedPack;
-use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet};
+use arks_protocol::{decode_packet, decode_text_line, encode_packet, Packet};
 use arks_refs::RefTarget;
 use arks_repo::Repository;
 use arks_store::{FilesystemGitStore, ObjectFormat, ObjectStore};
@@ -44,6 +45,7 @@ fn receive_refs_and_caps(repo: &Repository) -> Result<RefsAndCaps, ServerError> 
         "report-status".into(),
         "report-status-v2".into(),
         "delete-refs".into(),
+        "push-options".into(),
         "agent=arks/0.0.0".into(),
     ];
     Ok((refs, caps))
@@ -62,10 +64,11 @@ pub fn receive_pack_advertisement(repo: &Repository) -> Result<Vec<u8>, ServerEr
 }
 
 pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, ServerError> {
-    let (commands, pack) = split_commands(body)?;
+    let (commands, push_options, pack) = split_commands(body)?;
     let quarantine = Quarantine::create(repo.git_dir())?;
     let hook_env = HookEnv {
         quarantine_path: Some(quarantine.path.clone()),
+        push_options,
     };
 
     if !pack.is_empty() {
@@ -247,9 +250,10 @@ struct ReceiveCommand {
     name: String,
 }
 
-fn split_commands(body: &[u8]) -> Result<(Vec<ReceiveCommand>, Vec<u8>), ServerError> {
+fn split_commands(body: &[u8]) -> Result<(Vec<ReceiveCommand>, Vec<String>, Vec<u8>), ServerError> {
     let mut offset = 0;
     let mut commands = Vec::new();
+    let mut saw_push_options_cap = false;
     while offset < body.len() {
         let (packet, n) =
             decode_packet(&body[offset..]).map_err(|e| ServerError::Protocol(e.to_string()))?;
@@ -258,9 +262,14 @@ fn split_commands(body: &[u8]) -> Result<(Vec<ReceiveCommand>, Vec<u8>), ServerE
             Packet::Flush => break,
             Packet::Data(payload) => {
                 let owned = if let Some(nul) = payload.iter().position(|b| *b == 0) {
-                    std::str::from_utf8(&payload[..nul])
+                    let text = std::str::from_utf8(&payload[..nul])
                         .map_err(|_| ServerError::Protocol("command not utf-8".into()))?
-                        .to_string()
+                        .to_string();
+                    let caps = std::str::from_utf8(&payload[nul + 1..]).unwrap_or("");
+                    if caps.split_whitespace().any(|c| c == "push-options") {
+                        saw_push_options_cap = true;
+                    }
+                    text
                 } else {
                     decode_text_line(&payload).map_err(|e| ServerError::Protocol(e.to_string()))?
                 };
@@ -275,18 +284,53 @@ fn split_commands(body: &[u8]) -> Result<(Vec<ReceiveCommand>, Vec<u8>), ServerE
                 let name = parts
                     .next()
                     .ok_or_else(|| ServerError::Protocol("bad command".into()))?;
+                // Capability list may trail the first command after a NUL already handled;
+                // also accept space-separated caps after the refname on some peers.
+                if name.contains("push-options") || text.contains(" push-options") {
+                    saw_push_options_cap = true;
+                }
+                let refname = name.split('\0').next().unwrap_or(name).to_string();
                 commands.push(ReceiveCommand {
                     old: Oid::from_hex(old_hex)
                         .map_err(|e| ServerError::Protocol(e.to_string()))?,
                     new: Oid::from_hex(new_hex)
                         .map_err(|e| ServerError::Protocol(e.to_string()))?,
-                    name: name.to_string(),
+                    name: refname,
                 });
             }
             _ => {}
         }
     }
-    Ok((commands, body[offset..].to_vec()))
+    let mut push_options = Vec::new();
+    if saw_push_options_cap {
+        while offset < body.len() {
+            if body[offset..].starts_with(b"PACK") {
+                break;
+            }
+            let (packet, n) =
+                decode_packet(&body[offset..]).map_err(|e| ServerError::Protocol(e.to_string()))?;
+            offset += n;
+            match packet {
+                Packet::Flush => break,
+                Packet::Data(payload) => {
+                    let line = decode_text_line(&payload)
+                        .map_err(|e| ServerError::Protocol(e.to_string()))?;
+                    let line = line.trim_end_matches('\n');
+                    if let Some(rest) = line.strip_prefix("push-option ") {
+                        push_options.push(rest.to_string());
+                    } else if line == "push-option" {
+                        push_options.push(String::new());
+                    } else {
+                        return Err(ServerError::Protocol(format!(
+                            "expected push-option line, got {line}"
+                        )));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    Ok((commands, push_options, body[offset..].to_vec()))
 }
 
 fn encode_report_status_owned(

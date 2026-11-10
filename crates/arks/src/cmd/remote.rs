@@ -110,9 +110,38 @@ pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_push(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let remote_name = args.first().map(String::as_str).unwrap_or("origin");
-    let refspec = args.get(1).map(String::as_str);
+    refuse_unknown_flags(args, &["--force-with-lease", "--push-option", "-o"])?;
+    let mut force_with_lease = false;
+    let mut lease_expect: Option<(String, String)> = None;
+    let mut push_options: Vec<String> = Vec::new();
+    let mut positional: Vec<String> = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "--force-with-lease" {
+            force_with_lease = true;
+        } else if let Some(rest) = args[i].strip_prefix("--force-with-lease=") {
+            force_with_lease = true;
+            let (r, e) = rest
+                .split_once(':')
+                .ok_or_else(|| CliError::Usage("push --force-with-lease=<ref>:<expect>".into()))?;
+            lease_expect = Some((r.to_string(), e.to_string()));
+        } else if args[i] == "--push-option" || args[i] == "-o" {
+            i += 1;
+            let v = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("push --push-option <string>".into()))?;
+            push_options.push(v.clone());
+        } else if let Some(rest) = args[i].strip_prefix("--push-option=") {
+            push_options.push(rest.to_string());
+        } else if args[i].starts_with('-') {
+            return Err(CliError::Usage(format!("unknown push flag {}", args[i])));
+        } else {
+            positional.push(args[i].clone());
+        }
+        i += 1;
+    }
+    let remote_name = positional.first().map(String::as_str).unwrap_or("origin");
+    let refspec = positional.get(1).map(String::as_str);
     let repo = open_repo()?;
     let cfg = repo.git_dir().join("config");
     let remotes = arks_remote::list_remotes(&cfg)?;
@@ -172,13 +201,44 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
             (full, oid)
         }
     };
-    arks_remote::push_remote(
+    let expected_old = if let Some((r, expect_hex)) = lease_expect {
+        let full = if r.starts_with("refs/") {
+            r
+        } else {
+            format!("refs/heads/{r}")
+        };
+        if full != refname {
+            return Err(CliError::Usage(
+                "push --force-with-lease ref must match the pushed ref".into(),
+            ));
+        }
+        Some(arks_oid::Oid::from_hex(&expect_hex).map_err(|e| CliError::Msg(e.to_string()))?)
+    } else if force_with_lease {
+        // Default: expect remote-tracking tip for the same branch.
+        let tracking = format!(
+            "refs/remotes/{}/{}",
+            remote_name,
+            refname
+                .strip_prefix("refs/heads/")
+                .unwrap_or(refname.as_str())
+        );
+        Some(repo.refs().resolve(&tracking).map_err(|_| {
+            CliError::Msg(format!(
+                "force-with-lease: missing tracking ref {tracking}; pass --force-with-lease=<ref>:<expect>"
+            ))
+        })?)
+    } else {
+        None
+    };
+    arks_remote::push_remote_with(
         &repo,
         &remote.url,
         &[arks_remote::PushUpdate {
             refname,
             new_oid: oid,
+            expected_old,
         }],
+        &arks_remote::PushOptions { push_options },
     )?;
     Ok(())
 }
@@ -297,7 +357,7 @@ fn parse_depth(raw: &str) -> CliResult<u32> {
     Ok(n)
 }
 
-/// Claimed partial-clone filter-spec (`blob:none` only; residual R3 / S1).
+/// Claimed partial-clone filter-spec (`blob:none` / `tree:0`; R3 / S1 / O2).
 fn parse_filter(raw: &str) -> CliResult<String> {
     arks_remote::validate_claimed_filter(raw)
         .map_err(|e| CliError::NotImplemented(e.to_string()))?;
@@ -348,19 +408,20 @@ mod tests {
     #[test]
     fn clone_refuses_unclaimed_filter_spec() {
         let err = cmd_clone(&[
-            "--filter=tree:0".into(),
+            "--filter=blob:limit=1k".into(),
             "https://example.invalid/repo.git".into(),
         ])
-        .expect_err("tree:0 must refuse");
+        .expect_err("blob:limit must refuse");
         let s = err.to_string();
         assert!(
-            s.contains("tree:0") && s.contains("not claimed"),
+            s.contains("blob:limit") && s.contains("not claimed"),
             "unexpected refuse text: {s}"
         );
     }
 
     #[test]
-    fn parse_filter_accepts_blob_none() {
+    fn parse_filter_accepts_blob_none_and_tree_0() {
         assert_eq!(parse_filter("blob:none").unwrap(), "blob:none");
+        assert_eq!(parse_filter("tree:0").unwrap(), "tree:0");
     }
 }

@@ -3,8 +3,8 @@ id: sot:root/arks-remote
 title: arks-remote unit
 status: active
 created: 2026-11-08T11:05:00Z
-updated: 2026-11-10T11:26:00Z
-tags: [m6, m16, unit, remote, client, smart-http, dumb-http, webdav, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow, r1, r2, r3, filter, promisor, s1, s3]
+updated: 2026-11-10T21:00:00Z
+tags: [m6, m16, unit, remote, client, smart-http, dumb-http, webdav, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow, r1, r2, r3, filter, promisor, s1, s3, o2, tree-0]
 verify: manual
 rel:
   governs: [crates/arks-remote]
@@ -32,14 +32,16 @@ rel:
     - adr:root/20261110190000
     - adr:root/20261110105547
     - adr:root/20261110112600
+    - adr:root/20261110210000
     - research:root/20261110105436
+    - research:root/20261110205403
     - evidence:root/20261108104837
   evidence: [evidence:root/20261108112000, evidence:root/20261110180000, evidence:root/20261110190000, evidence:root/20261110105855, evidence:root/20261110112600]
 ---
 
 # arks-remote unit
 
-Version **0.5.4**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback + **`git://` client (R1)** + **dumb HTTP push (R2)** + **partial-clone `blob:none` (R3 / S1)** + **dumb HTTP push deletes (S3)**. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `filter` / `delete-refs`), [partial-clone](https://git-scm.com/docs/partial-clone), [git-daemon](https://git-scm.com/docs/git-daemon), [git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]]. Historical ladder: [[research:root/20261110095142]]. Symmetry ladder: [[research:root/20261110105436]]. Unlock R2: [[adr:root/20261110190000]]. Unlock R3: [[adr:root/20261110105547]]. Unlock S3 deletes: [[adr:root/20261110112600]].
+Version **0.5.5**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback + **`git://` client (R1)** + **dumb HTTP push (R2)** + **partial-clone `blob:none` + `tree:0` (R3 / S1 / O2)** + **dumb HTTP push deletes (S3)**. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `filter` / `delete-refs`), [partial-clone](https://git-scm.com/docs/partial-clone), [git-daemon](https://git-scm.com/docs/git-daemon), [git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]]. Historical ladder: [[research:root/20261110095142]]. Symmetry ladder: [[research:root/20261110105436]]. Optional ladder: [[research:root/20261110205403]]. Unlock R2: [[adr:root/20261110190000]]. Unlock R3: [[adr:root/20261110105547]]. Unlock S3 deletes: [[adr:root/20261110112600]]. Unlock O2 `tree:0`: [[adr:root/20261110210000]].
 
 **Entry:** M5 exit proven — [[evidence:root/20261108104837]]. **Not production** — production is **M9**.
 
@@ -87,19 +89,19 @@ Version **0.5.4**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 13. **Capability honesty.** MUST NOT request `shallow` / `deepen` / `filter` unless implemented and peer-advertised. Depth against a peer that does not advertise `shallow` MUST refuse. Local path / `file://` clone MUST refuse `--depth` (no pack-protocol deepen on the claimed local object-dir path).
 14. **Depth non-claims (remain out).** `deepen-since` / `deepen-not` / `deepen-relative`, `--unshallow`, server-side shallow product. Clean-room proof for depth: [[sot:root/interop-test-matrix]] **G9** via compose **G35** (`verify/matrices/matrix-g35.md`).
 
-### Claimed partial-clone subset (R3 / symmetry **S1**; v0.5.3)
+### Claimed partial-clone subset (R3 / symmetry **S1** / optional **O2**; v0.5.5)
 
-15. **`--filter=blob:none` only.** Client MAY request `blob:none` on smart HTTP, SSH, and `git://` clone/fetch when the peer advertises `filter` ([partial-clone](https://git-scm.com/docs/partial-clone); [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack) `filter-request`; [git-clone `--filter`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---filterltfilter-specgt)). Wire: request `filter` on the first want line; send `filter blob:none` before flush. Other filter-specs MUST refuse fail-closed.
+15. **`--filter=blob:none` and `--filter=tree:0`.** Client MAY request `blob:none` or `tree:0` on smart HTTP, SSH, and `git://` clone/fetch when the peer advertises `filter` ([partial-clone](https://git-scm.com/docs/partial-clone); [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack) `filter-request`; [git-clone `--filter`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---filterltfilter-specgt); [git-rev-list `--filter`](https://git-scm.com/docs/git-rev-list#Documentation/git-rev-list.txt---filterltfilter-specgt)). Wire: request `filter` on the first want line; send `filter <spec>` before flush. Other filter-specs MUST refuse fail-closed.
 16. **Promisor + extension.** After a successful filtered pack ingest, MUST set `core.repositoryformatversion=1` and `extensions.partialClone=<remote-name>`, and MUST mark the pack with a sibling `.promisor` file. Demand-fetch packs that backfill missing objects for checkout MUST also be marked promisor.
-17. **Checkout backfill.** Clone composition MUST demand-fetch missing blobs required for the HEAD tree from the promisor remote before completing worktree materialization (user-visible parity with stock `git clone --filter=blob:none`). Historical blobs MAY remain absent.
-18. **Partial-clone non-claims.** `tree:0`, `blob:limit=*`, sparse OID filters, multi-promisor ordering product, local/`file://` `--filter`, server-side filter as a sole server product. Unlock: [[adr:root/20261110105547]].
+17. **Checkout backfill.** Clone composition MUST demand-fetch missing objects required for HEAD materialization from the promisor remote (`blob:none`: missing blobs; `tree:0`: missing nested trees **and** blobs) before completing worktree materialization (user-visible parity with stock `git clone --filter=<claimed-spec>`). Historical objects outside the HEAD tree MAY remain absent.
+18. **Partial-clone non-claims.** `blob:limit=*`, sparse OID filters, combined/unknown filter-specs, multi-promisor ordering product, local/`file://` `--filter`, server-side filter as a sole server product. Unlock `blob:none`: [[adr:root/20261110105547]]. Unlock `tree:0`: [[adr:root/20261110210000]].
 
 ### Out of scope (M6)
 
 - Git server role / `arks-server` (**M11**).
 - Forge product APIs (B).
 - CELIR; lease L1+ runtime (**M10**).
-- Filter-specs beyond the `blob:none` subset above.
+- Filter-specs beyond the claimed `blob:none` / `tree:0` subset above.
 - Calling M6 **production**.
 - Permanent `gix`; product-path `git` subprocess (stock Git allowed only as clean-room oracle / local peer fixture).
 - `--shared` / alternates local clone; piped `file://` upload-pack clone (may amend later). Hardlink-prefer for object files is claimed (v0.4.0).
@@ -114,6 +116,6 @@ Wave H unlocks remotes before porcelain waves. A Ring 6 client over proven pkt-l
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-remote` and Wave H CLI tests via `-p arks`.
 2. Clean-room **G7** `remote-recorded` (+ G1–G6 regression) per `verify/matrices/matrix-m6.md` — authoritative. **G8** default **Refuse-closed** without opt-in secrets ([[adr:root/20261110151000]]); live only when `ARKS_G8_LIVE=1` + token + URL. Host green alone is not product-verified.
 3. Clean-room **G35** (`verify/matrices/matrix-g35.md`, compose `g35`) for the claimed `--depth` shallow subset (**G9** semantics). Host green alone is not product-verified.
-4. Residual **R3** / symmetry **S1**: host wire (or clean-room twin) MUST prove `clone --filter=blob:none` vs stock peer with `filter` advertised → `extensions.partialClone` + `.promisor` + HEAD worktree; Claimed only with evidence. Unclaimed filter-specs MUST still refuse. Symmetry e2e expansion is **S6**.
+4. Residual **R3** / symmetry **S1** / optional **O2**: host wire (or clean-room twin) MUST prove `clone --filter=blob:none` and `clone --filter=tree:0` vs stock peer with `filter` advertised → `extensions.partialClone` + `.promisor` + HEAD worktree; Claimed only with evidence. Unclaimed filter-specs MUST still refuse. Symmetry e2e expansion is **S6** / G39-class.
 5. `spec check` clean for this SoT.
 6. Workspace `cargo metadata`: `arks-remote` depends inward only; zero `gix`/gitoxide; zero `celir` edges.

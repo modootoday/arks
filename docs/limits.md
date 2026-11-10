@@ -40,7 +40,7 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ### Partial clone / dumb push?
 
-`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`). Partial-clone `--filter=blob:none` (promisor + `extensions.partialClone`) is claimed on those pack transports; other filter-specs remain refused. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE/DELETE) when receive-pack discovery is dumb, including empty-refspec deletes (`push :<ref>`); stock Apache DAV interop remains unclaimed.
+`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`). Partial-clone `--filter=blob:none` and `--filter=tree:0` (promisor + `extensions.partialClone`) are claimed on those pack transports; other filter-specs remain refused. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE/DELETE) when receive-pack discovery is dumb, including empty-refspec deletes (`push :<ref>`); stock Apache DAV interop is Claimed only with clean-room G41 receipt. Smart-pack `push --force-with-lease` and `--push-option` are claimed; lease on dumb HTTP is not.
 
 ### Commit and tag signing?
 
@@ -52,7 +52,7 @@ Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxk
 
 ### Interactive TUI?
 
-`rebase -i`, `add -p`/`-i`, editor-required `commit` (no `-m`), and similar TUI flows stay **out of claim** under the agent non-interactive bar (S4 honest defer). Use non-interactive forms (`rebase <upstream>`, `commit -m`, path `add`). See [Git vs arks](../git-vs-arks/).
+Full curses/TTY TUI menus stay **out of claim**. Scripted modes are Claimed (O3): `rebase -i` with `GIT_SEQUENCE_EDITOR`/`ARKS_SEQUENCE_EDITOR`, editor `commit` via `GIT_EDITOR`/`ARKS_EDITOR`/`-F`, and `add -p` via `ARKS_ADD_PATCH_ANSWERS` or non-TTY stdin (file-granularity). See [Git vs arks](../git-vs-arks/).
 
 ### Alias coverage?
 

@@ -63,7 +63,7 @@ Primary inventory: [git(1) 2.39.0](https://git-scm.com/docs/git/2.39.0) porcelai
 | Forge OAuth UX + Git Credential Manager as bundled first-party binary | External GCM/OAuth helpers MAY still be configured by path/name; product ships first-party `wincred`/`libsecret`/`osxkeychain` + TTY (G33) | [[sot:root/credential-helper-askpass]] |
 | Product SSHD / key CA (arks as sshd) | Ops wrap ForceCommand / `git-shell`; arks speaks pack protocol on stdio only | [[sot:root/arks-server]] |
 | Dumb-HTTP-**only** as sole claimed server path | Forbidden — smart HTTP remains required; dumb is additive (**G29 Claimed**) | [[sot:root/arks-server]], [[evidence:root/20261109221500]] |
-| Interactive editor/TUI-required flows (`commit` without `-m`; `rebase -i`; `add -i`/`-p`; `stash -p`; mergetool/difftool **GUI**) | Non-interactive agent/alias bar | gitcli(7); this SoT |
+| Full curses/TTY TUI menu flows (`add -i` menu; mergetool/difftool **GUI**; `stash -p`) | Pixel/TUI clone out of product; scripted O3 subset is Claimed separately | gitcli(7); [[adr:root/20261110210300]] |
 | GPG/SSH **signing** beyond claimed SSH commit subset (`tag -s`/`-u`; `verify-tag`; OpenPGP/`gpg.format=openpgp` + X.509 `commit -S` / `verify-commit`) | External crypto UX outside claimed `gpg.format=ssh` commit create/verify ([[sot:root/arks-object]] FW-GPGSIG) | git-tag / git-commit / git-verify-commit / gitformat-signature |
 | Foreign SCM bridges (`svn`, `p4`, `cvs*`, `archimport`, `quiltimport`, `imap-send`, `send-email` SMTP identity) | Not Git core object/CLI symmetry | git(1) interacting-with-others |
 | `filter-branch` | Successor honesty — external history rewrite | git-filter-branch; M15 exclude |
@@ -85,7 +85,7 @@ Wave Done = Docker **G21** PASS for that wave’s matrix IDs + G14/G20 regressio
 | `status` | human; `-s`/`--porcelain` (v1); **`-b`** (branch header / porcelain `##`) | porcelain v2 full schema extras beyond claimed |
 | `log` / `show` | default; **`--oneline`**; **`--graph`** (ASCII); `-n`/`-<n>`; path limiters as already claimed | `--pretty=format:` full custom; pager identity |
 | `branch` | existing + **`-a`/`--all`**; **`-r`/`--remotes`**; `-v` short | `--sort` exotic; `--format` full |
-| `add` | paths; `-A`/`-u`; **`--chmod=+x`/`--chmod=-x`** | `-i`/`-p`/`-e` interactive (**global N/A**) |
+| `add` | paths; `-A`/`-u`; **`--chmod=+x`/`--chmod=-x`**; **`-p`/`--patch` scripted** (file-granularity; `ARKS_ADD_PATCH_ANSWERS` / non-TTY stdin) | `-i` menu; `-e` hunk edit; TTY pixel TUI |
 | `clean` | `-f` `-d`; **`-x`** (ignore ignore rules) | `-e` exclude pathspec extras beyond pin subset |
 | `describe` | `--tags`; **`--dirty[=<mark>]`** | `--match` globs beyond claimed |
 | `switch` | `-c`/`-C`; **`--detach`** | `--orphan` (→ Sy-2 with checkout) |

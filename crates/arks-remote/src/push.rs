@@ -3,7 +3,7 @@
 //!
 //! Smart path: update commands + undeltified pack, then `report-status` (or
 //! `report-status-v2` when that is the only form advertised). Deletes require
-//! peer `delete-refs`. Force-with-lease is not claimed.
+//! peer `delete-refs`. Force-with-lease + push-options claimed (O4).
 //!
 //! Dumb path: WebDAV LOCK/MKCOL/PUT/(MOVE)/DELETE/UNLOCK per git-http-push +
 //! RFC 4918 ([[adr:root/20261110190000]], [[adr:root/20261110112600]]).
@@ -13,18 +13,18 @@
 //! <https://git-scm.com/docs/gitprotocol-http>,
 //! <https://git-scm.com/docs/git-http-push>
 
-use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
+use crate::advertise::{cap_advertised, content_type_is, parse_advertisement, Advertisement};
 use crate::error::RemoteError;
 use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::http::UreqTransport;
 use crate::ssh::{SshService, SshSession};
-use crate::transport::{HttpRequest, Transport, header, require_success};
-use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
+use crate::transport::{header, require_success, HttpRequest, Transport};
+use crate::url::{join_url, GitDaemonUrl, SshRemoteUrl};
 use crate::walk::collect_closure;
 use arks_object::RawObject;
 use arks_oid::Oid;
 use arks_pack::EncodedPack;
-use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet};
+use arks_protocol::{decode_packet, decode_text_line, encode_packet, encode_text_line, Packet};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;
@@ -39,6 +39,15 @@ const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 pub struct PushUpdate {
     pub refname: String,
     pub new_oid: Oid,
+    /// When set (`--force-with-lease`), use as the receive-pack command `old`
+    /// OID instead of the advertisement tip (O4).
+    pub expected_old: Option<Oid>,
+}
+
+/// Options for a single push dialog (O4 push-options).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PushOptions {
+    pub push_options: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,17 +64,35 @@ pub(crate) struct ReportStatus {
 }
 
 pub fn push_http(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<(), RemoteError> {
+    push_http_with(repo, url, updates, &PushOptions::default())
+}
+
+pub fn push_http_with(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<(), RemoteError> {
     let mut transport = UreqTransport::new();
-    push_with(&mut transport, repo, url, updates)
+    push_with(&mut transport, repo, url, updates, opts)
 }
 
 /// Push over OpenSSH speaking receive-pack pkt-line.
 pub fn push_ssh(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<(), RemoteError> {
+    push_ssh_with(repo, url, updates, &PushOptions::default())
+}
+
+pub fn push_ssh_with(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<(), RemoteError> {
     validate_push_updates(updates)?;
     let ssh_url = SshRemoteUrl::parse(url)?;
     let mut session = SshSession::connect(&ssh_url, SshService::ReceivePack)?;
     let ad = session.read_advertisement()?;
-    let (body, skip) = build_push_body(repo, &ad, updates)?;
+    let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
     if skip {
         // Nothing to send; drop the session (peer may exit non-zero on empty dialog).
         drop(session);
@@ -82,11 +109,20 @@ pub fn push_ssh(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<
 
 /// Push over `git://` speaking receive-pack (peer must enable receive-pack).
 pub fn push_git(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<(), RemoteError> {
+    push_git_with(repo, url, updates, &PushOptions::default())
+}
+
+pub fn push_git_with(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<(), RemoteError> {
     validate_push_updates(updates)?;
     let git_url = GitDaemonUrl::parse(url)?;
     let mut session = GitDaemonSession::connect(&git_url, GitDaemonService::ReceivePack)?;
     let ad = session.read_advertisement()?;
-    let (body, skip) = build_push_body(repo, &ad, updates)?;
+    let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
     if skip {
         drop(session);
         return Ok(());
@@ -104,12 +140,21 @@ pub fn push_remote(
     url: &str,
     updates: &[PushUpdate],
 ) -> Result<(), RemoteError> {
+    push_remote_with(repo, url, updates, &PushOptions::default())
+}
+
+pub fn push_remote_with(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<(), RemoteError> {
     if SshRemoteUrl::parse(url).is_ok() {
-        push_ssh(repo, url, updates)
+        push_ssh_with(repo, url, updates, opts)
     } else if GitDaemonUrl::parse(url).is_ok() {
-        push_git(repo, url, updates)
+        push_git_with(repo, url, updates, opts)
     } else {
-        push_http(repo, url, updates)
+        push_http_with(repo, url, updates, opts)
     }
 }
 
@@ -118,6 +163,7 @@ pub(crate) fn push_with<T: Transport>(
     repo: &Repository,
     url: &str,
     updates: &[PushUpdate],
+    opts: &PushOptions,
 ) -> Result<(), RemoteError> {
     validate_push_updates(updates)?;
 
@@ -132,6 +178,16 @@ pub(crate) fn push_with<T: Transport>(
     // Smart clients fall back to dumb when the advertisement is not smart
     // (gitprotocol-http). Dumb push uses WebDAV (git-http-push / RFC 4918).
     if crate::dumb::looks_like_dumb_info_refs(header(&info.headers, "content-type"), &info.body) {
+        if !opts.push_options.is_empty() {
+            return Err(RemoteError::NotImplemented(
+                "push --push-option is not claimed on dumb HTTP (pack-protocol only)".into(),
+            ));
+        }
+        if updates.iter().any(|u| u.expected_old.is_some()) {
+            return Err(RemoteError::NotImplemented(
+                "push --force-with-lease is not claimed on dumb HTTP (smart pack only)".into(),
+            ));
+        }
         return crate::dumb::push_dumb_with(transport, repo, url, updates, &info.body);
     }
     if !content_type_is(
@@ -143,7 +199,7 @@ pub(crate) fn push_with<T: Transport>(
         ));
     }
     let ad = parse_advertisement(&info.body, "git-receive-pack")?;
-    let (body, skip) = build_push_body(repo, &ad, updates)?;
+    let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
     if skip {
         return Ok(());
     }
@@ -190,18 +246,40 @@ fn build_push_body(
     repo: &Repository,
     ad: &Advertisement,
     updates: &[PushUpdate],
+    opts: &PushOptions,
 ) -> Result<(Vec<u8>, bool), RemoteError> {
-    let caps = push_capability_list(&ad.capabilities)?;
+    let want_push_options = !opts.push_options.is_empty();
+    if want_push_options && !cap_advertised(&ad.capabilities, "push-options") {
+        return Err(RemoteError::NotImplemented(
+            "peer did not advertise push-options; --push-option not claimed against this peer"
+                .into(),
+        ));
+    }
+    let caps = push_capability_list(&ad.capabilities, want_push_options)?;
 
     let mut commands: Vec<(Oid, Oid, String)> = Vec::new();
     let mut any_delete = false;
     for update in updates {
-        let old = ad
+        let advertised = ad
             .refs
             .iter()
             .find(|r| r.name == update.refname)
             .map(|r| r.oid)
             .unwrap_or_else(zero_oid);
+        let old = if let Some(expect) = update.expected_old {
+            // Fail closed early when the tip already moved (force-with-lease).
+            if advertised != expect {
+                return Err(RemoteError::Rejected(format!(
+                    "force-with-lease failed for {}: expected {}, remote has {}",
+                    update.refname,
+                    expect.to_hex(),
+                    advertised.to_hex()
+                )));
+            }
+            expect
+        } else {
+            advertised
+        };
         if old == update.new_oid {
             continue;
         }
@@ -245,6 +323,17 @@ fn build_push_body(
         body.extend(command_pkt(old, new, name, cap)?);
     }
     body.extend(encode_packet(&Packet::Flush).map_err(|e| RemoteError::Protocol(e.to_string()))?);
+    if want_push_options {
+        for opt in &opts.push_options {
+            body.extend(
+                encode_text_line(&format!("push-option {opt}"))
+                    .map_err(|e| RemoteError::Protocol(e.to_string()))?,
+            );
+        }
+        body.extend(
+            encode_packet(&Packet::Flush).map_err(|e| RemoteError::Protocol(e.to_string()))?,
+        );
+    }
     body.extend_from_slice(&pack);
     Ok((body, false))
 }
@@ -275,19 +364,25 @@ fn apply_report_status(body: &[u8]) -> Result<(), RemoteError> {
     Ok(())
 }
 
-fn push_capability_list(advertised: &[String]) -> Result<String, RemoteError> {
+fn push_capability_list(
+    advertised: &[String],
+    want_push_options: bool,
+) -> Result<String, RemoteError> {
     let mut caps = Vec::new();
     if cap_advertised(advertised, "report-status") {
-        caps.push("report-status");
+        caps.push("report-status".to_string());
     } else if cap_advertised(advertised, "report-status-v2") {
-        caps.push("report-status-v2");
+        caps.push("report-status-v2".to_string());
     } else {
         return Err(RemoteError::Protocol(
             "peer did not advertise report-status".into(),
         ));
     }
+    if want_push_options && cap_advertised(advertised, "push-options") {
+        caps.push("push-options".to_string());
+    }
     if cap_advertised(advertised, "agent") {
-        caps.push("agent=arks/0.0.0");
+        caps.push("agent=arks/0.0.0".to_string());
     }
     Ok(caps.join(" "))
 }

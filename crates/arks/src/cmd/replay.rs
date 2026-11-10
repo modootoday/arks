@@ -16,9 +16,9 @@ use crate::cmd::shared::{
     resolve_rev,
 };
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index, FORMAT};
 use crate::write_tree::write_tree_from_index;
-use arks_index::{Index, IndexEntry, sort_entries};
+use arks_index::{sort_entries, Index, IndexEntry};
 use arks_object::{Commit, ObjectKind, RawObject, Signature};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
@@ -114,11 +114,21 @@ pub fn cmd_revert(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_rebase(args: &[String]) -> CliResult<()> {
-    if args.iter().any(|a| a == "-i" || a == "--interactive") {
-        return Err(CliError::NotImplemented(
-            "rebase -i excluded (interactive/TUI); use non-interactive rebase <upstream> (Fs-5)"
-                .into(),
-        ));
+    let interactive = args.iter().any(|a| a == "-i" || a == "--interactive");
+    if interactive {
+        refuse_unknown_flags(args, &["-i", "--interactive"])?;
+        let filtered: Vec<String> = args
+            .iter()
+            .filter(|a| *a != "-i" && *a != "--interactive")
+            .cloned()
+            .collect();
+        let upstream = one_rev(&filtered, "rebase -i <upstream>")?;
+        if upstream.contains("..") {
+            return Err(CliError::NotImplemented(
+                "rebase -i ranges are not claimed; pass a single upstream".into(),
+            ));
+        }
+        return rebase_interactive(upstream);
     }
     refuse_unknown_flags(args, &[])?;
     let upstream = one_rev(args, "rebase <upstream>")?;
@@ -128,6 +138,187 @@ pub fn cmd_rebase(args: &[String]) -> CliResult<()> {
         ));
     }
     rebase_onto(upstream)
+}
+
+/// Scripted interactive rebase (O3): requires `GIT_SEQUENCE_EDITOR` / `ARKS_SEQUENCE_EDITOR`.
+/// Claimed todo verbs: `pick`, `drop` (or `#` comment), `reword` (message via editor env).
+fn rebase_interactive(upstream_rev: &str) -> CliResult<()> {
+    let editor = std::env::var("ARKS_SEQUENCE_EDITOR")
+        .or_else(|_| std::env::var("GIT_SEQUENCE_EDITOR"))
+        .map_err(|_| {
+            CliError::NotImplemented(
+                "rebase -i requires GIT_SEQUENCE_EDITOR or ARKS_SEQUENCE_EDITOR (scripted O3); full TTY TUI remains N/A"
+                    .into(),
+            )
+        })?;
+    let repo = open_repo()?;
+    refuse_exclusive_sequencer_state(&repo, SequencerOp::Rebase)?;
+    require_branch(&repo)?;
+    let head = repo.head_oid()?;
+    let upstream = resolve_rev(&repo, upstream_rev)?;
+    let _ = read_commit(&repo, &upstream)?;
+    if head == upstream {
+        println!("Already up to date.");
+        return Ok(());
+    }
+    let commits = replay_list(&repo, head, upstream)?;
+    if commits.is_empty() {
+        drop(repo);
+        reset_hard(&upstream)?;
+        println!("Fast-forward");
+        return Ok(());
+    }
+    let _ = ensure_clean(&repo)?;
+    let git = repo.git_dir().to_path_buf();
+    let merge_dir = git.join("rebase-merge");
+    fs::create_dir_all(&merge_dir)?;
+    fs::write(merge_dir.join("interactive"), b"")?;
+    fs::write(merge_dir.join("onto"), format!("{}\n", upstream.to_hex()))?;
+    fs::write(merge_dir.join("head-name"), b"attached")?;
+    let mut todo = String::from(
+        "# arks scripted rebase -i (O3)\n# Commands: pick | drop | reword | # comment\n",
+    );
+    for oid in &commits {
+        let c = read_commit(&repo, oid)?;
+        let subj = c.message.lines().next().unwrap_or("").trim();
+        todo.push_str(&format!("pick {} {}\n", oid.to_hex(), subj));
+    }
+    let todo_path = merge_dir.join("git-rebase-todo");
+    fs::write(&todo_path, &todo)?;
+    drop(repo);
+    run_external_editor(&editor, &todo_path)?;
+    let edited = fs::read_to_string(&todo_path)?;
+    let steps = parse_rebase_todo(&edited)?;
+    if steps.is_empty() {
+        let _ = fs::remove_dir_all(&merge_dir);
+        reset_hard(&upstream)?;
+        println!("Successfully rebased and updated (empty todo).");
+        return Ok(());
+    }
+    ensure_replay_applies(
+        &open_repo()?,
+        upstream,
+        &steps.iter().map(|s| s.oid).collect::<Vec<_>>(),
+    )?;
+    reset_hard(&upstream)?;
+    for step in &steps {
+        match step.verb {
+            RebaseVerb::Pick => cherry_pick_oid(&step.oid, false)?,
+            RebaseVerb::Drop => {}
+            RebaseVerb::Reword => {
+                cherry_pick_oid(&step.oid, false)?;
+                reword_head_message()?;
+            }
+        }
+    }
+    let _ = fs::remove_dir_all(&merge_dir);
+    println!("Successfully rebased.");
+    Ok(())
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RebaseVerb {
+    Pick,
+    Drop,
+    Reword,
+}
+
+#[derive(Debug, Clone)]
+struct RebaseTodoStep {
+    verb: RebaseVerb,
+    oid: Oid,
+}
+
+fn parse_rebase_todo(text: &str) -> CliResult<Vec<RebaseTodoStep>> {
+    let mut out = Vec::new();
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.split_whitespace();
+        let verb_s = parts.next().unwrap_or("");
+        let oid_s = parts
+            .next()
+            .ok_or_else(|| CliError::Usage(format!("rebase -i todo: missing oid in '{line}'")))?;
+        let verb = match verb_s {
+            "pick" | "p" => RebaseVerb::Pick,
+            "drop" | "d" => RebaseVerb::Drop,
+            "reword" | "r" => RebaseVerb::Reword,
+            other => {
+                return Err(CliError::NotImplemented(format!(
+                    "rebase -i todo verb '{other}' not claimed (O3: pick|drop|reword)"
+                )));
+            }
+        };
+        if verb == RebaseVerb::Drop {
+            continue;
+        }
+        let oid = Oid::from_hex(oid_s).map_err(|e| CliError::Msg(e.to_string()))?;
+        out.push(RebaseTodoStep { verb, oid });
+    }
+    Ok(out)
+}
+
+fn run_external_editor(editor: &str, path: &Path) -> CliResult<()> {
+    // Allow `true` / `:` no-op editors and `cmd args` forms used in scripted CI.
+    let mut argv = shell_words(editor);
+    if argv.is_empty() {
+        return Err(CliError::Usage("empty sequence/editor command".into()));
+    }
+    argv.push(path.display().to_string());
+    let status = std::process::Command::new(&argv[0])
+        .args(&argv[1..])
+        .status()
+        .map_err(|e| CliError::Msg(format!("spawn editor '{editor}': {e}")))?;
+    if !status.success() {
+        return Err(CliError::Msg(format!(
+            "editor '{editor}' exited {}",
+            status.code().unwrap_or(-1)
+        )));
+    }
+    Ok(())
+}
+
+fn shell_words(s: &str) -> Vec<String> {
+    // Minimal split: whitespace; keep it deterministic for scripted env values.
+    s.split_whitespace().map(|w| w.to_string()).collect()
+}
+
+fn reword_head_message() -> CliResult<()> {
+    let editor = std::env::var("ARKS_EDITOR")
+        .or_else(|_| std::env::var("GIT_EDITOR"))
+        .or_else(|_| std::env::var("EDITOR"))
+        .map_err(|_| {
+            CliError::NotImplemented(
+                "rebase -i reword requires GIT_EDITOR / ARKS_EDITOR / EDITOR (O3 scripted)".into(),
+            )
+        })?;
+    let repo = open_repo()?;
+    let head = repo.head_oid()?;
+    let commit = read_commit(&repo, &head)?;
+    let msg_path = repo.git_dir().join("COMMIT_EDITMSG");
+    fs::write(&msg_path, ensure_nl(commit.message.clone()))?;
+    drop(repo);
+    run_external_editor(&editor, &msg_path)?;
+    let new_msg = fs::read_to_string(&msg_path)?;
+    let new_msg = strip_commit_editmsg_comments(&new_msg);
+    if new_msg.trim().is_empty() {
+        return Err(CliError::Msg("aborting reword due to empty message".into()));
+    }
+    // Amend HEAD message in place via existing commit --amend path.
+    crate::cmd::core::cmd_commit(&[
+        "--amend".into(),
+        "-m".into(),
+        new_msg.trim_end().to_string(),
+    ])
+}
+
+fn strip_commit_editmsg_comments(text: &str) -> String {
+    text.lines()
+        .filter(|l| !l.starts_with('#'))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// Non-interactive rebase of `HEAD` onto `upstream_rev` (clean apply only).

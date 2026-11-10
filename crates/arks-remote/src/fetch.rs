@@ -3,7 +3,7 @@
 //! Protocol v1. The want line lists only capabilities the peer advertised and
 //! this client implements (`ofs-delta`, `no-progress`, `agent`, `shallow` when
 //! `--depth` / local shallow file requires it, and `filter` when
-//! `--filter=blob:none` is claimed). Side-band is omitted so upload-pack
+//! `--filter=blob:none|tree:0` is claimed). Side-band is omitted so upload-pack
 //! returns a contiguous PACK (no pkt-line demux on J-CLONE-LOCAL).
 //! `thin-pack` is not requested, so the pack is self-contained.
 //! Have lines name local tips when present; `done` ends the
@@ -11,8 +11,8 @@
 //!
 //! Shallow (`--depth N`): request `shallow`, send `deepen N`, parse server
 //! `shallow`/`unshallow`, write `$GIT_DIR/shallow`.
-//! Partial-clone (`--filter=blob:none`): request `filter`, send
-//! `filter blob:none`, mark pack promisor, set `extensions.partialClone`.
+//! Partial-clone (`--filter=blob:none|tree:0`): request `filter`, send
+//! `filter <spec>`, mark pack promisor, set `extensions.partialClone`.
 //! Cite: <https://git-scm.com/docs/gitprotocol-capabilities>,
 //! <https://git-scm.com/docs/gitprotocol-pack>,
 //! <https://git-scm.com/docs/partial-clone>,
@@ -22,7 +22,7 @@
 //! <https://git-scm.com/docs/gitprotocol-pack>
 
 use crate::advertise::{
-    Advertisement, cap_advertised, content_type_is, parse_advertisement, symref_target,
+    cap_advertised, content_type_is, parse_advertisement, symref_target, Advertisement,
 };
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
@@ -30,10 +30,10 @@ use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::http::UreqTransport;
 use crate::shallow::{apply_shallow_update, read_shallow, write_shallow};
 use crate::ssh::{SshService, SshSession};
-use crate::transport::{HttpRequest, Transport, header, require_success};
-use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
+use crate::transport::{header, require_success, HttpRequest, Transport};
+use crate::url::{join_url, GitDaemonUrl, SshRemoteUrl};
 use arks_oid::Oid;
-use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
+use arks_protocol::{decode_packet, decode_text_line, encode_packet, encode_text_line, Packet};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;
@@ -52,7 +52,7 @@ pub struct FetchOptions {
     /// write (`FilesystemGitStore::take_pending_pack`) so clone can overlap
     /// persist with worktree checkout. Fetch callers that set this MUST flush.
     pub defer_pack_disk: bool,
-    /// Claimed partial-clone filter-spec (`blob:none` only). `None` = full pack.
+    /// Claimed partial-clone filter-spec (`blob:none` / `tree:0`). `None` = full pack.
     pub filter: Option<String>,
     /// When set, want these OIDs instead of advertised branch tips (promisor backfill).
     pub want_oids: Option<Vec<Oid>>,
@@ -429,14 +429,14 @@ where
     })
 }
 
-/// Claimed filter-spec gate (`blob:none` only for S1).
+/// Claimed filter-spec gate (`blob:none` + `tree:0` for S1 / O2).
 pub fn validate_claimed_filter(spec: &str) -> Result<(), RemoteError> {
-    if spec == "blob:none" {
-        return Ok(());
+    match spec {
+        "blob:none" | "tree:0" => Ok(()),
+        _ => Err(RemoteError::NotImplemented(format!(
+            "clone/fetch --filter={spec} not claimed; claimed subset: blob:none, tree:0"
+        ))),
     }
-    Err(RemoteError::NotImplemented(format!(
-        "clone/fetch --filter={spec} not claimed; claimed subset: blob:none"
-    )))
 }
 
 fn head_from_ad(ad: &Advertisement) -> (Option<String>, Option<Oid>) {

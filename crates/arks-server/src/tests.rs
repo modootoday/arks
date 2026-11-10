@@ -74,8 +74,9 @@ fn receive_advertises_delete_refs_and_report_status_v2() {
     assert!(text.contains("report-status"));
     assert!(text.contains("report-status-v2"));
     assert!(text.contains("delete-refs"));
-    // Fail-closed: do not advertise unclaimed push-options / proc-receive.
-    assert!(!text.contains("push-options"));
+    // O4: push-options advertised; proc-receive remains unclaimed.
+    assert!(text.contains("push-options"));
+    assert!(!text.contains("proc-receive"));
 }
 
 #[test]

@@ -4,7 +4,7 @@ use crate::clone::{clone_http, clone_http_with, clone_local};
 use crate::error::RemoteError;
 use crate::fetch::{FetchOptions, FetchOutcome, fetch_with};
 use crate::mock::MemoryPeer;
-use crate::push::{PushUpdate, push_http, push_with};
+use crate::push::{PushOptions, PushUpdate, push_http, push_with};
 use crate::transport::{HttpRequest, HttpResponse, RecordedExchange, RecordedTransport};
 use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
@@ -170,7 +170,9 @@ fn memory_peer_push_then_fetch() {
         &[PushUpdate {
             refname: "refs/heads/main".into(),
             new_oid: second,
+            expected_old: None,
         }],
+        &PushOptions::default(),
     )
     .unwrap();
     assert_eq!(peer.ref_oid("refs/heads/main"), Some(second));
@@ -185,7 +187,9 @@ fn memory_peer_push_then_fetch() {
         &[PushUpdate {
             refname: "refs/heads/other".into(),
             new_oid: second,
+            expected_old: None,
         }],
+        &PushOptions::default(),
     )
     .unwrap_err();
     assert!(matches!(err, RemoteError::Rejected(_)));
@@ -214,6 +218,7 @@ fn loopback_clone_and_push() {
         &[PushUpdate {
             refname: "refs/heads/main".into(),
             new_oid,
+            expected_old: None,
         }],
     )
     .unwrap();
@@ -419,6 +424,63 @@ fn stock_git_http_backend_partial_clone_blob_none() {
 }
 
 #[test]
+fn stock_git_http_backend_partial_clone_tree_0() {
+    let git_ok = std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !git_ok {
+        return;
+    }
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path().join("peer");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = root.join("src");
+    std::fs::create_dir_all(work.join("nested")).unwrap();
+    git_ok_at(&work, &["init", "-b", "main"]);
+    git_ok_at(&work, &["config", "user.email", "git@example.com"]);
+    git_ok_at(&work, &["config", "user.name", "Git"]);
+    std::fs::write(work.join("README"), b"root-readme\n").unwrap();
+    std::fs::write(work.join("nested/deep.txt"), b"nested-blob\n").unwrap();
+    git_ok_at(&work, &["add", "README", "nested/deep.txt"]);
+    git_ok_at(&work, &["commit", "-m", "c1-nested"]);
+    git_ok_at(
+        &root,
+        &["clone", "--bare", work.to_str().unwrap(), "app.git"],
+    );
+    let bare = root.join("app.git");
+    git_ok_at(&bare, &["config", "http.receivepack", "true"]);
+    git_ok_at(&bare, &["config", "uploadpack.allowFilter", "true"]);
+    git_ok_at(&bare, &["config", "uploadpack.allowAnySHA1InWant", "true"]);
+
+    let server = GitBackend::spawn(root.clone());
+    let dest = tmp.path().join("partial-tree0");
+    clone_http_with(
+        &format!("{}/app.git", server.url),
+        &dest,
+        &FetchOptions {
+            filter: Some("tree:0".into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        std::fs::read(dest.join("README")).unwrap(),
+        b"root-readme\n"
+    );
+    assert_eq!(
+        std::fs::read(dest.join("nested/deep.txt")).unwrap(),
+        b"nested-blob\n"
+    );
+    let cfg = std::fs::read_to_string(dest.join(".git/config")).unwrap();
+    assert!(
+        cfg.to_ascii_lowercase().contains("partialclone"),
+        "expected extensions.partialClone in config: {cfg}"
+    );
+}
+
+#[test]
 fn stock_git_http_backend_shallow_clone_depth_1() {
     let git_ok = std::process::Command::new("git")
         .arg("--version")
@@ -527,6 +589,7 @@ fn stock_git_http_backend_clone_fetch_push() {
         &[PushUpdate {
             refname: "refs/heads/main".into(),
             new_oid,
+            expected_old: None,
         }],
     )
     .unwrap();
@@ -943,6 +1006,7 @@ fn dumb_http_push_roundtrip_via_serve_http() {
         &[PushUpdate {
             refname: "refs/heads/main".into(),
             new_oid,
+            expected_old: None,
         }],
     )
     .expect("dumb push_http");
@@ -961,6 +1025,7 @@ fn dumb_http_push_roundtrip_via_serve_http() {
         &[PushUpdate {
             refname: "refs/heads/topic".into(),
             new_oid,
+            expected_old: None,
         }],
     )
     .expect("dumb push topic");
@@ -978,6 +1043,7 @@ fn dumb_http_push_roundtrip_via_serve_http() {
         &[PushUpdate {
             refname: "refs/heads/topic".into(),
             new_oid: zero,
+            expected_old: None,
         }],
     )
     .expect("dumb push delete topic");
@@ -996,6 +1062,7 @@ fn dumb_http_push_roundtrip_via_serve_http() {
         &[PushUpdate {
             refname: "refs/heads/main".into(),
             new_oid: zero,
+            expected_old: None,
         }],
     );
     assert!(del_main.is_err(), "deleting remote HEAD target must fail");
@@ -1071,9 +1138,69 @@ fn git_daemon_clone_fetch_push_roundtrip() {
         &[PushUpdate {
             refname: "refs/heads/main".into(),
             new_oid,
+            expected_old: None,
         }],
     )
     .expect("push_git");
+
+    stop.store(true, Ordering::SeqCst);
+    let _ = handle.join();
+}
+
+#[test]
+fn smart_http_force_with_lease_and_push_options() {
+    use crate::push::{PushOptions, PushUpdate, push_http_with};
+    use arks_server::spawn_loopback;
+    use std::sync::atomic::Ordering;
+    use tempfile::TempDir;
+
+    let base = TempDir::new().unwrap();
+    let bare = base.path().join("repo.git");
+    let (_, tip) = seed_bare_for_daemon(&bare);
+    let (addr, stop, handle) = spawn_loopback(bare.clone()).unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(30));
+    let url = format!("http://{addr}/");
+
+    let dest = TempDir::new().unwrap();
+    let dest_path = dest.path().join("clone");
+    crate::clone::clone_http(&url, &dest_path).expect("clone");
+    let mut repo = Repository::discover(&dest_path).unwrap();
+    let new_oid = commit_file(&mut repo, "hello.txt", b"leased\n", "lease").unwrap();
+
+    // Stale expect must fail closed.
+    let stale = Oid::from_hex("1111111111111111111111111111111111111111").unwrap();
+    let err = push_http_with(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid,
+            expected_old: Some(stale),
+        }],
+        &PushOptions::default(),
+    )
+    .unwrap_err();
+    assert!(
+        matches!(err, RemoteError::Rejected(_)),
+        "stale lease must reject: {err}"
+    );
+
+    push_http_with(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid,
+            expected_old: Some(tip),
+        }],
+        &PushOptions {
+            push_options: vec!["ci.skip".into()],
+        },
+    )
+    .expect("force-with-lease + push-option");
+
+    let peer = Repository::open(&bare).unwrap();
+    assert_eq!(peer.refs().resolve("refs/heads/main").unwrap(), new_oid);
 
     stop.store(true, Ordering::SeqCst);
     let _ = handle.join();
