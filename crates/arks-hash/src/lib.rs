@@ -152,7 +152,7 @@ pub fn hash_object(format: ObjectFormat, type_name: &str, payload: &[u8]) -> Dig
             let mut size_buf = [0u8; 20];
             let size = write_decimal(payload.len() as u64, &mut size_buf);
             h.update(size);
-            h.update(&[0]);
+            h.update([0]);
             h.update(payload);
             let out = h.finalize_reset();
             Digest::from_bytes(ObjectFormat::Sha1, out.as_slice()).expect("sha1 len")
