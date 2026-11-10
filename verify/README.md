@@ -4,7 +4,7 @@
 
 **Advisory:** `cargo test` on the host (including Windows) speeds iteration; it is not product-verified unless the same gate is green in clean-room.
 
-SoTs: `.spec/sot/product-verification-clean-room.sot.md`, `.spec/sot/verify-directory-conventions.sot.md` (tree / naming / out / SKIP·STRICT), `.spec/sot/structural-conventions.sot.md` §7, research `.spec/research/20261110095355-verify-fixtures-rust-layout.research.md`, `.spec/research/20261111082440-verify-directory-conventions-pain.research.md`.
+SoTs: `.spec/sot/product-verification-clean-room.sot.md`, `.spec/sot/verify-directory-conventions.sot.md` (tree / folder naming / out / SKIP·STRICT), `.spec/sot/structural-conventions.sot.md` §7, research `.spec/research/20261110095355-verify-fixtures-rust-layout.research.md`, `.spec/research/20261111082440-verify-directory-conventions-pain.research.md`.
 
 **CLI-parity production** = **M9** / **G14** when evidenced. **G16** journey-compare is additive observability (func + timing). **G19** enforces comparative allow-list bars on G16 metrics. **G17** is M12 concurrency issue-repro compare. SoT: `.spec/sot/clean-room-journey-compare.sot.md`, `.spec/sot/interop-test-matrix.sot.md`.
 
@@ -54,6 +54,8 @@ verify/
 | `crates/arks-*/testdata/` | Crate-owned binary/json fixtures | Product matrices |
 
 ### Naming families
+
+Folder ids under `verify/gates/<id>/` are kebab-case and should match compose service names (`gN`, `gN-<suffix>`, `fsNNN-*-advisory`; reserved `dod-*` only when a gate oracle exists) — see `.spec/sot/verify-directory-conventions.sot.md` §1a–§1d.
 
 | Family | Compose | Scripts |
 |--------|---------|---------|

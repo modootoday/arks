@@ -111,7 +111,7 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 | Daemon (`arks daemon`) | [[sot:root/arks-daemon-product-intent]] |
 | Product self-host (LAN/WAN) | [[sot:root/arks-self-host-server]] · public `docs/self-host.md` |
 | Claimed residual gates (B1–B9) | [[sot:root/arks-claimed-residual-gates]] · [[research:root/20261111074523]] — design/SKIP harness; no invent Claimed |
-| Verify directory conventions | [[sot:root/verify-directory-conventions]] · [[research:root/20261111082440]] — tree / naming / out / SKIP·STRICT / residual registration |
+| Verify directory conventions | [[sot:root/verify-directory-conventions]] · [[research:root/20261111082440]] — tree / folder naming / out / SKIP·STRICT / residual registration |
 | Hub (`arks hub`) | [[sot:root/arks-hub-product-intent]] |
 | CLI personality / factory | [[sot:root/arks-cli-personality-factory]] (git\|gh\|arks; OverlapFacade; ExitCodePolicy — design/Partial) |
 | CLI output + exit contract | [[sot:root/arks-cli-output-exit-contract]] (stdout/stderr; porcelain flags; triple exit classes — design/Partial) |
