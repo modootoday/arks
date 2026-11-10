@@ -11,9 +11,7 @@
 //! and retry once ([[sot:root/credential-helper-askpass]]).
 //!
 //! Pf5: defer `CredentialSource::discover` until a 401 (or explicit `with_source`) so
-//! unauthenticated smart-HTTP clone/fetch skips `.gitconfig` / helper walks. The
-//! exchange hot path also skips `resolve_authorization`/`fill` (and `/dev/tty`
-//! probes) until userinfo or a 401 requires them.
+//! unauthenticated smart-HTTP clone/fetch skips `.gitconfig` / helper walks.
 
 use crate::credential::{CredentialSource, resolve_authorization};
 use crate::error::RemoteError;
@@ -79,23 +77,6 @@ impl Default for UreqTransport {
 
 impl Transport for UreqTransport {
     fn exchange(&mut self, request: &HttpRequest) -> Result<HttpResponse, RemoteError> {
-        // J-CLONE-LOCAL hot path: lazy empty source + no userinfo → skip
-        // split_url / fill /dev/tty probes that otherwise sit inside upload-pack RT.
-        if !self.discovered && !url_has_userinfo(&request.url) {
-            match self.exchange_once(request, &request.url, None) {
-                Ok(response) => return Ok(response),
-                Err(RemoteError::Http(msg)) if msg.starts_with("HTTP 401") => {
-                    self.ensure_discovered();
-                    let prepared = prepare_url_with_source(&request.url, &self.source)?;
-                    let auth = resolve_authorization(&request.url, &self.source)?;
-                    if auth.is_none() {
-                        return Err(RemoteError::Http(msg));
-                    }
-                    return self.exchange_once(request, &prepared.url, auth.as_deref());
-                }
-                Err(err) => return Err(err),
-            }
-        }
         let prepared = prepare_url_with_source(&request.url, &self.source)?;
         match self.exchange_once(request, &prepared.url, prepared.authorization.as_deref()) {
             Ok(response) => Ok(response),
@@ -112,16 +93,6 @@ impl Transport for UreqTransport {
             Err(err) => Err(err),
         }
     }
-}
-
-/// True when the http(s) authority embeds `userinfo@` (needs strip/auth).
-fn url_has_userinfo(url: &str) -> bool {
-    let rest = url
-        .strip_prefix("https://")
-        .or_else(|| url.strip_prefix("http://"))
-        .unwrap_or(url);
-    let authority = rest.split_once('/').map(|(a, _)| a).unwrap_or(rest);
-    authority.contains('@')
 }
 
 impl UreqTransport {
