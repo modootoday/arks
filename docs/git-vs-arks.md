@@ -76,7 +76,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Area | Git | arks | Status |
 |------|-----|------|--------|
 | Clean-room journey ≤0.8× allow-list | Oracle | Measured 19/19 | **Claimed** (M17 / G19) |
-| Aggressive ≤0.5× journeys | Oracle | **Claimed 8/8** (incl. Clone HTTP) | **Claimed** (PF5) |
+| Aggressive ≤0.5× journeys | Oracle | Historical **8/8** at `79fc9bf`; tip `54c9dc2` **Claimed(partial)** (17 + ALIAS/REVERT `aggressive_na`) | **Claimed(partial)** on tip (PF5) |
 | Product leases / high-concurrency shape | N/A (stock) | Claimed with receipts | **Claimed** (M10 / M23 / M26) |
 | Live forge latency SLO | N/A | Harness ready; no invented live PASS | **Done (ops)** (L5) ≠ live PASS |
 
@@ -115,7 +115,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | **O4** | force-with-lease / push-options / Apache DAV | **Done** (lease+options + G41 PASS) |
 | **O_final** | Docs / residual currency; **L9** closed | **Done** |
 
-### Full Symmetry ladder (FS0–FS_final) — active DoD
+### Full Symmetry ladder (FS0–FS_final) — Done
 
 DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A forever”). **L9** and live G8 latency remain non-FS.
 
@@ -130,7 +130,17 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | **FS6** | filter clean/smudge + in-process LFS / scalar | **Done** |
 | **FS7** | GUI handoff / OAuth helper | **Done** |
 | **FS8** | Hostile/impossible + OBJ-004 fsck | **Done** |
-| **FS_final** | No casual N/A for real git features | **Done** — remaining = documented Impossible only (crypto / forge UX / host-env / L9 / live G8); LFS network + sha256 porcelain **Claimed** ([[adr:root/20261110214800]]) |
+| **FS_final** | No casual N/A for real git features | **Done** — remaining = documented Impossible / advisory / owner-policy only |
+
+### Completeness honesty (tip ≥ `54c9dc2`)
+
+| Question | Verdict |
+|----------|---------|
+| Git feature symmetry DoD (**FS_final**) | **YES** — Claimed rows have receipts; residuals are Impossible/advisory/owner-policy, not casual N/A |
+| Product “everything including live forge SLOs / crates.io publish / crypto immunity” | **NO** — those stay documented non-goals (see below) |
+| Clean-room re-stamp of all Docker gates on this tip | See evidence pack under `.spec/evidence/*-full-cleanroom-matrix/` (maintainer); host CI ≠ Verified |
+
+**Documented non-goals (not FS gaps):** absolute SHA-1 collision immunity; forge Checks/merge-queue/Issues UX; embedded forge OAuth browser UX; full multi-device cloud-sync safety on `.git` (FS-007/WIN-003 advisory detect only); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy).
 
 See: [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 

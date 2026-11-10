@@ -211,7 +211,12 @@ fn g15_capability_honesty_upload_ad() {
     assert!(rtext.contains("report-status"));
     assert!(rtext.contains("report-status-v2"));
     assert!(rtext.contains("delete-refs"));
-    assert!(!rtext.contains("push-options"));
+    // O4 Claimed: advertise push-options (forward to hooks). Historical G15
+    // "must not advertise" assertion is superseded.
+    assert!(
+        rtext.contains("push-options"),
+        "O4: receive-pack must advertise push-options; got: {rtext}"
+    );
 }
 
 /// M11-C14 — stock Git push vs arks receive-pack honor list

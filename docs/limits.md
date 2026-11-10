@@ -20,10 +20,11 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 ## Out of product scope here
 
 - Agent frameworks, orchestrators, and IDE products (arks is the **revision** layer those systems call)
-- Embedding full GUI front-ends (`gitk`, `git-gui`) inside the CLI binary — closest handoff scheduled under Full Symmetry **FS7**
-- Git LFS **as a silent default gate** without a dedicated SoT — closest filter-process parity scheduled under **FS6**
-- Forge host APIs (issues, PRs, Checks) — not git CLI features; use tools like `gh`
+- Embedding full GUI front-ends (`gitk`, `git-gui`) inside the CLI binary — **FS7** external handoff Claimed (refuse+reason); not an embed
+- Git LFS as a **separate** `git-lfs` product / tus / multi-tenant S3 locks — in-process LFS fetch/push + smudge is **Claimed**; remaining transfer modes stay out
+- Forge host APIs (issues, PRs, Checks) — **Impossible** as git CLI features; use tools like `gh`
 - Shipping arks as a Docker-based end-user runtime — the product is the **native CLI**
+- Absolute SHA-1 collision **immunity**, full cloud-sync safety on `.git`, embedded forge OAuth UX, and crates.io timing (**L9**) — documented Impossible / advisory / owner-policy (see [Git vs arks](../git-vs-arks/))
 
 ## Storage
 
@@ -60,7 +61,7 @@ Unimplemented commands fail closed (non-zero, no repo mutation). See [Alias `git
 
 ### Aggressive ≤0.5× journeys?
 
-Latest sole G19 remeasure: **all 19** allow-list journeys ≤0.5× (**Claimed 8/8**, including Clone HTTP). See [Performance](../performance/).
+M17 ≤0.8× remains **19/19**. Aggressive ≤0.5×: historical **Claimed 8/8** at `79fc9bf`; tip ≥`54c9dc2` is **Claimed(partial)** (17 ≤0.5× + honest `aggressive_na` for alias process-tax / revert short-wall — no thrash remasure). See [Performance](../performance/).
 
 
 ### Live harnesses?

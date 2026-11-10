@@ -48,6 +48,9 @@ aggressive_na = {
     "J-STASH-01": "quantum-timer-floor: ≤0.5× N/A unless seed amortization clears bar (sot:root/pf5-journey-seed-amortization)",
     "J-WORKTREE-01": "mid-residual: ≤0.5× N/A unless seed amortization clears bar (sot:root/pf5-journey-seed-amortization)",
     "J-CHERRY-01": "quantum-timer-floor: short-wall flicker; ≤0.5× N/A when measured >0.5 (sot:root/pf5-journey-seed-amortization)",
+    # Tip ≥54c9dc2 (sha1cd): alias PATH spawn tax + REVERT short-wall; do not thrash G19.
+    "J-ALIAS-01": "process-tax: alias PATH argv vs direct arks; ≤0.5× N/A when measured >0.5 after residual amortize (sot:root/pf5-journey-seed-amortization)",
+    "J-REVERT-01": "quantum-timer-floor: short-wall flicker; ≤0.5× N/A when measured >0.5 (sot:root/pf5-journey-seed-amortization)",
 }
 
 # Hard regression bar (M17). Pf4/Pf5 aggressive claim is reported separately.

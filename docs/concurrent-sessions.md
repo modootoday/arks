@@ -57,7 +57,7 @@ Live forge functional journeys are claimed only with receipts; harnesses that ne
 
 ### Timing bars
 
-Full journey allow-list ≤0.8× is measured (**19/19** on the latest sole G19 remeasure). Aggressive ≤0.5× holds on that receipt except **Clone HTTP**, which stays **aggressive_na**. Charts: [Performance](../performance/).
+Full journey allow-list ≤0.8× is measured (**19/19** on the latest sole G19 remasure). Aggressive ≤0.5× on tip ≥`54c9dc2` is **Claimed(partial)** (alias process-tax / revert short-wall stay honest `aggressive_na` — no thrash remasure). Charts: [Performance](../performance/).
 
 
 ### Index sidecar

@@ -3,7 +3,7 @@ id: sot:root/public-surface
 title: Public surface
 status: active
 created: 2026-11-08T08:32:38Z
-updated: 2026-11-10T10:54:36Z
+updated: 2026-11-10T13:50:00Z
 tags: [public, docs, pages, license, security, agents, naming, honesty, alias, dot-git, perf, celir-index, g28, l3]
 verify: manual
 rel:
@@ -126,7 +126,7 @@ This SoT owns **public-vs-private placement**, **human-readable vs agent-governa
 29. **CELIR honesty:** Public copy MAY say **CELIR dual-path Git verified** only with [[evidence:root/20261109205534]] (G23) and MUST state FS `.git` sole ObjectStore + CELIR index sidecar. Bare “CELIR-backed Git” / CELIR as object store remains forbidden ([[adr:root/20261109204916]]).
 30. **L3 / shared-index honesty:** Public copy MAY say high-concurrency leases ship in the **claimed** L3 shape (lease + batch-apply + worktree/ref-shard) ([[adr:root/20261109194200]]). Shared-index N-way MAY be cited as **M26 / G34 Claimed** with [[evidence:root/20261110074200]]; MUST NOT conflate it with M23 L3 or with G22/G24 CELIR index gates ([[adr:root/20261110074000]]).
 31. **Live forge / crypto honesty:** Public copy MAY cite **G28 Claimed** only with [[evidence:root/20261109212500]] (live) + [[evidence:root/20261109213400]] (offline clones; checklist N/A=0). MUST NOT imply forge throughput or Checks/merge-queue. **gpgsig** SSH MAY be cited with [[evidence:root/20261110073800]] (**G37**); OpenPGP / X.509 / `tag -s` MAY be cited with [[evidence:root/20261110110800]] (**G38**). G8 live smoke is secrets-default-on harness honesty — SKIP without secrets; never invent PASS. Tokens stay in env only.
-32. **Partial residual honesty:** Public copy MAY cite **`--filter=blob:none` / promisor** only with [[evidence:root/20261110105855]]; MUST keep unclaimed filter-specs (`tree:0`, `blob:limit=*`, …) **N/A**, forge OAuth **Refuse**, and Pf5 honesty current (**8/8** Claimed ≤0.5× on tip remasure [[evidence:root/20261110142500]]; do not resurrect CLONE-LOCAL NA). Credential fill (G33) MAY cite TTY + first-party OS wallets; MUST NOT market forge OAuth under CRED.
+32. **Partial residual honesty:** Public copy MAY cite **`--filter=blob:none` / `tree:0` / FS4 `blob:limit`/`tree:<n>` / promisor** with [[evidence:root/20261110105855]] + [[evidence:root/20261110210500]]; MUST keep **exotic** unclaimed filter-specs **N/A**/refuse-with-reason, forge OAuth **Refuse**/Impossible (embedded UX), and Pf5 honesty current (**8/8** Claimed ≤0.5× on tip remasure [[evidence:root/20261110142500]]; do not resurrect CLONE-LOCAL NA). Credential fill (G33) MAY cite TTY + first-party OS wallets; MUST NOT market forge OAuth under CRED. **FS-007 / WIN-003** MAY be cited as **advisory detect** only ([[evidence:root/20261110223500]]); full cloud-sync safety remains Impossible. **OBJ-004** MAY cite sha1cd **detect+refuse**; absolute collision immunity remains Impossible.
 
 ### Out of scope here
 

@@ -10,6 +10,7 @@ columns:
   - title: Honesty
     items:
       - {title: Performance, url: /performance/}
+      - {title: Completeness, url: /completion/}
       - {title: Limits, url: /limits/}
       - {title: Search, url: /search/}
   - title: Project

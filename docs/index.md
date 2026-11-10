@@ -42,7 +42,7 @@ Selected medians from a Docker clean-room receipt (stock Git 2.39.5 vs release `
 
 *Median wall-clock ms — selected journeys (clean-room G19 remeasure at tip `c1b0b24`)*
 
-Full table, ratio honesty (Clone HTTP remains aggressive_na), and evidence links: [Performance](performance/).
+Full table, ratio honesty (M17 **19/19** ≤0.8×; tip PF5 **Claimed(partial)** with honest `aggressive_na`), and evidence links: [Performance](performance/). Feature Claimed vs advisory vs Impossible: [Git vs arks](git-vs-arks/).
 
 
 ## Next

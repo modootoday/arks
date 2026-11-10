@@ -1,0 +1,4 @@
+﻿tip=54c9dc2eef001af9c39ee31def5029829d8096b8
+stamp=20261110224814-full-cleanroom-matrix
+evidence=C:\workspaces\gir\.spec\evidence\20261110224814-full-cleanroom-matrix
+policy=sequential Docker only; halt OOM/fail; no invent PASS

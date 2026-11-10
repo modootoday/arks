@@ -9,6 +9,7 @@
 - title: Honesty
   items:
     - {title: Git vs arks, url: /git-vs-arks/}
+    - {title: Completeness, url: /completion/}
     - {title: Performance, url: /performance/}
     - {title: Limits, url: /limits/}
 - {title: Contribute, url: /contribute/}

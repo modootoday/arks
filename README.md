@@ -103,20 +103,18 @@ Clean-room Docker verification compared stock Git **2.39.5** to release `arks` o
 | Bar | Result | Evidence |
 |-----|--------|----------|
 | ≤0.8× median wall-clock on all journeys | **19/19** | [G19 remeasure `c1b0b24`](.spec/evidence/20261110003836-g19-remeasure-c1b0b24/) · historical [M17](.spec/evidence/20261109090000-m17-exit-g19-measured-19/) |
-| Aggressive ≤0.5× | **19** journeys ≤0.5× (**Claimed 8/8**; Clone HTTP **0.1579**) | [PF5 8/8 remasure](.spec/evidence/20261110142500-g19-remeasure-pf5-8of8/) · prior [875359e](.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8/) · [7/8 notes](.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8/) · historical [M18](.spec/evidence/20261109143000-m18-pf4-3-g19-exit/) |
+| Aggressive ≤0.5× | Tip `54c9dc2` **Claimed(partial)** (17 + ALIAS/REVERT `aggressive_na`); historical **8/8** at `79fc9bf` | [tip matrix](.spec/evidence/20261110224814-full-cleanroom-matrix/) · [PF5 8/8 historical](.spec/evidence/20261110142500-g19-remeasure-pf5-8of8/) · prior [875359e](.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8/) |
 
 Charts and honesty labels: [docs/performance.md](docs/performance.md). Prefer **ratios** over absolute ms across receipts (seeds change). Host-only timings are advisory only.
 
 ## Limits (what is not claimed)
 
-Short and honest — see [docs/limits.md](docs/limits.md):
+Short and honest — see [docs/limits.md](docs/limits.md) and [Git vs arks](docs/git-vs-arks.md):
 
-- **Not** a GUI, Git LFS client, `scalar`, forge host API tool, or agent orchestrator.
+- **Not** a GUI embed (`gitk`/`git-gui` handoff only), `scalar` product, forge host API tool (Issues/PRs/Checks — use `gh`), or agent orchestrator.
 - The Git **object store** remains ordinary filesystem `.git`. An optional index sidecar may sit beside it for product queries; arks does not replace `.git` objects with a different store in Git-compatible mode.
-- Partial-clone filters / promisor packs, OpenPGP / X.509 commit & tag signing (`tag -s` / `verify-tag`), and forge OAuth are out or refused.
-- Credential fill includes helper / `GIT_ASKPASS` / TTY prompts and first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`); forge OAuth stays out.
-- Shallow clone supports `--depth`; filter/`blob:none`-style partial clone is not claimed (CLI refuses `--filter`).
-- Live forge journeys and harnesses are **claimed with receipts** when secrets are present; never invent PASS when SKIP is honest.
+- **Claimed** (with receipts): `--depth` shallow; partial-clone `blob:none` / `tree:0` / related filter subset; OpenPGP / X.509 / `tag -s` / `verify-tag`; in-process Git LFS fetch/push + smudge; credential helper / askpass / TTY / first-party OS wallets.
+- **Advisory / Impossible (documented non-goals):** `arks host-env` cloud-sync / OneDrive CfAPI is **detect+advisory only** (full multi-device sync safety Impossible); absolute SHA-1 collision **immunity** Impossible (detect+refuse Claimed); forge OAuth browser UX Impossible; live G8 latency SLO needs secrets + receipt (never invent PASS); crates.io timing (**L9**) remains owner policy.
 
 ## Documentation
 
@@ -131,6 +129,7 @@ Human-facing site (GitHub Pages): [`docs/`](docs/)
 | [Workflows](docs/workflows.md) | Everyday command map |
 | [Concurrent sessions](docs/concurrent-sessions.md) | Contention motive and concurrency honesty |
 | [Git vs arks](docs/git-vs-arks.md) | Honest feature comparison (Claimed / N/A / reopen) |
+| [Completeness](docs/completion.md) | FS_final YES vs documented non-goals (PARTIAL overall) |
 | [Performance](docs/performance.md) | Clean-room git vs arks timings |
 | [Limits](docs/limits.md) | What is not claimed |
 | [Contribute](docs/contribute.md) | Bugs, docs, maintainer pointers |

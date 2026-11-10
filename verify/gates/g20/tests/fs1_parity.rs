@@ -487,14 +487,25 @@ fn m15_fs5_03_interactive_editor_exclude() {
     assert_fail(&no_m, "commit without -m");
     let rebase_i = arks(&repo, &["rebase", "-i", "HEAD"]);
     assert_fail(&rebase_i, "rebase -i");
-    let msg = format!(
-        "{}{}",
-        String::from_utf8_lossy(&no_m.stderr),
-        String::from_utf8_lossy(&rebase_i.stderr)
+    let commit_msg = String::from_utf8_lossy(&no_m.stderr);
+    let rebase_msg = String::from_utf8_lossy(&rebase_i.stderr);
+    // FS1/O3: fail-closed without inventing a silent editor — require EDITOR /
+    // sequence-editor (or -m). Historical "exclude" wording is superseded.
+    assert!(
+        commit_msg.contains("GIT_EDITOR")
+            || commit_msg.contains("ARKS_EDITOR")
+            || commit_msg.contains("EDITOR")
+            || commit_msg.contains("exclude"),
+        "expected commit editor honesty: {commit_msg}"
     );
     assert!(
-        msg.contains("excluded") || msg.contains("exclude") || msg.contains("interactive"),
-        "expected exclude honesty: {msg}"
+        rebase_msg.contains("SEQUENCE_EDITOR")
+            || rebase_msg.contains("GIT_EDITOR")
+            || rebase_msg.contains("ARKS_EDITOR")
+            || rebase_msg.contains("EDITOR")
+            || rebase_msg.contains("exclude")
+            || rebase_msg.contains("interactive"),
+        "expected rebase -i editor honesty: {rebase_msg}"
     );
     record_row("M15-FS5-03", true);
 }

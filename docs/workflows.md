@@ -68,8 +68,16 @@ arks verify-tag v1.0
 ```
 
 > [!NOTE]
-> OpenPGP / X.509 commit signing and `tag -s` / `verify-tag` are claimed via spawned `gpg` / `gpgsm` (clean-room **G38**). Forge signature UX is not claimed — see [Limits](../limits/).
+> OpenPGP / X.509 commit signing and `tag -s` / `verify-tag` are claimed via spawned `gpg` / `gpgsm` (clean-room **G38**). Forge signature UX is Impossible — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
+
+## Host environment advisory
+
+```bash
+arks host-env .
+```
+
+Reports cloud-sync / OneDrive placeholder hazards as **advisory** only — not a Claimed multi-device sync product. See [Limits](../limits/).
 
 ## Next
 
-[Getting started](../getting-started/) [Alias `git` → `arks`](../alias-git-arks/) [Concurrent sessions](../concurrent-sessions/)
+[Getting started](../getting-started/) [Alias `git` → `arks`](../alias-git-arks/) [Git vs arks](../git-vs-arks/) [Concurrent sessions](../concurrent-sessions/)

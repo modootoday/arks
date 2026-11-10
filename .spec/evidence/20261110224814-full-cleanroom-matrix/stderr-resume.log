@@ -1,0 +1,7 @@
+Halt on fail for g11 exit=1
+위치 C:\workspaces\gir\verify\scripts\resume-cleanroom-matrix.ps1:53 문자:5
++     throw "Halt on fail for $gate exit=$ec"
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Halt on fail for g11 exit=1:String) [], RuntimeException
+    + FullyQualifiedErrorId : Halt on fail for g11 exit=1
+ 

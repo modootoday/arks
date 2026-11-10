@@ -1,0 +1,3559 @@
+L8 remaining: g21 then suite stamp
+===== starting g21 =====
+ Container arks-verify-m1-g21-run-54f4e94e7630 Creating 
+ Container arks-verify-m1-g21-run-54f4e94e7630 Created 
+G21: stock git git version 2.39.5
+G21: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G21: gix-exit / no-celir scan
+G21: gix-exit / default tree CELIR-free OK
+G21: build arks (release)
+ Downloading crates ...
+  Downloaded icu_provider v2.4.0
+  Downloaded idna v1.1.0
+  Downloaded idna_adapter v1.2.2
+  Downloaded getrandom v0.2.17
+  Downloaded form_urlencoded v1.2.2
+  Downloaded base64 v0.22.1
+  Downloaded percent-encoding v2.3.2
+  Downloaded subtle v2.6.1
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded untrusted v0.9.0
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded itoa v1.0.18
+  Downloaded utf8_iter v1.1.0
+  Downloaded zerofrom v0.1.8
+  Downloaded synstructure v0.14.0
+  Downloaded yoke-derive v0.8.4
+  Downloaded webpki-roots v0.26.11
+  Downloaded potential_utf v0.1.6
+  Downloaded displaydoc v0.2.7
+  Downloaded utf_types v1.0.0
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded tinystr v0.8.5
+  Downloaded zmij v1.0.23
+  Downloaded once_cell v1.21.4
+  Downloaded zeroize v1.9.1
+  Downloaded zerovec-derive v0.11.7
+  Downloaded writeable v0.6.4
+  Downloaded smallvec v1.16.5
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded litemap v0.8.3
+  Downloaded shlex v2.0.1
+  Downloaded serde_core v1.0.229
+  Downloaded log v0.4.35
+  Downloaded yoke v0.8.4
+  Downloaded serde_derive v1.0.229
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded serde v1.0.229
+  Downloaded icu_properties_data v2.4.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded url v2.5.8
+  Downloaded memchr v2.8.3
+  Downloaded rustls-webpki v0.103.16
+  Downloaded zerotrie v0.2.5
+  Downloaded ureq v2.12.1
+  Downloaded icu_collections v2.4.0
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded cc v1.11.1
+  Downloaded webpki-roots v1.0.11
+  Downloaded rustls v0.23.46
+  Downloaded icu_normalizer v2.4.0
+  Downloaded libc v0.2.191
+  Downloaded ring v0.17.14
+    Finished `release` profile [optimized] target(s) in 1.14s
+G21: ARKS_BIN=/cargo-target/release/arks
+G21: Sy suite (verify/gates/g21)
+ Downloading crates ...
+  Downloaded fastrand v2.5.0
+  Downloaded itoa v1.0.19
+  Downloaded getrandom v0.4.3
+  Downloaded errno v0.3.14
+  Downloaded bitflags v2.13.2
+  Downloaded tempfile v3.27.0
+  Downloaded rustix v1.1.6
+  Downloaded linux-raw-sys v0.12.1
+    Finished `release` profile [optimized] target(s) in 0.35s
+     Running tests/sy1_parity.rs (/cargo-target/release/deps/sy1_parity-2db07de81e24596b)
+
+running 7 tests
+test m16_sy1_01_status_b ... ok
+test m16_sy1_04_add_chmod ... ok
+test m16_sy1_03_branch_a_r ... ok
+test m16_sy1_02_log_oneline_graph ... ok
+test m16_sy1_05_clean_x_describe_dirty ... ok
+test m16_sy1_receipt_write ... ok
+test m16_sy1_06_switch_detach_diff_stat_bare ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/sy2_parity.rs (/cargo-target/release/deps/sy2_parity-79c0193c4bd3ef2e)
+
+running 4 tests
+test m16_sy2_receipt_write ... ok
+test m16_sy2_03_checkout_orphan ... ok
+test m16_sy2_01_worktree_porcelain_lock ... ok
+test m16_sy2_02_submodule_recursive ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/sy3_parity.rs (/cargo-target/release/deps/sy3_parity-e761af0d9f64e5ef)
+
+running 2 tests
+test m16_sy3_02_pack_objects_index_pack ... ok
+test m16_sy3_01_plumbing_refs_and_lists ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/sy4_parity.rs (/cargo-target/release/deps/sy4_parity-0c93e2dc09224fab)
+
+running 3 tests
+test m16_sy4_receipt_write ... ok
+test m16_sy4_02_submodule_add_ssh ... ok
+test m16_sy4_01_clone_fetch_push_ssh ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.36s
+
+     Running tests/sy5_parity.rs (/cargo-target/release/deps/sy5_parity-69b64539bbf0caf7)
+
+running 5 tests
+test m16_sy5_05_version_and_global_version ... ok
+test m16_sy5_04_format_patch_cover_letter_and_am_3way ... ok
+test m16_sy5_01_stash_and_cherry_pick_range ... ok
+test m16_sy5_02_bisect_notes_blame_fsck_count_packrefs ... ok
+test m16_sy5_03_detached_commit_and_cherry_pick_sequencer ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+G21: G20 regression (historical M15)
+    Finished `release` profile [optimized] target(s) in 0.03s
+     Running tests/fs1_parity.rs (/cargo-target/release/deps/fs1_parity-23b184069d40412d)
+
+running 15 tests
+test m15_fs1_01_commit_amend ... ok
+test m15_fs1_04_plumbing_minimum ... ok
+test m15_fs2_01_diverged_clean_merge ... ok
+test m15_fs1_02_sync_pre_commit_hook ... ok
+test m15_fs3_03_repack_lease_honest ... ok
+test m15_fs3_01_notes_add_show ... ok
+test m15_fs4_01_add_all_and_porcelain_status ... ok
+test m15_fs3_04_gc_and_prune_now_refuse ... ok
+test m15_fs3_02_sparse_checkout_cone ... ok
+test m15_fs1_03_merge_no_ff ... ok
+test m15_fs5_02_commit_all ... ok
+test m15_fs3_05_filter_branch_backfill_exclude ... ok
+test m15_fs5_01_range_diff_subjects ... ok
+test m15_fs5_03_interactive_editor_exclude ... ok
+test m15_fs2_02_diverged_conflict ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+G21: G14 regression (historical M9)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/porcelain_pc.rs (/cargo-target/debug/deps/porcelain_pc-2b28c71443f69c0a)
+
+running 9 tests
+test help_lists_pc_and_omits_refuse_closed ... ok
+test clean_d_removes_untracked_dir ... ok
+test archive_tar_contains_blob ... ok
+test reflog_after_commit ... ok
+test same_dot_git_stock_peer ... ok
+test bundle_verify_arks_bundle ... ok
+test annotated_tag_stock_git_reads ... ok
+test refuse_closed_and_unknown_flags ... ok
+test alias_shim_workflows_and_refuse ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+G21: PASS
+2026-11-10T22:54:32.2422207+09:00 g21,PASS,0,6,"resume"
+2026-11-10T22:54:32.2493765+09:00 l8-suite,PASS,0,0,"g14 g16 g20 g21 sequential (g20 retested)"
+===== starting g38 =====
+ Container arks-verify-m1-g38-run-d974b7f4f232 Creating 
+ Container arks-verify-m1-g38-run-d974b7f4f232 Created 
+G38: stock git git version 2.39.5
+G38: gpg (GnuPG) 2.2.40
+G38: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded zmij v1.0.23
+  Downloaded serde_derive v1.0.229
+  Downloaded litemap v0.8.3
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded idna_adapter v1.2.2
+  Downloaded proc-macro2 v1.0.107
+  Downloaded memchr v2.8.3
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded subtle v2.6.1
+  Downloaded zerofrom v0.1.8
+  Downloaded potential_utf v0.1.6
+  Downloaded crypto-common v0.1.7
+  Downloaded fastrand v2.5.0
+  Downloaded windows-interface v0.58.0
+  Downloaded windows-targets v0.52.6
+  Downloaded errno v0.3.14
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded synstructure v0.14.0
+  Downloaded windows-result v0.2.0
+  Downloaded block-buffer v0.10.4
+  Downloaded once_cell v1.21.4
+  Downloaded windows-implement v0.58.0
+  Downloaded shlex v2.0.1
+  Downloaded thiserror-impl v2.0.21
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded generic-array v0.14.7
+  Downloaded form_urlencoded v1.2.2
+  Downloaded version_check v0.9.5
+  Downloaded cpufeatures v0.2.17
+  Downloaded webpki-roots v0.26.11
+  Downloaded windows-strings v0.1.0
+  Downloaded utf8_iter v1.1.0
+  Downloaded cfg-if v1.0.5
+  Downloaded windows-link v0.2.1
+  Downloaded itoa v1.0.18
+  Downloaded untrusted v0.9.0
+  Downloaded serde_core v1.0.229
+  Downloaded percent-encoding v2.3.2
+  Downloaded writeable v0.6.4
+  Downloaded getrandom v0.2.17
+  Downloaded smallvec v1.16.5
+  Downloaded displaydoc v0.2.7
+  Downloaded bitflags v2.13.2
+  Downloaded thiserror v2.0.21
+  Downloaded zeroize v1.9.1
+  Downloaded yoke-derive v0.8.4
+  Downloaded digest v0.10.7
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded quote v1.0.47
+  Downloaded zerovec-derive v0.11.7
+  Downloaded sha2 v0.10.9
+  Downloaded utf_types v1.0.0
+  Downloaded tinystr v0.8.5
+  Downloaded getrandom v0.4.3
+  Downloaded r-efi v6.0.0
+  Downloaded windows-core v0.58.0
+  Downloaded yoke v0.8.4
+  Downloaded serde v1.0.229
+  Downloaded tempfile v3.27.0
+  Downloaded unicode-ident v1.0.27
+  Downloaded icu_provider v2.4.0
+  Downloaded log v0.4.35
+  Downloaded crc32fast v1.5.4
+  Downloaded url v2.5.8
+  Downloaded base64 v0.22.1
+  Downloaded zerotrie v0.2.5
+  Downloaded icu_locale_core v2.4.0
+  Downloaded rustls-webpki v0.103.16
+  Downloaded flate2 v1.1.11
+  Downloaded typenum v1.20.1
+  Downloaded ureq v2.12.1
+  Downloaded icu_collections v2.4.0
+  Downloaded icu_properties v2.4.0
+  Downloaded zerovec v0.11.9
+  Downloaded serde_json v1.0.154
+  Downloaded cc v1.11.1
+  Downloaded icu_properties_data v2.4.0
+  Downloaded idna v1.1.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded rustix v1.1.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G38: gix-exit OK
+G38: build arks
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.71s
+G38: OpenPGP / tag suite
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g38_cleanroom-5161747004eabc48)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/openpgp_tag_sign_verify.rs (/cargo-target/debug/deps/openpgp_tag_sign_verify-c237401364065682)
+
+running 3 tests
+test g38_split_signed_tag_helper_smoke ... ok
+test g38_x509_mock_program_roundtrip ... ok
+test g38_openpgp_commit_and_tag_stock_roundtrip ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+   Doc-tests arks_g38_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G38: PASS
+2026-11-10T22:54:38.2534603+09:00 g38,PASS,0,6,"resume"
+===== starting g39 =====
+ Container arks-verify-m1-g39-run-0ffd813a2efc Creating 
+ Container arks-verify-m1-g39-run-0ffd813a2efc Created 
+G39: stock git git version 2.39.5
+G39: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded block-buffer v0.10.4
+  Downloaded itoa v1.0.18
+  Downloaded digest v0.10.7
+  Downloaded idna_adapter v1.2.2
+  Downloaded icu_properties v2.4.0
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded zmij v1.0.23
+  Downloaded writeable v0.6.4
+  Downloaded cpufeatures v0.2.17
+  Downloaded windows-core v0.58.0
+  Downloaded crypto-common v0.1.7
+  Downloaded windows-strings v0.1.0
+  Downloaded windows-link v0.2.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded cfg-if v1.0.5
+  Downloaded errno v0.3.14
+  Downloaded sha2 v0.10.9
+  Downloaded thiserror-impl v2.0.21
+  Downloaded form_urlencoded v1.2.2
+  Downloaded yoke-derive v0.8.4
+  Downloaded generic-array v0.14.7
+  Downloaded webpki-roots v0.26.11
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded potential_utf v0.1.6
+  Downloaded version_check v0.9.5
+  Downloaded windows-targets v0.52.6
+  Downloaded percent-encoding v2.3.2
+  Downloaded windows-result v0.2.0
+  Downloaded subtle v2.6.1
+  Downloaded windows-interface v0.58.0
+  Downloaded zerofrom v0.1.8
+  Downloaded displaydoc v0.2.7
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded getrandom v0.2.17
+  Downloaded utf_types v1.0.0
+  Downloaded shlex v2.0.1
+  Downloaded synstructure v0.14.0
+  Downloaded thiserror v2.0.21
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded zerovec-derive v0.11.7
+  Downloaded untrusted v0.9.0
+  Downloaded windows-implement v0.58.0
+  Downloaded fastrand v2.5.0
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded crc32fast v1.5.4
+  Downloaded once_cell v1.21.4
+  Downloaded quote v1.0.47
+  Downloaded unicode-ident v1.0.27
+  Downloaded zeroize v1.9.1
+  Downloaded smallvec v1.16.5
+  Downloaded yoke v0.8.4
+  Downloaded tinystr v0.8.5
+  Downloaded getrandom v0.4.3
+  Downloaded litemap v0.8.3
+  Downloaded serde_derive v1.0.229
+  Downloaded log v0.4.35
+  Downloaded tempfile v3.27.0
+  Downloaded icu_provider v2.4.0
+  Downloaded r-efi v6.0.0
+  Downloaded serde_core v1.0.229
+  Downloaded flate2 v1.1.11
+  Downloaded bitflags v2.13.2
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded zerotrie v0.2.5
+  Downloaded rustls-webpki v0.103.16
+  Downloaded ureq v2.12.1
+  Downloaded url v2.5.8
+  Downloaded base64 v0.22.1
+  Downloaded proc-macro2 v1.0.107
+  Downloaded memchr v2.8.3
+  Downloaded serde v1.0.229
+  Downloaded icu_collections v2.4.0
+  Downloaded typenum v1.20.1
+  Downloaded zerovec v0.11.9
+  Downloaded idna v1.1.0
+  Downloaded cc v1.11.1
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v3.0.9
+  Downloaded syn v2.0.119
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded rustls v0.23.46
+  Downloaded rustix v1.1.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G39: gix-exit OK
+G39: build arks
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.57s
+G39: blob:none suite
+   Compiling arks-g39-cleanroom v0.0.0 (/workspace/verify/gates/g39)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g39_cleanroom-7c2967b03109430e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/blob_none_partial_clone.rs (/cargo-target/debug/deps/blob_none_partial_clone-880c247b77959f71)
+
+running 3 tests
+test g39_refuse_unclaimed_filter_spec ... ok
+test g39_arks_clone_filter_blob_none_vs_stock_peer ... ok
+test g39_arks_clone_filter_tree_0_vs_stock_peer ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+   Doc-tests arks_g39_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G39: PASS
+2026-11-10T22:54:44.0885160+09:00 g39,PASS,0,6,"resume"
+===== starting g40 =====
+ Container arks-verify-m1-g40-run-6c7b2e05cd63 Creating 
+ Container arks-verify-m1-g40-run-6c7b2e05cd63 Created 
+G40: stock git git version 2.39.5
+G40: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded block-buffer v0.10.4
+  Downloaded zmij v1.0.23
+  Downloaded errno v0.3.14
+  Downloaded getrandom v0.2.17
+  Downloaded cfg-if v1.0.5
+  Downloaded form_urlencoded v1.2.2
+  Downloaded bitflags v2.13.2
+  Downloaded crc32fast v1.5.4
+  Downloaded base64 v0.22.1
+  Downloaded flate2 v1.1.11
+  Downloaded cc v1.11.1
+  Downloaded generic-array v0.14.7
+  Downloaded itoa v1.0.18
+  Downloaded windows-targets v0.52.6
+  Downloaded percent-encoding v2.3.2
+  Downloaded idna_adapter v1.2.2
+  Downloaded once_cell v1.21.4
+  Downloaded icu_properties v2.4.0
+  Downloaded subtle v2.6.1
+  Downloaded getrandom v0.4.3
+  Downloaded smallvec v1.16.5
+  Downloaded untrusted v0.9.0
+  Downloaded yoke-derive v0.8.4
+  Downloaded shlex v2.0.1
+  Downloaded zeroize v1.9.1
+  Downloaded quote v1.0.47
+  Downloaded potential_utf v0.1.6
+  Downloaded cpufeatures v0.2.17
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zerofrom v0.1.8
+  Downloaded crypto-common v0.1.7
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded thiserror v2.0.21
+  Downloaded synstructure v0.14.0
+  Downloaded sha2 v0.10.9
+  Downloaded unicode-ident v1.0.27
+  Downloaded windows-strings v0.1.0
+  Downloaded webpki-roots v0.26.11
+  Downloaded windows-result v0.2.0
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded windows-interface v0.58.0
+  Downloaded icu_provider v2.4.0
+  Downloaded tinystr v0.8.5
+  Downloaded version_check v0.9.5
+  Downloaded windows-implement v0.58.0
+  Downloaded windows-link v0.2.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded digest v0.10.7
+  Downloaded writeable v0.6.4
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded thiserror-impl v2.0.21
+  Downloaded serde_core v1.0.229
+  Downloaded proc-macro2 v1.0.107
+  Downloaded fastrand v2.5.0
+  Downloaded zerovec-derive v0.11.7
+  Downloaded displaydoc v0.2.7
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded tempfile v3.27.0
+  Downloaded windows-core v0.58.0
+  Downloaded yoke v0.8.4
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded litemap v0.8.3
+  Downloaded serde_derive v1.0.229
+  Downloaded log v0.4.35
+  Downloaded icu_locale_core v2.4.0
+  Downloaded memchr v2.8.3
+  Downloaded utf_types v1.0.0
+  Downloaded r-efi v6.0.0
+  Downloaded serde v1.0.229
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded rustls-webpki v0.103.16
+  Downloaded zerotrie v0.2.5
+  Downloaded url v2.5.8
+  Downloaded icu_collections v2.4.0
+  Downloaded typenum v1.20.1
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded idna v1.1.0
+  Downloaded serde_json v1.0.154
+  Downloaded webpki-roots v1.0.11
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded icu_normalizer v2.4.0
+  Downloaded rustix v1.1.6
+  Downloaded rustls v0.23.46
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G40: gix-exit OK
+G40: build arks
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.59s
+G40: dumb HTTP delete suite
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g40_cleanroom-451dca4d240e20de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/dumb_http_push_delete.rs (/cargo-target/debug/deps/dumb_http_push_delete-7ed8c5502875cc6e)
+
+running 1 test
+test g40_dumb_push_topic_then_delete_refspec ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+   Doc-tests arks_g40_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G40: PASS
+2026-11-10T22:54:50.1943116+09:00 g40,PASS,0,6,"resume"
+2026-11-10T22:54:50.2102145+09:00 s6-suite,PASS,0,0,"g38 g39 g40 sequential"
+===== starting g0 =====
+ Container arks-verify-m1-g0-run-8a6f52ba1552 Creating 
+ Container arks-verify-m1-g0-run-8a6f52ba1552 Created 
+G0: stock git git version 2.39.5
+G0: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G0: CARGO_BUILD_JOBS=1
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded cc v1.11.1
+  Downloaded cfg-if v1.0.5
+  Downloaded block-buffer v0.10.4
+  Downloaded bitflags v2.13.2
+  Downloaded base64 v0.22.1
+  Downloaded idna_adapter v1.2.2
+  Downloaded form_urlencoded v1.2.2
+  Downloaded errno v0.3.14
+  Downloaded crc32fast v1.5.4
+  Downloaded proc-macro2 v1.0.107
+  Downloaded quote v1.0.47
+  Downloaded cpufeatures v0.2.17
+  Downloaded rustls-webpki v0.103.16
+  Downloaded crypto-common v0.1.7
+  Downloaded digest v0.10.7
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded utf_types v1.0.0
+  Downloaded smallvec v1.16.5
+  Downloaded flate2 v1.1.11
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded fastrand v2.5.0
+  Downloaded shlex v2.0.1
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded generic-array v0.14.7
+  Downloaded displaydoc v0.2.7
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded percent-encoding v2.3.2
+  Downloaded webpki-roots v0.26.11
+  Downloaded potential_utf v0.1.6
+  Downloaded itoa v1.0.18
+  Downloaded subtle v2.6.1
+  Downloaded untrusted v0.9.0
+  Downloaded zerofrom v0.1.8
+  Downloaded serde v1.0.229
+  Downloaded once_cell v1.21.4
+  Downloaded serde_derive v1.0.229
+  Downloaded version_check v0.9.5
+  Downloaded synstructure v0.14.0
+  Downloaded zeroize v1.9.1
+  Downloaded zerovec-derive v0.11.7
+  Downloaded sha2 v0.10.9
+  Downloaded writeable v0.6.4
+  Downloaded yoke-derive v0.8.4
+  Downloaded thiserror v2.0.21
+  Downloaded yoke v0.8.4
+  Downloaded icu_provider v2.4.0
+  Downloaded url v2.5.8
+  Downloaded tinystr v0.8.5
+  Downloaded getrandom v0.4.3
+  Downloaded getrandom v0.2.17
+  Downloaded thiserror-impl v2.0.21
+  Downloaded litemap v0.8.3
+  Downloaded zmij v1.0.23
+  Downloaded idna v1.1.0
+  Downloaded tempfile v3.27.0
+  Downloaded serde_core v1.0.229
+  Downloaded log v0.4.35
+  Downloaded typenum v1.20.1
+  Downloaded unicode-ident v1.0.27
+  Downloaded icu_locale_core v2.4.0
+  Downloaded zerotrie v0.2.5
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded icu_properties v2.4.0
+  Downloaded memchr v2.8.3
+  Downloaded icu_collections v2.4.0
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded webpki-roots v1.0.11
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded rustix v1.1.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded libc v0.2.191
+  Downloaded ring v0.17.14
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.33s
+     Running unittests src/main.rs (/cargo-target/debug/deps/arks-7b0c08c8317bf02a)
+
+running 8 tests
+test cmd::remote::tests::clone_refuses_unclaimed_filter_spec ... ok
+test cmd::remote::tests::parse_filter_accepts_blob_none_tree_0_and_blob_limit ... ok
+test cmd::interactive_patch::tests::hunk_split_and_apply_partial ... ok
+test cmd::sign::tests::config_reads_gpg_ssh_subsection ... ok
+test cmd::sign::tests::openpgp_sign_verify_roundtrip_ephemeral_key ... ok
+test cmd::sign::tests::split_signed_tag_finds_armor ... ok
+test cmd::tag::tests::tag_signed_requires_message_flag ... ok
+test cmd::sign::tests::ssh_sign_verify_roundtrip_ephemeral_key ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_hash-f543dfc4f769c9bb)
+
+running 14 tests
+test tests::digest_from_bytes_rejects_wrong_length ... ok
+test tests::digest_wrong_format_length_pairs ... ok
+test tests::empty_blob_sha1_matches_known_oid ... ok
+test tests::empty_blob_sha256_length_and_oid ... ok
+test tests::hash_object_incremental_matches_one_shot ... ok
+test tests::hasher_incremental_matches_one_shot ... ok
+test tests::hello_blob_sha1 ... ok
+test tests::nul_bytes_in_payload_are_hashed_as_payload ... ok
+test tests::object_format_digest_len ... ok
+test tests::sha1_collision_error_message_names_obj004 ... ok
+test tests::sha256_incremental_matches_one_shot ... ok
+test tests::type_token_changes_oid ... ok
+test tests::large_payload_stress ... ok
+test tests::refuses_shattered_pdf_fixture_when_present ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_hostfs-41e52c141b7dd82d)
+
+running 5 tests
+test tests::dropbox_marker_detection ... ok
+test tests::placeholder_false_on_normal_temp ... ok
+test tests::onedrive_path_component ... ok
+test tests::syncthing_marker_detection ... ok
+test tests::probe_report_notes_empty_on_local ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_index-d34d1ae57a02a4e7)
+
+running 12 tests
+test tests::tests::checksum_mismatch ... ok
+test tests::tests::memcmp_path_order ... ok
+test tests::tests::path_nul_rejected_on_write ... ok
+test tests::tests::roundtrip_empty_v2 ... ok
+test tests::tests::stage_bits_roundtrip ... ok
+test tests::tests::roundtrip_single_and_multi_sorted ... ok
+test tests::tests::truncated_and_bad_signature ... ok
+test tests::tests::unsorted_write_rejected ... ok
+test tests::tests::unsupported_version ... ok
+test tests::tests::write_path_refuses_existing_lock ... ok
+test tests::tests::write_path_uses_lock ... ok
+test tests::tests::stock_git_advisory_roundtrip ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_lease-72eb3b7793169e80)
+
+running 10 tests
+test tests::cd1_resource_prefix_helpers ... ok
+test tests::dual_path_gitcompat_default_high_concurrency_opt_in ... ok
+test tests::l1_conflict_and_renew_same_holder ... ok
+test tests::l1_expire_due ... ok
+test tests::l1_grant_release_inspect_list ... ok
+test pipeline::tests::competing_git_lock_still_fails_under_lease ... ok
+test tests::l2_durable_roundtrip ... ok
+test tests::lease_held_still_honors_git_ref_lock ... ok
+test pipeline::tests::prep_parallel_and_batch_apply_distinct_shards ... ok
+test pipeline::tests::prep_parallel_and_batch_apply_hundreds ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/g22_index_contention.rs (/cargo-target/debug/deps/g22_index_contention-f770760d2874e1f9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g23_dual_path_git.rs (/cargo-target/debug/deps/g23_dual_path_git-6354fcd0f5eceddd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g24_l3_celir_joint.rs (/cargo-target/debug/deps/g24_l3_celir_joint-e4694e2a0bc43ad4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g25_index_scale.rs (/cargo-target/debug/deps/g25_index_scale-44ed001626ccc2a5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g26_branch_pr_sim.rs (/cargo-target/debug/deps/g26_branch_pr_sim-4411d621e3574cb3)
+
+running 5 tests
+test g26_c04_contended_lease_fail_closed ... ok
+test g26_c03_leased_concurrent_tip_workers_n32 ... ok
+test g26_c01_branch_scale_n2048 ... ok
+test g26_c05_planted_lock_induce_compare ... ok
+test g26_c02_synthetic_pr_refs_n2048 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+
+     Running tests/g34_shared_index_contention.rs (/cargo-target/debug/deps/g34_shared_index_contention-70b9d05d5faf1823)
+
+running 3 tests
+test g34_c02_second_holder_already_held ... ok
+test g34_c03_live_index_lock_refuses_write ... ok
+test g34_c01_two_writer_shared_index ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_object-b647995f3237a043)
+
+running 22 tests
+test commit::tests::decode_skips_encoding_header ... ok
+test commit::tests::roundtrip_root_commit ... ok
+test commit::tests::decode_skips_gpgsig_multiline_header ... ok
+test patch::tests::refuse_non_mailbox ... ok
+test commit::tests::roundtrip_with_parent ... ok
+test commit::tests::roundtrip_ssh_gpgsig_header ... ok
+test tests::blob_roundtrip_memory ... ok
+test tests::empty_blob_known_oid ... ok
+test tests::claimed_kinds_opaque_payload_roundtrip ... ok
+test tests::refuse_bad_header_and_size ... ok
+test tests::refuse_corrupt_zlib ... ok
+test tests::refuse_missing_header_nul ... ok
+test tests::refuse_size_mismatch ... ok
+test tests::refuse_unknown_kind ... ok
+test tree::tests::directory_mode_is_40000_not_040000 ... ok
+test tree::tests::encode_decode_single_file ... ok
+test tree::tests::sort_directory_as_trailing_slash ... ok
+test tests::zlib_roundtrip_preserves_bytes ... ok
+test tree::tests::known_hello_txt_tree_oid ... ok
+test tests::loose_write_read_roundtrip ... ok
+test tests::refuse_oid_mismatch_on_corrupt_payload ... ok
+test tests::write_loose_idempotent_same_oid ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-ecfd4af2e6b80456)
+
+running 5 tests
+test git_write_arks_read ... ok
+test arks_write_git_cat_file ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_oid-e611a4f7a1acfff7)
+
+running 12 tests
+test tests::accept_uppercase_hex ... ok
+test tests::display_and_debug_lowercase_hex ... ok
+test tests::empty_blob_oid_roundtrip ... ok
+test tests::from_bytes_roundtrip_sha1 ... ok
+test tests::hello_blob_oid_roundtrip ... ok
+test tests::mixed_case_hex_normalizes_lower ... ok
+test tests::oid_kinds_expose_widths ... ok
+test tests::reject_bad_hex_charset ... ok
+test tests::reject_bad_hex_length ... ok
+test tests::reject_near_miss_hex_lengths ... ok
+test tests::reject_wrong_byte_length ... ok
+test tests::sha256_hex_roundtrip ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_pack-603bb4938e46e09a)
+
+running 19 tests
+test bundle::tests::refuse_non_v2 ... ok
+test delta::tests::copy_and_insert_hello ... ok
+test bundle::tests::roundtrip_empty_pack ... ok
+test delta::tests::omitted_middle_offset_byte_keeps_place ... ok
+test delta::tests::refuse_base_size_mismatch_and_short_result ... ok
+test delta::tests::copy_size_zero_means_64k ... ok
+test delta::tests::refuse_reserved_opcode ... ok
+test pack::entry::tests::ofs_offset_roundtrip ... ok
+test pack::entry::tests::type_size_roundtrip_widths ... ok
+test pack::entry::tests::inflate_stops_at_zlib_end ... ok
+test tests::crc32_matches_zlib_check_value ... ok
+test tests::idx_fanout_and_lookup ... ok
+test pack::entry::tests::refuse_type_zero_and_five ... ok
+test tests::idx_fanout_mismatch_and_unsorted_names ... ok
+test tests::duplicate_oid_is_refused_on_encode ... ok
+test tests::refuse_invalid_magic_version_and_type ... ok
+test tests::undeltified_sha256_width_roundtrip ... ok
+test tests::resolve_ofs_and_ref_deltas ... ok
+test tests::roundtrip_undeltified_pack_and_idx ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-0179f2b0cd7a64e0)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-4934f3bd2c484d81)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+test v1_style_advertisement_fragment ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_refs-5b0722a3d511f6e1)
+
+running 18 tests
+test loose::loose_tests::bare_oid_vs_symref ... ok
+test refname::tests::accepts_head_special ... ok
+test refname::tests::accepts_heads_main ... ok
+test refname::tests::allow_onelevel_accepts_main ... ok
+test refname::tests::rejects_at_brace ... ok
+test packed::tests::parses_header_and_peel_skipped ... ok
+test refname::tests::rejects_lock_suffix ... ok
+test refname::tests::rejects_onelevel_without_flag ... ok
+test refname::tests::rejects_dotdot ... ok
+test store::tests::concurrent_lock_fails ... ok
+test store::tests::invalid_refname_rejected ... ok
+test store::tests::loose_wins_over_packed ... ok
+test store::tests::delete_packed_only_refuses_without_rewrite ... ok
+test store::tests::missing_trailing_newline_still_parses ... ok
+test store::tests::head_symref_resolve ... ok
+test store::tests::update_rejects_wrong_old ... ok
+test store::tests::update_read_delete_with_lock ... ok
+test store::tests::update_packed_only_honors_old_and_writes_loose ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_remote-fb6b7f4cd73ac06b)
+
+running 42 tests
+test advertise::tests::service_line_matches_gitprotocol_http_example ... ok
+test advertise::tests::roundtrip_refs_and_symref ... ok
+test config::tests::refspec_maps_heads ... ok
+test credential::tests::fill_preserves_existing_userpass ... ok
+test credential::tests::helper_command_transforms ... ok
+test credential::tests::parse_and_format_roundtrip ... ok
+test credential::tests::prepare_authorized_url_uses_userinfo ... ok
+test credential::tests::url_attribute_expands ... ok
+test dumb::tests::parse_dumb_refs_tab_separated ... ok
+test fetch::shallow_wire_tests::encode_includes_deepen_and_shallow_cap ... ok
+test fetch::shallow_wire_tests::extract_parses_shallow_before_nak ... ok
+test git::tests::service_request_roundtrips_pkt ... ok
+test lfs::tests::extract_href_from_batch_json ... ok
+test lfs::tests::parse_pointer_ok ... ok
+test push::tests::report_status_roundtrip_ok_and_ng ... ok
+test ssh::tests::single_quote_escapes_apostrophe ... ok
+test url::tests::ssh_url_and_scp_ok ... ok
+test url::tests::userinfo_stripped_into_basic ... ok
+test wallet::tests::kind_parse ... ok
+test url::tests::git_daemon_url_ok ... ok
+test url::tests::http_and_https_ok_ssh_refused ... ok
+test url::tests::local_path_and_file_url_ok ... ok
+test config::tests::add_list_remove_preserves_core ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_pointer_resolves_local_object ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_size_mismatch_refuses ... ok
+test config::tests::ssh_url_accepted ... ok
+test wallet::tests::file_wallet_roundtrip ... ok
+test tests::memory_peer_dumb_fetch_refuses_depth ... ok
+test tests::recorded_script_fetch_stores_advertised_commit ... ok
+test tests::memory_peer_dumb_fetch_falls_back_and_stores_commit ... ok
+test tests::local_path_and_file_url_clone ... ok
+test tests::loopback_clone_and_push ... ok
+test tests::memory_peer_push_then_fetch ... ok
+test credential::tests::fill_from_askpass_program ... ok
+test credential::tests::helper_shell_snippet_get ... ok
+test tests::smart_http_force_with_lease_and_push_options ... ok
+test tests::stock_git_http_backend_shallow_clone_depth_1 ... ok
+test tests::stock_git_http_backend_partial_clone_tree_0 ... ok
+test tests::stock_git_http_backend_partial_clone_blob_none ... ok
+test tests::git_daemon_clone_fetch_push_roundtrip ... ok
+test tests::dumb_http_push_roundtrip_via_serve_http ... ok
+test tests::stock_git_http_backend_clone_fetch_push ... ok
+
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_repo-e0aec252692d31f4)
+
+running 7 tests
+test discover::tests::discovers_bare ... ok
+test discover::tests::discovers_dot_git_dir ... ok
+test discover::tests::parse_gitdir_absolute ... ok
+test discover::tests::discovers_gitdir_file ... ok
+test repo::tests::linked_worktree_uses_commondir_objects ... ok
+test repo::tests::open_known_git_dir ... ok
+test repo::tests::compose_head_resolve_and_object ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_server-2b17daa8b4142394)
+
+running 15 tests
+test auth::tests::accepts_valid_basic ... ok
+test auth::tests::password_may_contain_colon ... ok
+test auth::tests::roundtrip_base64 ... ok
+test auth::tests::rejects_missing_and_wrong ... ok
+test tests::lfs_batch_upload_and_put_object ... ok
+test tests::receive_advertises_delete_refs_and_report_status_v2 ... ok
+test tests::smart_http_basic_auth_challenge_and_accept ... ok
+test tests::lfs_batch_download_and_get_object ... ok
+test tests::receive_advertises_proc_receive_when_hook_present ... ok
+test tests::receive_pre_receive_hook_rejects_entire_push ... ok
+test tests::upload_advertisement_includes_main ... ok
+test tests::smart_http_info_refs_upload ... ok
+test tests::receive_update_hook_rejects_one_ref ... ok
+test tests::receive_post_receive_runs_after_success ... ok
+test tests::loopback_serves_info_refs ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_store-82ff294a2877ffc7)
+
+running 12 tests
+test facade_tests::memory_backend_via_trait ... ok
+test memory::tests::empty_blob_known_oid ... ok
+test memory::tests::put_get_roundtrip ... ok
+test memory::tests::put_is_idempotent_oid ... ok
+test memory::tests::exists_false_for_missing ... ok
+test facade_tests::memory_and_filesystem_sha256_roundtrip ... ok
+test fs::tests::exists_false_and_get_not_found_for_missing ... ok
+test facade_tests::filesystem_backend_via_trait ... ok
+test fs::tests::put_get_roundtrip ... ok
+test fs::tests::empty_and_hello_known_oids ... ok
+test fs::tests::put_is_idempotent_oid ... ok
+test fs::tests::ingest_pack_roundtrip_without_loose ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_hash
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_hostfs
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_index
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_lease
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_object
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_oid
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_pack
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_refs
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_remote
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_repo
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_store
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:54:55.1336965+09:00 g0,PASS,0,5,"resume"
+===== starting g1 =====
+ Container arks-verify-m1-g1-run-bcdd7cd20380 Creating 
+ Container arks-verify-m1-g1-run-bcdd7cd20380 Created 
+G1: stock git git version 2.39.5
+G1: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G1: CARGO_BUILD_JOBS=1
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded block-buffer v0.10.4
+  Downloaded version_check v0.9.5
+  Downloaded generic-array v0.14.7
+  Downloaded cfg-if v1.0.5
+  Downloaded crypto-common v0.1.7
+  Downloaded cpufeatures v0.2.17
+  Downloaded digest v0.10.7
+  Downloaded thiserror-impl v2.0.21
+  Downloaded quote v1.0.47
+  Downloaded thiserror v2.0.21
+  Downloaded sha2 v0.10.9
+  Downloaded unicode-ident v1.0.27
+  Downloaded proc-macro2 v1.0.107
+  Downloaded flate2 v1.1.11
+  Downloaded typenum v1.20.1
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded sha1collisiondetection v0.3.4
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.28s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test arks_write_git_cat_file ... ok
+test git_write_arks_read ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+ Downloading crates ...
+  Downloaded fastrand v2.5.0
+  Downloaded tempfile v3.27.0
+  Downloaded errno v0.3.14
+  Downloaded bitflags v2.13.2
+  Downloaded once_cell v1.21.4
+  Downloaded getrandom v0.4.3
+  Downloaded rustix v1.1.6
+  Downloaded libc v0.2.191
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.49s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test arks_write_git_cat_file_roundtrip ... ok
+test empty_blob_arks_write_git_cat_file ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:54:57.8358847+09:00 g1,PASS,0,3,"resume"
+===== starting g2 =====
+ Container arks-verify-m1-g2-run-610ad0798071 Creating 
+ Container arks-verify-m1-g2-run-610ad0798071 Created 
+G2: stock git git version 2.39.5
+G2: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G2: CARGO_BUILD_JOBS=1
+G2: refs + index oracle (verify/gates/g2)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded block-buffer v0.10.4
+  Downloaded cfg-if v1.0.5
+  Downloaded bitflags v2.13.2
+  Downloaded crypto-common v0.1.7
+  Downloaded cpufeatures v0.2.17
+  Downloaded thiserror-impl v2.0.21
+  Downloaded generic-array v0.14.7
+  Downloaded errno v0.3.14
+  Downloaded digest v0.10.7
+  Downloaded version_check v0.9.5
+  Downloaded sha2 v0.10.9
+  Downloaded fastrand v2.5.0
+  Downloaded thiserror v2.0.21
+  Downloaded quote v1.0.47
+  Downloaded unicode-ident v1.0.27
+  Downloaded once_cell v1.21.4
+  Downloaded getrandom v0.4.3
+  Downloaded tempfile v3.27.0
+  Downloaded proc-macro2 v1.0.107
+  Downloaded crc32fast v1.5.4
+  Downloaded flate2 v1.1.11
+  Downloaded typenum v1.20.1
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded rustix v1.1.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded libc v0.2.191
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.24s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g2_cleanroom-90a7890edb5ea3b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-2710e7de09703292)
+
+running 9 tests
+test git_add_index_readable_by_arks ... ok
+test arks_update_ref_readable_by_git_show_ref ... ok
+test l0_index_lock_contention_fails ... ok
+test l0_ref_lock_contention_fails ... ok
+test arks_index_write_readable_by_git_ls_files ... ok
+test arks_delete_ref_absent_from_git_show_ref ... ok
+test git_update_ref_readable_by_arks ... ok
+test arks_head_symref_matches_git_rev_parse ... ok
+test repo_compose_discovers_and_resolves_head ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g2_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G2: G10/G1 regression (M3 must not break facade/loose-object interop)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_put_get_roundtrip ... ok
+test facade_exists_true_after_put ... ok
+test facade_exists_false_absent ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Updating crates.io index
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.82s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test git_write_arks_read ... ok
+test arks_write_git_cat_file ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test arks_write_git_cat_file_roundtrip ... ok
+test empty_blob_arks_write_git_cat_file ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:55:01.2967399+09:00 g2,PASS,0,3,"resume"
+===== starting g3 =====
+ Container arks-verify-m1-g3-run-2fb3ba3b0fbf Creating 
+ Container arks-verify-m1-g3-run-2fb3ba3b0fbf Created 
+G3: stock git git version 2.39.5
+G3: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G3: CARGO_BUILD_JOBS=1
+G3: build arks binary
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded base64 v0.22.1
+  Downloaded block-buffer v0.10.4
+  Downloaded cpufeatures v0.2.17
+  Downloaded cc v1.11.1
+  Downloaded crc32fast v1.5.4
+  Downloaded cfg-if v1.0.5
+  Downloaded itoa v1.0.18
+  Downloaded potential_utf v0.1.6
+  Downloaded form_urlencoded v1.2.2
+  Downloaded untrusted v0.9.0
+  Downloaded crypto-common v0.1.7
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded yoke-derive v0.8.4
+  Downloaded percent-encoding v2.3.2
+  Downloaded generic-array v0.14.7
+  Downloaded digest v0.10.7
+  Downloaded utf_types v1.0.0
+  Downloaded thiserror v2.0.21
+  Downloaded idna_adapter v1.2.2
+  Downloaded version_check v0.9.5
+  Downloaded subtle v2.6.1
+  Downloaded webpki-roots v0.26.11
+  Downloaded zerofrom v0.1.8
+  Downloaded writeable v0.6.4
+  Downloaded sha2 v0.10.9
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded thiserror-impl v2.0.21
+  Downloaded displaydoc v0.2.7
+  Downloaded utf8_iter v1.1.0
+  Downloaded zerovec-derive v0.11.7
+  Downloaded flate2 v1.1.11
+  Downloaded synstructure v0.14.0
+  Downloaded shlex v2.0.1
+  Downloaded tinystr v0.8.5
+  Downloaded zeroize v1.9.1
+  Downloaded litemap v0.8.3
+  Downloaded getrandom v0.2.17
+  Downloaded yoke v0.8.4
+  Downloaded zmij v1.0.23
+  Downloaded proc-macro2 v1.0.107
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded quote v1.0.47
+  Downloaded smallvec v1.16.5
+  Downloaded once_cell v1.21.4
+  Downloaded log v0.4.35
+  Downloaded unicode-ident v1.0.27
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded serde_derive v1.0.229
+  Downloaded icu_provider v2.4.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded icu_properties v2.4.0
+  Downloaded serde_core v1.0.229
+  Downloaded memchr v2.8.3
+  Downloaded serde v1.0.229
+  Downloaded zerotrie v0.2.5
+  Downloaded rustls-webpki v0.103.16
+  Downloaded url v2.5.8
+  Downloaded typenum v1.20.1
+  Downloaded icu_collections v2.4.0
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded idna v1.1.0
+  Downloaded icu_properties_data v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded rustls v0.23.46
+  Downloaded syn v3.0.9
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded libc v0.2.191
+  Downloaded ring v0.17.14
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.92s
+G3: index-commit oracle (verify/gates/g3)
+ Downloading crates ...
+  Downloaded errno v0.3.14
+  Downloaded fastrand v2.5.0
+  Downloaded tempfile v3.27.0
+  Downloaded bitflags v2.13.2
+  Downloaded getrandom v0.4.3
+  Downloaded rustix v1.1.6
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g3_cleanroom-be55f64b4c9475af)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-6711819c3cca7c07)
+
+running 3 tests
+test nested_path_roundtrip ... ok
+test arks_commit_readable_by_git ... ok
+test git_commit_readable_by_arks ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g3_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:55:04.7505216+09:00 g3,PASS,0,3,"resume"
+===== starting g4 =====
+ Container arks-verify-m1-g4-run-0632438b877a Creating 
+ Container arks-verify-m1-g4-run-0632438b877a Created 
+G4: stock git git version 2.39.5
+G4: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G4: CARGO_BUILD_JOBS=1
+G4: pack/idx oracle (verify/gates/g4)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded cpufeatures v0.2.17
+  Downloaded bitflags v2.13.2
+  Downloaded cfg-if v1.0.5
+  Downloaded crc32fast v1.5.4
+  Downloaded block-buffer v0.10.4
+  Downloaded typenum v1.20.1
+  Downloaded errno v0.3.14
+  Downloaded version_check v0.9.5
+  Downloaded generic-array v0.14.7
+  Downloaded crypto-common v0.1.7
+  Downloaded quote v1.0.47
+  Downloaded thiserror v2.0.21
+  Downloaded fastrand v2.5.0
+  Downloaded once_cell v1.21.4
+  Downloaded tempfile v3.27.0
+  Downloaded digest v0.10.7
+  Downloaded thiserror-impl v2.0.21
+  Downloaded getrandom v0.4.3
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.27
+  Downloaded sha2 v0.10.9
+  Downloaded flate2 v1.1.11
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded rustix v1.1.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded libc v0.2.191
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g4_cleanroom-8cdc1a0e3fb764e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-a714bd9241b6c847)
+
+running 3 tests
+test arks_roundtrip_matches_own_oids ... ok
+test git_pack_objects_decoded_by_arks ... ok
+test arks_undeltified_pack_accepted_by_git_index_pack ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests arks_g4_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G4: G5 protocol-offline (verify/gates/g5 + arks-protocol)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+test v2_capability_advertisement_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Updating crates.io index
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.75s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v1_style_advertisement_fragment ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G4: G2/G10/G1 regression (M4 must not break refs/index/facade/loose-object interop)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g2_cleanroom-90a7890edb5ea3b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-2710e7de09703292)
+
+running 9 tests
+test git_add_index_readable_by_arks ... ok
+test arks_index_write_readable_by_git_ls_files ... ok
+test arks_update_ref_readable_by_git_show_ref ... ok
+test l0_ref_lock_contention_fails ... ok
+test l0_index_lock_contention_fails ... ok
+test arks_delete_ref_absent_from_git_show_ref ... ok
+test arks_head_symref_matches_git_rev_parse ... ok
+test repo_compose_discovers_and_resolves_head ... ok
+test git_update_ref_readable_by_arks ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g2_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_exists_false_absent ... ok
+test facade_exists_true_after_put ... ok
+test facade_put_get_roundtrip ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test git_write_arks_read ... ok
+test arks_write_git_cat_file ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test arks_write_git_cat_file_roundtrip ... ok
+test empty_blob_arks_write_git_cat_file ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:55:08.7583070+09:00 g4,PASS,0,4,"resume"
+===== starting g5 =====
+ Container arks-verify-m1-g5-run-708d93e9e2db Creating 
+ Container arks-verify-m1-g5-run-708d93e9e2db Created 
+G5: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G5: CARGO_BUILD_JOBS=1
+G5: offline fixtures (verify/gates/g5)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded quote v1.0.47
+  Downloaded thiserror v2.0.21
+  Downloaded unicode-ident v1.0.27
+  Downloaded proc-macro2 v1.0.107
+  Downloaded thiserror-impl v2.0.21
+  Downloaded syn v3.0.9
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+test v2_capability_advertisement_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G5: arks-protocol unit + g5_offline
+    Updating crates.io index
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.94s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v1_style_advertisement_fragment ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:55:11.0348676+09:00 g5,PASS,0,2,"resume"
+===== starting g6 =====
+ Container arks-verify-m1-g6-run-2b8ca5ae4ac5 Creating 
+ Container arks-verify-m1-g6-run-2b8ca5ae4ac5 Created 
+G6: stock git git version 2.39.5
+G6: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G6: CARGO_BUILD_JOBS=1
+G6: build arks binary
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded generic-array v0.14.7
+  Downloaded version_check v0.9.5
+  Downloaded itoa v1.0.18
+  Downloaded smallvec v1.16.5
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded untrusted v0.9.0
+  Downloaded potential_utf v0.1.6
+  Downloaded crypto-common v0.1.7
+  Downloaded subtle v2.6.1
+  Downloaded cpufeatures v0.2.17
+  Downloaded block-buffer v0.10.4
+  Downloaded quote v1.0.47
+  Downloaded displaydoc v0.2.7
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded zerofrom v0.1.8
+  Downloaded idna_adapter v1.2.2
+  Downloaded webpki-roots v0.26.11
+  Downloaded utf8_iter v1.1.0
+  Downloaded yoke-derive v0.8.4
+  Downloaded cfg-if v1.0.5
+  Downloaded percent-encoding v2.3.2
+  Downloaded shlex v2.0.1
+  Downloaded digest v0.10.7
+  Downloaded synstructure v0.14.0
+  Downloaded writeable v0.6.4
+  Downloaded zmij v1.0.23
+  Downloaded icu_properties v2.4.0
+  Downloaded utf_types v1.0.0
+  Downloaded form_urlencoded v1.2.2
+  Downloaded thiserror v2.0.21
+  Downloaded sha2 v0.10.9
+  Downloaded yoke v0.8.4
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded zerovec-derive v0.11.7
+  Downloaded zeroize v1.9.1
+  Downloaded once_cell v1.21.4
+  Downloaded litemap v0.8.3
+  Downloaded thiserror-impl v2.0.21
+  Downloaded getrandom v0.2.17
+  Downloaded tinystr v0.8.5
+  Downloaded crc32fast v1.5.4
+  Downloaded serde_core v1.0.229
+  Downloaded icu_provider v2.4.0
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded flate2 v1.1.11
+  Downloaded unicode-ident v1.0.27
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded log v0.4.35
+  Downloaded serde_derive v1.0.229
+  Downloaded proc-macro2 v1.0.107
+  Downloaded serde v1.0.229
+  Downloaded icu_locale_core v2.4.0
+  Downloaded url v2.5.8
+  Downloaded rustls-webpki v0.103.16
+  Downloaded base64 v0.22.1
+  Downloaded idna v1.1.0
+  Downloaded icu_collections v2.4.0
+  Downloaded zerotrie v0.2.5
+  Downloaded memchr v2.8.3
+  Downloaded ureq v2.12.1
+  Downloaded typenum v1.20.1
+  Downloaded zerovec v0.11.9
+  Downloaded serde_json v1.0.154
+  Downloaded zlib-rs v0.6.8
+  Downloaded cc v1.11.1
+  Downloaded icu_properties_data v2.4.0
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded libc v0.2.191
+  Downloaded ring v0.17.14
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.89s
+G6: Wave L argv suite (verify/gates/g6)
+ Downloading crates ...
+  Downloaded tempfile v3.27.0
+  Downloaded errno v0.3.14
+  Downloaded fastrand v2.5.0
+  Downloaded bitflags v2.13.2
+  Downloaded getrandom v0.4.3
+  Downloaded rustix v1.1.6
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g6_cleanroom-c9dc9806d1b150c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli_argv.rs (/cargo-target/debug/deps/cli_argv-705037501567122a)
+
+running 6 tests
+test help_lists_wave_l_and_h ... ok
+test hash_object_and_cat_file_parity ... ok
+test init_opens_with_stock_git ... ok
+test refuse_unimplemented_command_and_flag ... ok
+test update_ref_and_rev_parse ... ok
+test add_status_commit_log_show_suite ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g6_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G6: full G3 index-commit (verify/gates/g3)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g3_cleanroom-be55f64b4c9475af)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-6711819c3cca7c07)
+
+running 3 tests
+test nested_path_roundtrip ... ok
+test arks_commit_readable_by_git ... ok
+test git_commit_readable_by_arks ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g3_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G6: G4 pack + G5 protocol + G2/G10/G1 regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g4_cleanroom-8cdc1a0e3fb764e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-a714bd9241b6c847)
+
+running 3 tests
+test arks_roundtrip_matches_own_oids ... ok
+test git_pack_objects_decoded_by_arks ... ok
+test arks_undeltified_pack_accepted_by_git_index_pack ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests arks_g4_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+test v2_capability_advertisement_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+test v1_style_advertisement_fragment ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g2_cleanroom-90a7890edb5ea3b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-2710e7de09703292)
+
+running 9 tests
+test l0_index_lock_contention_fails ... ok
+test l0_ref_lock_contention_fails ... ok
+test git_add_index_readable_by_arks ... ok
+test arks_index_write_readable_by_git_ls_files ... ok
+test arks_update_ref_readable_by_git_show_ref ... ok
+test arks_delete_ref_absent_from_git_show_ref ... ok
+test git_update_ref_readable_by_arks ... ok
+test repo_compose_discovers_and_resolves_head ... ok
+test arks_head_symref_matches_git_rev_parse ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g2_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_put_get_roundtrip ... ok
+test facade_exists_false_absent ... ok
+test facade_exists_true_after_put ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test git_write_arks_read ... ok
+test empty_blob_bidirectional_loose ... ok
+test arks_write_git_cat_file ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test empty_blob_arks_write_git_cat_file ... ok
+test arks_write_git_cat_file_roundtrip ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:55:16.2980658+09:00 g6,PASS,0,5,"resume"
+===== starting g7 =====
+ Container arks-verify-m1-g7-run-4aad4d1bd9db Creating 
+ Container arks-verify-m1-g7-run-4aad4d1bd9db Created 
+G7: stock git git version 2.39.5
+G7: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G7: CARGO_BUILD_JOBS=1
+G7: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded zmij v1.0.23
+  Downloaded cc v1.11.1
+  Downloaded block-buffer v0.10.4
+  Downloaded bitflags v2.13.2
+  Downloaded base64 v0.22.1
+  Downloaded cfg-if v1.0.5
+  Downloaded crypto-common v0.1.7
+  Downloaded displaydoc v0.2.7
+  Downloaded cpufeatures v0.2.17
+  Downloaded digest v0.10.7
+  Downloaded litemap v0.8.3
+  Downloaded crc32fast v1.5.4
+  Downloaded itoa v1.0.18
+  Downloaded windows-interface v0.58.0
+  Downloaded windows-result v0.2.0
+  Downloaded version_check v0.9.5
+  Downloaded idna v1.1.0
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded idna_adapter v1.2.2
+  Downloaded form_urlencoded v1.2.2
+  Downloaded percent-encoding v2.3.2
+  Downloaded windows-implement v0.58.0
+  Downloaded writeable v0.6.4
+  Downloaded windows-link v0.2.1
+  Downloaded subtle v2.6.1
+  Downloaded errno v0.3.14
+  Downloaded utf8_iter v1.1.0
+  Downloaded quote v1.0.47
+  Downloaded zerovec-derive v0.11.7
+  Downloaded yoke-derive v0.8.4
+  Downloaded zerofrom v0.1.8
+  Downloaded windows-strings v0.1.0
+  Downloaded generic-array v0.14.7
+  Downloaded windows-targets v0.52.6
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded webpki-roots v0.26.11
+  Downloaded synstructure v0.14.0
+  Downloaded untrusted v0.9.0
+  Downloaded thiserror v2.0.21
+  Downloaded thiserror-impl v2.0.21
+  Downloaded potential_utf v0.1.6
+  Downloaded fastrand v2.5.0
+  Downloaded shlex v2.0.1
+  Downloaded tinystr v0.8.5
+  Downloaded sha2 v0.10.9
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded yoke v0.8.4
+  Downloaded getrandom v0.2.17
+  Downloaded utf_types v1.0.0
+  Downloaded tempfile v3.27.0
+  Downloaded once_cell v1.21.4
+  Downloaded smallvec v1.16.5
+  Downloaded zeroize v1.9.1
+  Downloaded windows-core v0.58.0
+  Downloaded unicode-ident v1.0.27
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded serde_derive v1.0.229
+  Downloaded log v0.4.35
+  Downloaded r-efi v6.0.0
+  Downloaded icu_provider v2.4.0
+  Downloaded serde_core v1.0.229
+  Downloaded proc-macro2 v1.0.107
+  Downloaded getrandom v0.4.3
+  Downloaded flate2 v1.1.11
+  Downloaded url v2.5.8
+  Downloaded icu_locale_core v2.4.0
+  Downloaded serde v1.0.229
+  Downloaded zerotrie v0.2.5
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded memchr v2.8.3
+  Downloaded rustls-webpki v0.103.16
+  Downloaded icu_collections v2.4.0
+  Downloaded typenum v1.20.1
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded webpki-roots v1.0.11
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded syn v2.0.119
+  Downloaded rustls v0.23.46
+  Downloaded rustix v1.1.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G7: gix-exit OK
+G7: build arks binary
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.60s
+G7: remote smart-HTTP suite (verify/gates/g7)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g7_cleanroom-c48a1874f7402353)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/remote_http.rs (/cargo-target/debug/deps/remote_http-80a44dc292e61ebe)
+
+running 4 tests
+test help_lists_wave_h_and_refuses_ssh ... ok
+test remote_add_list_remove_config ... ok
+test submodule_add_https_smart_http_loopback ... ok
+test clone_fetch_push_smart_http_loopback ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+   Doc-tests arks_g7_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G7: arks-remote + arks unit tests
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.54s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_remote-fb6b7f4cd73ac06b)
+
+running 42 tests
+test advertise::tests::service_line_matches_gitprotocol_http_example ... ok
+test advertise::tests::roundtrip_refs_and_symref ... ok
+test config::tests::refspec_maps_heads ... ok
+test credential::tests::fill_preserves_existing_userpass ... ok
+test credential::tests::helper_command_transforms ... ok
+test credential::tests::parse_and_format_roundtrip ... ok
+test credential::tests::prepare_authorized_url_uses_userinfo ... ok
+test credential::tests::url_attribute_expands ... ok
+test dumb::tests::parse_dumb_refs_tab_separated ... ok
+test fetch::shallow_wire_tests::extract_parses_shallow_before_nak ... ok
+test git::tests::service_request_roundtrips_pkt ... ok
+test fetch::shallow_wire_tests::encode_includes_deepen_and_shallow_cap ... ok
+test lfs::tests::parse_pointer_ok ... ok
+test lfs::tests::extract_href_from_batch_json ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_size_mismatch_refuses ... ok
+test push::tests::report_status_roundtrip_ok_and_ng ... ok
+test ssh::tests::single_quote_escapes_apostrophe ... ok
+test url::tests::git_daemon_url_ok ... ok
+test url::tests::http_and_https_ok_ssh_refused ... ok
+test wallet::tests::kind_parse ... ok
+test config::tests::add_list_remove_preserves_core ... ok
+test url::tests::ssh_url_and_scp_ok ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_pointer_resolves_local_object ... ok
+test wallet::tests::file_wallet_roundtrip ... ok
+test url::tests::local_path_and_file_url_ok ... ok
+test url::tests::userinfo_stripped_into_basic ... ok
+test config::tests::ssh_url_accepted ... ok
+test tests::memory_peer_push_then_fetch ... ok
+test tests::memory_peer_dumb_fetch_refuses_depth ... ok
+test tests::recorded_script_fetch_stores_advertised_commit ... ok
+test tests::memory_peer_dumb_fetch_falls_back_and_stores_commit ... ok
+test tests::loopback_clone_and_push ... ok
+test tests::local_path_and_file_url_clone ... ok
+test credential::tests::fill_from_askpass_program ... ok
+test credential::tests::helper_shell_snippet_get ... ok
+test tests::smart_http_force_with_lease_and_push_options ... ok
+test tests::stock_git_http_backend_shallow_clone_depth_1 ... ok
+test tests::stock_git_http_backend_partial_clone_tree_0 ... ok
+test tests::stock_git_http_backend_partial_clone_blob_none ... ok
+test tests::dumb_http_push_roundtrip_via_serve_http ... ok
+test tests::git_daemon_clone_fetch_push_roundtrip ... ok
+test tests::stock_git_http_backend_clone_fetch_push ... ok
+
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+   Doc-tests arks_remote
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.59s
+     Running unittests src/main.rs (/cargo-target/debug/deps/arks-7b0c08c8317bf02a)
+
+running 8 tests
+test cmd::remote::tests::clone_refuses_unclaimed_filter_spec ... ok
+test cmd::remote::tests::parse_filter_accepts_blob_none_tree_0_and_blob_limit ... ok
+test cmd::interactive_patch::tests::hunk_split_and_apply_partial ... ok
+test cmd::sign::tests::openpgp_sign_verify_roundtrip_ephemeral_key ... ok
+test cmd::sign::tests::split_signed_tag_finds_armor ... ok
+test cmd::sign::tests::config_reads_gpg_ssh_subsection ... ok
+test cmd::tag::tests::tag_signed_requires_message_flag ... ok
+test cmd::sign::tests::ssh_sign_verify_roundtrip_ephemeral_key ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+G7: G6 Wave L argv regression (verify/gates/g6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g6_cleanroom-c9dc9806d1b150c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli_argv.rs (/cargo-target/debug/deps/cli_argv-705037501567122a)
+
+running 6 tests
+test help_lists_wave_l_and_h ... ok
+test init_opens_with_stock_git ... ok
+test hash_object_and_cat_file_parity ... ok
+test refuse_unimplemented_command_and_flag ... ok
+test update_ref_and_rev_parse ... ok
+test add_status_commit_log_show_suite ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g6_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G7: G3 index-commit regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g3_cleanroom-be55f64b4c9475af)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-6711819c3cca7c07)
+
+running 3 tests
+test nested_path_roundtrip ... ok
+test arks_commit_readable_by_git ... ok
+test git_commit_readable_by_arks ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g3_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G7: G4/G5/G2/G10/G1 regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g4_cleanroom-8cdc1a0e3fb764e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-a714bd9241b6c847)
+
+running 3 tests
+test arks_roundtrip_matches_own_oids ... ok
+test git_pack_objects_decoded_by_arks ... ok
+test arks_undeltified_pack_accepted_by_git_index_pack ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests arks_g4_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+test v2_capability_advertisement_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+test v1_style_advertisement_fragment ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g2_cleanroom-90a7890edb5ea3b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-2710e7de09703292)
+
+running 9 tests
+test l0_ref_lock_contention_fails ... ok
+test l0_index_lock_contention_fails ... ok
+test repo_compose_discovers_and_resolves_head ... ok
+test arks_update_ref_readable_by_git_show_ref ... ok
+test git_add_index_readable_by_arks ... ok
+test arks_index_write_readable_by_git_ls_files ... ok
+test arks_delete_ref_absent_from_git_show_ref ... ok
+test arks_head_symref_matches_git_rev_parse ... ok
+test git_update_ref_readable_by_arks ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g2_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_exists_false_absent ... ok
+test facade_put_get_roundtrip ... ok
+test facade_exists_true_after_put ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.42s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test git_write_arks_read ... ok
+test arks_write_git_cat_file ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test arks_write_git_cat_file_roundtrip ... ok
+test empty_blob_arks_write_git_cat_file ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G7: PASS
+2026-11-10T22:55:26.1484764+09:00 g7,PASS,0,10,"resume"
+===== starting g10 =====
+ Container arks-verify-m1-g10-run-c373acec4106 Creating 
+ Container arks-verify-m1-g10-run-c373acec4106 Created 
+G10: stock git git version 2.39.5
+G10: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G10: CARGO_BUILD_JOBS=1
+G10: facade oracle (verify/gates/g10)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded bitflags v2.13.2
+  Downloaded fastrand v2.5.0
+  Downloaded tempfile v3.27.0
+  Downloaded generic-array v0.14.7
+  Downloaded errno v0.3.14
+  Downloaded cpufeatures v0.2.17
+  Downloaded crypto-common v0.1.7
+  Downloaded proc-macro2 v1.0.107
+  Downloaded digest v0.10.7
+  Downloaded quote v1.0.47
+  Downloaded cfg-if v1.0.5
+  Downloaded block-buffer v0.10.4
+  Downloaded version_check v0.9.5
+  Downloaded sha2 v0.10.9
+  Downloaded flate2 v1.1.11
+  Downloaded thiserror v2.0.21
+  Downloaded thiserror-impl v2.0.21
+  Downloaded once_cell v1.21.4
+  Downloaded getrandom v0.4.3
+  Downloaded unicode-ident v1.0.27
+  Downloaded crc32fast v1.5.4
+  Downloaded typenum v1.20.1
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded rustix v1.1.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded libc v0.2.191
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.08s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_exists_false_absent ... ok
+test facade_exists_true_after_put ... ok
+test facade_put_get_roundtrip ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G10: G1 regression (M2 facade must not break loose-object interop)
+    Updating crates.io index
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.77s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test arks_write_git_cat_file ... ok
+test git_write_arks_read ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test empty_blob_arks_write_git_cat_file ... ok
+test arks_write_git_cat_file_roundtrip ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+2026-11-10T22:55:29.0877931+09:00 g10,PASS,0,3,"resume"
+===== starting g12 =====
+ Container arks-verify-m1-g12-run-84a331649e31 Creating 
+ Container arks-verify-m1-g12-run-84a331649e31 Created 
+G12: stock git git version 2.39.5
+G12: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G12: CARGO_BUILD_JOBS=1
+G12: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded zmij v1.0.23
+  Downloaded cfg-if v1.0.5
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded block-buffer v0.10.4
+  Downloaded fastrand v2.5.0
+  Downloaded icu_provider v2.4.0
+  Downloaded form_urlencoded v1.2.2
+  Downloaded itoa v1.0.18
+  Downloaded smallvec v1.16.5
+  Downloaded potential_utf v0.1.6
+  Downloaded crypto-common v0.1.7
+  Downloaded subtle v2.6.1
+  Downloaded shlex v2.0.1
+  Downloaded generic-array v0.14.7
+  Downloaded sha2 v0.10.9
+  Downloaded errno v0.3.14
+  Downloaded yoke-derive v0.8.4
+  Downloaded cpufeatures v0.2.17
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded windows-interface v0.58.0
+  Downloaded untrusted v0.9.0
+  Downloaded percent-encoding v2.3.2
+  Downloaded windows-strings v0.1.0
+  Downloaded windows-implement v0.58.0
+  Downloaded windows-targets v0.52.6
+  Downloaded windows-result v0.2.0
+  Downloaded webpki-roots v0.26.11
+  Downloaded windows-link v0.2.1
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded utf8_iter v1.1.0
+  Downloaded zerofrom v0.1.8
+  Downloaded displaydoc v0.2.7
+  Downloaded getrandom v0.4.3
+  Downloaded idna_adapter v1.2.2
+  Downloaded digest v0.10.7
+  Downloaded quote v1.0.47
+  Downloaded thiserror-impl v2.0.21
+  Downloaded synstructure v0.14.0
+  Downloaded thiserror v2.0.21
+  Downloaded version_check v0.9.5
+  Downloaded zerovec-derive v0.11.7
+  Downloaded utf_types v1.0.0
+  Downloaded writeable v0.6.4
+  Downloaded zeroize v1.9.1
+  Downloaded serde_derive v1.0.229
+  Downloaded yoke v0.8.4
+  Downloaded bitflags v2.13.2
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded litemap v0.8.3
+  Downloaded once_cell v1.21.4
+  Downloaded tinystr v0.8.5
+  Downloaded crc32fast v1.5.4
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded windows-core v0.58.0
+  Downloaded tempfile v3.27.0
+  Downloaded icu_collections v2.4.0
+  Downloaded log v0.4.35
+  Downloaded serde_core v1.0.229
+  Downloaded getrandom v0.2.17
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.27
+  Downloaded memchr v2.8.3
+  Downloaded base64 v0.22.1
+  Downloaded r-efi v6.0.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded serde v1.0.229
+  Downloaded flate2 v1.1.11
+  Downloaded rustls-webpki v0.103.16
+  Downloaded url v2.5.8
+  Downloaded cc v1.11.1
+  Downloaded zerotrie v0.2.5
+  Downloaded typenum v1.20.1
+  Downloaded icu_properties v2.4.0
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded idna v1.1.0
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded rustix v1.1.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G12: gix-exit OK
+G12: build arks binary
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.61s
+G12: Wave Pa porcelain suite (verify/gates/g12)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/porcelain_pa.rs (/cargo-target/debug/deps/porcelain_pa-f0d7681c7969f0ee)
+
+running 7 tests
+test help_lists_wave_pa_and_omits_deferred ... ok
+test restore_and_shortlog ... ok
+test reset_hard_and_diff_dirty ... ok
+test merge_ff_only ... ok
+test refuse_deferred_and_unclaimed_flags ... ok
+test branch_checkout_switch_roundtrip ... ok
+test rm_mv_clean_tag_describe_config_grep_stash ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+G12: arks-remote + arks unit tests
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.56s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_remote-fb6b7f4cd73ac06b)
+
+running 42 tests
+test advertise::tests::service_line_matches_gitprotocol_http_example ... ok
+test advertise::tests::roundtrip_refs_and_symref ... ok
+test config::tests::refspec_maps_heads ... ok
+test credential::tests::helper_command_transforms ... ok
+test credential::tests::fill_preserves_existing_userpass ... ok
+test credential::tests::parse_and_format_roundtrip ... ok
+test credential::tests::prepare_authorized_url_uses_userinfo ... ok
+test credential::tests::url_attribute_expands ... ok
+test dumb::tests::parse_dumb_refs_tab_separated ... ok
+test git::tests::service_request_roundtrips_pkt ... ok
+test lfs::tests::extract_href_from_batch_json ... ok
+test fetch::shallow_wire_tests::extract_parses_shallow_before_nak ... ok
+test fetch::shallow_wire_tests::encode_includes_deepen_and_shallow_cap ... ok
+test lfs::tests::parse_pointer_ok ... ok
+test push::tests::report_status_roundtrip_ok_and_ng ... ok
+test ssh::tests::single_quote_escapes_apostrophe ... ok
+test url::tests::userinfo_stripped_into_basic ... ok
+test url::tests::git_daemon_url_ok ... ok
+test url::tests::ssh_url_and_scp_ok ... ok
+test url::tests::http_and_https_ok_ssh_refused ... ok
+test url::tests::local_path_and_file_url_ok ... ok
+test wallet::tests::kind_parse ... ok
+test config::tests::ssh_url_accepted ... ok
+test config::tests::add_list_remove_preserves_core ... ok
+test tests::memory_peer_dumb_fetch_refuses_depth ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_pointer_resolves_local_object ... ok
+test wallet::tests::file_wallet_roundtrip ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_size_mismatch_refuses ... ok
+test tests::recorded_script_fetch_stores_advertised_commit ... ok
+test tests::memory_peer_dumb_fetch_falls_back_and_stores_commit ... ok
+test tests::memory_peer_push_then_fetch ... ok
+test tests::local_path_and_file_url_clone ... ok
+test tests::loopback_clone_and_push ... ok
+test credential::tests::helper_shell_snippet_get ... ok
+test credential::tests::fill_from_askpass_program ... ok
+test tests::smart_http_force_with_lease_and_push_options ... ok
+test tests::stock_git_http_backend_shallow_clone_depth_1 ... ok
+test tests::stock_git_http_backend_partial_clone_tree_0 ... ok
+test tests::stock_git_http_backend_partial_clone_blob_none ... ok
+test tests::git_daemon_clone_fetch_push_roundtrip ... ok
+test tests::dumb_http_push_roundtrip_via_serve_http ... ok
+test tests::stock_git_http_backend_clone_fetch_push ... ok
+
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+   Doc-tests arks_remote
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.63s
+     Running unittests src/main.rs (/cargo-target/debug/deps/arks-7b0c08c8317bf02a)
+
+running 8 tests
+test cmd::remote::tests::clone_refuses_unclaimed_filter_spec ... ok
+test cmd::remote::tests::parse_filter_accepts_blob_none_tree_0_and_blob_limit ... ok
+test cmd::interactive_patch::tests::hunk_split_and_apply_partial ... ok
+test cmd::sign::tests::openpgp_sign_verify_roundtrip_ephemeral_key ... ok
+test cmd::sign::tests::split_signed_tag_finds_armor ... ok
+test cmd::sign::tests::config_reads_gpg_ssh_subsection ... ok
+test cmd::tag::tests::tag_signed_requires_message_flag ... ok
+test cmd::sign::tests::ssh_sign_verify_roundtrip_ephemeral_key ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+G12: G7 Wave H regression (verify/gates/g7)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g7_cleanroom-c48a1874f7402353)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/remote_http.rs (/cargo-target/debug/deps/remote_http-80a44dc292e61ebe)
+
+running 4 tests
+test help_lists_wave_h_and_refuses_ssh ... ok
+test remote_add_list_remove_config ... ok
+test submodule_add_https_smart_http_loopback ... ok
+test clone_fetch_push_smart_http_loopback ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+   Doc-tests arks_g7_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G12: G6 Wave L regression (verify/gates/g6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g6_cleanroom-c9dc9806d1b150c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli_argv.rs (/cargo-target/debug/deps/cli_argv-705037501567122a)
+
+running 6 tests
+test help_lists_wave_l_and_h ... ok
+test init_opens_with_stock_git ... ok
+test hash_object_and_cat_file_parity ... ok
+test refuse_unimplemented_command_and_flag ... ok
+test add_status_commit_log_show_suite ... ok
+test update_ref_and_rev_parse ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g6_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G12: G3/G4/G5/G2/G10/G1 regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g3_cleanroom-be55f64b4c9475af)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-6711819c3cca7c07)
+
+running 3 tests
+test nested_path_roundtrip ... ok
+test arks_commit_readable_by_git ... ok
+test git_commit_readable_by_arks ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g3_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g4_cleanroom-8cdc1a0e3fb764e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-a714bd9241b6c847)
+
+running 3 tests
+test arks_roundtrip_matches_own_oids ... ok
+test git_pack_objects_decoded_by_arks ... ok
+test arks_undeltified_pack_accepted_by_git_index_pack ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests arks_g4_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+test v2_capability_advertisement_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v1_style_advertisement_fragment ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g2_cleanroom-90a7890edb5ea3b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-2710e7de09703292)
+
+running 9 tests
+test l0_index_lock_contention_fails ... ok
+test repo_compose_discovers_and_resolves_head ... ok
+test arks_index_write_readable_by_git_ls_files ... ok
+test l0_ref_lock_contention_fails ... ok
+test git_add_index_readable_by_arks ... ok
+test arks_head_symref_matches_git_rev_parse ... ok
+test arks_delete_ref_absent_from_git_show_ref ... ok
+test arks_update_ref_readable_by_git_show_ref ... ok
+test git_update_ref_readable_by_arks ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g2_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_exists_false_absent ... ok
+test facade_exists_true_after_put ... ok
+test facade_put_get_roundtrip ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.40s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test arks_write_git_cat_file ... ok
+test git_write_arks_read ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test arks_write_git_cat_file_roundtrip ... ok
+test empty_blob_arks_write_git_cat_file ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G12: PASS
+2026-11-10T22:55:38.9967466+09:00 g12,PASS,0,10,"resume"
+===== starting g13 =====
+ Container arks-verify-m1-g13-run-2d601422eb63 Creating 
+ Container arks-verify-m1-g13-run-2d601422eb63 Created 
+G13: stock git git version 2.39.5
+G13: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G13: CARGO_BUILD_JOBS=1
+G13: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded base64 v0.22.1
+  Downloaded zmij v1.0.23
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded webpki-roots v0.26.11
+  Downloaded getrandom v0.2.17
+  Downloaded unicode-ident v1.0.27
+  Downloaded tinystr v0.8.5
+  Downloaded smallvec v1.16.5
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded serde_json v1.0.154
+  Downloaded cc v1.11.1
+  Downloaded zerofrom v0.1.8
+  Downloaded crc32fast v1.5.4
+  Downloaded subtle v2.6.1
+  Downloaded itoa v1.0.18
+  Downloaded untrusted v0.9.0
+  Downloaded windows-strings v0.1.0
+  Downloaded form_urlencoded v1.2.2
+  Downloaded utf_types v1.0.0
+  Downloaded cfg-if v1.0.5
+  Downloaded generic-array v0.14.7
+  Downloaded cpufeatures v0.2.17
+  Downloaded potential_utf v0.1.6
+  Downloaded percent-encoding v2.3.2
+  Downloaded shlex v2.0.1
+  Downloaded errno v0.3.14
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded idna_adapter v1.2.2
+  Downloaded utf8_iter v1.1.0
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded tempfile v3.27.0
+  Downloaded windows-link v0.2.1
+  Downloaded yoke-derive v0.8.4
+  Downloaded version_check v0.9.5
+  Downloaded windows-targets v0.52.6
+  Downloaded displaydoc v0.2.7
+  Downloaded synstructure v0.14.0
+  Downloaded block-buffer v0.10.4
+  Downloaded crypto-common v0.1.7
+  Downloaded windows-result v0.2.0
+  Downloaded windows-implement v0.58.0
+  Downloaded fastrand v2.5.0
+  Downloaded litemap v0.8.3
+  Downloaded once_cell v1.21.4
+  Downloaded r-efi v6.0.0
+  Downloaded proc-macro2 v1.0.107
+  Downloaded zerovec-derive v0.11.7
+  Downloaded bitflags v2.13.2
+  Downloaded writeable v0.6.4
+  Downloaded windows-interface v0.58.0
+  Downloaded thiserror v2.0.21
+  Downloaded thiserror-impl v2.0.21
+  Downloaded sha2 v0.10.9
+  Downloaded zeroize v1.9.1
+  Downloaded digest v0.10.7
+  Downloaded windows-core v0.58.0
+  Downloaded serde_derive v1.0.229
+  Downloaded quote v1.0.47
+  Downloaded yoke v0.8.4
+  Downloaded typenum v1.20.1
+  Downloaded icu_provider v2.4.0
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded url v2.5.8
+  Downloaded getrandom v0.4.3
+  Downloaded log v0.4.35
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded memchr v2.8.3
+  Downloaded serde_core v1.0.229
+  Downloaded zerotrie v0.2.5
+  Downloaded serde v1.0.229
+  Downloaded icu_collections v2.4.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded flate2 v1.1.11
+  Downloaded rustls-webpki v0.103.16
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded idna v1.1.0
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded rustix v1.1.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded icu_normalizer v2.4.0
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G13: gix-exit OK
+G13: build arks binary
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.60s
+G13: Wave Pb porcelain suite (verify/gates/g13)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/porcelain_pb.rs (/cargo-target/debug/deps/porcelain_pb-043f2386bf5358c3)
+
+running 10 tests
+test help_lists_wave_pb_and_omits_deferred ... ok
+test refuse_deferred_and_unclaimed_flags ... ok
+test cherry_pick_single_clean_commit ... ok
+test revert_single_clean_commit ... ok
+test bundle_create_list_heads_unbundle ... ok
+test bisect_start_bad_good_reset ... ok
+test rebase_replays_linear_commits ... ok
+test conflicted_cherry_pick_and_rebase_refuse ... ok
+test format_patch_and_am_round_trip ... ok
+test pull_rebase_onto_tracking_branch ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+G13: arks-remote + arks unit tests
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.54s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_remote-fb6b7f4cd73ac06b)
+
+running 42 tests
+test advertise::tests::service_line_matches_gitprotocol_http_example ... ok
+test advertise::tests::roundtrip_refs_and_symref ... ok
+test config::tests::refspec_maps_heads ... ok
+test credential::tests::fill_preserves_existing_userpass ... ok
+test credential::tests::helper_command_transforms ... ok
+test credential::tests::parse_and_format_roundtrip ... ok
+test credential::tests::prepare_authorized_url_uses_userinfo ... ok
+test credential::tests::url_attribute_expands ... ok
+test dumb::tests::parse_dumb_refs_tab_separated ... ok
+test fetch::shallow_wire_tests::encode_includes_deepen_and_shallow_cap ... ok
+test fetch::shallow_wire_tests::extract_parses_shallow_before_nak ... ok
+test git::tests::service_request_roundtrips_pkt ... ok
+test lfs::tests::extract_href_from_batch_json ... ok
+test lfs::tests::parse_pointer_ok ... ok
+test push::tests::report_status_roundtrip_ok_and_ng ... ok
+test ssh::tests::single_quote_escapes_apostrophe ... ok
+test url::tests::http_and_https_ok_ssh_refused ... ok
+test url::tests::local_path_and_file_url_ok ... ok
+test config::tests::add_list_remove_preserves_core ... ok
+test url::tests::git_daemon_url_ok ... ok
+test url::tests::ssh_url_and_scp_ok ... ok
+test url::tests::userinfo_stripped_into_basic ... ok
+test wallet::tests::kind_parse ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_pointer_resolves_local_object ... ok
+test checkout::lfs_smudge_tests::in_process_lfs_size_mismatch_refuses ... ok
+test config::tests::ssh_url_accepted ... ok
+test wallet::tests::file_wallet_roundtrip ... ok
+test tests::recorded_script_fetch_stores_advertised_commit ... ok
+test tests::memory_peer_dumb_fetch_refuses_depth ... ok
+test tests::local_path_and_file_url_clone ... ok
+test tests::memory_peer_dumb_fetch_falls_back_and_stores_commit ... ok
+test tests::loopback_clone_and_push ... ok
+test tests::memory_peer_push_then_fetch ... ok
+test credential::tests::helper_shell_snippet_get ... ok
+test credential::tests::fill_from_askpass_program ... ok
+test tests::smart_http_force_with_lease_and_push_options ... ok
+test tests::stock_git_http_backend_shallow_clone_depth_1 ... ok
+test tests::stock_git_http_backend_partial_clone_tree_0 ... ok
+test tests::stock_git_http_backend_partial_clone_blob_none ... ok
+test tests::git_daemon_clone_fetch_push_roundtrip ... ok
+test tests::dumb_http_push_roundtrip_via_serve_http ... ok
+test tests::stock_git_http_backend_clone_fetch_push ... ok
+
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+   Doc-tests arks_remote
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.62s
+     Running unittests src/main.rs (/cargo-target/debug/deps/arks-7b0c08c8317bf02a)
+
+running 8 tests
+test cmd::remote::tests::clone_refuses_unclaimed_filter_spec ... ok
+test cmd::interactive_patch::tests::hunk_split_and_apply_partial ... ok
+test cmd::remote::tests::parse_filter_accepts_blob_none_tree_0_and_blob_limit ... ok
+test cmd::sign::tests::openpgp_sign_verify_roundtrip_ephemeral_key ... ok
+test cmd::sign::tests::config_reads_gpg_ssh_subsection ... ok
+test cmd::sign::tests::split_signed_tag_finds_armor ... ok
+test cmd::tag::tests::tag_signed_requires_message_flag ... ok
+test cmd::sign::tests::ssh_sign_verify_roundtrip_ephemeral_key ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+G13: G12 Wave Pa regression (verify/gates/g12)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/porcelain_pa.rs (/cargo-target/debug/deps/porcelain_pa-f0d7681c7969f0ee)
+
+running 7 tests
+test help_lists_wave_pa_and_omits_deferred ... ok
+test reset_hard_and_diff_dirty ... ok
+test restore_and_shortlog ... ok
+test refuse_deferred_and_unclaimed_flags ... ok
+test merge_ff_only ... ok
+test branch_checkout_switch_roundtrip ... ok
+test rm_mv_clean_tag_describe_config_grep_stash ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+G13: G7 Wave H regression (verify/gates/g7)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g7_cleanroom-c48a1874f7402353)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/remote_http.rs (/cargo-target/debug/deps/remote_http-80a44dc292e61ebe)
+
+running 4 tests
+test help_lists_wave_h_and_refuses_ssh ... ok
+test remote_add_list_remove_config ... ok
+test submodule_add_https_smart_http_loopback ... ok
+test clone_fetch_push_smart_http_loopback ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+   Doc-tests arks_g7_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G13: G6 Wave L regression (verify/gates/g6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g6_cleanroom-c9dc9806d1b150c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli_argv.rs (/cargo-target/debug/deps/cli_argv-705037501567122a)
+
+running 6 tests
+test help_lists_wave_l_and_h ... ok
+test init_opens_with_stock_git ... ok
+test hash_object_and_cat_file_parity ... ok
+test update_ref_and_rev_parse ... ok
+test refuse_unimplemented_command_and_flag ... ok
+test add_status_commit_log_show_suite ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g6_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G13: G3/G4/G5/G2/G10/G1 regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g3_cleanroom-be55f64b4c9475af)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-6711819c3cca7c07)
+
+running 3 tests
+test nested_path_roundtrip ... ok
+test arks_commit_readable_by_git ... ok
+test git_commit_readable_by_arks ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g3_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g4_cleanroom-8cdc1a0e3fb764e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-a714bd9241b6c847)
+
+running 3 tests
+test arks_roundtrip_matches_own_oids ... ok
+test arks_undeltified_pack_accepted_by_git_index_pack ... ok
+test git_pack_objects_decoded_by_arks ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests arks_g4_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+test v2_capability_advertisement_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v1_style_advertisement_fragment ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.31s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g2_cleanroom-90a7890edb5ea3b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-2710e7de09703292)
+
+running 9 tests
+test l0_index_lock_contention_fails ... ok
+test l0_ref_lock_contention_fails ... ok
+test git_add_index_readable_by_arks ... ok
+test arks_index_write_readable_by_git_ls_files ... ok
+test repo_compose_discovers_and_resolves_head ... ok
+test arks_head_symref_matches_git_rev_parse ... ok
+test arks_delete_ref_absent_from_git_show_ref ... ok
+test arks_update_ref_readable_by_git_show_ref ... ok
+test git_update_ref_readable_by_arks ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests arks_g2_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g10_cleanroom-340bb9b7dbe518da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-f6b43a2f908bf03b)
+
+running 7 tests
+test facade_exists_false_absent ... ok
+test facade_exists_true_after_put ... ok
+test facade_write_git_cat_file_roundtrip ... ok
+test facade_put_get_roundtrip ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_facade_get_roundtrip ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g10_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running tests/g1_oracle.rs (/cargo-target/debug/deps/g1_oracle-9d4d84c7643a747f)
+
+running 5 tests
+test arks_write_git_cat_file ... ok
+test git_write_arks_read ... ok
+test empty_blob_bidirectional_loose ... ok
+test binary_nul_blob_oid_and_roundtrip ... ok
+test oid_parity_empty_and_hello ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g1_cleanroom-62180f744c8bd05c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/git_oracle.rs (/cargo-target/debug/deps/git_oracle-1fa01fa832eac9ce)
+
+running 6 tests
+test empty_blob_arks_write_git_cat_file ... ok
+test arks_write_git_cat_file_roundtrip ... ok
+test binary_nul_blob_oid_matches_git ... ok
+test hello_blob_oid_matches_git_hash_object ... ok
+test empty_blob_oid_matches_git_hash_object ... ok
+test git_hash_object_write_arks_read_roundtrip ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests arks_g1_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G13: PASS
+2026-11-10T22:55:48.8683760+09:00 g13,PASS,0,10,"resume"
+===== starting g11 =====
+ Container arks-verify-m1-g11-run-0fd3d3f837a2 Creating 
+ Container arks-verify-m1-g11-run-0fd3d3f837a2 Created 
+G11: stock git git version 2.39.5
+G11: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G11: CARGO_BUILD_JOBS=1
+G11: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded cfg-if v1.0.5
+  Downloaded block-buffer v0.10.4
+  Downloaded zmij v1.0.23
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded getrandom v0.2.17
+  Downloaded cpufeatures v0.2.17
+  Downloaded errno v0.3.14
+  Downloaded bitflags v2.13.2
+  Downloaded getrandom v0.4.3
+  Downloaded base64 v0.22.1
+  Downloaded icu_collections v2.4.0
+  Downloaded cc v1.11.1
+  Downloaded generic-array v0.14.7
+  Downloaded displaydoc v0.2.7
+  Downloaded itoa v1.0.18
+  Downloaded once_cell v1.21.4
+  Downloaded yoke v0.8.4
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded windows-interface v0.58.0
+  Downloaded potential_utf v0.1.6
+  Downloaded idna_adapter v1.2.2
+  Downloaded version_check v0.9.5
+  Downloaded synstructure v0.14.0
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded writeable v0.6.4
+  Downloaded yoke-derive v0.8.4
+  Downloaded crypto-common v0.1.7
+  Downloaded windows-strings v0.1.0
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded windows-link v0.2.1
+  Downloaded windows-targets v0.52.6
+  Downloaded form_urlencoded v1.2.2
+  Downloaded subtle v2.6.1
+  Downloaded windows-implement v0.58.0
+  Downloaded percent-encoding v2.3.2
+  Downloaded zeroize v1.9.1
+  Downloaded untrusted v0.9.0
+  Downloaded webpki-roots v0.26.11
+  Downloaded zerofrom v0.1.8
+  Downloaded windows-result v0.2.0
+  Downloaded smallvec v1.16.5
+  Downloaded tempfile v3.27.0
+  Downloaded quote v1.0.47
+  Downloaded sha2 v0.10.9
+  Downloaded utf_types v1.0.0
+  Downloaded thiserror-impl v2.0.21
+  Downloaded fastrand v2.5.0
+  Downloaded digest v0.10.7
+  Downloaded thiserror v2.0.21
+  Downloaded shlex v2.0.1
+  Downloaded zerovec-derive v0.11.7
+  Downloaded litemap v0.8.3
+  Downloaded windows-core v0.58.0
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded rustls-webpki v0.103.16
+  Downloaded icu_provider v2.4.0
+  Downloaded tinystr v0.8.5
+  Downloaded serde_core v1.0.229
+  Downloaded unicode-ident v1.0.27
+  Downloaded serde_derive v1.0.229
+  Downloaded proc-macro2 v1.0.107
+  Downloaded crc32fast v1.5.4
+  Downloaded log v0.4.35
+  Downloaded r-efi v6.0.0
+  Downloaded flate2 v1.1.11
+  Downloaded zerotrie v0.2.5
+  Downloaded memchr v2.8.3
+  Downloaded url v2.5.8
+  Downloaded icu_locale_core v2.4.0
+  Downloaded serde v1.0.229
+  Downloaded typenum v1.20.1
+  Downloaded ureq v2.12.1
+  Downloaded idna v1.1.0
+  Downloaded zerovec v0.11.9
+  Downloaded webpki-roots v1.0.11
+  Downloaded icu_properties v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded syn v2.0.119
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded rustix v1.1.6
+  Downloaded rustls v0.23.46
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G11: forbidden celir edge in cargo metadata
+System.Management.Automation.RemoteException
+2026-11-10T22:55:54.3174399+09:00 g11,FAIL,1,5,"resume"

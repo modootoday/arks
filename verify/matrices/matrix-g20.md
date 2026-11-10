@@ -43,7 +43,7 @@ Authoritative venue: Docker clean-room service `g20` (`verify/scripts/run-g20.sh
 |----|-----------|----------|
 | M15-FS5-01 | `range-diff A..B C..D` pairwise subject compare (`=`/`!`); stock Git may peer-read same ranges | yes |
 | M15-FS5-02 | `commit -a -m` stages tracked updates and commits | yes |
-| M15-FS5-03 | Interactive/editor forms explicit exclude: `rebase -i` and `commit` without `-m` refuse with exclude honesty | yes |
+| M15-FS5-03 | Editor honesty: `rebase -i` and `commit` without `-m` fail closed unless EDITOR / sequence-editor is set (**FS1** / O3; historical “exclude” wording superseded) | yes |
 
 ## Later waves
 

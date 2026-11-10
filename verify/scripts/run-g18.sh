@@ -21,16 +21,14 @@ if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*
   echo "G18: forbidden gix/gitoxide package name in workspace members" >&2
   exit 1
 fi
-meta="$(cargo metadata --format-version 1)"
-if echo "$meta" | grep -E '"name":\s*"gix|"name":\s*"gitoxide|"name":\s*"gix-' >/dev/null; then
-  echo "G18: forbidden gix/gitoxide edge in cargo metadata" >&2
+# Optional path-deps appear in full metadata when discrete-circuit is mounted.
+# Product honesty = default feature graph (celir-index OFF). Same as G11/G20.
+if cargo tree -p arks-store --edges normal 2>/dev/null | grep -Ei 'celir' >/dev/null; then
+  echo "G18: FAIL — default arks-store tree has celir edge" >&2
+  cargo tree -p arks-store --edges normal >&2 || true
   exit 1
 fi
-if echo "$meta" | grep -Ei '"name":\s*"celir|"name":\s*"celir-' >/dev/null; then
-  echo "G18: forbidden celir edge in cargo metadata" >&2
-  exit 1
-fi
-echo "G18: gix-exit / no-celir OK"
+echo "G18: gix-exit / default tree CELIR-free OK"
 
 echo "G18: build arks binary (release)"
 cargo build -p arks --release

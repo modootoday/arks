@@ -87,10 +87,10 @@ Primary cites: [git-notes](https://git-scm.com/docs/git-notes), [git-sparse-chec
 |----------------|---------|------------------------|
 | `range-diff` | `<oldA>..<oldB> <newA>..<newB>` first-parent subject pairwise (`=`/`!`) | symmetric `...`; full dual-diff emit; merge commits |
 | `commit -a` / `--all` | stage tracked updates then commit (with `-m`) | — |
-| `commit` without `-m` | — | **exclude** (editor/TUI message path) |
-| `rebase -i` | — | **exclude** (interactive/TUI); non-interactive `rebase <upstream>` remains |
-| Credential helper / askpass | — | **exclude** (unchanged product exclusion) |
-| `git daemon` / `git://` | — | **exclude** (unchanged until remote-host SoT amend) |
+| `commit` without `-m` | Editor path when `GIT_EDITOR`/`ARKS_EDITOR`/`EDITOR` set (**FS1**/O3 supersedes historical exclude) | fail-closed honesty without editor |
+| `rebase -i` | Sequence/editor path (**FS1** supersedes historical exclude); non-interactive `rebase <upstream>` remains | fail-closed honesty without sequence/editor |
+| Credential helper / askpass | **Claimed (G33)** — historical M15 exclude superseded | forge OAuth remains out |
+| `git daemon` / `git://` | **Claimed (G32)** — historical M15 exclude superseded | — |
 
 ## Later waves (Open until claimed)
 

@@ -1,0 +1,1695 @@
+===== skip already done g21 =====
+===== skip already done g38 =====
+===== skip already done g39 =====
+===== skip already done g40 =====
+===== skip already done g0 =====
+===== skip already done g1 =====
+===== skip already done g2 =====
+===== skip already done g3 =====
+===== skip already done g4 =====
+===== skip already done g5 =====
+===== skip already done g6 =====
+===== skip already done g7 =====
+===== skip already done g10 =====
+===== skip already done g12 =====
+===== skip already done g13 =====
+===== skip already done g11 =====
+===== skip already done g11l3 =====
+===== starting g15 =====
+ Container arks-verify-m1-g15-run-076930d18f5f Creating 
+ Container arks-verify-m1-g15-run-076930d18f5f Created 
+G15: stock git git version 2.39.5
+G15: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G15: CARGO_BUILD_JOBS=1
+G15: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded idna_adapter v1.2.2
+  Downloaded block-buffer v0.10.4
+  Downloaded itoa v1.0.18
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded cfg-if v1.0.5
+  Downloaded crc32fast v1.5.4
+  Downloaded cpufeatures v0.2.17
+  Downloaded getrandom v0.2.17
+  Downloaded zmij v1.0.23
+  Downloaded fastrand v2.5.0
+  Downloaded bitflags v2.13.2
+  Downloaded form_urlencoded v1.2.2
+  Downloaded crypto-common v0.1.7
+  Downloaded generic-array v0.14.7
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded errno v0.3.14
+  Downloaded displaydoc v0.2.7
+  Downloaded shlex v2.0.1
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded yoke-derive v0.8.4
+  Downloaded windows-link v0.2.1
+  Downloaded zerofrom v0.1.8
+  Downloaded potential_utf v0.1.6
+  Downloaded utf8_iter v1.1.0
+  Downloaded windows-strings v0.1.0
+  Downloaded subtle v2.6.1
+  Downloaded windows-implement v0.58.0
+  Downloaded windows-result v0.2.0
+  Downloaded percent-encoding v2.3.2
+  Downloaded version_check v0.9.5
+  Downloaded windows-targets v0.52.6
+  Downloaded digest v0.10.7
+  Downloaded sha2 v0.10.9
+  Downloaded tinystr v0.8.5
+  Downloaded untrusted v0.9.0
+  Downloaded webpki-roots v0.26.11
+  Downloaded zeroize v1.9.1
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded windows-interface v0.58.0
+  Downloaded quote v1.0.47
+  Downloaded synstructure v0.14.0
+  Downloaded writeable v0.6.4
+  Downloaded utf_types v1.0.0
+  Downloaded zerovec-derive v0.11.7
+  Downloaded once_cell v1.21.4
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded thiserror v2.0.21
+  Downloaded thiserror-impl v2.0.21
+  Downloaded tempfile v3.27.0
+  Downloaded smallvec v1.16.5
+  Downloaded litemap v0.8.3
+  Downloaded yoke v0.8.4
+  Downloaded windows-core v0.58.0
+  Downloaded getrandom v0.4.3
+  Downloaded icu_provider v2.4.0
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.27
+  Downloaded log v0.4.35
+  Downloaded r-efi v6.0.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded base64 v0.22.1
+  Downloaded serde_derive v1.0.229
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded serde_core v1.0.229
+  Downloaded memchr v2.8.3
+  Downloaded flate2 v1.1.11
+  Downloaded serde v1.0.229
+  Downloaded url v2.5.8
+  Downloaded icu_collections v2.4.0
+  Downloaded zerotrie v0.2.5
+  Downloaded rustls-webpki v0.103.16
+  Downloaded typenum v1.20.1
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded cc v1.11.1
+  Downloaded idna v1.1.0
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded webpki-roots v1.0.11
+  Downloaded zlib-rs v0.6.8
+  Downloaded syn v3.0.9
+  Downloaded syn v2.0.119
+  Downloaded rustls v0.23.46
+  Downloaded rustix v1.1.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G15: arks-server deps OK (no gix/celir/lease)
+G15: gix-exit / no-celir / no-lease-dep OK
+G15: build arks binary
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.70s
+G15: arks-server unit tests
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.56s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_server-06201efda6411310)
+
+running 15 tests
+test auth::tests::password_may_contain_colon ... ok
+test auth::tests::accepts_valid_basic ... ok
+test auth::tests::rejects_missing_and_wrong ... ok
+test auth::tests::roundtrip_base64 ... ok
+test tests::lfs_batch_download_and_get_object ... ok
+test tests::receive_advertises_delete_refs_and_report_status_v2 ... ok
+test tests::receive_advertises_proc_receive_when_hook_present ... ok
+test tests::lfs_batch_upload_and_put_object ... ok
+test tests::receive_update_hook_rejects_one_ref ... ok
+test tests::receive_pre_receive_hook_rejects_entire_push ... ok
+test tests::smart_http_basic_auth_challenge_and_accept ... ok
+test tests::smart_http_info_refs_upload ... ok
+test tests::upload_advertisement_includes_main ... ok
+test tests::receive_post_receive_runs_after_success ... ok
+test tests::loopback_serves_info_refs ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+   Doc-tests arks_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G15: git-server suite vs stock git (verify/gates/g15)
+   Compiling arks-g15-cleanroom v0.0.0 (/workspace/verify/gates/g15)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+     Running tests/git_server.rs (/cargo-target/debug/deps/git_server-f0829f6cf5f653b3)
+
+running 4 tests
+test g15_help_wave_sv ... ok
+test g15_capability_honesty_upload_ad ... ok
+test g15_stock_git_clone_fetch_push ... ok
+test g15_receive_pack_githooks_honor_list ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+G15: G14 CLI-parity regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/porcelain_pc.rs (/cargo-target/debug/deps/porcelain_pc-2b28c71443f69c0a)
+
+running 9 tests
+test help_lists_pc_and_omits_refuse_closed ... ok
+test clean_d_removes_untracked_dir ... ok
+test reflog_after_commit ... ok
+test archive_tar_contains_blob ... ok
+test bundle_verify_arks_bundle ... ok
+test same_dot_git_stock_peer ... ok
+test annotated_tag_stock_git_reads ... ok
+test refuse_closed_and_unknown_flags ... ok
+test alias_shim_workflows_and_refuse ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+G15: G7 remote-client regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g7_cleanroom-c48a1874f7402353)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/remote_http.rs (/cargo-target/debug/deps/remote_http-80a44dc292e61ebe)
+
+running 4 tests
+test help_lists_wave_h_and_refuses_ssh ... ok
+test remote_add_list_remove_config ... ok
+test submodule_add_https_smart_http_loopback ... ok
+test clone_fetch_push_smart_http_loopback ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+   Doc-tests arks_g7_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G15: G5 protocol regression
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g5_cleanroom-c6325528cc4c267b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/offline_fixtures.rs (/cargo-target/debug/deps/offline_fixtures-f2de5b83f7badb2f)
+
+running 4 tests
+test capability_advertise_parse_offline ... ok
+test pkt_line_specials_and_data_offline ... ok
+test v2_capability_advertisement_offline ... ok
+test v1_advertisement_fragment_offline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_g5_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.45s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_protocol-89def1f623b2d04c)
+
+running 9 tests
+test capabilities::tests::advertise_parse_roundtrip_preserves_order_and_unknowns ... ok
+test capabilities::tests::empty_and_duplicate_tokens ... ok
+test pkt_line::tests::common_doc_examples ... ok
+test pkt_line::tests::binary_roundtrip_is_8bit_clean ... ok
+test pkt_line::tests::empty_data_0004_parse_only ... ok
+test pkt_line::tests::refuse_bad_lengths ... ok
+test pkt_line::tests::specials_are_length_fields_not_payloads ... ok
+test pkt_line::tests::max_payload_encodes ... ok
+test pkt_line::tests::text_helper_lf_rules ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g5_offline.rs (/cargo-target/debug/deps/g5_offline-c25a23303badbdb1)
+
+running 4 tests
+test capability_parse_advertise_roundtrip ... ok
+test flush_data_delim_response_end_sequence ... ok
+test v1_style_advertisement_fragment ... ok
+test v2_style_capability_advertisement_with_delim_and_response_end ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G15: PASS
+2026-11-10T23:11:44.8251005+09:00 g15,PASS,0,13,"resume"
+===== starting g17 =====
+ Container arks-verify-m1-g17-run-86ae68142bb0 Creating 
+ Container arks-verify-m1-g17-run-86ae68142bb0 Created 
+G17: stock git git version 2.39.5
+G17: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G17: CARGO_BUILD_JOBS=1
+G17: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded cfg-if v1.0.5
+  Downloaded zmij v1.0.23
+  Downloaded cc v1.11.1
+  Downloaded fastrand v2.5.0
+  Downloaded displaydoc v0.2.7
+  Downloaded crypto-common v0.1.7
+  Downloaded icu_locale_core v2.4.0
+  Downloaded shlex v2.0.1
+  Downloaded cpufeatures v0.2.17
+  Downloaded serde_core v1.0.229
+  Downloaded flate2 v1.1.11
+  Downloaded base64 v0.22.1
+  Downloaded serde_derive v1.0.229
+  Downloaded errno v0.3.14
+  Downloaded form_urlencoded v1.2.2
+  Downloaded tinystr v0.8.5
+  Downloaded digest v0.10.7
+  Downloaded unicode-ident v1.0.27
+  Downloaded getrandom v0.2.17
+  Downloaded idna_adapter v1.2.2
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded windows-result v0.2.0
+  Downloaded itoa v1.0.18
+  Downloaded icu_normalizer v2.4.0
+  Downloaded generic-array v0.14.7
+  Downloaded windows-targets v0.52.6
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded untrusted v0.9.0
+  Downloaded windows-strings v0.1.0
+  Downloaded version_check v0.9.5
+  Downloaded percent-encoding v2.3.2
+  Downloaded webpki-roots v0.26.11
+  Downloaded subtle v2.6.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded yoke-derive v0.8.4
+  Downloaded zerovec-derive v0.11.7
+  Downloaded utf_types v1.0.0
+  Downloaded windows-implement v0.58.0
+  Downloaded windows-interface v0.58.0
+  Downloaded block-buffer v0.10.4
+  Downloaded potential_utf v0.1.6
+  Downloaded r-efi v6.0.0
+  Downloaded windows-link v0.2.1
+  Downloaded thiserror-impl v2.0.21
+  Downloaded writeable v0.6.4
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded quote v1.0.47
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded getrandom v0.4.3
+  Downloaded icu_provider v2.4.0
+  Downloaded synstructure v0.14.0
+  Downloaded zerofrom v0.1.8
+  Downloaded sha2 v0.10.9
+  Downloaded litemap v0.8.3
+  Downloaded thiserror v2.0.21
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded yoke v0.8.4
+  Downloaded smallvec v1.16.5
+  Downloaded tempfile v3.27.0
+  Downloaded crc32fast v1.5.4
+  Downloaded windows-core v0.58.0
+  Downloaded once_cell v1.21.4
+  Downloaded zeroize v1.9.1
+  Downloaded log v0.4.35
+  Downloaded serde v1.0.229
+  Downloaded bitflags v2.13.2
+  Downloaded proc-macro2 v1.0.107
+  Downloaded url v2.5.8
+  Downloaded icu_collections v2.4.0
+  Downloaded memchr v2.8.3
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded typenum v1.20.1
+  Downloaded rustls-webpki v0.103.16
+  Downloaded zerotrie v0.2.5
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded idna v1.1.0
+  Downloaded icu_properties v2.4.0
+  Downloaded icu_properties_data v2.4.0
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded rustix v1.1.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G17: gix-exit OK
+G17: build arks binary (release)
+    Finished `release` profile [optimized] target(s) in 0.73s
+G17: issue-compare suite (verify/gates/g17; serial threads for receipt)
+ Downloading crates ...
+  Downloaded itoa v1.0.19
+   Compiling serde_core v1.0.229
+   Compiling itoa v1.0.19
+   Compiling serde_json v1.0.154
+   Compiling arks-g17-cleanroom v0.0.0 (/workspace/verify/gates/g17)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.53s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g17_cleanroom-e4365d197cead2c3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/issue_compare.rs (/cargo-target/debug/deps/issue_compare-dd7ae28d3db5cebc)
+
+running 146 tests
+test cm1_agent006_idx008_optional_locks ... G17 AGENT-006/IDX-008: git=pathology_pass arks=resolved_pass ??optional-lock reader vs writer; agent/--no-optional-locks status creates no index.lock
+ok
+test cm1_lock002_stale_lock ... G17 LOCK-002: git=pathology_pass arks=resolved_pass ??inspect + clear --stale; refuse live PID; no skip on write path
+ok
+test cm1_sub001_submodule_lock_domain ... G17 SUB-001: git=pathology_pass arks=resolved_pass ??submodule index.lock domain fail-closed; super status separate domain
+ok
+test cm1_wt001_worktree_lock_domain ... G17 WT-001: git=pathology_pass arks=resolved_pass ??common-dir ref lock fail-closed; locked worktree remove refuse
+ok
+test cm2_agent003_backoff_guidance ... G17 AGENT-003: git=pathology_pass arks=resolved_pass ??backoff/retry guidance on lock fail; no M12 lease scheduler
+ok
+test cm2_hook001_006_sync_hooks_refuse_async ... G17 HOOK-001/HOOK-006: git=pathology_pass arks=resolved_pass ??sync hooks claimed; refuse inventing async; --no-verify escape
+ok
+test cm2_idx001_exclusive_index_lock ... G17 IDX-001: git=pathology_pass arks=resolved_pass ??exclusive index.lock fail-closed + retry guidance; no sharded writer
+ok
+test cm2_pack004_maint003_refuse_gc ... G17 PACK-004/MAINT-003: git=pathology_pass arks=resolved_pass ??maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now refuse
+ok
+test cm3_agent005_evicted_container_stale_lock ... G17 AGENT-005: git=pathology_pass arks=resolved_pass ??evicted/dead PID stale lock inspect+clear; write path honors locks
+ok
+test cm3_agent007_worktree_submodule_composition ... G17 AGENT-007: git=pathology_pass arks=resolved_pass ??worktree+submodule multi-domain fail-closed; AGENT-007 inspect honesty
+ok
+test cm3_corr001_refuse_prune_now ... G17 CORR-001: git=pathology_pass arks=resolved_pass ??refuse gc --prune=now (CORR-001); lease-honest repack/maintenance remain
+ok
+test cm3_fs006_bind_mount_lock_visibility ... G17 FS-006: git=pathology_pass arks=resolved_pass ??bind-mount dual-writer honesty; inspect FS-006; honor locks; clear only dead
+ok
+test cm3_idx002_background_status_no_optional_lock ... G17 IDX-002: git=pathology_pass arks=resolved_pass ??background/optional status lock class; default arks status takes no optional locks
+ok
+test cx1_lock001_exclusive_create ... G17 LOCK-001: git=pathology_pass arks=resolved_pass ??exclusive O_CREAT lock fail-closed; LOCK-001 inspect honesty
+ok
+test cx1_misc012_update_index_refresh_lock ... G17 MISC-012: git=pathology_pass arks=resolved_pass ??update-index --refresh honors index.lock (MISC-012)
+ok
+test cx1_ref007_head_lock ... G17 REF-007: git=pathology_pass arks=resolved_pass ??HEAD.lock fail-closed; inspect REF-007; lease ??skip
+ok
+test cx1_ref018_pseudoref_merge_head ... G17 REF-018: git=pathology_pass arks=resolved_pass ??MERGE_HEAD pseudoref ??refuse conflicting porcelain (REF-018)
+ok
+test cx1_seq001_parallel_rebase_state ... G17 SEQ-001: git=pathology_pass arks=resolved_pass ??rebase-merge present ??refuse concurrent rebase (SEQ-001)
+ok
+test cx1_seq002_rebase_vs_merge ... G17 SEQ-002: git=pathology_pass arks=resolved_pass ??MERGE_HEAD present ??refuse rebase (SEQ-002)
+ok
+test cx1_seq003_cherry_pick_in_progress ... G17 SEQ-003: git=pathology_pass arks=resolved_pass ??CHERRY_PICK_HEAD present ??refuse concurrent cherry-pick (SEQ-003)
+ok
+test cx1_toctou005_no_poll_skip ... G17 TOCTOU-005: git=pathology_pass arks=resolved_pass ??no poll-then-skip; inspect TOCTOU-005; exclusive create honored
+ok
+test cx1_wt002_same_branch_two_worktrees ... G17 WT-002: git=pathology_pass arks=resolved_pass ??same branch two worktrees fail-closed
+ok
+test cx1_wt004_locked_worktree_remove ... G17 WT-004: git=pathology_pass arks=resolved_pass ??locked worktree remove refuse; unlock then remove
+ok
+test cx2_bisect001_concurrent_start ... G17 BISECT-001: git=pathology_pass arks=resolved_pass ??stock clobbers bisect session; arks exclusive refuse (BISECT-001)
+ok
+test cx2_bisect002_dirty_mid_bisect ... G17 BISECT-002: git=pathology_pass arks=resolved_pass ??dirty mid-bisect refuse (BISECT-002)
+ok
+test cx2_corr002_gc_force_refuse ... G17 CORR-002: git=pathology_pass arks=resolved_pass ??refuse gc --force (CORR-002 overlapping gc honesty)
+ok
+test cx2_lock004_porcelain_die_class ... G17 LOCK-004: git=pathology_pass arks=resolved_pass ??porcelain die-class under lock (LOCK-004); no soft-skip dialect
+ok
+test cx2_misc005_reset_hard_lock ... G17 MISC-005: git=pathology_pass arks=resolved_pass ??index.lock ??refuse reset --hard (MISC-005)
+ok
+test cx2_misc007_parallel_am ... G17 MISC-007: git=pathology_pass arks=resolved_pass ??parallel am / shared apply state refuse (MISC-007)
+ok
+test cx2_ref021_symbolic_ref_lock ... G17 REF-021: git=pathology_pass arks=resolved_pass ??HEAD.lock ??refuse symbolic-ref retarget (REF-021)
+ok
+test cx2_seq006_interactive_todo ... G17 SEQ-006: git=pathology_pass arks=resolved_pass ??interactive rebase todo ??refuse concurrent rebase (SEQ-006)
+ok
+test cx2_seq007_am_under_apply_state ... G17 SEQ-007: git=pathology_pass arks=resolved_pass ??rebase-apply present ??refuse concurrent am (SEQ-007)
+ok
+test cx2_stash001_stash_lock ... G17 STASH-001: git=pathology_pass arks=resolved_pass ??refs/stash.lock ??refuse concurrent stash push (STASH-001)
+ok
+test cx2_stash002_pop_under_index_lock ... G17 STASH-002: git=pathology_pass arks=resolved_pass ??index.lock ??refuse stash pop (STASH-002)
+ok
+test cx2_toctou003_dirty_checkout ... G17 TOCTOU-003: git=pathology_pass arks=resolved_pass ??dirty worktree ??refuse checkout overwrite (TOCTOU-003)
+ok
+test cx3_cfg004_unknown_extension ... G17 CFG-004: git=pathology_pass arks=resolved_pass ??format v1 unknown extensions ??refuse CFG-004
+ok
+test cx3_idx014_read_tree_lock ... G17 IDX-014: git=pathology_pass arks=resolved_pass ??index.lock ??refuse read-tree (IDX-014)
+ok
+test cx3_maint002_gc_log ... G17 MAINT-002: git=pathology_pass arks=resolved_pass ??gc.log present ??MAINT-002 inspect honesty
+ok
+test cx3_misc017_notes_merge_state ... G17 MISC-017: git=pathology_pass arks=resolved_pass ??NOTES_MERGE_* state ??refuse notes mutate (MISC-017)
+ok
+test cx3_misc018_reapply_index_lock ... G17 MISC-018: git=pathology_pass arks=resolved_pass ??index.lock ??refuse sparse-checkout reapply (MISC-018)
+ok
+test cx3_net009_clone_dest_collision ... G17 NET-009: git=pathology_pass arks=resolved_pass ??non-empty clone dest ??refuse NET-009
+ok
+test cx3_pack009_keep_honesty ... G17 PACK-009: git=pathology_pass arks=resolved_pass ??*.keep leftover ??PACK-009 inspect honesty
+ok
+test cx3_ref012_pack_refs_lock ... G17 REF-012: git=pathology_pass arks=resolved_pass ??packed-refs.lock ??refuse pack-refs (REF-012)
+ok
+test cx3_ref016_notes_lock ... G17 REF-016: git=pathology_pass arks=resolved_pass ??refs/notes/commits.lock ??refuse notes add (REF-016)
+ok
+test cx3_sparse001_cone_lock ... G17 SPARSE-001: git=pathology_pass arks=resolved_pass ??sparse-checkout.lock ??refuse set (SPARSE-001)
+ok
+test cx3_sub008_move_with_submodules ... G17 SUB-008: git=pathology_pass arks=resolved_pass ??worktree move with modules ??refuse SUB-008
+ok
+test cx3_toctou007_incomplete_prune ... G17 TOCTOU-007: git=pathology_pass arks=resolved_pass ??incomplete worktree admin ??refuse prune (TOCTOU-007)
+ok
+test cx4_hook002_pre_auto_gc ... G17 HOOK-002: git=pathology_pass arks=resolved_pass ??pre-auto-gc honesty via gc --auto / lock inspect (HOOK-002)
+ok
+test cx4_hook005_nested_index_write ... G17 HOOK-005: git=pathology_pass arks=resolved_pass ??index.lock ??refuse nested index write (HOOK-005)
+ok
+test cx4_idx010_skip_worktree_lock ... G17 IDX-010: git=pathology_pass arks=resolved_pass ??index.lock ??refuse skip-worktree flip (IDX-010)
+ok
+test cx4_idx013_chmod_lock ... G17 IDX-013: git=pathology_pass arks=resolved_pass ??index.lock ??refuse update-index --chmod (IDX-013)
+ok
+test cx4_misc011_hooks_swap ... G17 MISC-011: git=pathology_pass arks=resolved_pass ??mid-flight hooks swap inspect honesty (MISC-011)
+ok
+test cx4_misc014_reflog_expire ... G17 MISC-014: git=pathology_pass arks=resolved_pass ??reflog expire under contention refuse (MISC-014)
+ok
+test cx4_pack008_index_pack_lock ... G17 PACK-008: git=pathology_pass arks=resolved_pass ??colliding pack .lock ??refuse index-pack (PACK-008)
+ok
+test cx4_ref009_reflog_lock ... G17 REF-009: git=pathology_pass arks=resolved_pass ??logs/HEAD.lock ??refuse commit/update-ref (REF-009)
+ok
+test cx4_ref022_foreach_reader_safe ... G17 REF-022: git=pathology_pass arks=resolved_pass ??packed-refs.lock ??reader-safe for-each-ref + REF-022 inspect
+ok
+test cx4_shal001_shallow_lock ... G17 SHAL-001: git=pathology_pass arks=resolved_pass ??shallow.lock ??refuse fetch/deepen (SHAL-001)
+ok
+test cx4_sub006_gitlink_mismatch ... G17 SUB-006: git=pathology_pass arks=resolved_pass ??gitlink vs nested HEAD mismatch status honesty (SUB-006)
+ok
+test cx4_wt006_worktree_config_lock ... G17 WT-006: git=pathology_pass arks=resolved_pass ??config.worktree.lock ??refuse config (WT-006)
+ok
+test cx5_hook003_post_index_change ... G17 HOOK-003: git=pathology_pass arks=resolved_pass ??post-index-change honesty via lock inspect (HOOK-003)
+ok
+test cx5_idx004_sharedindex_lock ... G17 IDX-004: git=pathology_pass arks=resolved_pass ??sharedindex.lock ??refuse add (IDX-004)
+ok
+test cx5_idx011_extension_lock ... G17 IDX-011: git=pathology_pass arks=resolved_pass ??index.lock ??refuse update-index extension rewrite (IDX-011)
+ok
+test cx5_lock003_rename_atomicity ... G17 LOCK-003: git=pathology_pass arks=resolved_pass ??rename-atomicity reader honesty via inspect (LOCK-003)
+ok
+test cx5_misc002_archive_collision ... G17 MISC-002: git=pathology_pass arks=resolved_pass ??occupied archive -o path ??refuse MISC-002
+ok
+test cx5_misc003_bundle_head_lock ... G17 MISC-003: git=pathology_pass arks=resolved_pass ??HEAD.lock ??refuse bundle create (MISC-003)
+ok
+test cx5_misc019_gitattributes_lock ... G17 MISC-019: git=pathology_pass arks=resolved_pass ??.gitattributes.lock ??refuse add (MISC-019)
+ok
+test cx5_obj001_identical_loose ... G17 OBJ-001: git=pathology_pass arks=resolved_pass ??identical concurrent loose create idempotent + OBJ-001 note
+ok
+test cx5_obj005_partial_loose ... G17 OBJ-005: git=pathology_pass arks=resolved_pass ??partial/corrupt loose ??refuse cat-file (OBJ-005)
+ok
+test cx5_pack001_repack_lock ... G17 PACK-001: git=pathology_pass arks=resolved_pass ??tmp pack lock ??refuse repack (PACK-001)
+ok
+test cx5_shal003_filter_mismatch ... G17 SHAL-003: git=pathology_pass arks=resolved_pass ??partial-clone filter mismatch inspect honesty (SHAL-003)
+ok
+test cx5_wt005_stale_gitdir ... G17 WT-005: git=pathology_pass arks=resolved_pass ??stale gitdir ??worktree repair refuse/honesty (WT-005)
+ok
+test cx6_corr004_partial_prune ... G17 CORR-004: git=pathology_pass arks=resolved_pass ??partial-clone prune refuse (CORR-004)
+ok
+test cx6_corr005_shallow_deepen ... G17 CORR-005: git=pathology_pass arks=resolved_pass ??shallow.lock deepen refuse (CORR-005)
+ok
+test cx6_lock007_same_fs ... G17 LOCK-007: git=pathology_pass arks=resolved_pass ??same-FS rename honesty (LOCK-007)
+ok
+test cx6_misc020_checkout_prefix ... G17 MISC-020: git=pathology_pass arks=resolved_pass ??occupied --prefix refuse (MISC-020)
+ok
+test cx6_obj008_hash_load ... G17 OBJ-008: git=pathology_pass arks=resolved_pass ??hash-object load honesty (OBJ-008)
+ok
+test cx6_pack002_midx ... G17 PACK-002: git=pathology_pass arks=resolved_pass ??MIDX inspect honesty (PACK-002)
+ok
+test cx6_pack003_bitmap ... G17 PACK-003: git=pathology_pass arks=resolved_pass ??bitmap inspect honesty (PACK-003)
+ok
+test cx6_seq004_rr_cache_lock ... G17 SEQ-004: git=pathology_pass arks=resolved_pass ??rr-cache.lock ??refuse (SEQ-004)
+ok
+test cx6_sub003_absorb ... G17 SUB-003: git=pathology_pass arks=resolved_pass ??modules absorb honesty (SUB-003)
+ok
+test cx6_sub009_sync_lock ... G17 SUB-009: git=pathology_pass arks=resolved_pass ??.gitmodules.lock ??refuse sync (SUB-009)
+ok
+test cx6_wt009_dual_repair ... G17 WT-009: git=pathology_pass arks=resolved_pass ??repair.lock ??refuse dual repair (WT-009)
+ok
+test cx6_wt010_worktree_config_mix ... G17 WT-010: git=pathology_pass arks=resolved_pass ??worktreeConfig mix honesty (WT-010)
+ok
+test cx7_ci001_shared_workspace ... G17 CI-001: git=pathology_pass arks=resolved_pass ??shared workspace lock plant honesty (CI-001)
+ok
+test cx7_corr003_replace_refs ... G17 CORR-003: git=pathology_pass arks=resolved_pass ??replace.lock ??refuse update-ref (CORR-003)
+ok
+test cx7_fs008_casefold ... G17 FS-008: git=pathology_pass arks=resolved_pass ??case-folding collision honesty (FS-008)
+ok
+test cx7_fsm001_daemon_honesty ... G17 FSM-001: git=pathology_pass arks=resolved_pass ??fsmonitor/sparse-index FSM race honesty (FSM-001)
+ok
+test cx7_fsm002_transition_refuse ... G17 FSM-002: git=pathology_pass arks=resolved_pass ??concurrent FSM transition refuse (FSM-002)
+ok
+test cx7_fsm004_incomplete_refuse ... G17 FSM-004: git=pathology_pass arks=resolved_pass ??incomplete FSM marker refuse (FSM-004)
+ok
+test cx7_idx005_untracked_cache ... G17 IDX-005: git=pathology_pass arks=resolved_pass ??untracked-cache.lock ??refuse expand (IDX-005)
+ok
+test cx7_maint005_commit_graph_lock ... G17 MAINT-005: git=pathology_pass arks=resolved_pass ??commit-graph.lock ??refuse maintenance (MAINT-005)
+ok
+test cx7_misc008_sparse_materialize ... G17 MISC-008: git=pathology_pass arks=resolved_pass ??sparse-checkout.lock ??refuse materialize (MISC-008)
+ok
+test cx7_pack005_cruft ... G17 PACK-005: git=pathology_pass arks=resolved_pass ??pack keep/cruft under maintenance honesty (PACK-005)
+ok
+test cx7_shal004_grafts ... G17 SHAL-004: git=pathology_pass arks=resolved_pass ??shallow + graft interaction honesty (SHAL-004)
+ok
+test cx7_sparse002_non_cone ... G17 SPARSE-002: git=pathology_pass arks=resolved_pass ??non-cone sparse rewrite refuse (SPARSE-002)
+ok
+test cx8_ci005_reusable_ws ... G17 CI-005: git=pathology_pass arks=resolved_pass ??reusable workspace leftover lock honesty (CI-005)
+ok
+test cx8_corr006_alternates_prune ... G17 CORR-006: git=pathology_pass arks=resolved_pass ??alternates + prune refuse (CORR-006)
+ok
+test cx8_corr007_replace_prune ... G17 CORR-007: git=pathology_pass arks=resolved_pass ??replace-refs + prune refuse (CORR-007)
+ok
+test cx8_fsm003_overflow ... G17 FSM-003: git=pathology_pass arks=resolved_pass ??fsmonitor event overflow honesty (FSM-003)
+ok
+test cx8_idx006_racy ... G17 IDX-006: git=pathology_pass arks=resolved_pass ??untracked-cache / racy-git false dirtiness honesty (IDX-006)
+ok
+test cx8_maint006_midx_lock ... G17 MAINT-006: git=pathology_pass arks=resolved_pass ??multi-pack-index.lock ??refuse maintenance (MAINT-006)
+ok
+test cx8_misc001_describe ... G17 MISC-001: git=pathology_pass arks=resolved_pass ??parallel describe under pack-refs honesty (MISC-001)
+ok
+test cx8_misc009_reference_clone ... G17 MISC-009: git=pathology_pass arks=resolved_pass ??clone --reference under donor gc refuse (MISC-009)
+ok
+test cx8_net010_filter ... G17 NET-010: git=pathology_pass arks=resolved_pass ??partial-clone filter mismatch honesty (NET-010)
+ok
+test cx8_obj006_alternates ... G17 OBJ-006: git=pathology_pass arks=resolved_pass ??alternates borrow race honesty (OBJ-006)
+ok
+test cx8_pack006_window ... G17 PACK-006: git=pathology_pass arks=resolved_pass ??parallel pack-objects window/memory honesty (PACK-006)
+ok
+test cx8_ref003_packed_delete ... G17 REF-003: git=pathology_pass arks=resolved_pass ??packed-refs.lock ??refuse delete (REF-003)
+ok
+test dz1_fs001_nfs ... G17 FS-001: git=pathology_pass arks=resolved_pass ??NFS non-atomic rename/lock honesty (FS-001)
+ok
+test dz1_fs002_smb ... G17 FS-002: git=pathology_pass arks=resolved_pass ??SMB/CIFS lock residue honesty (FS-002)
+ok
+test dz1_fs003_win_share ... G17 FS-003: git=pathology_pass arks=resolved_pass ??Windows mandatory sharing honesty (FS-003)
+ok
+test dz1_fs004_av ... G17 FS-004: git=pathology_pass arks=resolved_pass ??Antivirus rename-hold honesty (FS-004)
+ok
+test dz1_fs005_wsl_ntfs ... G17 FS-005: git=pathology_pass arks=resolved_pass ??WSL?�NTFS metadata honesty (FS-005)
+ok
+test dz1_fs009_unicode ... G17 FS-009: git=pathology_pass arks=resolved_pass ??Unicode NFD/NFC path honesty (FS-009)
+ok
+test dz1_fs010_diskfull ... G17 FS-010: git=pathology_pass arks=resolved_pass ??disk-full lock rename honesty (FS-010)
+ok
+test dz1_fs011_overlay ... G17 FS-011: git=pathology_pass arks=resolved_pass ??overlayfs copy-up honesty (FS-011)
+ok
+test dz1_fs012_fuse ... G17 FS-012: git=pathology_pass arks=resolved_pass ??FUSE/virtiofs lock latency honesty (FS-012)
+ok
+test dz1_fs013_inode ... G17 FS-013: git=pathology_pass arks=resolved_pass ??objects/ inode exhaustion honesty (FS-013)
+ok
+test dz1_win001_maxpath ... G17 WIN-001: git=pathology_pass arks=resolved_pass ??Win32 MAX_PATH honesty (WIN-001)
+ok
+test dz1_win002_delete_pending ... G17 WIN-002: git=pathology_pass arks=resolved_pass ??Windows delete-pending O_EXCL honesty (WIN-002)
+ok
+test dz2_ci002_cache_restore ... G17 CI-002: git=pathology_pass arks=resolved_pass ??CI .git cache restore honesty (CI-002)
+ok
+test dz2_hook007_receive_scratch ... G17 HOOK-007: git=pathology_pass arks=resolved_pass ??receive-hook shared scratch honesty (HOOK-007)
+ok
+test dz2_lock005_pid ... G17 LOCK-005: git=pathology_pass arks=resolved_pass ??lockfilePid diagnostics honesty (LOCK-005)
+ok
+test dz2_lock006_writers_only ... G17 LOCK-006: git=pathology_pass arks=resolved_pass ??lockfile writers-only honesty (LOCK-006)
+ok
+test dz2_lock008_manual_delete ... G17 LOCK-008: git=pathology_pass arks=resolved_pass ??manual live lock delete refuse honesty (LOCK-008)
+ok
+test dz2_lock009_nfs_steal ... G17 LOCK-009: git=pathology_pass arks=resolved_pass ??NFS lock/lease steal honesty (LOCK-009)
+ok
+test dz2_misc013_quarantine_fanin ... G17 MISC-013: git=pathology_pass arks=resolved_pass ??quarantine push fan-in honesty (MISC-013)
+ok
+test dz2_obj007_quarantine ... G17 OBJ-007: git=pathology_pass arks=resolved_pass ??receive-pack quarantine honesty (OBJ-007)
+ok
+test dz2_obj009_batch_check ... G17 OBJ-009: git=pathology_pass arks=resolved_pass ??cat-file batch-check stampede honesty (OBJ-009)
+ok
+test dz2_ref013_reftable ... G17 REF-013: git=pathology_pass arks=resolved_pass ??reftable unclaimed honesty (REF-013)
+ok
+test dz2_ref020_nfs_dangling ... G17 REF-020: git=pathology_pass arks=resolved_pass ??NFS dangling lock honesty (REF-020)
+ok
+test dz2_sub005_fsmonitor ... G17 SUB-005: git=pathology_pass arks=resolved_pass ??fsmonitor submodule noise honesty (SUB-005)
+ok
+test dz3_cred001 ... G17 CRED-001: git=pathology_pass arks=resolved_pass ??platform credential store race honesty (CRED-001)
+ok
+test dz3_cred002 ... G17 CRED-002: git=pathology_pass arks=resolved_pass ??credential-cache socket honesty (CRED-002)
+ok
+test dz3_lfs001 ... G17 LFS-001: git=pathology_pass arks=resolved_pass ??shared lfs.storage race honesty (LFS-001)
+ok
+test dz3_lfs003 ... G17 LFS-003: git=pathology_pass arks=resolved_pass ??LFS filter backpressure honesty (LFS-003)
+ok
+test dz3_lfs004 ... G17 LFS-004: git=pathology_pass arks=resolved_pass ??lfs prune vs checkout honesty (LFS-004)
+ok
+test dz3_lfs005 ... G17 LFS-005: git=pathology_pass arks=resolved_pass ??concurrent lfs push OID honesty (LFS-005)
+ok
+test dz3_lfs006 ... G17 LFS-006: git=pathology_pass arks=resolved_pass ??missing git-lfs pointer honesty (LFS-006)
+ok
+test dz3_net003 ... G17 NET-003: git=pathology_pass arks=resolved_pass ??HTTP pool exhaustion honesty (NET-003)
+ok
+test dz3_net004 ... G17 NET-004: git=pathology_pass arks=resolved_pass ??SSH ControlMaster mux honesty (NET-004)
+ok
+test dz3_net005 ... G17 NET-005: git=pathology_pass arks=resolved_pass ??protocol v2 ls-refs stale honesty (NET-005)
+ok
+test dz3_net008 ... G17 NET-008: git=pathology_pass arks=resolved_pass ??askPass headless hang honesty (NET-008)
+ok
+test dz3_net011 ... G17 NET-011: git=pathology_pass arks=resolved_pass ??push atomic vs non-atomic honesty (NET-011)
+ok
+test dz4_ci006 ... G17 CI-006: git=pathology_pass arks=resolved_pass ??parallel sparse checkout honesty (CI-006)
+ok
+test dz4_toctou004 ... G17 TOCTOU-004: git=pathology_pass arks=resolved_pass ??credential exists-then-store TOCTOU honesty (TOCTOU-004)
+ok
+test zzz_write_g17_receipt ... G17: receipt written to /workspace/verify/gates/g17/out/receipt.json
+ok
+
+test result: ok. 146 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.88s
+
+   Doc-tests arks_g17_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G17: receipt written to /workspace/verify/gates/g17/out/receipt.json
+{
+  "generated_unix": 1794319918,
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "54c9dc2eef001af9c39ee31def5029829d8096b8",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "optional-lock reader vs writer; agent/--no-optional-locks status creates no index.lock",
+      "scenario_id": "AGENT-006/IDX-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "inspect + clear --stale; refuse live PID; no skip on write path",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "submodule index.lock domain fail-closed; super status separate domain",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "common-dir ref lock fail-closed; locked worktree remove refuse",
+      "scenario_id": "WT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "backoff/retry guidance on lock fail; no M12 lease scheduler",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "sync hooks claimed; refuse inventing async; --no-verify escape",
+      "scenario_id": "HOOK-001/HOOK-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive index.lock fail-closed + retry guidance; no sharded writer",
+      "scenario_id": "IDX-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now refuse",
+      "scenario_id": "PACK-004/MAINT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "evicted/dead PID stale lock inspect+clear; write path honors locks",
+      "scenario_id": "AGENT-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "worktree+submodule multi-domain fail-closed; AGENT-007 inspect honesty",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse gc --prune=now (CORR-001); lease-honest repack/maintenance remain",
+      "scenario_id": "CORR-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "bind-mount dual-writer honesty; inspect FS-006; honor locks; clear only dead",
+      "scenario_id": "FS-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "background/optional status lock class; default arks status takes no optional locks",
+      "scenario_id": "IDX-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive O_CREAT lock fail-closed; LOCK-001 inspect honesty",
+      "scenario_id": "LOCK-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "update-index --refresh honors index.lock (MISC-012)",
+      "scenario_id": "MISC-012"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "HEAD.lock fail-closed; inspect REF-007; lease ??skip",
+      "scenario_id": "REF-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "MERGE_HEAD pseudoref ??refuse conflicting porcelain (REF-018)",
+      "scenario_id": "REF-018"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "rebase-merge present ??refuse concurrent rebase (SEQ-001)",
+      "scenario_id": "SEQ-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "MERGE_HEAD present ??refuse rebase (SEQ-002)",
+      "scenario_id": "SEQ-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "CHERRY_PICK_HEAD present ??refuse concurrent cherry-pick (SEQ-003)",
+      "scenario_id": "SEQ-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "no poll-then-skip; inspect TOCTOU-005; exclusive create honored",
+      "scenario_id": "TOCTOU-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "same branch two worktrees fail-closed",
+      "scenario_id": "WT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "locked worktree remove refuse; unlock then remove",
+      "scenario_id": "WT-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "stock clobbers bisect session; arks exclusive refuse (BISECT-001)",
+      "scenario_id": "BISECT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "dirty mid-bisect refuse (BISECT-002)",
+      "scenario_id": "BISECT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refuse gc --force (CORR-002 overlapping gc honesty)",
+      "scenario_id": "CORR-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "porcelain die-class under lock (LOCK-004); no soft-skip dialect",
+      "scenario_id": "LOCK-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index.lock ??refuse reset --hard (MISC-005)",
+      "scenario_id": "MISC-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "parallel am / shared apply state refuse (MISC-007)",
+      "scenario_id": "MISC-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "HEAD.lock ??refuse symbolic-ref retarget (REF-021)",
+      "scenario_id": "REF-021"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "interactive rebase todo ??refuse concurrent rebase (SEQ-006)",
+      "scenario_id": "SEQ-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "rebase-apply present ??refuse concurrent am (SEQ-007)",
+      "scenario_id": "SEQ-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+G17: Cm-1..Cm-3 + Cx-1..Cx-8 oracle gate (scenario IDs + dual PASS)
+G17: Dz-4 oracle gate PASS (includes Cm/Cx + Dz-1..Dz-3 regression; Deferred catalog IDs claimed)
+G17: PASS
+2026-11-10T23:11:59.9088386+09:00 g17,PASS,0,15,"resume"
+===== starting g18 =====
+ Container arks-verify-m1-g18-run-1c3d423bc7a9 Creating 
+ Container arks-verify-m1-g18-run-1c3d423bc7a9 Created 
+G18: stock git git version 2.39.5
+G18: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G18: CARGO_BUILD_JOBS=1
+G18: gix-exit / no-celir scan
+G18: gix-exit / default tree CELIR-free OK
+G18: build arks binary (release)
+ Downloading crates ...
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded base64 v0.22.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded yoke v0.8.4
+  Downloaded itoa v1.0.18
+  Downloaded zerovec-derive v0.11.7
+  Downloaded once_cell v1.21.4
+  Downloaded idna_adapter v1.2.2
+  Downloaded yoke-derive v0.8.4
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded form_urlencoded v1.2.2
+  Downloaded webpki-roots v0.26.11
+  Downloaded percent-encoding v2.3.2
+  Downloaded potential_utf v0.1.6
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded zerofrom v0.1.8
+  Downloaded subtle v2.6.1
+  Downloaded writeable v0.6.4
+  Downloaded shlex v2.0.1
+  Downloaded utf_types v1.0.0
+  Downloaded tinystr v0.8.5
+  Downloaded displaydoc v0.2.7
+  Downloaded untrusted v0.9.0
+  Downloaded zmij v1.0.23
+  Downloaded litemap v0.8.3
+  Downloaded synstructure v0.14.0
+  Downloaded zeroize v1.9.1
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded smallvec v1.16.5
+  Downloaded getrandom v0.2.17
+  Downloaded zerotrie v0.2.5
+  Downloaded icu_provider v2.4.0
+  Downloaded serde_core v1.0.229
+  Downloaded serde_derive v1.0.229
+  Downloaded icu_locale_core v2.4.0
+  Downloaded log v0.4.35
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded url v2.5.8
+  Downloaded rustls-webpki v0.103.16
+  Downloaded serde v1.0.229
+  Downloaded icu_collections v2.4.0
+  Downloaded memchr v2.8.3
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded idna v1.1.0
+  Downloaded cc v1.11.1
+  Downloaded serde_json v1.0.154
+  Downloaded icu_properties_data v2.4.0
+  Downloaded webpki-roots v1.0.11
+  Downloaded rustls v0.23.46
+  Downloaded icu_normalizer v2.4.0
+  Downloaded libc v0.2.191
+  Downloaded ring v0.17.14
+    Finished `release` profile [optimized] target(s) in 1.12s
+G18: issue-compare suite (verify/gates/g18; serial threads for receipt)
+ Downloading crates ...
+  Downloaded fastrand v2.5.0
+  Downloaded tempfile v3.27.0
+  Downloaded getrandom v0.4.3
+  Downloaded errno v0.3.14
+  Downloaded itoa v1.0.19
+  Downloaded bitflags v2.13.2
+  Downloaded rustix v1.1.6
+  Downloaded linux-raw-sys v0.12.1
+   Compiling arks-g18-cleanroom v0.0.0 (/workspace/verify/gates/g18)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.92s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g18_cleanroom-32e73d1c7e3e8de3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/issue_compare.rs (/cargo-target/debug/deps/issue_compare-350271a4709b7c6f)
+
+running 73 tests
+test cd1_agent003_lease_wait ... G18 AGENT-003: git=pathology_pass arks=resolved_pass ??M13 lease AlreadyHeld wait/backoff; write path honors live locks
+ok
+test cd1_ref001_refns_lease ... G18 REF-001: git=pathology_pass arks=resolved_pass ??refns lease coordinates tip writers; lease ??skip Git locks
+ok
+test cd1_ref006_cas_lease ... G18 REF-006: git=pathology_pass arks=resolved_pass ??lease serializes tip writers before CAS; wait honesty for loser
+ok
+test cd1_ref011_namespace_leases ... G18 REF-011: git=pathology_pass arks=resolved_pass ??partitioned refns agent namespaces; overlapping prefix AlreadyHeld
+ok
+test cd2_agent007_domain_composition ... G18 AGENT-007: git=pathology_pass arks=resolved_pass ??composed domain:worktree + domain:submodule leases; locks honored
+ok
+test cd2_lock002_lease_fencing ... G18 LOCK-002: git=pathology_pass arks=resolved_pass ??TTL fencing via lease expire; write path honors Git locks
+ok
+test cd2_sub001_submodule_domain_lease ... G18 SUB-001: git=pathology_pass arks=resolved_pass ??domain:submodule lease; Git locks still honored
+ok
+test cd2_wt001_worktree_domain_lease ... G18 WT-001: git=pathology_pass arks=resolved_pass ??domain:worktree lease; Git locks still honored
+ok
+test cd3_agent002_merge_namespace ... G18 AGENT-002: git=pathology_pass arks=resolved_pass ??agent refns partitions + main merge coordinator lease
+ok
+test cd3_hook001_hook006_budget ... G18 HOOK-001/HOOK-006: git=pathology_pass arks=resolved_pass ??hook:critical lease budget; no invented async hook runners
+ok
+test cd3_idx001_pathset_lease ... G18 IDX-001: git=pathology_pass arks=resolved_pass ??index:paths:default path-set lease; Git locks honored
+ok
+test cd3_pack004_maint003_gc_lease ... G18 PACK-004/MAINT-003: git=pathology_pass arks=resolved_pass ??maint:gc lease; arks gc refuse-closed
+ok
+test cd4_agent001_blackboard ... G18 AGENT-001: git=pathology_pass arks=resolved_pass ??agent:blackboard exclusive lease; lease ??skip index.lock
+ok
+test cd4_agent010_retry_taxonomy ... G18 AGENT-010: git=pathology_pass arks=resolved_pass ??AlreadyHeld taxonomy vs blind-retry all fatals (AGENT-010)
+ok
+test cd4_agent011_formatter ... G18 AGENT-011: git=pathology_pass arks=resolved_pass ??index:paths:formatter lease; locks honored
+ok
+test cd4_idx003_private_index ... G18 IDX-003: git=pathology_pass arks=resolved_pass ??index:private:agent lease; shared default index contamination refuse
+ok
+test cd4_idx007_same_path ... G18 IDX-007: git=pathology_pass arks=resolved_pass ??index:paths:same lease for parallel same-path add
+ok
+test cd4_maint001_background ... G18 MAINT-001: git=pathology_pass arks=resolved_pass ??maint:background lease; gc prune remains refuse-closed
+ok
+test cd4_ref002_packed_refs ... G18 REF-002: git=pathology_pass arks=resolved_pass ??refns:packed-refs lease; packed-refs.lock still honored
+ok
+test cd4_ref004_txn ... G18 REF-004: git=pathology_pass arks=resolved_pass ??refns:txn:multi lease for multi-ref prepare abort-all class
+ok
+test cd4_ref008_symref ... G18 REF-008: git=pathology_pass arks=resolved_pass ??refns:HEAD lease; HEAD.lock still honored
+ok
+test cd4_ref010_create ... G18 REF-010: git=pathology_pass arks=resolved_pass ??exclusive refns for identical new-ref create
+ok
+test cd4_seq005_conflict ... G18 SEQ-005: git=pathology_pass arks=resolved_pass ??seq:conflict:path exclusive lease for dual conflict edits
+ok
+test cd4_wt003_prune ... G18 WT-003: git=pathology_pass arks=resolved_pass ??domain:worktree:prune lease before prune vs live agent
+ok
+test cd5_agent008_policy_hook ... G18 AGENT-008: git=pathology_pass arks=resolved_pass ??hook:policy exclusive lease; lease ??skip index.lock
+ok
+test cd5_agent009_bare_channel ... G18 AGENT-009: git=pathology_pass arks=resolved_pass ??refns:refs/heads/agents/ + refns:bare:coord; tip locks still honored
+ok
+test cd5_agent012_secret_scan ... G18 AGENT-012: git=pathology_pass arks=resolved_pass ??hook:secret-scan exclusive lease under secret-scan × N
+ok
+test cd5_cfg001_config_local ... G18 CFG-001: git=pathology_pass arks=resolved_pass ??config:local exclusive lease; no invented config.lock dialect; lease ??skip Git locks
+ok
+test cd5_idx009_hook_index_compose ... G18 IDX-009: git=pathology_pass arks=resolved_pass ??hook:critical + index:paths:default composition; locks honored
+ok
+test cd5_idx012_worktree_index ... G18 IDX-012: git=pathology_pass arks=resolved_pass ??index:paths:worktree lease; shared tip/refns remain separate
+ok
+test cd5_ref005_txn_snapshot ... G18 REF-005: git=pathology_pass arks=resolved_pass ??refns:txn:snapshot lease honesty; no invented snapshot wire bytes
+ok
+test cd5_ref014_remotes_fanin ... G18 REF-014: git=pathology_pass arks=resolved_pass ??refns:refs/remotes/ lease; packed-refs.lock still honored
+ok
+test cd5_ref015_receive_pack ... G18 REF-015: git=pathology_pass arks=resolved_pass ??refns:receive-pack lease; tip locks still honored
+ok
+test cd5_toctou001_status_commit ... G18 TOCTOU-001: git=pathology_pass arks=resolved_pass ??toctou:status-commit lease-before-lock; no invented porcelain snapshot txn
+ok
+test cd5_wt007_shared_hooks ... G18 WT-007: git=pathology_pass arks=resolved_pass ??domain:worktree:hooks lease before shared pre-commit storm
+ok
+test cd5_wt008_add_collision ... G18 WT-008: git=pathology_pass arks=resolved_pass ??domain:worktree:add exclusive lease before worktree add name collide
+ok
+test cd6_cfg003_global ... G18 CFG-003: git=pathology_pass arks=resolved_pass ??config:global exclusive lease; no invented config.lock dialect
+ok
+test cd6_hook004_update ... G18 HOOK-004: git=pathology_pass arks=resolved_pass ??hook:update exclusive lease; tip locks still honored
+ok
+test cd6_misc004_clean ... G18 MISC-004: git=pathology_pass arks=resolved_pass ??misc:clean exclusive lease; lease ??skip index.lock
+ok
+test cd6_obj002_loose_write ... G18 OBJ-002: git=pathology_pass arks=resolved_pass ??obj:loose:write exclusive lease before loose fan-out storms
+ok
+test cd6_obj003_write_before_ref ... G18 OBJ-003: git=pathology_pass arks=resolved_pass ??obj:write-before-ref + maint:gc honesty; prune remains refuse-closed
+ok
+test cd6_ref019_common ... G18 REF-019: git=pathology_pass arks=resolved_pass ??refns:common lease before shared tip moves across worktrees
+ok
+test cd6_ref023_rename ... G18 REF-023: git=pathology_pass arks=resolved_pass ??refns:rename lease; tip locks still honored
+ok
+test cd6_sub002_update ... G18 SUB-002: git=pathology_pass arks=resolved_pass ??domain:submodule:update exclusive lease for same-path update
+ok
+test cd6_sub004_status ... G18 SUB-004: git=pathology_pass arks=resolved_pass ??domain:submodule:status lease; no absolute PERF SLO claim
+ok
+test cd6_sub007_modules ... G18 SUB-007: git=pathology_pass arks=resolved_pass ??domain:submodule:modules exclusive lease before modules/ create race
+ok
+test cd6_toctou002_tip_cas ... G18 TOCTOU-002: git=pathology_pass arks=resolved_pass ??toctou:tip-cas lease-before-lock; prefer expected OID CAS
+ok
+test cd6_toctou006_fetch_rebase ... G18 TOCTOU-006: git=pathology_pass arks=resolved_pass ??toctou:fetch-rebase exclusive lease; no invented onto snapshot
+ok
+test cd7_ci003_fixture_bare ... G18 CI-003: git=pathology_pass arks=resolved_pass ??ci:fixture-bare exclusive lease for shared fixture push CAS
+ok
+test cd7_ci004_bot_ns ... G18 CI-004: git=pathology_pass arks=resolved_pass ??refns:refs/heads/bot/ partition lease for bot temp branches
+ok
+test cd7_lfs002_path_lock ... G18 LFS-002: git=pathology_pass arks=resolved_pass ??lfs:path-lock honesty; LFS locks ??index.lock; lease ??skip Git locks
+ok
+test cd7_misc010_identity_env ... G18 MISC-010: git=pathology_pass arks=resolved_pass ??misc:identity-env exclusive lease before identity-sensitive writes
+ok
+test cd7_misc015_add_from_bare ... G18 MISC-015: git=pathology_pass arks=resolved_pass ??domain:worktree:add-from-bare exclusive lease
+ok
+test cd7_misc016_txn_stdin ... G18 MISC-016: git=pathology_pass arks=resolved_pass ??refns:txn:stdin lease; tip locks still honored
+ok
+test cd7_net001_fetch ... G18 NET-001: git=pathology_pass arks=resolved_pass ??net:fetch:origin lease; packed-refs.lock still honored
+ok
+test cd7_net002_push ... G18 NET-002: git=pathology_pass arks=resolved_pass ??net:push:branch exclusive lease; tip locks still honored
+ok
+test cd7_net007_credential ... G18 NET-007: git=pathology_pass arks=resolved_pass ??net:credential lease honesty; no invented helper protocol
+ok
+test cd7_pack007_promisor_fetch ... G18 PACK-007: git=pathology_pass arks=resolved_pass ??pack:promisor:fetch exclusive lease
+ok
+test cd7_shal002_promisor ... G18 SHAL-002: git=pathology_pass arks=resolved_pass ??shallow:promisor lease; no absolute PERF SLO claim
+ok
+test cd7_sub010_deinit ... G18 SUB-010: git=pathology_pass arks=resolved_pass ??domain:submodule:deinit exclusive lease
+ok
+test cd8_agent004_nfs_refuse ... G18 AGENT-004: git=pathology_pass arks=resolved_pass ??agent:nfs:refuse honesty ??do not green multi-host shared WT on NFS
+ok
+test cd8_cfg002_includeif ... G18 CFG-002: git=pathology_pass arks=resolved_pass ??config:includeIf lease; no invented config.lock dialect
+ok
+test cd8_perf001_lock_serialize ... G18 PERF-001: git=pathology_pass arks=resolved_pass ??perf:lock:serialize lease; no absolute ms SLO (M14/G19 separated)
+ok
+test cd8_perf002_status_walk ... G18 PERF-002: git=pathology_pass arks=resolved_pass ??perf:status:walk lease; no absolute ms SLO
+ok
+test cd8_perf003_fsmonitor ... G18 PERF-003: git=pathology_pass arks=resolved_pass ??perf:fsmonitor lease; no invented daemon; no absolute ms SLO
+ok
+test cd8_perf004_commit_graph ... G18 PERF-004: git=pathology_pass arks=resolved_pass ??perf:commit-graph lease; no absolute ms SLO
+ok
+test cd8_perf005_loose_burst ... G18 PERF-005: git=pathology_pass arks=resolved_pass ??perf:loose:burst lease; no absolute ms SLO
+ok
+test cd8_perf006_process_spawn ... G18 PERF-006: git=pathology_pass arks=resolved_pass ??perf:process:spawn lease; no absolute ms SLO
+ok
+test cd8_perf007_pack_mmap ... G18 PERF-007: git=pathology_pass arks=resolved_pass ??perf:pack:mmap lease; no absolute ms SLO
+ok
+test cd8_perf008_blame ... G18 PERF-008: git=pathology_pass arks=resolved_pass ??perf:blame lease; no absolute ms SLO
+ok
+test cd8_perf009_grep ... G18 PERF-009: git=pathology_pass arks=resolved_pass ??perf:grep lease; no absolute ms SLO
+ok
+test cd8_perf010_diff_stat ... G18 PERF-010: git=pathology_pass arks=resolved_pass ??perf:diff:stat lease; no absolute ms SLO
+ok
+test zzz_write_receipt ... G18: receipt written to /workspace/verify/gates/g18/out/receipt.json
+ok
+
+test result: ok. 73 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.30s
+
+   Doc-tests arks_g18_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G18: receipt written to /workspace/verify/gates/g18/out/receipt.json
+{
+  "generated_unix": 1794319931,
+  "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "revision": "54c9dc2eef001af9c39ee31def5029829d8096b8",
+  "scenarios": [
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "M13 lease AlreadyHeld wait/backoff; write path honors live locks",
+      "scenario_id": "AGENT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns lease coordinates tip writers; lease ??skip Git locks",
+      "scenario_id": "REF-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "lease serializes tip writers before CAS; wait honesty for loser",
+      "scenario_id": "REF-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "partitioned refns agent namespaces; overlapping prefix AlreadyHeld",
+      "scenario_id": "REF-011"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "composed domain:worktree + domain:submodule leases; locks honored",
+      "scenario_id": "AGENT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "TTL fencing via lease expire; write path honors Git locks",
+      "scenario_id": "LOCK-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:submodule lease; Git locks still honored",
+      "scenario_id": "SUB-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree lease; Git locks still honored",
+      "scenario_id": "WT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "agent refns partitions + main merge coordinator lease",
+      "scenario_id": "AGENT-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:critical lease budget; no invented async hook runners",
+      "scenario_id": "HOOK-001/HOOK-006"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:default path-set lease; Git locks honored",
+      "scenario_id": "IDX-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:gc lease; arks gc refuse-closed",
+      "scenario_id": "PACK-004/MAINT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "agent:blackboard exclusive lease; lease ??skip index.lock",
+      "scenario_id": "AGENT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "AlreadyHeld taxonomy vs blind-retry all fatals (AGENT-010)",
+      "scenario_id": "AGENT-010"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:formatter lease; locks honored",
+      "scenario_id": "AGENT-011"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:private:agent lease; shared default index contamination refuse",
+      "scenario_id": "IDX-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:same lease for parallel same-path add",
+      "scenario_id": "IDX-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "maint:background lease; gc prune remains refuse-closed",
+      "scenario_id": "MAINT-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:packed-refs lease; packed-refs.lock still honored",
+      "scenario_id": "REF-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:txn:multi lease for multi-ref prepare abort-all class",
+      "scenario_id": "REF-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:HEAD lease; HEAD.lock still honored",
+      "scenario_id": "REF-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "exclusive refns for identical new-ref create",
+      "scenario_id": "REF-010"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "seq:conflict:path exclusive lease for dual conflict edits",
+      "scenario_id": "SEQ-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:prune lease before prune vs live agent",
+      "scenario_id": "WT-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:policy exclusive lease; lease ??skip index.lock",
+      "scenario_id": "AGENT-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:refs/heads/agents/ + refns:bare:coord; tip locks still honored",
+      "scenario_id": "AGENT-009"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:secret-scan exclusive lease under secret-scan × N",
+      "scenario_id": "AGENT-012"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "config:local exclusive lease; no invented config.lock dialect; lease ??skip Git locks",
+      "scenario_id": "CFG-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:critical + index:paths:default composition; locks honored",
+      "scenario_id": "IDX-009"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "index:paths:worktree lease; shared tip/refns remain separate",
+      "scenario_id": "IDX-012"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:txn:snapshot lease honesty; no invented snapshot wire bytes",
+      "scenario_id": "REF-005"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:refs/remotes/ lease; packed-refs.lock still honored",
+      "scenario_id": "REF-014"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:receive-pack lease; tip locks still honored",
+      "scenario_id": "REF-015"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "toctou:status-commit lease-before-lock; no invented porcelain snapshot txn",
+      "scenario_id": "TOCTOU-001"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:hooks lease before shared pre-commit storm",
+      "scenario_id": "WT-007"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "domain:worktree:add exclusive lease before worktree add name collide",
+      "scenario_id": "WT-008"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "config:global exclusive lease; no invented config.lock dialect",
+      "scenario_id": "CFG-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "hook:update exclusive lease; tip locks still honored",
+      "scenario_id": "HOOK-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "misc:clean exclusive lease; lease ??skip index.lock",
+      "scenario_id": "MISC-004"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "obj:loose:write exclusive lease before loose fan-out storms",
+      "scenario_id": "OBJ-002"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "obj:write-before-ref + maint:gc honesty; prune remains refuse-closed",
+      "scenario_id": "OBJ-003"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+      "git_outcome": "pathology_pass",
+      "notes": "refns:common lease before shared tip moves across worktrees",
+      "scenario_id": "REF-019"
+    },
+    {
+      "arks_outcome": "resolved_pass",
+G18: Cd-1..Cd-8 oracle gate (scenario IDs + dual PASS)
+G18: Cd-8 oracle gate PASS (includes Cd-1..Cd-7 regression)
+G18: PASS
+2026-11-10T23:12:12.0691207+09:00 g18,PASS,0,12,"resume"
+===== starting g19 =====
+ Container arks-verify-m1-g19-run-e5136dcb2192 Creating 
+ Container arks-verify-m1-g19-run-e5136dcb2192 Created 
+G19: running G16 functional+timing baseline (iterations>=3, release)
+G16: stock git git version 2.39.5
+G16: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G16: CARGO_BUILD_JOBS=1
+G16: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded form_urlencoded v1.2.2
+  Downloaded zmij v1.0.23
+  Downloaded icu_properties_data v2.4.0
+  Downloaded litemap v0.8.3
+  Downloaded itoa v1.0.18
+  Downloaded idna_adapter v1.2.2
+  Downloaded generic-array v0.14.7
+  Downloaded block-buffer v0.10.4
+  Downloaded windows-link v0.2.1
+  Downloaded idna v1.1.0
+  Downloaded potential_utf v0.1.6
+  Downloaded digest v0.10.7
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded base64 v0.22.1
+  Downloaded thiserror-impl v2.0.21
+  Downloaded yoke v0.8.4
+  Downloaded getrandom v0.2.17
+  Downloaded utf8_iter v1.1.0
+  Downloaded windows-targets v0.52.6
+  Downloaded cfg-if v1.0.5
+  Downloaded windows-core v0.58.0
+  Downloaded version_check v0.9.5
+  Downloaded zerofrom v0.1.8
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded log v0.4.35
+  Downloaded utf_types v1.0.0
+  Downloaded synstructure v0.14.0
+  Downloaded windows-result v0.2.0
+  Downloaded errno v0.3.14
+  Downloaded cpufeatures v0.2.17
+  Downloaded percent-encoding v2.3.2
+  Downloaded untrusted v0.9.0
+  Downloaded windows-interface v0.58.0
+  Downloaded crypto-common v0.1.7
+  Downloaded subtle v2.6.1
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded windows-strings v0.1.0
+  Downloaded serde_core v1.0.229
+  Downloaded webpki-roots v0.26.11
+  Downloaded writeable v0.6.4
+  Downloaded windows-implement v0.58.0
+  Downloaded icu_provider v2.4.0
+  Downloaded displaydoc v0.2.7
+  Downloaded yoke-derive v0.8.4
+  Downloaded zeroize v1.9.1
+  Downloaded fastrand v2.5.0
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded tinystr v0.8.5
+  Downloaded sha2 v0.10.9
+  Downloaded zerovec-derive v0.11.7
+  Downloaded getrandom v0.4.3
+  Downloaded shlex v2.0.1
+  Downloaded unicode-ident v1.0.27
+  Downloaded smallvec v1.16.5
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded quote v1.0.47
+  Downloaded once_cell v1.21.4
+  Downloaded bitflags v2.13.2
+  Downloaded memchr v2.8.3
+  Downloaded thiserror v2.0.21
+  Downloaded tempfile v3.27.0
+  Downloaded proc-macro2 v1.0.107
+  Downloaded serde_derive v1.0.229
+  Downloaded crc32fast v1.5.4
+  Downloaded flate2 v1.1.11
+  Downloaded r-efi v6.0.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded url v2.5.8
+  Downloaded zerotrie v0.2.5
+  Downloaded rustls-webpki v0.103.16
+  Downloaded serde v1.0.229
+  Downloaded icu_collections v2.4.0
+  Downloaded typenum v1.20.1
+  Downloaded icu_properties v2.4.0
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded cc v1.11.1
+  Downloaded serde_json v1.0.154
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded icu_normalizer v2.4.0
+  Downloaded rustls v0.23.46
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded rustix v1.1.6
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded windows-sys v0.52.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows v0.58.0
+G16: gix-exit OK
+G16: build arks binary (release; compile excluded from timings)
+    Finished `release` profile [optimized] target(s) in 0.61s
+G16: ARKS_JOURNEY_ITERATIONS=3
+G16: journey-compare suite (verify/gates/g16; release harness ??lower RSS vs debug)
+warning: function `run_refuse_cmd_journey` is never used
+    --> tests/journey_compare.rs:1140:4
+     |
+1140 | fn run_refuse_cmd_journey(
+     |    ^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+System.Management.Automation.RemoteException
+warning: function `snapshot_git_dir` is never used
+    --> tests/journey_compare.rs:1386:4
+     |
+1386 | fn snapshot_git_dir(repo: &Path) -> Vec<(String, u64)> {
+     |    ^^^^^^^^^^^^^^^^
+System.Management.Automation.RemoteException
+warning: function `seed_bare_repo` is never used
+    --> tests/journey_compare.rs:1716:4
+     |
+1716 | fn seed_bare_repo(parent: &Path, name: &str) -> PathBuf {
+     |    ^^^^^^^^^^^^^^
+System.Management.Automation.RemoteException
+warning: `arks-g16-cleanroom` (test "journey_compare") generated 3 warnings
+    Finished `release` profile [optimized] target(s) in 0.05s
+     Running unittests src/lib.rs (/cargo-target/release/deps/arks_g16_cleanroom-b5d4972bd7c55728)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/journey_compare.rs (/cargo-target/release/deps/journey_compare-4ac159e34f118d11)
+
+running 1 test
+G16 journey done: J-LOCAL-01
+G16 journey done: J-BRANCH-01
+G16 journey done: J-MERGE-FF-01
+G16 journey done: J-REBASE-01
+G16 journey done: J-BUNDLE-01
+G16 journey done: J-CLONE-LOCAL-01
+G16 journey done: J-CLONE-PATH-01
+G16 journey done: J-ALIAS-01
+G16 journey done: J-WORKTREE-01
+G16 journey done: J-TAG-01
+G16 journey done: J-STASH-01
+G16 journey done: J-CHERRY-01
+G16 journey done: J-DIFF-01
+G16 journey done: J-RM-MV-01
+G16 journey done: J-ARCHIVE-01
+G16 journey done: J-REFLOG-01
+G16 journey done: J-REVERT-01
+G16 journey done: J-REPACK-01
+G16 journey done: J-SUBMODULE-01
+G16 journey-compare functional PASS; iterations=3 aggregation=median_p95; metrics -> /workspace/verify/gates/g16/out/metrics.json
+  J-LOCAL-01 / git: functional=pass wall_ms_total=358 wall_ms_p95_total=Some(359) peak_rss_kb=Some(4756) cpu_ms=Some(0)
+  J-LOCAL-01 / arks: functional=pass wall_ms_total=154 wall_ms_p95_total=Some(158) peak_rss_kb=Some(14188) cpu_ms=Some(10)
+  J-BRANCH-01 / git: functional=pass wall_ms_total=338 wall_ms_p95_total=Some(348) peak_rss_kb=Some(4780) cpu_ms=Some(0)
+  J-BRANCH-01 / arks: functional=pass wall_ms_total=152 wall_ms_p95_total=Some(152) peak_rss_kb=Some(4712) cpu_ms=Some(0)
+  J-MERGE-FF-01 / git: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(6) peak_rss_kb=Some(4588) cpu_ms=Some(0)
+  J-MERGE-FF-01 / arks: functional=pass wall_ms_total=2 wall_ms_p95_total=Some(4) peak_rss_kb=Some(296) cpu_ms=Some(0)
+  J-REBASE-01 / git: functional=pass wall_ms_total=27 wall_ms_p95_total=Some(27) peak_rss_kb=Some(5080) cpu_ms=Some(0)
+  J-REBASE-01 / arks: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(8) peak_rss_kb=Some(5088) cpu_ms=Some(0)
+  J-BUNDLE-01 / git: functional=pass wall_ms_total=322 wall_ms_p95_total=Some(371) peak_rss_kb=Some(4732) cpu_ms=Some(0)
+  J-BUNDLE-01 / arks: functional=pass wall_ms_total=148 wall_ms_p95_total=Some(152) peak_rss_kb=Some(848) cpu_ms=Some(0)
+  J-CLONE-LOCAL-01 / git: functional=pass wall_ms_total=42 wall_ms_p95_total=Some(44) peak_rss_kb=Some(4824) cpu_ms=Some(0)
+  J-CLONE-LOCAL-01 / arks: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(8) peak_rss_kb=Some(4356) cpu_ms=Some(0)
+  J-CLONE-PATH-01 / git: functional=pass wall_ms_total=35 wall_ms_p95_total=Some(39) peak_rss_kb=Some(4872) cpu_ms=Some(0)
+  J-CLONE-PATH-01 / arks: functional=pass wall_ms_total=12 wall_ms_p95_total=Some(12) peak_rss_kb=Some(4556) cpu_ms=Some(0)
+  J-ALIAS-01 / alias: functional=pass wall_ms_total=199 wall_ms_p95_total=Some(233) peak_rss_kb=Some(14644) cpu_ms=Some(10)
+  J-WORKTREE-01 / git: functional=pass wall_ms_total=526 wall_ms_p95_total=Some(668) peak_rss_kb=Some(4752) cpu_ms=Some(0)
+  J-WORKTREE-01 / arks: functional=pass wall_ms_total=206 wall_ms_p95_total=Some(206) peak_rss_kb=Some(920) cpu_ms=Some(0)
+  J-TAG-01 / git: functional=pass wall_ms_total=198 wall_ms_p95_total=Some(198) peak_rss_kb=Some(24008) cpu_ms=Some(80)
+  J-TAG-01 / arks: functional=pass wall_ms_total=64 wall_ms_p95_total=Some(64) peak_rss_kb=Some(6840) cpu_ms=Some(0)
+  J-STASH-01 / git: functional=pass wall_ms_total=587 wall_ms_p95_total=Some(593) peak_rss_kb=Some(4856) cpu_ms=Some(0)
+  J-STASH-01 / arks: functional=pass wall_ms_total=217 wall_ms_p95_total=Some(217) peak_rss_kb=Some(5912) cpu_ms=Some(10)
+  J-CHERRY-01 / git: functional=pass wall_ms_total=72 wall_ms_p95_total=Some(73) peak_rss_kb=Some(4824) cpu_ms=Some(10)
+  J-CHERRY-01 / arks: functional=pass wall_ms_total=32 wall_ms_p95_total=Some(32) peak_rss_kb=Some(4476) cpu_ms=Some(0)
+  J-DIFF-01 / git: functional=pass wall_ms_total=173 wall_ms_p95_total=Some(174) peak_rss_kb=Some(4820) cpu_ms=Some(20)
+  J-DIFF-01 / arks: functional=pass wall_ms_total=79 wall_ms_p95_total=Some(83) peak_rss_kb=Some(11060) cpu_ms=Some(30)
+  J-RM-MV-01 / git: functional=pass wall_ms_total=742 wall_ms_p95_total=Some(779) peak_rss_kb=Some(4792) cpu_ms=Some(0)
+  J-RM-MV-01 / arks: functional=pass wall_ms_total=262 wall_ms_p95_total=Some(264) peak_rss_kb=Some(840) cpu_ms=Some(0)
+  J-ARCHIVE-01 / git: functional=pass wall_ms_total=32 wall_ms_p95_total=Some(32) peak_rss_kb=Some(4436) cpu_ms=Some(0)
+  J-ARCHIVE-01 / arks: functional=pass wall_ms_total=12 wall_ms_p95_total=Some(16) peak_rss_kb=Some(6752) cpu_ms=Some(0)
+  J-REFLOG-01 / git: functional=pass wall_ms_total=8 wall_ms_p95_total=Some(8) peak_rss_kb=Some(4956) cpu_ms=Some(0)
+  J-REFLOG-01 / arks: functional=pass wall_ms_total=4 wall_ms_p95_total=Some(4) peak_rss_kb=Some(312) cpu_ms=Some(0)
+  J-REVERT-01 / git: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(6) peak_rss_kb=Some(4772) cpu_ms=Some(0)
+  J-REVERT-01 / arks: functional=pass wall_ms_total=2 wall_ms_p95_total=Some(4) peak_rss_kb=Some(176) cpu_ms=Some(0)
+  J-REPACK-01 / git: functional=pass wall_ms_total=31 wall_ms_p95_total=Some(45) peak_rss_kb=Some(4060) cpu_ms=Some(0)
+  J-REPACK-01 / arks: functional=pass wall_ms_total=6 wall_ms_p95_total=Some(8) peak_rss_kb=Some(4744) cpu_ms=Some(0)
+  J-SUBMODULE-01 / git: functional=pass wall_ms_total=107 wall_ms_p95_total=Some(108) peak_rss_kb=Some(3716) cpu_ms=Some(0)
+  J-SUBMODULE-01 / arks: functional=pass wall_ms_total=16 wall_ms_p95_total=Some(16) peak_rss_kb=Some(356) cpu_ms=Some(0)
+test journey_compare_catalog ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.54s
+
+   Doc-tests arks_g16_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G16: metrics written to /workspace/verify/gates/g16/out/metrics.json
+{
+  "schema": "arks-journey-metrics/v1",
+  "run": {
+    "venue": "clean-room",
+    "image_tag": "arks-verify-m1:0.1.0",
+    "image_digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+    "stock_git_version": "git version 2.39.5",
+    "arks_revision": "54c9dc2eef001af9c39ee31def5029829d8096b8",
+    "arks_profile": "release",
+    "iterations": 3,
+    "warm_policy": "cold-workdir-per-lane",
+    "aggregation": "median_p95"
+  },
+  "journeys": [
+    {
+      "id": "J-LOCAL-01",
+      "lanes": [
+        {
+          "peer": "git",
+          "functional": "pass",
+          "exit_overall": 0,
+          "wall_ms_total": 358,
+          "wall_ms_p95_total": 359,
+          "peak_rss_kb": 4756,
+          "peak_rss_kb_p95": 4800,
+          "cpu_ms": 0,
+          "cpu_ms_p95": 0,
+          "steps": [
+            {
+              "name": "add",
+              "wall_ms": 6,
+              "wall_ms_p95": 8,
+              "exit": 0
+            },
+            {
+              "name": "commit",
+              "wall_ms": 4,
+              "wall_ms_p95": 4,
+              "exit": 0
+            },
+G16: PASS
+G19: evaluate Pf3 allow-list = all G16 journeys (arks_median <= 0.8 * git_median)
+G19: FAIL J-ALIAS-01: aggressive ratio 0.5559 > 0.5 (not in aggressive_na)
+G19 J-LOCAL-01: git=358 arks=154 ratio=0.4302 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-BRANCH-01: git=338 arks=152 ratio=0.4497 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-MERGE-FF-01: git=6 arks=2 ratio=0.3333 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REBASE-01: git=27 arks=6 ratio=0.2222 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-BUNDLE-01: git=322 arks=148 ratio=0.4596 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-CLONE-LOCAL-01: git=42 arks=6 ratio=0.1429 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-CLONE-PATH-01: git=35 arks=12 ratio=0.3429 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-ALIAS-01: git=358 arks=199 ratio=0.5559 pass(<=0.8)=True aggressive(<=0.5)=False
+G19 J-WORKTREE-01: git=526 arks=206 ratio=0.3916 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-TAG-01: git=198 arks=64 ratio=0.3232 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-STASH-01: git=587 arks=217 ratio=0.3697 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-CHERRY-01: git=72 arks=32 ratio=0.4444 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-DIFF-01: git=173 arks=79 ratio=0.4566 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-RM-MV-01: git=742 arks=262 ratio=0.3531 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-ARCHIVE-01: git=32 arks=12 ratio=0.3750 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REFLOG-01: git=8 arks=4 ratio=0.5000 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REVERT-01: git=6 arks=2 ratio=0.3333 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-REPACK-01: git=31 arks=6 ratio=0.1935 pass(<=0.8)=True aggressive(<=0.5)=True
+G19 J-SUBMODULE-01: git=107 arks=16 ratio=0.1495 pass(<=0.8)=True aggressive(<=0.5)=True
+G19: receipt written to /workspace/verify/gates/g19/out/receipt.json
+G19: Pf5 aggressive ??.5× claimed=18 aggressive_na=0 terminal=18/19 miss=['J-ALIAS-01']
+System.Management.Automation.RemoteException
+2026-11-10T23:12:43.2315652+09:00 g19,FAIL,1,31,"resume"

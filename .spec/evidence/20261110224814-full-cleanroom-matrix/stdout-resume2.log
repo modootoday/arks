@@ -1,0 +1,494 @@
+===== skip already done g21 =====
+===== skip already done g38 =====
+===== skip already done g39 =====
+===== skip already done g40 =====
+===== skip already done g0 =====
+===== skip already done g1 =====
+===== skip already done g2 =====
+===== skip already done g3 =====
+===== skip already done g4 =====
+===== skip already done g5 =====
+===== skip already done g6 =====
+===== skip already done g7 =====
+===== skip already done g10 =====
+===== skip already done g12 =====
+===== skip already done g13 =====
+===== starting g11 =====
+ Container arks-verify-m1-g11-run-15b88c0c885d Creating 
+ Container arks-verify-m1-g11-run-15b88c0c885d Created 
+G11: stock git git version 2.39.5
+G11: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G11: CARGO_BUILD_JOBS=1
+G11: gix-exit / no-celir scan
+G11: gix-exit / default tree CELIR-free OK
+G11: build arks binary
+ Downloading crates ...
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded form_urlencoded v1.2.2
+  Downloaded webpki-roots v0.26.11
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded base64 v0.22.1
+  Downloaded serde_derive v1.0.229
+  Downloaded idna_adapter v1.2.2
+  Downloaded utf8_iter v1.1.0
+  Downloaded writeable v0.6.4
+  Downloaded untrusted v0.9.0
+  Downloaded subtle v2.6.1
+  Downloaded yoke-derive v0.8.4
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded zerofrom v0.1.8
+  Downloaded tinystr v0.8.5
+  Downloaded potential_utf v0.1.6
+  Downloaded serde_core v1.0.229
+  Downloaded smallvec v1.16.5
+  Downloaded once_cell v1.21.4
+  Downloaded utf_types v1.0.0
+  Downloaded yoke v0.8.4
+  Downloaded itoa v1.0.18
+  Downloaded zeroize v1.9.1
+  Downloaded zmij v1.0.23
+  Downloaded percent-encoding v2.3.2
+  Downloaded zerovec-derive v0.11.7
+  Downloaded displaydoc v0.2.7
+  Downloaded shlex v2.0.1
+  Downloaded synstructure v0.14.0
+  Downloaded getrandom v0.2.17
+  Downloaded litemap v0.8.3
+  Downloaded serde v1.0.229
+  Downloaded icu_provider v2.4.0
+  Downloaded log v0.4.35
+  Downloaded zerotrie v0.2.5
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded rustls-webpki v0.103.16
+  Downloaded url v2.5.8
+  Downloaded memchr v2.8.3
+  Downloaded icu_collections v2.4.0
+  Downloaded ureq v2.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded serde_json v1.0.154
+  Downloaded cc v1.11.1
+  Downloaded idna v1.1.0
+  Downloaded icu_properties_data v2.4.0
+  Downloaded webpki-roots v1.0.11
+  Downloaded rustls v0.23.46
+  Downloaded icu_normalizer v2.4.0
+  Downloaded libc v0.2.191
+  Downloaded ring v0.17.14
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.15s
+G11: arks-lease unit tests (L1/L2/dual-path/lock-additive)
+ Downloading crates ...
+  Downloaded getrandom v0.4.3
+  Downloaded bitflags v2.13.2
+  Downloaded errno v0.3.14
+  Downloaded fastrand v2.5.0
+  Downloaded tempfile v3.27.0
+  Downloaded rustix v1.1.6
+  Downloaded linux-raw-sys v0.12.1
+   Compiling arks-pack v0.0.0 (/workspace/crates/arks-pack)
+   Compiling serde_derive v1.0.229
+   Compiling serde v1.0.229
+   Compiling arks-store v0.0.0 (/workspace/crates/arks-store)
+   Compiling arks-index v0.0.0 (/workspace/crates/arks-index)
+   Compiling arks-lease v0.0.0 (/workspace/crates/arks-lease)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.71s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_lease-e56d6e6246b00f81)
+
+running 10 tests
+test tests::cd1_resource_prefix_helpers ... ok
+test tests::dual_path_gitcompat_default_high_concurrency_opt_in ... ok
+test tests::l1_conflict_and_renew_same_holder ... ok
+test tests::l1_expire_due ... ok
+test tests::l1_grant_release_inspect_list ... ok
+test pipeline::tests::competing_git_lock_still_fails_under_lease ... ok
+test tests::l2_durable_roundtrip ... ok
+test tests::lease_held_still_honors_git_ref_lock ... ok
+test pipeline::tests::prep_parallel_and_batch_apply_distinct_shards ... ok
+test pipeline::tests::prep_parallel_and_batch_apply_hundreds ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/g22_index_contention.rs (/cargo-target/debug/deps/g22_index_contention-eb772b8f7f7fd174)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g23_dual_path_git.rs (/cargo-target/debug/deps/g23_dual_path_git-6106e30eb121779e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g24_l3_celir_joint.rs (/cargo-target/debug/deps/g24_l3_celir_joint-6562971b3e3e82e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g25_index_scale.rs (/cargo-target/debug/deps/g25_index_scale-bf50f55c3cb06508)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g26_branch_pr_sim.rs (/cargo-target/debug/deps/g26_branch_pr_sim-47683a0c89bfc969)
+
+running 5 tests
+test g26_c04_contended_lease_fail_closed ... ok
+test g26_c03_leased_concurrent_tip_workers_n32 ... ok
+test g26_c01_branch_scale_n2048 ... ok
+test g26_c05_planted_lock_induce_compare ... ok
+test g26_c02_synthetic_pr_refs_n2048 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/g34_shared_index_contention.rs (/cargo-target/debug/deps/g34_shared_index_contention-90f79b4bf4bcf4be)
+
+running 3 tests
+test g34_c02_second_holder_already_held ... ok
+test g34_c03_live_index_lock_refuses_write ... ok
+test g34_c01_two_writer_shared_index ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_lease
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G11: lease-product suite (verify/gates/g11)
+   Compiling arks-g11-cleanroom v0.0.0 (/workspace/verify/gates/g11)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running tests/lease_product.rs (/cargo-target/debug/deps/lease_product-26933703f93ea667)
+
+running 2 tests
+test g11_lease_crate_tests_are_invoked_by_gate_script ... ok
+test g11_help_lists_sv_and_not_forge ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+G11: G14 CLI-parity regression (verify/gates/g14)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/porcelain_pc.rs (/cargo-target/debug/deps/porcelain_pc-2b28c71443f69c0a)
+
+running 9 tests
+test help_lists_pc_and_omits_refuse_closed ... ok
+test archive_tar_contains_blob ... ok
+test clean_d_removes_untracked_dir ... ok
+test bundle_verify_arks_bundle ... ok
+test reflog_after_commit ... ok
+test annotated_tag_stock_git_reads ... ok
+test same_dot_git_stock_peer ... ok
+test refuse_closed_and_unknown_flags ... ok
+test alias_shim_workflows_and_refuse ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+G11: G7 remote-client regression (verify/gates/g7)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_g7_cleanroom-c48a1874f7402353)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/remote_http.rs (/cargo-target/debug/deps/remote_http-80a44dc292e61ebe)
+
+running 4 tests
+test help_lists_wave_h_and_refuses_ssh ... ok
+test remote_add_list_remove_config ... ok
+test submodule_add_https_smart_http_loopback ... ok
+test clone_fetch_push_smart_http_loopback ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+   Doc-tests arks_g7_cleanroom
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G11: PASS
+2026-11-10T23:00:59.3346709+09:00 g11,PASS,0,11,"resume"
+===== starting g11l3 =====
+ Container arks-verify-m1-g11l3-run-d22c5548a185 Creating 
+ Container arks-verify-m1-g11l3-run-d22c5548a185 Created 
+G11-L3: stock git git version 2.39.5
+G11-L3: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G11-L3: CARGO_BUILD_JOBS=1
+G11-L3: gix-exit / no-celir scan
+G11-L3: gix-exit / default tree CELIR-free OK
+G11-L3: arks-lease unit + pipeline stress (L1/L2 + N=32/N=128 claimed shape)
+ Downloading crates ...
+  Downloaded memchr v2.8.3
+  Downloaded errno v0.3.14
+  Downloaded itoa v1.0.18
+  Downloaded fastrand v2.5.0
+  Downloaded once_cell v1.21.4
+  Downloaded tempfile v3.27.0
+  Downloaded zmij v1.0.23
+  Downloaded getrandom v0.4.3
+  Downloaded serde_derive v1.0.229
+  Downloaded bitflags v2.13.2
+  Downloaded serde_core v1.0.229
+  Downloaded serde v1.0.229
+  Downloaded serde_json v1.0.154
+  Downloaded rustix v1.1.6
+  Downloaded libc v0.2.191
+  Downloaded linux-raw-sys v0.12.1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.15s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_lease-e56d6e6246b00f81)
+
+running 10 tests
+test tests::dual_path_gitcompat_default_high_concurrency_opt_in ... ok
+test tests::cd1_resource_prefix_helpers ... ok
+test tests::l1_conflict_and_renew_same_holder ... ok
+test tests::l1_expire_due ... ok
+test tests::l1_grant_release_inspect_list ... ok
+test pipeline::tests::competing_git_lock_still_fails_under_lease ... ok
+test tests::l2_durable_roundtrip ... ok
+test tests::lease_held_still_honors_git_ref_lock ... ok
+test pipeline::tests::prep_parallel_and_batch_apply_distinct_shards ... ok
+test pipeline::tests::prep_parallel_and_batch_apply_hundreds ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/g22_index_contention.rs (/cargo-target/debug/deps/g22_index_contention-eb772b8f7f7fd174)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g23_dual_path_git.rs (/cargo-target/debug/deps/g23_dual_path_git-6106e30eb121779e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g24_l3_celir_joint.rs (/cargo-target/debug/deps/g24_l3_celir_joint-6562971b3e3e82e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g25_index_scale.rs (/cargo-target/debug/deps/g25_index_scale-bf50f55c3cb06508)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g26_branch_pr_sim.rs (/cargo-target/debug/deps/g26_branch_pr_sim-47683a0c89bfc969)
+
+running 5 tests
+test g26_c04_contended_lease_fail_closed ... ok
+test g26_c03_leased_concurrent_tip_workers_n32 ... ok
+test g26_c01_branch_scale_n2048 ... ok
+test g26_c05_planted_lock_induce_compare ... ok
+test g26_c02_synthetic_pr_refs_n2048 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests/g34_shared_index_contention.rs (/cargo-target/debug/deps/g34_shared_index_contention-90f79b4bf4bcf4be)
+
+running 3 tests
+test g34_c02_second_holder_already_held ... ok
+test g34_c03_live_index_lock_refuses_write ... ok
+test g34_c01_two_writer_shared_index ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arks_lease
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G11-L3: lease-product suite regress (verify/gates/g11)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/lease_product.rs (/cargo-target/debug/deps/lease_product-26933703f93ea667)
+
+running 2 tests
+test g11_lease_crate_tests_are_invoked_by_gate_script ... ok
+test g11_help_lists_sv_and_not_forge ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G11-L3: PASS
+2026-11-10T23:01:03.4201526+09:00 g11l3,PASS,0,4,"resume"
+===== starting g15 =====
+ Container arks-verify-m1-g15-run-ddb121dca56f Creating 
+ Container arks-verify-m1-g15-run-ddb121dca56f Created 
+G15: stock git git version 2.39.5
+G15: rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+G15: CARGO_BUILD_JOBS=1
+G15: gix-exit scan
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded zmij v1.0.23
+  Downloaded icu_provider v2.4.0
+  Downloaded base64 v0.22.1
+  Downloaded itoa v1.0.18
+  Downloaded potential_utf v0.1.6
+  Downloaded r-efi v6.0.0
+  Downloaded bitflags v2.13.2
+  Downloaded litemap v0.8.3
+  Downloaded icu_properties_data v2.4.0
+  Downloaded sha2 v0.10.9
+  Downloaded percent-encoding v2.3.2
+  Downloaded cpufeatures v0.2.17
+  Downloaded idna_adapter v1.2.2
+  Downloaded displaydoc v0.2.7
+  Downloaded quote v1.0.47
+  Downloaded once_cell v1.21.4
+  Downloaded memchr v2.8.3
+  Downloaded proc-macro2 v1.0.107
+  Downloaded log v0.4.35
+  Downloaded serde_core v1.0.229
+  Downloaded serde_derive v1.0.229
+  Downloaded serde v1.0.229
+  Downloaded thiserror-impl v2.0.21
+  Downloaded rustls-webpki v0.103.16
+  Downloaded generic-array v0.14.7
+  Downloaded getrandom v0.4.3
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded zerovec-derive v0.11.7
+  Downloaded windows-link v0.2.1
+  Downloaded subtle v2.6.1
+  Downloaded webpki-roots v0.26.11
+  Downloaded block-buffer v0.10.4
+  Downloaded utf8_iter v1.1.0
+  Downloaded cfg-if v1.0.5
+  Downloaded windows-result v0.2.0
+  Downloaded shlex v2.0.1
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded utf_types v1.0.0
+  Downloaded yoke v0.8.4
+  Downloaded synstructure v0.14.0
+  Downloaded windows-implement v0.58.0
+  Downloaded crypto-common v0.1.7
+  Downloaded untrusted v0.9.0
+  Downloaded zerofrom v0.1.8
+  Downloaded yoke-derive v0.8.4
+  Downloaded form_urlencoded v1.2.2
+  Downloaded errno v0.3.14
+  Downloaded windows-interface v0.58.0
+  Downloaded windows-strings v0.1.0
+  Downloaded version_check v0.9.5
+  Downloaded thiserror v2.0.21
+  Downloaded windows-targets v0.52.6
+  Downloaded writeable v0.6.4
+  Downloaded digest v0.10.7
+  Downloaded fastrand v2.5.0
+  Downloaded tinystr v0.8.5
+  Downloaded zeroize v1.9.1
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded windows-core v0.58.0
+  Downloaded getrandom v0.2.17
+  Downloaded smallvec v1.16.5
+  Downloaded tempfile v3.27.0
+  Downloaded unicode-ident v1.0.27
+  Downloaded icu_locale_core v2.4.0
+  Downloaded url v2.5.8
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded crc32fast v1.5.4
+  Downloaded flate2 v1.1.11
+  Downloaded zerotrie v0.2.5
+  Downloaded typenum v1.20.1
+  Downloaded idna v1.1.0
+  Downloaded icu_collections v2.4.0
+  Downloaded ureq v2.12.1
+  Downloaded serde_json v1.0.154
+  Downloaded zerovec v0.11.9
+  Downloaded icu_properties v2.4.0
+  Downloaded cc v1.11.1
+  Downloaded rustix v1.1.6
+  Downloaded zlib-rs v0.6.8
+  Downloaded webpki-roots v1.0.11
+  Downloaded syn v2.0.119
+  Downloaded syn v3.0.9
+  Downloaded rustls v0.23.46
+  Downloaded windows_x86_64_gnullvm v0.52.6
+  Downloaded windows_i686_gnullvm v0.52.6
+  Downloaded windows_aarch64_gnullvm v0.52.6
+  Downloaded icu_normalizer v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded windows_aarch64_msvc v0.52.6
+  Downloaded libc v0.2.191
+  Downloaded windows_x86_64_gnu v0.52.6
+  Downloaded windows_x86_64_msvc v0.52.6
+  Downloaded windows_i686_gnu v0.52.6
+  Downloaded windows_i686_msvc v0.52.6
+  Downloaded ring v0.17.14
+  Downloaded windows-sys v0.61.2
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded windows-sys v0.52.0
+  Downloaded windows v0.58.0
+G15: arks-server deps OK (no gix/celir/lease)
+G15: gix-exit / no-celir / no-lease-dep OK
+G15: build arks binary
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.64s
+G15: arks-server unit tests
+   Compiling arks-repo v0.0.0 (/workspace/crates/arks-repo)
+   Compiling arks-server v0.0.0 (/workspace/crates/arks-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.98s
+     Running unittests src/lib.rs (/cargo-target/debug/deps/arks_server-06201efda6411310)
+
+running 15 tests
+test auth::tests::accepts_valid_basic ... ok
+test auth::tests::password_may_contain_colon ... ok
+test auth::tests::roundtrip_base64 ... ok
+test auth::tests::rejects_missing_and_wrong ... ok
+test tests::lfs_batch_download_and_get_object ... ok
+test tests::receive_update_hook_rejects_one_ref ... ok
+test tests::receive_post_receive_runs_after_success ... ok
+test tests::smart_http_info_refs_upload ... ok
+test tests::lfs_batch_upload_and_put_object ... ok
+test tests::receive_advertises_delete_refs_and_report_status_v2 ... ok
+test tests::upload_advertisement_includes_main ... ok
+test tests::smart_http_basic_auth_challenge_and_accept ... ok
+test tests::receive_advertises_proc_receive_when_hook_present ... ok
+test tests::receive_pre_receive_hook_rejects_entire_push ... ok
+test tests::loopback_serves_info_refs ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+   Doc-tests arks_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+G15: git-server suite vs stock git (verify/gates/g15)
+   Compiling arks-g15-cleanroom v0.0.0 (/workspace/verify/gates/g15)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running tests/git_server.rs (/cargo-target/debug/deps/git_server-f0829f6cf5f653b3)
+
+running 4 tests
+test g15_help_wave_sv ... ok
+test g15_capability_honesty_upload_ad ... FAILED
+test g15_stock_git_clone_fetch_push ... ok
+test g15_receive_pack_githooks_honor_list ... ok
+
+failures:
+
+---- g15_capability_honesty_upload_ad stdout ----
+
+thread 'g15_capability_honesty_upload_ad' (646) panicked at tests/git_server.rs:214:5:
+assertion failed: !rtext.contains("push-options")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    g15_capability_honesty_upload_ad
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+error: test failed, to rerun pass `--test git_server`
+System.Management.Automation.RemoteException
+2026-11-10T23:01:13.1917361+09:00 g15,FAIL,101,10,"resume"

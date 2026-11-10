@@ -35,11 +35,11 @@ Release-channel ops (OIDC Environments, tag dry-run, draft Releases): [Release c
 
 Secrets-gated live forge smoke / scale harness: [Forge scale harness](../forge-scale/). Dry-run readiness is not a live latency PASS.
 
-Partial-clone `--filter=blob:none` / promisor is claimed on pack transports; other filter-specs remain out of claim — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/). Shallow `--depth` remains claimed.
+Partial-clone `--filter=blob:none` / `tree:0` / related FS4 filters + promisor are claimed on pack transports; exotic filter-specs remain refuse-with-reason — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/). Shallow `--depth` remains claimed. In-process Git LFS network + smudge is claimed; `scalar` stays refuse/handoff.
 
-SSH, OpenPGP, and X.509 commit signing plus `tag -s` / `verify-tag` are claimed (SSH **G37**; OpenPGP/X.509/`tag -s` **G38**). Forge signature UX remains out of claim — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
+SSH, OpenPGP, and X.509 commit signing plus `tag -s` / `verify-tag` are claimed (SSH **G37**; OpenPGP/X.509/`tag -s` **G38**). Forge signature UX remains Impossible — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
 
-Honest feature comparison: [Git vs arks](../git-vs-arks/). Clean-room Docker e2e (L8) is maintainer verification — not the end-user install path.
+Honest feature comparison: [Git vs arks](../git-vs-arks/). Full Symmetry **FS_final** is Done for git feature symmetry DoD; remaining non-goals are documented Impossible / advisory / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, forge UX, host-env full sync). Clean-room Docker e2e (L8 / S6) is maintainer verification — not the end-user install path.
 
 ## Next
 

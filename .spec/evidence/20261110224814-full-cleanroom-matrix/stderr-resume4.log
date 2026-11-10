@@ -1,0 +1,15 @@
+out-file : 'C:\workspaces\gir\.spec\evidence\20261110224814-full-cleanroom-matrix\g22.log' 파일은 다른 프로세스에서 사
+용 중이므로 프로세스에서 액세스할 수 없습니다.
+위치 C:\workspaces\gir\verify\scripts\resume-cleanroom-matrix.ps1:40 문자:3
++   & docker compose -f verify/docker-compose.yml run --rm @extraArgs $ ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OpenError: (:) [out-file], IOException
+    + FullyQualifiedErrorId : FileOpenFailure,Microsoft.PowerShell.Commands.OutFileCommand
+ 
+Halt on fail for g22 exit=-1
+위치 C:\workspaces\gir\verify\scripts\resume-cleanroom-matrix.ps1:53 문자:5
++     throw "Halt on fail for $gate exit=$ec"
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Halt on fail for g22 exit=-1:String) [], RuntimeException
+    + FullyQualifiedErrorId : Halt on fail for g22 exit=-1
+ 

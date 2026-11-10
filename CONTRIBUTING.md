@@ -9,7 +9,8 @@ Human-facing guidance lives on the product site:
 - [Forge scale harness](docs/forge-scale.md) — secrets-gated G8 dry-run vs receipt-only live
 - [Getting started](docs/getting-started.md) — build and first commands
 - [Limits](docs/limits.md) — what is not claimed
+- [Git vs arks](docs/git-vs-arks.md) — Claimed / advisory / Impossible honesty bar
 
-For agent / maintainer governance, start at [`AGENTS.md`](AGENTS.md). Prefer English in issues, PRs, and docs. Keep secrets out of the tree.
+For agent / maintainer governance, start at [`AGENTS.md`](AGENTS.md). Prefer English in issues, PRs, and docs. Keep secrets out of the tree. Clean-room Docker proves Verified claims; never invent PASS for secrets-absent live forge gates.
 
 Security reports: see [`SECURITY.md`](SECURITY.md).

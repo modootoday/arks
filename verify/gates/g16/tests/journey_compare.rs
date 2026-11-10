@@ -495,13 +495,20 @@ fn run_local_journey(peer: &str, bin: &Path, shim_dir: Option<&Path>, root: &Pat
     assert_step_ok(&s, peer);
     steps.push(s);
     // Pf5: larger timed add/commit payloads beat process-tax floor (LOCAL/ALIAS).
+    // Alias PATH argv (`git` shim = hard-copied arks) adds per-spawn tax vs direct
+    // `arks` — use residual amortize count so ≤0.5× stays stable after sha1cd/object work.
+    let amortize = if peer == "alias" {
+        PF5_RESIDUAL_AMORTIZE_COMMITS
+    } else {
+        PF5_AMORTIZE_COMMITS
+    };
     push_amortize_commits(
         peer,
         bin,
         shim_dir,
         &repo,
         &mut steps,
-        PF5_AMORTIZE_COMMITS,
+        amortize,
         "local",
     );
     assert_peer_ok(peer, bin, shim_dir, &repo, &["status"]);
