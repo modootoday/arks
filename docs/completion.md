@@ -22,7 +22,7 @@ Short public answer to “is arks **fully complete**?” — without inventing C
 | Live forge latency SLOs, crates.io timing (**L9**), absolute crypto immunity, forge host UX, full cloud-sync safety | **NO** — documented non-goals |
 | One-word operator summary | **PARTIAL** — symmetry DoD complete; non-FS residuals remain |
 
-Tip carrying Pf5 REVERT ≤0.5× Claimed + ALIAS honest `aggressive_na`, sha1cd detect+refuse, host-env advisory, forge thin-wrap: see [Git vs arks](../git-vs-arks/) (unblock [[evidence:root/20261111015154]]; U-ladder [[evidence:root/20261111003444]]). Authoritative residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Canonical Done / Partial / Blocked / Non-goal tip table: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) (v0.15.4+). Per-gap unblock paths: [partial-completion unblock research](https://github.com/modootoday/arks/blob/main/.spec/research/20261111001816-partial-completion-unblock-roadmap.research.md). External-deps unblock options for still-blocked items: [still-blocked external-deps research](https://github.com/modootoday/arks/blob/main/.spec/research/20261111012840-still-blocked-external-deps-unblock.research.md).
+Tip carrying Pf5 REVERT ≤0.5× Claimed + ALIAS PATH/`exec` G7 remasure, sha1cd detect+refuse, host-env advisory, forge thin-wrap, server `bundle-uri` + LFS locks slices: see [Git vs arks](../git-vs-arks/) (G-ladder [[plan:root/20261111024440]]; prior unblock [[evidence:root/20261111015154]]). Authoritative residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Canonical tip table: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) (v0.15.5+ G-ladder). Gap classification: [20261111022345](https://github.com/modootoday/arks/blob/main/.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md).
 
 ## Documented non-goals / still blocked
 
@@ -35,17 +35,17 @@ Tip carrying Pf5 REVERT ≤0.5× Claimed + ALIAS honest `aggressive_na`, sha1cd 
 
 ## Tip remasure notes (PF5)
 
-G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: unblock wave REVERT-first (`12→20`) sole remasure — **REVERT 0.5000 Claimed**; **ALIAS 0.5546** `aggressive_na` (process-tax; no PATH redesign this wave); claimed=18; **no** stampede. Historical **Claimed 8/8** at `79fc9bf` remains archival. Details: [Performance](../performance/) · [20261111015154](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111015154-pf5-revert-first-g19-unblock) · [20261111003444](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111003444-u-ladder-partial-gap-close).
+G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: G7 PATH/`exec` absolute-shim cut → **exactly one** sole Docker G19 (see G-ladder evidence); prior REVERT **0.5000 Claimed**; **no** stampede; halt OOM. Historical **Claimed 8/8** at `79fc9bf` remains archival. Details: [Performance](../performance/).
 
 ## Remaining partials (ranked unblock)
 
-1. Live G8 latency — Environment `g8-live` secrets still **0** (2026-11-11 re-probe) + receipt (SKIP ≠ PASS) — **Operator-only**
-2. Pf5 ALIAS ≤0.5× — needs product PATH/`exec` redesign (not seed); hold `aggressive_na` — **no thrash**
+1. Live G8 latency — Environment `g8-live` secrets still **0** (2026-11-11 G1 re-probe) + receipt (SKIP ≠ PASS) — **Operator-only**
+2. Pf5 ALIAS ≤0.5× — G7 PATH/`exec` cut landed; disposition follows sole G19 receipt — **no thrash**
 3. Host-env — Claimed detect+opt-in refuse / LSM detect; full sync still Non-goal / Impossible
-4. **L9** — owner SoT reopen pack only — **Operator-only**
-5. Crypto immunity / full sync / forge product UX — Impossible or Non-goal (detect / thin-wrap Claimed; **never** market “immune”)
+4. **L9** — owner SoT reopen pack only (G2 refreshed) — **Operator-only**
+5. Crypto immunity / full sync / forge product UX / CELIR ObjectStore / multi-writer warranty — Hold forever (detect / thin-wrap Claimed; **never** fake)
 
-Detail: [20261111012840](https://github.com/modootoday/arks/blob/main/.spec/research/20261111012840-still-blocked-external-deps-unblock.research.md). Self vs deps vs FFI buckets: [20261111022345](https://github.com/modootoday/arks/blob/main/.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md).
+Detail: [G-ladder plan](https://github.com/modootoday/arks/blob/main/.spec/plan/20261111024440-gap-classification-g-ladder.plan.md) · [20261111022345](https://github.com/modootoday/arks/blob/main/.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md).
 
 ## How maintainers verify
 

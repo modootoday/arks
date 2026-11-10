@@ -42,8 +42,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Interactive (`rebase -i`, `add -p`/`-i`/`-e`, `stash -p`, editor commit) | Yes | TTY + hunk `-p`, `-i` menu, `-e`, `stash -p` (**FS1/FS3**); scripted env retained | **Claimed** (FS1 / FS3) |
 | `proc-receive` (server) | Yes | Advertise when hook present; divert; ok/ng + rewrite; concurrent lock (**FS2/FS8**) | **Claimed** (FS2 / FS8 closest) |
 | GUI (`gitk`, `git-gui`) | Separate tools | External handoff refuse (**FS7**) | **Claimed** (handoff) |
-| Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT; other argv handoff to `git-lfs`; `scalar` refuse | **Claimed** |
-| `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed with NET-006 lock/truncation honesty (**FS5**) | **Claimed** (FS5 / NET-006) |
+| Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push|lock|locks|unlock` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT + **locks**; tus/S3 handoff; other argv → `git-lfs`; `scalar` refuse | **Claimed** (locks G4; tus/S3 Partial) |
+| `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed (**FS5**); server v2 **`bundle-uri` advertise** (**G3**) | **Claimed** (FS5 / NET-006 / G3) |
 | Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse + **sha1cd detect+refuse** (**OBJ-004**); `init --object-format=sha256` porcelain e2e | **Claimed** (detect+refuse) / **Impossible** (crypto immunity) |
 | Cloud sync on `.git` / OneDrive placeholders | Host hazard | `arks host-env` DriveFS/OneDrive/Dropbox/Syncthing **detect + opt-in refuse**; CfAPI `RECALL_ON_DATA_ACCESS` detect; FS-014 LSM detect | **Claimed(advisory+refuse)** detect (FS-007 / WIN-003 / FS-014); full sync / hydration / LSM bypass **Impossible** |
 | Forge Checks / PR / Issues UX | Not-git | `arks forge` thin wrap → host `gh`; `arks forge recipe`; credential.helper OAuth | **Claimed-closest** thin-wrap; full forge host UX **Non-goal** |
@@ -59,7 +59,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | `push --force-with-lease` / `--push-option` | Yes | Yes on smart pack (lease + options→hooks); not on dumb | **Claimed** (O4 host wire) |
 | Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
-| Partial-clone filters / promisor | Yes | `blob:none`, `tree:0`, `tree:<n>`, `blob:limit=<n>[kmg]` (**FS4**); exotic specs refuse with reason | **Claimed** (R3 / S1 / O2 / FS4) |
+| Partial-clone filters / promisor | Yes | `blob:none`, `tree:0`, `tree:<n>`, `blob:limit=<n>[kmg]`, `object:type=…`, `combine:` of Claimed children (**FS4 + G6**); `sparse:oid` refuse | **Claimed** (R3 / S1 / O2 / FS4 / G6) |
 | Forge Checks / merge-queue / Issues UX | Host APIs | Not a git CLI feature — use `gh` | **Impossible** (documented) |
 | Forge OAuth browser UX | Via helpers | External `credential.helper` MAY speak OAuth; no in-arks browser UX | **Claimed** (helper honor) / **Impossible** (embedded OAuth) |
 
@@ -77,7 +77,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Area | Git | arks | Status |
 |------|-----|------|--------|
 | Clean-room journey ≤0.8× allow-list | Oracle | Measured 19/19 | **Claimed** (M17 / G19) |
-| Aggressive ≤0.5× journeys | Oracle | Historical **8/8** at `79fc9bf`; tip **Claimed(partial)** (18 + ALIAS `aggressive_na`; REVERT Claimed) | **Claimed(partial)** on tip (PF5) |
+| Aggressive ≤0.5× journeys | Oracle | Historical **8/8** at `79fc9bf`; tip **Claimed(partial)** (18 + ALIAS `aggressive_na` **0.5489** after G7 PATH/`exec`; REVERT Claimed) | **Claimed(partial)** on tip (PF5 / G7) |
 | Product leases / high-concurrency shape | N/A (stock) | Claimed with receipts | **Claimed** (M10 / M23 / M26) |
 | Live forge latency SLO | N/A | Harness ready; no invented live PASS | **Done (ops)** (L5) ≠ live PASS |
 

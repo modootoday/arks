@@ -3,7 +3,7 @@ id: research:root/20261111003444
 title: L9 crates.io / docs.rs — owner reopen pack (blocked; no publish)
 status: active
 created: 2026-11-10T15:34:44Z
-updated: 2026-11-10T15:34:44Z
+updated: 2026-11-10T17:50:00Z
 tags: [l9, crates-io, docs-rs, owner-policy, reopen-pack, blocked]
 verify: manual
 rel:
@@ -22,6 +22,8 @@ rel:
 ## Status
 
 **Blocked** — owner policy closed. This note is a **reopen checklist only**. Agents MUST NOT flip `publish = true`, mint trusted-publisher bindings, or run live `cargo publish` without an owner SoT amend that reopens L9.
+
+**G2 refresh (2026-11-11):** Tip ≥ `a02f7be` G-ladder; no owner SoT reopen present; agent did **not** publish. Pack remains the only L9 action until owner amends [[sot:root/public-surface]] + roadmap L9 row.
 
 ## Why blocked (current tip)
 

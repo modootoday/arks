@@ -130,10 +130,20 @@ fn print_recipes() {
 ## Checks / PR / Issues
   gh pr list
   gh pr checks
-  gh pr view --json statusCheckRollup,url
+  gh pr view --json statusCheckRollup,url,mergeStateStatus
+  gh pr create --fill
+  gh pr merge --auto --squash
   gh issue list
+  gh issue view <n>
   gh api repos/{{owner}}/{{repo}}/commits/{{sha}}/check-runs
+  gh api repos/{{owner}}/{{repo}}/commits/{{sha}}/status
   gh api repos/{{owner}}/{{repo}}/actions/runs --jq '.workflow_runs[:5]|map({{name,status,conclusion,html_url}})'
+
+## Merge queue / Releases (host gh — Claimed-closest recipes only)
+  gh api repos/{{owner}}/{{repo}}/commits/{{sha}}/check-suites
+  gh release list
+  gh release view --json tagName,url
+  gh api repos/{{owner}}/{{repo}}/actions/runs/{{run_id}}/jobs --jq '.jobs|map({{name,status,conclusion}})'
 
 ## Workflow dispatch / Environments (ops — not forge product UX)
   gh workflow list
@@ -141,6 +151,7 @@ fn print_recipes() {
   # Live G8 latency needs Environment g8-live secrets (ARKS_G8_TOKEN + ARKS_G8_REPO_URL);
   # dry_run=false only after total_count≥2 — never invent medians from SKIP.
   gh api repos/{{owner}}/{{repo}}/environments/g8-live/secrets --jq .total_count
+  gh api repos/{{owner}}/{{repo}}/environments/crates/secrets --jq .total_count
 
 ## OAuth / credentials (external helper — already Claimed under G33)
   git config --global credential.helper manager   # Git Credential Manager
@@ -150,12 +161,15 @@ fn print_recipes() {
 ## Thin wrap
   arks forge pr list          # requires `gh` on PATH
   arks forge pr checks
+  arks forge pr view
   arks forge workflow list
+  arks forge release list
   ARKS_GH=/path/to/gh arks forge api user
 
 ## Not claimed
-  Full forge host UX parity with GitHub UI / Checks product / merge-queue
-  First-party OAuth App registration / device-flow product"
+  Full forge host UX parity with GitHub UI / Checks product / merge-queue product
+  First-party OAuth App registration / device-flow product
+  Embedded GUI / scalar product"
     );
     eprintln!("{HONESTY}");
 }

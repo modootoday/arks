@@ -6,8 +6,8 @@ use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, work_tree};
 use arks_object::ObjectKind;
 use arks_remote::{
-    LfsPointer, lfs_batch_download, lfs_batch_upload, parse_lfs_pointer, read_local_lfs_object,
-    write_local_lfs_object,
+    LfsPointer, lfs_batch_download, lfs_batch_upload, lfs_lock_create, lfs_lock_unlock,
+    lfs_locks_list, parse_lfs_pointer, read_local_lfs_object, write_local_lfs_object,
 };
 use std::process::Command;
 
@@ -16,8 +16,41 @@ pub fn cmd_lfs(args: &[String]) -> CliResult<()> {
     match sub {
         "fetch" | "pull" => lfs_fetch_pull(),
         "push" => lfs_push(),
+        "lock" => lfs_lock(&args[1..]),
+        "unlock" => lfs_unlock(&args[1..]),
+        "locks" => lfs_locks_cmd(&args[1..]),
         _ => handoff_git_lfs(args),
     }
+}
+
+fn lfs_lock(args: &[String]) -> CliResult<()> {
+    let path = args
+        .first()
+        .ok_or_else(|| CliError::Usage("lfs lock <path>".into()))?;
+    let repo = open_repo()?;
+    let lock = lfs_lock_create(&repo, path).map_err(|e| CliError::Msg(e.to_string()))?;
+    println!("locked {} id={}", lock.path, lock.id);
+    Ok(())
+}
+
+fn lfs_unlock(args: &[String]) -> CliResult<()> {
+    let id = args
+        .first()
+        .ok_or_else(|| CliError::Usage("lfs unlock <id>".into()))?;
+    let repo = open_repo()?;
+    let lock = lfs_lock_unlock(&repo, id).map_err(|e| CliError::Msg(e.to_string()))?;
+    println!("unlocked {} id={}", lock.path, lock.id);
+    Ok(())
+}
+
+fn lfs_locks_cmd(args: &[String]) -> CliResult<()> {
+    let path = args.first().map(|s| s.as_str());
+    let repo = open_repo()?;
+    let locks = lfs_locks_list(&repo, path).map_err(|e| CliError::Msg(e.to_string()))?;
+    for l in locks {
+        println!("{}\t{}\t{}", l.id, l.path, l.owner);
+    }
+    Ok(())
 }
 
 fn handoff_git_lfs(args: &[String]) -> CliResult<()> {

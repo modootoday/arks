@@ -351,6 +351,133 @@ fn extract_action_headers(body: &[u8], action: &str) -> Vec<(String, String)> {
     Vec::new()
 }
 
+/// Claimed LFS lock record (server `/locks` subset).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LfsLock {
+    pub id: String,
+    pub path: String,
+    pub owner: String,
+}
+
+/// Create a lock via `POST …/locks` (G4).
+pub fn lfs_lock_create(repo: &Repository, path: &str) -> Result<LfsLock, RemoteError> {
+    let endpoint = discover_lfs_endpoint(repo)?
+        .ok_or_else(|| RemoteError::Msg("lfs: no endpoint for locks".into()))?;
+    let url = format!("{endpoint}/locks");
+    let body = format!(r#"{{"path":"{}"}}"#, path.replace('"', ""));
+    let mut transport = UreqTransport::new();
+    let resp = transport.exchange(&HttpRequest {
+        method: "POST".into(),
+        url,
+        headers: vec![
+            ("Accept".into(), "application/vnd.git-lfs+json".into()),
+            ("Content-Type".into(), "application/vnd.git-lfs+json".into()),
+        ],
+        body: body.into_bytes(),
+    })?;
+    if resp.status != 201 && resp.status != 200 {
+        return Err(RemoteError::Msg(format!(
+            "lfs lock create HTTP {}",
+            resp.status
+        )));
+    }
+    parse_lock_from_body(&resp.body).ok_or_else(|| RemoteError::Msg("lfs lock: bad response".into()))
+}
+
+/// List locks via `GET …/locks` (optional `?path=`).
+pub fn lfs_locks_list(
+    repo: &Repository,
+    path: Option<&str>,
+) -> Result<Vec<LfsLock>, RemoteError> {
+    let endpoint = discover_lfs_endpoint(repo)?
+        .ok_or_else(|| RemoteError::Msg("lfs: no endpoint for locks".into()))?;
+    let url = match path {
+        Some(p) => format!("{endpoint}/locks?path={}", p.replace(' ', "%20")),
+        None => format!("{endpoint}/locks"),
+    };
+    let mut transport = UreqTransport::new();
+    let resp = transport.exchange(&HttpRequest {
+        method: "GET".into(),
+        url,
+        headers: vec![("Accept".into(), "application/vnd.git-lfs+json".into())],
+        body: Vec::new(),
+    })?;
+    if resp.status != 200 {
+        return Err(RemoteError::Msg(format!(
+            "lfs locks list HTTP {}",
+            resp.status
+        )));
+    }
+    Ok(parse_locks_array(&resp.body))
+}
+
+/// Unlock via `POST …/locks/{id}/unlock`.
+pub fn lfs_lock_unlock(repo: &Repository, id: &str) -> Result<LfsLock, RemoteError> {
+    let endpoint = discover_lfs_endpoint(repo)?
+        .ok_or_else(|| RemoteError::Msg("lfs: no endpoint for locks".into()))?;
+    let url = format!("{endpoint}/locks/{id}/unlock");
+    let mut transport = UreqTransport::new();
+    let resp = transport.exchange(&HttpRequest {
+        method: "POST".into(),
+        url,
+        headers: vec![
+            ("Accept".into(), "application/vnd.git-lfs+json".into()),
+            ("Content-Type".into(), "application/vnd.git-lfs+json".into()),
+        ],
+        body: b"{}".to_vec(),
+    })?;
+    if resp.status != 200 {
+        return Err(RemoteError::Msg(format!(
+            "lfs lock unlock HTTP {}",
+            resp.status
+        )));
+    }
+    parse_lock_from_body(&resp.body).ok_or_else(|| RemoteError::Msg("lfs unlock: bad response".into()))
+}
+
+fn parse_lock_from_body(body: &[u8]) -> Option<LfsLock> {
+    let text = std::str::from_utf8(body).ok()?;
+    let id = scrape_json_str(text, "id")?;
+    let path = scrape_json_str(text, "path")?;
+    let owner = scrape_json_str(text, "name").unwrap_or_else(|| "arks".into());
+    Some(LfsLock { id, path, owner })
+}
+
+fn parse_locks_array(body: &[u8]) -> Vec<LfsLock> {
+    let Ok(text) = std::str::from_utf8(body) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    let mut rest = text;
+    while let Some(i) = rest.find("\"id\"") {
+        rest = &rest[i..];
+        let Some(lock) = parse_lock_from_body(rest.as_bytes()) else {
+            break;
+        };
+        // Advance past this id to avoid re-parsing the same lock.
+        rest = rest.get(4..).unwrap_or("");
+        if let Some(p) = rest.find('}') {
+            rest = &rest[p + 1..];
+        }
+        out.push(lock);
+    }
+    out
+}
+
+fn scrape_json_str(text: &str, key: &str) -> Option<String> {
+    let needle = format!("\"{key}\"");
+    let i = text.find(&needle)?;
+    let rest = &text[i + needle.len()..];
+    let colon = rest.find(':')?;
+    let mut s = rest[colon + 1..].trim_start();
+    if !s.starts_with('"') {
+        return None;
+    }
+    s = &s[1..];
+    let end = s.find('"')?;
+    Some(s[..end].to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

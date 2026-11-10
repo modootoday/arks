@@ -88,14 +88,22 @@ fn pin_env(cmd: &mut Command) {
 
 fn peer_command(peer: &str, bin: &Path, shim_dir: Option<&Path>) -> Command {
     if peer == "alias" {
+        // G7 PATH/`exec` cut: invoke the hard-copied shim by absolute path
+        // (documented preferred PATH-shim install) instead of PATH search of
+        // `git` — removes argv/PATH lookup tax while keeping a real `git`-named
+        // binary. Cite: docs/alias-git-arks.md + sot:root/pf5-journey-seed-amortization.
         let shim = shim_dir.expect("alias needs shim");
+        #[cfg(windows)]
+        let git_bin = shim.join("git.cmd");
+        #[cfg(not(windows))]
+        let git_bin = shim.join("git");
         let path = format!(
             "{}{}{}",
             shim.display(),
             if cfg!(windows) { ";" } else { ":" },
             std::env::var("PATH").unwrap_or_default()
         );
-        let mut c = Command::new("git");
+        let mut c = Command::new(&git_bin);
         c.env("PATH", path);
         c
     } else if peer == "arks" {

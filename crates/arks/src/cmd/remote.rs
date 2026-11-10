@@ -537,4 +537,19 @@ mod tests {
         assert_eq!(parse_filter("blob:limit=1k").unwrap(), "blob:limit=1k");
         assert_eq!(parse_filter("blob:limit=1024").unwrap(), "blob:limit=1024");
     }
+
+    #[test]
+    fn parse_filter_accepts_object_type_and_combine() {
+        assert_eq!(parse_filter("object:type=blob").unwrap(), "object:type=blob");
+        assert_eq!(
+            parse_filter("combine:blob:none+tree:0").unwrap(),
+            "combine:blob:none+tree:0"
+        );
+        assert_eq!(
+            parse_filter("combine:object:type=blob+blob:limit=1k").unwrap(),
+            "combine:object:type=blob+blob:limit=1k"
+        );
+        assert!(parse_filter("combine:blob:none+sparse:oid=x").is_err());
+        assert!(parse_filter("object:type=widget").is_err());
+    }
 }

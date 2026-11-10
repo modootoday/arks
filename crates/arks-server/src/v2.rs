@@ -18,9 +18,12 @@ use arks_store::ObjectStore;
 /// Capability lines advertised for v2 (commands + agent).
 pub fn v2_capability_lines() -> Vec<String> {
     // gitprotocol-v2: command features as `fetch=<feature>…` (SP-separated values).
+    // G3 / NET-006 server: advertise `bundle-uri` (command handled below).
+    // Cite: https://git-scm.com/docs/gitprotocol-v2#_bundle_uri
     vec![
         "ls-refs".into(),
         "fetch=ofs-delta".into(),
+        "bundle-uri".into(),
         "agent=arks/0.0.0".into(),
         "object-format=sha1".into(),
     ]
@@ -46,6 +49,7 @@ pub fn handle_v2_request(
     let out = match command.as_str() {
         "ls-refs" => ls_refs(repo, &args)?,
         "fetch" => fetch_v2(repo, &args)?,
+        "bundle-uri" => bundle_uri_command(repo)?,
         other => {
             return Err(ServerError::Protocol(format!(
                 "unknown or unclaimed v2 command: {other}"
@@ -142,6 +146,40 @@ fn ls_refs(repo: &Repository, args: &[String]) -> Result<Vec<u8>, ServerError> {
             encode_text_line(&format!("{} {name}", oid.to_hex()))
                 .map_err(|e| ServerError::Protocol(e.to_string()))?,
         );
+    }
+    out.extend(encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?);
+    Ok(out)
+}
+
+/// Protocol v2 `bundle-uri` command — key=value pkt-lines then flush.
+///
+/// Config: `ARKS_BUNDLE_URI` (comma-separated http(s)/path URIs) and/or
+/// `$GIT_DIR/config` keys `bundle.<id>.uri`. Empty config still returns
+/// `bundle.version=1` so advertise honesty stays Claimable without inventing CDN SLOs.
+fn bundle_uri_command(repo: &Repository) -> Result<Vec<u8>, ServerError> {
+    let mut out = encode_text_line("bundle.version=1")
+        .map_err(|e| ServerError::Protocol(e.to_string()))?;
+    out.extend(
+        encode_text_line("bundle.mode=all").map_err(|e| ServerError::Protocol(e.to_string()))?,
+    );
+    let mut n = 0usize;
+    if let Ok(env) = std::env::var("ARKS_BUNDLE_URI") {
+        for uri in env.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+            n += 1;
+            let line = format!("bundle.seed{n}.uri={uri}");
+            out.extend(encode_text_line(&line).map_err(|e| ServerError::Protocol(e.to_string()))?);
+        }
+    }
+    // Optional file: one URI per line under $GIT_DIR/arks-bundle-uris (ops/config).
+    let list = repo.git_dir().join("arks-bundle-uris");
+    if list.is_file() {
+        let text = std::fs::read_to_string(&list).map_err(|e| ServerError::Msg(e.to_string()))?;
+        for uri in text.lines().map(str::trim).filter(|s| !s.is_empty() && !s.starts_with('#'))
+        {
+            n += 1;
+            let line = format!("bundle.seed{n}.uri={uri}");
+            out.extend(encode_text_line(&line).map_err(|e| ServerError::Protocol(e.to_string()))?);
+        }
     }
     out.extend(encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?);
     Ok(out)

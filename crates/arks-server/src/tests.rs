@@ -274,6 +274,81 @@ fn receive_post_receive_runs_after_success() {
 }
 
 #[test]
+fn v2_advertises_and_serves_bundle_uri() {
+    let dir = TempDir::new().unwrap();
+    let (git, _) = seed_bare(dir.path());
+    std::fs::write(git.join("arks-bundle-uris"), "https://example.test/seed.bundle\n").unwrap();
+    let lines = v2_capability_lines();
+    assert!(
+        lines.iter().any(|l| l == "bundle-uri"),
+        "G3 must advertise bundle-uri: {lines:?}"
+    );
+    let repo = Repository::open(&git).unwrap();
+    // command=bundle-uri + flush
+    let mut body = arks_protocol::encode_text_line("command=bundle-uri").unwrap();
+    body.extend(arks_protocol::encode_packet(&arks_protocol::Packet::Flush).unwrap());
+    let out = handle_v2_request(&repo, &body, true).unwrap();
+    let text = String::from_utf8_lossy(&out);
+    assert!(text.contains("bundle.version=1"), "{text}");
+    assert!(
+        text.contains("bundle.seed1.uri=https://example.test/seed.bundle"),
+        "{text}"
+    );
+}
+
+#[test]
+fn lfs_locks_create_list_unlock() {
+    let dir = TempDir::new().unwrap();
+    let (git, _) = seed_bare(dir.path());
+    let mut repo = Repository::open(&git).unwrap();
+    let create = HttpRequest {
+        method: "POST".into(),
+        path: "/info/lfs/locks".into(),
+        query: String::new(),
+        body: br#"{"path":"assets/big.bin"}"#.to_vec(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &create).unwrap();
+    assert_eq!(resp.status, 201, "{}", String::from_utf8_lossy(&resp.body));
+    let text = String::from_utf8_lossy(&resp.body);
+    assert!(text.contains("assets/big.bin"), "{text}");
+
+    let list = HttpRequest {
+        method: "GET".into(),
+        path: "/info/lfs/locks".into(),
+        query: "path=assets/big.bin".into(),
+        body: Vec::new(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &list).unwrap();
+    assert_eq!(resp.status, 200);
+    let text = String::from_utf8_lossy(&resp.body);
+    assert!(text.contains("\"id\""), "{text}");
+
+    let unlock = HttpRequest {
+        method: "POST".into(),
+        path: "/info/lfs/locks/1/unlock".into(),
+        query: String::new(),
+        body: b"{}".to_vec(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &unlock).unwrap();
+    assert_eq!(resp.status, 200, "{}", String::from_utf8_lossy(&resp.body));
+}
+
+#[test]
 fn lfs_batch_download_and_get_object() {
     let dir = TempDir::new().unwrap();
     let (git, _) = seed_bare(dir.path());

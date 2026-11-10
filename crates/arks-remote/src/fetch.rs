@@ -430,11 +430,22 @@ where
     })
 }
 
-/// Claimed filter-spec gate (S1/O2 + FS4).
+/// Claimed filter-spec gate (S1/O2 + FS4 + G6).
 ///
 /// Claimed: `blob:none`, `tree:0`, `tree:<depth>` (non-neg int), `blob:limit=<n>`
-/// (`n` bytes, optional `k`/`m`/`g` suffix). Other specs refuse fail-closed.
+/// (`n` bytes, optional `k`/`m`/`g` suffix), `object:type=(blob|tree|commit|tag)`,
+/// and `combine:` of already-Claimed children joined by `+`.
+/// `sparse:oid=…` and multi-`--filter` remain refuse. Cite: git-rev-list `--filter`.
 pub fn validate_claimed_filter(spec: &str) -> Result<(), RemoteError> {
+    validate_claimed_filter_inner(spec, 0)
+}
+
+fn validate_claimed_filter_inner(spec: &str, depth: u8) -> Result<(), RemoteError> {
+    if depth > 8 {
+        return Err(RemoteError::NotImplemented(
+            "clone/fetch --filter=combine: nesting too deep".into(),
+        ));
+    }
     if spec == "blob:none" || spec == "tree:0" {
         return Ok(());
     }
@@ -448,8 +459,25 @@ pub fn validate_claimed_filter(spec: &str) -> Result<(), RemoteError> {
             return Ok(());
         }
     }
+    if let Some(rest) = spec.strip_prefix("object:type=") {
+        match rest {
+            "blob" | "tree" | "commit" | "tag" => return Ok(()),
+            _ => {}
+        }
+    }
+    if let Some(rest) = spec.strip_prefix("combine:") {
+        if rest.is_empty() {
+            return Err(RemoteError::NotImplemented(
+                "clone/fetch --filter=combine: requires claimed children".into(),
+            ));
+        }
+        for part in rest.split('+') {
+            validate_claimed_filter_inner(part, depth + 1)?;
+        }
+        return Ok(());
+    }
     Err(RemoteError::NotImplemented(format!(
-        "clone/fetch --filter={spec} not claimed; claimed: blob:none, tree:0, tree:<depth>, blob:limit=<n>"
+        "clone/fetch --filter={spec} not claimed; claimed: blob:none, tree:0, tree:<depth>, blob:limit=<n>, object:type=<blob|tree|commit|tag>, combine:<claimed>+…"
     )))
 }
 

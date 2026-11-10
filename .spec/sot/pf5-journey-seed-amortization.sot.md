@@ -20,7 +20,7 @@ rel:
 
 # Pf5 journey seed amortization (≤0.5× reopen)
 
-Version **0.1.13**. Normative harness rules that reopen [[adr:root/20261110162000]] for Pf5 `aggressive_na` journeys without inventing Git semantics. **U1 residual wave** ([[evidence:root/20261111003444]]): ALIAS residual 48→56 **hurt** (rolled back to 48); REVERT +`PF5_REVERT_AMORTIZE_COMMITS=12` → 0.5417. **External-deps unblock wave** ([[research:root/20261111012840]]): REVERT-first modest nudge **12→20**; **exactly one** sole Docker G19; no ALIAS seed inflation; ALIAS PATH/`exec` redesign only if REVERT clears ≤0.5× and remaining budget is safe — else keep honest `aggressive_na` / Claimed(partial). Historical primary **Claimed 8/8** [[evidence:root/20261110142500]] at `79fc9bf`. Prior tip partial [[evidence:root/20261110224814]].
+Version **0.1.14**. Normative harness rules that reopen [[adr:root/20261110162000]] for Pf5 `aggressive_na` journeys without inventing Git semantics. **U1 residual wave** ([[evidence:root/20261111003444]]): ALIAS residual 48→56 **hurt** (rolled back to 48); REVERT +`PF5_REVERT_AMORTIZE_COMMITS=12` → 0.5417. **External-deps unblock wave** ([[research:root/20261111012840]]): REVERT-first modest nudge **12→20**; REVERT **0.5000 Claimed** ([[evidence:root/20261111015154]]). **G7 PATH/`exec` cut** ([[plan:root/20261111024440]]): alias peer invokes hard-copied shim by **absolute path** (documented preferred install) — **exactly one** sole Docker G19 after land; no seed inflation; no thrash; halt OOM. Historical primary **Claimed 8/8** [[evidence:root/20261110142500]] at `79fc9bf`. Prior tip partial [[evidence:root/20261110224814]].
 
 ## Rule
 

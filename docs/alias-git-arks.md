@@ -42,7 +42,9 @@ Familiar commands (`git status`, `git commit -m …`) then invoke arks with the 
 
 ## PATH shim (scripts)
 
-Place an executable named `git` earlier on `PATH` that runs the arks binary with `"$@"`. Shell aliases do not apply inside many scripts and CI jobs, so a shim is the reliable non-interactive option — including agent runners that shell out to `git`.
+Place an executable named `git` earlier on `PATH` that is a **hard copy or hard link of the `arks` binary** (preferred — G7 absolute-path `exec`, zero shell hop), or a thin wrapper that `exec`s arks with `"$@"`. Shell aliases do not apply inside many scripts and CI jobs, so a shim is the reliable non-interactive option — including agent runners that shell out to `git`.
+
+Preferred install: put the hard-copied `git` on `PATH`, then invoke it by absolute path when measuring or scripting (`/path/to/shim/git status`) so PATH lookup tax does not dominate short journeys.
 
 > [!TIP]
 > Use the alias for interactive evaluation; use a PATH shim when orchestrators or CI must call `git` without a shell profile.
