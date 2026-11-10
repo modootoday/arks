@@ -139,7 +139,7 @@ Generic Git remote **client** for claimed protocols; GitHub-class hosts are the 
 |---------|--------|-------------|
 | `arks remote` | Add/list/remove remotes | Config as Git documents |
 | `arks fetch` | Download objects/refs | Pack protocol / HTTP smart / v2 as negotiated |
-| `arks push` | Upload refs/objects | receive-pack path; refuse unimplemented caps |
+| `arks push` | Upload refs/objects | receive-pack / dumb WebDAV path; `:<ref>` delete claimed (S3); refuse other `src:dst` refspecs / unimplemented caps |
 | `arks clone` | Init + fetch/copy + checkout baseline | HTTP smart + local path / same-host `file://` hardlink-or-copy ([[sot:root/arks-remote]]); not `--shared` |
 | `arks pull` | Fetch + integrate (may land with Wave Pa/Pb if merge/rebase not yet claimed — if so, refuse incomplete pull forms) | Must not imply unimplemented merge/rebase |
 

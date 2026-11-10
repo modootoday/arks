@@ -35,7 +35,7 @@ Amend [[sot:root/arks-remote]] and [[sot:root/arks-server]] to claim an additive
 ## Non-claims
 
 - Stock Apache `mod_dav` / litmus full suite as a verified peer.
-- `git http-push` `-d`/`-D` delete path; force-with-lease; push-options.
+- `git http-push` `-d`/`-D` delete path — **superseded for Claimed subset by** [[adr:root/20261110112600]] (WebDAV `DELETE` / `:<ref>`); force-with-lease; push-options remain non-claims.
 - Treating the obsolete howto [setup-git-server-over-http](https://www.kernel.org/pub/software/scm/git/docs/howto/setup-git-server-over-http.html) as the recommend path (howto itself points to smart `git-http-backend`).
 - Inventing a private non-WebDAV “PUT pack” dumb push.
 

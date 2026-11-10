@@ -3,8 +3,8 @@ id: sot:root/arks-server
 title: arks-server unit
 status: active
 created: 2026-11-08T23:12:49Z
-updated: 2026-11-10T19:00:00Z
-tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, webdav, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g36, r2]
+updated: 2026-11-10T11:26:00Z
+tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, webdav, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g36, r2, s3]
 verify: manual
 rel:
   governs: [crates/arks-server]
@@ -15,6 +15,7 @@ rel:
     - adr:root/20261109220230
     - adr:root/20261109224236
     - adr:root/20261110190000
+    - adr:root/20261110112600
     - sot:root/remote-host-compatibility-surface
     - sot:root/cli-surface
     - sot:root/git-compat-surface
@@ -34,12 +35,12 @@ rel:
     - research:root/20261108071859
     - adr:root/20261108083507
     - evidence:root/20261108150000
-  evidence: [evidence:root/20261108231300, evidence:root/20261110200000, evidence:root/20261109224717, evidence:root/20261110190000]
+  evidence: [evidence:root/20261108231300, evidence:root/20261110200000, evidence:root/20261109224717, evidence:root/20261110190000, evidence:root/20261110112600]
 ---
 
 # arks-server unit
 
-Version **0.3.1**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) under [[plan:root/20261108105446]] / Phase **Sv** (**M11** — **production-server**) and [[plan:root/20261109220230]] / Phase **Sv2** (**M25** — transport expansion) + additive **R2** WebDAV write for dumb HTTP push. Wire: [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2), [git-upload-pack](https://git-scm.com/docs/git-upload-pack), [git-receive-pack](https://git-scm.com/docs/git-receive-pack), [git-http-backend](https://git-scm.com/docs/git-http-backend), [git-daemon](https://git-scm.com/docs/git-daemon), [git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918), [githooks](https://git-scm.com/docs/githooks). Catalog: [[research:root/20261108071916]]. Scope: [[sot:root/remote-host-compatibility-surface]]. Unlock: [[adr:root/20261109220230]]. Optional HTTP Basic: [[adr:root/20261109224236]]. Dumb push write: [[adr:root/20261110190000]].
+Version **0.3.2**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) under [[plan:root/20261108105446]] / Phase **Sv** (**M11** — **production-server**) and [[plan:root/20261109220230]] / Phase **Sv2** (**M25** — transport expansion) + additive **R2** WebDAV write for dumb HTTP push + **S3** ref `DELETE`. Wire: [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2), [git-upload-pack](https://git-scm.com/docs/git-upload-pack), [git-receive-pack](https://git-scm.com/docs/git-receive-pack), [git-http-backend](https://git-scm.com/docs/git-http-backend), [git-daemon](https://git-scm.com/docs/git-daemon), [git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918), [githooks](https://git-scm.com/docs/githooks). Catalog: [[research:root/20261108071916]]. Scope: [[sot:root/remote-host-compatibility-surface]]. Unlock: [[adr:root/20261109220230]]. Optional HTTP Basic: [[adr:root/20261109224236]]. Dumb push write: [[adr:root/20261110190000]]. Dumb push deletes: [[adr:root/20261110112600]].
 
 **Entry:** M9 exit by default — [[evidence:root/20261108150000]]. **M10 is not a prerequisite.** Lease is not required for server.
 
@@ -101,7 +102,7 @@ Hooks run only when `$GIT_DIR/hooks/<name>` exists and is executable (Unix mode 
 6. **upload-pack (v1):** Advertise refs + claimed caps; accept want/have/done; emit pack (undeltified OK) optionally side-band-64k when negotiated. HTTP ads include `# service=git-upload-pack`; SSH/`git://` duplex ads omit the HTTP service pkt-line ([gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack) vs [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http)).
 7. **receive-pack (v1):** Advertise refs + `report-status` (v1 only unless amended); accept update commands + pack; unpack via `arks-pack`; honor §Receive-pack githooks; update surviving refs under Git locks; emit report-status.
 8. **Dumb HTTP:** On `GET …/info/refs` **without** `service=`, return dumb `info/refs` text (not `application/x-git-*`). Serve `objects/info/packs`, loose objects, and pack/idx files. `update-server-info` MUST refresh dumb advertisements.
-8a. **Dumb HTTP push (WebDAV write, additive; R2):** Accept `PROPFIND` / `LOCK` / `UNLOCK` / `MKCOL` / `PUT` / `MOVE` under `objects/`, `refs/`, and `info/` per [[adr:root/20261110190000]]. After successful ref PUT, refresh `update-server-info`. Never claim dumb-only as the sole server path.
+8a. **Dumb HTTP push (WebDAV write, additive; R2 + S3):** Accept `PROPFIND` / `LOCK` / `UNLOCK` / `MKCOL` / `PUT` / `MOVE` / `DELETE` under `objects/`, `refs/`, and `info/` per [[adr:root/20261110190000]] + [[adr:root/20261110112600]]. `DELETE` is claimed for `refs/` only; MUST refuse deleting the current HEAD target. After successful ref PUT or DELETE, refresh `update-server-info`. Never claim dumb-only as the sole server path.
 9. **Protocol v2 (when claimed):** On client `version=2` (HTTP `Git-Protocol` / git:// extra-param / `GIT_PROTOCOL`), advertise `version 2` + claimed keys only; execute `ls-refs` and `fetch` per [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2). Stateless HTTP responses end with response-end-pkt where required.
 10. **`git://` daemon:** Parse initial service request pkt-line (`git-upload-pack` / `git-receive-pack` + path + `host=`); require `git-daemon-export-ok` unless `--export-all`; then duplex pack protocol.
 11. **Wave Sv / Sv2 CLI:** `arks upload-pack`, `arks receive-pack`, `arks http-backend`, `arks serve-http`, `arks daemon` (when G32 claimed), `arks update-server-info` (dumb). Help lists only implemented commands.

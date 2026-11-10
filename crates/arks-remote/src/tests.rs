@@ -954,6 +954,52 @@ fn dumb_http_push_roundtrip_via_serve_http() {
         "bare tip after dumb push"
     );
 
+    // S3: create a topic ref via WebDAV, then delete it (zero new_oid).
+    push_http(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/topic".into(),
+            new_oid,
+        }],
+    )
+    .expect("dumb push topic");
+    assert!(
+        Repository::open(&bare)
+            .unwrap()
+            .refs()
+            .resolve("refs/heads/topic")
+            .is_ok()
+    );
+    let zero = crate::push::zero_oid();
+    push_http(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/topic".into(),
+            new_oid: zero,
+        }],
+    )
+    .expect("dumb push delete topic");
+    assert!(
+        Repository::open(&bare)
+            .unwrap()
+            .refs()
+            .resolve("refs/heads/topic")
+            .is_err(),
+        "topic ref removed after WebDAV DELETE"
+    );
+    // HEAD target must remain refuse-closed.
+    let del_main = push_http(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid: zero,
+        }],
+    );
+    assert!(del_main.is_err(), "deleting remote HEAD target must fail");
+
     stop.store(true, Ordering::SeqCst);
     let _ = handle.join();
 }

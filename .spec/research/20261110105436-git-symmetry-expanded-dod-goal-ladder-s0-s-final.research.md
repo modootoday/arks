@@ -62,8 +62,8 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 |----------------|-------------------|--------------------|-------------|
 | **R3** filter / promisor (`blob:none` claimed; other specs refuse) | N/A (L6 refuse) → **Claimed host wire** | **SoT-amend → implement** | **S1 Done** ([[evidence:root/20261110105855]]) |
 | **R4** OpenPGP / X.509 / `tag -s` / `verify-tag` | N/A (L7 refuse) → **Claimed G38** | **SoT-amend → implement** | **S2 Done** ([[evidence:root/20261110110800]]) |
-| Dumb HTTP push **deletes** (`-d`/`-D`) | Explicit non-claim in [[adr:root/20261110190000]] | **SoT-amend → implement** if WebDAV DELETE SoTable | **S3** |
-| Other §F protocol narrows still refuse-only (if any SoTable) | Claimed subset / N/A | Inventory then amend | **S3** |
+| Dumb HTTP push **deletes** (`-d`/`-D` / `:<ref>`) | Explicit non-claim in [[adr:root/20261110190000]] → **Claimed** | **SoT-amend → implement** | **S3 Done** ([[evidence:root/20261110112600]]) |
+| Other §F protocol narrows (Apache DAV, force-with-lease, push-options) | Still N/A / honest defer | Inventory; no invent Claimed | **S3 inventory closed** |
 | Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | N/A (agent non-interactive bar) | **Implement if Specfold allows**; else honest defer with SoT reason | **S4** |
 | **R5** live forge scale / G8 live PASS | Ops readiness Done | **Live only if secrets**; else structural + documented block (**≠** fake PASS) | **S5** |
 | Symmetry e2e matrix (git vs arks clean-room) | L8 = g14/g16/g20/g21 | **Expand** for each newly Claimed surface | **S6** |
@@ -82,8 +82,8 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 | **S0** | Inventory lock | Specfold | This table maps every residual → implement / SoT-amend / still-OOS / owner-closed; residual register + AGENTS + comparison pointer cite this research | **Done** (this note) |
 | **S1** | **R3** partial-clone filter / promisor | Git asymmetry | SoT amend [[sot:root/arks-remote]] beyond `--depth`; wire `filter` + `blob:none`; promisor / `extensions.partialClone`; CLI support claimed spec; host evidence before Claimed | **Done** ([[adr:root/20261110105547]] + [[evidence:root/20261110105855]]) |
 | **S2** | **R4** OpenPGP / X.509 / `tag -s` / `verify-tag` | Git asymmetry | SoT amend [[sot:root/arks-object]] + CLI; G38 clean-room evidence (not host gpg keygen) | **Done** ([[adr:root/20261110110450]] + [[evidence:root/20261110110800]]) |
-| **S3** | Protocol narrows (dumb HTTP deletes / other implementable §F rows) | Git asymmetry | Per-row ADR + SoT amend; host/clean-room evidence; no invent Claimed | **Next** |
-| **S4** | Interactive / patch flows | CLI | Specfold allows → implement + e2e; else SoT reason + honest defer (**≠** fake PASS) | Open |
+| **S3** | Protocol narrows (dumb HTTP deletes / other implementable §F rows) | Git asymmetry | Per-row ADR + SoT amend; host/clean-room evidence; no invent Claimed | **Done** ([[adr:root/20261110112600]] + [[evidence:root/20261110112600]]; Apache DAV / lease / push-options honest defer) |
+| **S4** | Interactive / patch flows | CLI | Specfold allows → implement + e2e; else SoT reason + honest defer (**≠** fake PASS) | **Next** |
 | **S5** | **R5** live forge scale | Secrets-gated | Secrets present → measured receipt; else documented structural block; never invent latency PASS | Open |
 | **S6** | Symmetry e2e matrix | Verify DoD | Clean-room Docker git vs arks for each newly Claimed surface; expand beyond L8; suite green; halt on OOM/stampede | Open |
 | **S7** | Comparison + residual currency | Docs / DoD | `docs/git-vs-arks.md` + [[sot:root/production-residual-register]] match new Claimed/PASS with evidence ids | Open |
@@ -99,7 +99,7 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 
 ### Execution note (this round)
 
-**S0–S2 Done** on tip: inventory lock + R3 `blob:none` + R4 OpenPGP/X.509/`tag -s` (G38). Next **S3** (protocol narrows). Symmetry clean-room expansion remains **S6**. Prior L-ladder remains historical; this **S-*** ladder is the active expanded DoD order.
+**S0–S3 Done** on tip: inventory lock + R3 `blob:none` + R4 OpenPGP/X.509/`tag -s` (G38) + dumb HTTP push deletes (WebDAV `DELETE`). Next **S4** (interactive / patch flows or honest defer). Symmetry clean-room expansion remains **S6**. Prior L-ladder remains historical; this **S-*** ladder is the active expanded DoD order.
 
 ## Verification
 

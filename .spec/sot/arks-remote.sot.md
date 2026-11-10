@@ -3,8 +3,8 @@ id: sot:root/arks-remote
 title: arks-remote unit
 status: active
 created: 2026-11-08T11:05:00Z
-updated: 2026-11-10T10:55:47Z
-tags: [m6, m16, unit, remote, client, smart-http, dumb-http, webdav, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow, r1, r2, r3, filter, promisor, s1]
+updated: 2026-11-10T11:26:00Z
+tags: [m6, m16, unit, remote, client, smart-http, dumb-http, webdav, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow, r1, r2, r3, filter, promisor, s1, s3]
 verify: manual
 rel:
   governs: [crates/arks-remote]
@@ -31,14 +31,15 @@ rel:
     - adr:root/20261108083507
     - adr:root/20261110190000
     - adr:root/20261110105547
+    - adr:root/20261110112600
     - research:root/20261110105436
     - evidence:root/20261108104837
-  evidence: [evidence:root/20261108112000, evidence:root/20261110180000, evidence:root/20261110190000, evidence:root/20261110105855]
+  evidence: [evidence:root/20261108112000, evidence:root/20261110180000, evidence:root/20261110190000, evidence:root/20261110105855, evidence:root/20261110112600]
 ---
 
 # arks-remote unit
 
-Version **0.5.3**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback + **`git://` client (R1)** + **dumb HTTP push (R2)** + **partial-clone `blob:none` (R3 / S1)**. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `filter` / `delete-refs`), [partial-clone](https://git-scm.com/docs/partial-clone), [git-daemon](https://git-scm.com/docs/git-daemon), [git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]]. Historical ladder: [[research:root/20261110095142]]. Symmetry ladder: [[research:root/20261110105436]]. Unlock R2: [[adr:root/20261110190000]]. Unlock R3: [[adr:root/20261110105547]].
+Version **0.5.4**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback + **`git://` client (R1)** + **dumb HTTP push (R2)** + **partial-clone `blob:none` (R3 / S1)** + **dumb HTTP push deletes (S3)**. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `filter` / `delete-refs`), [partial-clone](https://git-scm.com/docs/partial-clone), [git-daemon](https://git-scm.com/docs/git-daemon), [git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]]. Historical ladder: [[research:root/20261110095142]]. Symmetry ladder: [[research:root/20261110105436]]. Unlock R2: [[adr:root/20261110190000]]. Unlock R3: [[adr:root/20261110105547]]. Unlock S3 deletes: [[adr:root/20261110112600]].
 
 **Entry:** M5 exit proven — [[evidence:root/20261108104837]]. **Not production** — production is **M9**.
 
@@ -59,7 +60,7 @@ Version **0.5.3**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 | Local filesystem **path** and same-host `file://` (absolute; empty host or `localhost`) | **Required (v0.2.0 additive; v0.3.0 pack-aware; v0.4.0 hardlink-prefer)** | **Clone composition only** via local object-directory **hardlink-or-copy** (prefer hardlink when the filesystem allows — git-clone(1) local default; fall back to byte copy); packs kept in place and read through pack-aware [[sot:root/arks-store]]. Cite [git-clone(1)](https://git-scm.com/docs/git-clone) local / `file://` forms; [[research:root/20261108071916]] file-transport note. **Not** `--shared` alternates; **not** piped upload-pack over `file://`. Does **not** unlock G8 |
 | SSH (`git@` / `ssh://`) | **Required (M16 Sy-4)** — OpenSSH `ssh` helper speaking upload-pack/receive-pack pkt-line (no product-path `git`) | [[sot:root/cli-flag-parity-complete]]; auth via agent / key files (OpenSSH defaults); askpass / credential-helper N/A |
 | Dumb HTTP fetch/clone | **Claimed (additive)** | Fall back when smart `info/refs` returns dumb body ([gitprotocol-http](https://git-scm.com/docs/gitprotocol-http#_dumb_clients)); packs via `objects/info/packs` + loose OID GETs; `--depth` refused on dumb |
-| Dumb HTTP push | **Claimed (additive; R2)** | When receive-pack discovery is dumb, WebDAV write ([git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918)): PROPFIND/LOCK/MKCOL/PUT/MOVE/UNLOCK; FF-only; no `-d`/`-D`; host wire vs `arks serve-http --dumb-only` [[evidence:root/20261110190000]] |
+| Dumb HTTP push | **Claimed (additive; R2 + S3 deletes)** | When receive-pack discovery is dumb, WebDAV write ([git-http-push](https://git-scm.com/docs/git-http-push), [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918)): PROPFIND/LOCK/MKCOL/PUT/MOVE/DELETE/UNLOCK; FF-only; zero-oid / `:<ref>` deletes; refuse deleting remote HEAD target; host wire vs `arks serve-http --dumb-only` [[evidence:root/20261110190000]] + [[evidence:root/20261110112600]] |
 | `git://` | **Claimed (additive; R1)** | TCP pack-protocol client to git-daemon peers ([git-daemon](https://git-scm.com/docs/git-daemon), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack)); clone/fetch (`git-upload-pack`) + push (`git-receive-pack` when peer enables receive); default port **9418**; host wire roundtrip vs `arks daemon` |
 
 ### Operations (MUST for claimed subset)
@@ -69,7 +70,7 @@ Version **0.5.3**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 6a. **Fetch / clone path (SSH).** OpenSSH `ssh` (or `GIT_SSH_COMMAND` / `ARKS_SSH_COMMAND`) runs peer `git-upload-pack '<path>'`; speak gitprotocol-pack v1 advertisement + want/have/done over the duplex; demux side-band when negotiated; ingest pack+idx; update tracking refs. Cite [[research:root/20261108071916]] SSH/pack note.
 6b. **Fetch / clone path (`git://`).** TCP connect to `host:port` (default **9418**); send initial service pkt-line `git-upload-pack /path\0host=…\0`; then same pack-protocol negotiation/ingest as SSH. Cite [git-daemon](https://git-scm.com/docs/git-daemon) + [[research:root/20261108071916]].
 7. **Push path (HTTP).** `GET …/info/refs?service=git-receive-pack` then `POST …/git-receive-pack`; send update commands + pack; parse `report-status` / `report-status-v2` as advertised for the claimed subset. When the advertisement is dumb (non-`application/x-git-*`), fall back to **dumb HTTP push** (rule 7c).
-7c. **Push path (dumb HTTP / WebDAV).** LOCK target ref; MKCOL object fanout; PUT zlib loose objects (temp name + MOVE); PUT ref `oid LF`; UNLOCK; refuse non-fast-forward and deletes. Cite [[adr:root/20261110190000]].
+7c. **Push path (dumb HTTP / WebDAV).** LOCK target ref; MKCOL object fanout; PUT zlib loose objects (temp name + MOVE); PUT ref `oid LF`; UNLOCK; refuse non-fast-forward. Zero `new_oid` / CLI `:<ref>`: LOCK + `DELETE` + UNLOCK; MUST refuse deleting the remote HEAD symref target. Cite [[adr:root/20261110190000]] + [[adr:root/20261110112600]].
 7a. **Push path (SSH).** Same pack-protocol push dialog over OpenSSH running peer `git-receive-pack '<path>'`.
 7b. **Push path (`git://`).** Same receive-pack dialog after service request `git-receive-pack /path\0host=…\0`; peer MUST enable receive-pack (arks: `--enable=receive-pack`). Half-close write after the push body so the peer can finish `report-status`.
 8. **Clone composition (HTTP).** Init repo layout + fetch + baseline checkout of HEAD tree into the work tree (and index) for the claimed non-bare case.

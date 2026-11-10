@@ -5,8 +5,8 @@
 //! `report-status-v2` when that is the only form advertised). Deletes require
 //! peer `delete-refs`. Force-with-lease is not claimed.
 //!
-//! Dumb path: WebDAV LOCK/MKCOL/PUT/(MOVE)/UNLOCK per git-http-push + RFC 4918
-//! ([[adr:root/20261110190000]]).
+//! Dumb path: WebDAV LOCK/MKCOL/PUT/(MOVE)/DELETE/UNLOCK per git-http-push +
+//! RFC 4918 ([[adr:root/20261110190000]], [[adr:root/20261110112600]]).
 //!
 //! Primary: <https://git-scm.com/docs/gitprotocol-pack> (push-cert / report-status),
 //! <https://git-scm.com/docs/gitprotocol-capabilities> (`delete-refs`),

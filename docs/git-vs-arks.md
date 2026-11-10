@@ -49,7 +49,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Smart HTTP clone/fetch/push | Yes | Yes | **Claimed** |
 | SSH clone/fetch/push (OpenSSH helper) | Yes | Yes | **Claimed** |
 | Client `git://` | Yes | Yes | **Claimed** (host wire; ladder L2) |
-| Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE subset) | **Claimed** (host wire; ladder L3) |
+| Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE/DELETE; `:<ref>` delete) | **Claimed** (host wire; L3 + S3) |
 | Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
 | Partial-clone `--filter=blob:none` / promisor | Yes | Yes (`blob:none`; other specs refuse) | **Claimed** (R3 / S1 host wire) |
@@ -98,7 +98,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | **S0** | Inventory lock (implement / SoT-amend / still-OOS) | **Done** |
 | **S1** | R3 filter / promisor (`blob:none`) | **Done** (host wire) |
 | **S2** | R4 OpenPGP / X.509 / `tag -s` | **Done** (G38) |
-| **S3** | Protocol narrows (e.g. dumb HTTP deletes) | Next |
+| **S3** | Protocol narrows (dumb HTTP deletes) | **Done** (host wire) |
 | **S4** | Interactive / patch flows or honest defer | Open |
 | **S5** | R5 live forge (secrets) or documented block | Open |
 | **S6** | Symmetry e2e matrix (git vs arks) | Open |

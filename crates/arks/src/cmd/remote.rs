@@ -121,9 +121,24 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         .find(|r| r.name == remote_name)
         .ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
     let (refname, oid) = match refspec {
+        // Empty-source delete: `arks push <remote> :<ref>` (S3 / git push shape).
+        Some(rs) if rs.starts_with(':') => {
+            let name = rs[1..].trim();
+            if name.is_empty() {
+                return Err(CliError::Usage("push :<ref>".into()));
+            }
+            let full = if name.starts_with("refs/") {
+                name.to_string()
+            } else {
+                format!("refs/heads/{name}")
+            };
+            let zero = arks_oid::Oid::from_hex("0000000000000000000000000000000000000000")
+                .map_err(|e| CliError::Msg(e.to_string()))?;
+            (full, zero)
+        }
         Some(rs) if rs.contains(':') => {
             return Err(CliError::NotImplemented(
-                "push refspec with ':' not claimed in M6".into(),
+                "push src:dst refspec not claimed".into(),
             ));
         }
         Some(name) => {

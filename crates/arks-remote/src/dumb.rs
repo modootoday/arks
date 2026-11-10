@@ -5,10 +5,11 @@
 //! read `objects/info/packs`, download listed packs, fetch missing loose
 //! objects by OID path, update remote-tracking refs.
 //!
-//! Push flow (R2): when receive-pack discovery is dumb, speak WebDAV write
+//! Push flow (R2/S3): when receive-pack discovery is dumb, speak WebDAV write
 //! ([git-http-push](https://git-scm.com/docs/git-http-push),
 //! [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918),
-//! [[adr:root/20261110190000]]).
+//! [[adr:root/20261110190000]], [[adr:root/20261110112600]]) including ref
+//! `DELETE` for zero-oid updates.
 
 use crate::advertise::{AdvertisedRef, Advertisement};
 use crate::config::{fetch_specs_for, map_refspec};
@@ -300,6 +301,8 @@ fn get_bytes<T: Transport>(
 ///
 /// `info_body` is the dumb `info/refs` entity already returned for receive-pack
 /// discovery (smart→dumb fallback; no second GET required).
+///
+/// Zero `new_oid` updates are remote ref deletes (S3 / WebDAV `DELETE`).
 pub(crate) fn push_dumb_with<T: Transport>(
     transport: &mut T,
     repo: &Repository,
@@ -316,21 +319,32 @@ pub(crate) fn push_dumb_with<T: Transport>(
         body: Vec::new(),
     });
 
+    let head_target = remote_head_symref(transport, url)?;
+
     let mut tips = Vec::new();
     let mut bases = Vec::new();
     let mut planned: Vec<(Oid, Oid, String)> = Vec::new();
+    let mut deletes: Vec<String> = Vec::new();
     for update in updates {
-        if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
-            return Err(RemoteError::NotImplemented(
-                "dumb HTTP push delete (-d/-D) is not claimed".into(),
-            ));
-        }
         let old = ad
             .refs
             .iter()
             .find(|r| r.name == update.refname)
             .map(|r| r.oid)
             .unwrap_or_else(zero_oid);
+        if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
+            if old.as_bytes().iter().all(|b| *b == 0) {
+                continue;
+            }
+            if head_target.as_deref() == Some(update.refname.as_str()) {
+                return Err(RemoteError::Rejected(format!(
+                    "cannot delete remote HEAD target {}",
+                    update.refname
+                )));
+            }
+            deletes.push(update.refname.clone());
+            continue;
+        }
         if old == update.new_oid {
             continue;
         }
@@ -350,7 +364,7 @@ pub(crate) fn push_dumb_with<T: Transport>(
         tips.push(update.new_oid);
         planned.push((old, update.new_oid, update.refname.clone()));
     }
-    if planned.is_empty() {
+    if planned.is_empty() && deletes.is_empty() {
         return Ok(());
     }
 
@@ -385,6 +399,62 @@ pub(crate) fn push_dumb_with<T: Transport>(
         }
         dav_unlock(transport, url, refname, &token)?;
     }
+
+    for refname in &deletes {
+        dav_delete_ref(transport, url, refname)?;
+    }
+    Ok(())
+}
+
+fn remote_head_symref<T: Transport>(
+    transport: &mut T,
+    base: &str,
+) -> Result<Option<String>, RemoteError> {
+    let resp = match transport.exchange(&HttpRequest {
+        method: "GET".into(),
+        url: join_url(base, "HEAD"),
+        headers: Vec::new(),
+        body: Vec::new(),
+    }) {
+        Ok(r) => r,
+        Err(RemoteError::Http(msg)) if msg.starts_with("HTTP 404") => return Ok(None),
+        Err(e) => return Err(e),
+    };
+    if !(200..300).contains(&resp.status) {
+        return Ok(None);
+    }
+    let text = String::from_utf8_lossy(&resp.body);
+    let line = text.lines().next().unwrap_or("").trim();
+    if let Some(rest) = line.strip_prefix("ref: ") {
+        return Ok(Some(rest.trim().to_string()));
+    }
+    Ok(None)
+}
+
+fn dav_delete_ref<T: Transport>(
+    transport: &mut T,
+    base: &str,
+    refname: &str,
+) -> Result<(), RemoteError> {
+    let token = dav_lock(transport, base, refname)?;
+    let del = transport.exchange(&HttpRequest {
+        method: "DELETE".into(),
+        url: join_url(base, refname),
+        headers: vec![
+            ("If".into(), format!("(<{token}>)")),
+            ("Lock-Token".into(), format!("<{token}>")),
+        ],
+        body: Vec::new(),
+    })?;
+    if !(200..300).contains(&del.status) {
+        let _ = dav_unlock(transport, base, refname, &token);
+        return Err(RemoteError::Http(format!(
+            "DELETE {refname} -> HTTP {}",
+            del.status
+        )));
+    }
+    // Lock file may already be gone with the ref; UNLOCK best-effort.
+    let _ = dav_unlock(transport, base, refname, &token);
     Ok(())
 }
 

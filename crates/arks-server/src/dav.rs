@@ -1,7 +1,7 @@
 //! Additive WebDAV write path for dumb HTTP push.
 //!
 //! Primary: [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918) (PROPFIND /
-//! LOCK / UNLOCK / MKCOL / PUT / MOVE), [git-http-push(1)](https://git-scm.com/docs/git-http-push),
+//! LOCK / UNLOCK / MKCOL / PUT / MOVE / DELETE), [git-http-push(1)](https://git-scm.com/docs/git-http-push),
 //! object URL layout from [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http),
 //! ref file shape from [gitrepository-layout](https://git-scm.com/docs/gitrepository-layout),
 //! [git-update-server-info](https://git-scm.com/docs/git-update-server-info).
@@ -12,6 +12,7 @@ use crate::dumb::update_server_info;
 use crate::error::ServerError;
 use crate::http::{HttpRequest, HttpResponse};
 use arks_oid::Oid;
+use arks_refs::RefTarget;
 use arks_repo::Repository;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
@@ -23,7 +24,7 @@ const DAV_XML: &str = "application/xml; charset=\"utf-8\"";
 pub fn is_dav_method(method: &str) -> bool {
     matches!(
         method.to_ascii_uppercase().as_str(),
-        "PROPFIND" | "LOCK" | "UNLOCK" | "MKCOL" | "PUT" | "MOVE"
+        "PROPFIND" | "LOCK" | "UNLOCK" | "MKCOL" | "PUT" | "MOVE" | "DELETE"
     )
 }
 
@@ -41,6 +42,7 @@ pub fn handle_dav(repo: &mut Repository, req: &HttpRequest) -> Result<HttpRespon
         "MKCOL" => mkcol(repo.git_dir(), &rel),
         "PUT" => put_resource(repo, &rel, &req.body, req.lock_token.as_deref()),
         "MOVE" => move_resource(repo.git_dir(), &rel, req.destination.as_deref()),
+        "DELETE" => delete_resource(repo, &rel, req.lock_token.as_deref()),
         _ => Ok(text(405, b"method not allowed")),
     }
 }
@@ -199,6 +201,43 @@ fn put_ref(repo: &mut Repository, rel: &str, body: &[u8]) -> Result<HttpResponse
         .map_err(|e| ServerError::Msg(e.to_string()))?;
     update_server_info(repo)?;
     Ok(text(201, b""))
+}
+
+fn delete_resource(
+    repo: &mut Repository,
+    rel: &str,
+    token: Option<&str>,
+) -> Result<HttpResponse, ServerError> {
+    ensure_writable_rel(rel)?;
+    if !rel.starts_with("refs/") {
+        return Ok(text(403, b"delete path not claimed"));
+    }
+    if let Some(resp) = lock_conflict(repo.git_dir(), rel, token)? {
+        return Ok(resp);
+    }
+    // git-http-push refuses deleting the remote HEAD target.
+    if let Ok(RefTarget::Symbolic(head_ref)) = repo.head_target() {
+        if head_ref == rel {
+            return Ok(text(403, b"cannot delete current HEAD"));
+        }
+    }
+    match repo.refs_mut().delete(rel, None) {
+        Ok(()) => {
+            update_server_info(repo)?;
+            Ok(text(204, b""))
+        }
+        Err(e) => {
+            let msg = e.to_string();
+            if msg.contains("not found")
+                || msg.contains("missing")
+                || msg.contains("does not exist")
+            {
+                Ok(text(404, b"ref missing"))
+            } else {
+                Err(ServerError::Msg(msg))
+            }
+        }
+    }
 }
 
 fn move_resource(
