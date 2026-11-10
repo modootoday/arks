@@ -243,8 +243,8 @@ fn peel_tag_target(repo: &arks_repo::Repository, oid: &arks_oid::Oid) -> CliResu
     let text = String::from_utf8_lossy(&obj.payload);
     for line in text.lines() {
         if let Some(hex) = line.strip_prefix("object ") {
-            return Ok(arks_oid::Oid::from_hex(hex.trim())
-                .map_err(|e| CliError::Msg(format!("bad tag object oid: {e}")))?);
+            return arks_oid::Oid::from_hex(hex.trim())
+                .map_err(|e| CliError::Msg(format!("bad tag object oid: {e}")));
         }
     }
     Err(CliError::Msg(format!(

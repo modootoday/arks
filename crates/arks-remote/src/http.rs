@@ -29,7 +29,7 @@ impl UreqTransport {
     }
 
     /// Inject a pre-built credential source (tests / callers that already discovered).
-    #[allow(dead_code)]
+    #[allow(dead_code)] // intentional API for injected CredentialSource (tests / auth)
     pub fn with_source(source: CredentialSource) -> Self {
         Self::with_source_lazy(source, true)
     }

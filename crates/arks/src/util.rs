@@ -61,10 +61,8 @@ fn refuse_unknown_repo_extensions(repo: &Repository) -> CliResult<()> {
             if in_core && key == "repositoryformatversion" {
                 format_v1 = val == "1";
             }
-            if in_extensions {
-                if !KNOWN_EXTENSIONS.contains(&key.as_str()) {
-                    unknown.push(key);
-                }
+            if in_extensions && !KNOWN_EXTENSIONS.contains(&key.as_str()) {
+                unknown.push(key);
             }
         }
     }

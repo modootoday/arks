@@ -17,27 +17,27 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
             stash_push()
         }
         "list" => {
-            refuse_unknown_flags(&args.get(1..).unwrap_or(&[]), &[])?;
+            refuse_unknown_flags(args.get(1..).unwrap_or(&[]), &[])?;
             stash_list()
         }
         "pop" => {
-            refuse_unknown_flags(&args.get(1..).unwrap_or(&[]), &[])?;
+            refuse_unknown_flags(args.get(1..).unwrap_or(&[]), &[])?;
             stash_pop()
         }
         "show" => {
-            refuse_unknown_flags(&args.get(1..).unwrap_or(&[]), &[])?;
+            refuse_unknown_flags(args.get(1..).unwrap_or(&[]), &[])?;
             stash_show()
         }
         "apply" => {
-            refuse_unknown_flags(&args.get(1..).unwrap_or(&[]), &[])?;
+            refuse_unknown_flags(args.get(1..).unwrap_or(&[]), &[])?;
             stash_apply(false)
         }
         "drop" => {
-            refuse_unknown_flags(&args.get(1..).unwrap_or(&[]), &[])?;
+            refuse_unknown_flags(args.get(1..).unwrap_or(&[]), &[])?;
             stash_drop()
         }
         "clear" => {
-            refuse_unknown_flags(&args.get(1..).unwrap_or(&[]), &[])?;
+            refuse_unknown_flags(args.get(1..).unwrap_or(&[]), &[])?;
             stash_clear()
         }
         other => Err(CliError::NotImplemented(format!(

@@ -98,8 +98,8 @@ fn resolve_ssh_signing_key(signing_key: &str) -> CliResult<PathBuf> {
             literal.chars().take(12).collect::<String>()
         )));
     }
-    if signing_key.ends_with(".pub") {
-        let priv_path = PathBuf::from(&signing_key[..signing_key.len() - 4]);
+    if let Some(stem) = signing_key.strip_suffix(".pub") {
+        let priv_path = PathBuf::from(stem);
         if !priv_path.is_file() {
             return Err(CliError::Msg(format!(
                 "commit -S: private key not found for {}: {}",

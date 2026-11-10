@@ -370,12 +370,12 @@ fn lease_inspect(args: &[String]) -> CliResult<()> {
 }
 
 fn lease_list(args: &[String]) -> CliResult<()> {
-    if take_flag(args, "--help") || args.iter().any(|a| a.starts_with('-')) {
-        if args.iter().any(|a| a.starts_with('-') && a != "--help") {
-            return Err(CliError::NotImplemented(
-                "lease list: no options claimed".into(),
-            ));
-        }
+    if (take_flag(args, "--help") || args.iter().any(|a| a.starts_with('-')))
+        && args.iter().any(|a| a.starts_with('-') && a != "--help")
+    {
+        return Err(CliError::NotImplemented(
+            "lease list: no options claimed".into(),
+        ));
     }
     lease_inspect(&[])
 }

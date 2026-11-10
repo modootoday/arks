@@ -401,8 +401,8 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(
         &filtered
             .iter()
-            .cloned()
             .filter(|a| a.starts_with('-'))
+            .cloned()
             .collect::<Vec<_>>(),
         &["--count"],
     )?;
