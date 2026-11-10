@@ -909,3 +909,48 @@ fn open_repo(path: &Path) -> Result<Repository, ServerError> {
     }
     Repository::open(path).map_err(|e| ServerError::Msg(e.to_string()))
 }
+
+#[cfg(test)]
+mod archive_path_filter_tests {
+    use super::*;
+
+    #[test]
+    fn parse_prefix_includes_excludes() {
+        let args = vec![
+            "HEAD".into(),
+            "--prefix=pkg/".into(),
+            "src".into(),
+            "--exclude=src/secret".into(),
+        ];
+        let (treeish, filter) = parse_archive_path_filter(&args).unwrap();
+        assert_eq!(treeish, "HEAD");
+        assert_eq!(filter.prefix, "pkg/");
+        assert_eq!(filter.includes, vec!["src".to_string()]);
+        assert_eq!(filter.excludes, vec!["src/secret".to_string()]);
+    }
+
+    #[test]
+    fn path_filter_include_exclude_parity_partial() {
+        let filter = ArchivePathFilter {
+            prefix: String::new(),
+            includes: vec!["src".into()],
+            excludes: vec!["src/secret".into()],
+        };
+        assert!(path_allowed("src/lib.rs", &filter));
+        assert!(!path_allowed("src/secret/key", &filter));
+        assert!(!path_allowed("docs/readme", &filter));
+        let empty = ArchivePathFilter::default();
+        assert!(path_allowed("anything", &empty));
+    }
+
+    #[test]
+    fn path_filter_exclude_segment_name() {
+        let filter = ArchivePathFilter {
+            prefix: "out/".into(),
+            includes: vec![],
+            excludes: vec![".git".into()],
+        };
+        assert!(!path_allowed("foo/.git/config", &filter));
+        assert!(path_allowed("foo/bar", &filter));
+    }
+}
