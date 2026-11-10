@@ -23,8 +23,20 @@ fn git_ok() -> bool {
         .unwrap_or(false)
 }
 
+/// Drop inherited GIT_* so Actions/host wrappers cannot redirect stock-Git
+/// into the workspace checkout (Windows flaky "not a git repository").
+fn git_cmd() -> Command {
+    let mut c = Command::new("git");
+    c.env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .env_remove("GIT_COMMON_DIR")
+        .env_remove("GIT_OBJECT_DIRECTORY")
+        .env_remove("GIT_INDEX_FILE");
+    c
+}
+
 fn git_hash_object(payload: &[u8]) -> String {
-    let mut child = Command::new("git")
+    let mut child = git_cmd()
         .args(["hash-object", "--stdin"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -43,18 +55,19 @@ fn git_hash_object(payload: &[u8]) -> String {
 
 fn git_init(repo: &Path) {
     // Empty template avoids host template-hook copy races on Windows temp dirs.
-    let st = Command::new("git")
-        .args(["-c", "init.templateDir=", "init", "--quiet"])
-        .current_dir(repo)
+    // Prefer `git -C` over current_dir alone — more reliable on Windows runners.
+    let repo_s = repo.to_str().expect("repo utf-8 path");
+    let st = git_cmd()
+        .args(["-C", repo_s, "-c", "init.templateDir=", "init", "--quiet"])
         .status()
         .expect("git init");
     assert!(st.success());
 }
 
 fn git_hash_object_write(repo: &Path, payload: &[u8]) -> String {
-    let mut child = Command::new("git")
-        .args(["hash-object", "-w", "--stdin"])
-        .current_dir(repo)
+    let repo_s = repo.to_str().expect("repo utf-8 path");
+    let mut child = git_cmd()
+        .args(["-C", repo_s, "hash-object", "-w", "--stdin"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -71,9 +84,9 @@ fn git_hash_object_write(repo: &Path, payload: &[u8]) -> String {
 }
 
 fn git_cat_file_blob(repo: &Path, oid: &str) -> Vec<u8> {
-    let out = Command::new("git")
-        .args(["cat-file", "blob", oid])
-        .current_dir(repo)
+    let repo_s = repo.to_str().expect("repo utf-8 path");
+    let out = git_cmd()
+        .args(["-C", repo_s, "cat-file", "blob", oid])
         .output()
         .expect("git cat-file");
     assert!(out.status.success(), "git cat-file failed: {out:?}");
