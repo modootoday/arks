@@ -2,19 +2,17 @@
 .spec.local/
 .specfold/
 target/
-target-agent/
-target-agent2/
-target-cleanroom/
-target-pilot/
+target-*/
 .cargo-target/
-verify/gates/*/target/
-verify/gates/*/out/
 verify/out/
+verify/gates/*/out/
+verify/gates/*/.run.lock.dir/
 
 # Local CI / agent scratch dumps (never commit)
 /_win_*.log
 *.bak
 *.agent-dump.*
+*.evidence
 **/agent-transcripts/
 
 # Secrets / credentials (public-surface: never commit)
