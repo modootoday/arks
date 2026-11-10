@@ -61,7 +61,6 @@ sha2 = { version = "0.10", default-features = false }
 thiserror = "2.0"
 tempfile = "3"
 ureq = { version = "2.12", default-features = false, features = ["tls"] }
-mimalloc = { version = "0.1", default-features = false }
 
 [profile.dev]
 # Keep host advisory builds light when many agents share the machine.

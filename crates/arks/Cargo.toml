@@ -25,8 +25,6 @@ arks-server = { workspace = true }
 arks-pack = { workspace = true }
 arks-lease = { workspace = true }
 thiserror = { workspace = true }
-# J-CLONE-LOCAL: pack decode + 220× checkout writes are alloc-heavy.
-mimalloc = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
