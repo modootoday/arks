@@ -30,7 +30,133 @@ pub fn cmd_receive_pack(args: &[String]) -> CliResult<()> {
         .map_err(|e| CliError::Msg(e.to_string()))
 }
 
+/// Transitional `arks serve-http` — HTTP-only (`≡ arks serve --no-ssh --no-forge`).
+/// Prefer `arks serve --no-ssh --no-forge` in new call sites ([[sot:root/arks-self-host-server]]).
 pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        print_serve_http_transitional_help();
+        return Ok(());
+    }
+    run_serve_http_listener(args, "arks serve-http (transitional ≡ serve --no-ssh --no-forge)")
+}
+
+/// `arks serve` — single hosting process; default HTTP+SSH+forge; `config` nested.
+/// Cite: [[sot:root/arks-self-host-server]] (flags win; fail-closed SSH/forge Partial).
+pub fn cmd_serve(args: &[String]) -> CliResult<()> {
+    if args.is_empty()
+        || matches!(
+            args.first().map(String::as_str),
+            Some("--help" | "-h" | "help")
+        )
+    {
+        print_serve_help();
+        return Ok(());
+    }
+    if args.first().map(String::as_str) == Some("config") {
+        return cmd_serve_config(&args[1..]);
+    }
+
+    let mut enable_http = true;
+    let mut enable_ssh = true;
+    let mut enable_forge = true;
+    let mut forwarded = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        let a = args[i].as_str();
+        match a {
+            "--no-http" => enable_http = false,
+            "--no-ssh" => enable_ssh = false,
+            "--no-forge" => enable_forge = false,
+            "--http" => enable_http = true,
+            "--ssh" => enable_ssh = true,
+            "--forge" => enable_forge = true,
+            "--listen" => {
+                forwarded.push(args[i].clone());
+                i += 1;
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("serve --listen needs ADDR".into()))?;
+                forwarded.push(v.clone());
+            }
+            "--basic-auth" | "--basic-auth-file" => {
+                forwarded.push(args[i].clone());
+                i += 1;
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage(format!("serve {a} needs a value")))?;
+                forwarded.push(v.clone());
+            }
+            "--dumb-only" => forwarded.push(args[i].clone()),
+            other if other.starts_with("--listen=") => forwarded.push(args[i].clone()),
+            other if other.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!(
+                    "serve option not claimed: {other}"
+                )));
+            }
+            _ => forwarded.push(args[i].clone()),
+        }
+        i += 1;
+    }
+
+    if !enable_http && !enable_ssh && !enable_forge {
+        return Err(CliError::Usage(
+            "arks serve: nothing to serve (`--no-http` + `--no-ssh` + `--no-forge`); omit a disable flag"
+                .into(),
+        ));
+    }
+
+    // Fail-closed: forge-in-serve enabled but Missing/Partial — do not silent-degrade.
+    if enable_forge {
+        return Err(CliError::NotImplemented(
+            "arks serve: forge API enabled by default but not Claimed yet \
+             ([[sot:root/arks-self-host-server]]); fail-closed — use `arks serve --no-forge` \
+             (and `--no-ssh` until SSH Claimed); transitional `arks hub serve` for Partial local forge"
+                .into(),
+        ));
+    }
+
+    // Fail-closed: SSH enabled but in-process listener Missing/Partial — do not silent-degrade.
+    if enable_ssh {
+        return Err(CliError::NotImplemented(
+            "arks serve: SSH listener enabled by default but not Claimed yet \
+             ([[sot:root/arks-self-host-server]]); fail-closed — use `arks serve --no-ssh` for HTTP-only, \
+             or ops SSHD + `arks upload-pack`/`receive-pack` for SSH remotes today"
+                .into(),
+        ));
+    }
+
+    if !enable_http {
+        return Err(CliError::Usage(
+            "arks serve: HTTP disabled and SSH/forge not Claimed — nothing to run".into(),
+        ));
+    }
+    run_serve_http_listener(&forwarded, "arks serve --no-ssh --no-forge")
+}
+
+/// `arks serve config` — self-host server config (Partial; not Claimed; ≠ `arks config`).
+pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
+    if args.is_empty()
+        || matches!(
+            args.first().map(String::as_str),
+            Some("--help" | "-h" | "help")
+        )
+    {
+        print_serve_config_help();
+        return Ok(());
+    }
+    let sub = args[0].as_str();
+    match sub {
+        "show" | "set" | "path" | "validate" => Err(CliError::NotImplemented(format!(
+            "arks serve config {sub}: design/Partial — not Claimed yet \
+             ([[sot:root/arks-self-host-server]]); server config ≠ `arks config` / hub settings"
+        ))),
+        other => Err(CliError::Usage(format!(
+            "arks serve config: unknown `{other}` (show|set|path|validate); see --help"
+        ))),
+    }
+}
+
+fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut listen = "127.0.0.1:8080".to_string();
     let mut dir: Option<PathBuf> = None;
     let mut dumb_only = false;
@@ -43,8 +169,11 @@ pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
                 i += 1;
                 listen = args
                     .get(i)
-                    .ok_or_else(|| CliError::Usage("serve-http --listen needs ADDR".into()))?
+                    .ok_or_else(|| CliError::Usage("serve --listen needs ADDR".into()))?
                     .clone();
+            }
+            _ if args[i].starts_with("--listen=") => {
+                listen = args[i][9..].to_string();
             }
             "--dumb-only" => dumb_only = true,
             "--basic-auth" => {
@@ -52,7 +181,7 @@ pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
                 basic_auth_cli = Some(
                     args.get(i)
                         .ok_or_else(|| {
-                            CliError::Usage("serve-http --basic-auth needs user:pass".into())
+                            CliError::Usage("serve --basic-auth needs user:pass".into())
                         })?
                         .clone(),
                 );
@@ -62,30 +191,26 @@ pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
                 basic_auth_file = Some(PathBuf::from(
                     args.get(i)
                         .ok_or_else(|| {
-                            CliError::Usage("serve-http --basic-auth-file needs PATH".into())
+                            CliError::Usage("serve --basic-auth-file needs PATH".into())
                         })?
                         .as_str(),
                 ));
             }
-            "--help" | "-h" => {
-                print_serve_help();
-                return Ok(());
-            }
             other if other.starts_with('-') => {
                 return Err(CliError::NotImplemented(format!(
-                    "serve-http option not claimed: {other}"
+                    "serve option not claimed: {other}"
                 )));
             }
             other => {
                 if dir.is_some() {
-                    return Err(CliError::Usage("serve-http takes one directory".into()));
+                    return Err(CliError::Usage("serve takes one directory".into()));
                 }
                 dir = Some(PathBuf::from(other));
             }
         }
         i += 1;
     }
-    let dir = dir.ok_or_else(|| CliError::Usage("serve-http <directory> required".into()))?;
+    let dir = dir.ok_or_else(|| CliError::Usage("serve <directory> required".into()))?;
     let git_dir = resolve_git_dir(&dir)?;
     // Refresh dumb advertisements so additive dumb GETs work beside smart HTTP.
     if let Ok(repo) = Repository::open(&git_dir) {
@@ -94,13 +219,19 @@ pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
     let addr: SocketAddr = listen
         .parse()
         .map_err(|e| CliError::Usage(format!("bad --listen address: {e}")))?;
+    if !addr.ip().is_loopback() {
+        eprintln!(
+            "{label}: non-loopback bind (LAN/WAN) — product self-host Partial; ops owns firewall/TLS \
+             ([[sot:root/arks-self-host-server]]); prefer --basic-auth + HTTPS front before exposure"
+        );
+    }
     let basic_auth = resolve_basic_auth(basic_auth_cli.as_deref(), basic_auth_file.as_deref())?;
     let auth_label = if basic_auth.is_some() {
         "basic-auth=on"
     } else {
         "unauthenticated"
     };
-    eprintln!("arks serve-http listening on http://{addr}/ (dumb_only={dumb_only}; {auth_label})");
+    eprintln!("{label} listening on http://{addr}/ (dumb_only={dumb_only}; {auth_label})");
     let stop = Arc::new(AtomicBool::new(false));
     serve_http_with_opts(
         git_dir,
@@ -300,17 +431,56 @@ fn resolve_git_dir(dir: &std::path::Path) -> CliResult<PathBuf> {
 fn print_serve_help() {
     print!(
         "\
-arks serve-http — smart (+ dumb) HTTP Git server (Wave Sv / M11+M25)
+arks serve — self-host umbrella (HTTP + SSH + forge API; Wave Sv / M11+M25)
 
 Usage:
-  arks serve-http [--listen ADDR] [--dumb-only] [--basic-auth user:pass]
-                  [--basic-auth-file PATH] <directory>
+  arks serve [--no-http] [--no-ssh] [--no-forge] [--listen ADDR|--listen=ADDR]
+             [--dumb-only] [--basic-auth user:pass] [--basic-auth-file PATH] <directory>
+  arks serve config show|set|path|validate …
 
-Unauthenticated loopback is the default (G15 clean-room). Optional in-process
-HTTP Basic via `--basic-auth` / `--basic-auth-file` or env `ARKS_HTTP_BASIC` /
-`ARKS_HTTP_BASIC_FILE` (G36). Forge OAuth is refused. Ops reverse-proxy / TLS
-MAY still front the listener. Dumb GETs are additive beside smart HTTP.
-`--dumb-only` forces dumb info/refs replies (G29 / smart-client fallback).
+Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-forge
+(preferred over redundant enable flags). Disabling all three is an error.
+
+Honesty ([[sot:root/arks-self-host-server]]):
+  - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
+  - In-process SSH listener: Missing/Partial — fail-closed if SSH stays enabled
+  - Forge-in-serve: Missing/Partial — fail-closed if forge stays enabled
+  - Practical today: `arks serve --no-ssh --no-forge` (HTTP-only)
+  - Ops SSHD + upload-pack/receive-pack remains valid SSH remotes today
+  - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
+  - Hub OAuth is refused as primary git-remote auth
+  - `serve config` is server config (Partial) — not `arks config`, not hub
+
+Bind: default 127.0.0.1:8080 (localhost-safe). LAN/WAN: --listen 0.0.0.0:8080
+or a LAN IP (ops owns firewall + TLS — not Claimed WAN-safe).
+"
+    );
+}
+
+fn print_serve_http_transitional_help() {
+    print!(
+        "\
+arks serve-http — transitional HTTP-only alias (≡ `arks serve --no-ssh --no-forge`)
+
+Prefer:  arks serve --no-ssh --no-forge [flags…] <directory>
+See:     arks serve --help
+"
+    );
+}
+
+fn print_serve_config_help() {
+    print!(
+        "\
+arks serve config — self-host server configuration (design / Partial; not Claimed)
+
+Usage:
+  arks serve config show
+  arks serve config set <key> <value>
+  arks serve config path
+  arks serve config validate
+
+Not `arks config` (git-repo config). Not hub forge settings.
+Keys (design): bind, transports, Basic auth refs, TLS notes, SSH key paths, allow-paths.
 "
     );
 }

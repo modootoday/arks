@@ -98,6 +98,7 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "name-rev" => cmd::cmd_name_rev(args),
         "upload-pack" => cmd::cmd_upload_pack(args),
         "receive-pack" => cmd::cmd_receive_pack(args),
+        "serve" => cmd::cmd_serve(args),
         "serve-http" => cmd::cmd_serve_http(args),
         "http-backend" => cmd::cmd_http_backend(args),
         "update-server-info" => cmd::cmd_update_server_info(args),
@@ -179,6 +180,5 @@ pub fn is_overlap_leaf(cmd: &str) -> bool {
 }
 
 pub fn is_serve_leaf(cmd: &str) -> bool {
-    // `serve` umbrella lands in a later clap-stub commit; tip surface is serve-http.
-    matches!(cmd, "serve-http")
+    matches!(cmd, "serve" | "serve-http")
 }

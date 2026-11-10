@@ -31,7 +31,8 @@ Flat forge leaves (Partial/stub): pr issue auth release label run workflow
   search api org … — refuse non-zero until hub wiring commit.
   Transitional: arks hub … → same stub.
 
-Serve: tip surface `arks serve-http` (umbrella `serve` clap lands later).
+Serve: arks serve [--no-http|--no-ssh|--no-forge] …  (forge/SSH Missing → fail-closed)
+  Transitional: arks serve-http ≡ serve --no-ssh --no-forge
 
 Git porcelain/plumbing: historical inventory (Claimed rows unchanged).
 Agent: arks agent … (Partial stub)
