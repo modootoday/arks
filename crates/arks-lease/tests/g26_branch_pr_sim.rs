@@ -186,7 +186,7 @@ fn g26_c03_leased_concurrent_tip_workers_n32() {
                 shard_resource: shard_refns(&refname),
                 refname: refname.clone(),
                 expected_old: None,
-                new_oid: prepared[i].oid.clone(),
+                new_oid: prepared[i].oid,
             };
             let mut leases = LeaseManager::new();
             apply_batch(
@@ -308,8 +308,8 @@ fn g26_c05_planted_lock_induce_compare() {
     let update = TipUpdate {
         shard_resource: shard_refns("refs/heads/main"),
         refname: "refs/heads/main".into(),
-        expected_old: Some(oid.clone()),
-        new_oid: next.clone(),
+        expected_old: Some(oid),
+        new_oid: next,
     };
     let batch = apply_batch(
         &git,

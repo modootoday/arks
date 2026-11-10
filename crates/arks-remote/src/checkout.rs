@@ -6,6 +6,7 @@
 //! M17 Pf3-2: skip rewriting worktree blobs whose index OID already matches (same
 //! class of up-to-date short-circuit stock Git uses on switch/checkout).
 //! Pf4-3: collect blob write jobs then parallel get+write (Mutex store).
+//! Pf5: pack-cache-first reads + cheap fresh-write stamps; parallel from 8 blobs.
 
 use crate::error::RemoteError;
 use arks_index::{Index, IndexEntry, sort_entries};
@@ -219,42 +220,30 @@ fn materialize_jobs(
             }
         }
     }
-    // Prefetch blobs once (serial store reads) then parallel fs::write. Avoids
-    // Mutex contention on pack_objects during J-CLONE-LOCAL bulk checkout.
-    let mut prepared: Vec<(usize, String, PathBuf, Oid, u32, Vec<u8>)> =
-        Vec::with_capacity(writes.len());
-    for (i, rel, path, oid, mode) in writes {
-        let blob = repo
-            .get_object(&oid)
-            .map_err(|e| RemoteError::Msg(e.to_string()))?;
-        if blob.kind != ObjectKind::Blob {
-            return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
-        }
-        prepared.push((i, rel, path, oid, mode, blob.payload));
-    }
-    let written = if prepared.len() < 8 {
-        let mut out = Vec::with_capacity(prepared.len());
-        for (i, rel, path, oid, mode, payload) in prepared {
-            out.push((i, write_prefetched_blob(&rel, &path, &oid, mode, &payload)?));
+    // Overlap get+write across workers (pack-cache hits are concurrent under RwLock).
+    // Full prefetch-then-write regressed J-CLONE-PATH (lost read/write overlap).
+    let written = if writes.len() < 8 {
+        let mut out = Vec::with_capacity(writes.len());
+        for (i, rel, path, oid, mode) in writes {
+            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode)?));
         }
         out
     } else {
         let workers = thread::available_parallelism()
             .map(|p| p.get().clamp(2, 8))
             .unwrap_or(4)
-            .min(prepared.len());
-        let chunk = prepared.len().div_ceil(workers);
-        let mut out = Vec::with_capacity(prepared.len());
+            .min(writes.len());
+        let chunk = writes.len().div_ceil(workers);
+        let mut out = Vec::with_capacity(writes.len());
         let mut worker_err: Option<RemoteError> = None;
         thread::scope(|scope| {
             let mut handles = Vec::with_capacity(workers);
-            for piece in prepared.chunks(chunk) {
+            for piece in writes.chunks(chunk) {
                 handles.push(scope.spawn(
                     move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
                         let mut local = Vec::with_capacity(piece.len());
-                        for (i, rel, path, oid, mode, payload) in piece {
-                            local
-                                .push((*i, write_prefetched_blob(rel, path, oid, *mode, payload)?));
+                        for (i, rel, path, oid, mode) in piece {
+                            local.push((*i, write_one_blob(repo, rel, path, oid, *mode)?));
                         }
                         Ok(local)
                     },
@@ -284,15 +273,22 @@ fn materialize_jobs(
     Ok(entries.into_iter().map(|(_, e)| e).collect())
 }
 
-fn write_prefetched_blob(
+fn write_one_blob(
+    repo: &Repository,
     rel: &str,
     path: &Path,
     oid: &Oid,
     mode: u32,
-    payload: &[u8],
 ) -> Result<IndexEntry, RemoteError> {
-    fs::write(path, payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
-    let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) = stamp_after_write(payload.len());
+    let blob = repo
+        .get_object(oid)
+        .map_err(|e| RemoteError::Msg(e.to_string()))?;
+    if blob.kind != ObjectKind::Blob {
+        return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
+    }
+    fs::write(path, &blob.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) =
+        stamp_after_write(blob.payload.len());
     Ok(IndexEntry {
         ctime_sec,
         ctime_nsec,
@@ -355,9 +351,7 @@ fn index_stat_matches_worktree(e: &IndexEntry, path: &Path) -> bool {
     dur.as_secs() as u32 == e.mtime_sec && dur.subsec_nanos() == e.mtime_nsec
 }
 
-/// Fresh-write stamp without a post-write `stat` (clone hot path). Index
-/// racy-git protection still holds: next status that sees a matching size+mtime
-/// will re-hash when the worktree changes.
+/// Fresh-write stamp without a post-write `stat` (clone hot path).
 fn stamp_after_write(len: usize) -> (u32, u32, u32, u32, u32) {
     use std::time::{SystemTime, UNIX_EPOCH};
     let size = u32::try_from(len).unwrap_or(u32::MAX);

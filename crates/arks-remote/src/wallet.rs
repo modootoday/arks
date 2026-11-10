@@ -221,7 +221,7 @@ fn wallet_store(kind: WalletKind, desc: &Credential) -> Result<(), RemoteError> 
         WalletKind::Wincred => {
             #[cfg(windows)]
             {
-                return wincred_store(&key, desc);
+                wincred_store(&key, desc)
             }
             #[cfg(not(windows))]
             {
@@ -232,7 +232,7 @@ fn wallet_store(kind: WalletKind, desc: &Credential) -> Result<(), RemoteError> 
         WalletKind::Osxkeychain => {
             #[cfg(target_os = "macos")]
             {
-                return osx_store(&key, desc);
+                osx_store(&key, desc)
             }
             #[cfg(not(target_os = "macos"))]
             {
@@ -260,7 +260,7 @@ fn wallet_erase(kind: WalletKind, desc: &Credential) -> Result<(), RemoteError> 
         WalletKind::Wincred => {
             #[cfg(windows)]
             {
-                return wincred_erase(&key);
+                wincred_erase(&key)
             }
             #[cfg(not(windows))]
             {
@@ -271,7 +271,7 @@ fn wallet_erase(kind: WalletKind, desc: &Credential) -> Result<(), RemoteError> 
         WalletKind::Osxkeychain => {
             #[cfg(target_os = "macos")]
             {
-                return osx_erase(&key);
+                osx_erase(&key)
             }
             #[cfg(not(target_os = "macos"))]
             {
@@ -416,16 +416,12 @@ pub fn cmd_wallet_helper(kind: WalletKind, args: &[String]) -> Result<(), Remote
         .read_to_string(&mut input)
         .map_err(|e| RemoteError::Msg(format!("wallet stdin: {e}")))?;
     let desc = Credential::parse_attributes(&input);
-    match run_wallet_helper(kind, op, &desc)? {
-        Some(got) => {
-            let mut out = got.format_attrs();
-            if !out.ends_with('\n') {
-                out.push('\n');
-            }
+    if let Some(got) = run_wallet_helper(kind, op, &desc)? {
+        let mut out = got.format_attrs();
+        if !out.ends_with('\n') {
             out.push('\n');
-            print!("{out}");
         }
-        None => {}
+        print!("{out}");
     }
     Ok(())
 }

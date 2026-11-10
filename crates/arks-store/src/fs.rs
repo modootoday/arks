@@ -12,28 +12,29 @@ use arks_pack::{DecodedPack, PackIndex, PackIndexEntry};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 /// Loose + pack object store rooted at a Git `objects/` directory.
 ///
-/// Pf4-2: `Mutex` (not `RefCell`) so parallel checkout/archive readers can share a store.
+/// Pf4-2 / Pf5: `RwLock` so parallel checkout readers share the pack cache without
+/// exclusive-lock serialization on every blob get.
 #[derive(Debug)]
 pub struct FilesystemGitStore {
     objects_dir: PathBuf,
     /// Same-process inserts (e.g. after pack ingest) before disk re-read.
-    overlay: Mutex<HashMap<Oid, RawObject>>,
+    overlay: RwLock<HashMap<Oid, RawObject>>,
     /// Lazily decoded pack objects under `objects/pack/`.
-    pack_objects: Mutex<HashMap<Oid, RawObject>>,
-    packs_loaded: Mutex<bool>,
+    pack_objects: RwLock<HashMap<Oid, RawObject>>,
+    packs_loaded: RwLock<bool>,
 }
 
 impl Clone for FilesystemGitStore {
     fn clone(&self) -> Self {
         Self {
             objects_dir: self.objects_dir.clone(),
-            overlay: Mutex::new(self.overlay.lock().expect("overlay").clone()),
-            pack_objects: Mutex::new(self.pack_objects.lock().expect("pack_objects").clone()),
-            packs_loaded: Mutex::new(*self.packs_loaded.lock().expect("packs_loaded")),
+            overlay: RwLock::new(self.overlay.read().expect("overlay").clone()),
+            pack_objects: RwLock::new(self.pack_objects.read().expect("pack_objects").clone()),
+            packs_loaded: RwLock::new(*self.packs_loaded.read().expect("packs_loaded")),
         }
     }
 }
@@ -50,9 +51,9 @@ impl FilesystemGitStore {
     pub fn open(objects_dir: impl Into<PathBuf>) -> Self {
         Self {
             objects_dir: objects_dir.into(),
-            overlay: Mutex::new(HashMap::new()),
-            pack_objects: Mutex::new(HashMap::new()),
-            packs_loaded: Mutex::new(false),
+            overlay: RwLock::new(HashMap::new()),
+            pack_objects: RwLock::new(HashMap::new()),
+            packs_loaded: RwLock::new(false),
         }
     }
 
@@ -91,13 +92,13 @@ impl FilesystemGitStore {
                 }
             }
         }
-        for &oid in self.overlay.lock().expect("overlay").keys() {
+        for &oid in self.overlay.read().expect("overlay").keys() {
             if seen.insert(oid) {
                 oids.push(oid);
             }
         }
         self.load_packs_if_needed()?;
-        for &oid in self.pack_objects.lock().expect("pack_objects").keys() {
+        for &oid in self.pack_objects.read().expect("pack_objects").keys() {
             if seen.insert(oid) {
                 oids.push(oid);
             }
@@ -147,22 +148,22 @@ impl FilesystemGitStore {
         {
             // Hot path (fetch/clone): keep one copy in pack_objects only.
             // get()/exists() already consult pack_objects after overlay.
-            let mut pack_objects = self.pack_objects.lock().expect("pack_objects");
+            let mut pack_objects = self.pack_objects.write().expect("pack_objects");
             for resolved in decoded.objects {
                 pack_objects.insert(resolved.oid, resolved.object);
             }
         }
-        *self.packs_loaded.lock().expect("packs_loaded") = true;
+        *self.packs_loaded.write().expect("packs_loaded") = true;
         Ok(())
     }
 
     fn load_packs_if_needed(&self) -> Result<(), StoreError> {
-        if *self.packs_loaded.lock().expect("packs_loaded") {
+        if *self.packs_loaded.read().expect("packs_loaded") {
             return Ok(());
         }
         let pack_dir = self.objects_dir.join("pack");
         if !pack_dir.is_dir() {
-            *self.packs_loaded.lock().expect("packs_loaded") = true;
+            *self.packs_loaded.write().expect("packs_loaded") = true;
             return Ok(());
         }
         let mut loaded = HashMap::new();
@@ -185,10 +186,10 @@ impl FilesystemGitStore {
             }
         }
         self.pack_objects
-            .lock()
+            .write()
             .expect("pack_objects")
             .extend(loaded);
-        *self.packs_loaded.lock().expect("packs_loaded") = true;
+        *self.packs_loaded.write().expect("packs_loaded") = true;
         Ok(())
     }
 }
@@ -227,13 +228,13 @@ impl ObjectStore for FilesystemGitStore {
     }
 
     fn get(&self, oid: &Oid) -> Result<RawObject, Self::Error> {
-        if let Some(obj) = self.overlay.lock().expect("overlay").get(oid) {
+        if let Some(obj) = self.overlay.read().expect("overlay").get(oid) {
             return Ok(obj.clone());
         }
         // Clone/fetch hot path: packs are already ingested into RAM — probe the
         // cache before a loose `is_file` syscall (220× miss on J-CLONE-LOCAL).
-        if *self.packs_loaded.lock().expect("packs_loaded") {
-            if let Some(obj) = self.pack_objects.lock().expect("pack_objects").get(oid) {
+        if *self.packs_loaded.read().expect("packs_loaded") {
+            if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
                 return Ok(obj.clone());
             }
         }
@@ -243,20 +244,20 @@ impl ObjectStore for FilesystemGitStore {
             return read_loose_hot(&self.objects_dir, oid).map_err(|e| map_read_error(oid, e));
         }
         self.load_packs_if_needed()?;
-        if let Some(obj) = self.pack_objects.lock().expect("pack_objects").get(oid) {
+        if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
             return Ok(obj.clone());
         }
         Err(StoreError::NotFound(oid.to_hex()))
     }
 
     fn exists(&self, oid: &Oid) -> Result<bool, Self::Error> {
-        if self.overlay.lock().expect("overlay").contains_key(oid) {
+        if self.overlay.read().expect("overlay").contains_key(oid) {
             return Ok(true);
         }
-        if *self.packs_loaded.lock().expect("packs_loaded")
+        if *self.packs_loaded.read().expect("packs_loaded")
             && self
                 .pack_objects
-                .lock()
+                .read()
                 .expect("pack_objects")
                 .contains_key(oid)
         {
@@ -268,7 +269,7 @@ impl ObjectStore for FilesystemGitStore {
         self.load_packs_if_needed()?;
         Ok(self
             .pack_objects
-            .lock()
+            .read()
             .expect("pack_objects")
             .contains_key(oid))
     }
@@ -336,7 +337,8 @@ mod tests {
     fn ingest_pack_roundtrip_without_loose() {
         let (_dir, mut store) = store_in_temp();
         let blob = RawObject::new(ObjectKind::Blob, b"pack-ingest");
-        let encoded = EncodedPack::from_undeltified(ObjectFormat::Sha1, &[blob.clone()]).unwrap();
+        let encoded =
+            EncodedPack::from_undeltified(ObjectFormat::Sha1, std::slice::from_ref(&blob)).unwrap();
         store
             .ingest_pack_bytes(&encoded.pack, ObjectFormat::Sha1)
             .unwrap();

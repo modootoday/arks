@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod tests {
     use crate::{Index, IndexEntry, IndexError, cmp_entries, entries_sorted, sort_entries};
     use arks_oid::{Oid, OidKind};

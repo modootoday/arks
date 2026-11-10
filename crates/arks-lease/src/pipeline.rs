@@ -186,7 +186,7 @@ pub fn apply_batch(
         for u in &ordered {
             refs.update(&u.refname, &u.new_oid, u.expected_old.as_ref())
                 .map_err(|e| LeaseError::Pipeline(format!("ref update {}: {e}", u.refname)))?;
-            applied.push((u.refname.clone(), u.new_oid.clone()));
+            applied.push((u.refname.clone(), u.new_oid));
         }
 
         // Tip verify — resolve direct OID after apply.
@@ -305,7 +305,7 @@ mod tests {
         )
         .unwrap();
         materialize_objects(&mut store, ObjectFormat::Sha1, &prep).unwrap();
-        let oid = prep[0].oid.clone();
+        let oid = prep[0].oid;
         let refname = "refs/heads/shard-a";
         std::fs::write(git.join(refname).with_extension("lock"), b"").unwrap();
         // Git uses `refs/heads/shard-a.lock` sibling — create correctly.

@@ -5,6 +5,9 @@
 //!
 //! On HTTP 401 without an Authorization header, fill credentials via helper/askpass
 //! and retry once ([[sot:root/credential-helper-askpass]]).
+//!
+//! Pf5: defer `CredentialSource::discover` until a 401 (or explicit `with_source`) so
+//! unauthenticated smart-HTTP clone/fetch skips `.gitconfig` / helper walks.
 
 use crate::credential::{CredentialSource, resolve_authorization};
 use crate::error::RemoteError;
@@ -16,14 +19,22 @@ use std::time::Duration;
 pub struct UreqTransport {
     agent: ureq::Agent,
     source: CredentialSource,
+    discovered: bool,
 }
 
 impl UreqTransport {
     pub fn new() -> Self {
-        Self::with_source(CredentialSource::discover(&[]))
+        // Lazy discover: empty until 401 forces a fill (J-CLONE-LOCAL hot path).
+        Self::with_source_lazy(CredentialSource::empty(), false)
     }
 
+    /// Inject a pre-built credential source (tests / callers that already discovered).
+    #[allow(dead_code)]
     pub fn with_source(source: CredentialSource) -> Self {
+        Self::with_source_lazy(source, true)
+    }
+
+    fn with_source_lazy(source: CredentialSource, discovered: bool) -> Self {
         let agent = ureq::AgentBuilder::new()
             .redirects(0)
             .timeout_connect(Duration::from_secs(15))
@@ -31,7 +42,19 @@ impl UreqTransport {
             .timeout_write(Duration::from_secs(120))
             .user_agent("arks/0.0.0")
             .build();
-        Self { agent, source }
+        Self {
+            agent,
+            source,
+            discovered,
+        }
+    }
+
+    fn ensure_discovered(&mut self) {
+        if self.discovered {
+            return;
+        }
+        self.source = CredentialSource::discover(&[]);
+        self.discovered = true;
     }
 }
 
@@ -50,6 +73,7 @@ impl Transport for UreqTransport {
                 if msg.starts_with("HTTP 401") && prepared.authorization.is_none() =>
             {
                 // Retry once after force-fill (askpass / helper may only run on challenge).
+                self.ensure_discovered();
                 let auth = resolve_authorization(&request.url, &self.source)?;
                 if auth.is_none() {
                     return Err(RemoteError::Http(msg));

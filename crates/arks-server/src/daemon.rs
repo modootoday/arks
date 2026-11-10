@@ -17,6 +17,12 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
+type LoopbackDaemon = (
+    SocketAddr,
+    Arc<AtomicBool>,
+    thread::JoinHandle<Result<(), ServerError>>,
+);
+
 #[derive(Debug, Clone)]
 pub struct DaemonOptions {
     pub base_path: PathBuf,
@@ -51,16 +57,7 @@ pub fn serve_daemon(
 }
 
 /// Bind ephemeral loopback daemon; return (addr, stop, join).
-pub fn spawn_loopback_daemon(
-    opts: DaemonOptions,
-) -> Result<
-    (
-        SocketAddr,
-        Arc<AtomicBool>,
-        thread::JoinHandle<Result<(), ServerError>>,
-    ),
-    ServerError,
-> {
+pub fn spawn_loopback_daemon(opts: DaemonOptions) -> Result<LoopbackDaemon, ServerError> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let addr = listener.local_addr()?;
     listener.set_nonblocking(true)?;
@@ -186,7 +183,7 @@ fn read_service_request(stream: &mut TcpStream) -> Result<ServiceRequest, Server
     let mut lenbuf = [0u8; 4];
     stream.read_exact(&mut lenbuf)?;
     let pkt_len = parse_pkt_len(&lenbuf)?;
-    if pkt_len < 4 || pkt_len > 65_520 {
+    if !(4..=65_520).contains(&pkt_len) {
         return Err(ServerError::Protocol("bad service request length".into()));
     }
     let mut payload = vec![0u8; pkt_len - 4];

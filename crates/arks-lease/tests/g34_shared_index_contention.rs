@@ -52,7 +52,7 @@ fn apply_with_retry(
             leases,
             holder,
             ttl,
-            &[entry.clone()],
+            std::slice::from_ref(&entry),
             OidKind::Sha1,
         ) {
             Ok(r) => return r,

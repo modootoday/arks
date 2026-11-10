@@ -22,9 +22,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
-fn receive_refs_and_caps(
-    repo: &Repository,
-) -> Result<(Vec<(String, Oid)>, Vec<String>), ServerError> {
+type RefsAndCaps = (Vec<(String, Oid)>, Vec<String>);
+
+fn receive_refs_and_caps(repo: &Repository) -> Result<RefsAndCaps, ServerError> {
     let mut refs = repo
         .refs()
         .list_refs("refs/")
@@ -102,17 +102,12 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
     }
 
     // Migrate quarantined objects into the main store only after pre-receive.
-    quarantine
-        .migrate_into(repo)
-        .map_err(|e| ServerError::Msg(e))?;
+    quarantine.migrate_into(repo).map_err(ServerError::Msg)?;
 
     let mut results: Vec<(String, Result<(), String>)> = Vec::new();
     let mut success_cmds: Vec<&ReceiveCommand> = Vec::new();
     for cmd in &commands {
-        let old = match repo.refs().resolve(&cmd.name) {
-            Ok(oid) => Some(oid),
-            Err(_) => None,
-        };
+        let old = repo.refs().resolve(&cmd.name).ok();
         // Expect old matches when peer sent non-zero old (fast-forward check deferred:
         // accept if old is None or matches cmd.old, else refuse).
         if !cmd.old.as_bytes().iter().all(|b| *b == 0) {

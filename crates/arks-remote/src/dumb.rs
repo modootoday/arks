@@ -66,7 +66,7 @@ pub(crate) fn looks_like_dumb_info_refs(content_type: Option<&str>, body: &[u8])
     if body.len() >= 5 && body[4] == b'#' {
         return false;
     }
-    body.iter().any(|b| *b == b'\t')
+    body.contains(&b'\t')
 }
 
 pub(crate) fn fetch_dumb_with<T: Transport>(

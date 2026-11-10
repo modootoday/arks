@@ -176,6 +176,16 @@ impl Clone for CredentialSource {
 }
 
 impl CredentialSource {
+    /// Empty source (no helpers / askpass). Used until a 401 forces discover.
+    pub fn empty() -> Self {
+        Self {
+            helpers: Vec::new(),
+            askpass: None,
+            username: None,
+            filled_cache: RefCell::new(None),
+        }
+    }
+
     /// Discover helpers / askpass / username from env + optional config files.
     pub fn discover(extra_config_paths: &[PathBuf]) -> Self {
         let mut helpers = Vec::new();
@@ -406,10 +416,7 @@ fn run_askpass(program: &Path, prompt: &str) -> Result<String, RemoteError> {
 }
 
 fn terminal_prompt_allowed() -> bool {
-    match std::env::var("GIT_TERMINAL_PROMPT") {
-        Ok(v) if v == "0" => false,
-        _ => true,
-    }
+    !matches!(std::env::var("GIT_TERMINAL_PROMPT").as_deref(), Ok("0"))
 }
 
 fn open_tty_reader() -> Option<Box<dyn BufRead>> {

@@ -11,6 +11,12 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
+type LoopbackHttp = (
+    SocketAddr,
+    Arc<AtomicBool>,
+    thread::JoinHandle<Result<(), ServerError>>,
+);
+
 #[derive(Debug, Clone, Default)]
 pub struct ServeHttpOptions {
     /// When true, answer `info/refs` (even with `service=`) as dumb text/plain so
@@ -57,30 +63,14 @@ pub fn serve_http_with_opts(
 }
 
 /// Bind an ephemeral port; return (bound addr, join handle, stop flag).
-pub fn spawn_loopback(
-    git_dir: PathBuf,
-) -> Result<
-    (
-        SocketAddr,
-        Arc<AtomicBool>,
-        thread::JoinHandle<Result<(), ServerError>>,
-    ),
-    ServerError,
-> {
+pub fn spawn_loopback(git_dir: PathBuf) -> Result<LoopbackHttp, ServerError> {
     spawn_loopback_with_opts(git_dir, ServeHttpOptions::default())
 }
 
 pub fn spawn_loopback_with_opts(
     git_dir: PathBuf,
     opts: ServeHttpOptions,
-) -> Result<
-    (
-        SocketAddr,
-        Arc<AtomicBool>,
-        thread::JoinHandle<Result<(), ServerError>>,
-    ),
-    ServerError,
-> {
+) -> Result<LoopbackHttp, ServerError> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let addr = listener.local_addr()?;
     listener.set_nonblocking(true)?;

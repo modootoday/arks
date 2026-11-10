@@ -12,7 +12,10 @@ use arks_store::{ObjectFormat, ObjectStore};
 
 const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
-fn upload_caps(repo: &Repository) -> Result<(Vec<(String, Oid)>, Vec<String>), ServerError> {
+type RefsAndCaps = (Vec<(String, Oid)>, Vec<String>);
+type RefsAndHead = (Vec<(String, Oid)>, Option<String>);
+
+fn upload_caps(repo: &Repository) -> Result<RefsAndCaps, ServerError> {
     let (refs, head) = list_refs_and_head(repo)?;
     let mut caps = vec![
         "ofs-delta".into(),
@@ -64,9 +67,7 @@ pub fn upload_pack_result_with_nak(
     sideband_pack(&pack.pack, include_nak)
 }
 
-fn list_refs_and_head(
-    repo: &Repository,
-) -> Result<(Vec<(String, Oid)>, Option<String>), ServerError> {
+fn list_refs_and_head(repo: &Repository) -> Result<RefsAndHead, ServerError> {
     let mut refs = repo
         .refs()
         .list_refs("refs/")

@@ -460,26 +460,23 @@ struct GitBackend {
 
 impl GitBackend {
     fn spawn(project_root: std::path::PathBuf) -> Self {
+        // Blocking listener only. Never set_nonblocking on the listener on Windows:
+        // accepted sockets inherit that mode and ureq hangs on WouldBlock/empty reads.
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
-        listener.set_nonblocking(true).unwrap();
         let stop = Arc::new(AtomicBool::new(false));
         let stop2 = Arc::clone(&stop);
         let join = thread::spawn(move || {
-            while !stop2.load(Ordering::SeqCst) {
-                match listener.accept() {
-                    Ok((stream, _)) => {
-                        // Windows: accepted sockets inherit nonblocking from the listener.
-                        stream
-                            .set_nonblocking(false)
-                            .expect("blocking accepted stream");
+            for stream in listener.incoming() {
+                if stop2.load(Ordering::SeqCst) {
+                    break;
+                }
+                match stream {
+                    Ok(stream) => {
                         let root = project_root.clone();
                         thread::spawn(move || {
                             let _ = git_http_one(stream, &root);
                         });
-                    }
-                    Err(err) if err.kind() == std::io::ErrorKind::WouldBlock => {
-                        thread::sleep(Duration::from_millis(10));
                     }
                     Err(_) => break,
                 }
@@ -496,6 +493,12 @@ impl GitBackend {
 impl Drop for GitBackend {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::SeqCst);
+        if let Ok(port) = self.url.rsplit(':').next().unwrap_or("").parse::<u16>() {
+            let _ = TcpStream::connect_timeout(
+                &std::net::SocketAddr::from(([127, 0, 0, 1], port)),
+                Duration::from_millis(200),
+            );
+        }
         if let Some(join) = self.join.take() {
             let _ = join.join();
         }
@@ -636,33 +639,24 @@ struct TestServer {
 
 impl TestServer {
     fn spawn(peer: Arc<Mutex<MemoryPeer>>) -> Self {
+        // Blocking listener only. Toggling nonblocking for poll/wakeup made
+        // accepted sockets inherit nonblocking on Windows → ureq hang.
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
-        // Keep the accept loop blocking with a short accept timeout so Drop can
-        // unblock via connecting a dummy client after setting `stop`. Nonblocking
-        // accept + inherited nonblocking streams caused hung ureq reads on Windows.
-        listener.set_nonblocking(false).expect("blocking listener");
         let stop = Arc::new(AtomicBool::new(false));
         let stop2 = Arc::clone(&stop);
         let join = thread::spawn(move || {
-            while !stop2.load(Ordering::SeqCst) {
-                // Wake periodically so stop can be observed without a client.
-                let _ = listener.set_nonblocking(true);
-                thread::sleep(Duration::from_millis(20));
-                let _ = listener.set_nonblocking(false);
-                match listener.accept() {
-                    Ok((stream, _)) => {
-                        // Accepted sockets may inherit nonblocking from the
-                        // listener's brief nonblocking poll window (Windows).
-                        stream
-                            .set_nonblocking(false)
-                            .expect("blocking accepted stream");
+            for stream in listener.incoming() {
+                if stop2.load(Ordering::SeqCst) {
+                    break;
+                }
+                match stream {
+                    Ok(stream) => {
                         let peer = Arc::clone(&peer);
-                        let _ = serve_one(stream, &peer);
+                        thread::spawn(move || {
+                            let _ = serve_one(stream, &peer);
+                        });
                     }
-                    Err(err) if err.kind() == std::io::ErrorKind::WouldBlock => continue,
-                    Err(err) if err.kind() == std::io::ErrorKind::TimedOut => continue,
-                    Err(err) if err.kind() == std::io::ErrorKind::Interrupted => continue,
                     Err(_) => break,
                 }
             }
@@ -678,26 +672,17 @@ impl TestServer {
 impl Drop for TestServer {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::SeqCst);
-        // Unblock a stuck accept: connect then drop.
-        if let Ok(addr) = self
+        // Unblock blocking accept with a dummy connect.
+        if let Some(port_s) = self
             .url
             .trim_start_matches("http://")
-            .split('/')
-            .next()
-            .unwrap_or("")
-            .parse::<std::net::SocketAddr>()
-        {
-            let _ = TcpStream::connect_timeout(&addr, Duration::from_millis(100));
-        } else if let Some(port_s) = self
-            .url
-            .rsplit(':')
-            .next()
-            .and_then(|s| s.split('/').next())
+            .split([':', '/'])
+            .nth(1)
         {
             if let Ok(port) = port_s.parse::<u16>() {
                 let _ = TcpStream::connect_timeout(
                     &std::net::SocketAddr::from(([127, 0, 0, 1], port)),
-                    Duration::from_millis(100),
+                    Duration::from_millis(200),
                 );
             }
         }

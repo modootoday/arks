@@ -102,8 +102,7 @@ pub fn serve_dumb_path(
         return Ok(Some(("text/plain; charset=utf-8".into(), body)));
     }
     if let Some(rest) = strip_objects_prefix(rel) {
-        if rest.starts_with("pack/") {
-            let name = &rest["pack/".len()..];
+        if let Some(name) = rest.strip_prefix("pack/") {
             if !is_safe_pack_name(name) {
                 return Ok(None);
             }
