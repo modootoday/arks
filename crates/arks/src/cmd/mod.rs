@@ -52,22 +52,22 @@ pub use credential::{
 };
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
-pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
-pub use lease::cmd_lease;
-pub use lock::cmd_lock;
-pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use host_skew::{
     cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_replay_exp,
     cmd_survey, cmd_url_parse,
 };
+pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
+pub use lease::cmd_lease;
+pub use lock::cmd_lock;
+pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_apply, cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry,
     cmd_column, cmd_credential_store, cmd_diagnose, cmd_diff_files, cmd_diff_index,
     cmd_fmt_merge_msg, cmd_for_each_repo, cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers,
     cmd_ls_remote, cmd_mailinfo, cmd_mailsplit, cmd_merge_file, cmd_merge_tree, cmd_mktag,
     cmd_mktree, cmd_pack_redundant, cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_request_pull,
-    cmd_shell, cmd_show_branch, cmd_show_index, cmd_stripspace, cmd_unpack_file, cmd_unpack_objects,
-    cmd_upload_archive, cmd_var, cmd_verify_pack,
+    cmd_shell, cmd_show_branch, cmd_show_index, cmd_stripspace, cmd_unpack_file,
+    cmd_unpack_objects, cmd_upload_archive, cmd_var, cmd_verify_pack,
 };
 pub use matrix_rest::{
     cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_fetch_pack, cmd_http_fetch,

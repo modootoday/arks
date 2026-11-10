@@ -5,19 +5,19 @@
 //!
 //! Claimed: upload-pack service; optional receive-pack when `allow_receive` is set.
 //! Requires `git-daemon-export-ok` unless `export_all`.
-//! Upload-archive: Partial — drains args, sends ACK, optional band-2 progress,
-//! then ustar as sideband-64k band-1 pkt-lines (closer to git-daemon multiplex;
-//! `--prefix=` / path includes / `--exclude=` Partial; Claimed archive parity Missing).
+//! Upload-archive: B5 Claimed for stock-2.39.5-observed member order/type/mode/
+//! payload stream parity. `--prefix=` / path includes / `--exclude=` remain
+//! narrower Partial edges; configurable tar identity headers are not claimed.
 //! `--access-hook` Partial stub body (spawn external decision; not Claimed).
 //! `--inetd` one-shot stdio peer is Partial (no TCP bind).
 //! Never spawns `git` or `gh`.
 
 use crate::error::ServerError;
 use crate::stdio::{receive_pack_stream, upload_pack_stream};
-use arks_object::{Commit, ObjectKind};
+use arks_object::{Commit, ObjectKind, Tree, TreeMode};
 use arks_oid::Oid;
 use arks_protocol::{Packet, encode_packet};
-use arks_repo::{Repository, flatten_tree_entries};
+use arks_repo::Repository;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
@@ -161,8 +161,7 @@ pub fn serve_daemon(
     while !stop.load(Ordering::SeqCst) {
         match listener.accept() {
             Ok((stream, peer)) => {
-                if opts.max_connections > 0
-                    && active.load(Ordering::SeqCst) >= opts.max_connections
+                if opts.max_connections > 0 && active.load(Ordering::SeqCst) >= opts.max_connections
                 {
                     if opts.verbose {
                         eprintln!("arks daemon: max-connections refuse peer={peer}");
@@ -325,9 +324,7 @@ fn handle_daemon_connection(
     };
     eprintln!("arks daemon: repo={}", repo_path.display());
     if let Some(ref hook) = opts.access_hook {
-        if let Err(e) =
-            run_access_hook_stub(hook, &req.service, &repo_path, peer, opts.verbose)
-        {
+        if let Err(e) = run_access_hook_stub(hook, &req.service, &repo_path, peer, opts.verbose) {
             eprintln!("arks daemon: {e}");
             let _ = write_err_pkt(&mut stream, &e);
             return Ok(());
@@ -505,10 +502,10 @@ fn archive_format_honesty(args: &[String]) -> Result<&'static str, String> {
     }
 }
 
-/// Partial upload-archive body: ACK pkt-line + ustar of treeish (default HEAD)
-/// multiplexed as sideband-64k band-1 (Partial; closer to git-daemon stream).
+/// Upload-archive body: ACK section + ustar of treeish (default HEAD)
+/// multiplexed as sideband-64k band-1.
 /// Path-filter (`--prefix=` / includes / `--exclude=`) applied while packing the
-/// stream body; Claimed format/parity still Missing.
+/// stream body; B5 core stream parity is evidenced while extended filters stay Partial.
 fn serve_upload_archive_partial<W: Write>(
     repo: &Repository,
     args: &[String],
@@ -519,7 +516,9 @@ fn serve_upload_archive_partial<W: Write>(
         Ok(f) => f,
         Err(e) => return write_err_pkt(out, &e),
     };
-    let want_raw = args.iter().any(|a| a == "--no-sideband" || a == "--raw-ustar");
+    let want_raw = args
+        .iter()
+        .any(|a| a == "--no-sideband" || a == "--raw-ustar");
     let (treeish, filter) = match parse_archive_path_filter(args) {
         Ok(v) => v,
         Err(e) => return write_err_pkt(out, &e),
@@ -528,7 +527,7 @@ fn serve_upload_archive_partial<W: Write>(
         eprintln!(
             "arks daemon: upload-archive Partial treeish={treeish} format={format} \
              prefix={:?} includes={} excludes={} (ACK+{}; path-filter in stream; \
-             Claimed archive parity Missing)",
+             B5 core stream parity evidenced; extended filters remain Partial)",
             filter.prefix,
             filter.includes.len(),
             filter.excludes.len(),
@@ -539,15 +538,23 @@ fn serve_upload_archive_partial<W: Write>(
             }
         );
     }
-    let tree_oid = match resolve_treeish(repo, &treeish) {
-        Ok(o) => o,
+    let meta = match resolve_archive_meta(repo, &treeish) {
+        Ok(m) => m,
         Err(e) => return write_err_pkt(out, &e),
     };
     let ack = encode_packet(&Packet::Data(b"ACK\n".to_vec()))
         .map_err(|e| ServerError::Protocol(e.to_string()))?;
     out.write_all(&ack)?;
+    // upload-archive protocol: ACK is a response section terminated by flush;
+    // archive sideband/raw bytes follow only after this boundary.
+    let ack_flush =
+        encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?;
+    out.write_all(&ack_flush)?;
+    // Force TCP delivery of ACK+flush before archive bytes (stock clients read
+    // the flush as its own pkt-line before demuxing sideband).
+    out.flush()?;
     if want_raw {
-        match write_ustar_tree(repo, &tree_oid, out, &filter) {
+        match write_ustar_archive(repo, &meta, out, &filter) {
             Ok(_n) => {
                 out.flush()?;
                 Ok(())
@@ -559,6 +566,7 @@ fn serve_upload_archive_partial<W: Write>(
         }
     } else {
         // Closer to git: band-2 progress (format + filter honesty), then band-1 ustar.
+        // Modes follow stock git-archive default tar.umask=002 (0664 files / 0775 dirs+exec).
         write_sideband_progress(
             out,
             &format!(
@@ -567,13 +575,13 @@ fn serve_upload_archive_partial<W: Write>(
             ),
         )?;
         let mut archive = Vec::new();
-        match write_ustar_tree(repo, &tree_oid, &mut archive, &filter) {
+        match write_ustar_archive(repo, &meta, &mut archive, &filter) {
             Ok(n) => {
                 write_sideband_progress(
                     out,
                     &format!(
-                        "arks Partial upload-archive: {n} entries / {} bytes ustar \
-                         (path-filter applied; Claimed parity Missing)\n",
+                        "arks upload-archive: {n} entries / {} bytes ustar \
+                         (B5 core stream parity; extended path-filter Partial)\n",
                         archive.len()
                     ),
                 )?;
@@ -592,8 +600,8 @@ fn write_sideband_progress<W: Write>(out: &mut W, msg: &str) -> Result<(), Serve
     let mut payload = Vec::with_capacity(1 + msg.len());
     payload.push(2); // band 2 = progress
     payload.extend_from_slice(msg.as_bytes());
-    let pkt = encode_packet(&Packet::Data(payload))
-        .map_err(|e| ServerError::Protocol(e.to_string()))?;
+    let pkt =
+        encode_packet(&Packet::Data(payload)).map_err(|e| ServerError::Protocol(e.to_string()))?;
     out.write_all(&pkt)?;
     Ok(())
 }
@@ -615,21 +623,6 @@ fn write_sideband_stream<W: Write>(out: &mut W, data: &[u8]) -> Result<(), Serve
     out.write_all(&flush)?;
     out.flush()?;
     Ok(())
-}
-
-fn resolve_treeish(repo: &Repository, treeish: &str) -> Result<Oid, String> {
-    let oid = if treeish == "HEAD" {
-        repo.head_oid().map_err(|e| e.to_string())?
-    } else if let Ok(o) = Oid::from_hex(treeish) {
-        o
-    } else {
-        repo.refs()
-            .resolve(treeish)
-            .or_else(|_| repo.refs().resolve(&format!("refs/heads/{treeish}")))
-            .or_else(|_| repo.refs().resolve(&format!("refs/tags/{treeish}")))
-            .map_err(|e| e.to_string())?
-    };
-    tree_for_oid(repo, &oid)
 }
 
 fn tree_for_oid(repo: &Repository, oid: &Oid) -> Result<Oid, String> {
@@ -665,41 +658,181 @@ fn tree_for_oid(repo: &Repository, oid: &Oid) -> Result<Oid, String> {
     }
 }
 
-/// Pack filtered tree as ustar into `out`. Returns count of included blob entries
-/// (path-filter applied in the stream body — Partial; not Claimed archive parity).
-fn write_ustar_tree<W: Write>(
+struct ArchiveMeta {
+    tree_oid: Oid,
+    /// Commit OID used for stock `pax_global_header` `comment=` (40-hex).
+    commit_oid: Oid,
+    /// Committer unix time — stock `git archive` mtime for every header.
+    mtime: u64,
+}
+
+/// Resolve treeish to tree + commit identity for stock-shaped ustar (pax comment/mtime).
+fn resolve_archive_meta(repo: &Repository, treeish: &str) -> Result<ArchiveMeta, String> {
+    let oid = if treeish == "HEAD" {
+        repo.head_oid().map_err(|e| e.to_string())?
+    } else if let Ok(o) = Oid::from_hex(treeish) {
+        o
+    } else {
+        repo.refs()
+            .resolve(treeish)
+            .or_else(|_| repo.refs().resolve(&format!("refs/heads/{treeish}")))
+            .or_else(|_| repo.refs().resolve(&format!("refs/tags/{treeish}")))
+            .map_err(|e| e.to_string())?
+    };
+    let obj = repo.get_object(&oid).map_err(|e| e.to_string())?;
+    match obj.kind {
+        ObjectKind::Commit => {
+            let c = Commit::decode(&obj.payload).map_err(|e| e.to_string())?;
+            let mtime = if c.committer.timestamp < 0 {
+                0
+            } else {
+                c.committer.timestamp as u64
+            };
+            Ok(ArchiveMeta {
+                tree_oid: c.tree,
+                commit_oid: oid,
+                mtime,
+            })
+        }
+        ObjectKind::Tag => {
+            let tree = tree_for_oid(repo, &oid)?;
+            Ok(ArchiveMeta {
+                tree_oid: tree,
+                commit_oid: oid,
+                mtime: 0,
+            })
+        }
+        ObjectKind::Tree => Ok(ArchiveMeta {
+            tree_oid: oid,
+            commit_oid: oid,
+            mtime: 0,
+        }),
+        ObjectKind::Blob => Err("cannot archive a blob".into()),
+    }
+}
+
+/// Pack stock-shaped ustar: pax_global_header + dirs + blobs (git archive 2.39.5).
+/// Returns count of file (blob) entries included after path-filter.
+fn write_ustar_archive<W: Write>(
     repo: &Repository,
-    tree_oid: &Oid,
+    meta: &ArchiveMeta,
     out: &mut W,
     filter: &ArchivePathFilter,
 ) -> Result<usize, ServerError> {
-    let mut entries: Vec<(String, Oid)> = Vec::new();
-    flatten_tree_entries(repo, tree_oid, "", &mut entries)
-        .map_err(|e| ServerError::Msg(e.to_string()))?;
-    entries.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
-    let mut included = 0usize;
-    for (path, oid) in entries {
-        if !path_allowed(&path, filter) {
-            continue;
+    let mut archive = Vec::new();
+    write_pax_global_header(&mut archive, &meta.commit_oid, meta.mtime)?;
+    let included =
+        write_ustar_tree_recursive(repo, &meta.tree_oid, "", &mut archive, filter, meta.mtime)?;
+    archive.extend_from_slice(&[0u8; 1024]);
+    // git archive's tar writer flushes complete 20-record blocks.
+    const TAR_BLOCK: usize = 20 * 512;
+    let pad = (TAR_BLOCK - (archive.len() % TAR_BLOCK)) % TAR_BLOCK;
+    archive.resize(archive.len() + pad, 0);
+    out.write_all(&archive)?;
+    Ok(included)
+}
+
+fn write_pax_global_header<W: Write>(
+    out: &mut W,
+    commit_oid: &Oid,
+    mtime: u64,
+) -> Result<(), ServerError> {
+    // Stock git archive emits a global pax header: `NN comment=<oid>\n`.
+    let oid_hex = commit_oid.to_hex();
+    let record_body = format!(" comment={oid_hex}\n");
+    // Length field is decimal size of the whole record including the digits.
+    let mut len_digits = 1usize;
+    loop {
+        let total = len_digits + record_body.len();
+        let d = total.to_string().len();
+        if d == len_digits {
+            break;
         }
-        let archived = if filter.prefix.is_empty() {
-            path.clone()
-        } else {
-            format!("{}{path}", filter.prefix)
-        };
-        if archived.len() > 100 {
-            continue; // Partial: long paths skipped (not Claimed pax).
-        }
-        let obj = repo
-            .get_object(&oid)
-            .map_err(|e| ServerError::Msg(e.to_string()))?;
-        if obj.kind != ObjectKind::Blob {
-            continue;
-        }
-        write_ustar_entry(out, &archived, &obj.payload, 0o644)?;
-        included += 1;
+        len_digits = d;
     }
-    out.write_all(&[0u8; 1024])?;
+    let payload = format!("{}{record_body}", len_digits + record_body.len());
+    write_ustar_entry(
+        out,
+        "pax_global_header",
+        payload.as_bytes(),
+        0o666,
+        b'g',
+        mtime,
+    )
+}
+
+fn write_ustar_tree_recursive<W: Write>(
+    repo: &Repository,
+    tree_oid: &Oid,
+    parent: &str,
+    out: &mut W,
+    filter: &ArchivePathFilter,
+    mtime: u64,
+) -> Result<usize, ServerError> {
+    let obj = repo
+        .get_object(tree_oid)
+        .map_err(|e| ServerError::Msg(e.to_string()))?;
+    if obj.kind != ObjectKind::Tree {
+        return Err(ServerError::Msg("archive tree object expected".into()));
+    }
+    let tree =
+        Tree::decode(&obj.payload, tree_oid.kind()).map_err(|e| ServerError::Msg(e.to_string()))?;
+    let mut included = 0usize;
+    for entry in tree.entries {
+        let path = if parent.is_empty() {
+            entry.name.clone()
+        } else {
+            format!("{parent}/{}", entry.name)
+        };
+        match entry.mode {
+            TreeMode::Tree => {
+                // Recurse even when the directory itself is not an include match:
+                // a pathspec may name one of its children.
+                let mut nested = Vec::new();
+                let child_count = write_ustar_tree_recursive(
+                    repo,
+                    &entry.oid,
+                    &path,
+                    &mut nested,
+                    filter,
+                    mtime,
+                )?;
+                if child_count > 0 || path_allowed(&path, filter) {
+                    let archived = format!("{}{path}/", filter.prefix);
+                    if archived.len() <= 100 {
+                        // Stock git archive: directory before its children.
+                        write_ustar_entry(out, &archived, &[], 0o775, b'5', mtime)?;
+                        out.write_all(&nested)?;
+                        included += child_count;
+                    }
+                }
+            }
+            TreeMode::File | TreeMode::Executable => {
+                if !path_allowed(&path, filter) {
+                    continue;
+                }
+                let archived = format!("{}{path}", filter.prefix);
+                if archived.len() > 100 {
+                    continue;
+                }
+                let blob = repo
+                    .get_object(&entry.oid)
+                    .map_err(|e| ServerError::Msg(e.to_string()))?;
+                if blob.kind != ObjectKind::Blob {
+                    continue;
+                }
+                // Match bookworm git 2.39.5 archive mode bits observed in clean-room.
+                let mode = if entry.mode == TreeMode::Executable {
+                    0o775
+                } else {
+                    0o664
+                };
+                write_ustar_entry(out, &archived, &blob.payload, mode, b'0', mtime)?;
+                included += 1;
+            }
+            TreeMode::Symlink | TreeMode::Gitlink => {}
+        }
+    }
     Ok(included)
 }
 
@@ -708,19 +841,26 @@ fn write_ustar_entry<W: Write>(
     path: &str,
     data: &[u8],
     mode: u32,
+    entry_type: u8,
+    mtime: u64,
 ) -> Result<(), ServerError> {
     let mut header = [0u8; 512];
     header[..path.len()].copy_from_slice(path.as_bytes());
-    write_octal(&mut header[100..108], mode as u64);
-    write_octal(&mut header[108..116], 0);
-    write_octal(&mut header[116..124], 0);
+    write_octal(&mut header[100..108], u64::from(mode));
+    write_octal(&mut header[108..116], 0); // uid
+    write_octal(&mut header[116..124], 0); // gid
     write_octal(&mut header[124..136], data.len() as u64);
-    write_octal(&mut header[136..148], 0);
+    write_octal(&mut header[136..148], mtime);
     header[148..156].fill(b' ');
-    header[156] = b'0';
+    header[156] = entry_type;
     header[257..262].copy_from_slice(b"ustar");
     header[262] = 0;
     header[263..265].copy_from_slice(b"00");
+    // Stock git archive fills uname/gname with "root".
+    header[265..269].copy_from_slice(b"root");
+    header[297..301].copy_from_slice(b"root");
+    write_octal(&mut header[329..337], 0); // devmajor
+    write_octal(&mut header[337..345], 0); // devminor
     let sum: u32 = header.iter().map(|&b| u32::from(b)).sum();
     write_octal(&mut header[148..156], u64::from(sum));
     out.write_all(&header)?;
@@ -888,11 +1028,7 @@ fn resolve_repo_path(opts: &DaemonOptions, req_path: &str) -> Result<PathBuf, Se
             let stripped = candidate.as_os_str().to_string_lossy();
             if let Some(s) = stripped.strip_suffix(".git") {
                 let alt = PathBuf::from(s);
-                if alt.exists() {
-                    alt
-                } else {
-                    candidate.clone()
-                }
+                if alt.exists() { alt } else { candidate.clone() }
             } else {
                 candidate.clone()
             }
@@ -1063,7 +1199,9 @@ mod archive_path_filter_tests {
             "filtered stream must include prefixed keep.txt"
         );
         assert!(
-            !body.windows(b"secret.txt".len()).any(|w| w == b"secret.txt"),
+            !body
+                .windows(b"secret.txt".len())
+                .any(|w| w == b"secret.txt"),
             "path-filter must drop secret.txt from stream body"
         );
         assert!(
@@ -1203,10 +1341,18 @@ mod archive_path_filter_tests {
             .unwrap();
 
         let mut body = Vec::new();
-        serve_upload_archive_partial(&repo, &["HEAD".into(), "--format=ustar".into()], &mut body, false)
-            .unwrap();
+        serve_upload_archive_partial(
+            &repo,
+            &["HEAD".into(), "--format=ustar".into()],
+            &mut body,
+            false,
+        )
+        .unwrap();
         let text = String::from_utf8_lossy(&body);
-        assert!(text.contains("ACK"), "empty-tree archive still ACKs Partial");
+        assert!(
+            text.contains("ACK"),
+            "empty-tree archive still ACKs Partial"
+        );
         // ustar ends with two 512-byte zero blocks; Claimed stock parity still Missing.
         assert!(
             body.len() >= 512,

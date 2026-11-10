@@ -1,15 +1,21 @@
 //! Loopback smart-HTTP listener for clean-room / local serve.
+//!
+//! Optional in-process TLS terminate via operator-supplied PEMs
+//! ([[sot:root/arks-claimed-residual-gates]] B9). Dual-bind drain on rebind
+//! supports B7 Claimed evidence when harnessed.
 
 use crate::auth::BasicAuthConfig;
 use crate::error::ServerError;
 use crate::http::{HttpRequest, handle_smart_http_auth};
 use arks_repo::Repository;
+use rustls::ServerConfig;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::{Duration, Instant};
 
 type LoopbackHttp = (
     SocketAddr,
@@ -17,11 +23,12 @@ type LoopbackHttp = (
     thread::JoinHandle<Result<(), ServerError>>,
 );
 
-/// Shared slot: when set to `Some(addr)`, the HTTP accept loop attempts live rebind
-/// (Partial; Claimed zero-downtime / OpenSSH-class hot-rebind Missing).
+/// Shared slot: when set to `Some(addr)`, the HTTP accept loop performs a
+/// bounded dual-bind rebind. B7 is Claimed for the evidenced HTTP scenario;
+/// SSH/forge rebind and OpenSSH-class interop are separate gates.
 pub type ListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct ServeHttpOptions {
     /// When true, answer `info/refs` (even with `service=`) as dumb text/plain so
     /// smart clients fall back to dumb HTTP (gitprotocol-http). Used by G29.
@@ -30,6 +37,19 @@ pub struct ServeHttpOptions {
     pub basic_auth: Option<BasicAuthConfig>,
     /// Optional live listen rebind target (Partial; polled in accept loop).
     pub rebind_desired: Option<ListenRebindSlot>,
+    /// Optional rustls server config for in-process TLS terminate (B9).
+    pub tls: Option<Arc<ServerConfig>>,
+}
+
+impl std::fmt::Debug for ServeHttpOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServeHttpOptions")
+            .field("dumb_only", &self.dumb_only)
+            .field("basic_auth", &self.basic_auth.as_ref().map(|_| "Some(..)"))
+            .field("rebind_desired", &self.rebind_desired.is_some())
+            .field("tls", &self.tls.is_some())
+            .finish()
+    }
 }
 
 /// Bind `addr` and serve `git_dir` over smart HTTP until `stop` is set or accept fails.
@@ -51,6 +71,9 @@ pub fn serve_http_with_opts(
     let mut listener = TcpListener::bind(addr)?;
     listener.set_nonblocking(true)?;
     let mut current = addr;
+    // A successful rebind keeps prior listeners accepting for this bounded
+    // overlap. Accepted handlers are independently owned and always drain.
+    let mut draining: Vec<(TcpListener, SocketAddr, Instant)> = Vec::new();
     while !stop.load(Ordering::SeqCst) {
         if let Some(slot) = &opts.rebind_desired {
             if let Ok(mut g) = slot.lock() {
@@ -66,10 +89,15 @@ pub fn serve_http_with_opts(
                                     *g = Some(new_addr);
                                 } else {
                                     eprintln!(
-                                        "arks serve-http: live rebind Partial {current} → {new_addr} \
-                                         (design ≠ Claimed zero-downtime hot-rebind)"
+                                        "arks serve-http: live rebind dual-bind {current} → {new_addr}; \
+                                         prior listener draining for 5s"
                                     );
-                                    listener = l;
+                                    let old = std::mem::replace(&mut listener, l);
+                                    draining.push((
+                                        old,
+                                        current,
+                                        Instant::now() + Duration::from_secs(5),
+                                    ));
                                     current = new_addr;
                                 }
                             }
@@ -84,6 +112,14 @@ pub fn serve_http_with_opts(
                 }
             }
         }
+        draining.retain(|(_, old_addr, deadline)| {
+            if Instant::now() < *deadline {
+                true
+            } else {
+                eprintln!("arks serve-http: rebind drain complete; closing {old_addr}");
+                false
+            }
+        });
         match listener.accept() {
             Ok((stream, _)) => {
                 let dir = git_dir.clone();
@@ -96,6 +132,19 @@ pub fn serve_http_with_opts(
                 thread::sleep(std::time::Duration::from_millis(1));
             }
             Err(e) => return Err(e.into()),
+        }
+        for (old_listener, _, _) in &draining {
+            match old_listener.accept() {
+                Ok((stream, _)) => {
+                    let dir = git_dir.clone();
+                    let opts = opts.clone();
+                    thread::spawn(move || {
+                        let _ = handle_connection(stream, &dir, &opts);
+                    });
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {}
+                Err(e) => eprintln!("arks serve-http: draining listener accept error: {e}"),
+            }
         }
     }
     Ok(())
@@ -136,6 +185,11 @@ pub fn spawn_loopback_with_opts(
     Ok((addr, stop, handle))
 }
 
+/// Scheme label for listen banners (`http` or `https`).
+pub fn serve_http_scheme(opts: &ServeHttpOptions) -> &'static str {
+    if opts.tls.is_some() { "https" } else { "http" }
+}
+
 fn handle_connection(
     mut stream: TcpStream,
     git_dir: &Path,
@@ -145,6 +199,25 @@ fn handle_connection(
     stream.set_nonblocking(false)?;
     stream.set_read_timeout(Some(std::time::Duration::from_secs(30)))?;
     stream.set_write_timeout(Some(std::time::Duration::from_secs(30)))?;
+    if let Some(tls_cfg) = &opts.tls {
+        let conn = rustls::ServerConnection::new(tls_cfg.clone())
+            .map_err(|e| ServerError::Msg(format!("tls ServerConnection: {e}")))?;
+        let mut tls = rustls::StreamOwned::new(conn, stream);
+        // Complete handshake before HTTP parse.
+        tls.conn
+            .complete_io(&mut tls.sock)
+            .map_err(|e| ServerError::Msg(format!("tls handshake: {e}")))?;
+        handle_connection_io(&mut tls, git_dir, opts)
+    } else {
+        handle_connection_io(&mut stream, git_dir, opts)
+    }
+}
+
+fn handle_connection_io<S: Read + Write>(
+    stream: &mut S,
+    git_dir: &Path,
+    opts: &ServeHttpOptions,
+) -> Result<(), ServerError> {
     let mut buf = Vec::new();
     let mut tmp = [0u8; 8192];
     // Read headers

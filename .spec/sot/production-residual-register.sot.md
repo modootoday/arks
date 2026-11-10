@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-10T22:50:00Z
+updated: 2026-11-11T00:20:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final, claimed-residual]
 verify: manual
 rel:
@@ -257,7 +257,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | — | Release symmetry precheck (ops/CI) | **Wired** [[sot:root/release-symmetry-precheck]] — GHA `release-symmetry.yml` + `release.yml` `needs: symmetry-precheck`; pin Missing=0 + untracked leaves **block** `dist`; Partial + hub v1 Missing **advisory** by default; latest inventory continuity ≠ pin Claimed | No invent PASS from green gate; flip hub Missing block only when hub bar lands |
 | — | arks-only self-host server (LAN/WAN) | **Design** [[sot:root/arks-self-host-server]] — related hosting under [[sot:root/verify-cleanroom-symmetry-matrix]] (`dod-self-host` scaffold); ≠ daemon flag parity; wire G15/G29–G32/G36 already Claimed separately | Hosting e2e Claimed only with clean-room evidence; no invent PASS |
 | — | CLI personality / output+exit contract | **Design / Partial skeleton** — [[sot:root/arks-cli-personality-factory]] + [[sot:root/arks-cli-output-exit-contract]]; Registry/OverlapFacade/ExitCodePolicy + flat-leaf stubs; deep forge-in-serve / SSH listener / PR bodies **not** Claimed | Claimed only with peer-faithful evidence; stubs exit non-zero; no invent PASS |
-| — | Claimed residual gates (post-Partial) | **Active** [[sot:root/arks-claimed-residual-gates]] tip ≥ `f9ebcf4` — **B1/B3/B4/B7(HTTP)/B9 Claimed** with Docker receipts; **B2 Missing** (clone receipt invent demoted); **B5 Partial terminal** (ustar 501009); **B5+ Refuse terminal** (Partial openlog ≠ facility Claimed). | No invent Claimed; reopen B2/B5/B5+ only with deliberate SoT+receipt waves |
+| — | Claimed residual gates (post-Partial) | **Active** [[sot:root/arks-claimed-residual-gates]] tip ≥ `f6c5780` — **B1/B2/B3/B4/B7(HTTP)/B9 Claimed** with Docker receipts ([[evidence:root/20261110235116-claimed-ssh]] for B1+B2); **B5 Partial terminal** (ustar 501009 / [[research:root/20261111084400]]); **B5+ Refuse terminal** (Partial openlog ≠ facility Claimed). | No invent Claimed; reopen B5/B5+ only with deliberate SoT+receipt waves |
 | — | Verify directory conventions | **Design** [[sot:root/verify-directory-conventions]] + [[research:root/20261111082440]] — tree contract, `gN` vs `dod-*` naming, `verify/out/` vs `gates/*/out/`, SKIP vs `ARKS_DOD_STRICT=1`, pin Git **2.39.5** normative, residual registration checklist | Ops/harness only; does not invent product Claimed; coordinate harness edits with in-flight B-gate owners |
 
 ## Why

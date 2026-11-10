@@ -3,7 +3,7 @@ id: sot:root/arks-agent-product-intent
 title: arks agent product intent
 status: active
 created: 2026-11-10T19:23:00Z
-updated: 2026-11-10T19:23:00Z
+updated: 2026-11-10T23:19:59Z
 tags: [arks-agent, arks-agent-cmd, llm, code-review, cev, bot, internal-crate, single-release, openai-compat, providers]
 verify: manual
 rel:
@@ -21,7 +21,8 @@ rel:
     - sot:root/arks-agent-cev-review
     - sot:root/product-verification-clean-room
     - plan:root/20261111042300
-  evidence: []
+  evidence:
+    - evidence:root/20261110231959-claimed-agent-llm
 ---
 
 # arks agent product intent
@@ -48,6 +49,7 @@ CLI shape: [[sot:root/arks-agent-cli-surface]]. Providers: [[sot:root/arks-agent
 7. Run **CEV inspection** bots that check Consistency / Evidence / Verify honesty against Specfold SoT + matrices ([[sot:root/arks-agent-cev-review]]) — fail-closed, cite IDs, never invent **PASS** / **Claimed**.
 8. Integrate with **local hub** PRs/reviews via **`arks-hub` native HTTP** (and later optional local hub serve) — **never** subprocess `gh` or `git`.
 9. Prefer reading repository / Specfold context via **arks engine libs** and filesystem reads of tracked `.spec/` — not shelling out.
+10. A bounded multi-turn OpenAI-compatible conversation path MAY retain user/assistant history for review workflows. B4 is Claimed for the Docker fixture journey plus review request ([[evidence:root/20261110231959-claimed-agent-llm]]); this does not claim model quality.
 
 ### Conceptual map
 
@@ -93,7 +95,7 @@ Implementing review/CEV by shelling to `gh`/`git` **fails** this SoT.
 ### Non-goals
 
 1. Separate `arks-agent` release binary or dual-product marketing.
-2. **General chatbot** / open-ended assistant product (chat UX, agent frameworks, tool-calling OS control).
+2. General autonomous assistant frameworks, tool-calling OS control, or unrestricted repository rewriting. The bounded native-HTTP `agent chat --message …` conversation used by B4 is in scope.
 3. Mixing agent commands into Git porcelain inventory / alias DoD.
 4. Subprocess backends (`git`/`gh`/vendor CLIs such as `openai`, `ollama` CLI wrappers as product path).
 5. Storing API keys / tokens in tracked git / `.spec/`.

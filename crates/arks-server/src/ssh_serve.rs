@@ -7,8 +7,7 @@
 //! 4. optional SSH_MSG_KEXINIT exchange + peer name-list parse
 //! 5. local curve25519-sha256 ECDH (+ peer ECDH INIT when offered)
 //! 6. host-key **sign** Partial (OpenSSH ed25519 unencrypted) + NEWKEYS when key loads
-//! 7. encrypted transport Partial after NEWKEYS (`chacha20-poly1305` AEAD + SSH-style KDF;
-//!    OpenSSH-exact `chacha20-poly1305@openssh.com` / `aes256-gcm@openssh.com` interop Missing)
+//! 7. OpenSSH `chacha20-poly1305@openssh.com` packet protection after NEWKEYS
 //! 8. wire publickey auth verify against `authorized_keys` (Partial; when peer continues)
 //! 9. session channel + `exec` → `git-upload-pack`|`git-receive-pack` dispatch into
 //!    `upload_pack_stream` / `receive_pack_stream` (Partial; when channel opens)
@@ -19,17 +18,16 @@
 
 use crate::error::ServerError;
 use crate::serve::ListenRebindSlot;
+use crate::ssh_openssh_chacha::OpenSshChaCha;
 use crate::stdio::{receive_pack_stream, upload_pack_stream};
 use arks_repo::Repository;
-use chacha20poly1305::aead::{Aead, KeyInit};
-use chacha20poly1305::{ChaCha20Poly1305, Nonce};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
 use std::io::{Cursor, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 use x25519_dalek::{PublicKey, StaticSecret};
@@ -327,11 +325,12 @@ fn sign_ssh_ed25519(host: &HostEd25519, data: &[u8]) -> Vec<u8> {
 fn build_kexinit_payload(advertise_ed25519: bool) -> Vec<u8> {
     let mut p = Vec::with_capacity(256);
     p.push(20); // SSH_MSG_KEXINIT
-    let cookie = Sha256::digest(b"arks-ssh-partial-kexinit-cookie");
+    let cookie = StaticSecret::random().to_bytes();
     p.extend_from_slice(&cookie[..16]);
     p.extend(ssh_name_list(&[
         "curve25519-sha256",
         "curve25519-sha256@libssh.org",
+        "kex-strict-s-v00@openssh.com",
     ]));
     if advertise_ed25519 {
         p.extend(ssh_name_list(&["ssh-ed25519"]));
@@ -339,19 +338,13 @@ fn build_kexinit_payload(advertise_ed25519: bool) -> Vec<u8> {
         // Honest Missing hostkey name when key unloadable.
         p.extend(ssh_name_list(&["arks-partial-missing-hostkey-sign"]));
     }
-    // Encryption: advertise Partial AEAD names (not Claimed OpenSSH-exact interop).
-    // enc c→s, enc s→c
-    p.extend(ssh_name_list(&[
-        "chacha20-poly1305@openssh.com",
-        "aes256-gcm@openssh.com",
-    ]));
-    p.extend(ssh_name_list(&[
-        "chacha20-poly1305@openssh.com",
-        "aes256-gcm@openssh.com",
-    ]));
-    // MAC unused with AEAD; compression none.
-    p.extend(ssh_name_list(&["arks-partial-aead-implicit"]));
-    p.extend(ssh_name_list(&["arks-partial-aead-implicit"]));
+    // Only advertise the cipher implemented by this listener. OpenSSH still
+    // negotiates a MAC name for AEAD ciphers, but the selected MAC is implicit
+    // and no separate MAC is placed on the wire.
+    p.extend(ssh_name_list(&["chacha20-poly1305@openssh.com"]));
+    p.extend(ssh_name_list(&["chacha20-poly1305@openssh.com"]));
+    p.extend(ssh_name_list(&["hmac-sha2-256"]));
+    p.extend(ssh_name_list(&["hmac-sha2-256"]));
     p.extend(ssh_name_list(&["none"]));
     p.extend(ssh_name_list(&["none"]));
     p.extend(ssh_name_list(&[]));
@@ -396,6 +389,38 @@ fn read_ssh_packet(stream: &mut TcpStream, max_payload: usize) -> std::io::Resul
     }
     let payload_end = rest.len() - padding_len;
     Ok(rest[1..payload_end].to_vec())
+}
+
+/// Read identification lines without reading past LF into the first binary
+/// packet. RFC 4253 permits pre-identification banner lines.
+fn read_ssh_identification(stream: &mut TcpStream) -> std::io::Result<String> {
+    for _ in 0..50 {
+        let mut line = Vec::with_capacity(64);
+        loop {
+            let mut byte = [0u8; 1];
+            stream.read_exact(&mut byte)?;
+            line.push(byte[0]);
+            if byte[0] == b'\n' {
+                break;
+            }
+            if line.len() >= 255 {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "SSH identification line exceeds 255 bytes",
+                ));
+            }
+        }
+        let line = String::from_utf8_lossy(&line)
+            .trim_end_matches(['\r', '\n'])
+            .to_string();
+        if line.starts_with("SSH-") {
+            return Ok(line);
+        }
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::InvalidData,
+        "SSH identification not found",
+    ))
 }
 
 /// Local curve25519 ECDH self-check (Partial crypto evidence; not peer handshake Claimed).
@@ -469,9 +494,9 @@ fn verify_publickey_against_authorized(
     let Some(vk) = parse_ssh_ed25519_verifying(public_blob) else {
         return Err("public blob not ssh-ed25519".into());
     };
-    let authorized = keys.iter().any(|(k, blob)| {
-        k.as_bytes() == vk.as_bytes() || blob.as_slice() == public_blob
-    });
+    let authorized = keys
+        .iter()
+        .any(|(k, blob)| k.as_bytes() == vk.as_bytes() || blob.as_slice() == public_blob);
     if !authorized {
         return Err("public key not in authorized_keys".into());
     }
@@ -516,7 +541,9 @@ fn publickey_verify_scaffold(authorized_keys: &Path, host: Option<&HostEd25519>)
             &challenge,
             &sig_blob,
         ) {
-            Ok(()) => notes.push("auth_authorized_keys_verify=ok (host key listed; Partial)".into()),
+            Ok(()) => {
+                notes.push("auth_authorized_keys_verify=ok (host key listed; Partial)".into())
+            }
             Err(e) => notes.push(format!("auth_authorized_keys_verify=skip ({e})")),
         }
     } else {
@@ -600,81 +627,72 @@ fn channel_git_hookup_scaffold(repo_path: &Path) -> String {
     )
 }
 
-/// SSH-style hash KDF byte (RFC 4253 §7.2 shape) — Partial for post-NEWKEYS keys.
-fn ssh_kdf_bytes(shared_k: &[u8], exchange_hash: &[u8], letter: u8, n: usize) -> Vec<u8> {
+/// Encode the X25519 output string as the positive SSH `mpint K`.
+///
+/// RFC 8731 §3.1 deliberately reinterprets the returned octets directly as
+/// an unsigned fixed-length integer in network byte order; it does not first
+/// reverse X25519's little-endian field-element representation.
+fn x25519_shared_as_mpint(shared_wire: &[u8; 32]) -> Vec<u8> {
+    let magnitude = shared_wire.to_vec();
+    let first_nonzero = magnitude
+        .iter()
+        .position(|b| *b != 0)
+        .unwrap_or(magnitude.len());
+    let mut value = magnitude[first_nonzero..].to_vec();
+    if value.first().is_some_and(|b| b & 0x80 != 0) {
+        value.insert(0, 0);
+    }
+    ssh_string(&value)
+}
+
+/// RFC 4253 §7.2 KDF. `encoded_k` includes the SSH mpint length prefix.
+fn ssh_kdf_bytes(encoded_k: &[u8], exchange_hash: &[u8], letter: u8, n: usize) -> Vec<u8> {
     let mut out = Vec::with_capacity(n);
-    let mut prev = Vec::new();
     while out.len() < n {
         let mut h = Sha256::new();
-        h.update(ssh_string(shared_k));
+        h.update(encoded_k);
         h.update(exchange_hash);
-        if prev.is_empty() {
+        if out.is_empty() {
             h.update([letter]);
-            h.update(exchange_hash); // session_id ≅ H for first KEX Partial
+            h.update(exchange_hash); // session_id is H for the first key exchange.
         } else {
-            h.update(&prev);
+            h.update(&out);
         }
-        prev = h.finalize().to_vec();
-        out.extend_from_slice(&prev);
+        out.extend_from_slice(&h.finalize());
     }
     out.truncate(n);
     out
 }
 
-struct PartialCipher {
-    aead: ChaCha20Poly1305,
-    seq: u32,
+fn openssh_chacha(
+    encoded_k: &[u8],
+    exchange_hash: &[u8],
+    client_to_server: bool,
+    sequence: u32,
+) -> Result<OpenSshChaCha, String> {
+    let letter = if client_to_server { b'C' } else { b'D' };
+    let key = ssh_kdf_bytes(encoded_k, exchange_hash, letter, 64);
+    OpenSshChaCha::new(&key, sequence)
 }
 
-impl PartialCipher {
-    fn from_shared(shared_k: &[u8], exchange_hash: &[u8], client_to_server: bool) -> Self {
-        let letter = if client_to_server { b'C' } else { b'D' };
-        let key = ssh_kdf_bytes(shared_k, exchange_hash, letter, 32);
-        let aead = ChaCha20Poly1305::new_from_slice(&key).expect("32-byte chacha key");
-        Self { aead, seq: 0 }
-    }
-
-    fn nonce_for(&self) -> Nonce {
-        let mut n = [0u8; 12];
-        n[4..12].copy_from_slice(&u64::from(self.seq).to_be_bytes());
-        *Nonce::from_slice(&n)
-    }
-
-    fn seal(&mut self, plaintext: &[u8]) -> Result<Vec<u8>, String> {
-        let nonce = self.nonce_for();
-        let ct = self
-            .aead
-            .encrypt(&nonce, plaintext)
-            .map_err(|e| format!("aead encrypt: {e}"))?;
-        self.seq = self.seq.wrapping_add(1);
-        Ok(ct)
-    }
-
-    fn open(&mut self, ciphertext: &[u8]) -> Result<Vec<u8>, String> {
-        let nonce = self.nonce_for();
-        let pt = self
-            .aead
-            .decrypt(&nonce, ciphertext)
-            .map_err(|e| format!("aead decrypt: {e}"))?;
-        self.seq = self.seq.wrapping_add(1);
-        Ok(pt)
-    }
-}
-
-fn encrypted_transport_selfcheck(shared_k: &[u8], exchange_hash: &[u8]) -> String {
-    let mut c2s = PartialCipher::from_shared(shared_k, exchange_hash, true);
-    let mut s2c = PartialCipher::from_shared(shared_k, exchange_hash, false);
+fn encrypted_transport_selfcheck(encoded_k: &[u8], exchange_hash: &[u8]) -> String {
+    let mut c2s = match openssh_chacha(encoded_k, exchange_hash, true, 0) {
+        Ok(c) => c,
+        Err(e) => return format!("encrypted_transport=selfcheck_fail ({e})"),
+    };
     let sample = b"arks-ssh-partial-post-newkeys";
-    match c2s.seal(sample).and_then(|ct| {
-        let mut peer = PartialCipher::from_shared(shared_k, exchange_hash, true);
-        peer.open(&ct)
+    match c2s.seal_packet(sample).and_then(|packet| {
+        let mut peer = openssh_chacha(encoded_k, exchange_hash, true, 0)?;
+        let encrypted_length = packet[..4].try_into().map_err(|_| "length")?;
+        // The selfcheck knows the deterministic packet body length.
+        let body_len = packet.len() - 4 - 16;
+        let body = packet[4..4 + body_len].to_vec();
+        let tag = packet[4 + body_len..].try_into().map_err(|_| "tag")?;
+        peer.open_packet(encrypted_length, body, tag, 65_536)
     }) {
-        Ok(pt) if pt == sample => {
-            let _ = s2c.seal(b"srv");
-            "encrypted_transport=chacha20-poly1305 Partial AEAD selfcheck=ok \
-             (OpenSSH-exact cipher interop Missing; aes256-gcm advertised but not selected Partial)"
-                .into()
-        }
+        Ok(pt) if pt == sample => "encrypted_transport=OpenSSH-ChaCha packet selfcheck=ok \
+             (live stock-client receipt still required for Claimed)"
+            .into(),
         Ok(_) => "encrypted_transport=selfcheck_mismatch".into(),
         Err(e) => format!("encrypted_transport=selfcheck_fail ({e})"),
     }
@@ -682,139 +700,427 @@ fn encrypted_transport_selfcheck(shared_k: &[u8], exchange_hash: &[u8]) -> Strin
 
 fn write_encrypted_packet(
     stream: &mut TcpStream,
-    cipher: &mut PartialCipher,
+    cipher: &mut OpenSshChaCha,
     payload: &[u8],
 ) -> Result<(), String> {
-    // Partial framing: u32 ct_len || ciphertext(payload) — not Claimed SSH binary packet.
-    let ct = cipher.seal(payload)?;
-    stream
-        .write_all(&(ct.len() as u32).to_be_bytes())
-        .map_err(|e| e.to_string())?;
-    stream.write_all(&ct).map_err(|e| e.to_string())?;
-    Ok(())
+    cipher.write_packet(stream, payload)
 }
 
 fn read_encrypted_packet(
     stream: &mut TcpStream,
-    cipher: &mut PartialCipher,
+    cipher: &mut OpenSshChaCha,
     max: usize,
 ) -> Result<Vec<u8>, String> {
-    let mut lenbuf = [0u8; 4];
-    stream
-        .read_exact(&mut lenbuf)
-        .map_err(|e| e.to_string())?;
-    let n = u32::from_be_bytes(lenbuf) as usize;
-    if n == 0 || n > max {
-        return Err(format!("encrypted packet len {n}"));
-    }
-    let mut ct = vec![0u8; n];
-    stream.read_exact(&mut ct).map_err(|e| e.to_string())?;
-    cipher.open(&ct)
+    cipher.read_packet(stream, max)
 }
 
-/// After NEWKEYS: AEAD Partial + optional wire USERAUTH/channel toward pack dispatch.
+/// After NEWKEYS: AEAD + USERAUTH loop + session channel → pack duplex.
 fn continue_after_newkeys(
     stream: &mut TcpStream,
-    shared_k: &[u8],
+    encoded_k: &[u8],
     exchange_hash: &[u8],
+    initial_sequence: u32,
     authorized_keys: &Path,
     repo_path: &Path,
     host: Option<&HostEd25519>,
 ) -> (SshStage, String) {
-    let mut notes = vec![encrypted_transport_selfcheck(shared_k, exchange_hash)];
-    let mut c2s = PartialCipher::from_shared(shared_k, exchange_hash, true);
-    let mut s2c = PartialCipher::from_shared(shared_k, exchange_hash, false);
+    let mut notes = vec![encrypted_transport_selfcheck(encoded_k, exchange_hash)];
+    let mut c2s = match openssh_chacha(encoded_k, exchange_hash, true, initial_sequence) {
+        Ok(c) => c,
+        Err(e) => return (SshStage::EncryptedTransport, format!("c2s key error: {e}")),
+    };
+    let mut s2c = match openssh_chacha(encoded_k, exchange_hash, false, initial_sequence) {
+        Ok(c) => c,
+        Err(e) => return (SshStage::EncryptedTransport, format!("s2c key error: {e}")),
+    };
 
-    // Best-effort wire continuation (peer may stop; Partial timeout is honest).
-    let _ = stream.set_read_timeout(Some(Duration::from_millis(400)));
-    match read_encrypted_packet(stream, &mut c2s, 65_536) {
-        Ok(payload) if payload.first() == Some(&50) => {
-            // SSH_MSG_USERAUTH_REQUEST — Partial parse for publickey.
-            notes.push("wire_USERAUTH_REQUEST=seen (encrypted Partial)".into());
-            let auth_note = handle_userauth_request_partial(
-                &payload,
-                authorized_keys,
-                host,
-                stream,
-                &mut s2c,
-            );
-            notes.push(auth_note);
-            // After auth, try channel open / exec.
-            match read_encrypted_packet(stream, &mut c2s, 65_536) {
-                Ok(ch) if ch.first() == Some(&90) => {
-                    notes.push("wire_CHANNEL_OPEN=seen".into());
-                    if let Ok(exec_payload) = read_encrypted_packet(stream, &mut c2s, 65_536) {
-                        if exec_payload.first() == Some(&98) {
-                            // CHANNEL_REQUEST — look for exec string.
-                            if let Some(cmd) = extract_exec_command(&exec_payload) {
-                                notes.push(format!("wire_CHANNEL_REQUEST_exec={cmd}"));
-                                match dispatch_git_exec_to_pack(repo_path, &cmd) {
-                                    Ok(s) | Err(s) => notes.push(s),
-                                }
-                                return (SshStage::ChannelSession, notes.join("; "));
-                            }
-                        }
-                    }
-                    // No exec yet — still prove dispatch path offline.
-                    notes.push(channel_git_hookup_scaffold(repo_path));
-                    return (SshStage::ChannelSession, notes.join("; "));
-                }
-                Ok(p) => notes.push(format!(
-                    "wire_after_auth_msg={}",
-                    p.first().copied().unwrap_or(0)
+    // Stock OpenSSH: SERVICE_REQUEST ssh-userauth → SERVICE_ACCEPT, then one or
+    // more USERAUTH_REQUEST (none → publickey query → signed publickey).
+    let _ = stream.set_nodelay(true);
+    // Pack negotiation + tiny clone can exceed the accept-time 2s probe budget.
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
+    let mut next = read_encrypted_packet(stream, &mut c2s, 65_536);
+    if let Ok(payload) = &next
+        && payload.first() == Some(&5)
+    {
+        let mut off = 1usize;
+        if let Some(service) = read_ssh_bytes(payload, &mut off) {
+            let mut accept = vec![6]; // SSH_MSG_SERVICE_ACCEPT
+            accept.extend(ssh_string(&service));
+            match write_encrypted_packet(stream, &mut s2c, &accept) {
+                Ok(()) => notes.push(format!(
+                    "wire_SERVICE_ACCEPT={} (OpenSSH ChaCha decrypt+encrypt ok)",
+                    String::from_utf8_lossy(&service)
                 )),
-                Err(e) => notes.push(format!("wire_channel=timeout_or_err ({e})")),
+                Err(e) => notes.push(format!("wire_SERVICE_ACCEPT=write_err ({e})")),
             }
-            notes.push(channel_git_hookup_scaffold(repo_path));
-            (SshStage::AuthPublickey, notes.join("; "))
+            next = read_encrypted_packet(stream, &mut c2s, 65_536);
         }
-        Ok(payload) => {
+    }
+
+    let mut authenticated = false;
+    for round in 0..8 {
+        let payload = match next {
+            Ok(p) => p,
+            Err(e) => {
+                notes.push(format!("wire_auth=timeout_or_err round={round} ({e})"));
+                break;
+            }
+        };
+        if payload.first() != Some(&50) {
             notes.push(format!(
                 "wire_post_newkeys_msg={} (expected USERAUTH=50)",
                 payload.first().copied().unwrap_or(0)
             ));
-            notes.push(publickey_verify_scaffold(authorized_keys, host));
-            notes.push(channel_git_hookup_scaffold(repo_path));
-            (SshStage::EncryptedTransport, notes.join("; "))
+            break;
         }
+        notes.push(format!("wire_USERAUTH_REQUEST=seen round={round}"));
+        let (ok, auth_note) = handle_userauth_request_partial(
+            &payload,
+            exchange_hash,
+            authorized_keys,
+            host,
+            stream,
+            &mut s2c,
+        );
+        notes.push(auth_note);
+        if ok {
+            authenticated = true;
+            break;
+        }
+        next = read_encrypted_packet(stream, &mut c2s, 65_536);
+    }
+
+    if !authenticated {
+        notes.push(publickey_verify_scaffold(authorized_keys, host));
+        notes.push(channel_git_hookup_scaffold(repo_path));
+        return (SshStage::AuthPublickey, notes.join("; "));
+    }
+
+    match run_session_channel_pack(stream, &mut c2s, &mut s2c, repo_path, &mut notes) {
+        Ok(()) => (SshStage::ChannelSession, notes.join("; ")),
         Err(e) => {
-            notes.push(format!(
-                "wire_post_newkeys=no_peer_continue ({e}); encrypted Partial selfcheck stands; \
-                 OpenSSH client interop Claimed Missing"
-            ));
-            notes.push(publickey_verify_scaffold(authorized_keys, host));
+            notes.push(e);
             notes.push(channel_git_hookup_scaffold(repo_path));
-            (SshStage::EncryptedTransport, notes.join("; "))
+            (SshStage::ChannelSession, notes.join("; "))
         }
     }
 }
 
-fn extract_exec_command(channel_request: &[u8]) -> Option<String> {
-    // SSH_MSG_CHANNEL_REQUEST: byte 98 || uint32 recip || string "exec" || bool want_reply || string command
-    if channel_request.first()? != &98 {
-        return None;
+/// SSH session channel + `exec` → live `upload_pack_stream` / `receive_pack_stream`.
+fn run_session_channel_pack(
+    stream: &mut TcpStream,
+    c2s: &mut OpenSshChaCha,
+    s2c: &mut OpenSshChaCha,
+    repo_path: &Path,
+    notes: &mut Vec<String>,
+) -> Result<(), String> {
+    let mut peer_chan: Option<u32> = None;
+    let mut peer_max_packet: u32 = 32_768;
+    let our_chan: u32 = 0;
+    let mut exec_cmd: Option<String> = None;
+
+    for _ in 0..32 {
+        let msg = read_encrypted_packet(stream, c2s, 65_536).map_err(|e| {
+            format!("wire_channel=timeout_or_err ({e})")
+        })?;
+        match msg.first().copied() {
+            Some(90) => {
+                // SSH_MSG_CHANNEL_OPEN
+                let mut off = 1usize;
+                let chan_type = read_ssh_bytes(&msg, &mut off).unwrap_or_default();
+                let sender = read_u32(&msg, &mut off).unwrap_or(0);
+                let _window = read_u32(&msg, &mut off).unwrap_or(0);
+                peer_max_packet = read_u32(&msg, &mut off).unwrap_or(32_768).max(1024);
+                notes.push(format!(
+                    "wire_CHANNEL_OPEN={} sender={sender}",
+                    String::from_utf8_lossy(&chan_type)
+                ));
+                if chan_type.as_slice() != b"session" {
+                    let mut fail = vec![92]; // CHANNEL_OPEN_FAILURE
+                    fail.extend_from_slice(&sender.to_be_bytes());
+                    fail.extend_from_slice(&2u32.to_be_bytes()); // SSH_OPEN_ADMINISTRATIVELY_PROHIBITED
+                    fail.extend(ssh_string(b"only session"));
+                    fail.extend(ssh_string(b""));
+                    let _ = write_encrypted_packet(stream, s2c, &fail);
+                    return Err("channel_open=non_session".into());
+                }
+                peer_chan = Some(sender);
+                let mut conf = vec![91]; // CHANNEL_OPEN_CONFIRMATION
+                conf.extend_from_slice(&sender.to_be_bytes());
+                conf.extend_from_slice(&our_chan.to_be_bytes());
+                conf.extend_from_slice(&2_097_152u32.to_be_bytes());
+                conf.extend_from_slice(&32_768u32.to_be_bytes());
+                write_encrypted_packet(stream, s2c, &conf)
+                    .map_err(|e| format!("channel_open_confirm=write_err ({e})"))?;
+            }
+            Some(93) => {
+                // WINDOW_ADJUST — ignore; tiny clone fits initial window.
+            }
+            Some(98) => {
+                // CHANNEL_REQUEST
+                let mut off = 1usize;
+                let recip = read_u32(&msg, &mut off).unwrap_or(0);
+                let req = read_ssh_bytes(&msg, &mut off).unwrap_or_default();
+                let want_reply = msg.get(off).copied().unwrap_or(0) != 0;
+                if off < msg.len() {
+                    off += 1;
+                }
+                if recip != our_chan {
+                    notes.push(format!("wire_CHANNEL_REQUEST=wrong_recip={recip}"));
+                }
+                if req.as_slice() == b"exec" {
+                    let cmd = read_ssh_bytes(&msg, &mut off).unwrap_or_default();
+                    let cmd_s = String::from_utf8_lossy(&cmd).into_owned();
+                    notes.push(format!("wire_CHANNEL_REQUEST_exec={cmd_s}"));
+                    if want_reply {
+                        let mut ok = vec![99]; // CHANNEL_SUCCESS
+                        ok.extend_from_slice(&peer_chan.unwrap_or(0).to_be_bytes());
+                        write_encrypted_packet(stream, s2c, &ok)
+                            .map_err(|e| format!("channel_success=write_err ({e})"))?;
+                    }
+                    exec_cmd = Some(cmd_s);
+                    break;
+                }
+                if req.as_slice() == b"subsystem" {
+                    // git uses exec, not subsystem; refuse cleanly.
+                    notes.push("wire_CHANNEL_REQUEST_subsystem=refused".into());
+                    if want_reply {
+                        let mut fail = vec![100];
+                        fail.extend_from_slice(&peer_chan.unwrap_or(0).to_be_bytes());
+                        let _ = write_encrypted_packet(stream, s2c, &fail);
+                    }
+                    continue;
+                }
+                // OpenSSH git often sends `env` (e.g. GIT_PROTOCOL) before exec.
+                // Reply SUCCESS so the client continues; we do not apply env vars.
+                notes.push(format!(
+                    "wire_CHANNEL_REQUEST_ack={}",
+                    String::from_utf8_lossy(&req)
+                ));
+                if want_reply {
+                    let mut ok = vec![99]; // CHANNEL_SUCCESS
+                    ok.extend_from_slice(&peer_chan.unwrap_or(0).to_be_bytes());
+                    let _ = write_encrypted_packet(stream, s2c, &ok);
+                }
+            }
+            Some(96) | Some(97) => {
+                notes.push(format!(
+                    "wire_channel_early_eof_or_close={}",
+                    msg.first().copied().unwrap_or(0)
+                ));
+                break;
+            }
+            Some(2) | Some(4) => {
+                // ignore / debug
+            }
+            other => {
+                notes.push(format!(
+                    "wire_channel_msg={}",
+                    other.unwrap_or(0)
+                ));
+            }
+        }
     }
-    let mut off = 1usize;
-    let _ = read_u32(channel_request, &mut off).ok()?;
-    let req = read_ssh_bytes(channel_request, &mut off)?;
-    if req.as_slice() != b"exec" {
-        return None;
+
+    let Some(peer) = peer_chan else {
+        return Err("channel_open=missing".into());
+    };
+    let Some(cmd) = exec_cmd else {
+        return Err("channel_exec=missing".into());
+    };
+
+    let exit_code: u32 = if parse_git_exec_service(&cmd).is_some() {
+        let mut pipe = SshChannelPipe {
+            stream,
+            c2s,
+            s2c,
+            peer_channel: peer,
+            max_data: peer_max_packet.min(16_384) as usize,
+            inbox: Vec::new(),
+            eof: false,
+        };
+        match dispatch_git_exec_live(repo_path, &cmd, &mut pipe) {
+            Ok(pack_note) => {
+                notes.push(pack_note);
+                0
+            }
+            Err(e) => {
+                notes.push(e);
+                1
+            }
+        }
+    } else if cmd.trim() == "true" || cmd.trim().is_empty() {
+        // B1 OpenSSH probe uses `ssh … true`; succeed with empty body.
+        notes.push("channel_exec=true_ok".into());
+        0
+    } else {
+        notes.push(format!("channel_exec=unsupported ({cmd})"));
+        127
+    };
+
+    // Stock OpenSSH/git require exit-status before EOF/CLOSE or the client
+    // treats the remote command as failed (clone_rc=128) even after a good pack.
+    send_channel_exit_status(stream, s2c, peer, exit_code)?;
+    let mut eof_pkt = vec![96]; // CHANNEL_EOF
+    eof_pkt.extend_from_slice(&peer.to_be_bytes());
+    write_encrypted_packet(stream, s2c, &eof_pkt)
+        .map_err(|e| format!("channel_eof=write_err ({e})"))?;
+    let mut close_pkt = vec![97]; // CHANNEL_CLOSE
+    close_pkt.extend_from_slice(&peer.to_be_bytes());
+    write_encrypted_packet(stream, s2c, &close_pkt)
+        .map_err(|e| format!("channel_close=write_err ({e})"))?;
+    // Ensure CHANNEL_DATA / exit-status reached the peer before TCP teardown.
+    let _ = stream.flush();
+    // Drain a short window for the client's CHANNEL_CLOSE so git does not
+    // report "Connection closed by remote host" after a successful pack.
+    let _ = stream.set_read_timeout(Some(Duration::from_millis(500)));
+    for _ in 0..8 {
+        match read_encrypted_packet(stream, c2s, 65_536) {
+            Ok(msg) if msg.first() == Some(&97) || msg.first() == Some(&96) => break,
+            Ok(_) => continue,
+            Err(_) => break,
+        }
     }
-    if off >= channel_request.len() {
-        return None;
+    if exit_code == 0 {
+        Ok(())
+    } else {
+        Err(format!("channel_exec=exit_status={exit_code}"))
     }
-    off += 1; // want_reply
-    let cmd = read_ssh_bytes(channel_request, &mut off)?;
-    String::from_utf8(cmd).ok()
 }
 
+fn send_channel_exit_status(
+    stream: &mut TcpStream,
+    s2c: &mut OpenSshChaCha,
+    peer_channel: u32,
+    code: u32,
+) -> Result<(), String> {
+    let mut pkt = vec![98]; // SSH_MSG_CHANNEL_REQUEST
+    pkt.extend_from_slice(&peer_channel.to_be_bytes());
+    pkt.extend(ssh_string(b"exit-status"));
+    pkt.push(0); // want_reply = false
+    pkt.extend_from_slice(&code.to_be_bytes());
+    write_encrypted_packet(stream, s2c, &pkt).map_err(|e| format!("exit_status=write_err ({e})"))
+}
+
+/// Duplex adapter: SSH CHANNEL_DATA ↔ Read+Write for pack sessions.
+struct SshChannelPipe<'a> {
+    stream: &'a mut TcpStream,
+    c2s: &'a mut OpenSshChaCha,
+    s2c: &'a mut OpenSshChaCha,
+    peer_channel: u32,
+    max_data: usize,
+    inbox: Vec<u8>,
+    eof: bool,
+}
+
+impl Read for SshChannelPipe<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        while self.inbox.is_empty() && !self.eof {
+            let msg = match read_encrypted_packet(self.stream, self.c2s, 65_536) {
+                Ok(m) => m,
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::Other, e));
+                }
+            };
+            match msg.first().copied() {
+                Some(94) => {
+                    // CHANNEL_DATA
+                    let mut off = 1usize;
+                    let _recip = read_u32(&msg, &mut off).unwrap_or(0);
+                    if let Some(data) = read_ssh_bytes(&msg, &mut off) {
+                        self.inbox.extend_from_slice(&data);
+                    }
+                }
+                Some(93) => {}
+                Some(96) | Some(97) => {
+                    self.eof = true;
+                }
+                Some(98) => {
+                    // unexpected late request — fail if want_reply
+                    let mut off = 1usize;
+                    let _ = read_u32(&msg, &mut off);
+                    let _ = read_ssh_bytes(&msg, &mut off);
+                    let want_reply = msg.get(off).copied().unwrap_or(0) != 0;
+                    if want_reply {
+                        let mut fail = vec![100];
+                        fail.extend_from_slice(&self.peer_channel.to_be_bytes());
+                        let _ = write_encrypted_packet(self.stream, self.s2c, &fail);
+                    }
+                }
+                Some(2) | Some(4) => {}
+                _ => {}
+            }
+        }
+        if self.inbox.is_empty() {
+            return Ok(0);
+        }
+        let n = buf.len().min(self.inbox.len());
+        buf[..n].copy_from_slice(&self.inbox[..n]);
+        self.inbox.drain(..n);
+        Ok(n)
+    }
+}
+
+impl Write for SshChannelPipe<'_> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        if buf.is_empty() {
+            return Ok(0);
+        }
+        let chunk = buf.len().min(self.max_data.max(1));
+        let mut pkt = vec![94]; // CHANNEL_DATA
+        pkt.extend_from_slice(&self.peer_channel.to_be_bytes());
+        pkt.extend(ssh_string(&buf[..chunk]));
+        write_encrypted_packet(self.stream, self.s2c, &pkt)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        Ok(chunk)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.stream.flush()
+    }
+}
+
+fn dispatch_git_exec_live(
+    repo_path: &Path,
+    exec_cmd: &str,
+    pipe: &mut SshChannelPipe<'_>,
+) -> Result<String, String> {
+    let Some(svc) = parse_git_exec_service(exec_cmd) else {
+        return Err(format!("exec not git-upload-pack|receive-pack: {exec_cmd}"));
+    };
+    let mut repo = Repository::open(repo_path)
+        .or_else(|_| Repository::open(repo_path.join(".git")))
+        .map_err(|e| format!("open repo {}: {e}", repo_path.display()))?;
+    match svc {
+        "git-upload-pack" => match upload_pack_stream(&repo, pipe) {
+            Ok(()) => Ok(
+                "channel_exec=git-upload-pack live upload_pack_stream ok (OpenSSH channel)"
+                    .into(),
+            ),
+            Err(e) => Err(format!("channel_exec=git-upload-pack live err={e}")),
+        },
+        "git-receive-pack" => match receive_pack_stream(&mut repo, pipe) {
+            Ok(()) => Ok(
+                "channel_exec=git-receive-pack live receive_pack_stream ok (OpenSSH channel)"
+                    .into(),
+            ),
+            Err(e) => Err(format!("channel_exec=git-receive-pack live err={e}")),
+        },
+        _ => Err(format!("unknown service {svc}")),
+    }
+}
+
+/// Handle one USERAUTH_REQUEST. Returns `(authenticated, notes)`.
 fn handle_userauth_request_partial(
     payload: &[u8],
+    session_id: &[u8],
     authorized_keys: &Path,
     host: Option<&HostEd25519>,
     stream: &mut TcpStream,
-    s2c: &mut PartialCipher,
-) -> String {
+    s2c: &mut OpenSshChaCha,
+) -> (bool, String) {
     // SSH_MSG_USERAUTH_REQUEST: 50 || string user || string service || string method || …
     let mut off = 1usize;
     let user = read_ssh_bytes(payload, &mut off).unwrap_or_default();
@@ -828,12 +1134,19 @@ fn handle_userauth_request_partial(
     );
     if method.as_slice() != b"publickey" {
         notes.push_str("; auth=refuse_non_publickey Partial");
-        let _ = write_encrypted_packet(stream, s2c, &[51]); // USERAUTH_FAILURE
-        return notes;
+        let mut failure = vec![51]; // SSH_MSG_USERAUTH_FAILURE
+        failure.extend(ssh_name_list(&["publickey"]));
+        failure.push(0); // partial success = false
+        let _ = write_encrypted_packet(stream, s2c, &failure);
+        return (false, notes);
     }
     if off >= payload.len() {
         notes.push_str("; auth=publickey_short");
-        return notes;
+        let mut failure = vec![51];
+        failure.extend(ssh_name_list(&["publickey"]));
+        failure.push(0);
+        let _ = write_encrypted_packet(stream, s2c, &failure);
+        return (false, notes);
     }
     let has_sig = payload[off] != 0;
     off += 1;
@@ -844,23 +1157,36 @@ fn handle_userauth_request_partial(
         String::from_utf8_lossy(&alg)
     ));
     if !has_sig {
-        // Query-only — Partial accept path if key authorized.
         let keys = load_authorized_ed25519_keys(authorized_keys);
-        let ok = keys.iter().any(|(_, blob)| blob.as_slice() == pubkey.as_slice());
+        let ok = keys
+            .iter()
+            .any(|(_, blob)| blob.as_slice() == pubkey.as_slice());
         notes.push_str(&format!("; auth_pubkey_query_authorized={ok}"));
-        let _ = write_encrypted_packet(stream, s2c, &[60]); // USERAUTH_PK_OK Partial
-        return notes;
+        if ok {
+            let mut pk_ok = vec![60]; // SSH_MSG_USERAUTH_PK_OK
+            pk_ok.extend(ssh_string(&alg));
+            pk_ok.extend(ssh_string(&pubkey));
+            let _ = write_encrypted_packet(stream, s2c, &pk_ok);
+        } else {
+            let mut failure = vec![51];
+            failure.extend(ssh_name_list(&["publickey"]));
+            failure.push(0);
+            let _ = write_encrypted_packet(stream, s2c, &failure);
+        }
+        return (false, notes);
     }
+    let signed_request_end = off;
     let sig = read_ssh_bytes(payload, &mut off).unwrap_or_default();
-    // Partial challenge: exchange-shaped digest of payload prefix (not Claimed session_id binding).
-    let challenge = Sha256::digest(&payload[..off.saturating_sub(sig.len().saturating_add(4))]);
+    let mut challenge = ssh_string(session_id);
+    challenge.extend_from_slice(&payload[..signed_request_end]);
     match verify_publickey_against_authorized(authorized_keys, &pubkey, &challenge, &sig) {
         Ok(()) => {
-            notes.push_str("; auth_publickey_verify=ok against authorized_keys (Partial)");
+            notes.push_str("; auth_publickey_verify=ok against authorized_keys");
             let _ = write_encrypted_packet(stream, s2c, &[52]); // USERAUTH_SUCCESS
+            (true, notes)
         }
         Err(e) => {
-            // Fall back: if host key matches authorized + can self-sign challenge, note Partial.
+            // Offline scaffold note only — must not invent wire auth success.
             if let Some(h) = host {
                 let ch = Sha256::digest(b"arks-ssh-partial-wire-auth-fallback");
                 let sig_blob = sign_ssh_ed25519(h, &ch);
@@ -878,10 +1204,13 @@ fn handle_userauth_request_partial(
             } else {
                 notes.push_str(&format!("; auth_publickey_verify=fail ({e})"));
             }
-            let _ = write_encrypted_packet(stream, s2c, &[51]);
+            let mut failure = vec![51];
+            failure.extend(ssh_name_list(&["publickey"]));
+            failure.push(0);
+            let _ = write_encrypted_packet(stream, s2c, &failure);
+            (false, notes)
         }
     }
-    notes
 }
 
 /// Attempt peer ECDH + optional host-key sign + NEWKEYS (Partial).
@@ -896,9 +1225,9 @@ fn try_peer_ecdh_and_sign(
     authorized_keys: &Path,
     repo_path: &Path,
 ) -> (SshStage, String) {
-    let want = peer_kex.iter().any(|n| {
-        n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org"
-    });
+    let want = peer_kex
+        .iter()
+        .any(|n| n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org");
     if !want {
         return (
             SshStage::AlgoSelect,
@@ -911,10 +1240,7 @@ fn try_peer_ecdh_and_sign(
             if e.kind() == std::io::ErrorKind::WouldBlock
                 || e.kind() == std::io::ErrorKind::TimedOut =>
         {
-            return (
-                SshStage::Ecdh,
-                "ecdh_peer=timeout (no ECDH_INIT)".into(),
-            );
+            return (SshStage::Ecdh, "ecdh_peer=timeout (no ECDH_INIT)".into());
         }
         Err(e) => return (SshStage::Ecdh, format!("ecdh_peer=err ({e})")),
     };
@@ -935,6 +1261,12 @@ fn try_peer_ecdh_and_sign(
     let secret = StaticSecret::random();
     let q_s = PublicKey::from(&secret);
     let shared = secret.diffie_hellman(&peer_pk);
+    if shared.as_bytes().iter().all(|byte| *byte == 0) {
+        return (
+            SshStage::Ecdh,
+            "ecdh_peer=all_zero_shared_secret (RFC 8731 reject)".into(),
+        );
+    }
     let mut h = Sha256::new();
     h.update(b"arks-ssh-partial-peer-ecdh");
     h.update(shared.as_bytes());
@@ -953,17 +1285,21 @@ fn try_peer_ecdh_and_sign(
         return (SshStage::HostKeySign, notes.join("; "));
     };
 
-    // Partial exchange hash (RFC 4253 / 8731 shape) — SHA-256 for curve25519-sha256.
-    // V_C || V_S || I_C || I_S || K_S || Q_C || Q_S || K  (mpint K as raw 32-byte Partial).
+    // RFC 8731 exchange hash:
+    // string V_C || string V_S || string I_C || string I_S ||
+    // string K_S || string Q_C || string Q_S || mpint K.
+    let encoded_k = x25519_shared_as_mpint(shared.as_bytes());
     let mut exchange = Vec::new();
-    exchange.extend(ssh_string(peer_id.trim_end_matches(['\r', '\n']).as_bytes()));
+    exchange.extend(ssh_string(
+        peer_id.trim_end_matches(['\r', '\n']).as_bytes(),
+    ));
     exchange.extend(ssh_string(our_id.trim_end_matches(['\r', '\n']).as_bytes()));
     exchange.extend(ssh_string(peer_kexinit));
     exchange.extend(ssh_string(our_kexinit));
     exchange.extend(ssh_string(&host.public_blob));
     exchange.extend(ssh_string(&q_c));
     exchange.extend(ssh_string(q_s.as_bytes()));
-    exchange.extend(ssh_string(shared.as_bytes()));
+    exchange.extend_from_slice(&encoded_k);
     let exchange_hash = Sha256::digest(&exchange);
     let signature = sign_ssh_ed25519(host, &exchange_hash);
 
@@ -978,7 +1314,7 @@ fn try_peer_ecdh_and_sign(
     }
     notes.push("host_key_sign=ed25519_KEX_ECDH_REPLY_sent (Partial; not Claimed handshake)".into());
 
-    // SSH_MSG_NEWKEYS (cleartext), then switch to encrypted Partial.
+    // SSH_MSG_NEWKEYS (cleartext), then switch to OpenSSH ChaCha packets.
     if let Err(e) = write_ssh_packet(stream, &[21]) {
         notes.push(format!("newkeys=write_err ({e})"));
         return (SshStage::NewKeys, notes.join("; "));
@@ -999,10 +1335,18 @@ fn try_peer_ecdh_and_sign(
         Err(e) => notes.push(format!("newkeys=peer_err ({e})")),
     }
 
+    let strict_kex = peer_kex
+        .iter()
+        .any(|name| name == "kex-strict-c-v00@openssh.com");
+    let initial_sequence = if strict_kex { 0 } else { 3 };
+    notes.push(format!(
+        "strict_kex={strict_kex} encrypted_initial_sequence={initial_sequence}"
+    ));
     let (stage, post) = continue_after_newkeys(
         stream,
-        shared.as_bytes(),
+        &encoded_k,
         &exchange_hash,
+        initial_sequence,
         authorized_keys,
         repo_path,
         Some(host),
@@ -1011,14 +1355,41 @@ fn try_peer_ecdh_and_sign(
     (stage, notes.join("; "))
 }
 
-fn parse_peer_kexinit(payload: &[u8]) -> Option<(Vec<String>, Vec<String>)> {
+struct PeerKexInit {
+    kex: Vec<String>,
+    hostkey: Vec<String>,
+    enc_c2s: Vec<String>,
+    enc_s2c: Vec<String>,
+    mac_c2s: Vec<String>,
+    mac_s2c: Vec<String>,
+}
+
+fn parse_peer_kexinit(payload: &[u8]) -> Option<PeerKexInit> {
     if payload.first().copied()? != 20 {
         return None;
     }
     let mut off = 1 + 16; // type + cookie
     let kex = read_ssh_name_list(payload, &mut off)?;
     let hostkey = read_ssh_name_list(payload, &mut off)?;
-    Some((kex, hostkey))
+    let enc_c2s = read_ssh_name_list(payload, &mut off)?;
+    let enc_s2c = read_ssh_name_list(payload, &mut off)?;
+    let mac_c2s = read_ssh_name_list(payload, &mut off)?;
+    let mac_s2c = read_ssh_name_list(payload, &mut off)?;
+    let _compression_c2s = read_ssh_name_list(payload, &mut off)?;
+    let _compression_s2c = read_ssh_name_list(payload, &mut off)?;
+    let _languages_c2s = read_ssh_name_list(payload, &mut off)?;
+    let _languages_s2c = read_ssh_name_list(payload, &mut off)?;
+    if off + 5 > payload.len() {
+        return None;
+    }
+    Some(PeerKexInit {
+        kex,
+        hostkey,
+        enc_c2s,
+        enc_s2c,
+        mac_c2s,
+        mac_s2c,
+    })
 }
 
 fn run_kex_stages(
@@ -1059,7 +1430,7 @@ fn run_kex_stages(
         peer_payload.len()
     ));
 
-    let (peer_kex, peer_hostkey) = match parse_peer_kexinit(&peer_payload) {
+    let peer = match parse_peer_kexinit(&peer_payload) {
         Some(v) => v,
         None => {
             notes.push("algo_select=peer_kexinit_parse_fail".into());
@@ -1071,23 +1442,35 @@ fn run_kex_stages(
             return (SshStage::HostKeySign, notes.join("; "));
         }
     };
-    let kex_ok = peer_kex.iter().any(|n| {
-        n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org"
-    });
+    let kex_ok = peer
+        .kex
+        .iter()
+        .any(|n| n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org");
     let hostkey_ok = if advertise {
-        peer_hostkey.iter().any(|n| n == "ssh-ed25519")
+        peer.hostkey.iter().any(|n| n == "ssh-ed25519")
     } else {
-        peer_hostkey
+        peer.hostkey
             .iter()
             .any(|n| n == "arks-partial-missing-hostkey-sign")
     };
+    let cipher_ok = peer
+        .enc_c2s
+        .iter()
+        .any(|n| n == "chacha20-poly1305@openssh.com")
+        && peer
+            .enc_s2c
+            .iter()
+            .any(|n| n == "chacha20-poly1305@openssh.com");
+    let mac_ok = peer.mac_c2s.iter().any(|n| n == "hmac-sha2-256")
+        && peer.mac_s2c.iter().any(|n| n == "hmac-sha2-256");
     notes.push(format!(
-        "algo_select=kex_curve25519={kex_ok} hostkey_common={hostkey_ok} peer_kex_n={} peer_hostkey_n={}",
-        peer_kex.len(),
-        peer_hostkey.len()
+        "algo_select=kex_curve25519={kex_ok} hostkey_common={hostkey_ok} \
+         openssh_chacha={cipher_ok} mac_name_common={mac_ok} peer_kex_n={} peer_hostkey_n={}",
+        peer.kex.len(),
+        peer.hostkey.len()
     ));
-    if !kex_ok {
-        notes.push("stop=algo_select (no common curve25519-sha256)".into());
+    if !kex_ok || !cipher_ok || !mac_ok {
+        notes.push("stop=algo_select (no complete supported algorithm set)".into());
         return (SshStage::AlgoSelect, notes.join("; "));
     }
     if advertise && !hostkey_ok {
@@ -1106,7 +1489,7 @@ fn run_kex_stages(
 
     let (stage, ecdh_notes) = try_peer_ecdh_and_sign(
         stream,
-        &peer_kex,
+        &peer.kex,
         host,
         our_id,
         peer_id,
@@ -1136,10 +1519,7 @@ fn run_kex_stages(
 /// Bind failure fail-closed. Never advertises Claimed OpenSSH / SSH git e2e.
 ///
 /// Callers MUST NOT silent-degrade to HTTP-only when SSH was left enabled.
-pub fn serve_ssh_listener(
-    opts: ServeSshOptions,
-    stop: Arc<AtomicBool>,
-) -> Result<(), ServerError> {
+pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Result<(), ServerError> {
     let host_st = path_status(&opts.host_key);
     let auth_st = path_status(&opts.authorized_keys);
     let host_fmt = probe_host_key_format(&opts.host_key);
@@ -1216,20 +1596,16 @@ pub fn serve_ssh_listener(
             Ok((mut stream, peer)) => {
                 sessions += 1;
                 let _ = stream.set_nonblocking(false);
+                let _ = stream.set_nodelay(true);
                 let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
                 let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
                 let ours = format!("{our_id}\r\n");
                 let _ = stream.write_all(ours.as_bytes());
-                let mut buf = [0u8; 256];
-                let n = stream.read(&mut buf).unwrap_or(0);
-                let peer_raw = String::from_utf8_lossy(&buf[..n]);
-                let peer_id = peer_raw
-                    .lines()
-                    .next()
-                    .unwrap_or("")
-                    .trim()
+                let _ = stream.flush();
+                let peer_id = read_ssh_identification(&mut stream)
+                    .unwrap_or_default()
                     .chars()
-                    .take(80)
+                    .take(255)
                     .collect::<String>();
                 let id_part = if peer_id.is_empty() {
                     format!("id_exchange=partial peer={peer} peer_id=(empty/timeout)")
@@ -1239,10 +1615,8 @@ pub fn serve_ssh_listener(
                 let (stage, kex_part) = if peer_id.is_empty() {
                     match curve25519_ecdh_selfcheck() {
                         Ok(s) => {
-                            let auth = publickey_verify_scaffold(
-                                &opts.authorized_keys,
-                                host_key.as_ref(),
-                            );
+                            let auth =
+                                publickey_verify_scaffold(&opts.authorized_keys, host_key.as_ref());
                             let chan = channel_git_hookup_scaffold(&opts.path);
                             (
                                 SshStage::HostKeySign,
@@ -1267,7 +1641,9 @@ pub fn serve_ssh_listener(
                         &opts.path,
                     )
                 };
-                let _ = stream.shutdown(Shutdown::Both);
+                // Flush then half-close write so in-flight CHANNEL_DATA is not RST'd.
+                let _ = stream.flush();
+                let _ = stream.shutdown(Shutdown::Write);
                 eprintln!(
                     "arks serve SSH Partial session#{sessions} reached_stage={} \
                      ({id_part}; {kex_part}) — Claimed OpenSSH git e2e Missing",
@@ -1333,10 +1709,26 @@ mod tests {
 
     #[test]
     fn chacha_aead_roundtrip_partial() {
-        let shared = [7u8; 32];
+        let shared = x25519_shared_as_mpint(&[7u8; 32]);
         let h = Sha256::digest(b"exchange-hash-partial");
         let note = encrypted_transport_selfcheck(&shared, &h);
         assert!(note.contains("selfcheck=ok"), "{note}");
+    }
+
+    #[test]
+    fn rfc8731_shared_secret_mpint_encoding() {
+        let mut high_bit = [0u8; 32];
+        high_bit[0] = 0x80;
+        let encoded = x25519_shared_as_mpint(&high_bit);
+        assert_eq!(&encoded[..4], &33u32.to_be_bytes());
+        assert_eq!(encoded[4], 0);
+        assert_eq!(encoded[5], 0x80);
+
+        let mut leading_zero = [0u8; 32];
+        leading_zero[1] = 1;
+        let encoded = x25519_shared_as_mpint(&leading_zero);
+        assert_eq!(&encoded[..4], &31u32.to_be_bytes());
+        assert_eq!(encoded[4], 1);
     }
 
     #[test]

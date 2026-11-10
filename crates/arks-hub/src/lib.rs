@@ -24,8 +24,8 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 pub use serve::{
-    ForgeListenRebindSlot, ForgeServeOptions, default_forge_data_dir, serve_forge_api,
-    spawn_forge_api,
+    ForgeListenRebindSlot, ForgeServeOptions, default_forge_data_dir, forge_serve_scheme,
+    serve_forge_api, spawn_forge_api,
 };
 
 /// Flat / hub groups shown in stub help (gh-shaped + hub-native markers).
@@ -1081,7 +1081,9 @@ fn cmd_https_smoke(args: &[String]) -> ExitCode {
         }
     } else if base.starts_with("http://") {
         println!("https_smoke=Missing");
-        println!("missing_reason=non-https ARKS_HUB_API ({base}); use https:// for harness Partial");
+        println!(
+            "missing_reason=non-https ARKS_HUB_API ({base}); use https:// for harness Partial"
+        );
         eprintln!("note: Claimed forge remote e2e Missing; never spawns gh");
         ExitCode::from(2)
     } else {
@@ -1218,9 +1220,7 @@ fn cmd_run(args: &[String]) -> ExitCode {
     let sub = args.first().map(String::as_str).unwrap_or("");
     match sub {
         "" | "-h" | "--help" => {
-            eprintln!(
-                "arks hub run — list|create (local actions runs Partial; not CI Claimed)"
-            );
+            eprintln!("arks hub run — list|create (local actions runs Partial; not CI Claimed)");
             ExitCode::SUCCESS
         }
         "list" => {
@@ -1819,9 +1819,7 @@ fn cmd_out_local_list(name: &str, args: &[String], path_tmpl: &str, needs_repo: 
         }
         Err(e) => {
             println!("[]");
-            eprintln!(
-                "note: {name} Partial empty list ({e}) — design ≠ Claimed; never spawns gh"
-            );
+            eprintln!("note: {name} Partial empty list ({e}) — design ≠ Claimed; never spawns gh");
             ExitCode::SUCCESS
         }
     }
@@ -1870,9 +1868,7 @@ fn cmd_licenses(args: &[String]) -> ExitCode {
 
 fn cmd_browse(args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
-        eprintln!(
-            "arks hub browse [PATH] — print forge URL (Partial; never spawns a browser)"
-        );
+        eprintln!("arks hub browse [PATH] — print forge URL (Partial; never spawns a browser)");
         return ExitCode::SUCCESS;
     }
     let base = api_base();
@@ -1939,27 +1935,20 @@ fn cmd_completion(args: &[String]) -> ExitCode {
         }
         "zsh" => {
             println!("#compdef arks");
-            println!(
-                "_arks() {{ _arguments '1: :({})' }}",
-                GROUPS.join(" ")
-            );
+            println!("_arks() {{ _arguments '1: :({})' }}", GROUPS.join(" "));
         }
         "fish" => {
             println!("# Partial fish completion");
-            println!(
-                "complete -c arks -a \"{}\"",
-                GROUPS.join(" ")
-            );
+            println!("complete -c arks -a \"{}\"", GROUPS.join(" "));
         }
         "powershell" | "pwsh" => {
             println!("# Partial PowerShell Register-ArgumentCompleter stub");
-            println!(
-                "# leaves: {}",
-                GROUPS.join(" ")
-            );
+            println!("# leaves: {}", GROUPS.join(" "));
         }
         other => {
-            eprintln!("arks hub completion: shell `{other}` not claimed (bash|zsh|fish|powershell)");
+            eprintln!(
+                "arks hub completion: shell `{other}` not claimed (bash|zsh|fish|powershell)"
+            );
             return ExitCode::from(2);
         }
     }

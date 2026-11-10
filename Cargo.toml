@@ -74,9 +74,11 @@ sha2 = { version = "0.10", default-features = false }
 # not a Claimed SSH stack / russh substitute.
 x25519-dalek = { version = "2", default-features = false, features = ["static_secrets", "getrandom"] }
 ed25519-dalek = { version = "2", default-features = false, features = ["std"] }
-# Post-NEWKEYS encrypted transport Partial (chacha20-poly1305 AEAD); OpenSSH-exact
-# chacha20-poly1305@openssh.com / aes256-gcm@openssh.com client interop still Missing.
-chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc", "getrandom"] }
+# OpenSSH's chacha20-poly1305@openssh.com transport uses two legacy-nonce
+# ChaCha20 keys plus a per-packet Poly1305 key (PROTOCOL.chacha20).
+chacha20 = { version = "0.9", default-features = false }
+poly1305 = { version = "0.8", default-features = false }
+subtle = { version = "2.6", default-features = false }
 base64 = "0.22"
 thiserror = "2.0"
 windows = { version = "0.58", default-features = false, features = [

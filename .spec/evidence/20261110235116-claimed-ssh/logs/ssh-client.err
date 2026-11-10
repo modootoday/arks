@@ -1,0 +1,182 @@
+OpenSSH_9.2p1 Debian-2+deb12u10, OpenSSL 3.0.22 25 Aug 2026
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: /etc/ssh/ssh_config line 19: include /etc/ssh/ssh_config.d/*.conf matched no files
+debug1: /etc/ssh/ssh_config line 21: Applying options for *
+debug2: resolve_canonicalize: hostname 127.0.0.1 is address
+debug3: ssh_connect_direct: entering
+debug1: Connecting to 127.0.0.1 [127.0.0.1] port 41537.
+debug3: set_sock_tos: set socket 3 IP_TOS 0x10
+debug1: Connection established.
+debug1: identity file /tmp/arks-b1.z8GMTF/ssh/client type 3
+debug1: identity file /tmp/arks-b1.z8GMTF/ssh/client-cert type -1
+debug1: Local version string SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+debug1: Remote protocol version 2.0, remote software version arks_partial_chacha_auth_channel
+debug1: compat_banner: no match: arks_partial_chacha_auth_channel
+debug2: fd 3 setting O_NONBLOCK
+debug1: Authenticating to 127.0.0.1:41537 as 'git'
+debug3: put_host_port: [127.0.0.1]:41537
+debug1: load_hostkeys: fopen /tmp/arks-b1.z8GMTF/ssh/known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+debug3: order_hostkeyalgs: no algorithms matched; accept original
+debug3: send packet: type 20
+debug1: SSH2_MSG_KEXINIT sent
+debug3: receive packet: type 20
+debug1: SSH2_MSG_KEXINIT received
+debug2: local client KEXINIT proposal
+debug2: KEX algorithms: sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,ext-info-c,kex-strict-c-v00@openssh.com
+debug2: host key algorithms: ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
+debug2: ciphers ctos: chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+debug2: ciphers stoc: chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+debug2: MACs ctos: umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1
+debug2: MACs stoc: umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1
+debug2: compression ctos: none,zlib@openssh.com,zlib
+debug2: compression stoc: none,zlib@openssh.com,zlib
+debug2: languages ctos: 
+debug2: languages stoc: 
+debug2: first_kex_follows 0 
+debug2: reserved 0 
+debug2: peer server KEXINIT proposal
+debug2: KEX algorithms: curve25519-sha256,curve25519-sha256@libssh.org,kex-strict-s-v00@openssh.com
+debug2: host key algorithms: ssh-ed25519
+debug2: ciphers ctos: chacha20-poly1305@openssh.com
+debug2: ciphers stoc: chacha20-poly1305@openssh.com
+debug2: MACs ctos: hmac-sha2-256
+debug2: MACs stoc: hmac-sha2-256
+debug2: compression ctos: none
+debug2: compression stoc: none
+debug2: languages ctos: 
+debug2: languages stoc: 
+debug2: first_kex_follows 0 
+debug2: reserved 0 
+debug3: kex_choose_conf: will use strict KEX ordering
+debug1: kex: algorithm: curve25519-sha256
+debug1: kex: host key algorithm: ssh-ed25519
+debug1: kex: server->client cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
+debug1: kex: client->server cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
+debug3: send packet: type 30
+debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+debug3: receive packet: type 31
+debug1: SSH2_MSG_KEX_ECDH_REPLY received
+debug1: Server host key: ssh-ed25519 SHA256:8nfqs8dQXEk/ufSMhxFYrl1i76a84iD2vmFNmxvDEZw
+debug3: put_host_port: [127.0.0.1]:41537
+debug3: put_host_port: [127.0.0.1]:41537
+debug1: load_hostkeys: fopen /tmp/arks-b1.z8GMTF/ssh/known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+debug1: checking without port identifier
+debug1: load_hostkeys: fopen /tmp/arks-b1.z8GMTF/ssh/known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+Warning: Permanently added '[127.0.0.1]:41537' (ED25519) to the list of known hosts.
+debug3: send packet: type 21
+debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+debug2: ssh_set_newkeys: mode 1
+debug1: rekey out after 134217728 blocks
+debug1: SSH2_MSG_NEWKEYS sent
+debug1: expecting SSH2_MSG_NEWKEYS
+debug3: receive packet: type 21
+debug1: ssh_packet_read_poll2: resetting read seqnr 3
+debug1: SSH2_MSG_NEWKEYS received
+debug2: ssh_set_newkeys: mode 0
+debug1: rekey in after 134217728 blocks
+debug1: Will attempt key: /tmp/arks-b1.z8GMTF/ssh/client ED25519 SHA256:dJJmqQ0phFKXYUcLoqxBmI/zccrSRipqGMIKG/DRnaA explicit
+debug2: pubkey_prepare: done
+debug3: send packet: type 5
+debug3: receive packet: type 6
+debug2: service_accept: ssh-userauth
+debug1: SSH2_MSG_SERVICE_ACCEPT received
+debug3: send packet: type 50
+debug3: receive packet: type 51
+debug1: Authentications that can continue: publickey
+debug3: start over, passed a different list publickey
+debug3: preferred gssapi-with-mic,publickey
+debug3: authmethod_lookup publickey
+debug3: remaining preferred: ,publickey
+debug3: authmethod_is_enabled publickey
+debug1: Next authentication method: publickey
+debug1: Offering public key: /tmp/arks-b1.z8GMTF/ssh/client ED25519 SHA256:dJJmqQ0phFKXYUcLoqxBmI/zccrSRipqGMIKG/DRnaA explicit
+debug3: send packet: type 50
+debug2: we sent a publickey packet, wait for reply
+debug3: receive packet: type 60
+debug1: Server accepts key: /tmp/arks-b1.z8GMTF/ssh/client ED25519 SHA256:dJJmqQ0phFKXYUcLoqxBmI/zccrSRipqGMIKG/DRnaA explicit
+debug3: sign_and_send_pubkey: using publickey with ED25519 SHA256:dJJmqQ0phFKXYUcLoqxBmI/zccrSRipqGMIKG/DRnaA
+debug3: sign_and_send_pubkey: signing using ssh-ed25519 SHA256:dJJmqQ0phFKXYUcLoqxBmI/zccrSRipqGMIKG/DRnaA
+debug3: send packet: type 50
+debug3: receive packet: type 52
+Authenticated to 127.0.0.1 ([127.0.0.1]:41537) using "publickey".
+debug2: fd 4 setting O_NONBLOCK
+debug2: fd 5 setting O_NONBLOCK
+debug2: fd 6 setting O_NONBLOCK
+debug1: channel 0: new session [client-session] (inactive timeout: 0)
+debug3: ssh_session2_open: channel_new: 0
+debug2: channel 0: send open
+debug3: send packet: type 90
+debug1: Entering interactive session.
+debug1: pledge: network
+debug3: client_repledge: enter
+debug3: receive packet: type 91
+debug2: channel_input_open_confirmation: channel 0: callback start
+debug2: fd 3 setting TCP_NODELAY
+debug3: set_sock_tos: set socket 3 IP_TOS 0x08
+debug2: client_session2_setup: id 0
+debug1: Sending environment.
+debug3: Ignored env HOSTNAME
+debug3: Ignored env CARGO_TARGET_DIR
+debug3: Ignored env PWD
+debug3: Ignored env HOME
+debug3: Ignored env CARGO_HOME
+debug3: Ignored env RUSTUP_TOOLCHAIN
+debug3: Ignored env CARGO_BUILD_JOBS
+debug3: Ignored env RUSTUP_HOME
+debug3: Ignored env ARKS_DOD_STRICT
+debug3: Ignored env SHLVL
+debug3: Ignored env RUST_VERSION
+debug3: Ignored env PATH
+debug3: Ignored env OLDPWD
+debug3: Ignored env _
+debug1: Sending command: true
+debug2: channel 0: request exec confirm 1
+debug3: send packet: type 98
+debug3: client_repledge: enter
+debug1: pledge: fork
+debug2: channel_input_open_confirmation: channel 0: callback done
+debug2: channel 0: open confirm rwindow 2097152 rmax 32768
+debug2: channel 0: read failed rfd 4 maxlen 32768: Broken pipe
+debug2: channel 0: read failed
+debug2: chan_shutdown_read: channel 0: (i0 o0 sock -1 wfd 4 efd 6 [write])
+debug2: channel 0: input open -> drain
+debug2: channel 0: ibuf empty
+debug2: channel 0: send eof
+debug3: send packet: type 96
+debug2: channel 0: input drain -> closed
+debug3: receive packet: type 99
+debug2: channel_input_status_confirm: type 99 id 0
+debug2: exec request accepted on channel 0
+debug3: receive packet: type 98
+debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+debug3: receive packet: type 96
+debug2: channel 0: rcvd eof
+debug2: channel 0: output open -> drain
+debug2: channel 0: obuf empty
+debug2: chan_shutdown_write: channel 0: (i3 o1 sock -1 wfd 5 efd 6 [write])
+debug2: channel 0: output drain -> closed
+debug3: receive packet: type 97
+debug2: channel 0: rcvd close
+debug3: channel 0: will not send data after close
+debug2: channel 0: almost dead
+debug2: channel 0: gc: notify user
+debug2: channel 0: gc: user detached
+debug2: channel 0: send close
+debug3: send packet: type 97
+debug2: channel 0: is dead
+debug2: channel 0: garbage collecting
+debug1: channel 0: free: client-session, nchannels 1
+debug3: channel 0: status: The following connections are open:
+  #0 client-session (t4 [session] r0 i3/0 o3/0 e[write]/0 fd -1/-1/6 sock -1 cc -1 io 0x00/0x00)
+
+debug3: send packet: type 1
+Connection to 127.0.0.1 closed by remote host.
+Transferred: sent 2188, received 740 bytes, in 0.0 seconds
+Bytes per second: sent 7586369.5, received 2565774.0
+debug1: Exit status 0

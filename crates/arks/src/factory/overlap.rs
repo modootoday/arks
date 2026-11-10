@@ -43,11 +43,7 @@ pub struct FacadeOutcome {
 }
 
 /// Dispatch overlap leaf under the given personality.
-pub fn dispatch_overlap(
-    personality: Personality,
-    leaf: &str,
-    args: &[String],
-) -> FacadeOutcome {
+pub fn dispatch_overlap(personality: Personality, leaf: &str, args: &[String]) -> FacadeOutcome {
     let (mode, rest) = match personality {
         Personality::Git => (PeerMode::GitOnly, args.to_vec()),
         Personality::Gh => (PeerMode::ForgeOnly, args.to_vec()),

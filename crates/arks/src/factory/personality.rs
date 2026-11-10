@@ -85,16 +85,16 @@ mod tests {
     fn argv0_shim_basename() {
         // Path::file_name is OS-separator-sensitive; normalize both slash styles.
         assert_eq!(resolve_from_argv0_only(r"C:\bin\git.exe"), Personality::Git);
-        assert_eq!(resolve_from_argv0_only("/usr/local/bin/gh"), Personality::Gh);
+        assert_eq!(
+            resolve_from_argv0_only("/usr/local/bin/gh"),
+            Personality::Gh
+        );
         assert_eq!(resolve_from_argv0_only("arks"), Personality::Arks);
         assert_eq!(resolve_from_argv0_only("weird"), Personality::Arks);
     }
 
     fn resolve_from_argv0_only(argv0: &str) -> Personality {
-        let base = argv0
-            .rsplit(['/', '\\'])
-            .next()
-            .unwrap_or(argv0);
+        let base = argv0.rsplit(['/', '\\']).next().unwrap_or(argv0);
         let lower = base.to_ascii_lowercase();
         let stem = lower.strip_suffix(".exe").unwrap_or(lower.as_str());
         match stem {

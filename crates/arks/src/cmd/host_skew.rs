@@ -63,7 +63,10 @@ Usage:
         );
         return Ok(());
     }
-    refuse_unknown_flags(args, &["info", "structure", "--format", "-z", "--all", "--keys"])?;
+    refuse_unknown_flags(
+        args,
+        &["info", "structure", "--format", "-z", "--all", "--keys"],
+    )?;
     let sub = args
         .iter()
         .find(|a| !a.starts_with('-'))
@@ -89,7 +92,19 @@ Usage:
 
 /// `arks survey` — experimental repo survey counts (host 2.54+; Partial).
 pub fn cmd_survey(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-v", "--verbose", "--progress", "-n", "--top", "--all-refs", "--branches", "--tags"])?;
+    refuse_unknown_flags(
+        args,
+        &[
+            "-v",
+            "--verbose",
+            "--progress",
+            "-n",
+            "--top",
+            "--all-refs",
+            "--branches",
+            "--tags",
+        ],
+    )?;
     let repo = open_repo()?;
     let mut refs = 0usize;
     let heads = repo.git_dir().join("refs");
@@ -127,7 +142,17 @@ fn count_files(dir: &std::path::Path) -> CliResult<usize> {
 
 /// `arks last-modified` — path tip commit oid subset (host 2.54+).
 pub fn cmd_last_modified(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-r", "--recursive", "-t", "--show-trees", "--max-depth", "-z"])?;
+    refuse_unknown_flags(
+        args,
+        &[
+            "-r",
+            "--recursive",
+            "-t",
+            "--show-trees",
+            "--max-depth",
+            "-z",
+        ],
+    )?;
     let path = args
         .iter()
         .find(|a| !a.starts_with('-'))
@@ -221,7 +246,10 @@ pub fn cmd_url_parse(args: &[String]) -> CliResult<()> {
         (&url[..i], &url[i + 3..])
     } else if let Some((userhost, path)) = url.split_once(':') {
         // SCP-like
-        let host = userhost.rsplit_once('@').map(|(_, h)| h).unwrap_or(userhost);
+        let host = userhost
+            .rsplit_once('@')
+            .map(|(_, h)| h)
+            .unwrap_or(userhost);
         match component.as_deref() {
             None | Some("host") => println!("{host}"),
             Some("path") => println!("{path}"),

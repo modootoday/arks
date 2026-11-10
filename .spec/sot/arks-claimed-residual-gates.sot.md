@@ -3,7 +3,7 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-11T00:15:00Z
+updated: 2026-11-11T00:20:00Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
@@ -30,6 +30,7 @@ rel:
     - evidence:root/20261110233652-claimed-tls
     - evidence:root/20261110233655-claimed-hub-https
     - evidence:root/20261110233659-claimed-rebind
+    - evidence:root/20261110235116-claimed-ssh
     - evidence:root/20261110233921-claimed-ssh
   governs:
     - verify/scripts/run-claimed-residual-dod.sh
@@ -43,7 +44,7 @@ rel:
 
 # Claimed residual gates (post-Partial wiring)
 
-Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `f9ebcf4` (verify filename SoT landed; B-gate WIP may remain dirty).
+Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `bb782db` demoted invented B2; **B2 Claimed** restored only with [[evidence:root/20261110235116-claimed-ssh]] (tip ≥ `f6c5780` + WIP).
 
 **Honesty:** **Design intent ≠ Claimed.** Scaffold Docker harness greens **MUST NOT** invent PASS/Claimed. Product paths **MUST NOT** spawn `git` / `gh` / `ssh` / `ollama`. Windows host PowerShell is **not** normative DoD — Linux Docker `arks-verify-m1:0.1.0` is the judge ([[sot:root/product-verification-clean-room]]).
 
@@ -53,8 +54,8 @@ Document revision **0.1.2** (SoT edit counter only — **not** a product/crate r
 
 | ID | Gate | Status now | Owning product SoT(s) |
 |----|------|------------|------------------------|
-| **B1** | OpenSSH-exact cipher / binary-packet wire | **Claimed** (Docker stock OpenSSH ChaCha KEX/NEWKEYS/SERVICE_ACCEPT; [[evidence:root/20261110233921-claimed-ssh]]) | [[sot:root/arks-self-host-server]], [[sot:root/arks-server]] |
-| **B2** | Claimed SSH git e2e | **Missing** (no invent — cited folder clone logs show remote close / empty out; README absent; server still labels git e2e Missing; receipt `b2` corrected) | [[sot:root/arks-self-host-server]] |
+| **B1** | OpenSSH-exact cipher / binary-packet wire | **Claimed** (Docker stock OpenSSH ChaCha KEX/NEWKEYS/SERVICE_ACCEPT; [[evidence:root/20261110235116-claimed-ssh]]) | [[sot:root/arks-self-host-server]], [[sot:root/arks-server]] |
+| **B2** | Claimed SSH git e2e | **Claimed** (Docker stock `git clone ssh://` exit 0 + archived README; [[evidence:root/20261110235116-claimed-ssh]]) | [[sot:root/arks-self-host-server]] |
 | **B3** | Claimed hub HTTPS forge remote e2e | **Claimed** (Docker forge HTTPS + hub client; [[evidence:root/20261110233655-claimed-hub-https]]) | [[sot:root/arks-hub-product-intent]] |
 | **B4** | Claimed LLM chatbot / review e2e | **Claimed** (Docker fixture e2e; [[evidence:root/20261110231959-claimed-agent-llm]]) | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-llm-providers]] |
 | **B5** | Claimed daemon archive format parity | **Partial (terminal for this goal)** (protocol/structural OK; **byte-identical ≠ Claimed** — SKIP/STRICT-honest; mismatch class below) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |

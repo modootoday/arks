@@ -2,11 +2,13 @@
 //!
 //! Used by transitional `arks hub serve` and by the forge module under
 //! `arks serve` ([[sot:root/arks-self-host-server]]). Default bind:
-//! `127.0.0.1:3920`. Never spawns git/gh. No TLS Claimed.
+//! `127.0.0.1:3920`. Never spawns git/gh. In-process TLS when `tls` is set (B3/B9 pattern).
 
 use crate::http_min::{bearer_token, read_http_request, write_http_response};
 use crate::store::HubStore;
+use rustls::ServerConfig;
 use serde_json::{Value, json};
+use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -18,12 +20,25 @@ use std::time::Duration;
 pub type ForgeListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
 
 /// Options for the in-process local forge API listener (Partial).
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ForgeServeOptions {
     pub listen: SocketAddr,
     pub data_dir: PathBuf,
     /// Optional live listen rebind target (Partial; not Claimed zero-downtime).
     pub rebind_desired: Option<ForgeListenRebindSlot>,
+    /// Optional rustls server config for in-process TLS terminate (B3/B9).
+    pub tls: Option<Arc<ServerConfig>>,
+}
+
+impl std::fmt::Debug for ForgeServeOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ForgeServeOptions")
+            .field("listen", &self.listen)
+            .field("data_dir", &self.data_dir)
+            .field("rebind_desired", &self.rebind_desired.is_some())
+            .field("tls", &self.tls.is_some())
+            .finish()
+    }
 }
 
 impl Default for ForgeServeOptions {
@@ -34,8 +49,14 @@ impl Default for ForgeServeOptions {
                 .expect("default forge listen parses"),
             data_dir: default_forge_data_dir(),
             rebind_desired: None,
+            tls: None,
         }
     }
+}
+
+/// Scheme label for forge listen banners (`http` or `https`).
+pub fn forge_serve_scheme(opts: &ForgeServeOptions) -> &'static str {
+    if opts.tls.is_some() { "https" } else { "http" }
 }
 
 /// Default forge data directory (`ARKS_HUB_DATA` or `~/.config/arks/hub-data`).
@@ -87,6 +108,7 @@ pub fn run_serve(args: &[String]) -> Result<(), String> {
             listen: addr,
             data_dir: data,
             rebind_desired: None,
+            tls: None,
         },
         stop,
     )
@@ -102,15 +124,19 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
     }
     let store = Arc::new(Mutex::new(HubStore::open(&opts.data_dir)?));
     let mut listener = TcpListener::bind(opts.listen).map_err(|e| e.to_string())?;
-    listener
-        .set_nonblocking(true)
-        .map_err(|e| e.to_string())?;
+    listener.set_nonblocking(true).map_err(|e| e.to_string())?;
     let mut current = opts.listen;
+    let scheme = forge_serve_scheme(&opts);
     eprintln!(
-        "arks forge API listening on http://{}/ (data={}; Partial local API — not Claimed)",
+        "arks forge API listening on {scheme}://{}/ (data={}; Partial local API — not Claimed)",
         listener.local_addr().map_err(|e| e.to_string())?,
         opts.data_dir.display()
     );
+    if opts.tls.is_some() {
+        eprintln!(
+            "arks forge API: in-process TLS terminate armed (operator PEMs; same pattern as arks serve HTTP B9)"
+        );
+    }
     while !stop.load(Ordering::SeqCst) {
         if let Some(slot) = &opts.rebind_desired {
             if let Ok(mut g) = slot.lock() {
@@ -148,8 +174,9 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
         match listener.accept() {
             Ok((stream, _)) => {
                 let store = store.clone();
+                let tls = opts.tls.clone();
                 thread::spawn(move || {
-                    if let Err(e) = handle_client(stream, &store) {
+                    if let Err(e) = handle_forge_connection(stream, &store, &tls) {
                         eprintln!("arks forge API: {e}");
                     }
                 });
@@ -196,9 +223,33 @@ Never spawns git/gh. No TLS Claimed. Design ≠ Claimed.
     );
 }
 
-fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<(), String> {
-    let _ = stream.set_nonblocking(false);
-    let req = read_http_request(&mut stream)?;
+fn handle_forge_connection(
+    mut stream: TcpStream,
+    store: &Arc<Mutex<HubStore>>,
+    tls: &Option<Arc<ServerConfig>>,
+) -> Result<(), String> {
+    stream.set_nonblocking(false).map_err(|e| e.to_string())?;
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
+    if let Some(tls_cfg) = tls {
+        let conn = rustls::ServerConnection::new(tls_cfg.clone())
+            .map_err(|e| format!("tls ServerConnection: {e}"))?;
+        let mut tls_stream = rustls::StreamOwned::new(conn, stream);
+        tls_stream
+            .conn
+            .complete_io(&mut tls_stream.sock)
+            .map_err(|e| format!("tls handshake: {e}"))?;
+        handle_client(&mut tls_stream, store)
+    } else {
+        handle_client(&mut stream, store)
+    }
+}
+
+fn handle_client<S: Read + Write>(
+    stream: &mut S,
+    store: &Arc<Mutex<HubStore>>,
+) -> Result<(), String> {
+    let req = read_http_request(&mut *stream)?;
     let token = bearer_token(&req.headers);
     let (path, query) = req
         .path
@@ -218,17 +269,19 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
         .next()
         .unwrap_or_default();
 
-    let mut st = store.lock().map_err(|_| "store lock poisoned".to_string())?;
+    let mut st = store
+        .lock()
+        .map_err(|_| "store lock poisoned".to_string())?;
     // Health is unauthenticated.
     if req.method == "GET" && (path == "/" || path == "/health") {
         let body = json!({"ok":true,"service":"arks-hub","partial":true});
-        return respond(&mut stream, 200, &body);
+        return respond(stream, 200, &body);
     }
 
     if !st.auth_ok(token.as_deref()) && path != "/login" {
         let body =
             json!({"message":"Requires authentication","documentation_url":"arks hub auth login"});
-        return respond(&mut stream, 401, &body);
+        return respond(stream, 401, &body);
     }
 
     // Register token (local login bridge).
@@ -241,7 +294,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
         st.ensure_token(tok);
         st.save()?;
         return respond(
-            &mut stream,
+            stream,
             200,
             &json!({"token": tok, "login": st.db.user_login}),
         );
@@ -249,7 +302,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
 
     if req.method == "GET" && path == "/user" {
         return respond(
-            &mut stream,
+            stream,
             200,
             &json!({"login": st.db.user_login, "id": 1, "type": "User"}),
         );
@@ -271,7 +324,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                 })
             })
             .collect();
-        return respond(&mut stream, 200, &Value::Array(repos));
+        return respond(stream, 200, &Value::Array(repos));
     }
 
     if req.method == "POST" && path == "/user/repos" {
@@ -282,7 +335,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
         let repo = st.create_repo(&owner, name, desc);
         st.save()?;
         return respond(
-            &mut stream,
+            stream,
             201,
             &json!({
                 "id": repo.id,
@@ -302,9 +355,14 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
             let owner = parts[0];
             let repo = parts[1];
             if parts.len() == 2 && req.method == "GET" {
-                if let Some(r) = st.db.repos.iter().find(|r| r.owner == owner && r.name == repo) {
+                if let Some(r) = st
+                    .db
+                    .repos
+                    .iter()
+                    .find(|r| r.owner == owner && r.name == repo)
+                {
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({
                             "id": r.id,
@@ -316,7 +374,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         }),
                     );
                 }
-                return respond(&mut stream, 404, &json!({"message":"Not Found"}));
+                return respond(stream, 404, &json!({"message":"Not Found"}));
             }
             if parts.len() == 3 && parts[2] == "issues" {
                 if req.method == "GET" {
@@ -335,7 +393,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -344,7 +402,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let issue = st.create_issue(owner, repo, title, body);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "number": issue.number,
@@ -356,7 +414,8 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     );
                 }
             }
-            if parts.len() == 4 && parts[2] == "issues"
+            if parts.len() == 4
+                && parts[2] == "issues"
                 && let Ok(n) = parts[3].parse::<u64>()
             {
                 if let Some(i) = st
@@ -366,7 +425,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     .find(|i| i.owner == owner && i.repo == repo && i.number == n)
                 {
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({
                             "number": i.number,
@@ -377,7 +436,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         }),
                     );
                 }
-                return respond(&mut stream, 404, &json!({"message":"Not Found"}));
+                return respond(stream, 404, &json!({"message":"Not Found"}));
             }
             if parts.len() == 3 && parts[2] == "pulls" {
                 if req.method == "GET" {
@@ -398,7 +457,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -409,7 +468,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let pull = st.create_pull(owner, repo, title, body, head, base);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "number": pull.number,
@@ -423,7 +482,8 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     );
                 }
             }
-            if parts.len() == 4 && parts[2] == "pulls"
+            if parts.len() == 4
+                && parts[2] == "pulls"
                 && let Ok(n) = parts[3].parse::<u64>()
             {
                 if let Some(p) = st
@@ -433,7 +493,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     .find(|p| p.owner == owner && p.repo == repo && p.number == n)
                 {
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({
                             "number": p.number,
@@ -446,7 +506,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         }),
                     );
                 }
-                return respond(&mut stream, 404, &json!({"message":"Not Found"}));
+                return respond(stream, 404, &json!({"message":"Not Found"}));
             }
             if parts.len() == 3 && parts[2] == "labels" {
                 if req.method == "GET" {
@@ -464,7 +524,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -474,7 +534,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let label = st.create_label(owner, repo, name, color, desc);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "id": label.id,
@@ -504,7 +564,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -517,7 +577,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let rel = st.create_release(owner, repo, tag, name, body);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "id": rel.id,
@@ -550,7 +610,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         })
                         .collect();
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({"total_count": items.len(), "workflows": items}),
                     );
@@ -575,7 +635,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         })
                         .collect();
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({"total_count": items.len(), "workflow_runs": items}),
                     );
@@ -590,7 +650,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let run = st.create_run(owner, repo, name, branch);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "id": run.id,
@@ -620,16 +680,19 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("milestone");
+                    let title = v
+                        .get("title")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("milestone");
                     let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
                     let m = st.create_milestone(owner, repo, title, desc);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "number": m.number,
@@ -656,7 +719,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -665,7 +728,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let p = st.create_project(owner, repo, title, body);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "id": p.id,
@@ -686,7 +749,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         .map(|s| json!({"id": s.id, "name": s.name}))
                         .collect();
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({"total_count": items.len(), "secrets": items}),
                     );
@@ -697,7 +760,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     // Values are never stored — metadata only (Partial).
                     let s = st.create_secret_meta(owner, repo, name);
                     st.save()?;
-                    return respond(&mut stream, 201, &json!({"id": s.id, "name": s.name}));
+                    return respond(stream, 201, &json!({"id": s.id, "name": s.name}));
                 }
             }
             if parts.len() == 4 && parts[2] == "actions" && parts[3] == "variables" {
@@ -716,7 +779,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                         })
                         .collect();
                     return respond(
-                        &mut stream,
+                        stream,
                         200,
                         &json!({"total_count": items.len(), "variables": items}),
                     );
@@ -728,7 +791,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     let var = st.create_variable(owner, repo, name, value);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "id": var.id,
@@ -754,17 +817,23 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                             })
                         })
                         .collect();
-                    return respond(&mut stream, 200, &Value::Array(items));
+                    return respond(stream, 200, &Value::Array(items));
                 }
                 if req.method == "POST" {
                     let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("discussion");
+                    let title = v
+                        .get("title")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("discussion");
                     let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let cat = v.get("category").and_then(|x| x.as_str()).unwrap_or("General");
+                    let cat = v
+                        .get("category")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("General");
                     let d = st.create_discussion(owner, repo, title, body, cat);
                     st.save()?;
                     return respond(
-                        &mut stream,
+                        stream,
                         201,
                         &json!({
                             "number": d.number,
@@ -794,7 +863,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                     })
                 })
                 .collect();
-            return respond(&mut stream, 200, &Value::Array(items));
+            return respond(stream, 200, &Value::Array(items));
         }
         if req.method == "POST" {
             let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -812,7 +881,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
             let g = st.create_gist(desc, public, files);
             st.save()?;
             return respond(
-                &mut stream,
+                stream,
                 201,
                 &json!({
                     "id": g.id,
@@ -831,7 +900,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                 .iter()
                 .map(|k| json!({"id": k.id, "title": k.title, "key": k.key}))
                 .collect();
-            return respond(&mut stream, 200, &Value::Array(items));
+            return respond(stream, 200, &Value::Array(items));
         }
         if req.method == "POST" {
             let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
@@ -840,7 +909,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
             let k = st.create_ssh_key(title, key);
             st.save()?;
             return respond(
-                &mut stream,
+                stream,
                 201,
                 &json!({"id": k.id, "title": k.title, "key": k.key}),
             );
@@ -854,16 +923,19 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
                 .iter()
                 .map(|k| json!({"id": k.id, "name": k.name, "key_id": k.key_id}))
                 .collect();
-            return respond(&mut stream, 200, &Value::Array(items));
+            return respond(stream, 200, &Value::Array(items));
         }
         if req.method == "POST" {
             let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
             let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("gpg");
-            let key_id = v.get("key_id").and_then(|x| x.as_str()).unwrap_or("00000000");
+            let key_id = v
+                .get("key_id")
+                .and_then(|x| x.as_str())
+                .unwrap_or("00000000");
             let k = st.create_gpg_key(name, key_id);
             st.save()?;
             return respond(
-                &mut stream,
+                stream,
                 201,
                 &json!({"id": k.id, "name": k.name, "key_id": k.key_id}),
             );
@@ -879,7 +951,7 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
             .into_iter()
             .map(|login| json!({"login": login, "type": "Organization"}))
             .collect();
-        return respond(&mut stream, 200, &Value::Array(items));
+        return respond(stream, 200, &Value::Array(items));
     }
 
     // GET /search/{repos|issues|pulls}?q=… — local substring filter (Partial).
@@ -953,17 +1025,17 @@ fn handle_client(mut stream: TcpStream, store: &Arc<Mutex<HubStore>>) -> Result<
             }
             other => {
                 return respond(
-                    &mut stream,
+                    stream,
                     404,
                     &json!({"message": format!("search kind `{other}` not claimed (Partial)")}),
                 );
             }
         };
-        return respond(&mut stream, 200, &items);
+        return respond(stream, 200, &items);
     }
 
     respond(
-        &mut stream,
+        stream,
         404,
         &json!({"message":"Not Found","path": path, "method": req.method}),
     )
@@ -1006,7 +1078,7 @@ fn urlencoding_lite_decode(s: &str) -> String {
     out
 }
 
-fn respond(stream: &mut TcpStream, status: u16, body: &serde_json::Value) -> Result<(), String> {
+fn respond<S: Write>(stream: &mut S, status: u16, body: &serde_json::Value) -> Result<(), String> {
     let reason = match status {
         200 => "OK",
         201 => "Created",

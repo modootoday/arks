@@ -88,10 +88,7 @@ pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
     let heads = args.iter().any(|a| a == "--heads" || a == "-h");
     let tags = args.iter().any(|a| a == "--tags" || a == "-t");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    let remote_or_url = positional
-        .first()
-        .map(|s| s.as_str())
-        .unwrap_or("origin");
+    let remote_or_url = positional.first().map(|s| s.as_str()).unwrap_or("origin");
     let patterns: Vec<&str> = positional.iter().skip(1).map(|s| s.as_str()).collect();
     let url = resolve_remote_url(remote_or_url)?;
     let refs = arks_remote::ls_remote(&url).map_err(|e| CliError::Msg(e.to_string()))?;
@@ -383,10 +380,11 @@ pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
 
 fn default_upstream(repo: &Repository) -> CliResult<Oid> {
     let branch = match repo.head_target()? {
-        arks_refs::RefTarget::Symbolic(s) => s
-            .strip_prefix("refs/heads/")
-            .map(|s| s.to_string())
-            .ok_or_else(|| CliError::Msg("cherry: detached HEAD needs <upstream>".into()))?,
+        arks_refs::RefTarget::Symbolic(s) => {
+            s.strip_prefix("refs/heads/")
+                .map(|s| s.to_string())
+                .ok_or_else(|| CliError::Msg("cherry: detached HEAD needs <upstream>".into()))?
+        }
         arks_refs::RefTarget::Direct(_) => {
             return Err(CliError::Msg(
                 "cherry: detached HEAD needs <upstream>".into(),
@@ -504,9 +502,7 @@ fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
 /// `arks stripspace` — trim trailing whitespace / blank lines (stdin→stdout).
 pub fn cmd_stripspace(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-s", "--strip-comments", "-c", "--comment-lines"])?;
-    let strip_comments = args
-        .iter()
-        .any(|a| a == "-s" || a == "--strip-comments");
+    let strip_comments = args.iter().any(|a| a == "-s" || a == "--strip-comments");
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
     let mut out = String::new();
@@ -726,8 +722,8 @@ pub fn cmd_credential_store(args: &[String]) -> CliResult<()> {
     source.helpers = vec!["store".into()];
     match op {
         "get" => {
-            let filled =
-                arks_remote::credential_fill(desc, &source).map_err(|e| CliError::Msg(e.to_string()))?;
+            let filled = arks_remote::credential_fill(desc, &source)
+                .map_err(|e| CliError::Msg(e.to_string()))?;
             if filled.password.is_some() || filled.username.is_some() {
                 print!("{}", filled.format_attributes());
             }
@@ -735,8 +731,9 @@ pub fn cmd_credential_store(args: &[String]) -> CliResult<()> {
         }
         "store" => arks_remote::credential_approve(&desc, &source)
             .map_err(|e| CliError::Msg(e.to_string())),
-        "erase" => arks_remote::credential_reject(&desc, &source)
-            .map_err(|e| CliError::Msg(e.to_string())),
+        "erase" => {
+            arks_remote::credential_reject(&desc, &source).map_err(|e| CliError::Msg(e.to_string()))
+        }
         other => Err(CliError::Usage(format!(
             "credential-store: unknown op '{other}'"
         ))),
@@ -775,17 +772,11 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
     }
     // Split attrs vs paths at `--` when present.
     let (attrs, paths) = if let Some(i) = positional.iter().position(|a| *a == "--") {
-        (
-            positional[..i].to_vec(),
-            positional[i + 1..].to_vec(),
-        )
+        (positional[..i].to_vec(), positional[i + 1..].to_vec())
     } else if all {
         (Vec::new(), positional)
     } else if positional.len() >= 2 {
-        (
-            vec![positional[0]],
-            positional[1..].to_vec(),
-        )
+        (vec![positional[0]], positional[1..].to_vec())
     } else {
         return Err(CliError::Usage(
             "check-attr: need attribute name(s) and path(s)".into(),
@@ -802,7 +793,10 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
             }
         } else {
             for a in &attrs {
-                let v = matched.get(a.as_str()).map(String::as_str).unwrap_or("unspecified");
+                let v = matched
+                    .get(a.as_str())
+                    .map(String::as_str)
+                    .unwrap_or("unspecified");
                 println!("{path}: {a}: {v}");
             }
         }
@@ -950,9 +944,8 @@ pub fn cmd_merge_tree(args: &[String]) -> CliResult<()> {
             "merge-tree: tree-only args not claimed; pass commit-ish tips".into(),
         ));
     }
-    let result = crate::cmd::merge_engine::merge_commits_three_way(
-        &mut repo, &work, &ours, &theirs,
-    )?;
+    let result =
+        crate::cmd::merge_engine::merge_commits_three_way(&mut repo, &work, &ours, &theirs)?;
     if !result.conflicts.is_empty() {
         for c in &result.conflicts {
             println!("CONFLICT {c}");
@@ -1070,13 +1063,12 @@ pub fn cmd_verify_pack(args: &[String]) -> CliResult<()> {
             }
         }
     } else if verbose {
-        eprintln!("note: no idx beside pack; pack decode ok ({} objects)", decoded.objects.len());
+        eprintln!(
+            "note: no idx beside pack; pack decode ok ({} objects)",
+            decoded.objects.len()
+        );
     }
-    println!(
-        "ok: {} object(s) in {}",
-        decoded.objects.len(),
-        pack_path
-    );
+    println!("ok: {} object(s) in {}", decoded.objects.len(), pack_path);
     Ok(())
 }
 
@@ -1249,7 +1241,10 @@ pub fn cmd_for_each_repo(args: &[String]) -> CliResult<()> {
         let sep = ';';
         #[cfg(not(windows))]
         let sep = ':';
-        v.split(sep).map(|s| s.to_string()).filter(|s| !s.is_empty()).collect::<Vec<_>>()
+        v.split(sep)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
     } else {
         let _ = cfg_key;
         return Err(CliError::NotImplemented(
@@ -1315,7 +1310,14 @@ pub fn cmd_fmt_merge_msg(args: &[String]) -> CliResult<()> {
     } else if branches.len() == 1 {
         println!("Merge branch '{}'", branches[0]);
     } else {
-        println!("Merge branches {}", branches.iter().map(|b| format!("'{b}'")).collect::<Vec<_>>().join(", "));
+        println!(
+            "Merge branches {}",
+            branches
+                .iter()
+                .map(|b| format!("'{b}'"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
     }
     Ok(())
 }
@@ -1333,16 +1335,19 @@ Usage:
         );
         return Ok(());
     }
-    refuse_unknown_flags(args, &["--trailer", "--trim-empty", "--if-exists", "--if-missing"])?;
+    refuse_unknown_flags(
+        args,
+        &["--trailer", "--trim-empty", "--if-exists", "--if-missing"],
+    )?;
     let mut trailers: Vec<(String, String)> = Vec::new();
     let mut trim_empty = false;
     let mut i = 0;
     while i < args.len() {
         if args[i] == "--trailer" {
             i += 1;
-            let spec = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("interpret-trailers --trailer <token>=<value>".into()))?;
+            let spec = args.get(i).ok_or_else(|| {
+                CliError::Usage("interpret-trailers --trailer <token>=<value>".into())
+            })?;
             let (k, v) = split_trailer(spec)?;
             trailers.push((k, v));
         } else if let Some(rest) = args[i].strip_prefix("--trailer=") {
@@ -1555,10 +1560,7 @@ pub fn cmd_get_tar_commit_id(args: &[String]) -> CliResult<()> {
     for token in ["comment=", "42 comment="].iter() {
         if let Some(idx) = text.find(token) {
             let rest = &text[idx + token.len()..];
-            let oid: String = rest
-                .chars()
-                .take_while(|c| c.is_ascii_hexdigit())
-                .collect();
+            let oid: String = rest.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
             if oid.len() == 40 || oid.len() == 64 {
                 println!("{oid}");
                 return Ok(());
@@ -1581,9 +1583,7 @@ pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
     let oid = resolve_rev(&repo, rev)?;
     let obj = repo.get_object(&oid)?;
     if obj.kind != ObjectKind::Blob {
-        return Err(CliError::Msg(format!(
-            "unpack-file: {rev} is not a blob"
-        )));
+        return Err(CliError::Msg(format!("unpack-file: {rev} is not a blob")));
     }
     let path = std::env::temp_dir().join(format!(".merge_file_{}", &oid.to_hex()[..8]));
     fs::write(&path, &obj.payload)?;
@@ -1596,9 +1596,7 @@ pub fn cmd_request_pull(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &[])?;
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if positional.len() < 2 {
-        return Err(CliError::Usage(
-            "request-pull <start> <url> [<end>]".into(),
-        ));
+        return Err(CliError::Usage("request-pull <start> <url> [<end>]".into()));
     }
     let start = positional[0].as_str();
     let url = positional[1].as_str();
@@ -1606,7 +1604,10 @@ pub fn cmd_request_pull(args: &[String]) -> CliResult<()> {
     let repo = open_repo()?;
     let start_oid = resolve_rev(&repo, start)?;
     let end_oid = resolve_rev(&repo, end)?;
-    println!("The following changes since commit {}:\n", start_oid.to_hex());
+    println!(
+        "The following changes since commit {}:\n",
+        start_oid.to_hex()
+    );
     println!("  {url}\n");
     println!("are available in the git repository at:\n");
     println!("  {url}\n");
@@ -1627,7 +1628,15 @@ pub fn cmd_request_pull(args: &[String]) -> CliResult<()> {
             .lines()
             .skip_while(|l| !l.is_empty())
             .nth(1)
-            .or_else(|| text.lines().find(|l| !l.starts_with("tree ") && !l.starts_with("parent ") && !l.starts_with("author ") && !l.starts_with("committer ") && !l.is_empty()))
+            .or_else(|| {
+                text.lines().find(|l| {
+                    !l.starts_with("tree ")
+                        && !l.starts_with("parent ")
+                        && !l.starts_with("author ")
+                        && !l.starts_with("committer ")
+                        && !l.is_empty()
+                })
+            })
             .unwrap_or("")
             .to_string();
         lines.push(format!("  {} {}", &cur.to_hex()[..7], subject));
@@ -1742,9 +1751,7 @@ pub fn cmd_pack_redundant(args: &[String]) -> CliResult<()> {
             "note: pack-redundant subset — listed all packs; full redundancy algebra not claimed"
         );
     } else {
-        eprintln!(
-            "pack-redundant: pass --all to list packs (full redundancy scan not claimed)"
-        );
+        eprintln!("pack-redundant: pass --all to list packs (full redundancy scan not claimed)");
     }
     Ok(())
 }
@@ -1791,9 +1798,7 @@ pub fn cmd_shell(args: &[String]) -> CliResult<()> {
     };
     let dir = rest.trim().trim_matches('\'').trim_matches('"');
     if dir.is_empty() {
-        return Err(CliError::Usage(format!(
-            "shell -c '{prog} <directory>'"
-        )));
+        return Err(CliError::Usage(format!("shell -c '{prog} <directory>'")));
     }
     match arks_cmd {
         "upload-pack" => crate::cmd::cmd_upload_pack(&[dir.to_string()]),

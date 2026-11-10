@@ -499,13 +499,7 @@ impl HubStore {
         g
     }
 
-    pub fn create_project(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        title: &str,
-        body: &str,
-    ) -> Project {
+    pub fn create_project(&mut self, owner: &str, repo: &str, title: &str, body: &str) -> Project {
         if self.db.next_project == 0 {
             self.db.next_project = 1;
         }

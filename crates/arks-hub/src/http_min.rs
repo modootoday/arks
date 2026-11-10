@@ -1,11 +1,16 @@
 //! Minimal HTTP/1.1 helpers for hub serve/client (Partial).
 //!
 //! - `http://` loopback: raw `TcpStream` (local forge).
-//! - `https://` remote: `ureq` TLS path (Partial; not Claimed forge remote e2e).
+//! - `https://` remote: `ureq` TLS path; operator CA via `ARKS_HUB_CA_FILE` (B3 harness).
 //! Never spawns `gh` / `git`.
 
-use std::io::{Read, Write};
+use rustls::pki_types::CertificateDer;
+use std::env;
+use std::fs::File;
+use std::io::{BufReader, Read, Write};
 use std::net::TcpStream;
+use std::path::Path;
+use std::sync::Arc;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -16,7 +21,7 @@ pub struct HttpRequest {
     pub body: Vec<u8>,
 }
 
-pub fn read_http_request(stream: &mut TcpStream) -> Result<HttpRequest, String> {
+pub fn read_http_request(stream: &mut impl Read) -> Result<HttpRequest, String> {
     let mut buf = Vec::new();
     let mut tmp = [0u8; 1024];
     loop {
@@ -76,7 +81,7 @@ fn find_headers_end(buf: &[u8]) -> Option<usize> {
 }
 
 pub fn write_http_response(
-    stream: &mut TcpStream,
+    stream: &mut impl Write,
     status: u16,
     reason: &str,
     content_type: &str,
@@ -86,7 +91,9 @@ pub fn write_http_response(
         "HTTP/1.1 {status} {reason}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
         body.len()
     );
-    stream.write_all(head.as_bytes()).map_err(|e| e.to_string())?;
+    stream
+        .write_all(head.as_bytes())
+        .map_err(|e| e.to_string())?;
     stream.write_all(body).map_err(|e| e.to_string())?;
     stream.flush().map_err(|e| e.to_string())?;
     Ok(())
@@ -137,7 +144,9 @@ pub fn http_exchange(
         req.push_str("Content-Length: 0\r\n");
     }
     req.push_str("\r\n");
-    stream.write_all(req.as_bytes()).map_err(|e| e.to_string())?;
+    stream
+        .write_all(req.as_bytes())
+        .map_err(|e| e.to_string())?;
     if !body_bytes.is_empty() {
         stream.write_all(body_bytes).map_err(|e| e.to_string())?;
     }
@@ -182,9 +191,7 @@ fn http_exchange_https(
                 return Ok(v);
             }
             Err(e) if is_https_transport_retryable(&e) && attempt < MAX_ATTEMPTS => {
-                eprintln!(
-                    "note: https Partial transport retry {attempt}/{MAX_ATTEMPTS}: {e}"
-                );
+                eprintln!("note: https Partial transport retry {attempt}/{MAX_ATTEMPTS}: {e}");
                 last_err = Some(e);
                 std::thread::sleep(Duration::from_millis(50 * u64::from(attempt)));
             }
@@ -204,6 +211,38 @@ fn is_https_transport_retryable(err: &str) -> bool {
         || e.contains("broken pipe")
 }
 
+/// Operator trust anchor for `https://` hub client (B3 clean-room; PEM file path).
+fn hub_https_client_tls_config() -> Result<Option<Arc<rustls::ClientConfig>>, String> {
+    let ca_path = match env::var("ARKS_HUB_CA_FILE") {
+        Ok(p) if !p.trim().is_empty() => p,
+        _ => return Ok(None),
+    };
+    Ok(Some(load_operator_ca_tls_config(Path::new(&ca_path))?))
+}
+
+fn load_operator_ca_tls_config(ca_path: &Path) -> Result<Arc<rustls::ClientConfig>, String> {
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    let f = File::open(ca_path)
+        .map_err(|e| format!("ARKS_HUB_CA_FILE open {}: {e}", ca_path.display()))?;
+    let mut reader = BufReader::new(f);
+    let certs: Vec<CertificateDer<'static>> = rustls_pemfile::certs(&mut reader)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("ARKS_HUB_CA_FILE parse {}: {e}", ca_path.display()))?;
+    if certs.is_empty() {
+        return Err(format!("ARKS_HUB_CA_FILE PEM empty: {}", ca_path.display()));
+    }
+    let mut root_store = rustls::RootCertStore::empty();
+    for cert in certs {
+        root_store
+            .add(cert)
+            .map_err(|e| format!("ARKS_HUB_CA_FILE root add: {e}"))?;
+    }
+    let config = rustls::ClientConfig::builder()
+        .with_root_certificates(root_store)
+        .with_no_client_auth();
+    Ok(Arc::new(config))
+}
+
 fn http_exchange_https_once(
     url: &str,
     method: &str,
@@ -211,13 +250,16 @@ fn http_exchange_https_once(
     body: Option<&str>,
 ) -> Result<(u16, String), String> {
     // Redirect cap keeps Partial client fail-closed on redirect loops (not Claimed cookie jar).
-    let agent = ureq::AgentBuilder::new()
+    let mut agent_builder = ureq::AgentBuilder::new()
         .timeout_connect(Duration::from_secs(10))
         .timeout_read(Duration::from_secs(30))
         .timeout_write(Duration::from_secs(30))
         .redirects(4)
-        .user_agent("arks-hub/0.0.0 (+Partial HTTPS client; design≠Claimed)")
-        .build();
+        .user_agent("arks-hub/0.0.0 (+Partial HTTPS client; design≠Claimed)");
+    if let Some(tls_cfg) = hub_https_client_tls_config()? {
+        agent_builder = agent_builder.tls_config(tls_cfg);
+    }
+    let agent = agent_builder.build();
     let mut req = agent
         .request(method, url)
         .set("Accept", "application/json")
@@ -263,7 +305,9 @@ fn format_https_err(kind: &str, err: ureq::Error) -> String {
     match &err {
         ureq::Error::Status(code, resp) => {
             let url = resp.get_url().to_string();
-            format!("https Partial {kind} HTTP {code} for {url} (design ≠ Claimed forge remote e2e)")
+            format!(
+                "https Partial {kind} HTTP {code} for {url} (design ≠ Claimed forge remote e2e)"
+            )
         }
         ureq::Error::Transport(t) => {
             format!("https Partial {kind} transport: {t} (TLS/DNS/connect; never spawns gh)")

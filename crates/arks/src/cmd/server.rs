@@ -9,10 +9,11 @@ use crate::error::{CliError, CliResult};
 use arks_hub::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
 use arks_repo::Repository;
 use arks_server::{
-    BasicAuthConfig, DaemonOptions, HttpRequest, ListenRebindSlot, ServeHttpOptions,
-    ServeSshOptions, default_authorized_keys_path, default_host_key_path, handle_smart_http_auth,
-    receive_pack_session, serve_daemon, serve_daemon_inetd, serve_http_with_opts,
-    serve_ssh_listener, spawn_loopback_ssh, update_server_info, upload_pack_session,
+    BasicAuthConfig, DaemonOptions, HttpRequest, ListenRebindSlot, ProductTlsServerConfig,
+    ServeHttpOptions, ServeSshOptions, default_authorized_keys_path, default_host_key_path,
+    handle_smart_http_auth, load_server_config, receive_pack_session, serve_daemon,
+    serve_daemon_inetd, serve_http_scheme, serve_http_with_opts, serve_ssh_listener,
+    spawn_loopback_ssh, update_server_info, upload_pack_session,
 };
 use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -43,7 +44,10 @@ pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
         print_serve_http_transitional_help();
         return Ok(());
     }
-    run_serve_http_listener(args, "arks serve-http (transitional ≡ serve --no-ssh --no-forge)")
+    run_serve_http_listener(
+        args,
+        "arks serve-http (transitional ≡ serve --no-ssh --no-forge)",
+    )
 }
 
 /// `arks serve` — single hosting process; default HTTP+SSH+forge; `config` nested.
@@ -98,6 +102,15 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         forwarded.push("--basic-auth-file".into());
         forwarded.push(auth_file.clone());
     }
+    // Seed TLS paths from serve.conf when present; clap still wins.
+    if let Some(cert) = file_cfg.get("tls_cert") {
+        forwarded.push("--tls-cert".into());
+        forwarded.push(cert.clone());
+    }
+    if let Some(key) = file_cfg.get("tls_key") {
+        forwarded.push("--tls-key".into());
+        forwarded.push(key.clone());
+    }
     let mut i = 0;
     while i < args.len() {
         let a = args[i].as_str();
@@ -108,9 +121,26 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             "--http" => enable_http = true,
             "--ssh" => enable_ssh = true,
             "--forge" => enable_forge = true,
+            "--tls-cert" | "--tls-key" => {
+                // Drop any seeded pair so CLI wins.
+                if let Some(pos) = forwarded.iter().position(|x| x == a) {
+                    forwarded.remove(pos);
+                    if pos < forwarded.len() {
+                        forwarded.remove(pos);
+                    }
+                }
+                forwarded.push(args[i].clone());
+                i += 1;
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage(format!("serve {a} needs PATH")))?;
+                forwarded.push(v.clone());
+            }
             "--listen" => {
                 // Replace any seeded --listen from file store.
-                forwarded.retain(|x| x != "--listen" && !listen_from_cfg.as_ref().is_some_and(|b| b == x));
+                forwarded.retain(|x| {
+                    x != "--listen" && !listen_from_cfg.as_ref().is_some_and(|b| b == x)
+                });
                 listen_from_cfg = None;
                 forwarded.push(args[i].clone());
                 i += 1;
@@ -128,24 +158,24 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             }
             "--forge-data" => {
                 i += 1;
-                forge_data = Some(PathBuf::from(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("serve --forge-data needs DIR".into()))?,
-                ));
+                forge_data =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --forge-data needs DIR".into())
+                    })?));
             }
             "--ssh-host-key" => {
                 i += 1;
-                ssh_host_key = PathBuf::from(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("serve --ssh-host-key needs PATH".into()))?,
-                );
+                ssh_host_key =
+                    PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --ssh-host-key needs PATH".into())
+                    })?);
             }
             "--authorized-keys" => {
                 i += 1;
-                ssh_authorized_keys = PathBuf::from(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("serve --authorized-keys needs PATH".into()))?,
-                );
+                ssh_authorized_keys =
+                    PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --authorized-keys needs PATH".into())
+                    })?);
             }
             "--ssh-listen" => {
                 i += 1;
@@ -173,7 +203,9 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             }
             "--dumb-only" => forwarded.push(args[i].clone()),
             other if other.starts_with("--listen=") => {
-                forwarded.retain(|x| x != "--listen" && !listen_from_cfg.as_ref().is_some_and(|b| b == x));
+                forwarded.retain(|x| {
+                    x != "--listen" && !listen_from_cfg.as_ref().is_some_and(|b| b == x)
+                });
                 listen_from_cfg = None;
                 forwarded.push(args[i].clone());
             }
@@ -215,10 +247,9 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         .find(|w| w[0] == "--listen")
         .map(|w| w[1].clone())
         .or_else(|| {
-            forwarded.iter().find_map(|a| {
-                a.strip_prefix("--listen=")
-                    .map(str::to_string)
-            })
+            forwarded
+                .iter()
+                .find_map(|a| a.strip_prefix("--listen=").map(str::to_string))
         })
         .or(listen_from_cfg.clone())
         .unwrap_or_else(|| "127.0.0.1:8080".into());
@@ -273,11 +304,15 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         return result;
     }
 
+    let product_tls = resolve_product_tls_from_args(&forwarded)?;
     let mut forge_opts = if enable_forge {
         Some(resolve_forge_opts(&forge_listen, forge_data)?)
     } else {
         None
     };
+    if let Some(ref mut opts) = forge_opts {
+        opts.tls = product_tls.clone();
+    }
 
     sync_serve_runtime_to_file(
         enable_http.then_some(http_bind_for_sync.as_str()),
@@ -290,9 +325,8 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             // Cohost: forge on background thread; HTTP blocks on main (Partial).
             let forge_slot = register_live_forge_rebind_slot();
             opts.rebind_desired = Some(forge_slot);
-            let (forge_stop, forge_handle) = spawn_forge_api(opts.clone()).map_err(|e| {
-                CliError::Msg(format!("arks serve: forge API bind failed: {e}"))
-            })?;
+            let (forge_stop, forge_handle) = spawn_forge_api(opts.clone())
+                .map_err(|e| CliError::Msg(format!("arks serve: forge API bind failed: {e}")))?;
             let label = "arks serve --no-ssh (HTTP + Partial forge)";
             let http_result = run_serve_http_listener(&forwarded, label);
             forge_stop.store(true, Ordering::SeqCst);
@@ -331,7 +365,47 @@ fn resolve_forge_opts(
         listen,
         data_dir: forge_data.unwrap_or_else(arks_hub::default_forge_data_dir),
         rebind_desired: None,
+        tls: None,
     })
+}
+
+/// Parse `--tls-cert` / `--tls-key` from serve forwarded args (shared by HTTP + forge cohost).
+fn resolve_product_tls_from_args(args: &[String]) -> CliResult<Option<ProductTlsServerConfig>> {
+    let mut tls_cert: Option<PathBuf> = None;
+    let mut tls_key: Option<PathBuf> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--tls-cert" => {
+                i += 1;
+                tls_cert =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --tls-cert needs PATH".into())
+                    })?));
+            }
+            ref s if s.starts_with("--tls-cert=") => tls_cert = Some(PathBuf::from(&s[11..])),
+            "--tls-key" => {
+                i += 1;
+                tls_key =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --tls-key needs PATH".into())
+                    })?));
+            }
+            ref s if s.starts_with("--tls-key=") => tls_key = Some(PathBuf::from(&s[10..])),
+            _ => {}
+        }
+        i += 1;
+    }
+    match (tls_cert.as_ref(), tls_key.as_ref()) {
+        (Some(cert), Some(key)) => Ok(Some(load_server_config(cert, key).map_err(CliError::Msg)?)),
+        (None, None) => Ok(None),
+        (Some(_), None) => Err(CliError::Usage(
+            "serve --tls-cert requires --tls-key (operator-supplied PEM pair)".into(),
+        )),
+        (None, Some(_)) => Err(CliError::Usage(
+            "serve --tls-key requires --tls-cert (operator-supplied PEM pair)".into(),
+        )),
+    }
 }
 
 /// `arks serve config` — self-host server config (Partial; not Claimed; ≠ `arks config`).
@@ -366,7 +440,9 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
             if !raw.ends_with('\n') {
                 println!();
             }
-            eprintln!("note: Partial file store — design ≠ Claimed ([[sot:root/arks-self-host-server]])");
+            eprintln!(
+                "note: Partial file store — design ≠ Claimed ([[sot:root/arks-self-host-server]])"
+            );
             Ok(())
         }
         "set" => {
@@ -498,7 +574,9 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
                     .get(i)
                     .ok_or_else(|| CliError::Usage("watch --duration needs SECONDS".into()))?
                     .parse()
-                    .map_err(|_| CliError::Usage("watch --duration needs integer seconds".into()))?;
+                    .map_err(|_| {
+                        CliError::Usage("watch --duration needs integer seconds".into())
+                    })?;
             }
             other if let Some(v) = other.strip_prefix("--duration=") => {
                 duration_secs = v.parse().map_err(|_| {
@@ -536,7 +614,9 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
     }
     let path = serve_config_path();
     let start = std::time::Instant::now();
-    let mut last_mtime = std::fs::metadata(&path).ok().and_then(|m| m.modified().ok());
+    let mut last_mtime = std::fs::metadata(&path)
+        .ok()
+        .and_then(|m| m.modified().ok());
     eprintln!(
         "arks serve config watch: Partial file-watch path={} duration={duration_secs}s \
          interval={interval_ms}ms (no running-server signal; Claimed sync e2e Missing)",
@@ -546,17 +626,14 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
     serve_config_apply_reload("watch-initial", /*seed_defaults=*/ false)?;
     while start.elapsed() < std::time::Duration::from_secs(duration_secs.max(1)) {
         std::thread::sleep(std::time::Duration::from_millis(interval_ms.max(50)));
-        let mtime = std::fs::metadata(&path).ok().and_then(|m| m.modified().ok());
+        let mtime = std::fs::metadata(&path)
+            .ok()
+            .and_then(|m| m.modified().ok());
         if mtime != last_mtime {
-            eprintln!(
-                "arks serve config watch: mtime change detected → apply/reload Partial"
-            );
+            eprintln!("arks serve config watch: mtime change detected → apply/reload Partial");
             last_mtime = mtime;
             let mut map = load_serve_config_map()?;
-            map.insert(
-                "runtime_watch_mtime".into(),
-                format!("{:?}", mtime),
-            );
+            map.insert("runtime_watch_mtime".into(), format!("{:?}", mtime));
             map.insert(
                 "runtime_watch_signal".into(),
                 "file-mtime Partial (unix SIGHUP Partial on running serve; Windows Missing)".into(),
@@ -609,10 +686,8 @@ fn serve_config_apply_reload(label: &str, seed_defaults: bool) -> CliResult<()> 
         .cloned()
         .unwrap_or_else(|| "127.0.0.1:2222".into());
     let ssh_on = config_bool(&map, "ssh", true);
-    let mut probes: Vec<(&str, String)> = vec![
-        ("bind", bind.clone()),
-        ("forge_listen", forge.clone()),
-    ];
+    let mut probes: Vec<(&str, String)> =
+        vec![("bind", bind.clone()), ("forge_listen", forge.clone())];
     if ssh_on {
         probes.push(("ssh_listen", ssh.clone()));
     }
@@ -673,6 +748,8 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "ssh_authorized_keys",
     "allow_paths",
     "tls_note",
+    "tls_cert",
+    "tls_key",
     // Runtime sync keys (Partial live bind honesty; written by `serve` / `config sync`).
     "runtime_bind",
     "runtime_forge_listen",
@@ -687,11 +764,7 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "runtime_rebind",
 ];
 
-fn config_bool(
-    map: &std::collections::BTreeMap<String, String>,
-    key: &str,
-    default: bool,
-) -> bool {
+fn config_bool(map: &std::collections::BTreeMap<String, String>, key: &str, default: bool) -> bool {
     match map.get(key).map(String::as_str) {
         Some("on" | "true" | "1") => true,
         Some("off" | "false" | "0") => false,
@@ -754,7 +827,11 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
             "on" | "off" | "true" | "false" | "1" | "0" => Ok(()),
             _ => Err("expected on|off".into()),
         },
-        "bind" | "forge_listen" | "ssh_listen" | "runtime_bind" | "runtime_forge_listen"
+        "bind"
+        | "forge_listen"
+        | "ssh_listen"
+        | "runtime_bind"
+        | "runtime_forge_listen"
         | "runtime_ssh_listen" => {
             if value.parse::<SocketAddr>().is_ok() {
                 Ok(())
@@ -762,10 +839,21 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
                 Err("expected HOST:PORT socket address".into())
             }
         }
-        "forge_data" | "basic_auth_file" | "ssh_host_key" | "ssh_authorized_keys"
-        | "allow_paths" | "tls_note" | "runtime_synced_at" | "runtime_probe_bind"
-        | "runtime_probe_forge_listen" | "runtime_probe_ssh_listen" | "runtime_apply_op"
-        | "runtime_watch_mtime" | "runtime_watch_signal" => {
+        "forge_data"
+        | "basic_auth_file"
+        | "ssh_host_key"
+        | "ssh_authorized_keys"
+        | "allow_paths"
+        | "tls_note"
+        | "tls_cert"
+        | "tls_key"
+        | "runtime_synced_at"
+        | "runtime_probe_bind"
+        | "runtime_probe_forge_listen"
+        | "runtime_probe_ssh_listen"
+        | "runtime_apply_op"
+        | "runtime_watch_mtime"
+        | "runtime_watch_signal" => {
             if value.is_empty() {
                 Err("value must not be empty".into())
             } else {
@@ -777,9 +865,7 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
 }
 
 fn probe_bind_addr(addr: &str) -> Result<String, String> {
-    let sock: SocketAddr = addr
-        .parse()
-        .map_err(|e| format!("bad address: {e}"))?;
+    let sock: SocketAddr = addr.parse().map_err(|e| format!("bad address: {e}"))?;
     let listener = std::net::TcpListener::bind(sock).map_err(|e| e.to_string())?;
     let local = listener
         .local_addr()
@@ -848,6 +934,8 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut dumb_only = false;
     let mut basic_auth_cli: Option<String> = None;
     let mut basic_auth_file: Option<PathBuf> = None;
+    let mut tls_cert: Option<PathBuf> = None;
+    let mut tls_key: Option<PathBuf> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -881,6 +969,26 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
                         })?
                         .as_str(),
                 ));
+            }
+            "--tls-cert" => {
+                i += 1;
+                tls_cert =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --tls-cert needs PATH".into())
+                    })?));
+            }
+            _ if args[i].starts_with("--tls-cert=") => {
+                tls_cert = Some(PathBuf::from(&args[i][11..]));
+            }
+            "--tls-key" => {
+                i += 1;
+                tls_key =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --tls-key needs PATH".into())
+                    })?));
+            }
+            _ if args[i].starts_with("--tls-key=") => {
+                tls_key = Some(PathBuf::from(&args[i][10..]));
             }
             other if other.starts_with('-') => {
                 return Err(CliError::NotImplemented(format!(
@@ -917,21 +1025,38 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     } else {
         "unauthenticated"
     };
-    eprintln!("{label} listening on http://{addr}/ (dumb_only={dumb_only}; {auth_label})");
+    let tls = match (tls_cert.as_ref(), tls_key.as_ref()) {
+        (Some(cert), Some(key)) => Some(load_server_config(cert, key).map_err(CliError::Msg)?),
+        (None, None) => None,
+        (Some(_), None) => {
+            return Err(CliError::Usage(
+                "serve --tls-cert requires --tls-key (operator-supplied PEM pair)".into(),
+            ));
+        }
+        (None, Some(_)) => {
+            return Err(CliError::Usage(
+                "serve --tls-key requires --tls-cert (operator-supplied PEM pair)".into(),
+            ));
+        }
+    };
+    let mut http_opts = ServeHttpOptions {
+        dumb_only,
+        basic_auth,
+        rebind_desired: None,
+        tls,
+    };
+    let scheme = serve_http_scheme(&http_opts);
+    eprintln!("{label} listening on {scheme}://{addr}/ (dumb_only={dumb_only}; {auth_label})");
+    if http_opts.tls.is_some() {
+        eprintln!(
+            "{label}: in-process TLS terminate armed (operator PEMs; ops reverse-proxy still valid)"
+        );
+    }
     install_serve_config_sighup_partial(label);
-    let rebind = register_live_http_rebind_slot();
+    http_opts.rebind_desired = Some(register_live_http_rebind_slot());
     let stop = Arc::new(AtomicBool::new(false));
-    let result = serve_http_with_opts(
-        git_dir,
-        addr,
-        stop,
-        ServeHttpOptions {
-            dumb_only,
-            basic_auth,
-            rebind_desired: Some(rebind),
-        },
-    )
-    .map_err(|e| CliError::Msg(e.to_string()));
+    let result = serve_http_with_opts(git_dir, addr, stop, http_opts)
+        .map_err(|e| CliError::Msg(e.to_string()));
     clear_live_http_rebind_slot();
     result
 }
@@ -1113,11 +1238,12 @@ fn install_serve_config_sighup_partial(label: &str) {
                     };
                     map.insert(
                         "runtime_watch_signal".into(),
-                        "SIGHUP Partial (unix; live HTTP/forge/SSH rebind Partial)"
-                            .into(),
+                        "SIGHUP Partial (unix; live HTTP/forge/SSH rebind Partial)".into(),
                     );
                     let _ = save_serve_config_map(&map);
-                    if let Err(e) = serve_config_apply_reload("sighup", /*seed_defaults=*/ false) {
+                    if let Err(e) =
+                        serve_config_apply_reload("sighup", /*seed_defaults=*/ false)
+                    {
                         eprintln!("arks serve: SIGHUP apply/reload Partial err: {e}");
                     }
                 }
@@ -1133,9 +1259,7 @@ fn install_serve_config_sighup_partial(label: &str) {
         use std::sync::atomic::AtomicBool as Flag;
         static INSTALLED: Flag = Flag::new(false);
         if INSTALLED.swap(true, Ordering::SeqCst) {
-            eprintln!(
-                "{label}: Windows serve-config file-mtime reload Partial already armed"
-            );
+            eprintln!("{label}: Windows serve-config file-mtime reload Partial already armed");
             return;
         }
         eprintln!(
@@ -1145,14 +1269,10 @@ fn install_serve_config_sighup_partial(label: &str) {
         );
         std::thread::spawn(|| {
             let path = serve_config_path();
-            let mut last_mtime = std::fs::metadata(&path)
-                .and_then(|m| m.modified())
-                .ok();
+            let mut last_mtime = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
             loop {
                 std::thread::sleep(Duration::from_millis(500));
-                let cur = std::fs::metadata(&path)
-                    .and_then(|m| m.modified())
-                    .ok();
+                let cur = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
                 if cur != last_mtime && cur.is_some() {
                     last_mtime = cur;
                     eprintln!(
@@ -1257,7 +1377,10 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
                     let banner = String::from_utf8_lossy(&buf[..n]);
                     let line = banner.lines().next().unwrap_or("").trim();
                     println!("tcp_connect=ok");
-                    println!("banner_preview={}", line.chars().take(120).collect::<String>());
+                    println!(
+                        "banner_preview={}",
+                        line.chars().take(120).collect::<String>()
+                    );
                     if line.starts_with("SSH-2.0-") {
                         println!("ssh_banner=ok");
                         eprintln!(
@@ -1314,18 +1437,16 @@ fn cmd_serve_ssh_git_pack_smoke() -> CliResult<()> {
     println!("claimed_ssh_git_e2e=Missing");
 
     let opts = ServeSshOptions::with_defaults(
-        "127.0.0.1:0"
-            .parse()
-            .expect("loopback"),
+        "127.0.0.1:0".parse().expect("loopback"),
         PathBuf::from("."),
     );
-    let (addr, stop, handle) = spawn_loopback_ssh(opts).map_err(|e| CliError::Msg(e.to_string()))?;
+    let (addr, stop, handle) =
+        spawn_loopback_ssh(opts).map_err(|e| CliError::Msg(e.to_string()))?;
     println!("durable_listen={addr}");
 
     let client = (|| -> CliResult<()> {
-        let mut stream = TcpStream::connect_timeout(&addr, Duration::from_secs(2)).map_err(|e| {
-            CliError::Msg(format!("git-pack smoke connect fail ({e})"))
-        })?;
+        let mut stream = TcpStream::connect_timeout(&addr, Duration::from_secs(2))
+            .map_err(|e| CliError::Msg(format!("git-pack smoke connect fail ({e})")))?;
         let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
         let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
         let mut buf = [0u8; 256];
@@ -1333,7 +1454,10 @@ fn cmd_serve_ssh_git_pack_smoke() -> CliResult<()> {
         let banner = String::from_utf8_lossy(&buf[..n]);
         let line = banner.lines().next().unwrap_or("").trim();
         println!("tcp_connect=ok");
-        println!("banner_preview={}", line.chars().take(120).collect::<String>());
+        println!(
+            "banner_preview={}",
+            line.chars().take(120).collect::<String>()
+        );
         if !line.starts_with("SSH-2.0-") {
             return Err(CliError::Msg(
                 "git-pack smoke: durable listener banner not SSH-2.0-* (Partial)".into(),
@@ -1517,10 +1641,9 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             }
             "--base-path" => {
                 i += 1;
-                bases.push(PathBuf::from(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("daemon --base-path needs PATH".into()))?,
-                ));
+                bases.push(PathBuf::from(args.get(i).ok_or_else(|| {
+                    CliError::Usage("daemon --base-path needs PATH".into())
+                })?));
             }
             _ if a.starts_with("--base-path=") => {
                 bases.push(PathBuf::from(&a[12..]));
@@ -1585,10 +1708,9 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             "--detach" => detach = true,
             "--pid-file" => {
                 i += 1;
-                pid_file = Some(PathBuf::from(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("daemon --pid-file needs PATH".into()))?,
-                ));
+                pid_file = Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                    CliError::Usage("daemon --pid-file needs PATH".into())
+                })?));
             }
             other if other.starts_with("--pid-file=") => {
                 pid_file = Some(PathBuf::from(&other[11..]));
@@ -1604,11 +1726,9 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             }
             "--access-hook" => {
                 i += 1;
-                access_hook = Some(PathBuf::from(
-                    args.get(i).ok_or_else(|| {
-                        CliError::Usage("daemon --access-hook needs PATH".into())
-                    })?,
-                ));
+                access_hook = Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                    CliError::Usage("daemon --access-hook needs PATH".into())
+                })?));
             }
             other if other.starts_with("--access-hook=") => {
                 access_hook = Some(PathBuf::from(&other["--access-hook=".len()..]));
@@ -1925,9 +2045,7 @@ fn daemon_enable_syslog_partial() -> CliResult<()> {
         use std::ffi::CString;
         use std::sync::OnceLock;
         static IDENT: OnceLock<CString> = OnceLock::new();
-        let ident = IDENT.get_or_init(|| {
-            CString::new("arks-daemon").expect("arks-daemon ident")
-        });
+        let ident = IDENT.get_or_init(|| CString::new("arks-daemon").expect("arks-daemon ident"));
         // SAFETY: openlog ident lives for process life via OnceLock.
         unsafe {
             libc::openlog(
@@ -1947,7 +2065,9 @@ fn daemon_enable_syslog_partial() -> CliResult<()> {
     }
     #[cfg(not(unix))]
     {
-        Err(CliError::NotImplemented(daemon_windows_syslog_refuse().into()))
+        Err(CliError::NotImplemented(
+            daemon_windows_syslog_refuse().into(),
+        ))
     }
 }
 

@@ -696,4 +696,3 @@ fn stamp_now() -> (u32, u32) {
         .unwrap_or_default();
     (dur.as_secs() as u32, dur.subsec_nanos())
 }
-

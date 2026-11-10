@@ -63,8 +63,5 @@ fn ls_remote_http(url: &str) -> Result<Vec<RemoteRef>, RemoteError> {
             "info/refs was not a git-upload-pack advertisement".into(),
         ));
     }
-    Ok(from_ad(parse_advertisement(
-        &info.body,
-        "git-upload-pack",
-    )?))
+    Ok(from_ad(parse_advertisement(&info.body, "git-upload-pack")?))
 }

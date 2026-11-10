@@ -636,7 +636,10 @@ fn run_helper(
 
 fn is_store_helper(helper: &str) -> bool {
     let name = helper_short_name(helper);
-    matches!(name.as_str(), "store" | "credential-store" | "git-credential-store")
+    matches!(
+        name.as_str(),
+        "store" | "credential-store" | "git-credential-store"
+    )
 }
 
 fn is_cache_helper(helper: &str) -> bool {
@@ -711,10 +714,7 @@ fn is_abs_helper_path(h: &str) -> bool {
 }
 
 /// Native `credential.helper=store` using the stock `~/.git-credentials` file format.
-fn run_store_helper(
-    operation: &str,
-    desc: &Credential,
-) -> Result<Option<Credential>, RemoteError> {
+fn run_store_helper(operation: &str, desc: &Credential) -> Result<Option<Credential>, RemoteError> {
     let path = store_credentials_path();
     match operation {
         "get" => Ok(store_get(&path, desc)?),
@@ -808,9 +808,8 @@ fn store_put(path: &Path, desc: &Credential) -> Result<(), RemoteError> {
     if let Some(parent) = path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
-    std::fs::write(path, keep).map_err(|e| {
-        RemoteError::Msg(format!("credential store write {}: {e}", path.display()))
-    })?;
+    std::fs::write(path, keep)
+        .map_err(|e| RemoteError::Msg(format!("credential store write {}: {e}", path.display())))?;
     Ok(())
 }
 
@@ -841,9 +840,8 @@ fn store_erase(path: &Path, desc: &Credential) -> Result<(), RemoteError> {
         keep.push_str(old);
         keep.push('\n');
     }
-    std::fs::write(path, keep).map_err(|e| {
-        RemoteError::Msg(format!("credential store write {}: {e}", path.display()))
-    })?;
+    std::fs::write(path, keep)
+        .map_err(|e| RemoteError::Msg(format!("credential store write {}: {e}", path.display())))?;
     Ok(())
 }
 
@@ -1249,7 +1247,9 @@ mod tests {
         assert!(is_forbidden_helper_program("git"));
         assert!(is_forbidden_helper_program("git.exe"));
         assert!(is_forbidden_helper_program("gh"));
-        assert!(is_forbidden_helper_program(r"C:\Program Files\GitHub CLI\gh.exe"));
+        assert!(is_forbidden_helper_program(
+            r"C:\Program Files\GitHub CLI\gh.exe"
+        ));
         assert!(!is_forbidden_helper_program("git-credential-manager"));
         assert!(!is_forbidden_helper_program("/usr/bin/myhelper"));
     }

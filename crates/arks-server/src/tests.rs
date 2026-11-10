@@ -299,4 +299,3 @@ fn v2_advertises_and_serves_bundle_uri() {
         "{text}"
     );
 }
-

@@ -16,13 +16,14 @@ use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::process::ExitCode;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
 /// Top-level groups shown in help.
 pub const GROUPS: &[&str] = &[
+    "chat",
     "review",
     "cev-check",
     "provider",
@@ -110,6 +111,7 @@ COMMANDS (Partial honesty):
     provider      list|show|test|set|smoke LLM endpoints (openai-compat first; ollama smoke Partial)
     config        show|path agent config (secrets redacted)
     doctor        Config + TCP reachability sanity check
+    chat          Multi-turn openai-compat chat (`--message TEXT` repeated)
     review        Review stdin/file via openai-compat chat (Partial; --smoke [--mock])
     cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
     run           One-shot job: review|cev-check|doctor (Partial)
@@ -117,7 +119,7 @@ COMMANDS (Partial honesty):
 
 NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
-    Not required for git alias DoD. Not a general chatbot.
+    Not required for git alias DoD.
     Local Ollama default: http://127.0.0.1:11434/v1
     `provider smoke [ollama|--mock]` — local chat Partial (daemon or in-process mock)
     `review --smoke --mock` — fixture + openai-compat mock server Partial
@@ -129,8 +131,8 @@ NOTES:
 
 /// Ephemeral openai-compat mock (Partial): `/v1/models` + `/v1/chat/completions`.
 /// Never invents Claimed LLM e2e; never spawns ollama/openai CLIs.
-fn spawn_openai_compat_mock() -> Result<(SocketAddr, Arc<AtomicBool>, thread::JoinHandle<()>), String>
-{
+fn spawn_openai_compat_mock()
+-> Result<(SocketAddr, Arc<AtomicBool>, thread::JoinHandle<()>), String> {
     let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
     let addr = listener.local_addr().map_err(|e| e.to_string())?;
     let _ = listener.set_nonblocking(true);
@@ -163,7 +165,8 @@ fn spawn_openai_compat_mock() -> Result<(SocketAddr, Arc<AtomicBool>, thread::Jo
                                         })
                                     });
                                     if let Some(need) = cl {
-                                        if let Some(i) = buf.windows(4).position(|w| w == b"\r\n\r\n")
+                                        if let Some(i) =
+                                            buf.windows(4).position(|w| w == b"\r\n\r\n")
                                         {
                                             let body_start = i + 4;
                                             if buf.len().saturating_sub(body_start) >= need {
@@ -241,6 +244,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "provider" => cmd_provider(&args[1..]),
         "config" => cmd_config(&args[1..]),
         "doctor" => cmd_doctor(&args[1..]),
+        "chat" => cmd_chat(&args[1..]),
         "review" => cmd_review(&args[1..]),
         "cev-check" => cmd_cev_check(&args[1..]),
         "run" => cmd_run(&args[1..]),
@@ -466,12 +470,8 @@ fn http_get_models(base_url: &str) -> Result<(u16, String), String> {
     let _ = path;
     let mut stream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
-    stream
-        .set_read_timeout(Some(Duration::from_secs(5)))
-        .ok();
-    stream
-        .set_write_timeout(Some(Duration::from_secs(5)))
-        .ok();
+    stream.set_read_timeout(Some(Duration::from_secs(5))).ok();
+    stream.set_write_timeout(Some(Duration::from_secs(5))).ok();
     let req = format!(
         "GET {url_path} HTTP/1.1\r\nHost: {host}:{port}\r\nAccept: application/json\r\nConnection: close\r\n\r\n"
     );
@@ -530,9 +530,11 @@ fn cmd_provider(args: &[String]) -> ExitCode {
             println!("id={}", p.id);
             println!("base_url={base}");
             println!("notes={}", p.notes);
-            let key_env = env::var("ARKS_AGENT_API_KEY_ENV")
-                .ok()
-                .or_else(|| load_config_map().ok().and_then(|m| m.get("api_key_env").cloned()));
+            let key_env = env::var("ARKS_AGENT_API_KEY_ENV").ok().or_else(|| {
+                load_config_map()
+                    .ok()
+                    .and_then(|m| m.get("api_key_env").cloned())
+            });
             if let Some(v) = key_env {
                 println!("api_key_env={v}");
             }
@@ -678,7 +680,9 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
     println!("claimed_llm_chatbot_e2e=Missing");
     if !want_mock && base.starts_with("https://") {
         println!("ollama_smoke=Missing");
-        println!("missing_reason=HTTPS provider smoke Partial not wired; use http://127.0.0.1:11434/v1 or --mock");
+        println!(
+            "missing_reason=HTTPS provider smoke Partial not wired; use http://127.0.0.1:11434/v1 or --mock"
+        );
         eprintln!("note: Claimed LLM chatbot e2e Missing");
         return ExitCode::from(2);
     }
@@ -732,14 +736,16 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
                 eprintln!(
                     "note: local {} smoke Partial succeeded — Claimed LLM chatbot e2e still Missing \
                      (one-shot smoke ≠ product e2e)",
-                    if want_mock { "openai-compat mock" } else { "ollama" }
+                    if want_mock {
+                        "openai-compat mock"
+                    } else {
+                        "ollama"
+                    }
                 );
                 ExitCode::SUCCESS
             } else {
                 println!("provider_smoke=partial_http_{code}");
-                eprintln!(
-                    "note: provider reachable but chat HTTP {code}; Claimed e2e Missing"
-                );
+                eprintln!("note: provider reachable but chat HTTP {code}; Claimed e2e Missing");
                 ExitCode::from(1)
             }
         }
@@ -871,9 +877,7 @@ fn read_review_input(args: &[String]) -> Result<String, String> {
         .read_to_string(&mut buf)
         .map_err(|e| e.to_string())?;
     if buf.trim().is_empty() {
-        return Err(
-            "review needs stdin text or --file PATH (Partial; never spawns git/gh)".into(),
-        );
+        return Err("review needs stdin text or --file PATH (Partial; never spawns git/gh)".into());
     }
     Ok(buf)
 }
@@ -943,12 +947,8 @@ fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, Str
             classify_provider_err(&last_conn)
         )
     })?;
-    stream
-        .set_read_timeout(Some(Duration::from_secs(60)))
-        .ok();
-    stream
-        .set_write_timeout(Some(Duration::from_secs(30)))
-        .ok();
+    stream.set_read_timeout(Some(Duration::from_secs(60))).ok();
+    stream.set_write_timeout(Some(Duration::from_secs(30))).ok();
     let mut headers = format!(
         "POST {path} HTTP/1.1\r\nHost: {host}:{port}\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n",
         body.len()
@@ -957,12 +957,18 @@ fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, Str
         headers.push_str(&format!("Authorization: Bearer {key}\r\n"));
     }
     headers.push_str("\r\n");
-    stream
-        .write_all(headers.as_bytes())
-        .map_err(|e| format!("write headers: {e} [{}]", classify_provider_err(&e.to_string())))?;
-    stream
-        .write_all(body.as_bytes())
-        .map_err(|e| format!("write body: {e} [{}]", classify_provider_err(&e.to_string())))?;
+    stream.write_all(headers.as_bytes()).map_err(|e| {
+        format!(
+            "write headers: {e} [{}]",
+            classify_provider_err(&e.to_string())
+        )
+    })?;
+    stream.write_all(body.as_bytes()).map_err(|e| {
+        format!(
+            "write body: {e} [{}]",
+            classify_provider_err(&e.to_string())
+        )
+    })?;
     let mut buf = Vec::new();
     stream
         .read_to_end(&mut buf)
@@ -1038,6 +1044,106 @@ fn resolve_api_key() -> Option<String> {
     None
 }
 
+fn repeated_flag_values(args: &[String], name: &str) -> Result<Vec<String>, String> {
+    let mut values = Vec::new();
+    let mut i = 0usize;
+    while i < args.len() {
+        if args[i] == name {
+            i += 1;
+            values.push(
+                args.get(i)
+                    .cloned()
+                    .ok_or_else(|| format!("{name} needs a value"))?,
+            );
+        } else if let Some(value) = args[i].strip_prefix(&format!("{name}=")) {
+            values.push(value.to_string());
+        }
+        i += 1;
+    }
+    Ok(values)
+}
+
+/// Product multi-turn path for an OpenAI-compatible provider.
+///
+/// Every request carries the complete prior user/assistant history. This is a
+/// native HTTP path and never invokes a provider CLI.
+fn cmd_chat(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks agent chat --message TEXT [--message TEXT ...] [--base-url URL] [--model MODEL]\n\
+             Sends each turn with complete conversation history over native openai-compat HTTP."
+        );
+        return ExitCode::SUCCESS;
+    }
+    let messages = match repeated_flag_values(args, "--message") {
+        Ok(v) if !v.is_empty() => v,
+        Ok(_) => {
+            eprintln!("arks agent chat: at least one --message TEXT is required");
+            return ExitCode::from(2);
+        }
+        Err(e) => {
+            eprintln!("arks agent chat: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let map = load_config_map().unwrap_or_default();
+    let id = env::var("ARKS_AGENT_PROVIDER")
+        .ok()
+        .or_else(|| map.get("provider").cloned())
+        .unwrap_or_else(|| "openai-compat".into());
+    let base = effective_base_url(&id, flag_value(args, &["--base-url"]));
+    let model = flag_value(args, &["--model"])
+        .map(str::to_string)
+        .or_else(|| map.get("model").cloned())
+        .unwrap_or_else(|| "arks-fixture".into());
+    let mut history: Vec<(&str, String)> = Vec::new();
+    println!("provider={id}");
+    println!("base_url={base}");
+    println!("model={model}");
+    for (turn, user) in messages.iter().enumerate() {
+        history.push(("user", truncate_chars(user, 12_000)));
+        let rendered = history
+            .iter()
+            .map(|(role, content)| {
+                format!(
+                    r#"{{"role":{},"content":{}}}"#,
+                    json_escape(role),
+                    json_escape(content)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(",");
+        let body = format!(
+            r#"{{"model":{},"messages":[{}],"stream":false}}"#,
+            json_escape(&model),
+            rendered
+        );
+        let (status, response) = match http_post_chat_raw(&base, &body) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("arks agent chat turn {}: {e}", turn + 1);
+                return ExitCode::from(1);
+            }
+        };
+        if !(200..400).contains(&status) {
+            eprintln!("arks agent chat turn {}: upstream HTTP {status}", turn + 1);
+            return ExitCode::from(1);
+        }
+        let Some(assistant) = extract_json_string_field(&response, "content") else {
+            eprintln!(
+                "arks agent chat turn {}: response has no assistant content",
+                turn + 1
+            );
+            return ExitCode::from(1);
+        };
+        println!("turn_{}_http={status}", turn + 1);
+        println!("assistant_{}={assistant}", turn + 1);
+        history.push(("assistant", assistant));
+    }
+    println!("chat_turns_completed={}", messages.len());
+    ExitCode::SUCCESS
+}
+
 fn cmd_review(args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
@@ -1105,7 +1211,14 @@ fn cmd_review(args: &[String]) -> ExitCode {
     let prompt = format!(
         "You are arks agent review (Partial; not Claimed). Review the following diff/text briefly:\n\n{input}"
     );
-    println!("provider={}", if want_mock { "openai-compat-mock" } else { id.as_str() });
+    println!(
+        "provider={}",
+        if want_mock {
+            "openai-compat-mock"
+        } else {
+            id.as_str()
+        }
+    );
     println!("base_url={base}");
     println!("model={model}");
     println!("input_bytes={}", input.len());
@@ -1211,9 +1324,8 @@ fn cmd_cev_check(args: &[String]) -> ExitCode {
                     && raw.to_ascii_lowercase().contains("pass")
                     && !raw.contains("not Claimed")
                 {
-                    findings.push(
-                        "possible invent-Claimed phrasing — review honesty (rule 28)".into(),
-                    );
+                    findings
+                        .push("possible invent-Claimed phrasing — review honesty (rule 28)".into());
                 }
                 if raw.len() > 512 * 1024 {
                     findings.push("file >512KiB — CEV depth Partial".into());
@@ -1401,9 +1513,7 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
                 }
                 served += 1;
                 if once {
-                    eprintln!(
-                        "arks agent {kind}: served one Partial response (--once) then exit"
-                    );
+                    eprintln!("arks agent {kind}: served one Partial response (--once) then exit");
                     return ExitCode::SUCCESS;
                 }
                 if served == 1 {
@@ -1623,10 +1733,7 @@ fn ensure_chat_body(req_body: &str, default_model: &str, stream: bool) -> String
         let mut body = trimmed.to_string();
         if extract_json_string_field(&body, "model").is_none() {
             // Inject model after opening brace.
-            body.insert_str(
-                1,
-                &format!("\"model\":{},", json_escape(default_model)),
-            );
+            body.insert_str(1, &format!("\"model\":{},", json_escape(default_model)));
         }
         if stream && !chat_body_wants_stream(&body) {
             if body.ends_with('}') {
@@ -1643,7 +1750,8 @@ fn ensure_chat_body(req_body: &str, default_model: &str, stream: bool) -> String
         }
         return body;
     }
-    let model = extract_json_string_field(req_body, "model").unwrap_or_else(|| default_model.into());
+    let model =
+        extract_json_string_field(req_body, "model").unwrap_or_else(|| default_model.into());
     let prompt = extract_chat_user_content(req_body)
         .unwrap_or_else(|| req_body.chars().take(12_000).collect());
     format!(
@@ -1686,12 +1794,8 @@ fn http_post_chat_raw(base_url: &str, body: &str) -> Result<(u16, String), Strin
     let path = chat_completions_path(base_url);
     let mut stream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
-    stream
-        .set_read_timeout(Some(Duration::from_secs(60)))
-        .ok();
-    stream
-        .set_write_timeout(Some(Duration::from_secs(30)))
-        .ok();
+    stream.set_read_timeout(Some(Duration::from_secs(60))).ok();
+    stream.set_write_timeout(Some(Duration::from_secs(30))).ok();
     let mut headers = format!(
         "POST {path} HTTP/1.1\r\nHost: {host}:{port}\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n",
         body.len()
@@ -1703,7 +1807,9 @@ fn http_post_chat_raw(base_url: &str, body: &str) -> Result<(u16, String), Strin
     stream
         .write_all(headers.as_bytes())
         .map_err(|e| e.to_string())?;
-    stream.write_all(body.as_bytes()).map_err(|e| e.to_string())?;
+    stream
+        .write_all(body.as_bytes())
+        .map_err(|e| e.to_string())?;
     let mut buf = Vec::new();
     stream.read_to_end(&mut buf).map_err(|e| e.to_string())?;
     let text = String::from_utf8_lossy(&buf);

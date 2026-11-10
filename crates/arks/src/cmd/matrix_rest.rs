@@ -126,7 +126,10 @@ Usage:
                 ));
             }
             let n = fs::metadata(&midx)?.len();
-            println!("ok\t{}\t{n} bytes (presence check; checksum algebra not claimed)", midx.display());
+            println!(
+                "ok\t{}\t{n} bytes (presence check; checksum algebra not claimed)",
+                midx.display()
+            );
             Ok(())
         }
         "write" | "expire" | "repack" => Err(CliError::NotImplemented(format!(
@@ -153,11 +156,11 @@ Usage:
         );
         return Ok(());
     }
-    refuse_unknown_flags(args, &["status", "clear", "diff", "gc", "remaining", "forget"])?;
-    let sub = args
-        .first()
-        .map(String::as_str)
-        .unwrap_or("status");
+    refuse_unknown_flags(
+        args,
+        &["status", "clear", "diff", "gc", "remaining", "forget"],
+    )?;
+    let sub = args.first().map(String::as_str).unwrap_or("status");
     let repo = open_repo()?;
     let rr = repo.git_dir().join("rr-cache");
     match sub {
@@ -367,7 +370,9 @@ pub fn cmd_fast_import(args: &[String]) -> CliResult<()> {
             let mark = parse_mark_line(lines.next())?;
             let (n, data) = parse_data_block(&mut lines)?;
             if data.len() != n {
-                return Err(CliError::Msg("fast-import: blob data length mismatch".into()));
+                return Err(CliError::Msg(
+                    "fast-import: blob data length mismatch".into(),
+                ));
             }
             let format = repo.object_format();
             let obj = RawObject::new(ObjectKind::Blob, data);
@@ -398,11 +403,10 @@ pub fn cmd_fast_import(args: &[String]) -> CliResult<()> {
                     let m: u32 = rest
                         .parse()
                         .map_err(|_| CliError::Msg("fast-import: bad from mark".into()))?;
-                    parent = Some(
-                        *marks
-                            .get(&m)
-                            .ok_or_else(|| CliError::Msg(format!("fast-import: unknown mark :{m}")))?,
-                    );
+                    parent =
+                        Some(*marks.get(&m).ok_or_else(|| {
+                            CliError::Msg(format!("fast-import: unknown mark :{m}"))
+                        })?);
                     lines.next();
                 } else if let Some(rest) = p.strip_prefix("M ") {
                     // M <mode> :<mark> <path>
@@ -443,9 +447,7 @@ pub fn cmd_fast_import(args: &[String]) -> CliResult<()> {
                 gpgsig: None,
                 message: String::from_utf8_lossy(&msg).into_owned(),
             };
-            let payload = commit
-                .encode()
-                .map_err(|e| CliError::Msg(e.to_string()))?;
+            let payload = commit.encode().map_err(|e| CliError::Msg(e.to_string()))?;
             let format = repo.object_format();
             let obj = RawObject::new(ObjectKind::Commit, payload);
             let oid = repo
@@ -614,9 +616,7 @@ pub fn cmd_http_fetch(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-c", "-t", "-a", "-w", "--recover"])?;
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if positional.len() < 2 {
-        return Err(CliError::Usage(
-            "http-fetch <commit-id> <url>".into(),
-        ));
+        return Err(CliError::Usage("http-fetch <commit-id> <url>".into()));
     }
     let _want = &positional[0];
     let url = positional[1].as_str();
@@ -631,7 +631,10 @@ pub fn cmd_http_fetch(args: &[String]) -> CliResult<()> {
 
 /// `arks http-push <remote-url> [<local-ref>]` — legacy HTTP push (subset).
 pub fn cmd_http_push(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--all", "--force", "-v", "--verbose", "-d", "--dry-run"])?;
+    refuse_unknown_flags(
+        args,
+        &["--all", "--force", "-v", "--verbose", "-d", "--dry-run"],
+    )?;
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     let url = positional
         .first()

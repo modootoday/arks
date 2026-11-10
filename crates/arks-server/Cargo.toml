@@ -21,8 +21,13 @@ sha2 = { workspace = true }
 thiserror = { workspace = true }
 x25519-dalek = { workspace = true }
 ed25519-dalek = { workspace = true }
-chacha20poly1305 = { workspace = true }
+chacha20 = { workspace = true }
+poly1305 = { workspace = true }
+subtle = { workspace = true }
 base64 = { workspace = true }
+# Product in-process TLS terminate (B9); operator-supplied PEM — not ops reverse-proxy alone.
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

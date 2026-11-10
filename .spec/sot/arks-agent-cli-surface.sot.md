@@ -54,6 +54,7 @@ Invoked as `arks agent <group|command> …`.
 
 ```text
 arks agent --help
+arks agent chat --message <text> [--message <text> …] [--base-url …] [--model …]
 arks agent review [--pr <n>] [--diff <range>] [--files …] [--post] [--provider …] [--model …]
 arks agent cev-check [--path .spec] [--pr <n>] [--strict] [--json]
 arks agent provider list
@@ -71,6 +72,9 @@ arks agent bot run|status                 # alias-shaped later; may fold into se
 7. **`arks agent provider …`** owns discoverability of Cloudflare / OpenAI / Claude / Grok / Gemini / **openai-compat**.
 8. OpenAI-compat endpoints (Ollama, LocalAI, vLLM, LM Studio, custom) are configured with **`--base-url`** (default local Ollama documented in [[sot:root/arks-agent-llm-providers]]).
 9. `provider test` MUST use native HTTP — never spawn vendor CLIs.
+9a. `chat` is a bounded multi-turn native-HTTP surface. Repeated `--message`
+values are sent in order with prior assistant responses retained; it does not
+enable tool execution or shell invocation.
 
 ### Hub / review posting
 

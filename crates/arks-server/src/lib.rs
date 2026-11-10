@@ -14,8 +14,10 @@ mod hooks;
 mod http;
 mod receive;
 mod serve;
+mod ssh_openssh_chacha;
 mod ssh_serve;
 mod stdio;
+mod tls;
 mod upload;
 mod v2;
 mod walk;
@@ -28,8 +30,8 @@ pub use error::ServerError;
 pub use http::{HttpRequest, HttpResponse, handle_smart_http, handle_smart_http_auth};
 pub use receive::{receive_advertisement, receive_pack, receive_pack_advertisement};
 pub use serve::{
-    ListenRebindSlot, ServeHttpOptions, serve_http, serve_http_with_opts, spawn_loopback,
-    spawn_loopback_with_opts,
+    ListenRebindSlot, ServeHttpOptions, serve_http, serve_http_scheme, serve_http_with_opts,
+    spawn_loopback, spawn_loopback_with_opts,
 };
 pub use ssh_serve::{
     ServeSshOptions, default_authorized_keys_path, default_host_key_path, serve_ssh_listener,
@@ -38,6 +40,9 @@ pub use ssh_serve::{
 pub use stdio::{
     receive_pack_session, receive_pack_stream, upload_pack_session, upload_pack_stream,
 };
+pub use tls::load_server_config;
+/// Operator-supplied in-process TLS server config (B9); avoids naming `rustls` in CLI crates.
+pub type ProductTlsServerConfig = std::sync::Arc<rustls::ServerConfig>;
 pub use upload::{upload_advertisement, upload_pack_advertisement, upload_pack_result};
 pub use v2::{handle_v2_request, v2_capability_advertisement, v2_capability_lines};
 #[cfg(test)]
