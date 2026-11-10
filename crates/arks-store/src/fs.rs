@@ -8,7 +8,7 @@ use crate::{ObjectStore, StoreError};
 use arks_hash::ObjectFormat;
 use arks_object::{ObjectError, RawObject, loose_rel_path, read_loose_hot, write_loose};
 use arks_oid::Oid;
-use arks_pack::{DecodedPack, PackIndex, PackIndexEntry};
+use arks_pack::{DecodedPack, PackIndex, PackIndexEntry, ResolvedObject};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -193,12 +193,7 @@ impl FilesystemGitStore {
         let index = PackIndex::from_entries(format, entries, decoded.checksum)
             .map_err(|e| StoreError::Io(e.to_string()))?;
         let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
-        let mut loaded = HashMap::with_capacity(decoded.objects.len());
-        for resolved in decoded.objects {
-            loaded.insert(resolved.oid, Arc::new(resolved.object));
-        }
-        *self.pack_objects.write().expect("pack_objects") = loaded;
-        *self.packs_loaded.write().expect("packs_loaded") = true;
+        self.install_pack_objects(decoded.objects);
         self.flush_pending_pack()?;
         self.pending_pack = Some(PendingPackPersist {
             pack_path,
@@ -246,13 +241,7 @@ impl FilesystemGitStore {
         let index = PackIndex::from_entries(format, entries, decoded.checksum)
             .map_err(|e| StoreError::Io(e.to_string()))?;
         let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
-        // Fresh pack ingest: replace the map (clone hot path starts empty).
-        let mut loaded = HashMap::with_capacity(decoded.objects.len());
-        for resolved in decoded.objects {
-            loaded.insert(resolved.oid, Arc::new(resolved.object));
-        }
-        *self.pack_objects.write().expect("pack_objects") = loaded;
-        *self.packs_loaded.write().expect("packs_loaded") = true;
+        self.install_pack_objects(decoded.objects);
         if defer_disk {
             // Flush any prior deferred pack before replacing.
             self.flush_pending_pack()?;
@@ -277,15 +266,40 @@ impl FilesystemGitStore {
         Ok(())
     }
 
+    /// Install decoded pack objects into the RAM cache.
+    ///
+    /// Clone hot path starts empty → replace with a pre-sized map. Incremental
+    /// fetch / multi-pack must merge (never wipe prior OIDs).
+    fn install_pack_objects(&self, objects: Vec<ResolvedObject>) {
+        let mut pack_objects = self.pack_objects.write().expect("pack_objects");
+        if pack_objects.is_empty() {
+            let mut loaded = HashMap::with_capacity(objects.len());
+            for resolved in objects {
+                loaded.insert(resolved.oid, Arc::new(resolved.object));
+            }
+            *pack_objects = loaded;
+        } else {
+            pack_objects.reserve(objects.len());
+            for resolved in objects {
+                pack_objects.insert(resolved.oid, Arc::new(resolved.object));
+            }
+        }
+        *self.packs_loaded.write().expect("packs_loaded") = true;
+    }
+
     /// Bulk pack-cache lookup under a single read lock (clone checkout hot path).
     ///
-    /// Returns `None` when any OID misses the in-memory pack map (caller falls
-    /// back to per-OID [`Self::get_shared`]). Overlay / loose are not searched.
+    /// Loads on-disk packs if needed so J-CLONE-PATH (hardlinked pack after
+    /// local copy) still hits the batch Arc path when HEAD/trees were resolved
+    /// from loose without priming `packs_loaded`. Returns `None` when any OID
+    /// misses the in-memory pack map (caller falls back to per-OID
+    /// [`Self::get_shared`]). Overlay / loose are not searched.
     pub fn lookup_pack_cached(&self, oids: &[Oid]) -> Option<Vec<Arc<RawObject>>> {
-        if !*self.packs_loaded.read().expect("packs_loaded") {
+        let _ = self.load_packs_if_needed();
+        let pack = self.pack_objects.read().expect("pack_objects");
+        if pack.is_empty() {
             return None;
         }
-        let pack = self.pack_objects.read().expect("pack_objects");
         let mut out = Vec::with_capacity(oids.len());
         for oid in oids {
             out.push(Arc::clone(pack.get(oid)?));

@@ -250,7 +250,9 @@ fn materialize_jobs(
 /// Worker count for checkout writes.
 ///
 /// Threshold stays 8 (jobs < 8 → serial). Docker Desktop often advertises ≥8
-/// host CPUs; full parallelism thrashed J-CLONE-LOCAL, so cap at 2 there.
+/// host CPUs; 8-way thrash regressed J-CLONE-LOCAL, but pure serial left
+/// J-CLONE-PATH on a 0.52 knife-edge — cap at 2 recovers PATH headroom without
+/// the old full-parallel tax.
 fn checkout_workers(cpus: usize, jobs: usize) -> usize {
     if jobs < 8 || cpus <= 1 {
         return 1;

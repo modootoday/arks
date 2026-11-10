@@ -239,8 +239,9 @@ fn write_http_request(
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    let mut buf = Vec::with_capacity(4096);
-    let mut tmp = [0u8; 8192];
+    // 64KiB matches upload-pack pack frames better than 8KiB on J-CLONE-LOCAL.
+    let mut buf = Vec::with_capacity(64 * 1024);
+    let mut tmp = [0u8; 64 * 1024];
     let header_end;
     loop {
         let n = stream
@@ -258,28 +259,10 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
             return Err(RemoteError::Http("cleartext headers too large".into()));
         }
     }
-    let header_text = String::from_utf8_lossy(&buf[..header_end]);
-    let mut lines = header_text.split("\r\n");
-    let status_line = lines.next().unwrap_or("");
-    let status = status_line
-        .split_whitespace()
-        .nth(1)
-        .and_then(|s| s.parse::<u16>().ok())
-        .unwrap_or(0);
-    let mut content_length: Option<usize> = None;
-    let mut content_type = None;
-    for line in lines {
-        let lower = line.to_ascii_lowercase();
-        if let Some(v) = lower.strip_prefix("content-length:") {
-            content_length = v.trim().parse().ok();
-        }
-        if let Some(v) = lower.strip_prefix("content-type:") {
-            content_type = Some(v.trim().to_string());
-        }
-    }
-    let mut body = buf[header_end..].to_vec();
-    if let Some(len) = content_length {
-        body.reserve(len.saturating_sub(body.len()));
+    let (status, content_length, content_type) = parse_cleartext_headers(&buf[..header_end])?;
+    let body = if let Some(len) = content_length {
+        let mut body = Vec::with_capacity(len);
+        body.extend_from_slice(&buf[header_end..]);
         while body.len() < len {
             let n = stream
                 .read(&mut tmp)
@@ -290,7 +273,9 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
             body.extend_from_slice(&tmp[..n]);
         }
         body.truncate(len);
+        body
     } else {
+        let mut body = buf.split_off(header_end);
         loop {
             let n = stream
                 .read(&mut tmp)
@@ -300,7 +285,8 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
             }
             body.extend_from_slice(&tmp[..n]);
         }
-    }
+        body
+    };
     if !(200..300).contains(&status) {
         let snippet = String::from_utf8_lossy(&body[..body.len().min(512)]);
         return Err(RemoteError::Http(format!("HTTP {status}: {snippet}")));
@@ -314,6 +300,36 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         headers,
         body,
     })
+}
+
+fn parse_cleartext_headers(
+    header_bytes: &[u8],
+) -> Result<(u16, Option<usize>, Option<String>), RemoteError> {
+    let header_text = String::from_utf8_lossy(header_bytes);
+    let mut lines = header_text.split("\r\n");
+    let status_line = lines.next().unwrap_or("");
+    let status = status_line
+        .split_whitespace()
+        .nth(1)
+        .and_then(|s| s.parse::<u16>().ok())
+        .unwrap_or(0);
+    let mut content_length = None;
+    let mut content_type = None;
+    for line in lines {
+        if line.is_empty() {
+            continue;
+        }
+        let (name, value) = match line.split_once(':') {
+            Some(pair) => pair,
+            None => continue,
+        };
+        if name.eq_ignore_ascii_case("content-length") {
+            content_length = value.trim().parse().ok();
+        } else if name.eq_ignore_ascii_case("content-type") {
+            content_type = Some(value.trim().to_string());
+        }
+    }
+    Ok((status, content_length, content_type))
 }
 
 fn find_header_end(buf: &[u8]) -> Option<usize> {
