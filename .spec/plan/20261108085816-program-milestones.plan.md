@@ -87,7 +87,7 @@ Executable **Wave-1** checklist for **M1 start** only. Canonical milestone ident
 | W1.1 | Root virtual Cargo workspace | scaffolding | Gap-fill/re-verify |
 | W1.2 | `crates/arks-hash` | crate | Unit SoT [[sot:root/arks-hash]] |
 | W1.3 | `crates/arks-oid` | crate | Unit SoT [[sot:root/arks-oid]] |
-| W1.4 | Fixture intent for OID / blob parity | docs/fixtures | `fixtures/m1/` |
+| W1.4 | Fixture intent for OID / blob parity | docs/fixtures | `verify/fixtures/m1/` |
 | W1.5 | Clean-room / verify stub | verify stub | `verify/` + `images.lock.json` |
 | W1.6 | `crates/arks-object` | crate | Unit SoT [[sot:root/arks-object]] |
 | W1.7 | Update crate-architecture `rel.governs` | SoT | As needed |

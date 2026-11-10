@@ -22,7 +22,7 @@ rel:
 
 ## Context
 
-Milestone **M10** (default lease capability + optional high-concurrency valve / Phase **E**) under program roadmap **v0.3.1+**. This exit is the **lease capability** bar — it does **not** redefine **M9** CLI-parity production. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m10.md`. Unit SoT: [[sot:root/arks-lease]]. Depends on M9 [[evidence:root/20261108150000]].
+Milestone **M10** (default lease capability + optional high-concurrency valve / Phase **E**) under program roadmap **v0.3.1+**. This exit is the **lease capability** bar — it does **not** redefine **M9** CLI-parity production. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m10.md`. Unit SoT: [[sot:root/arks-lease]]. Depends on M9 [[evidence:root/20261108150000]].
 
 Host `cargo test -p arks-lease` results are **advisory only**.
 
@@ -47,16 +47,16 @@ Host `cargo test -p arks-lease` results are **advisory only**.
 |------|---------|---------|-------|
 | **gix-exit** | `cargo metadata` graph scan in `run-g11.sh` | **PASS** | zero `gix` / `gitoxide` edges |
 | **no-CELIR** | metadata scan | **PASS** | zero `celir` edges |
-| **G11** | `docker compose … run --rm g11` | **PASS** | `arks-lease` **6** + `verify/g11` **2** |
-| **G14** regression | (embedded) | **PASS** | `verify/g14` **9** |
-| **G7** regression | (embedded) | **PASS** | `verify/g7` **3** |
+| **G11** | `docker compose … run --rm g11` | **PASS** | `arks-lease` **6** + `verify/gates/g11` **2** |
+| **G14** regression | (embedded) | **PASS** | `verify/gates/g14` **9** |
+| **G7** regression | (embedded) | **PASS** | `verify/gates/g7` **3** |
 | Unit Specfold | `spec check` | **PASS** | (recorded at closeout) |
 
 Dual-path proof: `WriterMode::GitCompat` default; `HighConcurrency` → `HighConcurrencyRefused`. Lease ≠ skip Git locks: `lease_held_still_honors_git_ref_lock` (competing `*.lock` → `LockFailed` while lease held).
 
 ## Bug simulation (fixed / avoided)
 
-1. `verify/scripts/run-g11.sh` LF-only (CRLF `set: pipefail` class). See `verify/g11/BUGSIM.md`.
+1. `verify/scripts/run-g11.sh` LF-only (CRLF `set: pipefail` class). See `verify/gates/g11/BUGSIM.md`.
 2. HighConcurrency must refuse — no silent N-way.
 3. Lease must not bypass ref locks.
 

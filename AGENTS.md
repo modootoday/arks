@@ -45,10 +45,10 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Remotes (generic client + GitHub-class verify) / Git server role | `.spec/sot/remote-host-compatibility-surface.sot.md` + M11 plan `.spec/plan/*-m11-*.plan.md` |
 | Interop test matrix (G0–G37; G33 CRED / G34 shared-index / G35 depth / G36 Basic / G37 gpgsig SSH) | `.spec/sot/interop-test-matrix.sot.md` |
 | Clean-room verification | `.spec/sot/product-verification-clean-room.sot.md` + skill `verify-clean-room` |
-| Journey-compare (G16 func + timing; PF5 partial 7/8 honesty) | `.spec/sot/clean-room-journey-compare.sot.md` + `verify/matrix-journey.md` |
-| Live private forge journeys (G28 opt-in Claimed) | residual register + `.spec/sot/g28-live-private-arks-journeys.sot.md` + `verify/matrix-g28.md` |
-| Credential helper / askpass (G33) | `.spec/sot/credential-helper-askpass.sot.md` + `verify/matrix-g33.md` |
-| Shared-index N-way (M26 / G34) | `.spec/sot/shared-index-nway-clean-room.sot.md` + `verify/matrix-g34.md` |
+| Journey-compare (G16 func + timing; PF5 partial 7/8 honesty) | `.spec/sot/clean-room-journey-compare.sot.md` + `verify/matrices/matrix-journey.md` |
+| Live private forge journeys (G28 opt-in Claimed) | residual register + `.spec/sot/g28-live-private-arks-journeys.sot.md` + `verify/matrices/matrix-g28.md` |
+| Credential helper / askpass (G33) | `.spec/sot/credential-helper-askpass.sot.md` + `verify/matrices/matrix-g33.md` |
+| Shared-index N-way (M26 / G34) | `.spec/sot/shared-index-nway-clean-room.sot.md` + `verify/matrices/matrix-g34.md` |
 | CELIR dual-path / index-only opt-in | `.spec/sot/storage-celir-boundary.sot.md` + ADR `20261110052030` + `.spec/sot/celir-index-dual-path.sot.md` + skill `review-celir-boundary` |
 | Lease / concurrency intent (incl. L3 Claimed shape; shared-index = M26) | `.spec/sot/lease-concurrency-intent.sot.md` + skill `review-lease` |
 | Multi-agent Git concurrency scenarios (catalog; Deferred=0) | `.spec/sot/multi-agent-git-concurrency-scenarios.sot.md` + `.spec/research/*-multi-agent-git-concurrency*.research.md` |

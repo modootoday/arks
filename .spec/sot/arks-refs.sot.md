@@ -24,7 +24,7 @@ rel:
 
 Version 0.1.2. Unit SoT for Ring 3 Git refs under a filesystem `GIT_DIR` ([[plan:root/20261108090648]], M3 Phase R under [[sot:root/program-roadmap]] **v0.3.1**).
 
-**Pre-restart caution:** historical or host-only M3 trees are **not** product-verified; exit needs a clean-room receipt per [[sot:root/product-verification-clean-room]] and `verify/matrix-m3.md`.
+**Pre-restart caution:** historical or host-only M3 trees are **not** product-verified; exit needs a clean-room receipt per [[sot:root/product-verification-clean-room]] and `verify/matrices/matrix-m3.md`.
 
 ## Rule
 
@@ -44,6 +44,6 @@ Refs are the mutable pointer layer between repo layout and objects; isolating re
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-refs`.
-2. Clean-room **G2** refs-roundtrip via `verify/scripts/run-g2.sh` / compose service `g2` (`verify/matrix-m3.md`); carrying receipt: [[evidence:root/20261108191033]]. Host green alone is not product-verified ([[sot:root/product-verification-clean-room]]).
+2. Clean-room **G2** refs-roundtrip via `verify/scripts/run-g2.sh` / compose service `g2` (`verify/matrices/matrix-m3.md`); carrying receipt: [[evidence:root/20261108191033]]. Host green alone is not product-verified ([[sot:root/product-verification-clean-room]]).
 3. `spec check` clean for this SoT.
 4. Workspace `cargo metadata` shows no `gix` edge on `arks-refs`.

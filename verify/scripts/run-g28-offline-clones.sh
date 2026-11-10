@@ -11,10 +11,10 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/g28/out
-WORK="${ARKS_G28_OFFLINE_WORK:-$ROOT/verify/g28/out/offline-work}"
-RECEIPT="${ARKS_G28_OFFLINE_RECEIPT_OUT:-$ROOT/verify/g28/out/offline-clones-receipt.json}"
-RESULTS_JSON="${ARKS_G28_OFFLINE_RESULTS_OUT:-$ROOT/verify/g28/out/offline-clones-journeys.json}"
+mkdir -p verify/gates/g28/out
+WORK="${ARKS_G28_OFFLINE_WORK:-$ROOT/verify/gates/g28/out/offline-work}"
+RECEIPT="${ARKS_G28_OFFLINE_RECEIPT_OUT:-$ROOT/verify/gates/g28/out/offline-clones-receipt.json}"
+RESULTS_JSON="${ARKS_G28_OFFLINE_RESULTS_OUT:-$ROOT/verify/gates/g28/out/offline-clones-journeys.json}"
 REVISION="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"

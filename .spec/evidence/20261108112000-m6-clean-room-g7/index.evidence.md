@@ -23,7 +23,7 @@ rel:
 
 ## Context
 
-Milestone **M6** (Remote client / Phase H) under program roadmap **v0.3.1+**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m6.md`. Unit SoTs: [[sot:root/arks-remote]], [[sot:root/arks]]. Depends on M5 [[evidence:root/20261108104837]].
+Milestone **M6** (Remote client / Phase H) under program roadmap **v0.3.1+**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m6.md`. Unit SoTs: [[sot:root/arks-remote]], [[sot:root/arks]]. Depends on M5 [[evidence:root/20261108104837]].
 
 Generic smart-HTTP **client** for any claimed peer; GitHub-class hosts are the verify-peer label only ([[sot:root/remote-host-compatibility-surface]]). Host `cargo test` results are **advisory only**.
 
@@ -48,17 +48,17 @@ Generic smart-HTTP **client** for any claimed peer; GitHub-class hosts are the v
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **gix-exit** | `cargo metadata` graph scan in `run-g7.sh` | **PASS** | zero `gix` / `gitoxide` edges |
-| **G7** | `docker compose -f verify/docker-compose.yml run --rm g7` | **PASS** | `verify/g7` smart-HTTP suite **3** (help/refuse, remote config, clone/fetch/push loopback) |
-| **G6** regression | (embedded in `run-g7.sh`) | **PASS** | `verify/g6` **6** |
-| **G3** regression | (embedded) | **PASS** | `verify/g3` **3** |
-| **G4** regression | (embedded) | **PASS** | `verify/g4` **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded) | **PASS** | `verify/g2` **9** |
-| **G10** regression | (embedded) | **PASS** | `verify/g10` **7** |
-| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/g1` **6** |
+| **G7** | `docker compose -f verify/docker-compose.yml run --rm g7` | **PASS** | `verify/gates/g7` smart-HTTP suite **3** (help/refuse, remote config, clone/fetch/push loopback) |
+| **G6** regression | (embedded in `run-g7.sh`) | **PASS** | `verify/gates/g6` **6** |
+| **G3** regression | (embedded) | **PASS** | `verify/gates/g3` **3** |
+| **G4** regression | (embedded) | **PASS** | `verify/gates/g4` **3** |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
+| **G2** regression | (embedded) | **PASS** | `verify/gates/g2` **9** |
+| **G10** regression | (embedded) | **PASS** | `verify/gates/g10` **7** |
+| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
 | Unit Specfold | `spec check` | **PASS** | 0 errors / 0 warnings |
 
-Combinatorics covered (automated): M6-C01…C15 per `verify/matrix-m6.md`. Residual Open: M6-C16 G8 live smoke; M6-C17 G9 filters; M6-C18 SSH.
+Combinatorics covered (automated): M6-C01…C15 per `verify/matrices/matrix-m6.md`. Residual Open: M6-C16 G8 live smoke; M6-C17 G9 filters; M6-C18 SSH.
 
 ## Bug simulation (fixed)
 

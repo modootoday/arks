@@ -45,6 +45,6 @@ The index is the working-tree cache shared with stock Git. Isolating claimed ver
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-index`.
-2. Clean-room **index r/w** rows in `verify/matrix-m3.md` (portion toward G3; not full G3) vs in-image stock Git; carrying receipt: [[evidence:root/20261108191033]]. Host green alone is not product-verified ([[sot:root/product-verification-clean-room]]).
+2. Clean-room **index r/w** rows in `verify/matrices/matrix-m3.md` (portion toward G3; not full G3) vs in-image stock Git; carrying receipt: [[evidence:root/20261108191033]]. Host green alone is not product-verified ([[sot:root/product-verification-clean-room]]).
 3. `spec check` clean for this SoT.
 4. Workspace `cargo metadata` shows no `gix` edge on `arks-index`.

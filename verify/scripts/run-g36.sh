@@ -31,5 +31,5 @@ cargo build -p arks
 echo "G36: arks-server unit"
 cargo test -p arks-server "$@"
 echo "G36: HTTP Basic suite"
-cargo test --manifest-path verify/g36/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g36/Cargo.toml "$@"
 echo "G36: PASS"

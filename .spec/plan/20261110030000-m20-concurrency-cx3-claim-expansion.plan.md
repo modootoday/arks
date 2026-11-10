@@ -70,7 +70,7 @@ All twelve IDs **PASS**. Aggregate **47**/47 dual PASS. Evidence: [[evidence:roo
 
 1. SoT/plan/matrix/roadmap M20; catalog disposition recount; `spec check`.
 2. Engine/CLI mitigations for Cx-3 oracles only.
-3. Extend `verify/g17` + `run-g17.sh` + `verify/matrix-g17.md`.
+3. Extend `verify/gates/g17` + `run-g17.sh` + `verify/matrices/matrix-g17.md`.
 4. Docker G17 receipt + residual honesty.
 
 ## Out of scope

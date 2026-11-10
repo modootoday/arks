@@ -18,7 +18,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G22** (`verify/scripts/run-g22.sh` / compose `g22`) |
-| Matrix | `verify/matrix-g22.md` |
+| Matrix | `verify/matrices/matrix-g22.md` |
 | Milestone | **M24** index-contention verified (clean-room) |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |

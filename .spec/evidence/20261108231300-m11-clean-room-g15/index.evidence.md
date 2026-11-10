@@ -23,7 +23,7 @@ rel:
 
 ## Context
 
-Milestone **M11** (Git server role / Phase **Sv**) under program roadmap **v0.3.1+**. This exit is the **production-server** bar — it does **not** redefine **M9** CLI-parity production. **M10 lease is not a prerequisite.** Authoritative venue: Docker clean-room under `verify/`. Matrix: `verify/matrix-m11.md`. Unit SoT: [[sot:root/arks-server]]. Depends on M9 [[evidence:root/20261108150000]].
+Milestone **M11** (Git server role / Phase **Sv**) under program roadmap **v0.3.1+**. This exit is the **production-server** bar — it does **not** redefine **M9** CLI-parity production. **M10 lease is not a prerequisite.** Authoritative venue: Docker clean-room under `verify/`. Matrix: `verify/matrices/matrix-m11.md`. Unit SoT: [[sot:root/arks-server]]. Depends on M9 [[evidence:root/20261108150000]].
 
 Host `cargo test -p arks-server` / host G15 runs are **advisory only**.
 
@@ -49,10 +49,10 @@ Host `cargo test -p arks-server` / host G15 runs are **advisory only**.
 | **gix-exit** | metadata scan in `run-g15.sh` | **PASS** | zero `gix` / `gitoxide` |
 | **no-CELIR** | metadata scan | **PASS** | |
 | **no lease dep** | `arks-server` ↛ `arks-lease` | **PASS** | lease not required |
-| **G15** | `docker compose … run --rm g15` | **PASS** | stock `git` clone/fetch/push + cap honesty; `verify/g15` **3** + `arks-server` **4** |
+| **G15** | `docker compose … run --rm g15` | **PASS** | stock `git` clone/fetch/push + cap honesty; `verify/gates/g15` **3** + `arks-server` **4** |
 | **G14** regression | (embedded) | **PASS** | **9** |
 | **G7** regression | (embedded) | **PASS** | **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/g5` **4** + `arks-protocol` |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
 
 Wave Sv CLI shipped: `arks upload-pack`, `arks receive-pack`, `arks serve-http`, `arks http-backend`.
 
@@ -60,7 +60,7 @@ Honest caps claimed: upload-pack (`ofs-delta`, `side-band-64k`, `no-progress`, `
 
 ## Bug simulation (fixed / avoided)
 
-1. `run-g15.sh` LF-only. See `verify/g15/BUGSIM.md`.
+1. `run-g15.sh` LF-only. See `verify/gates/g15/BUGSIM.md`.
 2. Prefer native `arks.exe` over Linux ELF in shared target dirs on Windows host advisory runs.
 3. Dumb-HTTP-only forbidden as sole path — suite uses smart HTTP.
 

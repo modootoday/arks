@@ -14,9 +14,9 @@ echo "G10: CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-2}"
 
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 
-echo "G10: facade oracle (verify/g10)"
-cargo test --manifest-path verify/g10/Cargo.toml "$@"
+echo "G10: facade oracle (verify/gates/g10)"
+cargo test --manifest-path verify/gates/g10/Cargo.toml "$@"
 
 echo "G10: G1 regression (M2 facade must not break loose-object interop)"
 cargo test -p arks-object --test g1_oracle "$@"
-cargo test --manifest-path verify/g1/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g1/Cargo.toml "$@"

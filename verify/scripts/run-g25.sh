@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # G25 — CELIR index scale clean-room (N=256 required; 384/512 stretch under OOM policy).
-# SoT: celir-index-scale-clean-room; matrix: verify/matrix-g25.md
+# SoT: celir-index-scale-clean-room; matrix: verify/matrices/matrix-g25.md
 set -euo pipefail
 
 ROOT="${ARKS_G25_ROOT:-/workspaces/gir}"
 cd "$ROOT"
 
-mkdir -p verify/g25
-G25_LOCK="verify/g25/.run.lock.dir"
+mkdir -p verify/gates/g25
+G25_LOCK="verify/gates/g25/.run.lock.dir"
 if ! mkdir "$G25_LOCK" 2>/dev/null; then
   if [[ -f "$G25_LOCK/owner" ]]; then
     age=$(( $(date +%s) - $(stat -c %Y "$G25_LOCK/owner" 2>/dev/null || echo 0) ))
@@ -50,8 +50,8 @@ if cargo tree -p arks-store --edges normal 2>/dev/null | grep -Ei 'celir' >/dev/
   exit 1
 fi
 
-mkdir -p verify/g25/out
-export ARKS_G25_RECEIPT_OUT="${ARKS_G25_RECEIPT_OUT:-$ROOT/verify/g25/out/receipt.json}"
+mkdir -p verify/gates/g25/out
+export ARKS_G25_RECEIPT_OUT="${ARKS_G25_RECEIPT_OUT:-$ROOT/verify/gates/g25/out/receipt.json}"
 export ARKS_G25_DC_ROOT="$DC_ROOT"
 # Stretch tiers may be skipped via env if prior OOM; required N=256 always runs.
 export ARKS_G25_STRETCH="${ARKS_G25_STRETCH:-1}"
@@ -65,7 +65,7 @@ import json, os, subprocess, time
 n_pass = [256]
 stretch = {}
 for key, n in (("n384", 384), ("n512", 512)):
-    path = os.path.join(os.environ.get("ARKS_G25_ROOT", "/workspaces/gir"), "verify/g25/out", f"{key}.status")
+    path = os.path.join(os.environ.get("ARKS_G25_ROOT", "/workspaces/gir"), "verify/gates/g25/out", f"{key}.status")
     if os.path.isfile(path):
         stretch[str(n)] = open(path, encoding="utf-8").read().strip()
         if stretch[str(n)] == "PASS":

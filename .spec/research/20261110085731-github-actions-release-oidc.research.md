@@ -187,7 +187,7 @@ GitHub Actions job logs show **Annotations** when a `runs-on` label points at a 
 
 ### Venue law (arks)
 
-- **Authoritative comparative timing** (G16 record + G19 `arks_median ≤ 0.8× git_median` allow-list): Docker clean-room only ([[sot:root/clean-room-journey-compare]], [[sot:root/product-verification-clean-room]]). Compose services: `g16` (`verify/scripts/run-g16.sh`), `g19` (`verify/scripts/run-g19.sh`); matrices `verify/matrix-journey.md`, `verify/matrix-g19.md`.
+- **Authoritative comparative timing** (G16 record + G19 `arks_median ≤ 0.8× git_median` allow-list): Docker clean-room only ([[sot:root/clean-room-journey-compare]], [[sot:root/product-verification-clean-room]]). Compose services: `g16` (`verify/scripts/run-g16.sh`), `g19` (`verify/scripts/run-g19.sh`); matrices `verify/matrices/matrix-journey.md`, `verify/matrices/matrix-g19.md`.
 - **GHA hosted runners** are shared-pool, multi-tenant, OS-image-variable machines. Suitable for **compile/test**, not for “verified faster than Git” or G19 pass/fail ([GitHub-hosted runners](https://docs.github.com/en/actions/concepts/runners/github-hosted-runners)).
 - Product-hotspot research beyond M17 lives separately in [[research:root/20261109125438]] — that note is **not** a GHA perf-CI design; this section owns CI venue honesty.
 
@@ -236,7 +236,7 @@ GitHub Actions job logs show **Annotations** when a `runs-on` label points at a 
 | Events that trigger workflows (`schedule`, `workflow_dispatch`) | https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows | Optional advisory cron / manual smoke shapes |
 | arks clean-room SoT | [[sot:root/product-verification-clean-room]] | Host/GHA green ≠ product verified |
 | arks journey-compare SoT | [[sot:root/clean-room-journey-compare]] | `run.venue` = `clean-room` vs `host-advisory` |
-| G19 matrix | `verify/matrix-g19.md` | Authoritative comparative bar + sole Docker `g19` |
+| G19 matrix | `verify/matrices/matrix-g19.md` | Authoritative comparative bar + sole Docker `g19` |
 
 ---
 

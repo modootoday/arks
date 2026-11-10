@@ -7,7 +7,7 @@ updated: 2026-11-10T05:49:00Z
 tags: [celir, indexing-service, l3, highconcurrency, g24, m24, m23, clean-room, joint, lease]
 verify: clean-room
 rel:
-  governs: [verify/g24, verify/scripts/run-g24.sh, verify/matrix-g24.md]
+  governs: [verify/gates/g24, verify/scripts/run-g24.sh, verify/matrices/matrix-g24.md]
   depends_on:
     - sot:root/lease-concurrency-intent
     - adr:root/20261109194200
@@ -38,8 +38,8 @@ Version **0.1.0**. Normative Docker clean-room gate **G24** proving **WriterMode
 
 ### Gate identity
 
-1. Gate ID **G24** `l3-celir-index-joint`. Matrix: `verify/matrix-g24.md`.
-2. G11-L3 (`verify/matrix-l3.md`) stays CELIR-free. G24 is the **successor joint** gate — additive.
+1. Gate ID **G24** `l3-celir-index-joint`. Matrix: `verify/matrices/matrix-g24.md`.
+2. G11-L3 (`verify/matrices/matrix-l3.md`) stays CELIR-free. G24 is the **successor joint** gate — additive.
 3. Host greens MUST NOT authorize joint Verified.
 
 ### Assertions (PASS)

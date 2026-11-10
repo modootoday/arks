@@ -503,7 +503,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Close an **additional explicit** concurrency catalog claim-set (Cx-1) of high-value local filesystem races via Docker **G17** induce-compare. Does **not** assert the ~221 catalog is solved. |
 | **Entry** | M12 G17 Cm-1..Cm-3 Done; prefer after M13 claimed-set historical close. |
 | **Exit** | Docker G17 PASS for every Cx-1 ID + Cm-1..Cm-3 regression; evidence receipt; residual honesty for unclaimed IDs. |
-| **Linked** | Phase **Cx**; Gate **G17** (extended); plan [[plan:root/20261110010000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17** (extended); plan [[plan:root/20261110010000]]; matrix `verify/matrices/matrix-g17.md` |
 | **First slice (Cx-1)** | REF-007, LOCK-001, WT-002, WT-004, SEQ-001, SEQ-002, SEQ-003, REF-018, MISC-012, TOCTOU-005 |
 | **Non-goals** | Reopening M12/M13 exits; L3; CELIR; G8/G9; inventing G22; “all races fixed” language; host-only Done. |
 | **Status** | **Closed** — Cx-1 G17 **23**/23 PASS ([[evidence:root/20261110010000]]); Cx-2 G17 **35**/35 PASS (12 new + 23 regression; [[evidence:root/20261110020000]]). Catalog disposition register baseline: bare Open **0** (Claimed 42 unique + N/A 9 + Closed-deferred 170). Does **not** mean 221 races solved. |
@@ -515,7 +515,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote researched Closed-deferred mitigate IDs (Cx-3) via Docker **G17** induce-compare. Honesty: not “221 solved.” |
 | **Entry** | M19 Cx-2 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-3 ID + Cm/Cx-1/Cx-2 regression (**47**/47); evidence; disposition recount (Claimed 54 / deferred 158). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110030000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110030000]]; matrix `verify/matrices/matrix-g17.md` |
 | **Status** | **Closed** — Cx-3 G17 **47**/47 PASS (12 new + 35 regression; [[evidence:root/20261110030000]]). Disposition: Claimed **54** unique + N/A **9** + Closed-deferred **158**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-4 claim expansion
@@ -525,7 +525,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-4) via Docker **G17** induce-compare. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-3 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-4 ID + prior regression (**59**/59); evidence; disposition recount (Claimed 66 / deferred 146). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110040000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110040000]]; matrix `verify/matrices/matrix-g17.md` |
 | **Status** | **Closed** — Cx-4 G17 **59**/59 PASS (12 new + 47 regression; [[evidence:root/20261110040000]]). Disposition: Claimed **66** unique + N/A **9** + Closed-deferred **146**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-5 claim expansion
@@ -535,7 +535,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-5) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-4 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-5 ID + prior regression (**71**/71); evidence; disposition recount (Claimed 78 / deferred 134). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110050000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110050000]]; matrix `verify/matrices/matrix-g17.md` |
 | **Status** | **Closed** — Cx-5 G17 **71**/71 PASS (12 new + 59 regression; [[evidence:root/20261110050000]]). Disposition: Claimed **78** unique + N/A **9** + Closed-deferred **134**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-6 claim expansion
@@ -545,7 +545,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-6) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-5 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-6 ID + prior regression (**83**/83); evidence; disposition recount (Claimed 90 / deferred 122). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110060000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110060000]]; matrix `verify/matrices/matrix-g17.md` |
 | **Status** | **Closed** — Cx-6 G17 **83**/83 PASS (12 new + 71 regression; [[evidence:root/20261110060000]]). Disposition: Claimed **90** unique + N/A **9** + Closed-deferred **122**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-7 claim expansion
@@ -555,7 +555,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-7) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-6 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-7 ID + prior regression (**95**/95); evidence; disposition recount (Claimed 102 / deferred 110). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110070000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110070000]]; matrix `verify/matrices/matrix-g17.md` |
 | **Status** | **Closed** — Cx-7 G17 **95**/95 PASS (12 new + 83 regression; [[evidence:root/20261110070000]]). Disposition: Claimed **102** unique + N/A **9** + Closed-deferred **110**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-8 claim expansion
@@ -565,7 +565,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-8) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-7 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-8 ID + prior regression (**107**/107); evidence; disposition recount (Claimed 114 / deferred 98). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110080000]]; matrix `verify/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110080000]]; matrix `verify/matrices/matrix-g17.md` |
 | **Status** | **Closed** — Cx-8 G17 **107**/107 PASS (12 new + 95 regression; [[evidence:root/20261110080000]]). Disposition: Claimed **114** unique + N/A **9** + Closed-deferred **98**. Does **not** mean 221 races solved. Remaining bucket A Docker-induce-thin → prefer Cd-4. |
 
 ### M20 — Concurrency Cd-4 claim expansion
@@ -575,7 +575,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote researched Closed-deferred differentiate IDs (Cd-4) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-8 Done (bucket A Docker-induce-thin); research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-4 ID + Cd-1..Cd-3 regression (**24**/24); evidence; disposition recount (Claimed 126 / deferred 86). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110090000]]; matrix `verify/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110090000]]; matrix `verify/matrices/matrix-g18.md` |
 | **Status** | **Closed** — Cd-4 G18 **24**/24 PASS (12 new + 12 regression; [[evidence:root/20261110090000]]). Disposition: Claimed **126** unique + N/A **9** + Closed-deferred **86**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-5 claim expansion
@@ -585,7 +585,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred differentiate IDs (Cd-5) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-4 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-5 ID + Cd-1..Cd-4 regression (**36**/36); evidence; disposition recount (Claimed 138 / deferred 74). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110100000]]; matrix `verify/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110100000]]; matrix `verify/matrices/matrix-g18.md` |
 | **Status** | **Closed** — Cd-5 G18 **36**/36 PASS (12 new + 24 regression; [[evidence:root/20261110100000]]). Disposition: Claimed **138** unique + N/A **9** + Closed-deferred **74**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-6 claim expansion
@@ -595,7 +595,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred differentiate IDs (Cd-6) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-5 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-6 ID + Cd-1..Cd-5 regression (**48**/48); evidence; disposition recount (Claimed 150 / deferred 62). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110110000]]; matrix `verify/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110110000]]; matrix `verify/matrices/matrix-g18.md` |
 | **Status** | **Closed** — Cd-6 G18 **48**/48 PASS (12 new + 36 regression; [[evidence:root/20261110110000]]). Disposition: Claimed **150** unique + N/A **9** + Closed-deferred **62**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-7 claim expansion
@@ -605,7 +605,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred differentiate IDs (Cd-7) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-6 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-7 ID + Cd-1..Cd-6 regression (**60**/60); evidence; disposition recount (Claimed 162 / deferred 50). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110120000]]; matrix `verify/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110120000]]; matrix `verify/matrices/matrix-g18.md` |
 | **Status** | **Closed** — Cd-7 G18 **60**/60 PASS (12 new + 48 regression; [[evidence:root/20261110120000]]). Disposition: Claimed **162** unique + N/A **9** + Closed-deferred **50**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-8 claim expansion
@@ -615,7 +615,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote last researched bucket B leftovers (PERF coordination + CFG-002 + AGENT-004 NFS honesty) via Docker **G18**. Absolute PERF SLOs stay M14/G19. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-7 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-8 ID + Cd-1..Cd-7 regression (**72**/72); evidence; disposition recount (Claimed 174 / deferred 38); bucket B exhausted. |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110130000]]; matrix `verify/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110130000]]; matrix `verify/matrices/matrix-g18.md` |
 | **Status** | **Closed** — Cd-8 G18 **72**/72 PASS (12 new + 60 regression; [[evidence:root/20261110130000]]). Disposition: Claimed **174** unique + N/A **9** + Closed-deferred **38** (migrated to **M21 work queue**). Bucket B exhausted ≠ catalog Done. Does **not** mean 221 races solved. |
 
 ### M21 — Full catalog Deferred=0 (Phase Dz)

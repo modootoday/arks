@@ -7,7 +7,7 @@ updated: 2026-11-09T20:55:07Z
 tags: [clean-room, branch, pr-sim, refs, merge, lease, g26, concurrency]
 verify: clean-room
 rel:
-  governs: [verify/g26, verify/scripts/run-g26.sh, verify/matrix-g26.md]
+  governs: [verify/gates/g26, verify/scripts/run-g26.sh, verify/matrices/matrix-g26.md]
   depends_on:
     - sot:root/product-verification-clean-room
     - sot:root/interop-test-matrix
@@ -21,7 +21,7 @@ rel:
 
 # Local branch + synthetic PR clean-room
 
-Version **0.1.0**. Normative Docker clean-room gate **G26** for **local** thousands-class branch / synthetic PR-ref scale and concurrent merge workers under `arks-lease`. Authority: [[sot:root/product-verification-clean-room]]. Lease: [[sot:root/lease-concurrency-intent]]. Matrix: `verify/matrix-g26.md`. Plan: [[plan:root/20261109205507]].
+Version **0.1.0**. Normative Docker clean-room gate **G26** for **local** thousands-class branch / synthetic PR-ref scale and concurrent merge workers under `arks-lease`. Authority: [[sot:root/product-verification-clean-room]]. Lease: [[sot:root/lease-concurrency-intent]]. Matrix: `verify/matrices/matrix-g26.md`. Plan: [[plan:root/20261109205507]].
 
 ## Scope
 
@@ -72,7 +72,7 @@ Multi-agent workflows often look like “thousands of branches / PR heads conten
 
 ## Verification
 
-1. Docker `compose … run --rm g26` PASS + receipt under `verify/g26/out/`.
+1. Docker `compose … run --rm g26` PASS + receipt under `verify/gates/g26/out/`.
 2. Evidence stamp under `.spec/evidence/` cites actual N and tip SHA.
 3. Residual / roadmap rows say **local PR-sim verified** only with G26 receipt; GitHub deferred remains explicit.
 4. `spec check` clean for this SoT and [[plan:root/20261109205507]].

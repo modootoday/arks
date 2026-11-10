@@ -7,7 +7,7 @@ updated: 2026-11-10T05:49:00Z
 tags: [celir, indexing-service, scale, g25, m24, clean-room, contention, oom]
 verify: clean-room
 rel:
-  governs: [verify/g25, verify/scripts/run-g25.sh, verify/matrix-g25.md]
+  governs: [verify/gates/g25, verify/scripts/run-g25.sh, verify/matrices/matrix-g25.md]
   depends_on:
     - sot:root/celir-index-contention-clean-room
     - sot:root/celir-index-dual-path

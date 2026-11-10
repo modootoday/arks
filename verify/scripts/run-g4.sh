@@ -14,15 +14,15 @@ echo "G4: CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-2}"
 
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 
-echo "G4: pack/idx oracle (verify/g4)"
-cargo test --manifest-path verify/g4/Cargo.toml "$@"
+echo "G4: pack/idx oracle (verify/gates/g4)"
+cargo test --manifest-path verify/gates/g4/Cargo.toml "$@"
 
-echo "G4: G5 protocol-offline (verify/g5 + arks-protocol)"
-cargo test --manifest-path verify/g5/Cargo.toml "$@"
+echo "G4: G5 protocol-offline (verify/gates/g5 + arks-protocol)"
+cargo test --manifest-path verify/gates/g5/Cargo.toml "$@"
 cargo test -p arks-protocol "$@"
 
 echo "G4: G2/G10/G1 regression (M4 must not break refs/index/facade/loose-object interop)"
-cargo test --manifest-path verify/g2/Cargo.toml "$@"
-cargo test --manifest-path verify/g10/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g2/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g10/Cargo.toml "$@"
 cargo test -p arks-object --test g1_oracle "$@"
-cargo test --manifest-path verify/g1/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g1/Cargo.toml "$@"

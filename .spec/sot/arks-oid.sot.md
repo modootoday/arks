@@ -14,7 +14,7 @@ rel:
 
 # arks-oid unit
 
-Version 0.1.1. Normative intent for **`crates/arks-oid`**: a Ring-0 newtype for Git **object IDs (OIDs)** — fixed-width digests for SHA-1 (20 bytes) and SHA-256 (32 bytes). This crate **does not** hash object bytes, read loose files, or parse object payloads; identity **computation** is [[sot:root/core-object-model]] / `arks-hash`. **Representation, validation, and hex interchange** are in scope. Under [[sot:root/program-roadmap]] **v0.3.1**, M1 is **restart / re-verify** ([[plan:root/20261108090646]]); oracle rows in `fixtures/m1/` support unit tests; product OID claims remain clean-room authoritative ([[sot:root/product-verification-clean-room]]).
+Version 0.1.1. Normative intent for **`crates/arks-oid`**: a Ring-0 newtype for Git **object IDs (OIDs)** — fixed-width digests for SHA-1 (20 bytes) and SHA-256 (32 bytes). This crate **does not** hash object bytes, read loose files, or parse object payloads; identity **computation** is [[sot:root/core-object-model]] / `arks-hash`. **Representation, validation, and hex interchange** are in scope. Under [[sot:root/program-roadmap]] **v0.3.1**, M1 is **restart / re-verify** ([[plan:root/20261108090646]]); oracle rows in `verify/fixtures/m1/` support unit tests; product OID claims remain clean-room authoritative ([[sot:root/product-verification-clean-room]]).
 
 Primary: [gitformat-loose](https://git-scm.com/docs/gitformat-loose) — object id is the hash of **uncompressed** bytes `type SP size NUL` + payload ([[research:root/20261108071913]]).
 
@@ -37,7 +37,7 @@ Primary: [gitformat-loose](https://git-scm.com/docs/gitformat-loose) — object 
 
 ### Known vectors (M1 advisory / unit tests)
 
-These SHA-1 OIDs MUST match stock Git for the cited uncompressed headers + payloads (see `fixtures/m1/` intent docs):
+These SHA-1 OIDs MUST match stock Git for the cited uncompressed headers + payloads (see `verify/fixtures/m1/` intent docs):
 
 | Case | Uncompressed header + payload | SHA-1 OID (hex) |
 |------|------------------------------|-----------------|
@@ -60,4 +60,4 @@ Splitting **digest representation** from **hashing** keeps Ring 0 dependency-fre
 1. Host (advisory): `cargo test -p arks-oid` and `cargo clippy -p arks-oid -- -D warnings`.
 2. Unit tests MUST cover: known blob OIDs (empty, `hello`), hex length/charset refusal, byte-length refusal, case-insensitive hex parse, `Display`/`Debug` formatting.
 3. `spec check` clean for this document and links to primary URLs.
-4. Authoritative OID oracle vs stock Git: Docker clean-room per [[sot:root/product-verification-clean-room]] when harness exists; until then, fixture intent in `fixtures/m1/` cites primary docs only.
+4. Authoritative OID oracle vs stock Git: Docker clean-room per [[sot:root/product-verification-clean-room]] when harness exists; until then, fixture intent in `verify/fixtures/m1/` cites primary docs only.

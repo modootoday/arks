@@ -44,7 +44,7 @@ Version **0.2.1**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) und
 
 **M11 does not redefine M9.** Production-server is a separate bar. **M25 does not redefine M11** — smart HTTP G15 remains the frozen production-server smart-HTTP receipt.
 
-**G15 exit (frozen):** [[evidence:root/20261108231300]] — smart HTTP Claimed; matrix `verify/matrix-m11.md`.
+**G15 exit (frozen):** [[evidence:root/20261108231300]] — smart HTTP Claimed; matrix `verify/matrices/matrix-m11.md`.
 
 **M25 gates:** **G29** dumb HTTP; **G30** SSH command-mode; **G31** protocol v2; **G32** `git://` daemon — each Claimed only with its Docker receipt.
 

@@ -6,8 +6,8 @@ set -euo pipefail
 
 cd /workspace
 
-mkdir -p verify/g8/out
-RECEIPT="${ARKS_G8_RECEIPT_OUT:-/workspace/verify/g8/out/receipt.json}"
+mkdir -p verify/gates/g8/out
+RECEIPT="${ARKS_G8_RECEIPT_OUT:-/workspace/verify/gates/g8/out/receipt.json}"
 REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"

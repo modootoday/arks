@@ -37,13 +37,13 @@ cargo build -p arks
 echo "G11: arks-lease unit tests (L1/L2/dual-path/lock-additive)"
 cargo test -p arks-lease "$@"
 
-echo "G11: lease-product suite (verify/g11)"
-cargo test --manifest-path verify/g11/Cargo.toml "$@"
+echo "G11: lease-product suite (verify/gates/g11)"
+cargo test --manifest-path verify/gates/g11/Cargo.toml "$@"
 
-echo "G11: G14 CLI-parity regression (verify/g14)"
-cargo test --manifest-path verify/g14/Cargo.toml "$@"
+echo "G11: G14 CLI-parity regression (verify/gates/g14)"
+cargo test --manifest-path verify/gates/g14/Cargo.toml "$@"
 
-echo "G11: G7 remote-client regression (verify/g7)"
-cargo test --manifest-path verify/g7/Cargo.toml "$@"
+echo "G11: G7 remote-client regression (verify/gates/g7)"
+cargo test --manifest-path verify/gates/g7/Cargo.toml "$@"
 
 echo "G11: PASS"

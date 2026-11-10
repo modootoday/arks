@@ -17,5 +17,5 @@ cargo build -p arks -j1
 echo "G33: arks-remote credential + wallet unit"
 cargo test -p arks-remote --lib -j1 -- credential:: wallet:: --test-threads=1
 echo "G33: credential / askpass suite (serialized)"
-cargo test --manifest-path verify/g33/Cargo.toml -j1 -- --test-threads=1 "$@"
+cargo test --manifest-path verify/gates/g33/Cargo.toml -j1 -- --test-threads=1 "$@"
 echo "G33: PASS"

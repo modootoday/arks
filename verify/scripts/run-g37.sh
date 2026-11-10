@@ -14,5 +14,5 @@ echo G37: gix-exit OK
 echo G37: build arks
 cargo build -p arks
 echo G37: SSH suite
-cargo test --manifest-path verify/g37/Cargo.toml -- --nocapture
+cargo test --manifest-path verify/gates/g37/Cargo.toml -- --nocapture
 echo G37: PASS

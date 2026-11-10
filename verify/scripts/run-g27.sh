@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G27 — arks smart HTTP + synthetic PR contention clean-room.
-# SoT: arks-smart-http-pr-contention-clean-room; matrix: verify/matrix-g27.md
+# SoT: arks-smart-http-pr-contention-clean-room; matrix: verify/matrices/matrix-g27.md
 # Honesty: arks stand-in ≠ GitHub UX/Checks/merge-queue; ≠ live forge throughput.
 # Sole-runner vs heavy gates.
 set -euo pipefail
@@ -11,8 +11,8 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/g27/out
-G27_LOCK="verify/g27/.run.lock.dir"
+mkdir -p verify/gates/g27/out
+G27_LOCK="verify/gates/g27/.run.lock.dir"
 
 # Refuse overlap with other heavy clean-room runners (OOM lesson).
 for other in g17 g19 g22 g23 g24 g25 g26; do
@@ -61,15 +61,15 @@ fi
 echo "G27: build arks binary (serve-http)"
 cargo build -p arks
 
-export ARKS_G27_RECEIPT_OUT="${ARKS_G27_RECEIPT_OUT:-$ROOT/verify/g27/out/receipt.json}"
-export ARKS_G27_SCALE_OUT="${ARKS_G27_SCALE_OUT:-$ROOT/verify/g27/out/scale.json}"
+export ARKS_G27_RECEIPT_OUT="${ARKS_G27_RECEIPT_OUT:-$ROOT/verify/gates/g27/out/receipt.json}"
+export ARKS_G27_SCALE_OUT="${ARKS_G27_SCALE_OUT:-$ROOT/verify/gates/g27/out/scale.json}"
 # Defaults; tests may overwrite scale.json with actual achieved N.
 export ARKS_G27_N_BRANCHES="${ARKS_G27_N_BRANCHES:-2048}"
 export ARKS_G27_N_PR="${ARKS_G27_N_PR:-2048}"
 export ARKS_G27_N_AGENTS="${ARKS_G27_N_AGENTS:-8}"
 
-echo "G27: smart HTTP PR contention suite (verify/g27; serial — sole HTTP listeners)"
-cargo test --manifest-path verify/g27/Cargo.toml -- --nocapture --test-threads=1 "$@"
+echo "G27: smart HTTP PR contention suite (verify/gates/g27; serial — sole HTTP listeners)"
+cargo test --manifest-path verify/gates/g27/Cargo.toml -- --nocapture --test-threads=1 "$@"
 
 # Prefer scale file written by tests when present.
 if [[ -f "$ARKS_G27_SCALE_OUT" ]]; then

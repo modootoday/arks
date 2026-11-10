@@ -34,7 +34,7 @@ Close remaining [[sot:root/cli-surface]] parity inventory, **flag-parity audit**
 
 ## Frozen Wave Pc checklist (implement / refuse / exclude)
 
-Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for clean-room pin (Git 2.39.x in `verify/images.lock.json`). Classification before G14 claim. Matrix: `verify/matrix-m9.md`. Flag-parity ledger: `.spec/sot/cli-flag-parity-m9.sot.md` (or appendix in unit SoT). Alias how-to: `docs/alias-git-arks.md`.
+Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for clean-room pin (Git 2.39.x in `verify/images.lock.json`). Classification before G14 claim. Matrix: `verify/matrices/matrix-m9.md`. Flag-parity ledger: `.spec/sot/cli-flag-parity-m9.sot.md` (or appendix in unit SoT). Alias how-to: `docs/alias-git-arks.md`.
 
 ### Pc implement / deepen
 
@@ -102,7 +102,7 @@ Carrying receipt: [[evidence:root/20261108150000]].
 
 | Gate | Clean-room | Advisory |
 |------|------------|----------|
-| **G14** cli-parity-closure | Authoritative (`verify/g14` + `run-g14.sh`) | Host |
+| **G14** cli-parity-closure | Authoritative (`verify/gates/g14` + `run-g14.sh`) | Host |
 | G13 + G12 + G7 (+ G6 / prior) regression | Clean-room (embedded in `run-g14.sh`) | Host |
 | Help honesty / refuse / alias | Clean-room G14 | Host |
 | Zero `gix` | `run-g14.sh` metadata scan | — |
@@ -110,7 +110,7 @@ Carrying receipt: [[evidence:root/20261108150000]].
 
 ## Ordered work items
 
-1. **Design** — Freeze Pc checklist (this section); matrix `verify/matrix-m9.md`; unit SoT [[sot:root/arks]] Wave Pc; flag-parity ledger; alias docs.
+1. **Design** — Freeze Pc checklist (this section); matrix `verify/matrices/matrix-m9.md`; unit SoT [[sot:root/arks]] Wave Pc; flag-parity ledger; alias docs.
 2. **Scaffold** — `cmd_pc` (or deepen Pa/Pb); G14 crate + compose service + `run-g14.sh` (LF).
 3. **Implement** — annotated tag → archive → reflog append/show → bundle verify → clean `-d`; refuse-close remainder; alias shim docs.
 4. **Verify** — G14 + full regression; production checklist; public-surface honesty; evidence receipt; **this milestone IS CLI-parity production**.
@@ -129,4 +129,4 @@ Carrying receipt: [[evidence:root/20261108150000]].
 
 ## Cross-links
 
-[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/public-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], [[adr:root/20261108083507]], `verify/matrix-m9.md`, [[evidence:root/20261108143000]]
+[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/public-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], [[adr:root/20261108083507]], `verify/matrices/matrix-m9.md`, [[evidence:root/20261108143000]]

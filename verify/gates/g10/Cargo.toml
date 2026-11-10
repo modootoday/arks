@@ -9,10 +9,10 @@ license = "Apache-2.0 OR MIT"
 publish = false
 
 [dependencies]
-arks-hash = { path = "../../crates/arks-hash" }
-arks-object = { path = "../../crates/arks-object" }
-arks-oid = { path = "../../crates/arks-oid" }
-arks-store = { path = "../../crates/arks-store" }
+arks-hash = { path = "../../../crates/arks-hash" }
+arks-object = { path = "../../../crates/arks-object" }
+arks-oid = { path = "../../../crates/arks-oid" }
+arks-store = { path = "../../../crates/arks-store" }
 
 [dev-dependencies]
 tempfile = "3"

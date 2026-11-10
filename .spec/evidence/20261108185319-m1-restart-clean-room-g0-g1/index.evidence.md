@@ -20,7 +20,7 @@ rel:
 
 ## Context
 
-Milestone **M1** (engine identity + loose objects) **restart / re-verify** under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m1.md`.
+Milestone **M1** (engine identity + loose objects) **restart / re-verify** under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m1.md`.
 
 Host `cargo test` results are **advisory only** and are not this receipt.
 
@@ -46,9 +46,9 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | `arks-hash` 12; `arks-oid` 12; `arks-object` 12 + `g1_oracle` 5; `arks-store` 8 (workspace) |
-| **G1** | `docker compose -f verify/docker-compose.yml run --rm g1` | **PASS** | `arks-object` `g1_oracle` 5 + `verify/g1` `git_oracle` 6 |
+| **G1** | `docker compose -f verify/docker-compose.yml run --rm g1` | **PASS** | `arks-object` `g1_oracle` 5 + `verify/gates/g1` `git_oracle` 6 |
 
-Combinatorics covered (automated): M1-C01…C07 and M1-C11…C13 per `verify/matrix-m1.md`. M1-C08 stock-Git tree/commit/tag payloads deferred (opaque kind framing covered on G0 as M1-C11). M1-C09/C10 out of scope.
+Combinatorics covered (automated): M1-C01…C07 and M1-C11…C13 per `verify/matrices/matrix-m1.md`. M1-C08 stock-Git tree/commit/tag payloads deferred (opaque kind framing covered on G0 as M1-C11). M1-C09/C10 out of scope.
 
 ## Adversarial / bug-simulation (G0)
 

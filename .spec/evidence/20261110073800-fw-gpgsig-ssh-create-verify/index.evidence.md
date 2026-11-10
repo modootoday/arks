@@ -34,7 +34,7 @@ Primary: [gitformat-signature](https://git-scm.com/docs/gitformat-signature), [g
 |-------|-------|
 | Compose | `verify/docker-compose.yml` service `g37` (`--no-deps`) |
 | Entrypoint | `verify/scripts/run-g37.sh` |
-| Matrix | `verify/matrix-g37.md` |
+| Matrix | `verify/matrices/matrix-g37.md` |
 | Image | `arks-verify-m1:0.1.0` |
 | Stock Git | `git version 2.39.5` |
 | OpenSSH | `OpenSSH_9.2p1 Debian-2+deb12u10` |

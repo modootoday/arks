@@ -7,7 +7,7 @@ updated: 2026-11-09T20:45:00Z
 tags: [celir, indexing-service, clean-room, contention, g22, m24, lease, dual-path]
 verify: clean-room
 rel:
-  governs: [verify/g22, verify/scripts/run-g22.sh, verify/matrix-g22.md]
+  governs: [verify/gates/g22, verify/scripts/run-g22.sh, verify/matrices/matrix-g22.md]
   depends_on:
     - sot:root/celir-index-dual-path
     - sot:root/storage-celir-boundary
@@ -38,9 +38,9 @@ Version **0.1.0**. Normative **Docker clean-room** gate **G22** for optional fea
 
 ### Gate identity
 
-1. Gate ID **G22** `celir-index-contention`. Matrix: `verify/matrix-g22.md`. Entrypoint: `verify/scripts/run-g22.sh`. Compose service: `g22`.
+1. Gate ID **G22** `celir-index-contention`. Matrix: `verify/matrices/matrix-g22.md`. Entrypoint: `verify/scripts/run-g22.sh`. Compose service: `g22`.
 2. G22 is **additive** to M24 Claimed (host advisory). Host greens alone MUST NOT authorize “index contention verified.”
-3. G22 MUST NOT reopen or redefine G11-L3 claimed shape; CELIR remains excluded from G11-L3 (`verify/matrix-l3.md`).
+3. G22 MUST NOT reopen or redefine G11-L3 claimed shape; CELIR remains excluded from G11-L3 (`verify/matrices/matrix-l3.md`).
 
 ### Topology (N scale)
 

@@ -18,7 +18,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G23** (`verify/scripts/run-g23.sh` / compose `g23`) |
-| Matrix | `verify/matrix-g23.md` |
+| Matrix | `verify/matrices/matrix-g23.md` |
 | Claim | **CELIR dual-path Git verified** ([[adr:root/20261109204916]]) |
 | ObjectStore | filesystem `.git` only |
 | CELIR role | index sidecar only |

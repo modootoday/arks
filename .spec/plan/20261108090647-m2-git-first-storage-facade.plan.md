@@ -45,7 +45,7 @@ Route all **object** I/O through a store facade with a filesystem Git backend; k
 
 ## Exit gates (re-verify)
 
-Under roadmap **v0.3.1**, M2 exit is carried by the **new** authoritative receipt after clean-room re-run (`verify/images.lock.json`, `verify/matrix-m2.md`).
+Under roadmap **v0.3.1**, M2 exit is carried by the **new** authoritative receipt after clean-room re-run (`verify/images.lock.json`, `verify/matrices/matrix-m2.md`).
 
 | Gate | Clean-room (authoritative) | Advisory |
 |------|---------------------------|----------|

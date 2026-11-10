@@ -1,4 +1,4 @@
-﻿---
+---
 id: plan:root/20261109043916
 title: M17 full G19 journey allow-list
 status: archived
@@ -21,7 +21,7 @@ rel:
 
 ## Goal
 
-Expand comparative performance gate **G19** from the frozen M14 allow-list `{J-SUBMODULE-01, J-REPACK-01}` to **all current G16 timing journeys** in `verify/matrix-journey.md`, such that for every journey ID: **arks_median ≤ 0.8 × git_median** (`median_p95`, release), **or** the journey is explicitly **N/A** in SoT with rationale (must be rare; default is meet the bar).
+Expand comparative performance gate **G19** from the frozen M14 allow-list `{J-SUBMODULE-01, J-REPACK-01}` to **all current G16 timing journeys** in `verify/matrices/matrix-journey.md`, such that for every journey ID: **arks_median ≤ 0.8 × git_median** (`median_p95`, release), **or** the journey is explicitly **N/A** in SoT with rationale (must be rare; default is meet the bar).
 
 Functional full-symmetry (**M16 / G21**) for touched surface has priority; perf work continues only on functionally green units. Product Done requires **both** M16 complete-symmetry ledger green **and** this full G19 allow-list green.
 
@@ -29,7 +29,7 @@ Functional full-symmetry (**M16 / G21**) for touched surface has priority; perf 
 
 | Field | Rule |
 |-------|------|
-| Allow-list | Every required ID in `verify/matrix-journey.md` (current G16 catalog) |
+| Allow-list | Every required ID in `verify/matrices/matrix-journey.md` (current G16 catalog) |
 | Ratio | arks median ≤ 0.8 × git median |
 | Venue | Docker clean-room `g19` only; host advisory |
 | N/A | Journey may be SoT-N/A’d only with explicit reason (e.g. network-bound G8-class — none currently in G16 required set) |
@@ -39,7 +39,7 @@ Functional full-symmetry (**M16 / G21**) for touched surface has priority; perf 
 
 | Wave | Focus |
 |------|-------|
-| **Pf3-1** | Add all G16 IDs to `verify/matrix-g19.md`; baseline Docker timings; identify failers |
+| **Pf3-1** | Add all G16 IDs to `verify/matrices/matrix-g19.md`; baseline Docker timings; identify failers |
 | **Pf3-2** | Optimize failers (alloc/IO/pack/index paths) until ≤0.8×; no semantic invention |
 | **Pf3-3** | Final G19 PASS receipt for full allow-list; pin tip SHA; residual register Closed |
 

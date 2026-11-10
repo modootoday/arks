@@ -18,7 +18,7 @@ rel:
 
 ## Context
 
-Claim receive-pack server-side githooks honor list on arks smart HTTP: `pre-receive`, `update`, `post-receive` (sync only; ignore `*.sample`). Primary: [githooks](https://git-scm.com/docs/githooks), [git-receive-pack](https://git-scm.com/docs/git-receive-pack). Unit SoT: [[sot:root/arks-server]] §Receive-pack githooks. Matrix row **M11-C14** in `verify/matrix-m11.md`. Residual **FW-SRV-HOOKS**. Does **not** invent G33+; additive under frozen G15.
+Claim receive-pack server-side githooks honor list on arks smart HTTP: `pre-receive`, `update`, `post-receive` (sync only; ignore `*.sample`). Primary: [githooks](https://git-scm.com/docs/githooks), [git-receive-pack](https://git-scm.com/docs/git-receive-pack). Unit SoT: [[sot:root/arks-server]] §Receive-pack githooks. Matrix row **M11-C14** in `verify/matrices/matrix-m11.md`. Residual **FW-SRV-HOOKS**. Does **not** invent G33+; additive under frozen G15.
 
 ## Environment
 

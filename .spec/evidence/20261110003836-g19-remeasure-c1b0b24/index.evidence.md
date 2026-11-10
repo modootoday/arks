@@ -23,8 +23,8 @@ Authoritative sole-runner Docker `g19` (embeds G16 functional + timing) after hi
 
 | Surface | IDs | Role |
 |---------|-----|------|
-| G16 functional + timing | All 19 catalog journeys in `verify/matrix-journey.md` | Hard functional class + `median_p95` metrics |
-| G19 comparative | Same 19 allow-list (`verify/matrix-g19.md` Pf3+) | ≤0.8× regression + ≤0.5× aggressive / `aggressive_na` |
+| G16 functional + timing | All 19 catalog journeys in `verify/matrices/matrix-journey.md` | Hard functional class + `median_p95` metrics |
+| G19 comparative | Same 19 allow-list (`verify/matrices/matrix-g19.md` Pf3+) | ≤0.8× regression + ≤0.5× aggressive / `aggressive_na` |
 
 Journeys: LOCAL, BRANCH, MERGE-FF, REBASE, BUNDLE, CLONE-LOCAL, CLONE-PATH, ALIAS, WORKTREE, TAG, STASH, CHERRY, DIFF, RM-MV, ARCHIVE, REFLOG, REVERT, REPACK, SUBMODULE.
 

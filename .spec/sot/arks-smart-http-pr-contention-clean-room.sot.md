@@ -7,7 +7,7 @@ updated: 2026-11-09T21:04:05Z
 tags: [clean-room, smart-http, server, branch, pr-sim, contention, g27, github-stand-in]
 verify: clean-room
 rel:
-  governs: [verify/g27, verify/scripts/run-g27.sh, verify/matrix-g27.md]
+  governs: [verify/gates/g27, verify/scripts/run-g27.sh, verify/matrices/matrix-g27.md]
   depends_on:
     - sot:root/product-verification-clean-room
     - sot:root/interop-test-matrix
@@ -23,7 +23,7 @@ rel:
 
 # arks smart HTTP + synthetic PR contention clean-room
 
-Version **0.1.0**. Normative Docker clean-room gate **G27** for **arks smart-HTTP server** as a **GitHub stand-in**: thousands-class seeded branches / synthetic `refs/pull/*/head` (+ merge), N concurrent stock-Git agents clone/fetch/push/merge against the server, integrity fail-closed. Authority: [[sot:root/product-verification-clean-room]]. Server surface: [[sot:root/arks-server]] (smart HTTP only). Local filesystem PR-sim sibling: [[sot:root/local-branch-pr-sim-clean-room]] (**G26**). Matrix: `verify/matrix-g27.md`. Plan: [[plan:root/20261109210427]].
+Version **0.1.0**. Normative Docker clean-room gate **G27** for **arks smart-HTTP server** as a **GitHub stand-in**: thousands-class seeded branches / synthetic `refs/pull/*/head` (+ merge), N concurrent stock-Git agents clone/fetch/push/merge against the server, integrity fail-closed. Authority: [[sot:root/product-verification-clean-room]]. Server surface: [[sot:root/arks-server]] (smart HTTP only). Local filesystem PR-sim sibling: [[sot:root/local-branch-pr-sim-clean-room]] (**G26**). Matrix: `verify/matrices/matrix-g27.md`. Plan: [[plan:root/20261109210427]].
 
 Wire cites (no invented semantics): [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [git-upload-pack](https://git-scm.com/docs/git-upload-pack), [git-receive-pack](https://git-scm.com/docs/git-receive-pack). Synthetic PR ref names follow common forge layout (`refs/pull/N/head`, `refs/pull/N/merge`) as **fixtures only** — not GitHub Checks / merge-queue / protection UX.
 
@@ -79,7 +79,7 @@ Multi-agent workflows often look like “thousands of branches / PR heads conten
 
 ## Verification
 
-1. Docker `compose … run --rm g27` PASS + receipt under `verify/g27/out/`.
+1. Docker `compose … run --rm g27` PASS + receipt under `verify/gates/g27/out/`.
 2. Evidence stamp under `.spec/evidence/` cites actual N and tip SHA.
 3. Residual / roadmap rows say **arks smart-HTTP PR-contention verified** only with G27 receipt; GitHub deferred remains explicit.
 4. `spec check` clean for this SoT and [[plan:root/20261109210427]].

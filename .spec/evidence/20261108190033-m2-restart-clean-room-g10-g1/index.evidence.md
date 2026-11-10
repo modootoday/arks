@@ -19,7 +19,7 @@ rel:
 
 ## Context
 
-Milestone **M2** (Git-first storage facade / Phase S) **restart / re-verify** under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m2.md`. Unit SoT: [[sot:root/arks-store]]. Depends on M1 restart [[evidence:root/20261108185319]].
+Milestone **M2** (Git-first storage facade / Phase S) **restart / re-verify** under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m2.md`. Unit SoT: [[sot:root/arks-store]]. Depends on M1 restart [[evidence:root/20261108185319]].
 
 Host `cargo test` results are **advisory only** and are not this receipt.
 
@@ -45,10 +45,10 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | `arks-hash` 12; `arks-oid` 12; `arks-object` 12 + `g1_oracle` 5; `arks-store` 11 |
-| **G10** | `docker compose -f verify/docker-compose.yml run --rm g10` | **PASS** | `verify/g10` `git_oracle` 7 |
-| **G1** regression | (embedded in `run-g10.sh`) | **PASS** | `arks-object` `g1_oracle` 5 + `verify/g1` `git_oracle` 6 |
+| **G10** | `docker compose -f verify/docker-compose.yml run --rm g10` | **PASS** | `verify/gates/g10` `git_oracle` 7 |
+| **G1** regression | (embedded in `run-g10.sh`) | **PASS** | `arks-object` `g1_oracle` 5 + `verify/gates/g1` `git_oracle` 6 |
 
-Combinatorics covered (automated): M2-C01…C11 per `verify/matrix-m2.md`. M2-C12 (full G1–G4-through-facade) deferred post-M4. M2-C13 CELIR path blocked. M2-C14 lease out of scope.
+Combinatorics covered (automated): M2-C01…C11 per `verify/matrices/matrix-m2.md`. M2-C12 (full G1–G4-through-facade) deferred post-M4. M2-C13 CELIR path blocked. M2-C14 lease out of scope.
 
 ## Non-claims
 

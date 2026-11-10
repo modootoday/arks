@@ -18,7 +18,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G26** (`verify/scripts/run-g26.sh` / compose `g26`) |
-| Matrix | `verify/matrix-g26.md` |
+| Matrix | `verify/matrices/matrix-g26.md` |
 | Stream | **B** (umbrella A∧B; A Claimed at `fa78685`) |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |

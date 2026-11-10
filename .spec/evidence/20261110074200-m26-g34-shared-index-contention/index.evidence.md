@@ -27,7 +27,7 @@ Product Verified for shared-index N-way under [[adr:root/20261110074000]]. Gate 
 | Stock Git | git version 2.39.5 |
 | rustc | 1.99.1 |
 | Pre-commit tip | `eea8ebaa92b287e777657700bdefbdae4fec2bd1` |
-| Receipt | `verify/g34/out/receipt.json` |
+| Receipt | `verify/gates/g34/out/receipt.json` |
 
 ## Results
 

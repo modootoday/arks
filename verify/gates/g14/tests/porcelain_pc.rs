@@ -1,5 +1,5 @@
 //! Gate G14 — Wave Pc inventory + flag-parity + alias-ready (clean-room).
-//! CLI-parity production (M9). Matrix: `verify/matrix-m9.md` M9-C01..C10.
+//! CLI-parity production (M9). Matrix: `verify/matrices/matrix-m9.md` M9-C01..C10.
 
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -11,5 +11,5 @@ export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 echo "G30: build arks"
 cargo build -p arks
 echo "G30: SSH command-mode suite"
-cargo test --manifest-path verify/g30/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g30/Cargo.toml "$@"
 echo "G30: PASS"

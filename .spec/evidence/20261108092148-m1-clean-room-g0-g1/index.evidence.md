@@ -35,9 +35,9 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | Workspace tests: arks-hash 9, arks-oid 8, arks-object 7 + g1_oracle 3 |
-| **G1** | `docker compose -f verify/docker-compose.yml run --rm g1` | **PASS** | `arks-object` g1_oracle 3 + `verify/g1` git_oracle 4 |
+| **G1** | `docker compose -f verify/docker-compose.yml run --rm g1` | **PASS** | `arks-object` g1_oracle 3 + `verify/gates/g1` git_oracle 4 |
 
-Combinatorics covered (automated): M1-C01…C06 per `verify/matrix-m1.md`. M1-C07 SHA-256 API units on G0 only (not stock-Git G1 claim). M1-C08+ deferred.
+Combinatorics covered (automated): M1-C01…C06 per `verify/matrices/matrix-m1.md`. M1-C07 SHA-256 API units on G0 only (not stock-Git G1 claim). M1-C08+ deferred.
 
 ## Non-claims
 

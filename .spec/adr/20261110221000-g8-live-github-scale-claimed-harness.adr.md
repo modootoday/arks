@@ -25,7 +25,7 @@ rel:
 
 ## Decision
 
-1. **Claimed (harness ready):** Residual **FW-GH-LIVE-SCALE** is **Claimed**. Normative entry remains `verify/matrix-g8-live-scale.md` + `verify/scripts/run-g8-live-scale.sh` + compose `g8-live-scale`.
+1. **Claimed (harness ready):** Residual **FW-GH-LIVE-SCALE** is **Claimed**. Normative entry remains `verify/matrices/matrix-g8-live-scale.md` + `verify/scripts/run-g8-live-scale.sh` + compose `g8-live-scale`.
 2. **Measure when secrets present:** When token (`ARKS_G8_TOKEN` or `GITHUB_TOKEN`) **and** `ARKS_G8_REPO_URL` are present, the scale harness MUST record operator-local timing samples (e.g. repeated `ls-remote`) by default. `ARKS_G8_LIVE=1` is **not** required (aligned with [[adr:root/20261110220000]]).
 3. **Honest no-measurement when secrets absent:** Without token or URL, write a **SKIP / refuse-closed / no-measurement** receipt and empty samples — MUST NOT invent medians or product SLOs.
 4. **Explicit force-off:** `ARKS_G8_SCALE_MEASURE=0` MAY force no-measurement even when secrets are present. Unset or `1` does not block default-on measurement when secrets exist.

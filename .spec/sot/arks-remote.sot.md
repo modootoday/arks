@@ -76,7 +76,7 @@ Version **0.4.0**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 
 12. **`--depth N` only.** Client MAY request positive commit depth on smart HTTP and SSH clone/fetch when the peer advertises the `shallow` capability ([gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) `shallow`; [git-clone `--depth`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt)). Wire: request `shallow` on the first want line; send `deepen N`; parse server `shallow` / `unshallow` lines; write `$GIT_DIR/shallow` (gitrepository-layout). Existing local shallow OIDs MUST be re-sent as client `shallow` lines on later fetches.
 13. **Capability honesty.** MUST NOT request `shallow` / `deepen` / `filter` unless implemented and peer-advertised. Depth against a peer that does not advertise `shallow` MUST refuse. Local path / `file://` clone MUST refuse `--depth` (no pack-protocol deepen on the claimed local object-dir path).
-14. **Non-claims (remain out).** Partial-clone `filter` (`blob:none`, `tree:0`), promisor remotes, `extensions.partialClone`, `deepen-since` / `deepen-not` / `deepen-relative`, `--unshallow`, server-side shallow product. Clean-room proof: [[sot:root/interop-test-matrix]] **G9** semantics via compose **G35** (`verify/matrix-g35.md`) — coordination: G33=CRED, G34=SHARED-IDX.
+14. **Non-claims (remain out).** Partial-clone `filter` (`blob:none`, `tree:0`), promisor remotes, `extensions.partialClone`, `deepen-since` / `deepen-not` / `deepen-relative`, `--unshallow`, server-side shallow product. Clean-room proof: [[sot:root/interop-test-matrix]] **G9** semantics via compose **G35** (`verify/matrices/matrix-g35.md`) — coordination: G33=CRED, G34=SHARED-IDX.
 
 ### Out of scope (M6)
 
@@ -96,7 +96,7 @@ Wave H unlocks remotes before porcelain waves. A Ring 6 client over proven pkt-l
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-remote` and Wave H CLI tests via `-p arks`.
-2. Clean-room **G7** `remote-recorded` (+ G1–G6 regression) per `verify/matrix-m6.md` — authoritative. **G8** default **Refuse-closed** without opt-in secrets ([[adr:root/20261110151000]]); live only when `ARKS_G8_LIVE=1` + token + URL. Host green alone is not product-verified.
-3. Clean-room **G35** (`verify/matrix-g35.md`, compose `g35`) for the claimed `--depth` shallow subset (**G9** semantics). Host green alone is not product-verified.
+2. Clean-room **G7** `remote-recorded` (+ G1–G6 regression) per `verify/matrices/matrix-m6.md` — authoritative. **G8** default **Refuse-closed** without opt-in secrets ([[adr:root/20261110151000]]); live only when `ARKS_G8_LIVE=1` + token + URL. Host green alone is not product-verified.
+3. Clean-room **G35** (`verify/matrices/matrix-g35.md`, compose `g35`) for the claimed `--depth` shallow subset (**G9** semantics). Host green alone is not product-verified.
 4. `spec check` clean for this SoT.
 5. Workspace `cargo metadata`: `arks-remote` depends inward only; zero `gix`/gitoxide; zero `celir` edges.

@@ -3,8 +3,8 @@ id: sot:root/structural-conventions
 title: Structural conventions
 status: active
 created: 2026-11-08T08:54:10Z
-updated: 2026-11-08T08:55:00Z
-tags: [structure, srp, modular, naming, crates, conventions, agents]
+updated: 2026-11-10T09:53:55Z
+tags: [structure, srp, modular, naming, crates, conventions, agents, verify, fixtures]
 verify: manual
 rel:
   depends_on:
@@ -13,11 +13,13 @@ rel:
     - sot:root/conventions-inherit
     - sot:root/public-surface
     - sot:root/product-intent
+    - sot:root/product-verification-clean-room
+  evidence: [research:root/20261110095355]
 ---
 
 # Structural conventions
 
-Version 0.1.0. Normative **structure and modularity** rules for arks source, Specfold, and agent surfaces. Dependency rings and proposed crate names remain owned by [[sot:root/crate-architecture]]. Product / crate / bin identity remains owned by [[sot:root/product-naming]]. Bottom-up delivery order remains owned by [[sot:root/product-intent]] and rule `70-bottom-up-build-order`.
+Version 0.1.1. Normative **structure and modularity** rules for arks source, Specfold, and agent surfaces. Dependency rings and proposed crate names remain owned by [[sot:root/crate-architecture]]. Product / crate / bin identity remains owned by [[sot:root/product-naming]]. Bottom-up delivery order remains owned by [[sot:root/product-intent]] and rule `70-bottom-up-build-order`. Clean-room tree ownership: [[sot:root/product-verification-clean-room]]; layout research [[research:root/20261110095355]].
 
 Convention affinity (cite, do not fork megas): humanymous `C:\workspaces\humanymous\.spec\sot\crate-architecture.sot.md`, `C:\workspaces\humanymous\.spec\sot\rust-migration.sot.md` (Structure and naming), `C:\workspaces\humanymous\.spec\sot\structural-development.sot.md` (bottom-up / `src/<context>` pattern), `C:\workspaces\humanymous\.agents\rules\10-rust-conventions.md`.
 
@@ -63,16 +65,22 @@ Convention affinity (cite, do not fork megas): humanymous `C:\workspaces\humanym
 ### 7. Language-standard directory structures (prefer ecosystem norms)
 
 20. **Prefer the language ecosystem’s standard layout** when implementing in that language. Do not invent alien trees when a well-known standard exists.
-21. **For arks Rust code:** Cargo workspace norms apply first — root virtual workspace, members under `crates/` (proposed `crates/arks-*` plus primary package `arks`), standard `Cargo.toml` + `src/lib.rs` or `src/main.rs`, conventional `tests/` / `benches/` / `examples/` as needed. Exact membership remains design-open until the first workspace lands; update [[sot:root/crate-architecture]] when it does.
-22. **Orthogonal overlays:** Git working-tree layout, Specfold (`.spec/`, `spec.toml`), public Pages (`docs/`), and agent assets (`.agents/`) are **product/process overlays**, not substitutes for Cargo layout. They MUST NOT force non-standard Rust source roots when Cargo conventions suffice.
-23. If another language appears later under an explicit SoT exception, prefer that language’s standard project layout the same way — still English-only authored prose ([[sot:root/language-english-only]]).
+21. **For arks Rust code:** Cargo workspace norms apply first — root virtual workspace, members under `crates/` (`crates/arks-*` plus primary package `arks`), standard `Cargo.toml` + `src/lib.rs` or `src/main.rs`, conventional `tests/` / `benches/` / `examples/` as needed. Update [[sot:root/crate-architecture]] when membership changes.
+22. **Rust test / fixture homes (normative):**
+    - Unit tests beside the owning module (`#[cfg(test)]`).
+    - Single-crate integration tests under `crates/arks-<ctx>/tests/`.
+    - Crate-owned binary/json fixtures under `crates/arks-<ctx>/testdata/` (or a context-named subfolder of `tests/`) — not a repo-root flat `fixtures/` dump.
+    - Benches under `crates/arks-<ctx>/benches/` when claimed.
+23. **Product clean-room overlay (`verify/`):** Docker compose, image lock, gate scripts, matrices, and multi-crate / stock-Git oracles stay under `verify/` per [[sot:root/product-verification-clean-room]]. Grouped layout is mandatory: `verify/scripts/`, `verify/matrices/`, `verify/gates/gN/`, `verify/fixtures/` — **no** flat dump of unrelated `g*` crates and `matrix-*.md` at `verify/` root. Clean-room gate crates remain **outside** the workspace member list. Cite [[research:root/20261110095355]].
+24. **Orthogonal overlays:** Git working-tree layout, Specfold (`.spec/`, `spec.toml`), public Pages (`docs/`), and agent assets (`.agents/`) are **product/process overlays**, not substitutes for Cargo layout. They MUST NOT force non-standard Rust source roots when Cargo conventions suffice.
+25. If another language appears later under an explicit SoT exception, prefer that language’s standard project layout the same way — still English-only authored prose ([[sot:root/language-english-only]]).
 
 ### Agent surfaces
 
-24. Always-on rule: `.agents/rules/15-structural-conventions.md`.
-25. Router: root `AGENTS.md` hard constraint + progressive-disclosure row → this SoT.
-26. Pointer row: [[sot:root/conventions-inherit]].
-27. Governance: [[sot:root/agent-governance]] lists this SoT among hard process constraints agents must honor.
+26. Always-on rule: `.agents/rules/15-structural-conventions.md`.
+27. Router: root `AGENTS.md` hard constraint + progressive-disclosure row → this SoT.
+28. Pointer row: [[sot:root/conventions-inherit]].
+29. Governance: [[sot:root/agent-governance]] lists this SoT among hard process constraints agents must honor.
 
 ### Out of scope here
 

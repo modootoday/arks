@@ -71,7 +71,7 @@ This receipt proves **refuse-close / process / defer** honesty plus **full clean
 
 1. Image rebuild may refresh local Id — residual hygiene records the Id used for this run (`bab37bd1…`); prior M9/M10/M11 receipts remain historical for their own runs.
 2. `spec check` L3: SoTs must not appear under `rel.evidence` (fixed: residual SoTs under `depends_on`).
-3. Prior gate BUGSIM notes still apply (`verify/g14`, `g11`, `g15`).
+3. Prior gate BUGSIM notes still apply (`verify/gates/g14`, `g11`, `g15`).
 
 ## Non-claims
 

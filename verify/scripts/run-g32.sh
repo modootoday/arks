@@ -28,5 +28,5 @@ fi
 echo "G32: build arks"
 cargo build -p arks
 echo "G32: git-daemon suite"
-cargo test --manifest-path verify/g32/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g32/Cargo.toml "$@"
 echo "G32: PASS"

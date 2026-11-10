@@ -170,7 +170,7 @@ M15 closed command inventory while leaving per-flag refuse gaps that break true 
 
 ## Verification
 
-1. Clean-room **G21** (`verify/matrix-g21.md`) per Sy wave.
+1. Clean-room **G21** (`verify/matrices/matrix-g21.md`) per Sy wave.
 2. G14 + G20 regression green.
 3. `spec check` clean.
 4. Host `cargo test` advisory only.

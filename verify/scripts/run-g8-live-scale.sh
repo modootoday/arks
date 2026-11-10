@@ -7,7 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "${ROOT}"
 
-OUT_DIR="${ARKS_G8_SCALE_OUT:-${ROOT}/verify/g8-live-scale/out}"
+OUT_DIR="${ARKS_G8_SCALE_OUT:-${ROOT}/verify/gates/g8-live-scale/out}"
 mkdir -p "${OUT_DIR}"
 RECEIPT="${OUT_DIR}/receipt.json"
 SAMPLES="${OUT_DIR}/samples.json"

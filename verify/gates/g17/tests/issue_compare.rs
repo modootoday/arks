@@ -1,5 +1,5 @@
 //! Gate G17 — git vs arks concurrency issue-repro compare (Cm-1..Cm-3 + M19 Cx-1/Cx-2 + M20 Cx-3/Cx-4).
-//! Matrix: `verify/matrix-g17.md`. Plans: plan:root/20261109024634, plan:root/20261110010000,
+//! Matrix: `verify/matrices/matrix-g17.md`. Plans: plan:root/20261109024634, plan:root/20261110010000,
 //! plan:root/20261110030000, plan:root/20261110040000.
 
 use serde_json::{json, Value};

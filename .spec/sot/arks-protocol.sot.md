@@ -53,6 +53,6 @@ Exact pkt-line and capability string handling is the prerequisite for every smar
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-protocol`.
-2. Clean-room **G5** `protocol-offline` (`verify/matrix-m4.md`, `verify/g5`) — authoritative offline fixture replay; carrying receipt: [[evidence:root/20261108103610]]. Host green alone is not product-verified.
+2. Clean-room **G5** `protocol-offline` (`verify/matrices/matrix-m4.md`, `verify/gates/g5`) — authoritative offline fixture replay; carrying receipt: [[evidence:root/20261108103610]]. Host green alone is not product-verified.
 3. `spec check` clean for this SoT.
 4. Workspace `cargo metadata` shows no `gix` / gitoxide edge on `arks-protocol`.

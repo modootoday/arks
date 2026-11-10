@@ -68,7 +68,7 @@ PERF-001 / PERF-006 / AGENT-003 may improve measured journeys after M12/M13, but
 
 ## Ordered work items
 
-1. **Design** — Close absolute-perf open in journey-compare; name allow-list; wire G19. **Done (Pf-1)** — `verify/matrix-g19.md`; compose `g19`.
+1. **Design** — Close absolute-perf open in journey-compare; name allow-list; wire G19. **Done (Pf-1)** — `verify/matrices/matrix-g19.md`; compose `g19`.
 2. **Engine** — Optimizations for claimed rows only (no premature L3). Pf-1 uses already-passing journeys; Pf-2 expands via opt.
 3. **Verify** — G19 receipt; public-surface honesty.
 

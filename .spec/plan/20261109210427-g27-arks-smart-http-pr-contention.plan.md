@@ -59,5 +59,5 @@ arks smart-HTTP PR-contention ≠ GitHub PR UX / Checks / merge-queue / live for
 | Wave | Status | Tip / evidence |
 |------|--------|----------------|
 | G27-0 | Done | SoT + matrix + interop/roadmap/residual |
-| G27-1 | Done | harness `run-g27.sh` + `verify/g27` + gzip POST fix |
+| G27-1 | Done | harness `run-g27.sh` + `verify/gates/g27` + gzip POST fix |
 | G27-exit | **Claimed** | Docker PASS; [[evidence:root/20261109210427]]; N=2048/2048/8; parent tip `bbd1573` |

@@ -19,7 +19,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G27** (`verify/scripts/run-g27.sh` / compose `g27`) |
-| Matrix | `verify/matrix-g27.md` |
+| Matrix | `verify/matrices/matrix-g27.md` |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |
 | N scale | **2048** branches + **2048** PR heads + **8** concurrent agents |
@@ -31,7 +31,7 @@ files:
 | Step | Result |
 |------|--------|
 | `cargo build -p arks` | OK |
-| `cargo test --manifest-path verify/g27/Cargo.toml -- --test-threads=1` | 5/5 PASS |
+| `cargo test --manifest-path verify/gates/g27/Cargo.toml -- --test-threads=1` | 5/5 PASS |
 | Sole-runner lock | held |
 | Heavy-gate overlap refuse | OK (no G17/G19/G22–G26 lock) |
 

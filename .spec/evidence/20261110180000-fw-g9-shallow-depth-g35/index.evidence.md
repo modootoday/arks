@@ -35,7 +35,7 @@ Gate coordination: historical **G9** semantics; clean-room compose **G35** (G33=
 | Check | Outcome |
 |-------|---------|
 | `cargo test -p arks-remote --lib` | PASS (incl. stock `git http-backend` `--depth 1`) |
-| `cargo test --manifest-path verify/g35/Cargo.toml` | PASS (G35-C01..C03 host) |
+| `cargo test --manifest-path verify/gates/g35/Cargo.toml` | PASS (G35-C01..C03 host) |
 
 ## Docker clean-room (product authority)
 
@@ -43,7 +43,7 @@ Gate coordination: historical **G9** semantics; clean-room compose **G35** (G33=
 |-------|-------|
 | Compose | `verify/docker-compose.yml` service `g35` |
 | Entrypoint | `verify/scripts/run-g35.sh` |
-| Matrix | `verify/matrix-g35.md` |
+| Matrix | `verify/matrices/matrix-g35.md` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Stock Git | git version 2.39.5 |

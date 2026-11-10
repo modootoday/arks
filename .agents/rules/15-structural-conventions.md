@@ -12,7 +12,7 @@ Product naming: `.spec/sot/product-naming.sot.md`.
 4. **Naming** — `arks` / `arks-<context>` kebab-case; no `git` substring in short names; Rust snake_case / PascalCase / SCREAMING_SNAKE_CASE per ecosystem norms.
 5. **Context-based directories** — group by domain context; keep Specfold (`.spec/`), public docs (`docs/`), and future Cargo crate members in distinct roles.
 6. **Anti-fragmentation** — no micro-crate or forwarding-only module per helper; one owning implementation per responsibility.
-7. **Language-standard layouts** — prefer ecosystem norms. For Rust: Cargo workspace with conventional crates members first. Git / Specfold / public docs / `.agents/` are orthogonal overlays, not alien Rust trees.
+7. **Language-standard layouts** — prefer ecosystem norms. For Rust: Cargo workspace with conventional crates members first; unit beside code; integration in `crates/*/tests/`; crate fixtures in `testdata/` (not a root flat dump). Product clean-room stays under grouped `verify/{scripts,matrices,gates,fixtures}/` — not a flat `verify/g*` + `matrix-*` catalog. Git / Specfold / public docs / `.agents/` are orthogonal overlays, not alien Rust trees. Research: `.spec/research/20261110095355-verify-fixtures-rust-layout.research.md`.
 
 ## Cite (do not fork)
 

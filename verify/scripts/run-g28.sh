@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G28 — live private GitHub journey coverage with arks (opt-in network).
-# SoT: g28-live-private-arks-journeys; matrix: verify/matrix-g28.md
+# SoT: g28-live-private-arks-journeys; matrix: verify/matrices/matrix-g28.md
 # Honesty: functional journeys ≠ scale/contention ≠ G16 timing compare.
 # Uses arks-claimed argv only (no stock-Git-only -c / -u / ':' push refspecs).
 set -euo pipefail
@@ -11,9 +11,9 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/g28/out
-RECEIPT="${ARKS_G28_RECEIPT_OUT:-$ROOT/verify/g28/out/receipt.json}"
-RESULTS_JSON="${ARKS_G28_RESULTS_OUT:-$ROOT/verify/g28/out/journeys.json}"
+mkdir -p verify/gates/g28/out
+RECEIPT="${ARKS_G28_RECEIPT_OUT:-$ROOT/verify/gates/g28/out/receipt.json}"
+RESULTS_JSON="${ARKS_G28_RESULTS_OUT:-$ROOT/verify/gates/g28/out/journeys.json}"
 REVISION="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"

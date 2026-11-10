@@ -56,7 +56,7 @@ Attached: `receipt.json` (`arks-g18-issue-compare/v1`, wave `Cd-1`).
 
 - ADR grant prefixes `refns:` / `index:` ([[adr:root/20261109032955]]).
 - `arks lease` porcelain (grant/release/inspect/list/expire) over durable L2 store.
-- G18 harness + compose service + matrix `verify/matrix-g18.md`.
+- G18 harness + compose service + matrix `verify/matrices/matrix-g18.md`.
 
 ## Non-claims
 

@@ -1,5 +1,5 @@
 //! Gate G18 — git vs arks concurrency issue-repro compare (Cd-1 differentiate/lease).
-//! Matrix: `verify/matrix-g18.md`. Plan: plan:root/20261109024635.
+//! Matrix: `verify/matrices/matrix-g18.md`. Plan: plan:root/20261109024635.
 //! ADR: adr:root/20261109032955.
 
 use serde_json::{json, Value};

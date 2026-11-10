@@ -61,7 +61,7 @@ Wave **Done** = Docker G21 PASS for claimed IDs + G14/G20 regression + evidence 
 ## Steps
 
 1. Canon: activate complete ledger + roadmap/residual/interop/cli-surface amendments; `spec check`.
-2. Stand up `verify/matrix-g21.md` + `verify/scripts/run-g21.sh` / compose service (mirror G20 pattern).
+2. Stand up `verify/matrices/matrix-g21.md` + `verify/scripts/run-g21.sh` / compose service (mirror G20 pattern).
 3. Implement Sy-1 bottom-up (inner libs → CLI) with host tests advisory; Docker G21 Sy-1.
 4. Sy-2 → Sy-5 sequentially (SSH Sy-4 may need fixture OpenSSH in clean-room image).
 5. Residual register: mark complete-symmetry Closed; public honesty update.

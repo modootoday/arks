@@ -25,7 +25,7 @@ Optional in-process HTTP Basic on `arks serve-http` / `http-backend` ([[adr:root
 | Check | Outcome |
 |-------|---------|
 | `cargo test -p arks-server` | **PASS** — includes Basic challenge/accept + hooks honor tests |
-| `cargo test --manifest-path verify/g36/Cargo.toml` | **PASS** (4) — 401 challenge, URL userinfo clone, wrong/right cred, unauth default |
+| `cargo test --manifest-path verify/gates/g36/Cargo.toml` | **PASS** (4) — 401 challenge, URL userinfo clone, wrong/right cred, unauth default |
 
 ## Docker sole-runner (product authority)
 
@@ -33,7 +33,7 @@ Optional in-process HTTP Basic on `arks serve-http` / `http-backend` ([[adr:root
 |-------|-------|
 | Compose | `verify/docker-compose.yml` service `g36` |
 | Entrypoint | `verify/scripts/run-g36.sh` |
-| Matrix | `verify/matrix-g36.md` |
+| Matrix | `verify/matrices/matrix-g36.md` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Tip at verify | `d18c93f3254dc6f3dd2067f8922416d8e120cd69` |

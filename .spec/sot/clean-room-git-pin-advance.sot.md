@@ -34,7 +34,7 @@ Version **0.1.0**. Normative **process** for advancing the stock Git version pin
 
 1. **Gap audit** — Diff clean-room-pinned Git man pages / release notes vs the prior pin for every **claimed** inventory command and server/client wire surface. Classify each delta: **implement**, **refuse**, or **exclude** (same rules as [[sot:root/cli-surface]]). Record the audit under `.spec/research/` or an evidence appendix — do not invent semantics.
 2. **Lock update** — Update `verify/images.lock.json` (and Dockerfile/apt pins as needed) to the new stock Git version; rebuild `arks-verify-m1` (or successor tag); record new image Id digest.
-3. **Matrix refresh** — Amend `verify/matrix-m*.md` rows that name pin-specific expectations; update flag-parity ledger if options appear/disappear.
+3. **Matrix refresh** — Amend `verify/matrices/matrix-m*.md` rows that name pin-specific expectations; update flag-parity ledger if options appear/disappear.
 4. **Clean-room re-prove** — Re-run at least **G14** (CLI-parity) and any other gates whose claims touch the pin (**G7**, **G15**, **G11** when lease/server surfaces are claimed). Host greens remain advisory.
 5. **Evidence** — Author a new Specfold evidence receipt citing old pin → new pin, digests, gate outcomes. Prior receipts remain historical; they do **not** auto-carry the new pin.
 6. **Public honesty** — README / `docs/` MUST NOT imply the new pin is verified until the new receipt exists ([[sot:root/public-surface]]).

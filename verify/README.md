@@ -59,7 +59,7 @@ docker compose -f verify/docker-compose.yml run --rm g17
 
 Set **`CARGO_BUILD_JOBS=2`** when sharing agents or CI runners (default in compose). Override only deliberately.
 
-**Docker Desktop RAM (G16/G19):** journey-compare builds many temp repos per iteration. Give the Linux engine **≥8 GiB** RAM (Settings → Resources); **16 GiB** preferred when running G19. Do **not** overlap multiple `compose run … g16`/`g19` containers — concurrent catalogs OOMed hosts (exit **137**). Journey seeds in `verify/g16/tests/journey_compare.rs` are capped for a **single** catalog under that floor; raise seeds only after raising Docker RAM.
+**Docker Desktop RAM (G16/G19):** journey-compare builds many temp repos per iteration. Give the Linux engine **≥8 GiB** RAM (Settings → Resources); **16 GiB** preferred when running G19. Do **not** overlap multiple `compose run … g16`/`g19` containers — concurrent catalogs OOMed hosts (exit **137**). Journey seeds in `verify/gates/g16/tests/journey_compare.rs` are capped for a **single** catalog under that floor; raise seeds only after raising Docker RAM.
 
 ### Target cache
 

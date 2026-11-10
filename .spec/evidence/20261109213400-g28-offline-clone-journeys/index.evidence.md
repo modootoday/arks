@@ -19,7 +19,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G28** additive offline closure (`verify/scripts/run-g28-offline-clones.sh` / compose `g28-offline-clones`) |
-| Matrix | `verify/matrix-g28.md` |
+| Matrix | `verify/matrices/matrix-g28.md` |
 | Stock git (image) | `git version 2.39.5` |
 | Image | `arks-verify-m1:0.1.0` |
 | Parent tip | `a60e82e` |

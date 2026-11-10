@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # G19 — comparative performance pass/fail (≥20% faster on allow-list).
-# SoT: interop-test-matrix G19; matrix: verify/matrix-g19.md; plan: 20261109043916
+# SoT: interop-test-matrix G19; matrix: verify/matrices/matrix-g19.md; plan: 20261109043916
 set -euo pipefail
 
 cd /workspace
 
 # Exclusive lock: overlapping G19 catalogs OOM Docker Desktop (exit 137).
-mkdir -p verify/g19
-G19_LOCK="verify/g19/.run.lock.dir"
+mkdir -p verify/gates/g19
+G19_LOCK="verify/gates/g19/.run.lock.dir"
 if ! mkdir "$G19_LOCK" 2>/dev/null; then
   # Stale lock after SIGKILL (trap skipped): reclaim if holder file is older than 2h
   # or empty. Fresh holders write a timestamp owner file.
@@ -38,14 +38,14 @@ if [[ "${ARKS_JOURNEY_ITERATIONS}" -lt 3 ]]; then
 fi
 /bin/bash verify/scripts/run-g16.sh "$@"
 
-METRICS="${ARKS_JOURNEY_METRICS_OUT:-/workspace/verify/g16/out/metrics.json}"
+METRICS="${ARKS_JOURNEY_METRICS_OUT:-/workspace/verify/gates/g16/out/metrics.json}"
 if [[ ! -f "$METRICS" ]]; then
   echo "G19: missing metrics: $METRICS" >&2
   exit 1
 fi
 
-mkdir -p verify/g19/out
-RECEIPT="${ARKS_G19_RECEIPT_OUT:-/workspace/verify/g19/out/receipt.json}"
+mkdir -p verify/gates/g19/out
+RECEIPT="${ARKS_G19_RECEIPT_OUT:-/workspace/verify/gates/g19/out/receipt.json}"
 export ARKS_G19_RECEIPT_OUT="$RECEIPT"
 export ARKS_G19_METRICS="$METRICS"
 export ARKS_G19_REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"

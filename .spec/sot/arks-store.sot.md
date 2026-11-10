@@ -31,7 +31,7 @@ Routing object I/O through a small facade keeps Ring 1 types free of layout deta
 ## Verification
 
 1. Host `cargo test -p arks-store` — **advisory** (facade + FS unit tests).
-2. Clean-room **G10** objects-subset (`verify/g10` + `run-g10.sh`) with **G1** regression green — **authoritative**; carrying receipt under v0.3.1: [[evidence:root/20261108190033]] ([[plan:root/20261108090647]], [[sot:root/interop-test-matrix]], `verify/matrix-m2.md`).
+2. Clean-room **G10** objects-subset (`verify/gates/g10` + `run-g10.sh`) with **G1** regression green — **authoritative**; carrying receipt under v0.3.1: [[evidence:root/20261108190033]] ([[plan:root/20261108090647]], [[sot:root/interop-test-matrix]], `verify/matrices/matrix-m2.md`).
 3. `spec check` clean for this SoT.
 4. Default `cargo check -p arks-store` shows no required `celir-*` edge; `cargo check -p arks-store --features celir-index` succeeds when discrete-circuit packages exist; no `gix` / gitoxide.
 

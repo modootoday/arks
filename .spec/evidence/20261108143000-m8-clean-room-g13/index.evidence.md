@@ -22,7 +22,7 @@ rel:
 
 ## Context
 
-Milestone **M8** (Porcelain parity wave B / Phase **Pb**) under program roadmap **v0.3.1+**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m8.md`. Unit SoT: [[sot:root/arks]] Wave Pb. Depends on M7 [[evidence:root/20261108133000]].
+Milestone **M8** (Porcelain parity wave B / Phase **Pb**) under program roadmap **v0.3.1+**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m8.md`. Unit SoT: [[sot:root/arks]] Wave Pb. Depends on M7 [[evidence:root/20261108133000]].
 
 **Not production** — production is **M9**. Host `cargo test` results are **advisory only**.
 
@@ -47,23 +47,23 @@ Milestone **M8** (Porcelain parity wave B / Phase **Pb**) under program roadmap 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **gix-exit** | `cargo metadata` graph scan in `run-g13.sh` | **PASS** | zero `gix` / `gitoxide` edges |
-| **G13** | `docker compose -f verify/docker-compose.yml run --rm g13` | **PASS** | `verify/g13` Wave Pb suite **10** |
-| **G12** regression | (embedded in `run-g13.sh`) | **PASS** | `verify/g12` **7** |
-| **G7** regression | (embedded) | **PASS** | `verify/g7` **3** |
-| **G6** regression | (embedded) | **PASS** | `verify/g6` **6** |
-| **G3** regression | (embedded) | **PASS** | `verify/g3` **3** |
-| **G4** regression | (embedded) | **PASS** | `verify/g4` **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded) | **PASS** | `verify/g2` **9** |
-| **G10** regression | (embedded) | **PASS** | `verify/g10` **7** |
-| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/g1` **6** |
+| **G13** | `docker compose -f verify/docker-compose.yml run --rm g13` | **PASS** | `verify/gates/g13` Wave Pb suite **10** |
+| **G12** regression | (embedded in `run-g13.sh`) | **PASS** | `verify/gates/g12` **7** |
+| **G7** regression | (embedded) | **PASS** | `verify/gates/g7` **3** |
+| **G6** regression | (embedded) | **PASS** | `verify/gates/g6` **6** |
+| **G3** regression | (embedded) | **PASS** | `verify/gates/g3` **3** |
+| **G4** regression | (embedded) | **PASS** | `verify/gates/g4` **3** |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
+| **G2** regression | (embedded) | **PASS** | `verify/gates/g2` **9** |
+| **G10** regression | (embedded) | **PASS** | `verify/gates/g10` **7** |
+| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
 | Unit Specfold | `spec check` | **PASS** | 0 errors / 0 warnings |
 
-Combinatorics covered (automated): M8-C01…C15 per `verify/matrix-m8.md`. Residual Open: M8-C17 Pc deferrals (`range-diff`/`notes`/interactive rebase/annotated tags); M8-C18 M9 closure; M8-C19 out-of-scope.
+Combinatorics covered (automated): M8-C01…C15 per `verify/matrices/matrix-m8.md`. Residual Open: M8-C17 Pc deferrals (`range-diff`/`notes`/interactive rebase/annotated tags); M8-C18 M9 closure; M8-C19 out-of-scope.
 
 ## Bug simulation (fixed / avoided)
 
-1. `verify/scripts/run-g13.sh` authored LF-only up front (same CRLF `set: pipefail` class as G12/G7). See `verify/g13/BUGSIM.md`.
+1. `verify/scripts/run-g13.sh` authored LF-only up front (same CRLF `set: pipefail` class as G12/G7). See `verify/gates/g13/BUGSIM.md`.
 2. Host advisory `arks_bin()` continues to honor `CARGO_TARGET_DIR` in clean-room and prefer workspace `target/debug/arks(.exe)` on host (avoids Win32 error 193 from Linux ELF under `target-cleanroom`).
 
 ## Non-claims

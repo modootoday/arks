@@ -70,7 +70,7 @@ Ship the **claimed L3 shape** locked by [[adr:root/20261109194200]]:
 | Wave | Focus | Done |
 |------|-------|------|
 | **Hc-0** | Design lock: ADR active + this plan + SoT/roadmap/residual | `spec check`; commit+push |
-| **Hc-1** | Induce bar: `verify/matrix-l3.md` (+ G11 expansion / stress harness); pathology vs resolved | Scripts + matrix; commit+push |
+| **Hc-1** | Induce bar: `verify/matrices/matrix-l3.md` (+ G11 expansion / stress harness); pathology vs resolved | Scripts + matrix; commit+push |
 | **Hc-2** | Implement behind valve (pipeline + isolation); unit/advisory tests; refuse still on until unlock | Host tests advisory; commit+push |
 | **Hc-3** | Unlock claim: Docker dual-path green → remove refuse; evidence; honesty | Evidence id; residual Claimed; commit+push |
 | **Hc-exit** | Recount; L3 Claimed or hard-block ADR | Final push |

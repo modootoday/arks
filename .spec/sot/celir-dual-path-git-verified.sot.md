@@ -7,7 +7,7 @@ updated: 2026-11-10T05:49:00Z
 tags: [celir, indexing-service, dual-path, g23, m24, clean-room, porcelain, verified]
 verify: clean-room
 rel:
-  governs: [verify/g23, verify/scripts/run-g23.sh, verify/matrix-g23.md]
+  governs: [verify/gates/g23, verify/scripts/run-g23.sh, verify/matrices/matrix-g23.md]
   depends_on:
     - sot:root/celir-index-dual-path
     - sot:root/storage-celir-boundary
@@ -38,7 +38,7 @@ Version **0.1.0**. Normative Docker clean-room gate **G23** for the honest Done 
 
 ### Gate identity
 
-1. Gate ID **G23** `celir-dual-path-git`. Matrix: `verify/matrix-g23.md`.
+1. Gate ID **G23** `celir-dual-path-git`. Matrix: `verify/matrices/matrix-g23.md`.
 2. Host greens MUST NOT authorize dual-path Git **Verified**.
 3. G23 is additive to G22 (contention) — does not replace G22 receipts.
 

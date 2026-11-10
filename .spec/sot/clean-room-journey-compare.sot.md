@@ -167,8 +167,8 @@ Deferred / not catalog-required: live remote (G8), LFS, forge APIs, SSH/`git://`
 
 ### Clean-room entrypoint
 
-19. Compose service **`g16`** → `verify/scripts/run-g16.sh` → build release `arks` → `cargo test --manifest-path verify/g16/Cargo.toml` → write metrics artifact under `verify/g16/out/` (gitignored raw host copies OK; evidence copies committed metrics snapshot).
-20. Matrix: `verify/matrix-journey.md`. Reuse pinned image; bump `verify/images.lock.json` only if tooling requires it.
+19. Compose service **`g16`** → `verify/scripts/run-g16.sh` → build release `arks` → `cargo test --manifest-path verify/gates/g16/Cargo.toml` → write metrics artifact under `verify/gates/g16/out/` (gitignored raw host copies OK; evidence copies committed metrics snapshot).
+20. Matrix: `verify/matrices/matrix-journey.md`. Reuse pinned image; bump `verify/images.lock.json` only if tooling requires it.
 
 ### Out of scope (this SoT)
 
@@ -198,7 +198,7 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 | Binary profile for timings | **Closed (v0.1.0)** | **release** for G16; compile excluded from metrics |
 | Warm / iteration policy | **Closed (v0.2.0)** | `cold-workdir-per-lane`; authoritative default `iterations=3`; aggregation `median_p95` |
 | Perf metrics aggregation / SLO posture | **Closed (v0.2.0)** | Median + nearest-rank p95 recorded always on authoritative runs; **absolute ms pass/fail bars deferred** — must not redefine M9/M10/M11 |
-| Absolute perf regression bars (ms / ≥20% fail gates) | **Closed for Pf-1 allow-list (M14/G19)** | G16 remains record-only for non-allow-list rows; **G19** enforces `arks_median ≤ 0.8× git_median` on `verify/matrix-g19.md` after M12+M13 claimed-set exit |
+| Absolute perf regression bars (ms / ≥20% fail gates) | **Closed for Pf-1 allow-list (M14/G19)** | G16 remains record-only for non-allow-list rows; **G19** enforces `arks_median ≤ 0.8× git_median` on `verify/matrices/matrix-g19.md` after M12+M13 claimed-set exit |
 | Optional RSS/CPU metrics | **Closed (v0.3.0)** | Emit `peak_rss_kb` / `cpu_ms` (+ p95) when child sampling is available; **omit rather than invent** |
 | Live-remote journeys (G8) | **Claimed (default-on when secrets)** | [[adr:root/20261110220000]]; live when token+URL; SKIP when absent; prefer offline/local peer for ladder |
 | Path/`file://` clone lane | **Closed (v0.3.0; hardlink-prefer v0.4.0)** | **J-CLONE-PATH-01**; local path + same-host `file://` via hardlink-or-copy (not `--shared`; not piped upload-pack) |

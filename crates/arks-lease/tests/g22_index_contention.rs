@@ -2,7 +2,7 @@
 //!
 //! Enabled only with `--features celir-index-stress` (pulls `arks-store/celir-index`).
 //! SoT: `.spec/sot/celir-index-contention-clean-room.sot.md`
-//! Matrix: `verify/matrix-g22.md`
+//! Matrix: `verify/matrices/matrix-g22.md`
 
 #![cfg(feature = "celir-index-stress")]
 

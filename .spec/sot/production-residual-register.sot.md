@@ -116,11 +116,11 @@ Carrying exits (do not reopen as “not done”):
 |------|-------------|----------------|
 | Clean-room Git **pin-advance** | **Process closed** — follow [[sot:root/clean-room-git-pin-advance]]; current pin remains Git **2.39.5** (`verify/images.lock.json`) | Pin SoT + M9 plan |
 | Credential-helper / `askpass` | **Claimed (G33)** — fill + helper + askpass + **TTY** + first-party **wincred/libsecret/osxkeychain**; forge OAuth remains AUTH/N/A | [[sot:root/credential-helper-askpass]], [[sot:root/cli-surface]], [[evidence:root/20261110224000]], [[evidence:root/20261110233000]] |
-| Pc inventory honesty rows | **Closed** with M9 — implement/refuse ledger [[sot:root/cli-flag-parity-m9]]; matrix `verify/matrix-m9.md` | M9 plan + G14 |
+| Pc inventory honesty rows | **Closed** with M9 — implement/refuse ledger [[sot:root/cli-flag-parity-m9]]; matrix `verify/matrices/matrix-m9.md` | M9 plan + G14 |
 | `worktree` + `submodule` | **Closed (implement)** — leave M9 historical refuse intact; claim matrix + G16 rows **J-WORKTREE-01** / **J-SUBMODULE-01** per [[plan:root/20261109022956]]; receipt [[evidence:root/20261109114207]] | Flag ledger + journey SoT + G14/G16 |
 | Alias re-smoke | **Regression** — re-prove via G14 under residual hygiene; claimed `worktree`/`submodule` under alias | G14 / alias docs |
 | Same-`.git` after expansions | **Regression** — G14 + G11/G15 same-`.git` / stock-Git peer rows; no parallel store | git-compat + gates |
-| `version` / `--version` | **Closed (implement)** — Sy-5 ledger row; `arks version` and `arks --version` print matching `arks version <semver>`; G21 **M16-SY5-05** | [[sot:root/cli-flag-parity-complete]], `verify/matrix-g21.md` |
+| `version` / `--version` | **Closed (implement)** — Sy-5 ledger row; `arks version` and `arks --version` print matching `arks version <semver>`; G21 **M16-SY5-05** | [[sot:root/cli-flag-parity-complete]], `verify/matrices/matrix-g21.md` |
 | Plumbing inventory beyond everyday set | **Closed M15** minimum; **M16 Sy-3** complete plumbing breadth | [[sot:root/cli-flag-parity-complete]] |
 | Full CLI symmetric inventory (M9 refuse→implement) | **Closed historical M15** — Fs-1..Fs-5 G20 green; carrying [[evidence:root/20261109203000]] | M15 plan |
 | Per-flag refuse leftovers after M15 | **Closed M16** — Sy-1..Sy-5 G21 green; active bar = implement\|N/A; [[evidence:root/20261109061600]] / [[evidence:root/20261109063000]] | [[plan:root/20261109043910]] |
@@ -129,7 +129,7 @@ Carrying exits (do not reopen as “not done”):
 | Aggressive ≤0.5× Pf4 (M18) | **Closed (M18)** — progressive claim **11/19 ≤0.5×** + journey-class residuals; M17 ≤0.8× frozen; [[evidence:root/20261109143000]] (Pf4-3 exit); Pf4-1/2 progress [[evidence:root/20261109130000]] / [[evidence:root/20261109141500]] | [[plan:root/20261109125438]] |
 | Pf4 journey-class residuals (quantum / process-tax / mid) | **Closed (Pf5 aggressive_na)** — §F P6 rows; `aggressive_na` in `g19_eval.py`; reopen path [[adr:root/20261110162000]]; M17 ≤0.8× remains N/A-free measured | [[plan:root/20261110150000]], [[sot:root/clean-room-journey-compare]], [[adr:root/20261110162000]] |
 | G8 live remote smoke | **Claimed (default-on when secrets)** — live when token+URL present; honest SKIP when absent; force-off via `ARKS_G8_LIVE=0`; G7 remains offline remote proof ([[adr:root/20261110220000]] supersedes default-refuse for harness policy) | [[sot:root/interop-test-matrix]], [[adr:root/20261110220000]], [[evidence:root/20261110222000]] |
-| G9 partial/shallow filters | **Claimed (`--depth` subset / G35)** — smart HTTP/SSH `--depth N` clone/fetch + `.git/shallow`; filter/`blob:none`/`tree:0`/promisor still **N/A**; Docker G35 **PASS** | [[sot:root/interop-test-matrix]], [[sot:root/arks-remote]], `verify/matrix-g35.md`, [[evidence:root/20261110180000]] |
+| G9 partial/shallow filters | **Claimed (`--depth` subset / G35)** — smart HTTP/SSH `--depth N` clone/fetch + `.git/shallow`; filter/`blob:none`/`tree:0`/promisor still **N/A**; Docker G35 **PASS** | [[sot:root/interop-test-matrix]], [[sot:root/arks-remote]], `verify/matrices/matrix-g35.md`, [[evidence:root/20261110180000]] |
 
 ### B — Lease residuals
 
@@ -151,7 +151,7 @@ Carrying exits (do not reopen as “not done”):
 | Protocol v2 product | **Claimed (G31)** — advertise only implemented `ls-refs`/`fetch` subset | [[sot:root/arks-server]], [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2), [[evidence:root/20261109222500]] |
 | Optional HTTP Basic (in-process) | **Claimed (G36)** — product Basic when configured; forge OAuth still **Refuse** | [[sot:root/arks-server]], [[adr:root/20261109224236]], [[evidence:root/20261109224717]] |
 | Server-side hooks subset | **Claimed** — honor list pre-receive / update / post-receive | [[sot:root/arks-server]] §Receive-pack githooks, [[evidence:root/20261110200000]] |
-| G15 matrix | **Frozen** smart HTTP Claimed — `verify/matrix-m11.md`; transport expansion uses **G29–G32** | matrix-m11 + matrix-g29…g32 |
+| G15 matrix | **Frozen** smart HTTP Claimed — `verify/matrices/matrix-m11.md`; transport expansion uses **G29–G32** | matrix-m11 + matrix-g29…g32 |
 
 ### D — Public-flip hygiene
 
@@ -166,7 +166,7 @@ Carrying exits (do not reopen as “not done”):
 | Human vs agent public vocabulary (Pages plain language; Specfold IDs precise; no false “faster than Git”) | **Closed** — [[sot:root/public-surface]] v0.3.0; human `docs/` / README audited |
 | Local branch + synthetic PR-env scale (G26) | **Claimed (G26 PASS)** — N=2048 branches + 2048 PR heads + 32 workers; **not** GitHub PR throughput; live forge scale = harness only ([[adr:root/20261110161000]]) | [[sot:root/local-branch-pr-sim-clean-room]], [[plan:root/20261109205507]], [[evidence:root/20261109205847]] |
 | arks smart-HTTP branch + synthetic PR contention (G27) | **Claimed (G27 PASS)** — N=2048 branches + 2048 PR heads + 8 agents via arks smart HTTP; **not** GitHub UX/Checks/merge-queue; **not** live forge throughput | [[sot:root/arks-smart-http-pr-contention-clean-room]], [[plan:root/20261109210427]], [[evidence:root/20261109210427]] |
-| GitHub live PR/forge latency & rate-limit capacity | **Closed (harness + opt-in)** — [[adr:root/20261110161000]]; `verify/matrix-g8-live-scale.md` + `run-g8-live-scale.sh`; no invented latency; ≠ G28 functional claim | [[sot:root/interop-test-matrix]], [[adr:root/20261110151000]], [[adr:root/20261110161000]] |
+| GitHub live PR/forge latency & rate-limit capacity | **Closed (harness + opt-in)** — [[adr:root/20261110161000]]; `verify/matrices/matrix-g8-live-scale.md` + `run-g8-live-scale.sh`; no invented latency; ≠ G28 functional claim | [[sot:root/interop-test-matrix]], [[adr:root/20261110151000]], [[adr:root/20261110161000]] |
 | Live private forge **functional journeys** (G28) | **Claimed (G28 PASS)** — live private GitHub happy paths (PASS=21; [[evidence:root/20261109212500]]) + offline clone closure **J-CLONE-LOCAL-01** / **J-CLONE-PATH-01** PASS ([[evidence:root/20261109213400]]); checklist N/A=0; ≠ throughput/contention; `gpgsig` **read** Claimed ([[evidence:root/20261110170000]]); SSH create/verify ([[evidence:root/20261110073800]]); user-authorized opt-in; **ephemeral repos deleted** (cleanup Done) | [[sot:root/g28-live-private-arks-journeys]], [[plan:root/20261109212020]], [[evidence:root/20261109212500]], [[evidence:root/20261109213400]] |
 
 ### E — Hygiene (Main)
@@ -192,9 +192,9 @@ Every row is **Claimed / Refuse-closed / N/A / Closed** — **no bare Deferred**
 | P | ID | Disposition | Normative cite | Reopen path (if any) |
 |---|---|-------------|----------------|----------------------|
 | **P0** | **FW-G8-DEFAULT** | **Claimed (default-on when secrets)** — live when token+URL; SKIP when absent | [[adr:root/20261110220000]], [[evidence:root/20261110222000]] | Force-off via `ARKS_G8_LIVE=0`; live PASS needs secrets + receipt |
-| **P0** | **FW-GH-LIVE-SCALE** | **Claimed (harness ready)** — measure when secrets; no-measurement SKIP when absent | [[adr:root/20261110221000]], `verify/matrix-g8-live-scale.md`, [[evidence:root/20261110223000]] | No public SLO without gate; never invent latency |
-| **P1** | **FW-SHARED-IDX** | **Claimed (M26 / G34)** — shared-index N-way contention | [[adr:root/20261110074000]], [[evidence:root/20261110074200]], [[plan:root/20261110074000]], `verify/matrix-g34.md` | Re-verify G34 after shared-index protocol change |
-| **P1** | **FW-G9** | **Claimed (--depth subset / G35)** — shallow clone/fetch; filter/promisor still N/A; Docker G35 **PASS** | [[sot:root/arks-remote]], [[sot:root/interop-test-matrix]], `verify/matrix-g35.md`, [[evidence:root/20261110180000]] | Filter/promisor claim = new SoT amend; re-verify G35 after wire change |
+| **P0** | **FW-GH-LIVE-SCALE** | **Claimed (harness ready)** — measure when secrets; no-measurement SKIP when absent | [[adr:root/20261110221000]], `verify/matrices/matrix-g8-live-scale.md`, [[evidence:root/20261110223000]] | No public SLO without gate; never invent latency |
+| **P1** | **FW-SHARED-IDX** | **Claimed (M26 / G34)** — shared-index N-way contention | [[adr:root/20261110074000]], [[evidence:root/20261110074200]], [[plan:root/20261110074000]], `verify/matrices/matrix-g34.md` | Re-verify G34 after shared-index protocol change |
+| **P1** | **FW-G9** | **Claimed (--depth subset / G35)** — shallow clone/fetch; filter/promisor still N/A; Docker G35 **PASS** | [[sot:root/arks-remote]], [[sot:root/interop-test-matrix]], `verify/matrices/matrix-g35.md`, [[evidence:root/20261110180000]] | Filter/promisor claim = new SoT amend; re-verify G35 after wire change |
 | **P1** | **FW-CRED-ASKPASS** | **Claimed (G33)** — helper / askpass / TTY / first-party OS wallets | [[sot:root/credential-helper-askpass]], [[evidence:root/20261110224000]], [[evidence:root/20261110233000]] | Re-verify G33 after wire change |
 | **P1** | **FW-AUTH-PROXY** | **Claimed (product Basic G36)** + **Refuse-closed (forge OAuth)** — in-process Basic when configured | [[adr:root/20261109224236]], [[evidence:root/20261109224717]], [[sot:root/arks-server]] | Re-verify G36 after auth wire change |
 | **P1** | **FW-PF5-NA** | **Claimed (partial 7/8) + Verified** — LOCAL/BRANCH/BUNDLE/ALIAS/STASH/WORKTREE/RM-MV ≤0.5×; CLONE-LOCAL remains aggressive_na (HTTP seed amortization exhausted); sole Docker pin tip `c1b0b24` | [[sot:root/pf5-journey-seed-amortization]], [[adr:root/20261110162000]], [[evidence:root/20261110224500]], [[evidence:root/20261110234600]], [[evidence:root/20261111001400]], [[evidence:root/20261110003836]] | Product smart-HTTP clone work for residual 1 |

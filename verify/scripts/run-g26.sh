@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G26 — local branch + synthetic PR-env clean-room (stream B).
-# SoT: local-branch-pr-sim-clean-room; matrix: verify/matrix-g26.md
+# SoT: local-branch-pr-sim-clean-room; matrix: verify/matrices/matrix-g26.md
 # Honesty: local sim ≠ GitHub PR throughput. Sole-runner vs heavy gates.
 set -euo pipefail
 
@@ -11,8 +11,8 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/g26/out
-G26_LOCK="verify/g26/.run.lock.dir"
+mkdir -p verify/gates/g26/out
+G26_LOCK="verify/gates/g26/.run.lock.dir"
 
 # Refuse overlap with other heavy clean-room runners (OOM lesson).
 for other in g17 g19 g22 g23 g24 g25 g27; do
@@ -58,8 +58,8 @@ if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*
   exit 1
 fi
 
-export ARKS_G26_RECEIPT_OUT="${ARKS_G26_RECEIPT_OUT:-$ROOT/verify/g26/out/receipt.json}"
-export ARKS_G26_SCALE_OUT="${ARKS_G26_SCALE_OUT:-$ROOT/verify/g26/out/scale.json}"
+export ARKS_G26_RECEIPT_OUT="${ARKS_G26_RECEIPT_OUT:-$ROOT/verify/gates/g26/out/receipt.json}"
+export ARKS_G26_SCALE_OUT="${ARKS_G26_SCALE_OUT:-$ROOT/verify/gates/g26/out/scale.json}"
 
 echo "G26: branch/PR sim suite (arks-lease --test g26_branch_pr_sim)"
 cargo test -p arks-lease --test g26_branch_pr_sim -- --nocapture "$@"

@@ -59,7 +59,7 @@ fn query_effect(sidecar: &Path, oid_hex: &str) -> Option<String> {
 
 fn write_stretch_status(tier: &str, status: &str) {
     let root = std::env::var("ARKS_G25_ROOT").unwrap_or_else(|_| ".".into());
-    let out = PathBuf::from(root).join("verify/g25/out");
+    let out = PathBuf::from(root).join("verify/gates/g25/out");
     let _ = std::fs::create_dir_all(&out);
     let _ = std::fs::write(out.join(format!("{tier}.status")), status);
 }

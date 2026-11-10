@@ -21,7 +21,7 @@ rel:
 
 ## Context
 
-Milestone **M3** (Refs + index + repo / Phase R) under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m3.md`. Unit SoTs: [[sot:root/arks-refs]], [[sot:root/arks-index]], [[sot:root/arks-repo]]. Depends on M2 restart [[evidence:root/20261108190033]].
+Milestone **M3** (Refs + index + repo / Phase R) under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m3.md`. Unit SoTs: [[sot:root/arks-refs]], [[sot:root/arks-index]], [[sot:root/arks-repo]]. Depends on M2 restart [[evidence:root/20261108190033]].
 
 Host `cargo test` results are **advisory only** and are not this receipt.
 
@@ -47,11 +47,11 @@ Pre-restart untracked M3 trees were **gap-filled** against current SoTs and are 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | workspace includes refs/index/repo unit tests |
-| **G2** | `docker compose -f verify/docker-compose.yml run --rm g2` | **PASS** | `verify/g2` `git_oracle` **9** |
-| **G10** regression | (embedded in `run-g2.sh`) | **PASS** | `verify/g10` `git_oracle` **7** |
-| **G1** regression | (embedded in `run-g2.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/g1` `git_oracle` **6** |
+| **G2** | `docker compose -f verify/docker-compose.yml run --rm g2` | **PASS** | `verify/gates/g2` `git_oracle` **9** |
+| **G10** regression | (embedded in `run-g2.sh`) | **PASS** | `verify/gates/g10` `git_oracle` **7** |
+| **G1** regression | (embedded in `run-g2.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` `git_oracle` **6** |
 
-Combinatorics covered (automated): M3-C01…C13 per `verify/matrix-m3.md`. Deferred: M3-C14 packed-refs write; M3-C15 full G3; M3-C16 CELIR; M3-C17 lease L1+.
+Combinatorics covered (automated): M3-C01…C13 per `verify/matrices/matrix-m3.md`. Deferred: M3-C14 packed-refs write; M3-C15 full G3; M3-C16 CELIR; M3-C17 lease L1+.
 
 ## Non-claims
 

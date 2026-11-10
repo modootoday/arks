@@ -23,11 +23,11 @@ Unlocks `WriterMode::HighConcurrency` for the **claimed shape** locked by [[adr:
 | Field | Value |
 |-------|-------|
 | Gate | **G11-L3** (`verify/scripts/run-g11l3.sh` / compose `g11l3`) |
-| Matrix | `verify/matrix-l3.md` |
+| Matrix | `verify/matrices/matrix-l3.md` |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |
 | Result | **PASS** |
-| Suite | `cargo test -p arks-lease` (10 tests incl. N=32 + N=128 shard storm + lock-additive) + `verify/g11` regress |
+| Suite | `cargo test -p arks-lease` (10 tests incl. N=32 + N=128 shard storm + lock-additive) + `verify/gates/g11` regress |
 | gix / celir | zero edges (metadata scan) |
 | Tip at unlock | Hc-3 unlock commit on `origin/main` (after `dd2712b`); post-unlock Docker g11l3 revalidated PASS |
 

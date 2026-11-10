@@ -26,7 +26,7 @@ rel:
 ## Decision
 
 1. **Default product honesty — Closed (harness; no default claim):** Without opt-in, the product MUST NOT claim live GitHub PR/forge scale verification. Residual disposition is **Closed (measurement harness + opt-in)** — not Deferred.
-2. **Harness surface:** Normative operator entry is `verify/matrix-g8-live-scale.md` and `verify/scripts/run-g8-live-scale.sh`. Default run writes a **dry-run / refuse-closed** receipt when scale measurement vars are absent (same secret policy as G8).
+2. **Harness surface:** Normative operator entry is `verify/matrices/matrix-g8-live-scale.md` and `verify/scripts/run-g8-live-scale.sh`. Default run writes a **dry-run / refuse-closed** receipt when scale measurement vars are absent (same secret policy as G8).
 3. **Opt-in vars (all required for live measurement):**
    - `ARKS_G8_LIVE=1`
    - `ARKS_G8_TOKEN` or `GITHUB_TOKEN` (throwaway PAT; never commit)

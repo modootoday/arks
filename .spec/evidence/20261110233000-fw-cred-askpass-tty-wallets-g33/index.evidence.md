@@ -20,7 +20,7 @@ Extends [[evidence:root/20261110224000]] (C01–C05) with TTY terminal prompt an
 |-------|-------|
 | Branch | `agent/fw-cred-askpass` |
 | Gate | **G33** |
-| Matrix | `verify/matrix-g33.md` |
+| Matrix | `verify/matrices/matrix-g33.md` |
 | Compose | `docker compose -f verify/docker-compose.yml run --rm --no-deps g33` |
 | Receipt | `g33-run4.log` (C01–C07 ok; `G33: PASS`) |
 

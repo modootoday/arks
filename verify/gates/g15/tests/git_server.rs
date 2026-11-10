@@ -1,6 +1,6 @@
 //! Gate G15 — production-server: stock Git clone/fetch/push vs arks smart HTTP.
 //!
-//! Cite: verify/matrix-m11.md, gitprotocol-http, gitprotocol-pack.
+//! Cite: verify/matrices/matrix-m11.md, gitprotocol-http, gitprotocol-pack.
 //! No forge. No CELIR. Lease not required.
 
 use std::fs;

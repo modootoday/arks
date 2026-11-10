@@ -290,7 +290,7 @@ mod tests {
 
     #[test]
     fn prep_parallel_and_batch_apply_hundreds() {
-        // Stress-hundreds tier ([[verify/matrix-l3.md]]): N=128 distinct ref shards.
+        // Stress-hundreds tier ([[verify/matrices/matrix-l3.md]]): N=128 distinct ref shards.
         shard_storm(128, 8);
     }
 

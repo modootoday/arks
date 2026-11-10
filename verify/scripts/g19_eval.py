@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-# M17 / Pf3: full G16 catalog (verify/matrix-journey.md required IDs).
+# M17 / Pf3: full G16 catalog (verify/matrices/matrix-journey.md required IDs).
 allow = [
     "J-LOCAL-01",
     "J-BRANCH-01",

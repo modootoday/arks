@@ -1,6 +1,6 @@
 //! Gate G13 — Wave Pb porcelain argv suite (clean-room). Not production (M9).
 //!
-//! Matrix: `verify/matrix-m8.md` M8-C01..C10. Stock Git is a peer oracle where noted.
+//! Matrix: `verify/matrices/matrix-m8.md` M8-C01..C10. Stock Git is a peer oracle where noted.
 
 use std::fs;
 use std::io::{Read, Write};

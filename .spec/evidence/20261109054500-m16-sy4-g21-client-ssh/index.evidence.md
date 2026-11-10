@@ -33,7 +33,7 @@ No product-path `git` subprocess. Server SSH command-mode remains **N/A**.
 | M16-SY4-02 | `submodule add` over SSH URL fixture |
 | Regression | G20 + G14 |
 
-Fixture: `verify/g21/README-ssh-fixture.md` (ephemeral host/client keys; no secrets in tree).
+Fixture: `verify/gates/g21/README-ssh-fixture.md` (ephemeral host/client keys; no secrets in tree).
 
 ## Environment
 

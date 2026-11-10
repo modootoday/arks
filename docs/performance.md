@@ -35,7 +35,7 @@ Carrying receipts:
 - [M18 / G19 exit (historical progressive ≤0.5× set)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109143000-m18-pf4-3-g19-exit)
 - [M17 / G19 full allow-list (19/19 ≤0.8×)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109090000-m17-exit-g19-measured-19)
 - [PF5 aggressive_na amortization notes](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8)
-- Journey catalog notes: [verify/matrix-journey.md](https://github.com/modootoday/arks/blob/main/verify/matrix-journey.md)
+- Journey catalog notes: [verify/matrices/matrix-journey.md](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-journey.md)
 
 ## Claim bars (honesty)
 

@@ -25,7 +25,7 @@ Supersedes Closed (harness + opt-in) ([[adr:root/20261110161000]]) with [[adr:ro
 |-------|-------|
 | Compose | `verify/docker-compose.yml` service `g8-live-scale` |
 | Entrypoint | `verify/scripts/run-g8-live-scale.sh` |
-| Matrix | `verify/matrix-g8-live-scale.md` |
+| Matrix | `verify/matrices/matrix-g8-live-scale.md` |
 | Secrets in env | absent |
 | Disposition | `skip-no-measurement` |
 | Samples | `[]` |

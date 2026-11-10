@@ -1,7 +1,7 @@
 //! G26 — local branch + synthetic PR-env scale + leased concurrent tip workers.
 //!
 //! SoT: `.spec/sot/local-branch-pr-sim-clean-room.sot.md`
-//! Matrix: `verify/matrix-g26.md`
+//! Matrix: `verify/matrices/matrix-g26.md`
 //! Honesty: local sim ≠ GitHub PR throughput.
 
 use arks_hash::ObjectFormat;

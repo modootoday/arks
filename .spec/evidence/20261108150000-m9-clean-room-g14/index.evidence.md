@@ -24,7 +24,7 @@ rel:
 
 ## Context
 
-Milestone **M9** (Porcelain parity C + inventory closure / Phase **Pc**) under program roadmap **v0.3.1+**. This exit **is CLI-parity production** (same `.git` + CLI inventory + flag-parity + alias-ready + remote client). Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m9.md`. Unit SoT: [[sot:root/arks]] Wave Pc. Flag-parity: [[sot:root/cli-flag-parity-m9]]. Alias: `docs/alias-git-arks.md`. Depends on M8 [[evidence:root/20261108143000]].
+Milestone **M9** (Porcelain parity C + inventory closure / Phase **Pc**) under program roadmap **v0.3.1+**. This exit **is CLI-parity production** (same `.git` + CLI inventory + flag-parity + alias-ready + remote client). Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m9.md`. Unit SoT: [[sot:root/arks]] Wave Pc. Flag-parity: [[sot:root/cli-flag-parity-m9]]. Alias: `docs/alias-git-arks.md`. Depends on M8 [[evidence:root/20261108143000]].
 
 Host `cargo test` results are **advisory only**.
 
@@ -49,24 +49,24 @@ Host `cargo test` results are **advisory only**.
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **gix-exit** | `cargo metadata` graph scan in `run-g14.sh` | **PASS** | zero `gix` / `gitoxide` edges |
-| **G14** | `docker compose -f verify/docker-compose.yml run --rm g14` | **PASS** | `verify/g14` Wave Pc suite **9** |
-| **G13** regression | (embedded in `run-g14.sh`) | **PASS** | `verify/g13` **10** |
-| **G12** regression | (embedded) | **PASS** | `verify/g12` **7** |
-| **G7** regression | (embedded) | **PASS** | `verify/g7` **3** |
-| **G6** regression | (embedded) | **PASS** | `verify/g6` **6** |
-| **G3** regression | (embedded) | **PASS** | `verify/g3` **3** |
-| **G4** regression | (embedded) | **PASS** | `verify/g4` **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded) | **PASS** | `verify/g2` **9** |
-| **G10** regression | (embedded) | **PASS** | `verify/g10` **7** |
-| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/g1` **6** |
+| **G14** | `docker compose -f verify/docker-compose.yml run --rm g14` | **PASS** | `verify/gates/g14` Wave Pc suite **9** |
+| **G13** regression | (embedded in `run-g14.sh`) | **PASS** | `verify/gates/g13` **10** |
+| **G12** regression | (embedded) | **PASS** | `verify/gates/g12` **7** |
+| **G7** regression | (embedded) | **PASS** | `verify/gates/g7` **3** |
+| **G6** regression | (embedded) | **PASS** | `verify/gates/g6` **6** |
+| **G3** regression | (embedded) | **PASS** | `verify/gates/g3` **3** |
+| **G4** regression | (embedded) | **PASS** | `verify/gates/g4` **3** |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
+| **G2** regression | (embedded) | **PASS** | `verify/gates/g2` **9** |
+| **G10** regression | (embedded) | **PASS** | `verify/gates/g10` **7** |
+| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
 | Unit Specfold | `spec check` | **PASS** | 0 errors / 0 warnings |
 
-Combinatorics covered (automated): M9-C01…C16, C18 per `verify/matrix-m9.md`. Residual: M9-C19 out-of-scope (lease/CELIR/server/forge); pin-advance closed-as-process ([[sot:root/clean-room-git-pin-advance]]); credential-helper refuse-closed for M9 production.
+Combinatorics covered (automated): M9-C01…C16, C18 per `verify/matrices/matrix-m9.md`. Residual: M9-C19 out-of-scope (lease/CELIR/server/forge); pin-advance closed-as-process ([[sot:root/clean-room-git-pin-advance]]); credential-helper refuse-closed for M9 production.
 
 ## Bug simulation (fixed / avoided)
 
-1. `verify/scripts/run-g14.sh` authored/normalized LF-only (same CRLF `set: pipefail` class as G13/G12/G7). See `verify/g14/BUGSIM.md`.
+1. `verify/scripts/run-g14.sh` authored/normalized LF-only (same CRLF `set: pipefail` class as G13/G12/G7). See `verify/gates/g14/BUGSIM.md`.
 2. G12/G13 regression expectations updated for Pc claims (`reflog`, `clean -d`, `bundle verify`) so prior gates do not falsely require refuse.
 3. Alias tests use PATH argv shim (not shell `alias`) inside cargo tests.
 

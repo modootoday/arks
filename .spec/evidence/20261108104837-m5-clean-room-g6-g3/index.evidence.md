@@ -22,7 +22,7 @@ rel:
 
 ## Context
 
-Milestone **M5** (Local CLI foundation / Phase L) under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrix-m5.md`. Unit SoT: [[sot:root/arks]]. Depends on M4 [[evidence:root/20261108103610]].
+Milestone **M5** (Local CLI foundation / Phase L) under program roadmap **v0.3.1**. Authoritative venue: Docker clean-room under `verify/` per [[sot:root/product-verification-clean-room]]. Image pins: `verify/images.lock.json`. Matrix: `verify/matrices/matrix-m5.md`. Unit SoT: [[sot:root/arks]]. Depends on M4 [[evidence:root/20261108103610]].
 
 Host `cargo test` / host CLI smoke results are **advisory only** and are not this receipt.
 
@@ -46,16 +46,16 @@ Host `cargo test` / host CLI smoke results are **advisory only** and are not thi
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | workspace includes `arks` + tree/commit unit tests |
-| **G6** | `docker compose -f verify/docker-compose.yml run --rm g6` | **PASS** | `verify/g6` argv suite **6** |
-| **G3** | (embedded in `run-g6.sh`; also `g3` service) | **PASS** | `verify/g3` `git_oracle` **3** |
-| **G4** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/g4` **3** |
-| **G5** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/g2` **9** |
-| **G10** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/g10` **7** |
-| **G1** regression | (embedded in `run-g6.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/g1` **6** |
+| **G6** | `docker compose -f verify/docker-compose.yml run --rm g6` | **PASS** | `verify/gates/g6` argv suite **6** |
+| **G3** | (embedded in `run-g6.sh`; also `g3` service) | **PASS** | `verify/gates/g3` `git_oracle` **3** |
+| **G4** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g4` **3** |
+| **G5** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
+| **G2** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g2` **9** |
+| **G10** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g10` **7** |
+| **G1** regression | (embedded in `run-g6.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
 | **gix-exit** | `cargo metadata` graph scan | **PASS** | zero packages/edges named `gix` / `gitoxide` |
 
-Combinatorics covered (automated): M5-C01…C14 per `verify/matrix-m5.md`. Deferred: M5-C15 remotes; M5-C16 CELIR/lease; M5-C17 Pa/Pb/Pc.
+Combinatorics covered (automated): M5-C01…C14 per `verify/matrices/matrix-m5.md`. Deferred: M5-C15 remotes; M5-C16 CELIR/lease; M5-C17 Pa/Pb/Pc.
 
 ## Non-claims
 

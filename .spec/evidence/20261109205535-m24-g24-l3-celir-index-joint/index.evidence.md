@@ -18,7 +18,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G24** (`verify/scripts/run-g24.sh` / compose `g24`) |
-| Matrix | `verify/matrix-g24.md` |
+| Matrix | `verify/matrices/matrix-g24.md` |
 | N scale | **32** + **128** |
 | Shared-index N-way | **OUT** |
 | Stock git | `git version 2.39.5` |

@@ -18,7 +18,7 @@ files:
 | Field | Value |
 |-------|--------|
 | Gate | **G25** (`verify/scripts/run-g25.sh` / compose `g25`) |
-| Matrix | `verify/matrix-g25.md` |
+| Matrix | `verify/matrices/matrix-g25.md` |
 | Required N | **256** PASS |
 | Stretch | **384** PASS; **512** PASS |
 | Stock git | `git version 2.39.5` |

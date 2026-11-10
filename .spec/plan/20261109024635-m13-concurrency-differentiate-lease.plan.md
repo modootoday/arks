@@ -75,8 +75,8 @@ Claimed sets per wave must list explicit IDs; unlisted stay Open. Slice Done = G
 
 ## Ordered work items
 
-1. **Design** — ADR(s) for grant schema + fencing; freeze first Cd wave claim-set. **Done (Cd-1)** — [[adr:root/20261109032955]]; matrix `verify/matrix-g18.md`.
-2. **Implement** — `arks-lease` uplift + `arks lease` CLI + G18 runner (`verify/g18`, `run-g18.sh`, compose `g18`).
+1. **Design** — ADR(s) for grant schema + fencing; freeze first Cd wave claim-set. **Done (Cd-1)** — [[adr:root/20261109032955]]; matrix `verify/matrices/matrix-g18.md`.
+2. **Implement** — `arks-lease` uplift + `arks lease` CLI + G18 runner (`verify/gates/g18`, `run-g18.sh`, compose `g18`).
 3. **Verify** — Docker G18 PASS per claimed ID; evidence receipts; no L3 overclaim.
 
 ## Claimed set — Wave Cd-1 (first execution slice)

@@ -145,11 +145,11 @@ Generic Git remote **client** for claimed protocols; GitHub-class hosts are the 
 
 #### Wave Pa — Porcelain parity A (milestone M7)
 
-Main local branching / worktree / diff / integrate foundations from git(1) main porcelain, including at least: `branch`, `checkout`, `switch`, `restore`, `reset`, `diff`, `merge`, `rm`, `mv`, `tag`, `clean`, `config` (claimed subset→parity), `describe`, `shortlog`, `grep`, `stash` (minimal→full per plan), `worktree` (as claimed in plan), plus ancillary needed for those flows (`reflog`, `repack` / pack helpers as required). **Frozen** implement/refuse/exclude checklist: [[plan:root/20261108183810]] (M7); matrix `verify/matrix-m7.md`. M7 defers `worktree` / `reflog` / `repack` with refuse; `merge` is FF/`--ff-only` only; annotated tags refuse to Pb/Pc.
+Main local branching / worktree / diff / integrate foundations from git(1) main porcelain, including at least: `branch`, `checkout`, `switch`, `restore`, `reset`, `diff`, `merge`, `rm`, `mv`, `tag`, `clean`, `config` (claimed subset→parity), `describe`, `shortlog`, `grep`, `stash` (minimal→full per plan), `worktree` (as claimed in plan), plus ancillary needed for those flows (`reflog`, `repack` / pack helpers as required). **Frozen** implement/refuse/exclude checklist: [[plan:root/20261108183810]] (M7); matrix `verify/matrices/matrix-m7.md`. M7 defers `worktree` / `reflog` / `repack` with refuse; `merge` is FF/`--ff-only` only; annotated tags refuse to Pb/Pc.
 
 #### Wave Pb — Porcelain parity B (milestone M8)
 
-History-editing and patch workflows from git(1). **Frozen** implement/refuse/exclude checklist: [[plan:root/20261108183811]] (M8); matrix `verify/matrix-m8.md`. Implement (claimed subset): `rebase` (non-interactive), `cherry-pick`, `revert`, `bisect` (start/bad/good/reset), `am`, `format-patch`, `bundle`, `pull --rebase`. **Refuse** to Pc (omit from help): `range-diff`, `notes`, `filter-branch`, interactive rebase. Conflicted applies refuse non-zero (no 3-way merge engine in M8).
+History-editing and patch workflows from git(1). **Frozen** implement/refuse/exclude checklist: [[plan:root/20261108183811]] (M8); matrix `verify/matrices/matrix-m8.md`. Implement (claimed subset): `rebase` (non-interactive), `cherry-pick`, `revert`, `bisect` (start/bad/good/reset), `am`, `format-patch`, `bundle`, `pull --rebase`. **Refuse** to Pc (omit from help): `range-diff`, `notes`, `filter-branch`, interactive rebase. Conflicted applies refuse non-zero (no 3-way merge engine in M8).
 
 #### Wave Pc — Porcelain parity C + inventory closure (milestone M9) — **production**
 
@@ -158,7 +158,7 @@ History-editing and patch workflows from git(1). **Frozen** implement/refuse/exc
 3. **Alias-ready audit** green: representative muscle-memory workflows succeed when the clean-room invokes the `arks` binary under a `git`→`arks` alias (or argv-equivalent shim); refuse paths remain non-zero under alias.
 4. Satisfy [[sot:root/program-roadmap]] CLI-parity production checklist (same `.git` + remotes + engine + honesty + gates).
 
-**Frozen** implement/refuse/exclude checklist: [[plan:root/20261108183812]] (M9); matrix `verify/matrix-m9.md`; flag-parity ledger [[sot:root/cli-flag-parity-m9]]; alias how-to `docs/alias-git-arks.md`. Unit SoT: [[sot:root/arks]] Wave Pc.
+**Frozen** implement/refuse/exclude checklist: [[plan:root/20261108183812]] (M9); matrix `verify/matrices/matrix-m9.md`; flag-parity ledger [[sot:root/cli-flag-parity-m9]]; alias how-to `docs/alias-git-arks.md`. Unit SoT: [[sot:root/arks]] Wave Pc.
 
 #### Wave Fs — Full CLI symmetric residual (milestone M15) — **historical inventory close**
 

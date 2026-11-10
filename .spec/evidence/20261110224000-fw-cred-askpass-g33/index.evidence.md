@@ -1,4 +1,4 @@
-﻿---
+---
 id: evidence:root/20261110224000
 title: FW-CRED-ASKPASS G33 Claimed
 status: active
@@ -33,7 +33,7 @@ Primary: [gitcredentials](https://git-scm.com/docs/gitcredentials),
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Stock Git | `git version 2.39.5` |
-| Matrix | `verify/matrix-g33.md` |
+| Matrix | `verify/matrices/matrix-g33.md` |
 | Script | `verify/scripts/run-g33.sh` |
 | Cargo target | isolated volume `arks-cargo-target-g33` |
 

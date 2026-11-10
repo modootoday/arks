@@ -78,7 +78,7 @@ Move **`worktree`** and **`submodule`** from M9 Wave Pc **refuse-closed** to **c
 | **J-SUBMODULE-01** | J-REFUSE-03 | local `submodule add` → `status` → `deinit` → `init` → `update`; gitlink + `.gitmodules`; alias PASS |
 | **J-REFUSE-02** | (kept) | `repack -ad` remains refuse-closed |
 
-G14 residual re-smoke: help lists `worktree`/`submodule`; unknown flags refuse; alias shim exercises claimed subcommands (not refuse). Matrix: `verify/matrix-journey.md` + `verify/matrix-m9.md` honesty note that M9 historical refuse is superseded by this residual for these two commands only.
+G14 residual re-smoke: help lists `worktree`/`submodule`; unknown flags refuse; alias shim exercises claimed subcommands (not refuse). Matrix: `verify/matrices/matrix-journey.md` + `verify/matrices/matrix-m9.md` honesty note that M9 historical refuse is superseded by this residual for these two commands only.
 
 ## Non-goals
 

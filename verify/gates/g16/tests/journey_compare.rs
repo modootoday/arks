@@ -1,5 +1,5 @@
 //! Gate G16 — git vs arks user-journey compare (func + timing).
-//! Matrix: `verify/matrix-journey.md`. SoT: clean-room-journey-compare v0.3.0.
+//! Matrix: `verify/matrices/matrix-journey.md`. SoT: clean-room-journey-compare v0.3.0.
 
 use std::fs;
 use std::io::{Read, Write};

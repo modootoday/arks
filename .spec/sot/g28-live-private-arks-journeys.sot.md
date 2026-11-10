@@ -50,7 +50,7 @@ Version **0.1.1**. Additive **opt-in** Docker clean-room gate that drives **arks
 
 ### Journey checklist (G16-derived)
 
-8. Authoritative rows for G28 are the **live-applicable** adaptations of [[sot:root/clean-room-journey-compare]] / `verify/matrix-journey.md`:
+8. Authoritative rows for G28 are the **live-applicable** adaptations of [[sot:root/clean-room-journey-compare]] / `verify/matrices/matrix-journey.md`:
 
 | ID | Live adaptation | Functional class |
 |----|-----------------|------------------|
@@ -87,9 +87,9 @@ Version **0.1.1**. Additive **opt-in** Docker clean-room gate that drives **arks
 
 ### Evidence
 
-14. Live receipt under `verify/g28/out/receipt.json` + Specfold evidence citing journey PASS/FAIL table, image tag, arks revision, stock Git version, repo URL (public HTTPS form, no token), cleanup status.
-15. Offline clone receipt under `verify/g28/out/offline-clones-receipt.json` + Specfold evidence ([[evidence:root/20261109213400]] when stamped).
-16. Compose **`g28`** → `verify/scripts/run-g28.sh`; **`g28-offline-clones`** → `verify/scripts/run-g28-offline-clones.sh`. Matrix: `verify/matrix-g28.md`.
+14. Live receipt under `verify/gates/g28/out/receipt.json` + Specfold evidence citing journey PASS/FAIL table, image tag, arks revision, stock Git version, repo URL (public HTTPS form, no token), cleanup status.
+15. Offline clone receipt under `verify/gates/g28/out/offline-clones-receipt.json` + Specfold evidence ([[evidence:root/20261109213400]] when stamped).
+16. Compose **`g28`** → `verify/scripts/run-g28.sh`; **`g28-offline-clones`** → `verify/scripts/run-g28-offline-clones.sh`. Matrix: `verify/matrices/matrix-g28.md`.
 
 ### Out of scope
 

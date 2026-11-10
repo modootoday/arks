@@ -43,7 +43,7 @@ Version **0.1.1**. Normative clean-room gate for **M26** shared-index N-way cont
 
 ### Matrix / entrypoint
 
-- Matrix: `verify/matrix-g34.md`
+- Matrix: `verify/matrices/matrix-g34.md`
 - Script: `verify/scripts/run-g34.sh`
 - Compose: `verify/docker-compose.yml` service `g34`
 
