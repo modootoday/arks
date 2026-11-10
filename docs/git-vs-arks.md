@@ -52,7 +52,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE subset) | **Claimed** (host wire; ladder L3) |
 | Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
-| Partial-clone `--filter` / promisor | Yes | Refused; not claimed | **N/A** (R3 / L6 honest N/A) |
+| Partial-clone `--filter=blob:none` / promisor | Yes | Yes (`blob:none`; other specs refuse) | **Claimed** (R3 / S1 host wire) |
 | Forge OAuth / Checks / merge-queue UX | Via host tools | Out of product | **N/A** / **Refuse** |
 
 ## Signing and credentials
@@ -77,7 +77,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 
 | Residual | Disposition | Reopen requires |
 |----------|-------------|-----------------|
-| R3 filter / promisor | **N/A** (L6) | SoT amend beyond `--depth` + wire + G35-class re-verify |
+| R3 filter / promisor | **Claimed `blob:none` (S1 host wire)**; other specs N/A | Symmetry e2e twin (**S6**); expand filter-specs via SoT |
 | R4 OpenPGP / X.509 / `tag -s` | **N/A** (L7) | Dedicated crypto harness SoT + wire + G37-class re-verify |
 | R5 live forge scale PASS | Harness Claimed; ops dry-run Done | Secrets + receipt; never invent latency |
 | R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
@@ -96,8 +96,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Goal | Focus | Status |
 |------|-------|--------|
 | **S0** | Inventory lock (implement / SoT-amend / still-OOS) | **Done** |
-| **S1** | R3 filter / promisor | Next (SoT amend before Claimed) |
-| **S2** | R4 OpenPGP / X.509 / `tag -s` | Open |
+| **S1** | R3 filter / promisor (`blob:none`) | **Done** (host wire) |
+| **S2** | R4 OpenPGP / X.509 / `tag -s` | Next |
 | **S3** | Protocol narrows (e.g. dumb HTTP deletes) | Open |
 | **S4** | Interactive / patch flows or honest defer | Open |
 | **S5** | R5 live forge (secrets) or documented block | Open |

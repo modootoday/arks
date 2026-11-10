@@ -35,7 +35,7 @@ Release-channel ops (OIDC Environments, tag dry-run, draft Releases): [Release c
 
 Secrets-gated live forge smoke / scale harness: [Forge scale harness](../forge-scale/). Dry-run readiness is not a live latency PASS.
 
-Partial-clone filter / promisor remains out of product claim; see [Limits](../limits/). Shallow `--depth` is the claimed subset.
+Partial-clone `--filter=blob:none` / promisor is claimed on pack transports; other filter-specs remain out of claim — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/). Shallow `--depth` remains claimed.
 
 OpenPGP / X.509 / signed tags remain out of product claim; SSH commit `-S` / `verify-commit` is the claimed signing subset. See [Limits](../limits/).
 

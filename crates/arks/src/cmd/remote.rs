@@ -45,8 +45,8 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["--depth", "--filter"])?;
-    refuse_partial_clone_filter(args)?;
     let mut depth: Option<u32> = None;
+    let mut filter: Option<String> = None;
     let mut positional = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -58,6 +58,14 @@ pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
             depth = Some(parse_depth(n)?);
         } else if let Some(rest) = args[i].strip_prefix("--depth=") {
             depth = Some(parse_depth(rest)?);
+        } else if args[i] == "--filter" {
+            i += 1;
+            let spec = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("fetch --filter <spec>".into()))?;
+            filter = Some(parse_filter(spec)?);
+        } else if let Some(rest) = args[i].strip_prefix("--filter=") {
+            filter = Some(parse_filter(rest)?);
         } else {
             positional.push(args[i].clone());
         }
@@ -91,6 +99,7 @@ pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
         .ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
     let opts = arks_remote::FetchOptions {
         depth,
+        filter,
         ..Default::default()
     };
     let result = arks_remote::fetch_remote_with(&mut repo, &remote.url, remote_name, &opts)?;
@@ -161,10 +170,10 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_clone(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["--reference", "--depth", "--filter"])?;
-    refuse_partial_clone_filter(args)?;
     // MISC-009 (M20 Cx-8): clone --reference while donor under gc/maintenance.
     let mut reference: Option<PathBuf> = None;
     let mut depth: Option<u32> = None;
+    let mut filter: Option<String> = None;
     let mut positional = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -184,6 +193,14 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
             depth = Some(parse_depth(n)?);
         } else if let Some(rest) = args[i].strip_prefix("--depth=") {
             depth = Some(parse_depth(rest)?);
+        } else if args[i] == "--filter" {
+            i += 1;
+            let spec = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("clone --filter <spec>".into()))?;
+            filter = Some(parse_filter(spec)?);
+        } else if let Some(rest) = args[i].strip_prefix("--filter=") {
+            filter = Some(parse_filter(rest)?);
         } else {
             positional.push(args[i].clone());
         }
@@ -235,6 +252,7 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
     }
     let opts = arks_remote::FetchOptions {
         depth,
+        filter,
         ..Default::default()
     };
     if arks_remote::HttpRemoteUrl::parse(url).is_ok() {
@@ -264,19 +282,10 @@ fn parse_depth(raw: &str) -> CliResult<u32> {
     Ok(n)
 }
 
-/// Partial-clone `--filter` / promisor product path remains N/A (residual R3 / G9).
-/// Claimed shallow subset is `--depth N` only ([[sot:root/arks-remote]]).
-fn refuse_partial_clone_filter(args: &[String]) -> CliResult<()> {
-    if args
-        .iter()
-        .any(|a| *a == "--filter" || a.starts_with("--filter="))
-    {
-        return Err(CliError::NotImplemented(
-            "clone/fetch --filter (blob:none / tree:0 / promisor partial-clone) not claimed; use --depth N for shallow"
-                .into(),
-        ));
-    }
-    Ok(())
+/// Claimed partial-clone filter-spec (`blob:none` only; residual R3 / S1).
+fn parse_filter(raw: &str) -> CliResult<String> {
+    arks_remote::validate_claimed_filter(raw).map_err(|e| CliError::NotImplemented(e.to_string()))?;
+    Ok(raw.to_string())
 }
 
 /// Infer a directory name from a clone URL (HTTP, SSH, or path).
@@ -321,27 +330,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn clone_refuses_filter_flag() {
+    fn clone_refuses_unclaimed_filter_spec() {
         let err = cmd_clone(&[
-            "--filter=blob:none".into(),
+            "--filter=tree:0".into(),
             "https://example.invalid/repo.git".into(),
         ])
-        .expect_err("filter must refuse");
+        .expect_err("tree:0 must refuse");
         let s = err.to_string();
         assert!(
-            s.contains("--filter") && s.contains("not claimed"),
+            s.contains("tree:0") && s.contains("not claimed"),
             "unexpected refuse text: {s}"
         );
     }
 
     #[test]
-    fn fetch_refuses_filter_flag() {
-        let err = cmd_fetch(&["--filter".into(), "blob:none".into(), "origin".into()])
-            .expect_err("filter must refuse");
-        let s = err.to_string();
-        assert!(
-            s.contains("--filter") && s.contains("not claimed"),
-            "unexpected refuse text: {s}"
-        );
+    fn parse_filter_accepts_blob_none() {
+        assert_eq!(parse_filter("blob:none").unwrap(), "blob:none");
     }
 }

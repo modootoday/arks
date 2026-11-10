@@ -67,6 +67,74 @@ pub fn add_remote(config_file: &Path, name: &str, url: &str) -> Result<(), Remot
     Ok(())
 }
 
+/// Set `core.repositoryformatversion=1` + `extensions.partialClone=<remote>`.
+///
+/// Cite: [partial-clone](https://git-scm.com/docs/partial-clone),
+/// [git-config](https://git-scm.com/docs/git-config) `extensions.partialClone`.
+pub fn enable_partial_clone(git_dir: &Path, remote_name: &str) -> Result<(), RemoteError> {
+    let config_file = git_dir.join("config");
+    let mut text = match fs::read_to_string(&config_file) {
+        Ok(text) => text,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(RemoteError::Config(e.to_string())),
+    };
+    text = upsert_config_key(&text, "core", "repositoryformatversion", "1");
+    text = upsert_config_key(&text, "extensions", "partialClone", remote_name);
+    if !text.ends_with('\n') {
+        text.push('\n');
+    }
+    fs::write(&config_file, text).map_err(|e| RemoteError::Config(e.to_string()))?;
+    Ok(())
+}
+
+fn upsert_config_key(text: &str, section: &str, key: &str, value: &str) -> String {
+    let section_l = section.to_ascii_lowercase();
+    let mut out = String::with_capacity(text.len() + 64);
+    let mut in_section = false;
+    let mut section_seen = false;
+    let mut key_written = false;
+    for line in text.split_inclusive('\n') {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            if in_section && !key_written {
+                out.push_str(&format!("\t{key} = {value}\n"));
+                key_written = true;
+            }
+            let name = trimmed[1..trimmed.len() - 1].trim().to_ascii_lowercase();
+            in_section = name == section_l;
+            if in_section {
+                section_seen = true;
+            }
+            out.push_str(line);
+            continue;
+        }
+        if in_section {
+            if let Some((k, _)) = trimmed.split_once('=') {
+                if k.trim().eq_ignore_ascii_case(key) {
+                    out.push_str(&format!("\t{key} = {value}\n"));
+                    key_written = true;
+                    continue;
+                }
+            }
+        }
+        out.push_str(line);
+    }
+    if in_section && !key_written {
+        out.push_str(&format!("\t{key} = {value}\n"));
+        key_written = true;
+    }
+    if !section_seen {
+        if !out.is_empty() && !out.ends_with('\n') {
+            out.push('\n');
+        }
+        out.push_str(&format!("[{section}]\n\t{key} = {value}\n"));
+        let _ = key_written;
+    } else if !key_written {
+        out.push_str(&format!("[{section}]\n\t{key} = {value}\n"));
+    }
+    out
+}
+
 /// Delete the `[remote "<name>"]` section. Other sections stay byte-stable aside from that cut.
 pub fn remove_remote(config_file: &Path, name: &str) -> Result<(), RemoteError> {
     validate_name(name)?;

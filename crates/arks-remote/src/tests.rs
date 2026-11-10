@@ -354,6 +354,75 @@ fn commit_file(
 }
 
 #[test]
+fn stock_git_http_backend_partial_clone_blob_none() {
+    let git_ok = std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !git_ok {
+        return;
+    }
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path().join("peer");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = root.join("src");
+    std::fs::create_dir_all(&work).unwrap();
+    git_ok_at(&work, &["init", "-b", "main"]);
+    git_ok_at(&work, &["config", "user.email", "git@example.com"]);
+    git_ok_at(&work, &["config", "user.name", "Git"]);
+    std::fs::write(work.join("README"), b"hello-filter\n").unwrap();
+    git_ok_at(&work, &["add", "README"]);
+    git_ok_at(&work, &["commit", "-m", "c1"]);
+    // Older history blob that filter should omit until needed.
+    std::fs::write(work.join("OLD"), b"old-blob\n").unwrap();
+    git_ok_at(&work, &["add", "OLD"]);
+    git_ok_at(&work, &["commit", "-m", "c2"]);
+    std::fs::remove_file(work.join("OLD")).unwrap();
+    git_ok_at(&work, &["add", "OLD"]);
+    git_ok_at(&work, &["commit", "-m", "c3-drop-old"]);
+    git_ok_at(
+        &root,
+        &["clone", "--bare", work.to_str().unwrap(), "app.git"],
+    );
+    let bare = root.join("app.git");
+    git_ok_at(&bare, &["config", "http.receivepack", "true"]);
+    git_ok_at(&bare, &["config", "uploadpack.allowFilter", "true"]);
+    git_ok_at(&bare, &["config", "uploadpack.allowAnySHA1InWant", "true"]);
+
+    let server = GitBackend::spawn(root.clone());
+    let dest = tmp.path().join("partial");
+    clone_http_with(
+        &format!("{}/app.git", server.url),
+        &dest,
+        &FetchOptions {
+            filter: Some("blob:none".into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        std::fs::read(dest.join("README")).unwrap(),
+        b"hello-filter\n"
+    );
+    let cfg = std::fs::read_to_string(dest.join(".git/config")).unwrap();
+    assert!(
+        cfg.to_ascii_lowercase().contains("partialclone"),
+        "expected extensions.partialClone in config: {cfg}"
+    );
+    let pack_dir = dest.join(".git/objects/pack");
+    let promisor = std::fs::read_dir(&pack_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .any(|e| {
+            e.path()
+                .extension()
+                .is_some_and(|ext| ext == "promisor")
+        });
+    assert!(promisor, "expected at least one .promisor pack marker");
+}
+
+#[test]
 fn stock_git_http_backend_shallow_clone_depth_1() {
     let git_ok = std::process::Command::new("git")
         .arg("--version")

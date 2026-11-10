@@ -3,7 +3,7 @@ id: research:root/20261110105436
 title: Git symmetry expanded DoD goal ladder (S0-S_final)
 status: active
 created: 2026-11-10T10:54:36Z
-updated: 2026-11-10T10:54:36Z
+updated: 2026-11-10T10:58:55Z
 tags:
   [
     git-symmetry,
@@ -60,7 +60,7 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 
 | Residual / gap | Prior disposition | Expanded DoD class | Ladder goal |
 |----------------|-------------------|--------------------|-------------|
-| **R3** filter / promisor (`blob:none`, `tree:0`, `extensions.partialClone`) | N/A (L6 refuse) | **SoT-amend → implement** | **S1** |
+| **R3** filter / promisor (`blob:none` claimed; other specs refuse) | N/A (L6 refuse) → **Claimed host wire** | **SoT-amend → implement** | **S1 Done** ([[evidence:root/20261110105855]]) |
 | **R4** OpenPGP / X.509 / `tag -s` / `verify-tag` | N/A (L7 refuse) | **SoT-amend → implement** | **S2** |
 | Dumb HTTP push **deletes** (`-d`/`-D`) | Explicit non-claim in [[adr:root/20261110190000]] | **SoT-amend → implement** if WebDAV DELETE SoTable | **S3** |
 | Other §F protocol narrows still refuse-only (if any SoTable) | Claimed subset / N/A | Inventory then amend | **S3** |
@@ -80,8 +80,8 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 | # | Goal | Class | Exit criteria | Status |
 |---|------|-------|---------------|--------|
 | **S0** | Inventory lock | Specfold | This table maps every residual → implement / SoT-amend / still-OOS / owner-closed; residual register + AGENTS + comparison pointer cite this research | **Done** (this note) |
-| **S1** | **R3** partial-clone filter / promisor | Git asymmetry | SoT amend [[sot:root/arks-remote]] (+ interop matrix) beyond `--depth`; wire `filter` cap + claimed filter-spec(s); promisor / `extensions.partialClone` subset; CLI refuse→support where claimed; G35-class / new matrix twin; evidence before Claimed | **Next** |
-| **S2** | **R4** OpenPGP / X.509 / `tag -s` / `verify-tag` | Git asymmetry | SoT amend [[sot:root/arks-object]] + CLI; dedicated crypto harness; G37-class re-verify; evidence before Claimed | Open |
+| **S1** | **R3** partial-clone filter / promisor | Git asymmetry | SoT amend [[sot:root/arks-remote]] beyond `--depth`; wire `filter` + `blob:none`; promisor / `extensions.partialClone`; CLI support claimed spec; host evidence before Claimed | **Done** ([[adr:root/20261110105547]] + [[evidence:root/20261110105855]]) |
+| **S2** | **R4** OpenPGP / X.509 / `tag -s` / `verify-tag` | Git asymmetry | SoT amend [[sot:root/arks-object]] + CLI; dedicated crypto harness; G37-class re-verify; evidence before Claimed | **Next** |
 | **S3** | Protocol narrows (dumb HTTP deletes / other implementable §F rows) | Git asymmetry | Per-row ADR + SoT amend; host/clean-room evidence; no invent Claimed | Open |
 | **S4** | Interactive / patch flows | CLI | Specfold allows → implement + e2e; else SoT reason + honest defer (**≠** fake PASS) | Open |
 | **S5** | **R5** live forge scale | Secrets-gated | Secrets present → measured receipt; else documented structural block; never invent latency PASS | Open |
@@ -99,7 +99,7 @@ After ladder **L0–L8 + L_final Done** ([[research:root/20261110095142]]) with 
 
 ### Execution note (this round)
 
-**S0 Done** on tip via this research + pointer updates. Immediately proceed **S1** (SoT amend → wire → fixtures → symmetry e2e → docs). Prior L-ladder remains historical; this **S-*** ladder is the active expanded DoD order.
+**S0–S1 Done** on tip: inventory lock + R3 `blob:none` host-wire Claimed. Next **S2** (R4 OpenPGP / X.509 / `tag -s`). Symmetry clean-room expansion remains **S6**. Prior L-ladder remains historical; this **S-*** ladder is the active expanded DoD order.
 
 ## Verification
 

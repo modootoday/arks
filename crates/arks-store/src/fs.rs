@@ -25,9 +25,17 @@ pub struct PendingPackPersist {
     pack_at: usize,
     idx_path: PathBuf,
     idx: Vec<u8>,
+    /// When true, also write sibling `.promisor` (partial-clone).
+    promisor: bool,
 }
 
 impl PendingPackPersist {
+    /// Mark this deferred pack as a promisor pack (`.promisor` sibling).
+    pub fn mark_promisor(mut self) -> Self {
+        self.promisor = true;
+        self
+    }
+
     /// Write pack + idx to `objects/pack/` (gitrepository-layout).
     pub fn persist(self) -> Result<(), StoreError> {
         if let Some(parent) = self.pack_path.parent() {
@@ -43,8 +51,20 @@ impl PendingPackPersist {
         if !self.idx_path.is_file() {
             fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
         }
+        if self.promisor {
+            write_promisor_marker(&self.pack_path)?;
+        }
         Ok(())
     }
+}
+
+/// Write empty `pack-<checksum>.promisor` beside a pack (partial-clone design).
+pub fn write_promisor_marker(pack_path: &Path) -> Result<(), StoreError> {
+    let marker = pack_path.with_extension("promisor");
+    if !marker.is_file() {
+        fs::write(&marker, b"").map_err(|e| StoreError::Io(e.to_string()))?;
+    }
+    Ok(())
 }
 
 /// Loose + pack object store rooted at a Git `objects/` directory.
@@ -53,6 +73,8 @@ impl PendingPackPersist {
 /// decoded blobs without exclusive-lock serialization or deep payload clones.
 #[derive(Debug)]
 pub struct FilesystemGitStore {
+    /// When true, the next non-deferred pack ingest also writes `.promisor`.
+    mark_next_promisor: bool,
     objects_dir: PathBuf,
     /// Same-process inserts (e.g. after pack ingest) before disk re-read.
     overlay: RwLock<HashMap<Oid, Arc<RawObject>>>,
@@ -66,6 +88,7 @@ pub struct FilesystemGitStore {
 impl Clone for FilesystemGitStore {
     fn clone(&self) -> Self {
         Self {
+            mark_next_promisor: false,
             objects_dir: self.objects_dir.clone(),
             overlay: RwLock::new(self.overlay.read().expect("overlay").clone()),
             pack_objects: RwLock::new(self.pack_objects.read().expect("pack_objects").clone()),
@@ -87,6 +110,7 @@ impl FilesystemGitStore {
     /// Opens a store at `objects_dir` without creating directories.
     pub fn open(objects_dir: impl Into<PathBuf>) -> Self {
         Self {
+            mark_next_promisor: false,
             objects_dir: objects_dir.into(),
             overlay: RwLock::new(HashMap::new()),
             pack_objects: RwLock::new(HashMap::new()),
@@ -216,12 +240,15 @@ impl FilesystemGitStore {
         let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
         self.install_pack_objects(decoded.objects);
         self.flush_pending_pack()?;
+        let promisor = self.mark_next_promisor;
+        self.mark_next_promisor = false;
         self.pending_pack = Some(PendingPackPersist {
             pack_path,
             pack: buf,
             pack_at,
             idx_path,
             idx,
+            promisor,
         });
         Ok(())
     }
@@ -267,12 +294,15 @@ impl FilesystemGitStore {
         if defer_disk {
             // Flush any prior deferred pack before replacing.
             self.flush_pending_pack()?;
+            let promisor = self.mark_next_promisor;
+            self.mark_next_promisor = false;
             self.pending_pack = Some(PendingPackPersist {
                 pack_path,
                 pack: pack.to_vec(),
                 pack_at: 0,
                 idx_path,
                 idx,
+                promisor,
             });
         } else {
             // Sync hot path: write the received slice (no extra pack.to_vec).
@@ -285,8 +315,17 @@ impl FilesystemGitStore {
             if !idx_path.is_file() {
                 fs::write(&idx_path, idx).map_err(|e| StoreError::Io(e.to_string()))?;
             }
+            if self.mark_next_promisor {
+                write_promisor_marker(&pack_path)?;
+                self.mark_next_promisor = false;
+            }
         }
         Ok(())
+    }
+
+    /// Next sync ingest writes a `.promisor` sibling (partial-clone).
+    pub fn mark_next_pack_promisor(&mut self, mark: bool) {
+        self.mark_next_promisor = mark;
     }
 
     /// Install decoded pack objects into the RAM cache.

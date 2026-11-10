@@ -7,14 +7,16 @@
 //! SCP-like `user@host:path`, `git://` daemon pack-protocol client
 //! (clone/fetch/push), fetch, clone, push with `report-status` /
 //! `delete-refs` when advertised, remote config, additive local path /
-//! same-host `file://` clone via object-directory copy, and G9/G35
-//! `--depth N` shallow on pack transports. GitHub-class hosts are a
-//! verify-peer label, not a special code path.
+//! same-host `file://` clone via object-directory copy, G9/G35
+//! `--depth N` shallow on pack transports, and R3/S1
+//! `--filter=blob:none` partial-clone (promisor + extensions.partialClone).
+//! GitHub-class hosts are a verify-peer label, not a special code path.
 //!
 //! Primary:
 //! - <https://git-scm.com/docs/gitprotocol-http>
 //! - <https://git-scm.com/docs/gitprotocol-pack>
 //! - <https://git-scm.com/docs/gitprotocol-capabilities>
+//! - <https://git-scm.com/docs/partial-clone>
 //! - <https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt>
 //!
 //! Cite: `.spec/sot/arks-remote.sot.md`,
@@ -23,7 +25,6 @@
 //!
 //! No `gix`. No CELIR. No lease runtime. No product server. No forge APIs.
 //! No product-path `git` subprocess (OpenSSH `ssh` helper is claimed).
-//! No `filter` / promisor product path.
 
 #![deny(unsafe_code)]
 
@@ -59,7 +60,7 @@ pub use credential::{
 pub use error::RemoteError;
 pub use fetch::{
     FetchOptions, FetchOutcome, fetch_git, fetch_git_with, fetch_http, fetch_http_with,
-    fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with,
+    fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
 pub use push::{PushUpdate, push_git, push_http, push_remote, push_ssh};
 pub use transport::{HttpRequest, HttpResponse, RecordedExchange, RecordedTransport, Transport};

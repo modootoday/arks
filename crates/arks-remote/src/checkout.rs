@@ -13,6 +13,7 @@ use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode};
 use arks_oid::{Oid, OidKind};
 use arks_repo::Repository;
+use arks_store::ObjectStore;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -33,6 +34,69 @@ pub fn checkout_commit(repo: &Repository, work: &Path, commit: &Oid) -> Result<(
     }
     let parsed = Commit::decode(&obj.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
     checkout_tree(repo, work, &parsed.tree)
+}
+
+/// Collect blob OIDs reachable from `commit`'s tree that are not present locally.
+///
+/// Used by partial-clone checkout backfill (`blob:none`).
+pub fn missing_blob_oids(repo: &Repository, commit: &Oid) -> Result<Vec<Oid>, RemoteError> {
+    let obj = repo
+        .store()
+        .get_shared(commit)
+        .map_err(|e| RemoteError::Msg(e.to_string()))?;
+    if obj.kind != ObjectKind::Commit {
+        return Err(RemoteError::Protocol(format!(
+            "object {} is not a commit",
+            commit.to_hex()
+        )));
+    }
+    let parsed = Commit::decode(&obj.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    let mut missing = Vec::new();
+    let mut seen = HashSet::new();
+    collect_missing_blobs(repo, &parsed.tree, &mut missing, &mut seen)?;
+    Ok(missing)
+}
+
+fn collect_missing_blobs(
+    repo: &Repository,
+    tree_oid: &Oid,
+    missing: &mut Vec<Oid>,
+    seen: &mut HashSet<Oid>,
+) -> Result<(), RemoteError> {
+    if !seen.insert(*tree_oid) {
+        return Ok(());
+    }
+    let obj = repo
+        .store()
+        .get_shared(tree_oid)
+        .map_err(|e| RemoteError::Msg(e.to_string()))?;
+    if obj.kind != ObjectKind::Tree {
+        return Err(RemoteError::Protocol(format!(
+            "object {} is not a tree",
+            tree_oid.to_hex()
+        )));
+    }
+    let tree =
+        Tree::decode(&obj.payload, OidKind::Sha1).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    for entry in tree.entries {
+        match entry.mode {
+            TreeMode::Tree => collect_missing_blobs(repo, &entry.oid, missing, seen)?,
+            TreeMode::File | TreeMode::Executable | TreeMode::Symlink => {
+                if !seen.insert(entry.oid) {
+                    continue;
+                }
+                let present = repo
+                    .store()
+                    .exists(&entry.oid)
+                    .map_err(|e| RemoteError::Msg(e.to_string()))?;
+                if !present {
+                    missing.push(entry.oid);
+                }
+            }
+            TreeMode::Gitlink => {}
+        }
+    }
+    Ok(())
 }
 
 /// Write a tree into `work` and replace the index to match.

@@ -1,17 +1,21 @@
 //! Fetch: smart HTTP (`info/refs` + `git-upload-pack`) or SSH pack protocol.
 //!
 //! Protocol v1. The want line lists only capabilities the peer advertised and
-//! this client implements (`ofs-delta`, `no-progress`, `agent`, and `shallow`
-//! when `--depth` / local shallow file requires it). Side-band is omitted so
-//! upload-pack returns a contiguous PACK (no pkt-line demux on J-CLONE-LOCAL).
+//! this client implements (`ofs-delta`, `no-progress`, `agent`, `shallow` when
+//! `--depth` / local shallow file requires it, and `filter` when
+//! `--filter=blob:none` is claimed). Side-band is omitted so upload-pack
+//! returns a contiguous PACK (no pkt-line demux on J-CLONE-LOCAL).
 //! `thin-pack` is not requested, so the pack is self-contained.
 //! Have lines name local tips when present; `done` ends the
 //! stateless request.
 //!
 //! Shallow (`--depth N`): request `shallow`, send `deepen N`, parse server
 //! `shallow`/`unshallow`, write `$GIT_DIR/shallow`.
+//! Partial-clone (`--filter=blob:none`): request `filter`, send
+//! `filter blob:none`, mark pack promisor, set `extensions.partialClone`.
 //! Cite: <https://git-scm.com/docs/gitprotocol-capabilities>,
 //! <https://git-scm.com/docs/gitprotocol-pack>,
+//! <https://git-scm.com/docs/partial-clone>,
 //! <https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt>.
 //!
 //! Primary: <https://git-scm.com/docs/gitprotocol-http>,
@@ -48,6 +52,12 @@ pub struct FetchOptions {
     /// write (`FilesystemGitStore::take_pending_pack`) so clone can overlap
     /// persist with worktree checkout. Fetch callers that set this MUST flush.
     pub defer_pack_disk: bool,
+    /// Claimed partial-clone filter-spec (`blob:none` only). `None` = full pack.
+    pub filter: Option<String>,
+    /// When set, want these OIDs instead of advertised branch tips (promisor backfill).
+    pub want_oids: Option<Vec<Oid>>,
+    /// Force `.promisor` marking even without `filter` (demand-fetch packs).
+    pub mark_promisor: bool,
 }
 
 /// Refs updated by one fetch, plus the peer HEAD branch when advertised.
@@ -108,8 +118,9 @@ pub fn fetch_ssh_with(
         remote_name,
         &ad,
         opts,
-        |cap_list, haves, wants, client_shallows, depth| {
-            let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
+        |cap_list, haves, wants, client_shallows, depth, filter| {
+            let body =
+                encode_fetch_request(wants, cap_list, haves, client_shallows, depth, filter)?;
             session.write_all(&body)?;
             session.close_stdin();
             session.read_to_end()
@@ -143,8 +154,9 @@ pub fn fetch_git_with(
         remote_name,
         &ad,
         opts,
-        |cap_list, haves, wants, client_shallows, depth| {
-            let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
+        |cap_list, haves, wants, client_shallows, depth, filter| {
+            let body =
+                encode_fetch_request(wants, cap_list, haves, client_shallows, depth, filter)?;
             session.write_all(&body)?;
             session.read_to_end()
         },
@@ -208,8 +220,9 @@ pub(crate) fn fetch_with<T: Transport>(
         remote_name,
         &ad,
         opts,
-        |cap_list, haves, wants, client_shallows, depth| {
-            let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
+        |cap_list, haves, wants, client_shallows, depth, filter| {
+            let body =
+                encode_fetch_request(wants, cap_list, haves, client_shallows, depth, filter)?;
             let post_url = join_url(url, "git-upload-pack");
             let posted = transport.exchange(&HttpRequest {
                 method: "POST".into(),
@@ -242,7 +255,14 @@ fn apply_fetch_from_ad<F>(
     mut request_pack: F,
 ) -> Result<FetchOutcome, RemoteError>
 where
-    F: FnMut(&str, &[Oid], &[Oid], &[Oid], Option<u32>) -> Result<Vec<u8>, RemoteError>,
+    F: FnMut(
+        &str,
+        &[Oid],
+        &[Oid],
+        &[Oid],
+        Option<u32>,
+        Option<&str>,
+    ) -> Result<Vec<u8>, RemoteError>,
 {
     if let Some(depth) = opts.depth {
         if depth == 0 {
@@ -251,15 +271,23 @@ where
             ));
         }
     }
+    if let Some(filter) = opts.filter.as_deref() {
+        validate_claimed_filter(filter)?;
+    }
 
     let (head_branch, head_oid) = head_from_ad(ad);
     let specs = fetch_specs_for(&repo.git_dir().join("config"), remote_name);
-    let mut wants: Vec<Oid> = Vec::new();
-    for r in &ad.refs {
-        if r.name.starts_with("refs/heads/") && !wants.contains(&r.oid) {
-            wants.push(r.oid);
+    let wants: Vec<Oid> = if let Some(extra) = &opts.want_oids {
+        extra.clone()
+    } else {
+        let mut tips = Vec::new();
+        for r in &ad.refs {
+            if r.name.starts_with("refs/heads/") && !tips.contains(&r.oid) {
+                tips.push(r.oid);
+            }
         }
-    }
+        tips
+    };
     if wants.is_empty() {
         return Ok(FetchOutcome {
             updated: Vec::new(),
@@ -276,18 +304,41 @@ where
                 .into(),
         ));
     }
+    let need_filter_cap = opts.filter.is_some();
+    if need_filter_cap && !cap_advertised(&ad.capabilities, "filter") {
+        return Err(RemoteError::NotImplemented(
+            "peer did not advertise filter; --filter partial-clone not claimed against this peer"
+                .into(),
+        ));
+    }
 
-    let (cap_list, sideband) = negotiate_fetch_caps(&ad.capabilities, need_shallow_cap);
-    let haves = local_haves(repo);
-    let response_body = request_pack(&cap_list, &haves, &wants, &client_shallows, opts.depth)?;
+    let (cap_list, sideband) =
+        negotiate_fetch_caps(&ad.capabilities, need_shallow_cap, need_filter_cap);
+    let haves = if opts.want_oids.is_some() {
+        Vec::new()
+    } else {
+        local_haves(repo)
+    };
+    let response_body = request_pack(
+        &cap_list,
+        &haves,
+        &wants,
+        &client_shallows,
+        opts.depth,
+        opts.filter.as_deref(),
+    )?;
 
     let (pack_opt, update) = extract_pack_and_shallow(response_body, sideband)?;
+    let mark_promisor = opts.mark_promisor || opts.filter.is_some();
     let mut ingested_pack = false;
     match pack_opt {
         Some((buf, pack_at)) => {
             // Keep the received pack as pack+idx (Git layout) instead of
             // exploding every object to loose — fetch/clone hot path for M14.
             // Clone defers disk via owned move; pack_at skips NAK prefix copy.
+            if mark_promisor {
+                repo.store_mut().mark_next_pack_promisor(true);
+            }
             if opts.defer_pack_disk {
                 repo.store_mut()
                     .ingest_pack_bytes_deferred_at(buf, pack_at, FORMAT)
@@ -319,6 +370,10 @@ where
         write_shallow(repo.git_dir(), &next)?;
     }
 
+    if opts.filter.is_some() {
+        crate::config::enable_partial_clone(repo.git_dir(), remote_name)?;
+    }
+
     // Tips must resolve before refs move. After a successful pack ingest the
     // decoder already reconstructed tip OIDs into the pack cache — skip the
     // redundant exists() walk on that hot path.
@@ -335,6 +390,15 @@ where
                 )));
             }
         }
+    }
+
+    // Demand-fetch (want_oids) only fills missing objects; do not rewrite tracking refs.
+    if opts.want_oids.is_some() {
+        return Ok(FetchOutcome {
+            updated: Vec::new(),
+            head_branch,
+            head_oid,
+        });
     }
 
     let mut updated = Vec::new();
@@ -365,6 +429,16 @@ where
     })
 }
 
+/// Claimed filter-spec gate (`blob:none` only for S1).
+pub fn validate_claimed_filter(spec: &str) -> Result<(), RemoteError> {
+    if spec == "blob:none" {
+        return Ok(());
+    }
+    Err(RemoteError::NotImplemented(format!(
+        "clone/fetch --filter={spec} not claimed; claimed subset: blob:none"
+    )))
+}
+
 fn head_from_ad(ad: &Advertisement) -> (Option<String>, Option<Oid>) {
     if let Some(target) = symref_target(&ad.capabilities, "HEAD") {
         let oid = ad.refs.iter().find(|r| r.name == target).map(|r| r.oid);
@@ -381,7 +455,11 @@ fn head_from_ad(ad: &Advertisement) -> (Option<String>, Option<Oid>) {
     (None, None)
 }
 
-fn negotiate_fetch_caps(advertised: &[String], want_shallow: bool) -> (String, bool) {
+fn negotiate_fetch_caps(
+    advertised: &[String],
+    want_shallow: bool,
+    want_filter: bool,
+) -> (String, bool) {
     let mut caps = Vec::new();
     if cap_advertised(advertised, "ofs-delta") {
         caps.push("ofs-delta");
@@ -395,6 +473,9 @@ fn negotiate_fetch_caps(advertised: &[String], want_shallow: bool) -> (String, b
     }
     if want_shallow && cap_advertised(advertised, "shallow") {
         caps.push("shallow");
+    }
+    if want_filter && cap_advertised(advertised, "filter") {
+        caps.push("filter");
     }
     if cap_advertised(advertised, "agent") {
         caps.push("agent=arks/0.0.0");
@@ -428,6 +509,7 @@ fn encode_fetch_request(
     haves: &[Oid],
     client_shallows: &[Oid],
     depth: Option<u32>,
+    filter: Option<&str>,
 ) -> Result<Vec<u8>, RemoteError> {
     let mut body = Vec::new();
     for (i, oid) in wants.iter().enumerate() {
@@ -447,6 +529,12 @@ fn encode_fetch_request(
     if let Some(depth) = depth {
         body.extend(
             encode_text_line(&format!("deepen {depth}"))
+                .map_err(|e| RemoteError::Protocol(e.to_string()))?,
+        );
+    }
+    if let Some(spec) = filter {
+        body.extend(
+            encode_text_line(&format!("filter {spec}"))
                 .map_err(|e| RemoteError::Protocol(e.to_string()))?,
         );
     }
@@ -601,7 +689,8 @@ mod shallow_wire_tests {
     #[test]
     fn encode_includes_deepen_and_shallow_cap() {
         let oid = Oid::from_hex("0123456789abcdef0123456789abcdef01234567").unwrap();
-        let body = encode_fetch_request(&[oid], "ofs-delta shallow", &[], &[], Some(1)).unwrap();
+        let body =
+            encode_fetch_request(&[oid], "ofs-delta shallow", &[], &[], Some(1), None).unwrap();
         let text = String::from_utf8_lossy(&body);
         assert!(text.contains("want 0123456789abcdef0123456789abcdef01234567 ofs-delta shallow"));
         assert!(text.contains("deepen 1"));

@@ -91,6 +91,8 @@ where
         repo.refs_mut()
             .set_symbolic("HEAD", &branch)
             .map_err(|e| RemoteError::Msg(e.to_string()))?;
+        // Partial-clone: demand-fetch missing HEAD-tree blobs before materializing.
+        backfill_head_blobs_if_needed(&mut repo, url, &oid)?;
         crate::checkout::checkout_commit(&repo, dest, &oid)?;
     }
     if let Some(pending) = pending {
@@ -98,6 +100,30 @@ where
             .persist()
             .map_err(|e| RemoteError::Msg(format!("pack persist: {e}")))?;
     }
+    Ok(())
+}
+
+/// When `extensions.partialClone` is set, fetch missing blobs for `commit`'s tree.
+fn backfill_head_blobs_if_needed(
+    repo: &mut Repository,
+    url: &str,
+    commit: &arks_oid::Oid,
+) -> Result<(), RemoteError> {
+    let config = fs::read_to_string(repo.git_dir().join("config")).unwrap_or_default();
+    if !config.to_ascii_lowercase().contains("partialclone") {
+        return Ok(());
+    }
+    let missing = crate::checkout::missing_blob_oids(repo, commit)?;
+    if missing.is_empty() {
+        return Ok(());
+    }
+    let opts = FetchOptions {
+        want_oids: Some(missing),
+        mark_promisor: true,
+        defer_pack_disk: false,
+        ..Default::default()
+    };
+    crate::fetch::fetch_remote_with(repo, url, "origin", &opts)?;
     Ok(())
 }
 
@@ -115,6 +141,12 @@ pub fn clone_local_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(
     if opts.depth.is_some() {
         return Err(RemoteError::NotImplemented(
             "clone --depth is not claimed for local path / file:// (pack-protocol deepen only)"
+                .into(),
+        ));
+    }
+    if opts.filter.is_some() {
+        return Err(RemoteError::NotImplemented(
+            "clone --filter is not claimed for local path / file:// (pack-protocol filter only)"
                 .into(),
         ));
     }

@@ -88,6 +88,11 @@ pub(crate) fn fetch_dumb_with<T: Transport>(
             "clone/fetch --depth is not claimed for dumb HTTP (pack-protocol deepen only)".into(),
         ));
     }
+    if opts.filter.is_some() {
+        return Err(RemoteError::NotImplemented(
+            "clone/fetch --filter is not claimed for dumb HTTP (pack-protocol filter only)".into(),
+        ));
+    }
 
     download_packs(transport, repo, url)?;
 
