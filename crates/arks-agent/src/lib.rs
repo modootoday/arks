@@ -273,12 +273,64 @@ fn parse_host_port(base_url: &str) -> Result<(String, u16), String> {
 }
 
 fn tcp_probe(base_url: &str) -> Result<(), String> {
+    tcp_probe_retries(base_url, 3)
+}
+
+/// Partial provider reachability with short backoff (not Claimed LLM e2e).
+fn tcp_probe_retries(base_url: &str, attempts: u32) -> Result<(), String> {
     let (host, port) = parse_host_port(base_url)?;
-    let stream = TcpStream::connect((host.as_str(), port))
-        .map_err(|e| format!("connect {host}:{port}: {e}"))?;
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(3)));
-    let _ = stream.set_write_timeout(Some(Duration::from_secs(3)));
-    Ok(())
+    let attempts = attempts.max(1);
+    let mut last = String::new();
+    for i in 1..=attempts {
+        match TcpStream::connect((host.as_str(), port)) {
+            Ok(stream) => {
+                let _ = stream.set_read_timeout(Some(Duration::from_secs(3)));
+                let _ = stream.set_write_timeout(Some(Duration::from_secs(3)));
+                if i > 1 {
+                    eprintln!(
+                        "note: provider tcp retry ok attempt={i}/{attempts} (Partial backoff; \
+                         Claimed LLM e2e Missing)"
+                    );
+                }
+                return Ok(());
+            }
+            Err(e) => {
+                last = format!("connect {host}:{port}: {e}");
+                eprintln!(
+                    "note: provider tcp fail attempt={i}/{attempts}: {last} ({})",
+                    classify_provider_err(&last)
+                );
+                if i < attempts {
+                    std::thread::sleep(Duration::from_millis(40 * u64::from(i)));
+                }
+            }
+        }
+    }
+    Err(format!(
+        "{last} [{}] (retries={attempts}; Partial; Claimed LLM e2e Missing)",
+        classify_provider_err(&last)
+    ))
+}
+
+fn classify_provider_err(err: &str) -> &'static str {
+    let e = err.to_ascii_lowercase();
+    if e.contains("connection refused") {
+        "err_class=conn_refused"
+    } else if e.contains("timed out") || e.contains("timeout") {
+        "err_class=timeout"
+    } else if e.contains("failed to lookup")
+        || e.contains("dns")
+        || e.contains("name or service")
+        || e.contains("no such host")
+    {
+        "err_class=dns"
+    } else if e.contains("https") {
+        "err_class=https_partial"
+    } else if e.contains("connection reset") || e.contains("broken pipe") {
+        "err_class=reset"
+    } else {
+        "err_class=other"
+    }
 }
 
 /// Best-effort HTTP GET for openai-compat `/models` (Partial; no TLS Claimed beyond std).
@@ -401,6 +453,7 @@ fn cmd_provider(args: &[String]) -> ExitCode {
                 Ok(()) => println!("tcp=ok"),
                 Err(e) => {
                     println!("tcp=fail");
+                    println!("error_class={}", classify_provider_err(&e));
                     eprintln!("{e}");
                     return ExitCode::from(1);
                 }
@@ -412,7 +465,10 @@ fn cmd_provider(args: &[String]) -> ExitCode {
                         println!("{body}");
                     }
                     if code == 0 || code >= 400 {
-                        eprintln!("note: Partial probe — non-success HTTP (design ≠ Claimed)");
+                        eprintln!(
+                            "note: Partial probe — non-success HTTP ({}; design ≠ Claimed)",
+                            classify_provider_err(&format!("http {code}"))
+                        );
                         ExitCode::from(1)
                     } else {
                         ExitCode::SUCCESS
@@ -420,6 +476,7 @@ fn cmd_provider(args: &[String]) -> ExitCode {
                 }
                 Err(e) => {
                     println!("models_http=skipped");
+                    println!("error_class={}", classify_provider_err(&e));
                     eprintln!("{e}");
                     // TCP ok is enough for local Partial doctor/test honesty.
                     ExitCode::SUCCESS
@@ -610,8 +667,39 @@ fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, Str
         json_escape(model),
         json_escape(&truncate_chars(prompt, 12_000))
     );
-    let mut stream = TcpStream::connect((host.as_str(), port))
-        .map_err(|e| format!("connect {host}:{port}: {e}"))?;
+    // Connect with Partial retry; HTTP exchange itself is single-shot (POST not blindly retried).
+    let mut last_conn = String::new();
+    let mut stream = None;
+    for i in 1..=3u32 {
+        match TcpStream::connect((host.as_str(), port)) {
+            Ok(s) => {
+                if i > 1 {
+                    eprintln!(
+                        "note: chat connect retry ok attempt={i}/3 ({})",
+                        classify_provider_err(&last_conn)
+                    );
+                }
+                stream = Some(s);
+                break;
+            }
+            Err(e) => {
+                last_conn = format!("connect {host}:{port}: {e}");
+                eprintln!(
+                    "note: chat connect fail attempt={i}/3: {last_conn} ({})",
+                    classify_provider_err(&last_conn)
+                );
+                if i < 3 {
+                    std::thread::sleep(Duration::from_millis(40 * u64::from(i)));
+                }
+            }
+        }
+    }
+    let mut stream = stream.ok_or_else(|| {
+        format!(
+            "{last_conn} [{}] (Partial chat; Claimed LLM e2e Missing)",
+            classify_provider_err(&last_conn)
+        )
+    })?;
     stream
         .set_read_timeout(Some(Duration::from_secs(60)))
         .ok();
@@ -628,10 +716,14 @@ fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, Str
     headers.push_str("\r\n");
     stream
         .write_all(headers.as_bytes())
-        .map_err(|e| e.to_string())?;
-    stream.write_all(body.as_bytes()).map_err(|e| e.to_string())?;
+        .map_err(|e| format!("write headers: {e} [{}]", classify_provider_err(&e.to_string())))?;
+    stream
+        .write_all(body.as_bytes())
+        .map_err(|e| format!("write body: {e} [{}]", classify_provider_err(&e.to_string())))?;
     let mut buf = Vec::new();
-    stream.read_to_end(&mut buf).map_err(|e| e.to_string())?;
+    stream
+        .read_to_end(&mut buf)
+        .map_err(|e| format!("read: {e} [{}]", classify_provider_err(&e.to_string())))?;
     let text = String::from_utf8_lossy(&buf);
     let status = text
         .lines()
@@ -646,6 +738,12 @@ fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, Str
         .chars()
         .take(8_192)
         .collect::<String>();
+    if status == 0 || status >= 500 {
+        eprintln!(
+            "note: chat upstream status={status} ({}) — Partial; no blind POST retry",
+            classify_provider_err(&format!("http {status}"))
+        );
+    }
     Ok((status, resp_body))
 }
 
