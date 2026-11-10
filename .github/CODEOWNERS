@@ -1,0 +1,13 @@
+# Default review owners for modootoday/arks (public-surface hygiene).
+# Ownership hints only — Specfold SoT remains normative product authority.
+*       @modootoday
+
+# Specfold / agent governance
+.spec/          @modootoday
+.agents/        @modootoday
+AGENTS.md       @modootoday
+spec.toml       @modootoday
+
+# Engine + CLI
+crates/         @modootoday
+verify/         @modootoday

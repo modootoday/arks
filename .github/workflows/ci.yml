@@ -1,0 +1,116 @@
+# Cross-OS CI for arks (Rust CLI). Host-native green is advisory for product
+# "verified"; authoritative interop/journey gates remain Docker clean-room
+# (see .spec/sot/product-verification-clean-room.sot.md).
+#
+# Runner pins (2026-11-10) — avoid deprecated / browning labels:
+#   ubuntu-24.04  — supported; NOT ubuntu-22.04 (deprecation/brownouts → 2027-04-17);
+#                   NOT ubuntu-latest during Oct–Nov 2026 → Ubuntu 26.04 migration.
+#   windows-2025  — current Windows Server 2025 image (VS2026 migration complete).
+#   macos-15      — supported arm64; NOT macos-14 (retired 2026-11-02).
+# Cites: research .spec/research/20261110085731-github-actions-release-oidc.research.md
+#        § Runner-image Annotations.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  lint:
+    name: lint (fmt + clippy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust (rustfmt + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: v0-arks-lint
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: v0-arks-test
+          key: ${{ matrix.os }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: cargo test (workspace)
+        run: cargo test --workspace
+
+  msrv:
+    name: msrv (1.85)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # Workspace rust-version = "1.85" (Cargo.toml). Keep in sync.
+      - name: Install MSRV toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.85"
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: v0-arks-msrv
+          key: "1.85"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: cargo test (MSRV)
+        run: cargo test --workspace
+
+  clean-room-smoke:
+    name: clean-room image smoke (advisory vs full matrix)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stub discrete-circuit mount path
+        # verify/docker-compose.yml mounts ../../discrete-circuit (sibling of
+        # the parent of the repo). CI has no CELIR path-dep tree; empty stub
+        # lets compose start for image build / lightweight smoke only.
+        run: mkdir -p "$GITHUB_WORKSPACE/../../discrete-circuit"
+
+      - name: Build clean-room image (compose toolchain)
+        run: docker compose -f verify/docker-compose.yml build toolchain
+
+      - name: Honesty note
+        run: |
+          echo "GHA built the pinned clean-room image tag."
+          echo "Full G0–G37 compose receipts remain sole-runner Docker;"
+          echo "this job MUST NOT be labeled product-verified."

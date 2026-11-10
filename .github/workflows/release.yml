@@ -1,0 +1,303 @@
+# Tag-triggered release for arks (Rust CLI).
+#
+# Flow: v* tag → ungated dist build → draft GitHub Release (checksum/unsigned)
+#       → per-channel OIDC publish jobs, each gated by its GitHub Environment.
+#
+# Environments (live on modootoday/arks; required reviewer myso-kr; tag policy v*):
+#   crates | npm | pypi | rubygems
+# YAML alone cannot invent reviewers — humans configure protection in
+# https://github.com/modootoday/arks/settings/environments
+#
+# OUT / Deferred (do not add jobs): winget, apt signed repo, Chocolatey,
+# Authenticode, Apple Developer ID + notarization.
+#
+# Runner pins (2026-11-10) — see research § Runner-image Annotations:
+#   ubuntu-24.04, windows-2025, macos-15
+# (avoid ubuntu-22.04 brownouts; avoid macos-14 retired; pin away from *-latest
+# during ubuntu-latest → 26.04 migration window).
+#
+# Fail-closed: no long-lived registry tokens in repo secrets. OIDC only
+# (permissions.id-token: write). Skip publish when crate/wrapper packaging
+# is not ready or trusted publisher is not configured — never fall back to
+# plaintext tokens.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # --- Ungated: build release binaries + checksums ---
+  dist:
+    name: dist (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, target: x86_64-unknown-linux-gnu }
+          - { os: windows-2025, target: x86_64-pc-windows-msvc }
+          - { os: macos-15, target: aarch64-apple-darwin }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: cargo build --release
+        run: cargo build --locked --release -p arks --target ${{ matrix.target }}
+
+      - name: Package + SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="arks-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          ext=""
+          case "${{ matrix.target }}" in *windows*) ext=".exe";; esac
+          cp "target/${{ matrix.target }}/release/arks${ext}" "dist/$name/"
+          cp README.md LICENSE LICENSE-APACHE LICENSE-MIT "dist/$name/"
+          cd dist
+          case "${{ matrix.target }}" in
+            *windows*)
+              7z a -tzip "$name.zip" "$name" >/dev/null
+              archive="$name.zip"
+              ;;
+            *)
+              tar -czf "$name.tar.gz" "$name"
+              archive="$name.tar.gz"
+              ;;
+          esac
+          if command -v sha256sum >/dev/null; then
+            sha256sum "$archive" > "$archive.sha256"
+          else
+            shasum -a 256 "$archive" > "$archive.sha256"
+          fi
+          mkdir -p ../artifacts
+          mv "$archive" "$archive.sha256" ../artifacts/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.target }}
+          path: artifacts/*
+          if-no-files-found: error
+
+  # --- Ungated: draft GitHub Release + attach assets (checksum / unsigned) ---
+  github-release:
+    name: GitHub Release (draft)
+    needs: dist
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Assemble SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          ls -la
+          {
+            for f in *.sha256; do
+              cat "$f"
+            done
+          } > SHA256SUMS
+          cat SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create or reuse draft release + upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists; uploading missing assets only"
+          else
+            gh release create "$TAG" --draft --title "$TAG" \
+              --notes "arks $TAG — unsigned / checksum-listed GitHub Release assets. Registry publishes are separate approve-gated jobs (environments: crates, npm, pypi, rubygems)."
+          fi
+          gh release upload "$TAG" artifacts/* --clobber
+
+  # --- Approve-gated OIDC: crates.io ---
+  publish-crates:
+    name: publish crates.io (OIDC)
+    needs: github-release
+    runs-on: ubuntu-24.04
+    # Human approval via Environment protection (required reviewers).
+    environment: crates
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Skip if workspace crates are not publishable yet
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          # crates/arks currently has publish = false — fail-closed skip until flipped.
+          if grep -qE '^publish\s*=\s*false' crates/arks/Cargo.toml; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "arks has publish=false; skipping crates.io until the crate is publish-ready." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Trusted Publishing: exchange OIDC for short-lived token.
+      # No CARGO_REGISTRY_TOKEN secret fallback (fail-closed).
+      # Human must configure trusted publisher on crates.io for this repo,
+      # workflow "release.yml", environment "crates".
+      # https://crates.io/docs/trusted-publishing/
+      - name: crates.io OIDC auth
+        if: steps.gate.outputs.skip != 'true'
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: cargo publish
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish -p arks --locked
+
+  # --- Approve-gated OIDC: npm ---
+  publish-npm:
+    name: publish npm (OIDC)
+    needs: github-release
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Skip if npm packaging tree is absent
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f npm/package.json ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No npm/ package tree yet; OIDC job + environment npm are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Trusted Publishing + provenance on public repos.
+      # Requires npm ≥ 11.5.1, Node ≥ 22.14, GitHub-hosted runner.
+      # Human must configure trusted publisher on npmjs.com for this repo,
+      # workflow "release.yml", environment "npm".
+      # https://docs.npmjs.com/trusted-publishers/
+      # No NODE_AUTH_TOKEN / NPM_TOKEN secret fallback.
+      - name: npm publish (OIDC)
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.5.1
+          npm publish --access public --provenance
+        working-directory: npm
+
+  # --- Approve-gated OIDC: PyPI ---
+  publish-pypi:
+    name: publish PyPI (OIDC)
+    needs: github-release
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if Python packaging tree is absent
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f pyproject.toml ] && [ ! -f python/pyproject.toml ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No PyPI packaging yet; OIDC job + environment pypi are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Trusted Publishers: no PYPI_API_TOKEN secret fallback.
+      # Human must configure trusted publisher on PyPI for this repo,
+      # workflow "release.yml", environment "pypi".
+      # https://docs.pypi.org/trusted-publishers/
+      - name: Publish to PyPI (OIDC)
+        if: steps.gate.outputs.skip != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+  # --- Approve-gated OIDC: RubyGems (Phase 2 shape; skip until gemspec exists) ---
+  publish-rubygems:
+    name: publish RubyGems (OIDC)
+    needs: github-release
+    runs-on: ubuntu-24.04
+    environment: rubygems
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if gemspec is absent
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ls *.gemspec >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No gemspec yet; OIDC job + environment rubygems are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Trusted Publishing — no RUBYGEMS_API_KEY secret fallback.
+      # Human must configure trusted publisher on rubygems.org for this repo,
+      # workflow "release.yml", environment "rubygems".
+      # https://guides.rubygems.org/trusted-publishing/
+      - uses: ruby/setup-ruby@v1
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Release gem (OIDC)
+        if: steps.gate.outputs.skip != 'true'
+        uses: rubygems/release-gem@v1
