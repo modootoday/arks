@@ -27,9 +27,14 @@ impl Default for ForgeServeOptions {
             listen: "127.0.0.1:3920"
                 .parse()
                 .expect("default forge listen parses"),
-            data_dir: HubStore::data_dir(),
+            data_dir: default_forge_data_dir(),
         }
     }
+}
+
+/// Default forge data directory (`ARKS_HUB_DATA` or `~/.config/arks/hub-data`).
+pub fn default_forge_data_dir() -> PathBuf {
+    HubStore::data_dir()
 }
 
 /// CLI entry for transitional `arks hub serve`.

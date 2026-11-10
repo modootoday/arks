@@ -17,7 +17,9 @@ mod store;
 
 use std::process::ExitCode;
 
-pub use serve::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
+pub use serve::{
+    ForgeServeOptions, default_forge_data_dir, serve_forge_api, spawn_forge_api,
+};
 
 /// Flat / hub groups shown in stub help (gh-shaped + hub-native markers).
 pub const GROUPS: &[&str] = &[

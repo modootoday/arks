@@ -1,9 +1,12 @@
 //! Wave Sv / Sv2 server porcelain (upload-pack / receive-pack / HTTP / daemon).
 //!
-//! Cite: `.spec/sot/cli-surface.sot.md` Wave Sv, `.spec/sot/arks-server.sot.md`
-//! No forge. No CELIR. Lease not required. No `gix`.
+//! Cite: `.spec/sot/cli-surface.sot.md` Wave Sv, `.spec/sot/arks-server.sot.md`,
+//! `.spec/sot/arks-self-host-server.sot.md`
+//! Forge-in-serve: Partial local API via `arks-hub` (design ≠ Claimed).
+//! No CELIR. Lease not required. No `gix`.
 
 use crate::error::{CliError, CliResult};
+use arks_hub::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
 use arks_repo::Repository;
 use arks_server::{
     BasicAuthConfig, DaemonOptions, HttpRequest, ServeHttpOptions, handle_smart_http_auth,
@@ -14,7 +17,7 @@ use std::io::{self, Read, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub fn cmd_upload_pack(args: &[String]) -> CliResult<()> {
     let dir = require_dir(args)?;
@@ -59,6 +62,8 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
     let mut enable_http = true;
     let mut enable_ssh = true;
     let mut enable_forge = true;
+    let mut forge_listen = "127.0.0.1:3920".to_string();
+    let mut forge_data: Option<PathBuf> = None;
     let mut forwarded = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -78,6 +83,20 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
                     .ok_or_else(|| CliError::Usage("serve --listen needs ADDR".into()))?;
                 forwarded.push(v.clone());
             }
+            "--forge-listen" => {
+                i += 1;
+                forge_listen = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("serve --forge-listen needs ADDR".into()))?
+                    .clone();
+            }
+            "--forge-data" => {
+                i += 1;
+                forge_data = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("serve --forge-data needs DIR".into()))?,
+                ));
+            }
             "--basic-auth" | "--basic-auth-file" => {
                 forwarded.push(args[i].clone());
                 i += 1;
@@ -88,6 +107,12 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             }
             "--dumb-only" => forwarded.push(args[i].clone()),
             other if other.starts_with("--listen=") => forwarded.push(args[i].clone()),
+            other if other.starts_with("--forge-listen=") => {
+                forge_listen = other[15..].to_string();
+            }
+            other if other.starts_with("--forge-data=") => {
+                forge_data = Some(PathBuf::from(&other[13..]));
+            }
             other if other.starts_with('-') => {
                 return Err(CliError::NotImplemented(format!(
                     "serve option not claimed: {other}"
@@ -105,32 +130,60 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         ));
     }
 
-    // Fail-closed: forge-in-serve enabled but Missing/Partial — do not silent-degrade.
-    if enable_forge {
-        return Err(CliError::NotImplemented(
-            "arks serve: forge API enabled by default but not Claimed yet \
-             ([[sot:root/arks-self-host-server]]); fail-closed — use `arks serve --no-forge` \
-             (and `--no-ssh` until SSH Claimed); transitional `arks hub serve` for Partial local forge"
-                .into(),
-        ));
-    }
-
     // Fail-closed: SSH enabled but in-process listener Missing/Partial — do not silent-degrade.
     if enable_ssh {
         return Err(CliError::NotImplemented(
             "arks serve: SSH listener enabled by default but not Claimed yet \
-             ([[sot:root/arks-self-host-server]]); fail-closed — use `arks serve --no-ssh` for HTTP-only, \
-             or ops SSHD + `arks upload-pack`/`receive-pack` for SSH remotes today"
+             ([[sot:root/arks-self-host-server]]); fail-closed — use `arks serve --no-ssh` \
+             (HTTP and/or Partial forge); or ops SSHD + `arks upload-pack`/`receive-pack` today"
                 .into(),
         ));
     }
 
-    if !enable_http {
-        return Err(CliError::Usage(
-            "arks serve: HTTP disabled and SSH/forge not Claimed — nothing to run".into(),
-        ));
+    let forge_opts = if enable_forge {
+        Some(resolve_forge_opts(&forge_listen, forge_data)?)
+    } else {
+        None
+    };
+
+    match (enable_http, forge_opts) {
+        (true, Some(opts)) => {
+            // Cohost: forge on background thread; HTTP blocks on main (Partial).
+            let (forge_stop, forge_handle) = spawn_forge_api(opts).map_err(|e| {
+                CliError::Msg(format!("arks serve: forge API bind failed: {e}"))
+            })?;
+            let label = "arks serve --no-ssh (HTTP + Partial forge)";
+            let http_result = run_serve_http_listener(&forwarded, label);
+            forge_stop.store(true, Ordering::SeqCst);
+            let _ = forge_handle.join();
+            http_result
+        }
+        (true, None) => run_serve_http_listener(&forwarded, "arks serve --no-ssh --no-forge"),
+        (false, Some(opts)) => {
+            eprintln!(
+                "arks serve --no-http --no-ssh: Partial forge API only \
+                 ([[sot:root/arks-self-host-server]]); design ≠ Claimed"
+            );
+            let stop = Arc::new(AtomicBool::new(false));
+            serve_forge_api(opts, stop).map_err(|e| CliError::Msg(e))
+        }
+        (false, None) => Err(CliError::Usage(
+            "arks serve: HTTP disabled, forge disabled, SSH not Claimed — nothing to run".into(),
+        )),
     }
-    run_serve_http_listener(&forwarded, "arks serve --no-ssh --no-forge")
+}
+
+fn resolve_forge_opts(
+    forge_listen: &str,
+    forge_data: Option<PathBuf>,
+) -> CliResult<ForgeServeOptions> {
+    let listen: SocketAddr = forge_listen
+        .parse()
+        .map_err(|e| CliError::Usage(format!("bad --forge-listen address: {e}")))?;
+    Ok(ForgeServeOptions {
+        listen,
+        data_dir: forge_data.unwrap_or_else(arks_hub::default_forge_data_dir),
+    })
 }
 
 /// `arks serve config` — self-host server config (Partial; not Claimed; ≠ `arks config`).
@@ -435,6 +488,7 @@ arks serve — self-host umbrella (HTTP + SSH + forge API; Wave Sv / M11+M25)
 
 Usage:
   arks serve [--no-http] [--no-ssh] [--no-forge] [--listen ADDR|--listen=ADDR]
+             [--forge-listen ADDR] [--forge-data DIR]
              [--dumb-only] [--basic-auth user:pass] [--basic-auth-file PATH] <directory>
   arks serve config show|set|path|validate …
 
@@ -444,15 +498,15 @@ Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-fo
 Honesty ([[sot:root/arks-self-host-server]]):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
   - In-process SSH listener: Missing/Partial — fail-closed if SSH stays enabled
-  - Forge-in-serve: Missing/Partial — fail-closed if forge stays enabled
-  - Practical today: `arks serve --no-ssh --no-forge` (HTTP-only)
+  - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
+  - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
   - Ops SSHD + upload-pack/receive-pack remains valid SSH remotes today
   - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
   - Hub OAuth is refused as primary git-remote auth
   - `serve config` is server config (Partial) — not `arks config`, not hub
 
-Bind: default 127.0.0.1:8080 (localhost-safe). LAN/WAN: --listen 0.0.0.0:8080
-or a LAN IP (ops owns firewall + TLS — not Claimed WAN-safe).
+Bind: git HTTP default 127.0.0.1:8080; forge API default 127.0.0.1:3920
+(--forge-listen / --forge-data). LAN/WAN: ops owns firewall + TLS — not Claimed WAN-safe.
 "
     );
 }
