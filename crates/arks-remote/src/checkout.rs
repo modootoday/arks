@@ -251,10 +251,9 @@ fn materialize_jobs(
 ///
 /// Threshold stays 8 (jobs < 8 → serial). Docker Desktop often advertises ≥8
 /// host CPUs; 8-way thrash regressed J-CLONE-LOCAL. Cap at 2 matched the
-/// LOCAL 0.5778 tip. Under `--cpus=2` remasures, stay serial — two writers
-/// on two CPUs contended the bind mount and cost LOCAL ms.
+/// LOCAL 0.5778 tip while keeping PATH ≤0.5× (cap 3 did not buy LOCAL ms).
 fn checkout_workers(cpus: usize, jobs: usize) -> usize {
-    if jobs < 8 || cpus <= 2 {
+    if jobs < 8 || cpus <= 1 {
         return 1;
     }
     if cpus >= 8 {
