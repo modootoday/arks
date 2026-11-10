@@ -250,15 +250,14 @@ fn materialize_jobs(
 /// Worker count for checkout writes.
 ///
 /// Threshold stays 8 (jobs < 8 → serial). Docker Desktop often advertises ≥8
-/// host CPUs; 8-way thrash regressed J-CLONE-LOCAL. Cap at 3 recovers
-/// J-CLONE-PATH ≤0.5× headroom without the old full-parallel tax (serial
-/// HTTP checkout measured slower on LOCAL than this cap).
+/// host CPUs; 8-way thrash regressed J-CLONE-LOCAL. Cap at 2 matched the
+/// LOCAL 0.5778 tip while keeping PATH ≤0.5× (cap 3 did not buy LOCAL ms).
 fn checkout_workers(cpus: usize, jobs: usize) -> usize {
     if jobs < 8 || cpus <= 1 {
         return 1;
     }
     if cpus >= 8 {
-        return 3.min(jobs);
+        return 2.min(jobs);
     }
     cpus.clamp(2, 8).min(jobs)
 }

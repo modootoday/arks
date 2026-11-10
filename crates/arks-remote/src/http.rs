@@ -204,44 +204,81 @@ fn write_http_request(
     port: u16,
     authorization: Option<&str>,
 ) -> Result<(), RemoteError> {
-    let host_hdr = if port == 80 {
-        host.to_string()
-    } else {
-        format!("{host}:{port}")
-    };
-    let mut out = Vec::with_capacity(256 + request.body.len());
-    out.extend_from_slice(request.method.as_bytes());
-    out.push(b' ');
-    out.extend_from_slice(path_query.as_bytes());
-    out.extend_from_slice(b" HTTP/1.1\r\nHost: ");
-    out.extend_from_slice(host_hdr.as_bytes());
+    // Headers only — do not copy the POST body into the header buffer.
+    let mut hdr = Vec::with_capacity(256);
+    hdr.extend_from_slice(request.method.as_bytes());
+    hdr.push(b' ');
+    hdr.extend_from_slice(path_query.as_bytes());
+    hdr.extend_from_slice(b" HTTP/1.1\r\nHost: ");
+    hdr.extend_from_slice(host.as_bytes());
+    if port != 80 {
+        hdr.push(b':');
+        let mut port_buf = [0u8; 5];
+        hdr.extend_from_slice(write_decimal_u16(port, &mut port_buf));
+    }
     // Explicit close: matches git http-backend CGI; avoids half-closed reuse.
-    out.extend_from_slice(b"\r\nUser-Agent: arks/0.0.0\r\nConnection: close\r\n");
+    hdr.extend_from_slice(b"\r\nUser-Agent: arks/0.0.0\r\nConnection: close\r\n");
     for (name, value) in &request.headers {
-        out.extend_from_slice(name.as_bytes());
-        out.extend_from_slice(b": ");
-        out.extend_from_slice(value.as_bytes());
-        out.extend_from_slice(b"\r\n");
+        hdr.extend_from_slice(name.as_bytes());
+        hdr.extend_from_slice(b": ");
+        hdr.extend_from_slice(value.as_bytes());
+        hdr.extend_from_slice(b"\r\n");
     }
     if let Some(auth) = authorization {
-        out.extend_from_slice(b"Authorization: ");
-        out.extend_from_slice(auth.as_bytes());
-        out.extend_from_slice(b"\r\n");
+        hdr.extend_from_slice(b"Authorization: ");
+        hdr.extend_from_slice(auth.as_bytes());
+        hdr.extend_from_slice(b"\r\n");
     }
     if request.method == "POST" || !request.body.is_empty() {
-        out.extend_from_slice(format!("Content-Length: {}\r\n", request.body.len()).as_bytes());
+        hdr.extend_from_slice(b"Content-Length: ");
+        let mut len_buf = [0u8; 20];
+        hdr.extend_from_slice(write_decimal_usize(request.body.len(), &mut len_buf));
+        hdr.extend_from_slice(b"\r\n");
     }
-    out.extend_from_slice(b"\r\n");
-    out.extend_from_slice(&request.body);
+    hdr.extend_from_slice(b"\r\n");
     stream
-        .write_all(&out)
-        .map_err(|e| RemoteError::Http(e.to_string()))
+        .write_all(&hdr)
+        .map_err(|e| RemoteError::Http(e.to_string()))?;
+    if !request.body.is_empty() {
+        stream
+            .write_all(&request.body)
+            .map_err(|e| RemoteError::Http(e.to_string()))?;
+    }
+    Ok(())
+}
+
+fn write_decimal_u16(mut n: u16, buf: &mut [u8; 5]) -> &[u8] {
+    if n == 0 {
+        buf[4] = b'0';
+        return &buf[4..];
+    }
+    let mut i = 5;
+    while n > 0 {
+        i -= 1;
+        buf[i] = b'0' + (n % 10) as u8;
+        n /= 10;
+    }
+    &buf[i..]
+}
+
+fn write_decimal_usize(mut n: usize, buf: &mut [u8; 20]) -> &[u8] {
+    if n == 0 {
+        buf[19] = b'0';
+        return &buf[19..];
+    }
+    let mut i = 20;
+    while n > 0 {
+        i -= 1;
+        buf[i] = b'0' + (n % 10) as u8;
+        n /= 10;
+    }
+    &buf[i..]
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // 8KiB stack scratch matched the LOCAL 0.5778 tip; large heap scratch
-    // (64–256KiB) paid a once-per-request zero tax on info/refs. split_off
-    // still moves the body without a second full copy.
+    // Headers: 8KiB stack (info/refs stays cheap). Large Content-Length bodies
+    // (upload-pack PACK) switch to one 64KiB heap scratch — fewer syscalls
+    // without zero-taxing the small advertisement round-trip.
     let mut tmp = [0u8; 8192];
     let mut buf = Vec::with_capacity(8192);
     let header_end;
@@ -267,14 +304,27 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         if need > buf.capacity() {
             buf.reserve(need - buf.capacity());
         }
-        while buf.len() < need {
-            let n = stream
-                .read(&mut tmp)
-                .map_err(|e| RemoteError::Http(e.to_string()))?;
-            if n == 0 {
-                break;
+        if len > 16 * 1024 {
+            let mut big = vec![0u8; 64 * 1024];
+            while buf.len() < need {
+                let n = stream
+                    .read(&mut big)
+                    .map_err(|e| RemoteError::Http(e.to_string()))?;
+                if n == 0 {
+                    break;
+                }
+                buf.extend_from_slice(&big[..n]);
             }
-            buf.extend_from_slice(&tmp[..n]);
+        } else {
+            while buf.len() < need {
+                let n = stream
+                    .read(&mut tmp)
+                    .map_err(|e| RemoteError::Http(e.to_string()))?;
+                if n == 0 {
+                    break;
+                }
+                buf.extend_from_slice(&tmp[..n]);
+            }
         }
         let mut body = buf.split_off(header_end);
         body.truncate(len);

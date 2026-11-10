@@ -56,9 +56,7 @@ pub(crate) fn apply_delta(base: &[u8], delta: &[u8]) -> Result<Vec<u8>, PackErro
         return Err(PackError::BadDelta("base size mismatch"));
     }
     let result_len = usize::try_from(result_size).map_err(|_| PackError::SizeOverflow)?;
-    let mut out = Vec::new();
-    out.try_reserve(result_len)
-        .map_err(|_| PackError::SizeOverflow)?;
+    let mut out = Vec::with_capacity(result_len);
 
     while i < delta.len() {
         let cmd = delta[i];

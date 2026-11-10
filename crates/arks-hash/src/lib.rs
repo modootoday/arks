@@ -141,6 +141,23 @@ pub fn hash_bytes(format: ObjectFormat, data: &[u8]) -> Digest {
 /// `type_name` is the ASCII type token (`blob`, `tree`, `commit`, `tag`).
 /// `payload` is the raw object body (not zlib-wrapped).
 pub fn hash_object(format: ObjectFormat, type_name: &str, payload: &[u8]) -> Digest {
+    // Reuse one SHA-1 state across pack ingest (220+ objects on J-CLONE-LOCAL).
+    if format == ObjectFormat::Sha1 {
+        return SHA1_TLS.with(|cell| {
+            use sha1::Digest as _;
+            let mut h = cell.borrow_mut();
+            h.reset();
+            h.update(type_name.as_bytes());
+            h.update(b" ");
+            let mut size_buf = [0u8; 20];
+            let size = write_decimal(payload.len() as u64, &mut size_buf);
+            h.update(size);
+            h.update(&[0]);
+            h.update(payload);
+            let out = h.finalize_reset();
+            Digest::from_bytes(ObjectFormat::Sha1, out.as_slice()).expect("sha1 len")
+        });
+    }
     let mut h = Hasher::new(format);
     h.update(type_name.as_bytes());
     h.update(b" ");
@@ -151,6 +168,14 @@ pub fn hash_object(format: ObjectFormat, type_name: &str, payload: &[u8]) -> Dig
     h.update(&[0]);
     h.update(payload);
     h.finalize()
+}
+
+std::thread_local! {
+    static SHA1_TLS: std::cell::RefCell<sha1::Sha1> =
+        std::cell::RefCell::new({
+            use sha1::Digest as _;
+            sha1::Sha1::new()
+        });
 }
 
 fn write_decimal(mut n: u64, buf: &mut [u8; 20]) -> &[u8] {
