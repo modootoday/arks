@@ -199,7 +199,7 @@ Refuse unimplemented server transports/options; never advertise unimplemented ca
 
 ## Why
 
-arks is a Git-compatible **replacement CLI** on the **same `.git`**. Formats alone are not enough: users who already type `git …` must be able to **alias to `arks`** and keep muscle memory. Raising the end-state to **symmetric CLI parity + alias drop-in** (pinned Git man pages + clean-room oracle) prevents “subset MVP forever” while still allowing bottom-up engine delivery and phased porcelain waves. Server plumbing (**Wave Sv / M11**) is a separate production-server bar so M9 stays an honest client alias target. Refuse-closed behavior avoids silent incompatibility under alias. Exclusions keep GUI/LFS/forge/lease/CELIR from blocking the CLI-parity production bar.
+arks is a Git-compatible **replacement CLI** on the **same `.git`**. Formats alone are not enough: users who already type `git …` must be able to **alias to `arks`** and keep muscle memory. Raising the end-state to **symmetric CLI parity + alias drop-in** (pinned Git man pages + clean-room oracle) prevents “subset MVP forever” while still allowing bottom-up engine delivery and phased porcelain waves. Server plumbing (**Wave Sv / M11**) is a separate production-server bar so M9 stays an honest client alias target. Refuse-closed behavior avoids silent incompatibility under alias. Exclusions keep GUI/`scalar` from blocking the CLI-parity production bar. Non-git product CLI (`forge`, `host-env`, in-process `lfs`, CELIR Claimed path) is **trimmed** ([[research:root/20261111035700]]); `lease`/`lock` remain intentional asymmetry.
 
 ## Verification
 

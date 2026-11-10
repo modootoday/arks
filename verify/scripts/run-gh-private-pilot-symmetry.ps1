@@ -665,14 +665,8 @@ if (($g.ExitCode -eq 0) -and ($a.ExitCode -eq 0) -and ($gOid -eq $aOid)) {
     Add-Result -Id 'P13' -Scenario 'clone --bundle-uri (local file)' -Status 'FAIL' -GitExit $g.ExitCode -ArksExit $a.ExitCode -Notes "oids $gOid vs $aOid"
 }
 
-# ---------- P14 host-env advisory ----------
-$he = Invoke-Capture -Exe $Arks -ArgList @('host-env', $arksClone) -Cwd $Work
-Write-Log 'P14.log' "exit=$($he.ExitCode)`n$($he.Stdout)$($he.Stderr)"
-if ($he.ExitCode -eq 0 -and ($he.Stdout -match 'claimed.full_sync')) {
-    Add-Result -Id 'P14' -Scenario 'host-env advisory on GitHub clone path' -Status 'PASS' -ArksExit 0 -Notes 'N/A for GitHub remotes as hazard source; probe runs locally — advisory only'
-} else {
-    Add-Result -Id 'P14' -Scenario 'host-env advisory' -Status 'FAIL' -ArksExit $he.ExitCode -Notes $he.Stderr
-}
+# ---------- P14 host-env advisory (trimmed from product CLI) ----------
+Add-Result -Id 'P14' -Scenario 'host-env advisory' -Status 'SKIP' -Notes 'arks host-env trimmed (not git/git-daemon); over-design C13'
 
 # ---------- P15 SSH protocol note ----------
 # HTTPS is the configured gh protocol; SSH pilot only if agent has github access

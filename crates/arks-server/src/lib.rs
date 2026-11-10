@@ -2,6 +2,7 @@
 //! Claimed: smart HTTP (G15), dumb/SSH/v2/git:// (G29–G32), additive WebDAV
 //! write for dumb HTTP push (R2), optional HTTP Basic (G36),
 //! receive-pack githooks honor list (pre-receive/update/post-receive).
+//! Trimmed: in-process `info/lfs` batch/locks server (not stock git-http-backend).
 #![forbid(unsafe_code)]
 mod advertise;
 mod auth;
@@ -11,7 +12,6 @@ mod dumb;
 mod error;
 mod hooks;
 mod http;
-mod lfs;
 mod receive;
 mod serve;
 mod stdio;

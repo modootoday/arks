@@ -42,11 +42,11 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Interactive (`rebase -i`, `add -p`/`-i`/`-e`, `stash -p`, editor commit) | Yes | TTY + hunk `-p`, `-i` menu, `-e`, `stash -p` (**FS1/FS3**); scripted env retained | **Claimed** (FS1 / FS3) |
 | `proc-receive` (server) | Yes | Advertise when hook present; divert; ok/ng + rewrite; concurrent lock (**FS2/FS8**) | **Claimed** (FS2 / FS8 closest) |
 | GUI (`gitk`, `git-gui`) | Separate tools | External handoff refuse (**FS7**) | **Claimed** (handoff) |
-| Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push|lock|locks|unlock` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT + **locks** + `locks/verify`; non-basic/tus/S3 → `git-lfs` handoff; `scalar` refuse | **Claimed** (locks G4; tus/S3 handoff) |
+| Git LFS / `scalar` | Companion tools | **Trimmed** from product CLI/server (`arks lfs`, `serve-http` `info/lfs`); use external `git-lfs` + stock `filter.*.smudge`; `scalar` refuse | **Trimmed** (not git builtin) |
 | `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed (**FS5**); server v2 **`bundle-uri` advertise** (**G3**) | **Claimed** (FS5 / NET-006 / G3) |
 | Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse + **sha1cd detect+refuse** (**OBJ-004**); `init --object-format=sha256` porcelain e2e | **Claimed** (detect+refuse) / **Impossible** (crypto immunity) |
-| Cloud sync on `.git` / OneDrive placeholders | Host hazard | `arks host-env` DriveFS/OneDrive/Dropbox/Syncthing **detect + opt-in refuse**; CfAPI `RECALL_ON_DATA_ACCESS` detect; FS-014 LSM detect | **Claimed(advisory+refuse)** detect (FS-007 / WIN-003 / FS-014); full sync / hydration / LSM bypass **Impossible** |
-| Forge Checks / PR / Issues UX | Not-git | `arks forge` thin wrap → host `gh`; `arks forge recipe`; credential.helper OAuth | **Claimed-closest** thin-wrap; full forge host UX **Non-goal** |
+| Cloud sync on `.git` / OneDrive placeholders | Host hazard | **Trimmed** `arks host-env` / `arks-hostfs` product surface; host tooling only | **Trimmed** (not git); full sync **Impossible** |
+| Forge Checks / PR / Issues UX | Not-git | **Trimmed** `arks forge` / `forge recipe`; use host `gh` directly | **Trimmed** (not git); forge host UX **Non-goal** |
 
 ## Remotes and server
 
@@ -142,7 +142,7 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | Operator one-word | **PARTIAL** — see [Completeness](../completion/) |
 | Clean-room re-stamp of all Docker gates on this tip | See evidence pack under `.spec/evidence/*-full-cleanroom-matrix/` (maintainer); host CI ≠ Verified |
 
-**Documented non-goals / blocked (not FS gaps):** absolute SHA-1 collision immunity; full forge Checks/merge-queue/Issues product UX (thin `arks forge`→`gh` is Claimed-closest only); embedded forge OAuth browser UX; full multi-device cloud-sync safety on `.git` (FS-007/WIN-003/FS-014 detect+opt-in refuse only); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy — reopen pack only).
+**Documented non-goals / trimmed over-design:** absolute SHA-1 collision immunity; forge Checks/merge-queue/Issues product UX (`arks forge` **trimmed** — use host `gh`); embedded forge OAuth browser UX; cloud-sync / hostfs product CLI (`arks host-env` **trimmed**); in-process LFS client/server productization (**trimmed** — use `git-lfs`); CELIR index feature is ops/CI opt-in only (default OFF, not product Claimed path); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy).
 
 See: [program roadmap tip currency](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) · [partial unblock research](https://github.com/modootoday/arks/blob/main/.spec/research/20261111001816-partial-completion-unblock-roadmap.research.md) · [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 

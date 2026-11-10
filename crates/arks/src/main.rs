@@ -3,7 +3,7 @@
 //! M9 = CLI-parity production (client). M10 leases via `arks-lease`. M11
 //! production-server via Wave Sv (`upload-pack` / `receive-pack` / `serve-http`).
 //! Cite: `.spec/sot/arks.sot.md`, `.spec/sot/cli-surface.sot.md`
-//! No CELIR. No `gix`. No first-party forge host UX (thin `arks forge` → `gh` wrap only).
+//! No CELIR product path. No `gix`. No forge/host-env/LFS product CLI (trimmed; not git).
 
 mod cmd;
 mod error;
@@ -31,8 +31,6 @@ Commands:
   add           Stage file paths
   status        Show working-tree / index / HEAD summary
   lock          Inspect / clear stale Git *.lock files
-  host-env      Advisory cloud-sync / CfAPI / LSM detect (FS-007 / WIN-003 / FS-014)
-  forge         Thin wrap of host `gh` (Claimed-closest; not forge product UX)
   lease         Grant / release / inspect durable product leases (M13)
   commit        Record index as a commit (-m; -S SSH sign)
   verify-commit Verify SSH gpgsig on a commit
@@ -61,7 +59,6 @@ Commands:
   credential-wincred|libsecret|osxkeychain  First-party OS wallet helpers
   grep          Search tracked files
   stash         Stash push/list/pop/show/apply/drop/clear (-p FS3)
-  lfs           Hand off to external git-lfs (FS6 closest)
   cherry-pick   Apply commit or A..B (--continue/--abort)
   revert        Revert commit or A..B (clean inverse)
   rebase        Replay onto upstream (non-interactive)
@@ -162,8 +159,6 @@ fn run() -> CliResult<()> {
         "add" => cmd::cmd_add(&args),
         "status" => cmd::cmd_status(&args),
         "lock" => cmd::cmd_lock(&args),
-        "host-env" => cmd::cmd_host_env(&args),
-        "forge" => cmd::cmd_forge(&args),
         "lease" => cmd::cmd_lease(&args),
         "commit" => cmd::cmd_commit(&args),
         "verify-commit" => cmd::cmd_verify_commit(&args),
@@ -252,8 +247,10 @@ fn run() -> CliResult<()> {
         "scalar" => Err(CliError::NotImplemented(
             "scalar: separate large-repo helper (FS6); not claimed as arks porcelain".into(),
         )),
-        // FS6 closest: hand off to external git-lfs when present.
-        "lfs" => cmd::cmd_lfs(&args),
+        // Trimmed over-design (not stock git / git-daemon): forge, host-env, in-process lfs.
+        "forge" | "host-env" | "lfs" => Err(CliError::NotImplemented(format!(
+            "{cmd}: trimmed from product CLI (not git/git-daemon); use host gh / git-lfs externally if needed"
+        ))),
         other => Err(CliError::NotImplemented(format!(
             "command not implemented: {other}"
         ))),

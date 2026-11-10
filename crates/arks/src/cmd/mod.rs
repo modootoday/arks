@@ -8,15 +8,12 @@ pub mod bundle;
 pub mod config;
 pub mod core;
 pub mod credential;
-pub mod forge;
 pub mod grep;
 pub mod history;
 pub mod hooks;
-pub mod host_env;
 pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
-pub mod lfs;
 pub mod lock;
 pub mod maint;
 pub mod merge;
@@ -50,13 +47,10 @@ pub use core::{
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
-pub use forge::cmd_forge;
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
-pub use host_env::cmd_host_env;
 pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
-pub use lfs::cmd_lfs;
 pub use lock::cmd_lock;
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use merge::{cmd_merge, cmd_pull};

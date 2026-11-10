@@ -24,7 +24,6 @@ arks-remote = { workspace = true }
 arks-server = { workspace = true }
 arks-pack = { workspace = true }
 arks-lease = { workspace = true }
-arks-hostfs = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]

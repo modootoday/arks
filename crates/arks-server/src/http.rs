@@ -97,10 +97,7 @@ pub fn handle_smart_http_auth(
             });
         }
     }
-    // LFS basic PUT shares the verb with WebDAV; route info/lfs first.
-    if let Some(resp) = crate::lfs::handle_lfs(repo, req)? {
-        return Ok(resp);
-    }
+    // LFS server productization (`info/lfs`) trimmed — keep plain git HTTP only.
     if is_dav_method(&req.method) {
         return handle_dav(repo, req);
     }

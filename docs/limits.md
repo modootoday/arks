@@ -21,7 +21,7 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 - Agent frameworks, orchestrators, and IDE products (arks is the **revision** layer those systems call)
 - Embedding full GUI front-ends (`gitk`, `git-gui`) inside the CLI binary — **FS7** external handoff Claimed (refuse+reason); not an embed
-- Git LFS as a **separate** `git-lfs` product / tus / multi-tenant S3 locks — in-process LFS fetch/push + smudge is **Claimed**; remaining transfer modes stay out
+- Git LFS — **trimmed** from arks product CLI/server; use external `git-lfs` (stock git has no LFS builtin)
 - Forge host APIs (issues, PRs, Checks) — **Impossible** as git CLI features; use tools like `gh`
 - Shipping arks as a Docker-based end-user runtime — the product is the **native CLI**
 - Absolute SHA-1 collision **immunity**, full cloud-sync safety on `.git`, embedded forge OAuth UX, and crates.io timing (**L9**) — documented Impossible / advisory / owner-policy (see [Git vs arks](../git-vs-arks/))
@@ -53,7 +53,7 @@ Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxk
 
 ### Interactive / patch?
 
-**FS1/FS3 Claimed:** hunk-level `add -p` (TTY or `ARKS_ADD_PATCH_ANSWERS`), `add -i` menu, `add -e`, `stash -p`, and `rebase -i` via sequence/editor fallback. **FS5/NET-006:** `clone --bundle-uri` accepts local paths and `http(s)://` with concurrent-lock and Content-Length honesty. **FS6:** checkout honors `filter.*.smudge` and in-process Git LFS pointers under `.git/lfs/objects`. **OBJ-004:** `fsck` refuses OID mismatches; SHA-1 uses collision **detect+refuse** (`sha1collisiondetection`); absolute collision immunity remains Impossible; sha256 porcelain Claimed. **FS-007 / WIN-003:** `arks host-env` cloud-sync / OneDrive CfAPI **detect+advisory** only — not Claimed multi-device sync safety. See [Git vs arks](../git-vs-arks/).
+**FS1/FS3 Claimed:** hunk-level `add -p` (TTY or `ARKS_ADD_PATCH_ANSWERS`), `add -i` menu, `add -e`, `stash -p`, and `rebase -i` via sequence/editor fallback. **FS5/NET-006:** `clone --bundle-uri` accepts local paths and `http(s)://` with concurrent-lock and Content-Length honesty. **FS6:** checkout honors stock `filter.*.smudge` only (in-process LFS productization **trimmed**). **OBJ-004:** `fsck` refuses OID mismatches; SHA-1 uses collision **detect+refuse** (`sha1collisiondetection`); absolute collision immunity remains Impossible; sha256 porcelain Claimed. **FS-007 / WIN-003 / host-env:** product CLI **trimmed** (not git). See [Git vs arks](../git-vs-arks/).
 
 ### Alias coverage?
 

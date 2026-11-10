@@ -13,8 +13,9 @@ members = [
     "crates/arks-remote",
     "crates/arks-lease",
     "crates/arks-server",
-    "crates/arks-hostfs",
     "crates/arks",
+    # arks-hostfs kept in-tree as non-default (trimmed from product surface).
+    "crates/arks-hostfs",
 ]
 default-members = [
     "crates/arks-hash",
@@ -29,7 +30,6 @@ default-members = [
     "crates/arks-remote",
     "crates/arks-lease",
     "crates/arks-server",
-    "crates/arks-hostfs",
     "crates/arks",
 ]
 

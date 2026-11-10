@@ -55,7 +55,6 @@ fn lock_inspect(args: &[String]) -> CliResult<()> {
         ));
     }
     let repo = open_repo()?;
-    crate::cmd::host_env::emit_cloud_advisory(repo.git_dir());
     let mut roots = vec![repo.git_dir().to_path_buf()];
     let common = repo.common_dir().to_path_buf();
     if common != roots[0] {
@@ -277,22 +276,11 @@ fn print_lock_honesty_notes(repo: &arks_repo::Repository, reports: &[LockReport]
         "note: FS-013 — inode/direntry exhaustion in objects/ under extreme loose create; pack/gc before ENOSPC/ENFILE"
     );
     println!(
-        "note: FS-007 — cloud sync (DriveFS/OneDrive/Dropbox) on .git: detect sync roots when SoTable; refuse multi-writer claims; single-host smoke ≠ multi-device conflict Claimed"
+        "note: FS-007 — cloud sync on .git is a host hazard; arks host-env product CLI trimmed (not git); use host tooling for sync-root detection"
     );
-    {
-        let lsm = arks_hostfs::detect_lsm();
-        if lsm.is_empty() {
-            println!(
-                "note: FS-014 — SELinux/AppArmor deny .lock rename → clear EACCES/EPERM honesty; cannot implement host LSM policy inside arks (no LSM detected on this host)"
-            );
-        } else {
-            let names: Vec<&str> = lsm.iter().map(|l| l.as_str()).collect();
-            println!(
-                "note: FS-014 — host LSM detected ({}); .lock rename PermissionDenied → name LSM in errno honesty; cannot bypass policy inside arks",
-                names.join(",")
-            );
-        }
-    }
+    println!(
+        "note: FS-014 — SELinux/AppArmor deny .lock rename → clear EACCES/EPERM honesty; cannot implement host LSM policy inside arks"
+    );
     println!(
         "note: WIN-001 — Win32 MAX_PATH deep worktree/LFS temps fail CreateFile; enable long paths or shorten nesting"
     );

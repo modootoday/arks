@@ -22,14 +22,16 @@ Short public answer to “is arks **fully complete**?” — without inventing C
 | Live forge latency SLOs, crates.io timing (**L9**), absolute crypto immunity, forge host UX, full cloud-sync safety | **NO** — documented non-goals |
 | One-word operator summary | **PARTIAL** — symmetry DoD complete; non-FS residuals remain |
 
-Tip carrying Pf5 **19/19 ≤0.5× Claimed** (ALIAS hardlink cut), sha1cd detect+refuse, host-env advisory, forge thin-wrap, server `bundle-uri` + LFS locks + `sparse:oid` slices: see [Git vs arks](../git-vs-arks/) (G-ladder [[plan:root/20261111024440]]; ALIAS Claimed [[evidence:root/20261111032000]]). Authoritative residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Canonical tip table: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) (v0.15.5+ G-ladder). Gap classification: [20261111022345](https://github.com/modootoday/arks/blob/main/.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md).
+Tip carrying Pf5 **19/19 ≤0.5× Claimed** (ALIAS hardlink cut), sha1cd detect+refuse, server `bundle-uri` + `sparse:oid` slices: see [Git vs arks](../git-vs-arks/). **Trimmed over-design:** `forge` / `host-env` / in-process LFS / CELIR product path. Authoritative residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Canonical tip table: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md).
 
-## Documented non-goals / still blocked
+## Documented non-goals / trimmed
 
 - Absolute SHA-1 collision **immunity** (detect+refuse is Claimed)
-- Full forge Checks / merge-queue / Issues **product** UX (Claimed-closest: `arks forge` → host `gh`)
+- Forge Checks / merge-queue / Issues **product** UX (`arks forge` **trimmed** — use host `gh`)
 - Embedded forge OAuth browser UX (external credential.helper honored)
-- Full multi-device cloud-sync safety on `.git` (`arks host-env` detect + opt-in refuse only)
+- Cloud-sync / hostfs product CLI (`arks host-env` **trimmed**)
+- In-process LFS client/server (`arks lfs` / `info/lfs` **trimmed** — use `git-lfs`)
+- CELIR index feature — ops/CI opt-in only (default OFF; not product Claimed path)
 - Live G8 / scale latency PASS without secrets (honest SKIP; local-forge ≠ live PASS)
 - crates.io / docs.rs publish timing (**L9** owner policy — reopen pack only)
 
@@ -40,9 +42,8 @@ G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: hardlink + no PATH rewrit
 ## Remaining partials (ranked unblock)
 
 1. Live G8 latency — Environment `g8-live` secrets still **0** ([[evidence:root/20261111032001]]) + receipt (SKIP ≠ PASS) — **Operator-only**
-2. Host-env — Claimed detect+opt-in refuse / LSM detect; full sync still Non-goal / Impossible
-3. **L9** — owner SoT reopen pack only (G2 refreshed) — **Operator-only**
-4. Crypto immunity / full sync / forge product UX / CELIR ObjectStore / multi-writer warranty — Hold forever (detect / thin-wrap Claimed; **never** fake)
+2. **L9** — owner SoT reopen pack only (G2 refreshed) — **Operator-only**
+3. Crypto immunity / full sync / forge UX / CELIR ObjectStore / multi-writer warranty — Hold forever (**never** fake); forge/host-env/LFS product CLI already **trimmed**
 
 Detail: [G-ladder plan](https://github.com/modootoday/arks/blob/main/.spec/plan/20261111024440-gap-classification-g-ladder.plan.md) · [20261111022345](https://github.com/modootoday/arks/blob/main/.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md).
 

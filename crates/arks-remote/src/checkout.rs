@@ -512,7 +512,8 @@ fn write_one_blob(
     write_cached_blob(repo, work, rel, path, oid, mode, &blob, stamp)
 }
 
-/// Apply claimed smudge to blob bytes for worktree materialize (LFS in-process + filter).
+/// Apply smudge to blob bytes for worktree materialize via stock `filter.*.smudge` only.
+/// In-process Git LFS productization is trimmed (not stock git); use external git-lfs filters.
 pub fn smudge_worktree_blob(
     repo: &Repository,
     work: &Path,
@@ -522,16 +523,13 @@ pub fn smudge_worktree_blob(
     apply_smudge(repo, work, rel, payload)
 }
 
-/// FS6 reopen: smudge on checkout — LFS pointer (local or network) then `filter.*.smudge`.
+/// Smudge on checkout — honor configured `filter.*.smudge` (git attributes), not arks LFS.
 fn apply_smudge(
     repo: &Repository,
     work: &Path,
     rel: &str,
     payload: &[u8],
 ) -> Result<Vec<u8>, RemoteError> {
-    if let Some(bytes) = crate::lfs::resolve_lfs_pointer(repo, payload)? {
-        return Ok(bytes);
-    }
     let Some(name) = attribute_filter_name(work, rel) else {
         return Ok(payload.to_vec());
     };
