@@ -238,6 +238,22 @@ impl FilesystemGitStore {
         Ok(())
     }
 
+    /// Bulk pack-cache lookup under a single read lock (clone checkout hot path).
+    ///
+    /// Returns `None` when any OID misses the in-memory pack map (caller falls
+    /// back to per-OID [`Self::get_shared`]). Overlay / loose are not searched.
+    pub fn lookup_pack_cached(&self, oids: &[Oid]) -> Option<Vec<Arc<RawObject>>> {
+        if !*self.packs_loaded.read().expect("packs_loaded") {
+            return None;
+        }
+        let pack = self.pack_objects.read().expect("pack_objects");
+        let mut out = Vec::with_capacity(oids.len());
+        for oid in oids {
+            out.push(Arc::clone(pack.get(oid)?));
+        }
+        Some(out)
+    }
+
     /// Shared object handle (cheap `Arc` clone). Prefer for parallel checkout.
     pub fn get_shared(&self, oid: &Oid) -> Result<Arc<RawObject>, StoreError> {
         if let Some(obj) = self.overlay.read().expect("overlay").get(oid) {

@@ -10,12 +10,13 @@
 
 use crate::error::RemoteError;
 use arks_index::{Index, IndexEntry, sort_entries};
-use arks_object::{Commit, ObjectKind, Tree, TreeMode};
+use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode};
 use arks_oid::{Oid, OidKind};
 use arks_repo::Repository;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::thread;
 
 /// Write `commit`'s tree into `work` and replace the index to match.
@@ -222,22 +223,77 @@ fn materialize_jobs(
             }
         }
     }
-    // Overlap get+write across workers (pack-cache hits are concurrent under RwLock).
-    // Full prefetch-then-write regressed J-CLONE-PATH (lost read/write overlap).
     // One stamp for the whole batch (clone hot path); avoids SystemTime::now per blob.
     let stamp = stamp_now();
-    // Threshold 8 matches tip f6ac3e2 / 3af76a7 (serial-on-1cpu and <24 both missed PATH ≤0.5×).
-    let written = if writes.len() < 8 {
+    // Smart-HTTP clone: resolve every blob Arc under one pack-cache read lock,
+    // then fs::write without per-blob RwLock (J-CLONE-LOCAL 220× lock tax).
+    let oids: Vec<Oid> = writes.iter().map(|(_, _, _, oid, _)| *oid).collect();
+    let cached = repo.store().lookup_pack_cached(&oids);
+    let cpus = thread::available_parallelism()
+        .map(|p| p.get())
+        .unwrap_or(1);
+    let written = if let Some(blobs) = cached {
+        let prepared: Vec<(usize, String, PathBuf, Oid, u32, Arc<RawObject>)> = writes
+            .into_iter()
+            .zip(blobs)
+            .map(|((i, rel, path, oid, mode), blob)| (i, rel, path, oid, mode, blob))
+            .collect();
+        // 1-CPU Docker: serial writes (spawn tax > overlap). Multi-CPU: parallel fs::write.
+        if prepared.len() < 8 || cpus <= 1 {
+            let mut out = Vec::with_capacity(prepared.len());
+            for (i, rel, path, oid, mode, blob) in prepared {
+                out.push((i, write_cached_blob(&rel, &path, &oid, mode, &blob, stamp)?));
+            }
+            out
+        } else {
+            let workers = cpus.clamp(2, 8).min(prepared.len());
+            let chunk = prepared.len().div_ceil(workers);
+            let mut out = Vec::with_capacity(prepared.len());
+            let mut worker_err: Option<RemoteError> = None;
+            thread::scope(|scope| {
+                let mut handles = Vec::with_capacity(workers);
+                for piece in prepared.chunks(chunk) {
+                    handles.push(scope.spawn(
+                        move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+                            let mut local = Vec::with_capacity(piece.len());
+                            for (i, rel, path, oid, mode, blob) in piece {
+                                local.push((
+                                    *i,
+                                    write_cached_blob(rel, path, oid, *mode, blob, stamp)?,
+                                ));
+                            }
+                            Ok(local)
+                        },
+                    ));
+                }
+                for h in handles {
+                    match h.join() {
+                        Ok(Ok(local)) => out.extend(local),
+                        Ok(Err(e)) => {
+                            worker_err = Some(e);
+                            break;
+                        }
+                        Err(_) => {
+                            worker_err =
+                                Some(RemoteError::Msg("checkout: worker panicked".into()));
+                            break;
+                        }
+                    }
+                }
+            });
+            if let Some(e) = worker_err {
+                return Err(e);
+            }
+            out
+        }
+    } else if writes.len() < 8 || cpus <= 1 {
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
             out.push((i, write_one_blob(repo, &rel, &path, &oid, mode, stamp)?));
         }
         out
     } else {
-        let workers = thread::available_parallelism()
-            .map(|p| p.get().clamp(2, 8))
-            .unwrap_or(4)
-            .min(writes.len());
+        let workers = cpus.clamp(2, 8).min(writes.len());
         let chunk = writes.len().div_ceil(workers);
         let mut out = Vec::with_capacity(writes.len());
         let mut worker_err: Option<RemoteError> = None;
@@ -278,19 +334,14 @@ fn materialize_jobs(
     Ok(entries.into_iter().map(|(_, e)| e).collect())
 }
 
-fn write_one_blob(
-    repo: &Repository,
+fn write_cached_blob(
     rel: &str,
     path: &Path,
     oid: &Oid,
     mode: u32,
+    blob: &RawObject,
     stamp: (u32, u32),
 ) -> Result<IndexEntry, RemoteError> {
-    // Arc share from pack cache — avoid deep-copying every blob on parallel clone.
-    let blob = repo
-        .store()
-        .get_shared(oid)
-        .map_err(|e| RemoteError::Msg(e.to_string()))?;
     if blob.kind != ObjectKind::Blob {
         return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
     }
@@ -313,6 +364,22 @@ fn write_one_blob(
         flags_extended: None,
         path: rel.to_owned(),
     })
+}
+
+fn write_one_blob(
+    repo: &Repository,
+    rel: &str,
+    path: &Path,
+    oid: &Oid,
+    mode: u32,
+    stamp: (u32, u32),
+) -> Result<IndexEntry, RemoteError> {
+    // Arc share from pack cache — avoid deep-copying every blob on parallel clone.
+    let blob = repo
+        .store()
+        .get_shared(oid)
+        .map_err(|e| RemoteError::Msg(e.to_string()))?;
+    write_cached_blob(rel, path, oid, mode, &blob, stamp)
 }
 
 fn ensure_dir(path: &Path, made: &mut HashSet<PathBuf>) -> Result<(), RemoteError> {
