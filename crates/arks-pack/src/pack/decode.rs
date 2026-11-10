@@ -189,18 +189,12 @@ fn resolve_slots(
 ) -> Result<Vec<ResolvedObject>, PackError> {
     let n = slots.len();
     let mut oids: Vec<Option<Oid>> = vec![None; n];
-    // Non-thin clone packs are ofs-delta only — skip by_oid map + O(n²) ref walk.
-    let has_ref = slots.iter().any(|s| matches!(s, Slot::Ref { .. }));
-    let mut by_oid: HashMap<Oid, usize> = if has_ref {
-        HashMap::with_capacity(n)
-    } else {
-        HashMap::new()
-    };
+    let mut by_oid: HashMap<Oid, usize> = HashMap::with_capacity(n);
 
     for (i, slot) in slots.iter().enumerate() {
         if let Slot::Ready(obj) = slot {
             let oid = obj.oid(format)?;
-            record_oid(&mut oids, &mut by_oid, i, oid, has_ref);
+            record_oid(&mut oids, &mut by_oid, i, oid);
         }
     }
 
@@ -228,44 +222,42 @@ fn resolve_slots(
         let obj = RawObject::new(kind, payload);
         let oid = obj.oid(format)?;
         slots[i] = Slot::Ready(obj);
-        record_oid(&mut oids, &mut by_oid, i, oid, has_ref);
+        record_oid(&mut oids, &mut by_oid, i, oid);
     }
 
-    // Ref-delta is uncommon on non-thin packs; keep a short multi-pass only when present.
-    if has_ref {
-        for _ in 0..n {
-            let mut progress = false;
-            for i in 0..n {
-                if oids[i].is_some() {
+    // Ref-delta is uncommon on non-thin packs; keep a short multi-pass.
+    for _ in 0..n {
+        let mut progress = false;
+        for i in 0..n {
+            if oids[i].is_some() {
+                continue;
+            }
+            let Slot::Ref { base, .. } = &slots[i] else {
+                continue;
+            };
+            let Some(&base_idx) = by_oid.get(base) else {
+                continue;
+            };
+            if oids[base_idx].is_none() {
+                continue;
+            }
+            let delta = take_delta(&mut slots[i])?;
+            let (kind, base_payload) = match &slots[base_idx] {
+                Slot::Ready(obj) => (obj.kind, obj.payload.as_slice()),
+                _ => {
+                    restore_delta(&mut slots[i], delta);
                     continue;
                 }
-                let Slot::Ref { base, .. } = &slots[i] else {
-                    continue;
-                };
-                let Some(&base_idx) = by_oid.get(base) else {
-                    continue;
-                };
-                if oids[base_idx].is_none() {
-                    continue;
-                }
-                let delta = take_delta(&mut slots[i])?;
-                let (kind, base_payload) = match &slots[base_idx] {
-                    Slot::Ready(obj) => (obj.kind, obj.payload.as_slice()),
-                    _ => {
-                        restore_delta(&mut slots[i], delta);
-                        continue;
-                    }
-                };
-                let payload = apply_delta(base_payload, &delta)?;
-                let obj = RawObject::new(kind, payload);
-                let oid = obj.oid(format)?;
-                slots[i] = Slot::Ready(obj);
-                record_oid(&mut oids, &mut by_oid, i, oid, true);
-                progress = true;
-            }
-            if !progress {
-                break;
-            }
+            };
+            let payload = apply_delta(base_payload, &delta)?;
+            let obj = RawObject::new(kind, payload);
+            let oid = obj.oid(format)?;
+            slots[i] = Slot::Ready(obj);
+            record_oid(&mut oids, &mut by_oid, i, oid);
+            progress = true;
+        }
+        if !progress {
+            break;
         }
     }
 
@@ -289,17 +281,9 @@ fn resolve_slots(
     Ok(objects)
 }
 
-fn record_oid(
-    oids: &mut [Option<Oid>],
-    by_oid: &mut HashMap<Oid, usize>,
-    index: usize,
-    oid: Oid,
-    index_by_oid: bool,
-) {
+fn record_oid(oids: &mut [Option<Oid>], by_oid: &mut HashMap<Oid, usize>, index: usize, oid: Oid) {
     oids[index] = Some(oid);
-    if index_by_oid {
-        by_oid.entry(oid).or_insert(index);
-    }
+    by_oid.entry(oid).or_insert(index);
 }
 
 fn take_delta(slot: &mut Slot) -> Result<Vec<u8>, PackError> {
