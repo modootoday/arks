@@ -44,7 +44,8 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--depth"])?;
+    refuse_unknown_flags(args, &["--depth", "--filter"])?;
+    refuse_partial_clone_filter(args)?;
     let mut depth: Option<u32> = None;
     let mut positional = Vec::new();
     let mut i = 0;
@@ -159,7 +160,8 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_clone(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--reference", "--depth"])?;
+    refuse_unknown_flags(args, &["--reference", "--depth", "--filter"])?;
+    refuse_partial_clone_filter(args)?;
     // MISC-009 (M20 Cx-8): clone --reference while donor under gc/maintenance.
     let mut reference: Option<PathBuf> = None;
     let mut depth: Option<u32> = None;
@@ -262,6 +264,21 @@ fn parse_depth(raw: &str) -> CliResult<u32> {
     Ok(n)
 }
 
+/// Partial-clone `--filter` / promisor product path remains N/A (residual R3 / G9).
+/// Claimed shallow subset is `--depth N` only ([[sot:root/arks-remote]]).
+fn refuse_partial_clone_filter(args: &[String]) -> CliResult<()> {
+    if args
+        .iter()
+        .any(|a| *a == "--filter" || a.starts_with("--filter="))
+    {
+        return Err(CliError::NotImplemented(
+            "clone/fetch --filter (blob:none / tree:0 / promisor partial-clone) not claimed; use --depth N for shallow"
+                .into(),
+        ));
+    }
+    Ok(())
+}
+
 /// Infer a directory name from a clone URL (HTTP, SSH, or path).
 fn clone_dest_name(url: &str) -> String {
     let trimmed = url.trim().trim_end_matches('/');
@@ -296,5 +313,35 @@ fn clone_dest_name(url: &str) -> String {
         "repo".into()
     } else {
         base.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clone_refuses_filter_flag() {
+        let err = cmd_clone(&[
+            "--filter=blob:none".into(),
+            "https://example.invalid/repo.git".into(),
+        ])
+        .expect_err("filter must refuse");
+        let s = err.to_string();
+        assert!(
+            s.contains("--filter") && s.contains("not claimed"),
+            "unexpected refuse text: {s}"
+        );
+    }
+
+    #[test]
+    fn fetch_refuses_filter_flag() {
+        let err = cmd_fetch(&["--filter".into(), "blob:none".into(), "origin".into()])
+            .expect_err("filter must refuse");
+        let s = err.to_string();
+        assert!(
+            s.contains("--filter") && s.contains("not claimed"),
+            "unexpected refuse text: {s}"
+        );
     }
 }

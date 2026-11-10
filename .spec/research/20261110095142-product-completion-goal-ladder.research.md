@@ -3,7 +3,7 @@ id: research:root/20261110095142
 title: Product completion goal ladder (post-PF5 8/8)
 status: active
 created: 2026-11-10T09:51:42Z
-updated: 2026-11-10T19:20:00Z
+updated: 2026-11-10T19:25:00Z
 tags:
   [
     product-completion,
@@ -65,7 +65,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 | **L3** | Dumb HTTP **push** (**R2**) | Git asymmetry | **Done (Claimed host wire)** | [[adr:root/20261110190000]] + [[evidence:root/20261110190000]] |
 | **L4** | Release-channel readiness (OIDC registries / checksum Releases) | Release | **Done (ops dry-run)** — Environments live; `workflow_dispatch` dry-run + `docs/release.md` + `scripts/release-channel-readiness.sh`; **no** invented live publish PASS | Follow [[research:root/20261110085731]] / [[plan:root/20261110085731]]; live tag + trusted publishers remain operator |
 | **L5** | Live forge scale SLO / G8 live PASS (**R5**) | Secrets-gated | **Done (ops dry-run / readiness)** — Environment `g8-live` + `g8-forge-scale.yml` dry-run + `scripts/forge-scale-readiness.sh` + `docs/forge-scale.md`; harness Claimed; **no** invented live latency PASS | Secrets + receipt only for any future remasure; never invent latency |
-| **L6** | Partial-clone filter/promisor (**R3**) | N/A | Dedicated SoT amend beyond `--depth` | Honest N/A |
+| **L6** | Partial-clone filter/promisor (**R3**) | N/A | **Done (honest N/A)** — SoT remains `--depth` only; CLI refuses `--filter`; **no** filter/promisor Claimed/PASS; reopen = SoT amend beyond `--depth` + wire + G35-class re-verify | Ladder close ≠ product claim |
 | **L7** | OpenPGP / X.509 / `tag -s` (**R4**) | N/A | Dedicated crypto harness SoT | Honest N/A |
 | **L8** | Clean-room Git pin advance (**R6**) | Process | Deliberate pin bump + G14-class re-prove | Pin **2.39.5** process-closed |
 | **L9** | crates.io / docs.rs publish timing | Owner policy | Closed default in [[sot:root/public-surface]] | Not a residual Open |
@@ -79,7 +79,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 
 ### Execution note (this round)
 
-**L0–L5 Done.** L5 = secrets-gated forge-scale **ops readiness** (dry-run / SKIP receipts), **not** a live G8 remasure PASS or product scale SLO. Next recommended: **L6** partial-clone filter/promisor (**R3**) — honest N/A unless a dedicated SoT amends beyond `--depth`. **L9** stays closed owner policy ([[sot:root/public-surface]]); not a residual Open. L7–L8 remain N/A / process.
+**L0–L6 Done.** L6 = **honest N/A** for residual **R3** (filter/`blob:none`/`tree:0`/promisor remain out of [[sot:root/arks-remote]]; CLI fail-closed on `--filter`; **≠** partial-clone Claimed/PASS). Next recommended: **L7** OpenPGP / X.509 / `tag -s` (**R4**) — honest N/A unless a dedicated crypto harness SoT amends. **L9** stays closed owner policy ([[sot:root/public-surface]]); not a residual Open. L8 remains process-closed pin.
 
 ## Verification
 
@@ -89,3 +89,4 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 4. When L3 ships: [[adr:root/20261110190000]] + dumb WebDAV client/server + residual R2 Claimed + [[evidence:root/20261110190000]]; `spec check` clean.
 5. When L4 ships: Environments `crates`/`npm`/`pypi`/`rubygems` + `release.yml` dry-run wiring + maintainer docs; **no** Verified registry publish PASS invented; `spec check` clean.
 6. When L5 ships: Environment `g8-live` + `g8-forge-scale.yml` dry-run + readiness script + maintainer docs; harness SKIP without secrets; **no** invented live forge latency PASS / G8 remasure Claimed from empty receipts; `spec check` clean.
+7. When L6 ships: residual **R3** stays **N/A**; public/`docs/limits.md` keep filter/promisor unclaimed; clone/fetch refuse `--filter` fail-closed; **no** invented filter/promisor Claimed/PASS; `spec check` clean.

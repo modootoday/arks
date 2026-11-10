@@ -35,6 +35,8 @@ Release-channel ops (OIDC Environments, tag dry-run, draft Releases): [Release c
 
 Secrets-gated live forge smoke / scale harness: [Forge scale harness](../forge-scale/). Dry-run readiness is not a live latency PASS.
 
+Partial-clone filter / promisor remains out of product claim; see [Limits](../limits/). Shallow `--depth` is the claimed subset.
+
 ## Next
 
 [Getting started](../getting-started/) [Release channels](../release/) [Forge scale harness](../forge-scale/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)

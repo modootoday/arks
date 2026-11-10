@@ -115,7 +115,7 @@ Short and honest — see [docs/limits.md](docs/limits.md):
 - The Git **object store** remains ordinary filesystem `.git`. An optional index sidecar may sit beside it for product queries; arks does not replace `.git` objects with a different store in Git-compatible mode.
 - Partial-clone filters / promisor packs, OpenPGP / X.509 commit & tag signing, and forge OAuth are out or refused.
 - Credential fill includes helper / `GIT_ASKPASS` / TTY prompts and first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`); forge OAuth stays out.
-- Shallow clone supports `--depth`; filter/`blob:none`-style partial clone is not claimed.
+- Shallow clone supports `--depth`; filter/`blob:none`-style partial clone is not claimed (CLI refuses `--filter`).
 - Live forge journeys and harnesses are **claimed with receipts** when secrets are present; never invent PASS when SKIP is honest.
 
 ## Documentation

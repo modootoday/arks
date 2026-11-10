@@ -3,7 +3,7 @@ id: sot:root/public-surface
 title: Public surface
 status: active
 created: 2026-11-08T08:32:38Z
-updated: 2026-11-10T19:20:00Z
+updated: 2026-11-10T19:25:00Z
 tags: [public, docs, pages, license, security, agents, naming, honesty, alias, dot-git, perf, celir-index, g28, l3]
 verify: manual
 rel:
@@ -167,5 +167,6 @@ Manual:
 | crates.io publish timing | **Closed (owner default)** | Name lock is not a reservation; publish/reserve before relying on exclusivity ([[sot:root/product-naming]]); timing remains operator choice, not a residual Open. Ladder **L9**. |
 | Release-channel ops dry-run (OIDC Environments) | **Done (L4 ops)** | Environments `crates`/`npm`/`pypi`/`rubygems` + `release.yml` dry-run + `docs/release.md`; dry-run ≠ live registry publish PASS ([[research:root/20261110085731]], [[research:root/20261110095142]]). |
 | Forge-scale ops dry-run (secrets-gated G8) | **Done (L5 ops)** | Environment `g8-live` + `g8-forge-scale.yml` dry-run + `docs/forge-scale.md`; dry-run ≠ live forge latency PASS ([[research:root/20261110095142]]). |
+| Partial-clone filter/promisor residual (R3) | **Done (L6 honest N/A)** | SoT remains `--depth` only ([[sot:root/arks-remote]]); filter/`blob:none`/`tree:0`/promisor stay **N/A**; clone/fetch refuse `--filter`; **≠** partial-clone Claimed/PASS ([[research:root/20261110095142]]). |
 | Whether `docs/` links into raw `.spec/` HTML on GitHub | **Closed (docs policy)** | Allowed as “source of truth on GitHub”; still do not Jekyll-publish full SoT trees by default. |
 | Human vs agent vocabulary split | **Done (v0.3.0)** | Human Pages/README plain language; Specfold/AGENTS/`verify` keep precise IDs; no false “faster than Git” outside receipts. |

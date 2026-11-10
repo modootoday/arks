@@ -3,7 +3,7 @@ id: sot:root/arks-remote
 title: arks-remote unit
 status: active
 created: 2026-11-08T11:05:00Z
-updated: 2026-11-10T19:00:00Z
+updated: 2026-11-10T19:25:00Z
 tags: [m6, m16, unit, remote, client, smart-http, dumb-http, webdav, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow, r1, r2]
 verify: manual
 rel:
@@ -104,5 +104,6 @@ Wave H unlocks remotes before porcelain waves. A Ring 6 client over proven pkt-l
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-remote` and Wave H CLI tests via `-p arks`.
 2. Clean-room **G7** `remote-recorded` (+ G1–G6 regression) per `verify/matrices/matrix-m6.md` — authoritative. **G8** default **Refuse-closed** without opt-in secrets ([[adr:root/20261110151000]]); live only when `ARKS_G8_LIVE=1` + token + URL. Host green alone is not product-verified.
 3. Clean-room **G35** (`verify/matrices/matrix-g35.md`, compose `g35`) for the claimed `--depth` shallow subset (**G9** semantics). Host green alone is not product-verified.
-4. `spec check` clean for this SoT.
-5. Workspace `cargo metadata`: `arks-remote` depends inward only; zero `gix`/gitoxide; zero `celir` edges.
+4. CLI clone/fetch MUST refuse `--filter` / `--filter=` fail-closed (residual **R3** / ladder **L6** honest N/A). Refusing is **not** a filter/promisor product claim.
+5. `spec check` clean for this SoT.
+6. Workspace `cargo metadata`: `arks-remote` depends inward only; zero `gix`/gitoxide; zero `celir` edges.
