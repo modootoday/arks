@@ -38,7 +38,7 @@ rel:
 
 Version **0.5.0**. Normative **porcelain / plumbing CLI intent** for the `arks` binary ([[sot:root/product-naming]]). On-disk and wire semantics remain owned by [[sot:root/git-compat-surface]] and domain research — this SoT defines **Git CLI symmetric compatibility**, **`git`→`arks` alias drop-in**, how command/flag parity is judged, refuse-vs-implement rules, version pinning, phased delivery waves (including **Wave Sv** server plumbing, **Wave Fs** M15 inventory residual, and **Wave Sy** M16 complete flag symmetry), and honesty constraints.
 
-**End-state (normative):** `arks` is a **symmetric replacement** for the stock `git` CLI for the **full** git(1) inventory minus explicit **N/A exclusions** — same subcommand names, documented options/flags for the **clean-room-pinned Git version**, interchangeable repository/worktree results on the **same `.git` layout**, and **argv suitability for shell alias substitution** (e.g. `alias git=arks`) — implemented **in-engine** (no product-path `git` subprocess). **M9** closed an implement/refuse ledger (historical). **M15** closed inventory-level full symmetric residual (historical; still allowed per-flag refuse). **Active alias honesty** is **M16 / Wave Sy** — every pin command/flag is **implement** or **N/A exclusion**; **no production partial/refuse leftovers** ([[sot:root/program-roadmap]], [[plan:root/20261109043910]], [[sot:root/cli-flag-parity-complete]]). Everyday/partial/refuse subset MUST NOT be treated as the lasting production bar.
+**End-state (normative):** `arks` is a **symmetric replacement** for the stock `git` CLI for the **full** git(1) inventory minus explicit **N/A exclusions** — same subcommand names, documented options/flags for the **clean-room-pinned Git version**, interchangeable repository/worktree results on the **same `.git` layout**, and **argv suitability for shell alias substitution** (e.g. `alias git=arks`) — implemented **in-engine** (**never** spawn `git` or `gh`). **M9** closed an implement/refuse ledger (historical). **M15** closed inventory-level full symmetric residual (historical; still allowed per-flag refuse). **Active alias honesty** is **M16 / Wave Sy** — every pin command/flag is **implement** or **N/A exclusion**; **no production partial/refuse leftovers** ([[sot:root/program-roadmap]], [[plan:root/20261109043910]], [[sot:root/cli-flag-parity-complete]]). Everyday/partial/refuse subset MUST NOT be treated as the lasting production bar.
 
 ## Rule
 
@@ -48,7 +48,7 @@ Version **0.5.0**. Normative **porcelain / plumbing CLI intent** for the `arks` 
 2. **Porcelain composes plumbing.** CLI commands MUST wrap library crates from [[sot:root/crate-architecture]]; they MUST NOT invent on-disk or wire semantics. Format/protocol fidelity is owned by [[sot:root/git-compat-surface]].
 3. **Claims must be explicit.** Docs, `--help`, public narrative, and tests MUST name the **currently claimed** command/flag subset. Advertising a Git-compatible command implies the corresponding git-compat rows **and** the man-page option contract for the pin (below).
 4. **Exit and messaging.** Non-zero exit on failure. Prefer clear refuse messages for unimplemented surface. Exact stderr string identity with stock Git is **not** required unless a clean-room gate explicitly asserts it; on-disk / exit-code / documented behavioral outcomes **are** required for claimed parity.
-5. **No forge UX in CLI-parity production.** GitHub PR/Checks/Apps UX remains out of scope ([[sot:root/remote-host-compatibility-surface]] scope (B)).
+5. **No forge UX in CLI-parity production.** GitHub PR/Checks/Apps UX remains out of the `arks` binary ([[sot:root/remote-host-compatibility-surface]] scope (B)). Optional companion: [[sot:root/arks-hub-product-intent]] / [[sot:root/arks-hub-cli-surface]] (`arks-hub` — native API client; never `gh`/`git` subprocess).
 
 ### Git CLI symmetric compatibility (definition)
 
@@ -91,7 +91,7 @@ These remain **out of the default parity inventory** unless a future SoT amendme
 | GUI / browser tools (`gitk`, `git-gui`, `git-citool`, and similar) | Not CLI replacement surface | git(1) porcelain list; product non-goal |
 | `scalar` | Separate suite / managing large repos; not required for CLI symmetry bar | git(1) |
 | **Git LFS** (`git-lfs` and LFS-aware porcelain) | Separate project; not core Git builtins | defer; claim only with dedicated SoT |
-| Host product APIs (PRs/Checks/Apps) | Remote-host scope (B) | [[sot:root/remote-host-compatibility-surface]] |
+| Host product APIs (PRs/Checks/Apps) | Remote-host scope (B); optional `arks-hub` | [[sot:root/remote-host-compatibility-surface]], [[sot:root/arks-hub-product-intent]] |
 | Forge / GitHub App **as** arks server UX | Not CLI-parity; not production-server | [[sot:root/remote-host-compatibility-surface]] |
 | Lease admin UX / high-concurrency product valves | **Not** Git man-page inventory. Leases = **default product capability** (ships M10); high-concurrency = **opt-in selectable** product mode — exact CLI/config flags owned by [[sot:root/lease-concurrency-intent]], not this parity inventory | [[sot:root/lease-concurrency-intent]], [[sot:root/program-roadmap]] |
 | CELIR admin UX | **Cancelled / non-product** | [[sot:root/storage-celir-boundary]] |

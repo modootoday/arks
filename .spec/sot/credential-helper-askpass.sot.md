@@ -39,7 +39,7 @@ Primary docs (cite; do not paste):
 2. **Fill order.** When HTTPS needs credentials and URL userinfo is absent, fill MUST combine, in this order (gitcredentials requesting-credentials + helper loop):
    1. Existing attributes already present on the description
    2. Environment-backed values `ARKS_REMOTE_USERNAME` / `ARKS_REMOTE_PASSWORD` (arks product env helper; secrets never from the tree)
-   3. Configured `credential.helper` entries — invoke with operation `get` / `store` / `erase` per gitcredentials custom-helper rules (`!` shell snippet, absolute path, or helper name). Helper names **`wincred`**, **`libsecret`**, and **`osxkeychain`** MUST resolve to **arks first-party** wallet helpers (in-process and/or `arks credential-<name>`), not as an N/A exclusion. Bang helpers that are a **simple argv** (including POSIX single-quoted paths with spaces, e.g. stock `gh auth setup-git` on Windows: `!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential`) MUST spawn the executable directly with argv — do not require host `sh`, and MUST NOT leave Unix single quotes intact under `cmd /C` (git-for-Windows uses a shell that honors them; arks uses argv / cmd-safe rewrite for cross-OS parity).
+   3. Configured `credential.helper` entries — invoke with operation `get` / `store` / `erase` per gitcredentials custom-helper rules (`!` shell snippet, absolute path, or helper name). Helper names **`wincred`**, **`libsecret`**, and **`osxkeychain`** MUST resolve to **arks first-party** wallet helpers (in-process and/or `arks credential-<name>`). Helper name **`store`** MUST resolve to an **in-engine** file store (stock `~/.git-credentials` format; override via `ARKS_CREDENTIAL_STORE`). Short helper names MUST resolve to a standalone `git-credential-<name>` executable on PATH when not first-party — **never** `Command::new("git")` / `git credential-<name>`. **Absolute:** arks MUST NOT spawn the `git` or `gh` binaries (including bang helpers from `gh auth setup-git`); refuse those helpers with a clear error and prefer store/wincred/libsecret/osxkeychain.
    4. `GIT_ASKPASS`, else `core.askPass`, else `SSH_ASKPASS` — run the program with a prompt argv; read one line from stdout
    5. **TTY terminal prompt** when `GIT_TERMINAL_PROMPT` is unset or not `0` and a controlling terminal is available — prompt on the TTY for username (if missing) and password (gitcredentials step 4). When no TTY is available or `GIT_TERMINAL_PROMPT=0`, skip this step (fail closed if still incomplete).
 3. **OS wallet helpers (first-party).** For helper names `wincred` / `libsecret` / `osxkeychain`:
@@ -64,8 +64,9 @@ Primary docs (cite; do not paste):
 ### Out of scope (still N/A / non-claim)
 
 - Forge OAuth browser UX / host Apps auth (owned by AUTH residual / separate SoT when Claimed).
-- `credential-cache` daemon product path.
-- Git Credential Manager as a bundled first-party binary (external GCM MAY still be configured by path/name).
+- `credential-cache` daemon product path (`cache` helper → refuse-with-reason).
+- Spawning `git` or `gh` as credential helpers (forbidden absolute; refuse).
+- Git Credential Manager as a bundled first-party binary (external GCM MAY still be configured by absolute path / `git-credential-manager` name on PATH — not via `git`/`gh`).
 - SSH askpass as a required client-SSH path (OpenSSH agent/keys remain Sy-4; this SoT is HTTPS-focused).
 
 ## Why

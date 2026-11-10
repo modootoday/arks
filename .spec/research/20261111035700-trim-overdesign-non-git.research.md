@@ -29,6 +29,10 @@ Tip base: **`68b733e`**. Owner directive: discard product surfaces that stock **
 | C16 `serve-http` `info/lfs` | Removed server `lfs` module + HTTP route + unit tests; plain git HTTP **kept** |
 | C17 CELIR product path | Honesty: ops/CI feature only (default OFF); not product Claimed |
 
+## Absolute runtime rule (owner)
+
+**arks never invokes `git` or `gh`.** Product-path credential helpers that previously expanded short names to `git credential-*` or spawned bang `gh` are replaced: native `store`, first-party wallets, refuse git/gh programs. Matrix SoT: [[sot:root/cli-git-help-matrix]].
+
 ## KEEP (unchanged intent)
 
 - Full git CLI symmetry work

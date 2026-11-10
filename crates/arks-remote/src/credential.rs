@@ -584,7 +584,18 @@ fn run_helper(
             return run_wallet_helper(kind, operation, desc);
         }
     }
-    let mut cmd = spawn_helper_command(helper, operation);
+    // Native file store — never shell out to `git credential-store`.
+    if is_store_helper(helper) {
+        return run_store_helper(operation, desc);
+    }
+    if is_cache_helper(helper) {
+        return Err(RemoteError::Msg(
+            "credential.helper=cache: credential-cache daemon not claimed; use store/wincred/libsecret/osxkeychain"
+                .into(),
+        ));
+    }
+    refuse_forbidden_helper_program(helper)?;
+    let mut cmd = spawn_helper_command(helper, operation)?;
     let mut child = cmd
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -623,50 +634,309 @@ fn run_helper(
     Ok(None)
 }
 
-/// Build the process for a credential helper + operation.
-///
-/// Bang helpers (`!…`) that are a simple argv (including POSIX-quoted paths with
-/// spaces, as written by `gh auth setup-git` on Windows) spawn the executable
-/// directly — matching git's effective behavior without requiring host `sh` on
-/// Windows (`cmd /C` does not honor Unix single quotes).
-fn spawn_helper_command(helper: &str, operation: &str) -> Command {
-    if let Some(mut argv) = bang_helper_argv(helper) {
-        argv.push(operation.to_string());
-        let mut c = Command::new(&argv[0]);
-        c.args(&argv[1..]);
-        return c;
+fn is_store_helper(helper: &str) -> bool {
+    let name = helper_short_name(helper);
+    matches!(name.as_str(), "store" | "credential-store" | "git-credential-store")
+}
+
+fn is_cache_helper(helper: &str) -> bool {
+    let name = helper_short_name(helper);
+    matches!(
+        name.as_str(),
+        "cache" | "credential-cache" | "git-credential-cache"
+    )
+}
+
+fn helper_short_name(helper: &str) -> String {
+    let h = helper.trim().trim_start_matches('!');
+    let first = h.split_whitespace().next().unwrap_or("");
+    let base = std::path::Path::new(first)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or(first)
+        .to_ascii_lowercase();
+    let base = base.strip_suffix(".exe").unwrap_or(&base);
+    base.to_string()
+}
+
+/// Absolute rule: arks never spawns the `git` or `gh` binaries.
+fn is_forbidden_helper_program(program: &str) -> bool {
+    // Cross-OS basename: Windows helpers may be configured with `\` even when
+    // unit tests run on Linux (path::Path::file_name won't split on `\`).
+    let base = program
+        .rsplit(['/', '\\'])
+        .next()
+        .unwrap_or(program)
+        .to_ascii_lowercase();
+    let base = base.strip_suffix(".exe").unwrap_or(&base);
+    matches!(base, "git" | "gh")
+}
+
+fn refuse_forbidden_helper_program(helper: &str) -> Result<(), RemoteError> {
+    if let Some(argv) = bang_helper_argv(helper) {
+        if let Some(prog) = argv.first() {
+            if is_forbidden_helper_program(prog) {
+                return Err(RemoteError::Msg(format!(
+                    "credential.helper refuses spawning `{prog}` (arks never invokes git/gh; use store/wincred/libsecret/osxkeychain or a non-git/gh helper path)"
+                )));
+            }
+        }
+        return Ok(());
     }
-    let cmdline = helper_command(helper);
-    if cfg!(windows) {
-        let mut c = Command::new("cmd");
-        c.arg("/C").arg(format!("{cmdline} {operation}"));
-        c
-    } else {
-        let mut c = Command::new("sh");
-        c.arg("-c").arg(format!("{cmdline} {operation}"));
-        c
+    let h = helper.trim();
+    if let Some(rest) = h.strip_prefix('!') {
+        // Complex shell snippets: reject if they clearly start with git/gh.
+        let first = rest.split_whitespace().next().unwrap_or("");
+        let unquoted = first.trim_matches(|c| c == '\'' || c == '"');
+        if is_forbidden_helper_program(unquoted) {
+            return Err(RemoteError::Msg(format!(
+                "credential.helper refuses spawning `{unquoted}` (arks never invokes git/gh)"
+            )));
+        }
+        return Ok(());
+    }
+    if is_abs_helper_path(h) && is_forbidden_helper_program(h) {
+        return Err(RemoteError::Msg(
+            "credential.helper refuses absolute git/gh path (arks never invokes git/gh)".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn is_abs_helper_path(h: &str) -> bool {
+    h.starts_with('/')
+        || (h.len() >= 3
+            && h.as_bytes()[1] == b':'
+            && (h.as_bytes()[2] == b'\\' || h.as_bytes()[2] == b'/'))
+}
+
+/// Native `credential.helper=store` using the stock `~/.git-credentials` file format.
+fn run_store_helper(
+    operation: &str,
+    desc: &Credential,
+) -> Result<Option<Credential>, RemoteError> {
+    let path = store_credentials_path();
+    match operation {
+        "get" => Ok(store_get(&path, desc)?),
+        "store" => {
+            store_put(&path, desc)?;
+            Ok(None)
+        }
+        "erase" => {
+            store_erase(&path, desc)?;
+            Ok(None)
+        }
+        _ => Ok(None),
     }
 }
 
-fn helper_command(helper: &str) -> String {
-    let h = helper.trim();
-    if let Some(rest) = h.strip_prefix('!') {
-        // Windows cmd.exe fallback: rewrite POSIX single-quoted segments to
-        // double quotes so stock gitconfig bang paths still run if argv spawn
-        // is unavailable (complex shell snippets stay shell-routed).
-        if cfg!(windows) {
-            return posix_single_quotes_to_cmd(rest);
+fn store_credentials_path() -> PathBuf {
+    if let Ok(p) = std::env::var("ARKS_CREDENTIAL_STORE") {
+        if !p.is_empty() {
+            return PathBuf::from(p);
         }
-        return rest.to_string();
     }
-    let is_abs = h.starts_with('/')
-        || (h.len() >= 3
-            && h.as_bytes()[1] == b':'
-            && (h.as_bytes()[2] == b'\\' || h.as_bytes()[2] == b'/'));
-    if is_abs {
-        return h.to_string();
+    if let Ok(home) = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
+        return PathBuf::from(home).join(".git-credentials");
     }
-    format!("git credential-{h}")
+    PathBuf::from(".git-credentials")
+}
+
+fn store_get(path: &Path, desc: &Credential) -> Result<Option<Credential>, RemoteError> {
+    let text = match std::fs::read_to_string(path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => {
+            return Err(RemoteError::Msg(format!(
+                "credential store read {}: {e}",
+                path.display()
+            )));
+        }
+    };
+    let want_proto = desc.protocol.as_deref().unwrap_or("");
+    let want_host = desc.host.as_deref().unwrap_or("");
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if let Some(parsed) = parse_store_url_line(line) {
+            if parsed.protocol.as_deref().unwrap_or("") == want_proto
+                && parsed.host.as_deref().unwrap_or("") == want_host
+            {
+                return Ok(Some(parsed));
+            }
+        }
+    }
+    Ok(None)
+}
+
+fn store_put(path: &Path, desc: &Credential) -> Result<(), RemoteError> {
+    let proto = desc
+        .protocol
+        .as_deref()
+        .ok_or_else(|| RemoteError::Msg("credential store: missing protocol".into()))?;
+    let host = desc
+        .host
+        .as_deref()
+        .ok_or_else(|| RemoteError::Msg("credential store: missing host".into()))?;
+    let user = desc.username.as_deref().unwrap_or("");
+    let pass = desc.password.as_deref().unwrap_or("");
+    let line = if user.is_empty() {
+        format!("{proto}://{host}\n")
+    } else {
+        format!("{proto}://{user}:{pass}@{host}\n")
+    };
+    let mut keep = String::new();
+    if let Ok(existing) = std::fs::read_to_string(path) {
+        for old in existing.lines() {
+            let old = old.trim();
+            if old.is_empty() {
+                continue;
+            }
+            if let Some(parsed) = parse_store_url_line(old) {
+                if parsed.protocol.as_deref() == Some(proto) && parsed.host.as_deref() == Some(host)
+                {
+                    continue;
+                }
+            }
+            keep.push_str(old);
+            keep.push('\n');
+        }
+    }
+    keep.push_str(&line);
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    std::fs::write(path, keep).map_err(|e| {
+        RemoteError::Msg(format!("credential store write {}: {e}", path.display()))
+    })?;
+    Ok(())
+}
+
+fn store_erase(path: &Path, desc: &Credential) -> Result<(), RemoteError> {
+    let text = match std::fs::read_to_string(path) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => {
+            return Err(RemoteError::Msg(format!(
+                "credential store read {}: {e}",
+                path.display()
+            )));
+        }
+    };
+    let want_proto = desc.protocol.as_deref();
+    let want_host = desc.host.as_deref();
+    let mut keep = String::new();
+    for old in text.lines() {
+        let old = old.trim();
+        if old.is_empty() {
+            continue;
+        }
+        if let Some(parsed) = parse_store_url_line(old) {
+            if parsed.protocol.as_deref() == want_proto && parsed.host.as_deref() == want_host {
+                continue;
+            }
+        }
+        keep.push_str(old);
+        keep.push('\n');
+    }
+    std::fs::write(path, keep).map_err(|e| {
+        RemoteError::Msg(format!("credential store write {}: {e}", path.display()))
+    })?;
+    Ok(())
+}
+
+fn parse_store_url_line(line: &str) -> Option<Credential> {
+    // https://user:pass@host[/path]
+    let (protocol, rest) = line.split_once("://")?;
+    let (auth_host, _path) = match rest.split_once('/') {
+        Some((h, p)) => (h, Some(p)),
+        None => (rest, None),
+    };
+    let (username, password, host) = if let Some((userinfo, host)) = auth_host.split_once('@') {
+        if let Some((u, p)) = userinfo.split_once(':') {
+            (Some(u.to_string()), Some(p.to_string()), host.to_string())
+        } else {
+            (Some(userinfo.to_string()), None, host.to_string())
+        }
+    } else {
+        (None, None, auth_host.to_string())
+    };
+    Some(Credential {
+        protocol: Some(protocol.to_string()),
+        host: Some(host),
+        username,
+        password,
+        ..Default::default()
+    })
+}
+
+/// Build the process for a credential helper + operation.
+///
+/// Absolute rule: never spawn the `git` or `gh` binaries. Short helper names
+/// resolve to a standalone `git-credential-<name>` executable on PATH (git's
+/// helper install convention) — not `git credential-<name>`.
+fn spawn_helper_command(helper: &str, operation: &str) -> Result<Command, RemoteError> {
+    if let Some(mut argv) = bang_helper_argv(helper) {
+        if let Some(prog) = argv.first() {
+            if is_forbidden_helper_program(prog) {
+                return Err(RemoteError::Msg(format!(
+                    "credential.helper refuses spawning `{prog}` (arks never invokes git/gh)"
+                )));
+            }
+        }
+        argv.push(operation.to_string());
+        let mut c = Command::new(&argv[0]);
+        c.args(&argv[1..]);
+        return Ok(c);
+    }
+    let h = helper.trim();
+    if h.starts_with('!') {
+        // Complex shell snippets (functions): still refuse git/gh entrypoints.
+        refuse_forbidden_helper_program(helper)?;
+        let rest = h.trim_start_matches('!').trim();
+        let cmdline = if cfg!(windows) {
+            posix_single_quotes_to_cmd(rest)
+        } else {
+            rest.to_string()
+        };
+        if cfg!(windows) {
+            let mut c = Command::new("cmd");
+            c.arg("/C").arg(format!("{cmdline} {operation}"));
+            return Ok(c);
+        }
+        let mut c = Command::new("sh");
+        c.arg("-c").arg(format!("{cmdline} {operation}"));
+        return Ok(c);
+    }
+    if is_abs_helper_path(h) {
+        if is_forbidden_helper_program(h) {
+            return Err(RemoteError::Msg(
+                "credential.helper refuses absolute git/gh path".into(),
+            ));
+        }
+        let mut c = Command::new(h);
+        c.arg(operation);
+        return Ok(c);
+    }
+    // Short name → standalone helper binary on PATH (never `git` itself).
+    let first = h.split_whitespace().next().unwrap_or(h);
+    let rest_args: Vec<&str> = h.split_whitespace().skip(1).collect();
+    let exe = if first.starts_with("git-credential-") || first.starts_with("credential-") {
+        first.to_string()
+    } else {
+        format!("git-credential-{first}")
+    };
+    if is_forbidden_helper_program(&exe) {
+        return Err(RemoteError::Msg(
+            "credential.helper refuses git/gh program name".into(),
+        ));
+    }
+    let mut c = Command::new(&exe);
+    c.args(&rest_args);
+    c.arg(operation);
+    Ok(c)
 }
 
 /// Parse `!exe args…` / `!'C:\Program Files\…\gh.exe' auth git-credential`.
@@ -968,10 +1238,31 @@ mod tests {
     }
 
     #[test]
-    fn helper_command_transforms() {
-        assert_eq!(helper_command("store"), "git credential-store");
-        assert_eq!(helper_command("!f() { echo x; }; f"), "f() { echo x; }; f");
-        assert_eq!(helper_command("/usr/bin/myhelper"), "/usr/bin/myhelper");
+    fn store_helper_is_native_not_git_spawn() {
+        assert!(is_store_helper("store"));
+        assert!(is_store_helper("credential-store"));
+        assert!(!is_store_helper("wincred"));
+    }
+
+    #[test]
+    fn forbidden_programs_include_git_and_gh() {
+        assert!(is_forbidden_helper_program("git"));
+        assert!(is_forbidden_helper_program("git.exe"));
+        assert!(is_forbidden_helper_program("gh"));
+        assert!(is_forbidden_helper_program(r"C:\Program Files\GitHub CLI\gh.exe"));
+        assert!(!is_forbidden_helper_program("git-credential-manager"));
+        assert!(!is_forbidden_helper_program("/usr/bin/myhelper"));
+    }
+
+    #[test]
+    fn bang_gh_helper_is_refused() {
+        let err = refuse_forbidden_helper_program("!gh auth git-credential").unwrap_err();
+        assert!(err.to_string().contains("never invokes"), "{err}");
+        let err = refuse_forbidden_helper_program(
+            r"!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential",
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("never invokes"), "{err}");
     }
 
     #[test]
@@ -998,6 +1289,25 @@ mod tests {
                 .as_slice()
             )
         );
+    }
+
+    #[test]
+    fn native_store_roundtrip() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("creds");
+        let desc = Credential {
+            protocol: Some("https".into()),
+            host: Some("example.test".into()),
+            username: Some("u".into()),
+            password: Some("p".into()),
+            ..Default::default()
+        };
+        store_put(&path, &desc).unwrap();
+        let got = store_get(&path, &desc).unwrap().expect("filled");
+        assert_eq!(got.username.as_deref(), Some("u"));
+        assert_eq!(got.password.as_deref(), Some("p"));
+        store_erase(&path, &desc).unwrap();
+        assert!(store_get(&path, &desc).unwrap().is_none());
     }
 
     #[test]
