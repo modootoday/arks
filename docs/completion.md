@@ -54,11 +54,11 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | `arks serve --no-ssh --no-forge` | HTTP wire **Claimed** where evidenced | Practical Claimed hosting path today |
 | In-process SSH under `arks serve` | **Partial** | Bind + keys + id + KEXINIT + ECDH + ed25519 sign/NEWKEYS + chacha20-poly1305 encrypted Partial + authorized_keys verify + exec→pack dispatch; OpenSSH-exact / Claimed SSH e2e **Missing**. Ops SSHD + pack remains valid |
 | Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; no in-process TLS Claimed |
-| `arks serve config` | **Partial** | File seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** + same-process live HTTP/forge rebind Partial; Windows signal **Missing**; SSH durable / Claimed zero-downtime rebind **Missing** |
+| `arks serve config` | **Partial** | File seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** + same-process live HTTP/forge rebind Partial; Windows **in-process file-mtime reload Partial** (SIGHUP N/A); SSH durable / Claimed zero-downtime rebind **Missing** |
 | `arks serve ssh-smoke` | **Partial** | Local SSH banner smoke; Claimed OpenSSH git e2e **Missing** |
-| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Local-API Partial; `hub smoke` HTTPS harness Partial (or documented Missing); OUT `extension`/`copilot` refuse |
-| `arks daemon` deepen | **Partial** | upload-archive path-filter in stream body + format honesty; `--user`/`--group`/`--syslog` **Missing**; Claimed archive parity **Missing** |
-| `arks agent` | **Partial** | `provider smoke` optional local ollama Partial; Claimed LLM chatbot e2e **Missing** |
+| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Local-API Partial; `hub smoke` HTTPS harness Partial (or documented Missing); `hub smoke --out-refuse` residual OUT Partial; OUT `extension`/`copilot` refuse |
+| `arks daemon` deepen | **Partial** | upload-archive path-filter in stream body + format honesty; unix `--user`/`--group`/`--syslog` Partial; Windows those flags **Missing**; Claimed archive parity **Missing** |
+| `arks agent` | **Partial** | `provider smoke` optional local ollama Partial; `review --smoke` fixture Partial; Claimed LLM chatbot/review e2e **Missing** |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 
 Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES** where receipts carry — residuals are Impossible / advisory / owner-policy, not casual N/A. That does **not** promote forge/SSH/agent Partial rows to Claimed.
