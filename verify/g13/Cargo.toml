@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g13-cleanroom"
+description = "M8 clean-room G13 Wave Pb porcelain suite (verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

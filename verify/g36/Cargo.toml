@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g36-cleanroom"
+description = "FW-AUTH-PROXY clean-room G36 HTTP Basic suite"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

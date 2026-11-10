@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g16-cleanroom"
+description = "G16 clean-room journey-compare suite (func + timing; verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

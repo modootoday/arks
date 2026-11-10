@@ -1,0 +1,18 @@
+[workspace]
+
+[package]
+name = "arks-g10-cleanroom"
+description = "M2 clean-room store-facade oracle harness (verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+arks-hash = { path = "../../crates/arks-hash" }
+arks-object = { path = "../../crates/arks-object" }
+arks-oid = { path = "../../crates/arks-oid" }
+arks-store = { path = "../../crates/arks-store" }
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,36 @@
+{
+  "schema": "arks-verify-images/v1",
+  "updated": "2026-11-08",
+  "images": [
+    {
+      "role": "toolchain-base",
+      "name": "rust",
+      "tag": "1.99.1-bookworm",
+      "reference": "docker.io/library/rust:1.99.1-bookworm",
+      "digest": "sha256:e6f2cff35d0f309acf8433b4f05878ed77092602c5065cc81801177da0bb3a9c"
+    },
+    {
+      "role": "m1-cleanroom",
+      "name": "arks-verify-m1",
+      "tag": "0.1.0",
+      "reference": "docker.io/library/arks-verify-m1:0.1.0",
+      "digest": "sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0",
+      "build": {
+        "dockerfile": "verify/Dockerfile",
+        "compose": "verify/docker-compose.yml"
+      },
+      "stock_git": {
+        "expected_version_output": "git version 2.39.5",
+        "debian_package": "1:2.39.5-0+deb12u3"
+      },
+      "rustc": {
+        "expected_version_output": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+      },
+      "openssh": {
+        "expected_version_output": "OpenSSH_9.2p1 Debian-2+deb12u10, OpenSSL 3.0.22 25 Aug 2026",
+        "packages": ["openssh-client", "openssh-server"]
+      }
+    }
+  ],
+  "notes": "Rebuild with `docker compose -f verify/docker-compose.yml build` and refresh m1-cleanroom digest via `docker image inspect arks-verify-m1:0.1.0 --format '{{.Id}}'`. Prefer a single shared image tag for g0/g1/g2/g10 services."
+}

@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g32-cleanroom"
+description = "M25 clean-room G32 git:// daemon suite"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

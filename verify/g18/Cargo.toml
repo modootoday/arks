@@ -1,0 +1,15 @@
+[workspace]
+
+[package]
+name = "arks-g18-cleanroom"
+description = "G18 clean-room concurrency issue-repro compare (Cd-1; verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"
+serde_json = "1"

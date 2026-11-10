@@ -1,0 +1,12 @@
+{
+  "gate": "G26",
+  "name": "local-branch-pr-sim",
+  "result": "PASS",
+  "n_branches": 2048,
+  "n_pr": 2048,
+  "n_workers": 32,
+  "stock_git": "git version 2.39.5",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "ts": "2026-11-09T20:58:47Z",
+  "honesty": "local sim != GitHub PR throughput; forge Deferred G8+"
+}

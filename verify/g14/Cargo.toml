@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g14-cleanroom"
+description = "M9 clean-room G14 Wave Pc CLI-parity closure suite (verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,17 @@
+[workspace]
+
+[package]
+name = "arks-g1-cleanroom"
+description = "M1 clean-room stock-Git oracle harness (verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+arks-hash = { path = "../../crates/arks-hash" }
+arks-object = { path = "../../crates/arks-object" }
+arks-oid = { path = "../../crates/arks-oid" }
+
+[dev-dependencies]
+tempfile = "3"

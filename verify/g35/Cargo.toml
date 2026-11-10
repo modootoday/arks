@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g35-cleanroom"
+description = "G35 clean-room client shallow --depth suite (FW-G9)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

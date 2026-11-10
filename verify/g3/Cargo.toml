@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g3-cleanroom"
+description = "M5 clean-room G3 full index-commit round-trip (verify tree only)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"
