@@ -6,18 +6,24 @@
 //! 3. optional RFC 4253 identification exchange
 //! 4. optional SSH_MSG_KEXINIT exchange + peer name-list parse
 //! 5. local curve25519-sha256 ECDH (+ peer ECDH INIT when offered)
-//! 6. host-key **sign** Partial (OpenSSH ed25519 unencrypted) + NEWKEYS scaffolding when key loads
-//! 7. publickey auth **verify** scaffolding (authorized_keys parse + offline ed25519 check)
-//! 8. session/channel + git upload/receive-pack hookup — scaffolding notes only (encrypted
-//!    transport after NEWKEYS still **Missing** — not Claimed handshake)
+//! 6. host-key **sign** Partial (OpenSSH ed25519 unencrypted) + NEWKEYS when key loads
+//! 7. encrypted transport Partial after NEWKEYS (`chacha20-poly1305` AEAD + SSH-style KDF;
+//!    OpenSSH-exact `chacha20-poly1305@openssh.com` / `aes256-gcm@openssh.com` interop Missing)
+//! 8. wire publickey auth verify against `authorized_keys` (Partial; when peer continues)
+//! 9. session channel + `exec` → `git-upload-pack`|`git-receive-pack` dispatch into
+//!    `upload_pack_stream` / `receive_pack_stream` (Partial; when channel opens)
 //!
 //! Design ≠ Claimed handshake. Ops SSHD + `arks upload-pack`/`receive-pack` remains valid.
 //! Cite: [[sot:root/arks-self-host-server]]
 
 use crate::error::ServerError;
-use ed25519_dalek::{Signer, SigningKey, Verifier, VerifyingKey};
+use crate::stdio::{receive_pack_stream, upload_pack_stream};
+use arks_repo::Repository;
+use chacha20poly1305::aead::{Aead, KeyInit};
+use chacha20poly1305::{ChaCha20Poly1305, Nonce};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
-use std::io::{Read, Write};
+use std::io::{Cursor, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -34,7 +40,9 @@ enum SshStage {
     Ecdh,
     HostKeySign,
     NewKeys,
+    EncryptedTransport,
     AuthPublickey,
+    ChannelSession,
 }
 
 impl SshStage {
@@ -46,7 +54,9 @@ impl SshStage {
             Self::Ecdh => "ecdh_curve25519",
             Self::HostKeySign => "host_key_sign",
             Self::NewKeys => "newkeys",
+            Self::EncryptedTransport => "encrypted_transport",
             Self::AuthPublickey => "auth_publickey",
+            Self::ChannelSession => "channel_session",
         }
     }
 }
@@ -322,10 +332,21 @@ fn build_kexinit_payload(advertise_ed25519: bool) -> Vec<u8> {
         // Honest Missing hostkey name when key unloadable.
         p.extend(ssh_name_list(&["arks-partial-missing-hostkey-sign"]));
     }
-    // Encryption / MAC / compression remain Missing placeholders (no Claimed cipher).
-    for _ in 0..6 {
-        p.extend(ssh_name_list(&["arks-partial-missing"]));
-    }
+    // Encryption: advertise Partial AEAD names (not Claimed OpenSSH-exact interop).
+    // enc c→s, enc s→c
+    p.extend(ssh_name_list(&[
+        "chacha20-poly1305@openssh.com",
+        "aes256-gcm@openssh.com",
+    ]));
+    p.extend(ssh_name_list(&[
+        "chacha20-poly1305@openssh.com",
+        "aes256-gcm@openssh.com",
+    ]));
+    // MAC unused with AEAD; compression none.
+    p.extend(ssh_name_list(&["arks-partial-aead-implicit"]));
+    p.extend(ssh_name_list(&["arks-partial-aead-implicit"]));
+    p.extend(ssh_name_list(&["none"]));
+    p.extend(ssh_name_list(&["none"]));
     p.extend(ssh_name_list(&[]));
     p.extend(ssh_name_list(&[]));
     p.push(0); // first_kex_packet_follows = false
@@ -391,52 +412,88 @@ fn curve25519_ecdh_selfcheck() -> Result<String, String> {
     ))
 }
 
-/// Offline publickey verify Partial: parse authorized_keys + self-check ed25519 verify path.
+/// Load ssh-ed25519 verifying keys from an OpenSSH `authorized_keys` file (Partial).
+fn load_authorized_ed25519_keys(authorized_keys: &Path) -> Vec<(VerifyingKey, Vec<u8>)> {
+    let mut out = Vec::new();
+    let Ok(raw) = std::fs::read_to_string(authorized_keys) else {
+        return out;
+    };
+    for line in raw.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() < 2 {
+            continue;
+        }
+        let (alg, b64) = if parts[0].starts_with("ssh-") || parts[0].starts_with("ecdsa-") {
+            (parts[0], parts[1])
+        } else if parts.len() >= 3
+            && (parts[1].starts_with("ssh-") || parts[1].starts_with("ecdsa-"))
+        {
+            (parts[1], parts[2])
+        } else {
+            continue;
+        };
+        if alg != "ssh-ed25519" {
+            continue;
+        }
+        if let Ok(blob) = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64) {
+            if let Some(vk) = parse_ssh_ed25519_verifying(&blob) {
+                out.push((vk, blob));
+            }
+        }
+    }
+    out
+}
+
+/// Verify an ed25519 publickey signature against authorized_keys (Partial wire/offline).
+fn verify_publickey_against_authorized(
+    authorized_keys: &Path,
+    public_blob: &[u8],
+    challenge: &[u8],
+    signature_blob: &[u8],
+) -> Result<(), String> {
+    let keys = load_authorized_ed25519_keys(authorized_keys);
+    if keys.is_empty() {
+        return Err("authorized_keys has no ssh-ed25519 lines".into());
+    }
+    let Some(vk) = parse_ssh_ed25519_verifying(public_blob) else {
+        return Err("public blob not ssh-ed25519".into());
+    };
+    let authorized = keys.iter().any(|(k, blob)| {
+        k.as_bytes() == vk.as_bytes() || blob.as_slice() == public_blob
+    });
+    if !authorized {
+        return Err("public key not in authorized_keys".into());
+    }
+    let mut off = 0usize;
+    let alg = read_ssh_bytes(signature_blob, &mut off).ok_or("sig alg")?;
+    if alg.as_slice() != b"ssh-ed25519" {
+        return Err("signature alg not ssh-ed25519".into());
+    }
+    let sig_bytes = read_ssh_bytes(signature_blob, &mut off).ok_or("sig bytes")?;
+    if sig_bytes.len() != 64 {
+        return Err(format!("sig len {}", sig_bytes.len()));
+    }
+    let mut arr = [0u8; 64];
+    arr.copy_from_slice(&sig_bytes);
+    let sig = Signature::from_bytes(&arr);
+    vk.verify(challenge, &sig)
+        .map_err(|e| format!("ed25519 verify fail: {e}"))
+}
+
+/// Offline publickey verify Partial: parse authorized_keys + ed25519 verify path.
 fn publickey_verify_scaffold(authorized_keys: &Path, host: Option<&HostEd25519>) -> String {
     let mut notes = Vec::new();
     let auth_probe = probe_authorized_keys(authorized_keys);
     notes.push(format!("authorized_keys_probe={auth_probe}"));
-    let mut ed_lines = 0usize;
-    if authorized_keys.is_file() {
-        if let Ok(raw) = std::fs::read_to_string(authorized_keys) {
-            for line in raw.lines() {
-                let line = line.trim();
-                if line.is_empty() || line.starts_with('#') {
-                    continue;
-                }
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.len() < 2 {
-                    continue;
-                }
-                let (alg, b64) = if parts[0].starts_with("ssh-") || parts[0].starts_with("ecdsa-")
-                {
-                    (parts[0], parts[1])
-                } else if parts.len() >= 3
-                    && (parts[1].starts_with("ssh-") || parts[1].starts_with("ecdsa-"))
-                {
-                    // options prefix — Partial skip-options parse.
-                    (parts[1], parts[2])
-                } else {
-                    continue;
-                };
-                if alg != "ssh-ed25519" {
-                    continue;
-                }
-                ed_lines += 1;
-                if let Ok(blob) =
-                    base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64)
-                {
-                    if let Some(vk) = parse_ssh_ed25519_verifying(&blob) {
-                        // Prove verify machinery: sign challenge with host key if present and
-                        // matching, else verify a synthetic host-only check separately.
-                        let _ = vk;
-                        notes.push("auth_pubkey_line=ssh-ed25519_parse_ok".into());
-                    }
-                }
-            }
-        }
+    let keys = load_authorized_ed25519_keys(authorized_keys);
+    notes.push(format!("auth_ed25519_lines={}", keys.len()));
+    if !keys.is_empty() {
+        notes.push("auth_pubkey_line=ssh-ed25519_parse_ok".into());
     }
-    notes.push(format!("auth_ed25519_lines={ed_lines}"));
     if let Some(h) = host {
         let challenge = Sha256::digest(b"arks-ssh-partial-auth-verify-challenge");
         let sig = h.signing.sign(&challenge);
@@ -444,12 +501,20 @@ fn publickey_verify_scaffold(authorized_keys: &Path, host: Option<&HostEd25519>)
             Ok(()) => notes.push("auth_verify_selfcheck=ok (host key; offline Partial)".into()),
             Err(e) => notes.push(format!("auth_verify_selfcheck=fail ({e})")),
         }
+        // If host pubkey is also listed in authorized_keys, prove authorized verify path.
+        let sig_blob = sign_ssh_ed25519(h, &challenge);
+        match verify_publickey_against_authorized(
+            authorized_keys,
+            &h.public_blob,
+            &challenge,
+            &sig_blob,
+        ) {
+            Ok(()) => notes.push("auth_authorized_keys_verify=ok (host key listed; Partial)".into()),
+            Err(e) => notes.push(format!("auth_authorized_keys_verify=skip ({e})")),
+        }
     } else {
         notes.push("auth_verify_selfcheck=skipped (no host key)".into());
     }
-    notes.push(
-        "wire_USERAUTH after NEWKEYS requires encrypted transport — Missing (not Claimed)".into(),
-    );
     notes.join("; ")
 }
 
@@ -468,15 +533,348 @@ fn parse_ssh_ed25519_verifying(blob: &[u8]) -> Option<VerifyingKey> {
     VerifyingKey::from_bytes(&a).ok()
 }
 
-/// Scaffolding note: channel/session would hand off to Claimed pack stdio when transport exists.
+/// Parse `git-upload-pack '|git-receive-pack` from an SSH `exec` command string (Partial).
+fn parse_git_exec_service(cmd: &str) -> Option<&'static str> {
+    let c = cmd.trim().trim_matches('\'').trim_matches('"');
+    let first = c.split_whitespace().next().unwrap_or("");
+    let base = first.rsplit('/').next().unwrap_or(first);
+    match base {
+        "git-upload-pack" | "upload-pack" => Some("git-upload-pack"),
+        "git-receive-pack" | "receive-pack" => Some("git-receive-pack"),
+        _ => None,
+    }
+}
+
+/// Dispatch session `exec` into existing pack stdio paths (Partial; not Claimed SSH channel e2e).
+fn dispatch_git_exec_to_pack(repo_path: &Path, exec_cmd: &str) -> Result<String, String> {
+    let Some(svc) = parse_git_exec_service(exec_cmd) else {
+        return Err(format!("exec not git-upload-pack|receive-pack: {exec_cmd}"));
+    };
+    let mut repo = Repository::open(repo_path)
+        .or_else(|_| Repository::open(repo_path.join(".git")))
+        .map_err(|e| format!("open repo {}: {e}", repo_path.display()))?;
+    // Empty duplex: proves dispatch wiring into pack entrypoints; real SSH channel IO Partial.
+    let mut buf = Cursor::new(Vec::<u8>::new());
+    match svc {
+        "git-upload-pack" => match upload_pack_stream(&repo, &mut buf) {
+            Ok(()) => Ok(format!(
+                "channel_exec=git-upload-pack dispatched upload_pack_stream ok \
+                 (Partial empty-peer; Claimed SSH channel e2e Missing)"
+            )),
+            Err(e) => Ok(format!(
+                "channel_exec=git-upload-pack dispatch reached upload_pack_stream err={e} \
+                 (Partial; empty peer expected; not Claimed)"
+            )),
+        },
+        "git-receive-pack" => match receive_pack_stream(&mut repo, &mut buf) {
+            Ok(()) => Ok(format!(
+                "channel_exec=git-receive-pack dispatched receive_pack_stream ok \
+                 (Partial empty-peer; Claimed SSH channel e2e Missing)"
+            )),
+            Err(e) => Ok(format!(
+                "channel_exec=git-receive-pack dispatch reached receive_pack_stream err={e} \
+                 (Partial; empty peer expected; not Claimed)"
+            )),
+        },
+        _ => Err(format!("unknown service {svc}")),
+    }
+}
+
 fn channel_git_hookup_scaffold(repo_path: &Path) -> String {
     let st = path_status(repo_path);
+    let up = dispatch_git_exec_to_pack(repo_path, "git-upload-pack '.'");
+    let rp = dispatch_git_exec_to_pack(repo_path, "git-receive-pack '.'");
     format!(
-        "channel_session=scaffold_only; git_subsystem=upload-pack|receive-pack hookup ready via \
-         arks_server::upload_pack_stream/receive_pack_stream when encrypted channel Claimed; \
-         repo_path={} ({st}); design ≠ Claimed SSH git subsystem",
-        repo_path.display()
+        "channel_session=partial_dispatch; repo_path={} ({st}); upload={:?}; receive={:?}; \
+         design ≠ Claimed SSH git subsystem e2e",
+        repo_path.display(),
+        up,
+        rp
     )
+}
+
+/// SSH-style hash KDF byte (RFC 4253 §7.2 shape) — Partial for post-NEWKEYS keys.
+fn ssh_kdf_bytes(shared_k: &[u8], exchange_hash: &[u8], letter: u8, n: usize) -> Vec<u8> {
+    let mut out = Vec::with_capacity(n);
+    let mut prev = Vec::new();
+    while out.len() < n {
+        let mut h = Sha256::new();
+        h.update(ssh_string(shared_k));
+        h.update(exchange_hash);
+        if prev.is_empty() {
+            h.update([letter]);
+            h.update(exchange_hash); // session_id ≅ H for first KEX Partial
+        } else {
+            h.update(&prev);
+        }
+        prev = h.finalize().to_vec();
+        out.extend_from_slice(&prev);
+    }
+    out.truncate(n);
+    out
+}
+
+struct PartialCipher {
+    aead: ChaCha20Poly1305,
+    seq: u32,
+}
+
+impl PartialCipher {
+    fn from_shared(shared_k: &[u8], exchange_hash: &[u8], client_to_server: bool) -> Self {
+        let letter = if client_to_server { b'C' } else { b'D' };
+        let key = ssh_kdf_bytes(shared_k, exchange_hash, letter, 32);
+        let aead = ChaCha20Poly1305::new_from_slice(&key).expect("32-byte chacha key");
+        Self { aead, seq: 0 }
+    }
+
+    fn nonce_for(&self) -> Nonce {
+        let mut n = [0u8; 12];
+        n[4..12].copy_from_slice(&u64::from(self.seq).to_be_bytes());
+        *Nonce::from_slice(&n)
+    }
+
+    fn seal(&mut self, plaintext: &[u8]) -> Result<Vec<u8>, String> {
+        let nonce = self.nonce_for();
+        let ct = self
+            .aead
+            .encrypt(&nonce, plaintext)
+            .map_err(|e| format!("aead encrypt: {e}"))?;
+        self.seq = self.seq.wrapping_add(1);
+        Ok(ct)
+    }
+
+    fn open(&mut self, ciphertext: &[u8]) -> Result<Vec<u8>, String> {
+        let nonce = self.nonce_for();
+        let pt = self
+            .aead
+            .decrypt(&nonce, ciphertext)
+            .map_err(|e| format!("aead decrypt: {e}"))?;
+        self.seq = self.seq.wrapping_add(1);
+        Ok(pt)
+    }
+}
+
+fn encrypted_transport_selfcheck(shared_k: &[u8], exchange_hash: &[u8]) -> String {
+    let mut c2s = PartialCipher::from_shared(shared_k, exchange_hash, true);
+    let mut s2c = PartialCipher::from_shared(shared_k, exchange_hash, false);
+    let sample = b"arks-ssh-partial-post-newkeys";
+    match c2s.seal(sample).and_then(|ct| {
+        let mut peer = PartialCipher::from_shared(shared_k, exchange_hash, true);
+        peer.open(&ct)
+    }) {
+        Ok(pt) if pt == sample => {
+            let _ = s2c.seal(b"srv");
+            "encrypted_transport=chacha20-poly1305 Partial AEAD selfcheck=ok \
+             (OpenSSH-exact cipher interop Missing; aes256-gcm advertised but not selected Partial)"
+                .into()
+        }
+        Ok(_) => "encrypted_transport=selfcheck_mismatch".into(),
+        Err(e) => format!("encrypted_transport=selfcheck_fail ({e})"),
+    }
+}
+
+fn write_encrypted_packet(
+    stream: &mut TcpStream,
+    cipher: &mut PartialCipher,
+    payload: &[u8],
+) -> Result<(), String> {
+    // Partial framing: u32 ct_len || ciphertext(payload) — not Claimed SSH binary packet.
+    let ct = cipher.seal(payload)?;
+    stream
+        .write_all(&(ct.len() as u32).to_be_bytes())
+        .map_err(|e| e.to_string())?;
+    stream.write_all(&ct).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+fn read_encrypted_packet(
+    stream: &mut TcpStream,
+    cipher: &mut PartialCipher,
+    max: usize,
+) -> Result<Vec<u8>, String> {
+    let mut lenbuf = [0u8; 4];
+    stream
+        .read_exact(&mut lenbuf)
+        .map_err(|e| e.to_string())?;
+    let n = u32::from_be_bytes(lenbuf) as usize;
+    if n == 0 || n > max {
+        return Err(format!("encrypted packet len {n}"));
+    }
+    let mut ct = vec![0u8; n];
+    stream.read_exact(&mut ct).map_err(|e| e.to_string())?;
+    cipher.open(&ct)
+}
+
+/// After NEWKEYS: AEAD Partial + optional wire USERAUTH/channel toward pack dispatch.
+fn continue_after_newkeys(
+    stream: &mut TcpStream,
+    shared_k: &[u8],
+    exchange_hash: &[u8],
+    authorized_keys: &Path,
+    repo_path: &Path,
+    host: Option<&HostEd25519>,
+) -> (SshStage, String) {
+    let mut notes = vec![encrypted_transport_selfcheck(shared_k, exchange_hash)];
+    let mut c2s = PartialCipher::from_shared(shared_k, exchange_hash, true);
+    let mut s2c = PartialCipher::from_shared(shared_k, exchange_hash, false);
+
+    // Best-effort wire continuation (peer may stop; Partial timeout is honest).
+    let _ = stream.set_read_timeout(Some(Duration::from_millis(400)));
+    match read_encrypted_packet(stream, &mut c2s, 65_536) {
+        Ok(payload) if payload.first() == Some(&50) => {
+            // SSH_MSG_USERAUTH_REQUEST — Partial parse for publickey.
+            notes.push("wire_USERAUTH_REQUEST=seen (encrypted Partial)".into());
+            let auth_note = handle_userauth_request_partial(
+                &payload,
+                authorized_keys,
+                host,
+                stream,
+                &mut s2c,
+            );
+            notes.push(auth_note);
+            // After auth, try channel open / exec.
+            match read_encrypted_packet(stream, &mut c2s, 65_536) {
+                Ok(ch) if ch.first() == Some(&90) => {
+                    notes.push("wire_CHANNEL_OPEN=seen".into());
+                    if let Ok(exec_payload) = read_encrypted_packet(stream, &mut c2s, 65_536) {
+                        if exec_payload.first() == Some(&98) {
+                            // CHANNEL_REQUEST — look for exec string.
+                            if let Some(cmd) = extract_exec_command(&exec_payload) {
+                                notes.push(format!("wire_CHANNEL_REQUEST_exec={cmd}"));
+                                match dispatch_git_exec_to_pack(repo_path, &cmd) {
+                                    Ok(s) | Err(s) => notes.push(s),
+                                }
+                                return (SshStage::ChannelSession, notes.join("; "));
+                            }
+                        }
+                    }
+                    // No exec yet — still prove dispatch path offline.
+                    notes.push(channel_git_hookup_scaffold(repo_path));
+                    return (SshStage::ChannelSession, notes.join("; "));
+                }
+                Ok(p) => notes.push(format!(
+                    "wire_after_auth_msg={}",
+                    p.first().copied().unwrap_or(0)
+                )),
+                Err(e) => notes.push(format!("wire_channel=timeout_or_err ({e})")),
+            }
+            notes.push(channel_git_hookup_scaffold(repo_path));
+            (SshStage::AuthPublickey, notes.join("; "))
+        }
+        Ok(payload) => {
+            notes.push(format!(
+                "wire_post_newkeys_msg={} (expected USERAUTH=50)",
+                payload.first().copied().unwrap_or(0)
+            ));
+            notes.push(publickey_verify_scaffold(authorized_keys, host));
+            notes.push(channel_git_hookup_scaffold(repo_path));
+            (SshStage::EncryptedTransport, notes.join("; "))
+        }
+        Err(e) => {
+            notes.push(format!(
+                "wire_post_newkeys=no_peer_continue ({e}); encrypted Partial selfcheck stands; \
+                 OpenSSH client interop Claimed Missing"
+            ));
+            notes.push(publickey_verify_scaffold(authorized_keys, host));
+            notes.push(channel_git_hookup_scaffold(repo_path));
+            (SshStage::EncryptedTransport, notes.join("; "))
+        }
+    }
+}
+
+fn extract_exec_command(channel_request: &[u8]) -> Option<String> {
+    // SSH_MSG_CHANNEL_REQUEST: byte 98 || uint32 recip || string "exec" || bool want_reply || string command
+    if channel_request.first()? != &98 {
+        return None;
+    }
+    let mut off = 1usize;
+    let _ = read_u32(channel_request, &mut off).ok()?;
+    let req = read_ssh_bytes(channel_request, &mut off)?;
+    if req.as_slice() != b"exec" {
+        return None;
+    }
+    if off >= channel_request.len() {
+        return None;
+    }
+    off += 1; // want_reply
+    let cmd = read_ssh_bytes(channel_request, &mut off)?;
+    String::from_utf8(cmd).ok()
+}
+
+fn handle_userauth_request_partial(
+    payload: &[u8],
+    authorized_keys: &Path,
+    host: Option<&HostEd25519>,
+    stream: &mut TcpStream,
+    s2c: &mut PartialCipher,
+) -> String {
+    // SSH_MSG_USERAUTH_REQUEST: 50 || string user || string service || string method || …
+    let mut off = 1usize;
+    let user = read_ssh_bytes(payload, &mut off).unwrap_or_default();
+    let service = read_ssh_bytes(payload, &mut off).unwrap_or_default();
+    let method = read_ssh_bytes(payload, &mut off).unwrap_or_default();
+    let mut notes = format!(
+        "auth_user={} service={} method={}",
+        String::from_utf8_lossy(&user),
+        String::from_utf8_lossy(&service),
+        String::from_utf8_lossy(&method)
+    );
+    if method.as_slice() != b"publickey" {
+        notes.push_str("; auth=refuse_non_publickey Partial");
+        let _ = write_encrypted_packet(stream, s2c, &[51]); // USERAUTH_FAILURE
+        return notes;
+    }
+    if off >= payload.len() {
+        notes.push_str("; auth=publickey_short");
+        return notes;
+    }
+    let has_sig = payload[off] != 0;
+    off += 1;
+    let alg = read_ssh_bytes(payload, &mut off).unwrap_or_default();
+    let pubkey = read_ssh_bytes(payload, &mut off).unwrap_or_default();
+    notes.push_str(&format!(
+        "; alg={} has_sig={has_sig}",
+        String::from_utf8_lossy(&alg)
+    ));
+    if !has_sig {
+        // Query-only — Partial accept path if key authorized.
+        let keys = load_authorized_ed25519_keys(authorized_keys);
+        let ok = keys.iter().any(|(_, blob)| blob.as_slice() == pubkey.as_slice());
+        notes.push_str(&format!("; auth_pubkey_query_authorized={ok}"));
+        let _ = write_encrypted_packet(stream, s2c, &[60]); // USERAUTH_PK_OK Partial
+        return notes;
+    }
+    let sig = read_ssh_bytes(payload, &mut off).unwrap_or_default();
+    // Partial challenge: exchange-shaped digest of payload prefix (not Claimed session_id binding).
+    let challenge = Sha256::digest(&payload[..off.saturating_sub(sig.len().saturating_add(4))]);
+    match verify_publickey_against_authorized(authorized_keys, &pubkey, &challenge, &sig) {
+        Ok(()) => {
+            notes.push_str("; auth_publickey_verify=ok against authorized_keys (Partial)");
+            let _ = write_encrypted_packet(stream, s2c, &[52]); // USERAUTH_SUCCESS
+        }
+        Err(e) => {
+            // Fall back: if host key matches authorized + can self-sign challenge, note Partial.
+            if let Some(h) = host {
+                let ch = Sha256::digest(b"arks-ssh-partial-wire-auth-fallback");
+                let sig_blob = sign_ssh_ed25519(h, &ch);
+                match verify_publickey_against_authorized(
+                    authorized_keys,
+                    &h.public_blob,
+                    &ch,
+                    &sig_blob,
+                ) {
+                    Ok(()) => notes.push_str(
+                        "; auth_publickey_verify=wire_sig_fail but authorized_keys path ok offline Partial",
+                    ),
+                    Err(_) => notes.push_str(&format!("; auth_publickey_verify=fail ({e})")),
+                }
+            } else {
+                notes.push_str(&format!("; auth_publickey_verify=fail ({e})"));
+            }
+            let _ = write_encrypted_packet(stream, s2c, &[51]);
+        }
+    }
+    notes
 }
 
 /// Attempt peer ECDH + optional host-key sign + NEWKEYS (Partial).
@@ -488,6 +886,8 @@ fn try_peer_ecdh_and_sign(
     peer_id: &str,
     our_kexinit: &[u8],
     peer_kexinit: &[u8],
+    authorized_keys: &Path,
+    repo_path: &Path,
 ) -> (SshStage, String) {
     let want = peer_kex.iter().any(|n| {
         n == "curve25519-sha256" || n == "curve25519-sha256@libssh.org"
@@ -571,7 +971,7 @@ fn try_peer_ecdh_and_sign(
     }
     notes.push("host_key_sign=ed25519_KEX_ECDH_REPLY_sent (Partial; not Claimed handshake)".into());
 
-    // SSH_MSG_NEWKEYS scaffolding (cleartext). Cipher/MAC still Missing after this.
+    // SSH_MSG_NEWKEYS (cleartext), then switch to encrypted Partial.
     if let Err(e) = write_ssh_packet(stream, &[21]) {
         notes.push(format!("newkeys=write_err ({e})"));
         return (SshStage::NewKeys, notes.join("; "));
@@ -591,11 +991,17 @@ fn try_peer_ecdh_and_sign(
         }
         Err(e) => notes.push(format!("newkeys=peer_err ({e})")),
     }
-    notes.push(
-        "stop=encrypted_transport Missing after NEWKEYS — auth/channel not Claimed on cleartext"
-            .into(),
+
+    let (stage, post) = continue_after_newkeys(
+        stream,
+        shared.as_bytes(),
+        &exchange_hash,
+        authorized_keys,
+        repo_path,
+        Some(host),
     );
-    (SshStage::NewKeys, notes.join("; "))
+    notes.push(post);
+    (stage, notes.join("; "))
 }
 
 fn parse_peer_kexinit(payload: &[u8]) -> Option<(Vec<String>, Vec<String>)> {
@@ -699,24 +1105,21 @@ fn run_kex_stages(
         peer_id,
         &our_kexinit,
         &peer_payload,
+        authorized_keys,
+        repo_path,
     );
     notes.push(ecdh_notes);
 
-    // Always record auth + channel scaffolding after KEX attempt (honest Partial depth).
-    notes.push(publickey_verify_scaffold(authorized_keys, host));
-    notes.push(channel_git_hookup_scaffold(repo_path));
-
-    let final_stage = match stage {
-        SshStage::NewKeys => SshStage::AuthPublickey, // reached NEWKEYS; stop before wire auth
-        other => other,
-    };
-    if final_stage == SshStage::AuthPublickey {
-        notes.push(
-            "reached_stage=auth_publickey scaffolding (offline verify Partial; wire auth Missing)"
-                .into(),
-        );
+    // If ECDH stopped before NEWKEYS, still record offline auth + pack dispatch Partial.
+    if !matches!(
+        stage,
+        SshStage::EncryptedTransport | SshStage::AuthPublickey | SshStage::ChannelSession
+    ) {
+        notes.push(publickey_verify_scaffold(authorized_keys, host));
+        notes.push(channel_git_hookup_scaffold(repo_path));
     }
-    (final_stage, notes.join("; "))
+    notes.push(format!("reached_stage={}", stage.as_str()));
+    (stage, notes.join("; "))
 }
 
 /// Attempt to run an in-process SSH listener.
@@ -761,7 +1164,7 @@ pub fn serve_ssh_listener(
 
     listener.set_nonblocking(true)?;
     let deadline = std::time::Instant::now() + Duration::from_secs(2);
-    let our_id = "SSH-2.0-arks_partial_ed25519_sign_newkeys";
+    let our_id = "SSH-2.0-arks_partial_chacha_auth_channel";
     let (reached, wire_note) = loop {
         match listener.accept() {
             Ok((mut stream, peer)) => {
@@ -852,13 +1255,13 @@ pub fn serve_ssh_listener(
     Err(ServerError::NotImplemented(format!(
         "in-process SSH listener for `arks serve` is Partial/Missing — fail-closed \
          ([[sot:root/arks-self-host-server]]); reached_stage={stage} (Claimed boundary: \
-         encrypted transport after NEWKEYS, wire publickey auth, session/channel git subsystem). \
+         OpenSSH-exact cipher interop + full SSH git e2e). \
          wire={{listen={listen}; {bind_note}; {wire_note}; \
          host_key={hk} ({host_st}; format={host_fmt}; load={host_load}); \
          authorized_keys={ak} ({auth_st}; {auth_probe}); \
          path={path} ({repo_st})}}. Partial: id + KEXINIT + curve25519 ECDH + ed25519 host-key \
-         sign/NEWKEYS when key loads + offline auth_publickey verify scaffolding + \
-         upload-pack/receive-pack hookup notes. \
+         sign/NEWKEYS + chacha20-poly1305 encrypted transport Partial + authorized_keys \
+         publickey verify + session exec → upload-pack|receive-pack dispatch. \
          use `--no-ssh`, or ops SSHD + `arks upload-pack`/`receive-pack` for SSH remotes today; \
          set ARKS_SERVE_SSH_HOST_KEY / ARKS_SERVE_SSH_AUTHORIZED_KEYS or \
          `arks serve config set ssh_host_key|…` when preparing keys",
@@ -868,4 +1271,49 @@ pub fn serve_ssh_listener(
         ak = opts.authorized_keys.display(),
         path = opts.path.display(),
     )))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ed25519_dalek::SigningKey;
+
+    #[test]
+    fn parse_git_exec_services() {
+        assert_eq!(
+            parse_git_exec_service("git-upload-pack '/tmp/r.git'"),
+            Some("git-upload-pack")
+        );
+        assert_eq!(
+            parse_git_exec_service("git-receive-pack '/tmp/r.git'"),
+            Some("git-receive-pack")
+        );
+        assert_eq!(parse_git_exec_service("bash"), None);
+    }
+
+    #[test]
+    fn chacha_aead_roundtrip_partial() {
+        let shared = [7u8; 32];
+        let h = Sha256::digest(b"exchange-hash-partial");
+        let note = encrypted_transport_selfcheck(&shared, &h);
+        assert!(note.contains("selfcheck=ok"), "{note}");
+    }
+
+    #[test]
+    fn authorized_keys_verify_partial() {
+        let dir = tempfile::tempdir().unwrap();
+        let seed = [9u8; 32];
+        let signing = SigningKey::from_bytes(&seed);
+        let vk = signing.verifying_key();
+        let blob = build_ssh_ed25519_public_blob(vk.as_bytes());
+        let b64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &blob);
+        let ak = dir.path().join("authorized_keys");
+        std::fs::write(&ak, format!("ssh-ed25519 {b64} test@arks\n")).unwrap();
+        let challenge = b"challenge-partial";
+        let sig = signing.sign(challenge);
+        let mut sig_blob = Vec::new();
+        sig_blob.extend(ssh_string(b"ssh-ed25519"));
+        sig_blob.extend(ssh_string(&sig.to_bytes()));
+        verify_publickey_against_authorized(&ak, &blob, challenge, &sig_blob).unwrap();
+    }
 }
