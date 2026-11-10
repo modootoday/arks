@@ -54,9 +54,10 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | `arks serve --no-ssh --no-forge` | HTTP wire **Claimed** where evidenced | Practical Claimed hosting path today |
 | In-process SSH under `arks serve` | **Partial** | Bind + keys + id + KEXINIT + ECDH + ed25519 sign/NEWKEYS + chacha20-poly1305 encrypted Partial + authorized_keys verify + exec→pack dispatch; OpenSSH-exact / Claimed SSH e2e **Missing**. Ops SSHD + pack remains valid |
 | Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; no in-process TLS Claimed |
-| `arks serve config` | **Partial** | File seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** Partial; Windows signal **Missing**; ≠ Claimed live rebind |
+| `arks serve config` | **Partial** | File seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** + same-process live HTTP/forge rebind Partial; Windows signal **Missing**; SSH durable / Claimed zero-downtime rebind **Missing** |
+| `arks serve ssh-smoke` | **Partial** | Local SSH banner smoke; Claimed OpenSSH git e2e **Missing** |
 | Flat forge leaves (`pr`, `issue`, …) | **Partial** | Local-API Partial; `hub smoke` HTTPS harness Partial (or documented Missing); OUT `extension`/`copilot` refuse |
-| `arks daemon` deepen | **Partial** | archive path-filter unit tests + `--prefix`/`--exclude`; honest `--user`/`--group`/`--syslog` **Missing**; Claimed archive parity **Missing** |
+| `arks daemon` deepen | **Partial** | upload-archive path-filter in stream body + format honesty; `--user`/`--group`/`--syslog` **Missing**; Claimed archive parity **Missing** |
 | `arks agent` | **Partial** | `provider smoke` optional local ollama Partial; Claimed LLM chatbot e2e **Missing** |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 

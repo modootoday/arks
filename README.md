@@ -106,8 +106,9 @@ arks serve --no-ssh --no-forge /path/to/repos
 | Surface | Role | Tip honesty |
 |---------|------|-------------|
 | `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH **Partial** (chacha20-poly1305 encrypted + authorized_keys verify + exec→pack dispatch; OpenSSH-exact/Claimed e2e **Missing**); forge-in-serve **Partial** |
-| `arks serve config …` | Server config store | **Partial** (file seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** Partial; Windows signal **Missing**; ≠ hub) |
-| `arks daemon` | `git://` peer (`git-daemon` symmetry) | **Partial** (archive path-filter tests + `--prefix`/`--exclude`; honest `--user`/`--group`/`--syslog` Missing); Claimed archive parity **Missing** |
+| `arks serve config …` | Server config store | **Partial** (file seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** + live HTTP/forge rebind Partial; Windows signal **Missing**; ≠ hub) |
+| `arks serve ssh-smoke` | Local SSH banner smoke | **Partial** (Claimed OpenSSH git e2e **Missing**) |
+| `arks daemon` | `git://` peer (`git-daemon` symmetry) | **Partial** (upload-archive path-filter in stream + format honesty; `--user`/`--group`/`--syslog` Missing); Claimed archive parity **Missing** |
 | Flat `arks pr` / `issue` / `auth` / … | Forge **client** | **Partial** local-API + `hub smoke` HTTPS harness Partial; OUT `extension`/`copilot` refuse; never `gh` |
 | `arks agent …` | Optional review / CEV extension | **Partial** (`provider smoke` ollama optional; Claimed LLM e2e **Missing**); not git-alias DoD |
 
