@@ -53,7 +53,7 @@ Version **0.1.11**. Normative harness rules that reopen [[adr:root/2026111016200
 
 1. `spec check` clean for this SoT and cross-links.
 2. Sole Docker `g19` receipt; `g19_eval.py` records claimed vs remaining `aggressive_na`.
-3. Residual register **FW-PF5-NA** + per-journey P6 rows updated to Claimed / Claimed(partial) / remaining NA.
+3. Residual register **FW-PF5-NA** + per-journey P6 rows updated to **Claimed (≤0.5×)** under umbrella **8/8** (historical Claimed(partial) packs remain archival).
 4. Evidence filed under `.spec/evidence/`.
 
 ## Non-goals

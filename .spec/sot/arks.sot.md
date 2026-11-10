@@ -3,7 +3,7 @@ id: sot:root/arks
 title: arks CLI Wave L+H+Pa+Pb+Pc
 status: active
 created: 2026-11-08T10:39:43Z
-updated: 2026-11-08T14:05:00Z
+updated: 2026-11-10T09:45:00Z
 tags: [m5, m6, m7, m8, m9, unit, cli, wave-l, wave-h, wave-pa, wave-pb, wave-pc, ring-7, phase-l, phase-h, phase-pa, phase-pb, phase-pc, production, alias]
 verify: manual
 rel:
@@ -127,11 +127,13 @@ Apply rule: path-level clean apply only (HEAD blob must match base); else refuse
 | `clean` deepen | worktree walk | `-d` untracked directories | `-x` |
 | `worktree` | `arks-repo` common-dir + checkout | Residual: `add`/`list`/`remove`/`prune`/`move` ([[plan:root/20261109022956]]) | `--porcelain`; `lock`/`unlock`; `--detach`/`--orphan` |
 | `submodule` | gitlink + `.gitmodules` + local clone | Residual: `add`/`init`/`update`/`status`/`deinit` | `--recursive`; `--remote`; non-local URL add |
-| `repack` | — | **Not claimed** | Always refuse; omit from help |
-| `sparse-checkout` / `maintenance` / `backfill` | — | **Not claimed** | Always refuse; omit from help |
-| `range-diff` / `notes` / `filter-branch` | — | **Not claimed** | Always refuse; omit from help |
+| `repack` | store + pack + `maint:gc` | **Historical M9 refuse** — **Claimed M15** Fs-3 (`-a`/`-ad`) | `--window` / geometric / cruft |
+| `sparse-checkout` / `maintenance` | index + worktree / maint path | **Historical M9 refuse** — **Claimed M15** (cone sparse; `maintenance run`) | non-cone extras; `backfill` still **exclude** |
+| `range-diff` / `notes` | object/refs | **Historical M9 refuse** — **Claimed M15** Fs-5 / notes subset | `filter-branch` still **exclude** |
 
-Flag-parity rows for every inventory command: [[sot:root/cli-flag-parity-m9]]. Alias drop-in: `docs/alias-git-arks.md` + G14 shim tests.
+**Current** command/flag authority after M9: [[sot:root/cli-flag-parity-full]] (M15) + [[sot:root/cli-flag-parity-complete]] (M16). Do not treat the historical M9 refuse column above as tip honesty.
+
+Flag-parity rows for every inventory command: [[sot:root/cli-flag-parity-m9]] (historical) / M15–M16 ledgers. Alias drop-in: `docs/alias-git-arks.md` + G14 shim tests.
 
 ### Out of scope
 

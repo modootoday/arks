@@ -3,8 +3,8 @@ id: sot:root/agent-dev-readiness
 title: Agent dev readiness
 status: active
 created: 2026-11-08T08:21:48Z
-updated: 2026-11-09T21:25:00Z
-tags: [agent, readiness, specfold, dod, m24, g28, deferred-zero, l3, celir-index]
+updated: 2026-11-10T09:45:00Z
+tags: [agent, readiness, specfold, dod, m26, g28, g37, deferred-zero, l3, celir-index, pf5]
 verify: manual
 rel:
   depends_on:
@@ -36,7 +36,7 @@ rel:
 
 # Agent dev readiness
 
-Version **0.2.0**. Definition of Done for **“an AI can start implement/verify from specs alone”** in this repository. Language lock: **all project documents and agent-facing text are English-only** (same top-level principle as humanymous). This SoT does not replace product SoTs; it states when the Specfold + agent-router set is sufficient to begin bottom-up work without inventing process or Git semantics.
+Version **0.2.1**. Definition of Done for **“an AI can start implement/verify from specs alone”** in this repository. Language lock: **all project documents and agent-facing text are English-only** (same top-level principle as humanymous). This SoT does not replace product SoTs; it states when the Specfold + agent-router set is sufficient to begin bottom-up work without inventing process or Git semantics.
 
 ## Rule
 
@@ -62,9 +62,9 @@ An agent MAY claim “spec-ready to implement” for a slice only when the follo
 | [[sot:root/remote-host-compatibility-surface]] | GitHub-class remote (A)/(B) |
 | [[sot:root/product-verification-clean-room]] | Docker clean-room authority |
 | [[sot:root/cli-surface]] | Porcelain / alias surface |
-| [[sot:root/interop-test-matrix]] | Gate unlock ladder (**G0–G27**; +G28 when present) |
-| [[sot:root/program-roadmap]] | Milestones **M0–M24** and production exits |
-| [[sot:root/production-residual-register]] | Post-bar residual honesty; **Deferred=0**; no bare development Opens |
+| [[sot:root/interop-test-matrix]] | Gate unlock ladder (**G0–G37**; live G8/G28 secrets-gated) |
+| [[sot:root/program-roadmap]] | Milestones **M0–M26** and production exits |
+| [[sot:root/production-residual-register]] | Post-bar residual honesty; **Deferred=0**; no bare development Opens; §F terminal |
 | [[sot:root/public-surface]] | Human vs agent vocabulary; no secrets; Pages thin |
 | [[sot:root/clean-room-journey-compare]] | G16 journey catalog + timing honesty |
 | [[sot:root/agent-governance]] | AGENTS router + `.agents/**` process canon |
@@ -80,8 +80,8 @@ Supporting research under `.spec/research/*-git-*.research.md` and [[research:ro
 2. **Context first.** Run `spec context <path>` for the code or doc path you will touch, or `spec show <id>` / read the owning SoT from the table above.
 3. **Find canon.** `spec find --type sot` (or `spec find <words>`) to locate governing documents; prefer SoT IDs over chat memory.
 4. **Check before done.** `spec check` after Specfold edits; fix errors in owned docs. Document residual warnings you do not own.
-5. **Verify venue.** Product interop/acceptance claims follow [[sot:root/product-verification-clean-room]] and Gate IDs in [[sot:root/interop-test-matrix]] — host greens are advisory. Heavy Docker gates (G16–G27 and any live-forge opt-in) MUST respect sole-runner honesty — do not interrupt a sibling live-GH agent.
-6. **Build order.** Implement/verify inner-first per [[plan:root/20261108082148]] and rule `.agents/rules/70-bottom-up-build-order.md`; program exits follow [[sot:root/program-roadmap]] (**M0–M24**).
+5. **Verify venue.** Product interop/acceptance claims follow [[sot:root/product-verification-clean-room]] and Gate IDs in [[sot:root/interop-test-matrix]] — host greens are advisory. Heavy Docker gates (G16–G37 and any live-forge opt-in) MUST respect sole-runner honesty — do not interrupt a sibling live-GH agent. Do **not** restart sole G19 remasure unless PF5 honesty evidence is missing/broken.
+6. **Build order.** Implement/verify inner-first per [[plan:root/20261108082148]] and rule `.agents/rules/70-bottom-up-build-order.md`; program exits follow [[sot:root/program-roadmap]] (**M0–M26**).
 
 ### Claim / session light rules (pointer only)
 
@@ -94,10 +94,10 @@ Supporting research under `.spec/research/*-git-*.research.md` and [[research:ro
 **Ready (DoD checklist)**
 
 - [ ] Required SoT set above exists with English bodies (not empty Rule/Why/Verification stubs for the slice being implemented).
-- [ ] [[plan:root/20261108082148]] phases name inputs, outputs, clean-room Gate IDs, exit criteria; [[sot:root/program-roadmap]] covers **M0–M24**.
-- [ ] `spec check` reports **0 errors** on the working tree’s Specfold docs (warnings explicitly owned/documented).
-- [ ] Agent can name the next phase / Gate ID without inventing Git semantics; knows **G17–G27** (and **G28** when present).
-- [ ] Agent states current honesty: L3 **Claimed** shape; shared-index **M26 / G34 Claimed**; CELIR **index-only** (`celir-index`, ObjectStore Refuse); catalog **Deferred=0**; M25 G29–G32 Claimed; W1–W5 residual Claimed with partial honesty (filter N/A, Pf5 7/8, OpenPGP N/A); no invented live PASS.
+- [ ] [[plan:root/20261108082148]] phases name inputs, outputs, clean-room Gate IDs, exit criteria; [[sot:root/program-roadmap]] covers **M0–M26**.
+- [ ] `spec check` reports **0 errors** on the working tree’s Specfold docs (warnings explicitly owned/documented; Windows autocrlf may false-positive E1 on evidence attachments — trust LF tip / CI).
+- [ ] Agent can name the next phase / Gate ID without inventing Git semantics; knows **G17–G37** (and secrets-gated G8/G28).
+- [ ] Agent states current honesty: L3 **Claimed** shape; shared-index **M26 / G34 Claimed**; CELIR **index-only** (`celir-index`, ObjectStore Refuse); catalog **Deferred=0**; M25 G29–G32 Claimed; W1–W5 residual Claimed with honesty (filter/promisor N/A, **PF5 Claimed 8/8** [[evidence:root/20261110142500]], OpenPGP/X.509 N/A); no invented live PASS; §F reopen only via ADR/SoT amend.
 - [ ] `AGENTS.md` + `.agents/rules` present for safety, Specfold discipline, structural conventions, clean-room, CELIR boundary, bottom-up order, public surface, session overlap.
 - [ ] Ambiguity: ask the user when SoTs conflict or Open decisions block the claimed gate (`.agents/rules/40-ambiguity-ask.md`).
 
@@ -112,7 +112,7 @@ Supporting research under `.spec/research/*-git-*.research.md` and [[research:ro
 
 ## Why
 
-Greenfield agents fail by inventing process, reordering layers, or treating host Git as proof. A single readiness SoT ties Specfold discovery (`context` / `check`), the required document set, bottom-up phasing, current M0–M24 / G0–G27 honesty, and light session rules so implementation can start from the tree alone. English-only keeps humanymous-aligned multi-agent collaboration readable.
+Greenfield agents fail by inventing process, reordering layers, or treating host Git as proof. A single readiness SoT ties Specfold discovery (`context` / `check`), the required document set, bottom-up phasing, current M0–M26 / G0–G37 honesty (PF5 8/8 carrying), and light session rules so implementation can start from the tree alone. English-only keeps humanymous-aligned multi-agent collaboration readable.
 
 ## Verification
 
