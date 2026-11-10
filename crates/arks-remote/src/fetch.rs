@@ -244,7 +244,7 @@ where
     let haves = local_haves(repo);
     let response_body = request_pack(&cap_list, &haves, &wants, &client_shallows, opts.depth)?;
 
-    let (pack_opt, update) = extract_pack_and_shallow(&response_body, sideband)?;
+    let (pack_opt, update) = extract_pack_and_shallow(response_body, sideband)?;
     let mut ingested_pack = false;
     match pack_opt {
         Some(pack) => {
@@ -432,23 +432,24 @@ fn encode_fetch_request(
 /// Without side-band, pkt-line `NAK`/`ACK` is followed by a raw pack.
 /// `None` pack means the peer finished negotiation without a pack (already up to date).
 #[allow(dead_code)]
-pub(crate) fn extract_pack(body: &[u8], sideband: bool) -> Result<Option<Vec<u8>>, RemoteError> {
+pub(crate) fn extract_pack(body: Vec<u8>, sideband: bool) -> Result<Option<Vec<u8>>, RemoteError> {
     let (pack, _) = extract_pack_and_shallow(body, sideband)?;
     Ok(pack)
 }
 
 fn extract_pack_and_shallow(
-    body: &[u8],
+    mut body: Vec<u8>,
     sideband: bool,
 ) -> Result<(Option<Vec<u8>>, ShallowUpdate), RemoteError> {
     let mut offset = 0;
-    // Raw-pack path copies the trailing PACK once; reserve ≈ body size.
-    let mut pack = Vec::with_capacity(body.len());
+    // Side-band demux still accumulates; raw PACK after NAK is split_off (no copy).
+    let mut pack = Vec::new();
     let mut saw_status = false;
     let mut update = ShallowUpdate::default();
+    let mut raw_pack_at: Option<usize> = None;
     while offset < body.len() {
         if !sideband && body[offset..].starts_with(b"PACK") {
-            pack.extend_from_slice(&body[offset..]);
+            raw_pack_at = Some(offset);
             break;
         }
         if body.len() - offset < 4 {
@@ -510,6 +511,12 @@ fn extract_pack_and_shallow(
             }
         }
     }
+    let pack = if let Some(at) = raw_pack_at {
+        // Move trailing PACK out of the HTTP body — J-CLONE-LOCAL hot path.
+        body.split_off(at)
+    } else {
+        pack
+    };
     if pack.is_empty() {
         if saw_status {
             return Ok((None, update));
@@ -567,7 +574,7 @@ mod shallow_wire_tests {
         let mut pack = b"PACK".to_vec();
         pack.extend_from_slice(&[0u8; 8]);
         body.extend_from_slice(&pack);
-        let (got, update) = extract_pack_and_shallow(&body, false).unwrap();
+        let (got, update) = extract_pack_and_shallow(body, false).unwrap();
         assert_eq!(update.shallow, vec![tip]);
         assert!(got.unwrap().starts_with(b"PACK"));
     }

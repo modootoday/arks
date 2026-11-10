@@ -239,18 +239,20 @@ fn write_http_request(
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // 64KiB matches upload-pack pack frames better than 8KiB on J-CLONE-LOCAL.
+    // Grow one heap buffer (no stack 64KiB + no header→body memcpy). 64KiB
+    // read chunks match upload-pack frames on J-CLONE-LOCAL.
     let mut buf = Vec::with_capacity(64 * 1024);
-    let mut tmp = [0u8; 64 * 1024];
     let header_end;
     loop {
+        let start = buf.len();
+        buf.resize(start + 64 * 1024, 0);
         let n = stream
-            .read(&mut tmp)
+            .read(&mut buf[start..])
             .map_err(|e| RemoteError::Http(e.to_string()))?;
+        buf.truncate(start + n);
         if n == 0 {
             return Err(RemoteError::Http("cleartext EOF before headers".into()));
         }
-        buf.extend_from_slice(&tmp[..n]);
         if let Some(pos) = find_header_end(&buf) {
             header_end = pos;
             break;
@@ -261,31 +263,35 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     }
     let (status, content_length, content_type) = parse_cleartext_headers(&buf[..header_end])?;
     let body = if let Some(len) = content_length {
-        let mut body = Vec::with_capacity(len);
-        body.extend_from_slice(&buf[header_end..]);
-        while body.len() < len {
+        let need = header_end.saturating_add(len);
+        while buf.len() < need {
+            let start = buf.len();
+            let chunk = (need - start).max(8 * 1024).min(64 * 1024);
+            buf.resize(start + chunk, 0);
             let n = stream
-                .read(&mut tmp)
+                .read(&mut buf[start..])
                 .map_err(|e| RemoteError::Http(e.to_string()))?;
+            buf.truncate(start + n);
             if n == 0 {
                 break;
             }
-            body.extend_from_slice(&tmp[..n]);
         }
+        let mut body = buf.split_off(header_end);
         body.truncate(len);
         body
     } else {
-        let mut body = buf.split_off(header_end);
         loop {
+            let start = buf.len();
+            buf.resize(start + 64 * 1024, 0);
             let n = stream
-                .read(&mut tmp)
+                .read(&mut buf[start..])
                 .map_err(|e| RemoteError::Http(e.to_string()))?;
+            buf.truncate(start + n);
             if n == 0 {
                 break;
             }
-            body.extend_from_slice(&tmp[..n]);
         }
-        body
+        buf.split_off(header_end)
     };
     if !(200..300).contains(&status) {
         let snippet = String::from_utf8_lossy(&body[..body.len().min(512)]);
