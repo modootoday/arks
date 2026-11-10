@@ -697,6 +697,59 @@ fn run_filter_command(
     Ok(out.stdout)
 }
 
+fn ensure_dir(path: &Path, made: &mut HashSet<PathBuf>) -> Result<(), RemoteError> {
+    if made.contains(path) {
+        return Ok(());
+    }
+    fs::create_dir_all(path).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    made.insert(path.to_path_buf());
+    Ok(())
+}
+
+fn join_rel(work: &Path, rel: &str) -> Result<PathBuf, RemoteError> {
+    let mut path = work.to_path_buf();
+    for part in rel.split('/') {
+        if part.is_empty() || part == "." || part == ".." {
+            return Err(RemoteError::Protocol(format!("unsafe path {rel}")));
+        }
+        path.push(part);
+    }
+    Ok(path)
+}
+
+/// Return true when cached index stat still matches the worktree file (git
+/// `ce_match_stat` lite). Zeroed mtime means "untrusted / force rewrite".
+fn index_stat_matches_worktree(e: &IndexEntry, path: &Path) -> bool {
+    if !(path.is_file() || path.is_symlink()) {
+        return false;
+    }
+    if e.mtime_sec == 0 && e.mtime_nsec == 0 {
+        return false;
+    }
+    let Ok(meta) = fs::metadata(path) else {
+        return false;
+    };
+    if meta.len() != u64::from(e.size) {
+        return false;
+    }
+    let Ok(modified) = meta.modified() else {
+        return false;
+    };
+    let dur = modified
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+    dur.as_secs() as u32 == e.mtime_sec && dur.subsec_nanos() == e.mtime_nsec
+}
+
+/// Fresh-write clock sample without a post-write `stat` (clone hot path).
+fn stamp_now() -> (u32, u32) {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let dur = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
+    (dur.as_secs() as u32, dur.subsec_nanos())
+}
+
 #[cfg(test)]
 mod lfs_smudge_tests {
     use super::*;
@@ -758,57 +811,4 @@ mod lfs_smudge_tests {
         let err = resolve_lfs_pointer_local(&repo, pointer.as_bytes()).unwrap_err();
         assert!(err.to_string().contains("size mismatch"), "{err}");
     }
-}
-
-fn ensure_dir(path: &Path, made: &mut HashSet<PathBuf>) -> Result<(), RemoteError> {
-    if made.contains(path) {
-        return Ok(());
-    }
-    fs::create_dir_all(path).map_err(|e| RemoteError::Msg(e.to_string()))?;
-    made.insert(path.to_path_buf());
-    Ok(())
-}
-
-fn join_rel(work: &Path, rel: &str) -> Result<PathBuf, RemoteError> {
-    let mut path = work.to_path_buf();
-    for part in rel.split('/') {
-        if part.is_empty() || part == "." || part == ".." {
-            return Err(RemoteError::Protocol(format!("unsafe path {rel}")));
-        }
-        path.push(part);
-    }
-    Ok(path)
-}
-
-/// Return true when cached index stat still matches the worktree file (git
-/// `ce_match_stat` lite). Zeroed mtime means "untrusted / force rewrite".
-fn index_stat_matches_worktree(e: &IndexEntry, path: &Path) -> bool {
-    if !(path.is_file() || path.is_symlink()) {
-        return false;
-    }
-    if e.mtime_sec == 0 && e.mtime_nsec == 0 {
-        return false;
-    }
-    let Ok(meta) = fs::metadata(path) else {
-        return false;
-    };
-    if meta.len() != u64::from(e.size) {
-        return false;
-    }
-    let Ok(modified) = meta.modified() else {
-        return false;
-    };
-    let dur = modified
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default();
-    dur.as_secs() as u32 == e.mtime_sec && dur.subsec_nanos() == e.mtime_nsec
-}
-
-/// Fresh-write clock sample without a post-write `stat` (clone hot path).
-fn stamp_now() -> (u32, u32) {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let dur = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default();
-    (dur.as_secs() as u32, dur.subsec_nanos())
 }
