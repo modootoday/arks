@@ -147,7 +147,7 @@ Carrying exits (do not reopen as “not done”):
 |------|-------------|----------------|
 | SSH command-mode | **Claimed (G30)** — duplex stdio pack protocol | [[sot:root/arks-server]], [[evidence:root/20261109222000]] |
 | `git://` daemon | **Claimed (G32)** — [git-daemon](https://git-scm.com/docs/git-daemon); `arks daemon` | [[sot:root/arks-server]], [[evidence:root/20261109223000]] |
-| Dumb HTTP product path | **Claimed (G29)** — additive beside smart HTTP; dumb-only still forbidden as sole path | [[sot:root/arks-server]], [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [[evidence:root/20261109221500]] |
+| Dumb HTTP product path | **Claimed (G29 server)** + **client fetch/clone Claimed** (arks-remote dumb fallback; dumb push still unclaimed; dumb-only sole server still forbidden) | [[sot:root/arks-server]], [[sot:root/arks-remote]], [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [[evidence:root/20261109221500]] |
 | Protocol v2 product | **Claimed (G31)** — advertise only implemented `ls-refs`/`fetch` subset | [[sot:root/arks-server]], [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2), [[evidence:root/20261109222500]] |
 | Optional HTTP Basic (in-process) | **Claimed (G36)** — product Basic when configured; forge OAuth still **Refuse** | [[sot:root/arks-server]], [[adr:root/20261109224236]], [[evidence:root/20261109224717]] |
 | Server-side hooks subset | **Claimed** — honor list pre-receive / update / post-receive | [[sot:root/arks-server]] §Receive-pack githooks, [[evidence:root/20261110200000]] |
@@ -202,7 +202,7 @@ Every row is **Claimed / Refuse-closed / N/A / Closed** — **no bare Deferred**
 | **P2** | **FW-SRV-GIT** | **Claimed (G32)** — `git://` daemon | [[adr:root/20261109220230]], [[evidence:root/20261109223000]] | Re-verify G32 after wire change |
 | **P2** | **FW-SRV-DUMB** | **Claimed (G29)** — dumb HTTP additive path | [[adr:root/20261109220230]], [[evidence:root/20261109221500]] | Re-verify G29 after wire change |
 | **P2** | **FW-SRV-V2** | **Claimed (G31)** — protocol v2 advertisement | [[adr:root/20261109220230]], [[evidence:root/20261109222500]] | Re-verify G31 after wire change |
-| **P2** | **FW-SRV-HOOKS** | **Claimed** — receive-pack honor list `pre-receive` / `update` / `post-receive` | [[sot:root/arks-server]] §Receive-pack githooks, [[evidence:root/20261110200000]] | Re-verify G15 M11-C14 after hook semantics change |
+| **P2** | **FW-SRV-HOOKS** | **Claimed** — honor list `pre-receive` / `update` / `post-receive` / `post-update` + quarantine migrate | [[sot:root/arks-server]] §Receive-pack githooks, [[evidence:root/20261110200000]] | Re-verify G15 M11-C14 after hook/quarantine change |
 | **P2** | **FW-PIN** | **Closed (process)** — pin advance hygiene; pin **2.39.5** | [[sot:root/clean-room-git-pin-advance]], `verify/images.lock.json` | Deliberate pin bump + G14-class re-prove |
 | **P2** | **FW-SLO** | **Closed** — M17 ≤0.8× + M18/Pf5 evidence; no new host SLOs | [[evidence:root/20261109090000]], [[evidence:root/20261109143000]], [[sot:root/clean-room-journey-compare]] | Clean-room gate only; no laptop marketing SLO |
 | **P3** | **FW-CELIR-OS** | **Refuse-closed (terminal)** — CELIR ObjectStore | [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]], [[adr:root/20261109204916]] | ObjectStore reverse ADR (forbidden product path) |

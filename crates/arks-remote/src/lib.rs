@@ -1,12 +1,14 @@
 //! Generic Git remote **client** (M6 Wave H + M16 Sy-4 SSH).
 //!
 //! Claimed subset: `http://` and `https://` smart HTTP protocol v1
-//! (`info/refs` + `git-upload-pack` / `git-receive-pack`), OpenSSH client
-//! transport for `ssh://` and SCP-like `user@host:path`, fetch, clone,
-//! push with `report-status`, remote config, additive local path /
-//! same-host `file://` clone via object-directory copy, and G9/G35
-//! `--depth N` shallow on pack transports. GitHub-class hosts
-//! are a verify-peer label, not a special code path.
+//! (`info/refs` + `git-upload-pack` / `git-receive-pack`), additive dumb
+//! HTTP fetch/clone fallback ([gitprotocol-http] dumb clients), OpenSSH
+//! client transport for `ssh://` and SCP-like `user@host:path`, fetch,
+//! clone, push with `report-status` / `delete-refs` when advertised,
+//! remote config, additive local path / same-host `file://` clone via
+//! object-directory copy, and G9/G35 `--depth N` shallow on pack
+//! transports. GitHub-class hosts are a verify-peer label, not a special
+//! code path.
 //!
 //! Primary:
 //! - <https://git-scm.com/docs/gitprotocol-http>
@@ -24,11 +26,12 @@
 
 #![deny(unsafe_code)]
 
-mod credential;
 mod advertise;
 mod checkout;
 mod clone;
 mod config;
+mod credential;
+mod dumb;
 mod error;
 mod fetch;
 mod http;
@@ -41,18 +44,15 @@ mod walk;
 #[allow(unsafe_code)] // Windows Cred* FFI for first-party wincred helper only.
 mod wallet;
 
-pub use credential::{
-    Credential, CredentialSource, approve as credential_approve, fill as credential_fill,
-    reject as credential_reject,
-};
-pub use wallet::{
-    WalletKind, cmd_wallet_helper, is_os_wallet_helper, wallet_helper_kind,
-};
 pub use checkout::{checkout_commit, checkout_tree};
 pub use clone::{
     clone_http, clone_http_with, clone_local, clone_local_with, clone_ssh, clone_ssh_with,
 };
 pub use config::{RemoteConfig, add_remote, list_remotes, remove_remote};
+pub use credential::{
+    Credential, CredentialSource, approve as credential_approve, fill as credential_fill,
+    reject as credential_reject,
+};
 pub use error::RemoteError;
 pub use fetch::{
     FetchOptions, FetchOutcome, fetch_http, fetch_http_with, fetch_remote, fetch_remote_with,
@@ -61,6 +61,7 @@ pub use fetch::{
 pub use push::{PushUpdate, push_http, push_remote, push_ssh};
 pub use transport::{HttpRequest, HttpResponse, RecordedExchange, RecordedTransport, Transport};
 pub use url::{HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
+pub use wallet::{WalletKind, cmd_wallet_helper, is_os_wallet_helper, wallet_helper_kind};
 
 #[cfg(test)]
 mod mock;

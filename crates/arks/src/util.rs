@@ -162,11 +162,11 @@ pub fn refuse_unknown_flags(args: &[String], allowed: &[&str]) -> CliResult<()> 
             continue;
         }
         // Exact match, or `flag=value` form when `flag` is allowed (e.g. `--chmod=+x`).
-        let ok = allowed.iter().any(|x| *a == *x || a.starts_with(&format!("{x}=")));
+        let ok = allowed
+            .iter()
+            .any(|x| *a == *x || a.starts_with(&format!("{x}=")));
         if !ok {
-            return Err(CliError::NotImplemented(format!(
-                "unsupported option: {a}"
-            )));
+            return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
         }
     }
     Ok(())

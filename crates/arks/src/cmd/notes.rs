@@ -78,8 +78,7 @@ fn notes_add(args: &[String]) -> CliResult<()> {
     let tree_obj = RawObject::new(ObjectKind::Tree, tree_bytes);
     let tree_oid = repo.store_mut().put(FORMAT, &tree_obj)?;
     let old = repo.refs().resolve(NOTES_REF).ok();
-    repo.refs_mut()
-        .update(NOTES_REF, &tree_oid, old.as_ref())?;
+    repo.refs_mut().update(NOTES_REF, &tree_oid, old.as_ref())?;
     Ok(())
 }
 
@@ -91,15 +90,14 @@ fn notes_show(args: &[String]) -> CliResult<()> {
         None => repo.head_oid()?,
     };
     let entries = load_notes_entries(&repo)?;
-    let entry = entries.get(&target.to_hex()).ok_or_else(|| {
-        CliError::Msg(format!(
-            "no note found for object {}",
-            target.to_hex()
-        ))
-    })?;
+    let entry = entries
+        .get(&target.to_hex())
+        .ok_or_else(|| CliError::Msg(format!("no note found for object {}", target.to_hex())))?;
     let obj = repo.get_object(&entry.oid)?;
     if obj.kind != ObjectKind::Blob {
-        return Err(CliError::Msg("notes show: note object is not a blob".into()));
+        return Err(CliError::Msg(
+            "notes show: note object is not a blob".into(),
+        ));
     }
     let text = String::from_utf8_lossy(&obj.payload);
     if text.ends_with('\n') {
@@ -133,7 +131,8 @@ fn notes_append(args: &[String]) -> CliResult<()> {
         positional.push(args[i].as_str());
         i += 1;
     }
-    let message = message.ok_or_else(|| CliError::Usage("notes append -m <msg> [<object>]".into()))?;
+    let message =
+        message.ok_or_else(|| CliError::Usage("notes append -m <msg> [<object>]".into()))?;
     let mut repo = open_repo()?;
     refuse_notes_contention(&repo)?;
     let target = match positional.first() {
@@ -227,17 +226,13 @@ fn refuse_notes_contention(repo: &Repository) -> CliResult<()> {
     Ok(())
 }
 
-fn write_notes_tree(
-    repo: &mut Repository,
-    entries: HashMap<String, TreeEntry>,
-) -> CliResult<()> {
+fn write_notes_tree(repo: &mut Repository, entries: HashMap<String, TreeEntry>) -> CliResult<()> {
     let tree = Tree::new(entries.into_values().collect())?;
     let tree_bytes = tree.encode()?;
     let tree_obj = RawObject::new(ObjectKind::Tree, tree_bytes);
     let tree_oid = repo.store_mut().put(FORMAT, &tree_obj)?;
     let old = repo.refs().resolve(NOTES_REF).ok();
-    repo.refs_mut()
-        .update(NOTES_REF, &tree_oid, old.as_ref())?;
+    repo.refs_mut().update(NOTES_REF, &tree_oid, old.as_ref())?;
     Ok(())
 }
 

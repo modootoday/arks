@@ -76,8 +76,14 @@ fn recorded_script_fetch_stores_advertised_commit() {
     ]);
     let tmp = tempfile::TempDir::new().unwrap();
     let mut repo = empty_repo(tmp.path());
-    let outcome: FetchOutcome =
-        fetch_with(&mut recorded, &mut repo, base, "origin", &FetchOptions::default()).unwrap();
+    let outcome: FetchOutcome = fetch_with(
+        &mut recorded,
+        &mut repo,
+        base,
+        "origin",
+        &FetchOptions::default(),
+    )
+    .unwrap();
     assert_eq!(outcome.head_oid, Some(oid));
     assert_eq!(outcome.head_branch.as_deref(), Some("refs/heads/main"));
     let stored = repo.get_object(&oid).unwrap();

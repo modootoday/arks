@@ -63,8 +63,8 @@ impl DurableLeaseStore {
             fs::create_dir_all(parent).map_err(|e| LeaseError::Io(e.to_string()))?;
         }
         let records = self.manager.snapshot();
-        let bytes = serde_json::to_vec_pretty(&records)
-            .map_err(|e| LeaseError::Corrupt(e.to_string()))?;
+        let bytes =
+            serde_json::to_vec_pretty(&records).map_err(|e| LeaseError::Corrupt(e.to_string()))?;
         let tmp = self.path.with_extension("json.tmp");
         fs::write(&tmp, &bytes).map_err(|e| LeaseError::Io(e.to_string()))?;
         fs::rename(&tmp, &self.path).map_err(|e| LeaseError::Io(e.to_string()))?;

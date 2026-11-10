@@ -10,9 +10,7 @@ use tempfile::TempDir;
 fn l1_grant_release_inspect_list() {
     let mut m = LeaseManager::new();
     let id = refns("refs/heads/main");
-    let rec = m
-        .grant(&id, "agent-a", Duration::from_secs(60))
-        .unwrap();
+    let rec = m.grant(&id, "agent-a", Duration::from_secs(60)).unwrap();
     assert_eq!(rec.holder, "agent-a");
     assert!(m.inspect(&id).is_some());
     assert_eq!(m.list().len(), 1);
@@ -26,10 +24,7 @@ fn cd1_resource_prefix_helpers() {
     assert_eq!(refns("refns:refs/heads/main"), "refns:refs/heads/main");
     assert_eq!(index_scope("default"), "index:default");
     assert_eq!(domain_worktree("common"), "domain:worktree:common");
-    assert_eq!(
-        domain_submodule("deps/sub"),
-        "domain:submodule:deps/sub"
-    );
+    assert_eq!(domain_submodule("deps/sub"), "domain:submodule:deps/sub");
     assert!(is_typed("refns:refs/heads/a/"));
     assert!(is_typed("index:default"));
     assert!(is_typed("domain:worktree:common"));
@@ -54,7 +49,8 @@ fn l1_conflict_and_renew_same_holder() {
 #[test]
 fn l1_expire_due() {
     let mut m = LeaseManager::new();
-    m.grant_at("r1", "a", Duration::from_millis(10), 1_000).unwrap();
+    m.grant_at("r1", "a", Duration::from_millis(10), 1_000)
+        .unwrap();
     assert!(m.expire_due_at(1_000).is_empty());
     let expired = m.expire_due_at(1_010);
     assert_eq!(expired.len(), 1);
@@ -125,7 +121,9 @@ fn lease_held_still_honors_git_ref_lock() {
 
     let mut refs = FilesystemRefStore::open(&git).unwrap();
     let new = Oid::from_hex("2222222222222222222222222222222222222222").unwrap();
-    let err = refs.update("refs/heads/main", &new, Some(&oid)).unwrap_err();
+    let err = refs
+        .update("refs/heads/main", &new, Some(&oid))
+        .unwrap_err();
     assert!(
         matches!(err, RefsError::LockFailed(_)),
         "expected LockFailed while lease held, got {err:?}"

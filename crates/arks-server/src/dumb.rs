@@ -37,8 +37,7 @@ pub fn dumb_info_refs_body(repo: &Repository) -> Result<Vec<u8>, ServerError> {
     let mut out = Vec::new();
     for (name, oid) in refs {
         // Peeled tags (`name^{}`) not claimed in first dumb ship — direct refs only.
-        writeln!(out, "{}\t{name}", oid.to_hex())
-            .map_err(|e| ServerError::Io(e.to_string()))?;
+        writeln!(out, "{}\t{name}", oid.to_hex()).map_err(|e| ServerError::Io(e.to_string()))?;
     }
     Ok(out)
 }
@@ -69,7 +68,10 @@ fn dumb_packs_list(git_dir: &Path) -> Result<Vec<u8>, ServerError> {
 ///
 /// Paths are relative to `$GIT_URL` (e.g. `info/refs`, `objects/ab/cd…`,
 /// `objects/info/packs`, `objects/pack/pack-….pack`).
-pub fn serve_dumb_path(repo: &Repository, rel: &str) -> Result<Option<(String, Vec<u8>)>, ServerError> {
+pub fn serve_dumb_path(
+    repo: &Repository,
+    rel: &str,
+) -> Result<Option<(String, Vec<u8>)>, ServerError> {
     let rel = rel.trim_start_matches('/');
     let git_dir = repo.git_dir();
     // Dumb clients also GET `$GIT_URL/HEAD` (plain text) for default branch checkout.

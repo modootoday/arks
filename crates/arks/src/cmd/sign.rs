@@ -165,9 +165,10 @@ fn ssh_keygen_sign(program: &str, key_path: &Path, payload: &[u8]) -> CliResult<
 }
 
 fn verify_commit_ssh(repo: &Repository, commit: &Commit) -> CliResult<String> {
-    let armor = commit.gpgsig.as_deref().ok_or_else(|| {
-        CliError::Msg("verify-commit: commit has no gpgsig header".into())
-    })?;
+    let armor = commit
+        .gpgsig
+        .as_deref()
+        .ok_or_else(|| CliError::Msg("verify-commit: commit has no gpgsig header".into()))?;
     if armor.contains("BEGIN SSH SIGNATURE") {
         // claimed
     } else if armor.contains("BEGIN PGP SIGNATURE") || armor.contains("BEGIN PGP MESSAGE") {
@@ -258,9 +259,7 @@ pub fn cmd_verify_commit(args: &[String]) -> CliResult<()> {
     let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
     let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if revs.is_empty() {
-        return Err(CliError::Usage(
-            "verify-commit [-v] <commit>...".into(),
-        ));
+        return Err(CliError::Usage("verify-commit [-v] <commit>...".into()));
     }
     let repo = open_repo()?;
     for rev in revs {
@@ -424,7 +423,10 @@ mod tests {
 [user]
 \tsigningKey = /tmp/id_ed25519
 ";
-        assert_eq!(config_get_simple(text, "gpg.format").as_deref(), Some("ssh"));
+        assert_eq!(
+            config_get_simple(text, "gpg.format").as_deref(),
+            Some("ssh")
+        );
         assert_eq!(
             config_get_simple(text, "gpg.ssh.program").as_deref(),
             Some("ssh-keygen")

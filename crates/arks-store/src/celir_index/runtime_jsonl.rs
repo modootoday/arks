@@ -4,7 +4,7 @@
 //! (discrete-circuit indexing-service pack; do not invent APIs).
 
 use celir_index_runtime::{
-    build, Budget, BuildReport, Progress, Projection, Query, QueryLimits, Snapshot, Source,
+    Budget, BuildReport, Progress, Projection, Query, QueryLimits, Snapshot, Source, build,
 };
 use std::io;
 use std::ops::ControlFlow;
@@ -40,11 +40,7 @@ pub fn open_jsonl_root(root: impl AsRef<Path>) -> io::Result<Snapshot> {
 }
 
 /// Collect exact-match effects for `(oid, kind)`.
-pub fn query_exact_effects(
-    snapshot: Snapshot,
-    oid: &str,
-    kind: &str,
-) -> io::Result<Vec<String>> {
+pub fn query_exact_effects(snapshot: Snapshot, oid: &str, kind: &str) -> io::Result<Vec<String>> {
     let mut cursor = snapshot.query(Query::Exact(vec![oid.to_owned(), kind.to_owned()]))?;
     let mut effects = Vec::new();
     loop {
@@ -70,9 +66,7 @@ pub fn write_oid_kind_jsonl(
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let line = format!(
-        "{{\"oid\":{oid:?},\"kind\":{kind:?},\"effect\":{effect:?}}}\n"
-    );
+    let line = format!("{{\"oid\":{oid:?},\"kind\":{kind:?},\"effect\":{effect:?}}}\n");
     std::fs::write(&path, line)?;
     Ok(path)
 }
@@ -86,13 +80,8 @@ mod tests {
     fn runtime_build_open_query_roundtrip() {
         let dir = TempDir::new().unwrap();
         let root = dir.path().join("runtime-root");
-        let jsonl = write_oid_kind_jsonl(
-            dir.path().join("rows.jsonl"),
-            "abc123",
-            "blob",
-            "4",
-        )
-        .unwrap();
+        let jsonl =
+            write_oid_kind_jsonl(dir.path().join("rows.jsonl"), "abc123", "blob", "4").unwrap();
         let report = build_jsonl_root(
             &root,
             1,

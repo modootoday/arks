@@ -1,7 +1,7 @@
 //! Composed repository handle (store + refs).
 
-use crate::discover::{discover, resolve_common_dir, GitDirKind};
 use crate::RepoError;
+use crate::discover::{GitDirKind, discover, resolve_common_dir};
 use arks_object::RawObject;
 use arks_oid::Oid;
 use arks_refs::{FilesystemRefStore, RefTarget};
@@ -198,9 +198,10 @@ mod tests {
             fs::canonicalize(repo.work_tree().unwrap()).unwrap(),
             fs::canonicalize(tmp.path()).unwrap()
         );
-        assert!(repo
-            .index_path()
-            .ends_with(std::path::Path::new(".git").join("index")));
+        assert!(
+            repo.index_path()
+                .ends_with(std::path::Path::new(".git").join("index"))
+        );
         let _ = git_dir;
 
         let tip = oid(7);
@@ -214,10 +215,7 @@ mod tests {
         assert_eq!(repo.head_oid().unwrap(), tip);
 
         let obj = RawObject::new(ObjectKind::Blob, b"repo-compose");
-        let stored = repo
-            .store_mut()
-            .put(ObjectFormat::Sha1, &obj)
-            .unwrap();
+        let stored = repo.store_mut().put(ObjectFormat::Sha1, &obj).unwrap();
         let got = repo.get_object(&stored).unwrap();
         assert_eq!(got.payload, b"repo-compose");
     }
@@ -251,14 +249,13 @@ mod tests {
         fs::write(admin.join("commondir"), b"../..\n").unwrap();
         let gitfile = linked.join(".git");
         let admin_abs = fs::canonicalize(&admin).unwrap_or(admin.clone());
-        fs::write(
-            &gitfile,
-            format!("gitdir: {}\n", admin_abs.display()),
-        )
-        .unwrap();
+        fs::write(&gitfile, format!("gitdir: {}\n", admin_abs.display())).unwrap();
         fs::write(
             admin.join("gitdir"),
-            format!("{}\n", fs::canonicalize(&gitfile).unwrap_or(gitfile).display()),
+            format!(
+                "{}\n",
+                fs::canonicalize(&gitfile).unwrap_or(gitfile).display()
+            ),
         )
         .unwrap();
         fs::write(admin.join("HEAD"), b"ref: refs/heads/feature\n").unwrap();

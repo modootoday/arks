@@ -64,7 +64,9 @@ pub fn upload_pack_result_with_nak(
     sideband_pack(&pack.pack, include_nak)
 }
 
-fn list_refs_and_head(repo: &Repository) -> Result<(Vec<(String, Oid)>, Option<String>), ServerError> {
+fn list_refs_and_head(
+    repo: &Repository,
+) -> Result<(Vec<(String, Oid)>, Option<String>), ServerError> {
     let mut refs = repo
         .refs()
         .list_refs("refs/")
@@ -102,8 +104,8 @@ fn parse_wants(body: &[u8]) -> Result<Vec<Oid>, ServerError> {
                 // continue for have/done after flush
             }
             Packet::Data(payload) => {
-                let text = decode_text_line(&payload)
-                    .map_err(|e| ServerError::Protocol(e.to_string()))?;
+                let text =
+                    decode_text_line(&payload).map_err(|e| ServerError::Protocol(e.to_string()))?;
                 if let Some(rest) = text.strip_prefix("want ") {
                     let hex = rest.split_whitespace().next().unwrap_or("");
                     let oid = Oid::from_hex(hex)

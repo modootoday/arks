@@ -25,8 +25,5 @@ pub enum IndexError {
     #[error("path contains NUL byte")]
     PathNul,
     #[error("read path: {path}: {message}")]
-    ReadPath {
-        path: PathBuf,
-        message: String,
-    },
+    ReadPath { path: PathBuf, message: String },
 }

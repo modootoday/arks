@@ -1,18 +1,30 @@
 //! receive-pack service (push path).
+//!
+//! Claimed caps: `report-status`, `report-status-v2` (classic ok/ng; option
+//! lines reserved for future proc-receive rewrites), `delete-refs`, `agent`.
+//! Cite: <https://git-scm.com/docs/gitprotocol-capabilities>,
+//! <https://git-scm.com/docs/git-receive-pack> (quarantine environment).
 
 use crate::advertise::{encode_http_advertisement, encode_pack_advertisement};
 use crate::error::ServerError;
-use crate::hooks::{run_post_receive, run_pre_receive, run_update, HookGate};
+use crate::hooks::{
+    HookEnv, HookGate, run_post_receive, run_post_update, run_pre_receive, run_update,
+};
 use arks_oid::Oid;
 use arks_pack::DecodedPack;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet};
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use arks_store::{ObjectFormat, ObjectStore};
+use arks_store::{FilesystemGitStore, ObjectFormat, ObjectStore};
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
-fn receive_refs_and_caps(repo: &Repository) -> Result<(Vec<(String, Oid)>, Vec<String>), ServerError> {
+fn receive_refs_and_caps(
+    repo: &Repository,
+) -> Result<(Vec<(String, Oid)>, Vec<String>), ServerError> {
     let mut refs = repo
         .refs()
         .list_refs("refs/")
@@ -25,8 +37,15 @@ fn receive_refs_and_caps(repo: &Repository) -> Result<(Vec<(String, Oid)>, Vec<S
     } else if let Ok(RefTarget::Direct(oid)) = repo.head_target() {
         refs.insert(0, ("HEAD".into(), oid));
     }
-    // Capability honesty: do not advertise delete-refs / report-status-v2.
-    let caps = vec!["report-status".into(), "agent=arks/0.0.0".into()];
+    // Advertise only real caps. report-status-v2 without option lines matches
+    // stock receive-pack when no proc-receive rewrite applies.
+    // Cite: https://git-scm.com/docs/gitprotocol-capabilities
+    let caps = vec![
+        "report-status".into(),
+        "report-status-v2".into(),
+        "delete-refs".into(),
+        "agent=arks/0.0.0".into(),
+    ];
     Ok((refs, caps))
 }
 
@@ -44,16 +63,27 @@ pub fn receive_pack_advertisement(repo: &Repository) -> Result<Vec<u8>, ServerEr
 
 pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, ServerError> {
     let (commands, pack) = split_commands(body)?;
+    let quarantine = Quarantine::create(repo.git_dir())?;
+    let hook_env = HookEnv {
+        quarantine_path: Some(quarantine.path.clone()),
+    };
+
     if !pack.is_empty() {
         if !pack.starts_with(b"PACK") {
+            quarantine.discard();
             return encode_report_status("unpack unpacker error", &[]);
         }
         let decoded = match DecodedPack::decode(&pack, FORMAT) {
             Ok(d) => d,
-            Err(e) => return encode_report_status(&format!("unpack {e}"), &[]),
+            Err(e) => {
+                quarantine.discard();
+                return encode_report_status(&format!("unpack {e}"), &[]);
+            }
         };
+        let mut qstore = FilesystemGitStore::new(&quarantine.path)
+            .map_err(|e| ServerError::Msg(e.to_string()))?;
         for object in decoded.objects {
-            repo.store_mut()
+            qstore
                 .put(FORMAT, &object.object)
                 .map_err(|e| ServerError::Msg(e.to_string()))?;
         }
@@ -62,30 +92,23 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
     // Honor list: pre-receive once after unpack, before any ref update.
     // Cite: https://git-scm.com/docs/githooks , https://git-scm.com/docs/git-receive-pack
     let pre_stdin = hook_stdin_lines(&commands);
-    if run_pre_receive(repo.git_dir(), &pre_stdin)? == HookGate::Decline {
+    if run_pre_receive(repo.git_dir(), &pre_stdin, &hook_env)? == HookGate::Decline {
+        quarantine.discard();
         let declined: Vec<(String, Result<(), String>)> = commands
             .iter()
-            .map(|cmd| {
-                if is_delete(cmd) {
-                    (cmd.name.clone(), Err("delete not claimed".into()))
-                } else {
-                    (
-                        cmd.name.clone(),
-                        Err("pre-receive hook declined".into()),
-                    )
-                }
-            })
+            .map(|cmd| (cmd.name.clone(), Err("pre-receive hook declined".into())))
             .collect();
         return encode_report_status_owned("ok", &declined);
     }
 
+    // Migrate quarantined objects into the main store only after pre-receive.
+    quarantine
+        .migrate_into(repo)
+        .map_err(|e| ServerError::Msg(e))?;
+
     let mut results: Vec<(String, Result<(), String>)> = Vec::new();
     let mut success_cmds: Vec<&ReceiveCommand> = Vec::new();
     for cmd in &commands {
-        if is_delete(cmd) {
-            results.push((cmd.name.clone(), Err("delete not claimed".into())));
-            continue;
-        }
         let old = match repo.refs().resolve(&cmd.name) {
             Ok(oid) => Some(oid),
             Err(_) => None,
@@ -107,8 +130,20 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
         }
         let old_hex = cmd.old.to_hex();
         let new_hex = cmd.new.to_hex();
-        if run_update(repo.git_dir(), &cmd.name, &old_hex, &new_hex)? == HookGate::Decline {
+        if run_update(repo.git_dir(), &cmd.name, &old_hex, &new_hex, &hook_env)?
+            == HookGate::Decline
+        {
             results.push((cmd.name.clone(), Err("hook declined".into())));
+            continue;
+        }
+        if is_delete(cmd) {
+            match repo.refs_mut().delete(&cmd.name, old.as_ref()) {
+                Ok(()) => {
+                    results.push((cmd.name.clone(), Ok(())));
+                    success_cmds.push(cmd);
+                }
+                Err(e) => results.push((cmd.name.clone(), Err(e.to_string()))),
+            }
             continue;
         }
         match repo.refs_mut().update(&cmd.name, &cmd.new, old.as_ref()) {
@@ -122,10 +157,74 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
 
     if !success_cmds.is_empty() {
         let post_stdin = hook_stdin_lines_refs(success_cmds.iter().copied());
-        run_post_receive(repo.git_dir(), &post_stdin);
+        run_post_receive(repo.git_dir(), &post_stdin, &hook_env);
+        let names: Vec<&str> = success_cmds.iter().map(|c| c.name.as_str()).collect();
+        run_post_update(repo.git_dir(), &names, &hook_env);
     }
 
     encode_report_status_owned("ok", &results)
+}
+
+/// Quarantine object dir under `$GIT_DIR/objects` (git-receive-pack).
+struct Quarantine {
+    path: PathBuf,
+}
+
+impl Quarantine {
+    fn create(git_dir: &Path) -> Result<Self, ServerError> {
+        let objects = git_dir.join("objects");
+        fs::create_dir_all(&objects)?;
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let path = objects.join(format!("incoming-{nanos}-{}", std::process::id()));
+        fs::create_dir_all(&path)?;
+        Ok(Self { path })
+    }
+
+    fn discard(self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
+
+    fn migrate_into(self, repo: &mut Repository) -> Result<(), String> {
+        // Walk quarantine loose objects and put into the main store.
+        let Ok(entries) = fs::read_dir(&self.path) else {
+            let _ = fs::remove_dir_all(&self.path);
+            return Ok(());
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if name.len() != 2 {
+                continue;
+            }
+            let fanout = entry.path();
+            let Ok(objs) = fs::read_dir(&fanout) else {
+                continue;
+            };
+            for obj in objs.flatten() {
+                let fname = obj.file_name();
+                let rest = fname.to_string_lossy();
+                let hex = format!("{name}{rest}");
+                let Ok(oid) = Oid::from_hex(&hex) else {
+                    continue;
+                };
+                // Read via a store rooted at quarantine so packed/overlay stays honest.
+                let qstore = FilesystemGitStore::open(&self.path);
+                match qstore.get(&oid) {
+                    Ok(raw) => {
+                        repo.store_mut()
+                            .put(FORMAT, &raw)
+                            .map_err(|e| e.to_string())?;
+                    }
+                    Err(_) => continue,
+                }
+            }
+        }
+        let _ = fs::remove_dir_all(&self.path);
+        Ok(())
+    }
 }
 
 fn is_delete(cmd: &ReceiveCommand) -> bool {
@@ -142,9 +241,7 @@ where
 {
     let mut out = Vec::new();
     for cmd in commands {
-        out.extend(
-            format!("{} {} {}\n", cmd.old.to_hex(), cmd.new.to_hex(), cmd.name).as_bytes(),
-        );
+        out.extend(format!("{} {} {}\n", cmd.old.to_hex(), cmd.new.to_hex(), cmd.name).as_bytes());
     }
     out
 }
@@ -170,8 +267,7 @@ fn split_commands(body: &[u8]) -> Result<(Vec<ReceiveCommand>, Vec<u8>), ServerE
                         .map_err(|_| ServerError::Protocol("command not utf-8".into()))?
                         .to_string()
                 } else {
-                    decode_text_line(&payload)
-                        .map_err(|e| ServerError::Protocol(e.to_string()))?
+                    decode_text_line(&payload).map_err(|e| ServerError::Protocol(e.to_string()))?
                 };
                 let text = owned.trim_end_matches('\n');
                 let mut parts = text.splitn(3, ' ');
@@ -221,6 +317,8 @@ fn encode_report_status(
     unpack: &str,
     refs: &[(&str, Result<(), &str>)],
 ) -> Result<Vec<u8>, ServerError> {
+    // Classic unpack/ok/ng lines are valid report-status and report-status-v2
+    // when no proc-receive rewrite options are needed.
     let mut out = Vec::new();
     out.extend(text_pkt(&format!("unpack {unpack}"))?);
     for (name, result) in refs {

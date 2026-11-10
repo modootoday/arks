@@ -7,7 +7,7 @@ Roadmap **v0.3.1+** M11 (Git server / Phase Sv). Authoritative venue: Docker cle
 | M11-C01 | Stock `git clone` via arks smart HTTP | G15 | yes | objects/refs match |
 | M11-C02 | Stock `git fetch` after new commit on server | G15 | yes | tip advances |
 | M11-C03 | Stock `git push` to arks receive-pack | G15 | yes | report-status ok; tip matches |
-| M11-C04 | Capability refuse honesty | G15 | yes | no delete-refs / protocol v2 / report-status-v2 in ads |
+| M11-C04 | Capability honesty | G15 | yes | advertise delete-refs + report-status-v2 when implemented; no push-options / invented caps |
 | M11-C05 | Wave Sv CLI help lists upload-pack/receive-pack/serve-http/http-backend | G15 | yes | help smoke |
 | M11-C06 | zero gix / zero celir | G15 | yes | metadata scan |
 | M11-C07 | G14 + G7 + G5 regression | G15 | yes | embedded prior suites |

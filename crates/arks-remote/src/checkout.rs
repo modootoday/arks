@@ -18,11 +18,7 @@ use std::path::{Path, PathBuf};
 use std::thread;
 
 /// Write `commit`'s tree into `work` and replace the index to match.
-pub fn checkout_commit(
-    repo: &Repository,
-    work: &Path,
-    commit: &Oid,
-) -> Result<(), RemoteError> {
+pub fn checkout_commit(repo: &Repository, work: &Path, commit: &Oid) -> Result<(), RemoteError> {
     let obj = repo
         .get_object(commit)
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
@@ -42,7 +38,16 @@ pub fn checkout_tree(repo: &Repository, work: &Path, tree: &Oid) -> Result<(), R
     let mut jobs = Vec::new();
     let mut kept = HashSet::new();
     let mut made_dirs = HashSet::new();
-    collect_jobs(repo, work, tree, "", &prior, &mut jobs, &mut kept, &mut made_dirs)?;
+    collect_jobs(
+        repo,
+        work,
+        tree,
+        "",
+        &prior,
+        &mut jobs,
+        &mut kept,
+        &mut made_dirs,
+    )?;
     // Drop previously tracked paths that did not reappear (hard-reset style).
     for path in prior.keys() {
         if kept.contains(path.as_str()) {
@@ -71,7 +76,8 @@ fn load_stage0_index(repo: &Repository) -> Result<HashMap<String, IndexEntry>, R
     if !path.is_file() {
         return Ok(HashMap::new());
     }
-    let index = Index::read_path(&path, OidKind::Sha1).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    let index =
+        Index::read_path(&path, OidKind::Sha1).map_err(|e| RemoteError::Msg(e.to_string()))?;
     let mut map = HashMap::with_capacity(index.entries.len());
     for e in index.entries.into_iter().filter(|e| e.stage() == 0) {
         map.insert(e.path.clone(), e);
@@ -166,9 +172,8 @@ fn collect_jobs(
                     _ => 0o100644,
                 };
                 let prior_e = prior.get(&rel);
-                let up_to_date = prior_e.is_some_and(|e| {
-                    e.oid == entry.oid && index_stat_matches_worktree(e, &path)
-                });
+                let up_to_date = prior_e
+                    .is_some_and(|e| e.oid == entry.oid && index_stat_matches_worktree(e, &path));
                 kept.insert(rel.clone());
                 if up_to_date {
                     let mut e = prior_e.cloned().unwrap();
@@ -214,8 +219,9 @@ fn materialize_jobs(
             }
         }
     }
-    // Pf4-3: parallel only when job count clears thread-spawn overhead (clone seed ~48).
-    let written = if writes.len() < 96 {
+    // Pf5 clone: parallel sooner — J-CLONE-LOCAL bulk seed is mid-hundreds of
+    // blobs; spawning a few workers still wins vs serial write_one_blob.
+    let written = if writes.len() < 24 {
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
             out.push((i, write_one_blob(repo, &rel, &path, &oid, mode)?));
@@ -232,13 +238,15 @@ fn materialize_jobs(
         thread::scope(|scope| {
             let mut handles = Vec::with_capacity(workers);
             for piece in writes.chunks(chunk) {
-                handles.push(scope.spawn(move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
-                    let mut local = Vec::with_capacity(piece.len());
-                    for (i, rel, path, oid, mode) in piece {
-                        local.push((*i, write_one_blob(repo, rel, path, oid, *mode)?));
-                    }
-                    Ok(local)
-                }));
+                handles.push(scope.spawn(
+                    move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+                        let mut local = Vec::with_capacity(piece.len());
+                        for (i, rel, path, oid, mode) in piece {
+                            local.push((*i, write_one_blob(repo, rel, path, oid, *mode)?));
+                        }
+                        Ok(local)
+                    },
+                ));
             }
             for h in handles {
                 match h.join() {

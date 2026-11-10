@@ -1,7 +1,7 @@
 //! Trailing index checksum.
 
 use crate::error::IndexError;
-use arks_hash::{hash_bytes, ObjectFormat};
+use arks_hash::{ObjectFormat, hash_bytes};
 use arks_oid::OidKind;
 
 pub(crate) fn object_format(kind: OidKind) -> ObjectFormat {

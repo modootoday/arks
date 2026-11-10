@@ -51,7 +51,9 @@ fn looks_like_git_dir(dir: &Path) -> bool {
     if dir.join("objects").is_dir() {
         return true;
     }
-    resolve_common_dir(dir).ok().is_some_and(|cd| cd.join("objects").is_dir())
+    resolve_common_dir(dir)
+        .ok()
+        .is_some_and(|cd| cd.join("objects").is_dir())
 }
 
 /// Parse `$GIT_DIR/commondir` (relative paths resolve against `$GIT_DIR`).
@@ -76,11 +78,7 @@ pub fn parse_commondir(contents: &str, git_dir: &Path) -> Result<PathBuf, RepoEr
 pub fn resolve_common_dir(git_dir: &Path) -> Result<PathBuf, RepoError> {
     if let Ok(env_cd) = env::var("GIT_COMMON_DIR") {
         let p = PathBuf::from(env_cd);
-        let resolved = if p.is_absolute() {
-            p
-        } else {
-            git_dir.join(p)
-        };
+        let resolved = if p.is_absolute() { p } else { git_dir.join(p) };
         return Ok(fs::canonicalize(&resolved).unwrap_or(resolved));
     }
     let file = git_dir.join("commondir");
@@ -231,7 +229,8 @@ mod tests {
         let target = tmp.path().join("x.git");
         seed_git_dir(&target);
         let abs = fs::canonicalize(&target).unwrap();
-        let parsed = parse_gitdir_file(&format!("gitdir: {}\n", abs.display()), tmp.path()).unwrap();
+        let parsed =
+            parse_gitdir_file(&format!("gitdir: {}\n", abs.display()), tmp.path()).unwrap();
         assert_eq!(parsed, abs);
     }
 }

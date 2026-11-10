@@ -3,8 +3,8 @@ id: sot:root/arks-remote
 title: arks-remote unit
 status: active
 created: 2026-11-08T11:05:00Z
-updated: 2026-11-10T08:00:00Z
-tags: [m6, m16, unit, remote, client, smart-http, ssh, ring-6, phase-h, local-clone, g9, g35, shallow]
+updated: 2026-11-10T01:10:00Z
+tags: [m6, m16, unit, remote, client, smart-http, dumb-http, ssh, ring-6, phase-h, local-clone, g9, g35, shallow]
 verify: manual
 rel:
   governs: [crates/arks-remote]
@@ -35,7 +35,7 @@ rel:
 
 # arks-remote unit
 
-Version **0.4.0**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen`); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]].
+Version **0.5.0**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `delete-refs`); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]].
 
 **Entry:** M5 exit proven — [[evidence:root/20261108104837]]. **Not production** — production is **M9**.
 
@@ -55,7 +55,7 @@ Version **0.4.0**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 | Smart HTTP (`info/refs` + service POST) over `http://` and `https://` | **Required** | Same request/response shapes; TLS for `https://` |
 | Local filesystem **path** and same-host `file://` (absolute; empty host or `localhost`) | **Required (v0.2.0 additive; v0.3.0 pack-aware; v0.4.0 hardlink-prefer)** | **Clone composition only** via local object-directory **hardlink-or-copy** (prefer hardlink when the filesystem allows — git-clone(1) local default; fall back to byte copy); packs kept in place and read through pack-aware [[sot:root/arks-store]]. Cite [git-clone(1)](https://git-scm.com/docs/git-clone) local / `file://` forms; [[research:root/20261108071916]] file-transport note. **Not** `--shared` alternates; **not** piped upload-pack over `file://`. Does **not** unlock G8 |
 | SSH (`git@` / `ssh://`) | **Required (M16 Sy-4)** — OpenSSH `ssh` helper speaking upload-pack/receive-pack pkt-line (no product-path `git`) | [[sot:root/cli-flag-parity-complete]]; auth via agent / key files (OpenSSH defaults); askpass / credential-helper N/A |
-| Dumb HTTP | **Not claimed** | Refuse / do not advertise |
+| Dumb HTTP fetch/clone | **Claimed (additive)** | Fall back when smart `info/refs` returns dumb body ([gitprotocol-http](https://git-scm.com/docs/gitprotocol-http#_dumb_clients)); packs via `objects/info/packs` + loose OID GETs; **no** dumb push; `--depth` refused on dumb |
 | `git://` | **Not claimed** | — |
 
 ### Operations (MUST for claimed subset)

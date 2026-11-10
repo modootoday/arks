@@ -105,7 +105,11 @@ fn g23_c01_c02_porcelain_and_celir_index_same_repo() {
     let blob_hex = String::from_utf8_lossy(&blob_oid.stdout).trim().to_string();
     let effect = lookup_oid_kind(&mut snap, &blob_hex, "blob").expect("lookup");
     assert_eq!(effect.as_deref(), Some("14")); // "dual-path-seed".len()
-    assert!(store.exists(&arks_store::Oid::from_hex(&blob_hex).expect("oid")).unwrap());
+    assert!(
+        store
+            .exists(&arks_store::Oid::from_hex(&blob_hex).expect("oid"))
+            .unwrap()
+    );
 }
 
 /// G23-C03 — ObjectStore remains filesystem; index hint ≠ membership.

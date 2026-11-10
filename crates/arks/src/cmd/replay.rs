@@ -116,7 +116,8 @@ pub fn cmd_revert(args: &[String]) -> CliResult<()> {
 pub fn cmd_rebase(args: &[String]) -> CliResult<()> {
     if args.iter().any(|a| a == "-i" || a == "--interactive") {
         return Err(CliError::NotImplemented(
-            "rebase -i excluded (interactive/TUI); use non-interactive rebase <upstream> (Fs-5)".into(),
+            "rebase -i excluded (interactive/TUI); use non-interactive rebase <upstream> (Fs-5)"
+                .into(),
         ));
     }
     refuse_unknown_flags(args, &[])?;
@@ -242,11 +243,9 @@ fn apply_checked_opts(
     if no_commit {
         materialize_tree_only(&result)?;
         return Ok(picked.unwrap_or_else(|| {
-            result
-                .values()
-                .next()
-                .copied()
-                .unwrap_or_else(|| Oid::from_hex("0000000000000000000000000000000000000000").unwrap())
+            result.values().next().copied().unwrap_or_else(|| {
+                Oid::from_hex("0000000000000000000000000000000000000000").unwrap()
+            })
         }));
     }
     commit_tree(&result, message, author, committer)
@@ -270,7 +269,10 @@ fn write_cherry_pick_conflict(
     let work = work_tree(&repo)?;
     // Preserve ORIG_HEAD / sequencer head once.
     if let Ok(head) = repo.head_oid() {
-        let _ = fs::write(repo.git_dir().join("ORIG_HEAD"), format!("{}\n", head.to_hex()));
+        let _ = fs::write(
+            repo.git_dir().join("ORIG_HEAD"),
+            format!("{}\n", head.to_hex()),
+        );
         let seq = sequencer_dir(&repo);
         fs::create_dir_all(&seq)?;
         if !seq.join("head").is_file() {
@@ -440,7 +442,8 @@ fn materialize_tree_only(files: &HashMap<String, Oid>) -> CliResult<()> {
             fs::create_dir_all(parent)?;
         }
         fs::write(&abs, &blob.payload)?;
-        let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) = stamp_path(&abs, blob.payload.len());
+        let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) =
+            stamp_path(&abs, blob.payload.len());
         entries.push(IndexEntry {
             ctime_sec,
             ctime_nsec,
@@ -642,8 +645,8 @@ fn refuse_exclusive_sequencer_state(repo: &Repository, op: SequencerOp) -> CliRe
     }
     let git = repo.git_dir();
     let merge = git.join("MERGE_HEAD").is_file();
-    let cherry = git.join("CHERRY_PICK_HEAD").is_file()
-        || sequencer_dir(repo).join("todo").is_file();
+    let cherry =
+        git.join("CHERRY_PICK_HEAD").is_file() || sequencer_dir(repo).join("todo").is_file();
     let rebase = git.join("rebase-merge").is_dir() || git.join("rebase-apply").is_dir();
     let interactive_todo = git.join("rebase-merge").join("git-rebase-todo").is_file()
         || git.join("rebase-merge").join("interactive").is_file();
@@ -735,7 +738,9 @@ fn resolve_pick_list(repo: &Repository, rev: &str) -> CliResult<Vec<Oid>> {
             }
         }
         let start = if left.is_empty() {
-            return Err(CliError::Usage("cherry-pick A..B requires both ends".into()));
+            return Err(CliError::Usage(
+                "cherry-pick A..B requires both ends".into(),
+            ));
         } else {
             resolve_commit(repo, left)?
         };

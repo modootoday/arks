@@ -39,9 +39,8 @@ pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
             let n: usize = if rest.is_empty() {
                 1
             } else {
-                rest.parse().map_err(|_| {
-                    CliError::Msg(format!("unknown revision: {rev}"))
-                })?
+                rest.parse()
+                    .map_err(|_| CliError::Msg(format!("unknown revision: {rev}")))?
             };
             let mut oid = resolve_rev_base(repo, base)?;
             for _ in 0..n {
@@ -50,9 +49,10 @@ pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
                     return Err(CliError::Msg(format!("{rev}: not a commit")));
                 }
                 let c = arks_object::Commit::decode(&obj.payload)?;
-                oid = *c.parents.first().ok_or_else(|| {
-                    CliError::Msg(format!("{rev}: no first parent"))
-                })?;
+                oid = *c
+                    .parents
+                    .first()
+                    .ok_or_else(|| CliError::Msg(format!("{rev}: no first parent")))?;
             }
             return Ok(oid);
         }

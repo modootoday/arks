@@ -36,6 +36,4 @@ pub use discover::{
 };
 pub use error::RepoError;
 pub use repo::Repository;
-pub use tree::{
-    commit_tree_map, flatten_tree, flatten_tree_entries, head_blob_map, tree_blob_map,
-};
+pub use tree::{commit_tree_map, flatten_tree, flatten_tree_entries, head_blob_map, tree_blob_map};

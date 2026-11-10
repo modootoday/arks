@@ -57,7 +57,10 @@ pub struct BatchApplyReceipt {
 }
 
 /// Hash prep items (CPU) — safe to call from parallel workers; no Git locks.
-pub fn prep_hash(items: &[PrepItem], format: ObjectFormat) -> Result<Vec<PreparedObject>, LeaseError> {
+pub fn prep_hash(
+    items: &[PrepItem],
+    format: ObjectFormat,
+) -> Result<Vec<PreparedObject>, LeaseError> {
     items
         .iter()
         .map(|item| {
@@ -168,10 +171,7 @@ pub fn apply_batch(
     let mut ordered: Vec<&TipUpdate> = updates.iter().collect();
     ordered.sort_by(|a, b| a.refname.cmp(&b.refname));
 
-    let mut shards: Vec<String> = ordered
-        .iter()
-        .map(|u| u.shard_resource.clone())
-        .collect();
+    let mut shards: Vec<String> = ordered.iter().map(|u| u.shard_resource.clone()).collect();
     shards.sort();
     shards.dedup();
 
@@ -184,12 +184,8 @@ pub fn apply_batch(
             .map_err(|e| LeaseError::Pipeline(format!("open refs: {e}")))?;
         let mut applied = Vec::with_capacity(ordered.len());
         for u in &ordered {
-            refs.update(
-                &u.refname,
-                &u.new_oid,
-                u.expected_old.as_ref(),
-            )
-            .map_err(|e| LeaseError::Pipeline(format!("ref update {}: {e}", u.refname)))?;
+            refs.update(&u.refname, &u.new_oid, u.expected_old.as_ref())
+                .map_err(|e| LeaseError::Pipeline(format!("ref update {}: {e}", u.refname)))?;
             applied.push((u.refname.clone(), u.new_oid.clone()));
         }
 

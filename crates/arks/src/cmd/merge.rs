@@ -32,9 +32,7 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
     }
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if positional.len() != 1 {
-        return Err(CliError::Usage(
-            "merge [--ff-only|--no-ff] <branch>".into(),
-        ));
+        return Err(CliError::Usage("merge [--ff-only|--no-ff] <branch>".into()));
     }
     merge_onto(positional[0], ff_only, no_ff)
 }

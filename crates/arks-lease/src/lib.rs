@@ -31,21 +31,19 @@ pub use error::LeaseError;
 pub use manager::LeaseManager;
 pub use mode::WriterSession;
 pub use pipeline::{
-    apply_batch, materialize_objects, objects_dir, prep_hash, prep_hash_parallel, shard_refns,
-    shard_worktree, BatchApplyReceipt, PrepItem, PreparedObject, TipUpdate,
+    BatchApplyReceipt, PrepItem, PreparedObject, TipUpdate, apply_batch, materialize_objects,
+    objects_dir, prep_hash, prep_hash_parallel, shard_refns, shard_worktree,
 };
 pub use resource::{
-    domain_submodule, domain_worktree, hook_scope, index_scope, is_typed, maint_scope, refns,
     PREFIX_DOMAIN_SUBMODULE, PREFIX_DOMAIN_WORKTREE, PREFIX_HOOK, PREFIX_INDEX, PREFIX_MAINT,
-    PREFIX_REFNS,
+    PREFIX_REFNS, domain_submodule, domain_worktree, hook_scope, index_scope, is_typed,
+    maint_scope, refns,
 };
 pub use shared_index::{
-    apply_shared_index_entries, shared_index_resource, try_grant_shared_index,
-    SharedIndexWriteReceipt, SHARED_INDEX_RESOURCE,
+    SHARED_INDEX_RESOURCE, SharedIndexWriteReceipt, apply_shared_index_entries,
+    shared_index_resource, try_grant_shared_index,
 };
-pub use types::{
-    expiry_from, now_ms, system_time_to_ms, LeaseRecord, ResourceId, WriterMode,
-};
+pub use types::{LeaseRecord, ResourceId, WriterMode, expiry_from, now_ms, system_time_to_ms};
 
 #[cfg(test)]
 mod tests;

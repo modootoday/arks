@@ -346,11 +346,15 @@ fn resolve_submodule_remote_tip(
     // probe is out of scope for --remote on Sy-4; refuse SSH with a clear message.
     if SshRemoteUrl::parse(url).is_ok() {
         return Err(CliError::NotImplemented(
-            "submodule update --remote over SSH URL not claimed in Sy-4 (add/clone/fetch/push are)".into(),
+            "submodule update --remote over SSH URL not claimed in Sy-4 (add/clone/fetch/push are)"
+                .into(),
         ));
     }
-    let local = LocalRemoteUrl::parse(url)
-        .map_err(|_| CliError::Msg(format!("submodule update --remote: unsupported url '{url}'")))?;
+    let local = LocalRemoteUrl::parse(url).map_err(|_| {
+        CliError::Msg(format!(
+            "submodule update --remote: unsupported url '{url}'"
+        ))
+    })?;
     let source = Repository::discover(local.path())
         .or_else(|_| Repository::open(local.path()))
         .map_err(|e| CliError::Msg(format!("submodule remote '{url}': {e}")))?;
@@ -694,7 +698,8 @@ fn absorb_gitdir(super_repo: &Repository, worktree_path: &Path, rel: &str) -> Cl
     )?;
     // Git-compat: record core.worktree on the absorbed modules dir (submodule lock domain).
     // Use forward slashes so stock git-config parsers accept the value on Windows.
-    let wt_abs = strip_verbatim(fs::canonicalize(worktree_path).unwrap_or(worktree_path.to_path_buf()));
+    let wt_abs =
+        strip_verbatim(fs::canonicalize(worktree_path).unwrap_or(worktree_path.to_path_buf()));
     let wt_cfg = config_safe_path(&wt_abs.to_string_lossy());
     let cfg_path = modules.join("config");
     let mut cfg = fs::read_to_string(&cfg_path).unwrap_or_default();
@@ -768,13 +773,10 @@ fn ensure_submodule_checkout(
         let probe = Repository::open(&git_dir)?;
         if probe.get_object(commit).is_err() {
             if let Ok(local) = LocalRemoteUrl::parse(url) {
-                if let Ok(source) = Repository::discover(local.path())
-                    .or_else(|_| Repository::open(local.path()))
+                if let Ok(source) =
+                    Repository::discover(local.path()).or_else(|_| Repository::open(local.path()))
                 {
-                    merge_objects_dir(
-                        source.git_dir().join("objects"),
-                        git_dir.join("objects"),
-                    )?;
+                    merge_objects_dir(source.git_dir().join("objects"), git_dir.join("objects"))?;
                 }
             }
         }

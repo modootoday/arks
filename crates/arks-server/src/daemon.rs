@@ -13,8 +13,8 @@ use arks_repo::Repository;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 #[derive(Debug, Clone)]
@@ -53,8 +53,14 @@ pub fn serve_daemon(
 /// Bind ephemeral loopback daemon; return (addr, stop, join).
 pub fn spawn_loopback_daemon(
     opts: DaemonOptions,
-) -> Result<(SocketAddr, Arc<AtomicBool>, thread::JoinHandle<Result<(), ServerError>>), ServerError>
-{
+) -> Result<
+    (
+        SocketAddr,
+        Arc<AtomicBool>,
+        thread::JoinHandle<Result<(), ServerError>>,
+    ),
+    ServerError,
+> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let addr = listener.local_addr()?;
     listener.set_nonblocking(true)?;
@@ -80,7 +86,10 @@ pub fn spawn_loopback_daemon(
     Ok((addr, stop, handle))
 }
 
-fn handle_daemon_connection(mut stream: TcpStream, opts: &DaemonOptions) -> Result<(), ServerError> {
+fn handle_daemon_connection(
+    mut stream: TcpStream,
+    opts: &DaemonOptions,
+) -> Result<(), ServerError> {
     // Accepted sockets inherit nonblocking from the listener on some platforms
     // (notably Windows); force blocking for pack-protocol I/O.
     stream.set_nonblocking(false)?;

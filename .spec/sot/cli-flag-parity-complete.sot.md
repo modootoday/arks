@@ -3,8 +3,8 @@ id: sot:root/cli-flag-parity-complete
 title: CLI flag-parity complete symmetry
 status: active
 created: 2026-11-09T04:39:10Z
-updated: 2026-11-10T22:40:00Z
-tags: [m16, cli, flag-parity, complete-symmetry, alias, wave-sy, g21, no-refuse, credential, g33]
+updated: 2026-11-10T01:00:00Z
+tags: [m16, cli, flag-parity, complete-symmetry, alias, wave-sy, g21, no-refuse, credential, g33, m25]
 verify: manual
 rel:
   depends_on:
@@ -33,7 +33,7 @@ rel:
 
 # CLI flag-parity complete symmetry (M16 / Phase Sy)
 
-Version **0.1.0**. **Active** alias/`git=arks` honesty ledger after M15. Historical ledgers stay frozen: [[sot:root/cli-flag-parity-m9]] (M9), [[sot:root/cli-flag-parity-full]] (M15 inventory close). This SoT **supersedes them for production honesty**.
+Version **0.1.1**. **Active** alias/`git=arks` honesty ledger after M15. Historical ledgers stay frozen: [[sot:root/cli-flag-parity-m9]] (M9), [[sot:root/cli-flag-parity-full]] (M15 inventory close). This SoT **supersedes them for production honesty**. Server transport N/A rows below must not contradict [[sot:root/arks-server]] **M25 G29–G32 Claimed**.
 
 Primary inventory: [git(1) 2.39.0](https://git-scm.com/docs/git/2.39.0) porcelain + ancillary + plumbing required for scripting/alias muscle memory. Pin: clean-room Git **2.39.x**. Per-command options: matching `git-<cmd>(1)` for the pin.
 
@@ -61,8 +61,8 @@ Primary inventory: [git(1) 2.39.0](https://git-scm.com/docs/git/2.39.0) porcelai
 | CELIR admin UX | Cancelled / non-product | [[sot:root/storage-celir-boundary]] |
 | Lease admin / L3 N-way valves | Product lease SoT; L3 refuse-closed until superseding ADR | [[sot:root/lease-concurrency-intent]], [[adr:root/20261108232800]] |
 | Forge OAuth UX + Git Credential Manager as bundled first-party binary | External GCM/OAuth helpers MAY still be configured by path/name; product ships first-party `wincred`/`libsecret`/`osxkeychain` + TTY (G33) | [[sot:root/credential-helper-askpass]] |
-| `git daemon` / `git://` server | Transport exclusion until remote-host SoT amend | [[sot:root/arks-server]] |
-| Server SSH command-mode / dumb HTTP / protocol v2 **advertise** | M11 smart-HTTP claimed; server SSH/dumb/v2 remain N/A | [[sot:root/arks-server]] |
+| Product SSHD / key CA (arks as sshd) | Ops wrap ForceCommand / `git-shell`; arks speaks pack protocol on stdio only | [[sot:root/arks-server]] |
+| Dumb-HTTP-**only** as sole claimed server path | Forbidden — smart HTTP remains required; dumb is additive (**G29 Claimed**) | [[sot:root/arks-server]], [[evidence:root/20261109221500]] |
 | Interactive editor/TUI-required flows (`commit` without `-m`; `rebase -i`; `add -i`/`-p`; `stash -p`; mergetool/difftool **GUI**) | Non-interactive agent/alias bar | gitcli(7); this SoT |
 | GPG/SSH **signing** beyond claimed SSH commit subset (`tag -s`/`-u`; `verify-tag`; OpenPGP/`gpg.format=openpgp` + X.509 `commit -S` / `verify-commit`) | External crypto UX outside claimed `gpg.format=ssh` commit create/verify ([[sot:root/arks-object]] FW-GPGSIG) | git-tag / git-commit / git-verify-commit / gitformat-signature |
 | Foreign SCM bridges (`svn`, `p4`, `cvs*`, `archimport`, `quiltimport`, `imap-send`, `send-email` SMTP identity) | Not Git core object/CLI symmetry | git(1) interacting-with-others |
@@ -72,7 +72,7 @@ Primary inventory: [git(1) 2.39.0](https://git-scm.com/docs/git/2.39.0) porcelai
 | Byte-identical stderr / advice text | Unless a gate asserts it | [[sot:root/cli-surface]] |
 | Hardlink/`--shared` local clone alternates | Optional later; local path/`file://` object-dir copy remains | [[sot:root/arks-remote]] |
 
-**Client SSH** (`git@` / `ssh://` for clone/fetch/push/submodule add) is **implement** under M16 Sy-4 — not an exclusion. **Server** SSH remains N/A above.
+**Client SSH** (`git@` / `ssh://` for clone/fetch/push/submodule add) is **implement** under M16 Sy-4 — not an exclusion. **Server** transports Claimed under M25: smart HTTP (G15), dumb HTTP additive (**G29**), SSH command-mode stdio (**G30**), protocol v2 advertise (**G31**), `git://` daemon (**G32**) — [[sot:root/arks-server]]; not N/A.
 
 ### Wave Sy claim ledgers
 

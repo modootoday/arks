@@ -132,10 +132,7 @@ mod tests {
 
     #[test]
     fn reject_bad_hex_length() {
-        assert!(matches!(
-            Oid::from_hex("abcd"),
-            Err(OidError::HexLength(4))
-        ));
+        assert!(matches!(Oid::from_hex("abcd"), Err(OidError::HexLength(4))));
     }
 
     #[test]

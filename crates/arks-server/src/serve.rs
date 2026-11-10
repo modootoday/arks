@@ -2,13 +2,13 @@
 
 use crate::auth::BasicAuthConfig;
 use crate::error::ServerError;
-use crate::http::{handle_smart_http_auth, HttpRequest};
+use crate::http::{HttpRequest, handle_smart_http_auth};
 use arks_repo::Repository;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 #[derive(Debug, Clone, Default)]
@@ -57,14 +57,30 @@ pub fn serve_http_with_opts(
 }
 
 /// Bind an ephemeral port; return (bound addr, join handle, stop flag).
-pub fn spawn_loopback(git_dir: PathBuf) -> Result<(SocketAddr, Arc<AtomicBool>, thread::JoinHandle<Result<(), ServerError>>), ServerError> {
+pub fn spawn_loopback(
+    git_dir: PathBuf,
+) -> Result<
+    (
+        SocketAddr,
+        Arc<AtomicBool>,
+        thread::JoinHandle<Result<(), ServerError>>,
+    ),
+    ServerError,
+> {
     spawn_loopback_with_opts(git_dir, ServeHttpOptions::default())
 }
 
 pub fn spawn_loopback_with_opts(
     git_dir: PathBuf,
     opts: ServeHttpOptions,
-) -> Result<(SocketAddr, Arc<AtomicBool>, thread::JoinHandle<Result<(), ServerError>>), ServerError> {
+) -> Result<
+    (
+        SocketAddr,
+        Arc<AtomicBool>,
+        thread::JoinHandle<Result<(), ServerError>>,
+    ),
+    ServerError,
+> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let addr = listener.local_addr()?;
     listener.set_nonblocking(true)?;
@@ -207,9 +223,7 @@ fn handle_connection(
         authorization,
     };
     // dumb_only: strip service= so discovery uses dumb info/refs (smart clients fall back).
-    if opts.dumb_only
-        && (req.path.ends_with("info/refs") || req.path.ends_with("/info/refs"))
-    {
+    if opts.dumb_only && (req.path.ends_with("info/refs") || req.path.ends_with("/info/refs")) {
         req.query = String::new();
     }
     let resp = match handle_smart_http_auth(&mut repo, &req, opts.basic_auth.as_ref()) {

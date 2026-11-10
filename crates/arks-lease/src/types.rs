@@ -39,9 +39,7 @@ impl LeaseRecord {
 
 /// Convert [`SystemTime`] to Unix epoch milliseconds.
 pub fn system_time_to_ms(t: SystemTime) -> u64 {
-    t.duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
+    t.duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64
 }
 
 /// Current wall-clock Unix epoch milliseconds.

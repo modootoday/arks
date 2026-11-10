@@ -51,7 +51,9 @@ pub fn cmd_serve_http(args: &[String]) -> CliResult<()> {
                 i += 1;
                 basic_auth_cli = Some(
                     args.get(i)
-                        .ok_or_else(|| CliError::Usage("serve-http --basic-auth needs user:pass".into()))?
+                        .ok_or_else(|| {
+                            CliError::Usage("serve-http --basic-auth needs user:pass".into())
+                        })?
                         .clone(),
                 );
             }

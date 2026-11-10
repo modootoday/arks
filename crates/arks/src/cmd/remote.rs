@@ -248,9 +248,7 @@ fn parse_depth(raw: &str) -> CliResult<u32> {
         .parse()
         .map_err(|_| CliError::Usage(format!("invalid --depth '{raw}'")))?;
     if n == 0 {
-        return Err(CliError::Usage(
-            "--depth must be a positive integer".into(),
-        ));
+        return Err(CliError::Usage("--depth must be a positive integer".into()));
     }
     Ok(n)
 }

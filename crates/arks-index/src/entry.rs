@@ -44,7 +44,9 @@ pub fn cmp_entries(a: &IndexEntry, b: &IndexEntry) -> std::cmp::Ordering {
 }
 
 pub fn entries_sorted(entries: &[IndexEntry]) -> bool {
-    entries.windows(2).all(|w| cmp_entries(&w[0], &w[1]) != std::cmp::Ordering::Greater)
+    entries
+        .windows(2)
+        .all(|w| cmp_entries(&w[0], &w[1]) != std::cmp::Ordering::Greater)
 }
 
 pub(crate) fn read_entry_v2_v3(
@@ -74,9 +76,8 @@ pub(crate) fn read_entry_v2_v3(
     let uid = read_u32(data, &mut r);
     let gid = read_u32(data, &mut r);
     let size = read_u32(data, &mut r);
-    let oid = Oid::from_bytes(hash_kind, &data[r..r + oid_len]).map_err(|e| {
-        IndexError::Corrupt(format!("oid: {e}"))
-    })?;
+    let oid = Oid::from_bytes(hash_kind, &data[r..r + oid_len])
+        .map_err(|e| IndexError::Corrupt(format!("oid: {e}")))?;
     r += oid_len;
     if data.len() < r + 2 {
         return Err(IndexError::Truncated);
@@ -193,9 +194,8 @@ pub(crate) fn read_entry_v4(
     let uid = read_u32(data, &mut r);
     let gid = read_u32(data, &mut r);
     let size = read_u32(data, &mut r);
-    let oid = Oid::from_bytes(hash_kind, &data[r..r + oid_len]).map_err(|e| {
-        IndexError::Corrupt(format!("oid: {e}"))
-    })?;
+    let oid = Oid::from_bytes(hash_kind, &data[r..r + oid_len])
+        .map_err(|e| IndexError::Corrupt(format!("oid: {e}")))?;
     r += oid_len;
     let flags = u16::from_be_bytes([data[r], data[r + 1]]);
     r += 2;
@@ -218,7 +218,9 @@ pub(crate) fn read_entry_v4(
         .map_err(|_| IndexError::Corrupt("path suffix not utf-8".into()))?;
     let prev_len = prev_path.len();
     if strip > prev_len {
-        return Err(IndexError::Corrupt("v4 path strip exceeds previous path".into()));
+        return Err(IndexError::Corrupt(
+            "v4 path strip exceeds previous path".into(),
+        ));
     }
     let prefix = &prev_path[..prev_len - strip];
     let path = format!("{prefix}{suffix}");
@@ -281,8 +283,7 @@ pub(crate) fn write_entry_v2(
         return Err(IndexError::PathNul);
     }
     let path_bytes = entry.path.as_bytes();
-    let need_extended =
-        entry.flags_extended.is_some() || path_bytes.len() >= CE_NAMEMASK as usize;
+    let need_extended = entry.flags_extended.is_some() || path_bytes.len() >= CE_NAMEMASK as usize;
     let entry_start = buf.len();
     let mut flags = entry.flags & !(CE_NAMEMASK);
     flags &= !CE_EXTENDED;

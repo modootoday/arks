@@ -209,8 +209,9 @@ fn g15_capability_honesty_upload_ad() {
     assert_ok(&recv, "receive-pack ad");
     let rtext = String::from_utf8_lossy(&recv.stdout);
     assert!(rtext.contains("report-status"));
-    assert!(!rtext.contains("delete-refs"));
-    assert!(!rtext.contains("report-status-v2"));
+    assert!(rtext.contains("report-status-v2"));
+    assert!(rtext.contains("delete-refs"));
+    assert!(!rtext.contains("push-options"));
 }
 
 /// M11-C14 — stock Git push vs arks receive-pack honor list

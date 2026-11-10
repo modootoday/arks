@@ -128,9 +128,7 @@ fn g25_c02_stretch_n384() {
             if std::env::var("ARKS_G25_REQUIRE_STRETCH").ok().as_deref() == Some("1") {
                 panic!("stretch N=384 failed: {e}");
             }
-            eprintln!(
-                "G25: stretch N=384 HARD_BLOCK ({e}); required N=256 still authoritative"
-            );
+            eprintln!("G25: stretch N=384 HARD_BLOCK ({e}); required N=256 still authoritative");
         }
     }
 }
@@ -149,9 +147,7 @@ fn g25_c03_stretch_n512() {
             if std::env::var("ARKS_G25_REQUIRE_STRETCH").ok().as_deref() == Some("1") {
                 panic!("stretch N=512 failed: {e}");
             }
-            eprintln!(
-                "G25: stretch N=512 HARD_BLOCK ({e}); required N=256 still authoritative"
-            );
+            eprintln!("G25: stretch N=512 HARD_BLOCK ({e}); required N=256 still authoritative");
         }
     }
 }

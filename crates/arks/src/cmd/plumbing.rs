@@ -86,8 +86,10 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
         }
         i += 1;
     }
-    let tree_s = tree_arg.ok_or_else(|| CliError::Usage("commit-tree <tree> [-p <parent>]… -m <msg>".into()))?;
-    let message = message.ok_or_else(|| CliError::Usage("commit-tree: -m <msg> required".into()))?;
+    let tree_s = tree_arg
+        .ok_or_else(|| CliError::Usage("commit-tree <tree> [-p <parent>]… -m <msg>".into()))?;
+    let message =
+        message.ok_or_else(|| CliError::Usage("commit-tree: -m <msg> required".into()))?;
     let message = if message.ends_with('\n') {
         message
     } else {
@@ -113,7 +115,10 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
 pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
     // M16 Sy-3: `-c`/`-o`/`-d`/`-m`/`-u` claimed (git-ls-files).
     refuse_unknown_flags(args, &["-c", "-o", "-d", "-m", "-u"])?;
-    let cached = args.iter().any(|a| a == "-c") || !args.iter().any(|a| a == "-o" || a == "-d" || a == "-m" || a == "-u");
+    let cached = args.iter().any(|a| a == "-c")
+        || !args
+            .iter()
+            .any(|a| a == "-o" || a == "-d" || a == "-m" || a == "-u");
     let others = args.iter().any(|a| a == "-o");
     let deleted = args.iter().any(|a| a == "-d");
     let modified = args.iter().any(|a| a == "-m");
@@ -170,7 +175,9 @@ pub fn cmd_ls_tree(args: &[String]) -> CliResult<()> {
     let name_only = args.iter().any(|a| a == "--name-only");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if positional.len() != 1 {
-        return Err(CliError::Usage("ls-tree [-r] [--name-only] <tree-ish>".into()));
+        return Err(CliError::Usage(
+            "ls-tree [-r] [--name-only] <tree-ish>".into(),
+        ));
     }
     let repo = open_repo()?;
     let oid = resolve_rev(&repo, positional[0])?;
@@ -201,10 +208,7 @@ fn print_tree(
 ) -> CliResult<()> {
     let obj = repo.get_object(tree_oid)?;
     if obj.kind != ObjectKind::Tree {
-        return Err(CliError::Msg(format!(
-            "not a tree: {}",
-            tree_oid.to_hex()
-        )));
+        return Err(CliError::Msg(format!("not a tree: {}", tree_oid.to_hex())));
     }
     let tree = Tree::decode(&obj.payload, OID_KIND)?;
     for e in tree.entries {
@@ -273,9 +277,7 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
         })?;
         Ok(())
     } else {
-        Err(CliError::Usage(
-            "symbolic-ref <name> [<target>]".into(),
-        ))
+        Err(CliError::Usage("symbolic-ref <name> [<target>]".into()))
     }
 }
 
@@ -285,13 +287,15 @@ pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
     let all = args.iter().any(|a| a == "--all");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if positional.len() != 2 {
-        return Err(CliError::Usage("merge-base [--all] <commit> <commit>".into()));
+        return Err(CliError::Usage(
+            "merge-base [--all] <commit> <commit>".into(),
+        ));
     }
     let repo = open_repo()?;
     let a = resolve_rev(&repo, positional[0])?;
     let b = resolve_rev(&repo, positional[1])?;
-    let base = merge_base_oid(&repo, &a, &b)?
-        .ok_or_else(|| CliError::Msg("no merge base".into()))?;
+    let base =
+        merge_base_oid(&repo, &a, &b)?.ok_or_else(|| CliError::Msg("no merge base".into()))?;
     println!("{}", base.to_hex());
     if all {
         // Claimed subset: primary merge-base only; `--all` accepted for honesty
@@ -395,7 +399,11 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         i += 1;
     }
     refuse_unknown_flags(
-        &filtered.iter().cloned().filter(|a| a.starts_with('-')).collect::<Vec<_>>(),
+        &filtered
+            .iter()
+            .cloned()
+            .filter(|a| a.starts_with('-'))
+            .collect::<Vec<_>>(),
         &["--count"],
     )?;
     let start = filtered
@@ -528,7 +536,8 @@ pub fn cmd_update_index(args: &[String]) -> CliResult<()> {
             uc_lock.display()
         )));
     }
-    if (add || remove || chmod_mode.is_some() || skip_worktree || no_skip_worktree) && lock.is_file()
+    if (add || remove || chmod_mode.is_some() || skip_worktree || no_skip_worktree)
+        && lock.is_file()
     {
         // IDX-011 (M20 Cx-5): index extension / version rewrite under lock refuse.
         if chmod_mode.is_none() && !skip_worktree && !no_skip_worktree {
@@ -543,26 +552,28 @@ pub fn cmd_update_index(args: &[String]) -> CliResult<()> {
     while i < args.len() {
         if args[i] == "--cacheinfo" {
             i += 1;
-            let mode = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into()))?;
+            let mode = args.get(i).ok_or_else(|| {
+                CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into())
+            })?;
             i += 1;
-            let oid_s = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into()))?;
+            let oid_s = args.get(i).ok_or_else(|| {
+                CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into())
+            })?;
             i += 1;
-            let path = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into()))?;
+            let path = args.get(i).ok_or_else(|| {
+                CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into())
+            })?;
             // git-update-index --cacheinfo modes are octal (100644 / 100755 / 160000).
-            let mode_u: u32 = if mode.starts_with('0') || mode.chars().all(|c| matches!(c, '0'..='7'))
-            {
-                u32::from_str_radix(mode, 8).unwrap_or(0o100644)
-            } else {
-                mode.parse().unwrap_or(0o100644)
-            };
+            let mode_u: u32 =
+                if mode.starts_with('0') || mode.chars().all(|c| matches!(c, '0'..='7')) {
+                    u32::from_str_radix(mode, 8).unwrap_or(0o100644)
+                } else {
+                    mode.parse().unwrap_or(0o100644)
+                };
             let oid = Oid::from_hex(oid_s)?;
-            index.entries.retain(|e| !(e.path == *path && e.stage() == 0));
+            index
+                .entries
+                .retain(|e| !(e.path == *path && e.stage() == 0));
             index.entries.push(IndexEntry {
                 ctime_sec: 0,
                 ctime_nsec: 0,
@@ -943,7 +954,9 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
                 let colliding = rd.flatten().any(|e| {
                     let n = e.file_name().to_string_lossy().to_string();
                     n.ends_with(".lock")
-                        && (n.contains("tmp_pack") || n.ends_with(".pack.lock") || n.contains(".tmp"))
+                        && (n.contains("tmp_pack")
+                            || n.ends_with(".pack.lock")
+                            || n.contains(".tmp"))
                 });
                 if colliding {
                     return Err(CliError::Msg(

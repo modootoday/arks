@@ -5,7 +5,7 @@
 
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
-use arks_index::{IndexEntry, CE_EXTENDED};
+use arks_index::{CE_EXTENDED, IndexEntry};
 use std::fs;
 use std::path::Path;
 
@@ -14,10 +14,9 @@ const CE_SKIP_WORKTREE: u16 = 0x4000;
 
 pub fn cmd_sparse_checkout(args: &[String]) -> CliResult<()> {
     // M16 Sy-5: disable / reapply claimed (cone subset).
-    let sub = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage("sparse-checkout <init|set|list|disable|reapply> ...".into()))?;
+    let sub = args.first().map(String::as_str).ok_or_else(|| {
+        CliError::Usage("sparse-checkout <init|set|list|disable|reapply> ...".into())
+    })?;
     match sub {
         "init" => sparse_init(&args[1..]),
         "set" => sparse_set(&args[1..]),
@@ -58,9 +57,7 @@ fn sparse_set(args: &[String]) -> CliResult<()> {
         .map(String::as_str)
         .collect();
     if dirs.is_empty() {
-        return Err(CliError::Usage(
-            "sparse-checkout set <dir>...".into(),
-        ));
+        return Err(CliError::Usage("sparse-checkout set <dir>...".into()));
     }
     let mut repo = open_repo()?;
     // SPARSE-001 (M20 Cx-3): concurrent sparse-checkout cone file rewrite.

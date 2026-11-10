@@ -455,11 +455,7 @@ fn tty_write_prompt(prompt: &str) -> Result<(), RemoteError> {
         let mut f = std::fs::OpenOptions::new()
             .write(true)
             .open("CONOUT$")
-            .or_else(|_| {
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .open("CONIN$")
-            })
+            .or_else(|_| std::fs::OpenOptions::new().write(true).open("CONIN$"))
             .map_err(|e| RemoteError::Msg(format!("open console for prompt: {e}")))?;
         f.write_all(prompt.as_bytes())
             .map_err(|e| RemoteError::Msg(format!("tty prompt write: {e}")))?;

@@ -30,11 +30,7 @@ pub fn clone_http(url: &str, dest: &Path) -> Result<(), RemoteError> {
     clone_http_with(url, dest, &FetchOptions::default())
 }
 
-pub fn clone_http_with(
-    url: &str,
-    dest: &Path,
-    opts: &FetchOptions,
-) -> Result<(), RemoteError> {
+pub fn clone_http_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     HttpRemoteUrl::parse(url)?;
     let opts = opts.clone();
     clone_via_fetch(url, dest, move |repo, url| {
@@ -47,11 +43,7 @@ pub fn clone_ssh(url: &str, dest: &Path) -> Result<(), RemoteError> {
     clone_ssh_with(url, dest, &FetchOptions::default())
 }
 
-pub fn clone_ssh_with(
-    url: &str,
-    dest: &Path,
-    opts: &FetchOptions,
-) -> Result<(), RemoteError> {
+pub fn clone_ssh_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     SshRemoteUrl::parse(url)?;
     let opts = opts.clone();
     clone_via_fetch(url, dest, move |repo, url| {
@@ -93,11 +85,7 @@ pub fn clone_local(url: &str, dest: &Path) -> Result<(), RemoteError> {
     clone_local_with(url, dest, &FetchOptions::default())
 }
 
-pub fn clone_local_with(
-    url: &str,
-    dest: &Path,
-    opts: &FetchOptions,
-) -> Result<(), RemoteError> {
+pub fn clone_local_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     if opts.depth.is_some() {
         return Err(RemoteError::NotImplemented(
             "clone --depth is not claimed for local path / file:// (pack-protocol deepen only)"
@@ -216,7 +204,9 @@ fn copy_dir_recursive(src: PathBuf, dst: PathBuf) -> Result<(), RemoteError> {
     fs::create_dir_all(&dst).map_err(|e| RemoteError::Msg(e.to_string()))?;
     for entry in fs::read_dir(&src).map_err(|e| RemoteError::Msg(e.to_string()))? {
         let entry = entry.map_err(|e| RemoteError::Msg(e.to_string()))?;
-        let ty = entry.file_type().map_err(|e| RemoteError::Msg(e.to_string()))?;
+        let ty = entry
+            .file_type()
+            .map_err(|e| RemoteError::Msg(e.to_string()))?;
         let to = dst.join(entry.file_name());
         if ty.is_dir() {
             copy_dir_recursive(entry.path(), to)?;

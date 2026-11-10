@@ -365,11 +365,9 @@ fn print_lock_honesty_notes(repo: &arks_repo::Repository, reports: &[LockReport]
     let pack_dir = repo.common_dir().join("objects/pack");
     if pack_dir.is_dir() {
         if let Ok(rd) = fs::read_dir(&pack_dir) {
-            let has_keep = rd.flatten().any(|e| {
-                e.file_name()
-                    .to_string_lossy()
-                    .ends_with(".keep")
-            });
+            let has_keep = rd
+                .flatten()
+                .any(|e| e.file_name().to_string_lossy().ends_with(".keep"));
             if has_keep {
                 println!(
                     "note: PACK-009 — detected *.keep under objects/pack (crash leftover class); do not invent unlock-by-delete under live fetch"
@@ -378,9 +376,7 @@ fn print_lock_honesty_notes(repo: &arks_repo::Repository, reports: &[LockReport]
         }
     }
     if repo.common_dir().join("gc.log").is_file() {
-        println!(
-            "note: MAINT-002 — gc.log present; auto-gc may be suppressed (gc.logExpiry)"
-        );
+        println!("note: MAINT-002 — gc.log present; auto-gc may be suppressed (gc.logExpiry)");
     }
     if pack_dir.is_dir() {
         if let Ok(rd) = fs::read_dir(&pack_dir) {
@@ -395,11 +391,9 @@ fn print_lock_honesty_notes(repo: &arks_repo::Repository, reports: &[LockReport]
             }
         }
         if let Ok(rd) = fs::read_dir(&pack_dir) {
-            let has_bitmap = rd.flatten().any(|e| {
-                e.file_name()
-                    .to_string_lossy()
-                    .ends_with(".bitmap")
-            });
+            let has_bitmap = rd
+                .flatten()
+                .any(|e| e.file_name().to_string_lossy().ends_with(".bitmap"));
             if has_bitmap {
                 println!(
                     "note: PACK-003 — pack bitmap present; concurrent pack replace mid-bitmap is PACK-003 class"
@@ -428,7 +422,8 @@ fn print_lock_honesty_notes(repo: &arks_repo::Repository, reports: &[LockReport]
         );
     }
     let hooks = repo.git_dir().join("hooks");
-    if hooks.join(".arks-hooks-swap").is_file() || hooks.join(".githooks-swap-in-progress").is_file()
+    if hooks.join(".arks-hooks-swap").is_file()
+        || hooks.join(".githooks-swap-in-progress").is_file()
     {
         println!(
             "note: MISC-011 — hooks swap-in-progress marker detected; mid-flight hook deploy vs writers"

@@ -242,7 +242,10 @@ fn render_cover_letter(repo: &Repository, commits: &[Oid]) -> CliResult<String> 
         .ok_or_else(|| CliError::Msg("format-patch: empty cover letter series".into()))?;
     let tip = read_commit(repo, &head)?;
     let mut out = String::new();
-    out.push_str(&format!("From {} Mon Sep 17 00:00:00 2001\n", head.to_hex()));
+    out.push_str(&format!(
+        "From {} Mon Sep 17 00:00:00 2001\n",
+        head.to_hex()
+    ));
     out.push_str(&format!(
         "From: {} <{}>\n",
         tip.author.name, tip.author.email

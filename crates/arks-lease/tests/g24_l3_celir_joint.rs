@@ -7,8 +7,8 @@
 
 use arks_hash::ObjectFormat;
 use arks_lease::{
-    apply_batch, materialize_objects, objects_dir, prep_hash, prep_hash_parallel, shard_refns,
-    LeaseError, LeaseManager, PrepItem, TipUpdate, WriterMode, WriterSession,
+    LeaseError, LeaseManager, PrepItem, TipUpdate, WriterMode, WriterSession, apply_batch,
+    materialize_objects, objects_dir, prep_hash, prep_hash_parallel, shard_refns,
 };
 use arks_object::{ObjectKind, RawObject};
 use arks_store::celir_index::{lookup_oid_kind, open_sidecar, rebuild_from_git};
@@ -155,7 +155,10 @@ fn joint_storm(n: usize) {
         assert_eq!(stock_git_cat_file(&git, &p.oid.to_hex()), "blob");
     }
     // Post-storm index still consistent for seed.
-    assert_eq!(query_effect(&sidecar, &seed_hex).as_deref(), Some(want.as_str()));
+    assert_eq!(
+        query_effect(&sidecar, &seed_hex).as_deref(),
+        Some(want.as_str())
+    );
 }
 
 #[test]

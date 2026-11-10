@@ -6,9 +6,7 @@
 
 use crate::error::ServerError;
 use arks_oid::Oid;
-use arks_protocol::{
-    Packet, encode_packet, encode_text_line, v1_advertisement_payload,
-};
+use arks_protocol::{Packet, encode_packet, encode_text_line, v1_advertisement_payload};
 
 /// Encode a smart-HTTP service advertisement (`# service=` prefix).
 pub fn encode_http_advertisement(

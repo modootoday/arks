@@ -1,7 +1,7 @@
 //! L1 in-process lease manager.
 
 use crate::error::LeaseError;
-use crate::types::{expiry_from, now_ms, LeaseRecord, ResourceId};
+use crate::types::{LeaseRecord, ResourceId, expiry_from, now_ms};
 use std::collections::BTreeMap;
 use std::time::Duration;
 

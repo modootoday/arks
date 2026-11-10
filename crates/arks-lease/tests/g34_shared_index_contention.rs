@@ -4,10 +4,10 @@
 //! Cite: api-lockfile, gitformat-index, adr:root/20261110074000.
 //! ≠ G22 / G24 / M24 substitute.
 
-use arks_index::{index_lock_path, Index, IndexEntry};
+use arks_index::{Index, IndexEntry, index_lock_path};
 use arks_lease::{
-    apply_shared_index_entries, shared_index_resource, try_grant_shared_index, LeaseError,
-    LeaseManager, SHARED_INDEX_RESOURCE,
+    LeaseError, LeaseManager, SHARED_INDEX_RESOURCE, apply_shared_index_entries,
+    shared_index_resource, try_grant_shared_index,
 };
 use arks_oid::{Oid, OidKind};
 use std::fs;

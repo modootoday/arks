@@ -12,7 +12,10 @@ use std::fs;
 use std::path::Path;
 pub fn cmd_branch(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `-a`/`--all`, `-r`/`--remotes`, `-v` claimed (git-branch).
-    refuse_unknown_flags(args, &["-d", "-D", "-m", "-a", "--all", "-r", "--remotes", "-v"])?;
+    refuse_unknown_flags(
+        args,
+        &["-d", "-D", "-m", "-a", "--all", "-r", "--remotes", "-v"],
+    )?;
     let mut repo = open_repo()?;
     if args.iter().any(|a| a == "-d" || a == "-D") {
         let force = args.iter().any(|a| a == "-D");
@@ -113,7 +116,9 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         let name = args
             .get(i + 1)
             .filter(|a| !a.starts_with('-'))
-            .ok_or_else(|| CliError::Usage("checkout --orphan <new-branch> [<start-point>]".into()))?;
+            .ok_or_else(|| {
+                CliError::Usage("checkout --orphan <new-branch> [<start-point>]".into())
+            })?;
         // Remaining non-flag args after the orphan name are the optional start-point.
         let start = args
             .iter()

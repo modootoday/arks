@@ -6,7 +6,7 @@
 
 use crate::error::{CliError, CliResult};
 use crate::util::{FORMAT, open_repo, refuse_unknown_flags};
-use arks_lease::{maint_scope, DurableLeaseStore, LeaseError};
+use arks_lease::{DurableLeaseStore, LeaseError, maint_scope};
 use arks_object::{Commit, ObjectKind, RawObject, Tree};
 use arks_oid::Oid;
 use arks_pack::EncodedPack;
@@ -34,7 +34,10 @@ pub fn cmd_gc(args: &[String]) -> CliResult<()> {
             "gc --force refused (CORR-002 honesty): overlapping forced gc risks pack/prune interference; use single `arks gc` / `arks repack -ad` under maint:gc lease".into(),
         ));
     }
-    if args.iter().any(|a| a == "--prune=now" || a.starts_with("--prune=")) {
+    if args
+        .iter()
+        .any(|a| a == "--prune=now" || a.starts_with("--prune="))
+    {
         // CORR-004 (M20 Cx-6): partial-clone + aggressive prune misunderstanding.
         let repo = open_repo()?;
         let filters = repo.common_dir().join("objects/info/filters");
@@ -67,7 +70,8 @@ pub fn cmd_gc(args: &[String]) -> CliResult<()> {
     }
     if args.iter().any(|a| a == "--prune") {
         return Err(CliError::NotImplemented(
-            "gc --prune <date> not claimed; omit prune or see CORR-001 refuse for --prune=now".into(),
+            "gc --prune <date> not claimed; omit prune or see CORR-001 refuse for --prune=now"
+                .into(),
         ));
     }
     run_repack(&["-a".into(), "-d".into()])

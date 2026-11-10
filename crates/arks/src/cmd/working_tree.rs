@@ -132,7 +132,13 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `--stat`, `--name-only`, `--name-status` claimed (git-diff).
     refuse_unknown_flags(
         args,
-        &["--cached", "--staged", "--stat", "--name-only", "--name-status"],
+        &[
+            "--cached",
+            "--staged",
+            "--stat",
+            "--name-only",
+            "--name-status",
+        ],
     )?;
     let cached = args.iter().any(|a| a == "--cached" || a == "--staged");
     let name_only = args.iter().any(|a| a == "--name-only");

@@ -101,18 +101,14 @@ fn print_record(rec: &LeaseRecord) {
 
 fn lease_grant(args: &[String]) -> CliResult<()> {
     for a in args {
-        if a.starts_with('-')
-            && !a.starts_with("--holder")
-            && !a.starts_with("--ttl-secs")
-        {
+        if a.starts_with('-') && !a.starts_with("--holder") && !a.starts_with("--ttl-secs") {
             return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
         }
     }
     let pos = positionals(args);
-    let resource = pos
-        .first()
-        .copied()
-        .ok_or_else(|| CliError::Usage("lease grant <resource_id> --holder <name> [--ttl-secs N]".into()))?;
+    let resource = pos.first().copied().ok_or_else(|| {
+        CliError::Usage("lease grant <resource_id> --holder <name> [--ttl-secs N]".into())
+    })?;
     let holder = take_opt(args, "--holder").ok_or_else(|| {
         CliError::Usage("lease grant <resource_id> --holder <name> [--ttl-secs N]".into())
     })?;
@@ -319,18 +315,12 @@ fn lease_inspect(args: &[String]) -> CliResult<()> {
     println!(
         "note: MISC-016 — huge update-ref --stdin batches: exclusive refns:txn:stdin lease; tip locks still honored"
     );
-    println!(
-        "note: SUB-010 — deinit vs build in path: exclusive domain:submodule:deinit lease"
-    );
+    println!("note: SUB-010 — deinit vs build in path: exclusive domain:submodule:deinit lease");
     println!(
         "note: SHAL-002 — partial-clone promisor queue pileup: exclusive shallow:promisor lease; no absolute PERF SLO"
     );
-    println!(
-        "note: PACK-007 — promisor demand-fetch races: exclusive pack:promisor:fetch lease"
-    );
-    println!(
-        "note: CI-003 — shared fixture bare push CAS: exclusive ci:fixture-bare lease"
-    );
+    println!("note: PACK-007 — promisor demand-fetch races: exclusive pack:promisor:fetch lease");
+    println!("note: CI-003 — shared fixture bare push CAS: exclusive ci:fixture-bare lease");
     println!(
         "note: CI-004 — bot temp-branch namespace: exclusive refns:refs/heads/bot/ partition lease"
     );
@@ -356,24 +346,14 @@ fn lease_inspect(args: &[String]) -> CliResult<()> {
     println!(
         "note: PERF-003 — fsmonitor single-WD backlog: exclusive perf:fsmonitor lease; no invented daemon"
     );
-    println!(
-        "note: PERF-004 — commit-graph rewrite vs walks: exclusive perf:commit-graph lease"
-    );
-    println!(
-        "note: PERF-005 — loose object explosion lag: exclusive perf:loose:burst lease"
-    );
+    println!("note: PERF-004 — commit-graph rewrite vs walks: exclusive perf:commit-graph lease");
+    println!("note: PERF-005 — loose object explosion lag: exclusive perf:loose:burst lease");
     println!(
         "note: PERF-006 — process-spawn herd: exclusive perf:process:spawn lease; no absolute ms SLO"
     );
-    println!(
-        "note: PERF-007 — pack mmap thrash readers: exclusive perf:pack:mmap lease"
-    );
-    println!(
-        "note: PERF-008 — parallel blame: exclusive perf:blame lease; no absolute ms SLO"
-    );
-    println!(
-        "note: PERF-009 — parallel grep: exclusive perf:grep lease; no absolute ms SLO"
-    );
+    println!("note: PERF-007 — pack mmap thrash readers: exclusive perf:pack:mmap lease");
+    println!("note: PERF-008 — parallel blame: exclusive perf:blame lease; no absolute ms SLO");
+    println!("note: PERF-009 — parallel grep: exclusive perf:grep lease; no absolute ms SLO");
     println!(
         "note: PERF-010 — parallel diff --stat herd: exclusive perf:diff:stat lease; no absolute ms SLO"
     );
@@ -383,7 +363,9 @@ fn lease_inspect(args: &[String]) -> CliResult<()> {
     println!(
         "note: AGENT-004 — cross-host NFS: agent:nfs:refuse honesty — do not green multi-host shared WT on NFS"
     );
-    println!("note: lease ≠ skip Git locks; L3 HighConcurrency = opt-in claimed shape (shared-index N-way OUT)");
+    println!(
+        "note: lease ≠ skip Git locks; L3 HighConcurrency = opt-in claimed shape (shared-index N-way OUT)"
+    );
     Ok(())
 }
 

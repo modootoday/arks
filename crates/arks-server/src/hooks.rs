@@ -1,9 +1,10 @@
 //! Sync receive-pack githooks (Claimed honor list).
 //!
-//! Honored: `pre-receive`, `update`, `post-receive`.
+//! Honored: `pre-receive`, `update`, `post-receive`, `post-update`.
 //! Cite: <https://git-scm.com/docs/githooks>,
 //! <https://git-scm.com/docs/git-receive-pack>.
 //! Sync only — no invented async runners. Per-push stdin isolation.
+//! `proc-receive` / `push-options` remain unclaimed (fail-closed: not advertised).
 
 use crate::error::ServerError;
 use std::fs;
@@ -20,12 +21,20 @@ pub(crate) enum HookGate {
     Decline,
 }
 
+/// Optional env for hooks during a quarantined receive-pack.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct HookEnv {
+    /// Absolute path to the quarantine objects directory (`GIT_QUARANTINE_PATH`).
+    pub quarantine_path: Option<PathBuf>,
+}
+
 /// Run `$GIT_DIR/hooks/pre-receive` once with stdin lines of proposed updates.
 pub(crate) fn run_pre_receive(
     git_dir: &Path,
     stdin_lines: &[u8],
+    env: &HookEnv,
 ) -> Result<HookGate, ServerError> {
-    run_named_hook(git_dir, "pre-receive", &[], Some(stdin_lines), true)
+    run_named_hook(git_dir, "pre-receive", &[], Some(stdin_lines), true, env)
 }
 
 /// Run `$GIT_DIR/hooks/update` once for a single ref (`refname old-oid new-oid`).
@@ -34,6 +43,7 @@ pub(crate) fn run_update(
     refname: &str,
     old_hex: &str,
     new_hex: &str,
+    env: &HookEnv,
 ) -> Result<HookGate, ServerError> {
     run_named_hook(
         git_dir,
@@ -41,14 +51,26 @@ pub(crate) fn run_update(
         &[refname, old_hex, new_hex],
         None,
         true,
+        env,
     )
 }
 
 /// Run `$GIT_DIR/hooks/post-receive` once with stdin of successfully updated refs.
 ///
 /// Exit status does not change push outcome ([git-receive-pack] POST-RECEIVE HOOK).
-pub(crate) fn run_post_receive(git_dir: &Path, stdin_lines: &[u8]) {
-    let _ = run_named_hook(git_dir, "post-receive", &[], Some(stdin_lines), false);
+pub(crate) fn run_post_receive(git_dir: &Path, stdin_lines: &[u8], env: &HookEnv) {
+    let _ = run_named_hook(git_dir, "post-receive", &[], Some(stdin_lines), false, env);
+}
+
+/// Run `$GIT_DIR/hooks/post-update` with argv = updated ref names.
+///
+/// Cite: [git-receive-pack](https://git-scm.com/docs/git-receive-pack) POST-UPDATE HOOK.
+/// Exit status ignored.
+pub(crate) fn run_post_update(git_dir: &Path, updated_refs: &[&str], env: &HookEnv) {
+    if updated_refs.is_empty() {
+        return;
+    }
+    let _ = run_named_hook(git_dir, "post-update", updated_refs, None, false, env);
 }
 
 fn hook_path(git_dir: &Path, name: &str) -> PathBuf {
@@ -118,6 +140,7 @@ fn run_named_hook(
     args: &[&str],
     stdin: Option<&[u8]>,
     fail_on_nonzero: bool,
+    env: &HookEnv,
 ) -> Result<HookGate, ServerError> {
     let path = hook_path(git_dir, name);
     if !is_runnable_hook(&path) {
@@ -144,10 +167,16 @@ fn run_named_hook(
     {
         // Hooks that expand `$GIT_DIR/...` must see a POSIX path under bash.
         cmd.env("GIT_DIR", bash_style_path(git_dir));
+        if let Some(q) = &env.quarantine_path {
+            cmd.env("GIT_QUARANTINE_PATH", bash_style_path(q));
+        }
     }
     #[cfg(not(windows))]
     {
         cmd.env("GIT_DIR", git_dir);
+        if let Some(q) = &env.quarantine_path {
+            cmd.env("GIT_QUARANTINE_PATH", q);
+        }
     }
     cmd.current_dir(git_dir);
     if stdin.is_some() {

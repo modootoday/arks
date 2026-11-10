@@ -14,7 +14,7 @@
 use crate::error::LeaseError;
 use crate::manager::LeaseManager;
 use crate::resource::index_scope;
-use arks_index::{sort_entries, Index, IndexEntry};
+use arks_index::{Index, IndexEntry, sort_entries};
 use arks_oid::OidKind;
 use std::path::Path;
 use std::sync::Mutex;

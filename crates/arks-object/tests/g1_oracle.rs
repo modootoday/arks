@@ -6,7 +6,7 @@
 //! Primary: https://git-scm.com/docs/gitformat-loose
 
 use arks_hash::ObjectFormat;
-use arks_object::{read_loose, write_loose, ObjectKind, RawObject};
+use arks_object::{ObjectKind, RawObject, read_loose, write_loose};
 use arks_oid::Oid;
 use std::io::Write;
 use std::path::Path;
@@ -38,10 +38,7 @@ fn git_hash_object(payload: &[u8]) -> String {
         .expect("write stdin");
     let out = child.wait_with_output().expect("git hash-object");
     assert!(out.status.success(), "git hash-object failed: {out:?}");
-    String::from_utf8(out.stdout)
-        .unwrap()
-        .trim()
-        .to_string()
+    String::from_utf8(out.stdout).unwrap().trim().to_string()
 }
 
 fn git_init(repo: &Path) {
@@ -70,10 +67,7 @@ fn git_hash_object_write(repo: &Path, payload: &[u8]) -> String {
         .expect("write stdin");
     let out = child.wait_with_output().expect("git hash-object -w");
     assert!(out.status.success(), "git hash-object -w failed: {out:?}");
-    String::from_utf8(out.stdout)
-        .unwrap()
-        .trim()
-        .to_string()
+    String::from_utf8(out.stdout).unwrap().trim().to_string()
 }
 
 fn git_cat_file_blob(repo: &Path, oid: &str) -> Vec<u8> {

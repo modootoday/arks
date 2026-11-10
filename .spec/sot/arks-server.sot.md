@@ -3,7 +3,7 @@ id: sot:root/arks-server
 title: arks-server unit
 status: active
 created: 2026-11-08T23:12:49Z
-updated: 2026-11-10T08:00:00Z
+updated: 2026-11-10T01:10:00Z
 tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g36]
 verify: manual
 rel:
@@ -38,7 +38,7 @@ rel:
 
 # arks-server unit
 
-Version **0.2.1**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) under [[plan:root/20261108105446]] / Phase **Sv** (**M11** — **production-server**) and [[plan:root/20261109220230]] / Phase **Sv2** (**M25** — transport expansion). Wire: [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2), [git-upload-pack](https://git-scm.com/docs/git-upload-pack), [git-receive-pack](https://git-scm.com/docs/git-receive-pack), [git-http-backend](https://git-scm.com/docs/git-http-backend), [git-daemon](https://git-scm.com/docs/git-daemon), [githooks](https://git-scm.com/docs/githooks). Catalog: [[research:root/20261108071916]]. Scope: [[sot:root/remote-host-compatibility-surface]]. Unlock: [[adr:root/20261109220230]]. Optional HTTP Basic: [[adr:root/20261109224236]].
+Version **0.3.0**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) under [[plan:root/20261108105446]] / Phase **Sv** (**M11** — **production-server**) and [[plan:root/20261109220230]] / Phase **Sv2** (**M25** — transport expansion). Wire: [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-v2](https://git-scm.com/docs/gitprotocol-v2), [git-upload-pack](https://git-scm.com/docs/git-upload-pack), [git-receive-pack](https://git-scm.com/docs/git-receive-pack), [git-http-backend](https://git-scm.com/docs/git-http-backend), [git-daemon](https://git-scm.com/docs/git-daemon), [githooks](https://git-scm.com/docs/githooks). Catalog: [[research:root/20261108071916]]. Scope: [[sot:root/remote-host-compatibility-surface]]. Unlock: [[adr:root/20261109220230]]. Optional HTTP Basic: [[adr:root/20261109224236]].
 
 **Entry:** M9 exit by default — [[evidence:root/20261108150000]]. **M10 is not a prerequisite.** Lease is not required for server.
 
@@ -76,22 +76,22 @@ Version **0.2.1**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) und
 | Optional HTTP Basic (in-process) | **Claimed (G36)** | When configured (--basic-auth / ARKS_HTTP_BASIC / credential file); unset = unauthenticated loopback (G15); [[adr:root/20261109224236]], [[evidence:root/20261109224717]] |
 | Ops reverse-proxy / external TLS | **Still valid ops pattern** | MAY front arks; additional to in-process Basic |
 | Product SSHD / key CA | **Not claimed** | Operators wrap ForceCommand / `git-shell`; arks speaks pack protocol on stdio |
-| `delete-refs` / `report-status-v2` (unimplemented pack caps) | **Refuse-close** | MUST NOT appear in advertisements until implemented |
-| Server-side [githooks](https://git-scm.com/docs/githooks) on receive-pack | **Claimed (honor list)** — see §Receive-pack githooks | Sync honor of `pre-receive`, `update`, `post-receive` only; residual **FW-SRV-HOOKS** |
+| `delete-refs` / `report-status-v2` | **Claimed** | Advertise + implement; v2 uses classic ok/ng until proc-receive rewrite options are claimed; MUST NOT invent option lines |
+| Server-side [githooks](https://git-scm.com/docs/githooks) on receive-pack | **Claimed (honor list)** — see §Receive-pack githooks | Sync honor of `pre-receive`, `update`, `post-receive`, `post-update`; residual **FW-SRV-HOOKS** |
 | `proc-receive` / push-options | **N/A (unclaimed)** | Catalog HOOK-008; MUST NOT advertise `push-options` / proc-receive |
-| `post-update` hook | **Not claimed** | Optional receive-pack hook; reopen via SoT amend |
-| Quarantine object dir (`GIT_QUARANTINE_PATH`) | **Not claimed** | Objects MAY land in the main store before `pre-receive`; no invented quarantine API |
+| Quarantine object dir (`GIT_QUARANTINE_PATH`) | **Claimed** | Incoming objects land under `$GIT_DIR/objects/incoming-*` and migrate only after `pre-receive` succeeds ([git-receive-pack](https://git-scm.com/docs/git-receive-pack#_quarantine_environment)) |
 | Dumb-HTTP-only as sole server | **Forbidden** | Smart HTTP remains required |
 
 ### Receive-pack githooks (MUST — Claimed honor list)
 
-Primary docs: [githooks](https://git-scm.com/docs/githooks), [git-receive-pack](https://git-scm.com/docs/git-receive-pack). Sync process only — **no** invented async / out-of-band hook runners. Isolate per-push hook stdin; do not share scratch across concurrent pushes.
+Primary docs: [githooks](https://git-scm.com/docs/githooks), [git-receive-pack](https://git-scm.com/docs/git-receive-pack). Sync process only — **no** invented async / out-of-band hook runners. Isolate per-push hook stdin; do not share scratch across concurrent pushes. During unpack/`pre-receive`, set `GIT_QUARANTINE_PATH` to the incoming objects directory.
 
 | Hook | When | Failure semantics |
 |------|------|-------------------|
-| `pre-receive` | Once, after pack unpack and **before** any ref update (and before per-ref fast-forward checks) | Non-zero exit → **reject entire push**: no ref updates; no `update` / `post-receive`. report-status `ng <ref> pre-receive hook declined` for each proposed non-delete ref |
+| `pre-receive` | Once, after pack unpack into quarantine and **before** migrate/ref update (and before per-ref fast-forward checks) | Non-zero exit → **reject entire push**: discard quarantine; no ref updates; no `update` / `post-receive` / `post-update`. report-status `ng <ref> pre-receive hook declined` for each proposed ref |
 | `update` | Once per proposed ref, before that ref is updated | Non-zero exit → **reject that ref only** (`ng <ref> hook declined`); other refs MAY still update |
 | `post-receive` | Once after processing, **if** at least one ref updated successfully | Exit status does **not** change push outcome |
+| `post-update` | Once after processing, **if** at least one ref updated successfully; argv = updated ref names | Exit status ignored; typical use `update-server-info` for dumb HTTP |
 
 Hooks run only when `$GIT_DIR/hooks/<name>` exists and is executable (Unix mode bits; Windows host advisory may invoke via `bash`). Ignore `*.sample`. Stdin for `pre-receive` / `post-receive`: one `old-oid SP new-oid SP refname LF` line per ref ([githooks](https://git-scm.com/docs/githooks)). `update` argv: `refname old-oid new-oid`. Set `GIT_DIR` to the served repository. Missing hook file = no-op (stock Git).
 
@@ -111,7 +111,7 @@ Hooks run only when `$GIT_DIR/hooks/<name>` exists and is executable (Unix mode 
 
 - Forge (B); CELIR ObjectStore; requiring leases; inventing protocol caps; product credential / OAuth server.
 - Folding into M9; calling M25 “CLI-parity production.”
-- `proc-receive`, push-options, `post-update`, quarantine object directory (until SoT amend).
+- `proc-receive`, push-options (until SoT amend + real advertise).
 - Lease-over-wire (until lease SoT claims it).
 
 ## Why

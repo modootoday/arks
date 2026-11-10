@@ -52,11 +52,7 @@ pub fn ancestor_set(repo: &Repository, tip: Oid) -> Result<HashSet<Oid>, RepoErr
 
 /// Best-effort merge-base: first commit on `b`'s ancestry (including `b`) that
 /// is an ancestor of `a`. Cite: <https://git-scm.com/docs/git-merge-base>
-pub fn merge_base_oid(
-    repo: &Repository,
-    a: &Oid,
-    b: &Oid,
-) -> Result<Option<Oid>, RepoError> {
+pub fn merge_base_oid(repo: &Repository, a: &Oid, b: &Oid) -> Result<Option<Oid>, RepoError> {
     let a_anc = ancestor_set(repo, *a)?;
     let mut stack = vec![*b];
     let mut seen = HashSet::new();

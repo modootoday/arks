@@ -2,9 +2,10 @@
 //!
 //! The client sends update commands and a self-contained undeltified pack, then
 //! requires `report-status` (or `report-status-v2` when that is the only form
-//! advertised). Delete and force-with-lease are not claimed.
+//! advertised). Deletes require peer `delete-refs`. Force-with-lease is not claimed.
 //!
 //! Primary: <https://git-scm.com/docs/gitprotocol-pack> (push-cert / report-status),
+//! <https://git-scm.com/docs/gitprotocol-capabilities> (`delete-refs`),
 //! <https://git-scm.com/docs/gitprotocol-http>
 
 use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
@@ -74,7 +75,11 @@ pub fn push_ssh(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<
 }
 
 /// Dispatch HTTP vs SSH from the remote URL scheme.
-pub fn push_remote(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<(), RemoteError> {
+pub fn push_remote(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+) -> Result<(), RemoteError> {
     if SshRemoteUrl::parse(url).is_ok() {
         push_ssh(repo, url, updates)
     } else {
@@ -139,11 +144,6 @@ fn validate_push_updates(updates: &[PushUpdate]) -> Result<(), RemoteError> {
         return Err(RemoteError::Protocol("push with no refs".into()));
     }
     for update in updates {
-        if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
-            return Err(RemoteError::NotImplemented(
-                "push delete is not claimed".into(),
-            ));
-        }
         if !update.refname.starts_with("refs/") {
             return Err(RemoteError::Protocol(format!(
                 "push ref must be fully qualified, got {}",
@@ -163,6 +163,7 @@ fn build_push_body(
     let caps = push_capability_list(&ad.capabilities)?;
 
     let mut commands: Vec<(Oid, Oid, String)> = Vec::new();
+    let mut any_delete = false;
     for update in updates {
         let old = ad
             .refs
@@ -173,16 +174,27 @@ fn build_push_body(
         if old == update.new_oid {
             continue;
         }
+        if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
+            any_delete = true;
+        }
         commands.push((old, update.new_oid, update.refname.clone()));
     }
     if commands.is_empty() {
         return Ok((Vec::new(), true));
     }
+    if any_delete && !cap_advertised(&ad.capabilities, "delete-refs") {
+        return Err(RemoteError::NotImplemented(
+            "peer did not advertise delete-refs; push delete not claimed against this peer".into(),
+        ));
+    }
 
     let mut tips = Vec::new();
     let mut bases = Vec::new();
     for (old, new, _) in &commands {
-        tips.push(*new);
+        // Deletes send zero new-oid and no pack objects for that tip.
+        if !new.as_bytes().iter().all(|b| *b == 0) {
+            tips.push(*new);
+        }
         if !old.as_bytes().iter().all(|b| *b == 0) && repo.store().exists(old).unwrap_or(false) {
             bases.push(*old);
         }

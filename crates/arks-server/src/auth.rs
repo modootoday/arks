@@ -53,9 +53,8 @@ impl BasicAuthConfig {
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }
-            let (user, pass) = split_user_pass(line).map_err(|e| {
-                ServerError::Msg(format!("basic-auth file line {}: {e}", idx + 1))
-            })?;
+            let (user, pass) = split_user_pass(line)
+                .map_err(|e| ServerError::Msg(format!("basic-auth file line {}: {e}", idx + 1)))?;
             credentials.push(BasicCredential {
                 username: user,
                 password: pass,
@@ -163,20 +162,10 @@ fn base64_decode(input: &[u8]) -> Result<Vec<u8>, ()> {
         }
         let b0 = val(chunk[0])?;
         let b1 = val(chunk[1])?;
-        let b2 = if chunk[2] == b'=' {
-            0
-        } else {
-            val(chunk[2])?
-        };
-        let b3 = if chunk[3] == b'=' {
-            0
-        } else {
-            val(chunk[3])?
-        };
-        let n = (u32::from(b0) << 18)
-            | (u32::from(b1) << 12)
-            | (u32::from(b2) << 6)
-            | u32::from(b3);
+        let b2 = if chunk[2] == b'=' { 0 } else { val(chunk[2])? };
+        let b3 = if chunk[3] == b'=' { 0 } else { val(chunk[3])? };
+        let n =
+            (u32::from(b0) << 18) | (u32::from(b1) << 12) | (u32::from(b2) << 6) | u32::from(b3);
         out.push(((n >> 16) & 0xff) as u8);
         if pad < 2 {
             out.push(((n >> 8) & 0xff) as u8);
@@ -219,7 +208,10 @@ pub fn base64_encode(data: &[u8]) -> String {
 }
 
 pub fn basic_authorization_header(user: &str, pass: &str) -> String {
-    format!("Basic {}", base64_encode(format!("{user}:{pass}").as_bytes()))
+    format!(
+        "Basic {}",
+        base64_encode(format!("{user}:{pass}").as_bytes())
+    )
 }
 
 #[cfg(test)]

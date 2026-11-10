@@ -62,11 +62,11 @@ pub use plumbing::{
 pub use range_diff::cmd_range_diff;
 pub use remote::{cmd_clone, cmd_fetch, cmd_push, cmd_remote};
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
-pub use sign::cmd_verify_commit;
 pub use server::{
     cmd_daemon, cmd_http_backend, cmd_receive_pack, cmd_serve_http, cmd_update_server_info,
     cmd_upload_pack,
 };
+pub use sign::cmd_verify_commit;
 pub use sparse_checkout::cmd_sparse_checkout;
 pub use stash::cmd_stash;
 pub use submodule::cmd_submodule;

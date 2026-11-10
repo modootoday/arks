@@ -11,11 +11,7 @@ use std::fs;
 use std::path::Path;
 
 /// Apply server `shallow` / `unshallow` lines onto the client's prior shallow set.
-pub fn apply_shallow_update(
-    existing: &[Oid],
-    added: &[Oid],
-    removed: &[Oid],
-) -> Vec<Oid> {
+pub fn apply_shallow_update(existing: &[Oid], added: &[Oid], removed: &[Oid]) -> Vec<Oid> {
     let mut set: HashSet<Oid> = existing.iter().copied().collect();
     for oid in added {
         set.insert(*oid);
@@ -41,12 +37,8 @@ pub fn read_shallow(git_dir: &Path) -> Result<Vec<Oid>, RemoteError> {
         if line.is_empty() {
             continue;
         }
-        let oid = Oid::from_hex(line).map_err(|e| {
-            RemoteError::Protocol(format!(
-                "shallow file line {}: {e}",
-                lineno + 1
-            ))
-        })?;
+        let oid = Oid::from_hex(line)
+            .map_err(|e| RemoteError::Protocol(format!("shallow file line {}: {e}", lineno + 1)))?;
         out.push(oid);
     }
     Ok(out)

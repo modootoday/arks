@@ -94,12 +94,18 @@ pub fn fetch_ssh_with(
     let ssh_url = SshRemoteUrl::parse(url)?;
     let mut session = SshSession::connect(&ssh_url, SshService::UploadPack)?;
     let ad = session.read_advertisement()?;
-    let outcome = apply_fetch_from_ad(repo, remote_name, &ad, opts, |cap_list, haves, wants, client_shallows, depth| {
-        let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
-        session.write_all(&body)?;
-        session.close_stdin();
-        session.read_to_end()
-    })?;
+    let outcome = apply_fetch_from_ad(
+        repo,
+        remote_name,
+        &ad,
+        opts,
+        |cap_list, haves, wants, client_shallows, depth| {
+            let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
+            session.write_all(&body)?;
+            session.close_stdin();
+            session.read_to_end()
+        },
+    )?;
     // Pack already applied; ssh/upload-pack exit status is advisory.
     let _ = session.finish();
     Ok(outcome)
@@ -143,14 +149,11 @@ pub(crate) fn fetch_with<T: Transport>(
     })?;
     require_success(&info, "info/refs")?;
     let ct = header(&info.headers, "content-type");
-    if let Some(ct) = ct {
-        if ct.to_ascii_lowercase().contains("text/plain")
-            && !ct.to_ascii_lowercase().contains("git-upload-pack")
-        {
-            return Err(RemoteError::NotImplemented(
-                "dumb HTTP is not claimed".into(),
-            ));
-        }
+    // Smart clients MUST fall back to dumb when the peer returns a non-smart
+    // Content-Type / dumb body (gitprotocol-http Smart Clients).
+    if crate::dumb::looks_like_dumb_info_refs(ct, &info.body) {
+        let ad = crate::dumb::parse_dumb_info_refs(&info.body)?;
+        return crate::dumb::fetch_dumb_with(transport, repo, url, remote_name, opts, &ad);
     }
     if !content_type_is(ct, "git-upload-pack-advertisement") {
         return Err(RemoteError::Protocol(
@@ -158,29 +161,35 @@ pub(crate) fn fetch_with<T: Transport>(
         ));
     }
     let ad = parse_advertisement(&info.body, "git-upload-pack")?;
-    apply_fetch_from_ad(repo, remote_name, &ad, opts, |cap_list, haves, wants, client_shallows, depth| {
-        let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
-        let post_url = join_url(url, "git-upload-pack");
-        let posted = transport.exchange(&HttpRequest {
-            method: "POST".into(),
-            url: post_url,
-            headers: vec![
-                ("Content-Type".into(), UPLOAD_REQ.into()),
-                ("Accept".into(), UPLOAD_RES.into()),
-            ],
-            body,
-        })?;
-        require_success(&posted, "git-upload-pack")?;
-        if !content_type_is(
-            header(&posted.headers, "content-type"),
-            "git-upload-pack-result",
-        ) {
-            return Err(RemoteError::Protocol(
-                "git-upload-pack result had an unexpected content type".into(),
-            ));
-        }
-        Ok(posted.body)
-    })
+    apply_fetch_from_ad(
+        repo,
+        remote_name,
+        &ad,
+        opts,
+        |cap_list, haves, wants, client_shallows, depth| {
+            let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
+            let post_url = join_url(url, "git-upload-pack");
+            let posted = transport.exchange(&HttpRequest {
+                method: "POST".into(),
+                url: post_url,
+                headers: vec![
+                    ("Content-Type".into(), UPLOAD_REQ.into()),
+                    ("Accept".into(), UPLOAD_RES.into()),
+                ],
+                body,
+            })?;
+            require_success(&posted, "git-upload-pack")?;
+            if !content_type_is(
+                header(&posted.headers, "content-type"),
+                "git-upload-pack-result",
+            ) {
+                return Err(RemoteError::Protocol(
+                    "git-upload-pack result had an unexpected content type".into(),
+                ));
+            }
+            Ok(posted.body)
+        },
+    )
 }
 
 fn apply_fetch_from_ad<F>(
@@ -228,13 +237,7 @@ where
 
     let (cap_list, sideband) = negotiate_fetch_caps(&ad.capabilities, need_shallow_cap);
     let haves = local_haves(repo);
-    let response_body = request_pack(
-        &cap_list,
-        &haves,
-        &wants,
-        &client_shallows,
-        opts.depth,
-    )?;
+    let response_body = request_pack(&cap_list, &haves, &wants, &client_shallows, opts.depth)?;
 
     let (pack_opt, update) = extract_pack_and_shallow(&response_body, sideband)?;
     match pack_opt {
@@ -471,16 +474,14 @@ fn extract_pack_and_shallow(
                         return Err(RemoteError::Protocol(text));
                     }
                     if let Some(hex) = text.strip_prefix("shallow ") {
-                        let oid = Oid::from_hex(hex.trim()).map_err(|e| {
-                            RemoteError::Protocol(format!("shallow oid: {e}"))
-                        })?;
+                        let oid = Oid::from_hex(hex.trim())
+                            .map_err(|e| RemoteError::Protocol(format!("shallow oid: {e}")))?;
                         update.shallow.push(oid);
                         continue;
                     }
                     if let Some(hex) = text.strip_prefix("unshallow ") {
-                        let oid = Oid::from_hex(hex.trim()).map_err(|e| {
-                            RemoteError::Protocol(format!("unshallow oid: {e}"))
-                        })?;
+                        let oid = Oid::from_hex(hex.trim())
+                            .map_err(|e| RemoteError::Protocol(format!("unshallow oid: {e}")))?;
                         update.unshallow.push(oid);
                         continue;
                     }
@@ -538,14 +539,7 @@ mod shallow_wire_tests {
     #[test]
     fn encode_includes_deepen_and_shallow_cap() {
         let oid = Oid::from_hex("0123456789abcdef0123456789abcdef01234567").unwrap();
-        let body = encode_fetch_request(
-            &[oid],
-            "ofs-delta shallow",
-            &[],
-            &[],
-            Some(1),
-        )
-        .unwrap();
+        let body = encode_fetch_request(&[oid], "ofs-delta shallow", &[], &[], Some(1)).unwrap();
         let text = String::from_utf8_lossy(&body);
         assert!(text.contains("want 0123456789abcdef0123456789abcdef01234567 ofs-delta shallow"));
         assert!(text.contains("deepen 1"));

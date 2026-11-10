@@ -133,7 +133,8 @@ impl Tree {
             if bytes.len() < i + oid_len {
                 return Err(ObjectError::BadTreeEntry("truncated oid".into()));
             }
-            let oid = Oid::from_bytes(hash_kind, &bytes[i..i + oid_len]).map_err(ObjectError::Oid)?;
+            let oid =
+                Oid::from_bytes(hash_kind, &bytes[i..i + oid_len]).map_err(ObjectError::Oid)?;
             i += oid_len;
             entries.push(TreeEntry { mode, name, oid });
         }
@@ -154,7 +155,10 @@ fn validate_entries(entries: &[TreeEntry]) -> Result<(), ObjectError> {
             return Err(ObjectError::BadTreeEntry(format!("bad name {}", e.name)));
         }
         if e.name == "." || e.name == ".." || e.name.eq_ignore_ascii_case(".git") {
-            return Err(ObjectError::BadTreeEntry(format!("forbidden name {}", e.name)));
+            return Err(ObjectError::BadTreeEntry(format!(
+                "forbidden name {}",
+                e.name
+            )));
         }
     }
     Ok(())
@@ -186,8 +190,8 @@ pub fn tree_entries_sorted(entries: &[TreeEntry]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arks_hash::ObjectFormat;
     use crate::{ObjectKind, RawObject};
+    use arks_hash::ObjectFormat;
 
     fn oid(n: u8) -> Oid {
         Oid::from_hex(&format!("{n:040x}")).unwrap()

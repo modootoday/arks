@@ -44,10 +44,7 @@ pub fn cmd_reflog(args: &[String]) -> CliResult<()> {
             "reflog expire refused (MISC-014 — concurrent expire vs append contention; coordinate single maintainer; lease ≠ skip)".into(),
         ));
     }
-    if args
-        .iter()
-        .any(|a| a == "delete" || a == "exists")
-    {
+    if args.iter().any(|a| a == "delete" || a == "exists") {
         return Err(CliError::NotImplemented(
             "reflog delete/exists not claimed".into(),
         ));

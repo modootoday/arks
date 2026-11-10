@@ -15,12 +15,9 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 pub fn cmd_worktree(args: &[String]) -> CliResult<()> {
-    let sub = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage(
-            "worktree <add|list|remove|prune|move|lock|unlock>".into(),
-        ))?;
+    let sub = args.first().map(String::as_str).ok_or_else(|| {
+        CliError::Usage("worktree <add|list|remove|prune|move|lock|unlock>".into())
+    })?;
     let rest = &args[1..];
     match sub {
         "add" => wt_add(rest),
@@ -199,10 +196,7 @@ fn wt_add(args: &[String]) -> CliResult<()> {
     arks_remote::checkout_commit(&linked, &abs_path, &oid)
         .map_err(|e| CliError::Msg(e.to_string()))?;
     if detach {
-        println!(
-            "Preparing worktree (detached HEAD {})",
-            &oid.to_hex()[..7]
-        );
+        println!("Preparing worktree (detached HEAD {})", &oid.to_hex()[..7]);
     } else {
         let label = head_payload
             .trim()
@@ -325,7 +319,13 @@ fn wt_list(args: &[String]) -> CliResult<()> {
         } else {
             ""
         };
-        println!("{}\t{} {}{}", wt.path.display(), short, trail, lock_same_line);
+        println!(
+            "{}\t{} {}{}",
+            wt.path.display(),
+            short,
+            trail,
+            lock_same_line
+        );
     }
     Ok(())
 }
@@ -340,7 +340,9 @@ fn wt_lock(args: &[String]) -> CliResult<()> {
             i += 1;
             reason = Some(
                 args.get(i)
-                    .ok_or_else(|| CliError::Usage("worktree lock --reason <string> <worktree>".into()))?
+                    .ok_or_else(|| {
+                        CliError::Usage("worktree lock --reason <string> <worktree>".into())
+                    })?
                     .clone(),
             );
         } else if !args[i].starts_with('-') {
@@ -498,9 +500,7 @@ fn wt_move(args: &[String]) -> CliResult<()> {
     let repo = open_repo()?;
     // SUB-008 (M20 Cx-3): stock refuses move when worktree contains submodules.
     // Cite: https://git-scm.com/docs/git-worktree (move notes)
-    if repo.common_dir().join("modules").is_dir()
-        || worktree_has_gitmodules(&repo, &args[0])?
-    {
+    if repo.common_dir().join("modules").is_dir() || worktree_has_gitmodules(&repo, &args[0])? {
         return Err(CliError::Msg(
             "worktree move refused: submodules present (SUB-008 — cannot move worktree containing submodules)".into(),
         ));

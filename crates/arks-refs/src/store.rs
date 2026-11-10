@@ -50,11 +50,7 @@ impl FilesystemRefStore {
                         p.display()
                     )));
                 }
-                if p == git_dir {
-                    None
-                } else {
-                    Some(p)
-                }
+                if p == git_dir { None } else { Some(p) }
             }
             None => None,
         };

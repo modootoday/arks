@@ -113,9 +113,7 @@ impl SshSession {
         if status.success() {
             Ok(())
         } else {
-            Err(RemoteError::Msg(format!(
-                "ssh exited with status {status}"
-            )))
+            Err(RemoteError::Msg(format!("ssh exited with status {status}")))
         }
     }
 }
@@ -130,9 +128,7 @@ fn spawn_ssh(port: Option<u16>, host: &str, remote_cmd: &str) -> Result<Child, R
     let mut cmd = if let Some(wrapper) = ssh_command {
         // Match Git: sh -c '$GIT_SSH_COMMAND "$@"' 'sh' [-p port] host remote_cmd
         let mut c = Command::new("sh");
-        c.arg("-c")
-            .arg(format!("{wrapper} \"$@\""))
-            .arg("sh");
+        c.arg("-c").arg(format!("{wrapper} \"$@\"")).arg("sh");
         if let Some(p) = port {
             c.arg("-p").arg(p.to_string());
         }

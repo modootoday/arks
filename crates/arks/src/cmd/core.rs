@@ -601,8 +601,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         }
     } else {
         println!("On branch {branch}");
-        if staged.is_empty() && modified.is_empty() && deleted.is_empty() && untracked.is_empty()
-        {
+        if staged.is_empty() && modified.is_empty() && deleted.is_empty() && untracked.is_empty() {
             println!("nothing to commit, working tree clean");
         } else {
             if !staged.is_empty() {
@@ -668,11 +667,7 @@ pub fn wants_no_optional_locks(args: &[String]) -> bool {
 
 pub fn cmd_commit(args: &[String]) -> CliResult<()> {
     // Filter sign flags (incl. `-S<keyid>`) before refuse_unknown_flags.
-    let flag_args: Vec<String> = args
-        .iter()
-        .filter(|a| !is_sign_flag(a))
-        .cloned()
-        .collect();
+    let flag_args: Vec<String> = args.iter().filter(|a| !is_sign_flag(a)).cloned().collect();
     refuse_unknown_flags(
         &flag_args,
         &[

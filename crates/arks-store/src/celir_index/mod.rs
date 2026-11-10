@@ -14,15 +14,15 @@ mod sidecar;
 
 pub use query_surface::{lookup_oid_kind, open_sidecar};
 pub use rebuild::{
-    corpus_from_git, rebuild_from_git, rebuild_from_git_capped, RebuildError, RebuildReport,
-    REBUILD_COLUMNS,
+    REBUILD_COLUMNS, RebuildError, RebuildReport, corpus_from_git, rebuild_from_git,
+    rebuild_from_git_capped,
 };
 pub use runtime_jsonl::{
     build_jsonl_root, oid_kind_projection, open_jsonl_root, query_exact_effects,
     write_oid_kind_jsonl,
 };
 pub use sidecar::{
-    ensure_sidecar_root, is_sidecar_path, sidecar_root, SIDECAR_CONTAINER, SIDECAR_LEAF,
+    SIDECAR_CONTAINER, SIDECAR_LEAF, ensure_sidecar_root, is_sidecar_path, sidecar_root,
 };
 
 /// Bounded CELIR index store types (single-writer / snapshot).
@@ -33,10 +33,10 @@ pub use celir_index::{
 
 /// Immutable-root publication / query composition from `celir-index-runtime`.
 pub use celir_index_runtime::{
-    build as celir_index_runtime_build, Budget as CelirRuntimeBudget,
-    BuildReport as CelirRuntimeBuildReport, Projection as CelirRuntimeProjection,
-    Query as CelirRuntimeQuery, QueryLimits as CelirRuntimeQueryLimits,
-    Snapshot as CelirIndexRuntimeSnapshot, Source as CelirRuntimeSource,
+    Budget as CelirRuntimeBudget, BuildReport as CelirRuntimeBuildReport,
+    Projection as CelirRuntimeProjection, Query as CelirRuntimeQuery,
+    QueryLimits as CelirRuntimeQueryLimits, Snapshot as CelirIndexRuntimeSnapshot,
+    Source as CelirRuntimeSource, build as celir_index_runtime_build,
 };
 
 /// Compile-time linkage probe: proves path-deps resolve under `--features celir-index`.

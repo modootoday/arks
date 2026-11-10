@@ -32,7 +32,12 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
-    pub fn new(method: impl Into<String>, path: impl Into<String>, query: impl Into<String>, body: Vec<u8>) -> Self {
+    pub fn new(
+        method: impl Into<String>,
+        path: impl Into<String>,
+        query: impl Into<String>,
+        body: Vec<u8>,
+    ) -> Self {
         Self {
             method: method.into(),
             path: path.into(),
@@ -81,7 +86,10 @@ pub fn handle_smart_http_auth(
     let wants_v2 = req
         .git_protocol
         .as_deref()
-        .map(|v| v.split(':').any(|p| p.trim() == "version=2" || p.trim().starts_with("version=2")))
+        .map(|v| {
+            v.split(':')
+                .any(|p| p.trim() == "version=2" || p.trim().starts_with("version=2"))
+        })
         .unwrap_or(false)
         || req
             .git_protocol

@@ -89,10 +89,7 @@ pub fn cmd_archive(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-fn prefetch_blobs(
-    repo: &Repository,
-    entries: &[(String, Oid)],
-) -> CliResult<Vec<Option<Vec<u8>>>> {
+fn prefetch_blobs(repo: &Repository, entries: &[(String, Oid)]) -> CliResult<Vec<Option<Vec<u8>>>> {
     let n = entries.len();
     if n == 0 {
         return Ok(Vec::new());
@@ -124,19 +121,21 @@ fn prefetch_blobs(
         let mut handles = Vec::with_capacity(workers);
         for (batch_idx, piece) in entries.chunks(chunk).enumerate() {
             let base = batch_idx * chunk;
-            handles.push(scope.spawn(move || -> CliResult<Vec<(usize, Option<Vec<u8>>)>> {
-                let mut local = Vec::with_capacity(piece.len());
-                for (i, (_, oid)) in piece.iter().enumerate() {
-                    let obj = repo.get_object(oid)?;
-                    let payload = if obj.kind == ObjectKind::Blob {
-                        Some(obj.payload)
-                    } else {
-                        None
-                    };
-                    local.push((base + i, payload));
-                }
-                Ok(local)
-            }));
+            handles.push(
+                scope.spawn(move || -> CliResult<Vec<(usize, Option<Vec<u8>>)>> {
+                    let mut local = Vec::with_capacity(piece.len());
+                    for (i, (_, oid)) in piece.iter().enumerate() {
+                        let obj = repo.get_object(oid)?;
+                        let payload = if obj.kind == ObjectKind::Blob {
+                            Some(obj.payload)
+                        } else {
+                            None
+                        };
+                        local.push((base + i, payload));
+                    }
+                    Ok(local)
+                }),
+            );
         }
         for h in handles {
             match h.join() {

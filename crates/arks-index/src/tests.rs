@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{
-        cmp_entries, entries_sorted, sort_entries, Index, IndexEntry, IndexError,
-    };
+    use crate::{Index, IndexEntry, IndexError, cmp_entries, entries_sorted, sort_entries};
     use arks_oid::{Oid, OidKind};
     use std::fs;
     use std::process::Command;
@@ -76,7 +74,10 @@ mod tests {
         let mut bytes = idx.write(OidKind::Sha1).unwrap();
         let last = bytes.len() - 1;
         bytes[last] ^= 0xff;
-        assert_eq!(Index::read(&bytes, OidKind::Sha1), Err(IndexError::Checksum));
+        assert_eq!(
+            Index::read(&bytes, OidKind::Sha1),
+            Err(IndexError::Checksum)
+        );
     }
 
     #[test]
@@ -96,7 +97,10 @@ mod tests {
         };
         let mut bytes = idx.write(OidKind::Sha1).unwrap();
         bytes.truncate(bytes.len() - 5);
-        assert_eq!(Index::read(&bytes, OidKind::Sha1), Err(IndexError::Truncated));
+        assert_eq!(
+            Index::read(&bytes, OidKind::Sha1),
+            Err(IndexError::Truncated)
+        );
     }
 
     #[test]
@@ -216,10 +220,12 @@ mod tests {
         assert!(status.success());
         let index_path = dir.path().join(".git").join("index");
         let parsed = Index::read_path(&index_path, OidKind::Sha1).unwrap();
-        assert!(parsed
-            .entries
-            .iter()
-            .any(|e| e.path == "hello.txt" && e.stage() == 0));
+        assert!(
+            parsed
+                .entries
+                .iter()
+                .any(|e| e.path == "hello.txt" && e.stage() == 0)
+        );
 
         let rewrite = Index {
             version: 2,

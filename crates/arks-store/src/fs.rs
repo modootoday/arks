@@ -119,7 +119,8 @@ impl FilesystemGitStore {
         pack: &[u8],
         format: ObjectFormat,
     ) -> Result<(), StoreError> {
-        let decoded = DecodedPack::decode(pack, format).map_err(|e| StoreError::Io(e.to_string()))?;
+        let decoded =
+            DecodedPack::decode(pack, format).map_err(|e| StoreError::Io(e.to_string()))?;
         let pack_dir = self.objects_dir.join("pack");
         fs::create_dir_all(&pack_dir).map_err(|e| StoreError::Io(e.to_string()))?;
         let hex = checksum_hex(&decoded.checksum);
@@ -140,16 +141,14 @@ impl FilesystemGitStore {
                 .collect();
             let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())
                 .map_err(|e| StoreError::Io(e.to_string()))?;
-            let idx = index
-                .encode()
-                .map_err(|e| StoreError::Io(e.to_string()))?;
+            let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
             fs::write(&idx_path, idx).map_err(|e| StoreError::Io(e.to_string()))?;
         }
         {
-            let mut overlay = self.overlay.lock().expect("overlay");
+            // Hot path (fetch/clone): keep one copy in pack_objects only.
+            // get()/exists() already consult pack_objects after overlay.
             let mut pack_objects = self.pack_objects.lock().expect("pack_objects");
             for resolved in decoded.objects {
-                overlay.insert(resolved.oid, resolved.object.clone());
                 pack_objects.insert(resolved.oid, resolved.object);
             }
         }

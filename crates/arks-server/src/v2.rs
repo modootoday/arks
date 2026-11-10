@@ -76,16 +76,14 @@ fn parse_command_request(body: &[u8]) -> Result<(String, Vec<String>), ServerErr
                 caps_done = true;
             }
             Packet::Data(payload) => {
-                let text = decode_text_line(&payload)
-                    .map_err(|e| ServerError::Protocol(e.to_string()))?;
+                let text =
+                    decode_text_line(&payload).map_err(|e| ServerError::Protocol(e.to_string()))?;
                 if command.is_none() {
                     if let Some(rest) = text.strip_prefix("command=") {
                         command = Some(rest.to_string());
                         continue;
                     }
-                    return Err(ServerError::Protocol(
-                        "v2 request missing command=".into(),
-                    ));
+                    return Err(ServerError::Protocol("v2 request missing command=".into()));
                 }
                 if !caps_done {
                     continue;
@@ -125,7 +123,9 @@ fn ls_refs(repo: &Repository, args: &[String]) -> Result<Vec<u8>, ServerError> {
                 if want_symrefs {
                     line.push_str(&format!(" symref-target:{target}"));
                 }
-                out.extend(encode_text_line(&line).map_err(|e| ServerError::Protocol(e.to_string()))?);
+                out.extend(
+                    encode_text_line(&line).map_err(|e| ServerError::Protocol(e.to_string()))?,
+                );
             }
         }
         Ok(RefTarget::Direct(oid)) => {
@@ -171,7 +171,9 @@ fn fetch_v2(repo: &Repository, args: &[String]) -> Result<Vec<u8>, ServerError> 
         let mut out = encode_text_line("acknowledgments")
             .map_err(|e| ServerError::Protocol(e.to_string()))?;
         out.extend(encode_text_line("NAK").map_err(|e| ServerError::Protocol(e.to_string()))?);
-        out.extend(encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?);
+        out.extend(
+            encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?,
+        );
         return Ok(out);
     }
 

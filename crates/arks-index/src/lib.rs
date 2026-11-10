@@ -14,10 +14,10 @@ mod header;
 mod index;
 mod lock;
 
-pub use entry::{cmp_entries, entries_sorted, IndexEntry, CE_EXTENDED, CE_STAGEMASK, CE_VALID};
+pub use entry::{CE_EXTENDED, CE_STAGEMASK, CE_VALID, IndexEntry, cmp_entries, entries_sorted};
 pub use error::IndexError;
 pub use extension::IndexExtension;
-pub use index::{sort_entries, Index};
+pub use index::{Index, sort_entries};
 pub use lock::{index_lock_path, write_index_locked};
 
 #[cfg(test)]

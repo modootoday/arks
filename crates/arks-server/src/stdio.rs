@@ -94,8 +94,8 @@ fn read_upload_split<R: Read, W: Write>(
         }
         if let Some(flush_end) = trailing_flush_end(&body) {
             if nak_for_flush_at != Some(flush_end) {
-                let nak = encode_text_line("NAK")
-                    .map_err(|e| ServerError::Protocol(e.to_string()))?;
+                let nak =
+                    encode_text_line("NAK").map_err(|e| ServerError::Protocol(e.to_string()))?;
                 stdout.write_all(&nak)?;
                 stdout.flush()?;
                 sent_nak = true;
@@ -128,8 +128,8 @@ fn read_upload_one<S: Read + Write>(stream: &mut S) -> Result<(Vec<u8>, bool), S
         }
         if let Some(flush_end) = trailing_flush_end(&body) {
             if nak_for_flush_at != Some(flush_end) {
-                let nak = encode_text_line("NAK")
-                    .map_err(|e| ServerError::Protocol(e.to_string()))?;
+                let nak =
+                    encode_text_line("NAK").map_err(|e| ServerError::Protocol(e.to_string()))?;
                 stream.write_all(&nak)?;
                 stream.flush()?;
                 sent_nak = true;

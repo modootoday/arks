@@ -3,9 +3,7 @@
 //! Results are index hints — not ObjectStore membership proof
 //! ([[sot:root/celir-index-dual-path]] §Query surface).
 
-use celir_index::{
-    QueryBudget, Snapshot, SnapshotOutcome, Store, StoreError, StoreLimits,
-};
+use celir_index::{QueryBudget, Snapshot, SnapshotOutcome, Store, StoreError, StoreLimits};
 use std::path::Path;
 
 /// Open a readonly CELIR store at a product-private sidecar root.

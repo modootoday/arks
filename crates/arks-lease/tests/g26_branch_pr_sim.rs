@@ -6,12 +6,12 @@
 
 use arks_hash::ObjectFormat;
 use arks_lease::{
-    apply_batch, objects_dir, shard_refns, LeaseError, LeaseManager, PrepItem, TipUpdate,
-    materialize_objects, prep_hash_parallel, refns,
+    LeaseError, LeaseManager, PrepItem, TipUpdate, apply_batch, materialize_objects, objects_dir,
+    prep_hash_parallel, refns, shard_refns,
 };
 use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
-use arks_refs::{ref_lock_path, FilesystemRefStore};
+use arks_refs::{FilesystemRefStore, ref_lock_path};
 use arks_store::{FilesystemGitStore, ObjectStore};
 use std::path::Path;
 use std::process::Command;
@@ -90,7 +90,10 @@ fn g26_c01_branch_scale_n2048() {
         .list_refs("refs/heads/br-")
         .unwrap();
     assert_eq!(listed.len(), N_BRANCHES);
-    assert_eq!(stock_for_each_ref_count(&git, "refs/heads/br-*"), N_BRANCHES);
+    assert_eq!(
+        stock_for_each_ref_count(&git, "refs/heads/br-*"),
+        N_BRANCHES
+    );
 
     if let Ok(out) = std::env::var("ARKS_G26_SCALE_OUT") {
         write_scale_metrics(Path::new(&out), N_BRANCHES, 0, 0);
@@ -125,7 +128,10 @@ fn g26_c02_synthetic_pr_refs_n2048() {
     // N_PR heads + N_PR/2 merge refs
     assert_eq!(heads.len(), N_PR + N_PR / 2);
     assert_eq!(stock_for_each_ref_count(&git, "refs/pull/*/head"), N_PR);
-    assert_eq!(stock_for_each_ref_count(&git, "refs/pull/*/merge"), N_PR / 2);
+    assert_eq!(
+        stock_for_each_ref_count(&git, "refs/pull/*/merge"),
+        N_PR / 2
+    );
 
     // Sample stock resolve
     let sample = stock_git(&git, &["rev-parse", "refs/pull/1/head"]);
@@ -233,10 +239,13 @@ fn g26_c04_contended_lease_fail_closed() {
                 let mut mgr = leases.lock().unwrap();
                 mgr.grant(&resource, format!("w-{i}"), Duration::from_secs(30))
             };
-            results.lock().unwrap().push(outcome.map(|_| ()).map_err(|e| match e {
-                LeaseError::AlreadyHeld { .. } => "already_held".to_string(),
-                other => format!("other:{other}"),
-            }));
+            results
+                .lock()
+                .unwrap()
+                .push(outcome.map(|_| ()).map_err(|e| match e {
+                    LeaseError::AlreadyHeld { .. } => "already_held".to_string(),
+                    other => format!("other:{other}"),
+                }));
         }));
     }
     for h in handles {
@@ -310,7 +319,10 @@ fn g26_c05_planted_lock_induce_compare() {
         &[update],
     );
     // Either AlreadyHeld on shard or pipeline lock error — never success
-    assert!(batch.is_err(), "leased apply must not skip planted Git lock");
+    assert!(
+        batch.is_err(),
+        "leased apply must not skip planted Git lock"
+    );
 
     std::fs::remove_file(&lock).ok();
 }

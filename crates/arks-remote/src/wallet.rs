@@ -410,10 +410,7 @@ fn secret_tool_erase(key: &str) -> bool {
 
 /// CLI entry for `arks credential-<wallet> <get|store|erase>`.
 pub fn cmd_wallet_helper(kind: WalletKind, args: &[String]) -> Result<(), RemoteError> {
-    let op = args
-        .first()
-        .map(String::as_str)
-        .unwrap_or("get");
+    let op = args.first().map(String::as_str).unwrap_or("get");
     let mut input = String::new();
     std::io::stdin()
         .read_to_string(&mut input)
@@ -461,8 +458,12 @@ mod wincred_ffi {
 
     #[link(name = "advapi32")]
     unsafe extern "system" {
-        fn CredReadW(target: *const u16, type_: u32, flags: u32, credential: *mut *mut CredW)
-            -> i32;
+        fn CredReadW(
+            target: *const u16,
+            type_: u32,
+            flags: u32,
+            credential: *mut *mut CredW,
+        ) -> i32;
         fn CredWriteW(credential: *const CredW, flags: u32) -> i32;
         fn CredDeleteW(target: *const u16, type_: u32, flags: u32) -> i32;
         fn CredFree(buffer: *mut core::ffi::c_void);
@@ -562,9 +563,7 @@ fn osx_get(key: &str) -> Result<Option<Credential>, RemoteError> {
     if !output.status.success() {
         return Ok(None);
     }
-    let pass = String::from_utf8_lossy(&output.stdout)
-        .trim()
-        .to_string();
+    let pass = String::from_utf8_lossy(&output.stdout).trim().to_string();
     if pass.is_empty() {
         return Ok(None);
     }
@@ -620,7 +619,9 @@ fn osx_store(key: &str, desc: &Credential) -> Result<(), RemoteError> {
         .status()
         .map_err(|e| RemoteError::Msg(format!("security add: {e}")))?;
     if !status.success() {
-        return Err(RemoteError::Msg("security add-generic-password failed".into()));
+        return Err(RemoteError::Msg(
+            "security add-generic-password failed".into(),
+        ));
     }
     Ok(())
 }
@@ -644,10 +645,7 @@ mod tests {
     #[test]
     fn kind_parse() {
         assert_eq!(wallet_helper_kind("wincred"), Some(WalletKind::Wincred));
-        assert_eq!(
-            wallet_helper_kind("libsecret"),
-            Some(WalletKind::Libsecret)
-        );
+        assert_eq!(wallet_helper_kind("libsecret"), Some(WalletKind::Libsecret));
         assert_eq!(
             wallet_helper_kind("osxkeychain"),
             Some(WalletKind::Osxkeychain)

@@ -8,12 +8,12 @@
 
 use arks_hash::ObjectFormat;
 use arks_lease::{
-    apply_batch, index_scope, materialize_objects, objects_dir, prep_hash_parallel, shard_refns,
-    LeaseManager, PrepItem, TipUpdate,
+    LeaseManager, PrepItem, TipUpdate, apply_batch, index_scope, materialize_objects, objects_dir,
+    prep_hash_parallel, shard_refns,
 };
 use arks_object::{ObjectKind, RawObject};
 use arks_store::celir_index::{
-    lookup_oid_kind, open_sidecar, rebuild_from_git, sidecar_root, RebuildError,
+    RebuildError, lookup_oid_kind, open_sidecar, rebuild_from_git, sidecar_root,
 };
 use arks_store::{FilesystemGitStore, ObjectStore};
 use std::path::{Path, PathBuf};

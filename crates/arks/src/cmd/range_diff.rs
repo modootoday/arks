@@ -39,14 +39,7 @@ pub fn cmd_range_diff(args: &[String]) -> CliResult<()> {
                 let os = oc.subject();
                 let ns = nc.subject();
                 let op = if os == ns { '=' } else { '!' };
-                println!(
-                    "{}:  {} {} {}: {}",
-                    i + 1,
-                    short(o),
-                    op,
-                    short(n_oid),
-                    ns
-                );
+                println!("{}:  {} {} {}: {}", i + 1, short(o), op, short(n_oid), ns);
             }
             (Some(o), None) => {
                 let oc = read_commit(&repo, o)?;
@@ -81,8 +74,7 @@ fn dual_dot_series(repo: &Repository, spec: &str) -> CliResult<Vec<Oid>> {
     let left_oid = resolve_commit(repo, left)?;
     let end = resolve_commit(repo, right)?;
     let start = if three_dot {
-        arks_repo::merge_base_oid(repo, &left_oid, &end)?
-            .unwrap_or(left_oid)
+        arks_repo::merge_base_oid(repo, &left_oid, &end)?.unwrap_or(left_oid)
     } else {
         left_oid
     };

@@ -65,15 +65,17 @@ fn upload_advertisement_includes_main() {
 }
 
 #[test]
-fn receive_refuses_unimplemented_caps_in_ad() {
+fn receive_advertises_delete_refs_and_report_status_v2() {
     let dir = TempDir::new().unwrap();
     let (git, _) = seed_bare(dir.path());
     let repo = Repository::open(&git).unwrap();
     let body = receive_advertisement(&repo).unwrap();
     let text = String::from_utf8_lossy(&body);
     assert!(text.contains("report-status"));
-    assert!(!text.contains("delete-refs"));
-    assert!(!text.contains("report-status-v2"));
+    assert!(text.contains("report-status-v2"));
+    assert!(text.contains("delete-refs"));
+    // Fail-closed: do not advertise unclaimed push-options / proc-receive.
+    assert!(!text.contains("push-options"));
 }
 
 #[test]
@@ -87,7 +89,7 @@ fn smart_http_info_refs_upload() {
         query: "service=git-upload-pack".into(),
         body: Vec::new(),
         git_protocol: None,
-            authorization: None,
+        authorization: None,
     };
     let resp = handle_smart_http(&mut repo, &req).unwrap();
     assert_eq!(resp.status, 200);
@@ -185,11 +187,7 @@ fn install_hook(git: &std::path::Path, name: &str, script: &str) {
 fn receive_pre_receive_hook_rejects_entire_push() {
     let dir = TempDir::new().unwrap();
     let (git, oid) = seed_bare(dir.path());
-    install_hook(
-        &git,
-        "pre-receive",
-        "#!/bin/sh\nexit 1\n",
-    );
+    install_hook(&git, "pre-receive", "#!/bin/sh\nexit 1\n");
     let mut repo = Repository::open(&git).unwrap();
     let body = receive_create_branch_body(&oid, "refs/heads/topic");
     let out = receive_pack(&mut repo, &body).unwrap();
@@ -205,11 +203,7 @@ fn receive_pre_receive_hook_rejects_entire_push() {
 fn receive_update_hook_rejects_one_ref() {
     let dir = TempDir::new().unwrap();
     let (git, oid) = seed_bare(dir.path());
-    install_hook(
-        &git,
-        "update",
-        "#!/bin/sh\nexit 1\n",
-    );
+    install_hook(&git, "update", "#!/bin/sh\nexit 1\n");
     let mut repo = Repository::open(&git).unwrap();
     let body = receive_create_branch_body(&oid, "refs/heads/topic");
     let out = receive_pack(&mut repo, &body).unwrap();
@@ -233,7 +227,10 @@ fn receive_post_receive_runs_after_success() {
     let body = receive_create_branch_body(&oid, "refs/heads/topic");
     let out = receive_pack(&mut repo, &body).unwrap();
     let text = String::from_utf8_lossy(&out);
-    assert!(text.contains("ok refs/heads/topic"), "expected ok in {text}");
+    assert!(
+        text.contains("ok refs/heads/topic"),
+        "expected ok in {text}"
+    );
     assert_eq!(repo.refs().resolve("refs/heads/topic").unwrap(), oid);
     assert!(
         marker.is_file(),
