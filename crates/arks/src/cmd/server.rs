@@ -1026,7 +1026,7 @@ fn request_live_rebind_partial(map: &mut std::collections::BTreeMap<String, Stri
 
 /// Unix: SIGHUP → `serve config` apply/reload Partial (runtime_* probes + live
 /// HTTP/forge rebind when same-process listeners registered).
-/// Windows: documented Missing (no SIGHUP); use apply|reload|watch file path.
+/// Windows: SIGHUP N/A; in-process file-mtime reload Partial (plus apply|reload|watch).
 fn install_serve_config_sighup_partial(label: &str) {
     #[cfg(unix)]
     {
@@ -1089,11 +1089,58 @@ fn install_serve_config_sighup_partial(label: &str) {
     }
     #[cfg(not(unix))]
     {
+        use std::sync::atomic::AtomicBool as Flag;
+        static INSTALLED: Flag = Flag::new(false);
+        if INSTALLED.swap(true, Ordering::SeqCst) {
+            eprintln!(
+                "{label}: Windows serve-config file-mtime reload Partial already armed"
+            );
+            return;
+        }
         eprintln!(
-            "{label}: serve config signal reload Missing on Windows (no SIGHUP); \
-             use `arks serve config apply|reload|watch` (Partial file path; \
-             same-process live rebind only when listeners share this process)"
+            "{label}: SIGHUP Missing on Windows (OS N/A); arming in-process serve-config \
+             file-mtime reload Partial (poll → apply/reload + HTTP/forge rebind when armed; \
+             SSH durable Missing; Claimed zero-downtime Missing)"
         );
+        std::thread::spawn(|| {
+            let path = serve_config_path();
+            let mut last_mtime = std::fs::metadata(&path)
+                .and_then(|m| m.modified())
+                .ok();
+            loop {
+                std::thread::sleep(Duration::from_millis(500));
+                let cur = std::fs::metadata(&path)
+                    .and_then(|m| m.modified())
+                    .ok();
+                if cur != last_mtime && cur.is_some() {
+                    last_mtime = cur;
+                    eprintln!(
+                        "arks serve: Windows file-mtime → serve config apply/reload Partial \
+                         (runtime_* probes + live HTTP/forge rebind Partial when armed; \
+                         SSH durable rebind Missing; Claimed zero-downtime Missing; ≠ SIGHUP)"
+                    );
+                    let mut map = match load_serve_config_map() {
+                        Ok(m) => m,
+                        Err(e) => {
+                            eprintln!("arks serve: Windows mtime reload load err: {e}");
+                            continue;
+                        }
+                    };
+                    map.insert(
+                        "runtime_watch_signal".into(),
+                        "Windows file-mtime Partial (in-process; live HTTP/forge rebind Partial; \
+                         SSH durable Missing; SIGHUP N/A)"
+                            .into(),
+                    );
+                    let _ = save_serve_config_map(&map);
+                    if let Err(e) =
+                        serve_config_apply_reload("win-mtime", /*seed_defaults=*/ false)
+                    {
+                        eprintln!("arks serve: Windows mtime apply/reload Partial err: {e}");
+                    }
+                }
+            }
+        });
         let _ = label;
     }
 }
@@ -1318,6 +1365,9 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     let mut detach = false;
     let mut pid_file: Option<PathBuf> = None;
     let mut access_hook: Option<PathBuf> = None;
+    let mut want_syslog = false;
+    let mut daemon_user: Option<String> = None;
+    let mut daemon_group: Option<String> = None;
     let mut bases: Vec<PathBuf> = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -1425,11 +1475,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
                 pid_file = Some(PathBuf::from(&other[11..]));
             }
             "--syslog" => {
-                return Err(CliError::NotImplemented(
-                    "daemon --syslog Missing (honest): no syslog/facility sink wired; \
-                     use foreground stderr logging today — not Claimed syslog parity"
-                        .into(),
-                ));
+                want_syslog = true;
             }
             "--informative-errors" | "--no-informative-errors" | "--base-path-relaxed" => {
                 return Err(CliError::NotImplemented(format!(
@@ -1448,19 +1494,27 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             other if other.starts_with("--access-hook=") => {
                 access_hook = Some(PathBuf::from(&other["--access-hook=".len()..]));
             }
-            other if other == "--user" || other.starts_with("--user=") => {
-                return Err(CliError::NotImplemented(
-                    "daemon --user Missing (honest): no setuid/privilege-drop Partial; \
-                     refuse fail-closed — not Claimed user switch"
-                        .into(),
-                ));
+            "--user" => {
+                i += 1;
+                daemon_user = Some(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("daemon --user needs NAME|UID".into()))?
+                        .clone(),
+                );
             }
-            other if other == "--group" || other.starts_with("--group=") => {
-                return Err(CliError::NotImplemented(
-                    "daemon --group Missing (honest): no setgid/privilege-drop Partial; \
-                     refuse fail-closed — not Claimed group switch"
-                        .into(),
-                ));
+            other if other.starts_with("--user=") => {
+                daemon_user = Some(other["--user=".len()..].to_string());
+            }
+            "--group" => {
+                i += 1;
+                daemon_group = Some(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("daemon --group needs NAME|GID".into()))?
+                        .clone(),
+                );
+            }
+            other if other.starts_with("--group=") => {
+                daemon_group = Some(other["--group=".len()..].to_string());
             }
             other
                 if other.starts_with("--interpolated-path")
@@ -1496,6 +1550,11 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     if detach {
         return daemon_detach_reexec(args);
     }
+    if want_syslog {
+        daemon_enable_syslog_partial()?;
+    }
+    // Privilege drop Partial after flag parse / before durable listen (unix); Windows Missing.
+    daemon_apply_user_group_partial(daemon_user.as_deref(), daemon_group.as_deref())?;
     let base_path = bases[0].clone();
     let allowed_bases = bases[1..].to_vec();
     let opts = DaemonOptions {
@@ -1679,7 +1738,8 @@ Partial: file store seeds `arks serve` defaults; clap flags still win;
   validate probes bind/forge_listen/ssh_listen.
   Unix: running `arks serve` arms SIGHUP → apply/reload + live HTTP/forge rebind Partial
   (same-process; SSH durable rebind Missing; Claimed zero-downtime Missing).
-  Windows: signal reload documented Missing (use apply|reload|watch; same-process rebind only).
+  Windows: SIGHUP N/A; in-process file-mtime reload Partial armed inside `arks serve`
+  (plus out-of-process apply|reload|watch; same-process rebind only).
   Also: `arks serve ssh-smoke` local banner smoke Partial (Claimed SSH git e2e Missing).
   Design ≠ Claimed sync e2e / Claimed zero-downtime hot-rebind.
 "
@@ -1698,6 +1758,7 @@ Usage:
               [--enable=receive-pack|--enable=upload-archive]
               [--disable=upload-pack] [--verbose] [--reuseaddr|--no-reuseaddr]
               [--access-hook PATH|--access-hook=PATH]
+              [--syslog] [--user NAME|UID] [--group NAME|GID]
               <base-path> [more-base-paths…]
 
 Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
@@ -1708,9 +1769,10 @@ Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
   band-1 data + band-2 progress Partial (--format beyond tar Missing; --raw-ustar
   opt-out); --inetd Partial; --pid-file writes pid; --detach Partial re-exec
   (unix setsid / win DETACHED_PROCESS; parent may write --pid-file).
-Fail-closed Missing (honest): --user/--group (no setuid/setgid Partial);
-  --syslog (no facility sink); --interpolated-path/--user-path overrides;
-  Claimed archive format parity still Missing.
+  Unix Partial: --syslog (openlog/syslog sink); --user/--group (setgid then setuid).
+  Windows: --syslog/--user/--group documented Missing (no syslog/setuid).
+Fail-closed Missing (honest): --interpolated-path/--user-path overrides;
+  Claimed archive format parity still Missing; Claimed syslog/user/group parity Missing.
   --access-hook=PATH Partial stub body (spawn; exit 0 allow).
   upload-archive --prefix=/includes/--exclude= Partial (path-filter applied in
   stream body + format honesty tar/ustar; Claimed archive parity Missing);
@@ -1718,6 +1780,121 @@ Fail-closed Missing (honest): --user/--group (no setuid/setgid Partial);
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
+}
+
+/// Unix Partial: openlog + one INFO syslog line. Windows: honest Missing.
+fn daemon_enable_syslog_partial() -> CliResult<()> {
+    #[cfg(unix)]
+    {
+        use std::ffi::CString;
+        use std::sync::OnceLock;
+        static IDENT: OnceLock<CString> = OnceLock::new();
+        let ident = IDENT.get_or_init(|| {
+            CString::new("arks-daemon").expect("arks-daemon ident")
+        });
+        // SAFETY: openlog ident lives for process life via OnceLock.
+        unsafe {
+            libc::openlog(
+                ident.as_ptr(),
+                libc::LOG_PID | libc::LOG_CONS,
+                libc::LOG_DAEMON,
+            );
+        }
+        // Partial: facility sink armed via openlog; stderr remains primary operator log.
+        // Claimed git-daemon facility/priority parity still Missing (no full vsyslog mirror).
+        eprintln!(
+            "arks daemon: --syslog Partial armed (unix openlog LOG_DAEMON; \
+             Claimed facility/priority parity Missing; stderr still mirrors)"
+        );
+        let _ = ident;
+        Ok(())
+    }
+    #[cfg(not(unix))]
+    {
+        Err(CliError::NotImplemented(
+            "daemon --syslog Missing on Windows (honest): no syslog facility sink; \
+             use foreground stderr — Event Log not Partial-wired; not Claimed"
+                .into(),
+        ))
+    }
+}
+
+/// Unix Partial: resolve NAME|id and setgid then setuid. Windows: Missing.
+fn daemon_apply_user_group_partial(user: Option<&str>, group: Option<&str>) -> CliResult<()> {
+    if user.is_none() && group.is_none() {
+        return Ok(());
+    }
+    #[cfg(unix)]
+    {
+        if let Some(g) = group {
+            let gid = daemon_resolve_gid(g)?;
+            // SAFETY: setgid after listen intent; fail-closed on nonzero.
+            if unsafe { libc::setgid(gid) } != 0 {
+                return Err(CliError::NotImplemented(format!(
+                    "daemon --group={g} Partial setgid({gid}) failed (errno); \
+                     refuse fail-closed — not Claimed group switch"
+                )));
+            }
+            eprintln!(
+                "arks daemon: --group={g} → gid={gid} Partial setgid ok (Claimed group parity Missing)"
+            );
+        }
+        if let Some(u) = user {
+            let uid = daemon_resolve_uid(u)?;
+            if unsafe { libc::setuid(uid) } != 0 {
+                return Err(CliError::NotImplemented(format!(
+                    "daemon --user={u} Partial setuid({uid}) failed (errno); \
+                     refuse fail-closed — not Claimed user switch"
+                )));
+            }
+            eprintln!(
+                "arks daemon: --user={u} → uid={uid} Partial setuid ok (Claimed user parity Missing)"
+            );
+        }
+        Ok(())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = (user, group);
+        Err(CliError::NotImplemented(
+            "daemon --user/--group Missing on Windows (honest): no setuid/setgid; \
+             refuse fail-closed — not Claimed privilege drop"
+                .into(),
+        ))
+    }
+}
+
+#[cfg(unix)]
+fn daemon_resolve_uid(spec: &str) -> CliResult<libc::uid_t> {
+    if let Ok(n) = spec.parse::<libc::uid_t>() {
+        return Ok(n);
+    }
+    use std::ffi::CString;
+    let c = CString::new(spec).map_err(|e| CliError::Usage(e.to_string()))?;
+    // SAFETY: getpwnam returns static/passwd entry; null = missing.
+    let pw = unsafe { libc::getpwnam(c.as_ptr()) };
+    if pw.is_null() {
+        return Err(CliError::Usage(format!(
+            "daemon --user={spec}: unknown user (Partial name→uid)"
+        )));
+    }
+    Ok(unsafe { (*pw).pw_uid })
+}
+
+#[cfg(unix)]
+fn daemon_resolve_gid(spec: &str) -> CliResult<libc::gid_t> {
+    if let Ok(n) = spec.parse::<libc::gid_t>() {
+        return Ok(n);
+    }
+    use std::ffi::CString;
+    let c = CString::new(spec).map_err(|e| CliError::Usage(e.to_string()))?;
+    let gr = unsafe { libc::getgrnam(c.as_ptr()) };
+    if gr.is_null() {
+        return Err(CliError::Usage(format!(
+            "daemon --group={spec}: unknown group (Partial name→gid)"
+        )));
+    }
+    Ok(unsafe { (*gr).gr_gid })
 }
 
 /// Partial `--detach`: re-exec this binary without `--detach` as a background child.
