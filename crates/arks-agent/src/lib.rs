@@ -110,7 +110,7 @@ COMMANDS (Partial honesty):
     review        Review stdin/file via openai-compat chat (Partial; HTTP loopback)
     cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
     run           One-shot job: review|cev-check|doctor (Partial)
-    serve / bot   Loopback health listener (Partial; not a chatbot)
+    serve / bot   Loopback health listener (Partial long-running; --once; not a chatbot)
 
 NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
@@ -849,10 +849,12 @@ fn cmd_run(args: &[String]) -> ExitCode {
 fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks agent {kind} [--listen HOST:PORT] — loopback health Partial (not a chatbot)"
+            "arks agent {kind} [--listen HOST:PORT] [--once] — loopback health Partial \
+             (not a chatbot; LLM serve not Claimed)"
         );
         return ExitCode::SUCCESS;
     }
+    let once = args.iter().any(|a| a == "--once");
     let listen = flag_value(args, &["--listen"])
         .unwrap_or("127.0.0.1:3930")
         .to_string();
@@ -875,35 +877,53 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
             return ExitCode::from(1);
         }
     };
+    let _ = listener.set_nonblocking(false);
     eprintln!(
-        "arks agent {kind} listening on http://{}/ (Partial health only — LLM serve not Claimed)",
+        "arks agent {kind} listening on http://{}/ (Partial health only — LLM serve not Claimed; \
+         {} )",
         listener
             .local_addr()
             .map(|a| a.to_string())
-            .unwrap_or_else(|_| listen.clone())
-    );
-    // Single-accept Partial demo: respond once then exit (long-running bot Missing).
-    match listener.accept() {
-        Ok((mut stream, peer)) => {
-            let mut buf = [0u8; 1024];
-            let _ = stream.read(&mut buf);
-            let body = format!(
-                "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\"partial\":true,\"peer\":\"{peer}\"}}"
-            );
-            let resp = format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                body.len()
-            );
-            let _ = stream.write_all(resp.as_bytes());
-            eprintln!(
-                "arks agent {kind}: served one Partial health response then exit \
-                 (long-running bot Missing — design ≠ Claimed)"
-            );
-            ExitCode::SUCCESS
+            .unwrap_or_else(|_| listen.clone()),
+        if once {
+            "--once"
+        } else {
+            "long-running health loop Partial"
         }
-        Err(e) => {
-            eprintln!("arks agent {kind}: accept failed: {e}");
-            ExitCode::from(1)
+    );
+    let mut served = 0u64;
+    loop {
+        match listener.accept() {
+            Ok((mut stream, peer)) => {
+                let mut buf = [0u8; 1024];
+                let _ = stream.read(&mut buf);
+                let body = format!(
+                    "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\"partial\":true,\"peer\":\"{peer}\",\"served\":{}}}",
+                    served + 1
+                );
+                let resp = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = stream.write_all(resp.as_bytes());
+                served += 1;
+                if once {
+                    eprintln!(
+                        "arks agent {kind}: served one Partial health response (--once) then exit"
+                    );
+                    return ExitCode::SUCCESS;
+                }
+                if served == 1 {
+                    eprintln!(
+                        "arks agent {kind}: long-running Partial health loop (Ctrl-C to stop; \
+                         chatbot/LLM Missing — design ≠ Claimed)"
+                    );
+                }
+            }
+            Err(e) => {
+                eprintln!("arks agent {kind}: accept failed: {e}");
+                return ExitCode::from(1);
+            }
         }
     }
 }
