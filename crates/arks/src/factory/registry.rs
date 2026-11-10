@@ -23,6 +23,7 @@ Personality (Partial skeleton — [[sot:root/arks-cli-personality-factory]]):
   ARKS_PERSONALITY=git|gh|arks   (first wins)
   else argv0/shim basename git|gh|arks
   else default arks (git-first merged surface)
+  Thin helpers: scripts/shim-git.sh / scripts/shim-gh.sh (not extra crates.io bins)
 
 Overlap leaves (status|config|repo) under arks: unified Git + Forge-skip stub;
   --git-only / --forge-only / --porcelain select a single peer.
