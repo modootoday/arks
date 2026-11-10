@@ -20,9 +20,9 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 ## Out of product scope here
 
 - Agent frameworks, orchestrators, and IDE products (arks is the **revision** layer those systems call)
-- GUI front-ends (`gitk`, `git-gui`, and similar)
-- Git LFS and `scalar`
-- Forge host APIs (issues, PRs, Checks) — use tools like `gh` for that layer
+- Embedding full GUI front-ends (`gitk`, `git-gui`) inside the CLI binary — closest handoff scheduled under Full Symmetry **FS7**
+- Git LFS **as a silent default gate** without a dedicated SoT — closest filter-process parity scheduled under **FS6**
+- Forge host APIs (issues, PRs, Checks) — not git CLI features; use tools like `gh`
 - Shipping arks as a Docker-based end-user runtime — the product is the **native CLI**
 
 ## Storage
@@ -50,9 +50,9 @@ SSH create/verify for commit `gpgsig` may be used (`gpg.format=ssh`). OpenPGP an
 
 Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`) may be used; forge OAuth is not claimed.
 
-### Interactive TUI?
+### Interactive / patch?
 
-Full curses/TTY TUI menus stay **out of claim**. Scripted modes are Claimed (O3): `rebase -i` with `GIT_SEQUENCE_EDITOR`/`ARKS_SEQUENCE_EDITOR`, editor `commit` via `GIT_EDITOR`/`ARKS_EDITOR`/`-F`, and `add -p` via `ARKS_ADD_PATCH_ANSWERS` or non-TTY stdin (file-granularity). See [Git vs arks](../git-vs-arks/).
+**FS1 Claimed:** TTY `add -p` prompts (file-granularity) and `rebase -i` via `GIT_SEQUENCE_EDITOR` **or** ordinary editor fallback (`GIT_EDITOR` / `ARKS_EDITOR` / `EDITOR`). Scripted modes remain (O3): `ARKS_ADD_PATCH_ANSWERS`, non-TTY stdin, sequence-editor env. Hunk-level `-p`, `add -i`/`-e`, and `stash -p` are scheduled under the Full Symmetry ladder (**FS3**), not casual forever-N/A. See [Git vs arks](../git-vs-arks/).
 
 ### Alias coverage?
 

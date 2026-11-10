@@ -235,13 +235,13 @@ pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_add(args: &[String]) -> CliResult<()> {
     // Fs-4 + M16 Sy-1: `-A`/`-u`/`--chmod=+x|-x` (git-add). Cite: https://git-scm.com/docs/git-add
-    // O3: scripted `add -p` / `--patch` (file-granularity); `-i`/`-e` remain N/A.
+    // O3/FS1: `add -p` scripted + TTY prompt (file-granularity); `-i`/`-e` remain FS3.
     if args
         .iter()
         .any(|a| a == "-i" || a == "--interactive" || a == "-e")
     {
         return Err(CliError::NotImplemented(
-            "add -i/-e excluded (interactive/TUI menu); use add -p scripted or non-interactive add (O3 / Fs-5)"
+            "add -i/-e not claimed yet (FS3); use add -p (TTY or ARKS_ADD_PATCH_ANSWERS) or non-interactive add"
                 .into(),
         ));
     }
@@ -1077,10 +1077,11 @@ fn run_editor_cmd(editor: &str, path: &Path) -> CliResult<()> {
     Ok(())
 }
 
-/// O3 scripted `add -p`: file-granularity y/n/a/d/q from `ARKS_ADD_PATCH_ANSWERS` or non-TTY stdin.
+/// O3/FS1 `add -p`: file-granularity y/n/a/d/q from `ARKS_ADD_PATCH_ANSWERS`,
+/// non-TTY stdin, or interactive TTY prompts (FS1 human+agent parity).
 fn cmd_add_patch(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-p", "--patch"])?;
-    let answers = patch_answers()?;
+    let mode = patch_answer_mode()?;
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let index = read_index(&repo)?;
@@ -1123,9 +1124,14 @@ fn cmd_add_patch(args: &[String]) -> CliResult<()> {
         } else if decline_rest {
             'd'
         } else {
-            let ch = answers.get(answer_i).copied().unwrap_or('n');
-            answer_i += 1;
-            ch
+            match &mode {
+                PatchAnswerMode::Scripted(answers) => {
+                    let ch = answers.get(answer_i).copied().unwrap_or('n');
+                    answer_i += 1;
+                    ch
+                }
+                PatchAnswerMode::Tty => prompt_patch_answer(&path)?,
+            }
         };
         match ans {
             'y' | 'Y' => to_add.push(path),
@@ -1144,7 +1150,7 @@ fn cmd_add_patch(args: &[String]) -> CliResult<()> {
                 )));
             }
         }
-        let _ = &head_map; // keep head probe wired for future hunk mode
+        let _ = &head_map; // keep head probe wired for future hunk mode (FS3)
     }
     drop(repo);
     if to_add.is_empty() {
@@ -1153,19 +1159,50 @@ fn cmd_add_patch(args: &[String]) -> CliResult<()> {
     cmd_add(&to_add)
 }
 
-fn patch_answers() -> CliResult<Vec<char>> {
+enum PatchAnswerMode {
+    Scripted(Vec<char>),
+    Tty,
+}
+
+fn patch_answer_mode() -> CliResult<PatchAnswerMode> {
     if let Ok(raw) = std::env::var("ARKS_ADD_PATCH_ANSWERS") {
-        return Ok(raw.chars().filter(|c| !c.is_whitespace()).collect());
+        return Ok(PatchAnswerMode::Scripted(
+            raw.chars().filter(|c| !c.is_whitespace()).collect(),
+        ));
     }
-    // Non-TTY stdin: read answer characters. TTY without env → honest refuse (no pixel TUI).
     use std::io::IsTerminal;
     if io::stdin().is_terminal() {
-        return Err(CliError::NotImplemented(
-            "add -p TTY interactive UI not claimed; set ARKS_ADD_PATCH_ANSWERS or pipe answers on non-TTY stdin (O3)"
-                .into(),
-        ));
+        return Ok(PatchAnswerMode::Tty);
     }
     let mut buf = String::new();
     io::stdin().read_to_string(&mut buf)?;
-    Ok(buf.chars().filter(|c| !c.is_whitespace()).collect())
+    Ok(PatchAnswerMode::Scripted(
+        buf.chars().filter(|c| !c.is_whitespace()).collect(),
+    ))
+}
+
+fn prompt_patch_answer(path: &str) -> CliResult<char> {
+    use std::io::Write;
+    loop {
+        print!("Stage '{path}' [y,n,a,d,q]? ");
+        io::stdout()
+            .flush()
+            .map_err(|e| CliError::Msg(format!("flush prompt: {e}")))?;
+        let mut line = String::new();
+        io::stdin()
+            .read_line(&mut line)
+            .map_err(|e| CliError::Msg(format!("read prompt: {e}")))?;
+        let ch = line.chars().find(|c| !c.is_whitespace());
+        match ch {
+            Some(c @ ('y' | 'Y' | 'n' | 'N' | 'a' | 'A' | 'd' | 'D' | 'q' | 'Q')) => return Ok(c),
+            Some(_) => {
+                eprintln!("Please answer y, n, a, d, or q");
+            }
+            None => {
+                // Empty line → decline (git-ish default for unclear input: re-prompt;
+                // treat bare enter as 'n' for non-interactive pipe safety).
+                return Ok('n');
+            }
+        }
+    }
 }

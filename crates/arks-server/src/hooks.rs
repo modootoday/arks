@@ -1,14 +1,17 @@
 //! Sync receive-pack githooks (Claimed honor list).
 //!
-//! Honored: `pre-receive`, `update`, `post-receive`, `post-update`.
+//! Honored: `pre-receive`, `update`, `post-receive`, `post-update`,
+//! and **FS2** `proc-receive` (advertise + divert when hook +
+//! `receive.procReceiveRefs` match).
 //! Cite: <https://git-scm.com/docs/githooks>,
 //! <https://git-scm.com/docs/git-receive-pack>.
 //! Sync only — no invented async runners. Per-push stdin isolation.
-//! `proc-receive` / `push-options` remain unclaimed (fail-closed: not advertised).
+//! HOOK-008 race freedom remains unclaimed (FS8).
 
 use crate::error::ServerError;
+use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet};
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -73,6 +76,262 @@ pub(crate) fn run_post_update(git_dir: &Path, updated_refs: &[&str], env: &HookE
         return;
     }
     let _ = run_named_hook(git_dir, "post-update", updated_refs, None, false, env);
+}
+
+/// Whether `$GIT_DIR/hooks/proc-receive` is runnable (FS2 advertise gate).
+pub(crate) fn proc_receive_hook_present(git_dir: &Path) -> bool {
+    is_runnable_hook(&hook_path(git_dir, "proc-receive"))
+}
+
+/// Read multi-valued `receive.procReceiveRefs` from `$GIT_DIR/config` (local only).
+pub(crate) fn proc_receive_ref_prefixes(git_dir: &Path) -> Vec<String> {
+    let text = fs::read_to_string(git_dir.join("config")).unwrap_or_default();
+    let mut out = Vec::new();
+    let mut in_receive = false;
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+        if line.starts_with('[') {
+            in_receive = line.eq_ignore_ascii_case("[receive]");
+            continue;
+        }
+        if !in_receive {
+            continue;
+        }
+        let Some((k, v)) = line.split_once('=') else {
+            continue;
+        };
+        if k.trim().eq_ignore_ascii_case("procReceiveRefs") {
+            let v = v.trim().trim_matches('"').trim_matches('\'').to_string();
+            if !v.is_empty() {
+                out.push(v);
+            }
+        }
+    }
+    out
+}
+
+pub(crate) fn ref_matches_proc_receive(refname: &str, prefixes: &[String]) -> bool {
+    // FS2: positive `receive.procReceiveRefs` prefixes only (git multi-value).
+    // Negative `!` forms deferred until a dedicated SoT row claims them.
+    prefixes
+        .iter()
+        .filter(|p| !p.starts_with('!'))
+        .any(|p| refname.starts_with(p.as_str()))
+}
+
+/// One diverted update for the proc-receive hook (FS2).
+#[derive(Debug, Clone)]
+pub(crate) struct ProcReceiveCmd {
+    pub old_hex: String,
+    pub new_hex: String,
+    pub name: String,
+}
+
+/// Result reported by proc-receive (ok/ng; optional rewrite refname/oids).
+#[derive(Debug, Clone)]
+pub(crate) struct ProcReceiveResult {
+    pub name: String,
+    pub ok: bool,
+    pub error: Option<String>,
+    pub rewrite_ref: Option<String>,
+    pub rewrite_old: Option<String>,
+    pub rewrite_new: Option<String>,
+}
+
+/// Run `hooks/proc-receive` pkt-line protocol (version 0 subset).
+///
+/// Cite: <https://git-scm.com/docs/githooks#_proc_receive>,
+/// <https://git-scm.com/docs/git-receive-pack>.
+pub(crate) fn run_proc_receive(
+    git_dir: &Path,
+    commands: &[ProcReceiveCmd],
+    env: &HookEnv,
+) -> Result<Vec<ProcReceiveResult>, ServerError> {
+    if commands.is_empty() {
+        return Ok(Vec::new());
+    }
+    let path = hook_path(git_dir, "proc-receive");
+    if !is_runnable_hook(&path) {
+        return Err(ServerError::Msg(
+            "proc-receive advertised but hook missing".into(),
+        ));
+    }
+    let mut cmd = {
+        #[cfg(windows)]
+        {
+            let mut c = windows_bash();
+            c.arg(bash_style_path(&path));
+            c
+        }
+        #[cfg(not(windows))]
+        {
+            Command::new(&path)
+        }
+    };
+    #[cfg(windows)]
+    {
+        cmd.env("GIT_DIR", bash_style_path(git_dir));
+        if let Some(q) = &env.quarantine_path {
+            cmd.env("GIT_QUARANTINE_PATH", bash_style_path(q));
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        cmd.env("GIT_DIR", git_dir);
+        if let Some(q) = &env.quarantine_path {
+            cmd.env("GIT_QUARANTINE_PATH", q);
+        }
+    }
+    cmd.env("GIT_PUSH_OPTION_COUNT", env.push_options.len().to_string());
+    for (i, opt) in env.push_options.iter().enumerate() {
+        cmd.env(format!("GIT_PUSH_OPTION_{i}"), opt);
+    }
+    cmd.current_dir(git_dir);
+    cmd.stdin(Stdio::piped());
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::inherit());
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| ServerError::Msg(format!("hook proc-receive: {e}")))?;
+
+    // Negotiate version 0 (no "version=1" features required for ok/ng + option rewrite).
+    let mut request = Vec::new();
+    request.extend(
+        encode_packet(&Packet::Data(b"version=0\n".to_vec()))
+            .map_err(|e| ServerError::Protocol(e.to_string()))?,
+    );
+    request
+        .extend(encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?);
+    for c in commands {
+        let line = format!("{} {} {}\n", c.old_hex, c.new_hex, c.name);
+        request.extend(
+            encode_packet(&Packet::Data(line.into_bytes()))
+                .map_err(|e| ServerError::Protocol(e.to_string()))?,
+        );
+    }
+    request
+        .extend(encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?);
+    if let Some(mut hin) = child.stdin.take() {
+        match hin.write_all(&request) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => {}
+            Err(e) => {
+                return Err(ServerError::Msg(format!("hook proc-receive stdin: {e}")));
+            }
+        }
+    }
+    let mut stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| ServerError::Msg("hook proc-receive: no stdout".into()))?;
+    let mut buf = Vec::new();
+    stdout
+        .read_to_end(&mut buf)
+        .map_err(|e| ServerError::Msg(format!("hook proc-receive stdout: {e}")))?;
+    let status = child
+        .wait()
+        .map_err(|e| ServerError::Msg(format!("hook proc-receive: {e}")))?;
+    if !status.success() {
+        return Err(ServerError::Msg(format!(
+            "proc-receive hook exited {}",
+            status.code().unwrap_or(-1)
+        )));
+    }
+    parse_proc_receive_response(&buf, commands)
+}
+
+fn parse_proc_receive_response(
+    buf: &[u8],
+    commands: &[ProcReceiveCmd],
+) -> Result<Vec<ProcReceiveResult>, ServerError> {
+    let mut offset = 0;
+    // Optional leading flush / version ack from hook — skip until command results.
+    let mut results: Vec<ProcReceiveResult> = Vec::new();
+    let mut current: Option<ProcReceiveResult> = None;
+    let finish_current = |cur: &mut Option<ProcReceiveResult>, out: &mut Vec<ProcReceiveResult>| {
+        if let Some(r) = cur.take() {
+            out.push(r);
+        }
+    };
+    while offset < buf.len() {
+        let (packet, n) =
+            decode_packet(&buf[offset..]).map_err(|e| ServerError::Protocol(e.to_string()))?;
+        offset += n;
+        match packet {
+            Packet::Flush => {
+                finish_current(&mut current, &mut results);
+            }
+            Packet::Data(payload) => {
+                let line =
+                    decode_text_line(&payload).map_err(|e| ServerError::Protocol(e.to_string()))?;
+                let line = line.trim_end_matches('\n');
+                if line.is_empty() || line.starts_with("version") {
+                    continue;
+                }
+                if let Some(rest) = line.strip_prefix("ok ") {
+                    finish_current(&mut current, &mut results);
+                    current = Some(ProcReceiveResult {
+                        name: rest.trim().to_string(),
+                        ok: true,
+                        error: None,
+                        rewrite_ref: None,
+                        rewrite_old: None,
+                        rewrite_new: None,
+                    });
+                } else if let Some(rest) = line.strip_prefix("ng ") {
+                    finish_current(&mut current, &mut results);
+                    let mut parts = rest.splitn(2, ' ');
+                    let name = parts.next().unwrap_or("").to_string();
+                    let err = parts.next().unwrap_or("declined").to_string();
+                    current = Some(ProcReceiveResult {
+                        name,
+                        ok: false,
+                        error: Some(err),
+                        rewrite_ref: None,
+                        rewrite_old: None,
+                        rewrite_new: None,
+                    });
+                } else if let Some(rest) = line.strip_prefix("option ") {
+                    let Some(cur) = current.as_mut() else {
+                        return Err(ServerError::Protocol(
+                            "proc-receive option before ok/ng".into(),
+                        ));
+                    };
+                    if let Some(v) = rest.strip_prefix("refname ") {
+                        cur.rewrite_ref = Some(v.to_string());
+                    } else if let Some(v) = rest.strip_prefix("old-oid ") {
+                        cur.rewrite_old = Some(v.to_string());
+                    } else if let Some(v) = rest.strip_prefix("new-oid ") {
+                        cur.rewrite_new = Some(v.to_string());
+                    }
+                    // forced-update and unknown options ignored for FS2 subset.
+                } else {
+                    return Err(ServerError::Protocol(format!(
+                        "proc-receive unexpected line: {line}"
+                    )));
+                }
+            }
+            _ => {}
+        }
+    }
+    finish_current(&mut current, &mut results);
+    // Ensure every diverted command has a result (git requires reporting).
+    for cmd in commands {
+        if !results.iter().any(|r| r.name == cmd.name) {
+            results.push(ProcReceiveResult {
+                name: cmd.name.clone(),
+                ok: false,
+                error: Some("proc-receive did not report".into()),
+                rewrite_ref: None,
+                rewrite_old: None,
+                rewrite_new: None,
+            });
+        }
+    }
+    Ok(results)
 }
 
 fn hook_path(git_dir: &Path, name: &str) -> PathBuf {

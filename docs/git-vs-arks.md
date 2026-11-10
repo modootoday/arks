@@ -39,8 +39,9 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Full CLI inventory + flag symmetry (pin) | Yes | Implement or N/A exclusion (M16 bar) | **Claimed** (G20 / G21) |
 | `git` → `arks` alias drop-in | N/A | Documented alias; muscle-memory argv | **Claimed** (M16 / G21) |
 | Clean-room journey catalog (19 scenarios) | Oracle peer | Func PASS in Docker G16 | **Claimed** (G16 / G19 venue) |
-| Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | Yes | Scripted/non-TTY Claimed (`GIT_SEQUENCE_EDITOR` / `ARKS_EDITOR` / `ARKS_ADD_PATCH_ANSWERS`); full curses TUI N/A | **Claimed** (O3 scripted) / **N/A** (pixel TUI) |
-| GUI (`gitk`, `git-gui`) / Git LFS / `scalar` | Available as separate tools | Out of product | **N/A** |
+| Interactive (`rebase -i`, `add -p`, editor commit) | Yes | TTY `add -p` prompts + `rebase -i` editor fallback (**FS1**); scripted env retained (O3); hunk/`add -i`/`-e` → FS3 | **Claimed** (FS1 / O3) |
+| `proc-receive` (server) | Yes | Advertise when hook present; divert `receive.procReceiveRefs`; ok/ng + option rewrite (**FS2**) | **Claimed** (FS2) |
+| GUI (`gitk`, `git-gui`) / Git LFS / `scalar` | Separate tools / companion | Closest parity scheduled under FS6/FS7 (not casual forever-N/A) | **Open (FS ladder)** |
 
 ## Remotes and server
 
@@ -99,17 +100,29 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 |------|-------|--------|
 | **S0–S_final** | See prior tip | **Done** (**L9** closed) |
 
-### Optional residuals (O1–O_final) — active
+### Optional residuals (O1–O_final) — historical Done
 
 | Goal | Focus | Status |
 |------|-------|--------|
 | **O1** | Live G8 remasure | **Done (secrets hard-block)** — Environment secrets=0 |
 | **O2** | Extra filter-specs (`tree:0`) | **Done** (host wire) |
-| **O3** | Interactive scripted subset | **Done** (scripted Claimed; pixel TUI N/A) |
+| **O3** | Interactive scripted subset | **Done** (superseded for TTY by **FS1**) |
 | **O4** | force-with-lease / push-options / Apache DAV | **Done** (lease+options + G41 PASS) |
 | **O_final** | Docs / residual currency; **L9** closed | **Done** |
 
-See: [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [symmetry S0–S_final](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
+### Full Symmetry ladder (FS0–FS_final) — active DoD
+
+DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A forever”). **L9** and live G8 latency remain non-FS.
+
+| Goal | Focus | Status |
+|------|-------|--------|
+| **FS0** | Inventory all asymmetric rows | **Done** |
+| **FS1** | TTY `add -p` + `rebase -i` editor fallback | **Done** (Claimed) |
+| **FS2** | `proc-receive` advertise + divert | **Done** (Claimed; HOOK-008 → FS8) |
+| **FS3** | Hunk `-p` / `add -i`/`-e` / `stash -p` | Pending |
+| **FS4**–**FS8** / **FS_final** | Filters, bundle URI, LFS closest, GUI/OAuth closest, hostile edges, table clean | Pending |
+
+See: [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 
 ## Next
 

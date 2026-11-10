@@ -37,7 +37,8 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Post-bar residual disposition (no bare development Opens; Deferred=0; §F W1–W5 Claimed honesty) | `.spec/sot/production-residual-register.sot.md` |
 | Product-completion ladder (post-PF5 8/8; L0–L9 historical Done; L9 closed) | `.spec/research/20261110095142-product-completion-goal-ladder.research.md` |
 | Git symmetry expanded DoD ladder (S0–S_final; Done) | `.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md` |
-| Optional residuals O-ladder (O1–O_final; active after S_final) | `.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md` |
+| Optional residuals O-ladder (O1–O_final; historical Done) | `.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md` |
+| Full Symmetry ladder (FS0–FS_final; **active git feature DoD**) | `.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md` |
 | Git CLI symmetric compatibility | `.spec/sot/cli-surface.sot.md` |
 | Crate architecture | `.spec/sot/crate-architecture.sot.md` |
 | Native engine vs wrapper; zero-gix end state | `.spec/adr/20261108083507-native-rust-git-engine-versus-wrapper-and-gix.adr.md` |

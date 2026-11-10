@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-10T10:54:36Z
+updated: 2026-11-10T21:26:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final]
 verify: manual
 rel:
@@ -208,19 +208,19 @@ Every row is **Claimed / Refuse-closed / N/A / Closed** — **no bare Deferred**
 | **P2** | **FW-PIN** | **Closed (process)** — pin advance hygiene; pin **2.39.5** | [[sot:root/clean-room-git-pin-advance]], `verify/images.lock.json` | Deliberate pin bump + G14-class re-prove |
 | **P2** | **FW-SLO** | **Closed** — M17 ≤0.8× + M18/Pf5 evidence; no new host SLOs | [[evidence:root/20261109090000]], [[evidence:root/20261109143000]], [[sot:root/clean-room-journey-compare]] | Clean-room gate only; no laptop marketing SLO |
 | **P3** | **FW-CELIR-OS** | **Refuse-closed (terminal)** — CELIR ObjectStore | [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]], [[adr:root/20261109204916]] | ObjectStore reverse ADR (forbidden product path) |
-| **P4** | **FW-GUI** | **N/A (exclusion)** — gitk / git-gui / citool | [[sot:root/product-intent]], [[sot:root/cli-surface]] | Dedicated GUI SoT if ever claimed |
-| **P4** | **FW-SCALAR** | **N/A (exclusion)** — scalar | [[sot:root/product-intent]] | Same |
-| **P4** | **FW-LFS** | **N/A (exclusion)** — Git LFS default gate | [[sot:root/product-intent]] | Dedicated LFS SoT |
-| **P4** | **FW-FORGE-B** | **N/A (out)** — host product APIs (PR UX/Checks/Apps) | [[sot:root/product-intent]], [[sot:root/remote-host-compatibility-surface]] scope (B) | Scope-(B) SoT adoption |
-| **P5** | **FW-CAT-FS-007** | **N/A** — cloud sync on `.git` (out-of-scope) | [[sot:root/multi-agent-git-concurrency-scenarios]] row FS-007 | Primary-doc cite; not Claimed |
-| **P5** | **FW-CAT-FS-014** | **N/A** — SELinux/AppArmor deny `.lock` rename | Catalog FS-014 | Same |
-| **P5** | **FW-CAT-HOOK-008** | **N/A** — proc-receive / push-options races | Catalog HOOK-008, [proc-receive](https://git-scm.com/docs/git-receive-pack) | Same |
-| **P5** | **FW-CAT-MAINT-004** | **N/A** — dumb HTTP `update-server-info` races | Catalog MAINT-004 | Same |
-| **P5** | **FW-CAT-MISC-006** | **N/A** — hosting shadow refs (`refs/pull`) | Catalog MISC-006 | Same |
-| **P5** | **FW-CAT-NET-006** | **N/A** — bundle URI clone races | Catalog NET-006, [git bundle](https://git-scm.com/docs/git-bundle) | Same |
-| **P5** | **FW-CAT-OBJ-004** | **N/A** — SHA-1 collision / sha256 transition hostile inputs | Catalog OBJ-004 | Same |
-| **P5** | **FW-CAT-REF-017** | **N/A** — `git replace` concurrent edit | Catalog REF-017, [git-replace](https://git-scm.com/docs/git-replace) | Same |
-| **P5** | **FW-CAT-WIN-003** | **N/A** — OneDrive placeholder confusion | Catalog WIN-003 | Same |
+| **P4** | **FW-GUI** | **Open (FS7)** — closest external-tool handoff; not embed Tcl/Tk | [[research:root/20261110212414]], [[sot:root/product-intent]] | FS7 Claimed slice + evidence |
+| **P4** | **FW-SCALAR** | **Open (FS6 note)** — closest parity or written impossible | [[research:root/20261110212414]] | FS6 disposition |
+| **P4** | **FW-LFS** | **Open (FS6)** — filter-process / pointer closest parity | [[research:root/20261110212414]] | FS6 SoT + evidence |
+| **P4** | **FW-FORGE-B** | **Impossible (not a git feature)** — host PR/Checks UX; use `gh` | [[sot:root/product-intent]], [[sot:root/remote-host-compatibility-surface]] scope (B) | Documented impossible under FS DoD |
+| **P5** | **FW-CAT-FS-007** | **Impossible (host env)** — cloud sync on `.git` | Catalog FS-007 | Document + detect when SoTable |
+| **P5** | **FW-CAT-FS-014** | **Impossible (host policy)** — SELinux/AppArmor deny `.lock` rename | Catalog FS-014 | Errno honesty closest |
+| **P5** | **FW-CAT-HOOK-008** | **Open (FS8)** — proc-receive / push-options races; **FS2** protocol Claimed | Catalog HOOK-008, [[adr:root/20261110212500]] | Hostile harness SoT |
+| **P5** | **FW-CAT-MAINT-004** | **Open (FS5)** — dumb HTTP `update-server-info` races | Catalog MAINT-004 | FS5 |
+| **P5** | **FW-CAT-MISC-006** | **Open (FS6)** — shadow refs as ordinary refs honesty | Catalog MISC-006 | FS6 |
+| **P5** | **FW-CAT-NET-006** | **Open (FS5)** — bundle URI clone | Catalog NET-006, [git bundle](https://git-scm.com/docs/git-bundle) | FS5 |
+| **P5** | **FW-CAT-OBJ-004** | **Open (FS8)** — SHA-1 collision / sha256 hostile | Catalog OBJ-004 | FS8 |
+| **P5** | **FW-CAT-REF-017** | **Open (FS5)** — `git replace` concurrent edit | Catalog REF-017, [git-replace](https://git-scm.com/docs/git-replace) | FS5 |
+| **P5** | **FW-CAT-WIN-003** | **Impossible (host OS)** — OneDrive placeholders | Catalog WIN-003 | Errno / stub honesty |
 | **P6** | **FW-PF5-J-BRANCH** | **Claimed (≤0.5×)** — J-BRANCH-01 (under umbrella **8/8**) | [[sot:root/pf5-journey-seed-amortization]], [[evidence:root/20261110224500]], [[evidence:root/20261110142500]], [[adr:root/20261110162000]] | G19 regress after amortization change |
 | **P6** | **FW-PF5-J-BUNDLE** | **Claimed (≤0.5×)** — J-BUNDLE-01 (under umbrella **8/8**) | Same | Same |
 | **P6** | **FW-PF5-J-RM-MV** | **Claimed (≤0.5×)** — J-RM-MV-01 (under umbrella **8/8**) | [[sot:root/pf5-journey-seed-amortization]], [[evidence:root/20261111001400]], [[evidence:root/20261110142500]], [[adr:root/20261110162000]] | G19 regress after amortization change |
@@ -249,7 +249,8 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R4 | OpenPGP / X.509 / `tag -s` | **Claimed (G38)** — OpenPGP commit/tag + stock verify; X.509 via configured program [[adr:root/20261110110450]] + [[evidence:root/20261110110800]]; symmetry **S2 Done** | Re-verify G38 after crypto wire change |
 | R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; **O1 secrets hard-block** ([[evidence:root/20261110210200]]; Environment `g8-live` secrets=0); live remasure still needs secrets+receipt (**≠** fake PASS) | Secrets + receipt for any live samples; never invent latency |
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
-| — | Optional O-ladder O1–O_final | Normative in [[research:root/20261110205403]] — **O1–O_final Done**; O1 secrets-block; O2 `tree:0`; O3 scripted interactive; O4 lease+push-options + Apache **G41 PASS**; **L9** closed | Keep evidence current |
+| — | Optional O-ladder O1–O_final | Historical Done in [[research:root/20261110205403]]; superseded for feature DoD by Full Symmetry ladder | Keep evidence current |
+| — | Full Symmetry ladder FS0–FS_final | **Active DoD** [[research:root/20261110212414]]; **FS0–FS2 Done** ([[adr:root/20261110212430]], [[adr:root/20261110212500]], [[evidence:root/20261110212530]], [[evidence:root/20261110212545]]); FS3+ pending; **L9** closed; G8 live secrets still operator | No casual N/A for real git features; SoT+evidence before Claimed |
 
 ## Why
 

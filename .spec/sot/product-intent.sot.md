@@ -54,7 +54,7 @@ This SoT owns **inner/core product intent** and the **bottom-up build principle*
 4. **Pretending a CLI subset is production.** Phased delivery waves are allowed; calling Wave L/H “production” or deferring full porcelain as permanent end-state is **not**. Inventory, refuse policy, and exclusions: [[sot:root/cli-surface]].
 5. Host-only “verified” claims.
 6. Forking humanymous Specfold/convention prose — cite `C:\workspaces\humanymous` (especially structural bottom-up patterns in `sot:root/structural-development` there); do not duplicate competing convention SoTs here.
-7. GUI clones of gitk/git-gui/citool, Git LFS as a default production gate, or forge product APIs (PRs/Checks/Apps / GitHub App **as** arks server) — exclusions / other SoTs ([[sot:root/cli-surface]], [[sot:root/remote-host-compatibility-surface]] scope (B)).
+7. Embedding full **gitk/git-gui/citool** pixel GUIs inside the arks CLI binary, treating Git LFS **server product** as a default production gate without a dedicated SoT, or forge product APIs (PRs/Checks/Apps / GitHub App **as** arks server) — see [[research:root/20261110212414]] FS6/FS7 for **closest parity** slices (filter-process / external-tool handoff). Casual “agent non-interactive N/A” for real git interactive flows is **forbidden** under the full-symmetry DoD.
 8. Any permanent Cargo dependency on gitoxide/`gix` (runtime, optional feature, or permanent `dev-dependencies`) — **rejected** as end state. Hot paths always in-house; prefer never introducing `gix`; transitional cold use only under [[adr:root/20261108083507]] with mandatory exit before M4 (gix-exit).
 9. Treating **M9** CLI-parity production as if it included the Git **server** role — server is **M11** / production-server ([[sot:root/program-roadmap]]).
 

@@ -1,15 +1,18 @@
 //! receive-pack service (push path).
 //!
-//! Claimed caps: `report-status`, `report-status-v2` (classic ok/ng; option
-//! lines reserved for future proc-receive rewrites), `delete-refs`,
-//! `push-options` (O4; forward to hooks — not proc-receive), `agent`.
+//! Claimed caps: `report-status`, `report-status-v2` (classic ok/ng + FS2
+//! proc-receive option rewrite when diverted), `delete-refs`,
+//! `push-options` (O4; forward to hooks), `proc-receive` (FS2 when hook
+//! present), `agent`.
 //! Cite: <https://git-scm.com/docs/gitprotocol-capabilities>,
 //! <https://git-scm.com/docs/git-receive-pack> (quarantine environment).
 
 use crate::advertise::{encode_http_advertisement, encode_pack_advertisement};
 use crate::error::ServerError;
 use crate::hooks::{
-    HookEnv, HookGate, run_post_receive, run_post_update, run_pre_receive, run_update,
+    HookEnv, HookGate, ProcReceiveCmd, proc_receive_hook_present, proc_receive_ref_prefixes,
+    ref_matches_proc_receive, run_post_receive, run_post_update, run_pre_receive, run_proc_receive,
+    run_update,
 };
 use arks_oid::Oid;
 use arks_pack::DecodedPack;
@@ -38,16 +41,18 @@ fn receive_refs_and_caps(repo: &Repository) -> Result<RefsAndCaps, ServerError> 
     } else if let Ok(RefTarget::Direct(oid)) = repo.head_target() {
         refs.insert(0, ("HEAD".into(), oid));
     }
-    // Advertise only real caps. report-status-v2 without option lines matches
-    // stock receive-pack when no proc-receive rewrite applies.
+    // Advertise only real caps. FS2: advertise `proc-receive` when hook present.
     // Cite: https://git-scm.com/docs/gitprotocol-capabilities
-    let caps = vec![
+    let mut caps = vec![
         "report-status".into(),
         "report-status-v2".into(),
         "delete-refs".into(),
         "push-options".into(),
         "agent=arks/0.0.0".into(),
     ];
+    if proc_receive_hook_present(repo.git_dir()) {
+        caps.insert(caps.len() - 1, "proc-receive".into());
+    }
     Ok((refs, caps))
 }
 
@@ -107,9 +112,22 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
     // Migrate quarantined objects into the main store only after pre-receive.
     quarantine.migrate_into(repo).map_err(ServerError::Msg)?;
 
+    let prefixes = proc_receive_ref_prefixes(repo.git_dir());
+    let use_proc = proc_receive_hook_present(repo.git_dir()) && !prefixes.is_empty();
+
     let mut results: Vec<(String, Result<(), String>)> = Vec::new();
-    let mut success_cmds: Vec<&ReceiveCommand> = Vec::new();
+    let mut success_cmds: Vec<ReceiveCommand> = Vec::new();
+    let mut diverted: Vec<ReceiveCommand> = Vec::new();
+    let mut ordinary: Vec<&ReceiveCommand> = Vec::new();
     for cmd in &commands {
+        if use_proc && ref_matches_proc_receive(&cmd.name, &prefixes) {
+            diverted.push(cmd.clone());
+        } else {
+            ordinary.push(cmd);
+        }
+    }
+
+    for cmd in ordinary {
         let old = repo.refs().resolve(&cmd.name).ok();
         // Expect old matches when peer sent non-zero old (fast-forward check deferred:
         // accept if old is None or matches cmd.old, else refuse).
@@ -138,7 +156,7 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
             match repo.refs_mut().delete(&cmd.name, old.as_ref()) {
                 Ok(()) => {
                     results.push((cmd.name.clone(), Ok(())));
-                    success_cmds.push(cmd);
+                    success_cmds.push(cmd.clone());
                 }
                 Err(e) => results.push((cmd.name.clone(), Err(e.to_string()))),
             }
@@ -147,14 +165,81 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
         match repo.refs_mut().update(&cmd.name, &cmd.new, old.as_ref()) {
             Ok(()) => {
                 results.push((cmd.name.clone(), Ok(())));
-                success_cmds.push(cmd);
+                success_cmds.push(cmd.clone());
             }
             Err(e) => results.push((cmd.name.clone(), Err(e.to_string()))),
         }
     }
 
+    if !diverted.is_empty() {
+        let pr_cmds: Vec<ProcReceiveCmd> = diverted
+            .iter()
+            .map(|c| ProcReceiveCmd {
+                old_hex: c.old.to_hex(),
+                new_hex: c.new.to_hex(),
+                name: c.name.clone(),
+            })
+            .collect();
+        let pr_results = run_proc_receive(repo.git_dir(), &pr_cmds, &hook_env)?;
+        for pr in pr_results {
+            if !pr.ok {
+                results.push((
+                    pr.name,
+                    Err(pr.error.unwrap_or_else(|| "proc-receive declined".into())),
+                ));
+                continue;
+            }
+            // Apply rewrite if hook provided option refname / new-oid; else
+            // treat ok as "hook handled ref" without receive-pack updating the
+            // original name (stock git behavior for successful proc-receive).
+            let target_name = pr.rewrite_ref.clone().unwrap_or_else(|| pr.name.clone());
+            let new_oid = if let Some(hex) = &pr.rewrite_new {
+                Oid::from_hex(hex).map_err(|e| ServerError::Msg(e.to_string()))?
+            } else {
+                diverted
+                    .iter()
+                    .find(|c| c.name == pr.name)
+                    .map(|c| c.new)
+                    .ok_or_else(|| ServerError::Msg("proc-receive missing cmd".into()))?
+            };
+            let old_hint = if let Some(hex) = &pr.rewrite_old {
+                Some(Oid::from_hex(hex).map_err(|e| ServerError::Msg(e.to_string()))?)
+            } else {
+                repo.refs().resolve(&target_name).ok()
+            };
+            if new_oid.as_bytes().iter().all(|b| *b == 0) {
+                match repo.refs_mut().delete(&target_name, old_hint.as_ref()) {
+                    Ok(()) => {
+                        results.push((pr.name, Ok(())));
+                        success_cmds.push(ReceiveCommand {
+                            old: old_hint.unwrap_or_else(zero_oid),
+                            new: new_oid,
+                            name: target_name,
+                        });
+                    }
+                    Err(e) => results.push((pr.name, Err(e.to_string()))),
+                }
+            } else {
+                match repo
+                    .refs_mut()
+                    .update(&target_name, &new_oid, old_hint.as_ref())
+                {
+                    Ok(()) => {
+                        results.push((pr.name, Ok(())));
+                        success_cmds.push(ReceiveCommand {
+                            old: old_hint.unwrap_or_else(zero_oid),
+                            new: new_oid,
+                            name: target_name,
+                        });
+                    }
+                    Err(e) => results.push((pr.name, Err(e.to_string()))),
+                }
+            }
+        }
+    }
+
     if !success_cmds.is_empty() {
-        let post_stdin = hook_stdin_lines_refs(success_cmds.iter().copied());
+        let post_stdin = hook_stdin_lines_refs(success_cmds.iter());
         run_post_receive(repo.git_dir(), &post_stdin, &hook_env);
         let names: Vec<&str> = success_cmds.iter().map(|c| c.name.as_str()).collect();
         run_post_update(repo.git_dir(), &names, &hook_env);
@@ -229,6 +314,10 @@ fn is_delete(cmd: &ReceiveCommand) -> bool {
     cmd.new.as_bytes().iter().all(|b| *b == 0)
 }
 
+fn zero_oid() -> Oid {
+    Oid::from_hex("0000000000000000000000000000000000000000").expect("zero oid")
+}
+
 fn hook_stdin_lines(commands: &[ReceiveCommand]) -> Vec<u8> {
     hook_stdin_lines_refs(commands.iter())
 }
@@ -244,6 +333,7 @@ where
     out
 }
 
+#[derive(Debug, Clone)]
 struct ReceiveCommand {
     old: Oid,
     new: Oid,

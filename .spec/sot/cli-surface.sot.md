@@ -194,7 +194,7 @@ Refuse unimplemented server transports/options; never advertise unimplemented ca
 ### UX principles (arks-specific, non-semantic)
 
 11. **Git muscle memory without lying.** Same subcommand names as Git for inventory commands; never advertise full parity before Wave Pc exit.
-12. **Agent-friendly.** Stable non-interactive defaults; no TUI required for production CLI.
+12. **Agent-friendly + human parity.** Stable non-interactive / scripted defaults remain; **TTY interactive prompts and editor-driven flows that stock git exposes MUST be Claimed or impossible+slice** under [[research:root/20261110212414]] (FS1+) — “agent bar” convenience MUST NOT forever N/A real git features.
 13. **Crate placement.** CLI crate is outer: depends inward; libraries MUST NOT depend on the CLI bin ([[sot:root/crate-architecture]]).
 
 ## Why

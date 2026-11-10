@@ -140,14 +140,19 @@ pub fn cmd_rebase(args: &[String]) -> CliResult<()> {
     rebase_onto(upstream)
 }
 
-/// Scripted interactive rebase (O3): requires `GIT_SEQUENCE_EDITOR` / `ARKS_SEQUENCE_EDITOR`.
+/// Interactive rebase (O3 scripted + FS1 editor fallback):
+/// Prefer `ARKS_SEQUENCE_EDITOR` / `GIT_SEQUENCE_EDITOR`, else ordinary editor
+/// (`ARKS_EDITOR` / `GIT_EDITOR` / `EDITOR`) — stock git `GIT_SEQUENCE_EDITOR` fallback.
 /// Claimed todo verbs: `pick`, `drop` (or `#` comment), `reword` (message via editor env).
 fn rebase_interactive(upstream_rev: &str) -> CliResult<()> {
     let editor = std::env::var("ARKS_SEQUENCE_EDITOR")
         .or_else(|_| std::env::var("GIT_SEQUENCE_EDITOR"))
+        .or_else(|_| std::env::var("ARKS_EDITOR"))
+        .or_else(|_| std::env::var("GIT_EDITOR"))
+        .or_else(|_| std::env::var("EDITOR"))
         .map_err(|_| {
-            CliError::NotImplemented(
-                "rebase -i requires GIT_SEQUENCE_EDITOR or ARKS_SEQUENCE_EDITOR (scripted O3); full TTY TUI remains N/A"
+            CliError::Usage(
+                "rebase -i requires a sequence/editor: set GIT_SEQUENCE_EDITOR / ARKS_SEQUENCE_EDITOR or GIT_EDITOR / ARKS_EDITOR / EDITOR (FS1)"
                     .into(),
             )
         })?;
@@ -175,9 +180,8 @@ fn rebase_interactive(upstream_rev: &str) -> CliResult<()> {
     fs::write(merge_dir.join("interactive"), b"")?;
     fs::write(merge_dir.join("onto"), format!("{}\n", upstream.to_hex()))?;
     fs::write(merge_dir.join("head-name"), b"attached")?;
-    let mut todo = String::from(
-        "# arks scripted rebase -i (O3)\n# Commands: pick | drop | reword | # comment\n",
-    );
+    let mut todo =
+        String::from("# arks rebase -i (O3/FS1)\n# Commands: pick | drop | reword | # comment\n");
     for oid in &commits {
         let c = read_commit(&repo, oid)?;
         let subj = c.message.lines().next().unwrap_or("").trim();

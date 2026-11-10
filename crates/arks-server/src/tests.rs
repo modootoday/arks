@@ -74,9 +74,33 @@ fn receive_advertises_delete_refs_and_report_status_v2() {
     assert!(text.contains("report-status"));
     assert!(text.contains("report-status-v2"));
     assert!(text.contains("delete-refs"));
-    // O4: push-options advertised; proc-receive remains unclaimed.
+    // O4: push-options advertised; FS2: proc-receive only when hook present.
     assert!(text.contains("push-options"));
     assert!(!text.contains("proc-receive"));
+}
+
+#[test]
+fn receive_advertises_proc_receive_when_hook_present() {
+    let dir = TempDir::new().unwrap();
+    let (git, _) = seed_bare(dir.path());
+    let hooks = git.join("hooks");
+    std::fs::create_dir_all(&hooks).unwrap();
+    let hook = hooks.join("proc-receive");
+    std::fs::write(&hook, b"#!/bin/sh\nexit 0\n").unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = std::fs::metadata(&hook).unwrap().permissions();
+        perms.set_mode(0o755);
+        std::fs::set_permissions(&hook, perms).unwrap();
+    }
+    let repo = Repository::open(&git).unwrap();
+    let body = receive_advertisement(&repo).unwrap();
+    let text = String::from_utf8_lossy(&body);
+    assert!(
+        text.contains("proc-receive"),
+        "FS2 must advertise proc-receive when hook is runnable: {text}"
+    );
 }
 
 #[test]
