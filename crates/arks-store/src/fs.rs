@@ -6,7 +6,7 @@
 
 use crate::{ObjectStore, StoreError};
 use arks_hash::ObjectFormat;
-use arks_object::{loose_rel_path, read_loose_hot, write_loose, ObjectError, RawObject};
+use arks_object::{ObjectError, RawObject, loose_rel_path, read_loose_hot, write_loose};
 use arks_oid::Oid;
 use arks_pack::{DecodedPack, PackIndex, PackIndexEntry, ResolvedObject};
 use std::collections::HashMap;

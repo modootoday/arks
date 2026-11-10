@@ -18,17 +18,17 @@
 //! <https://git-scm.com/docs/gitprotocol-pack>
 
 use crate::advertise::{
-    cap_advertised, content_type_is, parse_advertisement, symref_target, Advertisement,
+    Advertisement, cap_advertised, content_type_is, parse_advertisement, symref_target,
 };
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
 use crate::http::UreqTransport;
 use crate::shallow::{apply_shallow_update, read_shallow, write_shallow};
 use crate::ssh::{SshService, SshSession};
-use crate::transport::{header, require_success, HttpRequest, Transport};
-use crate::url::{join_url, SshRemoteUrl};
+use crate::transport::{HttpRequest, Transport, header, require_success};
+use crate::url::{SshRemoteUrl, join_url};
 use arks_oid::Oid;
-use arks_protocol::{decode_packet, decode_text_line, encode_packet, encode_text_line, Packet};
+use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;
@@ -62,6 +62,9 @@ struct ShallowUpdate {
     shallow: Vec<Oid>,
     unshallow: Vec<Oid>,
 }
+
+/// Owned buffer holding a PACK, plus byte offset where the PACK starts (`buf[at..]`).
+type PackBufAt = Option<(Vec<u8>, usize)>;
 
 pub fn fetch_http(
     repo: &mut Repository,
@@ -442,7 +445,7 @@ pub(crate) fn extract_pack(body: Vec<u8>, sideband: bool) -> Result<Option<Vec<u
 fn extract_pack_and_shallow(
     body: Vec<u8>,
     sideband: bool,
-) -> Result<(Option<(Vec<u8>, usize)>, ShallowUpdate), RemoteError> {
+) -> Result<(PackBufAt, ShallowUpdate), RemoteError> {
     let mut offset = 0;
     // Side-band demux still accumulates; raw PACK keeps offset into `body`.
     let mut pack = Vec::new();

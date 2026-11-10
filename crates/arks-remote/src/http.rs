@@ -13,7 +13,7 @@
 //! Pf5: defer `CredentialSource::discover` until a 401 (or explicit `with_source`) so
 //! unauthenticated smart-HTTP clone/fetch skips `.gitconfig` / helper walks.
 
-use crate::credential::{resolve_authorization, CredentialSource};
+use crate::credential::{CredentialSource, resolve_authorization};
 use crate::error::RemoteError;
 use crate::transport::{HttpRequest, HttpResponse, Transport};
 use crate::url::prepare_url_with_source;
