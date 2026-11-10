@@ -151,7 +151,7 @@ pub fn checkout_tree(repo: &Repository, work: &Path, tree: &Oid) -> Result<(), R
         extensions: Vec::new(),
     };
     index
-        .write_path(&repo.index_path(), OidKind::Sha1)
+        .write_path(&repo.index_path(), repo.oid_kind())
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
     Ok(())
 }
@@ -522,14 +522,14 @@ pub fn smudge_worktree_blob(
     apply_smudge(repo, work, rel, payload)
 }
 
-/// FS6 reopen: smudge on checkout — in-process LFS pointer resolve, then `filter.*.smudge`.
+/// FS6 reopen: smudge on checkout — LFS pointer (local or network) then `filter.*.smudge`.
 fn apply_smudge(
     repo: &Repository,
     work: &Path,
     rel: &str,
     payload: &[u8],
 ) -> Result<Vec<u8>, RemoteError> {
-    if let Some(bytes) = resolve_lfs_pointer_local(repo, payload)? {
+    if let Some(bytes) = crate::lfs::resolve_lfs_pointer(repo, payload)? {
         return Ok(bytes);
     }
     let Some(name) = attribute_filter_name(work, rel) else {
@@ -541,57 +541,6 @@ fn apply_smudge(
         return Ok(payload.to_vec());
     };
     run_filter_command(&cmd, work, rel, payload, &key)
-}
-
-/// In-process Git LFS pointer → `.git/lfs/objects/aa/bb/<oid>` when present.
-fn resolve_lfs_pointer_local(
-    repo: &Repository,
-    payload: &[u8],
-) -> Result<Option<Vec<u8>>, RemoteError> {
-    let Ok(text) = std::str::from_utf8(payload) else {
-        return Ok(None);
-    };
-    if !text.starts_with("version https://git-lfs.github.com/spec/v1\n")
-        && !text.starts_with("version https://git-lfs.github.com/spec/v1\r\n")
-    {
-        return Ok(None);
-    }
-    let mut oid_hex: Option<&str> = None;
-    let mut size: Option<u64> = None;
-    for line in text.lines() {
-        if let Some(rest) = line.strip_prefix("oid sha256:") {
-            oid_hex = Some(rest.trim());
-        } else if let Some(rest) = line.strip_prefix("size ") {
-            size = rest.trim().parse().ok();
-        }
-    }
-    let Some(oid_hex) = oid_hex else {
-        return Ok(None);
-    };
-    if oid_hex.len() != 64 || !oid_hex.chars().all(|c| c.is_ascii_hexdigit()) {
-        return Ok(None);
-    }
-    let path = repo
-        .git_dir()
-        .join("lfs")
-        .join("objects")
-        .join(&oid_hex[..2])
-        .join(&oid_hex[2..4])
-        .join(oid_hex);
-    if !path.is_file() {
-        // Missing local object: leave pointer bytes (network LFS fetch remains git-lfs).
-        return Ok(None);
-    }
-    let bytes = fs::read(&path).map_err(|e| RemoteError::Msg(e.to_string()))?;
-    if let Some(sz) = size {
-        if bytes.len() as u64 != sz {
-            return Err(RemoteError::Msg(format!(
-                "lfs in-process smudge: size mismatch for {oid_hex} (got {} want {sz})",
-                bytes.len()
-            )));
-        }
-    }
-    Ok(Some(bytes))
 }
 
 fn attribute_filter_name(work: &Path, rel: &str) -> Option<String> {
@@ -780,7 +729,7 @@ mod lfs_smudge_tests {
             "version https://git-lfs.github.com/spec/v1\noid sha256:{oid_hex}\nsize {}\n",
             content.len()
         );
-        let got = resolve_lfs_pointer_local(&repo, pointer.as_bytes())
+        let got = crate::lfs::resolve_lfs_pointer(&repo, pointer.as_bytes())
             .unwrap()
             .expect("resolved");
         assert_eq!(got, content);
@@ -808,7 +757,7 @@ mod lfs_smudge_tests {
         let repo = Repository::open(&git).unwrap();
         let pointer =
             format!("version https://git-lfs.github.com/spec/v1\noid sha256:{oid_hex}\nsize 99\n");
-        let err = resolve_lfs_pointer_local(&repo, pointer.as_bytes()).unwrap_err();
+        let err = crate::lfs::resolve_lfs_pointer(&repo, pointer.as_bytes()).unwrap_err();
         assert!(err.to_string().contains("size mismatch"), "{err}");
     }
 }

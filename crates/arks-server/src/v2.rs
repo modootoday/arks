@@ -13,9 +13,8 @@ use arks_protocol::{
 };
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use arks_store::{ObjectFormat, ObjectStore};
+use arks_store::ObjectStore;
 
-const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
 /// Capability lines advertised for v2 (commands + agent).
 pub fn v2_capability_lines() -> Vec<String> {
@@ -183,7 +182,7 @@ fn fetch_v2(repo: &Repository, args: &[String]) -> Result<Vec<u8>, ServerError> 
         Err(e) => Err(ServerError::Msg(e.to_string())),
     };
     let objects = collect_closure(&wants, get)?;
-    let pack = EncodedPack::from_undeltified(FORMAT, &objects)
+    let pack = EncodedPack::from_undeltified(repo.object_format(), &objects)
         .map_err(|e| ServerError::Protocol(format!("pack encode: {e}")))?;
 
     // done was sent → omit acknowledgments; send packfile section only.

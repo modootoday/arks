@@ -5,7 +5,7 @@
 
 use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, OID_KIND, open_repo, refuse_unknown_flags};
+use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode};
 use arks_repo::Repository;
 use arks_store::ObjectStore;
@@ -62,7 +62,8 @@ fn notes_add(args: &[String]) -> CliResult<()> {
         None => repo.head_oid()?,
     };
     let blob = RawObject::new(ObjectKind::Blob, message.into_bytes());
-    let note_oid = repo.store_mut().put(FORMAT, &blob)?;
+    let format = repo.object_format();
+    let note_oid = repo.store_mut().put(format, &blob)?;
     let mut entries = load_notes_entries(&repo)?;
     let key = target.to_hex();
     entries.insert(
@@ -76,7 +77,8 @@ fn notes_add(args: &[String]) -> CliResult<()> {
     let tree = Tree::new(entries.into_values().collect())?;
     let tree_bytes = tree.encode()?;
     let tree_obj = RawObject::new(ObjectKind::Tree, tree_bytes);
-    let tree_oid = repo.store_mut().put(FORMAT, &tree_obj)?;
+    let format = repo.object_format();
+    let tree_oid = repo.store_mut().put(format, &tree_obj)?;
     let old = repo.refs().resolve(NOTES_REF).ok();
     repo.refs_mut().update(NOTES_REF, &tree_oid, old.as_ref())?;
     Ok(())
@@ -156,7 +158,8 @@ fn notes_append(args: &[String]) -> CliResult<()> {
         body.push(b'\n');
     }
     let blob = RawObject::new(ObjectKind::Blob, body);
-    let note_oid = repo.store_mut().put(FORMAT, &blob)?;
+    let format = repo.object_format();
+    let note_oid = repo.store_mut().put(format, &blob)?;
     entries.insert(
         key.clone(),
         TreeEntry {
@@ -230,7 +233,8 @@ fn write_notes_tree(repo: &mut Repository, entries: HashMap<String, TreeEntry>) 
     let tree = Tree::new(entries.into_values().collect())?;
     let tree_bytes = tree.encode()?;
     let tree_obj = RawObject::new(ObjectKind::Tree, tree_bytes);
-    let tree_oid = repo.store_mut().put(FORMAT, &tree_obj)?;
+    let format = repo.object_format();
+    let tree_oid = repo.store_mut().put(format, &tree_obj)?;
     let old = repo.refs().resolve(NOTES_REF).ok();
     repo.refs_mut().update(NOTES_REF, &tree_oid, old.as_ref())?;
     Ok(())
@@ -246,14 +250,14 @@ fn load_notes_entries(repo: &Repository) -> CliResult<HashMap<String, TreeEntry>
             "{NOTES_REF} does not point to a tree"
         )));
     }
-    let tree = Tree::decode(&obj.payload, OID_KIND)?;
+    let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
     let mut map = HashMap::new();
     for entry in tree.entries {
         // Fanout 0: entry name is the full object hex.
         // Fanout 1 (stock may rewrite): single-level dir + leaf — flatten for show/add.
         if entry.mode.is_tree() {
             let nested = repo.get_object(&entry.oid)?;
-            let nested_tree = Tree::decode(&nested.payload, OID_KIND)?;
+            let nested_tree = Tree::decode(&nested.payload, repo.oid_kind())?;
             for leaf in nested_tree.entries {
                 let name = format!("{}{}", entry.name, leaf.name);
                 map.insert(

@@ -3,9 +3,9 @@
 use crate::RepoError;
 use crate::discover::{GitDirKind, discover, resolve_common_dir};
 use arks_object::RawObject;
-use arks_oid::Oid;
+use arks_oid::{Oid, OidKind};
 use arks_refs::{FilesystemRefStore, RefTarget};
-use arks_store::{FilesystemGitStore, ObjectStore};
+use arks_store::{FilesystemGitStore, ObjectFormat, ObjectStore};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -17,6 +17,7 @@ pub struct Repository {
     common_dir: PathBuf,
     work_tree: Option<PathBuf>,
     kind: GitDirKind,
+    object_format: ObjectFormat,
     store: FilesystemGitStore,
     refs: FilesystemRefStore,
 }
@@ -73,11 +74,13 @@ impl Repository {
         } else {
             FilesystemRefStore::open_with_common(&git_dir, Some(&common_dir))?
         };
+        let object_format = read_object_format(&common_dir.join("config"));
         Ok(Self {
             git_dir,
             common_dir,
             work_tree,
             kind,
+            object_format,
             store,
             refs,
         })
@@ -99,6 +102,19 @@ impl Repository {
 
     pub fn kind(&self) -> GitDirKind {
         self.kind
+    }
+
+    /// Repository object hash format (`extensions.objectFormat`, default sha1).
+    pub fn object_format(&self) -> ObjectFormat {
+        self.object_format
+    }
+
+    /// OID width matching [`Self::object_format`].
+    pub fn oid_kind(&self) -> OidKind {
+        match self.object_format {
+            ObjectFormat::Sha1 => OidKind::Sha1,
+            ObjectFormat::Sha256 => OidKind::Sha256,
+        }
     }
 
     /// Path to `$GIT_DIR/index` (callers use `arks-index`; this crate does not decode).
@@ -136,6 +152,36 @@ impl Repository {
     pub fn get_object(&self, oid: &Oid) -> Result<RawObject, RepoError> {
         Ok(self.store.get(oid)?)
     }
+}
+
+fn read_object_format(config_path: &Path) -> ObjectFormat {
+    let Ok(text) = fs::read_to_string(config_path) else {
+        return ObjectFormat::Sha1;
+    };
+    let mut in_extensions = false;
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+        if line.starts_with('[') && line.ends_with(']') {
+            in_extensions = line[1..line.len() - 1]
+                .trim()
+                .eq_ignore_ascii_case("extensions");
+            continue;
+        }
+        if in_extensions {
+            if let Some((k, v)) = line.split_once('=') {
+                if k.trim().eq_ignore_ascii_case("objectformat") {
+                    let val = v.trim().trim_matches('"').to_ascii_lowercase();
+                    if val == "sha256" {
+                        return ObjectFormat::Sha256;
+                    }
+                }
+            }
+        }
+    }
+    ObjectFormat::Sha1
 }
 
 fn infer_work_tree(git_dir: &Path, kind: GitDirKind) -> Result<Option<PathBuf>, RepoError> {

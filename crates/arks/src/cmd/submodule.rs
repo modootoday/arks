@@ -6,10 +6,7 @@
 //! Plan: `.spec/plan/20261109022956-worktree-submodule-residual.plan.md`
 
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    FORMAT, OID_KIND, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
-    work_tree, write_index,
-};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index, };
 use arks_index::{IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
@@ -193,7 +190,8 @@ fn sm_add(args: &[String]) -> CliResult<()> {
     });
     let gm_bytes = fs::read(&gm_path)?;
     let gm_obj = RawObject::new(ObjectKind::Blob, gm_bytes.clone());
-    let gm_oid = repo.store_mut().put(FORMAT, &gm_obj)?;
+    let format = repo.object_format();
+    let gm_oid = repo.store_mut().put(format, &gm_obj)?;
     index.entries.push(IndexEntry {
         ctime_sec: 0,
         ctime_nsec: 0,
@@ -855,7 +853,7 @@ fn has_local_modifications(path: &Path) -> CliResult<bool> {
         }
         let bytes = fs::read(&p)?;
         let digest = arks_hash::hash_object(arks_hash::ObjectFormat::Sha1, "blob", &bytes);
-        let oid = Oid::from_bytes(OID_KIND, digest.as_bytes())
+        let oid = Oid::from_bytes(repo.oid_kind(), digest.as_bytes())
             .map_err(|err| CliError::Msg(err.to_string()))?;
         if oid != e.oid {
             return Ok(true);

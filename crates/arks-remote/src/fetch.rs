@@ -35,13 +35,12 @@ use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
 use arks_oid::Oid;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_repo::Repository;
-use arks_store::{ObjectFormat, ObjectStore};
+use arks_store::ObjectStore;
 use std::collections::HashSet;
 
 const UPLOAD_AD: &str = "application/x-git-upload-pack-advertisement";
 const UPLOAD_REQ: &str = "application/x-git-upload-pack-request";
 const UPLOAD_RES: &str = "application/x-git-upload-pack-result";
-const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
 /// Options for a single fetch/clone pack negotiation.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -340,12 +339,14 @@ where
                 repo.store_mut().mark_next_pack_promisor(true);
             }
             if opts.defer_pack_disk {
+                let format = repo.object_format();
                 repo.store_mut()
-                    .ingest_pack_bytes_deferred_at(buf, pack_at, FORMAT)
+                    .ingest_pack_bytes_deferred_at(buf, pack_at, format)
                     .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
             } else {
+                let format = repo.object_format();
                 repo.store_mut()
-                    .ingest_pack_bytes(&buf[pack_at..], FORMAT)
+                    .ingest_pack_bytes(&buf[pack_at..], format)
                     .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
             }
             ingested_pack = true;

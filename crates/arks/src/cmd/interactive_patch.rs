@@ -6,7 +6,7 @@
 use crate::cmd::core::cmd_add;
 use crate::cmd::shared::{collect_untracked, file_mode, file_times, index_stat_matches};
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use arks_index::{IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject, write_loose};
 use arks_repo::Repository;
@@ -545,7 +545,7 @@ fn stage_bytes(repo: &Repository, work: &Path, path: &str, bytes: &[u8]) -> CliR
     let objects_dir = repo.store().objects_dir().to_path_buf();
     // Write temp content? For staging we hash `bytes` directly, not WT.
     let obj = RawObject::new(ObjectKind::Blob, bytes.to_vec());
-    let oid = write_loose(&objects_dir, FORMAT, &obj)?;
+    let oid = write_loose(&objects_dir, repo.object_format(), &obj)?;
     let abs = work.join(path);
     // Prefer WT meta if file exists; else synthetic.
     let (meta_mode, times, size) = if abs.is_file() {

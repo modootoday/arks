@@ -8,9 +8,8 @@ use arks_pack::EncodedPack;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use arks_store::{ObjectFormat, ObjectStore};
+use arks_store::ObjectStore;
 
-const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
 type RefsAndCaps = (Vec<(String, Oid)>, Vec<String>);
 type RefsAndHead = (Vec<(String, Oid)>, Option<String>);
@@ -77,7 +76,7 @@ pub fn upload_pack_result_with_nak(
         Err(e) => Err(ServerError::Msg(e.to_string())),
     };
     let objects = collect_closure(&wants, get)?;
-    let pack = EncodedPack::from_undeltified(FORMAT, &objects)
+    let pack = EncodedPack::from_undeltified(repo.object_format(), &objects)
         .map_err(|e| ServerError::Protocol(format!("pack encode: {e}")))?;
     if want_sideband {
         sideband_pack(&pack.pack, include_nak)
@@ -110,7 +109,7 @@ fn try_reuse_on_disk_pack(
             continue;
         }
         let idx_bytes = std::fs::read(&idx_path).map_err(|e| ServerError::Msg(e.to_string()))?;
-        let idx = match arks_pack::PackIndex::decode(&idx_bytes, FORMAT) {
+        let idx = match arks_pack::PackIndex::decode(&idx_bytes, repo.object_format()) {
             Ok(i) => i,
             Err(_) => continue,
         };

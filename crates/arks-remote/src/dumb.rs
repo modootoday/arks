@@ -23,11 +23,10 @@ use arks_object::{
 };
 use arks_oid::{Oid, OidKind};
 use arks_repo::{Repository, ancestor_set};
-use arks_store::{ObjectFormat, ObjectStore};
+use arks_store::ObjectStore;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
 /// Parse dumb `info/refs` body (TAB-separated; optional peeled `^{}` lines ignored).
 pub(crate) fn parse_dumb_info_refs(body: &[u8]) -> Result<Advertisement, RemoteError> {
@@ -210,8 +209,9 @@ fn download_packs<T: Transport>(
         let pack_bytes = get_bytes(transport, url, &format!("objects/pack/{name}"))?;
         let idx_name = name.replacen(".pack", ".idx", 1);
         let _ = get_bytes(transport, url, &format!("objects/pack/{idx_name}"));
+        let format = repo.object_format();
         repo.store_mut()
-            .ingest_pack_bytes(&pack_bytes, FORMAT)
+            .ingest_pack_bytes(&pack_bytes, format)
             .map_err(|e| RemoteError::Protocol(format!("dumb pack ingest: {e}")))?;
     }
     Ok(())
@@ -275,8 +275,9 @@ fn fetch_loose<T: Transport>(
     let plain = zlib_decompress(&bytes).map_err(|e| RemoteError::Protocol(e.to_string()))?;
     let obj =
         RawObject::decode_uncompressed(&plain).map_err(|e| RemoteError::Protocol(e.to_string()))?;
+    let format = repo.object_format();
     repo.store_mut()
-        .put(FORMAT, &obj)
+        .put(format, &obj)
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
     Ok(())
 }
@@ -371,7 +372,7 @@ pub(crate) fn push_dumb_with<T: Transport>(
     let needed = objects_to_send(repo, &tips, &bases)?;
     for obj in &needed {
         let oid = obj
-            .oid(FORMAT)
+            .oid(repo.object_format())
             .map_err(|e| RemoteError::Protocol(e.to_string()))?;
         upload_loose(transport, url, &oid, obj)?;
     }

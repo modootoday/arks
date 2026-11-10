@@ -1,25 +1,26 @@
 //! Build a Git tree object from a flat index (Wave L commit path).
 
 use crate::error::{CliError, CliResult};
-use crate::util::FORMAT;
 use arks_index::IndexEntry;
 use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
-use arks_store::{FilesystemGitStore, ObjectStore};
+use arks_store::{FilesystemGitStore, ObjectFormat, ObjectStore};
 use std::collections::BTreeMap;
 
 pub fn write_tree_from_index(
     store: &mut FilesystemGitStore,
     entries: &[IndexEntry],
+    format: ObjectFormat,
 ) -> CliResult<Oid> {
     let staged: Vec<_> = entries.iter().filter(|e| e.stage() == 0).cloned().collect();
-    write_tree_level(store, &staged, "")
+    write_tree_level(store, &staged, "", format)
 }
 
 fn write_tree_level(
     store: &mut FilesystemGitStore,
     entries: &[IndexEntry],
     prefix: &str,
+    format: ObjectFormat,
 ) -> CliResult<Oid> {
     // Group by first path component under `prefix`.
     let mut files: BTreeMap<String, &IndexEntry> = BTreeMap::new();
@@ -60,7 +61,7 @@ fn write_tree_level(
         } else {
             format!("{prefix}/{name}")
         };
-        let oid = write_tree_level(store, &children, &child_prefix)?;
+        let oid = write_tree_level(store, &children, &child_prefix, format)?;
         tree_entries.push(TreeEntry {
             mode: TreeMode::Tree,
             name,
@@ -70,5 +71,5 @@ fn write_tree_level(
 
     let tree = Tree::new(tree_entries)?;
     let obj = RawObject::new(ObjectKind::Tree, tree.encode()?);
-    Ok(store.put(FORMAT, &obj)?)
+    Ok(store.put(format, &obj)?)
 }

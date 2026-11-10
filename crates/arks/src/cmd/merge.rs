@@ -7,7 +7,7 @@
 use crate::cmd::merge_engine::merge_commits_three_way;
 use crate::cmd::shared::{commit_signature, current_branch_name, is_ancestor, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, refuse_unknown_flags, work_tree};
+use crate::util::{open_repo, refuse_unknown_flags, work_tree};
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_refs::RefTarget;
 use arks_store::ObjectStore;
@@ -147,7 +147,8 @@ fn create_merge_commit(
         message: msg,
     };
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let coid = repo.store_mut().put(FORMAT, &cobj)?;
+    let format = repo.object_format();
+    let coid = repo.store_mut().put(format, &cobj)?;
     match repo.head_target()? {
         RefTarget::Symbolic(branch) => {
             repo.refs_mut().update(&branch, &coid, Some(head))?;

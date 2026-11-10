@@ -140,6 +140,7 @@ impl UreqTransport {
         let mut call = match request.method.as_str() {
             "GET" => agent.get(url),
             "POST" => agent.post(url),
+            "PUT" => agent.put(url),
             other => {
                 return Err(RemoteError::Http(format!(
                     "unsupported HTTP method {other}"
@@ -152,7 +153,7 @@ impl UreqTransport {
         if let Some(auth) = authorization {
             call = call.set("Authorization", auth);
         }
-        let result = if request.method == "POST" {
+        let result = if request.method == "POST" || request.method == "PUT" {
             call.send_bytes(&request.body)
         } else {
             call.call()

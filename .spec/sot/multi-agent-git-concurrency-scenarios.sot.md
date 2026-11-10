@@ -102,7 +102,7 @@ Honesty: `Deferred=0 Claimed=212 Refuse=0 N/A=9` (catalog rows; L3 product valve
 
 `FS-007`, `FS-014`, `HOOK-008`, `MAINT-004`, `MISC-006`, `NET-006`, `OBJ-004`, `REF-017`, `WIN-003`
 
-**FS reopen honesty (does not invent M21 gate PASS):** residual [[sot:root/production-residual-register]] + [[adr:root/20261110214000]] Claimed-closest slices for `HOOK-008` / `MAINT-004` / `MISC-006` / `NET-006` / `OBJ-004` / `REF-017` (and related FW-LFS smudge). Remaining true host/env **Impossible**: `FS-007`, `FS-014`, `WIN-003`. M21 arithmetic above stays historical.
+**FS reopen honesty (does not invent M21 gate PASS):** residual [[sot:root/production-residual-register]] + [[adr:root/20261110214000]] / [[adr:root/20261110214800]] Claimed slices for `HOOK-008` / `MAINT-004` / `MISC-006` / `NET-006` / `OBJ-004` (incl. sha256 porcelain) / `REF-017` / FW-LFS (incl. network batch/server). Remaining true host/env **Impossible**: `FS-007`, `FS-014`, `WIN-003`. M21 arithmetic above stays historical.
 
 #### M21 work queue remaining
 

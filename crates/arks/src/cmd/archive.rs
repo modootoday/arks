@@ -2,7 +2,7 @@
 
 use crate::cmd::shared::{commit_signature, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, refuse_unknown_flags};
+use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_repo::{Repository, flatten_tree_entries};
@@ -289,7 +289,8 @@ pub fn write_annotated_tag(
     let sig = commit_signature()?;
     let payload = encode_tag_payload(target, "commit", name, &sig.format_line(), message);
     let obj = RawObject::new(ObjectKind::Tag, payload);
-    let tag_oid = repo.store_mut().put(FORMAT, &obj)?;
+    let format = repo.object_format();
+    let tag_oid = repo.store_mut().put(format, &obj)?;
     repo.refs_mut()
         .update(&format!("refs/tags/{name}"), &tag_oid, None)?;
     Ok(tag_oid)

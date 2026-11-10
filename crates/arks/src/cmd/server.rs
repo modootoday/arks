@@ -132,6 +132,7 @@ pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
         .or_else(|| std::env::var("HTTP_IF").ok());
     let mut body = Vec::new();
     io::stdin().read_to_end(&mut body)?;
+    let host = std::env::var("HTTP_HOST").ok();
     let req = HttpRequest {
         method,
         path,
@@ -141,6 +142,7 @@ pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
         authorization,
         destination,
         lock_token,
+        host,
     };
     let basic_auth = resolve_basic_auth(None, None)?;
     let resp = handle_smart_http_auth(&mut repo, &req, basic_auth.as_ref())

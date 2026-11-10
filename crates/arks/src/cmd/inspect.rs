@@ -131,11 +131,7 @@ fn walk_check(
         }
     };
     // OBJ-004: recompute content OID — refuse collision pretends / mismatched content.
-    let format = match oid.kind() {
-        arks_oid::OidKind::Sha1 => arks_store::ObjectFormat::Sha1,
-        arks_oid::OidKind::Sha256 => arks_store::ObjectFormat::Sha256,
-    };
-    match obj.oid(format) {
+    match obj.oid(repo.object_format()) {
         Ok(got) if got == *oid => {}
         Ok(got) => {
             return Err(CliError::Msg(format!(
@@ -160,7 +156,7 @@ fn walk_check(
             }
         }
         ObjectKind::Tree => {
-            let tree = Tree::decode(&obj.payload, crate::util::OID_KIND)?;
+            let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
             for e in tree.entries {
                 walk_check(repo, &e.oid, seen, missing)?;
             }

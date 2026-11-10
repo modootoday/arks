@@ -4,7 +4,7 @@
 //! Conflicted paths land as index stages 1/2/3 + worktree conflict markers.
 
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, OID_KIND, write_index};
+use crate::util::{write_index};
 use crate::write_tree::write_tree_from_index;
 use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, TreeMode};
@@ -135,9 +135,11 @@ pub(crate) fn merge_commits_three_way(
 
     let tree = if index.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        repo.store_mut().put(FORMAT, &obj)?
+        let format = repo.object_format();
+        repo.store_mut().put(format, &obj)?
     } else {
-        write_tree_from_index(repo.store_mut(), &index.entries)?
+        let format = repo.object_format();
+        write_tree_from_index(repo.store_mut(), &index.entries, format)?
     };
     Ok(MergeResult {
         tree: Some(tree),
@@ -169,7 +171,7 @@ fn walk_tree(
     if obj.kind != ObjectKind::Tree {
         return Err(CliError::Msg(format!("not a tree {}", tree_oid.to_hex())));
     }
-    let tree = arks_object::Tree::decode(&obj.payload, OID_KIND)?;
+    let tree = arks_object::Tree::decode(&obj.payload, repo.oid_kind())?;
     for e in tree.entries {
         let path = if prefix.is_empty() {
             e.name.clone()

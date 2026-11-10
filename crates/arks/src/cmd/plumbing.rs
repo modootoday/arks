@@ -7,10 +7,7 @@
 
 use crate::cmd::shared::{commit_signature, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    FORMAT, OID_KIND, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
-    work_tree, write_index,
-};
+use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index, };
 use crate::write_tree::write_tree_from_index;
 use arks_index::{IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Tree};
@@ -30,9 +27,11 @@ pub fn cmd_write_tree(args: &[String]) -> CliResult<()> {
     let index = read_index(&repo)?;
     let oid = if index.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        repo.store_mut().put(FORMAT, &obj)?
+        let format = repo.object_format();
+        repo.store_mut().put(format, &obj)?
     } else {
-        write_tree_from_index(repo.store_mut(), &index.entries)?
+        let format = repo.object_format();
+        write_tree_from_index(repo.store_mut(), &index.entries, format)?
     };
     println!("{}", oid.to_hex());
     Ok(())
@@ -107,7 +106,8 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
         message,
     };
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let coid = repo.store_mut().put(FORMAT, &cobj)?;
+    let format = repo.object_format();
+    let coid = repo.store_mut().put(format, &cobj)?;
     println!("{}", coid.to_hex());
     Ok(())
 }
@@ -150,7 +150,7 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
             }
             if modified && abs.is_file() {
                 let bytes = fs::read(&abs)?;
-                let oid = RawObject::new(ObjectKind::Blob, bytes).oid(FORMAT)?;
+                let oid = RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?;
                 if oid != e.oid {
                     println!("{}", e.path);
                 }
@@ -210,7 +210,7 @@ fn print_tree(
     if obj.kind != ObjectKind::Tree {
         return Err(CliError::Msg(format!("not a tree: {}", tree_oid.to_hex())));
     }
-    let tree = Tree::decode(&obj.payload, OID_KIND)?;
+    let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
     for e in tree.entries {
         let path = if prefix.is_empty() {
             e.name.clone()
@@ -599,7 +599,8 @@ pub fn cmd_update_index(args: &[String]) -> CliResult<()> {
                 let meta = fs::metadata(&abs)?;
                 let payload = fs::read(&abs)?;
                 let obj = RawObject::new(ObjectKind::Blob, payload);
-                let oid = repo.store_mut().put(FORMAT, &obj)?;
+                let format = repo.object_format();
+                let oid = repo.store_mut().put(format, &obj)?;
                 index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
                 index.entries.push(IndexEntry {
                     ctime_sec: 0,
@@ -762,7 +763,7 @@ fn flatten_tree_to_index(
     out: &mut Vec<IndexEntry>,
 ) -> CliResult<()> {
     let obj = repo.get_object(tree_oid)?;
-    let tree = Tree::decode(&obj.payload, OID_KIND)?;
+    let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
     for e in tree.entries {
         let path = if prefix.is_empty() {
             e.name.clone()
@@ -858,13 +859,13 @@ pub fn cmd_pack_objects(args: &[String]) -> CliResult<()> {
     for oid in &oids {
         objects.push(repo.get_object(oid)?);
     }
-    let encoded = EncodedPack::from_undeltified(FORMAT, &objects)?;
+    let encoded = EncodedPack::from_undeltified(repo.object_format(), &objects)?;
     if stdout_pack {
         io::stdout().write_all(&encoded.pack)?;
         return Ok(());
     }
     let hex = {
-        let hash_len = FORMAT.digest_len();
+        let hash_len = repo.object_format().digest_len();
         let dig = &encoded.pack[encoded.pack.len() - hash_len..];
         dig.iter().map(|b| format!("{b:02x}")).collect::<String>()
     };
@@ -947,7 +948,7 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
             lock_sib.display()
         )));
     }
-    if let Ok(repo) = open_repo() {
+    let format = if let Ok(repo) = open_repo() {
         let pack_dir = repo.common_dir().join("objects/pack");
         if pack_dir.is_dir() {
             if let Ok(rd) = fs::read_dir(&pack_dir) {
@@ -965,9 +966,12 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
                 }
             }
         }
-    }
+        repo.object_format()
+    } else {
+        FORMAT
+    };
     let bytes = fs::read(pack_path)?;
-    let decoded = DecodedPack::decode(&bytes, FORMAT)?;
+    let decoded = DecodedPack::decode(&bytes, format)?;
     let entries: Vec<PackIndexEntry> = decoded
         .objects
         .iter()
@@ -977,7 +981,7 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
             offset: r.offset,
         })
         .collect();
-    let index = PackIndex::from_entries(FORMAT, entries, decoded.checksum.clone())?;
+    let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())?;
     let idx_bytes = index.encode()?;
     let idx_path = if pack_path.ends_with(".pack") {
         format!("{}idx", &pack_path[..pack_path.len() - 4])

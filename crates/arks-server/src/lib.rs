@@ -11,6 +11,7 @@ mod dumb;
 mod error;
 mod hooks;
 mod http;
+mod lfs;
 mod receive;
 mod serve;
 mod stdio;

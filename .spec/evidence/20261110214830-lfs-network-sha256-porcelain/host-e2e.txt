@@ -1,0 +1,3 @@
+SHA256_PORCELAIN PASS oid=e0fe54bbfe33aed63259a5a45e5d9ac67183220c32aca97e1eea887c7a825c29 hash-object=2928cdcdc8b78c930378ceba09ce9ca8b888fbfe1bffb2cceb42bdff9421cb52 fsck=fsck: 3 reachable object(s) ok
+LFS_NETWORK PASS fetch=lfs fetch: 1 object(s) push=lfs push: 2 object(s)
+ALL_PASS tip_precommit=pending

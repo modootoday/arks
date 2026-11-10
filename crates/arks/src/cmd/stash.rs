@@ -3,7 +3,7 @@
 use crate::cmd::interactive_patch::cmd_stash_patch;
 use crate::cmd::shared::commit_signature;
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use crate::write_tree::write_tree_from_index;
 use arks_index::Index;
 use arks_object::{Commit, ObjectKind, RawObject};
@@ -68,9 +68,11 @@ fn stash_push() -> CliResult<()> {
     let index = read_index(&repo)?;
     let tree = if index.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        repo.store_mut().put(FORMAT, &obj)?
+        let format = repo.object_format();
+        repo.store_mut().put(format, &obj)?
     } else {
-        write_tree_from_index(repo.store_mut(), &index.entries)?
+        let format = repo.object_format();
+        write_tree_from_index(repo.store_mut(), &index.entries, format)?
     };
     let mut dirty = index.clone();
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
@@ -78,14 +80,16 @@ fn stash_push() -> CliResult<()> {
         if abs.is_file() {
             let bytes = fs::read(&abs)?;
             let obj = RawObject::new(ObjectKind::Blob, bytes.clone());
-            let oid = repo.store_mut().put(FORMAT, &obj)?;
+            let format = repo.object_format();
+            let oid = repo.store_mut().put(format, &obj)?;
             if let Some(ent) = dirty.entries.iter_mut().find(|x| x.path == e.path) {
                 ent.oid = oid;
                 ent.size = bytes.len().min(u32::MAX as usize) as u32;
             }
         }
     }
-    let wtree = write_tree_from_index(repo.store_mut(), &dirty.entries)?;
+    let format = repo.object_format();
+    let wtree = write_tree_from_index(repo.store_mut(), &dirty.entries, format)?;
     let parent = repo.head_oid().ok();
     let sig = commit_signature()?;
     let msg = "WIP on stash\n".to_string();
@@ -98,7 +102,8 @@ fn stash_push() -> CliResult<()> {
         message: msg,
     };
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let coid = repo.store_mut().put(FORMAT, &cobj)?;
+    let format = repo.object_format();
+    let coid = repo.store_mut().put(format, &cobj)?;
     repo.refs_mut().update("refs/stash", &coid, None)?;
     if let Some(h) = parent {
         arks_remote::checkout_commit(&repo, &work, &h)?;

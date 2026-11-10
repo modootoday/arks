@@ -38,6 +38,7 @@ mod error;
 mod fetch;
 mod git;
 mod http;
+mod lfs;
 mod push;
 mod shallow;
 mod ssh;
@@ -65,6 +66,10 @@ pub use fetch::{
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
 pub use http::http_get;
+pub use lfs::{
+    LfsPointer, discover_lfs_endpoint, lfs_batch_download, lfs_batch_upload, lfs_object_path,
+    parse_lfs_pointer, read_local_lfs_object, resolve_lfs_pointer, write_local_lfs_object,
+};
 pub use push::{
     PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,
     push_remote_with, push_ssh, push_ssh_with,

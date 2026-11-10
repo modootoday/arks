@@ -36,6 +36,8 @@ pub struct HttpRequest {
     pub destination: Option<String>,
     /// WebDAV lock token from `Lock-Token` or `If` header.
     pub lock_token: Option<String>,
+    /// Raw `Host` header (for LFS batch href construction).
+    pub host: Option<String>,
 }
 
 impl HttpRequest {
@@ -54,6 +56,7 @@ impl HttpRequest {
             authorization: None,
             destination: None,
             lock_token: None,
+            host: None,
         }
     }
 }
@@ -93,6 +96,10 @@ pub fn handle_smart_http_auth(
                 extra_headers: Vec::new(),
             });
         }
+    }
+    // LFS basic PUT shares the verb with WebDAV; route info/lfs first.
+    if let Some(resp) = crate::lfs::handle_lfs(repo, req)? {
+        return Ok(resp);
     }
     if is_dav_method(&req.method) {
         return handle_dav(repo, req);

@@ -3,7 +3,7 @@
 use crate::cmd::shared::{commit_signature, resolve_rev};
 use crate::cmd::sign::sign_bytes;
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, refuse_unknown_flags};
+use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_store::ObjectStore;
 
@@ -111,7 +111,8 @@ fn write_signed_tag(
     let mut payload = unsigned;
     payload.extend_from_slice(armor.as_bytes());
     let obj = RawObject::new(ObjectKind::Tag, payload);
-    let tag_oid = repo.store_mut().put(FORMAT, &obj)?;
+    let format = repo.object_format();
+    let tag_oid = repo.store_mut().put(format, &obj)?;
     repo.refs_mut()
         .update(&format!("refs/tags/{name}"), &tag_oid, None)?;
     Ok(tag_oid)
@@ -301,7 +302,7 @@ fn peel_tag_target(repo: &arks_repo::Repository, oid: &arks_oid::Oid) -> CliResu
 /// Shared dirty-worktree probe (describe `--dirty`, BISECT-002, TOCTOU-003).
 pub(crate) fn worktree_dirty(repo: &arks_repo::Repository) -> CliResult<bool> {
     use crate::cmd::shared::{collect_untracked, head_blob_map};
-    use crate::util::{FORMAT, read_index, work_tree};
+    use crate::util::{read_index, work_tree};
     use arks_object::{ObjectKind, RawObject};
     let work = work_tree(repo)?;
     let index = read_index(repo)?;
@@ -317,7 +318,7 @@ pub(crate) fn worktree_dirty(repo: &arks_repo::Repository) -> CliResult<bool> {
             return Ok(true);
         }
         let bytes = std::fs::read(&abs)?;
-        let oid = RawObject::new(ObjectKind::Blob, bytes).oid(FORMAT)?;
+        let oid = RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?;
         if oid != e.oid {
             return Ok(true);
         }

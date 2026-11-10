@@ -16,7 +16,7 @@ use crate::cmd::shared::{
     resolve_rev,
 };
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use crate::write_tree::write_tree_from_index;
 use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Signature};
@@ -1013,7 +1013,8 @@ pub(crate) fn commit_tree(
     let mut repo = open_repo()?;
     let parent = repo.head_oid().ok();
     let entries = index_entries(&repo, files)?;
-    let tree = write_tree_from_index(repo.store_mut(), &entries)?;
+    let format = repo.object_format();
+    let tree = write_tree_from_index(repo.store_mut(), &entries, format)?;
     let message = ensure_nl(message);
     let subject = message.lines().next().unwrap_or("").to_owned();
     let commit = Commit {
@@ -1025,7 +1026,8 @@ pub(crate) fn commit_tree(
         message,
     };
     let obj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let oid = repo.store_mut().put(FORMAT, &obj)?;
+    let format = repo.object_format();
+    let oid = repo.store_mut().put(format, &obj)?;
     // M16 Sy-5: allow detached HEAD updates (same as git cherry-pick / commit).
     match repo.head_target()? {
         RefTarget::Symbolic(branch) => {
@@ -1275,7 +1277,8 @@ pub(crate) fn ensure_replay_applies(
 
 pub(crate) fn put_blob(repo: &mut Repository, bytes: &[u8]) -> CliResult<Oid> {
     let obj = RawObject::new(ObjectKind::Blob, bytes.to_vec());
-    Ok(repo.store_mut().put(FORMAT, &obj)?)
+    let format = repo.object_format();
+    Ok(repo.store_mut().put(format, &obj)?)
 }
 
 pub(crate) fn ensure_nl(mut message: String) -> String {

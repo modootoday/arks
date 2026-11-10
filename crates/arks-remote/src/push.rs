@@ -26,13 +26,12 @@ use arks_oid::Oid;
 use arks_pack::EncodedPack;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_repo::Repository;
-use arks_store::{ObjectFormat, ObjectStore};
+use arks_store::ObjectStore;
 use std::collections::HashSet;
 
 const RECEIVE_AD: &str = "application/x-git-receive-pack-advertisement";
 const RECEIVE_REQ: &str = "application/x-git-receive-pack-request";
 const RECEIVE_RES: &str = "application/x-git-receive-pack-result";
-const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
 /// One ref update. `new_oid` is the local tip to publish under `refname`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -312,7 +311,7 @@ fn build_push_body(
     let pack = if needed.is_empty() {
         Vec::new()
     } else {
-        EncodedPack::from_undeltified(FORMAT, &needed)
+        EncodedPack::from_undeltified(repo.object_format(), &needed)
             .map_err(|e| RemoteError::Protocol(format!("pack encode: {e}")))?
             .pack
     };
@@ -404,12 +403,12 @@ pub(crate) fn objects_to_send(
     let have = collect_closure(bases, get)?;
     let have_ids: HashSet<Oid> = have
         .iter()
-        .map(|obj| obj.oid(FORMAT))
+        .map(|obj| obj.oid(repo.object_format()))
         .collect::<Result<HashSet<_>, _>>()
         .map_err(|e| RemoteError::Protocol(e.to_string()))?;
     Ok(all
         .into_iter()
-        .filter(|obj| match obj.oid(FORMAT) {
+        .filter(|obj| match obj.oid(repo.object_format()) {
             Ok(oid) => !have_ids.contains(&oid),
             Err(_) => true,
         })

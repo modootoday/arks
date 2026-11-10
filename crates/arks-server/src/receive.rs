@@ -19,12 +19,11 @@ use arks_pack::DecodedPack;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet};
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use arks_store::{FilesystemGitStore, ObjectFormat, ObjectStore};
+use arks_store::{FilesystemGitStore, ObjectStore};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
 type RefsAndCaps = (Vec<(String, Oid)>, Vec<String>);
 
@@ -81,7 +80,7 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
             quarantine.discard();
             return encode_report_status("unpack unpacker error", &[]);
         }
-        let decoded = match DecodedPack::decode(&pack, FORMAT) {
+        let decoded = match DecodedPack::decode(&pack, repo.object_format()) {
             Ok(d) => d,
             Err(e) => {
                 quarantine.discard();
@@ -92,7 +91,7 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
             .map_err(|e| ServerError::Msg(e.to_string()))?;
         for object in decoded.objects {
             qstore
-                .put(FORMAT, &object.object)
+                .put(repo.object_format(), &object.object)
                 .map_err(|e| ServerError::Msg(e.to_string()))?;
         }
     }
@@ -315,8 +314,9 @@ impl Quarantine {
                 let qstore = FilesystemGitStore::open(&self.path);
                 match qstore.get(&oid) {
                     Ok(raw) => {
+                        let format = repo.object_format();
                         repo.store_mut()
-                            .put(FORMAT, &raw)
+                            .put(format, &raw)
                             .map_err(|e| e.to_string())?;
                     }
                     Err(_) => continue,

@@ -2,7 +2,7 @@
 
 use crate::cmd::replay::one_rev;
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, OID_KIND, open_repo, refuse_unknown_flags};
+use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, RawObject, Tree};
 use arks_oid::Oid;
 use arks_pack::{DecodedPack, EncodedPack, encode_bundle, parse_bundle};
@@ -78,7 +78,7 @@ fn bundle_create(args: &[String]) -> CliResult<()> {
     for (_, oid) in &refs {
         walk_object(&repo, oid, &mut seen, &mut objects)?;
     }
-    let encoded = EncodedPack::from_undeltified(FORMAT, &objects)?;
+    let encoded = EncodedPack::from_undeltified(repo.object_format(), &objects)?;
     let bytes = encode_bundle(&refs, &encoded.pack);
     fs::write(file, bytes)?;
     println!("created bundle {file}");
@@ -122,7 +122,7 @@ fn walk_object(
             }
         }
         ObjectKind::Tree => {
-            let tree = Tree::decode(&obj.payload, OID_KIND)?;
+            let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
             let children: Vec<Oid> = tree.entries.into_iter().map(|entry| entry.oid).collect();
             out.push(obj);
             for child in children {
@@ -171,7 +171,8 @@ fn bundle_verify(args: &[String]) -> CliResult<()> {
     if bundle.refs.is_empty() {
         return Err(CliError::Msg("bundle verify: no refs".into()));
     }
-    let decoded = DecodedPack::decode(&bundle.pack, FORMAT)?;
+    let repo = open_repo()?;
+    let decoded = DecodedPack::decode(&bundle.pack, repo.object_format())?;
     let mut by_oid: HashSet<Oid> = HashSet::new();
     for object in &decoded.objects {
         by_oid.insert(object.oid);
@@ -195,10 +196,11 @@ fn bundle_unbundle(args: &[String]) -> CliResult<()> {
     let file = one_rev(args, "bundle unbundle <file>")?;
     let bytes = fs::read(file)?;
     let bundle = parse_bundle(&bytes)?;
-    let decoded = DecodedPack::decode(&bundle.pack, FORMAT)?;
     let mut repo = open_repo()?;
+    let decoded = DecodedPack::decode(&bundle.pack, repo.object_format())?;
     for object in &decoded.objects {
-        let stored = repo.store_mut().put(FORMAT, &object.object)?;
+        let format = repo.object_format();
+        let stored = repo.store_mut().put(format, &object.object)?;
         if stored != object.oid {
             return Err(CliError::Msg(format!(
                 "pack object id mismatch for {}",

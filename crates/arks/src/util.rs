@@ -2,14 +2,13 @@
 
 use crate::error::{CliError, CliResult};
 use arks_index::Index;
-use arks_oid::OidKind;
 use arks_repo::Repository;
 use arks_store::ObjectFormat;
 use std::env;
 use std::path::{Path, PathBuf};
 
+/// Default object format for non-repo contexts (e.g. standalone index-pack).
 pub const FORMAT: ObjectFormat = ObjectFormat::Sha1;
-pub const OID_KIND: OidKind = OidKind::Sha1;
 
 pub fn cwd() -> CliResult<PathBuf> {
     env::current_dir().map_err(|e| CliError::Msg(e.to_string()))
@@ -76,13 +75,7 @@ fn refuse_unknown_repo_extensions(repo: &Repository) -> CliResult<()> {
             unknown.join(", ")
         )));
     }
-    // OBJ-004 closest: CLI porcelain remains Sha1; refuse sha256 repos fail-closed
-    // (library sha256 Claimed in arks-hash/store/pack — not casual N/A).
-    if matches!(object_format.as_deref(), Some("sha256")) {
-        return Err(CliError::Msg(
-            "extensions.objectFormat=sha256 (OBJ-004 — CLI porcelain remains Sha1; sha256 object format is library-Claimed in arks-hash/store/pack; full sha256 repo product not claimed on CLI; refuse rather than casual N/A)".into(),
-        ));
-    }
+    let _ = object_format; // Repository.object_format() is authoritative
     Ok(())
 }
 
@@ -117,11 +110,11 @@ pub fn read_index(repo: &Repository) -> CliResult<Index> {
             extensions: Vec::new(),
         });
     }
-    Ok(Index::read_path(&path, OID_KIND)?)
+    Ok(Index::read_path(&path, repo.oid_kind())?)
 }
 
 pub fn write_index(repo: &Repository, index: &Index) -> CliResult<()> {
-    Ok(index.write_path(&repo.index_path(), OID_KIND)?)
+    Ok(index.write_path(&repo.index_path(), repo.oid_kind())?)
 }
 
 pub fn rel_path_from_worktree(work: &Path, path: &Path) -> CliResult<String> {

@@ -5,7 +5,7 @@
 //! CORR-001: `gc --prune=now` remains refuse-closed.
 
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, refuse_unknown_flags};
+use crate::util::{open_repo, refuse_unknown_flags};
 use arks_lease::{DurableLeaseStore, LeaseError, maint_scope};
 use arks_object::{Commit, ObjectKind, RawObject, Tree};
 use arks_oid::Oid;
@@ -202,9 +202,10 @@ fn run_repack(args: &[String]) -> CliResult<()> {
             println!("Nothing new to pack.");
             return Ok(());
         }
-        let encoded = EncodedPack::from_undeltified(FORMAT, &objects)?;
+        let format = repo.object_format();
+        let encoded = EncodedPack::from_undeltified(format, &objects)?;
         repo.store_mut()
-            .ingest_pack_bytes(&encoded.pack, FORMAT)
+            .ingest_pack_bytes(&encoded.pack, format)
             .map_err(|e| CliError::Msg(e.to_string()))?;
 
         if delete_redundant {
@@ -317,7 +318,7 @@ fn walk_object(
             }
         }
         ObjectKind::Tree => {
-            let tree = Tree::decode(&obj.payload, crate::util::OID_KIND)?;
+            let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
             let children: Vec<Oid> = tree.entries.into_iter().map(|e| e.oid).collect();
             out.push(obj);
             for child in children {

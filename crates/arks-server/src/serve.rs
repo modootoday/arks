@@ -152,10 +152,16 @@ fn handle_connection(
     let mut authorization = None;
     let mut destination = None;
     let mut lock_token = None;
+    let mut host = None;
     for line in lines {
         let lower = line.to_ascii_lowercase();
         if let Some(v) = lower.strip_prefix("content-length:") {
             content_length = v.trim().parse().unwrap_or(0);
+        }
+        if lower.starts_with("host:") {
+            if let Some((_, v)) = line.split_once(':') {
+                host = Some(v.trim().to_string());
+            }
         }
         if lower.starts_with("expect:") && lower.contains("100-continue") {
             // git/curl POST often waits for 100 before sending the pack body
@@ -239,6 +245,7 @@ fn handle_connection(
         authorization,
         destination,
         lock_token,
+        host,
     };
     // dumb_only: strip service= so discovery uses dumb info/refs (smart clients fall back).
     if opts.dumb_only && (req.path.ends_with("info/refs") || req.path.ends_with("/info/refs")) {

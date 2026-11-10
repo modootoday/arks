@@ -7,7 +7,7 @@ use crate::cmd::shared::{
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
-    FORMAT, OID_KIND, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
+    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
     work_tree, write_index,
 };
 use crate::write_tree::write_tree_from_index;
@@ -24,9 +24,32 @@ use std::path::{Path, PathBuf};
 use std::thread;
 pub fn cmd_init(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `--bare` claimed (git-init). Cite: https://git-scm.com/docs/git-init
-    refuse_unknown_flags(args, &["--bare"])?;
+    // Sha256: `init --object-format=sha256` ([[adr:root/20261110214800]]).
+    refuse_unknown_flags(args, &["--bare", "--object-format"])?;
     let bare = args.iter().any(|a| a == "--bare");
-    let dir = if let Some(p) = args.iter().find(|a| !a.starts_with('-')) {
+    let mut object_format = "sha1".to_string();
+    let mut positional = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "--object-format" {
+            i += 1;
+            let v = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("init --object-format <sha1|sha256>".into()))?;
+            object_format = v.to_ascii_lowercase();
+        } else if let Some(rest) = args[i].strip_prefix("--object-format=") {
+            object_format = rest.to_ascii_lowercase();
+        } else if !args[i].starts_with('-') {
+            positional.push(args[i].clone());
+        }
+        i += 1;
+    }
+    if object_format != "sha1" && object_format != "sha256" {
+        return Err(CliError::Usage(format!(
+            "init --object-format: unknown '{object_format}' (claimed: sha1, sha256)"
+        )));
+    }
+    let dir = if let Some(p) = positional.first() {
         PathBuf::from(p)
     } else {
         cwd()?
@@ -44,12 +67,16 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
     fs::create_dir_all(git_dir.join("refs/tags"))?;
     fs::write(git_dir.join("HEAD"), b"ref: refs/heads/main\n")?;
     let bare_cfg = if bare { "true" } else { "false" };
-    fs::write(
-        git_dir.join("config"),
+    let cfg = if object_format == "sha256" {
+        format!(
+            "[core]\n\trepositoryformatversion = 1\n\tfilemode = true\n\tbare = {bare_cfg}\n\tlogallrefupdates = true\n[extensions]\n\tobjectFormat = sha256\n"
+        )
+    } else {
         format!(
             "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = {bare_cfg}\n\tlogallrefupdates = true\n"
-        ),
-    )?;
+        )
+    };
+    fs::write(git_dir.join("config"), cfg)?;
     println!(
         "Initialized empty arks repository in {}",
         git_dir.canonicalize().unwrap_or(git_dir).display()
@@ -73,10 +100,14 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
         ));
     };
     let obj = RawObject::new(ObjectKind::Blob, payload);
+    let format = open_repo()
+        .map(|r| r.object_format())
+        .unwrap_or(FORMAT);
     let oid = if write {
         let mut repo = open_repo()?;
         // OBJ-001 (M20 Cx-5): identical concurrent loose creates are idempotent; honesty note.
-        let oid = repo.store_mut().put(FORMAT, &obj)?;
+        let format = repo.object_format();
+        let oid = repo.store_mut().put(format, &obj)?;
         eprintln!(
             "note: OBJ-001 — concurrent identical loose object creates are content-addressed/idempotent; do not invent unlock-by-delete under live writers"
         );
@@ -85,7 +116,7 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
         );
         oid
     } else {
-        obj.oid(FORMAT)?
+        obj.oid(format)?
     };
     println!("{}", oid.to_hex());
     Ok(())
@@ -139,7 +170,7 @@ pub fn cmd_cat_file(args: &[String]) -> CliResult<()> {
                 print!("{}", String::from_utf8_lossy(&obj.payload));
             }
             ObjectKind::Tree => {
-                let tree = arks_object::Tree::decode(&obj.payload, OID_KIND)?;
+                let tree = arks_object::Tree::decode(&obj.payload, repo.oid_kind())?;
                 for e in &tree.entries {
                     let kind = if e.mode.is_tree() { "tree" } else { "blob" };
                     println!(
@@ -416,10 +447,11 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
     }
     if !dirty.is_empty() {
         let objects_dir = repo.store().objects_dir().to_path_buf();
+        let format = repo.object_format();
         let workers = parallel_workers(dirty.len());
         if workers <= 1 {
             for rel in dirty {
-                let entry = stage_blob_entry(&work, &objects_dir, &rel, chmod_mode)?;
+                let entry = stage_blob_entry(&work, &objects_dir, &rel, chmod_mode, format)?;
                 updates.insert(rel, entry);
             }
         } else {
@@ -434,7 +466,9 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
                     handles.push(scope.spawn(move || -> CliResult<Vec<IndexEntry>> {
                         let mut local = Vec::with_capacity(piece.len());
                         for rel in piece {
-                            local.push(stage_blob_entry(work, objects_dir, rel, chmod_mode)?);
+                            local.push(stage_blob_entry(
+                                work, objects_dir, rel, chmod_mode, format,
+                            )?);
                         }
                         Ok(local)
                     }));
@@ -493,6 +527,7 @@ fn stage_blob_entry(
     objects_dir: &Path,
     rel: &str,
     chmod_mode: Option<u32>,
+    format: arks_store::ObjectFormat,
 ) -> CliResult<IndexEntry> {
     let abs = work.join(rel);
     let meta = fs::metadata(&abs)?;
@@ -503,7 +538,7 @@ fn stage_blob_entry(
     }
     let size = payload.len().min(u32::MAX as usize) as u32;
     let obj = RawObject::new(ObjectKind::Blob, payload);
-    let oid = write_loose(objects_dir, FORMAT, &obj)?;
+    let oid = write_loose(objects_dir, format, &obj)?;
     let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec) = file_times(&meta);
     let mode = chmod_mode.unwrap_or_else(|| file_mode(&meta));
     Ok(IndexEntry {
@@ -579,7 +614,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         }
         let bytes = fs::read(&abs)?;
         let blob = RawObject::new(ObjectKind::Blob, bytes);
-        let oid = blob.oid(FORMAT)?;
+        let oid = blob.oid(repo.object_format())?;
         if oid != e.oid {
             modified.push(e.path.clone());
         }
@@ -774,9 +809,11 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
 
     let tree = if index.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        repo.store_mut().put(FORMAT, &obj)?
+        let format = repo.object_format();
+        repo.store_mut().put(format, &obj)?
     } else {
-        write_tree_from_index(repo.store_mut(), &index.entries)?
+        let format = repo.object_format();
+        write_tree_from_index(repo.store_mut(), &index.entries, format)?
     };
 
     if amend {
@@ -817,7 +854,8 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             sign_commit(&repo, &mut commit, sign_key.as_deref())?;
         }
         let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-        let coid = repo.store_mut().put(FORMAT, &cobj)?;
+        let format = repo.object_format();
+        let coid = repo.store_mut().put(format, &cobj)?;
         // M16 Sy-5: detached HEAD amend updates HEAD directly (git-commit).
         match repo.head_target()? {
             RefTarget::Symbolic(name) => {
@@ -880,7 +918,8 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         sign_commit(&repo, &mut commit, sign_key.as_deref())?;
     }
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let coid = repo.store_mut().put(FORMAT, &cobj)?;
+    let format = repo.object_format();
+    let coid = repo.store_mut().put(format, &cobj)?;
     // M16 Sy-5: detached HEAD commit updates HEAD directly (git-commit).
     match repo.head_target()? {
         RefTarget::Symbolic(name) => {

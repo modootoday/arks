@@ -117,6 +117,7 @@ fn smart_http_info_refs_upload() {
         authorization: None,
         destination: None,
         lock_token: None,
+        host: None,
     };
     let resp = handle_smart_http(&mut repo, &req).unwrap();
     assert_eq!(resp.status, 200);
@@ -138,6 +139,7 @@ fn smart_http_basic_auth_challenge_and_accept() {
         authorization: None,
         destination: None,
         lock_token: None,
+        host: None,
     };
     let resp = handle_smart_http_auth(&mut repo, &denied, Some(&cfg)).unwrap();
     assert_eq!(resp.status, 401);
@@ -155,6 +157,7 @@ fn smart_http_basic_auth_challenge_and_accept() {
         authorization: Some(basic_authorization_header("alice", "s3cret")),
         destination: None,
         lock_token: None,
+        host: None,
     };
     let resp = handle_smart_http_auth(&mut repo, &ok, Some(&cfg)).unwrap();
     assert_eq!(resp.status, 200);
@@ -268,4 +271,106 @@ fn receive_post_receive_runs_after_success() {
         "post-receive should have written {}",
         marker.display()
     );
+}
+
+#[test]
+fn lfs_batch_download_and_get_object() {
+    let dir = TempDir::new().unwrap();
+    let (git, _) = seed_bare(dir.path());
+    let oid = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    let content = b"lfs-network-payload";
+    let obj = git
+        .join("lfs/objects")
+        .join(&oid[..2])
+        .join(&oid[2..4]);
+    std::fs::create_dir_all(&obj).unwrap();
+    std::fs::write(obj.join(oid), content).unwrap();
+    let mut repo = Repository::open(&git).unwrap();
+    let batch = HttpRequest {
+        method: "POST".into(),
+        path: "/info/lfs/objects/batch".into(),
+        query: String::new(),
+        body: format!(
+            r#"{{"operation":"download","transfers":["basic"],"objects":[{{"oid":"{oid}","size":{}}}]}}"#,
+            content.len()
+        )
+        .into_bytes(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &batch).unwrap();
+    assert_eq!(resp.status, 200);
+    let text = String::from_utf8_lossy(&resp.body);
+    assert!(text.contains("\"download\""), "{text}");
+    assert!(text.contains(&format!("/objects/{oid}")), "{text}");
+
+    let get = HttpRequest {
+        method: "GET".into(),
+        path: format!("/info/lfs/objects/{oid}"),
+        query: String::new(),
+        body: Vec::new(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &get).unwrap();
+    assert_eq!(resp.status, 200);
+    assert_eq!(resp.body, content);
+}
+
+#[test]
+fn lfs_batch_upload_and_put_object() {
+    let dir = TempDir::new().unwrap();
+    let (git, _) = seed_bare(dir.path());
+    let oid = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    let content = b"lfs-upload-payload";
+    let mut repo = Repository::open(&git).unwrap();
+    let batch = HttpRequest {
+        method: "POST".into(),
+        path: "/info/lfs/objects/batch".into(),
+        query: String::new(),
+        body: format!(
+            r#"{{"operation":"upload","transfers":["basic"],"objects":[{{"oid":"{oid}","size":{}}}]}}"#,
+            content.len()
+        )
+        .into_bytes(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &batch).unwrap();
+    assert_eq!(resp.status, 200);
+    let text = String::from_utf8_lossy(&resp.body);
+    assert!(text.contains("\"upload\""), "{text}");
+
+    let put = HttpRequest {
+        method: "PUT".into(),
+        path: format!("/info/lfs/objects/{oid}"),
+        query: String::new(),
+        body: content.to_vec(),
+        git_protocol: None,
+        authorization: None,
+        destination: None,
+        lock_token: None,
+        host: Some("127.0.0.1:9".into()),
+    };
+    let resp = handle_smart_http(&mut repo, &put).unwrap();
+    assert!(
+        resp.status == 200 || resp.status == 201,
+        "status {}",
+        resp.status
+    );
+    let stored = git
+        .join("lfs/objects")
+        .join(&oid[..2])
+        .join(&oid[2..4])
+        .join(oid);
+    assert_eq!(std::fs::read(stored).unwrap(), content);
 }

@@ -100,7 +100,7 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 
 | Gap | Git | arks today | FS class | Ladder |
 |-----|-----|------------|----------|--------|
-| Git LFS | Separate `git-lfs` + filter process; `git lfs` UX | Product OOS exclusion | **Claimed closest** = `arks lfs` handoff + filter clean/smudge + in-process pointer→`.git/lfs/objects`; full LFS server non-claim | **FS6** |
+| Git LFS | Separate `git-lfs` + filter process; `git lfs` UX | Product OOS exclusion | **Claimed** = in-process smudge + **network** batch/basic + `serve-http` `info/lfs`; other argv may hand off to `git-lfs` ([[adr:root/20261110214800]]) | **FS6** |
 | `scalar` | Microsoft VFS helper | OOS | Closest = document N/A with reason (not required for git porcelain parity; scalar ≠ core git feature set) **or** minimal enlistment stubs if owner insists | **FS6** note |
 | `gitk` / `git-gui` / citool | Tcl/Tk GUIs invoked via git | OOS | **Closest parity**: not embeddable as CLI engine duty; ship refuse + documented external-tool handoff; full GUI = separate product SoT | **FS7** |
 
@@ -118,7 +118,7 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 |-----|-------|--------|
 | FS-007 cloud sync on `.git` | Environmental hazard, not a git feature | **Impossible** (document) + closest = refuse/detect when known sync markers |
 | FS-014 SELinux/AppArmor deny lock rename | Host policy | **Impossible** to “implement SELinux”; closest = clear errno honesty |
-| OBJ-004 SHA-1 collision / sha256 transition hostile | Research/hostile inputs | **Claimed closest** = fsck OidMismatch refuse + sha256 CLI refuse (library sha256 Claimed); crypto collision immunity **Impossible** |
+| OBJ-004 SHA-1 collision / sha256 transition hostile | Research/hostile inputs | **Claimed** = fsck OidMismatch refuse + **sha256 porcelain** ([[adr:root/20261110214800]]); crypto collision immunity **Impossible** |
 | WIN-003 OneDrive placeholders | Host OS | **Impossible** as feature; closest = errno / stub detection honesty |
 
 ### F. Explicitly out of *this* ladder (not feature symmetry)
@@ -144,10 +144,10 @@ Prior research that left pixel TUI / proc-receive / GUI/LFS unscheduled ([[resea
 | **FS3** | Patch siblings | `add -i` menu subset; `add -e`; hunk-level `-p`; `stash -p` / related `-p` | **Done** ([[adr:root/20261110213500]] + [[evidence:root/20261110213530]]) |
 | **FS4** | Extra filter-specs | `tree:<depth>` + `blob:limit=<n>`; refuse unlisted | **Done** (same ADR/evidence) |
 | **FS5** | Bundle URI / replace / update-server-info | `replace` CLI; local + **HTTP(S)** `--bundle-uri` with NET-006 lock/truncation honesty; info/refs.lock refuse | **Done** ([[adr:root/20261110214000]] + [[evidence:root/20261110214100]]) |
-| **FS6** | LFS closest + shadow-ref ordinary refs | `filter.*.clean` + **smudge**; **in-process** LFS pointer → `.git/lfs/objects`; scalar refuse; ordinary `refs/pull` | **Done** (full LFS server still non-claim) |
+| **FS6** | LFS + shadow-ref ordinary refs | `filter.*.clean` + **smudge**; local + **network** LFS; scalar refuse; ordinary `refs/pull` | **Done** (network/server Claimed [[adr:root/20261110214800]]) |
 | **FS7** | GUI/OAuth closest slices | External `gui`/`gitk`/`citool` handoff; OAuth via external helper; forge UX impossible | **Done** |
-| **FS8** | Hostile catalog edges | Host/env impossibles; HOOK-008=`proc-receive.lock`; **OBJ-004** fsck OidMismatch + sha256 CLI refuse | **Done** ([[adr:root/20261110214000]]) |
-| **FS_final** | Symmetry currency | No *casual* N/A; remaining = Claimed / Impossible+closest (no open harness rows) | **Done** ([[adr:root/20261110214000]] + [[evidence:root/20261110214100]]; **L9**/G8 non-FS) |
+| **FS8** | Hostile catalog edges | Host/env impossibles; HOOK-008=`proc-receive.lock`; **OBJ-004** fsck + sha256 porcelain | **Done** ([[adr:root/20261110214000]] / [[adr:root/20261110214800]]) |
+| **FS_final** | Symmetry currency | No *casual* N/A; remaining = documented Impossible only | **Done** (+ LFS network/sha256 porcelain [[evidence:root/20261110214830]]; **L9**/G8 non-FS) |
 
 ### Non-goals (still)
 

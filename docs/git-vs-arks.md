@@ -42,9 +42,9 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Interactive (`rebase -i`, `add -p`/`-i`/`-e`, `stash -p`, editor commit) | Yes | TTY + hunk `-p`, `-i` menu, `-e`, `stash -p` (**FS1/FS3**); scripted env retained | **Claimed** (FS1 / FS3) |
 | `proc-receive` (server) | Yes | Advertise when hook present; divert; ok/ng + rewrite; concurrent lock (**FS2/FS8**) | **Claimed** (FS2 / FS8 closest) |
 | GUI (`gitk`, `git-gui`) | Separate tools | External handoff refuse (**FS7**) | **Claimed** (handoff) |
-| Git LFS / `scalar` | Companion tools | `arks lfs` → `git-lfs`; filter clean/**smudge**; in-process LFS pointer→`.git/lfs/objects`; `scalar` refuse (**FS6**) | **Claimed** (closest) |
+| Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT; other argv handoff to `git-lfs`; `scalar` refuse | **Claimed** |
 | `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed with NET-006 lock/truncation honesty (**FS5**) | **Claimed** (FS5 / NET-006) |
-| Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse (**OBJ-004**); CLI porcelain Sha1; sha256 library Claimed; sha256 repo CLI refuse | **Claimed** (closest) / **Impossible** (crypto collision immunity) |
+| Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse (**OBJ-004**); `init --object-format=sha256` porcelain end-to-end where Git supports it | **Claimed** / **Impossible** (crypto SHA-1 collision immunity) |
 
 ## Remotes and server
 
@@ -129,7 +129,7 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | **FS6** | filter clean/smudge + in-process LFS / scalar | **Done** |
 | **FS7** | GUI handoff / OAuth helper | **Done** |
 | **FS8** | Hostile/impossible + OBJ-004 fsck | **Done** |
-| **FS_final** | No casual N/A for real git features | **Done** — remaining = documented Impossible + explicit non-claims only; **L9** + live G8 non-FS |
+| **FS_final** | No casual N/A for real git features | **Done** — remaining = documented Impossible only (crypto / forge UX / host-env / L9 / live G8); LFS network + sha256 porcelain **Claimed** ([[adr:root/20261110214800]]) |
 
 See: [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 
