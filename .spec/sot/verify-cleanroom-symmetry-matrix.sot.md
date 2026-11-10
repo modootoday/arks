@@ -15,6 +15,7 @@ rel:
     - sot:root/arks-hub-local-multi-agent-pr
     - sot:root/arks-self-host-server
     - sot:root/arks-claimed-residual-gates
+    - sot:root/verify-directory-conventions
     - sot:root/arks-daemon-product-intent
     - sot:root/arks-hub-product-intent
     - sot:root/cli-surface
@@ -40,7 +41,7 @@ rel:
 
 # Clean-room symmetry matrix (three DoD pillars)
 
-Version **0.1.5**. Umbrella **canon** for the public-story clean-room **Definition of Done**: three peer-symmetry pillars in **Linux Docker** (`arks-verify-m1:0.1.0`), plus **related hosting** e2e for arks-only self-host server (LAN/WAN) under [[sot:root/arks-self-host-server]], plus **adjacent Claimed residual** scaffolds under [[sot:root/arks-claimed-residual-gates]] (B1–B9 — **not** a fourth symmetry pillar). **No invent PASS/Claimed** from SoT alone.
+Version **0.1.5**. Umbrella **canon** for the public-story clean-room **Definition of Done**: three peer-symmetry pillars in **Linux Docker** (`arks-verify-m1:0.1.0`), plus **related hosting** e2e for arks-only self-host server (LAN/WAN) under [[sot:root/arks-self-host-server]], plus **adjacent Claimed residual** scaffolds under [[sot:root/arks-claimed-residual-gates]] (B1–B9 — **not** a fourth symmetry pillar). **No invent PASS/Claimed** from SoT alone. Directory / naming / SKIP·STRICT / out-path conventions: [[sot:root/verify-directory-conventions]].
 
 **Published binary:** **`arks` only** (`arks daemon`, `arks hub …`). Internal crates OK. Product paths **MUST NOT** spawn `git` or `gh`. Stock `git` / surveyed `gh` are oracles only.
 

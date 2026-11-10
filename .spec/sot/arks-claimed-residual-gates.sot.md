@@ -19,6 +19,7 @@ rel:
     - sot:root/arks-daemon-git-command-matrix
     - sot:root/arks-cli-personality-factory
     - sot:root/verify-cleanroom-symmetry-matrix
+    - sot:root/verify-directory-conventions
     - sot:root/product-verification-clean-room
     - sot:root/production-residual-register
     - sot:root/public-surface
@@ -124,6 +125,8 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 - **Refuse:** hub client `--local-tls` smoke; docs that only describe ops TLS front.
 
 ### Docker verify slots (normative names)
+
+New residual slots register per [[sot:root/verify-directory-conventions]] §7 (`dod-claimed-<concern>` → `run-claimed-<concern>-e2e.sh` → umbrella `dod-claimed-residual`; default SKIP / `ARKS_DOD_STRICT=1` fail-closed; **no invent Claimed**).
 
 | Compose service | Script | Gates |
 |-----------------|--------|-------|

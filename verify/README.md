@@ -4,7 +4,7 @@
 
 **Advisory:** `cargo test` on the host (including Windows) speeds iteration; it is not product-verified unless the same gate is green in clean-room.
 
-SoTs: `.spec/sot/product-verification-clean-room.sot.md`, `.spec/sot/structural-conventions.sot.md` §7, research `.spec/research/20261110095355-verify-fixtures-rust-layout.research.md`.
+SoTs: `.spec/sot/product-verification-clean-room.sot.md`, `.spec/sot/verify-directory-conventions.sot.md` (tree / naming / out / SKIP·STRICT), `.spec/sot/structural-conventions.sot.md` §7, research `.spec/research/20261110095355-verify-fixtures-rust-layout.research.md`, `.spec/research/20261111082440-verify-directory-conventions-pain.research.md`.
 
 **CLI-parity production** = **M9** / **G14** when evidenced. **G16** journey-compare is additive observability (func + timing). **G19** enforces comparative allow-list bars on G16 metrics. **G17** is M12 concurrency issue-repro compare. SoT: `.spec/sot/clean-room-journey-compare.sot.md`, `.spec/sot/interop-test-matrix.sot.md`.
 
@@ -28,6 +28,8 @@ Refresh lock digests after rebuild: `docker inspect arks-verify-m1:0.1.0 --forma
 
 ## Layout (matrix ownership)
 
+Normative detail: `.spec/sot/verify-directory-conventions.sot.md`.
+
 ```text
 verify/
   Dockerfile
@@ -35,19 +37,32 @@ verify/
   images.lock.json
   README.md
   scripts/                 # deterministic entrypoints (compose commands)
-  matrices/                # matrix-m*.md / matrix-g*.md / matrix-journey.md
+  matrices/                # matrix-m*.md / matrix-g*.md / matrix-journey.md / *-matrix.csv
   gates/gN/                # per-gate oracles, locks, out/ receipts (not workspace members)
   fixtures/                # shared oracle intent/bytes (no secrets); m1 OID docs
+  out/                     # gitignored cross-gate inventory / prerelease dumps
 ```
 
 | Tree | Owns | Does not own |
 |------|------|--------------|
 | `verify/scripts/` | Compose argv entrypoints, evaluators | Crate unit tests |
-| `verify/matrices/` | Gate/milestone claim matrices | Specfold SoTs |
+| `verify/matrices/` | Gate/milestone claim matrices + living symmetry CSVs | Specfold SoTs |
 | `verify/gates/gN/` | Multi-crate / stock-Git / journey clean-room oracles + receipts | Default host `cargo test -p` |
 | `verify/fixtures/` | Clean-room shared fixture intent | Crate-private `testdata/` |
+| `verify/out/` | Cross-gate inventory / prerelease dumps (gitignored) | Per-gate Claimed receipts |
 | `crates/arks-*/tests/` | Single-crate integration (host-advisory; scripts may invoke) | Docker image pins |
 | `crates/arks-*/testdata/` | Crate-owned binary/json fixtures | Product matrices |
+
+### Naming families
+
+| Family | Compose | Scripts |
+|--------|---------|---------|
+| Product / milestone gates | `gN`, `gN-<suffix>` | `run-gN.sh` |
+| Symmetry DoD / release / hosting | `dod-<concern>` | `run-*-matrix-e2e.sh`, `run-symmetry-*.sh`, `run-self-host-e2e.sh` |
+| Claimed residual (B-slots) | `dod-claimed-<concern>`, `dod-claimed-residual` | `run-claimed-*-e2e.sh` |
+| Host advisory | `fsNNN-*-advisory` | `run-fsNNN-*-advisory.sh` |
+
+Default scaffold / SKIP exit 0; `ARKS_DOD_STRICT=1` fails closed — smoke ≠ Claimed. Stock Git pin **2.39.5** in-image is normative; host Git is advisory only.
 
 `verify/gates/g*` harness crates stay **outside** the root workspace so host default builds stay small; oracles run via `--manifest-path verify/gates/gN/Cargo.toml` or `cargo test -p …` from scripts.
 
@@ -117,9 +132,9 @@ Compose defaults **`CARGO_BUILD_JOBS=1`**. Raise only deliberately. On Windows h
 
 ### Target cache
 
-Compose sets `CARGO_TARGET_DIR=/workspace/target-cleanroom` so clean-room artifacts stay separate from host `target/`.
+Compose uses a named volume (`arks-cargo-target` → `/cargo-target`) and sets `CARGO_TARGET_DIR=/cargo-target` so clean-room artifacts stay separate from host `target/`.
 
-**Agent / host hygiene:** `target-cleanroom/release/arks` is a **Linux ELF**. On Windows hosts:
+**Agent / host hygiene:** clean-room `arks` under that volume is a **Linux ELF**. On Windows hosts:
 
 - Prefer `target/release/arks.exe` for advisory runs (`ARKS_BIN=...`).
 - **Do not** `Select-String`, `Get-Content`, or `findstr` binaries — dumps abort shells (`exit -1` / `4294967295`).

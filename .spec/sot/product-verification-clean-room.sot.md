@@ -7,13 +7,13 @@ updated: 2026-11-10T09:53:55Z
 tags: [verification, docker, clean-room, ci, git-compat, public, journey, layout]
 verify: manual
 rel:
-  depends_on: [sot:root/git-compat-surface, sot:root/remote-host-compatibility-surface, research:root/20261108073650, sot:root/clean-room-journey-compare, sot:root/structural-conventions]
-  evidence: [research:root/20261108073650, research:root/20261110095355]
+  depends_on: [sot:root/git-compat-surface, sot:root/remote-host-compatibility-surface, research:root/20261108073650, sot:root/clean-room-journey-compare, sot:root/structural-conventions, sot:root/verify-directory-conventions]
+  evidence: [research:root/20261108073650, research:root/20261110095355, research:root/20261111082440]
 ---
 
 # Product verification clean-room
 
-Version 0.1.4. Normative **intent** for how GIR claims “verified.” Any product acceptance, interop, or regression gate that asserts verified status MUST be reproducible in a **Docker clean-room**. Host-local runs are development aids only. Convention affinity (Docker as completion authority; host e2e not “done”) follows humanymous patterns in `C:\workspaces\humanymous\.agents\rules\60-e2e-docker-only.md` and `96-docker-engine-affinity.md` — cite those rules; do not fork competing convention prose in this repo. Tree grouping vs crate `tests/`/`testdata/`: [[research:root/20261110095355]], [[sot:root/structural-conventions]] §7.
+Version 0.1.4. Normative **intent** for how GIR claims “verified.” Any product acceptance, interop, or regression gate that asserts verified status MUST be reproducible in a **Docker clean-room**. Host-local runs are development aids only. Convention affinity (Docker as completion authority; host e2e not “done”) follows humanymous patterns in `C:\workspaces\humanymous\.agents\rules\60-e2e-docker-only.md` and `96-docker-engine-affinity.md` — cite those rules; do not fork competing convention prose in this repo. Tree grouping vs crate `tests/`/`testdata/`: [[research:root/20261110095355]], [[sot:root/structural-conventions]] §7. Directory naming / out paths / SKIP·STRICT / residual registration: [[sot:root/verify-directory-conventions]] ([[research:root/20261111082440]]).
 
 Compatibility semantics remain owned by [[sot:root/git-compat-surface]] (formats/protocols) and [[sot:root/remote-host-compatibility-surface]] (GitHub-class remotes). Matrix dimensions and host-vs-clean-room placement: [[research:root/20261108073650]]. Additive journey-compare (func + timing) receipts: [[sot:root/clean-room-journey-compare]] (**G16**).
 
@@ -60,10 +60,10 @@ Advisory results MUST NOT be cited as product verification in READMEs, release n
 ### Image and lock intent (M1–M4 harness)
 
 5. **Pin digests/tags in companion lock.** Authoritative image identity lives in `verify/images.lock.json` (referenced here). Until a gate’s digest is recorded there, that gate remains **manual / not yet harnessed**; do not invent digests. M1–M4 reuse the same `arks-verify-m1:0.1.0` image tag until a digest bump is recorded.
-6. **Compose / tree layout (grouped):** `verify/` owns product clean-room only:
-   - Harness entry: `docker-compose.yml`, `Dockerfile`, `images.lock.json`, `scripts/run-g*.sh` (incl. journey `run-g16.sh` / comparative `run-g19.sh`).
-   - Matrices: `verify/matrices/matrix-*.md` (not a flat dump at `verify/` root).
-   - Gate oracles / receipts / locks: `verify/gates/gN/` (out-of-workspace Cargo packages when needed; not Cargo workspace members).
+6. **Compose / tree layout (grouped):** `verify/` owns product clean-room only (detail + naming families: [[sot:root/verify-directory-conventions]]):
+   - Harness entry: `docker-compose.yml`, `Dockerfile`, `images.lock.json`, `scripts/run-g*.sh` (incl. journey `run-g16.sh` / comparative `run-g19.sh`) plus `dod-*` DoD / residual / hosting entrypoints.
+   - Matrices: `verify/matrices/matrix-*.md` and living `*-matrix.csv` (not a flat dump at `verify/` root).
+   - Gate oracles / receipts / locks: `verify/gates/gN/` (out-of-workspace Cargo packages when needed; not Cargo workspace members); cross-gate dumps under gitignored `verify/out/`.
    - Shared oracle intent/bytes: `verify/fixtures/` (no secrets).
    - Single-crate integration that is only host-advisory MAY live under `crates/arks-<ctx>/tests/` and be invoked by a thin `scripts/run-gN.sh` (G34 model). Compose service `g4` enters `run-g4.sh` (embeds G5 + regressions); `g5` enters `run-g5.sh`; `g6` enters `run-g6.sh`; `g3` enters `run-g3.sh`; `g8` enters `run-g8.sh`; `g16` enters `run-g16.sh`; `g19` enters `run-g19.sh`.
 7. **Engine affinity on Windows.** When agents or operators run clean-room locally on Windows, follow humanymous Docker engine affinity: Windows Docker Desktop Linux engine (`desktop-linux`), no silent WSL-daemon substitution. Recorded as convention cite, not a second affinity SoT.

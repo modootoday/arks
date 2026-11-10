@@ -9,6 +9,7 @@ verify: manual
 rel:
   depends_on:
     - sot:root/verify-cleanroom-symmetry-matrix
+    - sot:root/verify-directory-conventions
     - sot:root/product-verification-clean-room
     - sot:root/clean-room-git-pin-advance
     - sot:root/cli-git-help-matrix
@@ -25,7 +26,7 @@ rel:
 
 # Release symmetry precheck (git / daemon / gh)
 
-Version **0.1.0**. Normative **ops/CI** gate that blocks a tagged release when clean-room CLI symmetry tracking breaks. Extends [[sot:root/verify-cleanroom-symmetry-matrix]]; does **not** invent product Claimed/PASS from green CI alone.
+Version **0.1.0**. Normative **ops/CI** gate that blocks a tagged release when clean-room CLI symmetry tracking breaks. Extends [[sot:root/verify-cleanroom-symmetry-matrix]]; does **not** invent product Claimed/PASS from green CI alone. Entrypoint / out-path naming under `verify/` follows [[sot:root/verify-directory-conventions]].
 
 **Published binary:** **`arks` only.** Product paths MUST NOT spawn `git` or `gh`. Stock `git` / `git-daemon` / surveyed `gh` are **oracles** for inventory + matrices only.
 
