@@ -266,7 +266,7 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         let need = header_end.saturating_add(len);
         while buf.len() < need {
             let start = buf.len();
-            let chunk = (need - start).max(8 * 1024).min(64 * 1024);
+            let chunk = (need - start).clamp(8 * 1024, 64 * 1024);
             buf.resize(start + chunk, 0);
             let n = stream
                 .read(&mut buf[start..])
