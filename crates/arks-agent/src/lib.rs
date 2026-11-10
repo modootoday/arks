@@ -107,10 +107,10 @@ COMMANDS (Partial honesty):
     provider      list|show|test|set LLM endpoints (openai-compat first)
     config        show|path agent config (secrets redacted)
     doctor        Config + TCP reachability sanity check
-    review        Automatic code review — Partial refuse (LLM wire forthcoming)
-    cev-check     CEV inspection — Partial refuse until evidenced
-    run           One-shot bot job — Partial refuse
-    serve / bot   Long-running listener — Partial refuse
+    review        Review stdin/file via openai-compat chat (Partial; HTTP loopback)
+    cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
+    run           One-shot job: review|cev-check|doctor (Partial)
+    serve / bot   Loopback health listener (Partial; not a chatbot)
 
 NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
@@ -141,13 +141,10 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "provider" => cmd_provider(&args[1..]),
         "config" => cmd_config(&args[1..]),
         "doctor" => cmd_doctor(&args[1..]),
-        "review" | "cev-check" | "run" | "serve" | "bot" => {
-            eprintln!(
-                "arks agent {first}: Partial/Missing — LLM review wire not Claimed yet \
-                 ([[sot:root/arks-agent-cli-surface]]); use `provider`/`config`/`doctor` today"
-            );
-            ExitCode::from(2)
-        }
+        "review" => cmd_review(&args[1..]),
+        "cev-check" => cmd_cev_check(&args[1..]),
+        "run" => cmd_run(&args[1..]),
+        "serve" | "bot" => cmd_serve_bot(first, &args[1..]),
         other if GROUPS.contains(&other) => {
             eprintln!(
                 "arks agent: `{other}` recognized (Partial stub); refuse exit 2 — design ≠ Claimed"
@@ -560,6 +557,352 @@ fn cmd_doctor(_args: &[String]) -> ExitCode {
             println!("tcp=fail");
             eprintln!("{e}");
             eprintln!("doctor=fail (Partial — start local provider or fix base_url)");
+            ExitCode::from(1)
+        }
+    }
+}
+
+fn read_review_input(args: &[String]) -> Result<String, String> {
+    if let Some(path) = flag_value(args, &["--file", "-f"]) {
+        return fs::read_to_string(path).map_err(|e| e.to_string());
+    }
+    let mut buf = String::new();
+    std::io::stdin()
+        .read_to_string(&mut buf)
+        .map_err(|e| e.to_string())?;
+    if buf.trim().is_empty() {
+        return Err(
+            "review needs stdin text or --file PATH (Partial; never spawns git/gh)".into(),
+        );
+    }
+    Ok(buf)
+}
+
+/// Best-effort openai-compat chat completions POST (HTTP loopback Partial).
+fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, String), String> {
+    if base_url.starts_with("https://") {
+        return Err(
+            "HTTPS chat Partial — TCP/HTTP loopback only today; use http:// provider or ops TLS front"
+                .into(),
+        );
+    }
+    let (host, port) = parse_host_port(base_url)?;
+    let root = base_url.trim_end_matches('/');
+    let path = if root.ends_with("/v1") {
+        "/v1/chat/completions".to_string()
+    } else if let Some(rest) = base_url
+        .strip_prefix("http://")
+        .and_then(|r| r.split_once('/').map(|(_, p)| p))
+    {
+        let rest = rest.trim_end_matches('/');
+        if rest.is_empty() {
+            "/v1/chat/completions".into()
+        } else if rest.ends_with("/v1") {
+            format!("/{rest}/chat/completions")
+        } else {
+            format!("/{rest}/chat/completions")
+        }
+    } else {
+        "/v1/chat/completions".into()
+    };
+    let body = format!(
+        r#"{{"model":{},"messages":[{{"role":"user","content":{}}}],"stream":false}}"#,
+        json_escape(model),
+        json_escape(&truncate_chars(prompt, 12_000))
+    );
+    let mut stream = TcpStream::connect((host.as_str(), port))
+        .map_err(|e| format!("connect {host}:{port}: {e}"))?;
+    stream
+        .set_read_timeout(Some(Duration::from_secs(60)))
+        .ok();
+    stream
+        .set_write_timeout(Some(Duration::from_secs(30)))
+        .ok();
+    let mut headers = format!(
+        "POST {path} HTTP/1.1\r\nHost: {host}:{port}\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n",
+        body.len()
+    );
+    if let Some(key) = resolve_api_key() {
+        headers.push_str(&format!("Authorization: Bearer {key}\r\n"));
+    }
+    headers.push_str("\r\n");
+    stream
+        .write_all(headers.as_bytes())
+        .map_err(|e| e.to_string())?;
+    stream.write_all(body.as_bytes()).map_err(|e| e.to_string())?;
+    let mut buf = Vec::new();
+    stream.read_to_end(&mut buf).map_err(|e| e.to_string())?;
+    let text = String::from_utf8_lossy(&buf);
+    let status = text
+        .lines()
+        .next()
+        .and_then(|l| l.split_whitespace().nth(1))
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    let resp_body = text
+        .split("\r\n\r\n")
+        .nth(1)
+        .unwrap_or("")
+        .chars()
+        .take(8_192)
+        .collect::<String>();
+    Ok((status, resp_body))
+}
+
+fn json_escape(s: &str) -> String {
+    let mut out = String::from("\"");
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if c.is_control() => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
+fn truncate_chars(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        s.to_string()
+    } else {
+        s.chars().take(max).collect::<String>() + "\n…[truncated Partial]"
+    }
+}
+
+fn resolve_api_key() -> Option<String> {
+    if let Ok(k) = env::var("ARKS_AGENT_API_KEY") {
+        if !k.is_empty() {
+            return Some(k);
+        }
+    }
+    if let Ok(k) = env::var("OPENAI_API_KEY") {
+        if !k.is_empty() {
+            return Some(k);
+        }
+    }
+    if let Ok(map) = load_config_map() {
+        if let Some(var) = map.get("api_key_env") {
+            if let Ok(k) = env::var(var) {
+                if !k.is_empty() {
+                    return Some(k);
+                }
+            }
+        }
+    }
+    None
+}
+
+fn cmd_review(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks agent review [--file PATH] — openai-compat chat Partial (stdin or --file)"
+        );
+        return ExitCode::SUCCESS;
+    }
+    let map = load_config_map().unwrap_or_default();
+    let id = env::var("ARKS_AGENT_PROVIDER")
+        .ok()
+        .or_else(|| map.get("provider").cloned())
+        .unwrap_or_else(|| "ollama".into());
+    let base = effective_base_url(&id, flag_value(args, &["--base-url"]));
+    let model = flag_value(args, &["--model"])
+        .map(str::to_string)
+        .or_else(|| map.get("model").cloned())
+        .unwrap_or_else(|| "llama3.2".into());
+    let input = match read_review_input(args) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("arks agent review: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let prompt = format!(
+        "You are arks agent review (Partial; not Claimed). Review the following diff/text briefly:\n\n{input}"
+    );
+    println!("provider={id}");
+    println!("base_url={base}");
+    println!("model={model}");
+    println!("input_bytes={}", input.len());
+    match http_post_chat(&base, &model, &prompt) {
+        Ok((code, body)) => {
+            println!("chat_http={code}");
+            println!("{body}");
+            eprintln!("note: Partial openai-compat review — design ≠ Claimed");
+            if code == 0 || code >= 400 {
+                ExitCode::from(1)
+            } else {
+                ExitCode::SUCCESS
+            }
+        }
+        Err(e) => {
+            println!("chat_http=skipped");
+            eprintln!("{e}");
+            eprintln!(
+                "arks agent review: Partial — provider unreachable; structured refuse \
+                 (start ollama/openai-compat or fix base_url). Not Claimed."
+            );
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_cev_check(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks agent cev-check [PATH] — structural CEV/config inspection (Partial; no LLM Claimed)"
+        );
+        return ExitCode::SUCCESS;
+    }
+    let target = args
+        .iter()
+        .find(|a| !a.starts_with('-'))
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    println!("path={}", target.display());
+    let mut findings = Vec::new();
+    if !target.exists() {
+        findings.push(format!("missing path: {}", target.display()));
+    } else if target.is_file() {
+        match fs::read_to_string(&target) {
+            Ok(raw) => {
+                println!("bytes={}", raw.len());
+                if raw.contains('\u{ac00}') {
+                    findings.push(
+                        "Hangul detected in inspected file (English-only product text rule)".into(),
+                    );
+                }
+                if raw.to_ascii_lowercase().contains("claimed")
+                    && raw.to_ascii_lowercase().contains("pass")
+                    && !raw.contains("not Claimed")
+                {
+                    findings.push(
+                        "possible invent-Claimed phrasing — review honesty (rule 28)".into(),
+                    );
+                }
+                if raw.len() > 512 * 1024 {
+                    findings.push("file >512KiB — CEV depth Partial".into());
+                }
+            }
+            Err(e) => findings.push(format!("read error: {e}")),
+        }
+    } else {
+        // Directory: look for common CEV / evidence markers (structural only).
+        let markers = [
+            ".spec",
+            ".spec.local",
+            "verify",
+            "AGENTS.md",
+            "docs/completion.md",
+        ];
+        for m in markers {
+            let p = target.join(m);
+            println!(
+                "marker={} {}",
+                m,
+                if p.exists() { "present" } else { "absent" }
+            );
+        }
+        let conf = config_path();
+        println!(
+            "agent_config={} {}",
+            conf.display(),
+            if conf.is_file() { "present" } else { "absent" }
+        );
+    }
+    if findings.is_empty() {
+        println!("cev_check=ok (Partial structural; LLM CEV not Claimed)");
+        ExitCode::SUCCESS
+    } else {
+        for f in &findings {
+            eprintln!("finding: {f}");
+        }
+        println!("cev_check=findings (Partial; not Claimed)");
+        ExitCode::from(1)
+    }
+}
+
+fn cmd_run(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    match sub {
+        "" | "-h" | "--help" | "help" => {
+            eprintln!("arks agent run — review|cev-check|doctor [args…] (Partial one-shot)");
+            ExitCode::SUCCESS
+        }
+        "review" => cmd_review(&args[1..]),
+        "cev-check" => cmd_cev_check(&args[1..]),
+        "doctor" => cmd_doctor(&args[1..]),
+        other => {
+            eprintln!(
+                "arks agent run {other}: Partial — known jobs: review|cev-check|doctor; \
+                 custom bot scripts not Claimed"
+            );
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks agent {kind} [--listen HOST:PORT] — loopback health Partial (not a chatbot)"
+        );
+        return ExitCode::SUCCESS;
+    }
+    let listen = flag_value(args, &["--listen"])
+        .unwrap_or("127.0.0.1:3930")
+        .to_string();
+    let addr: std::net::SocketAddr = match listen.parse() {
+        Ok(a) => a,
+        Err(e) => {
+            eprintln!("arks agent {kind}: bad --listen: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    if !addr.ip().is_loopback() {
+        eprintln!(
+            "arks agent {kind}: non-loopback bind Partial — ops owns firewall; not Claimed WAN-safe"
+        );
+    }
+    let listener = match std::net::TcpListener::bind(addr) {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("arks agent {kind}: bind failed: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    eprintln!(
+        "arks agent {kind} listening on http://{}/ (Partial health only — LLM serve not Claimed)",
+        listener
+            .local_addr()
+            .map(|a| a.to_string())
+            .unwrap_or_else(|_| listen.clone())
+    );
+    // Single-accept Partial demo: respond once then exit (long-running bot Missing).
+    match listener.accept() {
+        Ok((mut stream, peer)) => {
+            let mut buf = [0u8; 1024];
+            let _ = stream.read(&mut buf);
+            let body = format!(
+                "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\"partial\":true,\"peer\":\"{peer}\"}}"
+            );
+            let resp = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+            let _ = stream.write_all(resp.as_bytes());
+            eprintln!(
+                "arks agent {kind}: served one Partial health response then exit \
+                 (long-running bot Missing — design ≠ Claimed)"
+            );
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("arks agent {kind}: accept failed: {e}");
             ExitCode::from(1)
         }
     }
