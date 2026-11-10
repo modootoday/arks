@@ -118,7 +118,7 @@ COMMANDS:
     org           Organizations list (local Partial)
     search        Search repos|issues|prs (local Partial)
     api           Raw HTTP against ARKS_HUB_API
-    smoke         HTTPS forge e2e harness Partial (local https or documented Missing; no gh)
+    smoke         HTTPS forge e2e harness Partial (+ --out-refuse residual OUT; no gh)
     status        Aggregated status (Partial)
     co            Alias for pr checkout
     extension     OUT refuse (marketplace; not local forge)
@@ -995,12 +995,16 @@ fn cmd_search(args: &[String]) -> ExitCode {
 fn cmd_https_smoke(args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks hub smoke [--url URL] [--path /user]\n  \
+            "arks hub smoke [--url URL] [--path /user] [--out-refuse]\n  \
              HTTPS forge e2e harness Partial (ureq TLS). Prefer https:// ARKS_HUB_API.\n  \
              Without a reachable https endpoint: documents Missing (not Claimed).\n  \
+             --out-refuse: residual OUT harness Partial (extension/copilot exit 2; never gh).\n  \
              Optional local http:// fallback probe — never spawns gh."
         );
         return ExitCode::SUCCESS;
+    }
+    if args.iter().any(|a| a == "--out-refuse") {
+        return cmd_hub_out_refuse_smoke();
     }
     let path = flag_value(args, &["--path"]).unwrap_or("/user");
     let path = if path.starts_with('/') {
@@ -1641,6 +1645,42 @@ fn cmd_gpg_key(args: &[String]) -> ExitCode {
         None
     };
     local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
+}
+
+/// Residual OUT refuse smoke Partial: prove `extension`/`copilot` stay OUT exit 2.
+/// Never spawns `gh`. Does **not** invent Claimed forge remote e2e.
+fn cmd_hub_out_refuse_smoke() -> ExitCode {
+    println!("hub_smoke=partial");
+    println!("out_refuse_smoke=partial");
+    println!("spawns_gh=never");
+    println!("claimed_forge_remote_e2e=Missing");
+    let mut failed = false;
+    for name in HUB_OUT_GROUPS {
+        // Invoke the same OUT refuse path operators hit (`arks hub extension|copilot`).
+        let code = cmd_out_explicit_refuse(name, &[]);
+        let ok = code == ExitCode::from(2);
+        println!("out_group={name}");
+        println!("out_expect=2");
+        if ok {
+            println!("out_status=refuse_ok");
+        } else {
+            println!("out_status=refuse_unexpected");
+            failed = true;
+        }
+    }
+    if failed {
+        eprintln!(
+            "note: residual OUT refuse smoke Partial failed expectation — \
+             Claimed forge remote e2e still Missing; never spawns gh"
+        );
+        ExitCode::from(1)
+    } else {
+        eprintln!(
+            "note: residual OUT refuse smoke Partial ok (extension/copilot stay OUT); \
+             Claimed forge remote HTTPS e2e still Missing; never spawns gh"
+        );
+        ExitCode::SUCCESS
+    }
 }
 
 /// Explicit OUT refuse for marketplace/vendor leaves (`extension` / `copilot`).
