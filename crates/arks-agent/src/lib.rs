@@ -104,7 +104,7 @@ OPTIONS:
     -V, --version    Print version
 
 COMMANDS (Partial honesty):
-    provider      list|show|test|set LLM endpoints (openai-compat first)
+    provider      list|show|test|set|smoke LLM endpoints (openai-compat first; ollama smoke Partial)
     config        show|path agent config (secrets redacted)
     doctor        Config + TCP reachability sanity check
     review        Review stdin/file via openai-compat chat (Partial; HTTP loopback)
@@ -116,7 +116,8 @@ NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
     Not required for git alias DoD. Not a general chatbot.
     Local Ollama default: http://127.0.0.1:11434/v1
-    Native HTTP / TCP only — never spawns git / gh / vendor CLIs.
+    `provider smoke [ollama]` — optional local chat Partial when daemon up; Claimed e2e Missing
+    Native HTTP / TCP only — never spawns git / gh / vendor CLIs (including ollama CLI).
     Design ≠ Claimed ([[sot:root/arks-agent-cli-surface]]).
 "
     );
@@ -402,7 +403,10 @@ fn cmd_provider(args: &[String]) -> ExitCode {
     match sub {
         "" | "-h" | "--help" | "help" => {
             eprintln!(
-                "arks agent provider — list|show <id>|test <id>|set <id> [--base-url …] [--api-key-env VAR]"
+                "arks agent provider — list|show <id>|test <id>|set <id>|smoke [ollama] \
+                 [--base-url …] [--api-key-env VAR] [--model NAME]\n  \
+                 smoke: optional local ollama openai-compat chat Partial (no CLI spawn); \
+                 Claimed LLM chatbot e2e Missing unless real evidence"
             );
             ExitCode::SUCCESS
         }
@@ -518,9 +522,105 @@ fn cmd_provider(args: &[String]) -> ExitCode {
             );
             ExitCode::SUCCESS
         }
+        "smoke" => cmd_provider_ollama_smoke(args),
         other => {
-            eprintln!("arks agent provider: unknown `{other}` (list|show|test|set)");
+            eprintln!("arks agent provider: unknown `{other}` (list|show|test|set|smoke)");
             ExitCode::from(2)
+        }
+    }
+}
+
+/// Optional local Ollama smoke Partial: TCP + `/models` + tiny chat/completions.
+/// Never spawns the `ollama` CLI. Claimed LLM chatbot e2e remains Missing without evidence.
+fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
+    let id = args
+        .get(1)
+        .map(String::as_str)
+        .filter(|s| !s.starts_with('-'))
+        .unwrap_or("ollama");
+    if id != "ollama" && id != "openai-compat" {
+        eprintln!(
+            "arks agent provider smoke: optional local path is ollama|openai-compat (got `{id}`); \
+             Claimed vendor e2e Missing"
+        );
+        return ExitCode::from(2);
+    }
+    let base = effective_base_url(id, flag_value(args, &["--base-url"]));
+    let model = flag_value(args, &["--model"])
+        .map(str::to_string)
+        .or_else(|| load_config_map().ok().and_then(|m| m.get("model").cloned()))
+        .unwrap_or_else(|| "llama3.2".into());
+    println!("provider_smoke=partial");
+    println!("provider={id}");
+    println!("base_url={base}");
+    println!("model={model}");
+    println!("spawns_ollama_cli=never");
+    if base.starts_with("https://") {
+        println!("ollama_smoke=Missing");
+        println!("missing_reason=HTTPS provider smoke Partial not wired; use http://127.0.0.1:11434/v1");
+        eprintln!("note: Claimed LLM chatbot e2e Missing");
+        return ExitCode::from(2);
+    }
+    match tcp_probe(&base) {
+        Ok(()) => println!("tcp=ok"),
+        Err(e) => {
+            println!("tcp=fail");
+            println!("ollama_smoke=Missing");
+            println!("missing_reason=local ollama not reachable ({e})");
+            println!("error_class={}", classify_provider_err(&e));
+            eprintln!(
+                "note: optional local ollama smoke Partial — daemon absent; \
+                 Claimed LLM chatbot e2e still Missing (not invented Claimed)"
+            );
+            return ExitCode::from(1);
+        }
+    }
+    match http_get_models(&base) {
+        Ok((code, body)) => {
+            println!("models_http={code}");
+            if !body.is_empty() {
+                let preview: String = body.chars().take(160).collect();
+                println!("models_preview={preview}");
+            }
+        }
+        Err(e) => {
+            println!("models_http=fail");
+            println!("error_class={}", classify_provider_err(&e));
+            eprintln!("{e}");
+        }
+    }
+    match http_post_chat(&base, &model, "arks agent provider smoke Partial ping") {
+        Ok((code, body)) => {
+            println!("chat_http={code}");
+            let preview: String = body.chars().take(200).collect();
+            if !preview.is_empty() {
+                println!("chat_preview={preview}");
+            }
+            if (200..300).contains(&code) {
+                println!("ollama_smoke=ok");
+                eprintln!(
+                    "note: local ollama smoke Partial succeeded — Claimed LLM chatbot e2e still Missing \
+                     (one-shot smoke ≠ product e2e)"
+                );
+                ExitCode::SUCCESS
+            } else {
+                println!("ollama_smoke=partial_http_{code}");
+                eprintln!(
+                    "note: ollama reachable but chat HTTP {code}; Claimed e2e Missing"
+                );
+                ExitCode::from(1)
+            }
+        }
+        Err(e) => {
+            println!("chat_http=fail");
+            println!("ollama_smoke=Missing");
+            println!("error={}", e);
+            println!("error_class={}", classify_provider_err(&e));
+            eprintln!(
+                "note: optional local ollama smoke Partial — chat path failed; \
+                 Claimed LLM chatbot e2e Missing"
+            );
+            ExitCode::from(1)
         }
     }
 }
