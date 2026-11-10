@@ -220,21 +220,19 @@ fn refuse_closed_and_unknown_flags() {
     assert_fail(&arks(repo, &["rebase", "-i", "HEAD"]), "rebase -i");
     assert_fail(&arks(repo, &["archive", "--format=zip"]), "zip");
     assert_fail(&arks(repo, &["tag", "-s", "x"]), "signed tag");
+    // Manifest lives at verify/gates/g14 after layout relocate (cdbc907+).
+    let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..");
     assert!(
         Path::new("docs/alias-git-arks.md").is_file()
             || Path::new("../docs/alias-git-arks.md").is_file()
-            || PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../docs/alias-git-arks.md")
-                .is_file(),
+            || repo_root.join("docs/alias-git-arks.md").is_file(),
         "alias how-to docs missing"
     );
     assert!(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../.spec/sot/cli-flag-parity-m9.sot.md")
+        repo_root
+            .join(".spec/sot/cli-flag-parity-m9.sot.md")
             .is_file()
-            || PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../.spec/sot/arks.sot.md")
-                .is_file(),
+            || repo_root.join(".spec/sot/arks.sot.md").is_file(),
         "flag-parity / unit SoT missing"
     );
 }

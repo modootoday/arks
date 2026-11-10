@@ -193,8 +193,15 @@ fn run_named_hook(
         .map_err(|e| ServerError::Msg(format!("hook {name}: {e}")))?;
     if let Some(bytes) = stdin {
         if let Some(mut hin) = child.stdin.take() {
-            hin.write_all(bytes)
-                .map_err(|e| ServerError::Msg(format!("hook {name} stdin: {e}")))?;
+            // Hook may exit before reading stdin (e.g. `exit 1`); BrokenPipe is
+            // not a server fault — wait for status and apply fail-closed Decline.
+            match hin.write_all(bytes) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => {}
+                Err(e) => {
+                    return Err(ServerError::Msg(format!("hook {name} stdin: {e}")));
+                }
+            }
         }
     }
     let status = child
