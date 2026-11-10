@@ -279,10 +279,7 @@ fn lfs_batch_download_and_get_object() {
     let (git, _) = seed_bare(dir.path());
     let oid = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     let content = b"lfs-network-payload";
-    let obj = git
-        .join("lfs/objects")
-        .join(&oid[..2])
-        .join(&oid[2..4]);
+    let obj = git.join("lfs/objects").join(&oid[..2]).join(&oid[2..4]);
     std::fs::create_dir_all(&obj).unwrap();
     std::fs::write(obj.join(oid), content).unwrap();
     let mut repo = Repository::open(&git).unwrap();

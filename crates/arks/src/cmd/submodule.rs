@@ -6,7 +6,9 @@
 //! Plan: `.spec/plan/20261109022956-worktree-submodule-residual.plan.md`
 
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index, };
+use crate::util::{
+    open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
+};
 use arks_index::{IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;

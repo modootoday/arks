@@ -7,7 +7,10 @@
 
 use crate::cmd::shared::{commit_signature, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{FORMAT, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index, };
+use crate::util::{
+    FORMAT, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
+    write_index,
+};
 use crate::write_tree::write_tree_from_index;
 use arks_index::{IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, Tree};

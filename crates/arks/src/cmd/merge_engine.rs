@@ -4,7 +4,7 @@
 //! Conflicted paths land as index stages 1/2/3 + worktree conflict markers.
 
 use crate::error::{CliError, CliResult};
-use crate::util::{write_index};
+use crate::util::write_index;
 use crate::write_tree::write_tree_from_index;
 use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject, TreeMode};

@@ -7,8 +7,8 @@ use crate::cmd::shared::{
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
-    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
-    work_tree, write_index,
+    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
+    write_index,
 };
 use crate::write_tree::write_tree_from_index;
 use arks_index::{IndexEntry, sort_entries};
@@ -100,9 +100,7 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
         ));
     };
     let obj = RawObject::new(ObjectKind::Blob, payload);
-    let format = open_repo()
-        .map(|r| r.object_format())
-        .unwrap_or(FORMAT);
+    let format = open_repo().map(|r| r.object_format()).unwrap_or(FORMAT);
     let oid = if write {
         let mut repo = open_repo()?;
         // OBJ-001 (M20 Cx-5): identical concurrent loose creates are idempotent; honesty note.
@@ -467,7 +465,11 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
                         let mut local = Vec::with_capacity(piece.len());
                         for rel in piece {
                             local.push(stage_blob_entry(
-                                work, objects_dir, rel, chmod_mode, format,
+                                work,
+                                objects_dir,
+                                rel,
+                                chmod_mode,
+                                format,
                             )?);
                         }
                         Ok(local)

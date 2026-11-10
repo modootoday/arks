@@ -15,7 +15,6 @@ use arks_refs::RefTarget;
 use arks_repo::Repository;
 use arks_store::ObjectStore;
 
-
 /// Capability lines advertised for v2 (commands + agent).
 pub fn v2_capability_lines() -> Vec<String> {
     // gitprotocol-v2: command features as `fetch=<feature>…` (SP-separated values).

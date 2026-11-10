@@ -54,7 +54,10 @@ pub fn lfs_object_path(git_dir: &Path, oid_hex: &str) -> PathBuf {
         .join(oid_hex)
 }
 
-pub fn read_local_lfs_object(git_dir: &Path, ptr: &LfsPointer) -> Result<Option<Vec<u8>>, RemoteError> {
+pub fn read_local_lfs_object(
+    git_dir: &Path,
+    ptr: &LfsPointer,
+) -> Result<Option<Vec<u8>>, RemoteError> {
     let path = lfs_object_path(git_dir, &ptr.oid_hex);
     if !path.is_file() {
         return Ok(None);
@@ -71,7 +74,11 @@ pub fn read_local_lfs_object(git_dir: &Path, ptr: &LfsPointer) -> Result<Option<
     Ok(Some(bytes))
 }
 
-pub fn write_local_lfs_object(git_dir: &Path, oid_hex: &str, bytes: &[u8]) -> Result<(), RemoteError> {
+pub fn write_local_lfs_object(
+    git_dir: &Path,
+    oid_hex: &str,
+    bytes: &[u8],
+) -> Result<(), RemoteError> {
     let path = lfs_object_path(git_dir, oid_hex);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| RemoteError::Msg(e.to_string()))?;
@@ -167,10 +174,7 @@ fn config_value(text: &str, key: &str) -> Option<String> {
 }
 
 /// Batch download one object and store under `$GIT_DIR/lfs/objects`.
-pub fn lfs_batch_download(
-    repo: &Repository,
-    ptr: &LfsPointer,
-) -> Result<Vec<u8>, RemoteError> {
+pub fn lfs_batch_download(repo: &Repository, ptr: &LfsPointer) -> Result<Vec<u8>, RemoteError> {
     let endpoint = discover_lfs_endpoint(repo)?.ok_or_else(|| {
         RemoteError::Msg(
             "lfs: no endpoint (set lfs.url, a remote url, or ARKS_LFS_URL for network fetch)"
@@ -187,14 +191,8 @@ pub fn lfs_batch_download(
         method: "POST".into(),
         url: batch_url,
         headers: vec![
-            (
-                "Accept".into(),
-                "application/vnd.git-lfs+json".into(),
-            ),
-            (
-                "Content-Type".into(),
-                "application/vnd.git-lfs+json".into(),
-            ),
+            ("Accept".into(), "application/vnd.git-lfs+json".into()),
+            ("Content-Type".into(), "application/vnd.git-lfs+json".into()),
         ],
         body: body.into_bytes(),
     })?;
@@ -204,9 +202,8 @@ pub fn lfs_batch_download(
             resp.status
         )));
     }
-    let href = extract_download_href(&resp.body).ok_or_else(|| {
-        RemoteError::Msg("lfs batch: missing actions.download.href".into())
-    })?;
+    let href = extract_download_href(&resp.body)
+        .ok_or_else(|| RemoteError::Msg("lfs batch: missing actions.download.href".into()))?;
     let headers = extract_download_headers(&resp.body);
     let file = if headers.is_empty() {
         http_get(&href)?
@@ -258,10 +255,13 @@ pub fn resolve_lfs_pointer(
 }
 
 /// Batch upload local LFS object to endpoint (basic transfer).
-pub fn lfs_batch_upload(repo: &Repository, ptr: &LfsPointer, bytes: &[u8]) -> Result<(), RemoteError> {
-    let endpoint = discover_lfs_endpoint(repo)?.ok_or_else(|| {
-        RemoteError::Msg("lfs: no endpoint for upload".into())
-    })?;
+pub fn lfs_batch_upload(
+    repo: &Repository,
+    ptr: &LfsPointer,
+    bytes: &[u8],
+) -> Result<(), RemoteError> {
+    let endpoint = discover_lfs_endpoint(repo)?
+        .ok_or_else(|| RemoteError::Msg("lfs: no endpoint for upload".into()))?;
     let batch_url = format!("{endpoint}/objects/batch");
     let body = format!(
         r#"{{"operation":"upload","transfers":["basic"],"objects":[{{"oid":"{}","size":{}}}]}}"#,
@@ -272,14 +272,8 @@ pub fn lfs_batch_upload(repo: &Repository, ptr: &LfsPointer, bytes: &[u8]) -> Re
         method: "POST".into(),
         url: batch_url,
         headers: vec![
-            (
-                "Accept".into(),
-                "application/vnd.git-lfs+json".into(),
-            ),
-            (
-                "Content-Type".into(),
-                "application/vnd.git-lfs+json".into(),
-            ),
+            ("Accept".into(), "application/vnd.git-lfs+json".into()),
+            ("Content-Type".into(), "application/vnd.git-lfs+json".into()),
         ],
         body: body.into_bytes(),
     })?;

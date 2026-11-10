@@ -24,7 +24,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-
 type RefsAndCaps = (Vec<(String, Oid)>, Vec<String>);
 
 fn receive_refs_and_caps(repo: &Repository) -> Result<RefsAndCaps, ServerError> {

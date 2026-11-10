@@ -10,7 +10,6 @@ use arks_refs::RefTarget;
 use arks_repo::Repository;
 use arks_store::ObjectStore;
 
-
 type RefsAndCaps = (Vec<(String, Oid)>, Vec<String>);
 type RefsAndHead = (Vec<(String, Oid)>, Option<String>);
 

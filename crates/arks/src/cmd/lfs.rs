@@ -41,7 +41,9 @@ fn lfs_fetch_pull() -> CliResult<()> {
     let index = crate::util::read_index(&repo)?;
     let mut fetched = 0usize;
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        let obj = repo.get_object(&e.oid).map_err(|err| CliError::Msg(err.to_string()))?;
+        let obj = repo
+            .get_object(&e.oid)
+            .map_err(|err| CliError::Msg(err.to_string()))?;
         if obj.kind != ObjectKind::Blob {
             continue;
         }
@@ -67,7 +69,9 @@ fn lfs_push() -> CliResult<()> {
     let index = crate::util::read_index(&repo)?;
     let mut pushed = 0usize;
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        let obj = repo.get_object(&e.oid).map_err(|err| CliError::Msg(err.to_string()))?;
+        let obj = repo
+            .get_object(&e.oid)
+            .map_err(|err| CliError::Msg(err.to_string()))?;
         if obj.kind != ObjectKind::Blob {
             continue;
         }

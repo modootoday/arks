@@ -27,7 +27,6 @@ use arks_store::ObjectStore;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-
 /// Parse dumb `info/refs` body (TAB-separated; optional peeled `^{}` lines ignored).
 pub(crate) fn parse_dumb_info_refs(body: &[u8]) -> Result<Advertisement, RemoteError> {
     let text = std::str::from_utf8(body).map_err(|e| RemoteError::Protocol(e.to_string()))?;

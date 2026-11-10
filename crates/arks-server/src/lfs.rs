@@ -15,7 +15,10 @@ use std::path::Path;
 
 const LFS_JSON: &str = "application/vnd.git-lfs+json";
 
-pub fn handle_lfs(repo: &Repository, req: &HttpRequest) -> Result<Option<HttpResponse>, ServerError> {
+pub fn handle_lfs(
+    repo: &Repository,
+    req: &HttpRequest,
+) -> Result<Option<HttpResponse>, ServerError> {
     let path = req.path.as_str();
     let lfs_idx = match path.find("info/lfs") {
         Some(i) => i,
@@ -96,7 +99,11 @@ fn handle_get_object(repo: &Repository, oid: &str) -> Result<HttpResponse, Serve
     Ok(typed(200, "application/octet-stream", body))
 }
 
-fn handle_put_object(repo: &Repository, oid: &str, body: &[u8]) -> Result<HttpResponse, ServerError> {
+fn handle_put_object(
+    repo: &Repository,
+    oid: &str,
+    body: &[u8],
+) -> Result<HttpResponse, ServerError> {
     let path = object_path(repo.git_dir(), oid);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| ServerError::Msg(e.to_string()))?;
@@ -152,12 +159,11 @@ fn parse_batch_objects(body: &str) -> Vec<(String, u64)> {
             continue;
         };
         rest = &rest[si + 6..];
-        let Some(colon) = rest.find(':') else { continue };
+        let Some(colon) = rest.find(':') else {
+            continue;
+        };
         rest = rest[colon + 1..].trim_start();
-        let num: String = rest
-            .chars()
-            .take_while(|c| c.is_ascii_digit())
-            .collect();
+        let num: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
         if let Ok(size) = num.parse::<u64>() {
             if oid.len() == 64 {
                 out.push((oid, size));

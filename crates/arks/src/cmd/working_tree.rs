@@ -5,7 +5,9 @@ use crate::cmd::shared::{
     collect_untracked, flatten_tree, head_blob_map, resolve_rev, tree_blob_map,
 };
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index, };
+use crate::util::{
+    open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
+};
 use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_oid::Oid;
