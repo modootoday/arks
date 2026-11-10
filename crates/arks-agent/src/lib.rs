@@ -107,7 +107,7 @@ COMMANDS (Partial honesty):
     provider      list|show|test|set|smoke LLM endpoints (openai-compat first; ollama smoke Partial)
     config        show|path agent config (secrets redacted)
     doctor        Config + TCP reachability sanity check
-    review        Review stdin/file via openai-compat chat (Partial; HTTP loopback)
+    review        Review stdin/file via openai-compat chat (Partial; --smoke fixture OK)
     cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
     run           One-shot job: review|cev-check|doctor (Partial)
     serve / bot   Loopback health + chat completions proxy (JSON + stream SSE Partial; Claimed LLM e2e Missing)
@@ -898,10 +898,12 @@ fn resolve_api_key() -> Option<String> {
 fn cmd_review(args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks agent review [--file PATH] — openai-compat chat Partial (stdin or --file)"
+            "arks agent review [--file PATH] [--smoke] — openai-compat chat Partial \
+             (stdin or --file; --smoke uses built-in fixture)"
         );
         return ExitCode::SUCCESS;
     }
+    let smoke = args.iter().any(|a| a == "--smoke");
     let map = load_config_map().unwrap_or_default();
     let id = env::var("ARKS_AGENT_PROVIDER")
         .ok()
@@ -912,11 +914,24 @@ fn cmd_review(args: &[String]) -> ExitCode {
         .map(str::to_string)
         .or_else(|| map.get("model").cloned())
         .unwrap_or_else(|| "llama3.2".into());
-    let input = match read_review_input(args) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("arks agent review: {e}");
-            return ExitCode::from(2);
+    if smoke {
+        println!("review_smoke=partial");
+        println!("spawns_ollama_cli=never");
+        println!("claimed_llm_review_e2e=Missing");
+    }
+    let input = if smoke {
+        "arks agent review --smoke fixture (Partial):\n\
+         - do not invent Claimed\n\
+         - never spawn git/gh/ollama CLI\n\
+         fn example() { /* empty Partial */ }\n"
+            .to_string()
+    } else {
+        match read_review_input(args) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("arks agent review: {e}");
+                return ExitCode::from(2);
+            }
         }
     };
     let prompt = format!(
@@ -929,22 +944,53 @@ fn cmd_review(args: &[String]) -> ExitCode {
     match http_post_chat(&base, &model, &prompt) {
         Ok((code, body)) => {
             println!("chat_http={code}");
-            println!("{body}");
-            eprintln!("note: Partial openai-compat review — design ≠ Claimed");
-            if code == 0 || code >= 400 {
-                ExitCode::from(1)
+            if smoke {
+                let preview: String = body.chars().take(200).collect();
+                if !preview.is_empty() {
+                    println!("chat_preview={preview}");
+                }
+                if code > 0 && code < 400 {
+                    println!("review_smoke=ok");
+                    eprintln!(
+                        "note: review --smoke Partial succeeded — Claimed LLM review e2e still Missing \
+                         (one-shot fixture ≠ product e2e)"
+                    );
+                    ExitCode::SUCCESS
+                } else {
+                    println!("review_smoke=partial_http_{code}");
+                    eprintln!(
+                        "note: review --smoke Partial HTTP {code}; Claimed LLM review e2e Missing"
+                    );
+                    ExitCode::from(1)
+                }
             } else {
-                ExitCode::SUCCESS
+                println!("{body}");
+                eprintln!("note: Partial openai-compat review — design ≠ Claimed");
+                if code == 0 || code >= 400 {
+                    ExitCode::from(1)
+                } else {
+                    ExitCode::SUCCESS
+                }
             }
         }
         Err(e) => {
             println!("chat_http=skipped");
             eprintln!("{e}");
-            eprintln!(
-                "arks agent review: Partial — provider unreachable; structured refuse \
-                 (start ollama/openai-compat or fix base_url). Not Claimed."
-            );
-            ExitCode::from(2)
+            if smoke {
+                println!("review_smoke=Missing");
+                println!("missing_reason=provider unreachable for fixture smoke");
+                eprintln!(
+                    "note: review --smoke Partial — daemon absent; Claimed LLM review e2e Missing \
+                     (not invented Claimed); never spawns ollama CLI"
+                );
+                ExitCode::SUCCESS
+            } else {
+                eprintln!(
+                    "arks agent review: Partial — provider unreachable; structured refuse \
+                     (start ollama/openai-compat or fix base_url). Not Claimed."
+                );
+                ExitCode::from(2)
+            }
         }
     }
 }
