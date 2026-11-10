@@ -3,12 +3,14 @@ id: research:root/20261111033608
 title: GitHub private remotes — git ↔ arks symmetry pilot
 status: active
 created: 2026-11-10T18:36:08Z
-updated: 2026-11-10T18:50:00Z
+updated: 2026-11-10T19:00:00Z
 tags: [pilot, github, private, symmetry, https, credentials]
 verify: host
 rel:
   depends_on:
     - sot:root/program-roadmap
+    - sot:root/credential-helper-askpass
+    - sot:root/cli-flag-parity-complete
     - docs:root/git-vs-arks
   evidence:
     - evidence:root/20261111033608
@@ -23,21 +25,26 @@ Against two **throwaway private** GitHub remotes, do stock **git** and **arks** 
 ## Method
 
 1. `gh repo create` under `modootoday` (private); HTTPS via `gh auth setup-git`.
-2. Sequential matrix in `verify/scripts/run-gh-private-pilot-symmetry.ps1` — git then arks; record PASS/FAIL/SKIP+reason.
-3. No G8 SLO / no G19 remasure / no stretch.
+2. Sequential matrix in `verify/scripts/run-gh-private-pilot-symmetry.ps1` — **Windows PowerShell only** (no `/bin/sh`); git then arks; record PASS/FAIL/SKIP+reason.
+3. Linux-native scripted pilots stay in clean-room Docker; this host pilot uses `git.exe` / `arks.exe` / `gh`.
+4. No G8 SLO / no G19 remasure / no stretch.
+5. After wire fixes: **focused retest** of the four prior FAIL ids (AUTH-DIAG, P04abbrev, P05u, P08short) only — do not invent PASS for unretried rows.
 
 ## Result
 
-See [[evidence:root/20261111033608]]. **17 PASS / 4 FAIL / 5 SKIP** at tip `daf7f8a` (≥ `287d185`).
+See [[evidence:root/20261111033608]].
 
-### Fix candidates (FAIL rows)
+- Original at tip `fc12914`: **17 PASS / 4 FAIL / 5 SKIP**.
+- After fixes + focused retest: **21 PASS / 0 FAIL / 5 SKIP** (four FAIL → PASS; other rows retained).
 
-| Id | Gap |
-|----|-----|
-| AUTH-DIAG | Parse gitconfig bang-helpers with Windows-safe quoting (or strip shell quotes before `cmd /C`) |
-| P04abbrev | Implement `rev-parse --abbrev-ref` |
-| P05u | Implement `push -u` / `--set-upstream` |
-| P08short | When pushing a name that is a tag, resolve `refs/tags/` (git shorthand) |
+### Prior FAIL → fixed
+
+| Id | Gap | Fix |
+|----|-----|-----|
+| AUTH-DIAG | Windows stock `!'…\gh.exe'` bang | Simple bang argv spawn (POSIX quotes stripped); cmd `/C` rewrite fallback |
+| P04abbrev | `rev-parse --abbrev-ref` | Implement short ref name like git |
+| P05u | `push -u` / `--set-upstream` | Set `branch.<name>.remote` + `.merge` after branch push |
+| P08short | Short tag push | DWIM: `refs/heads/` then `refs/tags/` |
 
 ## Non-claims
 

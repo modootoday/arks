@@ -34,14 +34,13 @@ New-Item -ItemType Directory -Force -Path $Ev, $Work, $Logs | Out-Null
 $Results = New-Object System.Collections.Generic.List[object]
 $env:GIT_TERMINAL_PROMPT = '0'
 $env:GCM_INTERACTIVE = 'never'
-# Ensure `gh` is on PATH for bang-helper without spaces (cmd /C cannot parse git's !'…\gh.exe' quotes).
+# Ensure `gh` is on PATH (stock gitconfig may still use quoted Program Files gh.exe).
 $ghCli = 'C:\Program Files\GitHub CLI'
 if (Test-Path (Join-Path $ghCli 'gh.exe')) {
     $env:Path = "$ghCli;" + $env:Path
 }
-# Windows: stock gitconfig uses `!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential`.
-# arks runs helpers via `cmd /C`, which does not honor shell single-quotes → empty fill → HTTP 401.
-# Pilot override uses PATH-based bang helper; AUTH-DIAG records the stock-config asymmetry.
+# Stock: `!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential` (POSIX quotes).
+# arks argv-spawns simple bang helpers (AUTH-DIAG). Override remains a PATH fallback.
 if (-not $env:ARKS_CREDENTIAL_HELPER) {
     $env:ARKS_CREDENTIAL_HELPER = '!gh auth git-credential'
 }
@@ -200,11 +199,11 @@ $ovProc = Start-Process -FilePath $Arks -ArgumentList @('credential', 'fill') -R
 $ovText = Get-Content (Join-Path $Logs 'auth-diag-override.out') -Raw -ErrorAction SilentlyContinue
 $ovHas = [bool]($ovText -match 'password=')
 if ($ovText) { ($ovText -replace '(?m)^password=.*$', 'password=***') | Set-Content (Join-Path $Logs 'auth-diag-override.out') -Encoding utf8 }
-Write-Log 'AUTH-DIAG.log' "stock_exit=$($stockProc.ExitCode) stock_has_password=$stockHas`noverride_exit=$($ovProc.ExitCode) override_has_password=$ovHas`nnote: stock gitconfig uses Unix single-quotes around gh.exe; arks cmd/C ignores them"
-if (-not $stockHas -and $ovHas) {
-    Add-Result -Id 'AUTH-DIAG' -Scenario 'credential: stock !quoted-gh.exe vs !gh PATH' -Status 'FAIL' -Notes 'ASYMMETRY bug: arks helper spawn via cmd/C cannot parse gitconfig single-quoted bang path; pilot continues with ARKS_CREDENTIAL_HELPER=!gh auth git-credential'
+Write-Log 'AUTH-DIAG.log' "stock_exit=$($stockProc.ExitCode) stock_has_password=$stockHas`noverride_exit=$($ovProc.ExitCode) override_has_password=$ovHas`nnote: stock gitconfig bang may use POSIX single-quotes around gh.exe; arks argv-spawns simple bang helpers"
+if ($stockHas) {
+    Add-Result -Id 'AUTH-DIAG' -Scenario 'credential: stock !quoted-gh.exe vs !gh PATH' -Status 'PASS' -Notes 'stock POSIX-quoted bang path fills (argv spawn); override also ok'
 } elseif ($ovHas) {
-    Add-Result -Id 'AUTH-DIAG' -Scenario 'credential helper fill' -Status 'PASS' -Notes 'override fill ok'
+    Add-Result -Id 'AUTH-DIAG' -Scenario 'credential: stock !quoted-gh.exe vs !gh PATH' -Status 'FAIL' -Notes 'stock quoted bang failed; override PATH !gh fills — asymmetry remains'
 } else {
     Add-Result -Id 'AUTH-DIAG' -Scenario 'credential helper fill' -Status 'SKIP' -Notes 'auth/harness blocked fill; HTTPS clone rows may FAIL/SKIP'
 }

@@ -584,16 +584,7 @@ fn run_helper(
             return run_wallet_helper(kind, operation, desc);
         }
     }
-    let cmdline = helper_command(helper);
-    let mut cmd = if cfg!(windows) {
-        let mut c = Command::new("cmd");
-        c.arg("/C").arg(format!("{cmdline} {operation}"));
-        c
-    } else {
-        let mut c = Command::new("sh");
-        c.arg("-c").arg(format!("{cmdline} {operation}"));
-        c
-    };
+    let mut cmd = spawn_helper_command(helper, operation);
     let mut child = cmd
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -632,9 +623,40 @@ fn run_helper(
     Ok(None)
 }
 
+/// Build the process for a credential helper + operation.
+///
+/// Bang helpers (`!…`) that are a simple argv (including POSIX-quoted paths with
+/// spaces, as written by `gh auth setup-git` on Windows) spawn the executable
+/// directly — matching git's effective behavior without requiring host `sh` on
+/// Windows (`cmd /C` does not honor Unix single quotes).
+fn spawn_helper_command(helper: &str, operation: &str) -> Command {
+    if let Some(mut argv) = bang_helper_argv(helper) {
+        argv.push(operation.to_string());
+        let mut c = Command::new(&argv[0]);
+        c.args(&argv[1..]);
+        return c;
+    }
+    let cmdline = helper_command(helper);
+    if cfg!(windows) {
+        let mut c = Command::new("cmd");
+        c.arg("/C").arg(format!("{cmdline} {operation}"));
+        c
+    } else {
+        let mut c = Command::new("sh");
+        c.arg("-c").arg(format!("{cmdline} {operation}"));
+        c
+    }
+}
+
 fn helper_command(helper: &str) -> String {
     let h = helper.trim();
     if let Some(rest) = h.strip_prefix('!') {
+        // Windows cmd.exe fallback: rewrite POSIX single-quoted segments to
+        // double quotes so stock gitconfig bang paths still run if argv spawn
+        // is unavailable (complex shell snippets stay shell-routed).
+        if cfg!(windows) {
+            return posix_single_quotes_to_cmd(rest);
+        }
         return rest.to_string();
     }
     let is_abs = h.starts_with('/')
@@ -645,6 +667,143 @@ fn helper_command(helper: &str) -> String {
         return h.to_string();
     }
     format!("git credential-{h}")
+}
+
+/// Parse `!exe args…` / `!'C:\Program Files\…\gh.exe' auth git-credential`.
+/// Returns `None` for shell-function snippets that need `sh -c`.
+fn bang_helper_argv(helper: &str) -> Option<Vec<String>> {
+    let h = helper.trim();
+    let rest = h.strip_prefix('!')?;
+    if rest.is_empty() {
+        return None;
+    }
+    // Shell function / compound command — keep shell path.
+    if looks_like_shell_snippet(rest) {
+        return None;
+    }
+    let argv = shell_split_argv(rest)?;
+    if argv.is_empty() || argv[0].is_empty() {
+        return None;
+    }
+    Some(argv)
+}
+
+fn looks_like_shell_snippet(s: &str) -> bool {
+    // Unquoted shell metacharacters that imply a script, not a simple argv.
+    let mut in_squote = false;
+    let mut in_dquote = false;
+    let mut escaped = false;
+    for c in s.chars() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if in_squote {
+            if c == '\'' {
+                in_squote = false;
+            }
+            continue;
+        }
+        if in_dquote {
+            if c == '\\' {
+                escaped = true;
+            } else if c == '"' {
+                in_dquote = false;
+            }
+            continue;
+        }
+        match c {
+            '\'' => in_squote = true,
+            '"' => in_dquote = true,
+            '\\' => escaped = true,
+            '{' | '}' | '(' | ')' | ';' | '|' | '&' | '`' | '\n' => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
+/// Split a helper argv with POSIX-style quoting (single / double / backslash).
+fn shell_split_argv(s: &str) -> Option<Vec<String>> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut chars = s.chars().peekable();
+    let mut in_squote = false;
+    let mut in_dquote = false;
+    while let Some(c) = chars.next() {
+        if in_squote {
+            if c == '\'' {
+                in_squote = false;
+            } else {
+                cur.push(c);
+            }
+            continue;
+        }
+        if in_dquote {
+            if c == '\\' {
+                if let Some(&n) = chars.peek() {
+                    if n == '"' || n == '\\' || n == '$' || n == '`' {
+                        cur.push(chars.next().unwrap());
+                    } else {
+                        cur.push(c);
+                    }
+                } else {
+                    cur.push(c);
+                }
+            } else if c == '"' {
+                in_dquote = false;
+            } else {
+                cur.push(c);
+            }
+            continue;
+        }
+        match c {
+            '\'' => in_squote = true,
+            '"' => in_dquote = true,
+            '\\' => {
+                if let Some(n) = chars.next() {
+                    cur.push(n);
+                }
+            }
+            ' ' | '\t' => {
+                if !cur.is_empty() {
+                    out.push(std::mem::take(&mut cur));
+                }
+            }
+            _ => cur.push(c),
+        }
+    }
+    if in_squote || in_dquote {
+        return None;
+    }
+    if !cur.is_empty() {
+        out.push(cur);
+    }
+    Some(out)
+}
+
+/// Rewrite `'path with spaces'` → `"path with spaces"` for `cmd /C` fallback.
+fn posix_single_quotes_to_cmd(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\'' {
+            let mut inner = String::new();
+            for c2 in chars.by_ref() {
+                if c2 == '\'' {
+                    break;
+                }
+                inner.push(c2);
+            }
+            out.push('"');
+            // cmd.exe doubles embedded quotes inside a quoted argument.
+            out.push_str(&inner.replace('"', "\"\""));
+            out.push('"');
+        } else {
+            out.push(c);
+        }
+    }
+    out
 }
 
 /// Resolve Authorization for an HTTP(S) URL using Claimed fill order.
@@ -813,6 +972,42 @@ mod tests {
         assert_eq!(helper_command("store"), "git credential-store");
         assert_eq!(helper_command("!f() { echo x; }; f"), "f() { echo x; }; f");
         assert_eq!(helper_command("/usr/bin/myhelper"), "/usr/bin/myhelper");
+    }
+
+    #[test]
+    fn bang_helper_argv_parses_posix_quoted_windows_path() {
+        let helper = r"!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential";
+        let argv = bang_helper_argv(helper).expect("simple bang argv");
+        assert_eq!(
+            argv,
+            vec![
+                r"C:\Program Files\GitHub CLI\gh.exe".to_string(),
+                "auth".to_string(),
+                "git-credential".to_string(),
+            ]
+        );
+        assert!(bang_helper_argv("!f() { echo x; }; f").is_none());
+        assert_eq!(
+            bang_helper_argv("!gh auth git-credential").as_deref(),
+            Some(
+                [
+                    "gh".to_string(),
+                    "auth".to_string(),
+                    "git-credential".to_string()
+                ]
+                .as_slice()
+            )
+        );
+    }
+
+    #[test]
+    fn posix_single_quotes_become_cmd_double_quotes() {
+        let got =
+            posix_single_quotes_to_cmd(r"'C:\Program Files\GitHub CLI\gh.exe' auth git-credential");
+        assert_eq!(
+            got,
+            r#""C:\Program Files\GitHub CLI\gh.exe" auth git-credential"#
+        );
     }
 
     #[test]

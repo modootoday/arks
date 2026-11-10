@@ -1,3 +1,3 @@
-stock_exit=0 stock_has_password=False
+stock_exit=0 stock_has_password=True
 override_exit=0 override_has_password=True
-note: stock gitconfig uses Unix single-quotes around gh.exe; arks cmd/C ignores them
+note: stock gitconfig POSIX-quoted bang path fills via arks argv spawn; override !gh also ok

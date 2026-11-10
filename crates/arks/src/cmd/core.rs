@@ -250,16 +250,102 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    if args.is_empty() {
+    // Sy-1: `--abbrev-ref` / `--verify` / `--symbolic-full-name` (git-rev-parse).
+    // Cite: https://git-scm.com/docs/git-rev-parse + [[sot:root/cli-flag-parity-complete]]
+    refuse_unknown_flags(args, &["--abbrev-ref", "--verify", "--symbolic-full-name"])?;
+    let abbrev_ref = args
+        .iter()
+        .any(|a| *a == "--abbrev-ref" || a.starts_with("--abbrev-ref="));
+    let symbolic_full = args.iter().any(|a| a == "--symbolic-full-name");
+    let verify = args.iter().any(|a| a == "--verify");
+    let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    if revs.is_empty() {
         return Err(CliError::Usage("rev-parse: missing revision".into()));
     }
     let repo = open_repo()?;
-    for rev in args {
+    for rev in revs {
+        if abbrev_ref {
+            println!("{}", abbreviate_ref(&repo, rev)?);
+            continue;
+        }
+        if symbolic_full {
+            println!("{}", symbolic_full_name(&repo, rev)?);
+            continue;
+        }
         let oid = resolve_rev(&repo, rev)?;
+        if verify {
+            // Existence check only; still print the OID (git --verify default).
+        }
         println!("{}", oid.to_hex());
     }
     Ok(())
+}
+
+/// Short unambiguous ref name (`git rev-parse --abbrev-ref`).
+fn abbreviate_ref(repo: &Repository, rev: &str) -> CliResult<String> {
+    if rev == "HEAD" {
+        return match repo.head_target()? {
+            RefTarget::Symbolic(s) => Ok(shorten_ref_name(&s)),
+            RefTarget::Direct(_) => Ok("HEAD".into()),
+        };
+    }
+    if rev.starts_with("refs/") {
+        return Ok(shorten_ref_name(rev));
+    }
+    // Already short, or resolve via DWIM then shorten if we find a ref form.
+    let as_heads = format!("refs/heads/{rev}");
+    if repo.refs().resolve(&as_heads).is_ok() {
+        return Ok(rev.to_string());
+    }
+    let as_tags = format!("refs/tags/{rev}");
+    if repo.refs().resolve(&as_tags).is_ok() {
+        return Ok(rev.to_string());
+    }
+    let as_remotes = format!("refs/remotes/{rev}");
+    if repo.refs().resolve(&as_remotes).is_ok() {
+        return Ok(rev.to_string());
+    }
+    // Fall back: if resolve works as OID-ish name, still print the given token.
+    let _ = resolve_rev(repo, rev)?;
+    Ok(rev.to_string())
+}
+
+fn symbolic_full_name(repo: &Repository, rev: &str) -> CliResult<String> {
+    if rev == "HEAD" {
+        return match repo.head_target()? {
+            RefTarget::Symbolic(s) => Ok(s),
+            RefTarget::Direct(_) => Err(CliError::Msg(
+                "rev-parse --symbolic-full-name: detached HEAD".into(),
+            )),
+        };
+    }
+    if rev.starts_with("refs/") {
+        let _ = repo.refs().resolve(rev)?;
+        return Ok(rev.to_string());
+    }
+    let as_heads = format!("refs/heads/{rev}");
+    if repo.refs().resolve(&as_heads).is_ok() {
+        return Ok(as_heads);
+    }
+    let as_tags = format!("refs/tags/{rev}");
+    if repo.refs().resolve(&as_tags).is_ok() {
+        return Ok(as_tags);
+    }
+    let as_remotes = format!("refs/remotes/{rev}");
+    if repo.refs().resolve(&as_remotes).is_ok() {
+        return Ok(as_remotes);
+    }
+    Err(CliError::Msg(format!(
+        "rev-parse --symbolic-full-name: unknown ref {rev}"
+    )))
+}
+
+fn shorten_ref_name(full: &str) -> String {
+    full.strip_prefix("refs/heads/")
+        .or_else(|| full.strip_prefix("refs/tags/"))
+        .or_else(|| full.strip_prefix("refs/remotes/"))
+        .unwrap_or(full)
+        .to_string()
 }
 
 pub fn cmd_add(args: &[String]) -> CliResult<()> {

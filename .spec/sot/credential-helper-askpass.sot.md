@@ -3,7 +3,7 @@ id: sot:root/credential-helper-askpass
 title: Credential helper / askpass (TTY + OS wallets)
 status: active
 created: 2026-11-10T22:40:00Z
-updated: 2026-11-10T23:30:00Z
+updated: 2026-11-11T00:10:00Z
 tags: [credential, askpass, https, auth, fw-cred-askpass, g33, tty, wincred, libsecret, osxkeychain]
 verify: clean-room
 rel:
@@ -39,7 +39,7 @@ Primary docs (cite; do not paste):
 2. **Fill order.** When HTTPS needs credentials and URL userinfo is absent, fill MUST combine, in this order (gitcredentials requesting-credentials + helper loop):
    1. Existing attributes already present on the description
    2. Environment-backed values `ARKS_REMOTE_USERNAME` / `ARKS_REMOTE_PASSWORD` (arks product env helper; secrets never from the tree)
-   3. Configured `credential.helper` entries — invoke with operation `get` / `store` / `erase` per gitcredentials custom-helper rules (`!` shell snippet, absolute path, or helper name). Helper names **`wincred`**, **`libsecret`**, and **`osxkeychain`** MUST resolve to **arks first-party** wallet helpers (in-process and/or `arks credential-<name>`), not as an N/A exclusion.
+   3. Configured `credential.helper` entries — invoke with operation `get` / `store` / `erase` per gitcredentials custom-helper rules (`!` shell snippet, absolute path, or helper name). Helper names **`wincred`**, **`libsecret`**, and **`osxkeychain`** MUST resolve to **arks first-party** wallet helpers (in-process and/or `arks credential-<name>`), not as an N/A exclusion. Bang helpers that are a **simple argv** (including POSIX single-quoted paths with spaces, e.g. stock `gh auth setup-git` on Windows: `!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential`) MUST spawn the executable directly with argv — do not require host `sh`, and MUST NOT leave Unix single quotes intact under `cmd /C` (git-for-Windows uses a shell that honors them; arks uses argv / cmd-safe rewrite for cross-OS parity).
    4. `GIT_ASKPASS`, else `core.askPass`, else `SSH_ASKPASS` — run the program with a prompt argv; read one line from stdout
    5. **TTY terminal prompt** when `GIT_TERMINAL_PROMPT` is unset or not `0` and a controlling terminal is available — prompt on the TTY for username (if missing) and password (gitcredentials step 4). When no TTY is available or `GIT_TERMINAL_PROMPT=0`, skip this step (fail closed if still incomplete).
 3. **OS wallet helpers (first-party).** For helper names `wincred` / `libsecret` / `osxkeychain`:

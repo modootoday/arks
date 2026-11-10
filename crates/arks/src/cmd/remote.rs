@@ -111,8 +111,20 @@ pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_push(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--force-with-lease", "--push-option", "-o"])?;
+    // `-u` / `--set-upstream`: write branch.<name>.remote + .merge after a successful
+    // branch push (git-push). Tag short names DWIM to refs/tags/ when no head exists.
+    refuse_unknown_flags(
+        args,
+        &[
+            "--force-with-lease",
+            "--push-option",
+            "-o",
+            "-u",
+            "--set-upstream",
+        ],
+    )?;
     let mut force_with_lease = false;
+    let mut set_upstream = false;
     let mut lease_expect: Option<(String, String)> = None;
     let mut push_options: Vec<String> = Vec::new();
     let mut positional: Vec<String> = Vec::new();
@@ -126,6 +138,8 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
                 .split_once(':')
                 .ok_or_else(|| CliError::Usage("push --force-with-lease=<ref>:<expect>".into()))?;
             lease_expect = Some((r.to_string(), e.to_string()));
+        } else if args[i] == "-u" || args[i] == "--set-upstream" {
+            set_upstream = true;
         } else if args[i] == "--push-option" || args[i] == "-o" {
             i += 1;
             let v = args
@@ -160,7 +174,14 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
             let full = if name.starts_with("refs/") {
                 name.to_string()
             } else {
-                format!("refs/heads/{name}")
+                // Deletes prefer heads; tags use full refs/tags/ or existing tag DWIM.
+                let heads = format!("refs/heads/{name}");
+                let tags = format!("refs/tags/{name}");
+                if repo.refs().resolve(&tags).is_ok() && repo.refs().resolve(&heads).is_err() {
+                    tags
+                } else {
+                    heads
+                }
             };
             let zero = arks_oid::Oid::from_hex("0000000000000000000000000000000000000000")
                 .map_err(|e| CliError::Msg(e.to_string()))?;
@@ -184,7 +205,7 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
             } else if name.starts_with("refs/") {
                 name.to_string()
             } else {
-                format!("refs/heads/{name}")
+                resolve_push_dwim(&repo, name)?
             };
             let oid = repo.refs().resolve(&full)?;
             (full, oid)
@@ -235,13 +256,37 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         &repo,
         &remote.url,
         &[arks_remote::PushUpdate {
-            refname,
+            refname: refname.clone(),
             new_oid: oid,
             expected_old,
         }],
         &arks_remote::PushOptions { push_options },
     )?;
+    if set_upstream {
+        if let Some(branch) = refname.strip_prefix("refs/heads/") {
+            // Match git: branch.<name>.remote + branch.<name>.merge
+            crate::cmd::config::cmd_config(&[
+                format!("branch.{branch}.remote"),
+                remote_name.to_string(),
+            ])?;
+            crate::cmd::config::cmd_config(&[format!("branch.{branch}.merge"), refname.clone()])?;
+        }
+    }
     Ok(())
+}
+
+/// Resolve a short push name: prefer `refs/heads/`, else `refs/tags/` (git DWIM).
+fn resolve_push_dwim(repo: &arks_repo::Repository, name: &str) -> CliResult<String> {
+    let heads = format!("refs/heads/{name}");
+    if repo.refs().resolve(&heads).is_ok() {
+        return Ok(heads);
+    }
+    let tags = format!("refs/tags/{name}");
+    if repo.refs().resolve(&tags).is_ok() {
+        return Ok(tags);
+    }
+    // Default error path keeps heads form (historical message shape).
+    Err(CliError::Msg(format!("ref not found: {heads}")))
 }
 
 pub fn cmd_clone(args: &[String]) -> CliResult<()> {

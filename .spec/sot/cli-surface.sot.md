@@ -3,7 +3,7 @@ id: sot:root/cli-surface
 title: CLI surface
 status: active
 created: 2026-11-08T08:21:48Z
-updated: 2026-11-10T23:10:00Z
+updated: 2026-11-11T00:10:00Z
 tags: [cli, porcelain, ux, arks, parity, git-cli, alias, drop-in, server, worktree, submodule, m15, m16, full-symmetric, complete-symmetry, credential]
 verify: manual
 rel:
@@ -124,7 +124,7 @@ Minimum local daily-driver surface (still a **subset claim** until later waves c
 | `arks hash-object` | Write/read blob OID from content | Loose object format |
 | `arks cat-file` | Type/size/content by OID | Object header + inflate |
 | `arks update-ref` | Create/update/delete a ref | Refs + locking as documented |
-| `arks rev-parse` | Resolve revisions / symbolic names (expand toward pin) | Ref + object lookup |
+| `arks rev-parse` | Resolve revisions / symbolic names (expand toward pin); **`--abbrev-ref`** short branch/tag name | Ref + object lookup; [[sot:root/cli-flag-parity-complete]] |
 | `arks add` | Stage paths into the index | Index as claimed |
 | `arks status` | Worktree vs index vs HEAD | Index + refs |
 | `arks commit` | Write tree + commit; advance branch; optional `-S` SSH sign | Objects + refs + index; FW-GPGSIG SSH ([[sot:root/arks-object]]) |
@@ -139,7 +139,7 @@ Generic Git remote **client** for claimed protocols; GitHub-class hosts are the 
 |---------|--------|-------------|
 | `arks remote` | Add/list/remove remotes | Config as Git documents |
 | `arks fetch` | Download objects/refs | Pack protocol / HTTP smart / v2 as negotiated |
-| `arks push` | Upload refs/objects | receive-pack / dumb WebDAV path; `:<ref>` delete claimed (S3); refuse other `src:dst` refspecs / unimplemented caps |
+| `arks push` | Upload refs/objects; **`-u`/`--set-upstream`**; short tag name DWIM | receive-pack / dumb WebDAV path; `:<ref>` delete claimed (S3); branch upstream config; heads-then-tags DWIM; refuse other `src:dst` refspecs / unimplemented caps |
 | `arks clone` | Init + fetch/copy + checkout baseline | HTTP smart + local path / same-host `file://` hardlink-or-copy ([[sot:root/arks-remote]]); not `--shared` |
 | `arks pull` | Fetch + integrate (may land with Wave Pa/Pb if merge/rebase not yet claimed — if so, refuse incomplete pull forms) | Must not imply unimplemented merge/rebase |
 

@@ -1,221 +1,230 @@
 {
-  "tip": "daf7f8a63e8c0422617be3a93064c075db816a1f",
-  "protocol": "https",
-  "repo_a": "https://github.com/modootoday/arks-pilot-a-20261111033608.git",
-  "repo_b": "https://github.com/modootoday/arks-pilot-b-20261111033608.git",
-  "arks_bin": "C:\\workspaces\\gir\\target\\pilot-bin\\arks.exe",
-  "credential_helper_override": "!gh auth git-credential",
-  "pass": 17,
-  "fail": 4,
-  "skip": 5,
-  "results": [
-    {
-      "id": "S00",
-      "scenario": "seed push to GitHub (git HTTPS)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "",
-      "notes": "protocol=https remote=https://github.com/modootoday/arks-pilot-a-20261111033608.git; credential override=!gh auth git-credential"
-    },
-    {
-      "id": "AUTH-DIAG",
-      "scenario": "credential: stock !quoted-gh.exe vs !gh PATH",
-      "status": "FAIL",
-      "git_exit": "",
-      "arks_exit": "",
-      "notes": "ASYMMETRY bug: arks helper spawn via cmd/C cannot parse gitconfig single-quoted bang path; pilot continues with ARKS_CREDENTIAL_HELPER=!gh auth git-credential"
-    },
-    {
-      "id": "P01",
-      "scenario": "init creates repo metadata",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "arks init (default branch policy may differ from git -b main)"
-    },
-    {
-      "id": "P02",
-      "scenario": "clone smart HTTPS",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "seed=0c63e9dab50cffcba1b1b8d6cd0eb3f33e3aa4f9"
-    },
-    {
-      "id": "P03",
-      "scenario": "fetch updates origin/main",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "bait=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
-    },
-    {
-      "id": "P04",
-      "scenario": "branch/checkout/commit/log",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "independent topics; OIDs differ by design; branch via symbolic-ref"
-    },
-    {
-      "id": "P04abbrev",
-      "scenario": "rev-parse --abbrev-ref",
-      "status": "FAIL",
-      "git_exit": "0",
-      "arks_exit": "1",
-      "notes": "arks: unsupported option --abbrev-ref (use symbolic-ref)"
-    },
-    {
-      "id": "P05u",
-      "scenario": "arks push -u (upstream set)",
-      "status": "FAIL",
-      "git_exit": "",
-      "arks_exit": "1",
-      "notes": "unsupported option: -u (symmetry gap vs git)"
-    },
-    {
-      "id": "P05",
-      "scenario": "push topic branches (smart HTTPS)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "git used -u; arks plain push (see P05u)"
-    },
-    {
-      "id": "P06",
-      "scenario": "merge (ff/local)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "each client merged its own topic"
-    },
-    {
-      "id": "P07",
-      "scenario": "rebase (non-interactive onto origin/main)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "head=2ffc3821d81eab3073889df0e80cb390f3703ede; lines=3 | head=cffb868f5505ee610e3e1533513c8a4817398e47; lines=3"
-    },
-    {
-      "id": "P08short",
-      "scenario": "arks push origin <tagname> shorthand",
-      "status": "FAIL",
-      "git_exit": "",
-      "arks_exit": "1",
-      "notes": "resolves refs/heads/<name> not refs/tags/<name>"
-    },
-    {
-      "id": "P08",
-      "scenario": "annotated tag + push",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "arks used refs/tags/ refspec (see P08short); tags=pilot-v0-git-034908/pilot-v0-arks-034908"
-    },
-    {
-      "id": "P08s",
-      "scenario": "signed tag (gpg.format=ssh)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "key=C:\\Users\\smile\\.ssh\\migration_ed25519"
-    },
-    {
-      "id": "P09",
-      "scenario": "clone --depth 1",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "shallow git=True arks=True oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
-    },
-    {
-      "id": "P10a",
-      "scenario": "clone --filter=blob:none",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
-    },
-    {
-      "id": "P10b",
-      "scenario": "clone --filter=tree:0",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
-    },
-    {
-      "id": "P10c",
-      "scenario": "clone --filter=object:type=blob",
-      "status": "SKIP",
-      "git_exit": "128",
-      "arks_exit": "1",
-      "notes": "both refused/failed against GitHub"
-    },
-    {
-      "id": "P10d",
-      "scenario": "clone --filter=combine:blob:none+tree:0",
-      "status": "SKIP",
-      "git_exit": "128",
-      "arks_exit": "1",
-      "notes": "both refused/failed against GitHub"
-    },
-    {
-      "id": "P10e",
-      "scenario": "clone --filter=sparse:oid=<tree>",
-      "status": "SKIP",
-      "git_exit": "128",
-      "arks_exit": "1",
-      "notes": "both failed (GitHub/filter support)"
-    },
-    {
-      "id": "P11",
-      "scenario": "LFS basic clone/smudge",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "asset.bin size=2048"
-    },
-    {
-      "id": "P11L",
-      "scenario": "LFS locks (GitHub)",
-      "status": "SKIP",
-      "git_exit": "2",
-      "arks_exit": "",
-      "notes": "GitHub lock failed or unauthorized; skip"
-    },
-    {
-      "id": "P12",
-      "scenario": "dumb HTTP clone (local serve-http --dumb-only)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "url=http://127.0.0.1:19551/ oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
-    },
-    {
-      "id": "P13",
-      "scenario": "clone --bundle-uri (local file)",
-      "status": "PASS",
-      "git_exit": "0",
-      "arks_exit": "0",
-      "notes": "oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
-    },
-    {
-      "id": "P14",
-      "scenario": "host-env advisory on GitHub clone path",
-      "status": "PASS",
-      "git_exit": "",
-      "arks_exit": "0",
-      "notes": "N/A for GitHub remotes as hazard source; probe runs locally — advisory only"
-    },
-    {
-      "id": "P15",
-      "scenario": "clone SSH",
-      "status": "SKIP",
-      "git_exit": "128",
-      "arks_exit": "",
-      "notes": "SSH to github.com not available for this agent; HTTPS used for primary matrix"
-    }
-  ]
+    "tip":  "ebd7093298829208e360ca7909649e68aa3841eb",
+    "protocol":  "https",
+    "repo_a":  "https://github.com/modootoday/arks-pilot-a-20261111033608.git",
+    "repo_b":  "https://github.com/modootoday/arks-pilot-b-20261111033608.git",
+    "arks_bin":  "C:\\workspaces\\gir\\target\\debug\\arks.exe",
+    "credential_helper_override":  "!gh auth git-credential",
+    "pass":  21,
+    "fail":  0,
+    "skip":  5,
+    "fix_retest":  {
+                       "items":  [
+                                     "AUTH-DIAG",
+                                     "P04abbrev",
+                                     "P05u",
+                                     "P08short"
+                                 ],
+                       "note":  "Focused retest after wire fix; other PASS/SKIP rows retained from original fc12914 matrix"
+                   },
+    "results":  [
+                    {
+                        "id":  "S00",
+                        "scenario":  "seed push to GitHub (git HTTPS)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "",
+                        "notes":  "protocol=https remote=https://github.com/modootoday/arks-pilot-a-20261111033608.git; credential override=!gh auth git-credential"
+                    },
+                    {
+                        "id":  "AUTH-DIAG",
+                        "scenario":  "credential: stock !quoted-gh.exe vs !gh PATH",
+                        "status":  "PASS",
+                        "git_exit":  "",
+                        "arks_exit":  "0",
+                        "notes":  "fix retest: stock POSIX-quoted bang fills via argv spawn (password present)"
+                    },
+                    {
+                        "id":  "P01",
+                        "scenario":  "init creates repo metadata",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "arks init (default branch policy may differ from git -b main)"
+                    },
+                    {
+                        "id":  "P02",
+                        "scenario":  "clone smart HTTPS",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "seed=0c63e9dab50cffcba1b1b8d6cd0eb3f33e3aa4f9"
+                    },
+                    {
+                        "id":  "P03",
+                        "scenario":  "fetch updates origin/main",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "bait=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
+                    },
+                    {
+                        "id":  "P04",
+                        "scenario":  "branch/checkout/commit/log",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "independent topics; OIDs differ by design; branch via symbolic-ref"
+                    },
+                    {
+                        "id":  "P04abbrev",
+                        "scenario":  "rev-parse --abbrev-ref",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "fix retest: arks prints short branch (main)"
+                    },
+                    {
+                        "id":  "P05u",
+                        "scenario":  "arks push -u (upstream set)",
+                        "status":  "PASS",
+                        "git_exit":  "",
+                        "arks_exit":  "0",
+                        "notes":  "fix retest: push -u sets branch.*.remote=origin and branch.*.merge"
+                    },
+                    {
+                        "id":  "P05",
+                        "scenario":  "push topic branches (smart HTTPS)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "git used -u; arks plain push (see P05u)"
+                    },
+                    {
+                        "id":  "P06",
+                        "scenario":  "merge (ff/local)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "each client merged its own topic"
+                    },
+                    {
+                        "id":  "P07",
+                        "scenario":  "rebase (non-interactive onto origin/main)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "head=2ffc3821d81eab3073889df0e80cb390f3703ede; lines=3 | head=cffb868f5505ee610e3e1533513c8a4817398e47; lines=3"
+                    },
+                    {
+                        "id":  "P08short",
+                        "scenario":  "arks push origin \u003ctagname\u003e shorthand",
+                        "status":  "PASS",
+                        "git_exit":  "",
+                        "arks_exit":  "0",
+                        "notes":  "fix retest: short tag name DWIM to refs/tags/"
+                    },
+                    {
+                        "id":  "P08",
+                        "scenario":  "annotated tag + push",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "arks used refs/tags/ refspec (see P08short); tags=pilot-v0-git-034908/pilot-v0-arks-034908"
+                    },
+                    {
+                        "id":  "P08s",
+                        "scenario":  "signed tag (gpg.format=ssh)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "key=C:\\Users\\smile\\.ssh\\migration_ed25519"
+                    },
+                    {
+                        "id":  "P09",
+                        "scenario":  "clone --depth 1",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "shallow git=True arks=True oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
+                    },
+                    {
+                        "id":  "P10a",
+                        "scenario":  "clone --filter=blob:none",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
+                    },
+                    {
+                        "id":  "P10b",
+                        "scenario":  "clone --filter=tree:0",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
+                    },
+                    {
+                        "id":  "P10c",
+                        "scenario":  "clone --filter=object:type=blob",
+                        "status":  "SKIP",
+                        "git_exit":  "128",
+                        "arks_exit":  "1",
+                        "notes":  "both refused/failed against GitHub"
+                    },
+                    {
+                        "id":  "P10d",
+                        "scenario":  "clone --filter=combine:blob:none+tree:0",
+                        "status":  "SKIP",
+                        "git_exit":  "128",
+                        "arks_exit":  "1",
+                        "notes":  "both refused/failed against GitHub"
+                    },
+                    {
+                        "id":  "P10e",
+                        "scenario":  "clone --filter=sparse:oid=\u003ctree\u003e",
+                        "status":  "SKIP",
+                        "git_exit":  "128",
+                        "arks_exit":  "1",
+                        "notes":  "both failed (GitHub/filter support)"
+                    },
+                    {
+                        "id":  "P11",
+                        "scenario":  "LFS basic clone/smudge",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "asset.bin size=2048"
+                    },
+                    {
+                        "id":  "P11L",
+                        "scenario":  "LFS locks (GitHub)",
+                        "status":  "SKIP",
+                        "git_exit":  "2",
+                        "arks_exit":  "",
+                        "notes":  "GitHub lock failed or unauthorized; skip"
+                    },
+                    {
+                        "id":  "P12",
+                        "scenario":  "dumb HTTP clone (local serve-http --dumb-only)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "url=http://127.0.0.1:19551/ oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
+                    },
+                    {
+                        "id":  "P13",
+                        "scenario":  "clone --bundle-uri (local file)",
+                        "status":  "PASS",
+                        "git_exit":  "0",
+                        "arks_exit":  "0",
+                        "notes":  "oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac"
+                    },
+                    {
+                        "id":  "P14",
+                        "scenario":  "host-env advisory on GitHub clone path",
+                        "status":  "PASS",
+                        "git_exit":  "",
+                        "arks_exit":  "0",
+                        "notes":  "N/A for GitHub remotes as hazard source; probe runs locally — advisory only"
+                    },
+                    {
+                        "id":  "P15",
+                        "scenario":  "clone SSH",
+                        "status":  "SKIP",
+                        "git_exit":  "128",
+                        "arks_exit":  "",
+                        "notes":  "SSH to github.com not available for this agent; HTTPS used for primary matrix"
+                    }
+                ]
 }

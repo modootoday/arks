@@ -1,4 +1,1 @@
-git=0 topic-git
-
-arks=1 error: unsupported option: --abbrev-ref
-
+P04abbrev exit=0 out=main

@@ -3,7 +3,7 @@ id: sot:root/cli-flag-parity-complete
 title: CLI flag-parity complete symmetry
 status: active
 created: 2026-11-09T04:39:10Z
-updated: 2026-11-10T01:17:00Z
+updated: 2026-11-11T00:10:00Z
 tags: [m16, cli, flag-parity, complete-symmetry, alias, wave-sy, g21, no-refuse, credential, g33, m25]
 verify: manual
 rel:
@@ -101,6 +101,7 @@ Wave Done = Docker **G21** PASS for that wave’s matrix IDs + G14/G20 regressio
 | `cat-file` | `-t` `-s` `-p`; **`--batch-check`** minimal | textconv filters |
 | `update-ref` | `-d`; **`--stdin`** line protocol subset | — |
 | `rev-parse` | revs; **`--verify`**; **`--symbolic-full-name`**; **`--abbrev-ref`** | `--parseopt` shell helper |
+| `push` | remote + ref; **`-u`/`--set-upstream`**; short **tag** name DWIM (`refs/tags/` when no head) | full `src:dst` refspecs beyond claimed delete `:<ref>` |
 
 #### Sy-2 — Worktree porcelain + submodule recursive
 
