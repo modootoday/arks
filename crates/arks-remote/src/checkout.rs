@@ -249,12 +249,14 @@ fn materialize_jobs(
 
 /// Worker count for checkout writes.
 ///
-/// `1` = serial. Docker Desktop often advertises ≥8 host CPUs while G19 is
-/// effectively serial; a second writer is pure schedule/FS tax on J-CLONE-LOCAL
-/// (same class of bug as deferred pack-persist threads).
+/// Threshold stays 8 (jobs < 8 → serial). Docker Desktop often advertises ≥8
+/// host CPUs; full parallelism thrashed J-CLONE-LOCAL, so cap at 2 there.
 fn checkout_workers(cpus: usize, jobs: usize) -> usize {
-    if jobs < 8 || cpus <= 1 || cpus >= 8 {
+    if jobs < 8 || cpus <= 1 {
         return 1;
+    }
+    if cpus >= 8 {
+        return 2.min(jobs);
     }
     cpus.clamp(2, 8).min(jobs)
 }

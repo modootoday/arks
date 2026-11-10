@@ -279,6 +279,7 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     }
     let mut body = buf[header_end..].to_vec();
     if let Some(len) = content_length {
+        body.reserve(len.saturating_sub(body.len()));
         while body.len() < len {
             let n = stream
                 .read(&mut tmp)

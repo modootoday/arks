@@ -190,15 +190,14 @@ impl FilesystemGitStore {
                 offset: o.offset,
             })
             .collect();
-        let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())
+        let index = PackIndex::from_entries(format, entries, decoded.checksum)
             .map_err(|e| StoreError::Io(e.to_string()))?;
         let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
-        {
-            let mut pack_objects = self.pack_objects.write().expect("pack_objects");
-            for resolved in decoded.objects {
-                pack_objects.insert(resolved.oid, Arc::new(resolved.object));
-            }
+        let mut loaded = HashMap::with_capacity(decoded.objects.len());
+        for resolved in decoded.objects {
+            loaded.insert(resolved.oid, Arc::new(resolved.object));
         }
+        *self.pack_objects.write().expect("pack_objects") = loaded;
         *self.packs_loaded.write().expect("packs_loaded") = true;
         self.flush_pending_pack()?;
         self.pending_pack = Some(PendingPackPersist {
@@ -244,17 +243,15 @@ impl FilesystemGitStore {
                 offset: o.offset,
             })
             .collect();
-        let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())
+        let index = PackIndex::from_entries(format, entries, decoded.checksum)
             .map_err(|e| StoreError::Io(e.to_string()))?;
         let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
-        {
-            // Hot path (fetch/clone): RAM first so checkout can proceed while
-            // pack+idx hit disk (deferred) or immediately after (sync).
-            let mut pack_objects = self.pack_objects.write().expect("pack_objects");
-            for resolved in decoded.objects {
-                pack_objects.insert(resolved.oid, Arc::new(resolved.object));
-            }
+        // Fresh pack ingest: replace the map (clone hot path starts empty).
+        let mut loaded = HashMap::with_capacity(decoded.objects.len());
+        for resolved in decoded.objects {
+            loaded.insert(resolved.oid, Arc::new(resolved.object));
         }
+        *self.pack_objects.write().expect("pack_objects") = loaded;
         *self.packs_loaded.write().expect("packs_loaded") = true;
         if defer_disk {
             // Flush any prior deferred pack before replacing.
