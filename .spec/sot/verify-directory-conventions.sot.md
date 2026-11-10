@@ -3,7 +3,7 @@ id: sot:root/verify-directory-conventions
 title: Verify directory conventions and consistency
 status: active
 created: 2026-11-10T23:25:00Z
-updated: 2026-11-11T08:50:00Z
+updated: 2026-11-11T09:00:00Z
 tags: [verify, clean-room, docker, conventions, layout, naming, folders, filenames, numeric, zero-pad, skip, strict, matrices, claimed-residual, design, no-invent-claimed]
 verify: manual
 rel:
@@ -34,7 +34,7 @@ rel:
 
 # Verify directory conventions and consistency
 
-Document revision **0.5.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for how the product clean-room tree under `verify/` is laid out, named, and extended — including **internal folder naming** (0.2.0), **filename naming** (0.3.0), **numeric notation** (0.4.0 wrote unpadded G-series; **this revision supersedes** unpadded `gN` **and** any interim two-digit `gNN` guidance with **three-digit zero-padded `gNNN`**, same width class as `fsNNN`), and **contextual G-gate ids** (`gNNN-<kebab-context>`). Complements [[sot:root/product-verification-clean-room]] (authority) and [[sot:root/structural-conventions]] §7 (grouped overlay). Survey pain: [[research:root/20261111082440]].
+Document revision **0.6.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for how the product clean-room tree under `verify/` is laid out, named, and extended — including **internal folder naming** (0.2.0), **filename naming** (0.3.0), **numeric notation** (0.4.0 wrote unpadded G-series; **0.5.0** required three-digit `gNNN` + contextual kebab; **this revision** extends the **same width class** to live opaque ladder/milestone series **`mNNN` / `lNNN` / `sNNN`** found under `verify/matrices/`, `verify/scripts/`, and `verify/fixtures/`). Complements [[sot:root/product-verification-clean-room]] (authority) and [[sot:root/structural-conventions]] §7 (grouped overlay). Survey pain: [[research:root/20261111082440]]. Live inventory (tip ≥ `c1f7226` dirty Migration): gates already `gNNN-<kebab>` / `fsNNN-*-advisory`; residual opaque names were `matrix-mN.md`, `matrix-l3.md`, `matrix-l8-e2e.md`, `matrix-s6-symmetry.md`, `run-l8-e2e.sh`, `run-s6-symmetry.sh`, `fixtures/m1/`.
 
 **Honesty:** This SoT is **ops/harness convention** — **not** product Claimed. Scaffold / SKIP greens **MUST NOT** invent PASS/Claimed. English-only Specfold ([[sot:root/language-english-only]]). Document revision ≠ crates.io / `v*` product release.
 
@@ -78,7 +78,7 @@ verify/
 | `scripts/` | Compose argv entrypoints + host helpers | Only place for new `run-*.sh` / `*.ps1` by default |
 | `matrices/` | Claim matrices + living CSVs | No gate oracle crates |
 | `gates/` | Per-id oracle trees + gate-local `out/` | Ids per §1b |
-| `fixtures/` | Shared oracle intent / bytes | Milestone subdirs kebab or short milestone ids (`m1/`); no secrets |
+| `fixtures/` | Shared oracle intent / bytes | Milestone fixture subdirs use `mNNN-<kebab-context>/` (same width as `gNNN`); no secrets |
 | `out/` | Cross-gate dumps (gitignored) | Topics kebab (`symmetry-inventory/`, `claimed-<concern>/`) |
 
 **MUST:** new top-level directories under `verify/` require amending this SoT before landing.
@@ -98,14 +98,14 @@ verify/
 
 **MUST:**
 
-1. Gate directory basename **equals** the primary compose service name when a gate tree exists (after Migration: `verify/gates/g028-live-private-arks/` ↔ service `g028-live-private-arks`; live tip still uses unpadded bare ids until Migration).
+1. Gate directory basename **equals** the primary compose service name when a gate tree exists (live tip ≥ Migration: `verify/gates/g028-live-private-arks/` ↔ service `g028-live-private-arks`).
 2. **New** G-series gate dirs use `gNNN-<kebab-context>` (three-digit `NNN` + hyphen + short English concern slug) — not bare `gNNN`, not unpadded `gN`, not two-digit `gNN`, and not jammed tokens (`g11l3`).
 3. New host-advisory gate dirs keep the `fsNNN-*-advisory` shape (three-digit `NNN`).
 4. Compose service, `run-*.sh` stem, and dedicated `matrix-*.md` stem **MUST** use the **same** contextual id string when those artifacts exist (§1d / §2a.8 / §2b.7).
 
 **MUST NOT:** invent a fourth id family (e.g. `gate-N/`, `B1/`, `claimed-*` without `dod-`) without amending this SoT + [[sot:root/product-verification-clean-room]].
 
-**Legacy (grandfathered until Migration):** bare unpadded `g0`…`g41`, any two-digit-only `gNN` forms, and existing hyphen variants that still use unpadded digits (`g8-live-scale`, `g11-l3`, `g28-offline-clones`). Prefer Appendix C / D renames. **Hyphen unjam already migrated:** `g11l3` → `g11-l3` (compose + dir + `run-g11-l3.sh`); three-digit pad + context still backlog. Historical evidence blobs may still cite `g11l3` / unpadded ids.
+**G-series Migration (landed on disk):** bare unpadded `g0`…`g41` and unpadded variants renamed to `gNNN-<kebab-context>` (Appendix D). Interim `g11-l3` → `g011-high-concurrency`. Historical evidence blobs may still cite `g11l3` / unpadded ids.
 
 **DoD / Claimed residual without gate dirs:** most `dod-*` / `dod-claimed-*` services are **script-only** under `verify/scripts/` with optional receipts under `verify/out/<topic>/`. That is intentional — **MUST NOT** mass-create empty `gates/dod-*/` scaffolds.
 
@@ -148,6 +148,8 @@ Runtime scratch under `gates/<id>/out/**` (clones, worktrees) is ephemeral and *
 | Claimed residual | `dod-claimed-<concern>` | `run-claimed-<concern>-e2e.sh` | Register under [[sot:root/arks-claimed-residual-gates]] |
 | Claimed residual umbrella | `dod-claimed-residual` | `run-claimed-residual-dod.sh` | Orchestrates B-slots |
 | Host advisory | `fsNNN-*-advisory` | `run-fsNNN-*-advisory.sh` | Explicitly non-DoD |
+| Milestone matrix (M) | *(usually none)* | *(matrix only; fixture dir `mNNN-…`)* | Roadmap claim matrices — §2b.5a |
+| Ladder suite (L/S) | `lNNN-<kebab-context>` / `sNNN-<kebab-context>` | `run-lNNN-<kebab-context>.sh` / `run-sNNN-<kebab-context>.sh` | Orchestrates G-gates; §2b.5a |
 | Host wrappers | *(none required)* | `*.ps1` under `scripts/` | Drive compose only; never sole Verified judge |
 
 **MUST:**
@@ -199,8 +201,10 @@ Normative **file basename** rules. Aligns with compose service names, gate ids, 
 
 | Kind | Pattern | Notes |
 |------|---------|-------|
-| Milestone / gate claim Markdown | `matrix-<id>.md` | `matrix-m1.md`, live `matrix-g28.md` → prefer `matrix-g028-….md` after Migration, `matrix-journey.md` |
-| Gate / contextual Markdown | `matrix-gNNN-<kebab-context>.md` | e.g. prefer `matrix-g008-live-scale.md` (live `matrix-g8-live-scale.md` grandfathered) |
+| Milestone / gate claim Markdown | `matrix-<id>.md` | `matrix-mNNN-<kebab>.md`, `matrix-gNNN-<kebab>.md`, `matrix-lNNN-<kebab>.md`, `matrix-sNNN-<kebab>.md` |
+| Gate / contextual Markdown | `matrix-gNNN-<kebab-context>.md` | Live tip uses padded contextual forms |
+| Milestone matrix (M-series) | `matrix-mNNN-<kebab-context>.md` | Roadmap milestone claim matrices |
+| Ladder suite matrix (L/S) | `matrix-lNNN-<kebab-context>.md` / `matrix-sNNN-<kebab-context>.md` | Product-completion (L) / symmetry (S) ladder suites |
 | Living symmetry CSV | `<pillar>-<surface>-matrix.csv` or `<pillar>-<surface>-e2e-matrix.csv` | Tip: `cli-git-help-matrix.csv`, `daemon-git-arks-e2e-matrix.csv`, `hub-gh-arks-e2e-matrix.csv` |
 | Design-only CSV | Prefer Specfold (`.spec/sot/…-matrix.csv`) | Living status stays under `verify/matrices/` — §6 |
 
@@ -280,22 +284,23 @@ Normative **digit width / zero-padding** for ids that appear in gate folders, co
 | G-series contextual / variants | live `gN-<kebab>` unpadded | Same three-digit `NNN` + `-<kebab-context>` | live `g8-live-scale` → `g008-live-scale`; new e.g. `g032-git-daemon-wire` |
 | Legacy jammed G-token | `g11l3` | Prefer hyphen + later `g011-…` | `g11-l3` migrated; pad/context backlog — Appendix A / C |
 | Host-advisory FS slots | `fs` + **three-digit** + `-<kebab>-advisory` | Fixed width **3**, zero-pad (**unchanged**) | `fs007-host-advisory`, `fs014-lsm-advisory` |
-| Milestone matrix ids | `matrix-mN.md` | Unpadded `N` (**not** a G/FS pad family) | `matrix-m1.md` … `matrix-m11.md` |
-| Gate claim matrices | live `matrix-gN.md` / `matrix-gN-<kebab>.md` | Mirror live gate id until Migration; then `matrix-gNNN-<kebab-context>.md` | `matrix-g19.md` → prefer `matrix-g019-comparative-performance.md` |
-| Milestone aliases (historical) | `matrix-l3.md`, `matrix-l8-e2e.md`, `matrix-s6-symmetry.md` | Letter + historical label | Not a pad family — Appendix B |
-| Compose services | Same token as gate / DoD / FS id | Inherit family pad rule | live `g11`, `g11-l3`, `fs007-host-advisory`, `dod-claimed-tls` |
+| Milestone M-series (matrices + fixture dirs) | live unpadded `matrix-mN.md`, `fixtures/m1/` | Fixed width **3** + kebab (`mNNN-<kebab-context>`) | `matrix-m1.md` → `matrix-m001-clean-room-g0-g1.md`; `fixtures/m1/` → `fixtures/m001-clean-room-g0-g1/` |
+| Gate claim matrices | live `matrix-gNNN-<kebab>.md` (post G Migration) | Mirror gate id | `matrix-g019-comparative-performance.md` |
+| Ladder L-series | live `matrix-l3.md`, `matrix-l8-e2e.md`, `run-l8-e2e.sh` | Fixed width **3** + kebab (`lNNN-<kebab-context>`) | `l003-high-concurrency`, `l008-product-completion-e2e` |
+| Ladder S-series | live `matrix-s6-symmetry.md`, `run-s6-symmetry.sh` | Fixed width **3** + kebab (`sNNN-<kebab-context>`) | `s006-symmetry-e2e` |
+| Compose services | Same token as gate / DoD / FS / ladder id | Inherit family pad rule | `g011-lease-product`, `fs007-host-advisory`, `dod-claimed-tls`, `l008-…`, `s006-…` |
 | Specfold evidence dirs | `YYYYMMDDHHmmss-<kebab>` | **14-digit** compact UTC timestamp, then kebab | `20261110231959-claimed-agent-llm` |
 | DoD / Claimed residual | `dod-<concern>` / `dod-claimed-<concern>` | **No** series number pad (kebab concerns) | `dod-symmetry`, `dod-claimed-ssh` |
 
-**Observed G range (committed, live unpadded):** `g0`–`g8`, `g10`–`g41` (no `g9` dir at tip). **FS range:** `fs007`, `fs014` only.
+**Observed ranges (live inventory):** G `g000`–`g041` contextual (gap at `g009`); FS `fs007`, `fs014`; M matrices `m1`–`m11` (pre-Migration unpadded); L `l3`, `l8`; S `s6` only.
 
 #### 2b.2 Width rules (choose one family; do not mix)
 
 | Width class | Digits | Pad? | Use under `verify/` / Specfold |
 |-------------|--------|------|--------------------------------|
-| **Unpadded decimal** | `0`…∞ as needed | **MUST NOT** zero-pad | Milestone `mN` / `matrix-mN.md` only (and historical L/S aliases) — **not** G-series |
+| **Unpadded decimal** | `0`…∞ as needed | **MUST NOT** zero-pad | **None** under `verify/` numbered series after 0.6.0 — DoD concerns stay unnumbered kebab only |
 | **Two-digit fixed** `01`–`99` | Always 2 | Zero-pad to 2 | **MUST NOT** use for G-series. Reserved only if a future non-G series is explicitly declared here |
-| **Three-digit fixed** `001`–`999` | Always 3 | Zero-pad to 3 | **G-series `gNNN`** and **host-advisory `fsNNN`** — always `g011` / `fs007`, never `g11` / `g0110` / `fs7` / `fs07` as normative new ids |
+| **Three-digit fixed** `001`–`999` | Always 3 | Zero-pad to 3 | **`gNNN`**, **`fsNNN`**, **`mNNN`**, **`lNNN`**, **`sNNN`** — always `g011` / `m001` / `l008` / `s006` / `fs007`; never unpadded or two-digit-only as normative |
 | **Timestamp fixed** | 14 (`YYYYMMDDHHmmss`) | Calendar zero-fill by format | `.spec/evidence/<id>/` directory prefix only — **not** a gate / compose series |
 
 **Prose shorthand:** In this SoT, `gNNN` means “`g` + **exactly three** zero-padded decimal digits.” Informal unpadded `g11` / two-digit `g11` in historical prose cites the **live** grandfathered token until Migration rewrites paths.
@@ -329,13 +334,12 @@ Normative **digit width / zero-padding** for ids that appear in gate folders, co
 
 | Context | Rule |
 |---------|------|
-| Milestone `mN` / `matrix-mN.md` | Unpadded (`m1`, `m11` — not `m001`) |
 | DoD / Claimed concern tokens | No numeric pad (`claimed-tls`, not `claimed-001-tls`) |
 | Document revision / crate semver | Semver rules — **out of scope** for this subsection |
 | Human prose citing **live** paths | Prefer the token that currently exists on disk until Migration (`g11`, not `g011`) |
 | Historical evidence directory names | **Do not** rewrite committed evidence basenames solely to re-pad |
 
-Zero-pad **for** fixed-width series declared here: **`gNNN`**, **`fsNNN`**, and evidence `YYYYMMDDHHmmss`.
+Zero-pad **for** fixed-width series declared here: **`gNNN`**, **`fsNNN`**, **`mNNN`**, **`lNNN`**, **`sNNN`**, and evidence `YYYYMMDDHHmmss`.
 
 #### 2b.5 `fsNNN` (three-digit denser series) — unchanged
 
@@ -349,6 +353,27 @@ Zero-pad **for** fixed-width series declared here: **`gNNN`**, **`fsNNN`**, and 
 | Relation to G | **Same digit width class** as `gNNN` — operators learn one pad rule for numbered verify slots |
 
 **MUST NOT:** introduce `fs7`, `fs07`, or a second advisory family with a different pad width without amending this SoT.
+
+#### 2b.5a `mNNN` / `lNNN` / `sNNN` (milestone + ladder series) — **0.6.0**
+
+Live inventory found three opaque single-letter series **outside** `gates/` (matrices, scripts, fixtures). They **MUST** use the **same three-digit width class** as `gNNN` / `fsNNN`, plus a contextual kebab slug. **Supersedes** 0.4.0/0.5.0 guidance that left `mN` / L3 / L8 / S6 unpadded.
+
+| Series | Purpose | Normative id | Live → Migration examples |
+|--------|---------|--------------|---------------------------|
+| **M** | Roadmap milestone claim matrices + shared fixture buckets | `mNNN-<kebab-context>` | `matrix-m1.md` → `matrix-m001-clean-room-g0-g1.md`; `fixtures/m1/` → `fixtures/m001-clean-room-g0-g1/` |
+| **L** | Product-completion / concurrency **ladder suite** matrices + orchestrator scripts | `lNNN-<kebab-context>` | `matrix-l3.md` → `matrix-l003-high-concurrency.md`; `matrix-l8-e2e.md` / `run-l8-e2e.sh` → `…-l008-product-completion-e2e…` |
+| **S** | Symmetry **ladder suite** matrices + orchestrator scripts | `sNNN-<kebab-context>` | `matrix-s6-symmetry.md` / `run-s6-symmetry.sh` → `…-s006-symmetry-e2e…` |
+
+**MUST:**
+
+1. New M/L/S ids use three-digit zero-padded decimals + kebab context — never bare `m1` / `l8` / `s6` for new work.
+2. When a compose service exists for a ladder suite, service name, `run-*.sh` stem, and `matrix-*.md` stem share the **same** id string (`l008-product-completion-e2e`, `s006-symmetry-e2e`).
+3. Fixture milestone dirs under `verify/fixtures/` use `mNNN-<kebab-context>/` (not bare `mN/`).
+4. Do **not** invent additional single-letter numbered series (`pN`, `xN`, …) without amending this SoT.
+
+**MUST NOT:** mix unpadded and padded spellings for the same logical milestone/ladder slot; create empty `gates/mNNN-*` / `gates/lNNN-*` scaffolds solely for naming symmetry (matrices/scripts remain the home unless an oracle crate is needed).
+
+**Journey matrix:** prefer `matrix-g016-journey-compare.md` (align with gate `g016-journey-compare`) over opaque `matrix-journey.md`.
 
 #### 2b.6 Evidence timestamps
 
@@ -505,9 +530,11 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 | `verify/scripts/run-g11l3.sh` | `run-g11-l3.sh` | **Migrated** with Appendix A |
 | `verify/scripts/g19_eval.py` | `g19-eval.py` (or fold into `run-g19.sh` only) | **Migrated** — `run-g19.sh` / `run-g19-eval-only.sh` updated |
 | `verify/fixtures/openai_compat_fixture.py` | `openai-compat-fixture.py` | **Migrated on disk** — B4 WIP callers updated; fixture may remain untracked until B4 lands |
-| `verify/matrices/matrix-l3.md` | `matrix-g11-l3.md` (after id unjam) **or** keep as L3 milestone alias with README note | **Advisory** — milestone “L3” token predates `g11-l3` |
-| `verify/matrices/matrix-l8-e2e.md` / `run-l8-e2e.sh` | Keep L8 milestone names **or** document as milestone alias beside G-series | **Keep** unless milestone SoT retires L8 label |
-| `verify/matrices/matrix-s6-symmetry.md` / `run-s6-symmetry.sh` | Prefer `symmetry` / DoD family names already in §2 | **Advisory** — S6 historical label |
+| `verify/matrices/matrix-l3.md` | `matrix-l003-high-concurrency.md` | **Migration** — L-series pad + context (§2b.5a); gate remains `g011-high-concurrency` |
+| `verify/matrices/matrix-l8-e2e.md` / `run-l8-e2e.sh` | `matrix-l008-product-completion-e2e.md` / `run-l008-product-completion-e2e.sh` | **Migration** — L-series |
+| `verify/matrices/matrix-s6-symmetry.md` / `run-s6-symmetry.sh` | `matrix-s006-symmetry-e2e.md` / `run-s006-symmetry-e2e.sh` | **Migration** — S-series |
+| `verify/matrices/matrix-mN.md` / `fixtures/m1/` | `matrix-mNNN-<kebab>.md` / `fixtures/mNNN-<kebab>/` | **Migration** — M-series |
+| `verify/matrices/matrix-journey.md` | `matrix-g016-journey-compare.md` | **Migration** — align with gate id |
 | `verify/scripts/probe-*.sh` | Keep as non-`run-` helpers | **Keep** — not compose primary judges |
 | `gates/g41/seed.sh` | Keep short colocated name | **Keep** — §1c / Appendix A |
 | Ephemeral `out/**/receipt-<sha>.json`, `metrics-debug.json`, `receipt-fail1.json`, … | Prefer overwrite stable `receipt.json` / `metrics.json`; keep sha dumps local-only | **Keep pattern for debug**; do not promote to Claimed citations |
