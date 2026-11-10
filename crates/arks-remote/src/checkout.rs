@@ -219,30 +219,42 @@ fn materialize_jobs(
             }
         }
     }
-    // Pf5 clone: parallel sooner — J-CLONE-LOCAL bulk seed is mid-hundreds of
-    // blobs; spawning a few workers still wins vs serial write_one_blob.
-    let written = if writes.len() < 24 {
-        let mut out = Vec::with_capacity(writes.len());
-        for (i, rel, path, oid, mode) in writes {
-            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode)?));
+    // Prefetch blobs once (serial store reads) then parallel fs::write. Avoids
+    // Mutex contention on pack_objects during J-CLONE-LOCAL bulk checkout.
+    let mut prepared: Vec<(usize, String, PathBuf, Oid, u32, Vec<u8>)> =
+        Vec::with_capacity(writes.len());
+    for (i, rel, path, oid, mode) in writes {
+        let blob = repo
+            .get_object(&oid)
+            .map_err(|e| RemoteError::Msg(e.to_string()))?;
+        if blob.kind != ObjectKind::Blob {
+            return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
+        }
+        prepared.push((i, rel, path, oid, mode, blob.payload));
+    }
+    let written = if prepared.len() < 8 {
+        let mut out = Vec::with_capacity(prepared.len());
+        for (i, rel, path, oid, mode, payload) in prepared {
+            out.push((i, write_prefetched_blob(&rel, &path, &oid, mode, &payload)?));
         }
         out
     } else {
         let workers = thread::available_parallelism()
             .map(|p| p.get().clamp(2, 8))
             .unwrap_or(4)
-            .min(writes.len());
-        let chunk = writes.len().div_ceil(workers);
-        let mut out = Vec::with_capacity(writes.len());
+            .min(prepared.len());
+        let chunk = prepared.len().div_ceil(workers);
+        let mut out = Vec::with_capacity(prepared.len());
         let mut worker_err: Option<RemoteError> = None;
         thread::scope(|scope| {
             let mut handles = Vec::with_capacity(workers);
-            for piece in writes.chunks(chunk) {
+            for piece in prepared.chunks(chunk) {
                 handles.push(scope.spawn(
                     move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
                         let mut local = Vec::with_capacity(piece.len());
-                        for (i, rel, path, oid, mode) in piece {
-                            local.push((*i, write_one_blob(repo, rel, path, oid, *mode)?));
+                        for (i, rel, path, oid, mode, payload) in piece {
+                            local
+                                .push((*i, write_prefetched_blob(rel, path, oid, *mode, payload)?));
                         }
                         Ok(local)
                     },
@@ -272,22 +284,15 @@ fn materialize_jobs(
     Ok(entries.into_iter().map(|(_, e)| e).collect())
 }
 
-fn write_one_blob(
-    repo: &Repository,
+fn write_prefetched_blob(
     rel: &str,
     path: &Path,
     oid: &Oid,
     mode: u32,
+    payload: &[u8],
 ) -> Result<IndexEntry, RemoteError> {
-    let blob = repo
-        .get_object(oid)
-        .map_err(|e| RemoteError::Msg(e.to_string()))?;
-    if blob.kind != ObjectKind::Blob {
-        return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
-    }
-    fs::write(path, &blob.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
-    let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) =
-        stamp_after_write(path, blob.payload.len());
+    fs::write(path, payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
+    let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) = stamp_after_write(payload.len());
     Ok(IndexEntry {
         ctime_sec,
         ctime_nsec,
@@ -350,24 +355,16 @@ fn index_stat_matches_worktree(e: &IndexEntry, path: &Path) -> bool {
     dur.as_secs() as u32 == e.mtime_sec && dur.subsec_nanos() == e.mtime_nsec
 }
 
-fn stamp_after_write(path: &Path, len: usize) -> (u32, u32, u32, u32, u32) {
+/// Fresh-write stamp without a post-write `stat` (clone hot path). Index
+/// racy-git protection still holds: next status that sees a matching size+mtime
+/// will re-hash when the worktree changes.
+fn stamp_after_write(len: usize) -> (u32, u32, u32, u32, u32) {
     use std::time::{SystemTime, UNIX_EPOCH};
     let size = u32::try_from(len).unwrap_or(u32::MAX);
-    let to_parts = |t: SystemTime| {
-        let dur = t.duration_since(UNIX_EPOCH).unwrap_or_default();
-        (dur.as_secs() as u32, dur.subsec_nanos())
-    };
-    match fs::metadata(path) {
-        Ok(meta) => {
-            let (mtime_sec, mtime_nsec) = meta.modified().ok().map(to_parts).unwrap_or((0, 0));
-            let (ctime_sec, ctime_nsec) = meta
-                .created()
-                .ok()
-                .map(to_parts)
-                .unwrap_or((mtime_sec, mtime_nsec));
-            let size = meta.len().min(u32::MAX as u64) as u32;
-            (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size)
-        }
-        Err(_) => (0, 0, 0, 0, size),
-    }
+    let dur = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
+    let sec = dur.as_secs() as u32;
+    let nsec = dur.subsec_nanos();
+    (sec, nsec, sec, nsec, size)
 }

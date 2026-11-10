@@ -641,9 +641,7 @@ impl TestServer {
         // Keep the accept loop blocking with a short accept timeout so Drop can
         // unblock via connecting a dummy client after setting `stop`. Nonblocking
         // accept + inherited nonblocking streams caused hung ureq reads on Windows.
-        listener
-            .set_nonblocking(false)
-            .expect("blocking listener");
+        listener.set_nonblocking(false).expect("blocking listener");
         let stop = Arc::new(AtomicBool::new(false));
         let stop2 = Arc::clone(&stop);
         let join = thread::spawn(move || {
@@ -681,9 +679,21 @@ impl Drop for TestServer {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::SeqCst);
         // Unblock a stuck accept: connect then drop.
-        if let Ok(addr) = self.url.trim_start_matches("http://").split('/').next().unwrap_or("").parse::<std::net::SocketAddr>() {
+        if let Ok(addr) = self
+            .url
+            .trim_start_matches("http://")
+            .split('/')
+            .next()
+            .unwrap_or("")
+            .parse::<std::net::SocketAddr>()
+        {
             let _ = TcpStream::connect_timeout(&addr, Duration::from_millis(100));
-        } else if let Some(port_s) = self.url.rsplit(':').next().and_then(|s| s.split('/').next()) {
+        } else if let Some(port_s) = self
+            .url
+            .rsplit(':')
+            .next()
+            .and_then(|s| s.split('/').next())
+        {
             if let Ok(port) = port_s.parse::<u16>() {
                 let _ = TcpStream::connect_timeout(
                     &std::net::SocketAddr::from(([127, 0, 0, 1], port)),

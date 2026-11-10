@@ -3,7 +3,7 @@ id: sot:root/cli-flag-parity-complete
 title: CLI flag-parity complete symmetry
 status: active
 created: 2026-11-09T04:39:10Z
-updated: 2026-11-10T01:00:00Z
+updated: 2026-11-10T01:17:00Z
 tags: [m16, cli, flag-parity, complete-symmetry, alias, wave-sy, g21, no-refuse, credential, g33, m25]
 verify: manual
 rel:
@@ -131,7 +131,7 @@ Wave Done = Docker **G21** PASS for that wave’s matrix IDs + G14/G20 regressio
 
 | Surface | Implement | N/A |
 |---------|-----------|-----|
-| `clone`/`fetch`/`push` URL `ssh://` and `git@host:path` | OpenSSH `ssh` subprocess speaking upload-pack/receive-pack pkt-line (no product-path `git` binary) | Server SSH command-mode (**global N/A**) |
+| `clone`/`fetch`/`push` URL `ssh://` and `git@host:path` | OpenSSH `ssh` subprocess speaking upload-pack/receive-pack pkt-line (no product-path `git` binary) | Product SSHD/key CA (**global N/A** above); server command-mode stdio is **Claimed G30** — [[sot:root/arks-server]] |
 | `submodule add` over SSH URL | Same client SSH | — |
 | Auth (SSH) | `ssh` agent / key files via OpenSSH defaults | — |
 | Auth (HTTPS) + `credential` plumbing | URL userinfo; `ARKS_REMOTE_USERNAME`/`PASSWORD`; `credential.helper` get/store/erase incl. first-party `wincred`/`libsecret`/`osxkeychain`; `GIT_ASKPASS`/`core.askPass`; TTY when allowed; `arks credential fill\|approve\|reject` | Forge OAuth UX / bundled GCM (**global N/A** above); Gate **G33** |

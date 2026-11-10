@@ -230,6 +230,13 @@ impl ObjectStore for FilesystemGitStore {
         if let Some(obj) = self.overlay.lock().expect("overlay").get(oid) {
             return Ok(obj.clone());
         }
+        // Clone/fetch hot path: packs are already ingested into RAM — probe the
+        // cache before a loose `is_file` syscall (220× miss on J-CLONE-LOCAL).
+        if *self.packs_loaded.lock().expect("packs_loaded") {
+            if let Some(obj) = self.pack_objects.lock().expect("pack_objects").get(oid) {
+                return Ok(obj.clone());
+            }
+        }
         let path = self.loose_path(oid);
         if path.is_file() {
             // Pf4-2: hot-path decode without OID re-hash (path is content-addressed).
@@ -244,6 +251,15 @@ impl ObjectStore for FilesystemGitStore {
 
     fn exists(&self, oid: &Oid) -> Result<bool, Self::Error> {
         if self.overlay.lock().expect("overlay").contains_key(oid) {
+            return Ok(true);
+        }
+        if *self.packs_loaded.lock().expect("packs_loaded")
+            && self
+                .pack_objects
+                .lock()
+                .expect("pack_objects")
+                .contains_key(oid)
+        {
             return Ok(true);
         }
         if self.loose_path(oid).is_file() {
