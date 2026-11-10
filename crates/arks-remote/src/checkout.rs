@@ -224,12 +224,13 @@ fn materialize_jobs(
     }
     // Overlap get+write across workers (pack-cache hits are concurrent under RwLock).
     // Full prefetch-then-write regressed J-CLONE-PATH (lost read/write overlap).
-    // Restore tip-3af76a7 parallel policy: mid-hundred blob clones still win with
-    // a few workers vs serial (forcing serial on cpus==1 re-missed ≤0.5× at ~0.51).
-    let written = if writes.len() < 24 {
+    // One stamp for the whole batch (clone hot path); avoids SystemTime::now per blob.
+    let stamp = stamp_now();
+    // Threshold 8 matches tip f6ac3e2 / 3af76a7 (serial-on-1cpu and <24 both missed PATH ≤0.5×).
+    let written = if writes.len() < 8 {
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
-            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode)?));
+            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode, stamp)?));
         }
         out
     } else {
@@ -247,7 +248,7 @@ fn materialize_jobs(
                     move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
                         let mut local = Vec::with_capacity(piece.len());
                         for (i, rel, path, oid, mode) in piece {
-                            local.push((*i, write_one_blob(repo, rel, path, oid, *mode)?));
+                            local.push((*i, write_one_blob(repo, rel, path, oid, *mode, stamp)?));
                         }
                         Ok(local)
                     },
@@ -283,6 +284,7 @@ fn write_one_blob(
     path: &Path,
     oid: &Oid,
     mode: u32,
+    stamp: (u32, u32),
 ) -> Result<IndexEntry, RemoteError> {
     // Arc share from pack cache — avoid deep-copying every blob on parallel clone.
     let blob = repo
@@ -293,13 +295,13 @@ fn write_one_blob(
         return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
     }
     fs::write(path, &blob.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
-    let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size) =
-        stamp_after_write(blob.payload.len());
+    let size = u32::try_from(blob.payload.len()).unwrap_or(u32::MAX);
+    let (sec, nsec) = stamp;
     Ok(IndexEntry {
-        ctime_sec,
-        ctime_nsec,
-        mtime_sec,
-        mtime_nsec,
+        ctime_sec: sec,
+        ctime_nsec: nsec,
+        mtime_sec: sec,
+        mtime_nsec: nsec,
         dev: 0,
         ino: 0,
         mode,
@@ -357,14 +359,11 @@ fn index_stat_matches_worktree(e: &IndexEntry, path: &Path) -> bool {
     dur.as_secs() as u32 == e.mtime_sec && dur.subsec_nanos() == e.mtime_nsec
 }
 
-/// Fresh-write stamp without a post-write `stat` (clone hot path).
-fn stamp_after_write(len: usize) -> (u32, u32, u32, u32, u32) {
+/// Fresh-write clock sample without a post-write `stat` (clone hot path).
+fn stamp_now() -> (u32, u32) {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let size = u32::try_from(len).unwrap_or(u32::MAX);
     let dur = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default();
-    let sec = dur.as_secs() as u32;
-    let nsec = dur.subsec_nanos();
-    (sec, nsec, sec, nsec, size)
+    (dur.as_secs() as u32, dur.subsec_nanos())
 }

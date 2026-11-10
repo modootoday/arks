@@ -33,8 +33,12 @@ pub fn clone_http(url: &str, dest: &Path) -> Result<(), RemoteError> {
 pub fn clone_http_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     HttpRemoteUrl::parse(url)?;
     let mut opts = opts.clone();
-    // Overlap pack+idx disk persist with worktree checkout (J-CLONE-LOCAL).
-    opts.defer_pack_disk = true;
+    // Overlap pack+idx disk with checkout only when ≥2 CPUs; on sole Docker
+    // (often 1 CPU) a persist thread is pure schedule tax and regressed
+    // J-CLONE-LOCAL (~0.87 at tip 8c65583 dirty).
+    opts.defer_pack_disk = std::thread::available_parallelism()
+        .map(|p| p.get() >= 2)
+        .unwrap_or(false);
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_http_with(repo, url, "origin", &opts)
     })
@@ -48,7 +52,9 @@ pub fn clone_ssh(url: &str, dest: &Path) -> Result<(), RemoteError> {
 pub fn clone_ssh_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     SshRemoteUrl::parse(url)?;
     let mut opts = opts.clone();
-    opts.defer_pack_disk = true;
+    opts.defer_pack_disk = std::thread::available_parallelism()
+        .map(|p| p.get() >= 2)
+        .unwrap_or(false);
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_ssh_with(repo, url, "origin", &opts)
     })
@@ -66,7 +72,7 @@ where
 
     let mut repo = Repository::open(&git_dir).map_err(|e| RemoteError::Msg(e.to_string()))?;
     let outcome = do_fetch(&mut repo, url)?;
-    // Start pack+idx disk write in parallel with refs + checkout (RAM cache ready).
+    // When deferred, overlap pack+idx disk with refs + checkout (RAM cache ready).
     let pending = repo.store_mut().take_pending_pack();
     let persist_handle = pending.map(|p| std::thread::spawn(move || p.persist()));
     let checkout_res = (|| -> Result<(), RemoteError> {
