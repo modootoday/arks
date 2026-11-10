@@ -77,7 +77,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Area | Git | arks | Status |
 |------|-----|------|--------|
 | Clean-room journey ≤0.8× allow-list | Oracle | Measured 19/19 | **Claimed** (M17 / G19) |
-| Aggressive ≤0.5× journeys | Oracle | Historical **8/8** at `79fc9bf`; tip `54c9dc2` **Claimed(partial)** (17 + ALIAS/REVERT `aggressive_na`) | **Claimed(partial)** on tip (PF5) |
+| Aggressive ≤0.5× journeys | Oracle | Historical **8/8** at `79fc9bf`; tip **Claimed(partial)** (18 + ALIAS `aggressive_na`; REVERT Claimed) | **Claimed(partial)** on tip (PF5) |
 | Product leases / high-concurrency shape | N/A (stock) | Claimed with receipts | **Claimed** (M10 / M23 / M26) |
 | Live forge latency SLO | N/A | Harness ready; no invented live PASS | **Done (ops)** (L5) ≠ live PASS |
 

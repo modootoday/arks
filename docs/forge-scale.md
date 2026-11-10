@@ -44,16 +44,17 @@ bash scripts/forge-scale-readiness.sh
 
 ## Live samples (receipt-only)
 
-1. Configure Environment `g8-live` with `ARKS_G8_TOKEN` (or usable `GITHUB_TOKEN`) and `ARKS_G8_REPO_URL`.
-2. Dispatch **g8-forge-scale** with `dry_run=false`, or run the compose services locally with the same env vars.
-3. Keep sole-runner honesty — do not collide with clean-room G14–G28 matrices or restart sole G19 remasure without honesty breakage.
-4. Attach real receipts under `.spec/evidence/` only. Empty SKIP runs are not live PASS evidence.
+1. Mint a **throwaway** HTTPS peer repo + scoped PAT (prefer fine-grained; rotate after attach).
+2. Configure Environment `g8-live` with **`ARKS_G8_TOKEN`** and **`ARKS_G8_REPO_URL`** (GitHub UI → Settings → Environments). Confirm names-only: `gh api repos/modootoday/arks/environments/g8-live/secrets --jq .total_count` ≥ **2**.
+3. Dispatch **g8-forge-scale** with `dry_run=false` (`gh workflow run g8-forge-scale.yml -f dry_run=false`), or run compose `g8` + `g8-live-scale` locally with the same env vars. Optional fail-closed probe first: `bash scripts/g8-live-operator-path.sh`.
+4. Keep sole-runner honesty — do not collide with clean-room G14–G28 matrices or sole G19.
+5. Attach real receipts under `.spec/evidence/` only. Empty SKIP / dry-run / local-forge `claimed-wire` runs are **not** live PASS evidence.
 
 How a claim would be earned: **receipt-only**. Harness Claimed (ready) is already separate from any future live remasure or product SLO. Never publish medians as product SLOs without explicit gate governance.
 
 ## Symmetry S5 / optional O1 disposition
 
-Expanded DoD **S5** closed as a **documented secrets-block** ([[evidence:root/20261110113300]]). Optional **O1** re-probed Environment `g8-live` (**secret count = 0**) and shipped `scripts/g8-live-operator-path.sh` fail-closed operator path ([[evidence:root/20261110210200]]): harness remains Claimed-ready; live remasure PASS requires operator secrets + real receipts. Never invent latency from dry-run / SKIP.
+Expanded DoD **S5** closed as a **documented secrets-block** ([[evidence:root/20261110113300]]). Optional **O1** re-probed Environment `g8-live` (**secret count = 0**) and shipped `scripts/g8-live-operator-path.sh` fail-closed operator path ([[evidence:root/20261110210200]]). **Re-probe 2026-11-11** (post [[research:root/20261111012840]]): `gh api …/environments/g8-live/secrets` still **`total_count=0`** — operator steps unchanged; harness remains Claimed-ready; live remasure PASS requires operator secrets + real receipts. Never invent latency from dry-run / SKIP.
 
 ## Local-forge wire (secrets absent)
 

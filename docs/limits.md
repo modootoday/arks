@@ -61,7 +61,7 @@ Unimplemented commands fail closed (non-zero, no repo mutation). See [Alias `git
 
 ### Aggressive ≤0.5× journeys?
 
-M17 ≤0.8× remains **19/19**. Aggressive ≤0.5×: historical **Claimed 8/8** at `79fc9bf`; tip ≥`54c9dc2` is **Claimed(partial)** (17 ≤0.5× + honest `aggressive_na` for alias process-tax / revert short-wall — no thrash remasure). See [Performance](../performance/).
+M17 ≤0.8× remains **19/19**. Aggressive ≤0.5×: historical **Claimed 8/8** at `79fc9bf`; tip is **Claimed(partial)** (18 ≤0.5× incl. REVERT; honest `aggressive_na` for alias process-tax — no thrash remasure). Absolute SHA-1 collision **immunity** remains Impossible (detect+refuse is the Claimed bar — do not market “immune”). See [Performance](../performance/).
 
 
 ### Live harnesses?

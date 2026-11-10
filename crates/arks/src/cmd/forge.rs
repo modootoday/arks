@@ -130,8 +130,17 @@ fn print_recipes() {
 ## Checks / PR / Issues
   gh pr list
   gh pr checks
+  gh pr view --json statusCheckRollup,url
   gh issue list
   gh api repos/{{owner}}/{{repo}}/commits/{{sha}}/check-runs
+  gh api repos/{{owner}}/{{repo}}/actions/runs --jq '.workflow_runs[:5]|map({{name,status,conclusion,html_url}})'
+
+## Workflow dispatch / Environments (ops — not forge product UX)
+  gh workflow list
+  gh workflow run g8-forge-scale.yml -f dry_run=true
+  # Live G8 latency needs Environment g8-live secrets (ARKS_G8_TOKEN + ARKS_G8_REPO_URL);
+  # dry_run=false only after total_count≥2 — never invent medians from SKIP.
+  gh api repos/{{owner}}/{{repo}}/environments/g8-live/secrets --jq .total_count
 
 ## OAuth / credentials (external helper — already Claimed under G33)
   git config --global credential.helper manager   # Git Credential Manager
@@ -140,10 +149,12 @@ fn print_recipes() {
 
 ## Thin wrap
   arks forge pr list          # requires `gh` on PATH
+  arks forge pr checks
+  arks forge workflow list
   ARKS_GH=/path/to/gh arks forge api user
 
 ## Not claimed
-  Full forge host UX parity with GitHub UI
+  Full forge host UX parity with GitHub UI / Checks product / merge-queue
   First-party OAuth App registration / device-flow product"
     );
     eprintln!("{HONESTY}");

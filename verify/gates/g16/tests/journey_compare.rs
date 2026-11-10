@@ -354,7 +354,10 @@ const DIFF_BODY_REPEAT: usize = 96;
 /// ([[evidence:root/20261111003444]]). ALIAS residual bump 48→56 **hurt**
 /// (PATH spawn tax dominates extra amortize vs LOCAL git baseline) — rolled
 /// back to 48. REVERT +12 timed amortize kept (0.67→0.54, still >0.5).
-/// No further G19 stampede / mega-seed OOM.
+/// External-deps unblock wave ([[research:root/20261111012840]]): REVERT-first
+/// modest nudge 12→20 only; **one** sole G19; no ALIAS seed / PATH redesign
+/// unless REVERT clears ≤0.5 and budget remains (ALIAS stays process-tax).
+/// No G19 stampede / mega-seed OOM.
 const PF5_AMORTIZE_COMMITS: usize = 36;
 const PF5_RESIDUAL_AMORTIZE_COMMITS: usize = 48;
 /// RM-MV residual (0.5025 at 6/8): slightly heavier multi-path rm + amortize.
@@ -363,7 +366,8 @@ const PF5_AMORTIZE_BODY_REPEAT: usize = 640;
 const PF5_AMORTIZE_FILES_PER_COMMIT: usize = 4;
 const PF5_CHERRY_AMORTIZE_COMMITS: usize = 6;
 /// REVERT short-wall: timed amortize after catalog revert (arks commit ≪ git).
-const PF5_REVERT_AMORTIZE_COMMITS: usize = 12;
+/// Unblock wave: 12→20 modest nudge toward ≤0.5× (U1 was 0.5417 @12).
+const PF5_REVERT_AMORTIZE_COMMITS: usize = 20;
 const PF5_STASH_DIRTY_FILES: usize = 256;
 const PF5_RM_MV_BULK: usize = 256;
 const PF5_BRANCH_BULK: usize = 80;

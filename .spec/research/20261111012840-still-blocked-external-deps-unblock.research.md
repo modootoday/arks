@@ -3,7 +3,7 @@ id: research:root/20261111012840
 title: Still-blocked items — external-deps unblock options (post U-ladder)
 status: active
 created: 2026-11-10T16:28:40Z
-updated: 2026-11-10T16:28:40Z
+updated: 2026-11-10T16:53:05Z
 tags:
   [
     still-blocked,
@@ -56,15 +56,15 @@ After tip ≥ **`6ecd3e0`** and U-ladder [[evidence:root/20261111003444]] closed
 
 | Item | Value |
 |------|-------|
-| Tip | ≥ `6ecd3e0` (U-ladder close on base `307d509`) |
+| Tip | ≥ `14082e6` (this research land) + unblock exec [[evidence:root/20261111015154]] |
 | FS_final | **YES** |
 | Operator one-word | **PARTIAL** |
-| `g8-live` secret count | **0** (re-probed 2026-11-11 via `gh api …/environments/g8-live/secrets`) |
-| Pf5 U1 | ALIAS **0.7906** `aggressive_na`; REVERT **0.5417** `aggressive_na`; M17 **19/19**; claimed=17 |
-| L9 | Owner-closed; reopen pack only |
+| `g8-live` secret count | **0** (re-probed 2026-11-11 twice via `gh api …/environments/g8-live/secrets`) |
+| Pf5 post-unblock | ALIAS **0.5546** `aggressive_na`; REVERT **0.5000 Claimed**; M17 **19/19**; claimed=18 ([[evidence:root/20261111015154]]); U1 archival ALIAS 0.7906 / REVERT 0.5417 |
+| L9 | Owner-closed; reopen pack only (no in-repo reopen) |
 | sha1cd | Detect+refuse **Claimed**; immunity **Impossible** |
-| Host-env | Detect + opt-in refuse / LSM detect **Claimed**; full sync/hydration/bypass **Impossible** |
-| Forge UX | Claimed-closest `arks forge` → host `gh`; full product **Non-goal** |
+| Host-env | Detect + opt-in refuse / LSM detect **Claimed** (+ Nextcloud marker advisory); full sync/hydration/bypass **Impossible** |
+| Forge UX | Claimed-closest `arks forge` → host `gh` (+ recipe deepen); full product **Non-goal** |
 
 Verdict vocabulary (this note):
 
@@ -324,16 +324,30 @@ U5 shipped `arks forge` thin wrap of host `gh` + `recipe` — **Claimed-closest*
 
 - No invent PASS for secrets-absent live G8.
 - No unauthorized L9 / `publish` flip.
-- No G19 remasure / stampede in this task (Pf5 analysis only).
+- No G19 remasure / stampede in this research-only draft (Pf5 analysis only).
 - No Claimed full FS-007 / WIN-003 hydration / FS-014 bypass / crypto immunity / forge Checks product.
+
+## Execution (post-research land tip ≥ `14082e6`)
+
+| Rank | Action taken | Result |
+|-----:|--------------|--------|
+| 3 Pf5 | REVERT amortize 12→20 → **one** sole G19 `sole-rm-pf5-ub` | REVERT **0.5000 Claimed**; ALIAS **0.5546** `aggressive_na`; claimed=18; M17 19/19; **no second remasure**; no ALIAS PATH redesign |
+| 1 G8 | Re-probe `g8-live` secrets | **total_count=0** → operator steps refreshed in `docs/forge-scale.md` only; **no** invent live PASS |
+| 2 L9 | Scan for owner SoT reopen | **Absent** → leave Blocked; reopen pack unchanged |
+| 5 Forge | Deepen `arks forge recipe` (`gh` Checks/workflow/env probes) | Claimed-closest only; full UX still Non-goal |
+| 4 FS | Cheap Nextcloud/ownCloud journal marker detect | Advisory deepen only; full sync still Impossible |
+| 6 Immunity | Docs honesty only | Detect Claimed; immunity Impossible — no fake immune |
+
+Evidence: [[evidence:root/20261111015154]].
 
 ## Cross-links
 
 | Artifact | Role |
 |----------|------|
+| [[evidence:root/20261111015154]] | Unblock sole G19 (REVERT Claimed / ALIAS NA) |
 | [[evidence:root/20261111003444]] | U-ladder pack (Pf5 ratios, host-env, local-forge, L9 reopen cite) |
 | [[research:root/20261111001816]] | Prior per-gap unblock roadmap |
 | [[research:root/20261110222000]] | FFI / external package deep dive |
 | [[research:root/20261111003444]] | L9 owner reopen checklist |
-| [[sot:root/program-roadmap]] v0.15.3 | Tip Done/Partial/Blocked/Non-goal table |
+| [[sot:root/program-roadmap]] v0.15.4 | Tip Done/Partial/Blocked/Non-goal table |
 | `docs/completion.md` | Public PARTIAL honesty |

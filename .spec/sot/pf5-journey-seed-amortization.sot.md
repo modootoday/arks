@@ -3,7 +3,7 @@ id: sot:root/pf5-journey-seed-amortization
 title: Pf5 journey seed amortization (≤0.5× reopen)
 status: active
 created: 2026-11-10T22:00:00Z
-updated: 2026-11-10T04:25:00Z
+updated: 2026-11-10T16:49:00Z
 tags: [g19, pf5, perf, amortization, journey, verification]
 verify: manual
 rel:
@@ -15,12 +15,12 @@ rel:
     - adr:root/20261110162000
     - plan:root/20261110150000
     - evidence:root/20261110153000
-  evidence: [evidence:root/20261110142500, evidence:root/20261110131600, evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600, evidence:root/20261110110900, evidence:root/20261110111700, evidence:root/20261110113900, evidence:root/20261110114200, evidence:root/20261110135100]
+  evidence: [evidence:root/20261111015154, evidence:root/20261111003444, evidence:root/20261110142500, evidence:root/20261110131600, evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600, evidence:root/20261110110900, evidence:root/20261110111700, evidence:root/20261110113900, evidence:root/20261110114200, evidence:root/20261110135100]
 ---
 
 # Pf5 journey seed amortization (≤0.5× reopen)
 
-Version **0.1.12**. Normative harness rules that reopen [[adr:root/20261110162000]] for Pf5 `aggressive_na` journeys without inventing Git semantics. **U1 residual wave** ([[evidence:root/20261111003444]]): ALIAS `PF5_RESIDUAL_AMORTIZE_COMMITS=56`; REVERT +`PF5_REVERT_AMORTIZE_COMMITS=12` timed amortize — **one** sole G19 remasure only (no stampede / mega-seed OOM). Historical primary **Claimed 8/8** [[evidence:root/20261110142500]] at `79fc9bf`. Prior tip partial [[evidence:root/20261110224814]]. Prior claim amortization [[evidence:root/20261111001400]] remains historical **Claimed(partial 7/8)**.
+Version **0.1.13**. Normative harness rules that reopen [[adr:root/20261110162000]] for Pf5 `aggressive_na` journeys without inventing Git semantics. **U1 residual wave** ([[evidence:root/20261111003444]]): ALIAS residual 48→56 **hurt** (rolled back to 48); REVERT +`PF5_REVERT_AMORTIZE_COMMITS=12` → 0.5417. **External-deps unblock wave** ([[research:root/20261111012840]]): REVERT-first modest nudge **12→20**; **exactly one** sole Docker G19; no ALIAS seed inflation; ALIAS PATH/`exec` redesign only if REVERT clears ≤0.5× and remaining budget is safe — else keep honest `aggressive_na` / Claimed(partial). Historical primary **Claimed 8/8** [[evidence:root/20261110142500]] at `79fc9bf`. Prior tip partial [[evidence:root/20261110224814]].
 
 ## Rule
 

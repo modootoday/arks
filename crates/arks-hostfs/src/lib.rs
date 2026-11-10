@@ -24,6 +24,8 @@ pub enum CloudKind {
     Dropbox,
     /// Syncthing folder marker.
     Syncthing,
+    /// Nextcloud / ownCloud desktop sync journal marker (advisory FS-007).
+    Nextcloud,
 }
 
 impl CloudKind {
@@ -33,12 +35,13 @@ impl CloudKind {
             Self::OneDriveCfApi => "onedrive-cfapi",
             Self::Dropbox => "dropbox",
             Self::Syncthing => "syncthing",
+            Self::Nextcloud => "nextcloud",
         }
     }
 
     pub fn catalog_id(self) -> &'static str {
         match self {
-            Self::GoogleDriveFs | Self::Dropbox | Self::Syncthing => "FS-007",
+            Self::GoogleDriveFs | Self::Dropbox | Self::Syncthing | Self::Nextcloud => "FS-007",
             Self::OneDriveCfApi => "WIN-003",
         }
     }
@@ -82,6 +85,13 @@ pub fn detect_cloud_sync(path: &Path) -> Option<CloudDetection> {
         return Some(d);
     }
     if let Some(d) = detect_marker_root(&abs, ".syncthing", CloudKind::Syncthing) {
+        return Some(d);
+    }
+    // Nextcloud/ownCloud desktop clients leave a sync journal beside the tree.
+    if let Some(d) = detect_marker_root(&abs, ".csync_journal.db", CloudKind::Nextcloud) {
+        return Some(d);
+    }
+    if let Some(d) = detect_marker_root(&abs, ".owncloudsync.log", CloudKind::Nextcloud) {
         return Some(d);
     }
     None
@@ -420,6 +430,16 @@ mod tests {
         std::fs::create_dir_all(dir.join(".stfolder")).unwrap();
         let d = detect_cloud_sync(&dir.join("a")).expect("syncthing");
         assert_eq!(d.kind, CloudKind::Syncthing);
+    }
+
+    #[test]
+    fn nextcloud_journal_marker_detection() {
+        let dir = tempfile_dir();
+        std::fs::write(dir.join(".csync_journal.db"), b"x").unwrap();
+        let d = detect_cloud_sync(&dir.join("proj")).expect("nextcloud");
+        assert_eq!(d.kind, CloudKind::Nextcloud);
+        assert!(!d.claimed);
+        assert!(d.advisory_note().contains("FS-007"));
     }
 
     #[test]
