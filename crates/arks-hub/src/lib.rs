@@ -1,15 +1,23 @@
-//! `arks-hub` — forge collaboration surface (flat-leaf stubs; not Claimed).
+//! `arks-hub` — forge collaboration surface (Partial local forge API + client stubs).
 //!
 //! Wired as flat forge leaves (`arks pr|issue|auth|…`) and transitional
 //! `arks hub …`. Library-only. MUST NOT spawn `gh` or `git`.
 //!
+//! Local forge host: `arks hub serve` or the forge module under `arks serve`
+//! ([[sot:root/arks-self-host-server]]). Design ≠ Claimed.
+//!
 //! Cite: `.spec/sot/arks-hub-cli-surface.sot.md`,
 //! `.spec/sot/arks-cli-personality-factory.sot.md`
-//! Design ≠ Claimed — refuse Missing/Partial with exit 2.
 
 #![forbid(unsafe_code)]
 
+mod http_min;
+pub mod serve;
+mod store;
+
 use std::process::ExitCode;
+
+pub use serve::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
 
 /// Flat / hub groups shown in stub help (gh-shaped + hub-native markers).
 pub const GROUPS: &[&str] = &[
@@ -56,18 +64,19 @@ pub const GROUPS: &[&str] = &[
 pub fn print_help() {
     eprintln!(
         "\
-arks hub — forge collaboration (Partial stubs; not Claimed)
+arks hub — forge collaboration (Partial local API; not Claimed)
 
 USAGE:
     arks hub [OPTIONS] <COMMAND>
     arks <COMMAND> …   (flat forge leaves under arks / gh personality)
 
-COMMANDS (discoverability — bodies refuse until Claimed):
-    auth pr issue release repo label run workflow search status api org
-    config alias completion co browse gist … serve
+COMMANDS:
+    serve         Local forge API listen (Partial; transitional — prefer arks serve)
+    auth pr issue repo api status …
+                  Client leaves (stubs refuse until deepened; never spawn git/gh)
 
-ENV (design):
-    ARKS_HUB_API  ARKS_HUB_TOKEN_FILE  ARKS_HUB_REPO
+ENV (design / Partial):
+    ARKS_HUB_API  ARKS_HUB_TOKEN_FILE  ARKS_HUB_REPO  ARKS_HUB_DATA
 
 Never spawns git/gh. Design ≠ Claimed.
 "
@@ -90,6 +99,13 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             println!("arks hub {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
+        "serve" => match serve::run_serve(&args[1..]) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(e) => {
+                eprintln!("arks hub serve: {e}");
+                ExitCode::from(2)
+            }
+        },
         cmd if GROUPS.contains(&cmd) => {
             if args.get(1).map(String::as_str) == Some("--help")
                 || args.get(1).map(String::as_str) == Some("-h")
