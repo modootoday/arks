@@ -161,33 +161,64 @@ pub fn http_exchange(
 }
 
 /// Partial HTTPS remote client via workspace `ureq` (TLS feature). Not Claimed e2e.
+/// Hardening Partial: connect/read timeouts, redirect cap, User-Agent, size cap.
 fn http_exchange_https(
     url: &str,
     method: &str,
     token: Option<&str>,
     body: Option<&str>,
 ) -> Result<(u16, String), String> {
+    // Redirect cap keeps Partial client fail-closed on redirect loops (not Claimed cookie jar).
     let agent = ureq::AgentBuilder::new()
         .timeout_connect(Duration::from_secs(10))
         .timeout_read(Duration::from_secs(30))
+        .timeout_write(Duration::from_secs(30))
+        .redirects(4)
+        .user_agent("arks-hub/0.0.0 (+Partial HTTPS client; design≠Claimed)")
         .build();
-    let mut req = agent.request(method, url).set("Accept", "application/json");
+    let mut req = agent
+        .request(method, url)
+        .set("Accept", "application/json")
+        .set("Accept-Encoding", "identity");
     if let Some(t) = token {
         req = req.set("Authorization", &format!("Bearer {t}"));
     }
     let resp = if let Some(b) = body {
+        if b.len() > 1024 * 1024 {
+            return Err(format!(
+                "https Partial refuse: request body {} > 1MiB (Partial size cap)",
+                b.len()
+            ));
+        }
         req.set("Content-Type", "application/json")
             .send_string(b)
-            .map_err(|e| format!("https Partial request failed: {e}"))?
+            .map_err(|e| format_https_err("request", e))?
     } else {
-        req.call()
-            .map_err(|e| format!("https Partial request failed: {e}"))?
+        req.call().map_err(|e| format_https_err("request", e))?
     };
     let status = resp.status();
     let text = resp
         .into_string()
         .map_err(|e| format!("https Partial body read: {e}"))?;
+    if text.len() > 4 * 1024 * 1024 {
+        return Err(format!(
+            "https Partial refuse: response body {} > 4MiB (Partial size cap; not Claimed streaming)",
+            text.len()
+        ));
+    }
     Ok((status, text))
+}
+
+fn format_https_err(kind: &str, err: ureq::Error) -> String {
+    match &err {
+        ureq::Error::Status(code, resp) => {
+            let url = resp.get_url().to_string();
+            format!("https Partial {kind} HTTP {code} for {url} (design ≠ Claimed forge remote e2e)")
+        }
+        ureq::Error::Transport(t) => {
+            format!("https Partial {kind} transport: {t} (TLS/DNS/connect; never spawns gh)")
+        }
+    }
 }
 
 fn parse_http_url(url: &str) -> Result<(String, u16, String), String> {

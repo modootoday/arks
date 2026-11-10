@@ -69,15 +69,9 @@ pub const GROUPS: &[&str] = &[
 ];
 
 /// Matrix groups kept as discoverability refuse (OUT / later depth not wired).
-/// `licenses` graduated to a cheap local Partial list (see `cmd_licenses`).
+/// Graduated cheap local Partials: `licenses`, `cache`, `ruleset`, `skill`,
+/// `preview`, `attestation`, `codespace`, `agent-task` (see cmd_* below).
 pub const HUB_OUT_GROUPS: &[&str] = &[
-    "cache",
-    "ruleset",
-    "skill",
-    "agent-task",
-    "preview",
-    "attestation",
-    "codespace",
     "extension",
     "copilot",
 ];
@@ -110,6 +104,13 @@ COMMANDS:
     ssh-key       User SSH keys list|create (local Partial)
     gpg-key       User GPG keys list|create (local Partial)
     licenses      Common SPDX license ids list (local Partial; no gh)
+    cache         Actions cache list (local empty Partial; no gh)
+    ruleset       Repo rulesets list (local empty Partial)
+    skill         Skills list (local empty Partial)
+    preview       Deploy previews list (local empty Partial)
+    attestation   Attestations list (local empty Partial)
+    codespace     Codespaces list (local empty Partial)
+    agent-task    Agent tasks list (local empty Partial)
     browse        Print forge URL (Partial; no browser spawn)
     inbox         Alias → status forge facet (Partial)
     forge-config  Hub client path/token note (Partial; ≠ arks config)
@@ -120,7 +121,7 @@ COMMANDS:
     api           Raw HTTP against ARKS_HUB_API
     status        Aggregated status (Partial)
     co            Alias for pr checkout
-    …             OUT matrix groups: discoverability refuse (extension/copilot/…)
+    …             OUT matrix groups: discoverability refuse (extension/copilot)
 
 ENV:
     ARKS_HUB_API         default http://127.0.0.1:3920 for local mode
@@ -173,6 +174,33 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "ssh-key" => cmd_ssh_key(&args[1..]),
         "gpg-key" => cmd_gpg_key(&args[1..]),
         "licenses" => cmd_licenses(&args[1..]),
+        "cache" => cmd_out_local_list(
+            "cache",
+            &args[1..],
+            "/repos/{owner}/{repo}/actions/caches",
+            true,
+        ),
+        "ruleset" => cmd_out_local_list(
+            "ruleset",
+            &args[1..],
+            "/repos/{owner}/{repo}/rulesets",
+            true,
+        ),
+        "skill" => cmd_out_local_list("skill", &args[1..], "/user/skills", false),
+        "preview" => cmd_out_local_list(
+            "preview",
+            &args[1..],
+            "/repos/{owner}/{repo}/previews",
+            true,
+        ),
+        "attestation" => cmd_out_local_list(
+            "attestation",
+            &args[1..],
+            "/repos/{owner}/{repo}/attestations",
+            true,
+        ),
+        "codespace" => cmd_out_local_list("codespace", &args[1..], "/user/codespaces", false),
+        "agent-task" => cmd_out_local_list("agent-task", &args[1..], "/user/agent-tasks", false),
         "browse" => cmd_browse(&args[1..]),
         "inbox" => {
             eprintln!("arks hub inbox → status (demoted alias; Partial)");
@@ -1533,6 +1561,74 @@ fn cmd_gpg_key(args: &[String]) -> ExitCode {
         None
     };
     local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
+}
+
+/// Cheap OUT→local graduation: list against local forge path or empty JSON array.
+/// `needs_repo` selects whether `--repo` / ARKS_HUB_REPO is required for path fill.
+fn cmd_out_local_list(name: &str, args: &[String], path_tmpl: &str, needs_repo: bool) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("list");
+    if matches!(sub, "-h" | "--help" | "help") {
+        eprintln!(
+            "arks hub {name} [list] — local forge Partial list (OUT graduation; no gh spawn; \
+             design ≠ Claimed)"
+        );
+        return ExitCode::SUCCESS;
+    }
+    if !matches!(sub, "" | "list") {
+        eprintln!(
+            "arks hub {name} {sub}: Partial — only `list` wired; depth beyond inventory refused"
+        );
+        return ExitCode::from(2);
+    }
+    let path = if needs_repo {
+        let (owner, repo) = match repo_slug(args) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("arks hub {name}: {e}");
+                return ExitCode::from(2);
+            }
+        };
+        path_tmpl
+            .replace("{owner}", &owner)
+            .replace("{repo}", &repo)
+    } else {
+        path_tmpl.to_string()
+    };
+    let (base, tok) = match require_api() {
+        Ok(v) => v,
+        Err(e) => {
+            // Empty local inventory when forge is down — still Partial discoverability.
+            eprintln!("arks hub {name} list: {e}");
+            println!("[]");
+            eprintln!(
+                "note: {name} Partial empty list (API unavailable) — design ≠ Claimed; never spawns gh"
+            );
+            return ExitCode::SUCCESS;
+        }
+    };
+    match http_exchange(&base, "GET", &path, Some(&tok), None) {
+        Ok((code, body)) => {
+            if code >= 400 {
+                // Forge may not implement the leaf yet — empty array + honesty.
+                println!("[]");
+                eprintln!(
+                    "note: {name} Partial empty list (HTTP {code} from {path}) — design ≠ Claimed leaf API"
+                );
+                ExitCode::SUCCESS
+            } else {
+                println!("{body}");
+                eprintln!("note: {name} Partial local list — design ≠ Claimed");
+                ExitCode::SUCCESS
+            }
+        }
+        Err(e) => {
+            println!("[]");
+            eprintln!(
+                "note: {name} Partial empty list ({e}) — design ≠ Claimed; never spawns gh"
+            );
+            ExitCode::SUCCESS
+        }
+    }
 }
 
 /// Cheap OUT graduation: static SPDX-ish inventory (Partial; not Claimed license API).
