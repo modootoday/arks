@@ -53,10 +53,15 @@ fn git_hash_object(payload: &[u8]) -> String {
     String::from_utf8(out.stdout).unwrap().trim().to_string()
 }
 
+fn abs_repo(repo: &Path) -> std::path::PathBuf {
+    repo.canonicalize().unwrap_or_else(|_| repo.to_path_buf())
+}
+
 fn git_init(repo: &Path) {
     // Empty template avoids host template-hook copy races on Windows temp dirs.
-    // Prefer `git -C` over current_dir alone — more reliable on Windows runners.
-    let repo_s = repo.to_str().expect("repo utf-8 path");
+    // Prefer absolute `git -C` — Windows Actions sometimes loses relative cwd.
+    let repo_s = abs_repo(repo);
+    let repo_s = repo_s.to_str().expect("repo utf-8 path");
     let st = git_cmd()
         .args(["-C", repo_s, "-c", "init.templateDir=", "init", "--quiet"])
         .status()
@@ -65,7 +70,8 @@ fn git_init(repo: &Path) {
 }
 
 fn git_hash_object_write(repo: &Path, payload: &[u8]) -> String {
-    let repo_s = repo.to_str().expect("repo utf-8 path");
+    let repo_s = abs_repo(repo);
+    let repo_s = repo_s.to_str().expect("repo utf-8 path");
     let mut child = git_cmd()
         .args(["-C", repo_s, "hash-object", "-w", "--stdin"])
         .stdin(Stdio::piped())
@@ -84,7 +90,8 @@ fn git_hash_object_write(repo: &Path, payload: &[u8]) -> String {
 }
 
 fn git_cat_file_blob(repo: &Path, oid: &str) -> Vec<u8> {
-    let repo_s = repo.to_str().expect("repo utf-8 path");
+    let repo_s = abs_repo(repo);
+    let repo_s = repo_s.to_str().expect("repo utf-8 path");
     let out = git_cmd()
         .args(["-C", repo_s, "cat-file", "blob", oid])
         .output()
@@ -98,7 +105,8 @@ fn temp_repo() -> std::path::PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    let root = std::env::temp_dir().join(format!("arks-g1-{stamp}"));
+    let tid = format!("{:?}", std::thread::current().id()).replace(['(', ')'], "");
+    let root = std::env::temp_dir().join(format!("arks-g1-{stamp}-{tid}"));
     std::fs::create_dir_all(&root).unwrap();
     git_init(&root);
     root

@@ -156,16 +156,58 @@ impl FilesystemGitStore {
 
     /// Cache pack objects in RAM and defer pack+idx disk write.
     ///
-    /// Smart-HTTP clone overlaps `PendingPackPersist::persist` with worktree
-    /// checkout via [`Self::take_pending_pack`]. Fetch callers that do not
-    /// overlap MUST still call [`Self::flush_pending_pack`] (or use
-    /// [`Self::ingest_pack_bytes`], which persists immediately).
+    /// Smart-HTTP clone takes the pending job via [`Self::take_pending_pack`]
+    /// and persists after checkout (same thread — no overlap thrash). Prefer
+    /// [`Self::ingest_pack_bytes_deferred_owned`] when the caller already holds
+    /// an owned pack buffer (avoids a second full copy on J-CLONE-LOCAL).
     pub fn ingest_pack_bytes_deferred(
         &mut self,
         pack: &[u8],
         format: ObjectFormat,
     ) -> Result<(), StoreError> {
         self.ingest_pack_bytes_inner(pack, format, true)
+    }
+
+    /// Like [`Self::ingest_pack_bytes_deferred`], but moves `pack` into the
+    /// pending job (no `pack.to_vec()` on the clone hot path).
+    pub fn ingest_pack_bytes_deferred_owned(
+        &mut self,
+        pack: Vec<u8>,
+        format: ObjectFormat,
+    ) -> Result<(), StoreError> {
+        let decoded =
+            DecodedPack::decode(&pack, format).map_err(|e| StoreError::Io(e.to_string()))?;
+        let pack_dir = self.objects_dir.join("pack");
+        let hex = checksum_hex(&decoded.checksum);
+        let pack_path = pack_dir.join(format!("pack-{hex}.pack"));
+        let idx_path = pack_dir.join(format!("pack-{hex}.idx"));
+        let entries: Vec<PackIndexEntry> = decoded
+            .objects
+            .iter()
+            .map(|o| PackIndexEntry {
+                oid: o.oid,
+                crc32: o.crc32,
+                offset: o.offset,
+            })
+            .collect();
+        let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())
+            .map_err(|e| StoreError::Io(e.to_string()))?;
+        let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
+        {
+            let mut pack_objects = self.pack_objects.write().expect("pack_objects");
+            for resolved in decoded.objects {
+                pack_objects.insert(resolved.oid, Arc::new(resolved.object));
+            }
+        }
+        *self.packs_loaded.write().expect("packs_loaded") = true;
+        self.flush_pending_pack()?;
+        self.pending_pack = Some(PendingPackPersist {
+            pack_path,
+            pack,
+            idx_path,
+            idx,
+        });
+        Ok(())
     }
 
     /// Take a deferred pack+idx disk job (if any).

@@ -33,9 +33,10 @@ pub fn clone_http(url: &str, dest: &Path) -> Result<(), RemoteError> {
 pub fn clone_http_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     HttpRemoteUrl::parse(url)?;
     let mut opts = opts.clone();
-    // RAM-first: fill pack cache, checkout, then same-thread pack+idx persist.
-    // No persist thread — Docker Desktop CPU ads made overlap thrash J-CLONE-LOCAL.
-    opts.defer_pack_disk = true;
+    // Sync pack+idx before checkout: deferred ingest copies pack.to_vec() and
+    // still serializes disk after checkout, so wall time was ≥ sync (0.67× at
+    // e466d56). Keep RAM cache + write received slice with no extra copy.
+    opts.defer_pack_disk = false;
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_http_with(repo, url, "origin", &opts)
     })
@@ -49,7 +50,7 @@ pub fn clone_ssh(url: &str, dest: &Path) -> Result<(), RemoteError> {
 pub fn clone_ssh_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     SshRemoteUrl::parse(url)?;
     let mut opts = opts.clone();
-    opts.defer_pack_disk = true;
+    opts.defer_pack_disk = false;
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_ssh_with(repo, url, "origin", &opts)
     })
@@ -67,8 +68,13 @@ where
 
     let mut repo = Repository::open(&git_dir).map_err(|e| RemoteError::Msg(e.to_string()))?;
     let outcome = do_fetch(&mut repo, url)?;
-    // Checkout from RAM pack-cache first; persist pack+idx after (no overlap thread).
+    // Sync ingest already persisted; leftover deferred jobs (if any) flush first.
     let pending = repo.store_mut().take_pending_pack();
+    if let Some(pending) = pending {
+        pending
+            .persist()
+            .map_err(|e| RemoteError::Msg(format!("pack persist: {e}")))?;
+    }
     if let (Some(branch), Some(oid)) = (outcome.head_branch.clone(), outcome.head_oid) {
         repo.refs_mut()
             .update(&branch, &oid, None)
@@ -77,11 +83,6 @@ where
             .set_symbolic("HEAD", &branch)
             .map_err(|e| RemoteError::Msg(e.to_string()))?;
         crate::checkout::checkout_commit(&repo, dest, &oid)?;
-    }
-    if let Some(pending) = pending {
-        pending
-            .persist()
-            .map_err(|e| RemoteError::Msg(format!("pack persist: {e}")))?;
     }
     Ok(())
 }

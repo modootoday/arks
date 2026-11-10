@@ -250,10 +250,10 @@ where
         Some(pack) => {
             // Keep the received pack as pack+idx (Git layout) instead of
             // exploding every object to loose — fetch/clone hot path for M14.
-            // Clone may defer disk write to overlap with checkout.
+            // Clone defers disk via owned move (no second pack.to_vec).
             if opts.defer_pack_disk {
                 repo.store_mut()
-                    .ingest_pack_bytes_deferred(&pack, FORMAT)
+                    .ingest_pack_bytes_deferred_owned(pack, FORMAT)
                     .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
             } else {
                 repo.store_mut()
