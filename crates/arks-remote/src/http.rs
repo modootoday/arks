@@ -343,9 +343,7 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
 }
 
 fn find_header_end(buf: &[u8]) -> Option<usize> {
-    buf.windows(4)
-        .position(|w| w == b"\r\n\r\n")
-        .map(|i| i + 4)
+    buf.windows(4).position(|w| w == b"\r\n\r\n").map(|i| i + 4)
 }
 
 fn read_ureq_response(response: ureq::Response) -> Result<HttpResponse, RemoteError> {
