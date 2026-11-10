@@ -5,10 +5,11 @@
 //!
 //! Claimed: upload-pack service; optional receive-pack when `allow_receive` is set.
 //! Requires `git-daemon-export-ok` unless `export_all`.
+//! Upload-archive enable flag is Partial (protocol body not Claimed).
+//! Never spawns `git` or `gh`.
 
 use crate::error::ServerError;
 use crate::stdio::{receive_pack_stream, upload_pack_stream};
-// upload_pack_session kept for CLI stdio; daemon uses single-stream helpers.
 use arks_repo::Repository;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -16,6 +17,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
+use std::time::Duration;
 
 type LoopbackDaemon = (
     SocketAddr,
@@ -25,10 +27,52 @@ type LoopbackDaemon = (
 
 #[derive(Debug, Clone)]
 pub struct DaemonOptions {
+    /// Primary base (git `--base-path` / first positional).
     pub base_path: PathBuf,
+    /// Extra allow-listed directories (additional positionals; Partial multi-dir).
+    pub allowed_bases: Vec<PathBuf>,
     pub export_all: bool,
     pub allow_receive: bool,
+    pub allow_upload_archive: bool,
+    pub allow_upload_pack: bool,
     pub strict_paths: bool,
+    /// Per-connection idle timeout after the service request (git-daemon `--timeout`).
+    pub timeout_secs: u64,
+    /// Timeout for reading the initial service request pkt (git-daemon `--init-timeout`).
+    pub init_timeout_secs: u64,
+    /// Max concurrent connection handlers (0 = unbounded).
+    pub max_connections: usize,
+    pub verbose: bool,
+    /// Request SO_REUSEADDR-style rebind honesty (platform Partial).
+    pub reuseaddr: bool,
+}
+
+impl Default for DaemonOptions {
+    fn default() -> Self {
+        Self {
+            base_path: PathBuf::from("."),
+            allowed_bases: Vec::new(),
+            export_all: false,
+            allow_receive: false,
+            allow_upload_archive: false,
+            allow_upload_pack: true,
+            strict_paths: false,
+            timeout_secs: 30,
+            init_timeout_secs: 5,
+            max_connections: 0,
+            verbose: false,
+            reuseaddr: true,
+        }
+    }
+}
+
+fn bind_listener(addr: SocketAddr, reuseaddr: bool) -> Result<TcpListener, ServerError> {
+    // git-daemon --reuseaddr: prefer rebinding promptly after restart.
+    // std TcpListener::bind already sets SO_REUSEADDR on many Unix targets;
+    // on Windows we still bind normally (Partial — no raw setsockopt without libc).
+    let _ = reuseaddr;
+    let listener = TcpListener::bind(addr)?;
+    Ok(listener)
 }
 
 /// Bind and serve `git://` until `stop` is set.
@@ -37,18 +81,32 @@ pub fn serve_daemon(
     opts: DaemonOptions,
     stop: Arc<AtomicBool>,
 ) -> Result<(), ServerError> {
-    let listener = TcpListener::bind(addr)?;
+    let listener = bind_listener(addr, opts.reuseaddr)?;
     listener.set_nonblocking(true)?;
+    let active = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     while !stop.load(Ordering::SeqCst) {
         match listener.accept() {
-            Ok((stream, _)) => {
+            Ok((stream, peer)) => {
+                if opts.max_connections > 0
+                    && active.load(Ordering::SeqCst) >= opts.max_connections
+                {
+                    if opts.verbose {
+                        eprintln!("arks daemon: max-connections refuse peer={peer}");
+                    }
+                    // Accept then drop (git-daemon refuses excess); do not leave backlog hung.
+                    drop(stream);
+                    continue;
+                }
                 let opts = opts.clone();
+                let active = active.clone();
+                active.fetch_add(1, Ordering::SeqCst);
                 thread::spawn(move || {
                     let _ = handle_daemon_connection(stream, &opts);
+                    active.fetch_sub(1, Ordering::SeqCst);
                 });
             }
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                thread::sleep(std::time::Duration::from_millis(20));
+                thread::sleep(Duration::from_millis(20));
             }
             Err(e) => return Err(e.into()),
         }
@@ -58,22 +116,37 @@ pub fn serve_daemon(
 
 /// Bind ephemeral loopback daemon; return (addr, stop, join).
 pub fn spawn_loopback_daemon(opts: DaemonOptions) -> Result<LoopbackDaemon, ServerError> {
-    let listener = TcpListener::bind("127.0.0.1:0")?;
+    let listener = bind_listener(
+        "127.0.0.1:0"
+            .parse()
+            .map_err(|e| ServerError::Msg(format!("bad loopback: {e}")))?,
+        opts.reuseaddr,
+    )?;
     let addr = listener.local_addr()?;
     listener.set_nonblocking(true)?;
     let stop = Arc::new(AtomicBool::new(false));
     let stop2 = stop.clone();
+    let active = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let handle = thread::spawn(move || {
         while !stop2.load(Ordering::SeqCst) {
             match listener.accept() {
                 Ok((stream, _)) => {
+                    if opts.max_connections > 0
+                        && active.load(Ordering::SeqCst) >= opts.max_connections
+                    {
+                        drop(stream);
+                        continue;
+                    }
                     let opts = opts.clone();
+                    let active = active.clone();
+                    active.fetch_add(1, Ordering::SeqCst);
                     thread::spawn(move || {
                         let _ = handle_daemon_connection(stream, &opts);
+                        active.fetch_sub(1, Ordering::SeqCst);
                     });
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    thread::sleep(std::time::Duration::from_millis(20));
+                    thread::sleep(Duration::from_millis(20));
                 }
                 Err(e) => return Err(e.into()),
             }
@@ -90,8 +163,10 @@ fn handle_daemon_connection(
     // Accepted sockets inherit nonblocking from the listener on some platforms
     // (notably Windows); force blocking for pack-protocol I/O.
     stream.set_nonblocking(false)?;
-    stream.set_read_timeout(Some(std::time::Duration::from_secs(30)))?;
-    stream.set_write_timeout(Some(std::time::Duration::from_secs(30)))?;
+    let init = Duration::from_secs(opts.init_timeout_secs.max(1));
+    let idle = Duration::from_secs(opts.timeout_secs.max(1));
+    stream.set_read_timeout(Some(init))?;
+    stream.set_write_timeout(Some(init))?;
     let req = match read_service_request(&mut stream) {
         Ok(r) => r,
         Err(e) => {
@@ -99,12 +174,17 @@ fn handle_daemon_connection(
             return Err(e);
         }
     };
-    eprintln!(
-        "arks daemon: service={} path={} base={}",
-        req.service,
-        req.path,
-        opts.base_path.display()
-    );
+    // After the initial request, use --timeout for the pack session.
+    stream.set_read_timeout(Some(idle))?;
+    stream.set_write_timeout(Some(idle))?;
+    if opts.verbose {
+        eprintln!(
+            "arks daemon: service={} path={} base={}",
+            req.service,
+            req.path,
+            opts.base_path.display()
+        );
+    }
     let repo_path = match resolve_repo_path(opts, &req.path) {
         Ok(p) => p,
         Err(e) => {
@@ -118,7 +198,6 @@ fn handle_daemon_connection(
         let marker = repo_path.join("git-daemon-export-ok");
         let marker_git = repo_path.join(".git/git-daemon-export-ok");
         if !marker.is_file() && !marker_git.is_file() {
-            // git-daemon --no-informative-errors: access denied
             let _ = write_err_pkt(&mut stream, "access denied");
             return Ok(());
         }
@@ -130,11 +209,13 @@ fn handle_daemon_connection(
             return Ok(());
         }
     };
-    // Pack protocol is half-duplex on one TCP stream (advertise → read → respond).
     let result = match req.service.as_str() {
-        "git-upload-pack" => match upload_pack_stream(&repo, &mut stream) {
+        "git-upload-pack" if opts.allow_upload_pack => match upload_pack_stream(&repo, &mut stream)
+        {
             Ok(()) => {
-                eprintln!("arks daemon: upload-pack session ok");
+                if opts.verbose {
+                    eprintln!("arks daemon: upload-pack session ok");
+                }
                 Ok(())
             }
             Err(e) => {
@@ -142,9 +223,25 @@ fn handle_daemon_connection(
                 Err(e)
             }
         },
+        "git-upload-pack" => {
+            write_err_pkt(&mut stream, "upload-pack not enabled")?;
+            Ok(())
+        }
         "git-receive-pack" if opts.allow_receive => receive_pack_stream(&mut repo, &mut stream),
         "git-receive-pack" => {
             write_err_pkt(&mut stream, "receive-pack not enabled")?;
+            Ok(())
+        }
+        "git-upload-archive" if opts.allow_upload_archive => {
+            // Partial: flag accepted; protocol body not Claimed.
+            write_err_pkt(
+                &mut stream,
+                "upload-archive enabled but protocol subset not claimed",
+            )?;
+            Ok(())
+        }
+        "git-upload-archive" => {
+            write_err_pkt(&mut stream, "upload-archive not enabled")?;
             Ok(())
         }
         other => {
@@ -179,7 +276,6 @@ struct ServiceRequest {
 }
 
 fn read_service_request(stream: &mut TcpStream) -> Result<ServiceRequest, ServerError> {
-    // First pkt-line: "git-upload-pack /path\0host=…\0[\0extra\0…]"
     let mut lenbuf = [0u8; 4];
     stream.read_exact(&mut lenbuf)?;
     let pkt_len = parse_pkt_len(&lenbuf)?;
@@ -207,7 +303,6 @@ fn parse_pkt_len(lenbuf: &[u8; 4]) -> Result<usize, ServerError> {
 }
 
 fn parse_service_payload(payload: &[u8]) -> Result<ServiceRequest, ServerError> {
-    // Split on NUL.
     let parts: Vec<&[u8]> = payload.split(|b| *b == 0).collect();
     let head = std::str::from_utf8(parts.first().copied().unwrap_or(b""))
         .map_err(|_| ServerError::Protocol("service request not utf-8".into()))?;
@@ -242,43 +337,58 @@ fn parse_service_payload(payload: &[u8]) -> Result<ServiceRequest, ServerError> 
     })
 }
 
+fn all_bases(opts: &DaemonOptions) -> Vec<PathBuf> {
+    let mut v = vec![opts.base_path.clone()];
+    v.extend(opts.allowed_bases.iter().cloned());
+    v
+}
+
 fn resolve_repo_path(opts: &DaemonOptions, req_path: &str) -> Result<PathBuf, ServerError> {
     let rel = req_path.trim_start_matches('/');
-    let candidate = if rel.is_empty() {
-        opts.base_path.clone()
-    } else {
-        opts.base_path.join(rel)
-    };
-    // Prefer existing path; avoid canonicalize prefix mismatches (`\\?\` on Windows).
-    let resolved = if candidate.exists() {
-        candidate
-    } else if candidate.with_extension("git").exists() {
-        candidate.with_extension("git")
-    } else {
-        candidate
-    };
-    let base_norm = strip_verbatim(opts.base_path.as_path());
-    let resolved_norm = strip_verbatim(&resolved);
-    if opts.strict_paths {
-        if resolved_norm != base_norm && !resolved_norm.starts_with(&base_norm) {
-            return Err(ServerError::Msg(format!(
-                "path not allowed: {}",
-                resolved.display()
-            )));
+    let mut last_err = ServerError::Msg(format!("no repository for path {req_path}"));
+    for base in all_bases(opts) {
+        let candidate = if rel.is_empty() {
+            base.clone()
+        } else {
+            base.join(rel)
+        };
+        // Without --strict-paths, allow foo ↔ foo.git alias (git-daemon default).
+        let resolved = if candidate.exists() {
+            candidate.clone()
+        } else if !opts.strict_paths && candidate.with_extension("git").exists() {
+            candidate.with_extension("git")
+        } else if !opts.strict_paths {
+            let stripped = candidate.as_os_str().to_string_lossy();
+            if let Some(s) = stripped.strip_suffix(".git") {
+                let alt = PathBuf::from(s);
+                if alt.exists() {
+                    alt
+                } else {
+                    candidate.clone()
+                }
+            } else {
+                candidate.clone()
+            }
+        } else {
+            candidate.clone()
+        };
+        let base_norm = normalize_path(&base);
+        let resolved_norm = normalize_path(&resolved);
+        if !resolved_norm.starts_with(&base_norm) && resolved_norm != base_norm {
+            last_err = ServerError::Msg(format!("path not allowed: {}", resolved.display()));
+            continue;
         }
-    } else if !resolved_norm.starts_with(&base_norm) && resolved_norm != base_norm {
-        return Err(ServerError::Msg(format!(
-            "path not allowed: {}",
-            resolved.display()
-        )));
+        if resolved.exists() {
+            return Ok(resolved);
+        }
+        last_err = ServerError::Msg(format!("no repository at {}", resolved.display()));
     }
-    if !resolved.exists() {
-        return Err(ServerError::Msg(format!(
-            "no repository at {}",
-            resolved.display()
-        )));
-    }
-    Ok(resolved)
+    Err(last_err)
+}
+
+fn normalize_path(path: &Path) -> PathBuf {
+    let canon = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+    strip_verbatim(&canon)
 }
 
 fn strip_verbatim(path: &Path) -> PathBuf {

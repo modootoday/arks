@@ -219,7 +219,6 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
         ))),
     }
 }
-
 fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut listen = "127.0.0.1:8080".to_string();
     let mut dir: Option<PathBuf> = None;
@@ -402,59 +401,199 @@ pub fn cmd_update_server_info(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
-    let mut listen = "127.0.0.1:9418".to_string();
+    let mut listen_host = "127.0.0.1".to_string();
+    let mut port: u16 = 9418;
     let mut export_all = false;
     let mut allow_receive = false;
-    let mut base: Option<PathBuf> = None;
+    let mut allow_upload_archive = false;
+    let mut allow_upload_pack = true;
+    let mut strict_paths = false;
+    let mut timeout_secs: u64 = 30;
+    let mut init_timeout_secs: u64 = 5;
+    let mut max_connections: usize = 0;
+    let mut verbose = false;
+    let mut reuseaddr = true;
+    let mut bases: Vec<PathBuf> = Vec::new();
     let mut i = 0;
     while i < args.len() {
-        match args[i].as_str() {
+        let a = args[i].as_str();
+        match a {
             "--listen" => {
                 i += 1;
-                listen = args
+                let v = args
                     .get(i)
-                    .ok_or_else(|| CliError::Usage("daemon --listen needs ADDR".into()))?
-                    .clone();
+                    .ok_or_else(|| CliError::Usage("daemon --listen needs ADDR".into()))?;
+                parse_daemon_listen_value(v, &mut listen_host, &mut port)?;
+            }
+            _ if a.starts_with("--listen=") => {
+                parse_daemon_listen_value(&a[9..], &mut listen_host, &mut port)?;
+            }
+            "--port" => {
+                i += 1;
+                port = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("daemon --port needs N".into()))?
+                    .parse()
+                    .map_err(|_| CliError::Usage("daemon --port needs integer".into()))?;
+            }
+            _ if a.starts_with("--port=") => {
+                port = a[7..]
+                    .parse()
+                    .map_err(|_| CliError::Usage("daemon --port needs integer".into()))?;
+            }
+            "--base-path" => {
+                i += 1;
+                bases.push(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("daemon --base-path needs PATH".into()))?,
+                ));
+            }
+            _ if a.starts_with("--base-path=") => {
+                bases.push(PathBuf::from(&a[12..]));
             }
             "--export-all" => export_all = true,
+            "--strict-paths" => strict_paths = true,
+            "--verbose" => verbose = true,
+            "--reuseaddr" => reuseaddr = true,
+            "--no-reuseaddr" => reuseaddr = false,
+            "--timeout" => {
+                i += 1;
+                timeout_secs = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("daemon --timeout needs N".into()))?
+                    .parse()
+                    .map_err(|_| CliError::Usage("daemon --timeout needs integer".into()))?;
+            }
+            _ if a.starts_with("--timeout=") => {
+                timeout_secs = a[10..]
+                    .parse()
+                    .map_err(|_| CliError::Usage("daemon --timeout needs integer".into()))?;
+            }
+            "--init-timeout" => {
+                i += 1;
+                init_timeout_secs = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("daemon --init-timeout needs N".into()))?
+                    .parse()
+                    .map_err(|_| CliError::Usage("daemon --init-timeout needs integer".into()))?;
+            }
+            _ if a.starts_with("--init-timeout=") => {
+                init_timeout_secs = a[15..]
+                    .parse()
+                    .map_err(|_| CliError::Usage("daemon --init-timeout needs integer".into()))?;
+            }
+            "--max-connections" => {
+                i += 1;
+                max_connections = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("daemon --max-connections needs N".into()))?
+                    .parse()
+                    .map_err(|_| {
+                        CliError::Usage("daemon --max-connections needs integer".into())
+                    })?;
+            }
+            _ if a.starts_with("--max-connections=") => {
+                max_connections = a[18..].parse().map_err(|_| {
+                    CliError::Usage("daemon --max-connections needs integer".into())
+                })?;
+            }
             "--enable=receive-pack" => allow_receive = true,
+            "--enable=upload-archive" => allow_upload_archive = true,
+            "--enable=upload-pack" => allow_upload_pack = true,
+            "--disable=receive-pack" => allow_receive = false,
+            "--disable=upload-archive" => allow_upload_archive = false,
+            "--disable=upload-pack" => allow_upload_pack = false,
             "--help" | "-h" => {
                 print_daemon_help();
                 return Ok(());
+            }
+            "--detach" | "--inetd" | "--syslog" | "--informative-errors"
+            | "--no-informative-errors" | "--base-path-relaxed" => {
+                return Err(CliError::NotImplemented(format!(
+                    "daemon option not claimed: {a}"
+                )));
+            }
+            other
+                if other.starts_with("--pid-file")
+                    || other.starts_with("--user")
+                    || other.starts_with("--group")
+                    || other.starts_with("--access-hook")
+                    || other.starts_with("--interpolated-path")
+                    || other.starts_with("--user-path")
+                    || other.starts_with("--log-destination")
+                    || other.starts_with("--allow-override")
+                    || other.starts_with("--forbid-override")
+                    || other.starts_with("--enable=")
+                    || other.starts_with("--disable=") =>
+            {
+                return Err(CliError::NotImplemented(format!(
+                    "daemon option not claimed: {other}"
+                )));
             }
             other if other.starts_with('-') => {
                 return Err(CliError::NotImplemented(format!(
                     "daemon option not claimed: {other}"
                 )));
             }
-            other => {
-                if base.is_some() {
-                    return Err(CliError::Usage("daemon takes one base directory".into()));
-                }
-                base = Some(PathBuf::from(other));
-            }
+            other => bases.push(PathBuf::from(other)),
         }
         i += 1;
     }
-    let base = base.ok_or_else(|| CliError::Usage("daemon <base-path> required".into()))?;
+    if bases.is_empty() {
+        return Err(CliError::Usage("daemon <base-path> required".into()));
+    }
+    let base_path = bases[0].clone();
+    let allowed_bases = bases[1..].to_vec();
+    let listen = format!("{listen_host}:{port}");
     let addr: SocketAddr = listen
         .parse()
-        .map_err(|e| CliError::Usage(format!("bad --listen address: {e}")))?;
+        .map_err(|e| CliError::Usage(format!("bad --listen/--port address: {e}")))?;
+    if !addr.ip().is_loopback() {
+        eprintln!(
+            "arks daemon: non-loopback bind (LAN/WAN) — product self-host Partial; ops owns firewall \
+             ([[sot:root/arks-self-host-server]]); not Claimed WAN-safe"
+        );
+    }
     eprintln!(
-        "arks daemon listening on git://{addr}/ (export_all={export_all}; receive={allow_receive})"
+        "arks daemon listening on git://{addr}/ (export_all={export_all}; receive={allow_receive}; \
+         upload-archive={allow_upload_archive}; timeout={timeout_secs}s; init-timeout={init_timeout_secs}s; \
+         max_conn={max_connections}; bases={})",
+        bases.len()
     );
     let stop = Arc::new(AtomicBool::new(false));
     serve_daemon(
         addr,
         DaemonOptions {
-            base_path: base,
+            base_path,
+            allowed_bases,
             export_all,
             allow_receive,
-            strict_paths: false,
+            allow_upload_archive,
+            allow_upload_pack,
+            strict_paths,
+            timeout_secs,
+            init_timeout_secs,
+            max_connections,
+            verbose,
+            reuseaddr,
         },
         stop,
     )
     .map_err(|e| CliError::Msg(e.to_string()))
+}
+
+fn parse_daemon_listen_value(v: &str, host: &mut String, port: &mut u16) -> CliResult<()> {
+    if let Some((h, p)) = v.rsplit_once(':') {
+        if !h.is_empty() && p.parse::<u16>().is_ok() && !v.starts_with('[') {
+            *host = h.to_string();
+            *port = p
+                .parse()
+                .map_err(|_| CliError::Usage("daemon --listen bad port".into()))?;
+            return Ok(());
+        }
+    }
+    *host = v.to_string();
+    Ok(())
 }
 
 fn require_dir(args: &[String]) -> CliResult<PathBuf> {
@@ -553,23 +692,27 @@ Keys (design): bind, transports, Basic auth refs, TLS notes, SSH key paths, allo
 "
     );
 }
-
 fn print_daemon_help() {
     print!(
         "\
 arks daemon — git:// TCP daemon (git-daemon peer; Wave Sv2 / M25)
 
 Usage:
-  arks daemon [--listen HOST[:PORT]|--listen=…] [--export-all]
-              [--enable=receive-pack] <base-path>
+  arks daemon [--listen HOST[:PORT]|--listen=…] [--port N]
+              [--base-path PATH|--base-path=…] [--export-all] [--strict-paths]
+              [--timeout N] [--init-timeout N] [--max-connections N]
+              [--enable=receive-pack|--enable=upload-archive]
+              [--disable=upload-pack] [--verbose] [--reuseaddr|--no-reuseaddr]
+              <base-path> [more-base-paths…]
 
 Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
 Requires git-daemon-export-ok unless --export-all.
-Claimed today: bind + export-all + optional receive-pack via arks-server daemon.
-Not claimed yet (fail-closed if passed): --port --base-path --strict-paths
-  --timeout --init-timeout --max-connections --verbose --reuseaddr
-  --enable=upload-archive --disable=* --detach --inetd --pid-file
-  --user/--group --syslog --access-hook multi-base positionals.
+Multiple positionals / repeated --base-path = allow-list (Partial).
+Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
+  enable/disable upload-pack/receive-pack; upload-archive flag accepts but
+  protocol body remains Partial refuse.
+Not claimed (fail-closed): --detach --inetd --pid-file --user/--group --syslog
+  --access-hook --interpolated-path --user-path overrides.
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );

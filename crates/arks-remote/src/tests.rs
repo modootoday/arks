@@ -1157,6 +1157,7 @@ fn git_daemon_clone_fetch_push_roundtrip() {
         export_all: true,
         allow_receive: true,
         strict_paths: true,
+        ..DaemonOptions::default()
     })
     .unwrap();
     let url = format!("git://{}/repo.git", addr);
