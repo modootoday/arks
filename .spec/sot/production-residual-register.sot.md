@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-10T19:15:00Z
+updated: 2026-11-10T19:20:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential]
 verify: manual
 rel:
@@ -83,7 +83,7 @@ rel:
 
 # Production residual register
 
-Version **0.9.5**. Canonical register of **post-M9/M10/M11 residual opens** closed by implement, refuse-close, N/A exclusion, or explicit disposition — so public and Specfold claims stay honest without inventing a silent fourth bar. **M23** L3 claimed shape is **Claimed** ([[evidence:root/20261109194858]]). **M25** server transports **G29–G32 Claimed**. **M26** shared-index N-way is **Claimed + G34 Verified** ([[adr:root/20261110074000]], [[evidence:root/20261110074200]]) — additive to L3; historical M22 refuse ADR ([[adr:root/20261110160000]]) is superseded for this bar only. **M24** is **CELIR index dual-path / migration** ([[plan:root/20261109203430]]) — Claimed (host advisory) + **G22–G25 Verified**; ObjectStore Refuse retained. **G26** local PR-sim Claimed; **G27** arks smart-HTTP PR-contention Claimed; **G28** live-private journeys Claimed ([[evidence:root/20261109212500]]) + offline clone PASS ([[evidence:root/20261109213400]]); checklist N/A=0; G28 land tip ~`902d728`. W1–W5 residual exits Claimed where evidenced: **CRED G33**, hooks honor list, **GPGSIG** SSH create/verify (**G37**; OpenPGP N/A), **G9 `--depth` / G35** (filter/promisor N/A), **AUTH Basic G36** (OAuth Refuse), **PF5 Claimed 8/8** (primary [[evidence:root/20261110142500]]), **FW-G8-DEFAULT** / **FW-GH-LIVE-SCALE** harness. Live forge **scale** remains harness + secrets-gated ([[adr:root/20261110161000]] / [[adr:root/20261110221000]]). Bare development Opens remain **0**; §F future-work inventory is **38 terminal rows** (P0–P6) — no bare Deferred.
+Version **0.9.6**. Canonical register of **post-M9/M10/M11 residual opens** closed by implement, refuse-close, N/A exclusion, or explicit disposition — so public and Specfold claims stay honest without inventing a silent fourth bar. **M23** L3 claimed shape is **Claimed** ([[evidence:root/20261109194858]]). **M25** server transports **G29–G32 Claimed**. **M26** shared-index N-way is **Claimed + G34 Verified** ([[adr:root/20261110074000]], [[evidence:root/20261110074200]]) — additive to L3; historical M22 refuse ADR ([[adr:root/20261110160000]]) is superseded for this bar only. **M24** is **CELIR index dual-path / migration** ([[plan:root/20261109203430]]) — Claimed (host advisory) + **G22–G25 Verified**; ObjectStore Refuse retained. **G26** local PR-sim Claimed; **G27** arks smart-HTTP PR-contention Claimed; **G28** live-private journeys Claimed ([[evidence:root/20261109212500]]) + offline clone PASS ([[evidence:root/20261109213400]]); checklist N/A=0; G28 land tip ~`902d728`. W1–W5 residual exits Claimed where evidenced: **CRED G33**, hooks honor list, **GPGSIG** SSH create/verify (**G37**; OpenPGP N/A), **G9 `--depth` / G35** (filter/promisor N/A), **AUTH Basic G36** (OAuth Refuse), **PF5 Claimed 8/8** (primary [[evidence:root/20261110142500]]), **FW-G8-DEFAULT** / **FW-GH-LIVE-SCALE** harness. Live forge **scale** remains harness + secrets-gated ([[adr:root/20261110161000]] / [[adr:root/20261110221000]]). Bare development Opens remain **0**; §F future-work inventory is **38 terminal rows** (P0–P6) — no bare Deferred.
 
 **Bars:** M9 = historical CLI-parity inventory close; M15 = historical full CLI inventory residual; **M16 = active complete flag-symmetry alias bar** (implement \| N/A only); **M17 = full G19 = all G16 journeys**; M10 = lease capability; M11 = production-server. Tracks **M12/M13** (G17/G18), **M14** (frozen G19 allow-list), **M15** (G20), **M16** (G21), **M17** (expanded G19), **M21** (catalog Deferred=0), **M22** (residual terminal close) are in [[sot:root/program-roadmap]] and do **not** redefine M9/M10/M11 historical exits.
 
@@ -236,7 +236,7 @@ L3 ship is **M23** under [[adr:root/20261109194200]]. M21 catalog **Deferred=0**
 
 ### Post-terminal next-queue (reopen-only; not development Opens)
 
-After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (**L0–L4 Done**; L4 = OIDC/Environments dry-run ops readiness, **not** live registry publish PASS; next **L5** / **R5** secrets-gated live scale). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
+After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (**L0–L5 Done**; L4 = OIDC/Environments dry-run ops readiness, **not** live registry publish PASS; L5 = secrets-gated forge-scale ops readiness / dry-run, **not** live forge latency PASS; next **L6** / **R3** filter/promisor N/A unless SoT amends). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
 
 | Priority | Candidate | Disposition today | Reopen requires |
 |----------|-----------|-------------------|-----------------|
@@ -246,7 +246,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R2 | Dumb HTTP **push** | **Claimed (host wire)** — WebDAV write subset [[adr:root/20261110190000]]; [[sot:root/arks-remote]] v0.5.2 + [[sot:root/arks-server]] v0.3.1; ladder **L3** | Optional clean-room twin; re-verify after DAV/wire change |
 | R3 | Partial-clone filter / promisor | **N/A** (FW-G9) | SoT amend beyond `--depth` |
 | R4 | OpenPGP / X.509 / `tag -s` | **N/A** (FW-GPGSIG) | Dedicated crypto harness SoT |
-| R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; measure only with secrets | Secrets + receipt; never invent latency |
+| R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; ladder **L5** ops dry-run / readiness Done (Environment `g8-live` + workflow); **≠** live remasure PASS / product SLO | Secrets + receipt for any live samples; never invent latency |
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 
 ## Why

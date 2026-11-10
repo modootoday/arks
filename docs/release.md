@@ -62,4 +62,4 @@ Do not paste tokens into the repo. Fail-closed skips remain until packaging and 
 
 ## Next
 
-[Contribute](../contribute/) [Getting started](../getting-started/) [Limits](../limits/)
+[Contribute](../contribute/) [Forge scale harness](../forge-scale/) [Getting started](../getting-started/) [Limits](../limits/)

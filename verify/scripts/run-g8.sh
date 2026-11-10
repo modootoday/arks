@@ -4,11 +4,14 @@
 # (supersedes adr:root/20261110151000)
 set -euo pipefail
 
-cd /workspace
+# Portable root: clean-room image mounts the repo at /workspace; host/CI use
+# the script location (same pattern as run-g8-live-scale.sh).
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "${ROOT}"
 
 mkdir -p verify/gates/g8/out
-RECEIPT="${ARKS_G8_RECEIPT_OUT:-/workspace/verify/gates/g8/out/receipt.json}"
-REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"
+RECEIPT="${ARKS_G8_RECEIPT_OUT:-${ROOT}/verify/gates/g8/out/receipt.json}"
+REVISION="$(git -C "${ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"
 

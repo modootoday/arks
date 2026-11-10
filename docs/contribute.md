@@ -33,6 +33,8 @@ Start from [`AGENTS.md`](https://github.com/modootoday/arks/blob/main/AGENTS.md)
 
 Release-channel ops (OIDC Environments, tag dry-run, draft Releases): [Release channels](../release/). Dry-run readiness is not a registry publish PASS.
 
+Secrets-gated live forge smoke / scale harness: [Forge scale harness](../forge-scale/). Dry-run readiness is not a live latency PASS.
+
 ## Next
 
-[Getting started](../getting-started/) [Release channels](../release/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)
+[Getting started](../getting-started/) [Release channels](../release/) [Forge scale harness](../forge-scale/) [Limits](../limits/) [Source on GitHub](https://github.com/modootoday/arks)

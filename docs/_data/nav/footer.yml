@@ -16,5 +16,7 @@ columns:
     items:
       - {title: Source, url: https://github.com/modootoday/arks, new_window: true}
       - {title: Contribute, url: /contribute/}
+      - {title: Release channels, url: /release/}
+      - {title: Forge scale, url: /forge-scale/}
       - {title: Security, url: https://github.com/modootoday/arks/blob/main/SECURITY.md, new_window: true}
       - {title: License, url: https://github.com/modootoday/arks/blob/main/LICENSE, new_window: true}

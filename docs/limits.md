@@ -61,7 +61,7 @@ Latest sole G19 remeasure: **all 19** allow-list journeys ≤0.5× (**Claimed 8/
 
 ### Live harnesses?
 
-May SKIP without secrets; never invent PASS.
+May SKIP without secrets; never invent PASS. Maintainer dry-run / Environment wiring notes: [Forge scale harness](../forge-scale/).
 
 ## Performance wording
 

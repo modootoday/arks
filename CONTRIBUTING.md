@@ -6,6 +6,7 @@ Human-facing guidance lives on the product site:
 
 - [Contribute](docs/contribute.md) — bugs, docs, and maintainer paths
 - [Release channels](docs/release.md) — OIDC Environments, tag dry-run, draft Releases
+- [Forge scale harness](docs/forge-scale.md) — secrets-gated G8 dry-run vs receipt-only live
 - [Getting started](docs/getting-started.md) — build and first commands
 - [Limits](docs/limits.md) — what is not claimed
 

@@ -79,5 +79,5 @@ Also present (unchanged): `github-pages`. Settings: https://github.com/modootoda
 
 1. Operator: bind trusted publishers per registry when ready to cut a real `v*` tag; approve Environments deliberately.
 2. Land npm / PyPI / gem wrapper packaging when product is publish-ready; flip `publish = false` only then.
-3. Product-completion ladder next: **L5** / **R5** secrets-gated live forge scale (never invent PASS); **L9** remains closed owner policy.
+3. Product-completion ladder: **L5** / **R5** forge-scale ops dry-run readiness landed (Environment `g8-live` + workflow; never invent live latency PASS). Next **L6** / **R3** filter/promisor N/A unless SoT amends; **L9** remains closed owner policy.
 4. Optional later: `gha-advisory` journey exit-0 / trend jobs only under research §B labels — never as Verified.
