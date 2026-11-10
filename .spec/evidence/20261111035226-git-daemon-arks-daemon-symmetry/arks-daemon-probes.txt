@@ -1,0 +1,114 @@
+﻿
+==== daemon --help ====
+arks daemon — git:// TCP daemon (Wave Sv2 / M25)
+
+Usage:
+  arks daemon [--listen ADDR] [--export-all] [--enable=receive-pack] <base-path>
+
+Requires git-daemon-export-ok in each repo unless --export-all.
+
+==== daemon --timeout=10 . ====
+error: daemon option not claimed: --timeout=10
+
+==== daemon --init-timeout=5 . ====
+error: daemon option not claimed: --init-timeout=5
+
+==== daemon --max-connections=1 . ====
+error: daemon option not claimed: --max-connections=1
+
+==== daemon --port=9418 . ====
+error: daemon option not claimed: --port=9418
+
+==== daemon --strict-paths . ====
+error: daemon option not claimed: --strict-paths
+
+==== daemon --base-path=C:\tmp . ====
+error: daemon option not claimed: --base-path=C:\tmp
+
+==== daemon --base-path-relaxed . ====
+error: daemon option not claimed: --base-path-relaxed
+
+==== daemon --user-path . ====
+error: daemon option not claimed: --user-path
+
+==== daemon --interpolated-path=%H%D . ====
+error: daemon option not claimed: --interpolated-path=%H%D
+
+==== daemon --reuseaddr . ====
+error: daemon option not claimed: --reuseaddr
+
+==== daemon --pid-file=x.pid . ====
+error: daemon option not claimed: --pid-file=x.pid
+
+==== daemon --enable=upload-pack . ====
+error: daemon option not claimed: --enable=upload-pack
+
+==== daemon --enable=upload-archive . ====
+error: daemon option not claimed: --enable=upload-archive
+
+==== daemon --enable=receive-pack --help ====
+arks daemon — git:// TCP daemon (Wave Sv2 / M25)
+
+Usage:
+  arks daemon [--listen ADDR] [--export-all] [--enable=receive-pack] <base-path>
+
+Requires git-daemon-export-ok in each repo unless --export-all.
+
+==== daemon --disable=upload-pack . ====
+error: daemon option not claimed: --disable=upload-pack
+
+==== daemon --allow-override=upload-pack . ====
+error: daemon option not claimed: --allow-override=upload-pack
+
+==== daemon --forbid-override=upload-pack . ====
+error: daemon option not claimed: --forbid-override=upload-pack
+
+==== daemon --access-hook=hook.sh . ====
+error: daemon option not claimed: --access-hook=hook.sh
+
+==== daemon --inetd . ====
+error: daemon option not claimed: --inetd
+
+==== daemon --detach . ====
+error: daemon option not claimed: --detach
+
+==== daemon --syslog . ====
+error: daemon option not claimed: --syslog
+
+==== daemon --verbose . ====
+error: daemon option not claimed: --verbose
+
+==== daemon --log-destination=stderr . ====
+error: daemon option not claimed: --log-destination=stderr
+
+==== daemon --informative-errors . ====
+error: daemon option not claimed: --informative-errors
+
+==== daemon --no-informative-errors . ====
+error: daemon option not claimed: --no-informative-errors
+
+==== daemon --user=nobody . ====
+error: daemon option not claimed: --user=nobody
+
+==== daemon --group=nogroup . ====
+error: daemon option not claimed: --group=nogroup
+
+==== daemon --listen=127.0.0.1:9418 . ====
+error: daemon option not claimed: --listen=127.0.0.1:9418
+
+==== daemon --listen 127.0.0.1:9419 --help ====
+arks daemon — git:// TCP daemon (Wave Sv2 / M25)
+
+Usage:
+  arks daemon [--listen ADDR] [--export-all] [--enable=receive-pack] <base-path>
+
+Requires git-daemon-export-ok in each repo unless --export-all.
+
+==== daemon --export-all --help ====
+arks daemon — git:// TCP daemon (Wave Sv2 / M25)
+
+Usage:
+  arks daemon [--listen ADDR] [--export-all] [--enable=receive-pack] <base-path>
+
+Requires git-daemon-export-ok in each repo unless --export-all.
+
