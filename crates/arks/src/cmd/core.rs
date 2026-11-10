@@ -235,6 +235,16 @@ pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_add(args: &[String]) -> CliResult<()> {
     // Fs-4 + M16 Sy-1: `-A`/`-u`/`--chmod=+x|-x` (git-add). Cite: https://git-scm.com/docs/git-add
+    // S4: interactive patch/add remains Specfold N/A (agent non-interactive bar).
+    if args
+        .iter()
+        .any(|a| a == "-p" || a == "--patch" || a == "-i" || a == "--interactive" || a == "-e")
+    {
+        return Err(CliError::NotImplemented(
+            "add -p/-i/-e excluded (interactive/TUI); use non-interactive add paths (S4 / Fs-5)"
+                .into(),
+        ));
+    }
     refuse_unknown_flags(args, &["-A", "--all", "-u", "--update", "--chmod"])?;
     // HOOK-005 (M20 Cx-4): nested index write under held lock (hook/agent) refuse-closed.
     // Keep LOCK-001/LOCK-004 + retry guidance so Cm-2/Cx-2 regressions stay honest.

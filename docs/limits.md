@@ -50,6 +50,10 @@ SSH create/verify for commit `gpgsig` may be used (`gpg.format=ssh`). OpenPGP an
 
 Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`) may be used; forge OAuth is not claimed.
 
+### Interactive TUI?
+
+`rebase -i`, `add -p`/`-i`, editor-required `commit` (no `-m`), and similar TUI flows stay **out of claim** under the agent non-interactive bar (S4 honest defer). Use non-interactive forms (`rebase <upstream>`, `commit -m`, path `add`). See [Git vs arks](../git-vs-arks/).
+
 ### Alias coverage?
 
 Unimplemented commands fail closed (non-zero, no repo mutation). See [Alias `git` → `arks`](../alias-git-arks/).

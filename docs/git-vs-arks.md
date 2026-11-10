@@ -39,7 +39,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Full CLI inventory + flag symmetry (pin) | Yes | Implement or N/A exclusion (M16 bar) | **Claimed** (G20 / G21) |
 | `git` → `arks` alias drop-in | N/A | Documented alias; muscle-memory argv | **Claimed** (M16 / G21) |
 | Clean-room journey catalog (19 scenarios) | Oracle peer | Func PASS in Docker G16 | **Claimed** (G16 / G19 venue) |
-| Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | Yes | Out of non-interactive agent bar | **N/A** |
+| Interactive TUI (`rebase -i`, `add -p`, editor-required commit) | Yes | Out of non-interactive agent bar | **N/A** (S4 honest defer) |
 | GUI (`gitk`, `git-gui`) / Git LFS / `scalar` | Available as separate tools | Out of product | **N/A** |
 
 ## Remotes and server
@@ -79,7 +79,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 |----------|-------------|-----------------|
 | R3 filter / promisor | **Claimed `blob:none` (S1 host wire)**; other specs N/A | Symmetry e2e twin (**S6**); expand filter-specs via SoT |
 | R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38)** | Re-verify G38 after crypto wire change |
-| R5 live forge scale PASS | Harness Claimed; ops dry-run Done | Secrets + receipt; never invent latency |
+| R5 live forge scale PASS | Harness Claimed; **S5 secrets-block** Done; live remasure open | Secrets + receipt; never invent latency |
 | R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | crates.io / docs.rs timing | Closed owner policy (L9) | Owner decision |
 
@@ -99,9 +99,9 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | **S1** | R3 filter / promisor (`blob:none`) | **Done** (host wire) |
 | **S2** | R4 OpenPGP / X.509 / `tag -s` | **Done** (G38) |
 | **S3** | Protocol narrows (dumb HTTP deletes) | **Done** (host wire) |
-| **S4** | Interactive / patch flows or honest defer | Open |
-| **S5** | R5 live forge (secrets) or documented block | Open |
-| **S6** | Symmetry e2e matrix (git vs arks) | Open |
+| **S4** | Interactive / patch flows or honest defer | **Done (honest defer)** |
+| **S5** | R5 live forge (secrets) or documented block | **Done (secrets-block)** |
+| **S6** | Symmetry e2e matrix (git vs arks) | Next |
 | **S7** | Refresh this table + residual register | Open |
 | **S_final** | Expanded DoD met; **L9** still closed | Open |
 

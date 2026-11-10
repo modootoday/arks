@@ -50,6 +50,10 @@ bash scripts/forge-scale-readiness.sh
 
 How a claim would be earned: **receipt-only**. Harness Claimed (ready) is already separate from any future live remasure or product SLO. Never publish medians as product SLOs without explicit gate governance.
 
+## Symmetry S5 disposition
+
+Expanded DoD **S5** closed as a **documented secrets-block** when live samples are absent ([[evidence:root/20261110113300]]): harness remains Claimed-ready; structural readiness OK; live remasure PASS requires operator secrets + real receipts. Never invent latency from dry-run / SKIP.
+
 ## Honesty
 
 - Live forge throughput, Checks, and merge-queue behavior are **not** product SLOs — see [Limits](../limits/).
