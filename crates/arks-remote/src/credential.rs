@@ -416,7 +416,15 @@ fn run_askpass(program: &Path, prompt: &str) -> Result<String, RemoteError> {
 }
 
 fn terminal_prompt_allowed() -> bool {
-    !matches!(std::env::var("GIT_TERMINAL_PROMPT").as_deref(), Ok("0"))
+    if matches!(std::env::var("GIT_TERMINAL_PROMPT").as_deref(), Ok("0")) {
+        return false;
+    }
+    // Windows CI often exposes CONIN$ with no human at the keyboard; opening it
+    // and read_line blocks the HTTP exchange forever (Linux/macOS skip missing tty).
+    if std::env::var_os("CI").is_some() || std::env::var_os("GITHUB_ACTIONS").is_some() {
+        return false;
+    }
+    true
 }
 
 fn open_tty_reader() -> Option<Box<dyn BufRead>> {
