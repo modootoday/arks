@@ -144,10 +144,27 @@ pub fn hash_object(format: ObjectFormat, type_name: &str, payload: &[u8]) -> Dig
     let mut h = Hasher::new(format);
     h.update(type_name.as_bytes());
     h.update(b" ");
-    h.update(payload.len().to_string().as_bytes());
+    // Stack decimal — pack ingest hashes every object; avoid `to_string` allocs.
+    let mut size_buf = [0u8; 20];
+    let size = write_decimal(payload.len() as u64, &mut size_buf);
+    h.update(size);
     h.update(&[0]);
     h.update(payload);
     h.finalize()
+}
+
+fn write_decimal(mut n: u64, buf: &mut [u8; 20]) -> &[u8] {
+    if n == 0 {
+        buf[19] = b'0';
+        return &buf[19..];
+    }
+    let mut i = 20;
+    while n > 0 {
+        i -= 1;
+        buf[i] = b'0' + (n % 10) as u8;
+        n /= 10;
+    }
+    &buf[i..]
 }
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]

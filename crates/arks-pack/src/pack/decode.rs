@@ -3,7 +3,7 @@
 //! Primary: <https://git-scm.com/docs/gitformat-pack>
 
 use super::entry::{
-    OBJ_OFS_DELTA, OBJ_REF_DELTA, inflate, kind_of_type, read_ofs_offset, read_type_and_size,
+    OBJ_OFS_DELTA, OBJ_REF_DELTA, inflate_with, kind_of_type, read_ofs_offset, read_type_and_size,
     validate_type,
 };
 use super::header::{self, HEADER_LEN};
@@ -13,6 +13,7 @@ use crate::error::PackError;
 use arks_hash::ObjectFormat;
 use arks_object::RawObject;
 use arks_oid::Oid;
+use flate2::Decompress;
 use std::collections::HashMap;
 
 /// One pack entry resolved to a canonical object.
@@ -50,7 +51,9 @@ impl DecodedPack {
         let mut pos = HEADER_LEN;
         let mut slots = Vec::with_capacity(count as usize);
         let mut meta = Vec::with_capacity(count as usize);
-        let mut offset_index: HashMap<u64, usize> = HashMap::new();
+        let mut offset_index: HashMap<u64, usize> = HashMap::with_capacity(count as usize);
+        // One zlib state for the whole pack — J-CLONE-LOCAL inflate wall.
+        let mut inflator = Decompress::new(true);
 
         for _ in 0..count {
             if pos >= body_limit {
@@ -68,6 +71,8 @@ impl DecodedPack {
                 type_id,
                 declared,
                 entry_offset,
+                &offset_index,
+                &mut inflator,
             )?;
             let crc32 = crc32fast::hash(&bytes[entry_offset as usize..pos]);
             offset_index.insert(entry_offset, slots.len());
@@ -85,7 +90,7 @@ impl DecodedPack {
             return Err(PackError::PackChecksum);
         }
 
-        let objects = resolve_slots(slots, &meta, format, &offset_index)?;
+        let objects = resolve_slots(slots, &meta, format)?;
         Ok(Self {
             format,
             objects,
@@ -105,10 +110,12 @@ struct EntryMeta {
 
 enum Slot {
     Ready(RawObject),
-    Ofs { base_offset: u64, delta: Vec<u8> },
+    /// `base_idx` is the earlier pack slot (ofs-delta bases always precede).
+    Ofs { base_idx: usize, delta: Vec<u8> },
     Ref { base: Oid, delta: Vec<u8> },
 }
 
+#[allow(clippy::too_many_arguments)]
 fn read_body(
     bytes: &[u8],
     pos: &mut usize,
@@ -117,6 +124,8 @@ fn read_body(
     type_id: u8,
     declared: u64,
     entry_offset: u64,
+    offset_index: &HashMap<u64, usize>,
+    inflator: &mut Decompress,
 ) -> Result<Slot, PackError> {
     if type_id == OBJ_OFS_DELTA {
         if *pos >= body_limit {
@@ -128,8 +137,12 @@ fn read_body(
             return Err(PackError::BadOfsOffset);
         }
         let base_offset = entry_offset - rel;
-        let delta = inflate_declared(bytes, pos, body_limit, declared)?;
-        return Ok(Slot::Ofs { base_offset, delta });
+        let base_idx = offset_index
+            .get(&base_offset)
+            .copied()
+            .ok_or(PackError::BadOfsOffset)?;
+        let delta = inflate_declared(bytes, pos, body_limit, declared, inflator)?;
+        return Ok(Slot::Ofs { base_idx, delta });
     }
     if type_id == OBJ_REF_DELTA {
         let hash_len = format.digest_len();
@@ -139,11 +152,11 @@ fn read_body(
         }
         let base = Oid::from_bytes(checksum::oid_kind(format), &bytes[*pos..end])?;
         *pos = end;
-        let delta = inflate_declared(bytes, pos, body_limit, declared)?;
+        let delta = inflate_declared(bytes, pos, body_limit, declared, inflator)?;
         return Ok(Slot::Ref { base, delta });
     }
     let kind = kind_of_type(type_id)?;
-    let payload = inflate_declared(bytes, pos, body_limit, declared)?;
+    let payload = inflate_declared(bytes, pos, body_limit, declared, inflator)?;
     Ok(Slot::Ready(RawObject::new(kind, payload)))
 }
 
@@ -152,12 +165,13 @@ fn inflate_declared(
     pos: &mut usize,
     body_limit: usize,
     declared: u64,
+    inflator: &mut Decompress,
 ) -> Result<Vec<u8>, PackError> {
     if *pos > body_limit {
         return Err(PackError::Truncated);
     }
     let expected = usize::try_from(declared).map_err(|_| PackError::SizeOverflow)?;
-    let (data, consumed) = inflate(&bytes[*pos..body_limit], expected)?;
+    let (data, consumed) = inflate_with(inflator, &bytes[*pos..body_limit], expected)?;
     *pos += consumed;
     Ok(data)
 }
@@ -166,11 +180,10 @@ fn resolve_slots(
     mut slots: Vec<Slot>,
     meta: &[EntryMeta],
     format: ObjectFormat,
-    offset_index: &HashMap<u64, usize>,
 ) -> Result<Vec<ResolvedObject>, PackError> {
     let n = slots.len();
     let mut oids: Vec<Option<Oid>> = vec![None; n];
-    let mut by_oid: HashMap<Oid, usize> = HashMap::new();
+    let mut by_oid: HashMap<Oid, usize> = HashMap::with_capacity(n);
 
     for (i, slot) in slots.iter().enumerate() {
         if let Slot::Ready(obj) = slot {
@@ -179,24 +192,53 @@ fn resolve_slots(
         }
     }
 
+    // Ofs-delta bases always precede in pack order → one forward pass.
+    for i in 0..n {
+        if oids[i].is_some() {
+            continue;
+        }
+        let Slot::Ofs { base_idx, .. } = &slots[i] else {
+            continue;
+        };
+        let base_idx = *base_idx;
+        if oids[base_idx].is_none() {
+            return Err(PackError::DeltaBaseMissing);
+        }
+        let delta = take_delta(&mut slots[i])?;
+        let (kind, base_payload) = match &slots[base_idx] {
+            Slot::Ready(obj) => (obj.kind, obj.payload.as_slice()),
+            _ => {
+                restore_delta(&mut slots[i], delta);
+                return Err(PackError::DeltaBaseMissing);
+            }
+        };
+        let payload = apply_delta(base_payload, &delta)?;
+        let obj = RawObject::new(kind, payload);
+        let oid = obj.oid(format)?;
+        slots[i] = Slot::Ready(obj);
+        record_oid(&mut oids, &mut by_oid, i, oid);
+    }
+
+    // Ref-delta is uncommon on non-thin packs; keep a short multi-pass.
     for _ in 0..n {
         let mut progress = false;
         for i in 0..n {
             if oids[i].is_some() {
                 continue;
             }
-            let Some(base_idx) = base_index(&slots[i], offset_index, &by_oid)? else {
+            let Slot::Ref { base, .. } = &slots[i] else {
+                continue;
+            };
+            let Some(&base_idx) = by_oid.get(base) else {
                 continue;
             };
             if oids[base_idx].is_none() {
                 continue;
             }
-            // Take delta ownership (no clone); borrow base payload (often large).
             let delta = take_delta(&mut slots[i])?;
             let (kind, base_payload) = match &slots[base_idx] {
                 Slot::Ready(obj) => (obj.kind, obj.payload.as_slice()),
                 _ => {
-                    // Base not ready — put delta back and retry later.
                     restore_delta(&mut slots[i], delta);
                     continue;
                 }
@@ -214,7 +256,7 @@ fn resolve_slots(
     }
 
     if oids.iter().any(Option::is_none) {
-        return Err(classify_unresolved(&slots, &oids, offset_index, &by_oid));
+        return Err(classify_unresolved(&slots, &oids, &by_oid));
     }
 
     let mut objects = Vec::with_capacity(n);
@@ -238,24 +280,6 @@ fn record_oid(oids: &mut [Option<Oid>], by_oid: &mut HashMap<Oid, usize>, index:
     by_oid.entry(oid).or_insert(index);
 }
 
-fn base_index(
-    slot: &Slot,
-    offset_index: &HashMap<u64, usize>,
-    by_oid: &HashMap<Oid, usize>,
-) -> Result<Option<usize>, PackError> {
-    match slot {
-        Slot::Ready(_) => Ok(None),
-        Slot::Ofs { base_offset, .. } => {
-            let idx = offset_index
-                .get(base_offset)
-                .copied()
-                .ok_or(PackError::DeltaBaseMissing)?;
-            Ok(Some(idx))
-        }
-        Slot::Ref { base, .. } => Ok(by_oid.get(base).copied()),
-    }
-}
-
 fn take_delta(slot: &mut Slot) -> Result<Vec<u8>, PackError> {
     match slot {
         Slot::Ofs { delta, .. } | Slot::Ref { delta, .. } => Ok(std::mem::take(delta)),
@@ -273,7 +297,6 @@ fn restore_delta(slot: &mut Slot, bytes: Vec<u8>) {
 fn classify_unresolved(
     slots: &[Slot],
     oids: &[Option<Oid>],
-    offset_index: &HashMap<u64, usize>,
     by_oid: &HashMap<Oid, usize>,
 ) -> PackError {
     let mut internal = false;
@@ -283,11 +306,7 @@ fn classify_unresolved(
             continue;
         }
         match slot {
-            Slot::Ofs { base_offset, .. } => match offset_index.get(base_offset) {
-                Some(&bi) if oids[bi].is_none() => internal = true,
-                Some(_) => internal = true,
-                None => external = true,
-            },
+            Slot::Ofs { .. } => internal = true,
             Slot::Ref { base, .. } => {
                 if by_oid.contains_key(base) {
                     internal = true;

@@ -153,6 +153,17 @@ pub(crate) fn zlib_compress(data: &[u8]) -> Result<Vec<u8>, PackError> {
 /// Inflate one zlib stream. Returns `(bytes, input_consumed)`.
 pub(crate) fn inflate(input: &[u8], expected: usize) -> Result<(Vec<u8>, usize), PackError> {
     let mut dec = Decompress::new(true);
+    inflate_with(&mut dec, input, expected)
+}
+
+/// Inflate into a reusable decompressor (pack decode hot path — no per-entry alloc,
+/// no `resize(..., 0)` zero-fill; `decompress_vec` writes spare capacity only).
+pub(crate) fn inflate_with(
+    dec: &mut Decompress,
+    input: &[u8],
+    expected: usize,
+) -> Result<(Vec<u8>, usize), PackError> {
+    dec.reset(true);
     if expected == 0 {
         let mut dummy = [0u8; 1];
         let status = dec
@@ -170,11 +181,10 @@ pub(crate) fn inflate(input: &[u8], expected: usize) -> Result<(Vec<u8>, usize),
     let mut out = Vec::new();
     out.try_reserve_exact(expected)
         .map_err(|_| PackError::SizeOverflow)?;
-    out.resize(expected, 0);
     let status = dec
-        .decompress(input, &mut out, FlushDecompress::Finish)
+        .decompress_vec(input, &mut out, FlushDecompress::Finish)
         .map_err(|e| PackError::Zlib(e.to_string()))?;
-    let produced = usize::try_from(dec.total_out()).map_err(|_| PackError::SizeOverflow)?;
+    let produced = out.len();
     let consumed = usize::try_from(dec.total_in()).map_err(|_| PackError::SizeOverflow)?;
     if status != Status::StreamEnd {
         return Err(PackError::Zlib("incomplete zlib stream".into()));
