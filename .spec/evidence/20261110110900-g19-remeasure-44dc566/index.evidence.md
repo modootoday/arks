@@ -17,7 +17,7 @@ files:
 
 ## Context
 
-Authoritative **best complete** sole Docker `g19` (`--name arks-pf5-rm-44dc566b`) at tip `44dc566` (“Avoid zero-filling HTTP read chunks”). Cites [[sot:root/pf5-journey-seed-amortization]] — HTTP seed amortization exhausted; residual **FW-PF5-J-CLONE-LOCAL**. Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-PATH-01** ≤0.5× **PASS** at **0.4675**; **J-CLONE-LOCAL-01** remains `aggressive_na` at **0.6556** — A ≤0.5× not met (do not market). Later tip remasure attempts after this receipt were SIGTERM/SIGKILL’d mid-run (OOM=false); do not stampede.
+Historical **best-better-LOCAL** sole Docker `g19` (`--name arks-pf5-rm-44dc566b`) measured at commit `44dc566` (“Avoid zero-filling HTTP read chunks”) — **not** current tip honesty. Tip remasure is [[evidence:root/20261110111700]] at `91fbf64`. Cites [[sot:root/pf5-journey-seed-amortization]] — HTTP seed amortization exhausted; residual **FW-PF5-J-CLONE-LOCAL**. Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-PATH-01** ≤0.5× **PASS** at **0.4675**; **J-CLONE-LOCAL-01** remains `aggressive_na` at **0.6556** — A ≤0.5× not met (do not market / do not flip PF5 8/8).
 
 ## Scope measured (in)
 

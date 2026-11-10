@@ -21,7 +21,7 @@ rel:
     - adr:root/20261108083507
     - research:root/20261108073650
     - research:root/20261108071916
-  evidence: [evidence:root/20261108183045, evidence:root/20261108200811, evidence:root/20261109065018, evidence:root/20261108233610, evidence:root/20261109114207, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110110900]
+  evidence: [evidence:root/20261108183045, evidence:root/20261108200811, evidence:root/20261109065018, evidence:root/20261108233610, evidence:root/20261109114207, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110110900, evidence:root/20261110111700]
 ---
 
 # Clean-room journey compare
@@ -203,4 +203,4 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 | Live-remote journeys (G8) | **Claimed (default-on when secrets)** | [[adr:root/20261110220000]]; live when token+URL; SKIP when absent; prefer offline/local peer for ladder |
 | Path/`file://` clone lane | **Closed (v0.3.0; hardlink-prefer v0.4.0)** | **J-CLONE-PATH-01**; local path + same-host `file://` via hardlink-or-copy (not `--shared`; not piped upload-pack) |
 | Public Pages perf summary | **Closed (honesty)** | Allowed only with receipt + public-surface honesty; default keep under `.spec/evidence/` |
-| Pf5 aggressive ≤0.5× leftovers | **Claimed(partial 7/8) + Verified** | Claim amortization [[evidence:root/20261111001400]]; **best complete** sole pin tip `44dc566` [[evidence:root/20261110110900]] (PATH **0.4675** ≤0.5 PASS; LOCAL **0.6556** `aggressive_na`; miss=[]); prior Verified `c1b0b24` [[evidence:root/20261110003836]] / `e466d56` [[evidence:root/20261110014600]]; prior 6/8 [[evidence:root/20261110234600]]; no silent keep-at-0.8 |
+| Pf5 aggressive ≤0.5× leftovers | **Claimed(partial 7/8) + Verified** | Claim amortization [[evidence:root/20261111001400]]; **tip remasure** `91fbf64` [[evidence:root/20261110111700]] (LOCAL **0.7262** `aggressive_na`; PATH **0.4928** ≤0.5 PASS; no 8/8); historical best-better-LOCAL `44dc566` [[evidence:root/20261110110900]] (LOCAL **0.6556** / PATH **0.4675**); prior Verified `c1b0b24` [[evidence:root/20261110003836]] / `e466d56` [[evidence:root/20261110014600]]; prior 6/8 [[evidence:root/20261110234600]]; no silent keep-at-0.8 |

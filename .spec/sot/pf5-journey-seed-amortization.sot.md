@@ -15,12 +15,12 @@ rel:
     - adr:root/20261110162000
     - plan:root/20261110150000
     - evidence:root/20261110153000
-  evidence: [evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600, evidence:root/20261110110900]
+  evidence: [evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600, evidence:root/20261110110900, evidence:root/20261110111700]
 ---
 
 # Pf5 journey seed amortization (≤0.5× reopen)
 
-Version **0.1.5**. Normative harness rules that reopen [[adr:root/20261110162000]] for the eight Pf5 `aggressive_na` journeys without inventing Git semantics. Claim amortization receipt [[evidence:root/20261111001400]] — **Claimed(partial 7/8)** (prior [[evidence:root/20261110234600]] 6/8; [[evidence:root/20261110224500]] 4/8). **Best complete** sole Docker Verified pin [[evidence:root/20261110110900]] (tip `44dc566`; PATH **0.4675** ≤0.5 PASS; CLONE-LOCAL `aggressive_na` @ **0.6556**; miss=[]); prior pin [[evidence:root/20261110014600]] (`e466d56` @ 0.6705).
+Version **0.1.6**. Normative harness rules that reopen [[adr:root/20261110162000]] for the eight Pf5 `aggressive_na` journeys without inventing Git semantics. Claim amortization receipt [[evidence:root/20261111001400]] — **Claimed(partial 7/8)** (prior [[evidence:root/20261110234600]] 6/8; [[evidence:root/20261110224500]] 4/8). **Tip remasure** [[evidence:root/20261110111700]] at `91fbf64` — LOCAL **0.7262** `aggressive_na`, PATH **0.4928** ≤0.5 PASS (no 8/8). Historical best-better-LOCAL [[evidence:root/20261110110900]] at `44dc566` (LOCAL **0.6556** / PATH **0.4675**); prior pin [[evidence:root/20261110014600]] (`e466d56` @ 0.6705).
 
 ## Rule
 

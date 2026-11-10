@@ -3,15 +3,15 @@ id: evidence:root/20261110111700
 title: G19 sole-runner remeasure at tip 91fbf64 (PF5 partial 7/8; CLONE-LOCAL aggressive_na)
 status: active
 created: 2026-11-10T02:17:00Z
-updated: 2026-11-10T02:17:00Z
+updated: 2026-11-10T02:23:47Z
 tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110014600]
   evidence: []
 files:
-  - {path: receipt.json, sha256: 326323b97c8fe7dfbc51cf8056315b740b646c8349983ae9c5d0ece24d146057, bytes: 7253, store: repo}
-  - {path: metrics.json, sha256: fbd000a25fdbe91f4df395be8cf9a605f6f3d18a667fef0798e3d8c0721ee3bd, bytes: 228235, store: repo}
-  - {path: arks-pf5-rm-91fbf64c.log, sha256: d4d0a3b0c2f40787830c597307f9378f2a1b08f93492c913e9d0f9c07faf1f3f, bytes: 13520, store: repo}
+  - {path: receipt.json, sha256: 1e439534732939ff827a23534a488625f76da3132daf2c0064f96d0fd261ce3f, bytes: 7530, store: repo}
+  - {path: metrics.json, sha256: 13c2d82f08602ad48534d1c9d1c7feb5572e2a93613b6c28724efa46fbdaf938, bytes: 237011, store: repo}
+  - {path: arks-pf5-rm-91fbf64c.log, sha256: 308b903e0bb97abdbc37b2a21895cc41a84af687b8a17c38a3352270d9ce9d3e, bytes: 13794, store: repo}
 ---
 
 # G19 sole-runner remeasure — tip `91fbf64` (PF5 7/8; A not flipped)
