@@ -175,7 +175,9 @@ fn m16_sy5_02_bisect_notes_blame_fsck_count_packrefs() {
     // Use arks-compatible portable check via rustc-less: compare file.
     #[cfg(unix)]
     {
-        let script = repo.join("check.sh");
+        // Keep the probe script *outside* the worktree — an in-repo `check.sh`
+        // is untracked dirty and trips BISECT-002 on the first mark (honest).
+        let script = tmp.path().join("check.sh");
         fs::write(
             &script,
             "#!/bin/sh\ngrep -q v5 a.txt && exit 1 || exit 0\n",

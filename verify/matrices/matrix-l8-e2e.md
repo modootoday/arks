@@ -5,12 +5,12 @@ Venue: Docker clean-room only (`verify/docker-compose.yml`). Host `cargo test` i
 
 ## Suite (sequential; one `compose run --rm` at a time)
 
-| Order | Compose | Intent | Required for L8 |
-|-------|---------|--------|-----------------|
-| 1 | `g14` | M9 CLI-parity production + G13→G1 regression | **yes** |
-| 2 | `g16` | 19 diverse git↔arks journeys (func + timing metrics) | **yes** |
-| 3 | `g20` | M15 full CLI inventory symmetry | expand until green |
-| 4 | `g21` | M16 complete flag / alias symmetry | expand until green |
+| Order | Compose | Intent | Required for L8 | Tip status (agent receipts under `out/`; not Claimed invent) |
+|-------|---------|--------|-----------------|--------------------------------------------------------------|
+| 1 | `g14` | M9 CLI-parity production + G13→G1 regression | **yes** | Docker PASS on tip |
+| 2 | `g16` | 19 diverse git↔arks journeys (func + timing metrics) | **yes** | Docker PASS (19 journeys) on tip |
+| 3 | `g20` | M15 full CLI inventory symmetry | expand until green | Docker PASS after celir default-tree scan fix |
+| 4 | `g21` | M16 complete flag / alias symmetry | expand until green | Docker PASS (sy5 bisect fixture outside WT) |
 
 Optional later layers (still sequential; not a substitute for 1–2): `g7`, `g15`, `g35`, `g37`. Do **not** parallelize with `g19`. Do **not** restart sole G19 remasure unless honesty requires it.
 
