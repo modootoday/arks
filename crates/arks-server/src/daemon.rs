@@ -470,17 +470,9 @@ fn path_allowed(path: &str, filter: &ArchivePathFilter) -> bool {
     true
 }
 
-/// Partial upload-archive body: ACK pkt-line + ustar of treeish (default HEAD)
-/// multiplexed as sideband-64k band-1 (Partial; closer to git-daemon stream).
-/// `--prefix=` / includes / `--exclude=` Partial; Claimed format/parity still Missing.
-fn serve_upload_archive_partial<W: Write>(
-    repo: &Repository,
-    args: &[String],
-    out: &mut W,
-    verbose: bool,
-) -> Result<(), ServerError> {
-    // Honor `--format=` honestly: only tar (default) Partial; others fail-closed.
-    if let Some(fmt) = args
+/// Resolve `--format=` honesty: only tar/ustar Partial; empty/others fail-closed.
+fn archive_format_honesty(args: &[String]) -> Result<&'static str, String> {
+    let fmt = args
         .iter()
         .find_map(|a| a.strip_prefix("--format=").map(str::to_string))
         .or_else(|| {
@@ -491,19 +483,42 @@ fn serve_upload_archive_partial<W: Write>(
                     None
                 }
             })
-        })
-    {
-        let fmt = fmt.to_ascii_lowercase();
-        if fmt != "tar" && fmt != "ustar" {
-            return write_err_pkt(
-                out,
-                &format!(
-                    "upload-archive Partial: --format={fmt} not wired (tar/ustar only; \
+        });
+    match fmt.as_deref() {
+        None => Ok("tar"),
+        Some("") => Err(
+            "upload-archive Partial: --format= needs value (tar|ustar only; \
+             zip/others Missing — design ≠ Claimed)"
+                .into(),
+        ),
+        Some(f) => {
+            let f = f.to_ascii_lowercase();
+            if f == "tar" || f == "ustar" {
+                Ok(if f == "ustar" { "ustar" } else { "tar" })
+            } else {
+                Err(format!(
+                    "upload-archive Partial: --format={f} not wired (tar/ustar only; \
                      zip/others Missing — design ≠ Claimed)"
-                ),
-            );
+                ))
+            }
         }
     }
+}
+
+/// Partial upload-archive body: ACK pkt-line + ustar of treeish (default HEAD)
+/// multiplexed as sideband-64k band-1 (Partial; closer to git-daemon stream).
+/// Path-filter (`--prefix=` / includes / `--exclude=`) applied while packing the
+/// stream body; Claimed format/parity still Missing.
+fn serve_upload_archive_partial<W: Write>(
+    repo: &Repository,
+    args: &[String],
+    out: &mut W,
+    verbose: bool,
+) -> Result<(), ServerError> {
+    let format = match archive_format_honesty(args) {
+        Ok(f) => f,
+        Err(e) => return write_err_pkt(out, &e),
+    };
     let want_raw = args.iter().any(|a| a == "--no-sideband" || a == "--raw-ustar");
     let (treeish, filter) = match parse_archive_path_filter(args) {
         Ok(v) => v,
@@ -511,7 +526,9 @@ fn serve_upload_archive_partial<W: Write>(
     };
     if verbose {
         eprintln!(
-            "arks daemon: upload-archive Partial treeish={treeish} prefix={:?} includes={} excludes={} (ACK+{}; Claimed archive parity Missing)",
+            "arks daemon: upload-archive Partial treeish={treeish} format={format} \
+             prefix={:?} includes={} excludes={} (ACK+{}; path-filter in stream; \
+             Claimed archive parity Missing)",
             filter.prefix,
             filter.includes.len(),
             filter.excludes.len(),
@@ -531,7 +548,7 @@ fn serve_upload_archive_partial<W: Write>(
     out.write_all(&ack)?;
     if want_raw {
         match write_ustar_tree(repo, &tree_oid, out, &filter) {
-            Ok(()) => {
+            Ok(_n) => {
                 out.flush()?;
                 Ok(())
             }
@@ -541,17 +558,24 @@ fn serve_upload_archive_partial<W: Write>(
             }
         }
     } else {
-        // Closer to git: band-2 progress, then band-1 ustar chunks + flush.
+        // Closer to git: band-2 progress (format + filter honesty), then band-1 ustar.
         write_sideband_progress(
             out,
-            &format!("arks Partial upload-archive: packing {treeish}\n"),
+            &format!(
+                "arks Partial upload-archive: packing {treeish} format={format} \
+                 (path-filter in stream Partial)\n"
+            ),
         )?;
         let mut archive = Vec::new();
         match write_ustar_tree(repo, &tree_oid, &mut archive, &filter) {
-            Ok(()) => {
+            Ok(n) => {
                 write_sideband_progress(
                     out,
-                    &format!("arks Partial upload-archive: {} bytes ustar\n", archive.len()),
+                    &format!(
+                        "arks Partial upload-archive: {n} entries / {} bytes ustar \
+                         (path-filter applied; Claimed parity Missing)\n",
+                        archive.len()
+                    ),
                 )?;
                 write_sideband_stream(out, &archive)
             }
@@ -641,16 +665,19 @@ fn tree_for_oid(repo: &Repository, oid: &Oid) -> Result<Oid, String> {
     }
 }
 
+/// Pack filtered tree as ustar into `out`. Returns count of included blob entries
+/// (path-filter applied in the stream body — Partial; not Claimed archive parity).
 fn write_ustar_tree<W: Write>(
     repo: &Repository,
     tree_oid: &Oid,
     out: &mut W,
     filter: &ArchivePathFilter,
-) -> Result<(), ServerError> {
+) -> Result<usize, ServerError> {
     let mut entries: Vec<(String, Oid)> = Vec::new();
     flatten_tree_entries(repo, tree_oid, "", &mut entries)
         .map_err(|e| ServerError::Msg(e.to_string()))?;
     entries.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
+    let mut included = 0usize;
     for (path, oid) in entries {
         if !path_allowed(&path, filter) {
             continue;
@@ -670,9 +697,10 @@ fn write_ustar_tree<W: Write>(
             continue;
         }
         write_ustar_entry(out, &archived, &obj.payload, 0o644)?;
+        included += 1;
     }
     out.write_all(&[0u8; 1024])?;
-    Ok(())
+    Ok(included)
 }
 
 fn write_ustar_entry<W: Write>(
@@ -952,5 +980,95 @@ mod archive_path_filter_tests {
         };
         assert!(!path_allowed("foo/.git/config", &filter));
         assert!(path_allowed("foo/bar", &filter));
+    }
+
+    #[test]
+    fn archive_format_honesty_tar_only_partial() {
+        assert_eq!(archive_format_honesty(&[]).unwrap(), "tar");
+        assert_eq!(
+            archive_format_honesty(&["--format=ustar".into()]).unwrap(),
+            "ustar"
+        );
+        assert!(archive_format_honesty(&["--format=zip".into()]).is_err());
+        assert!(archive_format_honesty(&["--format=".into()]).is_err());
+    }
+
+    #[test]
+    fn upload_archive_protocol_body_applies_path_filter() {
+        use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, TreeMode};
+        use arks_store::{ObjectFormat, ObjectStore};
+        use tempfile::TempDir;
+
+        let dir = TempDir::new().unwrap();
+        let git = dir.path().to_path_buf();
+        std::fs::create_dir_all(git.join("objects")).unwrap();
+        std::fs::create_dir_all(git.join("refs/heads")).unwrap();
+        std::fs::write(git.join("HEAD"), b"ref: refs/heads/main\n").unwrap();
+        let mut repo = Repository::open(&git).unwrap();
+        let keep = RawObject::new(ObjectKind::Blob, b"keep\n".to_vec());
+        let keep_oid = repo.store_mut().put(ObjectFormat::Sha1, &keep).unwrap();
+        let secret = RawObject::new(ObjectKind::Blob, b"secret\n".to_vec());
+        let secret_oid = repo.store_mut().put(ObjectFormat::Sha1, &secret).unwrap();
+        let tree = Tree::new(vec![
+            TreeEntry {
+                mode: TreeMode::File,
+                name: "keep.txt".into(),
+                oid: keep_oid,
+            },
+            TreeEntry {
+                mode: TreeMode::File,
+                name: "secret.txt".into(),
+                oid: secret_oid,
+            },
+        ])
+        .unwrap();
+        let tree_obj = RawObject::new(ObjectKind::Tree, tree.encode().unwrap());
+        let tree_oid = repo.store_mut().put(ObjectFormat::Sha1, &tree_obj).unwrap();
+        let sig = Signature {
+            name: "arks".into(),
+            email: "arks@example.com".into(),
+            timestamp: 1_700_000_000,
+            timezone: "+0000".into(),
+        };
+        let commit = Commit {
+            tree: tree_oid,
+            parents: Vec::new(),
+            author: sig.clone(),
+            committer: sig,
+            gpgsig: None,
+            message: "archive filter\n".into(),
+        };
+        let commit_obj = RawObject::new(ObjectKind::Commit, commit.encode().unwrap());
+        let commit_oid = repo
+            .store_mut()
+            .put(ObjectFormat::Sha1, &commit_obj)
+            .unwrap();
+        repo.refs_mut()
+            .update("refs/heads/main", &commit_oid, None)
+            .unwrap();
+
+        let args = vec![
+            "HEAD".into(),
+            "--prefix=pkg/".into(),
+            "--exclude=secret.txt".into(),
+            "--format=tar".into(),
+        ];
+        let mut body = Vec::new();
+        serve_upload_archive_partial(&repo, &args, &mut body, false).unwrap();
+        let text = String::from_utf8_lossy(&body);
+        assert!(text.contains("ACK"), "protocol body needs ACK");
+        assert!(
+            body.windows(b"pkg/keep.txt".len())
+                .any(|w| w == b"pkg/keep.txt"),
+            "filtered stream must include prefixed keep.txt"
+        );
+        assert!(
+            !body.windows(b"secret.txt".len()).any(|w| w == b"secret.txt"),
+            "path-filter must drop secret.txt from stream body"
+        );
+        assert!(
+            text.contains("path-filter"),
+            "format/filter honesty in sideband progress Partial"
+        );
     }
 }
