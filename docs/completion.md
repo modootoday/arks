@@ -45,7 +45,7 @@ G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: unblock wave REVERT-first
 4. **L9** — owner SoT reopen pack only — **Operator-only**
 5. Crypto immunity / full sync / forge product UX — Impossible or Non-goal (detect / thin-wrap Claimed; **never** market “immune”)
 
-Detail: [20261111012840](https://github.com/modootoday/arks/blob/main/.spec/research/20261111012840-still-blocked-external-deps-unblock.research.md).
+Detail: [20261111012840](https://github.com/modootoday/arks/blob/main/.spec/research/20261111012840-still-blocked-external-deps-unblock.research.md). Self vs deps vs FFI buckets: [20261111022345](https://github.com/modootoday/arks/blob/main/.spec/research/20261111022345-gap-classification-self-dep-ffi.research.md).
 
 ## How maintainers verify
 

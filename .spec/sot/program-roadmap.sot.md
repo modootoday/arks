@@ -145,7 +145,7 @@ Carrying tip class ≥ `14082e6` + Pf5 unblock [[evidence:root/20261111015154]] 
 4. **L9** — owner SoT reopen pack only ([[research:root/20261111003444]]); no agent publish.
 5. **Forge** — keep Claimed-closest thin-wrap; do not market full forge UX.
 
-Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]]. External-deps still-blocked options: [[research:root/20261111012840]].
+Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]]. External-deps still-blocked options: [[research:root/20261111012840]]. Gap classification (self-implement / dependency packages / FFI·CLI): [[research:root/20261111022345]].
 
 ## Rule
 
