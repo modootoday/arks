@@ -516,8 +516,12 @@ Honesty ([[sot:root/arks-self-host-server]]):
   - Hub OAuth is refused as primary git-remote auth
   - `serve config` is server config (Partial) — not `arks config`, not hub
 
-Bind: git HTTP default 127.0.0.1:8080; forge API default 127.0.0.1:3920
-(--forge-listen / --forge-data). LAN/WAN: ops owns firewall + TLS — not Claimed WAN-safe.
+Ports ([[sot:root/arks-self-host-server]] / [[research:root/20261111055609]]):
+  Normative targets (clone URLs / dedicated host): SSH 22, HTTP 80, HTTPS 443, git:// 9418
+  Unprivileged loopback demo binds (current process defaults): HTTP 127.0.0.1:8080;
+    SSH stub 127.0.0.1:2222 — privilege / host-sshd workarounds, NOT more-standard Git ports
+  Forge API (arks-local convention): 127.0.0.1:3920 (--forge-listen / --forge-data)
+LAN/WAN: ops owns firewall + TLS — not Claimed WAN-safe.
 "
     );
 }
@@ -559,7 +563,8 @@ Usage:
   arks daemon [--listen HOST[:PORT]|--listen=…] [--export-all]
               [--enable=receive-pack] <base-path>
 
-Default listen 127.0.0.1:9418. Requires git-daemon-export-ok unless --export-all.
+Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
+Requires git-daemon-export-ok unless --export-all.
 Claimed today: bind + export-all + optional receive-pack via arks-server daemon.
 Not claimed yet (fail-closed if passed): --port --base-path --strict-paths
   --timeout --init-timeout --max-connections --verbose --reuseaddr

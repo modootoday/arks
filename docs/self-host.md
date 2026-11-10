@@ -6,6 +6,7 @@ sections:
   - what
   - commands
   - bind
+  - ports
   - auth
   - vs
   - honesty
@@ -69,6 +70,20 @@ arks pr list --host http://host          # flat forge client
 | WAN | Bind + firewall + **HTTPS/TLS in front** (HTTP) and/or SSH keys + firewall | Wire after traffic arrives |
 
 **Ops owns:** firewall rules, DNS, TLS certificates, reverse proxies. Prefer HTTPS for HTTP off localhost. **In-process TLS** is not claimed yet. arks does **not** claim “safe on the open internet by default.”
+
+## Ports (normative vs demo)
+
+Prefer **IANA / Git-documented** ports in operator-facing clone URLs when you can bind them or put an ops front in front. Unprivileged loopback demos may use higher ports — those are **alternates**, not “more standard” Git ports.
+
+| Surface | Normative target | Demo / alternate | Why the alternate |
+|---------|------------------|------------------|-------------------|
+| SSH git | **22** | **2222** | Non-root bind (`<1024` needs privilege) or host `sshd` already owns 22 |
+| HTTP git | **80** | **8080** | Same unprivileged-bind reason |
+| HTTPS | **443** | Ops TLS front | Prefer reverse-proxy TLS off localhost |
+| `git://` (`arks daemon`) | **9418** | — | Already the registered git-daemon default |
+| Forge API | **3920** | configurable | arks-local convention (not an IANA Git port) |
+
+Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, **2222** SSH stub, **9418** daemon, **3920** forge) so demos do not require privileged bind. Docs and `--help` treat **22 / 80 / 443 / 9418** as the product story. See Specfold [[sot:root/arks-self-host-server]] and [[research:root/20261111055609]].
 
 ## Auth (Git remote vs forge client)
 
