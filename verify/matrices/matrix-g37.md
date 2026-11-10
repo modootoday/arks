@@ -8,7 +8,7 @@ Primary: [gitformat-signature](https://git-scm.com/docs/gitformat-signature), [g
 | G37-C02 | `arks verify-commit HEAD` | G37 | yes | exit 0 |
 | G37-C03 | Stock `git cat-file -p` shows gpgsig | G37 | yes | subject + armor |
 | G37-C04 | Stock `git verify-commit` | G37 | yes | exit 0 |
-| G37-C05 | `gpg.format=openpgp` refuse | G37 | yes | non-zero |
+| G37-C05 | OpenPGP / signed-tag | G37 | n/a | Superseded by **G38** Claimed (R4 / S2); do not expect refuse |
 | G37-C06 | gix-exit scan | G37 | yes | clean |
 
-Host-only green does **not** carry G37 Claimed. Ephemeral keys only. OpenSSH already pinned in `arks-verify-m1`.
+Host-only green does **not** carry G37 Claimed. Ephemeral keys only. OpenSSH already pinned in `arks-verify-m1`. OpenPGP / X.509 / `tag -s` → [[matrix-g38]] / [[adr:root/20261110110450]].

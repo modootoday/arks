@@ -4,7 +4,7 @@ use crate::cmd::shared::{
     collect_untracked, commit_signature, current_branch_name, file_mode, file_times, head_blob_map,
     index_stat_matches, resolve_rev,
 };
-use crate::cmd::sign::{is_sign_flag, sign_commit_ssh, want_sign_commit};
+use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     FORMAT, OID_KIND, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree,
@@ -772,7 +772,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             message,
         };
         if do_sign {
-            sign_commit_ssh(&repo, &mut commit, sign_key.as_deref())?;
+            sign_commit(&repo, &mut commit, sign_key.as_deref())?;
         }
         let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
         let coid = repo.store_mut().put(FORMAT, &cobj)?;
@@ -835,7 +835,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         message,
     };
     if do_sign {
-        sign_commit_ssh(&repo, &mut commit, sign_key.as_deref())?;
+        sign_commit(&repo, &mut commit, sign_key.as_deref())?;
     }
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
     let coid = repo.store_mut().put(FORMAT, &cobj)?;

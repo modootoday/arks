@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g38-cleanroom"
+description = "FW-GPGSIG OpenPGP / X.509 / tag -s clean-room suite (G38)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

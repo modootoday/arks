@@ -33,7 +33,7 @@ pub mod tag;
 pub mod working_tree;
 pub mod worktree;
 
-pub use archive::{cmd_archive, write_annotated_tag};
+pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
 pub use bisect::cmd_bisect;
 pub use branch::{cmd_branch, cmd_checkout, cmd_switch};
 pub use bundle::cmd_bundle;
@@ -66,7 +66,7 @@ pub use server::{
     cmd_daemon, cmd_http_backend, cmd_receive_pack, cmd_serve_http, cmd_update_server_info,
     cmd_upload_pack,
 };
-pub use sign::cmd_verify_commit;
+pub use sign::{cmd_verify_commit, cmd_verify_tag};
 pub use sparse_checkout::cmd_sparse_checkout;
 pub use stash::cmd_stash;
 pub use submodule::cmd_submodule;

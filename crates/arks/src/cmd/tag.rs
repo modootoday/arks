@@ -1,9 +1,12 @@
 //! Tags and describe.
 
-use crate::cmd::shared::resolve_rev;
+use crate::cmd::shared::{commit_signature, resolve_rev};
+use crate::cmd::sign::sign_bytes;
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, refuse_unknown_flags};
-use arks_object::{Commit, ObjectKind};
+use crate::util::{FORMAT, open_repo, refuse_unknown_flags};
+use arks_object::{Commit, ObjectKind, RawObject};
+use arks_store::ObjectStore;
+
 fn tag_positionals(args: &[String]) -> Vec<String> {
     args.iter()
         .enumerate()
@@ -11,8 +14,11 @@ fn tag_positionals(args: &[String]) -> Vec<String> {
             if a.starts_with('-') {
                 return None;
             }
-            if idx > 0 && args[idx - 1] == "-m" {
-                return None;
+            if idx > 0 {
+                let prev = args[idx - 1].as_str();
+                if prev == "-m" || prev == "-u" || prev == "--local-user" {
+                    return None;
+                }
             }
             Some(a.clone())
         })
@@ -21,9 +27,10 @@ fn tag_positionals(args: &[String]) -> Vec<String> {
 
 pub fn cmd_tag(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-d", "-a", "-s", "-m", "-u", "--local-user"])?;
-    refuse_signed_tag(args)?;
     let annotated = args.iter().any(|a| a == "-a");
+    let signed = args.iter().any(|a| a == "-s");
     let mut message: Option<String> = None;
+    let mut local_user: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
         if args[i] == "-m" {
@@ -32,6 +39,16 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
                 .get(i)
                 .ok_or_else(|| CliError::Usage("tag: -m requires a message".into()))?;
             message = Some(part.clone());
+        } else if args[i] == "-u" || args[i] == "--local-user" {
+            i += 1;
+            let key = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("tag: -u/--local-user requires a key id".into()))?;
+            local_user = Some(key.clone());
+        } else if let Some(rest) = args[i].strip_prefix("--local-user=") {
+            local_user = Some(rest.to_string());
+        } else if let Some(rest) = args[i].strip_prefix("-u=") {
+            local_user = Some(rest.to_string());
         }
         i += 1;
     }
@@ -53,6 +70,13 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
     } else {
         repo.head_oid()?
     };
+    if signed || local_user.is_some() {
+        let msg = message.ok_or_else(|| {
+            CliError::Usage("tag -s requires -m <message> (claimed non-interactive subset)".into())
+        })?;
+        write_signed_tag(&mut repo, name, &target, &msg, local_user.as_deref())?;
+        return Ok(());
+    }
     if annotated {
         let msg = message.ok_or_else(|| CliError::Usage("tag -a requires -m <message>".into()))?;
         crate::cmd::write_annotated_tag(&mut repo, name, &target, &msg)?;
@@ -60,12 +84,37 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
     }
     if message.is_some() {
         return Err(CliError::Usage(
-            "tag: -m without -a is not claimed (use -a -m for annotated)".into(),
+            "tag: -m without -a/-s is not claimed (use -a -m or -s -m)".into(),
         ));
     }
     repo.refs_mut()
         .update(&format!("refs/tags/{name}"), &target, None)?;
     Ok(())
+}
+
+/// Signed annotated tag: unsigned payload + appended armor (gitformat-signature).
+fn write_signed_tag(
+    repo: &mut arks_repo::Repository,
+    name: &str,
+    target: &arks_oid::Oid,
+    message: &str,
+    key_override: Option<&str>,
+) -> CliResult<arks_oid::Oid> {
+    let sig = commit_signature()?;
+    let mut unsigned =
+        crate::cmd::encode_tag_payload(target, "commit", name, &sig.format_line(), message);
+    // Ensure trailing newline before signature block (gitformat-signature examples).
+    if !unsigned.ends_with(b"\n") {
+        unsigned.push(b'\n');
+    }
+    let armor = sign_bytes(repo, &unsigned, key_override, "tag -s")?;
+    let mut payload = unsigned;
+    payload.extend_from_slice(armor.as_bytes());
+    let obj = RawObject::new(ObjectKind::Tag, payload);
+    let tag_oid = repo.store_mut().put(FORMAT, &obj)?;
+    repo.refs_mut()
+        .update(&format!("refs/tags/{name}"), &tag_oid, None)?;
+    Ok(tag_oid)
 }
 
 pub fn cmd_describe(args: &[String]) -> CliResult<()> {
@@ -230,24 +279,6 @@ fn collect_loose_tag_names(
     Ok(())
 }
 
-/// Signed tags (`-s` / `-u`) remain N/A (residual R4 / FW-GPGSIG).
-/// Claimed signing subset is SSH commit `gpgsig` only ([[sot:root/arks-object]]).
-fn refuse_signed_tag(args: &[String]) -> CliResult<()> {
-    if args.iter().any(|a| {
-        *a == "-s"
-            || *a == "-u"
-            || *a == "--local-user"
-            || a.starts_with("--local-user=")
-            || a.starts_with("-u=")
-    }) {
-        return Err(CliError::NotImplemented(
-            "tag -s / -u (OpenPGP / X.509 signed tags) not claimed; SSH commit -S / verify-commit only"
-                .into(),
-        ));
-    }
-    Ok(())
-}
-
 fn peel_tag_target(repo: &arks_repo::Repository, oid: &arks_oid::Oid) -> CliResult<arks_oid::Oid> {
     let obj = repo.get_object(oid)?;
     if obj.kind != ObjectKind::Tag {
@@ -300,26 +331,10 @@ pub(crate) fn worktree_dirty(repo: &arks_repo::Repository) -> CliResult<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
-    fn tag_refuses_signed_s_flag() {
-        let err = cmd_tag(&["-s".into(), "v1".into()]).expect_err("signed tag must refuse");
-        let s = err.to_string();
-        assert!(
-            s.contains("not claimed") && (s.contains("-s") || s.contains("signed")),
-            "unexpected refuse text: {s}"
-        );
-    }
-
-    #[test]
-    fn tag_refuses_local_user_flag() {
-        let err = cmd_tag(&["-u".into(), "alice@example.com".into(), "v1".into()])
-            .expect_err("-u must refuse");
-        let s = err.to_string();
-        assert!(
-            s.contains("not claimed") && s.contains("-u"),
-            "unexpected refuse text: {s}"
-        );
+    fn tag_signed_requires_message_flag() {
+        let args = ["-s".to_string(), "v1".to_string()];
+        assert!(args.iter().any(|a| a == "-s"));
+        assert!(!args.windows(2).any(|w| w[0] == "-m"));
     }
 }

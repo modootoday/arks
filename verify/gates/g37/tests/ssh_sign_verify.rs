@@ -77,10 +77,6 @@ fn assert_ok(out: &std::process::Output, label: &str) {
     );
 }
 
-fn assert_fail(out: &std::process::Output, label: &str) {
-    assert!(!out.status.success(), "{label}: expected non-zero");
-}
-
 fn setup_ephemeral_ssh(dir: &Path) -> (PathBuf, PathBuf) {
     let priv_key = dir.join("id_ed25519");
     let out = Command::new("ssh-keygen")
@@ -156,12 +152,14 @@ fn g37_ssh_commit_sign_verify_stock_roundtrip() {
 }
 
 #[test]
-fn g37_refuse_openpgp_format() {
+fn g37_ssh_format_still_required_for_ssh_key_path() {
+    // OpenPGP is Claimed under G38. G37 remains the SSH matrix: with gpg.format=ssh,
+    // commit -S must still succeed (smoke that G37 path was not broken by R4).
     require_tools();
     let tmp = TempDir::new().unwrap();
     let keys = tmp.path().join("keys");
     fs::create_dir_all(&keys).unwrap();
-    let (pub_key, _) = setup_ephemeral_ssh(&keys);
+    let (pub_key, allowed) = setup_ephemeral_ssh(&keys);
     let repo = tmp.path().join("repo");
     fs::create_dir_all(&repo).unwrap();
     assert_ok(&arks(&repo, &["init"]), "init");
@@ -171,7 +169,17 @@ fn g37_refuse_openpgp_format() {
         &arks(&repo, &["config", "user.signingKey", pub_key.to_str().unwrap()]),
         "key",
     );
-    assert_ok(&arks(&repo, &["config", "gpg.format", "openpgp"]), "openpgp");
-    let out = arks(&repo, &["commit", "-S", "-m", "nope"]);
-    assert_fail(&out, "must refuse openpgp");
+    assert_ok(&arks(&repo, &["config", "gpg.format", "ssh"]), "ssh");
+    assert_ok(
+        &arks(
+            &repo,
+            &[
+                "config",
+                "gpg.ssh.allowedSignersFile",
+                allowed.to_str().unwrap(),
+            ],
+        ),
+        "allowed",
+    );
+    assert_ok(&arks(&repo, &["commit", "-S", "-m", "still ssh"]), "commit -S");
 }

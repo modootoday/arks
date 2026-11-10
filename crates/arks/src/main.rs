@@ -233,10 +233,7 @@ fn run() -> CliResult<()> {
         "fsck" => cmd::cmd_fsck(&args),
         "count-objects" => cmd::cmd_count_objects(&args),
         "pack-refs" => cmd::cmd_pack_refs(&args),
-        "verify-tag" => Err(CliError::NotImplemented(
-            "verify-tag not claimed (OpenPGP / X.509 / signed tags N/A; SSH verify-commit only)"
-                .into(),
-        )),
+        "verify-tag" => cmd::cmd_verify_tag(&args),
         "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),

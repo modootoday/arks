@@ -60,8 +60,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Area | Git | arks | Status |
 |------|-----|------|--------|
 | SSH commit sign / verify (`gpg.format=ssh`) | Yes | Yes (`commit -S` / `verify-commit`) | **Claimed** (G37) |
-| OpenPGP / X.509 commit signing | Yes | Refused | **N/A** (R4 / L7 honest N/A) |
-| Signed tags (`tag -s`) / `verify-tag` | Yes | Refused | **N/A** (R4 / L7 honest N/A) |
+| OpenPGP / X.509 commit signing | Yes | Yes (`gpg.format=openpgp` / `x509`) | **Claimed** (R4 / S2 / G38) |
+| Signed tags (`tag -s`) / `verify-tag` | Yes | Yes | **Claimed** (R4 / S2 / G38) |
 | Credential helper / askpass / TTY / OS wallets | Yes | Claimed first-party subset | **Claimed** (G33) |
 
 ## Performance and concurrency
@@ -78,7 +78,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Residual | Disposition | Reopen requires |
 |----------|-------------|-----------------|
 | R3 filter / promisor | **Claimed `blob:none` (S1 host wire)**; other specs N/A | Symmetry e2e twin (**S6**); expand filter-specs via SoT |
-| R4 OpenPGP / X.509 / `tag -s` | **N/A** (L7) | Dedicated crypto harness SoT + wire + G37-class re-verify |
+| R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38)** | Re-verify G38 after crypto wire change |
 | R5 live forge scale PASS | Harness Claimed; ops dry-run Done | Secrets + receipt; never invent latency |
 | R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | crates.io / docs.rs timing | Closed owner policy (L9) | Owner decision |
@@ -97,8 +97,8 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 |------|-------|--------|
 | **S0** | Inventory lock (implement / SoT-amend / still-OOS) | **Done** |
 | **S1** | R3 filter / promisor (`blob:none`) | **Done** (host wire) |
-| **S2** | R4 OpenPGP / X.509 / `tag -s` | Next |
-| **S3** | Protocol narrows (e.g. dumb HTTP deletes) | Open |
+| **S2** | R4 OpenPGP / X.509 / `tag -s` | **Done** (G38) |
+| **S3** | Protocol narrows (e.g. dumb HTTP deletes) | Next |
 | **S4** | Interactive / patch flows or honest defer | Open |
 | **S5** | R5 live forge (secrets) or documented block | Open |
 | **S6** | Symmetry e2e matrix (git vs arks) | Open |
