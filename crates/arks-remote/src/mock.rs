@@ -2,7 +2,9 @@
 //!
 //! This is not a product server. It answers `info/refs` and the two service
 //! POSTs with packs produced by `arks-pack` so client tests need no network
-//! and no `git` binary.
+//! and no `git` binary. Optional `prefer_dumb` serves dumb-HTTP bodies so the
+//! client fallback path (`looks_like_dumb_info_refs` → `fetch_dumb_with`) can
+//! be exercised offline.
 
 use crate::advertise::encode_advertisement;
 use crate::error::RemoteError;
@@ -10,7 +12,9 @@ use crate::fetch::sideband_pack;
 use crate::push::{encode_report_status, zero_oid};
 use crate::transport::{HttpRequest, HttpResponse, Transport};
 use crate::walk::collect_closure;
-use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, TreeMode};
+use arks_object::{
+    Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, TreeMode, zlib_compress,
+};
 use arks_oid::Oid;
 use arks_pack::{DecodedPack, EncodedPack};
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
@@ -30,6 +34,9 @@ pub(crate) struct MemoryPeer {
     head: Option<String>,
     /// When set, the next receive-pack reports `ng` and does not move refs.
     pub reject_push: bool,
+    /// When set, upload-pack `info/refs` returns a dumb body + loose object GETs
+    /// (client must fall back; no smart pack POST).
+    pub prefer_dumb: bool,
 }
 
 impl MemoryPeer {
@@ -39,6 +46,7 @@ impl MemoryPeer {
             objects: HashMap::new(),
             head: None,
             reject_push: false,
+            prefer_dumb: false,
         }
     }
 
@@ -129,6 +137,9 @@ impl MemoryPeer {
         let (path, query) = target.split_once('?').unwrap_or((target, ""));
         if path.ends_with("/info/refs") {
             let service = query_param(query, "service").unwrap_or("");
+            if self.prefer_dumb && service == "git-upload-pack" {
+                return Ok(text_response(200, &self.dumb_info_refs_body()));
+            }
             let (ct, body) = if service == "git-upload-pack" {
                 (UPLOAD_AD, self.advertisement("git-upload-pack")?)
             } else if service == "git-receive-pack" {
@@ -137,6 +148,29 @@ impl MemoryPeer {
                 return Ok(text_response(403, b"unknown service"));
             };
             return Ok(typed_response(200, ct, body));
+        }
+        if self.prefer_dumb {
+            if path.ends_with("/HEAD") {
+                if let Some(head) = &self.head {
+                    let body = format!("ref: {head}\n");
+                    return Ok(text_response(200, body.as_bytes()));
+                }
+                return Ok(text_response(404, b"no HEAD"));
+            }
+            if path.ends_with("/objects/info/packs") {
+                return Ok(text_response(404, b""));
+            }
+            if let Some(oid_hex) = dumb_loose_oid_hex(path) {
+                let oid = Oid::from_hex(&oid_hex)
+                    .map_err(|e| RemoteError::Protocol(format!("dumb loose oid: {e}")))?;
+                let obj = self
+                    .objects
+                    .get(&oid)
+                    .ok_or_else(|| RemoteError::Protocol(format!("missing loose {oid_hex}")))?;
+                let compressed = zlib_compress(&obj.encode_uncompressed())
+                    .map_err(|e| RemoteError::Protocol(e.to_string()))?;
+                return Ok(typed_response(200, "application/octet-stream", compressed));
+            }
         }
         if request.method == "POST" && path.ends_with("/git-upload-pack") {
             let body = self.upload_result(&request.body)?;
@@ -147,6 +181,17 @@ impl MemoryPeer {
             return Ok(typed_response(200, RECEIVE_RES, body));
         }
         Ok(text_response(404, b"not found"))
+    }
+
+    fn dumb_info_refs_body(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        for (name, oid) in &self.refs {
+            out.extend_from_slice(oid.to_hex().as_bytes());
+            out.push(b'\t');
+            out.extend_from_slice(name.as_bytes());
+            out.push(b'\n');
+        }
+        out
     }
 
     fn advertisement(&self, service: &str) -> Result<Vec<u8>, RemoteError> {
@@ -349,4 +394,18 @@ fn text_response(status: u16, body: &[u8]) -> HttpResponse {
         headers: vec![("content-type".into(), "text/plain".into())],
         body: body.to_vec(),
     }
+}
+
+/// Parse `.../objects/aa/bbbb…` from a request path into a 40-hex OID string.
+fn dumb_loose_oid_hex(path: &str) -> Option<String> {
+    let idx = path.find("/objects/")?;
+    let rest = &path[idx + "/objects/".len()..];
+    let (dir, file) = rest.split_once('/')?;
+    if dir.len() != 2 || file.len() != 38 {
+        return None;
+    }
+    if !dir.chars().all(|c| c.is_ascii_hexdigit()) || !file.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
+    Some(format!("{dir}{file}"))
 }

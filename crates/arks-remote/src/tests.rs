@@ -94,6 +94,53 @@ fn recorded_script_fetch_stores_advertised_commit() {
 }
 
 #[test]
+fn memory_peer_dumb_fetch_falls_back_and_stores_commit() {
+    let mut peer = MemoryPeer::new();
+    peer.prefer_dumb = true;
+    let oid = peer
+        .seed_file("refs/heads/main", "README", b"dumb client\n", "dumb")
+        .unwrap();
+    let tmp = tempfile::TempDir::new().unwrap();
+    let mut repo = empty_repo(tmp.path());
+    let outcome = fetch_with(
+        &mut peer,
+        &mut repo,
+        "http://memory.test/repo.git",
+        "origin",
+        &FetchOptions::default(),
+    )
+    .unwrap();
+    assert_eq!(outcome.head_oid, Some(oid));
+    assert_eq!(outcome.head_branch.as_deref(), Some("refs/heads/main"));
+    let stored = repo.get_object(&oid).unwrap();
+    assert_eq!(stored.kind, ObjectKind::Commit);
+    let tracking = repo.refs().resolve("refs/remotes/origin/main").unwrap();
+    assert_eq!(tracking, oid);
+}
+
+#[test]
+fn memory_peer_dumb_fetch_refuses_depth() {
+    let mut peer = MemoryPeer::new();
+    peer.prefer_dumb = true;
+    peer.seed_file("refs/heads/main", "README", b"x\n", "x")
+        .unwrap();
+    let tmp = tempfile::TempDir::new().unwrap();
+    let mut repo = empty_repo(tmp.path());
+    let err = fetch_with(
+        &mut peer,
+        &mut repo,
+        "http://memory.test/repo.git",
+        "origin",
+        &FetchOptions {
+            depth: Some(1),
+            ..FetchOptions::default()
+        },
+    )
+    .unwrap_err();
+    assert!(matches!(err, RemoteError::NotImplemented(_)));
+}
+
+#[test]
 fn memory_peer_push_then_fetch() {
     let mut peer = MemoryPeer::new();
     let first = peer

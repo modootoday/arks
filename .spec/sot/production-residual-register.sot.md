@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-11T00:14:00Z
+updated: 2026-11-10T01:35:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential]
 verify: manual
 rel:
@@ -124,7 +124,7 @@ Carrying exits (do not reopen as “not done”):
 | Plumbing inventory beyond everyday set | **Closed M15** minimum; **M16 Sy-3** complete plumbing breadth | [[sot:root/cli-flag-parity-complete]] |
 | Full CLI symmetric inventory (M9 refuse→implement) | **Closed historical M15** — Fs-1..Fs-5 G20 green; carrying [[evidence:root/20261109203000]] | M15 plan |
 | Per-flag refuse leftovers after M15 | **Closed M16** — Sy-1..Sy-5 G21 green; active bar = implement\|N/A; [[evidence:root/20261109061600]] / [[evidence:root/20261109063000]] | [[plan:root/20261109043910]] |
-| Client SSH transport | **Closed M16 Sy-4** — OpenSSH helper for clone/fetch/push/submodule add; server SSH remains N/A | M16 plan + arks-remote |
+| Client SSH transport | **Closed M16 Sy-4** — OpenSSH helper for clone/fetch/push/submodule add; server SSH command-mode is **Claimed (G30)** (not N/A) | M16 plan + arks-remote; [[sot:root/arks-server]], [[evidence:root/20261109222000]] |
 | Full G19 = all G16 journeys | **Closed (M17)** — Docker G19 PASS; **19/19 measured**; `na: {}` (no TAG/DIFF timer-floor N/A); [[evidence:root/20261109090000]]; M14 frozen allow-list remains historical | [[plan:root/20261109043916]] |
 | Aggressive ≤0.5× Pf4 (M18) | **Closed (M18)** — progressive claim **11/19 ≤0.5×** + journey-class residuals; M17 ≤0.8× frozen; [[evidence:root/20261109143000]] (Pf4-3 exit); Pf4-1/2 progress [[evidence:root/20261109130000]] / [[evidence:root/20261109141500]] | [[plan:root/20261109125438]] |
 | Pf4 journey-class residuals (quantum / process-tax / mid) | **Closed (Pf5 aggressive_na)** — §F P6 rows; `aggressive_na` in `g19_eval.py`; reopen path [[adr:root/20261110162000]]; M17 ≤0.8× remains N/A-free measured | [[plan:root/20261110150000]], [[sot:root/clean-room-journey-compare]], [[adr:root/20261110162000]] |
