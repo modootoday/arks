@@ -4,7 +4,7 @@ title: M19 Concurrency catalog claim expansion
 status: active
 created: 2026-11-10T01:00:00Z
 updated: 2026-11-10T02:10:00Z
-tags: [milestone, m19, phase-cx, concurrency, mitigate-with-compat, g17, claim-expansion, issue-resolution, done]
+tags: [milestone, m19, phase-cx, concurrency, mitigate-with-compat, g017-concurrency-issue-compare, claim-expansion, issue-resolution, done]
 rel:
   depends_on:
     - sot:root/program-roadmap
@@ -115,7 +115,7 @@ Wave Cx-2 **Done** = Docker G17 PASS for **all twelve** rows + Cm-1..Cm-3 + Cx-1
 
 1. SoT/plan/matrix updates for M19 + Cx-1 oracles; `spec check`.
 2. Engine/CLI mitigations required for Cx-1 resolved oracles only (sequencer exclusivity, refresh lock honor, inspect notes).
-3. Extend `verify/gates/g17` + `run-g17.sh` + `verify/matrices/matrix-g17.md` (reuse G17 protocol).
+3. Extend `verify/gates/g017-concurrency-issue-compare` + `run-g017-concurrency-issue-compare.sh` + `verify/matrices/matrix-g017-concurrency-issue-compare.md` (reuse G17 protocol).
 4. Docker clean-room G17 receipt + residual honesty.
 
 ## Out of scope
@@ -141,9 +141,9 @@ Milestone exit = every Cx-1 ID has G17 PASS — not “code merged.”
 
 ## Ordered work items
 
-1. **SoT / matrix** — Freeze Cx-1; amend roadmap M19; residual register; interop matrix G17 note; `verify/matrices/matrix-g17.md` Cx-1 section; `spec check`.
+1. **SoT / matrix** — Freeze Cx-1; amend roadmap M19; residual register; interop matrix G17 note; `verify/matrices/matrix-g017-concurrency-issue-compare.md` Cx-1 section; `spec check`.
 2. **Mitigations** — Sequencer/pseudoref exclusivity; `update-index --refresh` honors `index.lock`; lock inspect notes (REF-007 / LOCK-001 / TOCTOU-005); WT-002/WT-004 already claimed — prove via G17.
-3. **Harness** — Add Cx-1 tests to `verify/gates/g17`; extend `run-g17.sh` oracle list / counts.
+3. **Harness** — Add Cx-1 tests to `verify/gates/g017-concurrency-issue-compare`; extend `run-g017-concurrency-issue-compare.sh` oracle list / counts.
 4. **Verify** — Docker G17 PASS; evidence under `.spec/evidence/`; residual honesty.
 5. **Close** — Mark M19 Cx-1 Done only with receipts; commit locally.
 

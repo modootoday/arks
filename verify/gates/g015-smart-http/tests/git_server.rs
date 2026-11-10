@@ -1,6 +1,6 @@
 //! Gate G15 — production-server: stock Git clone/fetch/push vs arks smart HTTP.
 //!
-//! Cite: verify/matrices/matrix-m11.md, gitprotocol-http, gitprotocol-pack.
+//! Cite: verify/matrices/matrix-m011-clean-room-git-server.md, gitprotocol-http, gitprotocol-pack.
 //! No forge. No CELIR. Lease not required.
 
 use std::fs;
@@ -124,7 +124,7 @@ fn seed_bare_with_arks(root: &Path) -> PathBuf {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "init");
-    fs::write(work.join("hello.txt"), b"hello g15\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g015-smart-http\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");
     let bare = root.join("server.git");
@@ -139,7 +139,7 @@ fn seed_bare_with_arks(root: &Path) -> PathBuf {
 }
 
 #[test]
-fn g15_help_wave_sv() {
+fn g015-smart-http_help_wave_sv() {
     require_git();
     let out = Command::new(arks_bin())
         .arg("--help")
@@ -153,7 +153,7 @@ fn g15_help_wave_sv() {
 }
 
 #[test]
-fn g15_stock_git_clone_fetch_push() {
+fn g015-smart-http_stock_git_clone_fetch_push() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -167,7 +167,7 @@ fn g15_stock_git_clone_fetch_push() {
     assert_ok(&out, "git clone via arks smart HTTP");
     let body = fs::read_to_string(clone.join("hello.txt")).unwrap();
     assert!(
-        body.replace("\r\n", "\n").starts_with("hello g15"),
+        body.replace("\r\n", "\n").starts_with("hello g015-smart-http"),
         "unexpected clone content: {body:?}"
     );
 
@@ -196,7 +196,7 @@ fn g15_stock_git_clone_fetch_push() {
 }
 
 #[test]
-fn g15_capability_honesty_upload_ad() {
+fn g015-smart-http_capability_honesty_upload_ad() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -223,7 +223,7 @@ fn g15_capability_honesty_upload_ad() {
 /// (`pre-receive` / `update` / `post-receive`).
 /// Cite: https://git-scm.com/docs/githooks , https://git-scm.com/docs/git-receive-pack
 #[test]
-fn g15_receive_pack_githooks_honor_list() {
+fn g015-smart-http_receive_pack_githooks_honor_list() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());

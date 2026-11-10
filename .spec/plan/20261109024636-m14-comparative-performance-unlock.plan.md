@@ -4,7 +4,7 @@ title: M14 Comparative performance unlock
 status: archived
 created: 2026-11-09T02:46:36Z
 updated: 2026-11-09T21:30:00Z
-tags: [milestone, m14, phase-pf, performance, comparative, g16, g19]
+tags: [milestone, m14, phase-pf, performance, comparative, g016-journey-compare, g019-comparative-performance]
 rel:
   depends_on:
     - sot:root/program-roadmap
@@ -68,7 +68,7 @@ PERF-001 / PERF-006 / AGENT-003 may improve measured journeys after M12/M13, but
 
 ## Ordered work items
 
-1. **Design** — Close absolute-perf open in journey-compare; name allow-list; wire G19. **Done (Pf-1)** — `verify/matrices/matrix-g19.md`; compose `g19`.
+1. **Design** — Close absolute-perf open in journey-compare; name allow-list; wire G19. **Done (Pf-1)** — `verify/matrices/matrix-g019-comparative-performance.md`; compose `g019-comparative-performance`.
 2. **Engine** — Optimizations for claimed rows only (no premature L3). Pf-1 uses already-passing journeys; Pf-2 expands via opt.
 3. **Verify** — G19 receipt; public-surface honesty.
 

@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g12-cleanroom"
+name = "arks-g012-porcelain-wave-pa-cleanroom"
 description = "M7 clean-room G12 Wave Pa porcelain suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

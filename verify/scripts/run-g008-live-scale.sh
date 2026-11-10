@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # G8+ live GitHub forge scale harness — measure when secrets present; honest no-measurement when absent.
-# ADR: .spec/adr/20261110221000-g8-live-github-scale-claimed-harness.adr.md
+# ADR: .spec/adr/20261110221000-g008-live-forge-smoke-live-github-scale-claimed-harness.adr.md
 # (supersedes adr:root/20261110161000; secrets policy aligned with adr:root/20261110220000)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "${ROOT}"
 
-OUT_DIR="${ARKS_G8_SCALE_OUT:-${ROOT}/verify/gates/g8-live-scale/out}"
+OUT_DIR="${ARKS_G8_SCALE_OUT:-${ROOT}/verify/gates/g008-live-scale/out}"
 mkdir -p "${OUT_DIR}"
 RECEIPT="${OUT_DIR}/receipt.json"
 SAMPLES="${OUT_DIR}/samples.json"
@@ -19,7 +19,7 @@ write_receipt() {
 import json, os, sys, time
 out, disposition, detail = sys.argv[1:4]
 receipt = {
-    "schema": "arks-g8-live-scale/v1",
+    "schema": "arks-g008-live-scale/v1",
     "gate": "G8-live-scale",
     "disposition": disposition,
     "detail": detail,

@@ -4,7 +4,7 @@ title: Agent dev readiness
 status: active
 created: 2026-11-08T08:21:48Z
 updated: 2026-11-10T09:45:00Z
-tags: [agent, readiness, specfold, dod, m26, g28, g37, deferred-zero, l3, celir-index, pf5]
+tags: [agent, readiness, specfold, dod, m26, g028-live-private-arks, g037-gpgsig-ssh, deferred-zero, l3, celir-index, pf5]
 verify: manual
 rel:
   depends_on:

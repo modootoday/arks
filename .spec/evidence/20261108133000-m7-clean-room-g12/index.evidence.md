@@ -4,7 +4,7 @@ title: M7 clean-room G12 Wave Pa porcelain
 status: active
 created: 2026-11-08T13:30:00Z
 updated: 2026-11-08T13:30:00Z
-tags: [m7, clean-room, g12, g6, g7, wave-pa, porcelain, verified, v0.3.1]
+tags: [m7, clean-room, g012-porcelain-wave-pa, g006-cli-wave-l, g007-smart-http-client, wave-pa, porcelain, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -30,7 +30,7 @@ Milestone **M7** (Porcelain parity wave A / Phase **Pa**) under program roadmap 
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g12` |
+| Compose | `verify/docker-compose.yml` service `g012-porcelain-wave-pa` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (local Id) | `sha256:a6c5cd96b72c88cc3b7519d00faeb7883dbd6ed2d6151e7f756a7223b748aa89` |
 | Base | `rust:1.99.1-bookworm@sha256:e6f2cff35d0f309acf8433b4f05878ed77092602c5065cc81801177da0bb3a9c` |
@@ -46,23 +46,23 @@ Milestone **M7** (Porcelain parity wave A / Phase **Pa**) under program roadmap 
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **gix-exit** | `cargo metadata` graph scan in `run-g12.sh` | **PASS** | zero `gix` / `gitoxide` edges |
-| **G12** | `docker compose -f verify/docker-compose.yml run --rm g12` | **PASS** | `verify/gates/g12` Wave Pa suite **7** |
-| **G7** regression | (embedded in `run-g12.sh`) | **PASS** | `verify/gates/g7` **3** |
-| **G6** regression | (embedded) | **PASS** | `verify/gates/g6` **6** |
-| **G3** regression | (embedded) | **PASS** | `verify/gates/g3` **3** |
-| **G4** regression | (embedded) | **PASS** | `verify/gates/g4` **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded) | **PASS** | `verify/gates/g2` **9** |
-| **G10** regression | (embedded) | **PASS** | `verify/gates/g10` **7** |
-| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
+| **gix-exit** | `cargo metadata` graph scan in `run-g012-porcelain-wave-pa.sh` | **PASS** | zero `gix` / `gitoxide` edges |
+| **G12** | `docker compose -f verify/docker-compose.yml run --rm g012-porcelain-wave-pa` | **PASS** | `verify/gates/g012-porcelain-wave-pa` Wave Pa suite **7** |
+| **G7** regression | (embedded in `run-g012-porcelain-wave-pa.sh`) | **PASS** | `verify/gates/g007-smart-http-client` **3** |
+| **G6** regression | (embedded) | **PASS** | `verify/gates/g006-cli-wave-l` **6** |
+| **G3** regression | (embedded) | **PASS** | `verify/gates/g003-index-commit-roundtrip` **3** |
+| **G4** regression | (embedded) | **PASS** | `verify/gates/g004-pack-idx-roundtrip` **3** |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g005-protocol-offline-fixtures` **4** + `arks-protocol` |
+| **G2** regression | (embedded) | **PASS** | `verify/gates/g002-refs-index-roundtrip` **9** |
+| **G10** regression | (embedded) | **PASS** | `verify/gates/g010-store-facade` **7** |
+| **G1** regression | (embedded) | **PASS** | `arks-object` `g001-loose-object-interop_oracle` **5** + `verify/gates/g001-loose-object-interop` **6** |
 | Unit Specfold | `spec check` | **PASS** | 0 errors / 0 warnings |
 
 Combinatorics covered (automated): M7-C01…C16 per `verify/matrices/matrix-m7.md`. Residual Open: M7-C18 Pb set; M7-C19 M9 closure; M7-C20 out-of-scope.
 
 ## Bug simulation (fixed)
 
-1. `verify/scripts/run-g12.sh` initially had CRLF endings → would fail `set: pipefail` in Linux clean-room; rewritten to LF (`.gitattributes` `*.sh text eol=lf`). See `verify/gates/g12/BUGSIM.md`.
+1. `verify/scripts/run-g012-porcelain-wave-pa.sh` initially had CRLF endings → would fail `set: pipefail` in Linux clean-room; rewritten to LF (`.gitattributes` `*.sh text eol=lf`). See `verify/gates/g012-porcelain-wave-pa/BUGSIM.md`.
 2. Host advisory `arks_bin()` preferred stale Linux ELF under `target-cleanroom` on Windows (Win32 error 193); fixed to honor `CARGO_TARGET_DIR` in clean-room and prefer workspace `target/debug/arks(.exe)` on host.
 3. G6 help assertion used substring `worktree` which matched help prose (`Restore worktree…`); narrowed to command-list line match and reworded help descriptions to `working-tree`.
 4. `diff` looked up unstored dirty-blob OIDs in the object store; fixed to diff against worktree bytes.
@@ -80,5 +80,5 @@ Combinatorics covered (automated): M7-C01…C16 per `verify/matrices/matrix-m7.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g12
+docker compose -f verify/docker-compose.yml run --rm g012-porcelain-wave-pa
 ```

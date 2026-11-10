@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g33-cleanroom"
+name = "arks-g033-cred-askpass-cleanroom"
 description = "G33 clean-room credential-helper / askpass suite (FW-CRED-ASKPASS)"
 version = "0.0.0"
 edition = "2024"

@@ -4,7 +4,7 @@ title: M21 full catalog deferred zero
 status: archived
 created: 2026-11-10T14:00:00Z
 updated: 2026-11-10T14:40:00Z
-tags: [milestone, m21, phase-dz, concurrency, deferred-zero, g17, g18, catalog-closure, done]
+tags: [milestone, m21, phase-dz, concurrency, deferred-zero, g017-concurrency-issue-compare, g018-concurrency-issue-compare, catalog-closure, done]
 rel:
   depends_on:
     - sot:root/program-roadmap

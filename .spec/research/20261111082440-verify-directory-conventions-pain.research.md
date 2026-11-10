@@ -26,11 +26,11 @@ Dated survey of `verify/` layout and naming skew at tip ≥ `0f25c27`. Feeds des
 ```text
 verify/
   Dockerfile                 # rust:1.99.1-bookworm + apt git → pin 2.39.5
-  docker-compose.yml         # gN + dod-* + advisory + g41 helpers
+  docker-compose.yml         # gN + dod-* + advisory + g041-apache-dav-interop helpers
   images.lock.json           # digests + stock_git / rustc / openssh
   README.md
   scripts/                   # run-g*.sh, run-*-e2e.sh, run-symmetry-*.sh, *.ps1
-  matrices/                  # matrix-m*.md, matrix-g*.md, *-matrix.csv, matrix-journey.md
+  matrices/                  # matrix-m*.md, matrix-g*.md, *-matrix.csv, matrix-g016-journey-compare.md
   gates/gN/                  # oracles, locks, out/ receipts (gitignored)
   gates/fs*-*advisory/       # host-advisory receipts
   fixtures/                  # shared oracle intent/bytes (no secrets)
@@ -41,13 +41,13 @@ Compose service families:
 
 | Family | Examples | Role |
 |--------|----------|------|
-| Milestone / product gates | `g0`…`g41`, `g8-live-scale`, `g28-offline-clones` | Authoritative G-series oracles |
+| Milestone / product gates | `g000-workspace-lib-tests`…`g041-apache-dav-interop`, `g008-live-scale`, `g028-offline-clones` | Authoritative G-series oracles |
 | DoD / symmetry | `dod-cli-matrix`, `dod-daemon-matrix`, `dod-hub-matrix`, `dod-symmetry` | Three-pillar smoke / honesty |
 | Release precheck | `dod-symmetry-prerelease` | Pin Missing / untracked leaves |
 | Related hosting | `dod-self-host` | Self-host scaffold (≠ Claimed) |
 | Claimed residual | `dod-claimed-*`, `dod-claimed-residual` | B1–B9 design/SKIP slots |
 | Host advisory | `fs007-host-advisory`, `fs014-lsm-advisory` | Explicit non-DoD |
-| Helpers | `toolchain`, `g41-seed`, `g41-dav` | Build / fixture peers |
+| Helpers | `toolchain`, `g041-seed`, `g041-dav` | Build / fixture peers |
 
 ## Pain points
 
@@ -58,14 +58,14 @@ Compose service families:
 5. **Host vs Docker authority drift.** README still mentions `target-cleanroom` in places while compose uses named volume `arks-cargo-target` → `/cargo-target`. Host PowerShell helpers (`*.ps1`) and host Git **2.56** inventory are advisory; pin Git **2.39.5** remains normative — easy to cite the wrong judge.
 6. **B-gate slot growth.** Claimed residual slots (`dod-claimed-*`) landed beside symmetry DoD; without a registration checklist, new residuals risk clobbering sibling WIP or skipping residual-register / umbrella cross-links.
 7. **Self-host / prerelease adjacency.** `dod-self-host` and `dod-symmetry-prerelease` sit next to pillars but are not fourth pillars — naming alone does not encode that honesty without Spec pointers.
-8. **Internal folder naming skew.** Top-level `verify/` folders are already kebab (`scripts/` `matrices/` `gates/` `fixtures/` `out/`), but gate **ids** mix clean `gN` / `gN-<kebab>` (`g8-live-scale`, `g28-offline-clones`) with jammed legacy `g11l3`. Nested gate children are mostly Cargo-shaped (`src/` `tests/` `out/`) plus rare peers (`g41/httpd/`, `g41/seed.sh`). Ephemeral `gates/*/target/` and repo-root `target-cleanroom/` / `target-pilot/` look like verify layout unless documented as host/Cargo spill. No `dod-*` directories exist under `gates/` — residuals are script-first — which is correct once stated, confusing when agents invent empty `gates/dod-*` scaffolds.
+8. **Internal folder naming skew.** Top-level `verify/` folders are already kebab (`scripts/` `matrices/` `gates/` `fixtures/` `out/`), but gate **ids** mix clean `gN` / `gN-<kebab>` (`g008-live-scale`, `g028-offline-clones`) with jammed legacy `g011-lease-productl3`. Nested gate children are mostly Cargo-shaped (`src/` `tests/` `out/`) plus rare peers (`g041-apache-dav-interop/httpd/`, `g041-apache-dav-interop/seed.sh`). Ephemeral `gates/*/target/` and repo-root `target-cleanroom/` / `target-pilot/` look like verify layout unless documented as host/Cargo spill. No `dod-*` directories exist under `gates/` — residuals are script-first — which is correct once stated, confusing when agents invent empty `gates/dod-*` scaffolds.
 
 ## Non-goals of this research
 
 - Rewriting compose services or gate scripts mid sibling B-gate fix.
 - Promoting SKIP greens to Claimed.
 - Advancing the Git pin beyond `2.39.5`.
-- Mass-renaming `g11l3` or other legacy gate paths in the Spec-only convention wave.
+- Mass-renaming `g011-lease-productl3` or other legacy gate paths in the Spec-only convention wave.
 
 ## Follow-on
 

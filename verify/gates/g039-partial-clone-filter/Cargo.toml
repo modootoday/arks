@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g39-cleanroom"
+name = "arks-g039-partial-clone-filter-cleanroom"
 description = "G39 clean-room partial-clone blob:none symmetry (R3 / S6)"
 version = "0.0.0"
 edition = "2024"

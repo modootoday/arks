@@ -2,7 +2,7 @@
 
 Owning SoT: `.spec/sot/cli-surface.sot.md`, `.spec/sot/cli-flag-parity-complete.sot.md`, `.spec/sot/interop-test-matrix.sot.md` (G21). Plan: `.spec/plan/20261109043910-m16-complete-cli-flag-symmetry.plan.md`.
 
-Authoritative venue: Docker clean-room service `g21` (`verify/scripts/run-g21.sh`). Host greens are advisory only.
+Authoritative venue: Docker clean-room service `g021-cli-flag-symmetry` (`verify/scripts/run-g021-cli-flag-symmetry.sh`). Host greens are advisory only.
 
 ## Wave Sy-1 claim set (everyday porcelain flags)
 

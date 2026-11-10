@@ -4,7 +4,7 @@ title: M2 clean-room G10 G1 receipts
 status: active
 created: 2026-11-08T09:30:59Z
 updated: 2026-11-08T18:56:00Z
-tags: [m2, clean-room, g0, g1, g10, historical, non-carrying]
+tags: [m2, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, g010-store-facade, historical, non-carrying]
 rel:
   depends_on: [sot:root/product-verification-clean-room, sot:root/interop-test-matrix, plan:root/20261108090647, sot:root/arks-store]
 ---
@@ -36,9 +36,9 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | Workspace: arks-hash 9, arks-oid 8, arks-object 7 + g1_oracle 3, arks-store 8 |
-| **G10** | `docker compose -f verify/docker-compose.yml run --rm g10` | **PASS** | `verify/gates/g10` git_oracle 7 |
-| **G1** regression | (embedded in `run-g10.sh`) | **PASS** | `arks-object` g1_oracle 3 + `verify/gates/g1` git_oracle 4 |
+| **G0** | `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` | **PASS** | Workspace: arks-hash 9, arks-oid 8, arks-object 7 + g001-loose-object-interop_oracle 3, arks-store 8 |
+| **G10** | `docker compose -f verify/docker-compose.yml run --rm g010-store-facade` | **PASS** | `verify/gates/g010-store-facade` git_oracle 7 |
+| **G1** regression | (embedded in `run-g010-store-facade.sh`) | **PASS** | `arks-object` g001-loose-object-interop_oracle 3 + `verify/gates/g001-loose-object-interop` git_oracle 4 |
 
 Combinatorics covered (automated): M2-C01…C11 per `verify/matrices/matrix-m2.md`. M2-C12 (full G1–G4-through-facade) deferred post-M4. M2-C13 CELIR path blocked. M2-C14 lease out of scope.
 
@@ -54,6 +54,6 @@ Combinatorics covered (automated): M2-C01…C11 per `verify/matrices/matrix-m2.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g0
-docker compose -f verify/docker-compose.yml run --rm g10
+docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests
+docker compose -f verify/docker-compose.yml run --rm g010-store-facade
 ```

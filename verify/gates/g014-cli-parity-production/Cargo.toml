@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g14-cleanroom"
+name = "arks-g014-cli-parity-production-cleanroom"
 description = "M9 clean-room G14 Wave Pc CLI-parity closure suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

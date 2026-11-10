@@ -45,7 +45,7 @@ rel:
 
 Version **0.5.0**. Unit SoT for Ring 7 primary package + binary `arks` ([[sot:root/product-naming]]) delivering [[sot:root/cli-surface]] **Wave L** (M5), **Wave H** (M6), **Wave Pa** (M7), **Wave Pb** (M8), and **Wave Pc** (M9) under roadmap Phases L/H/Pa/Pb/Pc. **M9 / Wave Pc is the CLI-parity production claim tier** (same `.git` + inventory closure + flag-parity + alias-ready) when clean-room **G14** is green with a new evidence receipt.
 
-**Entry (Wave Pc):** M8 exit proven — [[evidence:root/20261108143000]]. Frozen checklist: [[plan:root/20261108183812]]. Matrix: `verify/matrices/matrix-m9.md`. Flag-parity ledger: [[sot:root/cli-flag-parity-m9]]. Alias how-to: `docs/alias-git-arks.md`. Remote client lib: [[sot:root/arks-remote]].
+**Entry (Wave Pc):** M8 exit proven — [[evidence:root/20261108143000]]. Frozen checklist: [[plan:root/20261108183812]]. Matrix: `verify/matrices/matrix-m009-clean-room-cli-parity.md`. Flag-parity ledger: [[sot:root/cli-flag-parity-m9]]. Alias how-to: `docs/alias-git-arks.md`. Remote client lib: [[sot:root/arks-remote]].
 
 ## Rule
 
@@ -149,7 +149,7 @@ Wave Pc closes remaining inventory with honest implement/refuse classification, 
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks` and `cargo run -p arks -- --help`.
-2. Clean-room **G14** + G13/G12/G7/G6 regression via `verify/matrices/matrix-m9.md` — authoritative for M9 / CLI-parity production. Prior M8 receipt [[evidence:root/20261108143000]] does not alone carry M9.
+2. Clean-room **G14** + G13/G12/G7/G6 regression via `verify/matrices/matrix-m009-clean-room-cli-parity.md` — authoritative for M9 / CLI-parity production. Prior M8 receipt [[evidence:root/20261108143000]] does not alone carry M9.
 3. `spec check` clean for this SoT.
 4. Help lists Wave L+H+Pa+Pb+Pc claimed commands; refuse-closed commands refuse and are omitted from help; refuse under alias stays non-zero.
 5. Workspace `cargo metadata`: inward deps only; zero `gix`/gitoxide; zero `celir`.

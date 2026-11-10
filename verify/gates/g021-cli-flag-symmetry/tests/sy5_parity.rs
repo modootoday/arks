@@ -1,5 +1,5 @@
 //! Gate G21 — M16 Sy-5 remaining depth + ancillary interrogators.
-//! Matrix: `verify/matrices/matrix-g21.md`. Cite: git-stash / git-cherry-pick / git-bisect /
+//! Matrix: `verify/matrices/matrix-g021-cli-flag-symmetry.md`. Cite: git-stash / git-cherry-pick / git-bisect /
 //! git-notes / git-blame / git-fsck / git-count-objects / git-pack-refs / git-commit 2.39.0.
 
 use serde_json::json;
@@ -19,7 +19,7 @@ fn record_row(id: &'static str, pass: bool) {
             "gate": "G21",
             "wave": "Sy-5",
             "pass": rows.iter().all(|(_, p)| *p),
-            "compose_service": "g21",
+            "compose_service": "g021-cli-flag-symmetry",
             "rows": rows.iter().map(|(i, p)| json!({"id": i, "pass": p})).collect::<Vec<_>>(),
         });
         if let Some(parent) = Path::new(&path).parent() {

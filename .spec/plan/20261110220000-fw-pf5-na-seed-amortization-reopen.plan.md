@@ -4,7 +4,7 @@ title: FW-PF5-NA seed amortization reopen (≤0.5×)
 status: archived
 created: 2026-11-10T22:00:00Z
 updated: 2026-11-11T00:14:00Z
-tags: [fw-pf5, g19, perf, amortization, residual]
+tags: [fw-pf5, g019-comparative-performance, perf, amortization, residual]
 rel:
   depends_on:
     - sot:root/pf5-journey-seed-amortization
@@ -27,7 +27,7 @@ Reopen [[adr:root/20261110162000]] via [[sot:root/pf5-journey-seed-amortization]
 | Wave | Work | Done |
 |------|------|------|
 | **A0** | Land SoT + this plan; amend journey SoT open-decision row; ADR reopen note | `spec check` |
-| **A1** | Harness seed amortization in `verify/gates/g16/tests/journey_compare.rs`; conditional `aggressive_na` in `g19_eval.py` | Host compile advisory |
+| **A1** | Harness seed amortization in `verify/gates/g016-journey-compare/tests/journey_compare.rs`; conditional `aggressive_na` in `g019-comparative-performance_eval.py` | Host compile advisory |
 | **A2** | Sole Docker G19; evidence + residual FW-PF5-* updates | Receipt; push tip |
 
 ## Exit

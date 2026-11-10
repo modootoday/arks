@@ -1,4 +1,4 @@
 # G23 clean-room
 
-Entrypoint: `verify/scripts/run-g23.sh`. Matrix: `verify/matrices/matrix-g23.md`.
+Entrypoint: `verify/scripts/run-g023-celir-dual-path.sh`. Matrix: `verify/matrices/matrix-g023-celir-dual-path.md`.
 

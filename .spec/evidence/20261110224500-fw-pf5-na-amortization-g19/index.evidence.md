@@ -4,7 +4,7 @@ title: FW-PF5-NA seed amortization G19 remeasure (Claimed partial 4/8)
 status: active
 created: 2026-11-10T22:45:00Z
 updated: 2026-11-10T22:45:00Z
-tags: [g19, pf5, clean-room, perf, aggressive, amortization, verified]
+tags: [g019-comparative-performance, pf5, clean-room, perf, aggressive, amortization, verified]
 rel:
   depends_on: [sot:root/pf5-journey-seed-amortization, sot:root/clean-room-journey-compare, sot:root/production-residual-register, adr:root/20261110162000, plan:root/20261110220000, evidence:root/20261110153000]
   evidence: []
@@ -23,7 +23,7 @@ Reopens [[adr:root/20261110162000]] under [[sot:root/pf5-journey-seed-amortizati
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g19` (sole) |
+| Compose | `verify/docker-compose.yml` service `g019-comparative-performance` (sole) |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |

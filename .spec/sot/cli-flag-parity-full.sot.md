@@ -98,4 +98,4 @@ None for M15 Phase Fs after Fs-5. Per-flag refuse gaps that remained at M15 exit
 
 ## Verification
 
-Clean-room **G20** (`verify/matrices/matrix-g20.md`) for each Fs wave claim set (historical). Active complete-symmetry verification is **G21** under [[sot:root/cli-flag-parity-complete]]. G14 regression must stay green. Host `cargo test` advisory only.
+Clean-room **G20** (`verify/matrices/matrix-g020-cli-symmetric-parity.md`) for each Fs wave claim set (historical). Active complete-symmetry verification is **G21** under [[sot:root/cli-flag-parity-complete]]. G14 regression must stay green. Host `cargo test` advisory only.

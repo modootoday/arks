@@ -4,7 +4,7 @@ title: M16 Sy-3 G21 plumbing breadth
 status: active
 created: 2026-11-09T05:02:38Z
 updated: 2026-11-09T05:02:38Z
-tags: [g21, m16, sy-3, plumbing, clean-room, verified, complete-symmetry]
+tags: [g021-cli-flag-symmetry, m16, sy-3, plumbing, clean-room, verified, complete-symmetry]
 rel:
   depends_on:
     - plan:root/20261109043910
@@ -36,13 +36,13 @@ Also landed: `check-ignore` (minimal `.gitignore`), `name-rev` (minimal).
 
 | Field | Value |
 |-------|-------|
-| Compose | `g21` |
+| Compose | `g021-cli-flag-symmetry` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git | `git version 2.39.5` |
 
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g21
+docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry
 spec check
 ```

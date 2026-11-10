@@ -65,4 +65,4 @@ Thin `arks` binary composing proven libraries for [[sot:root/cli-surface]] **Wav
 
 ## Cross-links
 
-[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], `verify/matrices/matrix-m5.md`
+[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], `verify/matrices/matrix-m005-clean-room-cli-wave.md`

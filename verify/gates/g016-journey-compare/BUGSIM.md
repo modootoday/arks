@@ -1,6 +1,6 @@
 # G16 bug simulation notes
 
-1. `verify/scripts/run-g16.sh` MUST be LF-only. CRLF yields `set: pipefail` / `$'\r'` failures (same class as G14/G13).
+1. `verify/scripts/run-g016-journey-compare.sh` MUST be LF-only. CRLF yields `set: pipefail` / `$'\r'` failures (same class as G14/G13).
 2. Authoritative timings use **release** `arks` (`cargo build -p arks --release`). `arks_bin()` must prefer `release/` under `CARGO_TARGET_DIR` before `debug/`.
 3. Alias shim uses a temporary PATH `git` script that `exec`s arks — not shell `alias` inside cargo tests.
 4. Host advisory runs may pick host `target/release/arks(.exe)`; do not execute Linux ELF from `target-cleanroom` on Windows.

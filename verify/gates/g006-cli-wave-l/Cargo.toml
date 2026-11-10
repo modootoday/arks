@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g6-cleanroom"
+name = "arks-g006-cli-wave-l-cleanroom"
 description = "M5 clean-room G6 Wave L CLI argv suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g15-cleanroom"
+name = "arks-g015-smart-http-cleanroom"
 description = "M11 clean-room G15 git-server suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

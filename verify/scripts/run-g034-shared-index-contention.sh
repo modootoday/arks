@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # G34 — shared-index N-way contention clean-room (M26).
-# SoT: shared-index-nway-clean-room; matrix: verify/matrices/matrix-g34.md
+# SoT: shared-index-nway-clean-room; matrix: verify/matrices/matrix-g034-shared-index-contention.md
 # Gate ≠ G22/G24; G33 reserved elsewhere.
 set -euo pipefail
 
 ROOT="${ARKS_G34_ROOT:-/workspace}"
 cd "$ROOT"
 
-mkdir -p verify/gates/g34
-G34_LOCK="verify/gates/g34/.run.lock.dir"
+mkdir -p verify/gates/g034-shared-index-contention
+G34_LOCK="verify/gates/g034-shared-index-contention/.run.lock.dir"
 if ! mkdir "$G34_LOCK" 2>/dev/null; then
   if [[ -f "$G34_LOCK/owner" ]]; then
     age=$(( $(date +%s) - $(stat -c %Y "$G34_LOCK/owner" 2>/dev/null || echo 0) ))
@@ -44,11 +44,11 @@ if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*
   exit 1
 fi
 
-mkdir -p verify/gates/g34/out
-export ARKS_G34_RECEIPT_OUT="${ARKS_G34_RECEIPT_OUT:-$ROOT/verify/gates/g34/out/receipt.json}"
+mkdir -p verify/gates/g034-shared-index-contention/out
+export ARKS_G34_RECEIPT_OUT="${ARKS_G34_RECEIPT_OUT:-$ROOT/verify/gates/g034-shared-index-contention/out/receipt.json}"
 
-echo "G34: shared-index contention suite (arks-lease --test g34_shared_index_contention)"
-cargo test -p arks-lease --test g34_shared_index_contention "$@"
+echo "G34: shared-index contention suite (arks-lease --test g034-shared-index-contention_shared_index_contention)"
+cargo test -p arks-lease --test g034-shared-index-contention_shared_index_contention "$@"
 
 echo "G34: writing receipt $ARKS_G34_RECEIPT_OUT"
 python3 - <<'PY'

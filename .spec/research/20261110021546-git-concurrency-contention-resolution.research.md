@@ -4,7 +4,7 @@ title: Full Git contention resolution — deferred promotion map
 status: active
 created: 2026-11-10T02:15:46Z
 updated: 2026-11-10T02:15:46Z
-tags: [git, concurrency, multi-agent, contention, g17, g18, deferred, promote, cx-3, m20]
+tags: [git, concurrency, multi-agent, contention, g017-concurrency-issue-compare, g018-concurrency-issue-compare, deferred, promote, cx-3, m20]
 rel:
   depends_on:
     - research:root/20261109023117

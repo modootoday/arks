@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g7-cleanroom"
+name = "arks-g007-smart-http-client-cleanroom"
 description = "M6 clean-room G7 smart-HTTP remote client suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

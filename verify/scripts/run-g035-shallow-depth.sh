@@ -28,5 +28,5 @@ fi
 echo "G35: build arks"
 cargo build -p arks -p arks-remote
 echo "G35: shallow depth suite"
-cargo test --manifest-path verify/gates/g35/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g035-shallow-depth/Cargo.toml "$@"
 echo "G35: PASS"

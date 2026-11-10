@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g36-cleanroom"
+name = "arks-g036-http-basic-auth-cleanroom"
 description = "FW-AUTH-PROXY clean-room G36 HTTP Basic suite"
 version = "0.0.0"
 edition = "2024"

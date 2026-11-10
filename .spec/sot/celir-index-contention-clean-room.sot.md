@@ -4,10 +4,10 @@ title: CELIR index contention clean-room
 status: active
 created: 2026-11-09T20:39:49Z
 updated: 2026-11-09T20:45:00Z
-tags: [celir, indexing-service, clean-room, contention, g22, m24, lease, dual-path]
+tags: [celir, indexing-service, clean-room, contention, g022-celir-index-contention, m24, lease, dual-path]
 verify: clean-room
 rel:
-  governs: [verify/gates/g22, verify/scripts/run-g22.sh, verify/matrices/matrix-g22.md]
+  governs: [verify/gates/g022-celir-index-contention, verify/scripts/run-g022-celir-index-contention.sh, verify/matrices/matrix-g022-celir-index-contention.md]
   depends_on:
     - sot:root/celir-index-dual-path
     - sot:root/storage-celir-boundary
@@ -29,7 +29,7 @@ Version **0.1.0**. Normative **Docker clean-room** gate **G22** for optional fea
 
 | In | Out |
 |----|-----|
-| Clean-room **G22** (`verify/scripts/run-g22.sh` / compose `g22`) | Extending **G11-L3** to CELIR (G11-L3 stays CELIR-free / shared-index N-way OUT) |
+| Clean-room **G22** (`verify/scripts/run-g022-celir-index-contention.sh` / compose `g022-celir-index-contention`) | Extending **G11-L3** to CELIR (G11-L3 stays CELIR-free / shared-index N-way OUT) |
 | N-way concurrent agents (tens→hundreds) on FS `.git` + leases + CELIR index build/publish/open/query / rebuild-from-`.git` | CELIR as ObjectStore; default-on `celir-index` |
 | Index integrity after contention; fail-closed publication; stock-Git readability of `.git` | Shared-index N-way Git index claim (lease L3 OUT) |
 | discrete-circuit path-deps mounted as sibling tree in clean-room | Fake PASS without CELIR crates / invented digests |
@@ -38,9 +38,9 @@ Version **0.1.0**. Normative **Docker clean-room** gate **G22** for optional fea
 
 ### Gate identity
 
-1. Gate ID **G22** `celir-index-contention`. Matrix: `verify/matrices/matrix-g22.md`. Entrypoint: `verify/scripts/run-g22.sh`. Compose service: `g22`.
+1. Gate ID **G22** `celir-index-contention`. Matrix: `verify/matrices/matrix-g022-celir-index-contention.md`. Entrypoint: `verify/scripts/run-g022-celir-index-contention.sh`. Compose service: `g022-celir-index-contention`.
 2. G22 is **additive** to M24 Claimed (host advisory). Host greens alone MUST NOT authorize “index contention verified.”
-3. G22 MUST NOT reopen or redefine G11-L3 claimed shape; CELIR remains excluded from G11-L3 (`verify/matrices/matrix-l3.md`).
+3. G22 MUST NOT reopen or redefine G11-L3 claimed shape; CELIR remains excluded from G11-L3 (`verify/matrices/matrix-l003-high-concurrency.md`).
 
 ### Topology (N scale)
 
@@ -64,7 +64,7 @@ Agents coordinate FS Git writers via **`arks-lease`** (ref-shard / `index:` scop
 ### Clean-room discrete-circuit mount
 
 1. Product path-deps resolve `../../../discrete-circuit/{packages,crates}/…` from `crates/arks-store` ([[adr:root/20261110052030]]).
-2. Compose service `g22` MUST mount the host sibling tree so that from `/workspaces/gir/crates/arks-store` the relative path reaches `/workspaces/discrete-circuit/…` (working_dir `/workspaces/gir`).
+2. Compose service `g022-celir-index-contention` MUST mount the host sibling tree so that from `/workspaces/gir/crates/arks-store` the relative path reaches `/workspaces/discrete-circuit/…` (working_dir `/workspaces/gir`).
 3. If the mount or packages are absent, the gate MUST **FAIL** (or refuse closed) — do **not** stub CELIR or fake PASS.
 4. Default product graph (no `celir-index`) remains CELIR-edge free; G22 enables the feature only inside its test invocation.
 
@@ -79,7 +79,7 @@ M24 shipped sidecar / rebuild / query with host-advisory tests only. Product ver
 
 ## Verification
 
-1. `docker compose -f verify/docker-compose.yml run --rm g22` PASS.
+1. `docker compose -f verify/docker-compose.yml run --rm g022-celir-index-contention` PASS.
 2. Receipt stamped under `.spec/evidence/` with gate, N scale, stock git/rustc, tip SHA.
 3. `spec check` clean for this SoT, [[plan:root/20261109203949]], and matrix cross-links.
 4. Residual / roadmap record advisory → verified for **this gate** only when receipt PASS.

@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g18-cleanroom"
+name = "arks-g018-concurrency-issue-compare-cleanroom"
 description = "G18 clean-room concurrency issue-repro compare (Cd-1; verify tree only)"
 version = "0.0.0"
 edition = "2024"

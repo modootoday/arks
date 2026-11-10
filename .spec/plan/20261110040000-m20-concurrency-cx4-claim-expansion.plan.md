@@ -4,7 +4,7 @@ title: M20 Concurrency Cx-4 claim expansion
 status: archived
 created: 2026-11-10T04:00:00Z
 updated: 2026-11-10T04:30:00Z
-tags: [milestone, m20, phase-cx, concurrency, mitigate-with-compat, g17, claim-expansion]
+tags: [milestone, m20, phase-cx, concurrency, mitigate-with-compat, g017-concurrency-issue-compare, claim-expansion]
 rel:
   depends_on:
     - sot:root/program-roadmap

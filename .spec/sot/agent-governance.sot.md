@@ -4,7 +4,7 @@ title: Agent governance
 status: active
 created: 2026-11-08T08:20:00Z
 updated: 2026-11-11T06:15:00Z
-tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, ports, symmetry, hooks, m24, g28, deferred-zero, l3]
+tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, ports, symmetry, hooks, m24, g028-live-private-arks, deferred-zero, l3]
 verify: manual
 rel:
   depends_on:

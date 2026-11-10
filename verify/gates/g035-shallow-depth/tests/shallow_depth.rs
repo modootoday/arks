@@ -1,5 +1,5 @@
 //! Gate G35 — arks `--depth` shallow clone/fetch vs stock `git http-backend`.
-//! Cite: verify/matrices/matrix-g35.md, git-clone --depth, gitprotocol-capabilities shallow.
+//! Cite: verify/matrices/matrix-g035-shallow-depth.md, git-clone --depth, gitprotocol-capabilities shallow.
 //! Coordination: G35 (not G33/G34). Filter/promisor not claimed.
 
 use std::fs;
@@ -262,7 +262,7 @@ fn seed_chain_bare(parent: &Path, name: &str) -> PathBuf {
 }
 
 #[test]
-fn g35_clone_depth_1_writes_shallow() {
+fn g035-shallow-depth_clone_depth_1_writes_shallow() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_chain_bare(root.path(), "app.git");
@@ -290,7 +290,7 @@ fn g35_clone_depth_1_writes_shallow() {
 }
 
 #[test]
-fn g35_fetch_depth_1_into_tracking_repo() {
+fn g035-shallow-depth_fetch_depth_1_into_tracking_repo() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_chain_bare(root.path(), "app.git");
@@ -312,7 +312,7 @@ fn g35_fetch_depth_1_into_tracking_repo() {
 }
 
 #[test]
-fn g35_local_clone_depth_refuses() {
+fn g035-shallow-depth_local_clone_depth_refuses() {
     require_git();
     let root = TempDir::new().unwrap();
     let work = root.path().join("src");

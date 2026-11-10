@@ -9,9 +9,9 @@ export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 meta="$(cargo metadata --format-version 1)"
 if echo "$meta" | grep -E '"name":[[:space:]]*"gix' >/dev/null; then echo G39: forbidden gix >&2; exit 1; fi
 echo G39: gix-exit OK
-mkdir -p verify/gates/g39/out
+mkdir -p verify/gates/g039-partial-clone-filter/out
 echo G39: build arks
 cargo build -p arks
 echo G39: blob:none suite
-cargo test --manifest-path verify/gates/g39/Cargo.toml -- --nocapture
+cargo test --manifest-path verify/gates/g039-partial-clone-filter/Cargo.toml -- --nocapture
 echo G39: PASS

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # G28 offline clone closure — J-CLONE-LOCAL-01 + J-CLONE-PATH-01 with arks.
 # Aligns with G16 seeds/oracles (smart-HTTP git-http-backend peer; path + file://).
-# SoT: g28-live-private-arks-journeys; catalog: clean-room-journey-compare.
+# SoT: g028-live-private-arks-live-private-arks-journeys; catalog: clean-room-journey-compare.
 # Honesty: functional offline only — not G16 timing; not live forge; not G26/G27 scale.
 set -euo pipefail
 
@@ -11,10 +11,10 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/gates/g28/out
-WORK="${ARKS_G28_OFFLINE_WORK:-$ROOT/verify/gates/g28/out/offline-work}"
-RECEIPT="${ARKS_G28_OFFLINE_RECEIPT_OUT:-$ROOT/verify/gates/g28/out/offline-clones-receipt.json}"
-RESULTS_JSON="${ARKS_G28_OFFLINE_RESULTS_OUT:-$ROOT/verify/gates/g28/out/offline-clones-journeys.json}"
+mkdir -p verify/gates/g028-offline-clones/out
+WORK="${ARKS_G28_OFFLINE_WORK:-$ROOT/verify/gates/g028-offline-clones/out/offline-work}"
+RECEIPT="${ARKS_G28_OFFLINE_RECEIPT_OUT:-$ROOT/verify/gates/g028-offline-clones/out/offline-clones-receipt.json}"
+RESULTS_JSON="${ARKS_G28_OFFLINE_RESULTS_OUT:-$ROOT/verify/gates/g028-offline-clones/out/offline-clones-journeys.json}"
 REVISION="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"
@@ -51,9 +51,9 @@ with open(results_path, encoding="utf-8") as f:
 fail = sum(1 for j in journeys if j.get("status") == "FAIL")
 passt = sum(1 for j in journeys if j.get("status") == "PASS")
 receipt = {
-    "schema": "arks-g28-offline-clone-journeys/v1",
+    "schema": "arks-g028-live-private-arks-offline-clone-journeys/v1",
     "gate": "G28",
-    "name": "g28-offline-clone-journeys",
+    "name": "g028-live-private-arks-offline-clone-journeys",
     "disposition": disposition,
     "detail": detail,
     "venue": "clean-room",
@@ -65,7 +65,7 @@ receipt = {
     "counts": {"PASS": passt, "FAIL": fail, "total": len(journeys)},
     "journeys": journeys,
     "honesty": "offline functional clone closure for G28 N/A rows; != G16 timing; != live forge; != G26/G27 scale",
-    "sot": "sot:root/g28-live-private-arks-journeys",
+    "sot": "sot:root/g028-live-private-arks-live-private-arks-journeys",
     "catalog": "sot:root/clean-room-journey-compare",
 }
 with open(out, "w", encoding="utf-8") as f:
@@ -180,7 +180,7 @@ seed_bare() {
   git -C "$work" init -b main >/dev/null
   git -C "$work" config user.email "arks@example.com"
   git -C "$work" config user.name "arks"
-  printf 'hello arks g16\n' >"$work/README"
+  printf 'hello arks g016-journey-compare\n' >"$work/README"
   if [[ "$extra" -gt 0 ]]; then
     mkdir -p "$work/bulk"
     local i
@@ -188,7 +188,7 @@ seed_bare() {
       python3 - "$work/bulk" "$i" <<'PY'
 import pathlib, sys
 bulk, i = pathlib.Path(sys.argv[1]), int(sys.argv[2])
-body = (f"arks g16 bulk {i}\n" * 32)
+body = (f"arks g016-journey-compare bulk {i}\n" * 32)
 (bulk / f"f{i:03d}.txt").write_text(body, encoding="utf-8")
 PY
     done
@@ -196,7 +196,7 @@ PY
   git -C "$work" add -A
   git -C "$work" -c commit.gpgsign=false commit -m "init" >/dev/null
   if [[ "$extra" -gt 0 ]]; then
-    printf 'hello arks g16\nwave-2\n' >"$work/README"
+    printf 'hello arks g016-journey-compare\nwave-2\n' >"$work/README"
     git -C "$work" add README
     git -C "$work" -c commit.gpgsign=false commit -m "touch" >/dev/null
   fi

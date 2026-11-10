@@ -1,5 +1,5 @@
 //! Gate G29 — dumb HTTP additive server path vs stock Git.
-//! Cite: verify/matrices/matrix-g29.md, gitprotocol-http dumb section.
+//! Cite: verify/matrices/matrix-g029-server-dumb-http.md, gitprotocol-http dumb section.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -125,7 +125,7 @@ fn seed_bare(root: &Path) -> PathBuf {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "init");
-    fs::write(work.join("hello.txt"), b"hello g29\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g029-server-dumb-http\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");
     let bare = root.join("server.git");
@@ -149,7 +149,7 @@ fn seed_bare(root: &Path) -> PathBuf {
 }
 
 #[test]
-fn g29_update_server_info_files() {
+fn g029-server-dumb-http_update_server_info_files() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -163,7 +163,7 @@ fn g29_update_server_info_files() {
 }
 
 #[test]
-fn g29_stock_git_clone_dumb_http() {
+fn g029-server-dumb-http_stock_git_clone_dumb_http() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -176,7 +176,7 @@ fn g29_stock_git_clone_dumb_http() {
     assert_ok(&out, "git clone via arks dumb HTTP");
     let body = fs::read_to_string(clone.join("hello.txt")).unwrap();
     assert!(
-        body.replace("\r\n", "\n").starts_with("hello g29"),
+        body.replace("\r\n", "\n").starts_with("hello g029-server-dumb-http"),
         "unexpected: {body:?}"
     );
 }

@@ -4,7 +4,7 @@ title: M17 exit — full G19 journey allow-list PASS
 status: active
 created: 2026-11-09T07:31:00Z
 updated: 2026-11-10T00:57:42Z
-tags: [g19, m17, pf3, exit, comparative-perf, clean-room, verified]
+tags: [g019-comparative-performance, m17, pf3, exit, comparative-perf, clean-room, verified]
 rel:
   depends_on: [plan:root/20261109043916, sot:root/program-roadmap, sot:root/clean-room-journey-compare, evidence:root/20261109064500, evidence:root/20261109070000, evidence:root/20261109213000]
   evidence: []
@@ -52,7 +52,7 @@ Closes milestone **M17** (Phase Pf3) of [[sot:root/program-roadmap]]: G19 allow-
 
 | Field | Value |
 |-------|-------|
-| Compose | `docker compose -f verify/docker-compose.yml run --rm g19` |
+| Compose | `docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |
@@ -62,6 +62,6 @@ Closes milestone **M17** (Phase Pf3) of [[sot:root/program-roadmap]]: G19 allow-
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g19
+docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance
 spec check
 ```

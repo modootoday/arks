@@ -11,4 +11,4 @@ Primary: [gitformat-signature](https://git-scm.com/docs/gitformat-signature), [g
 | G37-C05 | OpenPGP / signed-tag | G37 | n/a | Superseded by **G38** Claimed (R4 / S2); do not expect refuse |
 | G37-C06 | gix-exit scan | G37 | yes | clean |
 
-Host-only green does **not** carry G37 Claimed. Ephemeral keys only. OpenSSH already pinned in `arks-verify-m1`. OpenPGP / X.509 / `tag -s` → [[matrix-g38]] / [[adr:root/20261110110450]].
+Host-only green does **not** carry G37 Claimed. Ephemeral keys only. OpenSSH already pinned in `arks-verify-m1`. OpenPGP / X.509 / `tag -s` → [[matrix-g038-gpgsig-openpgp]] / [[adr:root/20261110110450]].

@@ -4,7 +4,7 @@ title: Multi-agent Git concurrency scenario catalog
 status: active
 created: 2026-11-09T02:31:18Z
 updated: 2026-11-10T14:00:00Z
-tags: [concurrency, multi-agent, lease, git-compat, performance, scenarios, g17, g18, m19, m20, m21, cx, cd, dz, deferred-zero]
+tags: [concurrency, multi-agent, lease, git-compat, performance, scenarios, g017-concurrency-issue-compare, g018-concurrency-issue-compare, m19, m20, m21, cx, cd, dz, deferred-zero]
 verify: manual
 rel:
   depends_on:

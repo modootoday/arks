@@ -51,7 +51,7 @@ Ship the smallest engine slice: in-house hashing, OID types, and loose object en
 
 ## Exit gates (re-verify)
 
-Under roadmap **v0.3.1**, M1 exit requires a **new** authoritative receipt after clean-room re-run (`verify/images.lock.json`, `verify/matrices/matrix-m1.md`).
+Under roadmap **v0.3.1**, M1 exit requires a **new** authoritative receipt after clean-room re-run (`verify/images.lock.json`, `verify/matrices/matrix-m001-clean-room-g0-g1.md`).
 
 | Gate | Clean-room (authoritative) | Advisory |
 |------|---------------------------|----------|

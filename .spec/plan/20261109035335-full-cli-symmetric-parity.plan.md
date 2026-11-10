@@ -4,7 +4,7 @@ title: Full CLI symmetric parity residual
 status: archived
 created: 2026-11-09T03:53:35Z
 updated: 2026-11-09T20:30:00Z
-tags: [milestone, m15, phase-fs, cli, parity, alias, residual, g20]
+tags: [milestone, m15, phase-fs, cli, parity, alias, residual, g020-cli-symmetric-parity]
 rel:
   depends_on:
     - sot:root/program-roadmap

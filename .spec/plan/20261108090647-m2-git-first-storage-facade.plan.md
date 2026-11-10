@@ -45,12 +45,12 @@ Route all **object** I/O through a store facade with a filesystem Git backend; k
 
 ## Exit gates (re-verify)
 
-Under roadmap **v0.3.1**, M2 exit is carried by the **new** authoritative receipt after clean-room re-run (`verify/images.lock.json`, `verify/matrices/matrix-m2.md`).
+Under roadmap **v0.3.1**, M2 exit is carried by the **new** authoritative receipt after clean-room re-run (`verify/images.lock.json`, `verify/matrices/matrix-m002-clean-room-g0-g1-g10.md`).
 
 | Gate | Clean-room (authoritative) | Advisory |
 |------|---------------------------|----------|
 | **G10** objects-subset | **PASS** — [[evidence:root/20261108190033]] | Host facade unit tests |
-| **G1** regression | **PASS** — [[evidence:root/20261108190033]] (via `run-g10.sh`) | Host |
+| **G1** regression | **PASS** — [[evidence:root/20261108190033]] (via `run-g010-store-facade.sh`) | Host |
 
 **Prior (non-carrying alone):** [[evidence:root/20261108093059]] — historical gap-fill input only under v0.3.1; **not** M2 exit by itself.
 

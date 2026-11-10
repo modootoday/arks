@@ -4,7 +4,7 @@ title: G8 local-forge wire substitute (≠ GitHub live PASS)
 status: active
 created: 2026-11-10T22:21:00Z
 updated: 2026-11-10T22:21:00Z
-tags: [g8, local-forge, wire, secrets-block, honesty, advisory]
+tags: [g008-live-forge-smoke, local-forge, wire, secrets-block, honesty, advisory]
 rel:
   depends_on:
     - research:root/20261110222000
@@ -23,10 +23,10 @@ files:
 
 | Item | Status |
 |------|--------|
-| Compose | `g8-local-forge` |
-| Receipt | `arks-g8-local-forge-wire/v1` `disposition=claimed-wire` |
+| Compose | `g008-local-forge` |
+| Receipt | `arks-g008-local-forge-wire/v1` `disposition=claimed-wire` |
 | `github_live_pass` | **false** |
-| Environment `g8-live` secrets | Still **0** (unchanged hard block) |
+| Environment `g008-live-forge-smoke-live` secrets | Still **0** (unchanged hard block) |
 | Product forge SLO | **Not claimed** |
 
 Proves HTTPS git clone/push/fetch against loopback `arks serve-http` when GitHub secrets are absent. Must not be rewritten as R5 live remasure PASS.

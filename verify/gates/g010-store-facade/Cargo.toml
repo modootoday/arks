@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g10-cleanroom"
+name = "arks-g010-store-facade-cleanroom"
 description = "M2 clean-room store-facade oracle harness (verify tree only)"
 version = "0.0.0"
 edition = "2024"

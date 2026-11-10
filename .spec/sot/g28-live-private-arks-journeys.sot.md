@@ -1,10 +1,10 @@
 ---
-id: sot:root/g28-live-private-arks-journeys
+id: sot:root/g028-live-private-arks-live-private-arks-journeys
 title: G28 live private arks journeys
 status: active
 created: 2026-11-09T21:20:20Z
 updated: 2026-11-09T21:34:00Z
-tags: [g28, verification, docker, clean-room, journey, live, github, private, remote, opt-in, offline-clone]
+tags: [g028-live-private-arks, verification, docker, clean-room, journey, live, github, private, remote, opt-in, offline-clone]
 verify: manual
 rel:
   depends_on:
@@ -50,7 +50,7 @@ Version **0.1.1**. Additive **opt-in** Docker clean-room gate that drives **arks
 
 ### Journey checklist (G16-derived)
 
-8. Authoritative rows for G28 are the **live-applicable** adaptations of [[sot:root/clean-room-journey-compare]] / `verify/matrices/matrix-journey.md`:
+8. Authoritative rows for G28 are the **live-applicable** adaptations of [[sot:root/clean-room-journey-compare]] / `verify/matrices/matrix-g016-journey-compare.md`:
 
 | ID | Live adaptation | Functional class |
 |----|-----------------|------------------|
@@ -76,7 +76,7 @@ Version **0.1.1**. Additive **opt-in** Docker clean-room gate that drives **arks
 | **J-PR-GH-01** | push topic; open PR via `gh` or GitHub REST; merge or leave open then cleanup | success |
 | **J-ALIAS-01** | optional PATH shim twin of a short local slice | success or N/A |
 
-9. Offline-only G16 rows (**J-CLONE-LOCAL-01**, **J-CLONE-PATH-01**) are **not** live-forge adaptations. They MUST close via the offline additive harness (`verify/scripts/run-g28-offline-clones.sh` / compose **`g28-offline-clones`**) using G16-aligned seeds/oracles (smart-HTTP `git http-backend` peer; path + `file://`). Do not invent live GitHub equivalents that redefine those rows. Live `run-g28.sh` MAY still record them as N/A for the live receipt; checklist honesty for the gate family is **PASS** when the offline receipt is stamped.
+9. Offline-only G16 rows (**J-CLONE-LOCAL-01**, **J-CLONE-PATH-01**) are **not** live-forge adaptations. They MUST close via the offline additive harness (`verify/scripts/run-g028-offline-clones.sh` / compose **`g028-offline-clones`**) using G16-aligned seeds/oracles (smart-HTTP `git http-backend` peer; path + `file://`). Do not invent live GitHub equivalents that redefine those rows. Live `run-g028-live-private-arks.sh` MAY still record them as N/A for the live receipt; checklist honesty for the gate family is **PASS** when the offline receipt is stamped.
 
 ### Honesty
 
@@ -87,9 +87,9 @@ Version **0.1.1**. Additive **opt-in** Docker clean-room gate that drives **arks
 
 ### Evidence
 
-14. Live receipt under `verify/gates/g28/out/receipt.json` + Specfold evidence citing journey PASS/FAIL table, image tag, arks revision, stock Git version, repo URL (public HTTPS form, no token), cleanup status.
-15. Offline clone receipt under `verify/gates/g28/out/offline-clones-receipt.json` + Specfold evidence ([[evidence:root/20261109213400]] when stamped).
-16. Compose **`g28`** → `verify/scripts/run-g28.sh`; **`g28-offline-clones`** → `verify/scripts/run-g28-offline-clones.sh`. Matrix: `verify/matrices/matrix-g28.md`.
+14. Live receipt under `verify/gates/g028-live-private-arks/out/receipt.json` + Specfold evidence citing journey PASS/FAIL table, image tag, arks revision, stock Git version, repo URL (public HTTPS form, no token), cleanup status.
+15. Offline clone receipt under `verify/gates/g028-live-private-arks/out/offline-clones-receipt.json` + Specfold evidence ([[evidence:root/20261109213400]] when stamped).
+16. Compose **`g028-live-private-arks`** → `verify/scripts/run-g028-live-private-arks.sh`; **`g028-offline-clones`** → `verify/scripts/run-g028-offline-clones.sh`. Matrix: `verify/matrices/matrix-g028-live-private-arks.md`.
 
 ### Out of scope
 
@@ -105,8 +105,8 @@ Operators need honesty that everyday arks flows work against a real private forg
 ## Verification
 
 1. `spec check` clean for this SoT, plan, matrix cross-links.
-2. Create throwaway private repo with `gh`; set opt-in env; `docker compose -f verify/docker-compose.yml run --rm g28`.
+2. Create throwaway private repo with `gh`; set opt-in env; `docker compose -f verify/docker-compose.yml run --rm g028-live-private-arks`.
 3. Journey table in receipt is complete for live-applicable rows; FAIL rows listed honestly.
-4. Offline clones: `docker compose -f verify/docker-compose.yml run --rm g28-offline-clones` → both IDs PASS; evidence stamped.
+4. Offline clones: `docker compose -f verify/docker-compose.yml run --rm g028-offline-clones` → both IDs PASS; evidence stamped.
 5. Evidence stamped; repo deleted (`gh repo delete`) when safe, or URL left documented.
 6. No tokens in git history / Specfold files.

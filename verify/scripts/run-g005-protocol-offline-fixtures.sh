@@ -9,8 +9,8 @@ echo "G5: CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-2}"
 
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 
-echo "G5: offline fixtures (verify/gates/g5)"
-cargo test --manifest-path verify/gates/g5/Cargo.toml "$@"
+echo "G5: offline fixtures (verify/gates/g005-protocol-offline-fixtures)"
+cargo test --manifest-path verify/gates/g005-protocol-offline-fixtures/Cargo.toml "$@"
 
-echo "G5: arks-protocol unit + g5_offline"
+echo "G5: arks-protocol unit + g005-protocol-offline-fixtures_offline"
 cargo test -p arks-protocol "$@"

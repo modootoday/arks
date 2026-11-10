@@ -4,7 +4,7 @@ title: Clean-room journey compare
 status: active
 created: 2026-11-08T18:24:57Z
 updated: 2026-11-10T04:40:00Z
-tags: [verification, docker, clean-room, journey, timing, perf, git-compat, observability, worktree, submodule, g17, g19]
+tags: [verification, docker, clean-room, journey, timing, perf, git-compat, observability, worktree, submodule, g017-concurrency-issue-compare, g019-comparative-performance]
 verify: manual
 rel:
   depends_on:
@@ -38,7 +38,7 @@ This SoT does **not** redefine [[sot:root/program-roadmap]] bars (**CLI-parity p
 2. For each catalog journey, record:
    - **Functional class** — exit codes / success-vs-refuse; same-`.git` / OID / ref / worktree parity **where claimed**.
    - **Timing/perf metrics** — wall-clock per step and per journey (schema below), always emitted when the harness runs.
-3. Host-only timings are **advisory**. Authoritative comparison receipts MUST come from a fresh `compose run --rm g16` (or equivalent deterministic entrypoint).
+3. Host-only timings are **advisory**. Authoritative comparison receipts MUST come from a fresh `compose run --rm g016-journey-compare` (or equivalent deterministic entrypoint).
 
 ### Relationship (additive)
 
@@ -162,13 +162,13 @@ Deferred / not catalog-required: live remote (G8), LFS, forge APIs, SSH/`git://`
 
 ### Evidence receipt format
 
-17. Authoritative runs land Specfold evidence under `.spec/evidence/<utcCompact>-journey-compare-g16/` with `index.evidence.md` citing: this SoT + plan versions, image digest from lock (and local Id if distinct), stock Git version, arks revision/profile, journey functional table, linked `metrics.json` (`arks-journey-metrics/v1`), residuals/honesty (noise, excluded journeys, Open rows).
+17. Authoritative runs land Specfold evidence under `.spec/evidence/<utcCompact>-journey-compare-g016-journey-compare/` with `index.evidence.md` citing: this SoT + plan versions, image digest from lock (and local Id if distinct), stock Git version, arks revision/profile, journey functional table, linked `metrics.json` (`arks-journey-metrics/v1`), residuals/honesty (noise, excluded journeys, Open rows).
 18. Evidence id convention: `evidence:root/<utcCompact>` matching directory prefix (same pattern as M9/M11 receipts).
 
 ### Clean-room entrypoint
 
-19. Compose service **`g16`** → `verify/scripts/run-g16.sh` → build release `arks` → `cargo test --manifest-path verify/gates/g16/Cargo.toml` → write metrics artifact under `verify/gates/g16/out/` (gitignored raw host copies OK; evidence copies committed metrics snapshot).
-20. Matrix: `verify/matrices/matrix-journey.md`. Reuse pinned image; bump `verify/images.lock.json` only if tooling requires it.
+19. Compose service **`g016-journey-compare`** → `verify/scripts/run-g016-journey-compare.sh` → build release `arks` → `cargo test --manifest-path verify/gates/g016-journey-compare/Cargo.toml` → write metrics artifact under `verify/gates/g016-journey-compare/out/` (gitignored raw host copies OK; evidence copies committed metrics snapshot).
+20. Matrix: `verify/matrices/matrix-g016-journey-compare.md`. Reuse pinned image; bump `verify/images.lock.json` only if tooling requires it.
 
 ### Out of scope (this SoT)
 
@@ -185,7 +185,7 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 ## Verification
 
 1. `spec check` clean for this SoT, plan, and cross-linked SoTs.
-2. `docker compose -f verify/docker-compose.yml run --rm g16` fresh container; metrics JSON validates `arks-journey-metrics/v1` with `aggregation=median_p95` and `iterations≥3`.
+2. `docker compose -f verify/docker-compose.yml run --rm g016-journey-compare` fresh container; metrics JSON validates `arks-journey-metrics/v1` with `aggregation=median_p95` and `iterations≥3`.
 3. Catalog claimed rows (Wave-1 + Wave-2 + Wave-3) functionally green under git and arks (refuse rows: arks refuses); timings present with median + p95 fields; optional RSS/CPU present on clean-room Linux lanes when sampled.
 4. Evidence receipt filed; host-only runs labeled advisory.
 5. Zero `gix` / CELIR product edges on the harness path; M9/M10/M11 meanings unchanged.
@@ -194,11 +194,11 @@ Functional oracles (G0–G15) already prove parity classes. Operators still need
 
 | Decision | Status | Notes |
 |----------|--------|-------|
-| Gate id / compose name | **Closed (v0.1.0)** | **G16** `journey-compare`; compose service `g16` |
+| Gate id / compose name | **Closed (v0.1.0)** | **G16** `journey-compare`; compose service `g016-journey-compare` |
 | Binary profile for timings | **Closed (v0.1.0)** | **release** for G16; compile excluded from metrics |
 | Warm / iteration policy | **Closed (v0.2.0)** | `cold-workdir-per-lane`; authoritative default `iterations=3`; aggregation `median_p95` |
 | Perf metrics aggregation / SLO posture | **Closed (v0.2.0)** | Median + nearest-rank p95 recorded always on authoritative runs; **absolute ms pass/fail bars deferred** — must not redefine M9/M10/M11 |
-| Absolute perf regression bars (ms / ≥20% fail gates) | **Closed for Pf-1 allow-list (M14/G19)** | G16 remains record-only for non-allow-list rows; **G19** enforces `arks_median ≤ 0.8× git_median` on `verify/matrices/matrix-g19.md` after M12+M13 claimed-set exit |
+| Absolute perf regression bars (ms / ≥20% fail gates) | **Closed for Pf-1 allow-list (M14/G19)** | G16 remains record-only for non-allow-list rows; **G19** enforces `arks_median ≤ 0.8× git_median` on `verify/matrices/matrix-g019-comparative-performance.md` after M12+M13 claimed-set exit |
 | Optional RSS/CPU metrics | **Closed (v0.3.0)** | Emit `peak_rss_kb` / `cpu_ms` (+ p95) when child sampling is available; **omit rather than invent** |
 | Live-remote journeys (G8) | **Claimed (default-on when secrets)** | [[adr:root/20261110220000]]; live when token+URL; SKIP when absent; prefer offline/local peer for ladder |
 | Path/`file://` clone lane | **Closed (v0.3.0; hardlink-prefer v0.4.0)** | **J-CLONE-PATH-01**; local path + same-host `file://` via hardlink-or-copy (not `--shared`; not piped upload-pack) |

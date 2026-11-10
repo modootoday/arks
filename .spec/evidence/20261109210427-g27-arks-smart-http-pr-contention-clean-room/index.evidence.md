@@ -4,7 +4,7 @@ title: G27 arks smart HTTP PR contention clean-room
 status: active
 created: 2026-11-09T21:04:27Z
 updated: 2026-11-10T00:57:44Z
-tags: [g27, clean-room, smart-http, server, branch, pr-sim, contention, verified]
+tags: [g027-smart-http-pr-contention, clean-room, smart-http, server, branch, pr-sim, contention, verified]
 rel:
   depends_on: [sot:root/arks-smart-http-pr-contention-clean-room, plan:root/20261109210427, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/arks-server, sot:root/program-roadmap, sot:root/production-residual-register]
 files:
@@ -18,8 +18,8 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G27** (`verify/scripts/run-g27.sh` / compose `g27`) |
-| Matrix | `verify/matrices/matrix-g27.md` |
+| Gate | **G27** (`verify/scripts/run-g027-smart-http-pr-contention.sh` / compose `g027-smart-http-pr-contention`) |
+| Matrix | `verify/matrices/matrix-g027-smart-http-pr-contention.md` |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |
 | N scale | **2048** branches + **2048** PR heads + **8** concurrent agents |
@@ -31,7 +31,7 @@ files:
 | Step | Result |
 |------|--------|
 | `cargo build -p arks` | OK |
-| `cargo test --manifest-path verify/gates/g27/Cargo.toml -- --test-threads=1` | 5/5 PASS |
+| `cargo test --manifest-path verify/gates/g027-smart-http-pr-contention/Cargo.toml -- --test-threads=1` | 5/5 PASS |
 | Sole-runner lock | held |
 | Heavy-gate overlap refuse | OK (no G17/G19/G22–G26 lock) |
 

@@ -4,7 +4,7 @@ title: M14 exit — comparative ≥20% on frozen G19 allow-list
 status: active
 created: 2026-11-09T21:30:00Z
 updated: 2026-11-10T00:57:44Z
-tags: [g19, m14, exit, comparative-perf, clean-room, verified]
+tags: [g019-comparative-performance, m14, exit, comparative-perf, clean-room, verified]
 rel:
   depends_on: [plan:root/20261109024636, sot:root/program-roadmap, evidence:root/20261109170000, evidence:root/20261109210000, evidence:root/20261109203000]
   evidence: []
@@ -29,7 +29,7 @@ Wave evidence: [[evidence:root/20261109170000]] (Pf-1), [[evidence:root/20261109
 
 | Field | Value |
 |-------|-------|
-| Compose | `g19` → G16 timing + allow-list gate |
+| Compose | `g019-comparative-performance` → G16 timing + allow-list gate |
 | Image | `arks-verify-m1:0.1.0` / `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |
@@ -38,6 +38,6 @@ Wave evidence: [[evidence:root/20261109170000]] (Pf-1), [[evidence:root/20261109
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g19
+docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance
 spec check
 ```

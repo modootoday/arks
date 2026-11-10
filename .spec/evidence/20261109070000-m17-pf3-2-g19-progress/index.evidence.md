@@ -4,7 +4,7 @@ title: M17 Pf3-2 G19 progress (partial allow-list)
 status: active
 created: 2026-11-09T07:00:00Z
 updated: 2026-11-10T00:57:42Z
-tags: [g19, m17, pf3, progress, clean-room, perf]
+tags: [g019-comparative-performance, m17, pf3, progress, clean-room, perf]
 rel:
   depends_on: [plan:root/20261109043916, evidence:root/20261109064500]
   evidence: []
@@ -35,5 +35,5 @@ Cold process-per-command floor: arks dyld/startup ≈4–6ms vs stock Git ≈1ms
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g19
+docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance
 ```

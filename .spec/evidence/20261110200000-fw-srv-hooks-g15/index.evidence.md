@@ -4,7 +4,7 @@ title: FW-SRV-HOOKS G15 receive-pack githooks honor list
 status: active
 created: 2026-11-10T08:00:00Z
 updated: 2026-11-10T08:00:00Z
-tags: [m11, g15, githooks, receive-pack, clean-room, verified, fw-srv-hooks, pre-receive, update, post-receive]
+tags: [m11, g015-smart-http, githooks, receive-pack, clean-room, verified, fw-srv-hooks, pre-receive, update, post-receive]
 rel:
   depends_on:
     - sot:root/arks-server
@@ -24,7 +24,7 @@ Claim receive-pack server-side githooks honor list on arks smart HTTP: `pre-rece
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g15` |
+| Compose | `verify/docker-compose.yml` service `g015-smart-http` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Stock Git | `git version 2.39.5` |
@@ -36,10 +36,10 @@ Claim receive-pack server-side githooks honor list on arks smart HTTP: `pre-rece
 
 | Gate | Command | Outcome |
 |------|---------|---------|
-| **G15** (full suite + M11-C14) | `docker compose -f verify/docker-compose.yml run --rm g15` | **PASS** |
+| **G15** (full suite + M11-C14) | `docker compose -f verify/docker-compose.yml run --rm g015-smart-http` | **PASS** |
 | arks-server units | includes `receive_pre_receive_*` / `receive_update_*` / `receive_post_receive_*` | **PASS** |
-| `g15_receive_pack_githooks_honor_list` | stock Git push vs rejecting/allowing hooks | **PASS** |
-| G14 / G7 / G5 regression | embedded in `run-g15.sh` | **PASS** |
+| `g015-smart-http_receive_pack_githooks_honor_list` | stock Git push vs rejecting/allowing hooks | **PASS** |
+| G14 / G7 / G5 regression | embedded in `run-g015-smart-http.sh` | **PASS** |
 
 ## Non-claims
 

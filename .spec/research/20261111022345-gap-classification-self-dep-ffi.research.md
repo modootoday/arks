@@ -22,7 +22,7 @@ tags:
     host-env,
     git-pin,
     pf5-alias,
-    g8-live,
+    g008-live-forge-smoke-live,
     l9,
     sha1-immunity,
     celir-objectstore,
@@ -73,7 +73,7 @@ At tip ≥ **`ade4040`**, with **FS_final YES** and operator honesty **PARTIAL**
 | FS_final | **YES** |
 | Operator one-word | **PARTIAL** |
 | Pf5 | REVERT **0.5000 Claimed**; ALIAS **0.5546** `aggressive_na`; claimed=18; M17 **19/19** ([[evidence:root/20261111015154]]) |
-| `g8-live` secrets | **0** (last probe in [[research:root/20261111012840]]) |
+| `g008-live-forge-smoke-live` secrets | **0** (last probe in [[research:root/20261111012840]]) |
 | L9 | Owner-closed; reopen pack only |
 | sha1cd | Detect+refuse **Claimed**; immunity **Impossible** |
 | Host-env | Detect + opt-in refuse / LSM detect **Claimed**; full sync/hydration/bypass **Impossible** |
@@ -240,7 +240,7 @@ Effort: **S** ≤1–2 eng-days · **M** ~1 sprint slice · **L** multi-sprint /
 | **Tip status** | **Blocked** — secrets=0; harness Claimed; local-forge ≠ live PASS |
 | **Bucket** | **3 FFI / external CLI / ops** (Environment secrets + Actions/`gh` + HTTPS peer) |
 | **Why** | Measurement substrate is operator PAT + URL; not crates. |
-| **Packages / CLI / FFI** | GitHub Environment `g8-live` secrets `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL`; `gh workflow run g8-forge-scale.yml`; optional compose `g8` / `g8-live-scale`. |
+| **Packages / CLI / FFI** | GitHub Environment `g008-live-forge-smoke-live` secrets `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL`; `gh workflow run g008-live-forge-smoke-forge-scale.yml`; optional compose `g008-live-forge-smoke` / `g008-live-scale`. |
 | **Effort** | **Ops** (minutes once secrets exist) + evidence attach |
 | **Specfold honesty** | Live receipt → latency row Done. SKIP / dry-run / `claimed-wire` ≠ live PASS. |
 | **Recommended next** | Owner fills secrets → one live dispatch → evidence. Highest ops ROI. |

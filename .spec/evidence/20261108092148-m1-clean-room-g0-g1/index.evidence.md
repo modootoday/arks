@@ -4,7 +4,7 @@ title: M1 clean-room G0 G1 receipts
 status: active
 created: 2026-11-08T09:21:48Z
 updated: 2026-11-08T18:53:19Z
-tags: [m1, clean-room, g0, g1, historical, superseded-for-exit]
+tags: [m1, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, historical, superseded-for-exit]
 rel:
   depends_on: [sot:root/product-verification-clean-room, sot:root/interop-test-matrix, plan:root/20261108090646]
 ---
@@ -34,8 +34,8 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | Workspace tests: arks-hash 9, arks-oid 8, arks-object 7 + g1_oracle 3 |
-| **G1** | `docker compose -f verify/docker-compose.yml run --rm g1` | **PASS** | `arks-object` g1_oracle 3 + `verify/gates/g1` git_oracle 4 |
+| **G0** | `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` | **PASS** | Workspace tests: arks-hash 9, arks-oid 8, arks-object 7 + g001-loose-object-interop_oracle 3 |
+| **G1** | `docker compose -f verify/docker-compose.yml run --rm g001-loose-object-interop` | **PASS** | `arks-object` g001-loose-object-interop_oracle 3 + `verify/gates/g001-loose-object-interop` git_oracle 4 |
 
 Combinatorics covered (automated): M1-C01…C06 per `verify/matrices/matrix-m1.md`. M1-C07 SHA-256 API units on G0 only (not stock-Git G1 claim). M1-C08+ deferred.
 
@@ -49,6 +49,6 @@ Combinatorics covered (automated): M1-C01…C06 per `verify/matrices/matrix-m1.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g0
-docker compose -f verify/docker-compose.yml run --rm g1
+docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests
+docker compose -f verify/docker-compose.yml run --rm g001-loose-object-interop
 ```

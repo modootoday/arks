@@ -37,7 +37,7 @@ Common Rust Git-tooling practice (gix / gitoxide-class workspaces; stock-Git ora
 |------|---------|-----|
 | Workspace crates under `crates/arks-*` | Yes | Y |
 | Crate `tests/` for single-crate integration | Present for `arks-object`, `arks-protocol`, `arks-lease` (G22–G26, G34 model) | Y (pattern) / Partial (coverage) |
-| Crate `testdata/` | Absent — no crate-private binary fixtures claimed yet; M1 OID docs are shared intent under `verify/fixtures/m1/` | Y (nothing to move) |
+| Crate `testdata/` | Absent — no crate-private binary fixtures claimed yet; M1 OID docs are shared intent under `verify/fixtures/m001-clean-room-g0-g1/` | Y (nothing to move) |
 | Product clean-room under grouped `verify/` | `scripts/`, `matrices/`, `gates/gN/`, `fixtures/` | Y |
 | Flat dump of `verify/g*` + `matrix-*.md` at `verify/` root | Removed | Y |
 | Gate harness `CARGO_MANIFEST_DIR` → repo-root fallbacks | After `gates/` nesting, must be `../../..` (not `../..`) | Y (repaired this slice) |
@@ -50,7 +50,7 @@ Product clean-room is **not** a Cargo package-layout concern; keeping it outside
 ### Stays under workspace `verify/` (product clean-room)
 
 - `Dockerfile`, `docker-compose.yml`, `images.lock.json`
-- `scripts/` — deterministic gate entrypoints (`run-g*.sh`, `g19_eval.py`, helpers)
+- `scripts/` — deterministic gate entrypoints (`run-g*.sh`, `g019-comparative-performance_eval.py`, helpers)
 - `matrices/` — gate/milestone matrix markdown
 - `gates/gN/` — per-gate harness: out-of-workspace Cargo oracles, locks, `out/` receipts
 - `fixtures/` — committed clean-room / oracle **intent and shared bytes** (no secrets); M1 OID docs
@@ -77,11 +77,11 @@ Multi-crate, stock-Git-in-image, journey catalog, and compose-bound oracles **re
 ```text
 # Before (flat; pre-cb17373)
 verify/
-  g1/ … g37/ …          # flat gate packages
+  g001-loose-object-interop/ … g037-gpgsig-ssh/ …          # flat gate packages
   matrix-*.md           # flat matrices
   scripts/
   Dockerfile …
-fixtures/m1/            # repo-root advisory OID docs
+fixtures/m001-clean-room-g0-g1/            # repo-root advisory OID docs
 
 # After (current)
 verify/
@@ -89,11 +89,11 @@ verify/
   Dockerfile
   docker-compose.yml
   images.lock.json
-  scripts/                 # run-g*.sh, g19_eval.py, locate-arks.ps1
-  matrices/                # matrix-m*.md, matrix-g*.md, matrix-journey.md, …
+  scripts/                 # run-g*.sh, g019-comparative-performance_eval.py, locate-arks.ps1
+  matrices/                # matrix-m*.md, matrix-g*.md, matrix-g016-journey-compare.md, …
   gates/
-    g1/ … g37/             # clean-room oracles / out / locks (not workspace members)
-    g8-live-scale/
+    g001-loose-object-interop/ … g037-gpgsig-ssh/             # clean-room oracles / out / locks (not workspace members)
+    g008-live-scale/
   fixtures/
     m1/                    # OID / blob intent docs
 
@@ -112,15 +112,15 @@ crates/arks-<ctx>/
 
 | Old | New |
 |-----|-----|
-| `verify/scripts/run-g19.sh` | unchanged path |
-| `verify/scripts/run-g16.sh` | unchanged path; internals → `verify/gates/g16` |
-| `verify/g16/` | `verify/gates/g16/` |
-| `verify/g16/out/metrics.json` | `verify/gates/g16/out/metrics.json` |
-| `verify/g19/` | `verify/gates/g19/` |
-| `verify/g19/out/receipt.json` | `verify/gates/g19/out/receipt.json` |
-| `verify/matrix-g19.md` | `verify/matrices/matrix-g19.md` |
-| `verify/matrix-journey.md` | `verify/matrices/matrix-journey.md` |
-| `fixtures/m1/` | `verify/fixtures/m1/` |
+| `verify/scripts/run-g019-comparative-performance.sh` | unchanged path |
+| `verify/scripts/run-g016-journey-compare.sh` | unchanged path; internals → `verify/gates/g016-journey-compare` |
+| `verify/g016-journey-compare/` | `verify/gates/g016-journey-compare/` |
+| `verify/g016-journey-compare/out/metrics.json` | `verify/gates/g016-journey-compare/out/metrics.json` |
+| `verify/g019-comparative-performance/` | `verify/gates/g019-comparative-performance/` |
+| `verify/g019-comparative-performance/out/receipt.json` | `verify/gates/g019-comparative-performance/out/receipt.json` |
+| `verify/matrix-g019-comparative-performance.md` | `verify/matrices/matrix-g019-comparative-performance.md` |
+| `verify/matrix-g016-journey-compare.md` | `verify/matrices/matrix-g016-journey-compare.md` |
+| `fixtures/m001-clean-room-g0-g1/` | `verify/fixtures/m001-clean-room-g0-g1/` |
 | `verify/gN/` (all gates) | `verify/gates/gN/` |
 | `verify/matrix-*.md` | `verify/matrices/matrix-*.md` |
 

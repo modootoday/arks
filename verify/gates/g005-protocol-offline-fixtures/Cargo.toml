@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g5-cleanroom"
+name = "arks-g005-protocol-offline-fixtures-cleanroom"
 description = "M4 clean-room G5 protocol-offline fixture harness (verify tree only)"
 version = "0.0.0"
 edition = "2024"

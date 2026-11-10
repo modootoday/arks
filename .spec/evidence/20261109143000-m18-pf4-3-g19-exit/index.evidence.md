@@ -4,7 +4,7 @@ title: M18 Pf4-3 / M18 exit — G19 sole run (19/19 ≤0.8×; 11/19 ≤0.5×; jo
 status: active
 created: 2026-11-09T14:30:00Z
 updated: 2026-11-10T00:57:43Z
-tags: [g19, m18, pf4, comparative-perf, clean-room, verified, na-free, exit]
+tags: [g019-comparative-performance, m18, pf4, comparative-perf, clean-room, verified, na-free, exit]
 rel:
   depends_on: [plan:root/20261109125438, research:root/20261109125438, sot:root/program-roadmap, sot:root/clean-room-journey-compare, sot:root/production-residual-register, evidence:root/20261109090000, evidence:root/20261109130000, evidence:root/20261109141500]
   evidence: []
@@ -49,7 +49,7 @@ Vs Pf4-1 [[evidence:root/20261109130000]] (9/19) and Pf4-2 [[evidence:root/20261
 
 | Field | Value |
 |-------|-------|
-| Compose | `docker compose -f verify/docker-compose.yml run --rm -e ARKS_G19_WAVE=Pf4 g19` |
+| Compose | `docker compose -f verify/docker-compose.yml run --rm -e ARKS_G19_WAVE=Pf4 g019-comparative-performance` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |

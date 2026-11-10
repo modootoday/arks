@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g20-cleanroom"
+name = "arks-g020-cli-symmetric-parity-cleanroom"
 description = "G20 clean-room full CLI symmetric parity (Fs-1; verify tree only)"
 version = "0.0.0"
 edition = "2024"

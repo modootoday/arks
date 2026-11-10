@@ -4,7 +4,7 @@ title: FW-GPGSIG read + FW-SUBMOD-HTTPS Claimed (G7 clean-room)
 status: active
 created: 2026-11-10T16:50:00Z
 updated: 2026-11-10T16:50:00Z
-tags: [fw-gpgsig, fw-submod-https, g7, clean-room, claimed, residual]
+tags: [fw-gpgsig, fw-submod-https, g007-smart-http-client, clean-room, claimed, residual]
 rel:
   depends_on:
     - sot:root/arks-object
@@ -31,8 +31,8 @@ Closes residual **P0** implementables:
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g7` |
-| Entrypoint | `verify/scripts/run-g7.sh` |
+| Compose | `verify/docker-compose.yml` service `g007-smart-http-client` |
+| Entrypoint | `verify/scripts/run-g007-smart-http-client.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Stock Git | `git version 2.39.5` |
 | Discrete-circuit mount | `/discrete-circuit` (parse-time optional path-deps; feature OFF) |

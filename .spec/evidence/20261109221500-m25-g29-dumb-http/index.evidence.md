@@ -4,7 +4,7 @@ title: M25 G29 dumb HTTP Claimed
 status: active
 created: 2026-11-09T22:15:00Z
 updated: 2026-11-09T22:15:00Z
-tags: [m25, g29, dumb-http, clean-room, verified, fw-srv-dumb]
+tags: [m25, g029-server-dumb-http, dumb-http, clean-room, verified, fw-srv-dumb]
 rel:
   depends_on:
     - adr:root/20261109220230
@@ -25,7 +25,7 @@ Additive dumb HTTP beside Claimed smart HTTP (G15). Unlock [[adr:root/2026110922
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g29` |
+| Compose | `verify/docker-compose.yml` service `g029-server-dumb-http` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Stock Git | in-image pin (2.39.5 class) |
@@ -35,7 +35,7 @@ Additive dumb HTTP beside Claimed smart HTTP (G15). Unlock [[adr:root/2026110922
 
 | Gate | Command | Outcome |
 |------|---------|---------|
-| **G29** | `docker compose … run --rm g29` | **PASS** — update-server-info + stock `git clone` via `--dumb-only`; arks-server unit 4 |
+| **G29** | `docker compose … run --rm g029-server-dumb-http` | **PASS** — update-server-info + stock `git clone` via `--dumb-only`; arks-server unit 4 |
 
 ## Non-claims
 

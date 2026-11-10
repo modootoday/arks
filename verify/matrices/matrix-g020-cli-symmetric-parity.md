@@ -2,7 +2,7 @@
 
 Owning SoT: `.spec/sot/cli-surface.sot.md`, `.spec/sot/cli-flag-parity-full.sot.md`, `.spec/sot/interop-test-matrix.sot.md` (G20). Plan: `.spec/plan/20261109035335-full-cli-symmetric-parity.plan.md`.
 
-Authoritative venue: Docker clean-room service `g20` (`verify/scripts/run-g20.sh`). Host greens are advisory only.
+Authoritative venue: Docker clean-room service `g020-cli-symmetric-parity` (`verify/scripts/run-g020-cli-symmetric-parity.sh`). Host greens are advisory only.
 
 ## Wave Fs-1 claim set
 

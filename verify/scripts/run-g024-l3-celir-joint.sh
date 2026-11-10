@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # G24 — L3 HighConcurrency + CELIR index joint clean-room (M24 successor).
-# SoT: l3-celir-index-joint-clean-room; matrix: verify/matrices/matrix-g24.md
+# SoT: l3-celir-index-joint-clean-room; matrix: verify/matrices/matrix-g024-l3-celir-joint.md
 set -euo pipefail
 
 ROOT="${ARKS_G24_ROOT:-/workspaces/gir}"
 cd "$ROOT"
 
-mkdir -p verify/gates/g24
-G24_LOCK="verify/gates/g24/.run.lock.dir"
+mkdir -p verify/gates/g024-l3-celir-joint
+G24_LOCK="verify/gates/g024-l3-celir-joint/.run.lock.dir"
 if ! mkdir "$G24_LOCK" 2>/dev/null; then
   if [[ -f "$G24_LOCK/owner" ]]; then
     age=$(( $(date +%s) - $(stat -c %Y "$G24_LOCK/owner" 2>/dev/null || echo 0) ))
@@ -51,12 +51,12 @@ if cargo tree -p arks-store --edges normal 2>/dev/null | grep -Ei 'celir' >/dev/
   exit 1
 fi
 
-mkdir -p verify/gates/g24/out
-export ARKS_G24_RECEIPT_OUT="${ARKS_G24_RECEIPT_OUT:-$ROOT/verify/gates/g24/out/receipt.json}"
+mkdir -p verify/gates/g024-l3-celir-joint/out
+export ARKS_G24_RECEIPT_OUT="${ARKS_G24_RECEIPT_OUT:-$ROOT/verify/gates/g024-l3-celir-joint/out/receipt.json}"
 export ARKS_G24_DC_ROOT="$DC_ROOT"
 
 echo "G24: joint suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g24_l3_celir_joint "$@"
+cargo test -p arks-lease --features celir-index-stress --test g024-l3-celir-joint_l3_celir_joint "$@"
 
 echo "G24: writing receipt $ARKS_G24_RECEIPT_OUT"
 python3 - <<'PY'

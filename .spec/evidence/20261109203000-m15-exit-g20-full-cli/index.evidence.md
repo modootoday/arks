@@ -4,7 +4,7 @@ title: M15 exit — full CLI symmetric parity (G20 Fs-1..Fs-5)
 status: active
 created: 2026-11-09T20:30:00Z
 updated: 2026-11-10T00:57:44Z
-tags: [g20, m15, exit, full-cli, clean-room, verified]
+tags: [g020-cli-symmetric-parity, m15, exit, full-cli, clean-room, verified]
 rel:
   depends_on: [plan:root/20261109035335, sot:root/cli-flag-parity-full, sot:root/program-roadmap, sot:root/production-residual-register, evidence:root/20261109180000, evidence:root/20261109183000, evidence:root/20261109190000, evidence:root/20261109193000, evidence:root/20261109200000]
   evidence: []
@@ -37,7 +37,7 @@ Closes milestone **M15** (Phase Fs) of [[sot:root/program-roadmap]]: active `ali
 
 | Field | Value |
 |-------|-------|
-| Compose | `g20` |
+| Compose | `g020-cli-symmetric-parity` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git | `git version 2.39.5` |
 | Tree SHA at M15 exit land | `6faa00dad0bc00b688315c4026f0842c47101066` |
@@ -49,6 +49,6 @@ GUI/`gitk`/`git-gui`/`git-citool`, Git LFS, `scalar`, CELIR admin, forge PR/Chec
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g20
+docker compose -f verify/docker-compose.yml run --rm g020-cli-symmetric-parity
 spec check
 ```

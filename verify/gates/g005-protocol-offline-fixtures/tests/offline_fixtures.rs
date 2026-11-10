@@ -4,7 +4,7 @@
 //! - https://git-scm.com/docs/gitprotocol-common
 //! - https://git-scm.com/docs/gitprotocol-capabilities
 //! - https://git-scm.com/docs/gitprotocol-v2
-//! Cite: `.spec/sot/arks-protocol.sot.md`, `verify/matrices/matrix-m4.md`
+//! Cite: `.spec/sot/arks-protocol.sot.md`, `verify/matrices/matrix-m004-clean-room-pack-protocol.md`
 
 use arks_protocol::{
     Packet, advertise_capabilities, decode_packets, encode_packet,

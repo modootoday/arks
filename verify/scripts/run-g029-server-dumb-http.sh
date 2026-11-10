@@ -31,5 +31,5 @@ cargo build -p arks
 echo "G29: arks-server unit"
 cargo test -p arks-server "$@"
 echo "G29: dumb HTTP suite"
-cargo test --manifest-path verify/gates/g29/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g029-server-dumb-http/Cargo.toml "$@"
 echo "G29: PASS"

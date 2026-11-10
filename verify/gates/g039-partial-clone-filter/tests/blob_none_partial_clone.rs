@@ -1,5 +1,5 @@
 //! Gate G39 — arks `clone --filter=blob:none` vs stock `git http-backend`.
-//! Cite: verify/matrices/matrix-g39.md, partial-clone, R3 / S6.
+//! Cite: verify/matrices/matrix-g039-partial-clone-filter.md, partial-clone, R3 / S6.
 
 use std::fs;
 use std::io::{Read, Write};
@@ -270,7 +270,7 @@ fn seed_filter_bare(parent: &Path, name: &str) -> PathBuf {
 }
 
 #[test]
-fn g39_arks_clone_filter_blob_none_vs_stock_peer() {
+fn g039-partial-clone-filter_arks_clone_filter_blob_none_vs_stock_peer() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_filter_bare(root.path(), "app.git");
@@ -302,7 +302,7 @@ fn g39_arks_clone_filter_blob_none_vs_stock_peer() {
 }
 
 #[test]
-fn g39_arks_clone_filter_tree_0_vs_stock_peer() {
+fn g039-partial-clone-filter_arks_clone_filter_tree_0_vs_stock_peer() {
     require_git();
     let root = TempDir::new().unwrap();
     let work = root.path().join("src");
@@ -367,7 +367,7 @@ fn g39_arks_clone_filter_tree_0_vs_stock_peer() {
 }
 
 #[test]
-fn g39_refuse_unclaimed_filter_spec() {
+fn g039-partial-clone-filter_refuse_unclaimed_filter_spec() {
     require_git();
     let root = TempDir::new().unwrap();
     let dest = root.path().join("x");

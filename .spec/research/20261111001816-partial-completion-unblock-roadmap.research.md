@@ -10,10 +10,10 @@ tags:
     unblock,
     roadmap,
     fs-final,
-    g8-live,
+    g008-live-forge-smoke-live,
     l9,
     pf5,
-    g19,
+    g019-comparative-performance,
     obj-004,
     fs-007,
     fs-014,
@@ -46,7 +46,7 @@ After tip ≥ **`60f33c2`** (clean-room matrix currency ≥ `54c9dc2`), with **F
 
 1. Reconcile tip currency against [[sot:root/program-roadmap]] v0.15.2 tip table, [[sot:root/production-residual-register]], [[research:root/20261110225000]], [[evidence:root/20261110224814]].
 2. Fold prior unblock research ([[research:root/20261110222000]], [[research:root/20261110211804]]) — note what already landed (sha1cd detect+refuse, host-env advisory).
-3. Re-probe Environment `g8-live` secret **names only** (`total_count`).
+3. Re-probe Environment `g008-live-forge-smoke-live` secret **names only** (`total_count`).
 4. Rank honest next actions. No invent Claimed/PASS. No L9 publish. No G19 remasure thrash.
 
 ## Tip honesty baseline
@@ -58,7 +58,7 @@ After tip ≥ **`60f33c2`** (clean-room matrix currency ≥ `54c9dc2`), with **F
 | Operator one-word | **PARTIAL** |
 | G19 M17 ≤0.8× | **19/19 PASS** |
 | Pf5 ≤0.5× tip | U1 one amortize wave → sole remasure; else **Claimed(partial)** |
-| `g8-live` secret count | **0** (re-probed 2026-11-11) |
+| `g008-live-forge-smoke-live` secret count | **0** (re-probed 2026-11-11) |
 | L9 | Owner-closed — reopen pack [[research:root/20261111003444]] |
 | Forge UX | Claimed-closest `arks forge` thin-wrap (was Non-goal) |
 | Host-env | Claimed detect+opt-in refuse / FS-014 LSM detect |
@@ -83,10 +83,10 @@ After tip ≥ **`60f33c2`** (clean-room matrix currency ≥ `54c9dc2`), with **F
 | Field | Content |
 |-------|---------|
 | **Status** | **Blocked** — harness Claimed / default-on when secrets; live remasure SKIP |
-| **Blocker class** | Operator secrets (Environment `g8-live`) |
+| **Blocker class** | Operator secrets (Environment `g008-live-forge-smoke-live`) |
 | **Deps** | Owner/operator PAT + throwaway HTTPS URL; Actions or compose; evidence attach |
-| **Option A (recommended)** | Fill `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` in Environment `g8-live` → `gh workflow run g8-forge-scale.yml -f dry_run=false` → attach receipts under `.spec/evidence/` → update residual R5 |
-| **Option B** | Local compose `g8` / `g8-live-scale` with same env names exported; same receipt honesty |
+| **Option A (recommended)** | Fill `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` in Environment `g008-live-forge-smoke-live` → `gh workflow run g008-live-forge-smoke-forge-scale.yml -f dry_run=false` → attach receipts under `.spec/evidence/` → update residual R5 |
+| **Option B** | Local compose `g008-live-forge-smoke` / `g008-live-scale` with same env names exported; same receipt honesty |
 | **Not options** | Invent medians; treat SKIP / local-forge `claimed-wire` as GitHub live PASS |
 | **Risks** | PAT leak in logs; colliding sole-runner Docker; marketing forge throughput from smoke latency |
 
@@ -176,7 +176,7 @@ After tip ≥ **`60f33c2`** (clean-room matrix currency ≥ `54c9dc2`), with **F
 | **Status** | Expected **SKIP** without secrets; G28 live-private already Claimed with prior receipts |
 | **Blocker class** | Same as §1 for *new* live latency samples |
 | **Option A** | Keep SKIP ≠ PASS in CI/docs |
-| **Option B** | Use `g8-local-forge` for wire-only substitute |
+| **Option B** | Use `g008-local-forge` for wire-only substitute |
 | **Risks** | CI green misread as live latency Claimed |
 
 ---

@@ -12,7 +12,7 @@ Operator-local measurement harness for throwaway GitHub-class HTTP timing. Produ
 
 | Step | Command | Expected |
 |------|---------|----------|
-| SKIP receipt | `bash verify/scripts/run-g8-live-scale.sh` | `skip-no-measurement` receipt under `verify/gates/g8-live-scale/out/` |
+| SKIP receipt | `bash verify/scripts/run-g008-live-scale.sh` | `skip-no-measurement` receipt under `verify/gates/g008-live-scale/out/` |
 | Policy | — | G7 remains default authoritative remote proof; harness Claimed ready |
 
 ## Default-on measurement (secrets present)
@@ -31,20 +31,20 @@ Set **both** of:
 # Example (operator shell — do not commit secrets)
 export ARKS_G8_TOKEN=…
 export ARKS_G8_REPO_URL=https://github.com/org/throwaway.git
-bash verify/scripts/run-g8-live-scale.sh
+bash verify/scripts/run-g008-live-scale.sh
 ```
 
-Outputs: `verify/gates/g8-live-scale/out/receipt.json` + `samples.json` (durations only; no tokens).
+Outputs: `verify/gates/g008-live-scale/out/receipt.json` + `samples.json` (durations only; no tokens).
 
 ## Docker (optional)
 
 ```bash
 docker compose -f verify/docker-compose.yml run --rm \
   -e ARKS_G8_TOKEN -e ARKS_G8_REPO_URL \
-  g8-live-scale
+  g008-live-scale
 ```
 
-Service `g8-live-scale` shares the G8 clean-room image; sole-runner policy applies — do not collide with G14–G28 matrices.
+Service `g008-live-scale` shares the G8 clean-room image; sole-runner policy applies — do not collide with G14–G28 matrices.
 
 ## Forbidden
 

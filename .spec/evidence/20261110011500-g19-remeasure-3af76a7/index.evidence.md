@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip 3af76a7 (PF5 partial 7/8 Verified; layou
 status: active
 created: 2026-11-10T01:15:00Z
 updated: 2026-11-10T01:15:00Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, verify-layout]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, verify-layout]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, evidence:root/20261111001400, evidence:root/20261110003836]
   evidence: []
@@ -17,7 +17,7 @@ files:
 
 ## Context
 
-Authoritative sole-runner Docker `g19` after verify layout relocate (`cb17373` / `cdbc907`) and A–E product land (`3af76a7`: pack caps, quarantine/hooks, dumb-HTTP client, PF5 clone hot path). Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)** (CLONE-LOCAL remains `aggressive_na` at ratio **0.604**). Host `cargo test` is advisory/unreliable (OOM exit 4294967295); this receipt is Docker-only Verified.
+Authoritative sole-runner Docker `g019-comparative-performance` after verify layout relocate (`cb17373` / `cdbc907`) and A–E product land (`3af76a7`: pack caps, quarantine/hooks, dumb-HTTP client, PF5 clone hot path). Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)** (CLONE-LOCAL remains `aggressive_na` at ratio **0.604**). Host `cargo test` is advisory/unreliable (OOM exit 4294967295); this receipt is Docker-only Verified.
 
 Follow-up tip `14142ef` is lint/harness-only (rustfmt + mock `delete-refs` + Windows loopback) and does not reopen G19 measurement.
 
@@ -26,13 +26,13 @@ Follow-up tip `14142ef` is lint/harness-only (rustfmt + mock `delete-refs` + Win
 | Surface | IDs | Role |
 |---------|-----|------|
 | G16 functional + timing | All 19 catalog journeys | Hard functional + `median_p95` |
-| G19 comparative | Same allow-list (`verify/matrices/matrix-g19.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
+| G19 comparative | Same allow-list (`verify/matrices/matrix-g019-comparative-performance.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g19` (sole) |
+| Compose | `verify/docker-compose.yml` service `g019-comparative-performance` (sole) |
 | Paths | `verify/{gates,matrices,fixtures,scripts}` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |

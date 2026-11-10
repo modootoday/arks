@@ -4,7 +4,7 @@ title: M16 Sy-2 G21 worktree submodule orphan
 status: active
 created: 2026-11-09T04:57:05Z
 updated: 2026-11-09T04:58:44Z
-tags: [g21, m16, sy-2, clean-room, verified, complete-symmetry, worktree, submodule, orphan]
+tags: [g021-cli-flag-symmetry, m16, sy-2, clean-room, verified, complete-symmetry, worktree, submodule, orphan]
 rel:
   depends_on: [plan:root/20261109043910, sot:root/cli-flag-parity-complete, sot:root/cli-surface, sot:root/interop-test-matrix, sot:root/program-roadmap, evidence:root/20261109044908]
   evidence: []
@@ -30,7 +30,7 @@ Primary cites (pin Git 2.39): [git-worktree](https://git-scm.com/docs/git-worktr
 
 | Field | Value |
 |-------|-------|
-| Compose | `g21` |
+| Compose | `g021-cli-flag-symmetry` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git | `git version 2.39.5` |
 | Host advisory | green (not verified) |
@@ -39,7 +39,7 @@ Primary cites (pin Git 2.39): [git-worktree](https://git-scm.com/docs/git-worktr
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g21
+docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry
 spec check
 ```
 

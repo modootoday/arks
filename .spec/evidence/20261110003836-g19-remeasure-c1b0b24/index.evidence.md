@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip c1b0b24 (PF5 partial 7/8 Verified)
 status: active
 created: 2026-11-10T00:38:36Z
 updated: 2026-11-10T00:38:36Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, evidence:root/20261111001400]
   evidence: []
@@ -17,14 +17,14 @@ files:
 
 ## Context
 
-Authoritative sole-runner Docker `g19` (embeds G16 functional + timing) after history rewrite of `origin/main` to tip **`c1b0b24b2d1722c986fec19f8c7087ec39680a0c`**. Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)** umbrella (CLONE-LOCAL remains `aggressive_na`). Prior PF5 claim receipt [[evidence:root/20261111001400]] remains the amortization flip cite; this receipt is the **Verified** carrying pin for published docs numbers.
+Authoritative sole-runner Docker `g019-comparative-performance` (embeds G16 functional + timing) after history rewrite of `origin/main` to tip **`c1b0b24b2d1722c986fec19f8c7087ec39680a0c`**. Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)** umbrella (CLONE-LOCAL remains `aggressive_na`). Prior PF5 claim receipt [[evidence:root/20261111001400]] remains the amortization flip cite; this receipt is the **Verified** carrying pin for published docs numbers.
 
 ## Scope measured (in)
 
 | Surface | IDs | Role |
 |---------|-----|------|
 | G16 functional + timing | All 19 catalog journeys in `verify/matrices/matrix-journey.md` | Hard functional class + `median_p95` metrics |
-| G19 comparative | Same 19 allow-list (`verify/matrices/matrix-g19.md` Pf3+) | ≤0.8× regression + ≤0.5× aggressive / `aggressive_na` |
+| G19 comparative | Same 19 allow-list (`verify/matrices/matrix-g019-comparative-performance.md` Pf3+) | ≤0.8× regression + ≤0.5× aggressive / `aggressive_na` |
 
 Journeys: LOCAL, BRANCH, MERGE-FF, REBASE, BUNDLE, CLONE-LOCAL, CLONE-PATH, ALIAS, WORKTREE, TAG, STASH, CHERRY, DIFF, RM-MV, ARCHIVE, REFLOG, REVERT, REPACK, SUBMODULE.
 
@@ -42,7 +42,7 @@ Journeys: LOCAL, BRANCH, MERGE-FF, REBASE, BUNDLE, CLONE-LOCAL, CLONE-PATH, ALIA
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g19` (sole; first attempt noise-failed CLONE-LOCAL ≤0.8× then sole re-run PASS) |
+| Compose | `verify/docker-compose.yml` service `g019-comparative-performance` (sole; first attempt noise-failed CLONE-LOCAL ≤0.8× then sole re-run PASS) |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |
@@ -69,6 +69,6 @@ Journeys: LOCAL, BRANCH, MERGE-FF, REBASE, BUNDLE, CLONE-LOCAL, CLONE-PATH, ALIA
 
 ### Honesty — first sole attempt
 
-First sole `g19` at this tip failed **M17** on **J-CLONE-LOCAL-01** (`ratio=0.8625`, git=80 / arks=69) while Pf5 aggressive terminal still 19/19. Treated as container scheduling noise (known short/mid clone variance); sole re-run recovered ≤0.8× without harness or product changes. Carrying artifacts are the **PASS** re-run only.
+First sole `g019-comparative-performance` at this tip failed **M17** on **J-CLONE-LOCAL-01** (`ratio=0.8625`, git=80 / arks=69) while Pf5 aggressive terminal still 19/19. Treated as container scheduling noise (known short/mid clone variance); sole re-run recovered ≤0.8× without harness or product changes. Carrying artifacts are the **PASS** re-run only.
 
 Gate exit **0**.

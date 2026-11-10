@@ -4,7 +4,7 @@ title: CELIR index dual-path companion
 status: active
 created: 2026-11-09T20:28:15Z
 updated: 2026-11-09T20:45:00Z
-tags: [celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, m24, g22]
+tags: [celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, m24, g022-celir-index-contention]
 verify: clean-room
 rel:
   governs: [crates/arks-store]

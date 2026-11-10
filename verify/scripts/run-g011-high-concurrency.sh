@@ -32,7 +32,7 @@ echo "G11-L3: gix-exit / default tree CELIR-free OK"
 echo "G11-L3: arks-lease unit + pipeline stress (L1/L2 + N=32/N=128 claimed shape)"
 cargo test -p arks-lease "$@"
 
-echo "G11-L3: lease-product suite regress (verify/gates/g11)"
-cargo test --manifest-path verify/gates/g11/Cargo.toml "$@"
+echo "G11-L3: lease-product suite regress (verify/gates/g011-lease-product)"
+cargo test --manifest-path verify/gates/g011-lease-product/Cargo.toml "$@"
 
 echo "G11-L3: PASS"

@@ -4,7 +4,7 @@ title: Post-M9 residual worktree + submodule implement (G16 + G14)
 status: active
 created: 2026-11-09T11:42:07Z
 updated: 2026-11-10T00:57:43Z
-tags: [g16, g14, clean-room, worktree, submodule, residual, verified]
+tags: [g016-journey-compare, g014-cli-parity-production, clean-room, worktree, submodule, residual, verified]
 rel:
   depends_on: [plan:root/20261109022956, sot:root/production-residual-register, sot:root/clean-room-journey-compare, sot:root/cli-flag-parity-m9, sot:root/cli-surface, sot:root/arks-repo, sot:root/arks, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, adr:root/20261108083507, evidence:root/20261108150000, evidence:root/20261109065018]
   evidence: []
@@ -24,8 +24,8 @@ Attached metrics: `metrics.json` (G16 clean-room `arks-journey-metrics/v1`, `agg
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` services `g16` + `g14` |
-| Entrypoints | `verify/scripts/run-g16.sh`, `verify/scripts/run-g14.sh` |
+| Compose | `verify/docker-compose.yml` services `g016-journey-compare` + `g014-cli-parity-production` |
+| Entrypoints | `verify/scripts/run-g016-journey-compare.sh`, `verify/scripts/run-g014-cli-parity-production.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (lock / local Id) | `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git (in-image) | `git version 2.39.5` |
@@ -76,7 +76,7 @@ Attached metrics: `metrics.json` (G16 clean-room `arks-journey-metrics/v1`, `agg
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g16
-docker compose -f verify/docker-compose.yml run --rm g14
+docker compose -f verify/docker-compose.yml run --rm g016-journey-compare
+docker compose -f verify/docker-compose.yml run --rm g014-cli-parity-production
 spec check
 ```

@@ -4,7 +4,7 @@ title: M22 Rc-3 Pf5 G19 aggressive leftovers terminal
 status: active
 created: 2026-11-10T15:30:00Z
 updated: 2026-11-10T15:30:00Z
-tags: [g19, m22, pf5, clean-room, perf, aggressive, verified]
+tags: [g019-comparative-performance, m22, pf5, clean-room, perf, aggressive, verified]
 rel:
   depends_on: [plan:root/20261110150000, sot:root/clean-room-journey-compare, sot:root/interop-test-matrix, sot:root/production-residual-register, evidence:root/20261109143000]
   evidence: []
@@ -23,7 +23,7 @@ Closes M18 journey-class leftovers for ≤0.5× honesty: every G16 journey is ei
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g19` (sole) |
+| Compose | `verify/docker-compose.yml` service `g019-comparative-performance` (sole) |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |

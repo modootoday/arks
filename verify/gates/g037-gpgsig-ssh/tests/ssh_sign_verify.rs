@@ -44,9 +44,9 @@ fn arks(cwd: &Path, args: &[&str]) -> std::process::Output {
         .args(args)
         .current_dir(cwd)
         .env("GIT_AUTHOR_NAME", "Arks Tester")
-        .env("GIT_AUTHOR_EMAIL", "arks-g37@example.com")
+        .env("GIT_AUTHOR_EMAIL", "arks-g037-gpgsig-ssh@example.com")
         .env("GIT_COMMITTER_NAME", "Arks Tester")
-        .env("GIT_COMMITTER_EMAIL", "arks-g37@example.com")
+        .env("GIT_COMMITTER_EMAIL", "arks-g037-gpgsig-ssh@example.com")
         .env("GIT_AUTHOR_DATE", "1000000000")
         .env("GIT_COMMITTER_DATE", "1000000000")
         .output()
@@ -58,9 +58,9 @@ fn git(cwd: &Path, args: &[&str]) -> std::process::Output {
         .args(args)
         .current_dir(cwd)
         .env("GIT_AUTHOR_NAME", "Arks Tester")
-        .env("GIT_AUTHOR_EMAIL", "arks-g37@example.com")
+        .env("GIT_AUTHOR_EMAIL", "arks-g037-gpgsig-ssh@example.com")
         .env("GIT_COMMITTER_NAME", "Arks Tester")
-        .env("GIT_COMMITTER_EMAIL", "arks-g37@example.com")
+        .env("GIT_COMMITTER_EMAIL", "arks-g037-gpgsig-ssh@example.com")
         .env("GIT_AUTHOR_DATE", "1000000000")
         .env("GIT_COMMITTER_DATE", "1000000000")
         .output()
@@ -89,7 +89,7 @@ fn setup_ephemeral_ssh(dir: &Path) -> (PathBuf, PathBuf) {
             "",
             "-q",
             "-C",
-            "arks-g37",
+            "arks-g037-gpgsig-ssh",
         ])
         .output()
         .expect("ssh-keygen");
@@ -100,7 +100,7 @@ fn setup_ephemeral_ssh(dir: &Path) -> (PathBuf, PathBuf) {
     fs::write(
         &allowed,
         format!(
-            "arks-g37@example.com namespaces=\"git\" {}\n",
+            "arks-g037-gpgsig-ssh@example.com namespaces=\"git\" {}\n",
             pub_line.trim()
         ),
     )
@@ -109,7 +109,7 @@ fn setup_ephemeral_ssh(dir: &Path) -> (PathBuf, PathBuf) {
 }
 
 #[test]
-fn g37_ssh_commit_sign_verify_stock_roundtrip() {
+fn g037-gpgsig-ssh_ssh_commit_sign_verify_stock_roundtrip() {
     require_tools();
     let tmp = TempDir::new().unwrap();
     let keys = tmp.path().join("keys");
@@ -119,7 +119,7 @@ fn g37_ssh_commit_sign_verify_stock_roundtrip() {
     fs::create_dir_all(&repo).unwrap();
 
     assert_ok(&arks(&repo, &["init"]), "init");
-    fs::write(repo.join("README"), b"g37\n").unwrap();
+    fs::write(repo.join("README"), b"g037-gpgsig-ssh\n").unwrap();
     assert_ok(&arks(&repo, &["add", "README"]), "add");
     assert_ok(
         &arks(&repo, &["config", "user.signingKey", pub_key.to_str().unwrap()]),
@@ -152,7 +152,7 @@ fn g37_ssh_commit_sign_verify_stock_roundtrip() {
 }
 
 #[test]
-fn g37_ssh_format_still_required_for_ssh_key_path() {
+fn g037-gpgsig-ssh_ssh_format_still_required_for_ssh_key_path() {
     // OpenPGP is Claimed under G38. G37 remains the SSH matrix: with gpg.format=ssh,
     // commit -S must still succeed (smoke that G37 path was not broken by R4).
     require_tools();

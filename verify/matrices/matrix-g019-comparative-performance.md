@@ -2,7 +2,7 @@
 
 Owning SoT: `.spec/sot/clean-room-journey-compare.sot.md`, `.spec/sot/interop-test-matrix.sot.md` (G19). Plan: `.spec/plan/20261109024636-m14-comparative-performance-unlock.plan.md`.
 
-Authoritative venue: Docker clean-room service `g19` (`verify/scripts/run-g19.sh`). Host timings are advisory only.
+Authoritative venue: Docker clean-room service `g019-comparative-performance` (`verify/scripts/run-g019-comparative-performance.sh`). Host timings are advisory only.
 
 ## Normative bar
 
@@ -33,8 +33,8 @@ Remaining G16 journey IDs were Open under M14 Pf-2. **M17 / Pf3** claims the ful
 
 ## Wave Pf3-1 allow-list (claimed — M17)
 
-Owning plan: `.spec/plan/20261109043916-m17-full-g19-journey-allow-list.plan.md`.
-Allow-list = **every required ID** in `verify/matrices/matrix-journey.md` (current G16 catalog). Default bar: arks_median ≤ 0.8 × git_median. N/A only with explicit SoT rationale (none in this catalog at claim time).
+Owning plan: `.spec/plan/20261109043916-m17-full-g019-comparative-performance-journey-allow-list.plan.md`.
+Allow-list = **every required ID** in `verify/matrices/matrix-g016-journey-compare.md` (current G16 catalog). Default bar: arks_median ≤ 0.8 × git_median. N/A only with explicit SoT rationale (none in this catalog at claim time).
 
 | ID | Notes | Required |
 |----|-------|----------|
@@ -62,7 +62,7 @@ Wave Pf3-1 **Done** = Docker G19 baseline recorded for full allow-list (PASS or 
 Wave Pf3-2 **Done** = all required IDs ≤0.8× (or SoT N/A).
 Wave Pf3-3 **Done** = final G19 PASS receipt + tip pin; residual Closed.
 
-**Pf3 status (2026-11-09):** Pf3-1..Pf3-3 **Done** — Docker `g19` PASS; carrying evidence [[evidence:root/20261109090000]] (**19/19 measured**, `na: {}`). Historical N/A-era receipt [[evidence:root/20261109073100]] superseded for M17 exit cites.
+**Pf3 status (2026-11-09):** Pf3-1..Pf3-3 **Done** — Docker `g019-comparative-performance` PASS; carrying evidence [[evidence:root/20261109090000]] (**19/19 measured**, `na: {}`). Historical N/A-era receipt [[evidence:root/20261109073100]] superseded for M17 exit cites.
 
 ## Wave Pf4 (M18 — aggressive ≤0.5×; M17 bar frozen)
 
@@ -73,7 +73,7 @@ Research: `.spec/research/20261109125438-arks-perf-beyond-m17.research.md`.
 |-------|------|
 | Regression | Full allow-list above stays ≤**0.8×** (M17) |
 | Aggressive | Progressive claim ≤**0.5×** on measured IDs (N/A-free) |
-| Venue | Sole Docker `g19` (no concurrent runs) |
+| Venue | Sole Docker `g019-comparative-performance` (no concurrent runs) |
 | Pf4-1 | [[evidence:root/20261109130000]] — 9/19 ≤0.5× |
 | Pf4-2 | [[evidence:root/20261109141500]] — 11/19 ≤0.5× (DIFF/ARCHIVE/CHERRY material) |
 | Pf4-3 / M18 exit | [[evidence:root/20261109143000]] — 11/19 ≤0.5× + journey-class residuals |

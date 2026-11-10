@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g21-cleanroom"
+name = "arks-g021-cli-flag-symmetry-cleanroom"
 description = "G21 clean-room complete CLI flag symmetry (Sy waves; verify tree only)"
 version = "0.0.0"
 edition = "2024"

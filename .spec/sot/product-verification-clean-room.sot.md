@@ -61,11 +61,11 @@ Advisory results MUST NOT be cited as product verification in READMEs, release n
 
 5. **Pin digests/tags in companion lock.** Authoritative image identity lives in `verify/images.lock.json` (referenced here). Until a gate’s digest is recorded there, that gate remains **manual / not yet harnessed**; do not invent digests. M1–M4 reuse the same `arks-verify-m1:0.1.0` image tag until a digest bump is recorded.
 6. **Compose / tree layout (grouped):** `verify/` owns product clean-room only (detail + naming families: [[sot:root/verify-directory-conventions]]):
-   - Harness entry: `docker-compose.yml`, `Dockerfile`, `images.lock.json`, `scripts/run-g*.sh` (incl. journey `run-g16.sh` / comparative `run-g19.sh`) plus `dod-*` DoD / residual / hosting entrypoints.
+   - Harness entry: `docker-compose.yml`, `Dockerfile`, `images.lock.json`, `scripts/run-g*.sh` (incl. journey `run-g016-journey-compare.sh` / comparative `run-g019-comparative-performance.sh`) plus `dod-*` DoD / residual / hosting entrypoints.
    - Matrices: `verify/matrices/matrix-*.md` and living `*-matrix.csv` (not a flat dump at `verify/` root).
    - Gate oracles / receipts / locks: `verify/gates/gN/` (out-of-workspace Cargo packages when needed; not Cargo workspace members); cross-gate dumps under gitignored `verify/out/`.
    - Shared oracle intent/bytes: `verify/fixtures/` (no secrets).
-   - Single-crate integration that is only host-advisory MAY live under `crates/arks-<ctx>/tests/` and be invoked by a thin `scripts/run-gN.sh` (G34 model). Compose service `g4` enters `run-g4.sh` (embeds G5 + regressions); `g5` enters `run-g5.sh`; `g6` enters `run-g6.sh`; `g3` enters `run-g3.sh`; `g8` enters `run-g8.sh`; `g16` enters `run-g16.sh`; `g19` enters `run-g19.sh`.
+   - Single-crate integration that is only host-advisory MAY live under `crates/arks-<ctx>/tests/` and be invoked by a thin `scripts/run-gN.sh` (G34 model). Compose service `g004-pack-idx-roundtrip` enters `run-g004-pack-idx-roundtrip.sh` (embeds G5 + regressions); `g005-protocol-offline-fixtures` enters `run-g005-protocol-offline-fixtures.sh`; `g006-cli-wave-l` enters `run-g006-cli-wave-l.sh`; `g003-index-commit-roundtrip` enters `run-g003-index-commit-roundtrip.sh`; `g008-live-forge-smoke` enters `run-g008-live-forge-smoke.sh`; `g016-journey-compare` enters `run-g016-journey-compare.sh`; `g019-comparative-performance` enters `run-g019-comparative-performance.sh`.
 7. **Engine affinity on Windows.** When agents or operators run clean-room locally on Windows, follow humanymous Docker engine affinity: Windows Docker Desktop Linux engine (`desktop-linux`), no silent WSL-daemon substitution. Recorded as convention cite, not a second affinity SoT.
 
 ### Forbidden as “verified”
@@ -95,7 +95,7 @@ GIR’s mission is Git-compatible replacement with GitHub-class remote interop. 
 ## Verification
 
 1. `spec check` clean for this SoT, [[research:root/20261108073650]], and [[research:root/20261110095355]].
-2. M1–M4 gates: `docker compose -f verify/docker-compose.yml run --rm g0` / `g1` / `g10` / `g2` / `g4` / `g5` with digests matching `verify/images.lock.json`. Journey-compare: `run --rm g16` (suite under `verify/gates/g16/`, matrix `verify/matrices/matrix-journey.md`) per [[sot:root/clean-room-journey-compare]] (timings authoritative only in clean-room). G19 sole run uses `verify/gates/g19/` receipts over G16 metrics.
+2. M1–M4 gates: `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` / `g001-loose-object-interop` / `g010-store-facade` / `g002-refs-index-roundtrip` / `g004-pack-idx-roundtrip` / `g005-protocol-offline-fixtures` with digests matching `verify/images.lock.json`. Journey-compare: `run --rm g016-journey-compare` (suite under `verify/gates/g016-journey-compare/`, matrix `verify/matrices/matrix-g016-journey-compare.md`) per [[sot:root/clean-room-journey-compare]] (timings authoritative only in clean-room). G19 sole run uses `verify/gates/g019-comparative-performance/` receipts over G16 metrics.
 3. Any PR that adds a product gate labels it **clean-room** or **host-advisory** per the matrix research; clean-room gates name the intended compose/service.
 4. Same image digest/tag in local clean-room and CI; stock Git version printed in gate evidence matches the lock.
 5. Do not mark release or interop “verified” from host-only runs.

@@ -89,4 +89,4 @@ Version **0.2.0**. Recorded **claimed** vs **refuse** flags for the closed inven
 
 ## Verification
 
-G14 (`verify/matrices/matrix-m9.md`) spot-checks help omission, unknown-flag refuse, and this ledger’s presence.
+G14 (`verify/matrices/matrix-m009-clean-room-cli-parity.md`) spot-checks help omission, unknown-flag refuse, and this ledger’s presence.

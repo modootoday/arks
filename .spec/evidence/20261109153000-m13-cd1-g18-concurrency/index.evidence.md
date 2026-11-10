@@ -4,7 +4,7 @@ title: M13 Cd-1 clean-room G18 concurrency issue-compare
 status: active
 created: 2026-11-09T15:30:00Z
 updated: 2026-11-10T00:57:43Z
-tags: [g18, m13, cd-1, clean-room, concurrency, differentiate-beyond-git, lease, issue-resolution, verified]
+tags: [g018-concurrency-issue-compare, m13, cd-1, clean-room, concurrency, differentiate-beyond-git, lease, issue-resolution, verified]
 rel:
   depends_on: [plan:root/20261109024635, adr:root/20261109032955, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/lease-concurrency-intent, sot:root/arks-lease, sot:root/product-verification-clean-room, evidence:root/20261108231249, evidence:root/20261109140000, research:root/20261109023117]
   evidence: []
@@ -18,14 +18,14 @@ files:
 
 Closes Wave **Cd-1** of [[plan:root/20261109024635]] under the Issue-resolution Done rule ([[sot:root/program-roadmap]] v0.5.0): each claimed differentiate/lease ID reproduced in Docker — stock **`git`** exhibits pathology; **`arks`** meets lease-uplift resolved criteria; comparative receipt attached. Grant schema: [[adr:root/20261109032955]]. Does **not** redefine M9/M10/M11 exits. Does **not** start M14 / G19 perf work. Unlisted differentiate IDs remain Open for Cd-2+.
 
-Attached: `receipt.json` (`arks-g18-issue-compare/v1`, wave `Cd-1`).
+Attached: `receipt.json` (`arks-g018-concurrency-issue-compare-issue-compare/v1`, wave `Cd-1`).
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` services `g18` (+ regression `g11`, `g17`, `g14`, `g16`) |
-| Entrypoints | `verify/scripts/run-g18.sh`, `run-g11.sh`, `run-g17.sh`, `run-g14.sh`, `run-g16.sh` |
+| Compose | `verify/docker-compose.yml` services `g018-concurrency-issue-compare` (+ regression `g011-lease-product`, `g017-concurrency-issue-compare`, `g014-cli-parity-production`, `g016-journey-compare`) |
+| Entrypoints | `verify/scripts/run-g018-concurrency-issue-compare.sh`, `run-g011-lease-product.sh`, `run-g017-concurrency-issue-compare.sh`, `run-g014-cli-parity-production.sh`, `run-g016-journey-compare.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest | `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git (in-image) | `git version 2.39.5` |
@@ -56,7 +56,7 @@ Attached: `receipt.json` (`arks-g18-issue-compare/v1`, wave `Cd-1`).
 
 - ADR grant prefixes `refns:` / `index:` ([[adr:root/20261109032955]]).
 - `arks lease` porcelain (grant/release/inspect/list/expire) over durable L2 store.
-- G18 harness + compose service + matrix `verify/matrices/matrix-g18.md`.
+- G18 harness + compose service + matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md`.
 
 ## Non-claims
 
@@ -68,10 +68,10 @@ Attached: `receipt.json` (`arks-g18-issue-compare/v1`, wave `Cd-1`).
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g18
-docker compose -f verify/docker-compose.yml run --rm g11
-docker compose -f verify/docker-compose.yml run --rm g17
-docker compose -f verify/docker-compose.yml run --rm g14
-docker compose -f verify/docker-compose.yml run --rm -e ARKS_JOURNEY_ITERATIONS=1 g16
+docker compose -f verify/docker-compose.yml run --rm g018-concurrency-issue-compare
+docker compose -f verify/docker-compose.yml run --rm g011-lease-product
+docker compose -f verify/docker-compose.yml run --rm g017-concurrency-issue-compare
+docker compose -f verify/docker-compose.yml run --rm g014-cli-parity-production
+docker compose -f verify/docker-compose.yml run --rm -e ARKS_JOURNEY_ITERATIONS=1 g016-journey-compare
 spec check
 ```

@@ -1,5 +1,5 @@
 //! Gate G33 — credential helper / GIT_ASKPASS against auth-required smart HTTP.
-//! Cite: verify/matrices/matrix-g33.md, gitcredentials, git-credential.
+//! Cite: verify/matrices/matrix-g033-cred-askpass.md, gitcredentials, git-credential.
 //! Secrets are generated at runtime into temp helpers — never committed.
 
 use std::fs;
@@ -231,7 +231,7 @@ fn handle_client(
     if auth.as_deref() != Some(expected_auth) {
         let body = b"unauthorized\n";
         let http = format!(
-            "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"g33\"\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"g033-cred-askpass\"\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
             body.len()
         );
         stream.write_all(http.as_bytes()).map_err(|e| e.to_string())?;
@@ -350,7 +350,7 @@ fn seed_bare_repo(parent: &Path, name: &str) -> PathBuf {
     let bare = parent.join(name);
     fs::create_dir_all(&work).unwrap();
     assert_ok(&git(&work, &["init", "-b", "main"]), "git init");
-    fs::write(work.join("README"), b"hello g33 cred\n").unwrap();
+    fs::write(work.join("README"), b"hello g033-cred-askpass cred\n").unwrap();
     assert_ok(&git(&work, &["add", "README"]), "add");
     assert_ok(&git(&work, &["commit", "-m", "init"]), "commit");
     assert_ok(
@@ -394,13 +394,13 @@ fn runtime_secret(tag: &str) -> (String, String) {
         .unwrap()
         .as_nanos();
     (
-        format!("g33user-{tag}"),
-        format!("g33pass-{tag}-{nonce}"),
+        format!("g033-cred-askpassuser-{tag}"),
+        format!("g033-cred-askpasspass-{tag}-{nonce}"),
     )
 }
 
 #[test]
-fn g33_c01_credential_fill_via_helper() {
+fn g033-cred-askpass_c01_credential_fill_via_helper() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("fill");
@@ -442,7 +442,7 @@ fn g33_c01_credential_fill_via_helper() {
 }
 
 #[test]
-fn g33_c02_clone_with_credential_helper() {
+fn g033-cred-askpass_c02_clone_with_credential_helper() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("helper");
@@ -472,7 +472,7 @@ fn g33_c02_clone_with_credential_helper() {
 }
 
 #[test]
-fn g33_c03_clone_with_git_askpass() {
+fn g033-cred-askpass_c03_clone_with_git_askpass() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("ask");
@@ -494,7 +494,7 @@ fn g33_c03_clone_with_git_askpass() {
 }
 
 #[test]
-fn g33_c04_fail_closed_without_creds() {
+fn g033-cred-askpass_c04_fail_closed_without_creds() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("deny");
@@ -509,8 +509,8 @@ fn g33_c04_fail_closed_without_creds() {
 }
 
 #[test]
-fn g33_c05_no_secret_in_tree_fixtures() {
-    // Static check: committed verify/gates/g33 sources generate secrets at runtime.
+fn g033-cred-askpass_c05_no_secret_in_tree_fixtures() {
+    // Static check: committed verify/gates/g033-cred-askpass sources generate secrets at runtime.
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let src = fs::read_to_string(root.join("tests/cred_askpass.rs")).unwrap();
     assert!(
@@ -526,7 +526,7 @@ fn g33_c05_no_secret_in_tree_fixtures() {
 }
 
 #[test]
-fn g33_c06_tty_prompt_via_pty() {
+fn g033-cred-askpass_c06_tty_prompt_via_pty() {
     require_git();
     #[cfg(unix)]
     {
@@ -642,7 +642,7 @@ finish(0 if b"Cloned into" in buf else 1)
 }
 
 #[test]
-fn g33_c07_os_wallet_helpers_file_backend() {
+fn g033-cred-askpass_c07_os_wallet_helpers_file_backend() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let wallet = tmp.path().join("wallet");

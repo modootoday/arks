@@ -4,7 +4,7 @@ title: M12 Concurrency compat mitigation
 status: active
 created: 2026-11-09T02:46:34Z
 updated: 2026-11-09T14:00:00Z
-tags: [milestone, m12, phase-cm, concurrency, mitigate-with-compat, multi-agent, locks, worktree, submodule, g17, issue-resolution]
+tags: [milestone, m12, phase-cm, concurrency, mitigate-with-compat, multi-agent, locks, worktree, submodule, g017-concurrency-issue-compare, issue-resolution]
 rel:
   depends_on:
     - sot:root/program-roadmap
@@ -65,7 +65,7 @@ Unlisted IDs remain **Open**. Selecting them for a later wave requires amending 
 | **WT-001** | Linked worktrees share common store; induced lock-domain fail | Claimed worktree matrix fail-closed / honesty (residual surface) |
 | **SUB-001** | Submodule multiplies lock domains under induced concurrency | Claimed submodule matrix fail-closed / honesty |
 
-Wave Cm-1 **Done** = G17 PASS receipt covering **all four** rows above (compose `g17`). Deferred rows stay Open.
+Wave Cm-1 **Done** = G17 PASS receipt covering **all four** rows above (compose `g017-concurrency-issue-compare`). Deferred rows stay Open.
 
 ## In scope
 
@@ -99,8 +99,8 @@ Milestone exit = every claimed ID across accepted M12 waves has G17 PASS — not
 
 ## Ordered work items
 
-1. **SoT / matrix** — Freeze Cm-1 claim-set oracles; add `verify/matrices/matrix-g17.md`; wire compose `g17`; `spec check`. **Done (Cm-1).**
-2. **Harness** — Implement induce → git peer → arks peer → compare runner inside clean-room image. **Done** (`verify/gates/g17`, `run-g17.sh`).
+1. **SoT / matrix** — Freeze Cm-1 claim-set oracles; add `verify/matrices/matrix-g017-concurrency-issue-compare.md`; wire compose `g017-concurrency-issue-compare`; `spec check`. **Done (Cm-1).**
+2. **Harness** — Implement induce → git peer → arks peer → compare runner inside clean-room image. **Done** (`verify/gates/g017-concurrency-issue-compare`, `run-g017-concurrency-issue-compare.sh`).
 3. **Mitigations** — Land code required for Cm-1 resolved oracles only. **Done** (optional-locks profile, `arks lock`, WT/SUB DotGitFile honesty).
 4. **Verify** — Docker G17 PASS for all Cm-1 IDs; evidence [[evidence:root/20261109030456]]; residual honesty; G14/G16 regression. **Done (Cm-1).**
 5. **Cm-2** — Claim IDX-001, HOOK-001/HOOK-006, PACK-004/MAINT-003, AGENT-003; mitigations + G17; evidence [[evidence:root/20261109123000]]. **Done (Cm-2).**

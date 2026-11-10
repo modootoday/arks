@@ -4,7 +4,7 @@ title: M18 Pf4 aggressive comparative perf
 status: archived
 created: 2026-11-09T12:54:38Z
 updated: 2026-11-09T14:30:00Z
-tags: [milestone, m18, phase-pf4, g19, perf, journey, comparative, aggressive]
+tags: [milestone, m18, phase-pf4, g019-comparative-performance, perf, journey, comparative, aggressive]
 rel:
   depends_on:
     - sot:root/program-roadmap
@@ -35,7 +35,7 @@ After **M17 / Pf3** full G19 exit (19/19 ≤0.8×, N/A-free — [[evidence:root/
 | **M17 regression** | Every current G16 journey: arks_median ≤ **0.8×** git_median | Frozen — MUST stay green |
 | **Pf4 aggressive** | Claimed progressive set: arks_median ≤ **0.5×** git_median (`median_p95`, release) | Additive — does **not** redefine M17 |
 | **N/A** | Forbidden for current catalog (`na: {}`) | Same honesty as M17 |
-| **Venue** | Docker sole `g19` (no concurrent G19; OOM/137) | [[sot:root/product-verification-clean-room]] |
+| **Venue** | Docker sole `g019-comparative-performance` (no concurrent G19; OOM/137) | [[sot:root/product-verification-clean-room]] |
 
 ## Claimed set — Wave Pf4-1 (progressive)
 
@@ -72,9 +72,9 @@ Target ≤0.5× on journeys with headroom (absolute ms or ratio room). Short qua
 
 ## Steps (Pf4-1)
 
-1. Land [[research:root/20261109125438]]; amend roadmap M18 stub; expand matrix-g19 Pf4 notes.
+1. Land [[research:root/20261109125438]]; amend roadmap M18 stub; expand matrix-g019-comparative-performance Pf4 notes.
 2. Implement hot paths; host `cargo test` advisory.
-3. Sole `docker compose … run --rm g19`; compare to [[evidence:root/20261109090000]].
+3. Sole `docker compose … run --rm g019-comparative-performance`; compare to [[evidence:root/20261109090000]].
 4. Evidence receipt + `spec check` + commit + push.
 5. `/goal` next wave if residuals remain above 0.5×.
 

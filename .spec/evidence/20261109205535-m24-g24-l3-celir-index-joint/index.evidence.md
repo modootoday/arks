@@ -4,7 +4,7 @@ title: M24 G24 L3 plus CELIR index joint clean-room
 status: active
 created: 2026-11-09T20:55:35Z
 updated: 2026-11-10T00:57:44Z
-tags: [m24, g24, celir, l3, highconcurrency, clean-room, verified, joint]
+tags: [m24, g024-l3-celir-joint, celir, l3, highconcurrency, clean-room, verified, joint]
 rel:
   depends_on: [sot:root/l3-celir-index-joint-clean-room, plan:root/20261109204935, adr:root/20261109194200, sot:root/product-verification-clean-room, sot:root/celir-index-dual-path, evidence:root/20261109204428]
 files:
@@ -17,8 +17,8 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G24** (`verify/scripts/run-g24.sh` / compose `g24`) |
-| Matrix | `verify/matrices/matrix-g24.md` |
+| Gate | **G24** (`verify/scripts/run-g024-l3-celir-joint.sh` / compose `g024-l3-celir-joint`) |
+| Matrix | `verify/matrices/matrix-g024-l3-celir-joint.md` |
 | N scale | **32** + **128** |
 | Shared-index N-way | **OUT** |
 | Stock git | `git version 2.39.5` |

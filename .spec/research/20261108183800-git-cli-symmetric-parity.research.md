@@ -50,7 +50,7 @@ Former “Partial = formats + CLI subset; full porcelain deferred” product bar
 
 ## Residual opens
 
-- Exact Pb/Pc command partition tables (milestone plans). **Pa frozen** in [[plan:root/20261108183810]] / `verify/matrices/matrix-m7.md`.
+- Exact Pb/Pc command partition tables (milestone plans). **Pa frozen** in [[plan:root/20261108183810]] / `verify/matrices/matrix-m007-clean-room-porcelain-pa.md`.
 - Plumbing minimum set for scripting without gaps.
 - Pin-advance gap-audit process detail when clean-room Git upgrades.
 - Credential helper depth; askpass.

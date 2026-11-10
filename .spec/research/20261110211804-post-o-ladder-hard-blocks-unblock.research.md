@@ -7,7 +7,7 @@ updated: 2026-11-10T21:25:00Z
 tags:
   [
     hard-blocks,
-    g8-live,
+    g008-live-forge-smoke-live,
     r5,
     o1,
     l9,
@@ -48,7 +48,7 @@ rel:
 
 After optional ladder **O1–O_final Done** at tip ≥ `be54977` on canon `modootoday/arks`, what are the **practical unblock paths** for the remaining hard blocks that are **not** closed as product Claimed/PASS:
 
-1. **Live G8 remasure** — Environment `g8-live` secrets = 0 (readiness Done; no live PASS)
+1. **Live G8 remasure** — Environment `g008-live-forge-smoke-live` secrets = 0 (readiness Done; no live PASS)
 2. **L9** — crates.io / docs.rs publish timing (owner-closed policy)
 3. **Pixel TUI** / **proc-receive** / other explicit **OOS** still deferred
 
@@ -68,8 +68,8 @@ Research only. Do **not** invent Claimed/PASS, fake secrets, or live latency. Do
 |------|-------|
 | Tip (research session) | `be54977` — *Claim Apache DAV G41 PASS and close O-ladder currency.* |
 | O-ladder | **O1–O_final Done** ([[research:root/20261110205403]]) |
-| Environment `g8-live` | **Exists**; Environments also include `crates` / `npm` / `pypi` / `rubygems` / `github-pages` |
-| `g8-live` secret count (API, names only) | **0** (re-probed 2026-11-10; matches [[evidence:root/20261110210200]]) |
+| Environment `g008-live-forge-smoke-live` | **Exists**; Environments also include `crates` / `npm` / `pypi` / `rubygems` / `github-pages` |
+| `g008-live-forge-smoke-live` secret count (API, names only) | **0** (re-probed 2026-11-10; matches [[evidence:root/20261110210200]]) |
 | Process env `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` | Expected absent in agent land path |
 | CLI crate `publish` | `publish = false` on `crates/arks` (and sibling crates) |
 | L9 | **Owner-closed** — not a development Open |
@@ -85,8 +85,8 @@ Research only. Do **not** invent Claimed/PASS, fake secrets, or live latency. Do
 | Layer | State | SoT / docs |
 |-------|-------|------------|
 | Harness | **Claimed (ready)** — G8 default-on when secrets; G8-live-scale measure when secrets | [[adr:root/20261110220000]], [[adr:root/20261110221000]], [[sot:root/interop-test-matrix]] |
-| Ops readiness | **Done** — Environment exists; `g8-forge-scale.yml` dry-run; `scripts/forge-scale-readiness.sh`; `docs/forge-scale.md` | Ladder **L5** ops ([[research:root/20261110095142]]); O1 operator path ([[adr:root/20261110210100]]) |
-| Live remasure / latency samples | **Hard-blocked** | Environment `g8-live` **secret count = 0**; no process-env token+URL → harness SKIP / no-measurement only ([[evidence:root/20261110210200]]) |
+| Ops readiness | **Done** — Environment exists; `g008-live-forge-smoke-forge-scale.yml` dry-run; `scripts/forge-scale-readiness.sh`; `docs/forge-scale.md` | Ladder **L5** ops ([[research:root/20261110095142]]); O1 operator path ([[adr:root/20261110210100]]) |
+| Live remasure / latency samples | **Hard-blocked** | Environment `g008-live-forge-smoke-live` **secret count = 0**; no process-env token+URL → harness SKIP / no-measurement only ([[evidence:root/20261110210200]]) |
 | Product forge throughput SLO | **Not claimed** | [[sot:root/production-residual-register]] R5; `docs/limits.md` / `docs/forge-scale.md` honesty |
 
 **Why:** YAML and agents cannot invent Environment secret *values*. Dry-run / structural OK / SKIP receipts are explicitly **≠** live PASS. Residual R5 reopen requires **secrets + real receipts** under `.spec/evidence/` — never invented medians.
@@ -95,12 +95,12 @@ Research only. Do **not** invent Claimed/PASS, fake secrets, or live latency. Do
 
 | Prerequisite | Detail |
 |--------------|--------|
-| GitHub Environment | `g8-live` on `modootoday/arks` (already present) |
+| GitHub Environment | `g008-live-forge-smoke-live` on `modootoday/arks` (already present) |
 | Environment secrets (names) | **`ARKS_G8_TOKEN`** (throwaway PAT with push/clone on throwaway repo) **and** **`ARKS_G8_REPO_URL`** (HTTPS clone URL of a throwaway peer) |
 | Optional local path | Same names in process env; workflow prefers Environment secrets and clears job `GITHUB_TOKEN` as silent substitute |
 | Force-off knobs | `ARKS_G8_LIVE=0` (smoke off); `ARKS_G8_SCALE_MEASURE=0` (scale off) |
-| Workflow | `.github/workflows/g8-forge-scale.yml` — `workflow_dispatch` with **`dry_run=false`** selects Environment `g8-live` |
-| Operator scripts | `scripts/g8-live-operator-path.sh` (probe + fail-closed); compose services `g8` / `g8-live-scale` |
+| Workflow | `.github/workflows/g008-live-forge-smoke-forge-scale.yml` — `workflow_dispatch` with **`dry_run=false`** selects Environment `g008-live-forge-smoke-live` |
+| Operator scripts | `scripts/g008-live-forge-smoke-live-operator-path.sh` (probe + fail-closed); compose services `g008-live-forge-smoke` / `g008-live-scale` |
 | Specfold | Attach measured receipts under `.spec/evidence/` before any public “live remasure Claimed/PASS” wording; residual R5 update only with receipts |
 | Honesty bounds | Sole-runner — do not collide with clean-room G14–G28 / sole G19 remasure; scrub PATs from logs; throwaway repo preferred |
 
@@ -111,17 +111,17 @@ Research only. Do **not** invent Claimed/PASS, fake secrets, or live latency. Do
 1. Owner/operator creates a **throwaway** GitHub repo (or org sandbox) for clone/fetch/push smoke.
 2. Mint a scoped PAT (or fine-grained token) with access to that throwaway only; store as Environment secret **`ARKS_G8_TOKEN`**.
 3. Store throwaway HTTPS URL as Environment secret **`ARKS_G8_REPO_URL`**.
-4. Confirm via names-only probe: `gh api repos/modootoday/arks/environments/g8-live/secrets` → `total_count ≥ 2` with those names.
-5. Dispatch **g8-forge-scale** with **`dry_run=false`** (Actions UI or `gh workflow run`).
+4. Confirm via names-only probe: `gh api repos/modootoday/arks/environments/g008-live-forge-smoke-live/secrets` → `total_count ≥ 2` with those names.
+5. Dispatch **g008-live-forge-smoke-forge-scale** with **`dry_run=false`** (Actions UI or `gh workflow run`).
 6. Inspect job summary receipts: expect non-SKIP dispositions when secrets resolve; if still SKIP, secrets are missing/misnamed — do not invent PASS.
-7. Download/copy `receipt.json` (+ `samples.json` durations only) into a new `.spec/evidence/<ts>-g8-live-remasure/` package; update residual R5 / comparison row only after evidence lands.
+7. Download/copy `receipt.json` (+ `samples.json` durations only) into a new `.spec/evidence/<ts>-g008-live-forge-smoke-live-remasure/` package; update residual R5 / comparison row only after evidence lands.
 8. Optionally delete throwaway repo / rotate PAT after attachment.
 
 #### Path B — Local compose remasure (same honesty)
 
 1. Export `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` in an operator shell (never commit).
-2. `bash scripts/g8-live-operator-path.sh` → expect `secrets-present-manual-live` (still `live_pass:false` until harness run).
-3. `docker compose -f verify/docker-compose.yml run --rm -e ARKS_G8_TOKEN -e ARKS_G8_REPO_URL g8` and `g8-live-scale` (or bare `verify/scripts/run-g8*.sh`).
+2. `bash scripts/g008-live-forge-smoke-live-operator-path.sh` → expect `secrets-present-manual-live` (still `live_pass:false` until harness run).
+3. `docker compose -f verify/docker-compose.yml run --rm -e ARKS_G8_TOKEN -e ARKS_G8_REPO_URL g008-live-forge-smoke` and `g008-live-scale` (or bare `verify/scripts/run-g008-live-forge-smoke*.sh`).
 4. Attach real out/ receipts under `.spec/evidence/`; same residual update rules as Path A.
 
 #### Path C — Remain secrets-blocked (valid steady state)
@@ -132,14 +132,14 @@ Keep O1 Done as **secrets hard-block**. Product DoD does **not** require live fo
 
 - Never publish dry-run green or SKIP as G8 live PASS or scale median.
 - Never use production PATs / primary repo URLs if a throwaway is available.
-- Live samples ≠ public product SLO without separate gate governance (`docs/forge-scale.md`, matrix-g8-live-scale Forbidden section).
+- Live samples ≠ public product SLO without separate gate governance (`docs/forge-scale.md`, matrix-g008-live-scale Forbidden section).
 - Docker sole-runner cost / contention — do not stampede with G14–G28 matrices.
 - Agent sessions without secret write access **cannot** unblock this alone.
 
 ### Recommended next action (ranked)
 
-1. **Owner adds `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` to Environment `g8-live`** (minutes; unblocks Path A).
-2. Dispatch `g8-forge-scale` `dry_run=false`; attach evidence if measured.
+1. **Owner adds `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` to Environment `g008-live-forge-smoke-live`** (minutes; unblocks Path A).
+2. Dispatch `g008-live-forge-smoke-forge-scale` `dry_run=false`; attach evidence if measured.
 3. If secrets will not be provided, leave Path C — document currency only; no fake PASS.
 
 **Classification:** **Temporarily operator-blocked** (not permanent OOS). Harness Claimed; live PASS is optional evidence reopen.
@@ -306,7 +306,7 @@ Only with explicit owner product-intent change. Out of post-O-ladder residual wo
 
 ## Recommended global order (quickest honest first)
 
-1. **If live forge evidence is desired:** owner fills `g8-live` secrets → Path A remasure → evidence attach (Hard block 1).
+1. **If live forge evidence is desired:** owner fills `g008-live-forge-smoke-live` secrets → Path A remasure → evidence attach (Hard block 1).
 2. **Otherwise accept Path C** for G8 — product already Done without live PASS.
 3. **Leave L9 closed** until owner publishes a reopen decision (Hard block 2).
 4. **Do not schedule pixel TUI / proc-receive / GUI/LFS** as post-O-ladder blockers (Hard block 3).
@@ -315,6 +315,6 @@ Only with explicit owner product-intent change. Out of post-O-ladder residual wo
 ## Verification (this research)
 
 1. Tip ≥ `be54977`; O-ladder research + residual R5/O rows cited.
-2. `g8-live` secret count re-probed **0** via GitHub API (names only).
+2. `g008-live-forge-smoke-live` secret count re-probed **0** via GitHub API (names only).
 3. Public docs (`forge-scale` / `limits` / `git-vs-arks` / `release`) and public-surface L9 disposition cited.
 4. No Claimed/PASS invented; no secrets created; no implementation in this note.

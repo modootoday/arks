@@ -23,7 +23,7 @@ rel:
 
 # B5 daemon upload-archive ustar Claimed — header encoding path
 
-English-only. Tip surveyed after verify Migration `g11-l3` / `g19-eval.py` (canon ≥ `9b27ea5`). **Design ≠ Claimed.** No invent Claimed from Partial structural greens or opportunistic `cmp`.
+English-only. Tip surveyed after verify Migration `g011-high-concurrency` / `g019-eval.py` (canon ≥ `9b27ea5`). **Design ≠ Claimed.** No invent Claimed from Partial structural greens or opportunistic `cmp`.
 
 ## Purpose
 

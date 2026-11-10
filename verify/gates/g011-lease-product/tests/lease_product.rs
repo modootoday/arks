@@ -1,5 +1,5 @@
 //! Gate G11 — lease-product (M10). Host cargo tests are advisory; this suite
-//! runs inside Docker clean-room via `verify/scripts/run-g11.sh`.
+//! runs inside Docker clean-room via `verify/scripts/run-g011-lease-product.sh`.
 //!
 //! Proves: L1 grant/release/expire; L2 durable; dual-path refuse; lease ≠ skip
 //! Git locks (via `cargo test -p arks-lease` in the gate script). This file
@@ -29,7 +29,7 @@ fn arks_bin() -> PathBuf {
 }
 
 #[test]
-fn g11_help_lists_sv_and_not_forge() {
+fn g011-lease-product_help_lists_sv_and_not_forge() {
     let out = Command::new(arks_bin())
         .arg("--help")
         .output()
@@ -42,7 +42,7 @@ fn g11_help_lists_sv_and_not_forge() {
 }
 
 #[test]
-fn g11_lease_crate_tests_are_invoked_by_gate_script() {
-    // Marker: run-g11.sh runs `cargo test -p arks-lease` which owns L1/L2/lock proofs.
+fn g011-lease-product_lease_crate_tests_are_invoked_by_gate_script() {
+    // Marker: run-g011-lease-product.sh runs `cargo test -p arks-lease` which owns L1/L2/lock proofs.
     assert!(true);
 }

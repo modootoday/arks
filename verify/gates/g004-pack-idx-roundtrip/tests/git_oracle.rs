@@ -2,7 +2,7 @@
 //! Gate G4: pack/idx local round-trip vs stock Git (claimed M4 subset).
 //!
 //! Primary: https://git-scm.com/docs/gitformat-pack
-//! Cite: `.spec/sot/arks-pack.sot.md`, `verify/matrices/matrix-m4.md`
+//! Cite: `.spec/sot/arks-pack.sot.md`, `verify/matrices/matrix-m004-clean-room-pack-protocol.md`
 
 use arks_hash::ObjectFormat;
 use arks_object::{ObjectKind, RawObject};
@@ -68,7 +68,7 @@ fn git_hash_object_write(repo: &Path, kind: &str, payload: &[u8]) -> String {
 fn sample_objects() -> Vec<RawObject> {
     vec![
         RawObject::new(ObjectKind::Blob, b"".to_vec()),
-        RawObject::new(ObjectKind::Blob, b"hello-g4".to_vec()),
+        RawObject::new(ObjectKind::Blob, b"hello-g004-pack-idx-roundtrip".to_vec()),
         RawObject::new(ObjectKind::Blob, b"pack-local-roundtrip\n".to_vec()),
         RawObject::new(ObjectKind::Tree, b"".to_vec()),
     ]

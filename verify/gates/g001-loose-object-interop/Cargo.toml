@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g1-cleanroom"
+name = "arks-g001-loose-object-interop-cleanroom"
 description = "M1 clean-room stock-Git oracle harness (verify tree only)"
 version = "0.0.0"
 edition = "2024"

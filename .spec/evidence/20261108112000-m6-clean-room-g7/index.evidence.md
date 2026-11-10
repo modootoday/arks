@@ -4,7 +4,7 @@ title: M6 clean-room G7 Wave H remote client
 status: active
 created: 2026-11-08T11:20:00Z
 updated: 2026-11-08T11:20:00Z
-tags: [m6, clean-room, g0, g1, g2, g3, g4, g5, g6, g7, g10, wave-h, remote, verified, v0.3.1]
+tags: [m6, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, g002-refs-index-roundtrip, g003-index-commit-roundtrip, g004-pack-idx-roundtrip, g005-protocol-offline-fixtures, g006-cli-wave-l, g007-smart-http-client, g010-store-facade, wave-h, remote, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -47,22 +47,22 @@ Generic smart-HTTP **client** for any claimed peer; GitHub-class hosts are the v
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **gix-exit** | `cargo metadata` graph scan in `run-g7.sh` | **PASS** | zero `gix` / `gitoxide` edges |
-| **G7** | `docker compose -f verify/docker-compose.yml run --rm g7` | **PASS** | `verify/gates/g7` smart-HTTP suite **3** (help/refuse, remote config, clone/fetch/push loopback) |
-| **G6** regression | (embedded in `run-g7.sh`) | **PASS** | `verify/gates/g6` **6** |
-| **G3** regression | (embedded) | **PASS** | `verify/gates/g3` **3** |
-| **G4** regression | (embedded) | **PASS** | `verify/gates/g4` **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded) | **PASS** | `verify/gates/g2` **9** |
-| **G10** regression | (embedded) | **PASS** | `verify/gates/g10` **7** |
-| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
+| **gix-exit** | `cargo metadata` graph scan in `run-g007-smart-http-client.sh` | **PASS** | zero `gix` / `gitoxide` edges |
+| **G7** | `docker compose -f verify/docker-compose.yml run --rm g007-smart-http-client` | **PASS** | `verify/gates/g007-smart-http-client` smart-HTTP suite **3** (help/refuse, remote config, clone/fetch/push loopback) |
+| **G6** regression | (embedded in `run-g007-smart-http-client.sh`) | **PASS** | `verify/gates/g006-cli-wave-l` **6** |
+| **G3** regression | (embedded) | **PASS** | `verify/gates/g003-index-commit-roundtrip` **3** |
+| **G4** regression | (embedded) | **PASS** | `verify/gates/g004-pack-idx-roundtrip` **3** |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g005-protocol-offline-fixtures` **4** + `arks-protocol` |
+| **G2** regression | (embedded) | **PASS** | `verify/gates/g002-refs-index-roundtrip` **9** |
+| **G10** regression | (embedded) | **PASS** | `verify/gates/g010-store-facade` **7** |
+| **G1** regression | (embedded) | **PASS** | `arks-object` `g001-loose-object-interop_oracle` **5** + `verify/gates/g001-loose-object-interop` **6** |
 | Unit Specfold | `spec check` | **PASS** | 0 errors / 0 warnings |
 
 Combinatorics covered (automated): M6-C01…C15 per `verify/matrices/matrix-m6.md`. Residual Open: M6-C16 G8 live smoke; M6-C17 G9 filters; M6-C18 SSH.
 
 ## Bug simulation (fixed)
 
-1. `verify/scripts/run-g7.sh` initially had CRLF endings → `set: pipefail` failed in Linux clean-room; rewritten to LF (`.gitattributes` `*.sh text eol=lf`).
+1. `verify/scripts/run-g007-smart-http-client.sh` initially had CRLF endings → `set: pipefail` failed in Linux clean-room; rewritten to LF (`.gitattributes` `*.sh text eol=lf`).
 2. G6 help test still forbade Wave H verbs after Wave H landed; updated to require `remote`/`fetch`/`push`/`clone` and refuse unclaimed `pull`.
 
 ## Non-claims
@@ -78,5 +78,5 @@ Combinatorics covered (automated): M6-C01…C15 per `verify/matrices/matrix-m6.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g7
+docker compose -f verify/docker-compose.yml run --rm g007-smart-http-client
 ```

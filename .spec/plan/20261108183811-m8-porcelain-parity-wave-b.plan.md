@@ -32,7 +32,7 @@ Deliver [[sot:root/cli-surface]] **Wave Pb**: history-editing and patch workflow
 
 ## Frozen Wave Pb checklist (implement / refuse / exclude)
 
-Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for clean-room pin (Git 2.39.x in `verify/images.lock.json`). Classification before G13 claim. Matrix: `verify/matrices/matrix-m8.md`.
+Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for clean-room pin (Git 2.39.x in `verify/images.lock.json`). Classification before G13 claim. Matrix: `verify/matrices/matrix-m008-clean-room-porcelain-pb.md`.
 
 | Command | Class | Claimed forms (M8) | Refuse / defer |
 |---------|-------|--------------------|----------------|
@@ -64,16 +64,16 @@ Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for
 
 | Gate | Clean-room | Advisory |
 |------|------------|----------|
-| **G13** cli-porcelain-pb | Authoritative (`verify/gates/g13` + `run-g13.sh`) | Host |
-| G12 + G7 (+ G6 / prior) regression | Clean-room (embedded in `run-g13.sh`) | Host |
+| **G13** cli-porcelain-pb | Authoritative (`verify/gates/g013-porcelain-wave-pb` + `run-g013-porcelain-wave-pb.sh`) | Host |
+| G12 + G7 (+ G6 / prior) regression | Clean-room (embedded in `run-g013-porcelain-wave-pb.sh`) | Host |
 | Help honesty / refuse | Clean-room G13 | Host |
-| Zero `gix` | `run-g13.sh` metadata scan | — |
+| Zero `gix` | `run-g013-porcelain-wave-pb.sh` metadata scan | — |
 | Unit Specfold | `spec check` | — |
 
 ## Ordered work items
 
-1. **Design** — Freeze Pb checklist (this section); matrix `verify/matrices/matrix-m8.md`; unit SoT [[sot:root/arks]] Wave Pb rows; `cli-surface` Pb freeze pointer.
-2. **Scaffold** — `crates/arks` `cmd_pb` module; G13 crate + compose service + `run-g13.sh` (LF).
+1. **Design** — Freeze Pb checklist (this section); matrix `verify/matrices/matrix-m008-clean-room-porcelain-pb.md`; unit SoT [[sot:root/arks]] Wave Pb rows; `cli-surface` Pb freeze pointer.
+2. **Scaffold** — `crates/arks` `cmd_pb` module; G13 crate + compose service + `run-g013-porcelain-wave-pb.sh` (LF).
 3. **Implement** — cherry-pick/revert → rebase → format-patch/am → bisect → bundle → `pull --rebase`; refuse closed for deferred.
 4. **Verify** — G13 + G12/G7 regressions; bug-sim fixes; evidence receipt; **not** production claim.
 
@@ -89,4 +89,4 @@ Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for
 
 ## Cross-links
 
-[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], [[research:root/20261108183800]], `verify/matrices/matrix-m8.md`, [[evidence:root/20261108133000]]
+[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], [[research:root/20261108183800]], `verify/matrices/matrix-m008-clean-room-porcelain-pb.md`, [[evidence:root/20261108133000]]

@@ -4,7 +4,7 @@ title: M3 clean-room G2 G1 G10 receipts
 status: active
 created: 2026-11-08T10:10:33Z
 updated: 2026-11-08T10:10:33Z
-tags: [m3, clean-room, g0, g1, g2, g10, verified, v0.3.1]
+tags: [m3, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, g002-refs-index-roundtrip, g010-store-facade, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -46,10 +46,10 @@ Pre-restart untracked M3 trees were **gap-filled** against current SoTs and are 
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | workspace includes refs/index/repo unit tests |
-| **G2** | `docker compose -f verify/docker-compose.yml run --rm g2` | **PASS** | `verify/gates/g2` `git_oracle` **9** |
-| **G10** regression | (embedded in `run-g2.sh`) | **PASS** | `verify/gates/g10` `git_oracle` **7** |
-| **G1** regression | (embedded in `run-g2.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` `git_oracle` **6** |
+| **G0** | `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` | **PASS** | workspace includes refs/index/repo unit tests |
+| **G2** | `docker compose -f verify/docker-compose.yml run --rm g002-refs-index-roundtrip` | **PASS** | `verify/gates/g002-refs-index-roundtrip` `git_oracle` **9** |
+| **G10** regression | (embedded in `run-g002-refs-index-roundtrip.sh`) | **PASS** | `verify/gates/g010-store-facade` `git_oracle` **7** |
+| **G1** regression | (embedded in `run-g002-refs-index-roundtrip.sh`) | **PASS** | `arks-object` `g001-loose-object-interop_oracle` **5** + `verify/gates/g001-loose-object-interop` `git_oracle` **6** |
 
 Combinatorics covered (automated): M3-C01…C13 per `verify/matrices/matrix-m3.md`. Deferred: M3-C14 packed-refs write; M3-C15 full G3; M3-C16 CELIR; M3-C17 lease L1+.
 
@@ -66,6 +66,6 @@ Combinatorics covered (automated): M3-C01…C13 per `verify/matrices/matrix-m3.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g0
-docker compose -f verify/docker-compose.yml run --rm g2
+docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests
+docker compose -f verify/docker-compose.yml run --rm g002-refs-index-roundtrip
 ```

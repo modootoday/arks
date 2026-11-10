@@ -4,7 +4,7 @@ title: M24 CELIR index dual-path migration
 status: active
 created: 2026-11-09T20:34:30Z
 updated: 2026-11-09T20:50:00Z
-tags: [m24, celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, migration, g22]
+tags: [m24, celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, migration, g022-celir-index-contention]
 rel:
   depends_on:
     - sot:root/program-roadmap

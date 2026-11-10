@@ -1,5 +1,5 @@
 //! Gate G32 — `git://` daemon vs stock Git.
-//! Cite: verify/matrices/matrix-g32.md, git-daemon, gitprotocol-pack.
+//! Cite: verify/matrices/matrix-g032-git-daemon-wire.md, git-daemon, gitprotocol-pack.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -132,7 +132,7 @@ fn seed_bare_under(base: &Path) -> PathBuf {
     let work = base.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "init");
-    fs::write(work.join("hello.txt"), b"hello g32\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g032-git-daemon-wire\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");
     let bare = base.join("server.git");
@@ -152,7 +152,7 @@ fn seed_bare_under(base: &Path) -> PathBuf {
 }
 
 #[test]
-fn g32_clone_with_export_all() {
+fn g032-git-daemon-wire_clone_with_export_all() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_bare_under(root.path());
@@ -164,11 +164,11 @@ fn g32_clone_with_export_all() {
     );
     assert_ok(&out, "git clone git:// via arks daemon");
     let body = fs::read_to_string(clone.join("hello.txt")).unwrap();
-    assert!(body.replace("\r\n", "\n").starts_with("hello g32"));
+    assert!(body.replace("\r\n", "\n").starts_with("hello g032-git-daemon-wire"));
 }
 
 #[test]
-fn g32_refuse_without_export_marker() {
+fn g032-git-daemon-wire_refuse_without_export_marker() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_bare_under(root.path());

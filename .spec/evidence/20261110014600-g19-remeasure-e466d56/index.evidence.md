@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip e466d56 (PF5 partial 7/8; CLONE-LOCAL ag
 status: active
 created: 2026-11-10T01:46:00Z
 updated: 2026-11-10T01:46:00Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110014000, evidence:root/20261110013400]
   evidence: []
@@ -17,20 +17,20 @@ files:
 
 ## Context
 
-Authoritative sole Docker `g19` (`--name arks-g19-sole-e466d56`) after product smart-HTTP work: zlib-rs inflate, omit side-band (raw PACK), serial Docker checkout workers, RAM-first same-thread pack+idx persist, and revert of broken cleartext TcpStream HTTP (CGI EOF). Cites [[sot:root/pf5-journey-seed-amortization]] — HTTP seed amortization exhausted; residual **FW-PF5-J-CLONE-LOCAL**. Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-LOCAL-01** remains `aggressive_na` at ratio **0.6705** — A ≤0.5× not met (do not market).
+Authoritative sole Docker `g019-comparative-performance` (`--name arks-g019-comparative-performance-sole-e466d56`) after product smart-HTTP work: zlib-rs inflate, omit side-band (raw PACK), serial Docker checkout workers, RAM-first same-thread pack+idx persist, and revert of broken cleartext TcpStream HTTP (CGI EOF). Cites [[sot:root/pf5-journey-seed-amortization]] — HTTP seed amortization exhausted; residual **FW-PF5-J-CLONE-LOCAL**. Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-LOCAL-01** remains `aggressive_na` at ratio **0.6705** — A ≤0.5× not met (do not market).
 
 ## Scope measured (in)
 
 | Surface | IDs | Role |
 |---------|-----|------|
 | G16 functional + timing | All 19 catalog journeys | Hard functional + `median_p95` |
-| G19 comparative | Same allow-list (`verify/matrices/matrix-g19.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
+| G19 comparative | Same allow-list (`verify/matrices/matrix-g019-comparative-performance.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g19` (sole; shared cargo volume) |
+| Compose | `verify/docker-compose.yml` service `g019-comparative-performance` (sole; shared cargo volume) |
 | Paths | `verify/{gates,matrices,fixtures,scripts}` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |

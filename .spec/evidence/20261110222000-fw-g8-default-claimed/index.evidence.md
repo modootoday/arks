@@ -4,7 +4,7 @@ title: FW-G8-DEFAULT Claimed (default-on when secrets; SKIP receipt without secr
 status: active
 created: 2026-11-10T22:20:00Z
 updated: 2026-11-10T22:20:00Z
-tags: [g8, fw-g8-default, claimed, clean-room, skip, live-forge]
+tags: [g008-live-forge-smoke, fw-g008-live-forge-smoke-default, claimed, clean-room, skip, live-forge]
 rel:
   depends_on: [adr:root/20261110220000, sot:root/interop-test-matrix, sot:root/product-verification-clean-room, sot:root/production-residual-register]
   evidence: []
@@ -22,8 +22,8 @@ Supersedes refuse-closed default ([[adr:root/20261110151000]]) with [[adr:root/2
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g8` |
-| Entrypoint | `verify/scripts/run-g8.sh` |
+| Compose | `verify/docker-compose.yml` service `g008-live-forge-smoke` |
+| Entrypoint | `verify/scripts/run-g008-live-forge-smoke.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Stock Git | `git version 2.39.5` |
 | Secrets in env | absent (`ARKS_G8_TOKEN` / `GITHUB_TOKEN` / `ARKS_G8_REPO_URL` unset) |

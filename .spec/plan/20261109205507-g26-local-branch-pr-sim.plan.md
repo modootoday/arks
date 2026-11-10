@@ -4,7 +4,7 @@ title: G26 local branch PR sim clean-room
 status: active
 created: 2026-11-09T20:55:07Z
 updated: 2026-11-09T21:00:00Z
-tags: [g26, clean-room, branch, pr-sim, lease, merge]
+tags: [g026-local-branch-pr-sim, clean-room, branch, pr-sim, lease, merge]
 rel:
   depends_on:
     - sot:root/local-branch-pr-sim-clean-room
@@ -26,7 +26,7 @@ Claim **local** thousands-class branch / synthetic PR-ref scale and leased concu
 
 | Disposition | Meaning |
 |-------------|---------|
-| **Verified / Claimed** | Docker `g26` PASS + evidence with actual N (≥2048 branches, ≥2048 PR refs, ≥32 workers) |
+| **Verified / Claimed** | Docker `g026-local-branch-pr-sim` PASS + evidence with actual N (≥2048 branches, ≥2048 PR refs, ≥32 workers) |
 | **FAIL** | Below minimum N, integrity failure, sole-runner conflict, lock skip |
 | **Out / Deferred** | GitHub rate limit, Actions, protection, live forge throughput (future G8+) |
 
@@ -50,7 +50,7 @@ Local PR-ref simulation ≠ GitHub PR throughput claim. Stream B Claimed does **
 | Wave | Work | Exit |
 |------|------|------|
 | G26-0 | SoT + plan + matrix + interop row | Docs |
-| G26-1 | Harness + tests + compose `g26` | Code ready |
+| G26-1 | Harness + tests + compose `g026-local-branch-pr-sim` | Code ready |
 | G26-exit | Docker PASS + evidence + residual/roadmap | Claimed |
 
 ## Record
@@ -58,5 +58,5 @@ Local PR-ref simulation ≠ GitHub PR throughput claim. Stream B Claimed does **
 | Wave | Status | Tip / evidence |
 |------|--------|----------------|
 | G26-0 | Done | SoT + matrix + interop row |
-| G26-1 | Done | harness `run-g26.sh` + `g26_branch_pr_sim` |
+| G26-1 | Done | harness `run-g026-local-branch-pr-sim.sh` + `g026-local-branch-pr-sim_branch_pr_sim` |
 | G26-exit | **Claimed** | Docker PASS; [[evidence:root/20261109205847]]; parent tip `fa78685` |

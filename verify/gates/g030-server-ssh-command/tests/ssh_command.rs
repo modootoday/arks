@@ -1,5 +1,5 @@
 //! Gate G30 — SSH command-mode shape via duplex `arks upload-pack` / `receive-pack`.
-//! Cite: verify/matrices/matrix-g30.md, gitprotocol-pack.
+//! Cite: verify/matrices/matrix-g030-server-ssh-command.md, gitprotocol-pack.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -71,7 +71,7 @@ fn seed_bare(root: &Path) -> PathBuf {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "init");
-    fs::write(work.join("hello.txt"), b"hello g30\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g030-server-ssh-command\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");
     let bare = root.join("server.git");
@@ -112,7 +112,7 @@ fn write_pack_shim(dir: &Path, service: &str) -> PathBuf {
 }
 
 #[test]
-fn g30_pack_ad_no_http_service_prefix() {
+fn g030-server-ssh-command_pack_ad_no_http_service_prefix() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -132,7 +132,7 @@ fn g30_pack_ad_no_http_service_prefix() {
 }
 
 #[test]
-fn g30_stock_git_clone_fetch_push_via_upload_pack() {
+fn g030-server-ssh-command_stock_git_clone_fetch_push_via_upload_pack() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -154,7 +154,7 @@ fn g30_stock_git_clone_fetch_push_via_upload_pack() {
         assert_ok(&out, "git clone --upload-pack shim");
     }
     let body = fs::read_to_string(clone.join("hello.txt")).expect("clone hello.txt");
-    assert!(body.replace("\r\n", "\n").starts_with("hello g30"));
+    assert!(body.replace("\r\n", "\n").starts_with("hello g030-server-ssh-command"));
 
     fs::write(clone.join("hello.txt"), b"hello push\n").unwrap();
     assert_ok(&git(&clone, &["add", "hello.txt"]), "add");

@@ -1,6 +1,6 @@
 //! Gate G36 — optional HTTP Basic on arks smart HTTP (FW-AUTH-PROXY).
 //!
-//! Cite: verify/matrices/matrix-g36.md, gitprotocol-http, RFC 7617 Basic (summarize),
+//! Cite: verify/matrices/matrix-g036-http-basic-auth.md, gitprotocol-http, RFC 7617 Basic (summarize),
 //! ADR 20261109224236. No forge OAuth.
 
 use std::fs;
@@ -128,7 +128,7 @@ fn seed_bare_with_arks(root: &Path) -> PathBuf {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "init");
-    fs::write(work.join("hello.txt"), b"hello g36\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g036-http-basic-auth\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");
     let bare = root.join("server.git");
@@ -163,7 +163,7 @@ fn raw_get_info_refs(hostport: &str, authorization: Option<&str>) -> String {
 }
 
 #[test]
-fn g36_c01_challenge_without_auth() {
+fn g036-http-basic-auth_c01_challenge_without_auth() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -181,7 +181,7 @@ fn g36_c01_challenge_without_auth() {
 }
 
 #[test]
-fn g36_c02_clone_with_url_userinfo() {
+fn g036-http-basic-auth_c02_clone_with_url_userinfo() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -192,13 +192,13 @@ fn g36_c02_clone_with_url_userinfo() {
     assert_ok(&out, "git clone with URL userinfo");
     let body = fs::read_to_string(clone.join("hello.txt")).unwrap();
     assert!(
-        body.replace("\r\n", "\n").starts_with("hello g36"),
+        body.replace("\r\n", "\n").starts_with("hello g036-http-basic-auth"),
         "unexpected clone content: {body:?}"
     );
 }
 
 #[test]
-fn g36_c03_wrong_then_right_credential() {
+fn g036-http-basic-auth_c03_wrong_then_right_credential() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -243,7 +243,7 @@ fn g36_c03_wrong_then_right_credential() {
         let out = cmd.output().expect("git clone helper");
         assert_ok(&out, "git clone via credential helper");
         let body = fs::read_to_string(ok.join("hello.txt")).unwrap();
-        assert!(body.replace("\r\n", "\n").starts_with("hello g36"));
+        assert!(body.replace("\r\n", "\n").starts_with("hello g036-http-basic-auth"));
     }
     #[cfg(not(unix))]
     {
@@ -257,7 +257,7 @@ fn g36_c03_wrong_then_right_credential() {
 }
 
 #[test]
-fn g36_c04_unauthenticated_default_still_works() {
+fn g036-http-basic-auth_c04_unauthenticated_default_still_works() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());

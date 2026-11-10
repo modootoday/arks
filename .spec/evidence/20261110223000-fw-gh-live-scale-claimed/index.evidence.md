@@ -4,7 +4,7 @@ title: FW-GH-LIVE-SCALE Claimed (harness ready; no-measurement without secrets)
 status: active
 created: 2026-11-10T22:30:00Z
 updated: 2026-11-10T22:30:00Z
-tags: [g8, fw-gh-live-scale, claimed, harness, skip, no-measurement]
+tags: [g008-live-forge-smoke, fw-gh-live-scale, claimed, harness, skip, no-measurement]
 rel:
   depends_on: [adr:root/20261110221000, adr:root/20261110220000, sot:root/interop-test-matrix, sot:root/production-residual-register]
   evidence: []
@@ -23,9 +23,9 @@ Supersedes Closed (harness + opt-in) ([[adr:root/20261110161000]]) with [[adr:ro
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g8-live-scale` |
-| Entrypoint | `verify/scripts/run-g8-live-scale.sh` |
-| Matrix | `verify/matrices/matrix-g8-live-scale.md` |
+| Compose | `verify/docker-compose.yml` service `g008-live-scale` |
+| Entrypoint | `verify/scripts/run-g008-live-scale.sh` |
+| Matrix | `verify/matrices/matrix-g008-live-scale.md` |
 | Secrets in env | absent |
 | Disposition | `skip-no-measurement` |
 | Samples | `[]` |

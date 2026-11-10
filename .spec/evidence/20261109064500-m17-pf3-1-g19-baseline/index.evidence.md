@@ -4,7 +4,7 @@ title: M17 Pf3-1 G19 full allow-list baseline
 status: active
 created: 2026-11-09T06:45:00Z
 updated: 2026-11-10T00:57:42Z
-tags: [g19, m17, pf3, baseline, clean-room, perf]
+tags: [g019-comparative-performance, m17, pf3, baseline, clean-room, perf]
 rel:
   depends_on: [plan:root/20261109043916, sot:root/interop-test-matrix, sot:root/clean-room-journey-compare, sot:root/program-roadmap, evidence:root/20261109061600]
   evidence: []
@@ -20,7 +20,7 @@ Pf3-1 baseline after M16 Sy-1..Sy-5 G21 green. Allow-list = all 19 G16 journey I
 
 | Field | Value |
 |-------|-------|
-| Compose | `g19` |
+| Compose | `g019-comparative-performance` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Aggregation | `median_p95` / iterations=3 / release + thin LTO |
@@ -34,5 +34,5 @@ Short porcelain journeys remain process/implementation-overhead dominated vs sto
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g19
+docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance
 ```

@@ -4,7 +4,7 @@ title: M10 clean-room G11 lease capability
 status: active
 created: 2026-11-08T23:12:49Z
 updated: 2026-11-08T23:12:49Z
-tags: [m10, clean-room, g11, lease, dual-path, verified, v0.3.1]
+tags: [m10, clean-room, g011-lease-product, lease, dual-path, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -30,7 +30,7 @@ Host `cargo test -p arks-lease` results are **advisory only**.
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g11` |
+| Compose | `verify/docker-compose.yml` service `g011-lease-product` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (local Id) | `sha256:a6c5cd96b72c88cc3b7519d00faeb7883dbd6ed2d6151e7f756a7223b748aa89` |
 | Base | `rust:1.99.1-bookworm@sha256:e6f2cff35d0f309acf8433b4f05878ed77092602c5065cc81801177da0bb3a9c` |
@@ -45,18 +45,18 @@ Host `cargo test -p arks-lease` results are **advisory only**.
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **gix-exit** | `cargo metadata` graph scan in `run-g11.sh` | **PASS** | zero `gix` / `gitoxide` edges |
+| **gix-exit** | `cargo metadata` graph scan in `run-g011-lease-product.sh` | **PASS** | zero `gix` / `gitoxide` edges |
 | **no-CELIR** | metadata scan | **PASS** | zero `celir` edges |
-| **G11** | `docker compose … run --rm g11` | **PASS** | `arks-lease` **6** + `verify/gates/g11` **2** |
-| **G14** regression | (embedded) | **PASS** | `verify/gates/g14` **9** |
-| **G7** regression | (embedded) | **PASS** | `verify/gates/g7` **3** |
+| **G11** | `docker compose … run --rm g011-lease-product` | **PASS** | `arks-lease` **6** + `verify/gates/g011-lease-product` **2** |
+| **G14** regression | (embedded) | **PASS** | `verify/gates/g014-cli-parity-production` **9** |
+| **G7** regression | (embedded) | **PASS** | `verify/gates/g007-smart-http-client` **3** |
 | Unit Specfold | `spec check` | **PASS** | (recorded at closeout) |
 
 Dual-path proof: `WriterMode::GitCompat` default; `HighConcurrency` → `HighConcurrencyRefused`. Lease ≠ skip Git locks: `lease_held_still_honors_git_ref_lock` (competing `*.lock` → `LockFailed` while lease held).
 
 ## Bug simulation (fixed / avoided)
 
-1. `verify/scripts/run-g11.sh` LF-only (CRLF `set: pipefail` class). See `verify/gates/g11/BUGSIM.md`.
+1. `verify/scripts/run-g011-lease-product.sh` LF-only (CRLF `set: pipefail` class). See `verify/gates/g011-lease-product/BUGSIM.md`.
 2. HighConcurrency must refuse — no silent N-way.
 3. Lease must not bypass ref locks.
 
@@ -70,5 +70,5 @@ Dual-path proof: `WriterMode::GitCompat` default; `HighConcurrency` → `HighCon
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g11
+docker compose -f verify/docker-compose.yml run --rm g011-lease-product
 ```

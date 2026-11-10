@@ -4,7 +4,7 @@ title: Production residual hygiene G14 G11 G15 G7
 status: active
 created: 2026-11-08T23:31:29Z
 updated: 2026-11-08T23:31:29Z
-tags: [residual, hygiene, g14, g11, g15, g7, production, refuse-close, verified]
+tags: [residual, hygiene, g014-cli-parity-production, g011-lease-product, g015-smart-http, g007-smart-http-client, production, refuse-close, verified]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -36,7 +36,7 @@ This receipt proves **refuse-close / process / defer** honesty plus **full clean
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` services `g14`, `g11`, `g15`, `g7` |
+| Compose | `verify/docker-compose.yml` services `g014-cli-parity-production`, `g011-lease-product`, `g015-smart-http`, `g007-smart-http-client` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (local Id) | `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Base | `rust:1.99.1-bookworm@sha256:e6f2cff35d0f309acf8433b4f05878ed77092602c5065cc81801177da0bb3a9c` |
@@ -52,10 +52,10 @@ This receipt proves **refuse-close / process / defer** honesty plus **full clean
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
 | **gix-exit** / **no-CELIR** | metadata scans in gate scripts | **PASS** | all four services |
-| **G14** | `docker compose … run --rm g14` | **PASS** | Pc **9** + G13/G12/G7/G6 + prior |
-| **G11** | `docker compose … run --rm g11` | **PASS** | lease **6** + g11 **2** + G14/G7 |
-| **G15** | `docker compose … run --rm g15` | **PASS** | server **4** + g15 **3** + G14/G7/G5 |
-| **G7** | `docker compose … run --rm g7` | **PASS** | remote **3** + prior (standalone) |
+| **G14** | `docker compose … run --rm g014-cli-parity-production` | **PASS** | Pc **9** + G13/G12/G7/G6 + prior |
+| **G11** | `docker compose … run --rm g011-lease-product` | **PASS** | lease **6** + g011-lease-product **2** + G14/G7 |
+| **G15** | `docker compose … run --rm g015-smart-http` | **PASS** | server **4** + g015-smart-http **3** + G14/G7/G5 |
+| **G7** | `docker compose … run --rm g007-smart-http-client` | **PASS** | remote **3** + prior (standalone) |
 | Unit Specfold | `spec check` | **PASS** | residual SoTs + L3 ADR |
 
 ## Residual dispositions frozen
@@ -71,7 +71,7 @@ This receipt proves **refuse-close / process / defer** honesty plus **full clean
 
 1. Image rebuild may refresh local Id — residual hygiene records the Id used for this run (`bab37bd1…`); prior M9/M10/M11 receipts remain historical for their own runs.
 2. `spec check` L3: SoTs must not appear under `rel.evidence` (fixed: residual SoTs under `depends_on`).
-3. Prior gate BUGSIM notes still apply (`verify/gates/g14`, `g11`, `g15`).
+3. Prior gate BUGSIM notes still apply (`verify/gates/g014-cli-parity-production`, `g011-lease-product`, `g015-smart-http`).
 
 ## Non-claims
 
@@ -83,9 +83,9 @@ This receipt proves **refuse-close / process / defer** honesty plus **full clean
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g14
-docker compose -f verify/docker-compose.yml run --rm g11
-docker compose -f verify/docker-compose.yml run --rm g15
-docker compose -f verify/docker-compose.yml run --rm g7
+docker compose -f verify/docker-compose.yml run --rm g014-cli-parity-production
+docker compose -f verify/docker-compose.yml run --rm g011-lease-product
+docker compose -f verify/docker-compose.yml run --rm g015-smart-http
+docker compose -f verify/docker-compose.yml run --rm g007-smart-http-client
 spec check
 ```

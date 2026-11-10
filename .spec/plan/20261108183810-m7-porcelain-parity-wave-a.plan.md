@@ -32,7 +32,7 @@ Deliver [[sot:root/cli-surface]] **Wave Pa**: main local branching / worktree / 
 
 ## Frozen Wave Pa checklist (implement / refuse / exclude)
 
-Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for clean-room pin (Git 2.39.x in `verify/images.lock.json`). Classification before G12 claim. Matrix: `verify/matrices/matrix-m7.md`.
+Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for clean-room pin (Git 2.39.x in `verify/images.lock.json`). Classification before G12 claim. Matrix: `verify/matrices/matrix-m007-clean-room-porcelain-pa.md`.
 
 | Command | Class | Claimed forms (M7) | Refuse / defer |
 |---------|-------|--------------------|----------------|
@@ -73,15 +73,15 @@ Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for
 
 | Gate | Clean-room | Advisory |
 |------|------------|----------|
-| **G12** cli-porcelain-pa | Authoritative (`verify/gates/g12` + `run-g12.sh`) | Host |
-| G6 + G7 regression | Clean-room (embedded in `run-g12.sh`) | Host |
+| **G12** cli-porcelain-pa | Authoritative (`verify/gates/g012-porcelain-wave-pa` + `run-g012-porcelain-wave-pa.sh`) | Host |
+| G6 + G7 regression | Clean-room (embedded in `run-g012-porcelain-wave-pa.sh`) | Host |
 | Help honesty / refuse | Clean-room G12 | Host |
-| Zero `gix` | `run-g12.sh` metadata scan | — |
+| Zero `gix` | `run-g012-porcelain-wave-pa.sh` metadata scan | — |
 | Unit Specfold | `spec check` | — |
 
 ## Ordered work items
 
-1. **Design** — Freeze Pa checklist (this section); matrix `verify/matrices/matrix-m7.md`; unit SoT [[sot:root/arks]] Wave Pa rows.
+1. **Design** — Freeze Pa checklist (this section); matrix `verify/matrices/matrix-m007-clean-room-porcelain-pa.md`; unit SoT [[sot:root/arks]] Wave Pa rows.
 2. **Scaffold** — CLI modules under `crates/arks`; G12 crate + compose service.
 3. **Implement** — branching → checkout/reset → diff → merge/pull → tree edits → names/config/grep/stash; refuse closed for deferred.
 4. **Verify** — G12 + G6/G7 regressions; bug-sim fixes; evidence receipt; **not** production claim.
@@ -97,4 +97,4 @@ Primary cites: [git(1)](https://git-scm.com/docs/git); per-command man pages for
 
 ## Cross-links
 
-[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], [[research:root/20261108183800]], `verify/matrices/matrix-m7.md`
+[[sot:root/program-roadmap]], [[sot:root/cli-surface]], [[sot:root/interop-test-matrix]], [[sot:root/arks]], [[research:root/20261108183800]], `verify/matrices/matrix-m007-clean-room-porcelain-pa.md`

@@ -4,7 +4,7 @@ title: M12 Cm-2 clean-room G17 concurrency issue-compare
 status: active
 created: 2026-11-09T12:30:00Z
 updated: 2026-11-10T00:57:43Z
-tags: [g17, m12, cm-2, clean-room, concurrency, issue-resolution, verified]
+tags: [g017-concurrency-issue-compare, m12, cm-2, clean-room, concurrency, issue-resolution, verified]
 rel:
   depends_on: [plan:root/20261109024634, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/product-verification-clean-room, evidence:root/20261109030456, research:root/20261109023117]
   evidence: []
@@ -18,14 +18,14 @@ files:
 
 Closes Wave **Cm-2** of [[plan:root/20261109024634]] under the Issue-resolution Done rule ([[sot:root/program-roadmap]] v0.5.0): each claimed ID reproduced in Docker — stock **`git`** exhibits pathology; **`arks`** meets resolved criteria; comparative receipt attached. Cm-1 rows re-verified green in the same receipt. Does **not** redefine M9/M10/M11 exits. Does **not** start M14 / G19 perf work. Unlisted catalog IDs remain Open.
 
-Attached: `receipt.json` (`arks-g17-issue-compare/v1`, wave `Cm-2`).
+Attached: `receipt.json` (`arks-g017-concurrency-issue-compare-issue-compare/v1`, wave `Cm-2`).
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` services `g17` (+ regression `g14`, `g16`) |
-| Entrypoints | `verify/scripts/run-g17.sh`, `run-g14.sh`, `run-g16.sh` |
+| Compose | `verify/docker-compose.yml` services `g017-concurrency-issue-compare` (+ regression `g014-cli-parity-production`, `g016-journey-compare`) |
+| Entrypoints | `verify/scripts/run-g017-concurrency-issue-compare.sh`, `run-g014-cli-parity-production.sh`, `run-g016-journey-compare.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest | `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git (in-image) | `git version 2.39.5` |
@@ -76,8 +76,8 @@ Attached: `receipt.json` (`arks-g17-issue-compare/v1`, wave `Cm-2`).
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g17
-docker compose -f verify/docker-compose.yml run --rm g14
-docker compose -f verify/docker-compose.yml run --rm -e ARKS_JOURNEY_ITERATIONS=1 g16
+docker compose -f verify/docker-compose.yml run --rm g017-concurrency-issue-compare
+docker compose -f verify/docker-compose.yml run --rm g014-cli-parity-production
+docker compose -f verify/docker-compose.yml run --rm -e ARKS_JOURNEY_ITERATIONS=1 g016-journey-compare
 spec check
 ```

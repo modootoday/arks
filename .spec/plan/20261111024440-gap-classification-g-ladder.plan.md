@@ -8,7 +8,7 @@ tags:
   [
     g-ladder,
     gap-classification,
-    g8-live,
+    g008-live-forge-smoke-live,
     l9,
     bundle-uri,
     lfs-locks,
@@ -48,7 +48,7 @@ Full acceptance / Claimed vs Hold / halt rules: [[plan:root/20261111024441]].
 
 | Goal | Work | Done when | Claimed vs Hold |
 |------|------|-----------|-----------------|
-| **G1** | Live G8 — secrets path **or** honest ops block refresh | Probe `g8-live` secrets; live remasure **only** if `total_count≥2`; else evidence of Blocked refresh | Live PASS only with secrets+receipt; SKIP ≠ PASS |
+| **G1** | Live G8 — secrets path **or** honest ops block refresh | Probe `g008-live-forge-smoke-live` secrets; live remasure **only** if `total_count≥2`; else evidence of Blocked refresh | Live PASS only with secrets+receipt; SKIP ≠ PASS |
 | **G2** | L9 — owner reopen pack only | Refresh [[research:root/20261111003444]]; **no** `publish` flip / `cargo publish` | Blocked until owner SoT |
 | **G3** | Server `bundle-uri` advertise (self) | SoT + advertise + command + evidence | Server slice Claimed; CDN SLOs separate |
 | **G4** | LFS **locks** slice | `/locks` honor on `serve-http` + client verify; tus/S3 = handoff | Locks Claimed; tus/S3 Partial/handoff |

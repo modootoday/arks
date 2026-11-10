@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip df79de9 (PF5 partial 7/8; CLONE-LOCAL ag
 status: active
 created: 2026-11-10T01:34:00Z
 updated: 2026-11-10T01:34:00Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110012500, evidence:root/20261110011500]
   evidence: []
@@ -17,7 +17,7 @@ files:
 
 ## Context
 
-Authoritative sole Docker `g19` (`--name arks-g19-sole-df79de9`) after pack-cache Arc + deferred pack persist (`dd953b9` / `df79de9`) on the relocated layout (`verify/gates|matrices|fixtures`, scripts `verify/scripts/`). Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-LOCAL-01** remains `aggressive_na` at ratio **0.7412** — A ≤0.5× not met (do not market).
+Authoritative sole Docker `g019-comparative-performance` (`--name arks-g019-comparative-performance-sole-df79de9`) after pack-cache Arc + deferred pack persist (`dd953b9` / `df79de9`) on the relocated layout (`verify/gates|matrices|fixtures`, scripts `verify/scripts/`). Reconfirms **M17 ≤0.8× 19/19** and **Pf5 aggressive terminal 19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-LOCAL-01** remains `aggressive_na` at ratio **0.7412** — A ≤0.5× not met (do not market).
 
 Follow-up tip `5bb5e78` (client dumb-HTTP offline proof + CLI N/A honesty) does not reopen G19 measurement.
 
@@ -26,13 +26,13 @@ Follow-up tip `5bb5e78` (client dumb-HTTP offline proof + CLI N/A honesty) does 
 | Surface | IDs | Role |
 |---------|-----|------|
 | G16 functional + timing | All 19 catalog journeys | Hard functional + `median_p95` |
-| G19 comparative | Same allow-list (`verify/matrices/matrix-g19.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
+| G19 comparative | Same allow-list (`verify/matrices/matrix-g019-comparative-performance.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g19` (sole) |
+| Compose | `verify/docker-compose.yml` service `g019-comparative-performance` (sole) |
 | Paths | `verify/{gates,matrices,fixtures,scripts}` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |

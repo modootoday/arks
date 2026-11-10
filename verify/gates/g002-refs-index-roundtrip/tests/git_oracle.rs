@@ -175,7 +175,7 @@ fn sample_oid(n: u8) -> Oid {
 fn arks_update_ref_readable_by_git_show_ref() {
     let dir = TempDir::new().unwrap();
     git_init(dir.path());
-    let commit = git_empty_commit(dir.path(), "g2-ref-a");
+    let commit = git_empty_commit(dir.path(), "g002-refs-index-roundtrip-ref-a");
     let oid = Oid::from_hex(&commit).unwrap();
     let mut refs = FilesystemRefStore::open(git_git_dir(dir.path())).unwrap();
     refs.update("refs/heads/feature", &oid, None).unwrap();
@@ -187,7 +187,7 @@ fn arks_update_ref_readable_by_git_show_ref() {
 fn git_update_ref_readable_by_arks() {
     let dir = TempDir::new().unwrap();
     git_init(dir.path());
-    let commit = git_empty_commit(dir.path(), "g2-ref-b");
+    let commit = git_empty_commit(dir.path(), "g002-refs-index-roundtrip-ref-b");
     git_update_ref(dir.path(), "refs/heads/from-git", &commit);
     let refs = FilesystemRefStore::open(git_git_dir(dir.path())).unwrap();
     assert_eq!(
@@ -200,7 +200,7 @@ fn git_update_ref_readable_by_arks() {
 fn arks_head_symref_matches_git_rev_parse() {
     let dir = TempDir::new().unwrap();
     git_init(dir.path());
-    let commit = git_empty_commit(dir.path(), "g2-head");
+    let commit = git_empty_commit(dir.path(), "g002-refs-index-roundtrip-head");
     let oid = Oid::from_hex(&commit).unwrap();
     let mut refs = FilesystemRefStore::open(git_git_dir(dir.path())).unwrap();
     refs.update("refs/heads/main", &oid, None).unwrap();
@@ -217,7 +217,7 @@ fn arks_head_symref_matches_git_rev_parse() {
 fn arks_delete_ref_absent_from_git_show_ref() {
     let dir = TempDir::new().unwrap();
     git_init(dir.path());
-    let commit = git_empty_commit(dir.path(), "g2-del");
+    let commit = git_empty_commit(dir.path(), "g002-refs-index-roundtrip-del");
     let oid = Oid::from_hex(&commit).unwrap();
     let mut refs = FilesystemRefStore::open(git_git_dir(dir.path())).unwrap();
     refs.update("refs/heads/temp", &oid, None).unwrap();
@@ -244,7 +244,7 @@ fn l0_ref_lock_contention_fails() {
 fn repo_compose_discovers_and_resolves_head() {
     let dir = TempDir::new().unwrap();
     git_init(dir.path());
-    let commit = git_empty_commit(dir.path(), "g2-repo");
+    let commit = git_empty_commit(dir.path(), "g002-refs-index-roundtrip-repo");
     let oid = Oid::from_hex(&commit).unwrap();
     {
         let mut refs = FilesystemRefStore::open(git_git_dir(dir.path())).unwrap();

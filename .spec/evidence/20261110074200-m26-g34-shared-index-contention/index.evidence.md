@@ -4,7 +4,7 @@ title: M26 G34 shared-index contention Verified
 status: active
 created: 2026-11-10T07:42:00Z
 updated: 2026-11-10T07:42:00Z
-tags: [m26, g34, shared-index, clean-room, verified, fw-shared-idx]
+tags: [m26, g034-shared-index-contention, shared-index, clean-room, verified, fw-shared-idx]
 rel:
   depends_on: [adr:root/20261110074000, plan:root/20261110074000, sot:root/shared-index-nway-clean-room, sot:root/arks-lease, sot:root/interop-test-matrix, sot:root/product-verification-clean-room, evidence:root/20261110074100]
 files:
@@ -21,19 +21,19 @@ Product Verified for shared-index N-way under [[adr:root/20261110074000]]. Gate 
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g34` |
+| Compose | `verify/docker-compose.yml` service `g034-shared-index-contention` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Stock Git | git version 2.39.5 |
 | rustc | 1.99.1 |
 | Pre-commit tip | `eea8ebaa92b287e777657700bdefbdae4fec2bd1` |
-| Receipt | `verify/gates/g34/out/receipt.json` |
+| Receipt | `verify/gates/g034-shared-index-contention/out/receipt.json` |
 
 ## Results
 
 | Gate | Command | Outcome |
 |------|---------|---------|
-| **G34** | `docker compose … run --rm g34` | **PASS** — G34-C01..C03 (2-writer shared index; AlreadyHeld; live `index.lock` refuse) |
+| **G34** | `docker compose … run --rm g034-shared-index-contention` | **PASS** — G34-C01..C03 (2-writer shared index; AlreadyHeld; live `index.lock` refuse) |
 
 ## Non-claims
 

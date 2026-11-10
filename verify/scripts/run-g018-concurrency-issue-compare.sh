@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G18 — concurrency issue-repro compare differentiate/lease (M13 Cd-1..Cd-3 + M20 Cd-4..Cd-8).
-# SoT: .spec/sot/interop-test-matrix.sot.md (G18); matrix: verify/matrices/matrix-g18.md
+# SoT: .spec/sot/interop-test-matrix.sot.md (G18); matrix: verify/matrices/matrix-g018-concurrency-issue-compare.md
 # Done: every claimed ID has git pathology_pass + arks resolved_pass in Docker receipt.
 set -euo pipefail
 
@@ -33,8 +33,8 @@ echo "G18: gix-exit / default tree CELIR-free OK"
 echo "G18: build arks binary (release)"
 cargo build -p arks --release
 
-mkdir -p verify/gates/g18/out
-export ARKS_G18_RECEIPT_OUT="${ARKS_G18_RECEIPT_OUT:-/workspace/verify/gates/g18/out/receipt.json}"
+mkdir -p verify/gates/g018-concurrency-issue-compare/out
+export ARKS_G18_RECEIPT_OUT="${ARKS_G18_RECEIPT_OUT:-/workspace/verify/gates/g018-concurrency-issue-compare/out/receipt.json}"
 export ARKS_G18_VENUE="${ARKS_G18_VENUE:-clean-room}"
 export ARKS_G18_IMAGE_TAG="${ARKS_G18_IMAGE_TAG:-arks-verify-m1:0.1.0}"
 export ARKS_G18_REQUIRE_FULL=1
@@ -55,9 +55,9 @@ fi
 export ARKS_G18_IMAGE_DIGEST="${ARKS_G18_IMAGE_DIGEST:-}"
 export ARKS_G18_REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"
 
-echo "G18: issue-compare suite (verify/gates/g18; serial threads for receipt)"
+echo "G18: issue-compare suite (verify/gates/g018-concurrency-issue-compare; serial threads for receipt)"
 # --test-threads=1 so RECEIPT static accumulates all rows before zzz flush.
-cargo test --manifest-path verify/gates/g18/Cargo.toml -- --nocapture --test-threads=1 "$@"
+cargo test --manifest-path verify/gates/g018-concurrency-issue-compare/Cargo.toml -- --nocapture --test-threads=1 "$@"
 
 if [[ ! -f "$ARKS_G18_RECEIPT_OUT" ]]; then
   echo "G18: receipt missing: $ARKS_G18_RECEIPT_OUT" >&2

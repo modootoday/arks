@@ -4,7 +4,7 @@ title: G27 arks smart HTTP PR contention clean-room
 status: active
 created: 2026-11-09T21:04:27Z
 updated: 2026-11-09T21:15:01Z
-tags: [g27, clean-room, smart-http, server, branch, pr-sim, contention]
+tags: [g027-smart-http-pr-contention, clean-room, smart-http, server, branch, pr-sim, contention]
 rel:
   depends_on:
     - sot:root/arks-smart-http-pr-contention-clean-room
@@ -27,7 +27,7 @@ Claim **arks smart-HTTP server** as GitHub stand-in for thousands-class branch /
 
 | Disposition | Meaning |
 |-------------|---------|
-| **Verified / Claimed** | Docker `g27` PASS + evidence with actual N (≥2048 branches, ≥2048 PR refs, ≥8 agents) |
+| **Verified / Claimed** | Docker `g027-smart-http-pr-contention` PASS + evidence with actual N (≥2048 branches, ≥2048 PR refs, ≥8 agents) |
 | **FAIL** | Below minimum N, integrity failure, sole-runner conflict, torn tip |
 | **Out / Deferred** | GitHub Checks/merge-queue/protection, live forge throughput (G8+) |
 
@@ -51,7 +51,7 @@ arks smart-HTTP PR-contention ≠ GitHub PR UX / Checks / merge-queue / live for
 | Wave | Work | Exit |
 |------|------|------|
 | G27-0 | SoT + plan + matrix + interop/roadmap/residual rows | Docs |
-| G27-1 | Harness + tests + compose `g27` | Code ready |
+| G27-1 | Harness + tests + compose `g027-smart-http-pr-contention` | Code ready |
 | G27-exit | Docker PASS + evidence + residual/roadmap stamp | Claimed |
 
 ## Record
@@ -59,5 +59,5 @@ arks smart-HTTP PR-contention ≠ GitHub PR UX / Checks / merge-queue / live for
 | Wave | Status | Tip / evidence |
 |------|--------|----------------|
 | G27-0 | Done | SoT + matrix + interop/roadmap/residual |
-| G27-1 | Done | harness `run-g27.sh` + `verify/gates/g27` + gzip POST fix |
+| G27-1 | Done | harness `run-g027-smart-http-pr-contention.sh` + `verify/gates/g027-smart-http-pr-contention` + gzip POST fix |
 | G27-exit | **Claimed** | Docker PASS; [[evidence:root/20261109210427]]; N=2048/2048/8; parent tip `bbd1573` |

@@ -4,7 +4,7 @@ title: M24 G23 CELIR dual-path Git verified clean-room
 status: active
 created: 2026-11-09T20:55:34Z
 updated: 2026-11-10T00:57:44Z
-tags: [m24, g23, celir, dual-path, clean-room, verified, porcelain]
+tags: [m24, g023-celir-dual-path, celir, dual-path, clean-room, verified, porcelain]
 rel:
   depends_on: [sot:root/celir-dual-path-git-verified, adr:root/20261109204916, plan:root/20261109204933, sot:root/product-verification-clean-room, sot:root/celir-index-dual-path, sot:root/storage-celir-boundary, evidence:root/20261109204428]
 files:
@@ -17,8 +17,8 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G23** (`verify/scripts/run-g23.sh` / compose `g23`) |
-| Matrix | `verify/matrices/matrix-g23.md` |
+| Gate | **G23** (`verify/scripts/run-g023-celir-dual-path.sh` / compose `g023-celir-dual-path`) |
+| Matrix | `verify/matrices/matrix-g023-celir-dual-path.md` |
 | Claim | **CELIR dual-path Git verified** ([[adr:root/20261109204916]]) |
 | ObjectStore | filesystem `.git` only |
 | CELIR role | index sidecar only |

@@ -4,7 +4,7 @@ title: M8 clean-room G13 Wave Pb porcelain
 status: active
 created: 2026-11-08T14:30:00Z
 updated: 2026-11-08T14:30:00Z
-tags: [m8, clean-room, g13, g12, g7, g6, wave-pb, porcelain, verified, v0.3.1]
+tags: [m8, clean-room, g013-porcelain-wave-pb, g012-porcelain-wave-pa, g007-smart-http-client, g006-cli-wave-l, wave-pb, porcelain, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -30,7 +30,7 @@ Milestone **M8** (Porcelain parity wave B / Phase **Pb**) under program roadmap 
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g13` |
+| Compose | `verify/docker-compose.yml` service `g013-porcelain-wave-pb` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (local Id) | `sha256:a6c5cd96b72c88cc3b7519d00faeb7883dbd6ed2d6151e7f756a7223b748aa89` |
 | Base | `rust:1.99.1-bookworm@sha256:e6f2cff35d0f309acf8433b4f05878ed77092602c5065cc81801177da0bb3a9c` |
@@ -46,24 +46,24 @@ Milestone **M8** (Porcelain parity wave B / Phase **Pb**) under program roadmap 
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **gix-exit** | `cargo metadata` graph scan in `run-g13.sh` | **PASS** | zero `gix` / `gitoxide` edges |
-| **G13** | `docker compose -f verify/docker-compose.yml run --rm g13` | **PASS** | `verify/gates/g13` Wave Pb suite **10** |
-| **G12** regression | (embedded in `run-g13.sh`) | **PASS** | `verify/gates/g12` **7** |
-| **G7** regression | (embedded) | **PASS** | `verify/gates/g7` **3** |
-| **G6** regression | (embedded) | **PASS** | `verify/gates/g6` **6** |
-| **G3** regression | (embedded) | **PASS** | `verify/gates/g3` **3** |
-| **G4** regression | (embedded) | **PASS** | `verify/gates/g4` **3** |
-| **G5** regression | (embedded) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded) | **PASS** | `verify/gates/g2` **9** |
-| **G10** regression | (embedded) | **PASS** | `verify/gates/g10` **7** |
-| **G1** regression | (embedded) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
+| **gix-exit** | `cargo metadata` graph scan in `run-g013-porcelain-wave-pb.sh` | **PASS** | zero `gix` / `gitoxide` edges |
+| **G13** | `docker compose -f verify/docker-compose.yml run --rm g013-porcelain-wave-pb` | **PASS** | `verify/gates/g013-porcelain-wave-pb` Wave Pb suite **10** |
+| **G12** regression | (embedded in `run-g013-porcelain-wave-pb.sh`) | **PASS** | `verify/gates/g012-porcelain-wave-pa` **7** |
+| **G7** regression | (embedded) | **PASS** | `verify/gates/g007-smart-http-client` **3** |
+| **G6** regression | (embedded) | **PASS** | `verify/gates/g006-cli-wave-l` **6** |
+| **G3** regression | (embedded) | **PASS** | `verify/gates/g003-index-commit-roundtrip` **3** |
+| **G4** regression | (embedded) | **PASS** | `verify/gates/g004-pack-idx-roundtrip` **3** |
+| **G5** regression | (embedded) | **PASS** | `verify/gates/g005-protocol-offline-fixtures` **4** + `arks-protocol` |
+| **G2** regression | (embedded) | **PASS** | `verify/gates/g002-refs-index-roundtrip` **9** |
+| **G10** regression | (embedded) | **PASS** | `verify/gates/g010-store-facade` **7** |
+| **G1** regression | (embedded) | **PASS** | `arks-object` `g001-loose-object-interop_oracle` **5** + `verify/gates/g001-loose-object-interop` **6** |
 | Unit Specfold | `spec check` | **PASS** | 0 errors / 0 warnings |
 
 Combinatorics covered (automated): M8-C01…C15 per `verify/matrices/matrix-m8.md`. Residual Open: M8-C17 Pc deferrals (`range-diff`/`notes`/interactive rebase/annotated tags); M8-C18 M9 closure; M8-C19 out-of-scope.
 
 ## Bug simulation (fixed / avoided)
 
-1. `verify/scripts/run-g13.sh` authored LF-only up front (same CRLF `set: pipefail` class as G12/G7). See `verify/gates/g13/BUGSIM.md`.
+1. `verify/scripts/run-g013-porcelain-wave-pb.sh` authored LF-only up front (same CRLF `set: pipefail` class as G12/G7). See `verify/gates/g013-porcelain-wave-pb/BUGSIM.md`.
 2. Host advisory `arks_bin()` continues to honor `CARGO_TARGET_DIR` in clean-room and prefer workspace `target/debug/arks(.exe)` on host (avoids Win32 error 193 from Linux ELF under `target-cleanroom`).
 
 ## Non-claims
@@ -80,5 +80,5 @@ Combinatorics covered (automated): M8-C01…C15 per `verify/matrices/matrix-m8.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g13
+docker compose -f verify/docker-compose.yml run --rm g013-porcelain-wave-pb
 ```

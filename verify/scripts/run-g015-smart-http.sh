@@ -60,17 +60,17 @@ cargo build -p arks
 echo "G15: arks-server unit tests"
 cargo test -p arks-server "$@"
 
-echo "G15: git-server suite vs stock git (verify/gates/g15)"
-cargo test --manifest-path verify/gates/g15/Cargo.toml "$@"
+echo "G15: git-server suite vs stock git (verify/gates/g015-smart-http)"
+cargo test --manifest-path verify/gates/g015-smart-http/Cargo.toml "$@"
 
 echo "G15: G14 CLI-parity regression"
-cargo test --manifest-path verify/gates/g14/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g014-cli-parity-production/Cargo.toml "$@"
 
 echo "G15: G7 remote-client regression"
-cargo test --manifest-path verify/gates/g7/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g007-smart-http-client/Cargo.toml "$@"
 
 echo "G15: G5 protocol regression"
-cargo test --manifest-path verify/gates/g5/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g005-protocol-offline-fixtures/Cargo.toml "$@"
 cargo test -p arks-protocol "$@"
 
 echo "G15: PASS"

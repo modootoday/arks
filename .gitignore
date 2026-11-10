@@ -33,3 +33,7 @@ Thumbs.db
 *~
 .idea/
 .vscode/
+
+# Gate-local cargo spill (clean-room uses compose volume)
+verify/gates/*/target/
+

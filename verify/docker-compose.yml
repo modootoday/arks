@@ -1,4 +1,4 @@
-﻿# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV).
+# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV).
 # Engine: Linux (Docker Desktop desktop-linux on Windows). Fresh `compose run` per gate.
 name: arks-verify-m1
 
@@ -19,11 +19,11 @@ x-cleanroom: &cleanroom
 
 volumes:
   arks-cargo-target:
-  arks-cargo-target-g33:
-  g41-git-data:
+  arks-cargo-target-g033:
+  g041-git-data:
 
 services:
-  # Build once; g0–g7/g10–g18 reuse the same tagged image.
+  # Build once; g000-workspace-lib-tests–g007-smart-http-client/g010-store-facade–g018-concurrency-issue-compare reuse the same tagged image.
   toolchain:
     <<: *cleanroom
     build:
@@ -31,56 +31,56 @@ services:
       dockerfile: verify/Dockerfile
     command: ["true"]
 
-  g0:
+  g000-workspace-lib-tests:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g0.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g000-workspace-lib-tests.sh"]
 
-  g1:
+  g001-loose-object-interop:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g1.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g001-loose-object-interop.sh"]
 
-  g2:
+  g002-refs-index-roundtrip:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g2.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g002-refs-index-roundtrip.sh"]
 
-  g3:
+  g003-index-commit-roundtrip:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g3.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g003-index-commit-roundtrip.sh"]
 
-  g4:
+  g004-pack-idx-roundtrip:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g4.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g004-pack-idx-roundtrip.sh"]
 
-  g5:
+  g005-protocol-offline-fixtures:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g5.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g005-protocol-offline-fixtures.sh"]
 
-  g6:
+  g006-cli-wave-l:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g6.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g006-cli-wave-l.sh"]
 
-  g7:
+  g007-smart-http-client:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g7.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g007-smart-http-client.sh"]
 
   # G8 live forge smoke — default-on when token+URL present; SKIP when absent (ADR 20261110220000).
-  g8:
+  g008-live-forge-smoke:
     <<: *cleanroom
     depends_on:
       - toolchain
@@ -92,10 +92,10 @@ services:
       ARKS_G8_TOKEN: "${ARKS_G8_TOKEN:-}"
       GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
       ARKS_G8_REPO_URL: "${ARKS_G8_REPO_URL:-}"
-    command: ["/bin/bash", "verify/scripts/run-g8.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g008-live-forge-smoke.sh"]
 
   # G8+ live forge scale — measure when secrets present; SKIP no-measurement when absent (ADR 20261110221000).
-  g8-live-scale:
+  g008-live-scale:
     <<: *cleanroom
     depends_on:
       - toolchain
@@ -109,7 +109,7 @@ services:
       ARKS_G8_REPO_URL: "${ARKS_G8_REPO_URL:-}"
       ARKS_G8_SCALE_MEASURE: "${ARKS_G8_SCALE_MEASURE:-}"
       ARKS_G8_SCALE_SAMPLES: "${ARKS_G8_SCALE_SAMPLES:-5}"
-    command: ["/bin/bash", "verify/scripts/run-g8-live-scale.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g008-live-scale.sh"]
 
   # FS-007 / WIN-003 host advisory — detect-only; ≠ Claimed full cloud-sync.
   fs007-host-advisory:
@@ -136,7 +136,7 @@ services:
     command: ["/bin/bash", "verify/scripts/run-fs014-lsm-advisory.sh"]
 
   # G8 local-forge wire substitute — loopback smart-HTTP peer; ≠ GitHub live PASS.
-  g8-local-forge:
+  g008-local-forge:
     <<: *cleanroom
     depends_on:
       - toolchain
@@ -145,96 +145,96 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G8_LOCAL_FORGE_SAMPLES: "${ARKS_G8_LOCAL_FORGE_SAMPLES:-3}"
-    command: ["/bin/bash", "verify/scripts/run-g8-local-forge.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g008-local-forge.sh"]
 
-  g10:
+  g010-store-facade:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g10.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g010-store-facade.sh"]
 
-  g12:
+  g012-porcelain-wave-pa:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g12.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g012-porcelain-wave-pa.sh"]
 
-  g13:
+  g013-porcelain-wave-pb:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g13.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g013-porcelain-wave-pb.sh"]
 
-  g14:
+  g014-cli-parity-production:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g14.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g014-cli-parity-production.sh"]
 
-  g11:
+  g011-lease-product:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g11.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g011-lease-product.sh"]
 
   # M23 L3 HighConcurrency claimed-shape stress (G11 expansion).
   # Legacy alias: g11l3 / run-g11l3.sh (pre-Migration Appendix A).
-  g11-l3:
+  g011-high-concurrency:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g11-l3.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g011-high-concurrency.sh"]
 
-  g15:
+  g015-smart-http:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g15.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g015-smart-http.sh"]
 
   # Additive journey-compare (func + timing). Not a production unlock.
-  g16:
+  g016-journey-compare:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g16.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g016-journey-compare.sh"]
 
   # M12 Cm concurrency issue-repro compare (git pathology vs arks resolved).
-  g17:
+  g017-concurrency-issue-compare:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g17.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g017-concurrency-issue-compare.sh"]
 
   # M13 Cd concurrency issue-repro compare differentiate/lease (git pathology vs arks resolved).
-  g18:
+  g018-concurrency-issue-compare:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g18.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g018-concurrency-issue-compare.sh"]
 
   # M14 Pf comparative ≥20% (arks_median ≤ 0.8× git_median) on G19 allow-list.
-  g19:
+  g019-comparative-performance:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g19.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g019-comparative-performance.sh"]
 
   # M15 Fs full CLI symmetric parity (G20).
-  g20:
+  g020-cli-symmetric-parity:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g20.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g020-cli-symmetric-parity.sh"]
 
   # M16 Sy complete CLI flag symmetry (G21).
-  g21:
+  g021-cli-flag-symmetry:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g21.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g021-cli-flag-symmetry.sh"]
 
   # M24 G22 CELIR index contention (requires discrete-circuit sibling mount).
-  g22:
+  g022-celir-index-contention:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -249,10 +249,10 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G22_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g22.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g022-celir-index-contention.sh"]
 
   # M24 successor G23 — CELIR dual-path Git verified (FS sole ObjectStore + index sidecar).
-  g23:
+  g023-celir-dual-path:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -266,10 +266,10 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G23_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g23.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g023-celir-dual-path.sh"]
 
   # M24 successor G24 — L3 HighConcurrency + CELIR index joint.
-  g24:
+  g024-l3-celir-joint:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -283,10 +283,10 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G24_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g24.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g024-l3-celir-joint.sh"]
 
   # M24 successor G25 — CELIR index scale (N=256 required; 384/512 stretch).
-  g25:
+  g025-celir-index-scale:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -301,11 +301,11 @@ services:
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G25_ROOT: /workspaces/gir
       ARKS_G25_STRETCH: "1"
-    command: ["/bin/bash", "verify/scripts/run-g25.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g025-celir-index-scale.sh"]
 
   # G26 — local branch + synthetic PR-env scale (stream B; no CELIR feature; sole-runner).
   # Mount discrete-circuit so Cargo can parse arks-store optional path-deps (feature stays OFF).
-  g26:
+  g026-local-branch-pr-sim:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -319,11 +319,11 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G26_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g26.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g026-local-branch-pr-sim.sh"]
 
   # G27 — arks smart HTTP as GitHub stand-in: thousands-class seed + N concurrent agents.
   # Honesty: ≠ GitHub UX/Checks/merge-queue; ≠ live forge throughput. Sole-runner vs heavy gates.
-  g27:
+  g027-smart-http-pr-contention:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -340,12 +340,12 @@ services:
       ARKS_G27_N_BRANCHES: "2048"
       ARKS_G27_N_PR: "2048"
       ARKS_G27_N_AGENTS: "8"
-    command: ["/bin/bash", "verify/scripts/run-g27.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g027-smart-http-pr-contention.sh"]
 
   # G28 — live private GitHub normal-user journeys with arks (G16 checklist).
   # Opt-in network + secrets; default Refuse-closed. ≠ scale/contention; ≠ G16 timing.
   # Mount discrete-circuit for celir-data path-dep (same as G22–G27); network left default (live forge).
-  g28:
+  g028-live-private-arks:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -364,11 +364,11 @@ services:
       ARKS_G28_REPO_URL: "${ARKS_G28_REPO_URL:-}"
       ARKS_G28_REPO_URL_PUBLIC: "${ARKS_G28_REPO_URL_PUBLIC:-}"
       ARKS_G28_SUBMODULE_URL: "${ARKS_G28_SUBMODULE_URL:-}"
-    command: ["/bin/bash", "verify/scripts/run-g28.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g028-live-private-arks.sh"]
 
   # G28 offline clone closure — J-CLONE-LOCAL-01 + J-CLONE-PATH-01 (G16-aligned; no live forge).
-  # Same mount layout as g28 so optional celir-data path-deps resolve under /workspaces.
-  g28-offline-clones:
+  # Same mount layout as g028-live-private-arks so optional celir-data path-deps resolve under /workspaces.
+  g028-offline-clones:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
     depends_on:
@@ -382,98 +382,98 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G28_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g28-offline-clones.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g028-offline-clones.sh"]
 
   # M25 server transport expansion (sole-runner; serialize with sibling Docker agents).
-  g29:
+  g029-server-dumb-http:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g29.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g029-server-dumb-http.sh"]
 
-  g30:
+  g030-server-ssh-command:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g30.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g030-server-ssh-command.sh"]
 
-  g31:
+  g031-server-protocol-v2:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g31.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g031-server-protocol-v2.sh"]
 
-  g32:
+  g032-git-daemon-wire:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g32.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g032-git-daemon-wire.sh"]
 
   # FW-SHARED-IDX / M26 shared-index N-way
-  g34:
+  g034-shared-index-contention:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g34.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g034-shared-index-contention.sh"]
 
   # FW-G9 shallow --depth subset
-  g35:
+  g035-shallow-depth:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g35.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g035-shallow-depth.sh"]
 
   # FW-CRED-ASKPASS — client credential-helper / askpass (sole-runner).
-  g33:
+  g033-cred-askpass:
     <<: *cleanroom
     depends_on:
       - toolchain
     environment:
       CARGO_BUILD_JOBS: "1"
-      CARGO_TARGET_DIR: /cargo-target-g33
+      CARGO_TARGET_DIR: /cargo-target-g033-cred-askpass
       RUSTUP_TOOLCHAIN: "1.99.1"
     volumes:
       - ..:/workspace:rw
       - ../../discrete-circuit:/discrete-circuit:ro
-      - arks-cargo-target-g33:/cargo-target-g33
-    command: ["/bin/bash", "verify/scripts/run-g33.sh"]
+      - arks-cargo-target-g033:/cargo-target-g033-cred-askpass
+    command: ["/bin/bash", "verify/scripts/run-g033-cred-askpass.sh"]
 
   # FW-AUTH-PROXY optional HTTP Basic.
-  g36:
+  g036-http-basic-auth:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g36.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g036-http-basic-auth.sh"]
 
-  g37:
+  g037-gpgsig-ssh:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g37.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g037-gpgsig-ssh.sh"]
 
   # FW-GPGSIG OpenPGP / X.509 / tag -s (R4 / S2).
-  g38:
+  g038-gpgsig-openpgp:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g38.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g038-gpgsig-openpgp.sh"]
 
   # R3 blob:none clean-room twin (S6).
-  g39:
+  g039-partial-clone-filter:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g39.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g039-partial-clone-filter.sh"]
 
   # S3 dumb HTTP push deletes clean-room twin (S6).
-  g40:
+  g040-dumb-http-push-deletes:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g40.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g040-dumb-http-push-deletes.sh"]
 
   # O4 Apache mod_dav dumb HTTP interop — seed bare repo, then stock httpd DAV.
-  g41-seed:
+  g041-seed:
     <<: *cleanroom
     depends_on:
       - toolchain
@@ -481,22 +481,22 @@ services:
       - ..:/workspace:rw
       - ../../discrete-circuit:/discrete-circuit:ro
       - arks-cargo-target:/cargo-target
-      - g41-git-data:/git-data
+      - g041-git-data:/git-data
     environment:
       CARGO_BUILD_JOBS: "1"
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G41_DOCROOT: /git-data
-    command: ["/bin/bash", "verify/gates/g41/seed.sh"]
+    command: ["/bin/bash", "verify/gates/g041-apache-dav-interop/seed.sh"]
 
-  g41-dav:
+  g041-dav:
     image: httpd:2.4-bookworm
     depends_on:
-      g41-seed:
+      g041-seed:
         condition: service_completed_successfully
     volumes:
-      - g41-git-data:/usr/local/apache2/htdocs
-      - ./gates/g41/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+      - g041-git-data:/usr/local/apache2/htdocs
+      - ./gates/g041-apache-dav-interop/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
     # Ensure DavLockDB parent exists before httpd starts.
     entrypoint:
       [
@@ -505,23 +505,45 @@ services:
         "mkdir -p /usr/local/apache2/var && chown daemon:daemon /usr/local/apache2/var /usr/local/apache2/htdocs/repo.git 2>/dev/null; exec httpd-foreground",
       ]
 
-  g41:
+  g041-apache-dav-interop:
     <<: *cleanroom
     depends_on:
       toolchain:
         condition: service_started
-      g41-dav:
+      g041-dav:
         condition: service_started
     environment:
       CARGO_BUILD_JOBS: "1"
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
-      ARKS_G41_DAV_URL: http://g41-dav/repo.git/
-    command: ["/bin/bash", "verify/scripts/run-g41.sh"]
+      ARKS_G41_DAV_URL: http://g041-dav/repo.git/
+    command: ["/bin/bash", "verify/scripts/run-g041-apache-dav-interop.sh"]
 
   # Clean-room DoD pillars (umbrella SoT: verify-cleanroom-symmetry-matrix).
   # Default = smoke honesty; Claimed needs ARKS_DOD_STRICT=1 + evidence (no invent PASS).
   # Usage: docker compose -f verify/docker-compose.yml run --rm dod-cli-matrix
+
+  # Ladder suites (SoT 0.6.0): orchestrate G-gates; not product Claimed by themselves.
+  l008-product-completion-e2e:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+    command: ["/bin/bash", "verify/scripts/run-l008-product-completion-e2e.sh"]
+
+  s006-symmetry-e2e:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+    command: ["/bin/bash", "verify/scripts/run-s006-symmetry-e2e.sh"]
+
   dod-cli-matrix:
     <<: *cleanroom
     depends_on:

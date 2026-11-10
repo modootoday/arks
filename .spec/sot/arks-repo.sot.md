@@ -49,6 +49,6 @@ Version **0.2.0**. Unit SoT for Ring 4 repository **discovery/layout** and **com
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-repo` when the crate is a workspace member.
-2. Clean-room **G0** includes repo unit tests; **G2** exercises refs through a discovered `GIT_DIR` (`verify/matrices/matrix-m3.md`); carrying receipt: [[evidence:root/20261108191033]].
+2. Clean-room **G0** includes repo unit tests; **G2** exercises refs through a discovered `GIT_DIR` (`verify/matrices/matrix-m003-clean-room-refs-index.md`); carrying receipt: [[evidence:root/20261108191033]].
 3. `spec check` clean for this SoT.
 4. Workspace `cargo metadata` shows no `gix` edge on `arks-repo`; edges only inward to store/refs/object/oid as claimed.

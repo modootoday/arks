@@ -4,10 +4,10 @@ title: CELIR index scale clean-room
 status: active
 created: 2026-11-09T20:49:15Z
 updated: 2026-11-10T05:49:00Z
-tags: [celir, indexing-service, scale, g25, m24, clean-room, contention, oom]
+tags: [celir, indexing-service, scale, g025-celir-index-scale, m24, clean-room, contention, oom]
 verify: clean-room
 rel:
-  governs: [verify/gates/g25, verify/scripts/run-g25.sh, verify/matrices/matrix-g25.md]
+  governs: [verify/gates/g025-celir-index-scale, verify/scripts/run-g025-celir-index-scale.sh, verify/matrices/matrix-g025-celir-index-scale.md]
   depends_on:
     - sot:root/celir-index-contention-clean-room
     - sot:root/celir-index-dual-path
@@ -26,7 +26,7 @@ Version **0.1.0**. Normative Docker clean-room gate **G25** extending G22 N-scal
 
 | In | Out |
 |----|-----|
-| Gate **G25** (`verify/scripts/run-g25.sh` / compose `g25`) | Fake PASS after OOM / exit 137 |
+| Gate **G25** (`verify/scripts/run-g025-celir-index-scale.sh` / compose `g025-celir-index-scale`) | Fake PASS after OOM / exit 137 |
 | Required tier **N=256** concurrent readonly open/query after publish | Redefining G22 historical N=32/128 Verified |
 | Optional stretch **N=384** and **N=512** under sole-runner OOM policy | Concurrent heavy G17/G19/G22/G23/G24 beside this gate |
 | Same integrity / ObjectStore Refuse / stock-readable assertions as G22 | CELIR as ObjectStore |
@@ -59,6 +59,6 @@ G22 stopped at 128. Multi-agent realism pushes toward higher hundreds; sole-runn
 
 ## Verification
 
-1. `docker compose -f verify/docker-compose.yml run --rm g25` PASS (N=256 required).
+1. `docker compose -f verify/docker-compose.yml run --rm g025-celir-index-scale` PASS (N=256 required).
 2. Evidence receipt lists attempted N tiers and outcomes.
 3. `spec check` clean for this SoT and [[plan:root/20261109204934]].

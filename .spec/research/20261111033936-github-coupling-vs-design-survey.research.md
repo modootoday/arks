@@ -4,7 +4,7 @@ title: GitHub coupling vs design survey
 status: active
 created: 2026-11-10T18:39:36Z
 updated: 2026-11-10T18:39:36Z
-tags: [github, forge, g8, oidc, coupling, survey, honesty]
+tags: [github, forge, g008-live-forge-smoke, oidc, coupling, survey, honesty]
 verify: manual
 rel:
   depends_on:
@@ -29,7 +29,7 @@ Does in-tree arks ship GitHub-related features that go **beyond** product/design
 ## Method
 
 1. Read SoT / public honesty: product-intent Non-goals §7; public-surface §31 / L4–L5 ops; residual FW-FORGE-B / G8 / G28; remote-host (A) wire vs (B) product APIs; `docs/limits.md`, `docs/git-vs-arks.md`.
-2. Search crates + verify + `.github/` for `arks forge`, `gh` wrappers, G8/`g8-live`, OIDC Environments, Actions workflows, `api.github.com`, Octokit/octocrab, Checks/PR/Issues UX, hardcoded `github.com`.
+2. Search crates + verify + `.github/` for `arks forge`, `gh` wrappers, G8/`g008-live-forge-smoke-live`, OIDC Environments, Actions workflows, `api.github.com`, Octokit/octocrab, Checks/PR/Issues UX, hardcoded `github.com`.
 3. Compare each hit to design intent; refuse inventing Claimed.
 
 ## Design baseline (SoT)
@@ -40,7 +40,7 @@ Does in-tree arks ship GitHub-related features that go **beyond** product/design
 | remote-host **(B)** | GitHub REST/GraphQL PRs/Checks/Apps/Issues — **out of** CLI-parity / production-server; FW-FORGE-B **Impossible** |
 | product-intent Non-goal §7 | Forge product APIs / GitHub App **as** arks server — out |
 | `arks forge` | **Claimed-closest** thin wrap → host `gh`; full forge UX **Non-goal** |
-| G8 / `g8-live` | Secrets-gated remasure **harness**; dry-run ≠ live latency PASS |
+| G8 / `g008-live-forge-smoke-live` | Secrets-gated remasure **harness**; dry-run ≠ live latency PASS |
 | G28 | Live-private **functional** journeys Claimed; ≠ throughput / Checks / merge-queue |
 | G26/G27 | Local / arks smart-HTTP **synthetic PR** sim — not GitHub UX |
 | L4 OIDC release | Environments `crates`/`npm`/`pypi`/`rubygems` + `release.yml` — **ops** Done ≠ registry PASS |
@@ -54,11 +54,11 @@ Does in-tree arks ship GitHub-related features that go **beyond** product/design
 | `arks forge recipe` | same | Prints static operator recipes (`gh pr` / Checks / Environments) — no network | G5 Claimed-closest recipe deepen; still not forge product | Text-only recipes | **In-design (thin-wrap)** |
 | Embedded GitHub REST/GraphQL client | crates `Cargo.toml` / `src` | Would be scope (B) product API | Out of scope / Impossible as product | **Absent** (no octocrab/Octokit) | **In-design (absent = refuse)** |
 | Forge OAuth browser UX | credential / AUTH paths | In-arks OAuth App / device-flow UI | Refuse / Impossible; helper MAY speak OAuth externally | Not implemented; docs point to GCM / helpers | **In-design (refuse)** |
-| G8 live smoke | `verify/scripts/run-g8.sh`, compose `g8` | Opt-in clone/fetch/push smoke vs throwaway HTTPS peer when secrets present; SKIP else | FW-G8-DEFAULT harness; GitHub-class verify peer (A) | Secrets-gated; force-off `ARKS_G8_LIVE=0` | **In-design (harness)** |
-| G8-live-scale | `verify/scripts/run-g8-live-scale.sh`, `matrix-g8-live-scale.md` | Operator-local latency samples when secrets; no invented medians | FW-GH-LIVE-SCALE harness ready ≠ product SLO | Environment `g8-live`; tip secrets `total_count=0` Blocked for live PASS | **In-design (harness)** |
-| `g8-forge-scale.yml` | `.github/workflows/g8-forge-scale.yml` | workflow_dispatch dry-run readiness + optional live Environment job | L5 ops Done; dry-run ≠ live PASS | Matches docs/forge-scale.md honesty | **In-design (ops)** |
-| G8 local-forge | `verify/scripts/run-g8-local-forge.sh` | Loopback `arks serve-http` wire when GitHub secrets absent | Documented ≠ GitHub live PASS | Receipt `github_live_pass=false` | **In-design (harness)** |
-| G28 live-private journeys | `verify/scripts/run-g28.sh`, G28 SoT/evidence | Opt-in functional journeys on private GitHub peer; harness uses `api.github.com` for peer admin bits | G28 Claimed functional; ≠ Checks/merge-queue/scale | Harness-only API; not shipped in `arks` binary | **In-design (harness)** |
+| G8 live smoke | `verify/scripts/run-g008-live-forge-smoke.sh`, compose `g008-live-forge-smoke` | Opt-in clone/fetch/push smoke vs throwaway HTTPS peer when secrets present; SKIP else | FW-G8-DEFAULT harness; GitHub-class verify peer (A) | Secrets-gated; force-off `ARKS_G8_LIVE=0` | **In-design (harness)** |
+| G8-live-scale | `verify/scripts/run-g008-live-scale.sh`, `matrix-g008-live-scale.md` | Operator-local latency samples when secrets; no invented medians | FW-GH-LIVE-SCALE harness ready ≠ product SLO | Environment `g008-live-forge-smoke-live`; tip secrets `total_count=0` Blocked for live PASS | **In-design (harness)** |
+| `g008-live-forge-smoke-forge-scale.yml` | `.github/workflows/g008-live-forge-smoke-forge-scale.yml` | workflow_dispatch dry-run readiness + optional live Environment job | L5 ops Done; dry-run ≠ live PASS | Matches docs/forge-scale.md honesty | **In-design (ops)** |
+| G8 local-forge | `verify/scripts/run-g008-local-forge.sh` | Loopback `arks serve-http` wire when GitHub secrets absent | Documented ≠ GitHub live PASS | Receipt `github_live_pass=false` | **In-design (harness)** |
+| G28 live-private journeys | `verify/scripts/run-g028-live-private-arks.sh`, G28 SoT/evidence | Opt-in functional journeys on private GitHub peer; harness uses `api.github.com` for peer admin bits | G28 Claimed functional; ≠ Checks/merge-queue/scale | Harness-only API; not shipped in `arks` binary | **In-design (harness)** |
 | G26 / G27 PR-sim | verify gates G26/G27 | Synthetic branch/PR-head contention locally / via arks smart HTTP | Explicitly **not** GitHub PR/Checks UX | Local/arks server only | **In-design (harness)** |
 | OIDC release Environments | `.github/workflows/release.yml`, `docs/release.md` | Tag dist + draft GitHub Release; per-registry OIDC publish jobs | L4 ops Done; dry-run ≠ crates.io PASS; L9 owner policy | Environments `crates`/`npm`/`pypi`/`rubygems` | **In-design (ops)** |
 | Host CI | `.github/workflows/ci.yml` | fmt/clippy/test matrix | Host CI advisory ≠ Verified | Standard Actions CI | **CI-only (not product)** |
@@ -74,7 +74,7 @@ Does in-tree arks ship GitHub-related features that go **beyond** product/design
 2. Product binary GitHub surface is only **`arks forge` → host `gh`** (plus static recipes) — explicitly allowed Claimed-closest, not scope-(B) product.
 3. All live GitHub REST (`api.github.com`) usage found is in **verify harnesses** (notably G28), not in the `arks` crate dependency graph.
 4. Actions/OIDC/Environments/Pages/CODEOWNERS are **ops or CI**, matching L4/L5 / public-flip SoT — not end-user forge product.
-5. Residual **FW-FORGE-B** (full Checks/PR/Issues UX) remains **Impossible / Non-goal**; live G8 latency remains **Blocked** on `g8-live` secrets=0.
+5. Residual **FW-FORGE-B** (full Checks/PR/Issues UX) remains **Impossible / Non-goal**; live G8 latency remains **Blocked** on `g008-live-forge-smoke-live` secrets=0.
 
 ## Non-findings (explicit)
 

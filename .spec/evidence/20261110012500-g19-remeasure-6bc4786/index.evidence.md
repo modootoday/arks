@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip 6bc4786 (PF5 partial 7/8; CLONE-LOCAL ag
 status: active
 created: 2026-11-10T01:25:00Z
 updated: 2026-11-10T10:03:17Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, clone-local]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, evidence:root/20261110011500]
   evidence: []
@@ -17,7 +17,7 @@ files:
 
 ## Context
 
-Sole Docker `g19` after A–E land + hooks BrokenPipe / G14 docs-path relocate (`6bc4786`). **M17 ≤0.8× 19/19** and aggressive terminal **19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-LOCAL-01** remains `aggressive_na` at ratio **0.7053** — A ≤0.5× not met (do not market).
+Sole Docker `g019-comparative-performance` after A–E land + hooks BrokenPipe / G14 docs-path relocate (`6bc4786`). **M17 ≤0.8× 19/19** and aggressive terminal **19/19** with honest **Claimed(partial 7/8)**. **J-CLONE-LOCAL-01** remains `aggressive_na` at ratio **0.7053** — A ≤0.5× not met (do not market).
 
 Prior pin [[evidence:root/20261110011500]] (`3af76a7`, ratio 0.604) remains valid history. Follow-up tip `f6ac3e2` (clippy + pack RwLock + lazy credential discover) needs its own G19 pin.
 
@@ -33,4 +33,4 @@ Prior pin [[evidence:root/20261110011500]] (`3af76a7`, ratio 0.604) remains vali
 
 ## Related Docker gates
 
-- **G15 PASS** on tree including hooks BrokenPipe + G14 path fix (`verify/gates/g15/out/docker-g15-6bc4786.log`).
+- **G15 PASS** on tree including hooks BrokenPipe + G14 path fix (`verify/gates/g015-smart-http/out/docker-g015-smart-http-6bc4786.log`).

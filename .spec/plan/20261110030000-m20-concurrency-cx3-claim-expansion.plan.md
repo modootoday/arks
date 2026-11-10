@@ -4,7 +4,7 @@ title: M20 Concurrency Cx-3 claim expansion
 status: active
 created: 2026-11-10T03:00:00Z
 updated: 2026-11-10T03:15:00Z
-tags: [milestone, m20, phase-cx, concurrency, mitigate-with-compat, g17, claim-expansion, issue-resolution, done]
+tags: [milestone, m20, phase-cx, concurrency, mitigate-with-compat, g017-concurrency-issue-compare, claim-expansion, issue-resolution, done]
 rel:
   depends_on:
     - sot:root/program-roadmap
@@ -70,7 +70,7 @@ All twelve IDs **PASS**. Aggregate **47**/47 dual PASS. Evidence: [[evidence:roo
 
 1. SoT/plan/matrix/roadmap M20; catalog disposition recount; `spec check`.
 2. Engine/CLI mitigations for Cx-3 oracles only.
-3. Extend `verify/gates/g17` + `run-g17.sh` + `verify/matrices/matrix-g17.md`.
+3. Extend `verify/gates/g017-concurrency-issue-compare` + `run-g017-concurrency-issue-compare.sh` + `verify/matrices/matrix-g017-concurrency-issue-compare.md`.
 4. Docker G17 receipt + residual honesty.
 
 ## Out of scope

@@ -4,7 +4,7 @@
 //! *label* in product SoT; this harness proves any smart-HTTP peer.
 //!
 //! Primary: https://git-scm.com/docs/gitprotocol-http
-//! Cite: verify/matrices/matrix-m6.md, .spec/sot/arks-remote.sot.md
+//! Cite: verify/matrices/matrix-m006-clean-room-smart-http-client.md, .spec/sot/arks-remote.sot.md
 
 use std::fs;
 use std::io::{Read, Write};

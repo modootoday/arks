@@ -4,7 +4,7 @@ title: M20 Concurrency Cd-5 claim expansion
 status: archived
 created: 2026-11-10T10:00:00Z
 updated: 2026-11-10T10:30:00Z
-tags: [milestone, m20, phase-cd, concurrency, differentiate-beyond-git, g18, claim-expansion, done]
+tags: [milestone, m20, phase-cd, concurrency, differentiate-beyond-git, g018-concurrency-issue-compare, claim-expansion, done]
 rel:
   depends_on:
     - sot:root/program-roadmap

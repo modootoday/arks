@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g40-cleanroom"
+name = "arks-g040-dumb-http-push-deletes-cleanroom"
 description = "G40 clean-room dumb HTTP push deletes symmetry (S3 / S6)"
 version = "0.0.0"
 edition = "2024"

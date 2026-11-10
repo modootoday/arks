@@ -4,7 +4,7 @@ title: CLI flag-parity complete symmetry
 status: active
 created: 2026-11-09T04:39:10Z
 updated: 2026-11-11T00:10:00Z
-tags: [m16, cli, flag-parity, complete-symmetry, alias, wave-sy, g21, no-refuse, credential, g33, m25]
+tags: [m16, cli, flag-parity, complete-symmetry, alias, wave-sy, g021-cli-flag-symmetry, no-refuse, credential, g033-cred-askpass, m25]
 verify: manual
 rel:
   depends_on:
@@ -171,7 +171,7 @@ M15 closed command inventory while leaving per-flag refuse gaps that break true 
 
 ## Verification
 
-1. Clean-room **G21** (`verify/matrices/matrix-g21.md`) per Sy wave.
+1. Clean-room **G21** (`verify/matrices/matrix-g021-cli-flag-symmetry.md`) per Sy wave.
 2. G14 + G20 regression green.
 3. `spec check` clean.
 4. Host `cargo test` advisory only.

@@ -4,7 +4,7 @@ title: M16 Sy-5 G21 cover-letter and am --3way
 status: active
 created: 2026-11-09T06:30:00Z
 updated: 2026-11-10T00:57:42Z
-tags: [g21, m16, sy-5, clean-room, verified, complete-symmetry, cover-letter, am]
+tags: [g021-cli-flag-symmetry, m16, sy-5, clean-room, verified, complete-symmetry, cover-letter, am]
 rel:
   depends_on: [plan:root/20261109043910, sot:root/cli-flag-parity-complete, sot:root/interop-test-matrix, evidence:root/20261109061600]
   evidence: []
@@ -29,7 +29,7 @@ Closes remaining Sy-5 SoT claimed rows under [[plan:root/20261109043910]] /
 
 | Field | Value |
 |-------|-------|
-| Compose | `g21` |
+| Compose | `g021-cli-flag-symmetry` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Land tip | `f52130b` (pin follow-up) |
@@ -37,6 +37,6 @@ Closes remaining Sy-5 SoT claimed rows under [[plan:root/20261109043910]] /
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g21
+docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry
 spec check
 ```

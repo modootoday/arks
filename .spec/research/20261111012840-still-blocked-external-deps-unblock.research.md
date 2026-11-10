@@ -9,7 +9,7 @@ tags:
     still-blocked,
     external-deps,
     u-ladder,
-    g8-live,
+    g008-live-forge-smoke-live,
     l9,
     pf5,
     j-alias-01,
@@ -48,7 +48,7 @@ After tip ≥ **`6ecd3e0`** and U-ladder [[evidence:root/20261111003444]] closed
 
 1. Reconcile U-ladder dispositions + tip table ([[sot:root/program-roadmap]] v0.15.3) + residual §F + `docs/completion.md`.
 2. Fold prior unblock research ([[research:root/20261111001816]], [[research:root/20261110222000]], [[research:root/20261111003444]], [[research:root/20261110211804]]).
-3. Re-probe Environment `g8-live` secret **names only** (`total_count`).
+3. Re-probe Environment `g008-live-forge-smoke-live` secret **names only** (`total_count`).
 4. For each item: root cause after U-ladder → external-deps options → tradeoffs → Plan A/B + acceptance → verdict.
 5. Analysis only for Pf5 — propose next engineering step; **do not** run G19 remasure in this research task.
 
@@ -59,7 +59,7 @@ After tip ≥ **`6ecd3e0`** and U-ladder [[evidence:root/20261111003444]] closed
 | Tip | ≥ `14082e6` (this research land) + unblock exec [[evidence:root/20261111015154]] |
 | FS_final | **YES** |
 | Operator one-word | **PARTIAL** |
-| `g8-live` secret count | **0** (re-probed 2026-11-11 twice via `gh api …/environments/g8-live/secrets`) |
+| `g008-live-forge-smoke-live` secret count | **0** (re-probed 2026-11-11 twice via `gh api …/environments/g008-live-forge-smoke-live/secrets`) |
 | Pf5 post-unblock | ALIAS **0.5546** `aggressive_na`; REVERT **0.5000 Claimed**; M17 **19/19**; claimed=18 ([[evidence:root/20261111015154]]); U1 archival ALIAS 0.7906 / REVERT 0.5417 |
 | L9 | Owner-closed; reopen pack only (no in-repo reopen) |
 | sha1cd | Detect+refuse **Claimed**; immunity **Impossible** |
@@ -76,19 +76,19 @@ Verdict vocabulary (this note):
 
 ---
 
-## 1. Live G8 latency (`g8-live` secrets=0)
+## 1. Live G8 latency (`g008-live-forge-smoke-live` secrets=0)
 
 ### Root cause after U-ladder
 
-U3 correctly refused invent PASS: Environment `g8-live` still has **`total_count=0`**. Harness + local-forge **wire** are Claimed; live latency samples remain SKIP. YAML/agents cannot mint Environment secret *values*.
+U3 correctly refused invent PASS: Environment `g008-live-forge-smoke-live` still has **`total_count=0`**. Harness + local-forge **wire** are Claimed; live latency samples remain SKIP. YAML/agents cannot mint Environment secret *values*.
 
 ### External-dependency options
 
 | Dep | Role |
 |-----|------|
-| GitHub Environment secrets `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` | Required for Actions `g8-forge-scale.yml` `dry_run=false` |
+| GitHub Environment secrets `ARKS_G8_TOKEN` + `ARKS_G8_REPO_URL` | Required for Actions `g008-live-forge-smoke-forge-scale.yml` `dry_run=false` |
 | Throwaway HTTPS peer + scoped PAT / fine-grained token | Measurement substrate |
-| Optional: process-env same names + compose `g8` / `g8-live-scale` | Local remasure path |
+| Optional: process-env same names + compose `g008-live-forge-smoke` / `g008-live-scale` | Local remasure path |
 | Optional: GitHub Actions sole-runner capacity | Avoid colliding G14–G28 / G19 |
 
 ### Tradeoffs
@@ -104,8 +104,8 @@ U3 correctly refused invent PASS: Environment `g8-live` still has **`total_count
 
 | Plan | Steps | Acceptance |
 |------|-------|------------|
-| **A (recommended)** | Owner fills `g8-live` secrets → confirm `total_count ≥ 2` → `gh workflow run g8-forge-scale.yml -f dry_run=false` → attach `.spec/evidence/<ts>-g8-live-remasure/` → residual R5 / tip table latency row Done only with receipts | Non-SKIP measured receipt; `github_live_pass` honest; no invented medians |
-| **B** | Export same env names locally → compose `g8` + `g8-live-scale` → same evidence rules | Same as A with venue=`compose-live` |
+| **A (recommended)** | Owner fills `g008-live-forge-smoke-live` secrets → confirm `total_count ≥ 2` → `gh workflow run g008-live-forge-smoke-forge-scale.yml -f dry_run=false` → attach `.spec/evidence/<ts>-g008-live-forge-smoke-live-remasure/` → residual R5 / tip table latency row Done only with receipts | Non-SKIP measured receipt; `github_live_pass` honest; no invented medians |
+| **B** | Export same env names locally → compose `g008-live-forge-smoke` + `g008-live-scale` → same evidence rules | Same as A with venue=`compose-live` |
 | **C (steady)** | Leave Blocked; keep local-forge wire as substitute | Documented PARTIAL OK indefinitely |
 
 ### Verdict
@@ -156,7 +156,7 @@ U4 filed reopen pack [[research:root/20261111003444]] and correctly **did not pu
 
 ### Root cause after U-ladder
 
-U1 sole remasure ([[evidence:root/20261111003444]] `g19/`):
+U1 sole remasure ([[evidence:root/20261111003444]] `g019-comparative-performance/`):
 
 | Journey | git_ms | arks_ms | ratio | Class |
 |---------|-------:|--------:|------:|-------|
@@ -313,7 +313,7 @@ U5 shipped `arks forge` thin wrap of host `gh` + `recipe` — **Claimed-closest*
 
 | Rank | Item | Verdict | Fastest honest next |
 |-----:|------|---------|---------------------|
-| 1 | Live G8 latency | **Operator-only** | Fill `g8-live` secrets → live dispatch → evidence |
+| 1 | Live G8 latency | **Operator-only** | Fill `g008-live-forge-smoke-live` secrets → live dispatch → evidence |
 | 2 | L9 publish | **Operator-only** | Owner SoT reopen pack only — no agent publish |
 | 3 | Pf5 ALIAS/REVERT | **Unblockable-with-eng** (REVERT nearer) | Hold partial **or** one justified product/harness change → **one** sole G19 |
 | 4 | Host-env advisory deepen | **Unblockable-with-ext-deps** (advisory only) | Optional OneDrive / Docker LSM fixtures; full claim Impossible |
@@ -332,7 +332,7 @@ U5 shipped `arks forge` thin wrap of host `gh` + `recipe` — **Claimed-closest*
 | Rank | Action taken | Result |
 |-----:|--------------|--------|
 | 3 Pf5 | REVERT amortize 12→20 → **one** sole G19 `sole-rm-pf5-ub` | REVERT **0.5000 Claimed**; ALIAS **0.5546** `aggressive_na`; claimed=18; M17 19/19; **no second remasure**; no ALIAS PATH redesign |
-| 1 G8 | Re-probe `g8-live` secrets | **total_count=0** → operator steps refreshed in `docs/forge-scale.md` only; **no** invent live PASS |
+| 1 G8 | Re-probe `g008-live-forge-smoke-live` secrets | **total_count=0** → operator steps refreshed in `docs/forge-scale.md` only; **no** invent live PASS |
 | 2 L9 | Scan for owner SoT reopen | **Absent** → leave Blocked; reopen pack unchanged |
 | 5 Forge | Deepen `arks forge recipe` (`gh` Checks/workflow/env probes) | Claimed-closest only; full UX still Non-goal |
 | 4 FS | Cheap Nextcloud/ownCloud journal marker detect | Advisory deepen only; full sync still Impossible |

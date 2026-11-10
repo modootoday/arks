@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g32-cleanroom"
+name = "arks-g032-git-daemon-wire-cleanroom"
 description = "M25 clean-room G32 git:// daemon suite"
 version = "0.0.0"
 edition = "2024"

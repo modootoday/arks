@@ -8,7 +8,7 @@ tags:
   [
     optional,
     o-ladder,
-    g8-live,
+    g008-live-forge-smoke-live,
     filter-spec,
     tree-0,
     interactive,
@@ -57,7 +57,7 @@ After symmetry ladder **S0–S_final Done** ([[research:root/20261110105436]]) w
 | R4 OpenPGP / X.509 / `tag -s` | **Claimed** (G38) |
 | S3 dumb deletes | **Claimed**; Apache DAV / lease / push-options honest defer |
 | S4 interactive TUI | **Honest defer** (full TUI N/A) |
-| S5 live forge | **Secrets-block**; Environment `g8-live` exists; **secret count = 0** (API); agent env absent |
+| S5 live forge | **Secrets-block**; Environment `g008-live-forge-smoke-live` exists; **secret count = 0** (API); agent env absent |
 | L9 crates.io timing | **Owner-closed** — do not reopen |
 | FW-GUI / FW-LFS / FW-SCALAR / FW-FORGE-B | **Still OOS** |
 

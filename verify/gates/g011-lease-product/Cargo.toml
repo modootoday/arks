@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g11-cleanroom"
+name = "arks-g011-lease-product-cleanroom"
 description = "M10 clean-room G11 lease-product suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

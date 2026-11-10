@@ -4,7 +4,7 @@ title: M13 Concurrency differentiate lease uplift
 status: active
 created: 2026-11-09T02:46:35Z
 updated: 2026-11-09T04:05:00Z
-tags: [milestone, m13, phase-cd, concurrency, differentiate-beyond-git, lease, multi-agent, hooks, locks, g18, issue-resolution]
+tags: [milestone, m13, phase-cd, concurrency, differentiate-beyond-git, lease, multi-agent, hooks, locks, g018-concurrency-issue-compare, issue-resolution]
 rel:
   depends_on:
     - sot:root/program-roadmap
@@ -75,8 +75,8 @@ Claimed sets per wave must list explicit IDs; unlisted stay Open. Slice Done = G
 
 ## Ordered work items
 
-1. **Design** — ADR(s) for grant schema + fencing; freeze first Cd wave claim-set. **Done (Cd-1)** — [[adr:root/20261109032955]]; matrix `verify/matrices/matrix-g18.md`.
-2. **Implement** — `arks-lease` uplift + `arks lease` CLI + G18 runner (`verify/gates/g18`, `run-g18.sh`, compose `g18`).
+1. **Design** — ADR(s) for grant schema + fencing; freeze first Cd wave claim-set. **Done (Cd-1)** — [[adr:root/20261109032955]]; matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md`.
+2. **Implement** — `arks-lease` uplift + `arks lease` CLI + G18 runner (`verify/gates/g018-concurrency-issue-compare`, `run-g018-concurrency-issue-compare.sh`, compose `g018-concurrency-issue-compare`).
 3. **Verify** — Docker G18 PASS per claimed ID; evidence receipts; no L3 overclaim.
 
 ## Claimed set — Wave Cd-1 (first execution slice)

@@ -4,7 +4,7 @@ title: M15 Fs-4 clean-room G20 add -A and status --porcelain
 status: active
 created: 2026-11-09T19:00:00Z
 updated: 2026-11-10T00:57:44Z
-tags: [g20, m15, fs-4, clean-room, flags, verified]
+tags: [g020-cli-symmetric-parity, m15, fs-4, clean-room, flags, verified]
 rel:
   depends_on: [plan:root/20261109035335, evidence:root/20261109183000]
   evidence: []
@@ -20,4 +20,4 @@ Closes Wave **Fs-4** (flag gaps; landed ahead of Fs-3 refuse-closed per alias va
 |----|------|
 | M15-FS4-01 | yes |
 
-Reproduce: `docker compose -f verify/docker-compose.yml run --rm g20`
+Reproduce: `docker compose -f verify/docker-compose.yml run --rm g020-cli-symmetric-parity`

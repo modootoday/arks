@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g4-cleanroom"
+name = "arks-g004-pack-idx-roundtrip-cleanroom"
 description = "M4 clean-room G4 pack/idx interchange oracle harness (verify tree only)"
 version = "0.0.0"
 edition = "2024"

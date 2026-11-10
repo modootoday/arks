@@ -4,7 +4,7 @@ title: Clean-room G16 journey-compare (func + timing)
 status: active
 created: 2026-11-08T18:30:45Z
 updated: 2026-11-10T00:57:42Z
-tags: [g16, clean-room, journey-compare, timing, metrics, verified, additive]
+tags: [g016-journey-compare, clean-room, journey-compare, timing, metrics, verified, additive]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, plan:root/20261108182457, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/cli-surface, sot:root/public-surface, adr:root/20261108083507]
 files:
@@ -23,8 +23,8 @@ Attached metrics: `metrics.json` in this evidence directory (snapshot of clean-r
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g16` |
-| Entrypoint | `verify/scripts/run-g16.sh` |
+| Compose | `verify/docker-compose.yml` service `g016-journey-compare` |
+| Entrypoint | `verify/scripts/run-g016-journey-compare.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (lock / local Id) | `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Base | `rust:1.99.1-bookworm@sha256:e6f2cff35d0f309acf8433b4f05878ed77092602c5065cc81801177da0bb3a9c` |
@@ -63,5 +63,5 @@ Attached metrics: `metrics.json` in this evidence directory (snapshot of clean-r
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g16
+docker compose -f verify/docker-compose.yml run --rm g016-journey-compare
 ```

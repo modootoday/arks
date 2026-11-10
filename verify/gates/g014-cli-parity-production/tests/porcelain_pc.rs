@@ -1,5 +1,5 @@
 //! Gate G14 — Wave Pc inventory + flag-parity + alias-ready (clean-room).
-//! CLI-parity production (M9). Matrix: `verify/matrices/matrix-m9.md` M9-C01..C10.
+//! CLI-parity production (M9). Matrix: `verify/matrices/matrix-m009-clean-room-cli-parity.md` M9-C01..C10.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -208,7 +208,7 @@ fn refuse_closed_and_unknown_flags() {
     assert_ok(&arks(repo, &["submodule", "status"]), "submodule status");
     // M15 Fs-3: notes / sparse-checkout / repack claimed (smoke under G14 regression).
     assert_ok(
-        &arks(repo, &["notes", "add", "-m", "g14-note"]),
+        &arks(repo, &["notes", "add", "-m", "g014-cli-parity-production-note"]),
         "notes add",
     );
     assert_ok(&arks(repo, &["notes", "show"]), "notes show");
@@ -220,7 +220,7 @@ fn refuse_closed_and_unknown_flags() {
     assert_fail(&arks(repo, &["rebase", "-i", "HEAD"]), "rebase -i");
     assert_fail(&arks(repo, &["archive", "--format=zip"]), "zip");
     assert_fail(&arks(repo, &["tag", "-s", "x"]), "signed tag");
-    // Manifest lives at verify/gates/g14 after layout relocate (cdbc907+).
+    // Manifest lives at verify/gates/g014-cli-parity-production after layout relocate (cdbc907+).
     let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..");
     assert!(
         Path::new("docs/alias-git-arks.md").is_file()

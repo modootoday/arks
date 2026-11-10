@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g29-cleanroom"
+name = "arks-g029-server-dumb-http-cleanroom"
 description = "M25 clean-room G29 dumb HTTP suite"
 version = "0.0.0"
 edition = "2024"

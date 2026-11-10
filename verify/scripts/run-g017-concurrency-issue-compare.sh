@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G17 — concurrency issue-repro compare (M12 Cm + M19 Cx + M20 Cx-3..Cx-8 + M21 Dz-1).
-# SoT: .spec/sot/interop-test-matrix.sot.md (G17); matrix: verify/matrices/matrix-g17.md
+# SoT: .spec/sot/interop-test-matrix.sot.md (G17); matrix: verify/matrices/matrix-g017-concurrency-issue-compare.md
 # Done: every claimed ID has git pathology_pass + arks resolved_pass in Docker receipt.
 set -euo pipefail
 
@@ -31,8 +31,8 @@ echo "G17: gix-exit OK"
 echo "G17: build arks binary (release)"
 cargo build -p arks --release
 
-mkdir -p verify/gates/g17/out
-export ARKS_G17_RECEIPT_OUT="${ARKS_G17_RECEIPT_OUT:-/workspace/verify/gates/g17/out/receipt.json}"
+mkdir -p verify/gates/g017-concurrency-issue-compare/out
+export ARKS_G17_RECEIPT_OUT="${ARKS_G17_RECEIPT_OUT:-/workspace/verify/gates/g017-concurrency-issue-compare/out/receipt.json}"
 export ARKS_G17_VENUE="${ARKS_G17_VENUE:-clean-room}"
 export ARKS_G17_IMAGE_TAG="${ARKS_G17_IMAGE_TAG:-arks-verify-m1:0.1.0}"
 export ARKS_G17_REQUIRE_FULL=1
@@ -53,9 +53,9 @@ fi
 export ARKS_G17_IMAGE_DIGEST="${ARKS_G17_IMAGE_DIGEST:-}"
 export ARKS_G17_REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"
 
-echo "G17: issue-compare suite (verify/gates/g17; serial threads for receipt)"
+echo "G17: issue-compare suite (verify/gates/g017-concurrency-issue-compare; serial threads for receipt)"
 # --test-threads=1 so RECEIPT static accumulates all rows before zzz flush.
-cargo test --manifest-path verify/gates/g17/Cargo.toml -- --nocapture --test-threads=1 "$@"
+cargo test --manifest-path verify/gates/g017-concurrency-issue-compare/Cargo.toml -- --nocapture --test-threads=1 "$@"
 
 if [[ ! -f "$ARKS_G17_RECEIPT_OUT" ]]; then
   echo "G17: receipt missing: $ARKS_G17_RECEIPT_OUT" >&2

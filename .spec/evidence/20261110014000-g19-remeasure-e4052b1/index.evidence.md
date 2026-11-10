@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip e4052b1 (PF5 partial 7/8 Verified; M17 g
 status: active
 created: 2026-11-10T01:40:00Z
 updated: 2026-11-10T01:40:00Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, clone-local]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, evidence:root/20261110011500, evidence:root/20261110012500]
   evidence: []
@@ -17,7 +17,7 @@ files:
 
 ## Context
 
-Carrying sole Docker `g19` after pack-persist / Arc pack-cache experiments that briefly regressed **J-CLONE-LOCAL-01** above M17 ≤0.8× (noise/overlap runs at `8c65583` / mid tips). Tip **`e4052b1`** (“Avoid cloning pack bytes on synchronous ingest”) restores **M17 19/19** with honest **Claimed(partial 7/8)** — CLONE-LOCAL remains `aggressive_na` at ratio **0.6421**.
+Carrying sole Docker `g019-comparative-performance` after pack-persist / Arc pack-cache experiments that briefly regressed **J-CLONE-LOCAL-01** above M17 ≤0.8× (noise/overlap runs at `8c65583` / mid tips). Tip **`e4052b1`** (“Avoid cloning pack bytes on synchronous ingest”) restores **M17 19/19** with honest **Claimed(partial 7/8)** — CLONE-LOCAL remains `aggressive_na` at ratio **0.6421**.
 
 Host cargo remains advisory/unreliable. Overlapping Docker G19 containers are forbidden (sole-runner lock).
 
@@ -39,5 +39,5 @@ Host cargo remains advisory/unreliable. Overlapping Docker G19 containers are fo
 
 ## Related
 
-- G15 PASS earlier at hooks/G14-path tip (`verify/gates/g15/out/docker-g15-6bc4786.log`).
+- G15 PASS earlier at hooks/G14-path tip (`verify/gates/g015-smart-http/out/docker-g015-smart-http-6bc4786.log`).
 - Prior pins: [[evidence:root/20261110011500]] (`3af76a7`), [[evidence:root/20261110012500]] (`6bc4786`).

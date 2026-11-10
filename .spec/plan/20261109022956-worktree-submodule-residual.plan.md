@@ -4,7 +4,7 @@ title: Post-M9 worktree and submodule residual implement
 status: active
 created: 2026-11-09T02:29:56Z
 updated: 2026-11-09T02:29:56Z
-tags: [residual, worktree, submodule, cli, post-m9, clean-room, g16]
+tags: [residual, worktree, submodule, cli, post-m9, clean-room, g016-journey-compare]
 rel:
   depends_on:
     - sot:root/cli-surface
@@ -78,7 +78,7 @@ Move **`worktree`** and **`submodule`** from M9 Wave Pc **refuse-closed** to **c
 | **J-SUBMODULE-01** | J-REFUSE-03 | local `submodule add` → `status` → `deinit` → `init` → `update`; gitlink + `.gitmodules`; alias PASS |
 | **J-REFUSE-02** | (kept) | `repack -ad` remains refuse-closed |
 
-G14 residual re-smoke: help lists `worktree`/`submodule`; unknown flags refuse; alias shim exercises claimed subcommands (not refuse). Matrix: `verify/matrices/matrix-journey.md` + `verify/matrices/matrix-m9.md` honesty note that M9 historical refuse is superseded by this residual for these two commands only.
+G14 residual re-smoke: help lists `worktree`/`submodule`; unknown flags refuse; alias shim exercises claimed subcommands (not refuse). Matrix: `verify/matrices/matrix-g016-journey-compare.md` + `verify/matrices/matrix-m009-clean-room-cli-parity.md` honesty note that M9 historical refuse is superseded by this residual for these two commands only.
 
 ## Non-goals
 

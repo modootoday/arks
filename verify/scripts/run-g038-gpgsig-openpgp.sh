@@ -14,5 +14,5 @@ echo G38: gix-exit OK
 echo G38: build arks
 cargo build -p arks
 echo G38: OpenPGP / tag suite
-cargo test --manifest-path verify/gates/g38/Cargo.toml -- --nocapture
+cargo test --manifest-path verify/gates/g038-gpgsig-openpgp/Cargo.toml -- --nocapture
 echo G38: PASS

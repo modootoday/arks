@@ -4,7 +4,7 @@ title: G7 sole Docker G19 — ALIAS PATH/exec absolute-shim cut
 status: active
 created: 2026-11-10T17:52:00Z
 updated: 2026-11-10T17:52:00Z
-tags: [g7, g19, pf5, alias, path-exec, g-ladder]
+tags: [g007-smart-http-client, g019-comparative-performance, pf5, alias, path-exec, g-ladder]
 verify: docker
 rel:
   depends_on:
@@ -20,13 +20,13 @@ rel:
 
 ## Product cut
 
-Alias peer invokes hard-copied `git` shim by **absolute path** (documented preferred PATH-shim install) instead of PATH search — see `verify/gates/g16/tests/journey_compare.rs` `peer_command` + `docs/alias-git-arks.md`.
+Alias peer invokes hard-copied `git` shim by **absolute path** (documented preferred PATH-shim install) instead of PATH search — see `verify/gates/g016-journey-compare/tests/journey_compare.rs` `peer_command` + `docs/alias-git-arks.md`.
 
 ## Receipt
 
 | Item | Value |
 |------|-------|
-| Venue | sole Docker `compose … run --rm g19` |
+| Venue | sole Docker `compose … run --rm g019-comparative-performance` |
 | Tip at measure | `a02f7be` |
 | Image | `arks-verify-m1:0.1.0` digest `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | 2.39.5 |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G20 — full CLI symmetric parity (M15 Fs waves).
-# SoT: interop-test-matrix G20; matrix: verify/matrices/matrix-g20.md; plan: 20261109035335
+# SoT: interop-test-matrix G20; matrix: verify/matrices/matrix-g020-cli-symmetric-parity.md; plan: 20261109035335
 set -euo pipefail
 
 cd /workspace
@@ -34,17 +34,17 @@ export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/workspace/target}"
 echo "G20: build arks (release)"
 cargo build -p arks --release
 
-mkdir -p verify/gates/g20/out
-export ARKS_G20_RECEIPT_OUT="${ARKS_G20_RECEIPT_OUT:-/workspace/verify/gates/g20/out/receipt.json}"
+mkdir -p verify/gates/g020-cli-symmetric-parity/out
+export ARKS_G20_RECEIPT_OUT="${ARKS_G20_RECEIPT_OUT:-/workspace/verify/gates/g020-cli-symmetric-parity/out/receipt.json}"
 # Always prefer the release binary just built into CARGO_TARGET_DIR (compose may set
 # target-cleanroom). G14 must honor ARKS_BIN so regression does not pick a stale debug.
 export ARKS_BIN="${ARKS_BIN:-$CARGO_TARGET_DIR/release/arks}"
 echo "G20: ARKS_BIN=$ARKS_BIN"
 
-echo "G20: Fs-1 suite (verify/gates/g20)"
-cargo test --manifest-path verify/gates/g20/Cargo.toml --release "$@"
+echo "G20: Fs-1 suite (verify/gates/g020-cli-symmetric-parity)"
+cargo test --manifest-path verify/gates/g020-cli-symmetric-parity/Cargo.toml --release "$@"
 
 echo "G20: G14 regression (historical M9)"
-cargo test --manifest-path verify/gates/g14/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g014-cli-parity-production/Cargo.toml "$@"
 
 echo "G20: PASS"

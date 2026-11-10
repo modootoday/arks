@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G21 — complete CLI flag symmetry (M16 Sy waves).
-# SoT: interop-test-matrix G21; matrix: verify/matrices/matrix-g21.md; plan: 20261109043910
+# SoT: interop-test-matrix G21; matrix: verify/matrices/matrix-g021-cli-flag-symmetry.md; plan: 20261109043910
 set -euo pipefail
 
 cd /workspace
@@ -31,18 +31,18 @@ export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/workspace/target}"
 echo "G21: build arks (release)"
 cargo build -p arks --release
 
-mkdir -p verify/gates/g21/out
-export ARKS_G21_RECEIPT_OUT="${ARKS_G21_RECEIPT_OUT:-/workspace/verify/gates/g21/out/receipt.json}"
+mkdir -p verify/gates/g021-cli-flag-symmetry/out
+export ARKS_G21_RECEIPT_OUT="${ARKS_G21_RECEIPT_OUT:-/workspace/verify/gates/g021-cli-flag-symmetry/out/receipt.json}"
 export ARKS_BIN="${ARKS_BIN:-$CARGO_TARGET_DIR/release/arks}"
 echo "G21: ARKS_BIN=$ARKS_BIN"
 
-echo "G21: Sy suite (verify/gates/g21)"
-cargo test --manifest-path verify/gates/g21/Cargo.toml --release "$@"
+echo "G21: Sy suite (verify/gates/g021-cli-flag-symmetry)"
+cargo test --manifest-path verify/gates/g021-cli-flag-symmetry/Cargo.toml --release "$@"
 
 echo "G21: G20 regression (historical M15)"
-cargo test --manifest-path verify/gates/g20/Cargo.toml --release "$@"
+cargo test --manifest-path verify/gates/g020-cli-symmetric-parity/Cargo.toml --release "$@"
 
 echo "G21: G14 regression (historical M9)"
-cargo test --manifest-path verify/gates/g14/Cargo.toml "$@"
+cargo test --manifest-path verify/gates/g014-cli-parity-production/Cargo.toml "$@"
 
 echo "G21: PASS"

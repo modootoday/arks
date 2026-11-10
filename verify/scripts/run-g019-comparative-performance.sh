@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # G19 — comparative performance pass/fail (≥20% faster on allow-list).
-# SoT: interop-test-matrix G19; matrix: verify/matrices/matrix-g19.md; plan: 20261109043916
+# SoT: interop-test-matrix G19; matrix: verify/matrices/matrix-g019-comparative-performance.md; plan: 20261109043916
 set -euo pipefail
 
 cd /workspace
 
 # Exclusive lock: overlapping G19 catalogs OOM Docker Desktop (exit 137).
-mkdir -p verify/gates/g19
-G19_LOCK="verify/gates/g19/.run.lock.dir"
+mkdir -p verify/gates/g019-comparative-performance
+G19_LOCK="verify/gates/g019-comparative-performance/.run.lock.dir"
 if ! mkdir "$G19_LOCK" 2>/dev/null; then
   # Stale lock after SIGKILL (trap skipped): reclaim if holder file is older than 2h
   # or empty. Fresh holders write a timestamp owner file.
@@ -36,16 +36,16 @@ if [[ "${ARKS_JOURNEY_ITERATIONS}" -lt 3 ]]; then
   echo "G19: ARKS_JOURNEY_ITERATIONS must be >=3 (got ${ARKS_JOURNEY_ITERATIONS})" >&2
   exit 1
 fi
-/bin/bash verify/scripts/run-g16.sh "$@"
+/bin/bash verify/scripts/run-g016-journey-compare.sh "$@"
 
-METRICS="${ARKS_JOURNEY_METRICS_OUT:-/workspace/verify/gates/g16/out/metrics.json}"
+METRICS="${ARKS_JOURNEY_METRICS_OUT:-/workspace/verify/gates/g016-journey-compare/out/metrics.json}"
 if [[ ! -f "$METRICS" ]]; then
   echo "G19: missing metrics: $METRICS" >&2
   exit 1
 fi
 
-mkdir -p verify/gates/g19/out
-RECEIPT="${ARKS_G19_RECEIPT_OUT:-/workspace/verify/gates/g19/out/receipt.json}"
+mkdir -p verify/gates/g019-comparative-performance/out
+RECEIPT="${ARKS_G19_RECEIPT_OUT:-/workspace/verify/gates/g019-comparative-performance/out/receipt.json}"
 export ARKS_G19_RECEIPT_OUT="$RECEIPT"
 export ARKS_G19_METRICS="$METRICS"
 export ARKS_G19_REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"
@@ -55,6 +55,6 @@ export ARKS_G19_STOCK_GIT="$(git --version)"
 
 echo "G19: evaluate Pf3 allow-list = all G16 journeys (arks_median <= 0.8 * git_median)"
 # External evaluator avoids bash-heredoc races on bind-mounted Windows hosts.
-python3 /workspace/verify/scripts/g19-eval.py
+python3 /workspace/verify/scripts/g019-eval.py
 
 echo "G19: PASS"

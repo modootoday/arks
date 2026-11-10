@@ -1,5 +1,5 @@
 //! Gate G20 — M15 Fs-1 full CLI symmetric claim rows.
-//! Matrix: `verify/matrices/matrix-g20.md`.
+//! Matrix: `verify/matrices/matrix-g020-cli-symmetric-parity.md`.
 
 use serde_json::json;
 use std::fs;
@@ -555,7 +555,7 @@ fn record_row(id: &str, pass: bool) {
     };
     rows.push(json!({"id": id, "pass": pass, "wave": wave}));
     let receipt = json!({
-        "schema": "arks-g20-cli-full-parity/v1",
+        "schema": "arks-g020-cli-symmetric-parity-cli-full-parity/v1",
         "wave": "Fs-1+Fs-2+Fs-3+Fs-4+Fs-5",
         "venue": std::env::var("ARKS_G20_VENUE").unwrap_or_else(|_| "clean-room".into()),
         "rows": rows,

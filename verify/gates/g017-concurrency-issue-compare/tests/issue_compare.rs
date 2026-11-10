@@ -1,5 +1,5 @@
 //! Gate G17 — git vs arks concurrency issue-repro compare (Cm-1..Cm-3 + M19 Cx-1/Cx-2 + M20 Cx-3/Cx-4).
-//! Matrix: `verify/matrices/matrix-g17.md`. Plans: plan:root/20261109024634, plan:root/20261110010000,
+//! Matrix: `verify/matrices/matrix-g017-concurrency-issue-compare.md`. Plans: plan:root/20261109024634, plan:root/20261110010000,
 //! plan:root/20261110030000, plan:root/20261110040000.
 
 use serde_json::{json, Value};
@@ -131,7 +131,7 @@ fn write_receipt_file() {
     let digest = std::env::var("ARKS_G17_IMAGE_DIGEST").unwrap_or_default();
     let venue = std::env::var("ARKS_G17_VENUE").unwrap_or_else(|_| "clean-room".into());
     let body = json!({
-        "schema": "arks-g17-issue-compare/v1",
+        "schema": "arks-g017-concurrency-issue-compare-issue-compare/v1",
         "venue": venue,
         "image_tag": image,
         "image_digest": digest,
@@ -4810,7 +4810,7 @@ fn dz4_toctou004() {
 
 /// Flush comparative receipt after Cm/Cx + Dz-1..Dz-4 (runs last by name).
 #[test]
-fn zzz_write_g17_receipt() {
+fn zzz_write_g017-concurrency-issue-compare_receipt() {
     let n = RECEIPT.lock().unwrap().len();
     if n < 145 {
         eprintln!("G17 receipt note: {n} rows so far (expect 145 under --test-threads=1)");

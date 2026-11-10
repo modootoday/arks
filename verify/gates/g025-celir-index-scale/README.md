@@ -1,4 +1,4 @@
 # G25 clean-room
 
-Entrypoint: `verify/scripts/run-g25.sh`. Matrix: `verify/matrices/matrix-g25.md`.
+Entrypoint: `verify/scripts/run-g025-celir-index-scale.sh`. Matrix: `verify/matrices/matrix-g025-celir-index-scale.md`.
 

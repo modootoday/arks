@@ -4,7 +4,7 @@ title: M5 clean-room G6 G3 Wave L
 status: active
 created: 2026-11-08T10:48:37Z
 updated: 2026-11-08T10:48:37Z
-tags: [m5, clean-room, g0, g1, g2, g3, g4, g5, g6, g10, wave-l, verified, v0.3.1]
+tags: [m5, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, g002-refs-index-roundtrip, g003-index-commit-roundtrip, g004-pack-idx-roundtrip, g005-protocol-offline-fixtures, g006-cli-wave-l, g010-store-facade, wave-l, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -45,14 +45,14 @@ Host `cargo test` / host CLI smoke results are **advisory only** and are not thi
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | workspace includes `arks` + tree/commit unit tests |
-| **G6** | `docker compose -f verify/docker-compose.yml run --rm g6` | **PASS** | `verify/gates/g6` argv suite **6** |
-| **G3** | (embedded in `run-g6.sh`; also `g3` service) | **PASS** | `verify/gates/g3` `git_oracle` **3** |
-| **G4** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g4` **3** |
-| **G5** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g5` **4** + `arks-protocol` |
-| **G2** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g2` **9** |
-| **G10** regression | (embedded in `run-g6.sh`) | **PASS** | `verify/gates/g10` **7** |
-| **G1** regression | (embedded in `run-g6.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` **6** |
+| **G0** | `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` | **PASS** | workspace includes `arks` + tree/commit unit tests |
+| **G6** | `docker compose -f verify/docker-compose.yml run --rm g006-cli-wave-l` | **PASS** | `verify/gates/g006-cli-wave-l` argv suite **6** |
+| **G3** | (embedded in `run-g006-cli-wave-l.sh`; also `g003-index-commit-roundtrip` service) | **PASS** | `verify/gates/g003-index-commit-roundtrip` `git_oracle` **3** |
+| **G4** regression | (embedded in `run-g006-cli-wave-l.sh`) | **PASS** | `verify/gates/g004-pack-idx-roundtrip` **3** |
+| **G5** regression | (embedded in `run-g006-cli-wave-l.sh`) | **PASS** | `verify/gates/g005-protocol-offline-fixtures` **4** + `arks-protocol` |
+| **G2** regression | (embedded in `run-g006-cli-wave-l.sh`) | **PASS** | `verify/gates/g002-refs-index-roundtrip` **9** |
+| **G10** regression | (embedded in `run-g006-cli-wave-l.sh`) | **PASS** | `verify/gates/g010-store-facade` **7** |
+| **G1** regression | (embedded in `run-g006-cli-wave-l.sh`) | **PASS** | `arks-object` `g001-loose-object-interop_oracle` **5** + `verify/gates/g001-loose-object-interop` **6** |
 | **gix-exit** | `cargo metadata` graph scan | **PASS** | zero packages/edges named `gix` / `gitoxide` |
 
 Combinatorics covered (automated): M5-C01…C14 per `verify/matrices/matrix-m5.md`. Deferred: M5-C15 remotes; M5-C16 CELIR/lease; M5-C17 Pa/Pb/Pc.
@@ -70,8 +70,8 @@ Combinatorics covered (automated): M5-C01…C14 per `verify/matrices/matrix-m5.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g0
-docker compose -f verify/docker-compose.yml run --rm g6
+docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests
+docker compose -f verify/docker-compose.yml run --rm g006-cli-wave-l
 # optional standalone:
-docker compose -f verify/docker-compose.yml run --rm g3
+docker compose -f verify/docker-compose.yml run --rm g003-index-commit-roundtrip
 ```

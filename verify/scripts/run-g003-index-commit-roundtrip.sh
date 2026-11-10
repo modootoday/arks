@@ -17,5 +17,5 @@ export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 echo "G3: build arks binary"
 cargo build -p arks
 
-echo "G3: index-commit oracle (verify/gates/g3)"
-cargo test --manifest-path verify/gates/g3/Cargo.toml "$@"
+echo "G3: index-commit oracle (verify/gates/g003-index-commit-roundtrip)"
+cargo test --manifest-path verify/gates/g003-index-commit-roundtrip/Cargo.toml "$@"

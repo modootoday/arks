@@ -1,4 +1,4 @@
-﻿---
+---
 id: sot:root/arks-object
 title: arks-object unit
 status: active
@@ -65,5 +65,5 @@ SSH signing was Claimed via OpenSSH (G37). Symmetry **S2** closes OpenPGP / X.50
 1. Host `cargo test -p arks-object` — advisory.
 2. Clean-room G0/G1 as before.
 3. FW-GPGSIG SSH create/verify: G37 evidence [[evidence:root/20261110073800]].
-4. FW-GPGSIG OpenPGP / X.509 / `tag -s` / `verify-tag`: clean-room **G38** (`verify/matrices/matrix-g38.md`) — Claimed only with carrying evidence. Host gpg abort loops MUST NOT invent PASS.
+4. FW-GPGSIG OpenPGP / X.509 / `tag -s` / `verify-tag`: clean-room **G38** (`verify/matrices/matrix-g038-gpgsig-openpgp.md`) — Claimed only with carrying evidence. Host gpg abort loops MUST NOT invent PASS.
 5. `spec check` clean for this SoT.

@@ -4,7 +4,7 @@ title: G19 sole-runner remeasure at tip 7305bb6 (superseded tip; PF5 partial 7/8
 status: active
 created: 2026-11-10T03:51:00Z
 updated: 2026-11-10T03:51:00Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, clone-local, verify-layout]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110113900, evidence:root/20261110114200, evidence:root/20261110110900]
   evidence: []
@@ -25,13 +25,13 @@ Authoritative sole Docker remasure (`--name arks-pf5-rm-7305bb6`) measured tip `
 | Surface | IDs | Role |
 |---------|-----|------|
 | G16 functional + timing | All 19 catalog journeys | Hard functional + `median_p95` |
-| G19 comparative | Same allow-list (`verify/matrices/matrix-g19.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
+| G19 comparative | Same allow-list (`verify/matrices/matrix-g019-comparative-performance.md`) | ≤0.8× + ≤0.5× / `aggressive_na` |
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Runner | sole `docker run` → `verify/scripts/run-g19.sh` (shared cargo volume `arks-verify-m1_arks-cargo-target`; same gate path as compose `g19`) |
+| Runner | sole `docker run` → `verify/scripts/run-g019-comparative-performance.sh` (shared cargo volume `arks-verify-m1_arks-cargo-target`; same gate path as compose `g019-comparative-performance`) |
 | Paths | `verify/{gates,matrices,fixtures,scripts}` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |

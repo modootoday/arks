@@ -2,7 +2,7 @@
 //! seed + N concurrent stock-Git clone/fetch/push; contended same-ref fail-closed.
 //!
 //! SoT: `.spec/sot/arks-smart-http-pr-contention-clean-room.sot.md`
-//! Matrix: `verify/matrices/matrix-g27.md`
+//! Matrix: `verify/matrices/matrix-g027-smart-http-pr-contention.md`
 //! Honesty: ≠ GitHub UX/Checks/merge-queue; ≠ live forge throughput.
 
 use arks_hash::ObjectFormat;
@@ -215,7 +215,7 @@ fn seed_bare_with_commit(root: &Path) -> (PathBuf, Oid) {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "arks init");
-    fs::write(work.join("hello.txt"), b"hello g27\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g027-smart-http-pr-contention\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "arks add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "arks commit");
     let tip_out = git(&work, &["rev-parse", "HEAD"]);
@@ -244,7 +244,7 @@ fn seed_bare_with_commit(root: &Path) -> (PathBuf, Oid) {
 
 fn seed_thousands_refs(bare: &Path, tip: &Oid, n_br: usize, n_pr: usize) {
     let mut store = FilesystemGitStore::new(objects_dir(bare)).unwrap();
-    let merge_oid = seed_blob(&mut store, b"g27-pr-merge-marker");
+    let merge_oid = seed_blob(&mut store, b"g027-smart-http-pr-contention-pr-merge-marker");
     let mut refs = FilesystemRefStore::open(bare).unwrap();
     for i in 0..n_br {
         refs.update(&format!("refs/heads/br-{i:04}"), tip, None)
@@ -281,7 +281,7 @@ fn count_ls_remote(url: &str, filter: impl Fn(&str) -> bool) -> usize {
 
 /// G27-C01 — seed scale visible via arks smart HTTP ls-remote.
 #[test]
-fn g27_c01_seed_scale_via_smart_http() {
+fn g027-smart-http-pr-contention_c01_seed_scale_via_smart_http() {
     require_git();
     let n_br = n_branches();
     let n_pr = n_pr();
@@ -314,7 +314,7 @@ fn g27_c01_seed_scale_via_smart_http() {
 
 /// G27-C02 — concurrent stock git clone against arks smart HTTP.
 #[test]
-fn g27_c02_concurrent_clone() {
+fn g027-smart-http-pr-contention_c02_concurrent_clone() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8, "minimum N_agents is 8");
@@ -342,7 +342,7 @@ fn g27_c02_concurrent_clone() {
             let ok = out.status.success();
             let body_ok = ok
                 && fs::read_to_string(dest.join("hello.txt"))
-                    .map(|b| b.replace("\r\n", "\n").starts_with("hello g27"))
+                    .map(|b| b.replace("\r\n", "\n").starts_with("hello g027-smart-http-pr-contention"))
                     .unwrap_or(false);
             results.lock().unwrap().push((i, body_ok, out.status.code()));
         }));
@@ -361,7 +361,7 @@ fn g27_c02_concurrent_clone() {
 
 /// G27-C03 — concurrent fetch after tip advance.
 #[test]
-fn g27_c03_concurrent_fetch() {
+fn g027-smart-http-pr-contention_c03_concurrent_fetch() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8);
@@ -425,7 +425,7 @@ fn g27_c03_concurrent_fetch() {
 
 /// G27-C04 — concurrent distinct-ref pushes.
 #[test]
-fn g27_c04_concurrent_distinct_push() {
+fn g027-smart-http-pr-contention_c04_concurrent_distinct_push() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8);
@@ -489,7 +489,7 @@ fn g27_c04_concurrent_distinct_push() {
 
 /// G27-C05 — contended same-ref push fail-closed; tip stock-resolvable.
 #[test]
-fn g27_c05_contended_same_ref_fail_closed() {
+fn g027-smart-http-pr-contention_c05_contended_same_ref_fail_closed() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8);

@@ -4,7 +4,7 @@ title: Clean-room G16 journey-compare Wave-2 + median/p95
 status: active
 created: 2026-11-08T20:08:11Z
 updated: 2026-11-10T00:57:42Z
-tags: [g16, clean-room, journey-compare, timing, metrics, verified, additive, median-p95]
+tags: [g016-journey-compare, clean-room, journey-compare, timing, metrics, verified, additive, median-p95]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, plan:root/20261108182457, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/cli-surface, sot:root/public-surface, adr:root/20261108083507, evidence:root/20261108183045]
 files:
@@ -23,8 +23,8 @@ Attached metrics: `metrics.json` in this evidence directory (snapshot of clean-r
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g16` |
-| Entrypoint | `verify/scripts/run-g16.sh` |
+| Compose | `verify/docker-compose.yml` service `g016-journey-compare` |
+| Entrypoint | `verify/scripts/run-g016-journey-compare.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest (lock / local Id) | `sha256:bab37bd1ea03832a5ca30aa41e598eafc8bef7a5b1026d65acefb75e3f4a73c1` |
 | Stock Git (in-image) | `git version 2.39.5` |
@@ -74,5 +74,5 @@ Attached metrics: `metrics.json` in this evidence directory (snapshot of clean-r
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g16
+docker compose -f verify/docker-compose.yml run --rm g016-journey-compare
 ```

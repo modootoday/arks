@@ -1,5 +1,5 @@
 //! Gate G21 — M16 Sy-1 everyday porcelain flag claim rows.
-//! Matrix: `verify/matrices/matrix-g21.md`.
+//! Matrix: `verify/matrices/matrix-g021-cli-flag-symmetry.md`.
 
 use serde_json::json;
 use std::fs;

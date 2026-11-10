@@ -9,7 +9,7 @@ tags:
     remaining-gaps,
     ffi,
     external,
-    g8-live,
+    g008-live-forge-smoke-live,
     l9,
     obj-004,
     sha1collisiondetection,
@@ -41,7 +41,7 @@ After Full Symmetry **FS0–FS_final Done** at tip ≥ `04f40bc`, which remainin
 
 ## Method
 
-1. Re-probe Environment `g8-live` secret *names* via `gh` API + process env.
+1. Re-probe Environment `g008-live-forge-smoke-live` secret *names* via `gh` API + process env.
 2. Ship structural readiness + optional **local-forge wire** substitute (≠ GitHub live PASS).
 3. Read-only inspect this host’s **G:** Google Drive for desktop substrate; run a bounded throwaway `.git` probe; record advisory evidence.
 4. Deep-research each Impossible item against crates.io / system libs / stock tools (`gh`, `aa-status`, Cloud Filter APIs, `sha1collisiondetection`).
@@ -52,11 +52,11 @@ After Full Symmetry **FS0–FS_final Done** at tip ≥ `04f40bc`, which remainin
 | Item | Value |
 |------|-------|
 | Tip | `04f40bc` — *rustfmt LFS network and sha256 porcelain surfaces.* |
-| Environment `g8-live` secret count | **0** (re-probed 2026-11-10T22:17Z / 22:19Z) |
+| Environment `g008-live-forge-smoke-live` secret count | **0** (re-probed 2026-11-10T22:17Z / 22:19Z) |
 | Process `ARKS_G8_TOKEN` / `ARKS_G8_REPO_URL` / `GITHUB_TOKEN` | **Absent** |
 | Live G8 remasure | **Still secrets-blocked** |
-| Local-forge wire harness | **Shipped + Docker green** — compose `g8-local-forge` → `claimed-wire` ([[evidence:root/20261110222100]]); ≠ GitHub live PASS |
-| G8 live script fix | `run-g8.sh` corrected for arks push surface (`branch` + named push; no `-c`/`-u`/src:dst) |
+| Local-forge wire harness | **Shipped + Docker green** — compose `g008-local-forge` → `claimed-wire` ([[evidence:root/20261110222100]]); ≠ GitHub live PASS |
+| G8 live script fix | `run-g008-live-forge-smoke.sh` corrected for arks push surface (`branch` + named push; no `-c`/`-u`/src:dst) |
 | G: DriveFS advisory probe | [[evidence:root/20261110221919]] — **advisory only** |
 
 ---
@@ -70,22 +70,22 @@ After Full Symmetry **FS0–FS_final Done** at tip ≥ `04f40bc`, which remainin
 | Secrets present? | **No** (`total_count=0`) |
 | Live remasure | **Not run** — would invent PASS if forced |
 | Structural readiness | **OK** (`scripts/forge-scale-readiness.sh`) |
-| Local substitute | **Shipped** — loopback `arks serve-http` clone/push/fetch → `arks-g8-local-forge-wire/v1` with `github_live_pass=false` |
+| Local substitute | **Shipped** — loopback `arks serve-http` clone/push/fetch → `arks-g008-local-forge-wire/v1` with `github_live_pass=false` |
 
 **Exact operator steps (unchanged honesty):**
 
 1. Create throwaway peer repo; mint scoped PAT.
-2. Environment `g8-live` secrets: `ARKS_G8_TOKEN`, `ARKS_G8_REPO_URL`.
-3. Confirm: `gh api repos/modootoday/arks/environments/g8-live/secrets` → `total_count ≥ 2`.
-4. `gh workflow run g8-forge-scale.yml -f dry_run=false` **or** compose `g8` + `g8-live-scale` with env exports.
+2. Environment `g008-live-forge-smoke-live` secrets: `ARKS_G8_TOKEN`, `ARKS_G8_REPO_URL`.
+3. Confirm: `gh api repos/modootoday/arks/environments/g008-live-forge-smoke-live/secrets` → `total_count ≥ 2`.
+4. `gh workflow run g008-live-forge-smoke-forge-scale.yml -f dry_run=false` **or** compose `g008-live-forge-smoke` + `g008-live-scale` with env exports.
 5. Attach real receipts under `.spec/evidence/` — SKIP ≠ PASS.
 
-Until secrets exist: use compose `g8-local-forge` for **wire** proof only.
+Until secrets exist: use compose `g008-local-forge` for **wire** proof only.
 
 ### Other in-tree residuals shipped this session
 
 - Honesty notes: `FS-007` / `FS-014` / `WIN-003` in `arks lock` catalog notes (`crates/arks/src/cmd/lock.rs`).
-- Docs: `docs/forge-scale.md` local-forge section; readiness script checks `g8-local-forge`.
+- Docs: `docs/forge-scale.md` local-forge section; readiness script checks `g008-local-forge`.
 
 ### L9 crates.io / docs.rs
 
@@ -250,7 +250,7 @@ See **Host Google Drive (G:)** section below for empirical substrate.
 | 1 | OBJ-004 detect | Integrate `sha1collisiondetection`; refuse/safe-hash; SHAttered fixture | M | Claimable **detect+refuse** (not immunity) |
 | 2 | WIN-003 detect | `windows` CfAPI / `RECALL_ON_DATA_ACCESS` honesty | S–M | Claimable detect slice; need OneDrive host |
 | 3 | FS-007 detect | DriveFS + sync-root detectors; advisory gate using G: sandbox | S–M | Advisory → optional refuse; **not** full FS-007 Claimed |
-| 4 | Live G8 | Owner fills `g8-live` secrets; remasure + evidence | Ops | Live PASS only with receipts |
+| 4 | Live G8 | Owner fills `g008-live-forge-smoke-live` secrets; remasure + evidence | Ops | Live PASS only with receipts |
 | 5 | FS-014 | errno hints + optional AppArmor Docker fixture | S | Partial honesty |
 | 6 | Forge OAuth / FW-FORGE-B | Docs + `gh` / external helper only | S | Keep Impossible as product |
 | 7 | L9 | Wait for owner SoT | — | Closed |
@@ -263,9 +263,9 @@ See **Host Google Drive (G:)** section below for empirical substrate.
 |----------|------|
 | Research (this note) | `.spec/research/20261110222000-remaining-gaps-ffi-external-unblock.research.md` |
 | G: advisory evidence | `.spec/evidence/20261110221919-fs007-gdrive-host-advisory/` |
-| Local-forge script | `verify/scripts/run-g8-local-forge.sh` |
-| Local-forge evidence | `.spec/evidence/20261110222100-g8-local-forge-wire-advisory/` |
-| Compose service | `g8-local-forge` in `verify/docker-compose.yml` |
+| Local-forge script | `verify/scripts/run-g008-local-forge.sh` |
+| Local-forge evidence | `.spec/evidence/20261110222100-g008-local-forge-wire-advisory/` |
+| Compose service | `g008-local-forge` in `verify/docker-compose.yml` |
 | Readiness / docs | `scripts/forge-scale-readiness.sh`, `docs/forge-scale.md` |
 | Catalog notes | `FS-007` / `FS-014` / `WIN-003` in `crates/arks/src/cmd/lock.rs` |
 

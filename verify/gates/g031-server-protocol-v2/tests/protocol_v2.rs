@@ -1,5 +1,5 @@
 //! Gate G31 — protocol v2 ls-refs + fetch vs stock Git.
-//! Cite: verify/matrices/matrix-g31.md, gitprotocol-v2.
+//! Cite: verify/matrices/matrix-g031-server-protocol-v2.md, gitprotocol-v2.
 
 use std::fs;
 use std::io::{Read, Write};
@@ -127,7 +127,7 @@ fn seed_bare(root: &Path) -> PathBuf {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
     assert_ok(&arks(&work, &["init"]), "init");
-    fs::write(work.join("hello.txt"), b"hello g31\n").unwrap();
+    fs::write(work.join("hello.txt"), b"hello g031-server-protocol-v2\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");
     let bare = root.join("server.git");
@@ -158,7 +158,7 @@ fn http_get_v2(port: u16) -> String {
 }
 
 #[test]
-fn g31_v2_capability_advertisement() {
+fn g031-server-protocol-v2_v2_capability_advertisement() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -174,7 +174,7 @@ fn g31_v2_capability_advertisement() {
 }
 
 #[test]
-fn g31_stock_git_protocol_v2_clone() {
+fn g031-server-protocol-v2_stock_git_protocol_v2_clone() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -197,11 +197,11 @@ fn g31_stock_git_protocol_v2_clone() {
         .unwrap();
     assert_ok(&out, "git -c protocol.version=2 clone");
     let body = fs::read_to_string(clone.join("hello.txt")).unwrap();
-    assert!(body.replace("\r\n", "\n").starts_with("hello g31"));
+    assert!(body.replace("\r\n", "\n").starts_with("hello g031-server-protocol-v2"));
 }
 
 #[test]
-fn g31_v1_still_works() {
+fn g031-server-protocol-v2_v1_still_works() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());

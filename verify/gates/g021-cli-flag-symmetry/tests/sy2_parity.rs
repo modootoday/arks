@@ -1,5 +1,5 @@
 //! Gate G21 — M16 Sy-2 worktree / submodule recursive / orphan claim rows.
-//! Matrix: `verify/matrices/matrix-g21.md`. Cite: git-worktree / git-submodule / git-checkout 2.39.0.
+//! Matrix: `verify/matrices/matrix-g021-cli-flag-symmetry.md`. Cite: git-worktree / git-submodule / git-checkout 2.39.0.
 
 use serde_json::json;
 use std::fs;

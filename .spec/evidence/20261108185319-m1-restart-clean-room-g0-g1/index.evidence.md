@@ -4,7 +4,7 @@ title: M1 restart clean-room G0 G1 receipts
 status: active
 created: 2026-11-08T18:53:19Z
 updated: 2026-11-08T18:53:19Z
-tags: [m1, restart, clean-room, g0, g1, verified, v0.3.1]
+tags: [m1, restart, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -45,8 +45,8 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | `arks-hash` 12; `arks-oid` 12; `arks-object` 12 + `g1_oracle` 5; `arks-store` 8 (workspace) |
-| **G1** | `docker compose -f verify/docker-compose.yml run --rm g1` | **PASS** | `arks-object` `g1_oracle` 5 + `verify/gates/g1` `git_oracle` 6 |
+| **G0** | `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` | **PASS** | `arks-hash` 12; `arks-oid` 12; `arks-object` 12 + `g001-loose-object-interop_oracle` 5; `arks-store` 8 (workspace) |
+| **G1** | `docker compose -f verify/docker-compose.yml run --rm g001-loose-object-interop` | **PASS** | `arks-object` `g001-loose-object-interop_oracle` 5 + `verify/gates/g001-loose-object-interop` `git_oracle` 6 |
 
 Combinatorics covered (automated): M1-C01…C07 and M1-C11…C13 per `verify/matrices/matrix-m1.md`. M1-C08 stock-Git tree/commit/tag payloads deferred (opaque kind framing covered on G0 as M1-C11). M1-C09/C10 out of scope.
 
@@ -65,6 +65,6 @@ Hash/OID/loose edges exercised in-crate: wrong digest lengths; near-miss hex len
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g0
-docker compose -f verify/docker-compose.yml run --rm g1
+docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests
+docker compose -f verify/docker-compose.yml run --rm g001-loose-object-interop
 ```

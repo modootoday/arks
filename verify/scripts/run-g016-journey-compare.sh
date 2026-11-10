@@ -38,8 +38,8 @@ if [[ -n "${ARKS_BIN}" && -x "${ARKS_BIN}" ]]; then
 fi
 git version >/dev/null 2>&1 || true
 
-mkdir -p verify/gates/g16/out
-export ARKS_JOURNEY_METRICS_OUT="${ARKS_JOURNEY_METRICS_OUT:-/workspace/verify/gates/g16/out/metrics.json}"
+mkdir -p verify/gates/g016-journey-compare/out
+export ARKS_JOURNEY_METRICS_OUT="${ARKS_JOURNEY_METRICS_OUT:-/workspace/verify/gates/g016-journey-compare/out/metrics.json}"
 export ARKS_JOURNEY_VENUE="${ARKS_JOURNEY_VENUE:-clean-room}"
 export ARKS_JOURNEY_IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"
 # Authoritative default: multi-iteration median + p95 (SoT v0.2.0). Override for advisory loops.
@@ -66,9 +66,9 @@ export ARKS_JOURNEY_GIT_VERSION="$(git --version)"
 export ARKS_JOURNEY_REVISION="$(git -C /workspace rev-parse HEAD 2>/dev/null || echo unknown)"
 export ARKS_JOURNEY_PROFILE=release
 
-echo "G16: journey-compare suite (verify/gates/g16; release harness — lower RSS vs debug)"
+echo "G16: journey-compare suite (verify/gates/g016-journey-compare; release harness — lower RSS vs debug)"
 # Release harness avoids debuginfo RSS blow-ups that SIGKILL (137) Docker Desktop.
-cargo test --release --manifest-path verify/gates/g16/Cargo.toml -- --nocapture "$@"
+cargo test --release --manifest-path verify/gates/g016-journey-compare/Cargo.toml -- --nocapture "$@"
 
 if [[ -f "$ARKS_JOURNEY_METRICS_OUT" ]]; then
   echo "G16: metrics written to $ARKS_JOURNEY_METRICS_OUT"

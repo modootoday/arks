@@ -4,7 +4,7 @@ title: M4 clean-room G4 G5 gix-exit receipts
 status: active
 created: 2026-11-08T10:36:10Z
 updated: 2026-11-08T10:36:10Z
-tags: [m4, clean-room, g0, g1, g2, g4, g5, g10, gix-exit, verified, v0.3.1]
+tags: [m4, clean-room, g000-workspace-lib-tests, g001-loose-object-interop, g002-refs-index-roundtrip, g004-pack-idx-roundtrip, g005-protocol-offline-fixtures, g010-store-facade, gix-exit, verified, v0.3.1]
 rel:
   depends_on:
     - sot:root/product-verification-clean-room
@@ -45,12 +45,12 @@ Host `cargo test` results are **advisory only** and are not this receipt.
 
 | Gate | Command | Outcome | Notes |
 |------|---------|---------|-------|
-| **G0** | `docker compose -f verify/docker-compose.yml run --rm g0` | **PASS** | workspace includes pack/protocol unit tests |
-| **G4** | `docker compose -f verify/docker-compose.yml run --rm g4` | **PASS** | `verify/gates/g4` `git_oracle` **3** |
-| **G5** | (embedded in `run-g4.sh`) | **PASS** | `verify/gates/g5` offline **4** + `arks-protocol` unit/g5_offline |
-| **G2** regression | (embedded in `run-g4.sh`) | **PASS** | `verify/gates/g2` `git_oracle` **9** |
-| **G10** regression | (embedded in `run-g4.sh`) | **PASS** | `verify/gates/g10` `git_oracle` **7** |
-| **G1** regression | (embedded in `run-g4.sh`) | **PASS** | `arks-object` `g1_oracle` **5** + `verify/gates/g1` `git_oracle` **6** |
+| **G0** | `docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests` | **PASS** | workspace includes pack/protocol unit tests |
+| **G4** | `docker compose -f verify/docker-compose.yml run --rm g004-pack-idx-roundtrip` | **PASS** | `verify/gates/g004-pack-idx-roundtrip` `git_oracle` **3** |
+| **G5** | (embedded in `run-g004-pack-idx-roundtrip.sh`) | **PASS** | `verify/gates/g005-protocol-offline-fixtures` offline **4** + `arks-protocol` unit/g005-protocol-offline-fixtures_offline |
+| **G2** regression | (embedded in `run-g004-pack-idx-roundtrip.sh`) | **PASS** | `verify/gates/g002-refs-index-roundtrip` `git_oracle` **9** |
+| **G10** regression | (embedded in `run-g004-pack-idx-roundtrip.sh`) | **PASS** | `verify/gates/g010-store-facade` `git_oracle` **7** |
+| **G1** regression | (embedded in `run-g004-pack-idx-roundtrip.sh`) | **PASS** | `arks-object` `g001-loose-object-interop_oracle` **5** + `verify/gates/g001-loose-object-interop` `git_oracle` **6** |
 | **gix-exit** | `cargo metadata` graph scan | **PASS** | zero packages/edges named `gix` / `gitoxide` |
 
 Combinatorics covered (automated): M4-C01…C14 per `verify/matrices/matrix-m4.md`. Deferred: M4-C15 delta encode / MIDX / `.rev`; M4-C16 remotes; M4-C17 CLI/G3; M4-C18 CELIR/lease.
@@ -67,8 +67,8 @@ Combinatorics covered (automated): M4-C01…C14 per `verify/matrices/matrix-m4.m
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g0
-docker compose -f verify/docker-compose.yml run --rm g4
+docker compose -f verify/docker-compose.yml run --rm g000-workspace-lib-tests
+docker compose -f verify/docker-compose.yml run --rm g004-pack-idx-roundtrip
 # optional standalone:
-docker compose -f verify/docker-compose.yml run --rm g5
+docker compose -f verify/docker-compose.yml run --rm g005-protocol-offline-fixtures
 ```

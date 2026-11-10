@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # G8 — live GitHub-class remote smoke: default-on when secrets present; honest SKIP when absent.
-# ADR: .spec/adr/20261110220000-g8-live-forge-default-on-when-secrets.adr.md
+# ADR: .spec/adr/20261110220000-g008-live-forge-smoke-live-forge-default-on-when-secrets.adr.md
 # (supersedes adr:root/20261110151000)
 set -euo pipefail
 
 # Portable root: clean-room image mounts the repo at /workspace; host/CI use
-# the script location (same pattern as run-g8-live-scale.sh).
+# the script location (same pattern as run-g008-live-scale.sh).
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "${ROOT}"
 
-mkdir -p verify/gates/g8/out
-RECEIPT="${ARKS_G8_RECEIPT_OUT:-${ROOT}/verify/gates/g8/out/receipt.json}"
+mkdir -p verify/gates/g008-live-forge-smoke/out
+RECEIPT="${ARKS_G8_RECEIPT_OUT:-${ROOT}/verify/gates/g008-live-forge-smoke/out/receipt.json}"
 REVISION="$(git -C "${ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"
@@ -22,7 +22,7 @@ write_receipt() {
 import json, os, sys
 out, disposition, detail, revision, stock_git, image_tag = sys.argv[1:7]
 receipt = {
-    "schema": "arks-g8-live-smoke/v1",
+    "schema": "arks-g008-live-forge-smoke-live-smoke/v1",
     "gate": "G8",
     "disposition": disposition,
     "detail": detail,
@@ -79,7 +79,7 @@ if [[ -z "${ARKS_BIN}" || ! -x "${ARKS_BIN}" ]]; then
 fi
 echo "G8: ARKS_BIN=${ARKS_BIN}"
 
-WORK="$(mktemp -d /tmp/arks-g8.XXXXXX)"
+WORK="$(mktemp -d /tmp/arks-g008-live-forge-smoke.XXXXXX)"
 trap 'rm -rf "$WORK"' EXIT
 
 # Scrub token from argv display; use header auth via URL rewrite for HTTPS.
@@ -99,15 +99,15 @@ CLONE_DIR="${WORK}/clone"
 echo "G8: clone throwaway peer (URL redacted)"
 "${ARKS_BIN}" clone "${AUTH_URL}" "${CLONE_DIR}"
 
-BRANCH="arks-g8-smoke-$(date +%s)"
+BRANCH="arks-g008-live-forge-smoke-smoke-$(date +%s)"
 cd "${CLONE_DIR}"
-export GIT_AUTHOR_NAME=arks-g8 GIT_AUTHOR_EMAIL=arks-g8@example.com
-export GIT_COMMITTER_NAME=arks-g8 GIT_COMMITTER_EMAIL=arks-g8@example.com
-git config user.name arks-g8
-git config user.email arks-g8@example.com
-echo "g8-smoke $(date -Iseconds)" > g8-smoke.txt
-"${ARKS_BIN}" add g8-smoke.txt
-"${ARKS_BIN}" commit -m "g8 smoke"
+export GIT_AUTHOR_NAME=arks-g008-live-forge-smoke GIT_AUTHOR_EMAIL=arks-g008-live-forge-smoke@example.com
+export GIT_COMMITTER_NAME=arks-g008-live-forge-smoke GIT_COMMITTER_EMAIL=arks-g008-live-forge-smoke@example.com
+git config user.name arks-g008-live-forge-smoke
+git config user.email arks-g008-live-forge-smoke@example.com
+echo "g008-live-forge-smoke-smoke $(date -Iseconds)" > g008-live-forge-smoke-smoke.txt
+"${ARKS_BIN}" add g008-live-forge-smoke-smoke.txt
+"${ARKS_BIN}" commit -m "g008-live-forge-smoke smoke"
 # arks push: no `-u`, no src:dst Claimed — named branch then push.
 "${ARKS_BIN}" branch "${BRANCH}"
 "${ARKS_BIN}" push origin "${BRANCH}"

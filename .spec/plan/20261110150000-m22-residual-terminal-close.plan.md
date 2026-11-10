@@ -4,7 +4,7 @@ title: M22 residual terminal close
 status: archived
 created: 2026-11-10T15:00:00Z
 updated: 2026-11-10T15:40:00Z
-tags: [milestone, m22, residual, terminal-close, g8, g19, pf5, server, l3, judgment]
+tags: [milestone, m22, residual, terminal-close, g008-live-forge-smoke, g019-comparative-performance, pf5, server, l3, judgment]
 rel:
   depends_on:
     - sot:root/program-roadmap

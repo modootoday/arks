@@ -4,7 +4,7 @@ title: M23 L3 HighConcurrency lease batch-apply ship
 status: archived
 created: 2026-11-09T19:42:08Z
 updated: 2026-11-09T19:50:00Z
-tags: [milestone, m23, l3, high-concurrency, lease, batch-apply, g11, clean-room]
+tags: [milestone, m23, l3, high-concurrency, lease, batch-apply, g011-lease-product, clean-room]
 rel:
   depends_on:
     - adr:root/20261109194200
@@ -70,7 +70,7 @@ Ship the **claimed L3 shape** locked by [[adr:root/20261109194200]]:
 | Wave | Focus | Done |
 |------|-------|------|
 | **Hc-0** | Design lock: ADR active + this plan + SoT/roadmap/residual | `spec check`; commit+push |
-| **Hc-1** | Induce bar: `verify/matrices/matrix-l3.md` (+ G11 expansion / stress harness); pathology vs resolved | Scripts + matrix; commit+push |
+| **Hc-1** | Induce bar: `verify/matrices/matrix-l003-high-concurrency.md` (+ G11 expansion / stress harness); pathology vs resolved | Scripts + matrix; commit+push |
 | **Hc-2** | Implement behind valve (pipeline + isolation); unit/advisory tests; refuse still on until unlock | Host tests advisory; commit+push |
 | **Hc-3** | Unlock claim: Docker dual-path green → remove refuse; evidence; honesty | Evidence id; residual Claimed; commit+push |
 | **Hc-exit** | Recount; L3 Claimed or hard-block ADR | Final push |
@@ -84,4 +84,4 @@ Ship the **claimed L3 shape** locked by [[adr:root/20261109194200]]:
 
 ## Status
 
-**Closed (Claimed)** — Hc-0 `126e9fa`; Hc-1 `e87e7c2`; Hc-2 `dd2712b`; Hc-3 unlock [[evidence:root/20261109194858]] (Docker g11l3 PASS; HighConcurrency opt-in accepted; shared-index N-way OUT).
+**Closed (Claimed)** — Hc-0 `126e9fa`; Hc-1 `e87e7c2`; Hc-2 `dd2712b`; Hc-3 unlock [[evidence:root/20261109194858]] (Docker g011-lease-productl3 PASS; HighConcurrency opt-in accepted; shared-index N-way OUT).

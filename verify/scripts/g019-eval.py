@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""G19 allow-list evaluator. Invoked by verify/scripts/run-g19.sh.
+"""G19 allow-list evaluator. Invoked by verify/scripts/run-g019-comparative-performance.sh.
 
 M17 / Pf3 regression bar: arks_median <= 0.8 * git_median (hard fail).
 M18 / Pf4 aggressive observability: also record <= 0.5 claim hits (does not
@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-# M17 / Pf3: full G16 catalog (verify/matrices/matrix-journey.md required IDs).
+# M17 / Pf3: full G16 catalog (verify/matrices/matrix-g016-journey-compare.md required IDs).
 allow = [
     "J-LOCAL-01",
     "J-BRANCH-01",
@@ -141,7 +141,7 @@ for jid in allow:
 
 run = data.get("run") or {}
 receipt = {
-    "schema": "arks-g19-perf-comparative/v1",
+    "schema": "arks-g019-comparative-performance-perf-comparative/v1",
     "venue": run.get("venue") or "clean-room",
     "wave": wave,
     "bar": f"arks_median <= {ratio_bar} * git_median",

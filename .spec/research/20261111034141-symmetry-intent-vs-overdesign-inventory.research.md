@@ -95,8 +95,8 @@ Not (1)(2)(3). Disposition relative to clarified intent.
 | `arks forge` → host `gh` | `crates/arks/src/cmd/forge.rs` | Claimed-closest thin-wrap; full forge Non-goal (`docs/git-vs-arks.md`) | **Candidate trim** (binary surface); docs may keep “use `gh`” |
 | `arks forge recipe` | same | G5 recipe deepen | **Candidate trim** |
 | Full forge Checks/PR/Issues/OAuth product | residual **FW-FORGE-B** | Impossible / Non-goal | **Keep as ops/CI-only** (absent) — do not Claim |
-| G8 / `g8-live` live forge **latency SLO as product** | `docs/forge-scale.md`; `g8-forge-scale.yml`; FW-GH-LIVE-SCALE | Harness Claimed; live PASS Blocked (secrets=0) | **Keep as ops/CI-only**; **Mis-labeled Claimed product** if sold as end-user feature |
-| G28 live-private journeys + harness `api.github.com` PR create | `verify/scripts/run-g28.sh` `J-PR-GH-01` | Functional Claimed ≠ Checks UX | **Keep as ops/CI-only** (verify peer); not CLI product |
+| G8 / `g008-live-forge-smoke-live` live forge **latency SLO as product** | `docs/forge-scale.md`; `g008-live-forge-smoke-forge-scale.yml`; FW-GH-LIVE-SCALE | Harness Claimed; live PASS Blocked (secrets=0) | **Keep as ops/CI-only**; **Mis-labeled Claimed product** if sold as end-user feature |
+| G28 live-private journeys + harness `api.github.com` PR create | `verify/scripts/run-g028-live-private-arks.sh` `J-PR-GH-01` | Functional Claimed ≠ Checks UX | **Keep as ops/CI-only** (verify peer); not CLI product |
 | OIDC Environments + `release.yml` as **product** | `docs/release.md`; public-surface L4 | Ops Done ≠ registry PASS; L9 owner | **Keep as ops/CI-only** |
 | Host CI `ci.yml` / CODEOWNERS / SECURITY Advisories | `.github/` | Repo hygiene | **Keep as ops/CI-only** |
 | Pages / docs theme hosting | `docs/_config.yml` | public-surface human lane | **Keep as ops/CI-only** |
@@ -121,8 +121,8 @@ Full detail: [[research:root/20261111033936]]. Short table:
 |------|-------|-------------------|
 | `arks forge` / recipe | `cmd/forge.rs` | In-design thin-wrap (tip SoT); **Candidate trim** under clarified triad |
 | No octocrab/Octokit in crates | Cargo graph | Absent — good |
-| G8 / g8-live / g8-forge-scale | `verify/` + `.github/workflows/` | Ops/harness — not product SLO |
-| G28 + `api.github.com` | `run-g28.sh` | Harness-only |
+| G8 / g008-live-forge-smoke-live / g008-live-forge-smoke-forge-scale | `verify/` + `.github/workflows/` | Ops/harness — not product SLO |
+| G28 + `api.github.com` | `run-g028-live-private-arks.sh` | Harness-only |
 | OIDC `release.yml` | `.github/workflows/release.yml` | Ops — not product |
 | `ci.yml` / CODEOWNERS / Pages | `.github/`, `docs/` | CI-only / docs host |
 | LFS `git-lfs.github.com/spec/v1` string | `arks-remote` LFS | Protocol cite — not forge API |

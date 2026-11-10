@@ -4,7 +4,7 @@ title: M24 G25 CELIR index scale clean-room
 status: active
 created: 2026-11-09T20:55:36Z
 updated: 2026-11-10T00:57:44Z
-tags: [m24, g25, celir, scale, clean-room, verified, contention, oom]
+tags: [m24, g025-celir-index-scale, celir, scale, clean-room, verified, contention, oom]
 rel:
   depends_on: [sot:root/celir-index-scale-clean-room, plan:root/20261109204934, evidence:root/20261109204428, sot:root/product-verification-clean-room, sot:root/celir-index-contention-clean-room]
 files:
@@ -17,8 +17,8 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G25** (`verify/scripts/run-g25.sh` / compose `g25`) |
-| Matrix | `verify/matrices/matrix-g25.md` |
+| Gate | **G25** (`verify/scripts/run-g025-celir-index-scale.sh` / compose `g025-celir-index-scale`) |
+| Matrix | `verify/matrices/matrix-g025-celir-index-scale.md` |
 | Required N | **256** PASS |
 | Stretch | **384** PASS; **512** PASS |
 | Stock git | `git version 2.39.5` |

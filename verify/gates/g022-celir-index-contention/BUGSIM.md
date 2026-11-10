@@ -16,5 +16,5 @@ Ultra-high concurrency against optional CELIR index dual-path (sidecar / rebuild
 
 ## Ops
 
-- Sole runner lock under `verify/gates/g22/.run.lock.dir` (do not overlap G17/G19).
+- Sole runner lock under `verify/gates/g022-celir-index-contention/.run.lock.dir` (do not overlap G17/G19).
 - Compose mounts `discrete-circuit` read-only beside `gir`.

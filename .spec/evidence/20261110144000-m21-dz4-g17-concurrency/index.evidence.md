@@ -4,7 +4,7 @@ title: M21 Dz-4 clean-room G17 Deferred=0 close
 status: active
 created: 2026-11-10T14:40:00Z
 updated: 2026-11-10T14:40:00Z
-tags: [g17, m21, dz-4, clean-room, concurrency, deferred-zero, verified]
+tags: [g017-concurrency-issue-compare, m21, dz-4, clean-room, concurrency, deferred-zero, verified]
 rel:
   depends_on: [plan:root/20261110140000, sot:root/program-roadmap, sot:root/interop-test-matrix, sot:root/multi-agent-git-concurrency-scenarios, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261110143000, research:root/20261110021546]
   evidence: []
@@ -22,8 +22,8 @@ Closes Wave **Dz-4** and **M21**: `CI-006`, `TOCTOU-004` + full regression (**14
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g17` |
-| Entrypoint | `verify/scripts/run-g17.sh` |
+| Compose | `verify/docker-compose.yml` service `g017-concurrency-issue-compare` |
+| Entrypoint | `verify/scripts/run-g017-concurrency-issue-compare.sh` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image digest | `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |

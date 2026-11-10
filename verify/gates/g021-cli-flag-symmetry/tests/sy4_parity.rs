@@ -1,5 +1,5 @@
 //! Gate G21 — M16 Sy-4 client SSH transport claim rows.
-//! Matrix: `verify/matrices/matrix-g21.md`. Fixture: `verify/gates/g21/README-ssh-fixture.md`.
+//! Matrix: `verify/matrices/matrix-g021-cli-flag-symmetry.md`. Fixture: `verify/gates/g021-cli-flag-symmetry/README-ssh-fixture.md`.
 //! Cite: git-clone / gitprotocol-pack 2.39.0; OpenSSH as transport helper.
 
 use serde_json::json;
@@ -23,7 +23,7 @@ fn record_row(id: &'static str, pass: bool) {
             "gate": "G21",
             "wave": "Sy-4",
             "pass": rows.iter().all(|(_, p)| *p),
-            "compose_service": "g21",
+            "compose_service": "g021-cli-flag-symmetry",
             "rows": rows.iter().map(|(i, p)| json!({"id": i, "pass": p})).collect::<Vec<_>>(),
         });
         if let Some(parent) = Path::new(&path).parent() {
@@ -417,7 +417,7 @@ fn m16_sy4_receipt_write() {
             "gate": "G21",
             "wave": "Sy-4",
             "pass": rows.iter().all(|(_, p)| *p) && rows.len() >= 2,
-            "compose_service": "g21",
+            "compose_service": "g021-cli-flag-symmetry",
             "rows": rows.iter().map(|(id, p)| json!({"id": id, "pass": p})).collect::<Vec<_>>(),
         });
         if let Some(parent) = Path::new(&path).parent() {

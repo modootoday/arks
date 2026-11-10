@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g41-cleanroom"
+name = "arks-g041-apache-dav-interop-cleanroom"
 description = "G41 clean-room Apache mod_dav dumb HTTP interop (O4)"
 version = "0.0.0"
 edition = "2024"

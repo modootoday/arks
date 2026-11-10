@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G26 — local branch + synthetic PR-env clean-room (stream B).
-# SoT: local-branch-pr-sim-clean-room; matrix: verify/matrices/matrix-g26.md
+# SoT: local-branch-pr-sim-clean-room; matrix: verify/matrices/matrix-g026-local-branch-pr-sim.md
 # Honesty: local sim ≠ GitHub PR throughput. Sole-runner vs heavy gates.
 set -euo pipefail
 
@@ -11,11 +11,11 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/gates/g26/out
-G26_LOCK="verify/gates/g26/.run.lock.dir"
+mkdir -p verify/gates/g026-local-branch-pr-sim/out
+G26_LOCK="verify/gates/g026-local-branch-pr-sim/.run.lock.dir"
 
 # Refuse overlap with other heavy clean-room runners (OOM lesson).
-for other in g17 g19 g22 g23 g24 g25 g27; do
+for other in g017-concurrency-issue-compare g019-comparative-performance g022-celir-index-contention g023-celir-dual-path g024-l3-celir-joint g025-celir-index-scale g027-smart-http-pr-contention; do
   if [[ -d "verify/${other}/.run.lock.dir" ]]; then
     echo "G26: heavy gate ${other} holds verify/${other}/.run.lock.dir — refuse overlap" >&2
     exit 75
@@ -58,11 +58,11 @@ if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*
   exit 1
 fi
 
-export ARKS_G26_RECEIPT_OUT="${ARKS_G26_RECEIPT_OUT:-$ROOT/verify/gates/g26/out/receipt.json}"
-export ARKS_G26_SCALE_OUT="${ARKS_G26_SCALE_OUT:-$ROOT/verify/gates/g26/out/scale.json}"
+export ARKS_G26_RECEIPT_OUT="${ARKS_G26_RECEIPT_OUT:-$ROOT/verify/gates/g026-local-branch-pr-sim/out/receipt.json}"
+export ARKS_G26_SCALE_OUT="${ARKS_G26_SCALE_OUT:-$ROOT/verify/gates/g026-local-branch-pr-sim/out/scale.json}"
 
-echo "G26: branch/PR sim suite (arks-lease --test g26_branch_pr_sim)"
-cargo test -p arks-lease --test g26_branch_pr_sim -- --nocapture "$@"
+echo "G26: branch/PR sim suite (arks-lease --test g026-local-branch-pr-sim_branch_pr_sim)"
+cargo test -p arks-lease --test g026-local-branch-pr-sim_branch_pr_sim -- --nocapture "$@"
 
 # Documented actual N (tests pin these minima).
 export ARKS_G26_N_BRANCHES="${ARKS_G26_N_BRANCHES:-2048}"

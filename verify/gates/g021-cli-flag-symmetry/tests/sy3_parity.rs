@@ -1,5 +1,5 @@
 //! Gate G21 — M16 Sy-3 plumbing breadth claim rows.
-//! Matrix: `verify/matrices/matrix-g21.md`. Cite: git-show-ref / git-pack-objects / git-index-pack 2.39.0.
+//! Matrix: `verify/matrices/matrix-g021-cli-flag-symmetry.md`. Cite: git-show-ref / git-pack-objects / git-index-pack 2.39.0.
 
 use std::fs;
 use std::io::Write;

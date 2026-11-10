@@ -1,5 +1,5 @@
 //! Gate G16 — git vs arks user-journey compare (func + timing).
-//! Matrix: `verify/matrices/matrix-journey.md`. SoT: clean-room-journey-compare v0.3.0.
+//! Matrix: `verify/matrices/matrix-g016-journey-compare.md`. SoT: clean-room-journey-compare v0.3.0.
 
 use std::fs;
 use std::io::Read;
@@ -399,7 +399,7 @@ fn write_bulk_files_salted(repo: &Path, dir: &str, n: usize, salt: &str) {
     let bulk = repo.join(dir);
     fs::create_dir_all(&bulk).unwrap();
     for i in 0..n {
-        let body = format!("arks-g16-bulk-{salt}-{i}\n").repeat(BULK_BODY_REPEAT);
+        let body = format!("arks-g016-journey-compare-bulk-{salt}-{i}\n").repeat(BULK_BODY_REPEAT);
         fs::write(bulk.join(format!("f{i:03}.txt")), body).unwrap();
     }
 }
@@ -997,7 +997,7 @@ fn run_diff_journey(peer: &str, bin: &Path, root: &Path) -> LaneResult {
     let bulk = repo.join("bulk");
     fs::create_dir_all(&bulk).unwrap();
     for i in 0..DIFF_DIRTY_FILES {
-        let body = format!("arks-g16-bulk-dirty-{i}\n").repeat(DIFF_BODY_REPEAT);
+        let body = format!("arks-g016-journey-compare-bulk-dirty-{i}\n").repeat(DIFF_BODY_REPEAT);
         fs::write(bulk.join(format!("f{i:03}.txt")), body).unwrap();
     }
     let mut steps = Vec::new();
@@ -1082,7 +1082,7 @@ fn run_archive_journey(peer: &str, bin: &Path, root: &Path) -> LaneResult {
     let bulk = repo.join("bulk");
     fs::create_dir_all(&bulk).unwrap();
     for i in 0..ARCHIVE_BULK_FILES {
-        let body = format!("arks-g16-bulk-archive-{i}\n").repeat(ARCHIVE_BODY_REPEAT);
+        let body = format!("arks-g016-journey-compare-bulk-archive-{i}\n").repeat(ARCHIVE_BODY_REPEAT);
         fs::write(bulk.join(format!("f{i:03}.txt")), body).unwrap();
     }
     assert_peer_ok(peer, bin, None, &repo, &["add", "-A"]);
@@ -1787,13 +1787,13 @@ fn seed_bare_repo_sized(
         .args(["config", "user.name", "arks"])
         .current_dir(&work)
         .output();
-    fs::write(work.join("README"), b"hello arks g16\n").unwrap();
+    fs::write(work.join("README"), b"hello arks g016-journey-compare\n").unwrap();
     if extra_files > 0 {
         let bulk = work.join("bulk");
         fs::create_dir_all(&bulk).unwrap();
         // Larger bodies so clone object transfer can dominate spawn.
         for i in 0..extra_files {
-            let body = format!("arks g16 bulk {i}\n").repeat(body_repeat);
+            let body = format!("arks g016-journey-compare bulk {i}\n").repeat(body_repeat);
             fs::write(bulk.join(format!("f{i:03}.txt")), body).unwrap();
         }
     }
@@ -1823,7 +1823,7 @@ fn seed_bare_repo_sized(
         for c in 0..extra_commits {
             fs::write(
                 work.join("README"),
-                format!("hello arks g16\nwave-{c}\n"),
+                format!("hello arks g016-journey-compare\nwave-{c}\n"),
             )
             .unwrap();
             let mut add2 = Command::new("git");

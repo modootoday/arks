@@ -27,7 +27,7 @@ Unlocks `WriterMode::HighConcurrency` for the **claimed shape** locked by [[adr:
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |
 | Result | **PASS** |
-| Suite | `cargo test -p arks-lease` (10 tests incl. N=32 + N=128 shard storm + lock-additive) + `verify/gates/g11` regress |
+| Suite | `cargo test -p arks-lease` (10 tests incl. N=32 + N=128 shard storm + lock-additive) + `verify/gates/g011-lease-product` regress |
 | gix / celir | zero edges (metadata scan) |
 | Tip at unlock | Hc-3 unlock commit on `origin/main` (after `dd2712b`); post-unlock Docker g11l3 revalidated PASS |
 

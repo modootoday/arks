@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # G23 — CELIR dual-path Git verified clean-room (M24 successor).
-# SoT: celir-dual-path-git-verified; ADR: 20261109204916; matrix: verify/matrices/matrix-g23.md
+# SoT: celir-dual-path-git-verified; ADR: 20261109204916; matrix: verify/matrices/matrix-g023-celir-dual-path.md
 set -euo pipefail
 
 ROOT="${ARKS_G23_ROOT:-/workspaces/gir}"
 cd "$ROOT"
 
-mkdir -p verify/gates/g23
-G23_LOCK="verify/gates/g23/.run.lock.dir"
+mkdir -p verify/gates/g023-celir-dual-path
+G23_LOCK="verify/gates/g023-celir-dual-path/.run.lock.dir"
 if ! mkdir "$G23_LOCK" 2>/dev/null; then
   if [[ -f "$G23_LOCK/owner" ]]; then
     age=$(( $(date +%s) - $(stat -c %Y "$G23_LOCK/owner" 2>/dev/null || echo 0) ))
@@ -63,12 +63,12 @@ fi
 export ARKS_BIN
 echo "G23: ARKS_BIN=$ARKS_BIN"
 
-mkdir -p verify/gates/g23/out
-export ARKS_G23_RECEIPT_OUT="${ARKS_G23_RECEIPT_OUT:-$ROOT/verify/gates/g23/out/receipt.json}"
+mkdir -p verify/gates/g023-celir-dual-path/out
+export ARKS_G23_RECEIPT_OUT="${ARKS_G23_RECEIPT_OUT:-$ROOT/verify/gates/g023-celir-dual-path/out/receipt.json}"
 export ARKS_G23_DC_ROOT="$DC_ROOT"
 
 echo "G23: dual-path suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g23_dual_path_git "$@"
+cargo test -p arks-lease --features celir-index-stress --test g023-celir-dual-path_dual_path_git "$@"
 
 echo "G23: writing receipt $ARKS_G23_RECEIPT_OUT"
 python3 - <<'PY'

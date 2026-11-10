@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # G22 — CELIR index contention clean-room (M24).
-# SoT: celir-index-contention-clean-room; matrix: verify/matrices/matrix-g22.md
-# discrete-circuit MUST be mounted as sibling of gir (see compose service g22).
+# SoT: celir-index-contention-clean-room; matrix: verify/matrices/matrix-g022-celir-index-contention.md
+# discrete-circuit MUST be mounted as sibling of gir (see compose service g022-celir-index-contention).
 set -euo pipefail
 
 # Compose sets working_dir=/workspaces/gir for path-dep layout.
@@ -9,8 +9,8 @@ ROOT="${ARKS_G22_ROOT:-/workspaces/gir}"
 cd "$ROOT"
 
 # Exclusive lock: do not overlap heavy G17/G19 (OOM lesson).
-mkdir -p verify/gates/g22
-G22_LOCK="verify/gates/g22/.run.lock.dir"
+mkdir -p verify/gates/g022-celir-index-contention
+G22_LOCK="verify/gates/g022-celir-index-contention/.run.lock.dir"
 if ! mkdir "$G22_LOCK" 2>/dev/null; then
   if [[ -f "$G22_LOCK/owner" ]]; then
     age=$(( $(date +%s) - $(stat -c %Y "$G22_LOCK/owner" 2>/dev/null || echo 0) ))
@@ -65,12 +65,12 @@ if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*
   exit 1
 fi
 
-mkdir -p verify/gates/g22/out
-export ARKS_G22_RECEIPT_OUT="${ARKS_G22_RECEIPT_OUT:-$ROOT/verify/gates/g22/out/receipt.json}"
+mkdir -p verify/gates/g022-celir-index-contention/out
+export ARKS_G22_RECEIPT_OUT="${ARKS_G22_RECEIPT_OUT:-$ROOT/verify/gates/g022-celir-index-contention/out/receipt.json}"
 export ARKS_G22_DC_ROOT="$DC_ROOT"
 
 echo "G22: stress suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g22_index_contention "$@"
+cargo test -p arks-lease --features celir-index-stress --test g022-celir-index-contention_index_contention "$@"
 
 echo "G22: arks-store feature-on regress"
 cargo test -p arks-store --features celir-index "$@"

@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g31-cleanroom"
+name = "arks-g031-server-protocol-v2-cleanroom"
 description = "M25 clean-room G31 protocol v2 suite"
 version = "0.0.0"
 edition = "2024"

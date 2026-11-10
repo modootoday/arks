@@ -4,7 +4,7 @@ title: G26 local branch + synthetic PR-env clean-room
 status: active
 created: 2026-11-09T20:58:47Z
 updated: 2026-11-10T00:57:44Z
-tags: [g26, clean-room, branch, pr-sim, lease, verified, stream-b]
+tags: [g026-local-branch-pr-sim, clean-room, branch, pr-sim, lease, verified, stream-b]
 rel:
   depends_on: [sot:root/local-branch-pr-sim-clean-room, plan:root/20261109205507, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/lease-concurrency-intent, sot:root/program-roadmap, sot:root/production-residual-register]
 files:
@@ -17,8 +17,8 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G26** (`verify/scripts/run-g26.sh` / compose `g26`) |
-| Matrix | `verify/matrices/matrix-g26.md` |
+| Gate | **G26** (`verify/scripts/run-g026-local-branch-pr-sim.sh` / compose `g026-local-branch-pr-sim`) |
+| Matrix | `verify/matrices/matrix-g026-local-branch-pr-sim.md` |
 | Stream | **B** (umbrella A∧B; A Claimed at `fa78685`) |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |
@@ -30,7 +30,7 @@ files:
 
 | Step | Result |
 |------|--------|
-| `cargo test -p arks-lease --test g26_branch_pr_sim` | 5/5 PASS |
+| `cargo test -p arks-lease --test g026-local-branch-pr-sim_branch_pr_sim` | 5/5 PASS |
 | Sole-runner lock | held |
 | Heavy-gate overlap refuse | OK (no G17/G19/G22–G25 lock) |
 

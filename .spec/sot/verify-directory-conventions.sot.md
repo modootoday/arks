@@ -34,7 +34,7 @@ rel:
 
 # Verify directory conventions and consistency
 
-Document revision **0.6.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for how the product clean-room tree under `verify/` is laid out, named, and extended — including **internal folder naming** (0.2.0), **filename naming** (0.3.0), **numeric notation** (0.4.0 wrote unpadded G-series; **0.5.0** required three-digit `gNNN` + contextual kebab; **this revision** extends the **same width class** to live opaque ladder/milestone series **`mNNN` / `lNNN` / `sNNN`** found under `verify/matrices/`, `verify/scripts/`, and `verify/fixtures/`). Complements [[sot:root/product-verification-clean-room]] (authority) and [[sot:root/structural-conventions]] §7 (grouped overlay). Survey pain: [[research:root/20261111082440]]. Live inventory (tip ≥ `c1f7226` dirty Migration): gates already `gNNN-<kebab>` / `fsNNN-*-advisory`; residual opaque names were `matrix-mN.md`, `matrix-l3.md`, `matrix-l8-e2e.md`, `matrix-s6-symmetry.md`, `run-l8-e2e.sh`, `run-s6-symmetry.sh`, `fixtures/m1/`.
+Document revision **0.6.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for how the product clean-room tree under `verify/` is laid out, named, and extended — including **internal folder naming** (0.2.0), **filename naming** (0.3.0), **numeric notation** (0.4.0 wrote unpadded G-series; **0.5.0** required three-digit `gNNN` + contextual kebab; **this revision** extends the **same width class** to live opaque ladder/milestone series **`mNNN` / `lNNN` / `sNNN`** found under `verify/matrices/`, `verify/scripts/`, and `verify/fixtures/`). Complements [[sot:root/product-verification-clean-room]] (authority) and [[sot:root/structural-conventions]] §7 (grouped overlay). Survey pain: [[research:root/20261111082440]]. Live inventory (tip ≥ `c1f7226` dirty Migration): gates already `gNNN-<kebab>` / `fsNNN-*-advisory`; residual opaque names were `matrix-mN.md`, `matrix-l003-high-concurrency.md`, `matrix-l008-product-completion-e2e.md`, `matrix-s006-symmetry-e2e.md`, `run-l008-product-completion-e2e.sh`, `run-s006-symmetry-e2e.sh`, `fixtures/m001-clean-room-g0-g1/`.
 
 **Honesty:** This SoT is **ops/harness convention** — **not** product Claimed. Scaffold / SKIP greens **MUST NOT** invent PASS/Claimed. English-only Specfold ([[sot:root/language-english-only]]). Document revision ≠ crates.io / `v*` product release.
 
@@ -284,10 +284,10 @@ Normative **digit width / zero-padding** for ids that appear in gate folders, co
 | G-series contextual / variants | live `gN-<kebab>` unpadded | Same three-digit `NNN` + `-<kebab-context>` | live `g8-live-scale` → `g008-live-scale`; new e.g. `g032-git-daemon-wire` |
 | Legacy jammed G-token | `g11l3` | Prefer hyphen + later `g011-…` | `g11-l3` migrated; pad/context backlog — Appendix A / C |
 | Host-advisory FS slots | `fs` + **three-digit** + `-<kebab>-advisory` | Fixed width **3**, zero-pad (**unchanged**) | `fs007-host-advisory`, `fs014-lsm-advisory` |
-| Milestone M-series (matrices + fixture dirs) | live unpadded `matrix-mN.md`, `fixtures/m1/` | Fixed width **3** + kebab (`mNNN-<kebab-context>`) | `matrix-m1.md` → `matrix-m001-clean-room-g0-g1.md`; `fixtures/m1/` → `fixtures/m001-clean-room-g0-g1/` |
+| Milestone M-series (matrices + fixture dirs) | live unpadded `matrix-mN.md`, `fixtures/m001-clean-room-g0-g1/` | Fixed width **3** + kebab (`mNNN-<kebab-context>`) | `matrix-m001-clean-room-g0-g1.md` → `matrix-m001-clean-room-g0-g1.md`; `fixtures/m001-clean-room-g0-g1/` → `fixtures/m001-clean-room-g0-g1/` |
 | Gate claim matrices | live `matrix-gNNN-<kebab>.md` (post G Migration) | Mirror gate id | `matrix-g019-comparative-performance.md` |
-| Ladder L-series | live `matrix-l3.md`, `matrix-l8-e2e.md`, `run-l8-e2e.sh` | Fixed width **3** + kebab (`lNNN-<kebab-context>`) | `l003-high-concurrency`, `l008-product-completion-e2e` |
-| Ladder S-series | live `matrix-s6-symmetry.md`, `run-s6-symmetry.sh` | Fixed width **3** + kebab (`sNNN-<kebab-context>`) | `s006-symmetry-e2e` |
+| Ladder L-series | live `matrix-l003-high-concurrency.md`, `matrix-l008-product-completion-e2e.md`, `run-l008-product-completion-e2e.sh` | Fixed width **3** + kebab (`lNNN-<kebab-context>`) | `l003-high-concurrency`, `l008-product-completion-e2e` |
+| Ladder S-series | live `matrix-s006-symmetry-e2e.md`, `run-s006-symmetry-e2e.sh` | Fixed width **3** + kebab (`sNNN-<kebab-context>`) | `s006-symmetry-e2e` |
 | Compose services | Same token as gate / DoD / FS / ladder id | Inherit family pad rule | `g011-lease-product`, `fs007-host-advisory`, `dod-claimed-tls`, `l008-…`, `s006-…` |
 | Specfold evidence dirs | `YYYYMMDDHHmmss-<kebab>` | **14-digit** compact UTC timestamp, then kebab | `20261110231959-claimed-agent-llm` |
 | DoD / Claimed residual | `dod-<concern>` / `dod-claimed-<concern>` | **No** series number pad (kebab concerns) | `dod-symmetry`, `dod-claimed-ssh` |
@@ -360,9 +360,9 @@ Live inventory found three opaque single-letter series **outside** `gates/` (mat
 
 | Series | Purpose | Normative id | Live → Migration examples |
 |--------|---------|--------------|---------------------------|
-| **M** | Roadmap milestone claim matrices + shared fixture buckets | `mNNN-<kebab-context>` | `matrix-m1.md` → `matrix-m001-clean-room-g0-g1.md`; `fixtures/m1/` → `fixtures/m001-clean-room-g0-g1/` |
-| **L** | Product-completion / concurrency **ladder suite** matrices + orchestrator scripts | `lNNN-<kebab-context>` | `matrix-l3.md` → `matrix-l003-high-concurrency.md`; `matrix-l8-e2e.md` / `run-l8-e2e.sh` → `…-l008-product-completion-e2e…` |
-| **S** | Symmetry **ladder suite** matrices + orchestrator scripts | `sNNN-<kebab-context>` | `matrix-s6-symmetry.md` / `run-s6-symmetry.sh` → `…-s006-symmetry-e2e…` |
+| **M** | Roadmap milestone claim matrices + shared fixture buckets | `mNNN-<kebab-context>` | `matrix-m001-clean-room-g0-g1.md` → `matrix-m001-clean-room-g0-g1.md`; `fixtures/m001-clean-room-g0-g1/` → `fixtures/m001-clean-room-g0-g1/` |
+| **L** | Product-completion / concurrency **ladder suite** matrices + orchestrator scripts | `lNNN-<kebab-context>` | `matrix-l003-high-concurrency.md` → `matrix-l003-high-concurrency.md`; `matrix-l008-product-completion-e2e.md` / `run-l008-product-completion-e2e.sh` → `…-l008-product-completion-e2e…` |
+| **S** | Symmetry **ladder suite** matrices + orchestrator scripts | `sNNN-<kebab-context>` | `matrix-s006-symmetry-e2e.md` / `run-s006-symmetry-e2e.sh` → `…-s006-symmetry-e2e…` |
 
 **MUST:**
 
@@ -373,7 +373,7 @@ Live inventory found three opaque single-letter series **outside** `gates/` (mat
 
 **MUST NOT:** mix unpadded and padded spellings for the same logical milestone/ladder slot; create empty `gates/mNNN-*` / `gates/lNNN-*` scaffolds solely for naming symmetry (matrices/scripts remain the home unless an oracle crate is needed).
 
-**Journey matrix:** prefer `matrix-g016-journey-compare.md` (align with gate `g016-journey-compare`) over opaque `matrix-journey.md`.
+**Journey matrix:** prefer `matrix-g016-journey-compare.md` (align with gate `g016-journey-compare`) over opaque `matrix-g016-journey-compare.md`.
 
 #### 2b.6 Evidence timestamps
 
@@ -440,7 +440,7 @@ Advancing the Git pin remains [[sot:root/clean-room-git-pin-advance]]. Latest-in
 
 | Artifact | Placement | Owning SoT (examples) |
 |----------|-----------|------------------------|
-| Milestone / gate claim matrices | `verify/matrices/matrix-m*.md`, `matrix-g*.md`, `matrix-journey.md`, … | Gate / milestone SoTs |
+| Milestone / gate claim matrices | `verify/matrices/matrix-m*.md`, `matrix-g*.md`, `matrix-g016-journey-compare.md`, … | Gate / milestone SoTs |
 | Living symmetry CSVs | `verify/matrices/*-matrix.csv` (cli / daemon / hub status ledgers) | Pillar SoTs + [[sot:root/verify-cleanroom-symmetry-matrix]] |
 | Hub design leaf CSV | `.spec/sot/arks-hub-gh-command-matrix.csv` (design inventory) | [[sot:root/arks-hub-gh-command-matrix]] — living status still under `verify/matrices/` |
 | Per-gate oracle code | `verify/gates/<id>/` | Gate SoT / plan; **not** under `matrices/` |
@@ -501,7 +501,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | From | To | Notes |
 |------|----|-------|
-| `verify/gates/g11l3/` | `verify/gates/g11-l3/` | **Done** — compose / `run-g11-l3.sh` / `matrix-l3.md` / matrix drivers updated; historical evidence blobs **not** rewritten |
+| `verify/gates/g11l3/` | `verify/gates/g11-l3/` | **Done** — compose / `run-g11-l3.sh` / `matrix-l003-high-concurrency.md` / matrix drivers updated; historical evidence blobs **not** rewritten |
 | Bare / unpadded `gates/gN/` (+ matching compose / `run-*.sh` / matrices) | `gates/gNNN-<kebab-context>/` | **Backlog** — coordinate with verify-migration siblings; do not mass-rename in Spec-only waves; see Appendix C / D |
 | Unpadded variants `g8-live-scale`, `g8-local-forge`, `g28-offline-clones`, `g11-l3` | `g008-live-scale`, `g008-local-forge`, `g028-offline-clones`, `g011-l3` (or richer context slug) | **Backlog** — already hyphenated; only pad (+ optional richer slug) |
 | `fs*-advisory` | *(no change)* | Already three-digit compliant |
@@ -530,11 +530,11 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 | `verify/scripts/run-g11l3.sh` | `run-g11-l3.sh` | **Migrated** with Appendix A |
 | `verify/scripts/g19_eval.py` | `g19-eval.py` (or fold into `run-g19.sh` only) | **Migrated** — `run-g19.sh` / `run-g19-eval-only.sh` updated |
 | `verify/fixtures/openai_compat_fixture.py` | `openai-compat-fixture.py` | **Migrated on disk** — B4 WIP callers updated; fixture may remain untracked until B4 lands |
-| `verify/matrices/matrix-l3.md` | `matrix-l003-high-concurrency.md` | **Migration** — L-series pad + context (§2b.5a); gate remains `g011-high-concurrency` |
-| `verify/matrices/matrix-l8-e2e.md` / `run-l8-e2e.sh` | `matrix-l008-product-completion-e2e.md` / `run-l008-product-completion-e2e.sh` | **Migration** — L-series |
-| `verify/matrices/matrix-s6-symmetry.md` / `run-s6-symmetry.sh` | `matrix-s006-symmetry-e2e.md` / `run-s006-symmetry-e2e.sh` | **Migration** — S-series |
-| `verify/matrices/matrix-mN.md` / `fixtures/m1/` | `matrix-mNNN-<kebab>.md` / `fixtures/mNNN-<kebab>/` | **Migration** — M-series |
-| `verify/matrices/matrix-journey.md` | `matrix-g016-journey-compare.md` | **Migration** — align with gate id |
+| `verify/matrices/matrix-l003-high-concurrency.md` | `matrix-l003-high-concurrency.md` | **Migration** — L-series pad + context (§2b.5a); gate remains `g011-high-concurrency` |
+| `verify/matrices/matrix-l008-product-completion-e2e.md` / `run-l008-product-completion-e2e.sh` | `matrix-l008-product-completion-e2e.md` / `run-l008-product-completion-e2e.sh` | **Migration** — L-series |
+| `verify/matrices/matrix-s006-symmetry-e2e.md` / `run-s006-symmetry-e2e.sh` | `matrix-s006-symmetry-e2e.md` / `run-s006-symmetry-e2e.sh` | **Migration** — S-series |
+| `verify/matrices/matrix-mN.md` / `fixtures/m001-clean-room-g0-g1/` | `matrix-mNNN-<kebab>.md` / `fixtures/mNNN-<kebab>/` | **Migration** — M-series |
+| `verify/matrices/matrix-g016-journey-compare.md` | `matrix-g016-journey-compare.md` | **Migration** — align with gate id |
 | `verify/scripts/probe-*.sh` | Keep as non-`run-` helpers | **Keep** — not compose primary judges |
 | `gates/g41/seed.sh` | Keep short colocated name | **Keep** — §1c / Appendix A |
 | Ephemeral `out/**/receipt-<sha>.json`, `metrics-debug.json`, `receipt-fail1.json`, … | Prefer overwrite stable `receipt.json` / `metrics.json`; keep sha dumps local-only | **Keep pattern for debug**; do not promote to Claimed citations |
@@ -574,7 +574,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 | Unpadded bare `g0`…`g41` (dirs, compose, `run-gN.sh`, many `matrix-gN.md`) | `gNNN-<kebab-context>` | **Grandfathered** — Migration backlog |
 | Unpadded variants `g8-live-scale`, `g8-local-forge`, `g28-offline-clones`, `g11-l3` | `g008-live-scale`, `g008-local-forge`, `g028-offline-clones`, `g011-l3` (optional richer slug) | **Grandfathered** |
 | `g11l3` (historical) | `g11-l3` then `g011-l3` / `g011-high-concurrency` | Hyphen **Migrated**; pad/context backlog |
-| `matrix-l3.md` / L8 / S6 milestone labels | Keep alias **or** align after contextual Migration | **Advisory** — Appendix B |
+| `matrix-l003-high-concurrency.md` / L8 / S6 milestone labels | Keep alias **or** align after contextual Migration | **Advisory** — Appendix B |
 | Evidence dirs citing live unpadded gate tokens (`…-g11`, `…-g19`) | Keep historical basenames | **Do not** rewrite solely for pad |
 | `fs007` / `fs014` | Keep three-digit | **Compliant** |
 

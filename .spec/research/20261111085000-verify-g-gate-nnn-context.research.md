@@ -21,8 +21,8 @@ Dated survey feeding [[sot:root/verify-directory-conventions]] **0.5.0**. **Does
 
 ## Problem
 
-1. Opaque bare ids (`g11`, `g19`, `g41`) do not convey concern when browsing `verify/gates/`.
-2. Unpadded `g1`…`g10`…`g2` sort wrongly in GitHub UI / lexicographic listings (`g1`, `g10`, `g11`, `g2`, …).
+1. Opaque bare ids (`g011-lease-product`, `g019-comparative-performance`, `g041-apache-dav-interop`) do not convey concern when browsing `verify/gates/`.
+2. Unpadded `g001-loose-object-interop`…`g010-store-facade`…`g002-refs-index-roundtrip` sort wrongly in GitHub UI / lexicographic listings (`g001-loose-object-interop`, `g010-store-facade`, `g011-lease-product`, `g002-refs-index-roundtrip`, …).
 3. Revision 0.4.0 forbade G-series zero-pad; interim two-digit `gNN` guidance also insufficient vs `fsNNN`.
 
 ## Normative direction (SoT)
@@ -36,16 +36,16 @@ Dated survey feeding [[sot:root/verify-directory-conventions]] **0.5.0**. **Does
 
 | Live | Proposed |
 |------|----------|
-| `g1` | `g001-loose-object-interop` |
-| `g11` | `g011-lease-product` |
-| `g15` | `g015-smart-http` |
-| `g19` | `g019-comparative-performance` |
-| `g32` | `g032-git-daemon-wire` |
-| `g33` | `g033-cred-askpass` |
-| `g41` | `g041-apache-dav-interop` |
-| `g8-live-scale` | `g008-live-scale` |
-| `g28-offline-clones` | `g028-offline-clones` |
-| `g11-l3` | `g011-l3` |
+| `g001-loose-object-interop` | `g001-loose-object-interop` |
+| `g011-lease-product` | `g011-lease-product` |
+| `g015-smart-http` | `g015-smart-http` |
+| `g019-comparative-performance` | `g019-comparative-performance` |
+| `g032-git-daemon-wire` | `g032-git-daemon-wire` |
+| `g033-cred-askpass` | `g033-cred-askpass` |
+| `g041-apache-dav-interop` | `g041-apache-dav-interop` |
+| `g008-live-scale` | `g008-live-scale` |
+| `g028-offline-clones` | `g028-offline-clones` |
+| `g011-high-concurrency` | `g011-l3` |
 
 Full table: SoT Appendix D. Coordinate with verify-migration siblings; Spec-only waves amend SoT only.
 

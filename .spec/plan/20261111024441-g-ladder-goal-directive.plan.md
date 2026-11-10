@@ -43,7 +43,7 @@ Execute **G1 → G_final** to the end: Specfold amend → code → evidence → 
 4. **Halt OOM.** If Docker sole-runner OOM or host memory pressure threatens the machine, **stop** the heavy gate, file evidence of halt, keep tip honesty, do not thrash retries.
 5. **Exactly one sole G19 for G7.** After a justified PATH/`exec` product cut, run **one** sole Docker G19. PASS ≤0.5× **or** retain honest `aggressive_na`. No second remasure after FAIL. No concurrent G19.
 6. **L9.** Refresh reopen pack only. Agents MUST NOT flip `publish = true`, bind tokens, or run live `cargo publish` without owner SoT reopen.
-7. **G1 Live G8.** If Environment `g8-live` secrets `total_count < 2`, refresh Blocked evidence and continue. Never invent latency medians.
+7. **G1 Live G8.** If Environment `g008-live-forge-smoke-live` secrets `total_count < 2`, refresh Blocked evidence and continue. Never invent latency medians.
 8. **English only** for authored Specfold/docs/commit prose.
 9. **No CELIR ObjectStore reverse; no `gix`; no GUI/scalar embed; no blanket “faster than Git.”**
 

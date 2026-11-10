@@ -4,7 +4,7 @@ title: M24 G22 CELIR index contention clean-room
 status: active
 created: 2026-11-09T20:39:49Z
 updated: 2026-11-09T20:45:00Z
-tags: [m24, g22, celir, indexing-service, clean-room, contention, dual-path]
+tags: [m24, g022-celir-index-contention, celir, indexing-service, clean-room, contention, dual-path]
 rel:
   depends_on:
     - sot:root/celir-index-contention-clean-room
@@ -33,7 +33,7 @@ Owning SoT: [[sot:root/celir-index-contention-clean-room]]. Unit companion: [[so
 
 | Disposition | Meaning |
 |-------------|---------|
-| **Verified (this gate)** | Docker compose `g22` PASS + evidence receipt; N≥32 and N=128 tiers green; stock-Git readable; fail-closed; no torn Present; ObjectStore Refuse held |
+| **Verified (this gate)** | Docker compose `g022-celir-index-contention` PASS + evidence receipt; N≥32 and N=128 tiers green; stock-Git readable; fail-closed; no torn Present; ObjectStore Refuse held |
 | **FAIL / blocked** | Missing discrete-circuit mount/packages, OOM/sole-runner conflict, or assertion failure — **no fake PASS** |
 | **Out** | G11-L3 shared-index N-way; CELIR-backed Git verified; default-on feature |
 
@@ -53,8 +53,8 @@ Owning SoT: [[sot:root/celir-index-contention-clean-room]]. Unit companion: [[so
 | Wave | Work | Exit |
 |------|------|------|
 | **G22-0** | SoT + plan + matrix + interop row; raise dual-path verification bar | Docs; `spec check` |
-| **G22-1** | Harness (`run-g22.sh`, compose `g22`, stress tests, discrete-circuit mount) | Code ready |
-| **G22-exit** | Docker `g22` PASS; evidence; residual/roadmap honesty; commit+push | Verified |
+| **G22-1** | Harness (`run-g022-celir-index-contention.sh`, compose `g022-celir-index-contention`, stress tests, discrete-circuit mount) | Code ready |
+| **G22-exit** | Docker `g022-celir-index-contention` PASS; evidence; residual/roadmap honesty; commit+push | Verified |
 
 ## Out of scope
 
@@ -68,4 +68,4 @@ Owning SoT: [[sot:root/celir-index-contention-clean-room]]. Unit companion: [[so
 |------|--------|----------------|
 | G22-0 | Closed | SoT + matrix + interop |
 | G22-1 | Closed | harness + discrete-circuit mount |
-| G22-exit | Closed (Verified) | [[evidence:root/20261109204428]]; Docker `g22` PASS N=32/128 |
+| G22-exit | Closed (Verified) | [[evidence:root/20261109204428]]; Docker `g022-celir-index-contention` PASS N=32/128 |

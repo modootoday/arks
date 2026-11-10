@@ -4,7 +4,7 @@ title: G19 sole-runner remasure at tip 875359e — PF5 Claimed 8/8 (CLONE-LOCAL 
 status: active
 created: 2026-11-10T04:16:00Z
 updated: 2026-11-10T10:03:17Z
-tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local, pf5-8of8]
+tags: [g019-comparative-performance, g016-journey-compare, pf5, clean-room, perf, journey-compare, verified, clone-local, pf5-8of8]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261111001400, evidence:root/20261110113900]
   evidence: []
@@ -18,20 +18,20 @@ files:
 
 ## Context
 
-Authoritative sole Docker remasure (`--name sole-rm-875359e`, stealth name — sibling kill-storms were matching `arks-pf5-*` / `*g19*`) measured tip `875359e` (rustfmt on upload-pack reuse; product land `668642a`: on-disk pack reuse in upload-pack + long-lived `arks serve-http` peer for J-CLONE-LOCAL). Clean complete (G19 PASS; exit 0). Cites [[sot:root/pf5-journey-seed-amortization]] — residual **FW-PF5-J-CLONE-LOCAL** flipped. **J-CLONE-LOCAL-01** ≤0.5× **PASS** at ratio **0.1875**. **J-CLONE-PATH-01** ≤0.5× **PASS** at **0.2424**. Pf5 aggressive: claimed=19, miss=[], aggressive_na=[].
+Authoritative sole Docker remasure (`--name sole-rm-875359e`, stealth name — sibling kill-storms were matching `arks-pf5-*` / `*g019-comparative-performance*`) measured tip `875359e` (rustfmt on upload-pack reuse; product land `668642a`: on-disk pack reuse in upload-pack + long-lived `arks serve-http` peer for J-CLONE-LOCAL). Clean complete (G19 PASS; exit 0). Cites [[sot:root/pf5-journey-seed-amortization]] — residual **FW-PF5-J-CLONE-LOCAL** flipped. **J-CLONE-LOCAL-01** ≤0.5× **PASS** at ratio **0.1875**. **J-CLONE-PATH-01** ≤0.5× **PASS** at **0.2424**. Pf5 aggressive: claimed=19, miss=[], aggressive_na=[].
 
 ## Scope measured (in)
 
 | Surface | IDs | Role |
 |---------|-----|------|
 | G16 functional + timing | All 19 catalog journeys | Hard functional + `median_p95` |
-| G19 comparative | Same allow-list (`verify/matrices/matrix-g19.md`) | ≤0.8× + ≤0.5× |
+| G19 comparative | Same allow-list (`verify/matrices/matrix-g019-comparative-performance.md`) | ≤0.8× + ≤0.5× |
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Runner | sole `docker run --cpus=2 --memory=16g` → `verify/scripts/run-g19.sh` (shared cargo volume `arks-verify-m1_arks-cargo-target`) |
+| Runner | sole `docker run --cpus=2 --memory=16g` → `verify/scripts/run-g019-comparative-performance.sh` (shared cargo volume `arks-verify-m1_arks-cargo-target`) |
 | Paths | `verify/{gates,matrices,fixtures,scripts}` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |

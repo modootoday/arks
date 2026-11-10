@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g38-cleanroom"
+name = "arks-g038-gpgsig-openpgp-cleanroom"
 description = "FW-GPGSIG OpenPGP / X.509 / tag -s clean-room suite (G38)"
 version = "0.0.0"
 edition = "2024"

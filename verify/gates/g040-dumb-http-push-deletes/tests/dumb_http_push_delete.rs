@@ -1,5 +1,5 @@
 //! Gate G40 — dumb HTTP push create + WebDAV DELETE (S3 / S6).
-//! Cite: verify/matrices/matrix-g40.md, git-http-push, RFC 4918.
+//! Cite: verify/matrices/matrix-g040-dumb-http-push-deletes.md, git-http-push, RFC 4918.
 
 use std::fs;
 use std::net::TcpListener;
@@ -140,7 +140,7 @@ fn seed_bare(parent: &Path) -> PathBuf {
 }
 
 #[test]
-fn g40_dumb_push_topic_then_delete_refspec() {
+fn g040-dumb-http-push-deletes_dumb_push_topic_then_delete_refspec() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());

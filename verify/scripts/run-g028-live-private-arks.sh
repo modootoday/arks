@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G28 — live private GitHub journey coverage with arks (opt-in network).
-# SoT: g28-live-private-arks-journeys; matrix: verify/matrices/matrix-g28.md
+# SoT: g028-live-private-arks-live-private-arks-journeys; matrix: verify/matrices/matrix-g028-live-private-arks.md
 # Honesty: functional journeys ≠ scale/contention ≠ G16 timing compare.
 # Uses arks-claimed argv only (no stock-Git-only -c / -u / ':' push refspecs).
 set -euo pipefail
@@ -11,9 +11,9 @@ if [[ -d /workspaces/gir/verify ]]; then
 fi
 cd "$ROOT"
 
-mkdir -p verify/gates/g28/out
-RECEIPT="${ARKS_G28_RECEIPT_OUT:-$ROOT/verify/gates/g28/out/receipt.json}"
-RESULTS_JSON="${ARKS_G28_RESULTS_OUT:-$ROOT/verify/gates/g28/out/journeys.json}"
+mkdir -p verify/gates/g028-live-private-arks/out
+RECEIPT="${ARKS_G28_RECEIPT_OUT:-$ROOT/verify/gates/g028-live-private-arks/out/receipt.json}"
+RESULTS_JSON="${ARKS_G28_RESULTS_OUT:-$ROOT/verify/gates/g028-live-private-arks/out/journeys.json}"
 REVISION="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 STOCK_GIT="$(git --version)"
 IMAGE_TAG="${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}"
@@ -47,7 +47,7 @@ passt = sum(1 for j in journeys if j.get("status") == "PASS")
 na = sum(1 for j in journeys if j.get("status") == "N/A")
 skip = sum(1 for j in journeys if j.get("status") == "SKIP")
 receipt = {
-    "schema": "arks-g28-live-private-journeys/v1",
+    "schema": "arks-g028-live-private-arks-live-private-journeys/v1",
     "gate": "G28",
     "name": "live-private-arks-journeys",
     "disposition": disposition,
@@ -67,7 +67,7 @@ receipt = {
     "journeys": journeys,
     "honesty": "functional journeys on live private forge; != G16 timing; != G26/G27 scale/contention; != Checks/merge-queue; unsigned seed (gpgsig unclaimed)",
     "adr_affinity": "adr:root/20261110151000",
-    "sot": "sot:root/g28-live-private-arks-journeys",
+    "sot": "sot:root/g028-live-private-arks-live-private-arks-journeys",
 }
 with open(out, "w", encoding="utf-8") as f:
     json.dump(receipt, f, indent=2)
@@ -87,9 +87,9 @@ TOKEN="${ARKS_G28_TOKEN:-${GITHUB_TOKEN:-}}"
 REPO_URL="${ARKS_G28_REPO_URL:-}"
 export ARKS_G28_REPO_URL_PUBLIC="${ARKS_G28_REPO_URL_PUBLIC:-$REPO_URL}"
 
-# Live receipt keeps N/A; checklist honesty closes via g28-offline-clones (evidence:root/20261109213400).
-record "J-CLONE-LOCAL-01" "N/A" "offline — see g28-offline-clones / evidence:root/20261109213400"
-record "J-CLONE-PATH-01" "N/A" "offline — see g28-offline-clones / evidence:root/20261109213400"
+# Live receipt keeps N/A; checklist honesty closes via g028-offline-clones (evidence:root/20261109213400).
+record "J-CLONE-LOCAL-01" "N/A" "offline — see g028-offline-clones / evidence:root/20261109213400"
+record "J-CLONE-PATH-01" "N/A" "offline — see g028-offline-clones / evidence:root/20261109213400"
 
 if [[ "${LIVE}" != "1" || -z "${TOKEN}" || -z "${REPO_URL}" ]]; then
   echo "G28: Refuse-closed (default) — missing opt-in live secrets"
@@ -129,23 +129,23 @@ PY
 )"
 API="https://api.github.com/repos/${OWNER_REPO}"
 
-WORK="$(mktemp -d /tmp/arks-g28.XXXXXX)"
+WORK="$(mktemp -d /tmp/arks-g028-live-private-arks.XXXXXX)"
 trap 'rm -rf "$WORK"' EXIT
 
-export GIT_AUTHOR_NAME="arks-g28"
-export GIT_AUTHOR_EMAIL="arks-g28@example.com"
-export GIT_COMMITTER_NAME="arks-g28"
-export GIT_COMMITTER_EMAIL="arks-g28@example.com"
+export GIT_AUTHOR_NAME="arks-g028-live-private-arks"
+export GIT_AUTHOR_EMAIL="arks-g028-live-private-arks@example.com"
+export GIT_COMMITTER_NAME="arks-g028-live-private-arks"
+export GIT_COMMITTER_EMAIL="arks-g028-live-private-arks@example.com"
 export GIT_AUTHOR_DATE="2026-11-10T00:00:00Z"
 export GIT_COMMITTER_DATE="2026-11-10T00:00:00Z"
 
 scrub_err() {
-  tr '\n' ' ' </tmp/g28-step.err 2>/dev/null | head -c 400 | sed "s/${TOKEN}/***/g" || true
+  tr '\n' ' ' </tmp/g028-live-private-arks-step.err 2>/dev/null | head -c 400 | sed "s/${TOKEN}/***/g" || true
 }
 
 journey() {
   local id="$1"; shift
-  if "$@" >/tmp/g28-step.out 2>/tmp/g28-step.err; then
+  if "$@" >/tmp/g028-live-private-arks-step.out 2>/tmp/g028-live-private-arks-step.err; then
     record "$id" "PASS" "ok"
     return 0
   fi
@@ -180,9 +180,9 @@ sync_main() {
 journey "J-LOCAL-01" bash -c "
   set -e
   cd '${CLONE}'
-  echo 'g28-local' > g28-local.txt
-  '${ARKS_BIN}' add g28-local.txt
-  '${ARKS_BIN}' commit -m 'g28 J-LOCAL-01 seed'
+  echo 'g028-live-private-arks-local' > g028-live-private-arks-local.txt
+  '${ARKS_BIN}' add g028-live-private-arks-local.txt
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks J-LOCAL-01 seed'
   '${ARKS_BIN}' status
   '${ARKS_BIN}' log -1 --oneline
   '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
@@ -193,14 +193,14 @@ sync_main
 journey "J-BRANCH-01" bash -c "
   set -e
   cd '${CLONE}'
-  '${ARKS_BIN}' branch topic-g28
-  '${ARKS_BIN}' checkout topic-g28
+  '${ARKS_BIN}' branch topic-g028-live-private-arks
+  '${ARKS_BIN}' checkout topic-g028-live-private-arks
   echo topic > topic.txt
   '${ARKS_BIN}' add topic.txt
-  '${ARKS_BIN}' commit -m 'g28 topic'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks topic'
   '${ARKS_BIN}' switch '${DEFAULT_BRANCH}'
-  '${ARKS_BIN}' switch topic-g28
-  '${ARKS_BIN}' push origin topic-g28
+  '${ARKS_BIN}' switch topic-g028-live-private-arks
+  '${ARKS_BIN}' push origin topic-g028-live-private-arks
 "
 
 # --- J-PUSH-FETCH-01 ---
@@ -208,7 +208,7 @@ journey "J-PUSH-FETCH-01" bash -c "
   set -e
   cd '${CLONE}'
   '${ARKS_BIN}' fetch origin
-  tip=\"\$('${ARKS_BIN}' rev-parse origin/topic-g28)\"
+  tip=\"\$('${ARKS_BIN}' rev-parse origin/topic-g028-live-private-arks)\"
   test -n \"\$tip\"
 "
 
@@ -219,7 +219,7 @@ journey "J-MERGE-FF-01" bash -c "
   cd '${CLONE}'
   '${ARKS_BIN}' fetch origin
   '${ARKS_BIN}' switch '${DEFAULT_BRANCH}'
-  '${ARKS_BIN}' merge --ff-only topic-g28 || '${ARKS_BIN}' merge --ff-only origin/topic-g28
+  '${ARKS_BIN}' merge --ff-only topic-g028-live-private-arks || '${ARKS_BIN}' merge --ff-only origin/topic-g028-live-private-arks
   '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
 "
 
@@ -231,7 +231,7 @@ journey "J-PULL-01" bash -c "
   cd '${CLONE}'
   echo pull-bait > pull-bait.txt
   '${ARKS_BIN}' add pull-bait.txt
-  '${ARKS_BIN}' commit -m 'g28 pull bait'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks pull bait'
   '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
   cd '${PULL_DIR}'
   '${ARKS_BIN}' pull origin
@@ -243,9 +243,9 @@ sync_main
 journey "J-TAG-01" bash -c "
   set -e
   cd '${CLONE}'
-  '${ARKS_BIN}' tag -a -m 'g28 tag' g28-v1
+  '${ARKS_BIN}' tag -a -m 'g028-live-private-arks tag' g028-live-private-arks-v1
   '${ARKS_BIN}' tag
-  '${ARKS_BIN}' push origin refs/tags/g28-v1
+  '${ARKS_BIN}' push origin refs/tags/g028-live-private-arks-v1
 "
 
 # --- J-STASH-01 ---
@@ -268,12 +268,12 @@ journey "J-DIFF-01" bash -c "
   cd '${CLONE}'
   echo diff-a > diff-a.txt
   '${ARKS_BIN}' add diff-a.txt
-  '${ARKS_BIN}' commit -m 'g28 diff base'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks diff base'
   echo diff-b >> diff-a.txt
   '${ARKS_BIN}' diff >/dev/null
   '${ARKS_BIN}' add diff-a.txt
   '${ARKS_BIN}' diff --cached >/dev/null
-  '${ARKS_BIN}' commit -m 'g28 diff commit'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks diff commit'
   '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
 "
 
@@ -285,10 +285,10 @@ journey "J-RM-MV-01" bash -c "
   echo mvsrc > mv-src.txt
   echo rmme > rm-me.txt
   '${ARKS_BIN}' add mv-src.txt rm-me.txt
-  '${ARKS_BIN}' commit -m 'g28 rm-mv seed'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks rm-mv seed'
   '${ARKS_BIN}' mv mv-src.txt mv-dst.txt
   '${ARKS_BIN}' rm rm-me.txt
-  '${ARKS_BIN}' commit -m 'g28 rm-mv'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks rm-mv'
   '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
 "
 
@@ -300,7 +300,7 @@ journey "J-CHERRY-01" bash -c "
   '${ARKS_BIN}' switch -c cherry-src
   echo cherry > cherry.txt
   '${ARKS_BIN}' add cherry.txt
-  '${ARKS_BIN}' commit -m 'g28 cherry commit'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks cherry commit'
   CHERRY_SHA=\"\$('${ARKS_BIN}' rev-parse HEAD)\"
   '${ARKS_BIN}' switch '${DEFAULT_BRANCH}'
   '${ARKS_BIN}' cherry-pick \"\$CHERRY_SHA\"
@@ -315,11 +315,11 @@ journey "J-REBASE-01" bash -c "
   '${ARKS_BIN}' switch -c rebase-topic
   echo rebase-a > rebase-a.txt
   '${ARKS_BIN}' add rebase-a.txt
-  '${ARKS_BIN}' commit -m 'g28 rebase topic'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks rebase topic'
   '${ARKS_BIN}' switch '${DEFAULT_BRANCH}'
   echo rebase-main > rebase-main.txt
   '${ARKS_BIN}' add rebase-main.txt
-  '${ARKS_BIN}' commit -m 'g28 rebase main advance'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks rebase main advance'
   '${ARKS_BIN}' switch rebase-topic
   '${ARKS_BIN}' rebase '${DEFAULT_BRANCH}'
   '${ARKS_BIN}' switch '${DEFAULT_BRANCH}'
@@ -334,7 +334,7 @@ journey "J-REVERT-01" bash -c "
   cd '${CLONE}'
   echo revert-me > revert-me.txt
   '${ARKS_BIN}' add revert-me.txt
-  '${ARKS_BIN}' commit -m 'g28 to revert'
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks to revert'
   '${ARKS_BIN}' revert HEAD
   '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
 "
@@ -351,16 +351,16 @@ journey "J-REFLOG-01" bash -c "
 journey "J-BUNDLE-01" bash -c "
   set -e
   cd '${CLONE}'
-  '${ARKS_BIN}' bundle create '${WORK}/g28.bundle' HEAD
-  '${ARKS_BIN}' bundle verify '${WORK}/g28.bundle'
+  '${ARKS_BIN}' bundle create '${WORK}/g028-live-private-arks.bundle' HEAD
+  '${ARKS_BIN}' bundle verify '${WORK}/g028-live-private-arks.bundle'
 "
 
 # --- J-ARCHIVE-01 ---
 journey "J-ARCHIVE-01" bash -c "
   set -e
   cd '${CLONE}'
-  '${ARKS_BIN}' archive --format=tar -o '${WORK}/g28.tar' HEAD
-  test -s '${WORK}/g28.tar'
+  '${ARKS_BIN}' archive --format=tar -o '${WORK}/g028-live-private-arks.tar' HEAD
+  test -s '${WORK}/g028-live-private-arks.tar'
 "
 
 # --- J-REPACK-01 ---
@@ -375,7 +375,7 @@ sync_main
 journey "J-WORKTREE-01" bash -c "
   set -e
   cd '${CLONE}'
-  WT='${WORK}/wt-g28'
+  WT='${WORK}/wt-g028-live-private-arks'
   '${ARKS_BIN}' worktree add -b wt-branch \"\$WT\"
   '${ARKS_BIN}' worktree list
   '${ARKS_BIN}' worktree remove \"\$WT\"
@@ -397,9 +397,9 @@ PY
     set -e
     '${ARKS_BIN}' clone '${SUB_AUTH}' '${WORK}/sub-src'
     cd '${CLONE}'
-    '${ARKS_BIN}' submodule add '${WORK}/sub-src' vendor/g28-sub
+    '${ARKS_BIN}' submodule add '${WORK}/sub-src' vendor/g028-live-private-arks-sub
     '${ARKS_BIN}' submodule status
-    '${ARKS_BIN}' commit -m 'g28 submodule'
+    '${ARKS_BIN}' commit -m 'g028-live-private-arks submodule'
     '${ARKS_BIN}' push origin '${DEFAULT_BRANCH}'
   "
 else
@@ -411,19 +411,19 @@ sync_main
 journey "J-PR-GH-01" bash -c "
   set -e
   cd '${CLONE}'
-  '${ARKS_BIN}' switch -c pr-g28
-  echo pr-body > pr-g28.txt
-  '${ARKS_BIN}' add pr-g28.txt
-  '${ARKS_BIN}' commit -m 'g28 pr branch'
-  '${ARKS_BIN}' push origin pr-g28
+  '${ARKS_BIN}' switch -c pr-g028-live-private-arks
+  echo pr-body > pr-g028-live-private-arks.txt
+  '${ARKS_BIN}' add pr-g028-live-private-arks.txt
+  '${ARKS_BIN}' commit -m 'g028-live-private-arks pr branch'
+  '${ARKS_BIN}' push origin pr-g028-live-private-arks
   python3 - '${API}' '${TOKEN}' '${DEFAULT_BRANCH}' <<'PY'
 import json, sys, urllib.request
 api, token, base = sys.argv[1:4]
 req = urllib.request.Request(
     f'{api}/pulls',
     data=json.dumps({
-        'title': 'g28 live private journey PR',
-        'head': 'pr-g28',
+        'title': 'g028-live-private-arks live private journey PR',
+        'head': 'pr-g028-live-private-arks',
         'base': base,
         'body': 'Ephemeral G28 journey verification PR (safe to close/delete with repo).',
     }).encode(),
@@ -431,7 +431,7 @@ req = urllib.request.Request(
         'Authorization': f'Bearer {token}',
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'arks-g28',
+        'User-Agent': 'arks-g028-live-private-arks',
         'Content-Type': 'application/json',
     },
     method='POST',

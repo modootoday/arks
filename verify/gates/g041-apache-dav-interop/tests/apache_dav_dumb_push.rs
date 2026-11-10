@@ -1,7 +1,7 @@
 //! Gate G41 — dumb HTTP push create/FF/delete vs stock Apache `mod_dav`.
-//! Cite: verify/matrices/matrix-g41.md, git-http-push, RFC 4918, O4.
+//! Cite: verify/matrices/matrix-g041-apache-dav-interop.md, git-http-push, RFC 4918, O4.
 //!
-//! Peer URL: `ARKS_G41_DAV_URL` (compose sets `http://g41-dav/repo.git/`).
+//! Peer URL: `ARKS_G41_DAV_URL` (compose sets `http://g041-dav/repo.git/`).
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -58,7 +58,7 @@ fn assert_ok(out: &std::process::Output, label: &str) {
 }
 
 fn dav_url() -> String {
-    std::env::var("ARKS_G41_DAV_URL").unwrap_or_else(|_| "http://g41-dav/repo.git/".into())
+    std::env::var("ARKS_G41_DAV_URL").unwrap_or_else(|_| "http://g041-dav/repo.git/".into())
 }
 
 fn wait_for_peer(url: &str) {
@@ -77,7 +77,7 @@ fn wait_for_peer(url: &str) {
 }
 
 #[test]
-fn g41_arks_push_create_ff_and_delete_vs_apache_dav() {
+fn g041-apache-dav-interop_arks_push_create_ff_and_delete_vs_apache_dav() {
     require_git();
     let url = dav_url();
     wait_for_peer(&url);

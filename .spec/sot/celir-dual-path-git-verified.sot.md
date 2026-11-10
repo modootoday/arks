@@ -4,10 +4,10 @@ title: CELIR dual-path Git verified clean-room
 status: active
 created: 2026-11-09T20:49:15Z
 updated: 2026-11-10T05:49:00Z
-tags: [celir, indexing-service, dual-path, g23, m24, clean-room, porcelain, verified]
+tags: [celir, indexing-service, dual-path, g023-celir-dual-path, m24, clean-room, porcelain, verified]
 verify: clean-room
 rel:
-  governs: [verify/gates/g23, verify/scripts/run-g23.sh, verify/matrices/matrix-g23.md]
+  governs: [verify/gates/g023-celir-dual-path, verify/scripts/run-g023-celir-dual-path.sh, verify/matrices/matrix-g023-celir-dual-path.md]
   depends_on:
     - sot:root/celir-index-dual-path
     - sot:root/storage-celir-boundary
@@ -29,7 +29,7 @@ Version **0.1.0**. Normative Docker clean-room gate **G23** for the honest Done 
 
 | In | Out |
 |----|-----|
-| Gate **G23** (`verify/scripts/run-g23.sh` / compose `g23`) | CELIR as ObjectStore / put/get/exists |
+| Gate **G23** (`verify/scripts/run-g023-celir-dual-path.sh` / compose `g023-celir-dual-path`) | CELIR as ObjectStore / put/get/exists |
 | Same-repo FS `.git` object R/W + tip + stock-Git open **and** celir-index build/publish/open/query | Claiming bare “CELIR-backed Git” without dual-path body |
 | G14-class or G3-class porcelain/interop subset (init/add/commit/status/log or store+stock equivalent) | Default-on `celir-index`; host-only Verified |
 | discrete-circuit sibling mount | Shared-index N-way; redefining G11-L3 |
@@ -38,7 +38,7 @@ Version **0.1.0**. Normative Docker clean-room gate **G23** for the honest Done 
 
 ### Gate identity
 
-1. Gate ID **G23** `celir-dual-path-git`. Matrix: `verify/matrices/matrix-g23.md`.
+1. Gate ID **G23** `celir-dual-path-git`. Matrix: `verify/matrices/matrix-g023-celir-dual-path.md`.
 2. Host greens MUST NOT authorize dual-path Git **Verified**.
 3. G23 is additive to G22 (contention) — does not replace G22 receipts.
 
@@ -62,6 +62,6 @@ G22 proved index contention but explicitly left “CELIR-backed Git verified” 
 
 ## Verification
 
-1. `docker compose -f verify/docker-compose.yml run --rm g23` PASS.
+1. `docker compose -f verify/docker-compose.yml run --rm g023-celir-dual-path` PASS.
 2. Evidence under `.spec/evidence/` with gate, stock git/rustc, tip SHA.
 3. `spec check` clean for this SoT and [[plan:root/20261109204933]].

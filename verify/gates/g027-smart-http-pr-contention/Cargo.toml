@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g27-cleanroom"
+name = "arks-g027-smart-http-pr-contention-cleanroom"
 description = "G27 clean-room arks smart HTTP PR contention suite (verify tree only)"
 version = "0.0.0"
 edition = "2024"

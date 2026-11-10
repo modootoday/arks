@@ -4,7 +4,7 @@ title: Credential helper / askpass (TTY + OS wallets)
 status: active
 created: 2026-11-10T22:40:00Z
 updated: 2026-11-11T00:10:00Z
-tags: [credential, askpass, https, auth, fw-cred-askpass, g33, tty, wincred, libsecret, osxkeychain]
+tags: [credential, askpass, https, auth, fw-cred-askpass, g033-cred-askpass, tty, wincred, libsecret, osxkeychain]
 verify: clean-room
 rel:
   governs: [crates/arks-remote, crates/arks]
@@ -76,6 +76,6 @@ Operators need standards-cited HTTPS Basic fill including interactive TTY and OS
 ## Verification
 
 1. Host unit tests in `arks-remote` / CLI — **advisory** (including Windows Cred* host tests when on Windows).
-2. Clean-room **G33** (`verify/matrices/matrix-g33.md`, compose `g33`) — **authoritative** for Claimed (prior C01–C05 plus TTY + wallet rows).
+2. Clean-room **G33** (`verify/matrices/matrix-g033-cred-askpass.md`, compose `g033-cred-askpass`) — **authoritative** for Claimed (prior C01–C05 plus TTY + wallet rows).
 3. `spec check` clean; residual register **FW-CRED-ASKPASS** → **Claimed** with evidence cite; no “Partial/Waiting/N/A wallets” wording for this ID.
 4. Public copy (README / alias docs) must not leave TTY / OS wallets as N/A after Claimed.

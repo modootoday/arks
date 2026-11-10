@@ -9,9 +9,9 @@ export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 meta="$(cargo metadata --format-version 1)"
 if echo "$meta" | grep -E '"name":[[:space:]]*"gix' >/dev/null; then echo G40: forbidden gix >&2; exit 1; fi
 echo G40: gix-exit OK
-mkdir -p verify/gates/g40/out
+mkdir -p verify/gates/g040-dumb-http-push-deletes/out
 echo G40: build arks
 cargo build -p arks
 echo G40: dumb HTTP delete suite
-cargo test --manifest-path verify/gates/g40/Cargo.toml -- --nocapture
+cargo test --manifest-path verify/gates/g040-dumb-http-push-deletes/Cargo.toml -- --nocapture
 echo G40: PASS

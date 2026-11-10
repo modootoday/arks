@@ -1,5 +1,5 @@
 //! Gate G18 — git vs arks concurrency issue-repro compare (Cd-1 differentiate/lease).
-//! Matrix: `verify/matrices/matrix-g18.md`. Plan: plan:root/20261109024635.
+//! Matrix: `verify/matrices/matrix-g018-concurrency-issue-compare.md`. Plan: plan:root/20261109024635.
 //! ADR: adr:root/20261109032955.
 
 use serde_json::{json, Value};
@@ -134,7 +134,7 @@ fn write_receipt_file() {
     let digest = std::env::var("ARKS_G18_IMAGE_DIGEST").unwrap_or_default();
     let venue = std::env::var("ARKS_G18_VENUE").unwrap_or_else(|_| "clean-room".into());
     let body = json!({
-        "schema": "arks-g18-issue-compare/v1",
+        "schema": "arks-g018-concurrency-issue-compare-issue-compare/v1",
         "venue": venue,
         "image_tag": image,
         "image_digest": digest,
@@ -304,7 +304,7 @@ fn cd1_ref006_cas_lease() {
 
     let arks_repo = init_repo("arks", root, "arks-ref006");
     let tip_a = head_oid("arks", &arks_repo);
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         &arks_repo,
         &[
@@ -317,8 +317,8 @@ fn cd1_ref006_cas_lease() {
             "120",
         ],
     );
-    assert!(ok(&g1), "{}", stderr_str(&g1));
-    let g2 = run_in(
+    assert!(ok(&g001-loose-object-interop), "{}", stderr_str(&g001-loose-object-interop));
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &[
@@ -331,11 +331,11 @@ fn cd1_ref006_cas_lease() {
             "120",
         ],
     );
-    assert!(!ok(&g2), "loser must fail at lease layer");
+    assert!(!ok(&g002-refs-index-roundtrip), "loser must fail at lease layer");
     assert!(
-        stderr_str(&g2).contains("AGENT-003") || stderr_str(&g2).contains("already held"),
+        stderr_str(&g002-refs-index-roundtrip).contains("AGENT-003") || stderr_str(&g002-refs-index-roundtrip).contains("already held"),
         "{}",
-        stderr_str(&g2)
+        stderr_str(&g002-refs-index-roundtrip)
     );
     fs::write(arks_repo.join("n.txt"), b"n\n").unwrap();
     let nhash = run_in("arks", &arks_repo, &["hash-object", "-w", "n.txt"]);
@@ -358,7 +358,7 @@ fn cd1_ref006_cas_lease() {
         ],
     );
     assert!(ok(&rel), "{}", stderr_str(&rel));
-    let g3 = run_in(
+    let g003-index-commit-roundtrip = run_in(
         "arks",
         &arks_repo,
         &[
@@ -371,9 +371,9 @@ fn cd1_ref006_cas_lease() {
             "120",
         ],
     );
-    assert!(ok(&g3), "after release loser can grant: {}", stderr_str(&g3));
+    assert!(ok(&g003-index-commit-roundtrip), "after release loser can grant: {}", stderr_str(&g003-index-commit-roundtrip));
 
-    let arks_resolved = !ok(&g2) && ok(&upd) && ok(&g3);
+    let arks_resolved = !ok(&g002-refs-index-roundtrip) && ok(&upd) && ok(&g003-index-commit-roundtrip);
     record(
         "REF-006",
         if git_pathology {
@@ -506,7 +506,7 @@ fn cd1_agent003_lease_wait() {
     let _ = fs::remove_file(&lock);
 
     let arks_repo = init_repo("arks", root, "arks-agent003");
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         &arks_repo,
         &[
@@ -519,8 +519,8 @@ fn cd1_agent003_lease_wait() {
             "120",
         ],
     );
-    assert!(ok(&g1), "{}", stderr_str(&g1));
-    let g2 = run_in(
+    assert!(ok(&g001-loose-object-interop), "{}", stderr_str(&g001-loose-object-interop));
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &[
@@ -533,8 +533,8 @@ fn cd1_agent003_lease_wait() {
             "120",
         ],
     );
-    assert!(!ok(&g2));
-    let msg = stderr_str(&g2);
+    assert!(!ok(&g002-refs-index-roundtrip));
+    let msg = stderr_str(&g002-refs-index-roundtrip);
     assert!(
         msg.contains("AGENT-003") && (msg.contains("wait") || msg.contains("backoff")),
         "M13 wait honesty: {msg}"
@@ -549,7 +549,7 @@ fn cd1_agent003_lease_wait() {
     let add_ok = run_in("arks", &arks_repo, &["add", "w.txt"]);
     assert!(ok(&add_ok), "holder write after unlock: {}", stderr_str(&add_ok));
 
-    let arks_resolved = ok(&g1) && !ok(&g2) && !ok(&blocked) && ok(&add_ok);
+    let arks_resolved = ok(&g001-loose-object-interop) && !ok(&g002-refs-index-roundtrip) && !ok(&blocked) && ok(&add_ok);
     record(
         "AGENT-003",
         if git_pathology {
@@ -583,7 +583,7 @@ fn cd2_lock002_lease_fencing() {
     let _ = fs::remove_file(&lock);
 
     let arks_repo = init_repo("arks", root, "arks-lock002");
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         &arks_repo,
         &[
@@ -596,11 +596,11 @@ fn cd2_lock002_lease_fencing() {
             "1",
         ],
     );
-    assert!(ok(&g1), "{}", stderr_str(&g1));
+    assert!(ok(&g001-loose-object-interop), "{}", stderr_str(&g001-loose-object-interop));
     std::thread::sleep(std::time::Duration::from_millis(1100));
     let exp = run_in("arks", &arks_repo, &["lease", "expire"]);
     assert!(ok(&exp), "expire: {}", stderr_str(&exp));
-    let g2 = run_in(
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &[
@@ -613,7 +613,7 @@ fn cd2_lock002_lease_fencing() {
             "120",
         ],
     );
-    assert!(ok(&g2), "after TTL fencing: {}", stderr_str(&g2));
+    assert!(ok(&g002-refs-index-roundtrip), "after TTL fencing: {}", stderr_str(&g002-refs-index-roundtrip));
     fs::write(arks_repo.join("s.txt"), b"s\n").unwrap();
     let ilock = arks_repo.join(".git/index.lock");
     fs::write(&ilock, b"999999\n").unwrap();
@@ -623,7 +623,7 @@ fn cd2_lock002_lease_fencing() {
     let add_ok = run_in("arks", &arks_repo, &["add", "s.txt"]);
     assert!(ok(&add_ok), "{}", stderr_str(&add_ok));
 
-    let arks_resolved = ok(&g1) && ok(&g2) && !ok(&blocked) && ok(&add_ok);
+    let arks_resolved = ok(&g001-loose-object-interop) && ok(&g002-refs-index-roundtrip) && !ok(&blocked) && ok(&add_ok);
     record(
         "LOCK-002",
         if git_pathology {
@@ -985,22 +985,22 @@ fn cd3_hook001_hook006_budget() {
     assert!(git_pathology, "git hook critical-section class");
 
     let arks_repo = init_repo("arks", root, "arks-hook");
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         &arks_repo,
         &["lease", "grant", "hook:critical", "--holder", "hook-owner"],
     );
-    assert!(ok(&g1), "{}", stderr_str(&g1));
-    let g2 = run_in(
+    assert!(ok(&g001-loose-object-interop), "{}", stderr_str(&g001-loose-object-interop));
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &["lease", "grant", "hook:critical", "--holder", "other"],
     );
-    assert!(!ok(&g2));
+    assert!(!ok(&g002-refs-index-roundtrip));
     assert!(
-        stderr_str(&g2).contains("AGENT-003") || stderr_str(&g2).contains("already held"),
+        stderr_str(&g002-refs-index-roundtrip).contains("AGENT-003") || stderr_str(&g002-refs-index-roundtrip).contains("already held"),
         "{}",
-        stderr_str(&g2)
+        stderr_str(&g002-refs-index-roundtrip)
     );
     let insp = run_in("arks", &arks_repo, &["lease", "inspect"]);
     assert!(ok(&insp));
@@ -1014,7 +1014,7 @@ fn cd3_hook001_hook006_budget() {
     let ht = stdout_str(&help).to_lowercase();
     assert!(!ht.contains("async-hook") && !ht.contains("hook-runner"));
 
-    let arks_resolved = ok(&g1) && !ok(&g2);
+    let arks_resolved = ok(&g001-loose-object-interop) && !ok(&g002-refs-index-roundtrip);
     record(
         "HOOK-001/HOOK-006",
         if git_pathology {
@@ -1045,18 +1045,18 @@ fn cd3_pack004_maint003_gc_lease() {
     assert!(git_pathology);
 
     let arks_repo = init_repo("arks", root, "arks-gc");
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         &arks_repo,
         &["lease", "grant", "maint:gc", "--holder", "writer"],
     );
-    assert!(ok(&g1), "{}", stderr_str(&g1));
-    let g2 = run_in(
+    assert!(ok(&g001-loose-object-interop), "{}", stderr_str(&g001-loose-object-interop));
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &["lease", "grant", "maint:gc", "--holder", "gc-agent"],
     );
-    assert!(!ok(&g2));
+    assert!(!ok(&g002-refs-index-roundtrip));
     let refuse = run_in("arks", &arks_repo, &["gc"]);
     assert!(!ok(&refuse), "arks gc refuse-closed under writers/lease era");
     let refuse2 = run_in("arks", &arks_repo, &["maintenance"]);
@@ -1066,7 +1066,7 @@ fn cd3_pack004_maint003_gc_lease() {
     let insp = run_in("arks", &arks_repo, &["lease", "inspect"]);
     assert!(stdout_str(&insp).contains("PACK-004") || stdout_str(&insp).contains("maint:gc"));
 
-    let arks_resolved = ok(&g1) && !ok(&g2) && !ok(&refuse);
+    let arks_resolved = ok(&g001-loose-object-interop) && !ok(&g002-refs-index-roundtrip) && !ok(&refuse);
     record(
         "PACK-004/MAINT-003",
         "pathology_pass",
@@ -1202,7 +1202,7 @@ fn cd3_idx001_pathset_lease() {
     let _ = fs::remove_file(&lock);
 
     let arks_repo = init_repo("arks", root, "arks-idx");
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         &arks_repo,
         &[
@@ -1213,8 +1213,8 @@ fn cd3_idx001_pathset_lease() {
             "writer-1",
         ],
     );
-    assert!(ok(&g1), "{}", stderr_str(&g1));
-    let g2 = run_in(
+    assert!(ok(&g001-loose-object-interop), "{}", stderr_str(&g001-loose-object-interop));
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &[
@@ -1225,7 +1225,7 @@ fn cd3_idx001_pathset_lease() {
             "writer-2",
         ],
     );
-    assert!(!ok(&g2));
+    assert!(!ok(&g002-refs-index-roundtrip));
     fs::write(arks_repo.join("p.txt"), b"p\n").unwrap();
     let ilock = arks_repo.join(".git/index.lock");
     fs::write(&ilock, b"1\n").unwrap();
@@ -1235,7 +1235,7 @@ fn cd3_idx001_pathset_lease() {
     let add_ok = run_in("arks", &arks_repo, &["add", "p.txt"]);
     assert!(ok(&add_ok), "{}", stderr_str(&add_ok));
 
-    let arks_resolved = ok(&g1) && !ok(&g2) && !ok(&blocked) && ok(&add_ok);
+    let arks_resolved = ok(&g001-loose-object-interop) && !ok(&g002-refs-index-roundtrip) && !ok(&blocked) && ok(&add_ok);
     record(
         "IDX-001",
         if git_pathology {
@@ -1253,19 +1253,19 @@ fn cd3_idx001_pathset_lease() {
 }
 
 fn cd4_lease_pair(arks_repo: &Path, resource: &str, holder_ok: &str, holder_fail: &str) -> bool {
-    let g1 = run_in(
+    let g001-loose-object-interop = run_in(
         "arks",
         arks_repo,
         &["lease", "grant", resource, "--holder", holder_ok],
     );
-    assert!(ok(&g1), "{}: {}", resource, stderr_str(&g1));
-    let g2 = run_in(
+    assert!(ok(&g001-loose-object-interop), "{}: {}", resource, stderr_str(&g001-loose-object-interop));
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         arks_repo,
         &["lease", "grant", resource, "--holder", holder_fail],
     );
-    assert!(!ok(&g2), "second grant must AlreadyHeld for {resource}");
-    ok(&g1) && !ok(&g2)
+    assert!(!ok(&g002-refs-index-roundtrip), "second grant must AlreadyHeld for {resource}");
+    ok(&g001-loose-object-interop) && !ok(&g002-refs-index-roundtrip)
 }
 
 /// AGENT-001 — shared checkout blackboard lease.
@@ -1309,12 +1309,12 @@ fn cd4_agent010_retry_taxonomy() {
 
     let arks_repo = init_repo("arks", root, "arks-a010");
     let leased = cd4_lease_pair(&arks_repo, "index:default", "owner", "retry-herd");
-    let g2 = run_in(
+    let g002-refs-index-roundtrip = run_in(
         "arks",
         &arks_repo,
         &["lease", "grant", "index:default", "--holder", "retry-herd"],
     );
-    let err = stderr_str(&g2);
+    let err = stderr_str(&g002-refs-index-roundtrip);
     assert!(
         err.contains("AGENT-003") || err.contains("AlreadyHeld") || err.contains("already held"),
         "taxonomy={err}"

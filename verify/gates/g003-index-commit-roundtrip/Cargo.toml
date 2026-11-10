@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g3-cleanroom"
+name = "arks-g003-index-commit-roundtrip-cleanroom"
 description = "M5 clean-room G3 full index-commit round-trip (verify tree only)"
 version = "0.0.0"
 edition = "2024"

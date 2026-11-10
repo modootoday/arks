@@ -4,7 +4,7 @@ title: FW-G9 Claimed --depth subset (G35 Docker PASS)
 status: active
 created: 2026-11-10T08:00:00Z
 updated: 2026-11-10T23:30:00Z
-tags: [fw-g9, g9, g35, shallow, depth, clean-room, claimed, verified]
+tags: [fw-g9, g9, g035-shallow-depth, shallow, depth, clean-room, claimed, verified]
 rel:
   depends_on:
     - sot:root/arks-remote
@@ -35,20 +35,20 @@ Gate coordination: historical **G9** semantics; clean-room compose **G35** (G33=
 | Check | Outcome |
 |-------|---------|
 | `cargo test -p arks-remote --lib` | PASS (incl. stock `git http-backend` `--depth 1`) |
-| `cargo test --manifest-path verify/gates/g35/Cargo.toml` | PASS (G35-C01..C03 host) |
+| `cargo test --manifest-path verify/gates/g035-shallow-depth/Cargo.toml` | PASS (G35-C01..C03 host) |
 
 ## Docker clean-room (product authority)
 
 | Field | Value |
 |-------|-------|
-| Compose | `verify/docker-compose.yml` service `g35` |
-| Entrypoint | `verify/scripts/run-g35.sh` |
-| Matrix | `verify/matrices/matrix-g35.md` |
+| Compose | `verify/docker-compose.yml` service `g035-shallow-depth` |
+| Entrypoint | `verify/scripts/run-g035-shallow-depth.sh` |
+| Matrix | `verify/matrices/matrix-g035-shallow-depth.md` |
 | Image | `arks-verify-m1:0.1.0` |
 | Image Id | `sha256:b235193c9ae45991f057aec1551feb769bf796ca917af1745110917cf53dfada` |
 | Stock Git | git version 2.39.5 |
 | Tip at verify | `7d988f27be262d66f2d89bfae68f8b8e842c79fc` |
-| Outcome | **PASS** — G35-C01..C03 (`g35_local_clone_depth_refuses`, `g35_clone_depth_1_writes_shallow`, `g35_fetch_depth_1_into_tracking_repo`) |
+| Outcome | **PASS** — G35-C01..C03 (`g035-shallow-depth_local_clone_depth_refuses`, `g035-shallow-depth_clone_depth_1_writes_shallow`, `g035-shallow-depth_fetch_depth_1_into_tracking_repo`) |
 
 ## Non-claims
 

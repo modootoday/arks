@@ -58,8 +58,8 @@ Deliver pack/idx codec and pkt-line / protocol helpers as libraries (no porcelai
 
 | Gate | Clean-room | Advisory |
 |------|------------|----------|
-| **G4** pack-local-roundtrip | Authoritative — `verify/matrices/matrix-m4.md` / `verify/gates/g4` | Host |
-| **G5** protocol-offline | Offline fixtures — `verify/gates/g5` | Host |
+| **G4** pack-local-roundtrip | Authoritative — `verify/matrices/matrix-m004-clean-room-pack-protocol.md` / `verify/gates/g004-pack-idx-roundtrip` | Host |
+| **G5** protocol-offline | Offline fixtures — `verify/gates/g005-protocol-offline-fixtures` | Host |
 | **gix-exit** | `cargo metadata` / workspace graph shows zero gix edges | CI/docs checklist |
 | G1/G2/G10 regression | Embedded in M4 clean-room entry | Host |
 

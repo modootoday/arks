@@ -4,7 +4,7 @@ title: Shared-index N-way clean-room (G34)
 status: active
 created: 2026-11-10T07:40:00Z
 updated: 2026-11-10T07:40:00Z
-tags: [m26, g34, shared-index, clean-room, lease, index-lock]
+tags: [m26, g034-shared-index-contention, shared-index, clean-room, lease, index-lock]
 verify: manual
 rel:
   depends_on:
@@ -37,15 +37,15 @@ Version **0.1.1**. Normative clean-room gate for **M26** shared-index N-way cont
 
 ### Authority
 
-1. Product **Verified** requires sole-runner Docker compose service `g34` / `verify/scripts/run-g34.sh` PASS + evidence.
-2. Host `cargo test -p arks-lease --test g34_shared_index_contention` is **advisory** only.
+1. Product **Verified** requires sole-runner Docker compose service `g034-shared-index-contention` / `verify/scripts/run-g034-shared-index-contention.sh` PASS + evidence.
+2. Host `cargo test -p arks-lease --test g034-shared-index-contention_shared_index_contention` is **advisory** only.
 3. MUST NOT cite M24 / G22 / G24 receipts as G34 substitutes.
 
 ### Matrix / entrypoint
 
-- Matrix: `verify/matrices/matrix-g34.md`
-- Script: `verify/scripts/run-g34.sh`
-- Compose: `verify/docker-compose.yml` service `g34`
+- Matrix: `verify/matrices/matrix-g034-shared-index-contention.md`
+- Script: `verify/scripts/run-g034-shared-index-contention.sh`
+- Compose: `verify/docker-compose.yml` service `g034-shared-index-contention`
 
 ## Why
 

@@ -4,7 +4,7 @@ title: M24 G22 CELIR index contention clean-room
 status: active
 created: 2026-11-09T20:44:28Z
 updated: 2026-11-10T00:57:44Z
-tags: [m24, g22, celir, indexing-service, clean-room, contention, verified, dual-path]
+tags: [m24, g022-celir-index-contention, celir, indexing-service, clean-room, contention, verified, dual-path]
 rel:
   depends_on: [sot:root/celir-index-contention-clean-room, sot:root/celir-index-dual-path, plan:root/20261109203949, plan:root/20261109203430, sot:root/storage-celir-boundary, adr:root/20261110052030, sot:root/lease-concurrency-intent, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/program-roadmap, sot:root/production-residual-register, evidence:root/20261109203236]
 files:
@@ -17,8 +17,8 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G22** (`verify/scripts/run-g22.sh` / compose `g22`) |
-| Matrix | `verify/matrices/matrix-g22.md` |
+| Gate | **G22** (`verify/scripts/run-g022-celir-index-contention.sh` / compose `g022-celir-index-contention`) |
+| Matrix | `verify/matrices/matrix-g022-celir-index-contention.md` |
 | Milestone | **M24** index-contention verified (clean-room) |
 | Stock git (image) | `git version 2.39.5` |
 | rustc (image) | `1.99.1` |
@@ -31,7 +31,7 @@ files:
 
 | Step | Result |
 |------|--------|
-| `cargo test -p arks-lease --features celir-index-stress --test g22_index_contention` | 5/5 PASS |
+| `cargo test -p arks-lease --features celir-index-stress --test g022-celir-index-contention_index_contention` | 5/5 PASS |
 | `cargo test -p arks-store --features celir-index` | 18/18 PASS |
 | Default `arks-store` tree CELIR-free | OK |
 | Sole-runner lock | held |

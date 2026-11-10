@@ -4,7 +4,7 @@ title: Pf5 journey seed amortization (≤0.5× reopen)
 status: active
 created: 2026-11-10T22:00:00Z
 updated: 2026-11-10T16:49:00Z
-tags: [g19, pf5, perf, amortization, journey, verification]
+tags: [g019-comparative-performance, pf5, perf, amortization, journey, verification]
 verify: manual
 rel:
   depends_on:
@@ -52,7 +52,7 @@ Version **0.1.15**. Normative harness rules that reopen [[adr:root/2026111016200
 ## Verification
 
 1. `spec check` clean for this SoT and cross-links.
-2. Sole Docker `g19` receipt; `g19-eval.py` records claimed vs remaining `aggressive_na`.
+2. Sole Docker `g019-comparative-performance` receipt; `g019-eval.py` records claimed vs remaining `aggressive_na`.
 3. Residual register **FW-PF5-NA** + per-journey P6 rows updated to **Claimed (≤0.5×)** under umbrella **8/8** (historical Claimed(partial) packs remain archival).
 4. Evidence filed under `.spec/evidence/`.
 

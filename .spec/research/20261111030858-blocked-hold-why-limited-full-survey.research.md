@@ -12,7 +12,7 @@ tags:
     impossible,
     non-goal,
     why-limited,
-    g8-live,
+    g008-live-forge-smoke-live,
     l9,
     pf5,
     j-alias-01,
@@ -67,7 +67,7 @@ At tip ≥ **`b7720d9`**, with G-ladder **G_final Done** and operator honesty **
 
 1. Reconcile tip currency ([[sot:root/program-roadmap]] v0.15.5), residual §F ([[sot:root/production-residual-register]] v0.9.9), public Pages (`docs/completion.md`, `docs/limits.md`, `docs/git-vs-arks.md`, `docs/forge-scale.md`).
 2. Fold G-ladder plans/evidence ([[plan:root/20261111024440]], [[plan:root/20261111024441]], [[evidence:root/20261111025000]], [[evidence:root/20261111025200]], [[evidence:root/20261111025300]]), classification [[research:root/20261111022345]], external-deps [[research:root/20261111012840]], L9 reopen pack [[research:root/20261111003444]], public-surface [[sot:root/public-surface]].
-3. Re-probe Environment `g8-live` secrets **names only** (`total_count`).
+3. Re-probe Environment `g008-live-forge-smoke-live` secrets **names only** (`total_count`).
 4. For each scoped item: tip status → why limited (cite SoT) → unblock precondition → class.
 5. Research only — **no** G19 remasure, **no** invent PASS, **no** L9 publish / `publish` flip.
 
@@ -79,7 +79,7 @@ At tip ≥ **`b7720d9`**, with G-ladder **G_final Done** and operator honesty **
 | FS_final | **YES** |
 | Operator one-word | **PARTIAL** |
 | Pf5 | claimed=18 + J-ALIAS-01 `aggressive_na` **0.5489**; REVERT **0.4943 Claimed**; M17 **19/19** ([[evidence:root/20261111025200]]) |
-| `g8-live` secrets | **`total_count=0`** (re-probe this survey; matches [[evidence:root/20261111025000]]) |
+| `g008-live-forge-smoke-live` secrets | **`total_count=0`** (re-probe this survey; matches [[evidence:root/20261111025000]]) |
 | L9 | Owner-closed; all crates `publish = false`; reopen pack only |
 | G3–G6 | Server `bundle-uri` / LFS locks / forge recipe / `object:type`+`combine:` **Claimed** ([[evidence:root/20261111025300]]); `sparse:oid` Hold; tus/S3 handoff |
 
@@ -102,8 +102,8 @@ At tip ≥ **`b7720d9`**, with G-ladder **G_final Done** and operator honesty **
 | Field | Content |
 |-------|---------|
 | **Tip status** | **Blocked** (G1 Done-as-honesty). Harness **Claimed** (default-on when secrets); local-forge `claimed-wire` ≠ GitHub live PASS. |
-| **Why limited** | Environment `g8-live` has **zero** secrets (`ARKS_G8_TOKEN` / `ARKS_G8_REPO_URL` absent). YAML and agents cannot invent Environment secret *values*. Latency medians without live samples would be invented PASS — forbidden ([[adr:root/20261110220000]], [[adr:root/20261110221000]], `docs/forge-scale.md`, residual R5 / **FW-G8-DEFAULT** / **FW-GH-LIVE-SCALE**). |
-| **Unblock** | Owner/operator: mint throwaway peer + scoped PAT → set Environment secrets (`total_count ≥ 2`) → `gh workflow run g8-forge-scale.yml -f dry_run=false` (or compose `g8` + `g8-live-scale`) → attach `.spec/evidence/` with real receipts. Force-off remains `ARKS_G8_LIVE=0`. |
+| **Why limited** | Environment `g008-live-forge-smoke-live` has **zero** secrets (`ARKS_G8_TOKEN` / `ARKS_G8_REPO_URL` absent). YAML and agents cannot invent Environment secret *values*. Latency medians without live samples would be invented PASS — forbidden ([[adr:root/20261110220000]], [[adr:root/20261110221000]], `docs/forge-scale.md`, residual R5 / **FW-G8-DEFAULT** / **FW-GH-LIVE-SCALE**). |
+| **Unblock** | Owner/operator: mint throwaway peer + scoped PAT → set Environment secrets (`total_count ≥ 2`) → `gh workflow run g008-live-forge-smoke-forge-scale.yml -f dry_run=false` (or compose `g008-live-forge-smoke` + `g008-live-scale`) → attach `.spec/evidence/` with real receipts. Force-off remains `ARKS_G8_LIVE=0`. |
 | **Class** | **Operator** |
 
 SoT: [[sot:root/program-roadmap]] tip row; [[evidence:root/20261111025000]]; [[sot:root/interop-test-matrix]]; `docs/forge-scale.md`.
@@ -298,7 +298,7 @@ Bare development Opens remain **0**. §F rows are terminal Claimed/Refuse/N/A/Cl
 
 | # | Item | Tip status | Why limited (one line) | Class |
 |---|------|------------|------------------------|-------|
-| 1 | Live G8 latency | **Blocked** | `g8-live` secrets=0; cannot invent medians | **Operator** |
+| 1 | Live G8 latency | **Blocked** | `g008-live-forge-smoke-live` secrets=0; cannot invent medians | **Operator** |
 | 2 | L9 crates.io/docs.rs | **Blocked** | Owner policy; `publish=false`; no agent publish | **Owner** |
 | 3 | J-ALIAS-01 | **aggressive_na 0.5489** | Process-tax; PATH cut insufficient; no thrash | **Eng-hard** |
 | 4 | SHA-1 immunity | **Impossible** | Crypto math; detect+refuse is the bar | **Physics/Crypto** |
@@ -334,7 +334,7 @@ Bare development Opens remain **0**. §F rows are terminal Claimed/Refuse/N/A/Cl
 
 | Rank | Action | Moves tip how | Who |
 |-----:|--------|---------------|-----|
-| 1 | Fill `g8-live` secrets → live remasure + evidence | Blocked → live latency Done (ops) | **Operator** |
+| 1 | Fill `g008-live-forge-smoke-live` secrets → live remasure + evidence | Blocked → live latency Done (ops) | **Operator** |
 | 2 | Owner SoT reopen L9 → publish | Blocked → L9 Done | **Owner** |
 | 3 | Further PATH/`exec` ADR → one G19 | Maybe clear ALIAS `aggressive_na` | **Eng-hard** |
 | 4 | `sparse:oid` / dumb lease / tus (optional) | Feature Partial → Claimed slice | **Eng-hard** |

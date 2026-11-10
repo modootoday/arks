@@ -4,12 +4,12 @@ title: Development residual close — version CODEOWNERS allocator dispositions
 status: active
 created: 2026-11-09T12:25:12Z
 updated: 2026-11-10T00:57:43Z
-tags: [residual, g21, version, codeowners, allocator, m16, m17, development-close, verified]
+tags: [residual, g021-cli-flag-symmetry, version, codeowners, allocator, m16, m17, development-close, verified]
 rel:
   depends_on: [sot:root/production-residual-register, sot:root/program-roadmap, sot:root/cli-flag-parity-complete, sot:root/public-surface, sot:root/crate-architecture, adr:root/20261109122126, adr:root/20261108232800, evidence:root/20261109090000, evidence:root/20261109061600, evidence:root/20261109063000]
   evidence: []
 files:
-  - {path: receipt-g21-sy5.json, sha256: 4e46a795037deffdd8864653dd6126e24333c648100e0e8507d1ed38f30ef2b8, bytes: 387, store: repo}
+  - {path: receipt-g021-cli-flag-symmetry-sy5.json, sha256: 4e46a795037deffdd8864653dd6126e24333c648100e0e8507d1ed38f30ef2b8, bytes: 387, store: repo}
 ---
 
 # Development residual close — version / CODEOWNERS / allocator / dispositions
@@ -33,7 +33,7 @@ Closes remaining **development** residuals after M0–M17 claimed exits. Normati
 
 | Field | Value |
 |-------|-------|
-| Compose | `docker compose -f verify/docker-compose.yml run --rm g21` |
+| Compose | `docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | rustc | `rustc 1.99.1 (58cf8f9c3 2026-10-13)` |
@@ -50,6 +50,6 @@ Closes remaining **development** residuals after M0–M17 claimed exits. Normati
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g21
+docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry
 spec check
 ```

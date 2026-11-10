@@ -4,7 +4,7 @@ title: "M17 exit — full G19 allow-list PASS (19/19 measured, N/A-free)"
 status: active
 created: 2026-11-09T09:00:00Z
 updated: 2026-11-10T00:57:42Z
-tags: [g19, m17, pf3, exit, comparative-perf, clean-room, verified, na-free]
+tags: [g019-comparative-performance, m17, pf3, exit, comparative-perf, clean-room, verified, na-free]
 rel:
   depends_on: [plan:root/20261109043916, sot:root/program-roadmap, sot:root/clean-room-journey-compare, evidence:root/20261109064500, evidence:root/20261109070000, evidence:root/20261109073100, evidence:root/20261109083500]
   evidence: []
@@ -54,7 +54,7 @@ Gate exit **0**. Container `arks-m17-sole3`.
 
 | Field | Value |
 |-------|-------|
-| Compose | `docker compose -f verify/docker-compose.yml run --rm g19` |
+| Compose | `docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |
@@ -64,5 +64,5 @@ Gate exit **0**. Container `arks-m17-sole3`.
 ## Reproduce
 
 ```bash
-docker compose -f verify/docker-compose.yml run --rm g19
+docker compose -f verify/docker-compose.yml run --rm g019-comparative-performance
 ```

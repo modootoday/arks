@@ -4,10 +4,10 @@ title: L3 HighConcurrency plus CELIR index joint clean-room
 status: active
 created: 2026-11-09T20:49:15Z
 updated: 2026-11-10T05:49:00Z
-tags: [celir, indexing-service, l3, highconcurrency, g24, m24, m23, clean-room, joint, lease]
+tags: [celir, indexing-service, l3, highconcurrency, g024-l3-celir-joint, m24, m23, clean-room, joint, lease]
 verify: clean-room
 rel:
-  governs: [verify/gates/g24, verify/scripts/run-g24.sh, verify/matrices/matrix-g24.md]
+  governs: [verify/gates/g024-l3-celir-joint, verify/scripts/run-g024-l3-celir-joint.sh, verify/matrices/matrix-g024-l3-celir-joint.md]
   depends_on:
     - sot:root/lease-concurrency-intent
     - adr:root/20261109194200
@@ -28,7 +28,7 @@ Version **0.1.0**. Normative Docker clean-room gate **G24** proving **WriterMode
 
 | In | Out |
 |----|-----|
-| Gate **G24** (`verify/scripts/run-g24.sh` / compose `g24`) | Shared-index N-way (remains OUT) |
+| Gate **G24** (`verify/scripts/run-g024-l3-celir-joint.sh` / compose `g024-l3-celir-joint`) | Shared-index N-way (remains OUT) |
 | Explicit `WriterMode::HighConcurrency` + `prep_hash_parallel` + `apply_batch` shard storm | Redefining G11-L3 as CELIR-bearing |
 | Concurrent CELIR index readers / leased rebuild on same FS `.git` | lease ≠ skip Git locks |
 | N=32 required; N=128 preferred | CELIR ObjectStore; default-on feature |
@@ -38,8 +38,8 @@ Version **0.1.0**. Normative Docker clean-room gate **G24** proving **WriterMode
 
 ### Gate identity
 
-1. Gate ID **G24** `l3-celir-index-joint`. Matrix: `verify/matrices/matrix-g24.md`.
-2. G11-L3 (`verify/matrices/matrix-l3.md`) stays CELIR-free. G24 is the **successor joint** gate — additive.
+1. Gate ID **G24** `l3-celir-index-joint`. Matrix: `verify/matrices/matrix-g024-l3-celir-joint.md`.
+2. G11-L3 (`verify/matrices/matrix-l003-high-concurrency.md`) stays CELIR-free. G24 is the **successor joint** gate — additive.
 3. Host greens MUST NOT authorize joint Verified.
 
 ### Assertions (PASS)
@@ -62,6 +62,6 @@ G22 and G11-L3 were separate. Product multi-agent reality uses HighConcurrency w
 
 ## Verification
 
-1. `docker compose -f verify/docker-compose.yml run --rm g24` PASS.
+1. `docker compose -f verify/docker-compose.yml run --rm g024-l3-celir-joint` PASS.
 2. Evidence receipt under `.spec/evidence/`.
 3. `spec check` clean for this SoT and [[plan:root/20261109204935]].

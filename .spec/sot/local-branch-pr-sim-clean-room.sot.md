@@ -4,10 +4,10 @@ title: Local branch PR sim clean-room
 status: active
 created: 2026-11-09T20:55:07Z
 updated: 2026-11-09T20:55:07Z
-tags: [clean-room, branch, pr-sim, refs, merge, lease, g26, concurrency]
+tags: [clean-room, branch, pr-sim, refs, merge, lease, g026-local-branch-pr-sim, concurrency]
 verify: clean-room
 rel:
-  governs: [verify/gates/g26, verify/scripts/run-g26.sh, verify/matrices/matrix-g26.md]
+  governs: [verify/gates/g026-local-branch-pr-sim, verify/scripts/run-g026-local-branch-pr-sim.sh, verify/matrices/matrix-g026-local-branch-pr-sim.md]
   depends_on:
     - sot:root/product-verification-clean-room
     - sot:root/interop-test-matrix
@@ -21,13 +21,13 @@ rel:
 
 # Local branch + synthetic PR clean-room
 
-Version **0.1.0**. Normative Docker clean-room gate **G26** for **local** thousands-class branch / synthetic PR-ref scale and concurrent merge workers under `arks-lease`. Authority: [[sot:root/product-verification-clean-room]]. Lease: [[sot:root/lease-concurrency-intent]]. Matrix: `verify/matrices/matrix-g26.md`. Plan: [[plan:root/20261109205507]].
+Version **0.1.0**. Normative Docker clean-room gate **G26** for **local** thousands-class branch / synthetic PR-ref scale and concurrent merge workers under `arks-lease`. Authority: [[sot:root/product-verification-clean-room]]. Lease: [[sot:root/lease-concurrency-intent]]. Matrix: `verify/matrices/matrix-g026-local-branch-pr-sim.md`. Plan: [[plan:root/20261109205507]].
 
 ## Scope
 
 | In | Out |
 |----|-----|
-| Gate **G26** (`verify/scripts/run-g26.sh` / compose `g26`) | Live GitHub API, rate limits, Actions, branch protection, merge queue |
+| Gate **G26** (`verify/scripts/run-g026-local-branch-pr-sim.sh` / compose `g026-local-branch-pr-sim`) | Live GitHub API, rate limits, Actions, branch protection, merge queue |
 | Thousands-class `refs/heads/*` and synthetic `refs/pull/N/head` (+ optional `merge`) | Claiming GitHub PR throughput / forge latency |
 | Concurrent merge / tip-update workers under leases + Git `*.lock` | Replacing G17/G18 catalog claims |
 | Stock-Git pathology compare where induce fits; fail-closed integrity | CELIR / ObjectStore changes (stream A / G22–G25) |
@@ -37,7 +37,7 @@ Version **0.1.0**. Normative Docker clean-room gate **G26** for **local** thousa
 
 ### Gate identity
 
-1. Gate ID **G26** `local-branch-pr-sim`. Entrypoint: `verify/scripts/run-g26.sh`. Compose: `g26`.
+1. Gate ID **G26** `local-branch-pr-sim`. Entrypoint: `verify/scripts/run-g026-local-branch-pr-sim.sh`. Compose: `g026-local-branch-pr-sim`.
 2. G26 is **additive** and independent of CELIR dual-path gates (G22–G25). It does **not** close stream A.
 3. Host greens are advisory only.
 
@@ -72,7 +72,7 @@ Multi-agent workflows often look like “thousands of branches / PR heads conten
 
 ## Verification
 
-1. Docker `compose … run --rm g26` PASS + receipt under `verify/gates/g26/out/`.
+1. Docker `compose … run --rm g026-local-branch-pr-sim` PASS + receipt under `verify/gates/g026-local-branch-pr-sim/out/`.
 2. Evidence stamp under `.spec/evidence/` cites actual N and tip SHA.
 3. Residual / roadmap rows say **local PR-sim verified** only with G26 receipt; GitHub deferred remains explicit.
 4. `spec check` clean for this SoT and [[plan:root/20261109205507]].

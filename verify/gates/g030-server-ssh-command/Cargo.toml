@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "arks-g30-cleanroom"
+name = "arks-g030-server-ssh-command-cleanroom"
 description = "M25 clean-room G30 SSH command-mode suite"
 version = "0.0.0"
 edition = "2024"

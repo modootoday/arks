@@ -4,7 +4,7 @@ title: M24 successor G23 CELIR dual-path Git verified
 status: active
 created: 2026-11-09T20:49:33Z
 updated: 2026-11-10T05:49:00Z
-tags: [m24, g23, celir, dual-path, clean-room, porcelain, verified]
+tags: [m24, g023-celir-dual-path, celir, dual-path, clean-room, porcelain, verified]
 rel:
   depends_on:
     - sot:root/celir-dual-path-git-verified
@@ -28,7 +28,7 @@ Close the G22 honesty residual “CELIR-backed Git verified” with an honest Do
 
 | Disposition | Meaning |
 |-------------|---------|
-| **Verified** | Docker `g23` PASS + evidence; ObjectStore Refuse held; stock-readable |
+| **Verified** | Docker `g023-celir-dual-path` PASS + evidence; ObjectStore Refuse held; stock-readable |
 | **FAIL / blocked** | Missing discrete-circuit, assertion failure — no fake PASS |
 | **Out** | CELIR ObjectStore; default-on feature |
 
@@ -54,5 +54,5 @@ Close the G22 honesty residual “CELIR-backed Git verified” with an honest Do
 | Wave | Status | Tip / evidence |
 |------|--------|----------------|
 | G23-0 | Closed | SoT + ADR + matrix + interop |
-| G23-1 | Closed | harness + g23_dual_path_git |
-| G23-exit | Closed (Verified) | [[evidence:root/20261109205534]]; Docker `g23` PASS |
+| G23-1 | Closed | harness + g023-celir-dual-path_dual_path_git |
+| G23-exit | Closed (Verified) | [[evidence:root/20261109205534]]; Docker `g023-celir-dual-path` PASS |

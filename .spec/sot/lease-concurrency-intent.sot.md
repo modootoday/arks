@@ -4,7 +4,7 @@ title: Lease concurrency intent
 status: active
 created: 2026-11-08T08:21:10Z
 updated: 2026-11-10T07:40:00Z
-tags: [lease, concurrency, locks, agents, allocator, two-tier, m23, m26, l3, shared-index, g34]
+tags: [lease, concurrency, locks, agents, allocator, two-tier, m23, m26, l3, shared-index, g034-shared-index-contention]
 verify: manual
 rel:
   depends_on: [sot:root/product-intent, sot:root/crate-architecture, sot:root/git-compat-surface, sot:root/product-verification-clean-room, sot:root/storage-celir-boundary, sot:root/program-roadmap, adr:root/20261108232800, adr:root/20261109194200, adr:root/20261110074000, adr:root/20261109122126, sot:root/arks-lease, sot:root/shared-index-nway-clean-room, plan:root/20261109194208, plan:root/20261110074000]

@@ -4,7 +4,7 @@ title: Program roadmap
 status: active
 created: 2026-11-08T08:58:16Z
 updated: 2026-11-10T17:44:40Z
-tags: [roadmap, milestones, bottom-up, program, waves, production, cli-parity, alias, dot-git, server, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, lease, concurrency, issue-resolution, perf, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, celir-index, g28, g34, shared-index, fs-final, partial-completion, g-ladder]
+tags: [roadmap, milestones, bottom-up, program, waves, production, cli-parity, alias, dot-git, server, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, lease, concurrency, issue-resolution, perf, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, celir-index, g028-live-private-arks, g034-shared-index-contention, shared-index, fs-final, partial-completion, g-ladder]
 verify: manual
 rel:
   depends_on:
@@ -162,7 +162,7 @@ Carrying tip class ≥ `1770102` + gap-classification research [[research:root/2
 **Next milestones (post-G-ladder — not M27 invent):**
 
 1. **Clean-room 3-pillar DoD** — git↔arks / git-daemon↔arks daemon / gh↔arks hub (+ local multi-agent framework). Umbrella [[sot:root/verify-cleanroom-symmetry-matrix]]; compose `dod-symmetry`. Tip ≥ `053e5ef`: CLI pin **Missing=0**; remaining focus **daemon flags** + **hub v1**. Host inventory `git 2.56.0.windows.4` / `gh 2.103.3` vs clean-room pin `git 2.39.5`. Smoke ≠ Claimed.
-2. **Ops — Live G8 latency** — owner fills `g8-live` secrets → remasure (G1 honesty Blocked until then; re-probe [[evidence:root/20261111032001]]).
+2. **Ops — Live G8 latency** — owner fills `g008-live-forge-smoke-live` secrets → remasure (G1 honesty Blocked until then; re-probe [[evidence:root/20261111032001]]).
 3. **L9** — owner SoT reopen pack only; no agent publish.
 4. **Hold forever** — immunity / ObjectStore / blanket faster / multi-writer warranty / GUI·scalar embed unchanged.
 
@@ -269,7 +269,7 @@ M9/M10/M11 **exit definitions and carrying receipts stay frozen**. Post-bar resi
 | CELIR index dual-path | **M24 Claimed** (host advisory [[evidence:root/20261109203236]]); **G22** contention ([[evidence:root/20261109204428]]); **G23** dual-path Git ([[evidence:root/20261109205534]]); **G24** L3+index joint ([[evidence:root/20261109205535]]); **G25** scale N≥256 ([[evidence:root/20261109205536]]); ObjectStore Refuse retained | [[plan:root/20261109203430]], [[plan:root/20261109203949]], [[plan:root/20261109204933]], [[plan:root/20261109204934]], [[plan:root/20261109204935]] |
 | Local branch + synthetic PR-env (G26) | **Stream B Claimed** — [[evidence:root/20261109205847]] (N=2048/2048/32); **not** GitHub throughput; forge Deferred; umbrella A∧B | [[sot:root/local-branch-pr-sim-clean-room]], [[plan:root/20261109205507]] |
 | arks smart-HTTP PR contention (G27) | **Claimed** — [[evidence:root/20261109210427]] (N=2048/2048/8); GitHub stand-in via arks smart HTTP; **not** GitHub UX/Checks/merge-queue; live forge Deferred | [[sot:root/arks-smart-http-pr-contention-clean-room]], [[plan:root/20261109210427]] |
-| Live private forge journeys (G28) | **Claimed** — live PASS=21 ([[evidence:root/20261109212500]]) + offline **J-CLONE-LOCAL-01** / **J-CLONE-PATH-01** PASS ([[evidence:root/20261109213400]]); checklist N/A=0; tip ~`902d728`; ≠ throughput; `gpgsig` read + SSH create/verify Claimed (OpenPGP N/A) | [[sot:root/g28-live-private-arks-journeys]], [[plan:root/20261109212020]], [[evidence:root/20261110073800]] |
+| Live private forge journeys (G28) | **Claimed** — live PASS=21 ([[evidence:root/20261109212500]]) + offline **J-CLONE-LOCAL-01** / **J-CLONE-PATH-01** PASS ([[evidence:root/20261109213400]]); checklist N/A=0; tip ~`902d728`; ≠ throughput; `gpgsig` read + SSH create/verify Claimed (OpenPGP N/A) | [[sot:root/g028-live-private-arks-live-private-arks-journeys]], [[plan:root/20261109212020]], [[evidence:root/20261110073800]] |
 | Server SSH / `git://` / dumb HTTP / v2 | **M25 Claimed** per G29–G32 | [[adr:root/20261109220230]], [[plan:root/20261109220230]], residual register + [[sot:root/arks-server]] |
 | G8 live smoke / G9 filters | G8 **Claimed** default-on when secrets; G9 **Claimed** `--depth` / G35 (filter N/A); catalog CRED/NET Claimed via Docker-local Dz | residual register + [[adr:root/20261110220000]] + [[evidence:root/20261110180000]] |
 | Multi-agent concurrency catalog (221) | Claimed M12–M20; **M21 Dz** requires **Deferred=0** terminal dispositions | [[sot:root/multi-agent-git-concurrency-scenarios]], residual register, [[plan:root/20261110140000]] |
@@ -560,7 +560,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Close an **additional explicit** concurrency catalog claim-set (Cx-1) of high-value local filesystem races via Docker **G17** induce-compare. Does **not** assert the ~221 catalog is solved. |
 | **Entry** | M12 G17 Cm-1..Cm-3 Done; prefer after M13 claimed-set historical close. |
 | **Exit** | Docker G17 PASS for every Cx-1 ID + Cm-1..Cm-3 regression; evidence receipt; residual honesty for unclaimed IDs. |
-| **Linked** | Phase **Cx**; Gate **G17** (extended); plan [[plan:root/20261110010000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17** (extended); plan [[plan:root/20261110010000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **First slice (Cx-1)** | REF-007, LOCK-001, WT-002, WT-004, SEQ-001, SEQ-002, SEQ-003, REF-018, MISC-012, TOCTOU-005 |
 | **Non-goals** | Reopening M12/M13 exits; L3; CELIR; G8/G9; inventing G22; “all races fixed” language; host-only Done. |
 | **Status** | **Closed** — Cx-1 G17 **23**/23 PASS ([[evidence:root/20261110010000]]); Cx-2 G17 **35**/35 PASS (12 new + 23 regression; [[evidence:root/20261110020000]]). Catalog disposition register baseline: bare Open **0** (Claimed 42 unique + N/A 9 + Closed-deferred 170). Does **not** mean 221 races solved. |
@@ -572,7 +572,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote researched Closed-deferred mitigate IDs (Cx-3) via Docker **G17** induce-compare. Honesty: not “221 solved.” |
 | **Entry** | M19 Cx-2 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-3 ID + Cm/Cx-1/Cx-2 regression (**47**/47); evidence; disposition recount (Claimed 54 / deferred 158). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110030000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110030000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cx-3 G17 **47**/47 PASS (12 new + 35 regression; [[evidence:root/20261110030000]]). Disposition: Claimed **54** unique + N/A **9** + Closed-deferred **158**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-4 claim expansion
@@ -582,7 +582,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-4) via Docker **G17** induce-compare. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-3 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-4 ID + prior regression (**59**/59); evidence; disposition recount (Claimed 66 / deferred 146). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110040000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110040000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cx-4 G17 **59**/59 PASS (12 new + 47 regression; [[evidence:root/20261110040000]]). Disposition: Claimed **66** unique + N/A **9** + Closed-deferred **146**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-5 claim expansion
@@ -592,7 +592,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-5) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-4 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-5 ID + prior regression (**71**/71); evidence; disposition recount (Claimed 78 / deferred 134). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110050000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110050000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cx-5 G17 **71**/71 PASS (12 new + 59 regression; [[evidence:root/20261110050000]]). Disposition: Claimed **78** unique + N/A **9** + Closed-deferred **134**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-6 claim expansion
@@ -602,7 +602,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-6) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-5 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-6 ID + prior regression (**83**/83); evidence; disposition recount (Claimed 90 / deferred 122). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110060000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110060000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cx-6 G17 **83**/83 PASS (12 new + 71 regression; [[evidence:root/20261110060000]]). Disposition: Claimed **90** unique + N/A **9** + Closed-deferred **122**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-7 claim expansion
@@ -612,7 +612,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-7) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-6 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-7 ID + prior regression (**95**/95); evidence; disposition recount (Claimed 102 / deferred 110). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110070000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110070000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cx-7 G17 **95**/95 PASS (12 new + 83 regression; [[evidence:root/20261110070000]]). Disposition: Claimed **102** unique + N/A **9** + Closed-deferred **110**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cx-8 claim expansion
@@ -622,7 +622,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred mitigate IDs (Cx-8) via Docker **G17**. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-7 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G17 PASS for every Cx-8 ID + prior regression (**107**/107); evidence; disposition recount (Claimed 114 / deferred 98). |
-| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110080000]]; matrix `verify/matrices/matrix-g17.md` |
+| **Linked** | Phase **Cx**; Gate **G17**; plan [[plan:root/20261110080000]]; matrix `verify/matrices/matrix-g017-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cx-8 G17 **107**/107 PASS (12 new + 95 regression; [[evidence:root/20261110080000]]). Disposition: Claimed **114** unique + N/A **9** + Closed-deferred **98**. Does **not** mean 221 races solved. Remaining bucket A Docker-induce-thin → prefer Cd-4. |
 
 ### M20 — Concurrency Cd-4 claim expansion
@@ -632,7 +632,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote researched Closed-deferred differentiate IDs (Cd-4) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cx-8 Done (bucket A Docker-induce-thin); research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-4 ID + Cd-1..Cd-3 regression (**24**/24); evidence; disposition recount (Claimed 126 / deferred 86). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110090000]]; matrix `verify/matrices/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110090000]]; matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cd-4 G18 **24**/24 PASS (12 new + 12 regression; [[evidence:root/20261110090000]]). Disposition: Claimed **126** unique + N/A **9** + Closed-deferred **86**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-5 claim expansion
@@ -642,7 +642,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred differentiate IDs (Cd-5) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-4 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-5 ID + Cd-1..Cd-4 regression (**36**/36); evidence; disposition recount (Claimed 138 / deferred 74). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110100000]]; matrix `verify/matrices/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110100000]]; matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cd-5 G18 **36**/36 PASS (12 new + 24 regression; [[evidence:root/20261110100000]]). Disposition: Claimed **138** unique + N/A **9** + Closed-deferred **74**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-6 claim expansion
@@ -652,7 +652,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred differentiate IDs (Cd-6) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-5 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-6 ID + Cd-1..Cd-5 regression (**48**/48); evidence; disposition recount (Claimed 150 / deferred 62). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110110000]]; matrix `verify/matrices/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110110000]]; matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cd-6 G18 **48**/48 PASS (12 new + 36 regression; [[evidence:root/20261110110000]]). Disposition: Claimed **150** unique + N/A **9** + Closed-deferred **62**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-7 claim expansion
@@ -662,7 +662,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote next researched Closed-deferred differentiate IDs (Cd-7) via Docker **G18** lease uplift. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-6 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-7 ID + Cd-1..Cd-6 regression (**60**/60); evidence; disposition recount (Claimed 162 / deferred 50). |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110120000]]; matrix `verify/matrices/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110120000]]; matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cd-7 G18 **60**/60 PASS (12 new + 48 regression; [[evidence:root/20261110120000]]). Disposition: Claimed **162** unique + N/A **9** + Closed-deferred **50**. Does **not** mean 221 races solved. |
 
 ### M20 — Concurrency Cd-8 claim expansion
@@ -672,7 +672,7 @@ Non-exhaustive; full IDs in [[sot:root/multi-agent-git-concurrency-scenarios]]. 
 | **Goal** | Promote last researched bucket B leftovers (PERF coordination + CFG-002 + AGENT-004 NFS honesty) via Docker **G18**. Absolute PERF SLOs stay M14/G19. Honesty: not “221 solved.” |
 | **Entry** | M20 Cd-7 Done; research [[research:root/20261110021546]]. |
 | **Exit** | Docker G18 PASS for every Cd-8 ID + Cd-1..Cd-7 regression (**72**/72); evidence; disposition recount (Claimed 174 / deferred 38); bucket B exhausted. |
-| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110130000]]; matrix `verify/matrices/matrix-g18.md` |
+| **Linked** | Phase **Cd**; Gate **G18**; plan [[plan:root/20261110130000]]; matrix `verify/matrices/matrix-g018-concurrency-issue-compare.md` |
 | **Status** | **Closed** — Cd-8 G18 **72**/72 PASS (12 new + 60 regression; [[evidence:root/20261110130000]]). Disposition: Claimed **174** unique + N/A **9** + Closed-deferred **38** (migrated to **M21 work queue**). Bucket B exhausted ≠ catalog Done. Does **not** mean 221 races solved. |
 
 ### M21 — Full catalog Deferred=0 (Phase Dz)

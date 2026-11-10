@@ -4,10 +4,10 @@ title: arks smart HTTP PR contention clean-room
 status: active
 created: 2026-11-09T21:04:05Z
 updated: 2026-11-09T21:04:05Z
-tags: [clean-room, smart-http, server, branch, pr-sim, contention, g27, github-stand-in]
+tags: [clean-room, smart-http, server, branch, pr-sim, contention, g027-smart-http-pr-contention, github-stand-in]
 verify: clean-room
 rel:
-  governs: [verify/gates/g27, verify/scripts/run-g27.sh, verify/matrices/matrix-g27.md]
+  governs: [verify/gates/g027-smart-http-pr-contention, verify/scripts/run-g027-smart-http-pr-contention.sh, verify/matrices/matrix-g027-smart-http-pr-contention.md]
   depends_on:
     - sot:root/product-verification-clean-room
     - sot:root/interop-test-matrix
@@ -23,7 +23,7 @@ rel:
 
 # arks smart HTTP + synthetic PR contention clean-room
 
-Version **0.1.0**. Normative Docker clean-room gate **G27** for **arks smart-HTTP server** as a **GitHub stand-in**: thousands-class seeded branches / synthetic `refs/pull/*/head` (+ merge), N concurrent stock-Git agents clone/fetch/push/merge against the server, integrity fail-closed. Authority: [[sot:root/product-verification-clean-room]]. Server surface: [[sot:root/arks-server]] (smart HTTP only). Local filesystem PR-sim sibling: [[sot:root/local-branch-pr-sim-clean-room]] (**G26**). Matrix: `verify/matrices/matrix-g27.md`. Plan: [[plan:root/20261109210427]].
+Version **0.1.0**. Normative Docker clean-room gate **G27** for **arks smart-HTTP server** as a **GitHub stand-in**: thousands-class seeded branches / synthetic `refs/pull/*/head` (+ merge), N concurrent stock-Git agents clone/fetch/push/merge against the server, integrity fail-closed. Authority: [[sot:root/product-verification-clean-room]]. Server surface: [[sot:root/arks-server]] (smart HTTP only). Local filesystem PR-sim sibling: [[sot:root/local-branch-pr-sim-clean-room]] (**G26**). Matrix: `verify/matrices/matrix-g027-smart-http-pr-contention.md`. Plan: [[plan:root/20261109210427]].
 
 Wire cites (no invented semantics): [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [git-upload-pack](https://git-scm.com/docs/git-upload-pack), [git-receive-pack](https://git-scm.com/docs/git-receive-pack). Synthetic PR ref names follow common forge layout (`refs/pull/N/head`, `refs/pull/N/merge`) as **fixtures only** — not GitHub Checks / merge-queue / protection UX.
 
@@ -31,7 +31,7 @@ Wire cites (no invented semantics): [gitprotocol-http](https://git-scm.com/docs/
 
 | In | Out |
 |----|-----|
-| Gate **G27** (`verify/scripts/run-g27.sh` / compose `g27`) | Live GitHub API, rate limits, Actions, Checks, branch protection, merge queue |
+| Gate **G27** (`verify/scripts/run-g027-smart-http-pr-contention.sh` / compose `g027-smart-http-pr-contention`) | Live GitHub API, rate limits, Actions, Checks, branch protection, merge queue |
 | arks **smart HTTP** remote as forge stand-in (G15 Claimed path) | Claiming live forge / GitHub throughput or UX parity |
 | Seed thousands-class `refs/heads/*` + `refs/pull/N/{head,merge}` on server | SSH / `git://` / dumb HTTP / protocol v2 (Refuse retained) |
 | N concurrent stock-Git agents: clone / fetch / push / merge-style tip updates | Replacing G15 functional bar or G26 local-only bar |
@@ -42,7 +42,7 @@ Wire cites (no invented semantics): [gitprotocol-http](https://git-scm.com/docs/
 
 ### Gate identity
 
-1. Gate ID **G27** `arks-smart-http-pr-contention`. Entrypoint: `verify/scripts/run-g27.sh`. Compose: `g27`.
+1. Gate ID **G27** `arks-smart-http-pr-contention`. Entrypoint: `verify/scripts/run-g027-smart-http-pr-contention.sh`. Compose: `g027-smart-http-pr-contention`.
 2. G27 is **additive**. It extends stream B (remote contention) after G26 local sim; it does **not** redefine M11/G15 or close live-forge Deferred (G8+).
 3. Host greens are advisory only.
 4. Prerequisites: G15 Claimed smart-HTTP path; G26 Claimed local scale (advisory sequencing — G27 harness MUST NOT require G26 lock).
@@ -79,7 +79,7 @@ Multi-agent workflows often look like “thousands of branches / PR heads conten
 
 ## Verification
 
-1. Docker `compose … run --rm g27` PASS + receipt under `verify/gates/g27/out/`.
+1. Docker `compose … run --rm g027-smart-http-pr-contention` PASS + receipt under `verify/gates/g027-smart-http-pr-contention/out/`.
 2. Evidence stamp under `.spec/evidence/` cites actual N and tip SHA.
 3. Residual / roadmap rows say **arks smart-HTTP PR-contention verified** only with G27 receipt; GitHub deferred remains explicit.
 4. `spec check` clean for this SoT and [[plan:root/20261109210427]].

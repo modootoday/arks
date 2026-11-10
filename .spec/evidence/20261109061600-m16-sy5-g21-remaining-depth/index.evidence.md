@@ -4,7 +4,7 @@ title: M16 Sy-5 G21 remaining depth + ancillary interrogators
 status: active
 created: 2026-11-09T06:16:00Z
 updated: 2026-11-09T06:16:00Z
-tags: [g21, m16, sy-5, clean-room, verified, complete-symmetry]
+tags: [g021-cli-flag-symmetry, m16, sy-5, clean-room, verified, complete-symmetry]
 rel:
   depends_on:
     - plan:root/20261109043910
@@ -39,7 +39,7 @@ sparse-checkout disable/reapply.
 
 | Field | Value |
 |-------|-------|
-| Compose | `g21` |
+| Compose | `g021-cli-flag-symmetry` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 
@@ -47,6 +47,6 @@ sparse-checkout disable/reapply.
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g21
+docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry
 spec check
 ```

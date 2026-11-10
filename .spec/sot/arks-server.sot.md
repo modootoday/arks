@@ -4,7 +4,7 @@ title: arks-server unit
 status: active
 created: 2026-11-08T23:12:49Z
 updated: 2026-11-10T19:40:00Z
-tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, webdav, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g36, r2, s3, self-host]
+tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, webdav, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g036-http-basic-auth, r2, s3, self-host]
 verify: manual
 rel:
   governs: [crates/arks-server]
@@ -46,7 +46,7 @@ Version **0.3.2**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) und
 
 **M11 does not redefine M9.** Production-server is a separate bar. **M25 does not redefine M11** — smart HTTP G15 remains the frozen production-server smart-HTTP receipt.
 
-**G15 exit (frozen):** [[evidence:root/20261108231300]] — smart HTTP Claimed; matrix `verify/matrices/matrix-m11.md`.
+**G15 exit (frozen):** [[evidence:root/20261108231300]] — smart HTTP Claimed; matrix `verify/matrices/matrix-m011-clean-room-git-server.md`.
 
 **M25 gates:** **G29** dumb HTTP; **G30** SSH command-mode; **G31** protocol v2; **G32** `git://` daemon — each Claimed only with its Docker receipt.
 

@@ -32,5 +32,5 @@
       }
     }
   ],
-  "notes": "Rebuild with `docker compose -f verify/docker-compose.yml build` and refresh m1-cleanroom digest via `docker image inspect arks-verify-m1:0.1.0 --format '{{.Id}}'`. Prefer a single shared image tag for g0/g1/g2/g10 services."
+  "notes": "Rebuild with `docker compose -f verify/docker-compose.yml build` and refresh m1-cleanroom digest via `docker image inspect arks-verify-m1:0.1.0 --format '{{.Id}}'`. Prefer a single shared image tag for g000-workspace-lib-tests/g001-loose-object-interop/g002-refs-index-roundtrip/g010-store-facade services."
 }

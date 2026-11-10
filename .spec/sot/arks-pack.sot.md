@@ -54,6 +54,6 @@ Pack/idx interchange is the bridge from loose-object M1–M3 stores to protocol 
 ## Verification
 
 1. Host (advisory): `CARGO_BUILD_JOBS=2 cargo test -p arks-pack`.
-2. Clean-room **G4** `pack-local-roundtrip` (`verify/matrices/matrix-m4.md`, `verify/gates/g4`) vs in-image stock Git — authoritative; carrying receipt: [[evidence:root/20261108103610]]. Host green alone is not product-verified ([[sot:root/product-verification-clean-room]], [[sot:root/interop-test-matrix]]).
+2. Clean-room **G4** `pack-local-roundtrip` (`verify/matrices/matrix-m004-clean-room-pack-protocol.md`, `verify/gates/g004-pack-idx-roundtrip`) vs in-image stock Git — authoritative; carrying receipt: [[evidence:root/20261108103610]]. Host green alone is not product-verified ([[sot:root/product-verification-clean-room]], [[sot:root/interop-test-matrix]]).
 3. `spec check` clean for this SoT.
 4. Workspace `cargo metadata` shows no `gix` / gitoxide edge on `arks-pack`.

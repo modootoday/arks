@@ -4,7 +4,7 @@ title: M16 Sy-4 G21 client SSH transport
 status: active
 created: 2026-11-09T05:45:00Z
 updated: 2026-11-09T05:45:00Z
-tags: [g21, m16, sy-4, ssh, clean-room, verified, complete-symmetry]
+tags: [g021-cli-flag-symmetry, m16, sy-4, ssh, clean-room, verified, complete-symmetry]
 rel:
   depends_on:
     - plan:root/20261109043910
@@ -33,13 +33,13 @@ No product-path `git` subprocess. Server SSH command-mode remains **N/A**.
 | M16-SY4-02 | `submodule add` over SSH URL fixture |
 | Regression | G20 + G14 |
 
-Fixture: `verify/gates/g21/README-ssh-fixture.md` (ephemeral host/client keys; no secrets in tree).
+Fixture: `verify/gates/g021-cli-flag-symmetry/README-ssh-fixture.md` (ephemeral host/client keys; no secrets in tree).
 
 ## Environment
 
 | Field | Value |
 |-------|-------|
-| Compose | `g21` |
+| Compose | `g021-cli-flag-symmetry` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | OpenSSH | `OpenSSH_9.2p1 Debian-2+deb12u10` |
@@ -48,6 +48,6 @@ Fixture: `verify/gates/g21/README-ssh-fixture.md` (ephemeral host/client keys; n
 
 ```bash
 docker compose -f verify/docker-compose.yml build toolchain
-docker compose -f verify/docker-compose.yml run --rm g21
+docker compose -f verify/docker-compose.yml run --rm g021-cli-flag-symmetry
 spec check
 ```

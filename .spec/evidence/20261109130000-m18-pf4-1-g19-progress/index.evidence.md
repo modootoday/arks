@@ -4,7 +4,7 @@ title: M18 Pf4-1 progress — G19 sole run (19/19 ≤0.8×; 9/19 ≤0.5×)
 status: active
 created: 2026-11-09T13:00:00Z
 updated: 2026-11-10T00:57:43Z
-tags: [g19, m18, pf4, comparative-perf, clean-room, verified, na-free, progress]
+tags: [g019-comparative-performance, m18, pf4, comparative-perf, clean-room, verified, na-free, progress]
 rel:
   depends_on: [plan:root/20261109125438, research:root/20261109125438, sot:root/program-roadmap, sot:root/clean-room-journey-compare, evidence:root/20261109090000]
   evidence: []
@@ -15,7 +15,7 @@ files:
 
 # M18 Pf4-1 progress — sole Docker G19
 
-Wave **Pf4-1** of [[plan:root/20261109125438]]: hot-path wins (diff `BufWriter`, bulk `add` HashMap stage, untracked sort-once, archive `BufWriter`) measured under sole Docker `g19`.
+Wave **Pf4-1** of [[plan:root/20261109125438]]: hot-path wins (diff `BufWriter`, bulk `add` HashMap stage, untracked sort-once, archive `BufWriter`) measured under sole Docker `g019-comparative-performance`.
 
 ## Before / after vs M17 exit [[evidence:root/20261109090000]]
 
@@ -55,7 +55,7 @@ Gate exit **0**. Aggressive ≤0.5× hits **9/19**. M17 ≤0.8× regression **19
 
 | Field | Value |
 |-------|-------|
-| Compose | `docker compose -f verify/docker-compose.yml run --rm -e ARKS_G19_WAVE=Pf4 g19` |
+| Compose | `docker compose -f verify/docker-compose.yml run --rm -e ARKS_G19_WAVE=Pf4 g019-comparative-performance` |
 | Image | `arks-verify-m1:0.1.0` / `sha256:5736c5687d3b5775e187ca3d21fbc5b2a5a2bf8965c5381778ee478eb185adf0` |
 | Stock Git | `git version 2.39.5` |
 | Iterations / aggregation | 3 / `median_p95` |

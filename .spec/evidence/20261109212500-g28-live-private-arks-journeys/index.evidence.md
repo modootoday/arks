@@ -4,9 +4,9 @@ title: G28 live private arks journeys
 status: active
 created: 2026-11-09T21:25:00Z
 updated: 2026-11-10T00:57:44Z
-tags: [g28, clean-room, journey, live, github, private, verified]
+tags: [g028-live-private-arks, clean-room, journey, live, github, private, verified]
 rel:
-  depends_on: [sot:root/g28-live-private-arks-journeys, plan:root/20261109212020, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/clean-room-journey-compare, sot:root/production-residual-register, adr:root/20261110151000]
+  depends_on: [sot:root/g028-live-private-arks-live-private-arks-journeys, plan:root/20261109212020, sot:root/product-verification-clean-room, sot:root/interop-test-matrix, sot:root/clean-room-journey-compare, sot:root/production-residual-register, adr:root/20261110151000]
 files:
   - {path: receipt.json, sha256: cdf58199f4e6d1e4492d37fd66316638c1cf9b6a4995406fda9a66ed96d5f05e, bytes: 3004, store: repo}
 ---
@@ -17,14 +17,14 @@ files:
 
 | Field | Value |
 |-------|--------|
-| Gate | **G28** (`verify/scripts/run-g28.sh` / compose `g28`) |
-| Matrix | `verify/matrices/matrix-g28.md` |
+| Gate | **G28** (`verify/scripts/run-g028-live-private-arks.sh` / compose `g028-live-private-arks`) |
+| Matrix | `verify/matrices/matrix-g028-live-private-arks.md` |
 | Stock git (image) | `git version 2.39.5` |
 | Image | `arks-verify-m1:0.1.0` |
 | Parent tip before wave | `244df73` |
 | Result | **PASS** (`disposition=closed-implement`, PASS=21 FAIL=0 N/A=2) |
-| Throwaway private repo | `https://github.com/myso-kr/arks-g28-live-journeys-20261110062418` |
-| Submodule peer | `https://github.com/myso-kr/arks-g28-live-sub-20261110062418` |
+| Throwaway private repo | `https://github.com/myso-kr/arks-g028-live-private-arks-live-journeys-20261110062418` |
+| Submodule peer | `https://github.com/myso-kr/arks-g028-live-private-arks-live-sub-20261110062418` |
 
 ## Journey table
 
@@ -66,9 +66,9 @@ files:
 
 **Done.** After `delete_repo` scope grant, all ephemeral private repos deleted (`gh repo view` → not found):
 
-- `myso-kr/arks-g28-live-journeys-20261110062418` (PASS venue)
-- `myso-kr/arks-g28-live-sub-20261110062418` (submodule peer)
-- `myso-kr/arks-g28-live-journeys-20261110062241` (abandoned signed-readme seed)
-- `myso-kr/arks-g28-live-sub-20261110062241` (abandoned)
+- `myso-kr/arks-g028-live-private-arks-live-journeys-20261110062418` (PASS venue)
+- `myso-kr/arks-g028-live-private-arks-live-sub-20261110062418` (submodule peer)
+- `myso-kr/arks-g028-live-private-arks-live-journeys-20261110062241` (abandoned signed-readme seed)
+- `myso-kr/arks-g028-live-private-arks-live-sub-20261110062241` (abandoned)
 
 G28 Claimed status unchanged.

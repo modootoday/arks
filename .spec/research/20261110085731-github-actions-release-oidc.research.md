@@ -22,8 +22,8 @@ tags:
     release,
     perf,
     perf-ci,
-    g16,
-    g19,
+    g016-journey-compare,
+    g019-comparative-performance,
     research,
     deferred-signing-channels,
     runner-annotations,
@@ -187,7 +187,7 @@ GitHub Actions job logs show **Annotations** when a `runs-on` label points at a 
 
 ### Venue law (arks)
 
-- **Authoritative comparative timing** (G16 record + G19 `arks_median ≤ 0.8× git_median` allow-list): Docker clean-room only ([[sot:root/clean-room-journey-compare]], [[sot:root/product-verification-clean-room]]). Compose services: `g16` (`verify/scripts/run-g16.sh`), `g19` (`verify/scripts/run-g19.sh`); matrices `verify/matrices/matrix-journey.md`, `verify/matrices/matrix-g19.md`.
+- **Authoritative comparative timing** (G16 record + G19 `arks_median ≤ 0.8× git_median` allow-list): Docker clean-room only ([[sot:root/clean-room-journey-compare]], [[sot:root/product-verification-clean-room]]). Compose services: `g016-journey-compare` (`verify/scripts/run-g016-journey-compare.sh`), `g019-comparative-performance` (`verify/scripts/run-g019-comparative-performance.sh`); matrices `verify/matrices/matrix-g016-journey-compare.md`, `verify/matrices/matrix-g019-comparative-performance.md`.
 - **GHA hosted runners** are shared-pool, multi-tenant, OS-image-variable machines. Suitable for **compile/test**, not for “verified faster than Git” or G19 pass/fail ([GitHub-hosted runners](https://docs.github.com/en/actions/concepts/runners/github-hosted-runners)).
 - Product-hotspot research beyond M17 lives separately in [[research:root/20261109125438]] — that note is **not** a GHA perf-CI design; this section owns CI venue honesty.
 
@@ -205,7 +205,7 @@ GitHub Actions job logs show **Annotations** when a `runs-on` label points at a 
 
 | Lane | Where | Trigger | Evidence label | Current scope |
 |------|-------|---------|----------------|---------------|
-| **G16 func + G19 timing (authoritative)** | Sole-runner Docker compose `g16` / `g19` | Human / sole-runner lab | `clean-room` / Specfold evidence | **KEEP** as only Verified path; **OUT of GHA as Verified oracle** |
+| **G16 func + G19 timing (authoritative)** | Sole-runner Docker compose `g016-journey-compare` / `g019-comparative-performance` | Human / sole-runner lab | `clean-room` / Specfold evidence | **KEEP** as only Verified path; **OUT of GHA as Verified oracle** |
 | **Clean-room image smoke** | GHA `clean-room-smoke` in `.github/workflows/ci.yml` | PR + push `main` | advisory (image builds) | **LANDED** (Phase 1) — proves compose toolchain compiles; MUST NOT claim G0–G37 |
 | **Optional journey exit-0 smoke** | Future GHA job invoking the **same** `verify/` compose services without promoting wall-ms | `workflow_dispatch` / optional schedule | `gha-advisory` | **Deferred optional** — only if CI wants regression “exits 0”; never a G19 bar |
 | **Nightly advisory trend charts** | Future scheduled workflow uploading labeled JSON/plots | `schedule` cron | `host-advisory` / `gha-advisory` | **Deferred optional** — never public “faster than Git”; never Specfold Verified |
@@ -236,7 +236,7 @@ GitHub Actions job logs show **Annotations** when a `runs-on` label points at a 
 | Events that trigger workflows (`schedule`, `workflow_dispatch`) | https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows | Optional advisory cron / manual smoke shapes |
 | arks clean-room SoT | [[sot:root/product-verification-clean-room]] | Host/GHA green ≠ product verified |
 | arks journey-compare SoT | [[sot:root/clean-room-journey-compare]] | `run.venue` = `clean-room` vs `host-advisory` |
-| G19 matrix | `verify/matrices/matrix-g19.md` | Authoritative comparative bar + sole Docker `g19` |
+| G19 matrix | `verify/matrices/matrix-g019-comparative-performance.md` | Authoritative comparative bar + sole Docker `g019-comparative-performance` |
 
 ---
 

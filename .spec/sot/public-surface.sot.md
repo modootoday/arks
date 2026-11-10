@@ -4,7 +4,7 @@ title: Public surface
 status: active
 created: 2026-11-08T08:32:38Z
 updated: 2026-11-10T19:40:00Z
-tags: [public, docs, pages, license, security, agents, naming, honesty, alias, dot-git, perf, celir-index, g28, l3, self-host]
+tags: [public, docs, pages, license, security, agents, naming, honesty, alias, dot-git, perf, celir-index, g028-live-private-arks, l3, self-host]
 verify: manual
 rel:
   depends_on:
@@ -170,7 +170,7 @@ Manual:
 | Forge-scale ops dry-run (secrets-gated G8) | **Done (L5 ops only)** | Maintainer harness — **not** product Claimed SLO; dry-run ≠ live forge latency PASS ([[research:root/20261110095142]]). |
 | Partial-clone filter/promisor residual (R3) | **S1 Done (host wire)** | Claimed `--filter=blob:none` + promisor ([[evidence:root/20261110105855]]); other filter-specs refuse; clean-room twin = **S6**. Active order [[research:root/20261110105436]]. |
 | OpenPGP / X.509 / `tag -s` residual (R4) | **S2 Done (G38)** | Claimed OpenPGP commit/tag + X.509 program spawn ([[evidence:root/20261110110800]]); SSH remains G37. Active order [[research:root/20261110105436]]. |
-| Clean-room Docker multi-scenario e2e (L8) | **Done** | Sequential Docker PASS `g14`→`g16`(19/19)→`g20`→`g21` (`verify/matrices/matrix-l8-e2e.md` / `run-l8-e2e.sh`); host CI ≠ Verified; no invent PASS ([[research:root/20261110095142]]). |
+| Clean-room Docker multi-scenario e2e (L8) | **Done** | Sequential Docker PASS `g014-cli-parity-production`→`g016-journey-compare`(19/19)→`g020-cli-symmetric-parity`→`g021-cli-flag-symmetry` (`verify/matrices/matrix-l008-product-completion-e2e.md` / `run-l008-product-completion-e2e.sh`); host CI ≠ Verified; no invent PASS ([[research:root/20261110095142]]). |
 | Git↔arks comparison matrix (L_final) | **Done** | Public `docs/git-vs-arks.md` + nav + Specfold residual/CLI honesty; Claimed/N/A/reopen-only only; never invent Claimed ([[research:root/20261110095142]]). |
 | Whether `docs/` links into raw `.spec/` HTML on GitHub | **Closed (docs policy)** | Allowed as “source of truth on GitHub”; still do not Jekyll-publish full SoT trees by default. |
 | Human vs agent vocabulary split | **Done (v0.3.0)** | Human Pages/README plain language; Specfold/AGENTS/`verify` keep precise IDs; no false “faster than Git” outside receipts. |

@@ -81,10 +81,10 @@ Disposition relative to clarified triad. **KEEP rows for daemon are above — no
 | C1 | `arks forge` → host `gh` | `crates/arks/src/cmd/forge.rs` | Claimed-closest thin-wrap; full forge Non-goal | **Candidate trim** (binary surface) | Yes |
 | C2 | `arks forge recipe` | same | G5 recipe deepen | **Candidate trim** | Yes |
 | C3 | Full forge Checks/PR/Issues/OAuth product | residual FW-FORGE-B | Impossible / Non-goal | **Keep as ops/CI-only** (absent) | Yes |
-| C4 | G8 / `g8-live` live forge **latency SLO as product** | `docs/forge-scale.md`; `g8-forge-scale.yml`; FW-GH-LIVE-SCALE | Harness Claimed; live PASS Blocked | **Keep as ops/CI-only**; **Mis-labeled Claimed product** if sold as end-user feature | Yes |
+| C4 | G8 / `g008-live-forge-smoke-live` live forge **latency SLO as product** | `docs/forge-scale.md`; `g008-live-forge-smoke-forge-scale.yml`; FW-GH-LIVE-SCALE | Harness Claimed; live PASS Blocked | **Keep as ops/CI-only**; **Mis-labeled Claimed product** if sold as end-user feature | Yes |
 | C5 | Pages-facing **Forge scale** maintainer doc | `docs/forge-scale.md`; footer nav | Ops honesty page on Pages | **Keep as ops/CI-only** (do not elevate to Product nav) | **Missed emphasis** |
-| C6 | G28 live-private journeys + harness `api.github.com` PR create | `verify/scripts/run-g28.sh` | Functional Claimed ≠ Checks UX | **Keep as ops/CI-only** | Yes |
-| C7 | G5 forge-recipe verify gate | `verify/scripts/run-g5.sh` | Harness for C1/C2 | **Keep as ops/CI-only** | **Missed** |
+| C6 | G28 live-private journeys + harness `api.github.com` PR create | `verify/scripts/run-g028-live-private-arks.sh` | Functional Claimed ≠ Checks UX | **Keep as ops/CI-only** | Yes |
+| C7 | G5 forge-recipe verify gate | `verify/scripts/run-g005-protocol-offline-fixtures.sh` | Harness for C1/C2 | **Keep as ops/CI-only** | **Missed** |
 | C8 | OIDC `release.yml` + Environments **`crates`/`npm`/`pypi`/`rubygems` as product** | `.github/workflows/release.yml`; `docs/release.md`; public-surface L4 | Ops Done ≠ registry PASS; L9 owner | **Keep as ops/CI-only** | Partial (OIDC yes; **multi-registry npm/pypi/rubygems under-called**) |
 | C9 | npm / PyPI / RubyGems **packaging trees as product** | absent `npm/` / PyPI tree; Gemfile is **docs** only | Skip-until in release.md | **Keep as ops/CI-only** (not shipped product) | **Missed** |
 | C10 | Pages-facing **Release channels** maintainer doc | `docs/release.md`; footer | Maintainer ops | **Keep as ops/CI-only** | Partial |
@@ -99,7 +99,7 @@ Disposition relative to clarified triad. **KEEP rows for daemon are above — no
 | C19 | Embedded forge OAuth browser | AUTH / CRED | Refuse / Impossible | **Keep as ops/CI-only** (absent) | Yes |
 | C20 | Absolute SHA-1 collision **immunity** marketing | OBJ-004 | Impossible; detect+refuse Claimed | Marketing hygiene (not excess code) | Yes |
 | C21 | “Faster than Git” marketing | public-surface §22 | Forbidden without receipts | Marketing hygiene | Yes |
-| C22 | Operator readiness scripts sold as product | `scripts/release-channel-readiness.sh`, `forge-scale-readiness.sh`, `g8-live-operator-path.sh` | Maintainer | **Keep as ops/CI-only** | **Missed** |
+| C22 | Operator readiness scripts sold as product | `scripts/release-channel-readiness.sh`, `forge-scale-readiness.sh`, `g008-live-forge-smoke-live-operator-path.sh` | Maintainer | **Keep as ops/CI-only** | **Missed** |
 | C23 | Host pilot / private-forge symmetry scripts | `verify/scripts/run-gh-private-pilot-symmetry.ps1` (+ untracked evidence) | Pilot harness | **Keep as ops/CI-only** | **Missed** (post-tip worktree noise) |
 | C24 | `.agents/**` / Specfold process agents | `.agents/` | Agent routing — not end-user product | **Keep as ops/CI-only** (dev process) | **Missed** (process surface) |
 
@@ -126,7 +126,7 @@ Several **C** rows are **already Claimed** / Claimed-closest on tip (`host-env`,
 - Cmd modules (37): archive…worktree; server porcelain in `cmd/server.rs` (`cmd_daemon` → `serve_daemon`).
 - Crates: hash/oid/object/store/refs/index/repo/protocol/pack/remote/lease/server/hostfs/arks — all needed for A/B except **hostfs≈C13/C14** and **store celir-index feature≈C17**.
 - Docs product vs ops: Product nav = overview/concurrent/getting-started/alias/workflows; Honesty = git-vs-arks/completion/performance/limits; Footer Project = **release** + **forge-scale** (ops).
-- Workflows: `ci.yml`, `release.yml`, `g8-forge-scale.yml` only.
+- Workflows: `ci.yml`, `release.yml`, `g008-live-forge-smoke-forge-scale.yml` only.
 
 ---
 

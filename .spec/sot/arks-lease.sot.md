@@ -4,7 +4,7 @@ title: arks-lease unit
 status: active
 created: 2026-11-08T23:12:49Z
 updated: 2026-11-10T07:40:00Z
-tags: [m10, m23, m26, unit, lease, ring-6, phase-e, l1, l2, l3-opt-in, shared-index, g34]
+tags: [m10, m23, m26, unit, lease, ring-6, phase-e, l1, l2, l3-opt-in, shared-index, g034-shared-index-contention]
 verify: manual
 rel:
   governs: [crates/arks-lease]
@@ -76,7 +76,7 @@ M10 ships the lease **runtime** already specified as default product SoT, after 
 
 ## Verification
 
-1. Host (advisory): `cargo test -p arks-lease` (incl. `--test g34_shared_index_contention`).
+1. Host (advisory): `cargo test -p arks-lease` (incl. `--test g034-shared-index-contention_shared_index_contention`).
 2. Clean-room **G11** `lease-product` + L3 stress expansion per [[plan:root/20261109194208]] — authoritative for L3 Claimed.
 3. Clean-room **G34** shared-index contention per [[plan:root/20261110074000]] / [[sot:root/shared-index-nway-clean-room]] — authoritative for shared-index Verified.
 4. Prove dual-path: Git-compat still acquires ref/index locks while lease held; HighConcurrency claimed shape unlocked; shared-index still takes `index.lock`.
