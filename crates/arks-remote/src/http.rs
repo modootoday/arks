@@ -357,10 +357,7 @@ fn read_into_vec(
         let n = {
             // SAFETY: `read` only reports bytes it initialized; we advance by `n`.
             let dst = unsafe {
-                std::slice::from_raw_parts_mut(
-                    spare.as_mut_ptr().cast::<u8>(),
-                    spare.len().min(want),
-                )
+                std::slice::from_raw_parts_mut(spare.as_mut_ptr().cast::<u8>(), spare.len().min(want))
             };
             stream
                 .read(dst)

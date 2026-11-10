@@ -258,7 +258,10 @@ fn try_materialize_pack_locked(
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
             let blob = pack.get(oid).expect("checked above");
-            out.push((*i, write_cached_blob(rel, path, oid, *mode, blob, stamp)?));
+            out.push((
+                *i,
+                write_cached_blob(rel, path, oid, *mode, blob, stamp)?,
+            ));
         }
         Ok(Some(out))
     }) else {
