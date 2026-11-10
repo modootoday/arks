@@ -1145,7 +1145,7 @@ fn git_daemon_clone_fetch_push_roundtrip() {
     use crate::clone::clone_git;
     use crate::fetch::fetch_git;
     use crate::push::{PushUpdate, push_git};
-    use arks_daemon::{DaemonOptions, spawn_loopback_daemon};
+    use arks_server::{DaemonOptions, spawn_loopback_daemon};
     use std::sync::atomic::Ordering;
     use tempfile::TempDir;
 
@@ -1157,7 +1157,6 @@ fn git_daemon_clone_fetch_push_roundtrip() {
         export_all: true,
         allow_receive: true,
         strict_paths: true,
-        ..DaemonOptions::default()
     })
     .unwrap();
     let url = format!("git://{}/repo.git", addr);
