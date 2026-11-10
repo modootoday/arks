@@ -6,7 +6,7 @@
 //! M17 Pf3-2: skip rewriting worktree blobs whose index OID already matches (same
 //! class of up-to-date short-circuit stock Git uses on switch/checkout).
 //! Pf4-3: collect blob write jobs then parallel get+write (Mutex store).
-//! Pf5: pack-cache-first reads + cheap fresh-write stamps; parallel from 8 blobs.
+//! Pf5: pack-cache `get_shared` (Arc) + cheap fresh-write stamps; 1-CPU-safe workers.
 
 use crate::error::RemoteError;
 use arks_index::{Index, IndexEntry, sort_entries};
@@ -21,7 +21,8 @@ use std::thread;
 /// Write `commit`'s tree into `work` and replace the index to match.
 pub fn checkout_commit(repo: &Repository, work: &Path, commit: &Oid) -> Result<(), RemoteError> {
     let obj = repo
-        .get_object(commit)
+        .store()
+        .get_shared(commit)
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
     if obj.kind != ObjectKind::Commit {
         return Err(RemoteError::Protocol(format!(
@@ -108,7 +109,8 @@ fn collect_jobs(
     made_dirs: &mut HashSet<PathBuf>,
 ) -> Result<(), RemoteError> {
     let obj = repo
-        .get_object(tree_oid)
+        .store()
+        .get_shared(tree_oid)
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
     if obj.kind != ObjectKind::Tree {
         return Err(RemoteError::Protocol(format!(
@@ -222,19 +224,19 @@ fn materialize_jobs(
     }
     // Overlap get+write across workers (pack-cache hits are concurrent under RwLock).
     // Full prefetch-then-write regressed J-CLONE-PATH (lost read/write overlap).
-    // Docker sole-runners often report 1 CPU; forcing ≥2 workers added spawn tax
-    // that pushed J-CLONE-PATH-01 over Pf5 ≤0.5× (~0.54 at tip 4454149).
-    let cpus = thread::available_parallelism()
-        .map(|p| p.get())
-        .unwrap_or(1);
-    let written = if writes.len() < 8 || cpus <= 1 {
+    // Restore tip-3af76a7 parallel policy: mid-hundred blob clones still win with
+    // a few workers vs serial (forcing serial on cpus==1 re-missed ≤0.5× at ~0.51).
+    let written = if writes.len() < 24 {
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
             out.push((i, write_one_blob(repo, &rel, &path, &oid, mode)?));
         }
         out
     } else {
-        let workers = cpus.clamp(2, 8).min(writes.len());
+        let workers = thread::available_parallelism()
+            .map(|p| p.get().clamp(2, 8))
+            .unwrap_or(4)
+            .min(writes.len());
         let chunk = writes.len().div_ceil(workers);
         let mut out = Vec::with_capacity(writes.len());
         let mut worker_err: Option<RemoteError> = None;

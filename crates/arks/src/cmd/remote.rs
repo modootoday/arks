@@ -87,7 +87,10 @@ pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
         .iter()
         .find(|r| r.name == remote_name)
         .ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
-    let opts = arks_remote::FetchOptions { depth };
+    let opts = arks_remote::FetchOptions {
+        depth,
+        ..Default::default()
+    };
     let result = arks_remote::fetch_remote_with(&mut repo, &remote.url, remote_name, &opts)?;
     for (name, oid) in result.updated {
         println!("{name}: {}", oid.to_hex());
@@ -227,7 +230,10 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
             )));
         }
     }
-    let opts = arks_remote::FetchOptions { depth };
+    let opts = arks_remote::FetchOptions {
+        depth,
+        ..Default::default()
+    };
     if arks_remote::HttpRemoteUrl::parse(url).is_ok() {
         arks_remote::clone_http_with(url, &dest, &opts)?;
     } else if arks_remote::SshRemoteUrl::parse(url).is_ok() {

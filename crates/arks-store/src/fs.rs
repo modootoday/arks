@@ -14,6 +14,32 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
+/// Deferred pack+idx disk write (RAM cache already live). Clone overlaps this
+/// with worktree checkout on the smart-HTTP hot path.
+#[derive(Debug)]
+pub struct PendingPackPersist {
+    pack_path: PathBuf,
+    pack: Vec<u8>,
+    idx_path: PathBuf,
+    idx: Vec<u8>,
+}
+
+impl PendingPackPersist {
+    /// Write pack + idx to `objects/pack/` (gitrepository-layout).
+    pub fn persist(self) -> Result<(), StoreError> {
+        if let Some(parent) = self.pack_path.parent() {
+            fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
+        }
+        if !self.pack_path.is_file() {
+            fs::write(&self.pack_path, &self.pack).map_err(|e| StoreError::Io(e.to_string()))?;
+        }
+        if !self.idx_path.is_file() {
+            fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
+        }
+        Ok(())
+    }
+}
+
 /// Loose + pack object store rooted at a Git `objects/` directory.
 ///
 /// Pf4-2 / Pf5: `RwLock` + `Arc` pack cache so parallel checkout readers share
@@ -26,6 +52,8 @@ pub struct FilesystemGitStore {
     /// Lazily decoded pack objects under `objects/pack/`.
     pack_objects: RwLock<HashMap<Oid, Arc<RawObject>>>,
     packs_loaded: RwLock<bool>,
+    /// Optional pack+idx bytes waiting for disk (clone overlaps with checkout).
+    pending_pack: Option<PendingPackPersist>,
 }
 
 impl Clone for FilesystemGitStore {
@@ -35,6 +63,8 @@ impl Clone for FilesystemGitStore {
             overlay: RwLock::new(self.overlay.read().expect("overlay").clone()),
             pack_objects: RwLock::new(self.pack_objects.read().expect("pack_objects").clone()),
             packs_loaded: RwLock::new(*self.packs_loaded.read().expect("packs_loaded")),
+            // Pending disk bytes stay with the owning store (clone is for readers).
+            pending_pack: None,
         }
     }
 }
@@ -54,6 +84,7 @@ impl FilesystemGitStore {
             overlay: RwLock::new(HashMap::new()),
             pack_objects: RwLock::new(HashMap::new()),
             packs_loaded: RwLock::new(false),
+            pending_pack: None,
         }
     }
 
@@ -120,40 +151,82 @@ impl FilesystemGitStore {
         pack: &[u8],
         format: ObjectFormat,
     ) -> Result<(), StoreError> {
+        self.ingest_pack_bytes_inner(pack, format, false)
+    }
+
+    /// Cache pack objects in RAM and defer pack+idx disk write.
+    ///
+    /// Smart-HTTP clone overlaps `PendingPackPersist::persist` with worktree
+    /// checkout via [`Self::take_pending_pack`]. Fetch callers that do not
+    /// overlap MUST still call [`Self::flush_pending_pack`] (or use
+    /// [`Self::ingest_pack_bytes`], which persists immediately).
+    pub fn ingest_pack_bytes_deferred(
+        &mut self,
+        pack: &[u8],
+        format: ObjectFormat,
+    ) -> Result<(), StoreError> {
+        self.ingest_pack_bytes_inner(pack, format, true)
+    }
+
+    /// Take a deferred pack+idx disk job (if any).
+    pub fn take_pending_pack(&mut self) -> Option<PendingPackPersist> {
+        self.pending_pack.take()
+    }
+
+    /// Persist any deferred pack+idx (no-op when none pending).
+    pub fn flush_pending_pack(&mut self) -> Result<(), StoreError> {
+        if let Some(pending) = self.pending_pack.take() {
+            pending.persist()?;
+        }
+        Ok(())
+    }
+
+    fn ingest_pack_bytes_inner(
+        &mut self,
+        pack: &[u8],
+        format: ObjectFormat,
+        defer_disk: bool,
+    ) -> Result<(), StoreError> {
         let decoded =
             DecodedPack::decode(pack, format).map_err(|e| StoreError::Io(e.to_string()))?;
         let pack_dir = self.objects_dir.join("pack");
-        fs::create_dir_all(&pack_dir).map_err(|e| StoreError::Io(e.to_string()))?;
         let hex = checksum_hex(&decoded.checksum);
         let pack_path = pack_dir.join(format!("pack-{hex}.pack"));
         let idx_path = pack_dir.join(format!("pack-{hex}.idx"));
-        if !pack_path.is_file() {
-            fs::write(&pack_path, pack).map_err(|e| StoreError::Io(e.to_string()))?;
-        }
-        if !idx_path.is_file() {
-            let entries: Vec<PackIndexEntry> = decoded
-                .objects
-                .iter()
-                .map(|o| PackIndexEntry {
-                    oid: o.oid,
-                    crc32: o.crc32,
-                    offset: o.offset,
-                })
-                .collect();
-            let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())
-                .map_err(|e| StoreError::Io(e.to_string()))?;
-            let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
-            fs::write(&idx_path, idx).map_err(|e| StoreError::Io(e.to_string()))?;
-        }
+        let entries: Vec<PackIndexEntry> = decoded
+            .objects
+            .iter()
+            .map(|o| PackIndexEntry {
+                oid: o.oid,
+                crc32: o.crc32,
+                offset: o.offset,
+            })
+            .collect();
+        let index = PackIndex::from_entries(format, entries, decoded.checksum.clone())
+            .map_err(|e| StoreError::Io(e.to_string()))?;
+        let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
         {
-            // Hot path (fetch/clone): keep one copy in pack_objects only.
-            // get()/exists() already consult pack_objects after overlay.
+            // Hot path (fetch/clone): RAM first so checkout can proceed while
+            // pack+idx hit disk (deferred) or immediately after (sync).
             let mut pack_objects = self.pack_objects.write().expect("pack_objects");
             for resolved in decoded.objects {
                 pack_objects.insert(resolved.oid, Arc::new(resolved.object));
             }
         }
         *self.packs_loaded.write().expect("packs_loaded") = true;
+        let pending = PendingPackPersist {
+            pack_path,
+            pack: pack.to_vec(),
+            idx_path,
+            idx,
+        };
+        if defer_disk {
+            // Flush any prior deferred pack before replacing.
+            self.flush_pending_pack()?;
+            self.pending_pack = Some(pending);
+        } else {
+            pending.persist()?;
+        }
         Ok(())
     }
 

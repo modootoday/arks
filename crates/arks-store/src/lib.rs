@@ -24,7 +24,7 @@ pub use arks_hash::ObjectFormat;
 pub use arks_object::RawObject;
 pub use arks_oid::Oid;
 
-pub use fs::FilesystemGitStore;
+pub use fs::{FilesystemGitStore, PendingPackPersist};
 pub use memory::MemoryObjectStore;
 
 /// Git-first object store facade (filesystem `.git` / loose objects).

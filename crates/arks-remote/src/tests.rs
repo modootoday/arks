@@ -345,7 +345,10 @@ fn stock_git_http_backend_shallow_clone_depth_1() {
     clone_http_with(
         &format!("{}/app.git", server.url),
         &dest,
-        &FetchOptions { depth: Some(1) },
+        &FetchOptions {
+            depth: Some(1),
+            ..Default::default()
+        },
     )
     .unwrap();
     assert_eq!(std::fs::read(dest.join("README")).unwrap(), b"c3\n");

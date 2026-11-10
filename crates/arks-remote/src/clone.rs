@@ -32,7 +32,9 @@ pub fn clone_http(url: &str, dest: &Path) -> Result<(), RemoteError> {
 
 pub fn clone_http_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     HttpRemoteUrl::parse(url)?;
-    let opts = opts.clone();
+    let mut opts = opts.clone();
+    // Overlap pack+idx disk persist with worktree checkout (J-CLONE-LOCAL).
+    opts.defer_pack_disk = true;
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_http_with(repo, url, "origin", &opts)
     })
@@ -45,7 +47,8 @@ pub fn clone_ssh(url: &str, dest: &Path) -> Result<(), RemoteError> {
 
 pub fn clone_ssh_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
     SshRemoteUrl::parse(url)?;
-    let opts = opts.clone();
+    let mut opts = opts.clone();
+    opts.defer_pack_disk = true;
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_ssh_with(repo, url, "origin", &opts)
     })
@@ -63,16 +66,35 @@ where
 
     let mut repo = Repository::open(&git_dir).map_err(|e| RemoteError::Msg(e.to_string()))?;
     let outcome = do_fetch(&mut repo, url)?;
-    if let (Some(branch), Some(oid)) = (outcome.head_branch.clone(), outcome.head_oid) {
-        repo.refs_mut()
-            .update(&branch, &oid, None)
-            .map_err(|e| RemoteError::Msg(e.to_string()))?;
-        repo.refs_mut()
-            .set_symbolic("HEAD", &branch)
-            .map_err(|e| RemoteError::Msg(e.to_string()))?;
-        crate::checkout::checkout_commit(&repo, dest, &oid)?;
+    // Start pack+idx disk write in parallel with refs + checkout (RAM cache ready).
+    let pending = repo.store_mut().take_pending_pack();
+    let persist_handle = pending.map(|p| std::thread::spawn(move || p.persist()));
+    let checkout_res = (|| -> Result<(), RemoteError> {
+        if let (Some(branch), Some(oid)) = (outcome.head_branch.clone(), outcome.head_oid) {
+            repo.refs_mut()
+                .update(&branch, &oid, None)
+                .map_err(|e| RemoteError::Msg(e.to_string()))?;
+            repo.refs_mut()
+                .set_symbolic("HEAD", &branch)
+                .map_err(|e| RemoteError::Msg(e.to_string()))?;
+            crate::checkout::checkout_commit(&repo, dest, &oid)?;
+        }
+        Ok(())
+    })();
+    if let Some(handle) = persist_handle {
+        match handle.join() {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => {
+                checkout_res?;
+                return Err(RemoteError::Msg(format!("pack persist: {e}")));
+            }
+            Err(_) => {
+                checkout_res?;
+                return Err(RemoteError::Msg("pack persist thread panicked".into()));
+            }
+        }
     }
-    Ok(())
+    checkout_res
 }
 
 /// Clone from a local filesystem path or same-host `file://` URL.

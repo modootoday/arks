@@ -42,6 +42,10 @@ const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 pub struct FetchOptions {
     /// Positive commit depth (`--depth N`). `None` = no deepen request.
     pub depth: Option<u32>,
+    /// When true, ingest keeps pack objects in RAM and defers pack+idx disk
+    /// write (`FilesystemGitStore::take_pending_pack`) so clone can overlap
+    /// persist with worktree checkout. Fetch callers that set this MUST flush.
+    pub defer_pack_disk: bool,
 }
 
 /// Refs updated by one fetch, plus the peer HEAD branch when advertised.
@@ -240,13 +244,22 @@ where
     let response_body = request_pack(&cap_list, &haves, &wants, &client_shallows, opts.depth)?;
 
     let (pack_opt, update) = extract_pack_and_shallow(&response_body, sideband)?;
+    let mut ingested_pack = false;
     match pack_opt {
         Some(pack) => {
             // Keep the received pack as pack+idx (Git layout) instead of
             // exploding every object to loose — fetch/clone hot path for M14.
-            repo.store_mut()
-                .ingest_pack_bytes(&pack, FORMAT)
-                .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
+            // Clone may defer disk write to overlap with checkout.
+            if opts.defer_pack_disk {
+                repo.store_mut()
+                    .ingest_pack_bytes_deferred(&pack, FORMAT)
+                    .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
+            } else {
+                repo.store_mut()
+                    .ingest_pack_bytes(&pack, FORMAT)
+                    .map_err(|e| RemoteError::Protocol(format!("pack: {e}")))?;
+            }
+            ingested_pack = true;
         }
         None => {
             for oid in &wants {
@@ -268,18 +281,21 @@ where
         write_shallow(repo.git_dir(), &next)?;
     }
 
-    // Tips must resolve before refs move; full closure walk is redundant after
-    // pack decode (OID reconstruction + trailer checksum already ran).
-    for oid in &wants {
-        let present = repo
-            .store()
-            .exists(oid)
-            .map_err(|e| RemoteError::Msg(e.to_string()))?;
-        if !present {
-            return Err(RemoteError::Protocol(format!(
-                "missing tip object {}",
-                oid.to_hex()
-            )));
+    // Tips must resolve before refs move. After a successful pack ingest the
+    // decoder already reconstructed tip OIDs into the pack cache — skip the
+    // redundant exists() walk on that hot path.
+    if !ingested_pack {
+        for oid in &wants {
+            let present = repo
+                .store()
+                .exists(oid)
+                .map_err(|e| RemoteError::Msg(e.to_string()))?;
+            if !present {
+                return Err(RemoteError::Protocol(format!(
+                    "missing tip object {}",
+                    oid.to_hex()
+                )));
+            }
         }
     }
 
