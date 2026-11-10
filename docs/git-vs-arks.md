@@ -132,18 +132,19 @@ DoD = **complete git feature symmetry** (not “O-ladder Done with casual N/A fo
 | **FS8** | Hostile/impossible + OBJ-004 fsck | **Done** |
 | **FS_final** | No casual N/A for real git features | **Done** — remaining = documented Impossible / advisory / owner-policy only |
 
-### Completeness honesty (tip ≥ `54c9dc2`)
+### Completeness honesty (tip ≥ `54c9dc2` / roadmap tip ≥ `60f33c2`)
 
 | Question | Verdict |
 |----------|---------|
 | Git feature symmetry DoD (**FS_final**) | **YES** — Claimed rows have receipts; residuals are Impossible/advisory/owner-policy, not casual N/A |
 | Product “everything including live forge SLOs / crates.io publish / crypto immunity” | **NO** — those stay documented non-goals (see below) |
+| Operator one-word | **PARTIAL** — see [Completeness](../completion/) |
 | Clean-room re-stamp of all Docker gates on this tip | See evidence pack under `.spec/evidence/*-full-cleanroom-matrix/` (maintainer); host CI ≠ Verified |
 
 **Documented non-goals (not FS gaps):** absolute SHA-1 collision immunity; forge Checks/merge-queue/Issues UX; embedded forge OAuth browser UX; full multi-device cloud-sync safety on `.git` (FS-007/WIN-003 advisory detect only); live G8 latency PASS without secrets; **L9** crates.io/docs.rs timing (owner policy).
 
-See: [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
+See: [program roadmap tip currency](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md) · [partial unblock research](https://github.com/modootoday/arks/blob/main/.spec/research/20261111001816-partial-completion-unblock-roadmap.research.md) · [Full Symmetry FS ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110212414-full-symmetry-ladder-fs0-fs-final.research.md) · [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [S-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).
 
 ## Next
 
-[Limits](../limits/) [Performance](../performance/) [Alias `git` → `arks`](../alias-git-arks/) [Contribute](../contribute/)
+[Completeness](../completion/) [Limits](../limits/) [Performance](../performance/) [Alias `git` → `arks`](../alias-git-arks/) [Contribute](../contribute/)

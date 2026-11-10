@@ -3,7 +3,7 @@ id: plan:root/20261108085816
 title: Program milestones Wave-1
 status: active
 created: 2026-11-08T08:58:16Z
-updated: 2026-11-09T02:52:00Z
+updated: 2026-11-10T15:18:16Z
 tags: [milestones, roadmap, wave-1, bottom-up, confirmation, gix-exit, m1, m12, m13, m14]
 rel:
   depends_on:
@@ -29,9 +29,9 @@ rel:
 
 ## Outcome
 
-Executable **Wave-1** checklist for **M1 start** only. Canonical milestone identities, **CLI-parity production = M9**, **production-server = M11**, post-production **issue-resolution M12/M13 (G17/G18)** then **future perf M14 (G19 ≥20% after issue-resolution)**, and per-milestone staged plans live in [[sot:root/program-roadmap]] v0.5.0+. This plan does **not** redefine M0–M14.
+Executable **Wave-1** checklist for **M1 start** only. Canonical milestone identities, **CLI-parity production = M9**, **production-server = M11**, post-production **issue-resolution M12/M13 (G17/G18)** then **future perf M14 (G19 ≥20% after issue-resolution)**, and per-milestone staged plans live in [[sot:root/program-roadmap]] (ladder through **M26**; tip currency **PARTIAL** after FS_final — see roadmap tip table + [[research:root/20261111001816]]). This plan does **not** redefine M0–M14.
 
-**Roadmap v0.3:** Implementation **restarts at M1** (gap-fill / re-verify prior trees). Do not treat historical G0/G1 evidence alone as skipping restart discipline without re-check against current SoTs.
+**Roadmap v0.3:** Implementation **restarts at M1** (gap-fill / re-verify prior trees). Do not treat historical G0/G1 evidence alone as skipping restart discipline without re-check against current SoTs. Post-ladder tip honesty is owned by [[sot:root/program-roadmap]] tip currency — not by inventing M27 here.
 
 ## Goal
 

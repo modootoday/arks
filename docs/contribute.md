@@ -39,7 +39,7 @@ Partial-clone `--filter=blob:none` / `tree:0` / related FS4 filters + promisor a
 
 SSH, OpenPGP, and X.509 commit signing plus `tag -s` / `verify-tag` are claimed (SSH **G37**; OpenPGP/X.509/`tag -s` **G38**). Forge signature UX remains Impossible — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
 
-Honest feature comparison: [Git vs arks](../git-vs-arks/). Full Symmetry **FS_final** is Done for git feature symmetry DoD; remaining non-goals are documented Impossible / advisory / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, forge UX, host-env full sync). Clean-room Docker e2e (L8 / S6) is maintainer verification — not the end-user install path.
+Honest feature comparison: [Git vs arks](../git-vs-arks/). Full Symmetry **FS_final** is Done for git feature symmetry DoD; operator summary stays **PARTIAL** — see [Completeness](../completion/). Remaining non-goals are documented Impossible / advisory / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, forge UX, host-env full sync). Clean-room Docker e2e (L8 / S6) is maintainer verification — not the end-user install path.
 
 ## Next
 

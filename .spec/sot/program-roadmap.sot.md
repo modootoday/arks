@@ -3,8 +3,8 @@ id: sot:root/program-roadmap
 title: Program roadmap
 status: active
 created: 2026-11-08T08:58:16Z
-updated: 2026-11-10T23:50:00Z
-tags: [roadmap, milestones, bottom-up, program, waves, production, cli-parity, alias, dot-git, server, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, lease, concurrency, issue-resolution, perf, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, celir-index, g28, g34, shared-index]
+updated: 2026-11-10T15:18:16Z
+tags: [roadmap, milestones, bottom-up, program, waves, production, cli-parity, alias, dot-git, server, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, lease, concurrency, issue-resolution, perf, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, celir-index, g28, g34, shared-index, fs-final, partial-completion]
 verify: manual
 rel:
   depends_on:
@@ -100,16 +100,52 @@ rel:
     - evidence:root/20261109203236
     - evidence:root/20261109212500
     - evidence:root/20261109213400
+    - evidence:root/20261110224814
     - research:root/20261109125438
+    - research:root/20261110212414
+    - research:root/20261110225000
+    - research:root/20261111001816
 ---
 
 # Program roadmap
 
-Version **0.15.1**. Normative **program milestones** for arks delivery through **CLI-parity production** (**M9**), **default product lease capability** (**M10**), **production-server** (**M11**), post-production **M12–M14**, **M15** inventory-level full CLI residual, then **M16 complete flag symmetry** (active alias bar — no production refuse leftovers), **M17 full G19 journey allow-list**, **M18 Pf4 aggressive comparative perf** (≤0.5× progressive claim; M17 ≤0.8× frozen), **M19 concurrency catalog claim expansion** (Phase **Cx** — Cx-1/Cx-2), **M20** further Cx/Cd claim expansion from researched promoteables ([[research:root/20261110021546]]), **M21 full-catalog Deferred=0** (Phase **Dz** — every ID terminal; Closed-deferred is **not** a success exit), **M22 residual terminal close** (Phase **Rc** — G8/server/Pf5/L3-refuse/judgment No leftovers terminal), **M23 L3 HighConcurrency ship** (Phase **Hc** — claimed lease+batch-apply+worktree/ref-shard shape), **M24 CELIR index dual-path / migration** (Phase **Ci** — sidecar beside `.git` + rebuild-from-`.git` + build/publish/open/query behind feature `celir-index`; ObjectStore Refuse retained), **M25 server transport expansion** (Phase **Sv2** — dumb HTTP / SSH command-mode / protocol v2 / `git://`; **G29–G32**; unlock [[adr:root/20261109220230]]; does not rewrite M11/G15), and **M26 shared-index N-way** (Phase **Si** — lease + `index.lock` on one shared index; unlock [[adr:root/20261110074000]]; gate **G34**; ≠ M24/G22/G24 substitute). Post-M24 additive gates **G26–G28** (local/smart-HTTP PR sims + live-private journeys) are Claimed; land tip for G28 offline N/A=0 close ~`902d728`. This SoT is the **canonical milestone ladder** (**M0…M26**). Executable phase letters (**C→S→R→P→L→H→Pa→Pb→Pc→E→Sv→Cm→Cd→Pf→Fs→Sy→Pf3→Pf4→Cx→Dz→Rc→Hc→Ci→Sv2→Si**) remain owned by [[plan:root/20261108082148]]. Core crate packaging detail remains owned by [[plan:root/20261108082110]]. Wave-1 (M1 first wave): [[plan:root/20261108085816]]. Per-milestone staged plans: M0–M6 [[plan:root/20261108090645]]…[[plan:root/20261108090651]]; M7–M10 [[plan:root/20261108183810]]…[[plan:root/20261108183813]]; **M11** [[plan:root/20261108105446]]; **M12** [[plan:root/20261109024634]]; **M13** [[plan:root/20261109024635]]; **M14** [[plan:root/20261109024636]]; **M15** [[plan:root/20261109035335]]; **M16** [[plan:root/20261109043910]]; **M17** [[plan:root/20261109043916]]; **M18** [[plan:root/20261109125438]]; **M19** [[plan:root/20261110010000]]; **M21** [[plan:root/20261110140000]]; **M22** [[plan:root/20261110150000]]; **M23** [[plan:root/20261109194208]]; **M24** [[plan:root/20261109203430]]; CELIR object-store side track **cancelled / non-product** [[plan:root/20261108090653]]. Concurrency catalog: [[sot:root/multi-agent-git-concurrency-scenarios]] + [[research:root/20261109023117]] (221 scenarios). Hotspot research: [[research:root/20261109125438]].
+Version **0.15.2**. Normative **program milestones** for arks delivery through **CLI-parity production** (**M9**), **default product lease capability** (**M10**), **production-server** (**M11**), post-production **M12–M14**, **M15** inventory-level full CLI residual, then **M16 complete flag symmetry** (active alias bar — no production refuse leftovers), **M17 full G19 journey allow-list**, **M18 Pf4 aggressive comparative perf** (≤0.5× progressive claim; M17 ≤0.8× frozen), **M19 concurrency catalog claim expansion** (Phase **Cx** — Cx-1/Cx-2), **M20** further Cx/Cd claim expansion from researched promoteables ([[research:root/20261110021546]]), **M21 full-catalog Deferred=0** (Phase **Dz** — every ID terminal; Closed-deferred is **not** a success exit), **M22 residual terminal close** (Phase **Rc** — G8/server/Pf5/L3-refuse/judgment No leftovers terminal), **M23 L3 HighConcurrency ship** (Phase **Hc** — claimed lease+batch-apply+worktree/ref-shard shape), **M24 CELIR index dual-path / migration** (Phase **Ci** — sidecar beside `.git` + rebuild-from-`.git` + build/publish/open/query behind feature `celir-index`; ObjectStore Refuse retained), **M25 server transport expansion** (Phase **Sv2** — dumb HTTP / SSH command-mode / protocol v2 / `git://`; **G29–G32**; unlock [[adr:root/20261109220230]]; does not rewrite M11/G15), and **M26 shared-index N-way** (Phase **Si** — lease + `index.lock` on one shared index; unlock [[adr:root/20261110074000]]; gate **G34**; ≠ M24/G22/G24 substitute). Post-M24 additive gates **G26–G28** (local/smart-HTTP PR sims + live-private journeys) are Claimed; land tip for G28 offline N/A=0 close ~`902d728`. Full Symmetry ladder **FS0–FS_final Done** ([[research:root/20261110212414]]); tip operator honesty is **PARTIAL** overall ([[research:root/20261110225000]], [[research:root/20261111001816]]) — **FS_final YES**, non-FS residuals remain. This SoT is the **canonical milestone ladder** (**M0…M26**). Executable phase letters (**C→S→R→P→L→H→Pa→Pb→Pc→E→Sv→Cm→Cd→Pf→Fs→Sy→Pf3→Pf4→Cx→Dz→Rc→Hc→Ci→Sv2→Si**) remain owned by [[plan:root/20261108082148]]. Core crate packaging detail remains owned by [[plan:root/20261108082110]]. Wave-1 (M1 first wave): [[plan:root/20261108085816]]. Per-milestone staged plans: M0–M6 [[plan:root/20261108090645]]…[[plan:root/20261108090651]]; M7–M10 [[plan:root/20261108183810]]…[[plan:root/20261108183813]]; **M11** [[plan:root/20261108105446]]; **M12** [[plan:root/20261109024634]]; **M13** [[plan:root/20261109024635]]; **M14** [[plan:root/20261109024636]]; **M15** [[plan:root/20261109035335]]; **M16** [[plan:root/20261109043910]]; **M17** [[plan:root/20261109043916]]; **M18** [[plan:root/20261109125438]]; **M19** [[plan:root/20261110010000]]; **M21** [[plan:root/20261110140000]]; **M22** [[plan:root/20261110150000]]; **M23** [[plan:root/20261109194208]]; **M24** [[plan:root/20261109203430]]; CELIR object-store side track **cancelled / non-product** [[plan:root/20261108090653]]. Concurrency catalog: [[sot:root/multi-agent-git-concurrency-scenarios]] + [[research:root/20261109023117]] (221 scenarios). Hotspot research: [[research:root/20261109125438]].
 
 If a chat summary, README, or Pages narrative disagrees with this SoT, **this SoT wins** for milestone identity and production exit. If a milestone exit and a phase exit disagree, **phase exits** win for product claims ([[plan:root/20261108082148]]); crate rings win for dependency direction ([[sot:root/crate-architecture]]).
 
-**Supersession notes:** Prior v0.2 “Git-compat production = M6 (CLI subset)” is **revoked**. Prior “arks as Git server = Open” is **revoked** — **M11** production-server. Prior “ladder ends at M11” is **superseded** by v0.5.0 post-production **M12–M14**. Prior “active alias bar = M15” is **superseded** by v0.7.0 **M16** complete symmetry (M15 remains historical inventory close) without rewriting M9–M15 receipts.
+**Supersession notes:** Prior v0.2 “Git-compat production = M6 (CLI subset)” is **revoked**. Prior “arks as Git server = Open” is **revoked** — **M11** production-server. Prior “ladder ends at M11” is **superseded** by v0.5.0 post-production **M12–M14**. Prior “active alias bar = M15” is **superseded** by v0.7.0 **M16** complete symmetry (M15 remains historical inventory close) without rewriting M9–M15 receipts. Prior tip narratives that treat historical Pf5 **8/8** at `79fc9bf` as current tip ≤0.5× are **superseded** for tip currency by **Claimed(partial)** after J-ALIAS-01 / J-REVERT-01 `aggressive_na` ([[evidence:root/20261110224814]]); M17 ≤0.8× **19/19** remains green — **no remasure thrash**.
+
+### Tip currency (post-M26 / FS_final) — normative honesty
+
+Carrying tip class ≥ `60f33c2` / evidence tip `54c9dc2` ([[evidence:root/20261110224814]]). **Ladder M0–M26 exits stay frozen Claimed/Closed.** No new **M27** invent; post-ladder work is reopen/ops/advisory only per residual register + [[research:root/20261111001816]].
+
+| Scope | Status | Notes |
+|-------|--------|-------|
+| **M0–M26** program ladder exits | **Done** | Historical receipts frozen; do not rewrite |
+| Full Symmetry **FS0–FS_final** (git feature DoD) | **Done** | Claimed rows have receipts; no casual N/A for real git features |
+| Catalog Deferred=0 / residual §F terminal | **Done** | No bare development Opens |
+| G19 M17 ≤0.8× (19 journeys) | **Done** | **19/19** measured; N/A-free on tip remasure |
+| Pf5 / G19 aggressive ≤0.5× umbrella | **Partial** | Tip **Claimed(partial)** — 17 claimed + **J-ALIAS-01** / **J-REVERT-01** `aggressive_na`; historical **8/8** at `79fc9bf` archival |
+| OBJ-004 sha1cd **detect+refuse** | **Done** | Claimed; absolute collision **immunity** stays Non-goal |
+| FS-007 / WIN-003 host-env | **Partial** | Advisory detect Claimed-class honesty; full sync safety / hydration = Non-goal |
+| FS-014 SELinux/AppArmor | **Partial** | Host-policy Impossible for bypass; errno/LSM detect honesty closest |
+| G8 / G28 live harness | **Done** (ops) | Default-on when secrets; live-private G28 Claimed with receipts |
+| Live G8 **latency SLO** remasure | **Blocked** | Secrets hard-block (`g8-live` secret count **0**); SKIP ≠ PASS |
+| **L9** crates.io / docs.rs timing | **Blocked** | Owner policy; no unauthorized publish |
+| Forge Checks / PR / OAuth UX | **Non-goal** | Not-git; use `gh` / external helper |
+| Absolute SHA-1 collision immunity | **Non-goal** | Crypto Impossible; detect+refuse is the Claimed bar |
+| Full multi-device cloud-sync safety on `.git` | **Non-goal** | Advisory only (DriveFS G: useful advisory ≠ Claimed) |
+| Operator one-word (“fully complete?”) | **PARTIAL** | FS_final **YES**; non-FS residuals remain |
+
+**Next milestones (post-ladder queue — not M27 invent):**
+
+1. **Ops — Live G8 latency** — owner fills Environment `g8-live` secrets → remasure + evidence (never invent PASS).
+2. **Pf5 honesty maintain** — keep M17 green; optional PATH/process-tax or short-wall amortize for ALIAS/REVERT only if product-justified; **forbid G19 stampede**.
+3. **Host-env deepen (advisory)** — WIN-003 OneDrive CfAPI host; FS-007 refuse-flag SoT amend; FS-014 Docker LSM fixture — still not full-sync Claimed.
+4. **L9** — wait for owner SoT reopen before any `publish` flip.
+5. **Keep Non-goals closed** — forge UX / crypto immunity / full FS-007 safety unless primary SoT reopens product scope.
+
+Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]].
 
 ## Rule
 
