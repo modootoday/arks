@@ -3,8 +3,8 @@ id: sot:root/agent-governance
 title: Agent governance
 status: active
 created: 2026-11-08T08:20:00Z
-updated: 2026-11-10T19:15:00Z
-tags: [agents, governance, specfold, conventions, language, public, triad, classification, spec-local, m24, g28, deferred-zero, l3]
+updated: 2026-11-11T06:10:00Z
+tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, m24, g28, deferred-zero, l3]
 verify: manual
 rel:
   depends_on:
@@ -35,9 +35,11 @@ rel:
 
 # Agent governance
 
-Version **0.3.0**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
+Version **0.3.1**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
 
 Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classification.md`.
+
+**0.3.1 addendum (process rules — not product Claimed):** always-on rules now also cover Hangul ban (`05`), SoT Version≠release (`26`), Spec-first commit order (`27`), evidence honesty (`28`), no git/gh subprocess (`30`), CLI personality (`32`), serve≠hub (`33`), and commit hygiene (`91`), plus skills `guard-cli-surface` / `commit-governance` and optional Cursor hooks under `.cursor/`.
 
 ## Rule
 
@@ -90,14 +92,16 @@ Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classificati
 
 ### Hard constraints agents must honor
 
-17. **English only** — [[sot:root/language-english-only]]; rule `.agents/rules/05-english-only.md`.
+17. **English only / Hangul ban** — [[sot:root/language-english-only]]; rule `.agents/rules/05-english-only.md`. Hangul and other non-English authored prose MUST NOT land in tracked Specfold/`docs/`/`AGENTS`/`.agents`.
 18. **Standards-first** — [[sot:root/git-compat-surface]].
-19. **Clean-room authoritative** for product “verified” — [[sot:root/product-verification-clean-room]].
+19. **Clean-room authoritative** for product “verified” — [[sot:root/product-verification-clean-room]]. **No invent Claimed/PASS** — rule `.agents/rules/28-evidence-honesty.md`.
 20. **No literal competing convention SoT** — cite humanymous live paths; pointer map in [[sot:root/conventions-inherit]].
 21. **CELIR / lease boundary** — filesystem `.git` is the sole Git-compat **object store**. CELIR MAY appear only as optional index-only feature `celir-index` (default OFF) ([[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]]). **ObjectStore via CELIR remains Refuse.** Lease/concurrency has its own SoT (rule `.agents/rules/50-celir-boundary.md`).
 22. **Bottom-up build order** — inner modules first (rule `.agents/rules/70-bottom-up-build-order.md`; skill `implement-sot-slice`). Program ladder **M0–M26** lives in [[sot:root/program-roadmap]].
 23. **Structural conventions** — [[sot:root/structural-conventions]]; rule `.agents/rules/15-structural-conventions.md`.
 24. **Public surface** — [[sot:root/public-surface]]; rules `.agents/rules/80-public-surface.md` and `.agents/rules/25-spec-classification.md`.
+24a. **Spec-first commit order** — public SoT meaning changes commit before related code; SoT `Version` ≠ product release — rules `.agents/rules/27-spec-first-commit-order.md`, `.agents/rules/26-sot-version-vs-release.md`, `.agents/rules/91-commit-hygiene.md`; skill `commit-governance`.
+24b. **CLI process boundaries** — no stock `git`/`gh` subprocess on product paths; personalities `git|gh|arks`; **`arks serve` ≠ `arks hub`** — rules `.agents/rules/30-no-git-gh-subprocess.md`, `.agents/rules/32-cli-personality.md`, `.agents/rules/33-serve-vs-hub.md`; skill `guard-cli-surface`. Product CLI semantics remain owned by [[sot:root/arks-cli-personality-factory]] / [[sot:root/arks-self-host-server]] / hub SoTs — this SoT only routes the always-on rules.
 
 ### Current program honesty (router pointers — not a second ledger)
 
@@ -128,6 +132,7 @@ Manual:
 1. `spec check` clean for this document and related assets.
 2. `spec assets` lists instructions, rules, skills, and agents roots.
 3. AGENTS.md contains no normative Git wire/object semantics that are absent from owning SoTs.
-4. Rules/skills named in AGENTS exist on disk (including `25-spec-classification`).
+4. Rules/skills named in AGENTS exist on disk (including `25`–`28`, `30`, `32`, `33`, `91`, and skills `guard-cli-surface` / `commit-governance`).
 5. `.gitignore` excludes `.spec.local/` and `.specfold/`.
-6. Progressive-disclosure pointers name the triad, M0–M26 historical ladder, residual honesty after trim, and push-deferred note without dumping gate catalogs into AGENTS.
+6. Progressive-disclosure pointers name the triad, M0–M26 historical ladder, residual honesty after trim, Hangul ban, Spec-first/commit hygiene, CLI serve≠hub/personality guards, and push-deferred note without dumping gate catalogs into AGENTS.
+7. Optional `.cursor/hooks.json` guards remain advisory process aids — they do not replace owning SoTs.

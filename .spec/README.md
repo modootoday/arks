@@ -100,6 +100,9 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 | Router | `/AGENTS.md` |
 | Classification | this file + rule `25-spec-classification` |
 | Process | [[sot:root/agent-governance]] |
+| Hangul / English-only | rule `05-english-only` + [[sot:root/language-english-only]] |
+| Spec-first / Version≠release / evidence | rules `26`–`28` + skill `commit-governance` |
+| Personality / serve≠hub / no git-gh | rules `30`, `32`, `33` + skill `guard-cli-surface` |
 | Public vs private | [[sot:root/public-surface]] |
 | `arks` intent | [[sot:root/product-intent]] |
 | Daemon (`arks daemon`) | [[sot:root/arks-daemon-product-intent]] |
