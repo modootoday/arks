@@ -7,7 +7,8 @@
 //! Requires `git-daemon-export-ok` unless `export_all`.
 //! Upload-archive: Partial — drains args, sends ACK, optional band-2 progress,
 //! then ustar as sideband-64k band-1 pkt-lines (closer to git-daemon multiplex;
-//! `--format=` / path filters / Claimed archive parity still Missing).
+//! `--prefix=` / path includes / `--exclude=` Partial; Claimed archive parity Missing).
+//! `--access-hook` Partial stub body (spawn external decision; not Claimed).
 //! `--inetd` one-shot stdio peer is Partial (no TCP bind).
 //! Never spawns `git` or `gh`.
 
@@ -20,6 +21,7 @@ use arks_repo::{Repository, flatten_tree_entries};
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
@@ -51,6 +53,8 @@ pub struct DaemonOptions {
     pub verbose: bool,
     /// Request SO_REUSEADDR-style rebind honesty (platform Partial).
     pub reuseaddr: bool,
+    /// Optional external access-hook path (git-daemon `--access-hook` Partial stub body).
+    pub access_hook: Option<PathBuf>,
 }
 
 impl Default for DaemonOptions {
@@ -68,6 +72,70 @@ impl Default for DaemonOptions {
             max_connections: 0,
             verbose: false,
             reuseaddr: true,
+            access_hook: None,
+        }
+    }
+}
+
+/// Partial access-hook stub body — spawn external command like git-daemon.
+/// Args: `<service> <repo-path> <hostname> <canonical> <ip> <port>`.
+/// Exit 0 = allow; non-zero = decline. Design ≠ Claimed hook contract e2e.
+fn run_access_hook_stub(
+    hook: &Path,
+    service: &str,
+    repo_path: &Path,
+    peer: Option<SocketAddr>,
+    verbose: bool,
+) -> Result<(), String> {
+    if !hook.is_file() {
+        return Err(format!(
+            "access-hook Partial: path not a file ({})",
+            hook.display()
+        ));
+    }
+    let (ip, port) = peer
+        .map(|p| (p.ip().to_string(), p.port().to_string()))
+        .unwrap_or_else(|| ("0.0.0.0".into(), "0".into()));
+    let hostname = "localhost";
+    let canonical = "localhost";
+    if verbose {
+        eprintln!(
+            "arks daemon: access-hook Partial spawn {} {service} {} {hostname} {canonical} {ip} {port}",
+            hook.display(),
+            repo_path.display()
+        );
+    }
+    let mut child = Command::new(hook)
+        .arg(service)
+        .arg(repo_path.as_os_str())
+        .arg(hostname)
+        .arg(canonical)
+        .arg(&ip)
+        .arg(&port)
+        .env("REMOTE_ADDR", &ip)
+        .env("REMOTE_PORT", &port)
+        .spawn()
+        .map_err(|e| format!("access-hook Partial spawn failed: {e}"))?;
+    // Bounded wait (Partial; not Claimed long-running hook).
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                if status.success() {
+                    return Ok(());
+                }
+                return Err(format!(
+                    "access-hook Partial declined service={service} status={status}"
+                ));
+            }
+            Ok(None) if std::time::Instant::now() < deadline => {
+                thread::sleep(Duration::from_millis(20));
+            }
+            Ok(None) => {
+                let _ = child.kill();
+                return Err("access-hook Partial timeout (5s)".into());
+            }
+            Err(e) => return Err(format!("access-hook Partial wait: {e}")),
         }
     }
 }
@@ -224,6 +292,7 @@ fn handle_daemon_connection(
     // Accepted sockets inherit nonblocking from the listener on some platforms
     // (notably Windows); force blocking for pack-protocol I/O.
     stream.set_nonblocking(false)?;
+    let peer = stream.peer_addr().ok();
     let init = Duration::from_secs(opts.init_timeout_secs.max(1));
     let idle = Duration::from_secs(opts.timeout_secs.max(1));
     stream.set_read_timeout(Some(init))?;
@@ -255,6 +324,15 @@ fn handle_daemon_connection(
         }
     };
     eprintln!("arks daemon: repo={}", repo_path.display());
+    if let Some(ref hook) = opts.access_hook {
+        if let Err(e) =
+            run_access_hook_stub(hook, &req.service, &repo_path, peer, opts.verbose)
+        {
+            eprintln!("arks daemon: {e}");
+            let _ = write_err_pkt(&mut stream, &e);
+            return Ok(());
+        }
+    }
     if !opts.export_all {
         let marker = repo_path.join("git-daemon-export-ok");
         let marker_git = repo_path.join(".git/git-daemon-export-ok");
@@ -318,9 +396,83 @@ fn handle_daemon_connection(
     result
 }
 
+/// Parsed upload-archive path-filter Partial (closer to git archive / daemon args).
+#[derive(Debug, Default)]
+struct ArchivePathFilter {
+    prefix: String,
+    includes: Vec<String>,
+    excludes: Vec<String>,
+}
+
+fn parse_archive_path_filter(args: &[String]) -> Result<(String, ArchivePathFilter), String> {
+    let mut filter = ArchivePathFilter::default();
+    let mut treeish = None;
+    let mut i = 0usize;
+    while i < args.len() {
+        let a = &args[i];
+        if let Some(p) = a.strip_prefix("--prefix=") {
+            filter.prefix = p.to_string();
+        } else if a == "--prefix" {
+            i += 1;
+            filter.prefix = args
+                .get(i)
+                .cloned()
+                .ok_or_else(|| "upload-archive --prefix needs value".to_string())?;
+        } else if let Some(p) = a.strip_prefix("--exclude=") {
+            filter.excludes.push(p.to_string());
+        } else if a == "--exclude" {
+            i += 1;
+            filter.excludes.push(
+                args.get(i)
+                    .cloned()
+                    .ok_or_else(|| "upload-archive --exclude needs value".to_string())?,
+            );
+        } else if a == "--format"
+            || a.starts_with("--format=")
+            || a == "--no-sideband"
+            || a == "--raw-ustar"
+        {
+            // handled elsewhere
+        } else if a.starts_with('-') {
+            return Err(format!(
+                "upload-archive Partial: unknown option `{a}` (not Claimed)"
+            ));
+        } else if treeish.is_none() {
+            treeish = Some(a.clone());
+        } else {
+            // Additional non-option args = include pathspecs (git archive style Partial).
+            filter.includes.push(a.clone());
+        }
+        i += 1;
+    }
+    Ok((treeish.unwrap_or_else(|| "HEAD".into()), filter))
+}
+
+fn path_allowed(path: &str, filter: &ArchivePathFilter) -> bool {
+    if !filter.includes.is_empty() {
+        let ok = filter.includes.iter().any(|inc| {
+            path == inc.as_str()
+                || path.starts_with(&format!("{inc}/"))
+                || (inc.ends_with('/') && path.starts_with(inc.as_str()))
+        });
+        if !ok {
+            return false;
+        }
+    }
+    for ex in &filter.excludes {
+        if path == ex.as_str()
+            || path.starts_with(&format!("{ex}/"))
+            || path.split('/').any(|seg| seg == ex)
+        {
+            return false;
+        }
+    }
+    true
+}
+
 /// Partial upload-archive body: ACK pkt-line + ustar of treeish (default HEAD)
 /// multiplexed as sideband-64k band-1 (Partial; closer to git-daemon stream).
-/// `--format=` beyond tar / path filters / Claimed archive parity remain Missing.
+/// `--prefix=` / includes / `--exclude=` Partial; Claimed format/parity still Missing.
 fn serve_upload_archive_partial<W: Write>(
     repo: &Repository,
     args: &[String],
@@ -353,34 +505,16 @@ fn serve_upload_archive_partial<W: Write>(
         }
     }
     let want_raw = args.iter().any(|a| a == "--no-sideband" || a == "--raw-ustar");
-    // Path filters: honor presence honestly — Partial refuse (not silent ignore).
-    let path_filter_args: Vec<&str> = args
-        .iter()
-        .map(String::as_str)
-        .filter(|a| {
-            *a == "--prefix"
-                || *a == "--exclude"
-                || a.starts_with("--prefix=")
-                || a.starts_with("--exclude=")
-        })
-        .collect();
-    if !path_filter_args.is_empty() {
-        return write_err_pkt(
-            out,
-            &format!(
-                "upload-archive Partial: path filters {path_filter_args:?} not wired \
-                 (Claimed path-filter Missing)"
-            ),
-        );
-    }
-    let treeish = args
-        .iter()
-        .find(|a| !a.starts_with('-') && !a.is_empty())
-        .map(String::as_str)
-        .unwrap_or("HEAD");
+    let (treeish, filter) = match parse_archive_path_filter(args) {
+        Ok(v) => v,
+        Err(e) => return write_err_pkt(out, &e),
+    };
     if verbose {
         eprintln!(
-            "arks daemon: upload-archive Partial treeish={treeish} (ACK+{}; format/path-filter Claimed Missing)",
+            "arks daemon: upload-archive Partial treeish={treeish} prefix={:?} includes={} excludes={} (ACK+{}; Claimed archive parity Missing)",
+            filter.prefix,
+            filter.includes.len(),
+            filter.excludes.len(),
             if want_raw {
                 "raw ustar"
             } else {
@@ -388,7 +522,7 @@ fn serve_upload_archive_partial<W: Write>(
             }
         );
     }
-    let tree_oid = match resolve_treeish(repo, treeish) {
+    let tree_oid = match resolve_treeish(repo, &treeish) {
         Ok(o) => o,
         Err(e) => return write_err_pkt(out, &e),
     };
@@ -396,7 +530,7 @@ fn serve_upload_archive_partial<W: Write>(
         .map_err(|e| ServerError::Protocol(e.to_string()))?;
     out.write_all(&ack)?;
     if want_raw {
-        match write_ustar_tree(repo, &tree_oid, out) {
+        match write_ustar_tree(repo, &tree_oid, out, &filter) {
             Ok(()) => {
                 out.flush()?;
                 Ok(())
@@ -413,7 +547,7 @@ fn serve_upload_archive_partial<W: Write>(
             &format!("arks Partial upload-archive: packing {treeish}\n"),
         )?;
         let mut archive = Vec::new();
-        match write_ustar_tree(repo, &tree_oid, &mut archive) {
+        match write_ustar_tree(repo, &tree_oid, &mut archive, &filter) {
             Ok(()) => {
                 write_sideband_progress(
                     out,
@@ -511,13 +645,22 @@ fn write_ustar_tree<W: Write>(
     repo: &Repository,
     tree_oid: &Oid,
     out: &mut W,
+    filter: &ArchivePathFilter,
 ) -> Result<(), ServerError> {
     let mut entries: Vec<(String, Oid)> = Vec::new();
     flatten_tree_entries(repo, tree_oid, "", &mut entries)
         .map_err(|e| ServerError::Msg(e.to_string()))?;
     entries.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
     for (path, oid) in entries {
-        if path.len() > 100 {
+        if !path_allowed(&path, filter) {
+            continue;
+        }
+        let archived = if filter.prefix.is_empty() {
+            path.clone()
+        } else {
+            format!("{}{path}", filter.prefix)
+        };
+        if archived.len() > 100 {
             continue; // Partial: long paths skipped (not Claimed pax).
         }
         let obj = repo
@@ -526,7 +669,7 @@ fn write_ustar_tree<W: Write>(
         if obj.kind != ObjectKind::Blob {
             continue;
         }
-        write_ustar_entry(out, &path, &obj.payload, 0o644)?;
+        write_ustar_entry(out, &archived, &obj.payload, 0o644)?;
     }
     out.write_all(&[0u8; 1024])?;
     Ok(())
