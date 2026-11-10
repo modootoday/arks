@@ -239,10 +239,10 @@ fn write_http_request(
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // Reusable scratch + extend (no per-read zero-fill). 256KiB cuts syscall
-    // count on upload-pack PACK bodies; split_off keeps body ownership.
-    let mut scratch = vec![0u8; 256 * 1024];
-    let mut buf = Vec::with_capacity(256 * 1024);
+    // Heap scratch + extend (no per-read zero-fill). 64KiB balances
+    // upload-pack frames vs once-per-request zero cost on info/refs.
+    let mut scratch = vec![0u8; 64 * 1024];
+    let mut buf = Vec::with_capacity(64 * 1024);
     let header_end;
     loop {
         let n = stream
