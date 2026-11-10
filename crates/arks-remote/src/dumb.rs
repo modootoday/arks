@@ -7,15 +7,13 @@
 //!
 //! Push over dumb HTTP is not claimed (receive-pack requires smart).
 
-use crate::advertise::{Advertisement, AdvertisedRef};
+use crate::advertise::{AdvertisedRef, Advertisement};
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
 use crate::fetch::{FetchOptions, FetchOutcome};
 use crate::transport::{HttpRequest, Transport, require_success};
 use crate::url::join_url;
-use arks_object::{
-    Commit, ObjectKind, RawObject, Tree, TreeMode, loose_rel_path, zlib_decompress,
-};
+use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode, loose_rel_path, zlib_decompress};
 use arks_oid::{Oid, OidKind};
 use arks_repo::Repository;
 use arks_store::{ObjectFormat, ObjectStore};
@@ -232,7 +230,8 @@ fn ensure_object_closure<T: Transport>(
             .map_err(|e| RemoteError::Msg(e.to_string()))?;
         match obj.kind {
             ObjectKind::Commit => {
-                let c = Commit::decode(&obj.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
+                let c =
+                    Commit::decode(&obj.payload).map_err(|e| RemoteError::Msg(e.to_string()))?;
                 frontier.push(c.tree);
                 frontier.extend(c.parents);
             }

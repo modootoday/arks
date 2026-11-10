@@ -163,6 +163,7 @@ impl MemoryPeer {
         } else {
             caps.push("report-status".into());
             caps.push("report-status-v2".into());
+            caps.push("delete-refs".into());
             caps.push("agent=arks/0.0.0".into());
         }
         let refs: Vec<(String, Oid)> = self
@@ -224,7 +225,8 @@ impl MemoryPeer {
         let mut refs = Vec::new();
         for cmd in &commands {
             if cmd.new.as_bytes().iter().all(|b| *b == 0) {
-                refs.push((cmd.name.as_str(), Err("delete not supported")));
+                self.refs.remove(&cmd.name);
+                refs.push((cmd.name.as_str(), Ok(())));
                 continue;
             }
             self.refs.insert(cmd.name.clone(), cmd.new);
