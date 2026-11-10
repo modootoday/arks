@@ -1,0 +1,167 @@
+git_cmd,arks_help,arks_dispatch,status,note
+add,True,True,Partial,SoT N/A: mergetool GUI identity
+add--interactive,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+am,True,True,Partial,SoT N/A: interactive
+annotate,True,True,Partial,synonym for blame; same edges
+apply,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+archive,True,True,Partial,HELP claims --format=tar; other formats not stamped here
+bisect,True,True,Partial,SoT N/A: visualize GUI
+bisect--helper,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+blame,True,True,Partial,SoT edge: -L range exotic
+branch,True,True,Partial,SoT N/A: --sort exotic; --format full
+bugreport,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+bundle,True,True,Partial,HTTP bundle-uri FS5; full man-page not stamped here
+cat-file,True,True,Partial,SoT N/A: textconv filters
+check-attr,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+check-ignore,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+check-mailmap,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+check-ref-format,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+checkout,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+checkout--worker,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+checkout-index,False,True,Partial,dispatch present but omitted from arks --help (help honesty gap)
+cherry,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+cherry-pick,True,True,Partial,conflicted sequencer edges documented; clean ranges claimed
+clean,True,True,Partial,SoT N/A: -e exclude pathspec extras beyond pin subset
+clone,True,True,Partial,SoT: not --shared; bundle-uri/filter subsets Claimed elsewhere
+column,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+commit,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+commit-graph,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+commit-tree,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+config,True,True,Partial,SoT N/A: --worktree multi-wt edge beyond claimed
+count-objects,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+credential,True,True,Partial,SoT N/A: forge OAuth / bundled GCM
+credential-cache,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+credential-cache--daemon,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+credential-store,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+daemon,True,True,Partial,G32 Claimed server; full git-daemon option set not stamped here
+describe,True,True,Partial,SoT N/A: --match globs beyond claimed
+diagnose,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+diff,True,True,Partial,SoT N/A: --word-diff / external difftool GUI
+diff-files,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+diff-index,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+diff-tree,True,True,Partial,SoT N/A: recursive combine
+difftool,False,False,Refuse/N/A,explicit product exclusion / refuse arm or SoT N/A
+difftool--helper,False,False,Refuse/N/A,explicit product exclusion / refuse arm or SoT N/A
+env--helper,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+fast-export,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+fast-import,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+fetch,True,True,Partial,filter/shallow Claimed subsets; not every man-page option stamped here
+fetch-pack,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+filter-branch,False,True,Refuse/N/A,explicit product exclusion / refuse arm or SoT N/A
+fmt-merge-msg,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+for-each-ref,True,True,Partial,SoT N/A: color/atom full set
+for-each-repo,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+format-patch,True,True,Partial,SoT N/A: binary patch exotic
+fsck,True,True,Partial,SoT N/A: full unreachable progress UI
+fsck-objects,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+fsmonitor--daemon,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+gc,True,True,Partial,SoT refuse/N/A: --prune=now (CORR-001); --auto/detach
+get-tar-commit-id,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+grep,True,True,Partial,SoT N/A: -P PCRE
+hash-object,True,True,Partial,SoT N/A/edge: --stdin-paths batch extras
+help,False,True,Partial,dispatch present but omitted from arks --help (help honesty gap)
+hook,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+http-backend,True,True,Partial,Wave Sv Claimed; CGI edge depth not stamped here
+http-fetch,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+http-push,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+imap-send,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+index-pack,True,True,Partial,SoT N/A: thin-pack exotic
+init,True,True,Partial,SoT N/A: template/shared exotic
+init-db,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+instaweb,False,False,Refuse/N/A,explicit product exclusion / refuse arm or SoT N/A
+interpret-trailers,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+log,True,True,Partial,SoT N/A: --pretty=format: full custom; pager identity
+ls-files,True,True,Partial,SoT N/A: --debug
+ls-remote,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+ls-tree,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+mailinfo,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+mailsplit,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+maintenance,True,True,Partial,SoT N/A: task scheduling start/stop
+merge,True,True,Partial,SoT N/A: octopus; non-ort strategies
+merge-base,True,True,Partial,SoT N/A: octopus >2 beyond claimed
+merge-file,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-index,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-octopus,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-one-file,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-ours,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-recursive,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-recursive-ours,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-recursive-theirs,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-resolve,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-subtree,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+merge-tree,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+mergetool,False,False,Refuse/N/A,explicit product exclusion / refuse arm or SoT N/A
+mktag,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+mktree,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+multi-pack-index,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+mv,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+name-rev,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+notes,True,True,Partial,SoT N/A: merge/edit interactive
+pack-objects,True,True,Partial,SoT N/A: thin-pack delta reuse exotic
+pack-redundant,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+pack-refs,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+patch-id,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+pickaxe,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+prune,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+prune-packed,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+pull,True,True,Partial,cred/forge OAuth browser UX N/A; rebase/FF/3way claimed subset
+push,True,True,Partial,tip claims delete/lease/options subsets; exotic refspecs historically refuse
+quiltimport,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+range-diff,True,True,Partial,SoT N/A: merge-commit dual diff full emit
+read-tree,True,True,Partial,SoT N/A: 3-tree full merge-index
+rebase,True,True,Partial,TTY -i Claimed FS1; exotic sequencer edges remain
+receive-pack,True,True,Partial,Wave Sv + proc-receive FS2/FS8; option depth not stamped here
+reflog,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+remote,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+remote-ext,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+remote-fd,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+remote-ftp,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+remote-ftps,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+remote-http,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+remote-https,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+repack,True,True,Partial,SoT edge: --window/geometric/cruft beyond -ad
+replace,True,True,Partial,FS5 claimed forms; full man-page not stamped here
+request-pull,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+rerere,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+reset,True,True,Partial,SoT may still N/A --merge conflicted restore edge
+restore,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+rev-list,True,True,Partial,SoT N/A: --objects full graph extras beyond claimed
+rev-parse,True,True,Partial,SoT N/A: --parseopt shell helper
+revert,True,True,Partial,same sequencer class as cherry-pick
+rm,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+send-pack,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+sh-i18n--envsubst,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+shell,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+shortlog,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+show,True,True,Partial,SoT N/A: pretty/pager identity (with log)
+show-branch,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+show-index,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+show-ref,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+sparse-checkout,True,True,Partial,SoT N/A: non-cone full
+stage,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+stash,True,True,Partial,FS3 -p claimed; remaining man-page depth not stamped here
+status,True,True,Partial,SoT N/A: porcelain v2 full schema extras
+stripspace,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+submodule,True,True,Partial,SoT N/A: custom !command update; absorbgitdirs exotic
+submodule--helper,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+subtree,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+switch,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+symbolic-ref,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+tag,True,True,Partial,command present; signing depth owned by R4/G38 — not full man-page stamp here
+unpack-file,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+unpack-objects,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+update-index,True,True,Partial,SoT N/A: --stdin full + chmod skip-worktree edges
+update-ref,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+update-server-info,True,True,Partial,G29 Claimed; option depth not stamped here
+upload-archive,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+upload-archive--writer,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+upload-pack,True,True,Partial,Wave Sv Claimed; option depth not stamped here
+var,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+verify-commit,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+verify-pack,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+verify-tag,False,True,Partial,dispatch present but omitted from arks --help (help honesty gap)
+version,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
+web--browse,False,False,Refuse/N/A,git internal helper (--*); not alias inventory
+whatchanged,False,False,Missing,pin list-cmds; arks no HELP / generic not-implemented
+worktree,True,True,Partial,SoT N/A: main-worktree remove
+write-tree,True,True,Parity-candidate,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed

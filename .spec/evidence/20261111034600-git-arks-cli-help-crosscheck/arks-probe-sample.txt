@@ -1,0 +1,70 @@
+﻿1	apply	arks.exe : error: command not implemented: apply
+1	cherry	arks.exe : error: command not implemented: cherry
+1	difftool	arks.exe : error: command not implemented: difftool
+1	fast-export	arks.exe : error: command not implemented: fast-export
+1	fast-import	arks.exe : error: command not implemented: fast-import
+1	fetch-pack	arks.exe : error: command not implemented: fetch-pack
+1	send-pack	arks.exe : error: command not implemented: send-pack
+1	ls-remote	arks.exe : error: command not implemented: ls-remote
+1	show-branch	arks.exe : error: command not implemented: show-branch
+1	whatchanged	arks.exe : error: command not implemented: whatchanged
+1	instaweb	arks.exe : error: command not implemented: instaweb
+1	mailinfo	arks.exe : error: command not implemented: mailinfo
+1	mailsplit	arks.exe : error: command not implemented: mailsplit
+1	merge-file	arks.exe : error: command not implemented: merge-file
+1	merge-index	arks.exe : error: command not implemented: merge-index
+1	merge-one-file	arks.exe : error: command not implemented: merge-one-file
+1	merge-recursive	arks.exe : error: command not implemented: merge-recursive
+1	merge-tree	arks.exe : error: command not implemented: merge-tree
+1	mktag	arks.exe : error: command not implemented: mktag
+1	mktree	arks.exe : error: command not implemented: mktree
+1	pack-redundant	arks.exe : error: command not implemented: pack-redundant
+1	prune	arks.exe : error: command not implemented: prune
+1	prune-packed	arks.exe : error: command not implemented: prune-packed
+1	quiltimport	arks.exe : error: command not implemented: quiltimport
+1	rebase--interactive	arks.exe : error: command not implemented: rebase--interactive
+1	receive-pack	arks.exe : error: usage: arks upload-pack|receive-pack|http-backend|update-server-info <directory>
+1	reflog	arks.exe : error: unsupported option: --help
+1	remote-fd	arks.exe : error: command not implemented: remote-fd
+1	remote-ext	arks.exe : error: command not implemented: remote-ext
+1	remote-http	arks.exe : error: command not implemented: remote-http
+1	remote-https	arks.exe : error: command not implemented: remote-https
+1	remote-ftp	arks.exe : error: command not implemented: remote-ftp
+1	remote-ftps	arks.exe : error: command not implemented: remote-ftps
+1	repack	arks.exe : error: unsupported option: --help
+1	replace	arks.exe : error: unsupported option: --help
+1	request-pull	arks.exe : error: command not implemented: request-pull
+1	rerere	arks.exe : error: command not implemented: rerere
+1	send-email	arks.exe : error: command not implemented: send-email
+1	sh-i18n	arks.exe : error: command not implemented: sh-i18n
+1	shell	arks.exe : error: command not implemented: shell
+1	stripspace	arks.exe : error: command not implemented: stripspace
+1	unpack-file	arks.exe : error: command not implemented: unpack-file
+1	unpack-objects	arks.exe : error: command not implemented: unpack-objects
+1	var	arks.exe : error: command not implemented: var
+1	verify-pack	arks.exe : error: command not implemented: verify-pack
+1	write-tree	arks.exe : error: unsupported option: --help
+1	hook	arks.exe : error: command not implemented: hook
+1	for-each-repo	arks.exe : error: command not implemented: for-each-repo
+1	bugreport	arks.exe : error: command not implemented: bugreport
+1	diagnose	arks.exe : error: command not implemented: diagnose
+1	scalar	arks.exe : error: scalar: separate large-repo helper (FS6); not claimed as arks porcelain
+1	gitk	arks.exe : error: gitk: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)
+1	gui	arks.exe : error: gui: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)
+1	citool	arks.exe : error: citool: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)
+1	backfill	arks.exe : error: backfill excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full
+1	filter-branch	arks.exe : error: filter-branch excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full
+0	serve-http	arks serve-http — smart (+ dumb) HTTP Git server (Wave Sv / M11+M25)
+1	upload-pack	arks.exe : error: usage: arks upload-pack|receive-pack|http-backend|update-server-info <directory>
+0	daemon	arks daemon — git:// TCP daemon (Wave Sv2 / M25)
+1	http-backend	arks.exe : error: usage: arks upload-pack|receive-pack|http-backend|update-server-info <directory>
+1	update-server-info	arks.exe : error: usage: arks upload-pack|receive-pack|http-backend|update-server-info <directory>
+0	version	arks version 0.0.0
+0	help	arks — Wave L+H+Pa+Pb+Pc + Sv
+0	lfs	git lfs <command> [<args>]
+1	lock	arks.exe : error: lock --help not claimed; see M12 Cm-1 (inspect/clear --stale)
+1	lease	arks.exe : error: lease --help not claimed; see M13 Cd-1 (grant/release/inspect/list/expire)
+0	forge	arks forge — Claimed-closest thin wrap of host GitHub CLI (`gh`)
+1	host-env	arks.exe : error: unsupported option: --help
+1	celir	arks.exe : error: command not implemented: celir
+1	celir-index	arks.exe : error: command not implemented: celir-index

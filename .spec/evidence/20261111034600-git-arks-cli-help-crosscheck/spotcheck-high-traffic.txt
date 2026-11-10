@@ -1,0 +1,21 @@
+exit=0 cmd=status -b :: On branch main | nothing to commit, working tree clean | 
+exit=0 cmd=log --graph :: * 40be4e2 c | 
+exit=0 cmd=branch -a :: * main | 
+exit=0 cmd=add --chmod=+x f.txt :: 
+exit=1 cmd=gc --prune=now :: arks.exe : error: gc --prune=now refused (CORR-001 / PACK-004 honesty): prune=now under writers risks object deletion r | aces; use `arks repack -ad` / `arks gc` without --prune=n
+exit=1 cmd=grep -P x :: arks.exe : error: grep -P not claimed in Wave Pa | ?? ?:41 ??:8 | +   $r = & $arks @c 2>&1 | Out-String
+exit=1 cmd=diff --word-diff :: arks.exe : error: unsupported option: --word-diff | ?? ?:41 ??:8 | +   $r = & $arks @c 2>&1 | Out-String
+exit=1 cmd=merge -s octopus :: arks.exe : error: unsupported option: -s | ?? ?:41 ??:8 | +   $r = & $arks @c 2>&1 | Out-String
+exit=0 cmd=worktree list --porcelain :: worktree //?/C:/Users/smile/AppData/Local/Temp/arks-cli-spot-1564223716 | HEAD 40be4e26be4dbcd0349395274e0730ac052084b6 | branch refs/heads/main
+exit=1 cmd=apply :: arks.exe : error: command not implemented: apply | ?? ?:49 ??:8
+exit=1 cmd=ls-remote :: arks.exe : error: command not implemented: ls-remote | ?? ?:49 ??:8
+exit=1 cmd=prune :: arks.exe : error: command not implemented: prune | ?? ?:49 ??:8
+exit=1 cmd=send-email :: arks.exe : error: command not implemented: send-email | ?? ?:49 ??:8
+exit=1 cmd=scalar :: arks.exe : error: scalar: separate large-repo helper (FS6); not claimed as arks porcelain | ?? ?:49 ??:8
+exit=1 cmd=filter-branch :: arks.exe : error: filter-branch excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full | ?? ?:49 ??:8
+exit=0 cmd=forge :: arks forge ? Claimed-closest thin wrap of host GitHub CLI (`gh`) | 
+exit=1 cmd=lease :: arks.exe : error: lease <grant|release|inspect|list|expire> | ?? ?:49 ??:8
+exit=1 cmd=lock :: arks.exe : error: lock <inspect|clear> | ?? ?:49 ??:8
+exit=0 cmd=host-env :: path: \\?\C:\Users\smile\AppData\Local\Temp\arks-cli-spot-1564223716 | claimed.full_sync: false
+exit=1 cmd=serve-http :: arks.exe : error: serve-http <directory> required | ?? ?:49 ??:8
+exit=1 cmd=celir :: arks.exe : error: command not implemented: celir | ?? ?:49 ??:8

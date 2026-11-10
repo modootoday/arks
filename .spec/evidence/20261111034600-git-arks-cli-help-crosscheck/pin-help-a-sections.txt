@@ -1,0 +1,120 @@
+Ancillary Commands / Manipulators
+   config                  Get and set repository or global options
+   fast-export             Git data exporter
+   fast-import             Backend for fast Git data importers
+   filter-branch           Rewrite branches
+   mergetool               Run merge conflict resolution tools to resolve merge conflicts
+   pack-refs               Pack heads and tags for efficient repository access
+   prune                   Prune all unreachable objects from the object database
+   reflog                  Manage reflog information
+   remote                  Manage set of tracked repositories
+   repack                  Pack unpacked objects in a repository
+   replace                 Create, list, delete refs to replace objects
+
+Ancillary Commands / Interrogators
+   annotate                Annotate file lines with commit information
+   blame                   Show what revision and author last modified each line of a file
+   bugreport               Collect information for user to file a bug report
+   count-objects           Count unpacked number of objects and their disk consumption
+   diagnose                Generate a zip archive of diagnostic information
+   difftool                Show changes using common diff tools
+   fsck                    Verifies the connectivity and validity of the objects in the database
+   gitweb                  Git web interface (web frontend to Git repositories)
+   help                    Display help information about Git
+   instaweb                Instantly browse your working repository in gitweb
+   merge-tree              Perform merge without touching index or working tree
+   rerere                  Reuse recorded resolution of conflicted merges
+   show-branch             Show branches and their commits
+   verify-commit           Check the GPG signature of commits
+   verify-tag              Check the GPG signature of tags
+   version                 Display version information about Git
+   whatchanged             Show logs with difference each commit introduces
+
+Interacting with Others
+   archimport              Import a GNU Arch repository into Git
+   cvsexportcommit         Export a single commit to a CVS checkout
+   cvsimport               Salvage your data out of another SCM people love to hate
+   cvsserver               A CVS server emulator for Git
+   imap-send               Send a collection of patches from stdin to an IMAP folder
+   p4                      Import from and submit to Perforce repositories
+   quiltimport             Applies a quilt patchset onto the current branch
+   request-pull            Generates a summary of pending changes
+   send-email              Send a collection of patches as emails
+   svn                     Bidirectional operation between a Subversion repository and Git
+
+Low-level Commands / Manipulators
+Low-level Commands / Manipulators
+   apply                   Apply a patch to files and/or to the index
+   apply                   Apply a patch to files and/or to the index
+   checkout-index          Copy files from the index to the working tree
+   checkout-index          Copy files from the index to the working tree
+   commit-graph            Write and verify Git commit-graph files
+   commit-graph            Write and verify Git commit-graph files
+   commit-tree             Create a new commit object
+   commit-tree             Create a new commit object
+   hash-object             Compute object ID and optionally creates a blob from a file
+   hash-object             Compute object ID and optionally creates a blob from a file
+   index-pack              Build pack index file for an existing packed archive
+   index-pack              Build pack index file for an existing packed archive
+   merge-file              Run a three-way file merge
+   merge-file              Run a three-way file merge
+   merge-index             Run a merge for files needing merging
+   merge-index             Run a merge for files needing merging
+   mktag                   Creates a tag object with extra validation
+   mktag                   Creates a tag object with extra validation
+   mktree                  Build a tree-object from ls-tree formatted text
+   mktree                  Build a tree-object from ls-tree formatted text
+   multi-pack-index        Write and verify multi-pack-indexes
+   multi-pack-index        Write and verify multi-pack-indexes
+   pack-objects            Create a packed archive of objects
+   pack-objects            Create a packed archive of objects
+   prune-packed            Remove extra objects that are already in pack files
+   prune-packed            Remove extra objects that are already in pack files
+   read-tree               Reads tree information into the index
+   read-tree               Reads tree information into the index
+   symbolic-ref            Read, modify and delete symbolic refs
+   symbolic-ref            Read, modify and delete symbolic refs
+   unpack-objects          Unpack objects from a packed archive
+   unpack-objects          Unpack objects from a packed archive
+   update-index            Register file contents in the working tree to the index
+   update-index            Register file contents in the working tree to the index
+   update-ref              Update the object name stored in a ref safely
+   update-ref              Update the object name stored in a ref safely
+   write-tree              Create a tree object from the current index
+   write-tree              Create a tree object from the current index
+
+
+Low-level Commands / Interrogators
+Low-level Commands / Interrogators
+   cat-file                Provide content or type and size information for repository objects
+   cat-file                Provide content or type and size information for repository objects
+   cherry                  Find commits yet to be applied to upstream
+   cherry                  Find commits yet to be applied to upstream
+   diff-files              Compares files in the working tree and the index
+   diff-files              Compares files in the working tree and the index
+   diff-index              Compare a tree to the working tree or index
+   diff-index              Compare a tree to the working tree or index
+   diff-tree               Compares the content and mode of blobs found via two tree objects
+   diff-tree               Compares the content and mode of blobs found via two tree objects
+   for-each-ref            Output information on each ref
+   for-each-ref            Output information on each ref
+   for-each-repo           Run a Git command on a list of repositories
+   for-each-repo           Run a Git command on a list of repositories
+   get-tar-commit-id       Extract commit ID from an archive created using git-archive
+   get-tar-commit-id       Extract commit ID from an archive created using git-archive
+   ls-files                Show information about files in the index and the working tree
+   ls-files                Show information about files in the index and the working tree
+   ls-remote               List references in a remote repository
+   ls-remote               List references in a remote repository
+   ls-tree                 List the contents of a tree object
+   ls-tree                 List the contents of a tree object
+   merge-base              Find as good common ancestors as possible for a merge
+   merge-base              Find as good common ancestors as possible for a merge
+   name-rev                Find symbolic names for given revs
+   name-rev                Find symbolic names for given revs
+   pack-redundant          Find redundant pack files
+   pack-redundant          Find redundant pack files
+   rev-list                Lists commit objects in reverse chronological order
+   rev-list                Lists commit objects in reverse chronological order
+   rev-parse               Pick out and massage parameters
+   rev-parse               Pick out and massage parameters

@@ -1,0 +1,15 @@
+arks_cmd,kind,in_help
+backfill,refuse arm for exclusion,False
+citool,refuse arm for exclusion,False
+credential-libsecret,dispatch name not in pin list-cmds,True
+credential-osxkeychain,dispatch name not in pin list-cmds,True
+credential-wincred,dispatch name not in pin list-cmds,True
+forge,arks-only (beyond stock git builtins),True
+gitk,refuse arm for exclusion,False
+gui,refuse arm for exclusion,False
+host-env,arks-only (beyond stock git builtins),True
+lease,arks-only (beyond stock git builtins),True
+lfs,companion surface (git-lfs); not pin builtin,True
+lock,arks-only (beyond stock git builtins),True
+scalar,refuse arm for exclusion,False
+serve-http,arks-only (beyond stock git builtins),True
