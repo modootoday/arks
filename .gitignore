@@ -2,9 +2,15 @@
 .spec.local/
 .specfold/
 target/
+target-agent/
+target-agent2/
 target-cleanroom/
 verify/gates/*/target/
 verify/gates/*/out/
+
+# Local CI / agent scratch dumps (never commit)
+/_win_*.log
+*.bak
 
 # Secrets / credentials (public-surface: never commit)
 .env
