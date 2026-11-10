@@ -14,14 +14,16 @@ Keep history stepwise and avoid clobbering sibling agents.
 ## Must not
 
 - `git add -A` / `git add .` when the working tree has sibling-owned dirty crates.
-- Force-push, mass-rebase, or amend foreign commits unless the user explicitly orders it.
-- Invent Claimed/PASS in commit messages (rule `28`).
-- Commit `.spec.local/**` or secrets.
+- Force-push to `main`/`master` (hooks **deny**); any other force-push / mass-rebase / amend of foreign commits unless the user explicitly orders it.
+- Invent Claimed/PASS/Verified in commit messages (rules `28`, `29`) — hooks **ask**/warn on obvious patterns.
+- Commit Hangul in subjects/bodies or staged Spec/docs (rule `05`) — hooks scan `git commit`.
+- Stage or commit `.spec.local/**`, `.env*`, or secrets (hooks **deny** staging those paths).
 - Clobber sibling factory/serve/hub crate work from a governance lane — prefer `.agents/`, `AGENTS.md`, `.spec` governance SoT, hooks/skills (tiny cross-links OK).
 
 ## Cite
 
 - `.spec/README.md` §Commit order
-- Local machine journey (gitignored): `.spec.local/sot/post-spec-canon-commit-order.sot.md`
+- Local machine journey (gitignored): `.spec.local/sot/post-spec-canon-commit-order.sot.md` (rule `35-spec-local-journey`)
 - skill `commit-governance`
+- Cursor hooks: `.cursor/hooks/governance-shell-guard.ps1`
 - humanymous cite (do not fork ledger): `C:\workspaces\humanymous\.agents\rules\91-git-contention.md`

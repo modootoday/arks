@@ -12,9 +12,10 @@ All authored project text is **English only**. Chat/coordinator briefings in oth
 
 ## Hangul / non-English ban (MUST)
 
-- **Never** commit Hangul (or other non-English authored prose) into tracked Specfold, `docs/`, `AGENTS.md`, `.agents/**`, README/CONTRIBUTING, or comments.
+- **Never** commit Hangul (or other non-English authored prose) into tracked Specfold, `docs/`, `AGENTS.md`, `.agents/**`, README/CONTRIBUTING/SECURITY/LICENSE*, `verify/**` authored prose, `.cursor/**` hook docs, or comments.
 - Operator Korean briefings stay in **chat only** (or gitignored `.spec.local/` scratch if needed) — convert before any tracked commit.
 - History rewrites that remove Hangul from Spec/docs are intentional; do not reintroduce Hangul “for the operator.”
+- **Hooks:** `.cursor/hooks/hangul-docs-guard.ps1` (after edit) + `.cursor/hooks/governance-shell-guard.ps1` (staged paths + commit message on `git commit`).
 
 ## Allowed exceptions
 

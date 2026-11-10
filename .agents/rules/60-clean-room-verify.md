@@ -7,8 +7,10 @@ Product acceptance / interop / regression claims that say **verified** MUST be r
 - Treat host/unit/IDE green as **advisory** unless the same gate is mirrored and green in clean-room.
 - Prefer pinned images/compose (when they exist); do not invent digests — track open decisions in the verification SoT.
 - On Windows, cite humanymous Docker engine affinity rather than forking affinity prose: `C:\workspaces\humanymous\.agents\rules\96-docker-engine-affinity.md` and `60-e2e-docker-only.md`.
+- Keep pin vs latest / Cross-OS honesty per rule `61-cross-os-pin-honesty`.
 - Gate IDs and unlock order: `.spec/sot/interop-test-matrix.sot.md` (**G0–G27**; +G28 when present).
 - Heavy sole-runner gates (journey / live forge / large contention): do **not** start a competing Docker compose run that clashes with an already-running sibling live-GH agent.
+- Symmetry pillars / release precheck: skills `run-symmetry-matrix`, `release-symmetry-gate`.
 
 ## Forbidden as “done”
 

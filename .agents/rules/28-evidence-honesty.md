@@ -28,6 +28,8 @@ Agents MUST keep Claimed / Verified / PASS language honest. Design intent and Pa
 
 ## Cite
 
+- Rule `29-stub-vs-claimed` (help/commit wording)
 - `.spec/README.md` §How Claimed works
 - `.spec/sot/public-surface.sot.md` + rule `80-public-surface`
 - `.spec/sot/product-verification-clean-room.sot.md` + rule `60-clean-room-verify`
+- Cursor commit scan: `.cursor/hooks/governance-shell-guard.ps1`
