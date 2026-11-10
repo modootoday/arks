@@ -12,19 +12,19 @@ use arks_pack::{DecodedPack, PackIndex, PackIndexEntry};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 /// Loose + pack object store rooted at a Git `objects/` directory.
 ///
-/// Pf4-2 / Pf5: `RwLock` so parallel checkout readers share the pack cache without
-/// exclusive-lock serialization on every blob get.
+/// Pf4-2 / Pf5: `RwLock` + `Arc` pack cache so parallel checkout readers share
+/// decoded blobs without exclusive-lock serialization or deep payload clones.
 #[derive(Debug)]
 pub struct FilesystemGitStore {
     objects_dir: PathBuf,
     /// Same-process inserts (e.g. after pack ingest) before disk re-read.
-    overlay: RwLock<HashMap<Oid, RawObject>>,
+    overlay: RwLock<HashMap<Oid, Arc<RawObject>>>,
     /// Lazily decoded pack objects under `objects/pack/`.
-    pack_objects: RwLock<HashMap<Oid, RawObject>>,
+    pack_objects: RwLock<HashMap<Oid, Arc<RawObject>>>,
     packs_loaded: RwLock<bool>,
 }
 
@@ -150,11 +150,33 @@ impl FilesystemGitStore {
             // get()/exists() already consult pack_objects after overlay.
             let mut pack_objects = self.pack_objects.write().expect("pack_objects");
             for resolved in decoded.objects {
-                pack_objects.insert(resolved.oid, resolved.object);
+                pack_objects.insert(resolved.oid, Arc::new(resolved.object));
             }
         }
         *self.packs_loaded.write().expect("packs_loaded") = true;
         Ok(())
+    }
+
+    /// Shared object handle (cheap `Arc` clone). Prefer for parallel checkout.
+    pub fn get_shared(&self, oid: &Oid) -> Result<Arc<RawObject>, StoreError> {
+        if let Some(obj) = self.overlay.read().expect("overlay").get(oid) {
+            return Ok(Arc::clone(obj));
+        }
+        if *self.packs_loaded.read().expect("packs_loaded") {
+            if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
+                return Ok(Arc::clone(obj));
+            }
+        }
+        let path = self.loose_path(oid);
+        if path.is_file() {
+            let obj = read_loose_hot(&self.objects_dir, oid).map_err(|e| map_read_error(oid, e))?;
+            return Ok(Arc::new(obj));
+        }
+        self.load_packs_if_needed()?;
+        if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
+            return Ok(Arc::clone(obj));
+        }
+        Err(StoreError::NotFound(oid.to_hex()))
     }
 
     fn load_packs_if_needed(&self) -> Result<(), StoreError> {
@@ -182,7 +204,7 @@ impl FilesystemGitStore {
                     .map_err(|e| StoreError::Io(e.to_string()))?,
             };
             for resolved in decoded.objects {
-                loaded.insert(resolved.oid, resolved.object);
+                loaded.insert(resolved.oid, Arc::new(resolved.object));
             }
         }
         self.pack_objects
@@ -228,26 +250,7 @@ impl ObjectStore for FilesystemGitStore {
     }
 
     fn get(&self, oid: &Oid) -> Result<RawObject, Self::Error> {
-        if let Some(obj) = self.overlay.read().expect("overlay").get(oid) {
-            return Ok(obj.clone());
-        }
-        // Clone/fetch hot path: packs are already ingested into RAM — probe the
-        // cache before a loose `is_file` syscall (220× miss on J-CLONE-LOCAL).
-        if *self.packs_loaded.read().expect("packs_loaded") {
-            if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
-                return Ok(obj.clone());
-            }
-        }
-        let path = self.loose_path(oid);
-        if path.is_file() {
-            // Pf4-2: hot-path decode without OID re-hash (path is content-addressed).
-            return read_loose_hot(&self.objects_dir, oid).map_err(|e| map_read_error(oid, e));
-        }
-        self.load_packs_if_needed()?;
-        if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
-            return Ok(obj.clone());
-        }
-        Err(StoreError::NotFound(oid.to_hex()))
+        Ok((*self.get_shared(oid)?).clone())
     }
 
     fn exists(&self, oid: &Oid) -> Result<bool, Self::Error> {

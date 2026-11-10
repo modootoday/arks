@@ -222,17 +222,19 @@ fn materialize_jobs(
     }
     // Overlap get+write across workers (pack-cache hits are concurrent under RwLock).
     // Full prefetch-then-write regressed J-CLONE-PATH (lost read/write overlap).
-    let written = if writes.len() < 8 {
+    // Docker sole-runners often report 1 CPU; forcing ≥2 workers added spawn tax
+    // that pushed J-CLONE-PATH-01 over Pf5 ≤0.5× (~0.54 at tip 4454149).
+    let cpus = thread::available_parallelism()
+        .map(|p| p.get())
+        .unwrap_or(1);
+    let written = if writes.len() < 8 || cpus <= 1 {
         let mut out = Vec::with_capacity(writes.len());
         for (i, rel, path, oid, mode) in writes {
             out.push((i, write_one_blob(repo, &rel, &path, &oid, mode)?));
         }
         out
     } else {
-        let workers = thread::available_parallelism()
-            .map(|p| p.get().clamp(2, 8))
-            .unwrap_or(4)
-            .min(writes.len());
+        let workers = cpus.clamp(2, 8).min(writes.len());
         let chunk = writes.len().div_ceil(workers);
         let mut out = Vec::with_capacity(writes.len());
         let mut worker_err: Option<RemoteError> = None;
@@ -280,8 +282,10 @@ fn write_one_blob(
     oid: &Oid,
     mode: u32,
 ) -> Result<IndexEntry, RemoteError> {
+    // Arc share from pack cache — avoid deep-copying every blob on parallel clone.
     let blob = repo
-        .get_object(oid)
+        .store()
+        .get_shared(oid)
         .map_err(|e| RemoteError::Msg(e.to_string()))?;
     if blob.kind != ObjectKind::Blob {
         return Err(RemoteError::Protocol(format!("path {rel} is not a blob")));
