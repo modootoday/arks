@@ -131,6 +131,22 @@ impl Hasher {
 
 /// Hash arbitrary bytes with the given object format.
 pub fn hash_bytes(format: ObjectFormat, data: &[u8]) -> Digest {
+    // Reuse SHA-1 TLS when free (pack/idx trailers on J-CLONE-LOCAL).
+    if format == ObjectFormat::Sha1 {
+        let reused = SHA1_TLS.try_with(|cell| {
+            let Ok(mut h) = cell.try_borrow_mut() else {
+                return None;
+            };
+            use sha1::Digest as _;
+            h.reset();
+            h.update(data);
+            let out = h.finalize_reset();
+            Some(Digest::from_bytes(ObjectFormat::Sha1, out.as_slice()).expect("sha1 len"))
+        });
+        if let Ok(Some(d)) = reused {
+            return d;
+        }
+    }
     let mut h = Hasher::new(format);
     h.update(data);
     h.finalize()

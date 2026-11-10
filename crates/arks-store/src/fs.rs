@@ -213,6 +213,10 @@ impl FilesystemGitStore {
         let idx = index.encode().map_err(|e| StoreError::Io(e.to_string()))?;
         self.install_pack_objects(decoded.objects);
         self.flush_pending_pack()?;
+        // Create pack/ now so persist() skips create_dir_all on the clone tail.
+        if let Some(parent) = pack_path.parent() {
+            fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
+        }
         self.pending_pack = Some(PendingPackPersist {
             pack_path,
             pack: buf,

@@ -17,9 +17,15 @@ use crate::credential::{CredentialSource, resolve_authorization};
 use crate::error::RemoteError;
 use crate::transport::{HttpRequest, HttpResponse, Transport};
 use crate::url::prepare_url_with_source;
+use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::time::Duration;
+
+thread_local! {
+    /// Grown once to 256KiB for upload-pack bodies — no per-request zero-fill.
+    static BODY_SCRATCH: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+}
 
 pub struct UreqTransport {
     /// Built lazily on first `https://` exchange only.
@@ -307,17 +313,24 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         let take = already.len().min(len);
         body.extend_from_slice(&already[..take]);
         if len > 16 * 1024 {
-            let mut big = vec![0u8; 64 * 1024];
-            while body.len() < len {
-                let n = stream
-                    .read(&mut big)
-                    .map_err(|e| RemoteError::Http(e.to_string()))?;
-                if n == 0 {
-                    break;
+            BODY_SCRATCH.with(|cell| {
+                let mut big = cell.borrow_mut();
+                if big.len() < 256 * 1024 {
+                    big.resize(256 * 1024, 0);
                 }
-                let room = len - body.len();
-                body.extend_from_slice(&big[..n.min(room)]);
-            }
+                while body.len() < len {
+                    let n = match stream.read(&mut big[..]) {
+                        Ok(n) => n,
+                        Err(e) => return Err(RemoteError::Http(e.to_string())),
+                    };
+                    if n == 0 {
+                        break;
+                    }
+                    let room = len - body.len();
+                    body.extend_from_slice(&big[..n.min(room)]);
+                }
+                Ok(())
+            })?;
         } else {
             while body.len() < len {
                 let n = stream

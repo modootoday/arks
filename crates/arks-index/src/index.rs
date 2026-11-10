@@ -81,7 +81,8 @@ impl Index {
         } else {
             2
         };
-        let mut buf = Vec::new();
+        // ~62-byte fixed entry + path; pre-size for clone checkout (220+ blobs).
+        let mut buf = Vec::with_capacity(12 + self.entries.len() * 96);
         write_header(&mut buf, write_version, self.entries.len() as u32);
         for entry in &self.entries {
             write_entry_v2(&mut buf, entry, hash_kind, write_version)?;
