@@ -3,7 +3,7 @@ id: sot:root/pf5-journey-seed-amortization
 title: Pf5 journey seed amortization (≤0.5× reopen)
 status: active
 created: 2026-11-10T22:00:00Z
-updated: 2026-11-10T00:38:36Z
+updated: 2026-11-10T01:46:00Z
 tags: [g19, pf5, perf, amortization, journey, verification]
 verify: manual
 rel:
@@ -15,12 +15,12 @@ rel:
     - adr:root/20261110162000
     - plan:root/20261110150000
     - evidence:root/20261110153000
-  evidence: [evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836]
+  evidence: [evidence:root/20261110224500, evidence:root/20261110234600, evidence:root/20261111001400, evidence:root/20261110003836, evidence:root/20261110014600]
 ---
 
 # Pf5 journey seed amortization (≤0.5× reopen)
 
-Version **0.1.4**. Normative harness rules that reopen [[adr:root/20261110162000]] for the eight Pf5 `aggressive_na` journeys without inventing Git semantics. Claim amortization receipt [[evidence:root/20261111001400]] — **Claimed(partial 7/8)** (prior [[evidence:root/20261110234600]] 6/8; [[evidence:root/20261110224500]] 4/8). Latest sole Docker Verified pin [[evidence:root/20261110003836]] (tip `c1b0b24`; 18/19 ≤0.5×; CLONE-LOCAL remains `aggressive_na`).
+Version **0.1.4**. Normative harness rules that reopen [[adr:root/20261110162000]] for the eight Pf5 `aggressive_na` journeys without inventing Git semantics. Claim amortization receipt [[evidence:root/20261111001400]] — **Claimed(partial 7/8)** (prior [[evidence:root/20261110234600]] 6/8; [[evidence:root/20261110224500]] 4/8). Latest sole Docker Verified pin [[evidence:root/20261110014600]] (tip `e466d56`; 18/19 ≤0.5×; CLONE-LOCAL remains `aggressive_na` @ 0.6705).
 
 ## Rule
 
