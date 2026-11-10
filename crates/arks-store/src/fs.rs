@@ -214,18 +214,26 @@ impl FilesystemGitStore {
             }
         }
         *self.packs_loaded.write().expect("packs_loaded") = true;
-        let pending = PendingPackPersist {
-            pack_path,
-            pack: pack.to_vec(),
-            idx_path,
-            idx,
-        };
         if defer_disk {
             // Flush any prior deferred pack before replacing.
             self.flush_pending_pack()?;
-            self.pending_pack = Some(pending);
+            self.pending_pack = Some(PendingPackPersist {
+                pack_path,
+                pack: pack.to_vec(),
+                idx_path,
+                idx,
+            });
         } else {
-            pending.persist()?;
+            // Sync hot path: write the received slice (no extra pack.to_vec).
+            if let Some(parent) = pack_path.parent() {
+                fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
+            }
+            if !pack_path.is_file() {
+                fs::write(&pack_path, pack).map_err(|e| StoreError::Io(e.to_string()))?;
+            }
+            if !idx_path.is_file() {
+                fs::write(&idx_path, idx).map_err(|e| StoreError::Io(e.to_string()))?;
+            }
         }
         Ok(())
     }
