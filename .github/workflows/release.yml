@@ -16,6 +16,9 @@
 # (avoid ubuntu-22.04 brownouts; avoid macos-14 retired; pin away from *-latest
 # during ubuntu-latest → 26.04 migration window).
 #
+# Action pins: actions/checkout@v5+ (Node 24) clears Node 20 deprecation
+# Annotations. Artifact actions use Node-24 majors (upload-artifact@v4→@v5+).
+#
 # Fail-closed: no long-lived registry tokens in repo secrets. OIDC only
 # (permissions.id-token: write). Skip publish when crate/wrapper packaging
 # is not ready or trusted publisher is not configured — never fall back to
@@ -50,7 +53,11 @@ jobs:
           - { os: windows-2025, target: x86_64-pc-windows-msvc }
           - { os: macos-15, target: aarch64-apple-darwin }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Stub discrete-circuit path-deps (parse-time)
+        shell: bash
+        run: bash scripts/ci-stub-discrete-circuit.sh
 
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
@@ -89,7 +96,7 @@ jobs:
           mkdir -p ../artifacts
           mv "$archive" "$archive.sha256" ../artifacts/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: dist-${{ matrix.target }}
           path: artifacts/*
@@ -103,10 +110,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: dist-*
           path: artifacts
@@ -152,7 +159,10 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Stub discrete-circuit path-deps (parse-time)
+        run: bash scripts/ci-stub-discrete-circuit.sh
 
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
@@ -196,7 +206,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v4
         with:
@@ -240,7 +250,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Skip if Python packaging tree is absent
         id: gate
@@ -274,7 +284,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Skip if gemspec is absent
         id: gate

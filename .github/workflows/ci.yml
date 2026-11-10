@@ -9,6 +9,9 @@
 #   macos-15      — supported arm64; NOT macos-14 (retired 2026-11-02).
 # Cites: research .spec/research/20261110085731-github-actions-release-oidc.research.md
 #        § Runner-image Annotations.
+#
+# Action pins: actions/checkout@v5+ uses Node 24 (clears Node 20 deprecation
+# Annotations). https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 
 name: ci
 
@@ -30,7 +33,10 @@ jobs:
     name: lint (fmt + clippy)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Stub discrete-circuit path-deps (parse-time)
+        run: bash scripts/ci-stub-discrete-circuit.sh
 
       - name: Install stable Rust (rustfmt + clippy)
         uses: dtolnay/rust-toolchain@stable
@@ -57,7 +63,11 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025, macos-15]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Stub discrete-circuit path-deps (parse-time)
+        shell: bash
+        run: bash scripts/ci-stub-discrete-circuit.sh
 
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
@@ -76,7 +86,10 @@ jobs:
     name: msrv (1.85)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Stub discrete-circuit path-deps (parse-time)
+        run: bash scripts/ci-stub-discrete-circuit.sh
 
       # Workspace rust-version = "1.85" (Cargo.toml). Keep in sync.
       - name: Install MSRV toolchain
@@ -98,13 +111,16 @@ jobs:
     name: clean-room image smoke (advisory vs full matrix)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Stub discrete-circuit mount path
+      - name: Stub discrete-circuit path-deps (parse-time + compose mount)
         # verify/docker-compose.yml mounts ../../discrete-circuit (sibling of
-        # the parent of the repo). CI has no CELIR path-dep tree; empty stub
-        # lets compose start for image build / lightweight smoke only.
-        run: mkdir -p "$GITHUB_WORKSPACE/../../discrete-circuit"
+        # the parent of the repo from some layouts; from GITHUB_WORKSPACE the
+        # Cargo path-dep sibling is ../discrete-circuit). Stub covers both
+        # parse-time Cargo and empty compose mount for image build smoke.
+        run: |
+          bash scripts/ci-stub-discrete-circuit.sh
+          mkdir -p "$GITHUB_WORKSPACE/../../discrete-circuit"
 
       - name: Build clean-room image (compose toolchain)
         run: docker compose -f verify/docker-compose.yml build toolchain
