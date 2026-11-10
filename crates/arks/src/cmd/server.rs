@@ -453,7 +453,7 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
         }
         "sync" => serve_config_apply_reload("sync", /*seed_defaults=*/ true),
         // `apply` / `reload`: re-read file store, live-probe binds, write runtime_* —
-        // Partial toward sync e2e without inventing Claimed running-server hot-reload.
+        // Partial toward sync e2e. On unix, running `arks serve` also honors SIGHUP Partial.
         "apply" | "reload" => serve_config_apply_reload(sub, /*seed_defaults=*/ false),
         // File-watch Partial: poll mtime and re-apply; does not signal a running serve.
         "watch" => serve_config_watch(&args[1..]),
@@ -464,7 +464,7 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
 }
 
 /// Partial hot-reload toward sync e2e: poll serve-config file mtime and re-apply probes.
-/// Does **not** mutate a running `arks serve` (Claimed process signal / SIGHUP Missing).
+/// Does **not** signal a running `arks serve` (unix SIGHUP is armed inside `arks serve` itself).
 fn serve_config_watch(args: &[String]) -> CliResult<()> {
     let mut duration_secs: u64 = 15;
     let mut interval_ms: u64 = 500;
@@ -502,7 +502,7 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
                 eprintln!(
                     "arks serve config watch [--duration SECS] [--interval-ms MS]\n  \
                      Partial file-watch: poll config mtime and apply/reload probes.\n  \
-                     Does not signal a running `arks serve` (Claimed hot-reload / SIGHUP Missing)."
+                     Does not signal a running serve (unix: send SIGHUP to `arks serve` for Partial)."
                 );
                 return Ok(());
             }
@@ -539,7 +539,7 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
             );
             map.insert(
                 "runtime_watch_signal".into(),
-                "file-mtime Partial (SIGHUP/running-serve Claimed Missing)".into(),
+                "file-mtime Partial (unix SIGHUP Partial on running serve; Windows Missing)".into(),
             );
             save_serve_config_map(&map)?;
             serve_config_apply_reload("watch-reload", /*seed_defaults=*/ false)?;
@@ -893,6 +893,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
         "unauthenticated"
     };
     eprintln!("{label} listening on http://{addr}/ (dumb_only={dumb_only}; {auth_label})");
+    install_serve_config_sighup_partial(label);
     let stop = Arc::new(AtomicBool::new(false));
     serve_http_with_opts(
         git_dir,
@@ -904,6 +905,76 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
         },
     )
     .map_err(|e| CliError::Msg(e.to_string()))
+}
+
+/// Unix: SIGHUP → `serve config` apply/reload Partial (runtime_* probes).
+/// Does **not** rebind a live HTTP listener (Claimed process hot-rebind Missing).
+/// Windows: documented Missing (no SIGHUP).
+fn install_serve_config_sighup_partial(label: &str) {
+    #[cfg(unix)]
+    {
+        use std::sync::atomic::AtomicBool as Flag;
+        static INSTALLED: Flag = Flag::new(false);
+        static RELOAD: Flag = Flag::new(false);
+        if INSTALLED.swap(true, Ordering::SeqCst) {
+            eprintln!("{label}: SIGHUP serve-config reload Partial already armed");
+            return;
+        }
+        // SAFETY: installs a minimal async-signal-safe handler that only stores a flag.
+        unsafe {
+            let mut sa: libc::sigaction = std::mem::zeroed();
+            sa.sa_sigaction = sighup_reload_handler as *const () as libc::sighandler_t;
+            sa.sa_flags = libc::SA_RESTART;
+            libc::sigemptyset(&mut sa.sa_mask);
+            if libc::sigaction(libc::SIGHUP, &sa, std::ptr::null_mut()) != 0 {
+                eprintln!(
+                    "{label}: SIGHUP install failed — serve config signal reload Partial unavailable"
+                );
+                return;
+            }
+        }
+        extern "C" fn sighup_reload_handler(_sig: libc::c_int) {
+            RELOAD.store(true, Ordering::SeqCst);
+        }
+        std::thread::spawn(|| {
+            loop {
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                if RELOAD.swap(false, Ordering::SeqCst) {
+                    eprintln!(
+                        "arks serve: SIGHUP → serve config apply/reload Partial \
+                         (runtime_* probes; live listen rebind Claimed Missing)"
+                    );
+                    let mut map = match load_serve_config_map() {
+                        Ok(m) => m,
+                        Err(e) => {
+                            eprintln!("arks serve: SIGHUP reload load err: {e}");
+                            continue;
+                        }
+                    };
+                    map.insert(
+                        "runtime_watch_signal".into(),
+                        "SIGHUP Partial (unix; live rebind Claimed Missing)".into(),
+                    );
+                    let _ = save_serve_config_map(&map);
+                    if let Err(e) = serve_config_apply_reload("sighup", /*seed_defaults=*/ false) {
+                        eprintln!("arks serve: SIGHUP apply/reload Partial err: {e}");
+                    }
+                }
+            }
+        });
+        eprintln!(
+            "{label}: SIGHUP serve-config reload Partial armed (unix; \
+             runtime_* only — Claimed live rebind Missing)"
+        );
+    }
+    #[cfg(not(unix))]
+    {
+        eprintln!(
+            "{label}: serve config signal reload Missing on Windows (no SIGHUP); \
+             use `arks serve config apply|reload|watch` in another process (Partial file path)"
+        );
+        let _ = label;
+    }
 }
 
 pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
@@ -1121,11 +1192,17 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             other if other.starts_with("--pid-file=") => {
                 pid_file = Some(PathBuf::from(&other[11..]));
             }
-            "--syslog" | "--informative-errors" | "--no-informative-errors"
-            | "--base-path-relaxed" => {
+            "--syslog" => {
+                return Err(CliError::NotImplemented(
+                    "daemon --syslog Missing (honest): no syslog/facility sink wired; \
+                     use foreground stderr logging today — not Claimed syslog parity"
+                        .into(),
+                ));
+            }
+            "--informative-errors" | "--no-informative-errors" | "--base-path-relaxed" => {
                 return Err(CliError::NotImplemented(format!(
                     "daemon option Missing (honest stub): {a} — not Claimed \
-                     (syslog/informative-errors/base-path-relaxed); use foreground logging today"
+                     (informative-errors/base-path-relaxed); use foreground logging today"
                 )));
             }
             "--access-hook" => {
@@ -1139,10 +1216,22 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             other if other.starts_with("--access-hook=") => {
                 access_hook = Some(PathBuf::from(&other["--access-hook=".len()..]));
             }
+            other if other == "--user" || other.starts_with("--user=") => {
+                return Err(CliError::NotImplemented(
+                    "daemon --user Missing (honest): no setuid/privilege-drop Partial; \
+                     refuse fail-closed — not Claimed user switch"
+                        .into(),
+                ));
+            }
+            other if other == "--group" || other.starts_with("--group=") => {
+                return Err(CliError::NotImplemented(
+                    "daemon --group Missing (honest): no setgid/privilege-drop Partial; \
+                     refuse fail-closed — not Claimed group switch"
+                        .into(),
+                ));
+            }
             other
-                if other.starts_with("--user")
-                    || other.starts_with("--group")
-                    || other.starts_with("--interpolated-path")
+                if other.starts_with("--interpolated-path")
                     || other.starts_with("--user-path")
                     || other.starts_with("--log-destination")
                     || other.starts_with("--allow-override")
@@ -1152,7 +1241,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             {
                 return Err(CliError::NotImplemented(format!(
                     "daemon option Missing (honest stub): {other} — not Claimed \
-                     (user/group/path overrides); refuse fail-closed"
+                     (path overrides); refuse fail-closed"
                 )));
             }
             other if other.starts_with('-') => {
@@ -1298,8 +1387,9 @@ Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-fo
 Honesty ([[sot:root/arks-self-host-server]]):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
   - In-process SSH listener: Partial (bind + id + KEXINIT + curve25519 ECDH + ed25519 host-key
-    sign/NEWKEYS when key loads + offline auth verify scaffold) then fail-closed — encrypted
-    transport / wire auth / channel Missing; ops SSHD + upload-pack/receive-pack valid
+    sign/NEWKEYS + chacha20-poly1305 encrypted Partial + authorized_keys verify +
+    session exec→pack dispatch) then fail-closed — OpenSSH-exact interop / Claimed SSH e2e
+    Missing; ops SSHD + upload-pack/receive-pack valid
   - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
   - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
   - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
@@ -1351,8 +1441,10 @@ Keys (Partial): bind, http, ssh, forge, forge_listen, ssh_listen, forge_data,
   runtime_watch_mtime, runtime_watch_signal.
 Partial: file store seeds `arks serve` defaults; clap flags still win;
   `serve` / `config sync|apply|reload|watch` write runtime_* + live-bind honesty;
-  validate probes bind/forge_listen/ssh_listen. Design ≠ Claimed sync e2e /
-  running-server hot-reload (watch is file-mtime Partial only).
+  validate probes bind/forge_listen/ssh_listen.
+  Unix: running `arks serve` arms SIGHUP → apply/reload Partial (runtime_*; live rebind Missing).
+  Windows: signal reload documented Missing (use apply|reload|watch).
+  Design ≠ Claimed sync e2e / live listen rebind.
 "
     );
 }
@@ -1379,10 +1471,12 @@ Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
   band-1 data + band-2 progress Partial (--format beyond tar Missing; --raw-ustar
   opt-out); --inetd Partial; --pid-file writes pid; --detach Partial re-exec
   (unix setsid / win DETACHED_PROCESS; parent may write --pid-file).
-Fail-closed Missing (honest stubs): --user/--group --syslog
-  --interpolated-path --user-path overrides; Claimed archive format parity.
+Fail-closed Missing (honest): --user/--group (no setuid/setgid Partial);
+  --syslog (no facility sink); --interpolated-path/--user-path overrides;
+  Claimed archive format parity still Missing.
   --access-hook=PATH Partial stub body (spawn; exit 0 allow).
-  upload-archive --prefix=/includes/--exclude= Partial (not Claimed parity).
+  upload-archive --prefix=/includes/--exclude= Partial (+ path-filter unit tests);
+  not Claimed archive parity.
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
