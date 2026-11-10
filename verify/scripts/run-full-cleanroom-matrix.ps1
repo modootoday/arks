@@ -24,7 +24,7 @@ $Tip = (git rev-parse HEAD).Trim()
 
 $OutGates = @(
   "g0","g1","g2","g3","g4","g5","g6","g7","g8","g8-live-scale","g8-local-forge",
-  "fs007-host-advisory","g10","g11","g11l3","g12","g13","g14","g15","g16","g17","g18",
+  "fs007-host-advisory","g10","g11","g11-l3","g12","g13","g14","g15","g16","g17","g18",
   "g19","g20","g21","g22","g23","g24","g25","g26","g27","g28","g28-offline-clones",
   "g29","g30","g31","g32","g33","g34","g35","g36","g37","g38","g39","g40","g41"
 )
@@ -122,7 +122,7 @@ Write-Result "s6-suite" "PASS" 0 ([int]$s6Sw.Elapsed.TotalSeconds) "g38 g39 g40 
 
 # --- Remaining gates (not covered by L8/S6/live SKIP) ---
 $Rest = @(
-  "g0","g1","g2","g3","g4","g5","g6","g7","g10","g12","g13","g11","g11l3","g15",
+  "g0","g1","g2","g3","g4","g5","g6","g7","g10","g12","g13","g11","g11-l3","g15",
   "g17","g18","g19","g22","g23","g24","g25","g26","g27","g28-offline-clones",
   "g29","g30","g31","g32","g33","g34","g35","g36","g37",
   "fs007-host-advisory","g8-local-forge"

@@ -3,7 +3,7 @@ id: sot:root/verify-directory-conventions
 title: Verify directory conventions and consistency
 status: active
 created: 2026-11-10T23:25:00Z
-updated: 2026-11-11T08:55:00Z
+updated: 2026-11-11T00:05:00Z
 tags: [verify, clean-room, docker, conventions, layout, naming, folders, filenames, numeric, zero-pad, skip, strict, matrices, claimed-residual, design, no-invent-claimed]
 verify: manual
 rel:
@@ -103,7 +103,7 @@ verify/
 
 **MUST NOT:** invent a fourth id family (e.g. `gate-N/`, `B1/`, `claimed-*` without `dod-`) without amending this SoT + [[sot:root/product-verification-clean-room]].
 
-**Legacy skew (allowed until Migration):** `g11l3` (compose + dir + `run-g11l3.sh`) — jammed L3 token; preferred form `g11-l3`. **Do not** rename in Spec-only waves; see Appendix A.
+**Legacy skew (migrated):** `g11l3` → `g11-l3` (compose + dir + `run-g11-l3.sh`). Historical evidence blobs may still cite `g11l3`. See Appendix A.
 
 **DoD / Claimed residual without gate dirs:** most `dod-*` / `dod-claimed-*` services are **script-only** under `verify/scripts/` with optional receipts under `verify/out/<topic>/`. That is intentional — **MUST NOT** mass-create empty `gates/dod-*/` scaffolds.
 
@@ -458,7 +458,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | Current | Preferred | Status |
 |---------|-----------|--------|
-| `gates/g11l3/` + compose `g11l3` + `run-g11l3.sh` | `g11-l3` everywhere (dir, compose, script, matrix rows) | **Legacy** — Claimed evidence cites `g11l3`; rename only in a dedicated harness PR with matrix/evidence path notes |
+| `gates/g11l3/` + compose `g11l3` + `run-g11l3.sh` | `g11-l3` everywhere (dir, compose, script, matrix rows) | **Migrated** — live tree uses `g11-l3`; Claimed evidence blobs may still cite `g11l3` |
 | Repo-root `target-cleanroom/`, `target-pilot/` | Host advisory only; clean-room uses compose volume | **Keep** as host conveniences; do not promote into `verify/` |
 | Gate-local `g41/seed.sh` | Acceptable peer helper | **Keep** unless folded into `scripts/` with compose update |
 
@@ -466,7 +466,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | From | To | Notes |
 |------|----|-------|
-| `verify/gates/g11l3/` | `verify/gates/g11-l3/` | Update compose service, `run-g11l3.sh` → `run-g11-l3.sh`, `matrix-l3.md` rows, and cite legacy alias in evidence indexes — **do not** rewrite historical evidence blobs |
+| `verify/gates/g11l3/` | `verify/gates/g11-l3/` | **Done** — compose / `run-g11-l3.sh` / `matrix-l3.md` / matrix drivers updated; historical evidence blobs **not** rewritten |
 | *(none else required at tip for folders)* | | Sibling dirs `g8-live-scale`, `g8-local-forge`, `g28-offline-clones` already match `gN-<kebab>`; `fs*-advisory` already compliant |
 
 **Survey snapshot (folders, tip ≥ `3f1a484`):** top-level = `scripts/` `matrices/` `gates/` `fixtures/` `out/` only; gate nested children observed = `out/` `src/` `tests/` `httpd/` (+ Cargo files); no `dod-*` dirs under `verify/`; host `target*` at repo root only (plus ephemeral `gates/g1/target` spill).
@@ -489,7 +489,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | Current | Preferred | Status |
 |---------|-----------|--------|
-| `verify/scripts/run-g11l3.sh` | `run-g11-l3.sh` | **Legacy** — couples to Appendix A `g11l3` rename |
+| `verify/scripts/run-g11l3.sh` | `run-g11-l3.sh` | **Migrated** with Appendix A |
 | `verify/scripts/g19_eval.py` | `g19-eval.py` (or fold into `run-g19.sh` only) | **Skew** — underscore; rename with `run-g19.sh` argv update |
 | `verify/fixtures/openai_compat_fixture.py` | `openai-compat-fixture.py` | **Skew** — snake_case fixture helper; rename when callers updated |
 | `verify/matrices/matrix-l3.md` | `matrix-g11-l3.md` (after id unjam) **or** keep as L3 milestone alias with README note | **Advisory** — milestone “L3” token predates `g11-l3` |
@@ -505,7 +505,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 |------|----|-------|
 | `scripts/g19_eval.py` | `scripts/g19-eval.py` | Update `run-g19.sh` / compose references; trivial when no parallel WIP on g19 |
 | `fixtures/openai_compat_fixture.py` | `fixtures/openai-compat-fixture.py` | Update importers; coordinate with Claimed agent-llm WIP if dirty |
-| `scripts/run-g11l3.sh` | `scripts/run-g11-l3.sh` | **Only** with Appendix A folder/compose rename |
+| `scripts/run-g11l3.sh` | `scripts/run-g11-l3.sh` | **Done** with Appendix A |
 | Stable multi-artifact names already compliant | *(none)* | `offline-clones-receipt.json`, living `*-matrix.csv`, root `docker-compose.yml` / `images.lock.json` / `README.md` match §2a |
 
 **Survey snapshot (filenames, tip ≥ `4a99f8e`):** root files = `Dockerfile` `docker-compose.yml` `images.lock.json` `README.md` `.gitattributes`; scripts dominated by `run-*.sh` + few `*.ps1` / `g19_eval.py` / `probe-*.sh`; matrices = `matrix-*.md` + three `*-matrix.csv`; primary receipts = `receipt.json` / `metrics.json` / `summary.txt` with local sha/debug variants under gate `out/`; compose filename singular.
@@ -528,7 +528,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | Current | Preferred | Status |
 |---------|-----------|--------|
-| `g11l3` (dir + compose + `run-g11l3.sh`) | `g11-l3` (unpadded `11`, hyphen variant) | **Legacy** — same as Appendix A/B; **not** a padding issue |
+| `g11l3` (dir + compose + `run-g11l3.sh`) | `g11-l3` (unpadded `11`, hyphen variant) | **Migrated** — same as Appendix A/B; **not** a padding issue |
 | `matrix-l3.md` / L8 / S6 milestone labels | Keep alias **or** align after `g11-l3` rename | **Advisory** — Appendix B |
 | Evidence dirs with live unpadded gate tokens (`…-g11`, `…-g19`) | Keep unpadded | **Compliant** — do not rewrite historical blobs to padded forms |
 | `fs007` / `fs014` | Keep three-digit | **Compliant** |
@@ -537,7 +537,7 @@ Related hosting stays `dod-self-host` ([[sot:root/arks-self-host-server]]) — c
 
 | From | To | Notes |
 |------|----|-------|
-| `g11l3` family | `g11-l3` family | Hyphen unjam only — **do not** change digit pad; coordinate with Appendix A/B |
+| `g11l3` family | `g11-l3` family | **Done** — hyphen unjam only; digit pad unchanged |
 | Hypothetical future `g01`-style mistake | `g1` (strip pad) | Only if such an id is ever introduced; **none** at tip ≥ `f9ebcf4` |
 | G-series `g10`…`g41` | *(no change)* | Already unpadded — **MUST NOT** “normalize” to `g010`…`g041` |
 | `fs007` / `fs014` | *(no change)* | Already fixed-3 — **MUST NOT** shorten to `fs7` |

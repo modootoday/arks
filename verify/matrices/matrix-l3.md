@@ -1,6 +1,6 @@
 # L3 HighConcurrency stress matrix (M23 / G11 expansion)
 
-**Authoritative runs:** `verify/docker-compose.yml` service `g11l3` (`verify/scripts/run-g11l3.sh`). Host cargo tests are advisory.
+**Authoritative runs:** `verify/docker-compose.yml` service `g11-l3` (`verify/scripts/run-g11-l3.sh`). Legacy alias: `g11l3` / `run-g11l3.sh` (historical evidence blobs keep that spelling). Host cargo tests are advisory.
 
 **Claimed shape** ([[adr:root/20261109194200]]): lease + parallel prep + short ordered Git-lock batch apply + worktree/ref-shard isolation. **Shared-index N-way OUT.**
 
@@ -30,13 +30,13 @@
 
 | Case | Gate | How |
 |------|------|-----|
-| L3-C01 | g11l3 | `prep_hash_parallel` + `apply_batch` N=32 tips_verified |
-| L3-C02 | g11l3 | N=128 shard apply tips_verified |
-| L3-C03 | g11l3 | Competing `*.lock` → Pipeline error; leases empty |
-| L3-C04 | g11l3 | GitCompat default; HighConcurrency opt-in accepted (post-unlock) |
-| L3-C05 | g11l3 | zero gix / zero celir metadata |
-| L3-C06 | g11l3 | G11 L1/L2 regress (`cargo test -p arks-lease`) |
+| L3-C01 | g11-l3 | `prep_hash_parallel` + `apply_batch` N=32 tips_verified |
+| L3-C02 | g11-l3 | N=128 shard apply tips_verified |
+| L3-C03 | g11-l3 | Competing `*.lock` → Pipeline error; leases empty |
+| L3-C04 | g11-l3 | GitCompat default; HighConcurrency opt-in accepted (post-unlock) |
+| L3-C05 | g11-l3 | zero gix / zero celir metadata |
+| L3-C06 | g11-l3 | G11 L1/L2 regress (`cargo test -p arks-lease`) |
 
 ## Done for Claimed
 
-Docker `g11l3` PASS + unlock evidence stamps residual L3 as Claimed; refuse removed for claimed shape only.
+Docker `g11-l3` PASS + unlock evidence stamps residual L3 as Claimed; refuse removed for claimed shape only. Historical Claimed receipts may still cite compose id `g11l3`.

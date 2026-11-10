@@ -96,6 +96,7 @@ Default scaffold / SKIP exit 0; `ARKS_DOD_STRICT=1` fails closed — smoke ≠ C
 | **G13** | Wave Pb porcelain + G12/G7/G6…G1 regression; gix-exit | `g13` |
 | **G14** | Wave Pc inventory + flag/alias + same-`.git` + G13…G1 regression; gix-exit — **CLI-parity production** | `g14` |
 | **G11** | Lease product gates (M10) | `g11` |
+| **G11-L3** | M23 HighConcurrency claimed-shape stress (G11 expansion) | `g11-l3` (legacy `g11l3`) |
 | **G15** | Git server (M11) | `g15` |
 | **G16** | Journey-compare catalog (func + timing metrics); additive | `g16` |
 | **G17** | Concurrency issue-repro compare (M12 claimed set / Cm-1) | `g17` |

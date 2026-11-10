@@ -178,11 +178,12 @@ services:
     command: ["/bin/bash", "verify/scripts/run-g11.sh"]
 
   # M23 L3 HighConcurrency claimed-shape stress (G11 expansion).
-  g11l3:
+  # Legacy alias: g11l3 / run-g11l3.sh (pre-Migration Appendix A).
+  g11-l3:
     <<: *cleanroom
     depends_on:
       - toolchain
-    command: ["/bin/bash", "verify/scripts/run-g11l3.sh"]
+    command: ["/bin/bash", "verify/scripts/run-g11-l3.sh"]
 
   g15:
     <<: *cleanroom
