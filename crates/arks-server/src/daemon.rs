@@ -5,11 +5,13 @@
 //!
 //! Claimed: upload-pack service; optional receive-pack when `allow_receive` is set.
 //! Requires `git-daemon-export-ok` unless `export_all`.
-//! Upload-archive enable flag is Partial (protocol body not Claimed).
+//! Upload-archive: Partial — drains client argument pkt-lines; archive stream not Claimed.
+//! `--inetd` one-shot stdio peer is Partial (no TCP bind).
 //! Never spawns `git` or `gh`.
 
 use crate::error::ServerError;
 use crate::stdio::{receive_pack_stream, upload_pack_stream};
+use arks_protocol::{Packet, encode_packet};
 use arks_repo::Repository;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -156,6 +158,53 @@ pub fn spawn_loopback_daemon(opts: DaemonOptions) -> Result<LoopbackDaemon, Serv
     Ok((addr, stop, handle))
 }
 
+/// One-shot inetd peer on split stdin/stdout (Partial).
+///
+/// Drains the service request + optional upload-archive args, then fail-closed
+/// with an honest Partial note. Claimed pack wire remains the TCP `serve_daemon`
+/// path (duplex socket). Cite: git-daemon `--inetd`.
+pub fn serve_daemon_inetd<R: Read, W: Write>(
+    mut input: R,
+    mut output: W,
+    opts: &DaemonOptions,
+) -> Result<(), ServerError> {
+    let req = match read_service_request(&mut input) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("arks daemon --inetd: bad service request: {e}");
+            return Err(e);
+        }
+    };
+    if opts.verbose {
+        eprintln!(
+            "arks daemon --inetd: service={} path={} (Partial stdio)",
+            req.service, req.path
+        );
+    }
+    if req.service == "git-upload-archive" && opts.allow_upload_archive {
+        let args = drain_upload_archive_args(&mut input)?;
+        if opts.verbose {
+            eprintln!("arks daemon --inetd: upload-archive args={args:?}");
+        }
+        return write_err_pkt(
+            &mut output,
+            &format!(
+                "upload-archive Partial (inetd): drained args={args:?}; \
+                 archive byte stream not Claimed — use `arks upload-archive` local helper \
+                 or TCP daemon once archive pkt-line body is evidenced"
+            ),
+        );
+    }
+    write_err_pkt(
+        &mut output,
+        &format!(
+            "arks daemon --inetd Partial: service={} path={}; split stdio pack not Claimed — \
+             use TCP `arks daemon` for upload-pack/receive-pack",
+            req.service, req.path
+        ),
+    )
+}
+
 fn handle_daemon_connection(
     mut stream: TcpStream,
     opts: &DaemonOptions,
@@ -233,12 +282,21 @@ fn handle_daemon_connection(
             Ok(())
         }
         "git-upload-archive" if opts.allow_upload_archive => {
-            // Partial: flag accepted; protocol body not Claimed.
+            let args = drain_upload_archive_args(&mut stream)?;
+            if opts.verbose {
+                eprintln!(
+                    "arks daemon: upload-archive Partial args={args:?} repo={}",
+                    repo.git_dir().display()
+                );
+            }
             write_err_pkt(
                 &mut stream,
-                "upload-archive enabled but protocol subset not claimed",
-            )?;
-            Ok(())
+                &format!(
+                    "upload-archive Partial: drained args={args:?}; \
+                     ACK+ustar/sideband body not Claimed on git:// — \
+                     local `arks upload-archive` helper remains the Partial stdio path"
+                ),
+            )
         }
         "git-upload-archive" => {
             write_err_pkt(&mut stream, "upload-archive not enabled")?;
@@ -255,9 +313,38 @@ fn handle_daemon_connection(
     result
 }
 
-fn write_err_pkt(stream: &mut TcpStream, msg: &str) -> Result<(), ServerError> {
+fn drain_upload_archive_args<R: Read>(input: &mut R) -> Result<Vec<String>, ServerError> {
+    let mut args = Vec::new();
+    // Cap reads so a stuck peer cannot hang forever (Partial).
+    for _ in 0..64 {
+        let mut lenbuf = [0u8; 4];
+        match input.read_exact(&mut lenbuf) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => return Err(e.into()),
+        }
+        let pkt_len = parse_pkt_len(&lenbuf)?;
+        // 0000 flush / 0001 delim / 0002 response-end — end of argument list.
+        if pkt_len < 4 {
+            break;
+        }
+        let mut payload = vec![0u8; pkt_len - 4];
+        if !payload.is_empty() {
+            input.read_exact(&mut payload)?;
+        }
+        let line = String::from_utf8_lossy(&payload);
+        let line = line.trim_end_matches(['\n', '\r']);
+        if let Some(arg) = line.strip_prefix("argument ") {
+            args.push(arg.to_string());
+        } else if !line.is_empty() {
+            args.push(line.to_string());
+        }
+    }
+    Ok(args)
+}
+
+fn write_err_pkt<W: Write>(stream: &mut W, msg: &str) -> Result<(), ServerError> {
     // gitprotocol-pack: error-line = PKT-LINE("ERR" SP text)
-    use arks_protocol::{Packet, encode_packet};
     let line = format!("ERR {msg}\n");
     let pkt = encode_packet(&Packet::Data(line.into_bytes()))
         .map_err(|e| ServerError::Protocol(e.to_string()))?;
@@ -275,7 +362,7 @@ struct ServiceRequest {
     extra: Vec<String>,
 }
 
-fn read_service_request(stream: &mut TcpStream) -> Result<ServiceRequest, ServerError> {
+fn read_service_request<R: Read>(stream: &mut R) -> Result<ServiceRequest, ServerError> {
     let mut lenbuf = [0u8; 4];
     stream.read_exact(&mut lenbuf)?;
     let pkt_len = parse_pkt_len(&lenbuf)?;
