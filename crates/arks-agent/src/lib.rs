@@ -110,7 +110,7 @@ COMMANDS (Partial honesty):
     review        Review stdin/file via openai-compat chat (Partial; HTTP loopback)
     cev-check     Structural CEV path/config inspection (Partial; no LLM Claimed)
     run           One-shot job: review|cev-check|doctor (Partial)
-    serve / bot   Loopback health listener (Partial long-running; --once; not a chatbot)
+    serve / bot   Loopback health + POST /v1/chat/completions proxy (Partial; not Claimed chatbot)
 
 NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
@@ -849,8 +849,9 @@ fn cmd_run(args: &[String]) -> ExitCode {
 fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "arks agent {kind} [--listen HOST:PORT] [--once] — loopback health Partial \
-             (not a chatbot; LLM serve not Claimed)"
+            "arks agent {kind} [--listen HOST:PORT] [--once] — loopback health + \
+             POST /v1/chat/completions openai-compat proxy Partial (review/bot path; \
+             not a Claimed general chatbot)"
         );
         return ExitCode::SUCCESS;
     }
@@ -878,9 +879,19 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
         }
     };
     let _ = listener.set_nonblocking(false);
+    let map = load_config_map().unwrap_or_default();
+    let provider_id = env::var("ARKS_AGENT_PROVIDER")
+        .ok()
+        .or_else(|| map.get("provider").cloned())
+        .unwrap_or_else(|| "ollama".into());
+    let base = effective_base_url(&provider_id, flag_value(args, &["--base-url"]));
+    let default_model = flag_value(args, &["--model"])
+        .map(str::to_string)
+        .or_else(|| map.get("model").cloned())
+        .unwrap_or_else(|| "llama3.2".into());
     eprintln!(
-        "arks agent {kind} listening on http://{}/ (Partial health only — LLM serve not Claimed; \
-         {} )",
+        "arks agent {kind} listening on http://{}/ (Partial health + chat proxy → {base}; \
+         design ≠ Claimed chatbot; {} )",
         listener
             .local_addr()
             .map(|a| a.to_string())
@@ -888,35 +899,82 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
         if once {
             "--once"
         } else {
-            "long-running health loop Partial"
+            "long-running Partial"
         }
     );
     let mut served = 0u64;
     loop {
         match listener.accept() {
             Ok((mut stream, peer)) => {
-                let mut buf = [0u8; 1024];
-                let _ = stream.read(&mut buf);
-                let body = format!(
-                    "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\"partial\":true,\"peer\":\"{peer}\",\"served\":{}}}",
-                    served + 1
-                );
+                let req = read_http_request_limited(&mut stream, 256 * 1024);
+                let (status, ctype, body) = match req {
+                    Ok((method, path, req_body)) => {
+                        let path_only = path.split('?').next().unwrap_or(path.as_str());
+                        if method == "POST"
+                            && (path_only == "/v1/chat/completions"
+                                || path_only == "/chat/completions")
+                        {
+                            match proxy_chat_completion(&base, &default_model, &req_body) {
+                                Ok((code, resp)) => {
+                                    let st = if code == 0 { 502 } else { code };
+                                    (st, "application/json", resp)
+                                }
+                                Err(e) => (
+                                    502,
+                                    "application/json",
+                                    format!(
+                                        "{{\"error\":\"partial proxy failed\",\"detail\":{},\"partial\":true}}",
+                                        json_escape(&e)
+                                    ),
+                                ),
+                            }
+                        } else {
+                            // Health / any other path — Partial JSON status.
+                            (
+                                200,
+                                "application/json",
+                                format!(
+                                    "{{\"ok\":true,\"service\":\"arks-agent\",\"mode\":\"{kind}\",\
+                                     \"partial\":true,\"peer\":\"{peer}\",\"served\":{},\
+                                     \"provider\":\"{provider_id}\",\"upstream\":{},\
+                                     \"chat\":\"POST /v1/chat/completions\"}}",
+                                    served + 1,
+                                    json_escape(&base)
+                                ),
+                            )
+                        }
+                    }
+                    Err(e) => (
+                        400,
+                        "application/json",
+                        format!(
+                            "{{\"error\":\"bad request\",\"detail\":{},\"partial\":true}}",
+                            json_escape(&e)
+                        ),
+                    ),
+                };
+                let reason = match status {
+                    200 => "OK",
+                    400 => "Bad Request",
+                    502 => "Bad Gateway",
+                    _ => "OK",
+                };
                 let resp = format!(
-                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    "HTTP/1.1 {status} {reason}\r\nContent-Type: {ctype}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
                     body.len()
                 );
                 let _ = stream.write_all(resp.as_bytes());
                 served += 1;
                 if once {
                     eprintln!(
-                        "arks agent {kind}: served one Partial health response (--once) then exit"
+                        "arks agent {kind}: served one Partial response (--once) then exit"
                     );
                     return ExitCode::SUCCESS;
                 }
                 if served == 1 {
                     eprintln!(
-                        "arks agent {kind}: long-running Partial health loop (Ctrl-C to stop; \
-                         chatbot/LLM Missing — design ≠ Claimed)"
+                        "arks agent {kind}: long-running Partial health+chat proxy (Ctrl-C to stop; \
+                         general chatbot product out of scope — design ≠ Claimed)"
                     );
                 }
             }
@@ -926,4 +984,112 @@ fn cmd_serve_bot(kind: &str, args: &[String]) -> ExitCode {
             }
         }
     }
+}
+
+/// Minimal HTTP/1.1 request read for agent serve (Partial; size-capped).
+fn read_http_request_limited(
+    stream: &mut impl Read,
+    max_body: usize,
+) -> Result<(String, String, String), String> {
+    let mut buf = Vec::new();
+    let mut tmp = [0u8; 2048];
+    loop {
+        let n = stream.read(&mut tmp).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        buf.extend_from_slice(&tmp[..n]);
+        if let Some(i) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
+            let (head, rest) = buf.split_at(i + 4);
+            let head_str = String::from_utf8_lossy(head);
+            let mut lines = head_str.split("\r\n");
+            let start = lines.next().unwrap_or("");
+            let mut parts = start.split_whitespace();
+            let method = parts.next().unwrap_or("GET").to_string();
+            let path = parts.next().unwrap_or("/").to_string();
+            let mut content_length = 0usize;
+            for line in lines {
+                if line.is_empty() {
+                    break;
+                }
+                if let Some((k, v)) = line.split_once(':') {
+                    if k.trim().eq_ignore_ascii_case("content-length") {
+                        content_length = v.trim().parse().unwrap_or(0);
+                    }
+                }
+            }
+            if content_length > max_body {
+                return Err(format!("body too large ({content_length} > {max_body})"));
+            }
+            let mut body = rest.to_vec();
+            while body.len() < content_length {
+                let n = stream.read(&mut tmp).map_err(|e| e.to_string())?;
+                if n == 0 {
+                    break;
+                }
+                body.extend_from_slice(&tmp[..n]);
+            }
+            body.truncate(content_length);
+            let body = String::from_utf8_lossy(&body).into_owned();
+            return Ok((method, path, body));
+        }
+        if buf.len() > max_body + 8192 {
+            return Err("headers too large".into());
+        }
+    }
+    Err("incomplete HTTP request".into())
+}
+
+/// Forward openai-compat chat body to configured upstream (Partial proxy).
+fn proxy_chat_completion(
+    base_url: &str,
+    default_model: &str,
+    req_body: &str,
+) -> Result<(u16, String), String> {
+    // Prefer caller model; fall back to serve default.
+    let model = extract_json_string_field(req_body, "model").unwrap_or_else(|| default_model.into());
+    let prompt = extract_chat_user_content(req_body)
+        .unwrap_or_else(|| req_body.chars().take(12_000).collect());
+    http_post_chat(base_url, &model, &prompt)
+}
+
+fn extract_json_string_field(raw: &str, key: &str) -> Option<String> {
+    let needle = format!("\"{key}\"");
+    let i = raw.find(&needle)?;
+    let after = &raw[i + needle.len()..];
+    let after = after.trim_start().trim_start_matches(':').trim_start();
+    if !after.starts_with('"') {
+        return None;
+    }
+    let mut out = String::new();
+    let mut chars = after.chars().skip(1);
+    while let Some(c) = chars.next() {
+        match c {
+            '\\' => {
+                if let Some(n) = chars.next() {
+                    out.push(n);
+                }
+            }
+            '"' => break,
+            c => out.push(c),
+        }
+    }
+    if out.is_empty() { None } else { Some(out) }
+}
+
+/// Best-effort: last `"content":"…"` under messages (Partial; not full JSON parse Claimed).
+fn extract_chat_user_content(raw: &str) -> Option<String> {
+    let mut last = None;
+    let mut search = raw;
+    while let Some(i) = search.find("\"content\"") {
+        let after = &search[i + "\"content\"".len()..];
+        let after = after.trim_start().trim_start_matches(':').trim_start();
+        if after.starts_with('"') {
+            if let Some(v) = extract_json_string_field(&format!("\"content\":{after}"), "content") {
+                last = Some(v);
+            }
+        }
+        search = &search[i + 1..];
+    }
+    last
 }
