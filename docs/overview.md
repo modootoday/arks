@@ -1,6 +1,7 @@
 ---
 title: Overview
 description: What arks is — Agent Revision Kinetic System for Git-compatible multi-session work
+nav_order: 10
 sections:
   - motive
   - what
@@ -11,7 +12,7 @@ sections:
 
 # Overview
 
-**arks** (tagline: **arks for Git**) is a **native Rust** Git-compatible revision CLI and infra. The working expansion — **Agent Revision Kinetic System** — names the motive once: built **for** agent / multi-session environments that thrash Git’s revision layer, without being an agent product itself.
+**arks** (tagline: **arks for Git**) is a **native Rust** Git-compatible revision CLI and infra, built **for** agent / multi-session environments that thrash Git’s revision layer, without being an agent product itself.
 
 You install and run the `arks` binary on your machine. Docker is used by maintainers for clean-room verification — it is not the product runtime.
 
@@ -30,6 +31,9 @@ arks improves that **revision system**: native engine for performance inside a s
 | Alias-ready argv where claimed | A warranty that every Git flag ships today |
 | Product leases + optional high-concurrency modes | “All races fixed” marketing |
 
+> [!IMPORTANT]
+> Public copy separates **Claimed** (with clean-room receipts) from **Verified** host folklore. This site does not invent PASS results or blanket “faster than Git” slogans.
+
 ## Priorities
 
 | Priority | Meaning |
@@ -39,9 +43,9 @@ arks improves that **revision system**: native engine for performance inside a s
 
 ## Naming
 
-- Product / crate / CLI binary: `arks`
-- Tagline: **arks for Git**
-- Working expansion (once): **Agent Revision Kinetic System**
+- **Product / crate / CLI binary**: `arks`
+- **Tagline**: **arks for Git**
+- **Working expansion** (once): **Agent Revision Kinetic System**
 - Drop-in usage is via alias or PATH shim — the short name does not contain a literal `git` substring
 
 ## Next

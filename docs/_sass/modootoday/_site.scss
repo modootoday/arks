@@ -1,0 +1,22 @@
+// Site token bridge for jekyll-theme-modootoday (CSP-safe; no inline styles).
+// Slate / ink palette — avoids purple-on-white and cream/terracotta clichés.
+$mt-overrides-base: (
+  font-sans: (ui-sans-serif, "Segoe UI", system-ui, sans-serif),
+  font-heading: (ui-sans-serif, "Segoe UI", system-ui, sans-serif),
+  heading-weight: 600,
+  radius: 0.5rem
+);
+$mt-overrides: (
+  primary: #1e3a5f,
+  link: #1e3a5f,
+  link-hover: #0f2744,
+  brand: #1e3a5f,
+  accent: #e8eef5
+);
+$mt-overrides-dark: (
+  primary: #8eb4d9,
+  link: #8eb4d9,
+  link-hover: #b7d0ea,
+  brand: #8eb4d9,
+  accent: #1a2330
+);

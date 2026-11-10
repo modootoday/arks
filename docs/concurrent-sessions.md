@@ -1,10 +1,11 @@
 ---
 title: Concurrent sessions
 description: Multi-agent revision contention — why arks exists and what is claimed
+nav_order: 20
 sections:
   - pain
-  - response
-  - honesty
+  - {c: timeline, name: response}
+  - {c: accordion, name: honesty}
   - {c: cta, name: next}
 ---
 
@@ -20,27 +21,52 @@ arks is built for that layer. It is **not** an agent framework, scheduler, or fo
 
 ## What arks does about it
 
-| Layer | Intent (plain language) |
-|-------|-------------------------|
-| Native Rust engine | Own hot paths in-process so allocator and concurrency policy can evolve without shelling out to `git` for core ops |
-| Same `.git` | Stay interchangeable with stock Git for claimed workflows |
-| Symmetric CLI + alias | Adopt without retraining every session on a new command name |
-| Product leases | Default coordination surface for agent-oriented writers |
-| High-concurrency shape | Optional selectable mode; claimed shape includes lease + batch-apply + worktree/ref-shard |
-| Shared-index N-way | Separate claimed bar for shared-index contention under clean-room receipts |
-| Diverse scenarios | Concurrency catalog work covers many revision races; public copy does **not** say “all races fixed” |
+### Native Rust engine
+
+Own hot paths in-process so allocator and concurrency policy can evolve without shelling out to `git` for core ops.
+
+### Same `.git`
+
+Stay interchangeable with stock Git for claimed workflows — ordinary filesystem object store in Git-compatible mode.
+
+### Symmetric CLI + alias
+
+Adopt without retraining every session on a new command name — see [Alias `git` → `arks`](../alias-git-arks/).
+
+### Product leases
+
+Default coordination surface for agent-oriented writers.
+
+### High-concurrency shape
+
+Optional selectable mode; claimed shape includes lease + batch-apply + worktree/ref-shard.
+
+### Shared-index N-way
+
+Separate claimed bar for shared-index contention under clean-room receipts — not conflated with the high-concurrency lease shape.
 
 ## Honesty (no invented Verified)
 
-Public wording stays conservative:
+### Claimed vs host-only
 
-- **Claimed** high-concurrency / lease / shared-index shapes cite clean-room receipts in the source tree — host-only runs are advisory.
-- Live forge functional journeys are claimed only with receipts; harnesses that need secrets may **SKIP** honestly when secrets are absent — never invent PASS.
-- Progressive timing bars: full journey allow-list ≤0.8× is measured; aggressive ≤0.5× work is **partial** (PF5 **7/8**; CLONE-LOCAL remains outside that aggressive set).
-- Optional index sidecar may sit **beside** `.git`; the Git object store stays filesystem `.git` in Git-compatible mode.
-- Deep IDs, matrices, and residual registers live under `.spec/` and `verify/` for maintainers — this site stays thin.
+**Claimed** high-concurrency / lease / shared-index shapes cite clean-room receipts in the source tree — host-only runs are advisory.
 
-Wall-clock charts (evidence, not slogans): [Performance](../performance/). Scope exclusions: [Limits](../limits/).
+### Live forge journeys
+
+Live forge functional journeys are claimed only with receipts; harnesses that need secrets may **SKIP** honestly when secrets are absent — never invent PASS.
+
+### Timing bars
+
+Full journey allow-list ≤0.8× is measured (**19/19** on the latest sole G19 remeasure). Aggressive ≤0.5× holds on that receipt except **Clone HTTP**, which stays **aggressive_na**. Charts: [Performance](../performance/).
+
+
+### Index sidecar
+
+Optional index sidecar may sit **beside** `.git`; the Git object store stays filesystem `.git` in Git-compatible mode.
+
+### Where deep IDs live
+
+Deep IDs, matrices, and residual registers live under `.spec/` and `verify/` for maintainers — this site stays thin. Scope exclusions: [Limits](../limits/).
 
 ## Next
 

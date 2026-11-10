@@ -1,11 +1,12 @@
 ---
 title: Getting started
 description: Build the native arks CLI and run your first Git-compatible workflows
+nav_order: 30
 sections:
-  - build
-  - first
+  - {c: steps, name: build}
+  - {c: tabs, name: first}
   - remotes
-  - alias
+  - {c: steps, name: alias}
   - {c: cta, name: next}
 ---
 
@@ -17,7 +18,11 @@ If you landed here from multi-agent orchestration pain: start with a single-sess
 
 ## Build the native CLI
 
-You need a recent Rust toolchain (**1.85+**).
+1. Install a recent Rust toolchain (**1.85+**).
+2. Clone and build the release binary.
+3. Put `target/release/arks` on your `PATH`, or invoke via `cargo run`.
+
+`file:build.sh`
 
 ```bash
 git clone https://github.com/modootoday/arks.git
@@ -25,13 +30,17 @@ cd arks
 cargo build -p arks --release
 ```
 
-Put `target/release/arks` on your `PATH`, or run without installing:
+Without installing:
+
+`file:help.sh`
 
 ```bash
 cargo run -p arks -- --help
 ```
 
 ## First repository
+
+### Init and commit
 
 ```bash
 arks init demo
@@ -43,11 +52,20 @@ arks status
 arks log
 ```
 
+### Inspect with stock Git
+
+```bash
+git status
+git log --oneline
+```
+
 Open the same directory with stock Git if you want a second opinion — the `.git` directory is ordinary Git data.
 
 ## Remotes
 
 Smart HTTP remotes use the usual commands:
+
+`file:remote.sh`
 
 ```bash
 arks clone https://example.com/repo.git
@@ -59,11 +77,15 @@ arks push
 
 ## Alias `git` → `arks`
 
+1. Prefer a shell alias for interactive evaluation.
+2. Prefer a PATH shim when scripts or agent runners shell out to `git`.
+3. Treat unfinished commands as fail-closed — see [Alias `git` → `arks`](../alias-git-arks/).
+
+`file:alias.sh`
+
 ```bash
 alias git=arks
 ```
-
-Familiar commands then invoke arks. Shell aliases do not apply inside many scripts — use a PATH shim when you need non-interactive drop-in behavior. Full honesty notes: [Alias `git` → `arks`](../alias-git-arks/).
 
 ## Next
 

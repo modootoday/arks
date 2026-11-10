@@ -1,11 +1,12 @@
 ---
 title: Alias git to arks
 description: How to adopt arks with alias git=arks — the symmetric CLI path
+nav_order: 40
 sections:
   - why
-  - shell
+  - {c: tabs, name: shell}
   - shim
-  - honesty
+  - {c: accordion, name: honesty}
   - {c: cta, name: next}
 ---
 
@@ -19,10 +20,22 @@ Multi-session / multi-agent environments already teach people `git …`. A separ
 
 ## Shell alias
 
+### bash / zsh
+
 ```bash
 alias git=arks
-# Windows Git Bash, if needed:
-# alias git=arks.exe
+```
+
+### Git Bash (Windows)
+
+```bash
+alias git=arks.exe
+```
+
+### fish
+
+```fish
+alias git=arks
 ```
 
 Familiar commands (`git status`, `git commit -m …`) then invoke arks with the same arguments after the command name.
@@ -31,14 +44,26 @@ Familiar commands (`git status`, `git commit -m …`) then invoke arks with the 
 
 Place an executable named `git` earlier on `PATH` that runs the arks binary with `"$@"`. Shell aliases do not apply inside many scripts and CI jobs, so a shim is the reliable non-interactive option — including agent runners that shell out to `git`.
 
+> [!TIP]
+> Use the alias for interactive evaluation; use a PATH shim when orchestrators or CI must call `git` without a shell profile.
+
 ## Honesty
 
-- The alias is for evaluation and everyday claimed commands — not a warranty that every Git subcommand and flag exists today.
-- Unimplemented or explicitly excluded commands exit **non-zero** and must not change the repository (for example interactive-only flows without a non-interactive path).
-- Not part of the client alias story: GUI tools (`gitk` / `gui` / `citool`), Git LFS, `scalar`, and forge host APIs.
-- Credential fill includes `credential.helper` / `GIT_ASKPASS` / TTY prompts and first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`); forge OAuth stays out.
-- Optional concurrency leases and the Git **server** role are separate capabilities; ordinary client alias use does not require them — see [Concurrent sessions](../concurrent-sessions/).
-- The published binary remains `arks`; do not publish a `git`-named crate or binary.
+### Coverage
+
+The alias is for evaluation and everyday claimed commands — not a warranty that every Git subcommand and flag exists today. Unimplemented or explicitly excluded commands exit **non-zero** and must not change the repository.
+
+### Out of the client alias story
+
+GUI tools (`gitk` / `gui` / `citool`), Git LFS, `scalar`, and forge host APIs are not part of the client alias story.
+
+### Credentials
+
+Credential fill includes `credential.helper` / `GIT_ASKPASS` / TTY prompts and first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`); forge OAuth stays out.
+
+### Separate capabilities
+
+Optional concurrency leases and the Git **server** role are separate capabilities; ordinary client alias use does not require them — see [Concurrent sessions](../concurrent-sessions/). The published binary remains `arks`; do not publish a `git`-named crate or binary.
 
 ## Next
 

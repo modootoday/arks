@@ -17,7 +17,23 @@ modootoday:
   languages: [en]
   logo: brand
   favicon: brand
+  color_scheme: auto
+  code_theme: github
+  sidebar: true
+  page_actions: true
+  back_to_top: true
+  csp: strict
+  asset_version: theme
+  lists: {link_chips: true, titled_items: true}
+  external_links: {new_window: true, icon: true}
   edit_url: https://github.com/modootoday/arks/edit/main/docs/
+  search:
+    words: 400
+    fields: [title, description]
+    results: 10
+  schema:
+    faq: auto
+  theme_color: {light: "#fafafa", dark: "#0a0a0a"}
   chart:
     enabled: true
     src: /assets/js/chart/chart.umd.min.js

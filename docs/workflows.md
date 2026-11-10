@@ -1,8 +1,9 @@
 ---
 title: Workflows
 description: Everyday Git-compatible workflows with the native arks CLI
+nav_order: 50
 sections:
-  - daily
+  - {name: daily, filter: true}
   - branches
   - remotes
   - signing
@@ -12,6 +13,9 @@ sections:
 # Workflows
 
 These are common day-to-day flows with the **native** `arks` binary — the same shapes multi-session environments already expect from Git. For the full command list, run `arks --help`. For contention and leases, see [Concurrent sessions](../concurrent-sessions/).
+
+> [!TIP]
+> Filter the daily table below, or open site search with `kbd:Ctrl+K`.
 
 ## Daily local work
 
@@ -51,12 +55,15 @@ These are common day-to-day flows with the **native** `arks` binary — the same
 
 With `gpg.format=ssh` configured:
 
+`file:sign.sh`
+
 ```bash
 arks commit -S -m "Signed change"
 arks verify-commit HEAD
 ```
 
-OpenPGP / X.509 / `tag -s` are not claimed — see [Limits](../limits/).
+> [!NOTE]
+> OpenPGP / X.509 / `tag -s` are not claimed — see [Limits](../limits/).
 
 ## Next
 

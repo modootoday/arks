@@ -2,7 +2,9 @@
 layout: doc
 toc: false
 title: arks for Git
+short_title: arks
 description: Agent Revision Kinetic System — Git-compatible revision CLI for multi-session contention.
+
 hero:
   c: split
   visual: code
@@ -38,9 +40,10 @@ arks keeps the **same `.git` on disk**, a **symmetric CLI**, and an adopt path o
 
 Selected medians from a Docker clean-room receipt (stock Git 2.39.5 vs release `arks`). Read them as wall-clock evidence on shared journeys — including ones that show up under parallel workflows — **not** as a “faster than Git” slogan.
 
-*Median wall-clock ms — selected journeys (clean-room G19 receipt @ `c1b0b24`)*
+*Median wall-clock ms — selected journeys (clean-room G19 remeasure at tip `c1b0b24`)*
 
-Full table, PF5 partial honesty (7/8; CLONE-LOCAL NA), and evidence links: [Performance](performance/).
+Full table, ratio honesty (Clone HTTP remains aggressive_na), and evidence links: [Performance](performance/).
+
 
 ## Next
 

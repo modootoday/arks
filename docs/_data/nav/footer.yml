@@ -3,15 +3,18 @@ columns:
   - title: Product
     items:
       - {title: Overview, url: /overview/}
+      - {title: Concurrent sessions, url: /concurrent-sessions/}
       - {title: Getting started, url: /getting-started/}
       - {title: Alias git → arks, url: /alias-git-arks/}
-      - {title: Concurrent sessions, url: /concurrent-sessions/}
       - {title: Workflows, url: /workflows/}
+  - title: Honesty
+    items:
       - {title: Performance, url: /performance/}
       - {title: Limits, url: /limits/}
+      - {title: Search, url: /search/}
   - title: Project
     items:
-      - {title: Source, url: https://github.com/modootoday/arks}
+      - {title: Source, url: https://github.com/modootoday/arks, new_window: true}
       - {title: Contribute, url: /contribute/}
-      - {title: Security, url: https://github.com/modootoday/arks/blob/main/SECURITY.md}
-      - {title: License, url: https://github.com/modootoday/arks/blob/main/LICENSE}
+      - {title: Security, url: https://github.com/modootoday/arks/blob/main/SECURITY.md, new_window: true}
+      - {title: License, url: https://github.com/modootoday/arks/blob/main/LICENSE, new_window: true}
