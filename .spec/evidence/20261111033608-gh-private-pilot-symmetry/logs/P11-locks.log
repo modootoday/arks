@@ -1,0 +1,7 @@
+git lock=2
+Locking asset.bin failed: Lock exists
+
+arks locks=0
+62816394	asset.bin	myso-kr
+
+unlock=0

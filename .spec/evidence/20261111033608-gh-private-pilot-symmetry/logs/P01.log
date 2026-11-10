@@ -1,0 +1,13 @@
+=== P01 init creates repo metadata ===
+--- git exit=0 ---
+Initialized empty Git repository in C:/workspaces/gir/.spec/evidence/20261111033608-gh-private-pilot-symmetry/work/p01-git-init/.git/
+
+
+--- arks exit=0 ---
+Initialized empty arks repository in \\?\C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p01-arks-init\.git
+
+
+--- git obs ---
+True
+--- arks obs ---
+True

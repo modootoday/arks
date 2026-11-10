@@ -1,0 +1,23 @@
+git:head=2ffc3821d81eab3073889df0e80cb390f3703ede; lines=3
+[re-git 2ffc382] pilot: rebase git
+ 1 file changed, 2 insertions(+)
+ create mode 100644 re-git.txt
+Current branch re-git is up to date.
+2ffc382 pilot: rebase git
+b04b24b pilot: fetch bait
+0c63e9d pilot: initial seed
+Switched to a new branch 're-git'
+
+arks:head=cffb868f5505ee610e3e1533513c8a4817398e47; lines=3
+Switched to a new branch 're-arks'
+[re-arks] 8272ecc63c622e4f0a4288501364100f842bb382
+refs/remotes/origin/main: b04b24b3c53c792509066d58fa8b09bdb99fd8ac
+refs/remotes/origin/topic-arks: 2eb2dffbb89bd137d0f541032c2e86d6f5f793eb
+refs/remotes/origin/topic-git: 39aff8ade4d1d889181e34bac28ef2590284d800
+refs/remotes/origin/topic-u-test: 432df8fafa048f0b51d167a51cab1eeef3a8b265
+[re-arks] cffb868f5505ee610e3e1533513c8a4817398e47
+Successfully rebased.
+cffb868 pilot: rebase arks
+b04b24b pilot: fetch bait
+0c63e9d pilot: initial seed
+

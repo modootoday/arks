@@ -1,0 +1,7 @@
+exit=0
+[main (root-commit) 0c63e9d] pilot: initial seed
+ 3 files changed, 6 insertions(+)
+ create mode 100644 README.md
+ create mode 100644 src/big.bin
+ create mode 100644 src/hello.txt
+

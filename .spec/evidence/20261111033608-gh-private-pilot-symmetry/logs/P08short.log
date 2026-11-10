@@ -1,0 +1,3 @@
+arks push tag shorthand exit=1
+error: ref not found: refs/heads/pilot-v0-arks-034908
+

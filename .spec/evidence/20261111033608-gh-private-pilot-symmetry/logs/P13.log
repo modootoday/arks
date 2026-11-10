@@ -1,0 +1,22 @@
+bundle create=0
+git=0 b04b24b3c53c792509066d58fa8b09bdb99fd8ac
+Cloning into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p13-git-bundle-uri'...
+
+arks=0 b04b24b3c53c792509066d58fa8b09bdb99fd8ac
+b04b24b3c53c792509066d58fa8b09bdb99fd8ac refs/heads/main
+b04b24b3c53c792509066d58fa8b09bdb99fd8ac refs/remotes/origin/HEAD
+b04b24b3c53c792509066d58fa8b09bdb99fd8ac refs/remotes/origin/main
+2eb2dffbb89bd137d0f541032c2e86d6f5f793eb refs/remotes/origin/topic-arks
+39aff8ade4d1d889181e34bac28ef2590284d800 refs/remotes/origin/topic-git
+432df8fafa048f0b51d167a51cab1eeef3a8b265 refs/remotes/origin/topic-u-test
+efe47ab4ed96b4ecb6daaad64ca2679b842bb1a9 refs/tags/pilot-v0-arks
+625b338e64c24b23182090126279afba26694103 refs/tags/pilot-v0-arks-034908
+d10fda1c04ccf0c1508457044d06fc30b67682fd refs/tags/pilot-v0-arks-034919
+560d14d11d15458d36a035862b617f256aa0c6b7 refs/tags/pilot-v0-git
+efa0592dfaab42e1c5bdb7cae30f4e0d7208fa4a refs/tags/pilot-v0-git-034908
+5cdbf34a876e7e8129ae58424122da5feb887816 refs/tags/pilot-v0-git-034919
+edff7fcba0beb1b0db20408793146ecadc1b6e40 refs/tags/t1
+b04b24b3c53c792509066d58fa8b09bdb99fd8ac HEAD
+Cloned into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p13-arks-bundle-uri'
+note: FS5/NET-006 — seeded objects from --bundle-uri C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p13.bundle
+

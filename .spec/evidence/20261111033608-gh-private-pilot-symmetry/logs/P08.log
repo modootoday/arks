@@ -1,0 +1,21 @@
+tags=pilot-v0-git-034908/pilot-v0-arks-034908
+git tag/push 0/0
+pilot-v0-arks
+pilot-v0-git
+pilot-v0-git-034908
+t1
+
+arks tag/push 0/0
+
+remote:
+efe47ab4ed96b4ecb6daaad64ca2679b842bb1a9	refs/tags/pilot-v0-arks
+37dcaebe1e3fef8fd13d0fb871e3e34ae6d8f8ef	refs/tags/pilot-v0-arks^{}
+625b338e64c24b23182090126279afba26694103	refs/tags/pilot-v0-arks-034908
+b04b24b3c53c792509066d58fa8b09bdb99fd8ac	refs/tags/pilot-v0-arks-034908^{}
+560d14d11d15458d36a035862b617f256aa0c6b7	refs/tags/pilot-v0-git
+e9e4cc9171ca513996a50586aa9def67e1b79c0b	refs/tags/pilot-v0-git^{}
+efa0592dfaab42e1c5bdb7cae30f4e0d7208fa4a	refs/tags/pilot-v0-git-034908
+b04b24b3c53c792509066d58fa8b09bdb99fd8ac	refs/tags/pilot-v0-git-034908^{}
+edff7fcba0beb1b0db20408793146ecadc1b6e40	refs/tags/t1
+432df8fafa048f0b51d167a51cab1eeef3a8b265	refs/tags/t1^{}
+

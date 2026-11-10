@@ -1,0 +1,8 @@
+filter=sparse:oid=e846f83214f361805d14d8c3f980f3387b8608fc
+git=128 missing
+Cloning into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\P10e-git'...
+fatal: remote error: filter 'sparse:oid' not supported
+
+arks=1 
+error: protocol: ERR filter 'sparse:oid' not supported
+

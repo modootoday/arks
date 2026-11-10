@@ -1,0 +1,6 @@
+git exit=0 shallow=True oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac
+Cloning into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p09-git-depth'...
+
+arks exit=0 shallow=True oid=b04b24b3c53c792509066d58fa8b09bdb99fd8ac
+Cloned into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p09-arks-depth'
+

@@ -1,0 +1,8 @@
+filter=object:type=blob
+git=128 oid=missing
+Cloning into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\P10c-git'...
+fatal: remote error: filter 'object:type' not supported
+
+arks=1 oid=
+error: protocol: ERR filter 'object:type' not supported
+

@@ -1,0 +1,16 @@
+exit=0
+path: C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p02-arks-clone
+claimed.full_sync: false
+claimed.hydration: false
+claimed.lsm_bypass: false
+claimed.detect_refuse: false
+hazard: none
+cloud.kind: (none)
+onedrive.placeholder: false
+lsm.kind: (none)
+refuse.sync.requested: false
+refuse.sync.trigger: false
+note: no cloud-sync / CfAPI / LSM hazard detected at this path (advisory probe only)
+note: FS-007 full multi-device sync safety remains Impossible/unclaimed; WIN-003 detect ≠ hydration; FS-014 detect ≠ LSM bypass
+note: opt-in refuse: `arks host-env --refuse-sync` or ARKS_HOST_ENV_REFUSE_SYNC=1 when .git under sync root (Claimed detect+refuse slice only)
+

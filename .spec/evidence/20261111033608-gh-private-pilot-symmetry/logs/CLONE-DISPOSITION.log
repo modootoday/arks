@@ -1,0 +1,6 @@
+﻿diag_shell_abort: prior Debug arks GitHub clone failure exited 4294967295 (harness/kill while hung on credential path) — not a clean git error
+stock_without_override: arks credential fill empty (gitconfig !'...\gh.exe' Unix single-quotes; arks spawns via cmd /C) → HTTP 401 private clone
+with_ARKS_CREDENTIAL_HELPER=!gh auth git-credential + gh on PATH: arks clone HTTPS PASS; HEAD OID matches stock git
+SSH: SKIP (no github.com SSH auth for this agent)
+protocol_primary: https (gh auth setup-git)
+repos_left_in_place: yes (throwaway private pilot)

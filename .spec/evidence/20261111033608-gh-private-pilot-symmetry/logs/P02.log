@@ -1,0 +1,13 @@
+=== P02 clone smart HTTPS ===
+--- git exit=0 ---
+
+Cloning into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p02-git-clone'...
+
+--- arks exit=0 ---
+Cloned into 'C:\workspaces\gir\.spec\evidence\20261111033608-gh-private-pilot-symmetry\work\p02-arks-clone'
+
+
+--- git obs ---
+0c63e9dab50cffcba1b1b8d6cd0eb3f33e3aa4f9
+--- arks obs ---
+0c63e9dab50cffcba1b1b8d6cd0eb3f33e3aa4f9

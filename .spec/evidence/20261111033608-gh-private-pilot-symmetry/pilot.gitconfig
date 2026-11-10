@@ -1,0 +1,4 @@
+﻿[credential "https://github.com"]
+	helper = !gh auth git-credential
+[credential]
+	helper = !gh auth git-credential

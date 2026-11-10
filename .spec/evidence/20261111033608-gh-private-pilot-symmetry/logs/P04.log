@@ -1,0 +1,19 @@
+git:
+branch=topic-git; head=39aff8ade4d1d889181e34bac28ef2590284d800; log_lines=3
+[topic-git 39aff8a] pilot: topic git
+ 1 file changed, 2 insertions(+)
+ create mode 100644 topic-git.txt
+39aff8a pilot: topic git
+b04b24b pilot: fetch bait
+0c63e9d pilot: initial seed
+Switched to a new branch 'topic-git'
+warning: in the working copy of 'topic-git.txt', LF will be replaced by CRLF the next time Git touches it
+
+arks:
+branch=topic-arks; head=2eb2dffbb89bd137d0f541032c2e86d6f5f793eb; log_lines=3
+Switched to a new branch 'topic-arks'
+[topic-arks] 2eb2dffbb89bd137d0f541032c2e86d6f5f793eb
+2eb2dff pilot: topic arks
+b04b24b pilot: fetch bait
+0c63e9d pilot: initial seed
+
