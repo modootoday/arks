@@ -447,9 +447,9 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     })
 }
 
-fn parse_cleartext_headers(
-    header_bytes: &[u8],
-) -> Result<(u16, Option<usize>, Option<String>, Option<String>), RemoteError> {
+type CleartextHeaders = (u16, Option<usize>, Option<String>, Option<String>);
+
+fn parse_cleartext_headers(header_bytes: &[u8]) -> Result<CleartextHeaders, RemoteError> {
     let header_text = String::from_utf8_lossy(header_bytes);
     let mut lines = header_text.split("\r\n");
     let status_line = lines.next().unwrap_or("");

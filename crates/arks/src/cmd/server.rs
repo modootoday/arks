@@ -126,6 +126,10 @@ pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
     let authorization = std::env::var("HTTP_AUTHORIZATION")
         .ok()
         .or_else(|| std::env::var("AUTHORIZATION").ok());
+    let destination = std::env::var("HTTP_DESTINATION").ok();
+    let lock_token = std::env::var("HTTP_LOCK_TOKEN")
+        .ok()
+        .or_else(|| std::env::var("HTTP_IF").ok());
     let mut body = Vec::new();
     io::stdin().read_to_end(&mut body)?;
     let req = HttpRequest {
@@ -135,6 +139,8 @@ pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
         body,
         git_protocol,
         authorization,
+        destination,
+        lock_token,
     };
     let basic_auth = resolve_basic_auth(None, None)?;
     let resp = handle_smart_http_auth(&mut repo, &req, basic_auth.as_ref())
@@ -143,6 +149,9 @@ pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
     print!("Content-Type: {}\r\n", resp.content_type);
     if let Some(ref wa) = resp.www_authenticate {
         print!("WWW-Authenticate: {wa}\r\n");
+    }
+    for (k, v) in &resp.extra_headers {
+        print!("{k}: {v}\r\n");
     }
     print!("Content-Length: {}\r\n\r\n", resp.body.len());
     io::stdout().write_all(&resp.body)?;
