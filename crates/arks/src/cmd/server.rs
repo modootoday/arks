@@ -210,15 +210,182 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
     }
     let sub = args[0].as_str();
     match sub {
-        "show" | "set" | "path" | "validate" => Err(CliError::NotImplemented(format!(
-            "arks serve config {sub}: design/Partial — not Claimed yet \
-             ([[sot:root/arks-self-host-server]]); server config ≠ `arks config` / hub settings"
-        ))),
+        "path" => {
+            println!("{}", serve_config_path().display());
+            Ok(())
+        }
+        "show" => {
+            let path = serve_config_path();
+            if !path.is_file() {
+                eprintln!(
+                    "arks serve config show: no file yet at {} (Partial defaults apply at clap)",
+                    path.display()
+                );
+                print_serve_config_defaults();
+                return Ok(());
+            }
+            let raw = std::fs::read_to_string(&path).map_err(|e| CliError::Msg(e.to_string()))?;
+            print!("{raw}");
+            if !raw.ends_with('\n') {
+                println!();
+            }
+            eprintln!("note: Partial file store — design ≠ Claimed ([[sot:root/arks-self-host-server]])");
+            Ok(())
+        }
+        "set" => {
+            let key = args
+                .get(1)
+                .ok_or_else(|| CliError::Usage("serve config set <key> <value>".into()))?;
+            let value = args
+                .get(2)
+                .ok_or_else(|| CliError::Usage("serve config set <key> <value>".into()))?;
+            if !SERVE_CONFIG_KEYS.contains(&key.as_str()) {
+                return Err(CliError::Usage(format!(
+                    "serve config set: unknown key `{key}` (allowed: {})",
+                    SERVE_CONFIG_KEYS.join(", ")
+                )));
+            }
+            let mut map = load_serve_config_map()?;
+            map.insert(key.clone(), value.clone());
+            save_serve_config_map(&map)?;
+            eprintln!(
+                "arks serve config set: {key}={value} → {} (Partial; not Claimed)",
+                serve_config_path().display()
+            );
+            Ok(())
+        }
+        "validate" => {
+            let path = serve_config_path();
+            if !path.is_file() {
+                eprintln!(
+                    "arks serve config validate: no file at {} — empty Partial OK",
+                    path.display()
+                );
+                return Ok(());
+            }
+            let map = load_serve_config_map()?;
+            let mut ok = true;
+            for (k, v) in &map {
+                if !SERVE_CONFIG_KEYS.contains(&k.as_str()) {
+                    eprintln!("unknown key: {k}");
+                    ok = false;
+                    continue;
+                }
+                if let Err(e) = validate_serve_config_value(k, v) {
+                    eprintln!("{k}: {e}");
+                    ok = false;
+                }
+            }
+            if ok {
+                eprintln!("arks serve config validate: ok (Partial schema)");
+                Ok(())
+            } else {
+                Err(CliError::Msg(
+                    "arks serve config validate: failed (Partial schema)".into(),
+                ))
+            }
+        }
         other => Err(CliError::Usage(format!(
             "arks serve config: unknown `{other}` (show|set|path|validate); see --help"
         ))),
     }
 }
+
+const SERVE_CONFIG_KEYS: &[&str] = &[
+    "bind",
+    "http",
+    "ssh",
+    "forge",
+    "forge_listen",
+    "forge_data",
+    "basic_auth_file",
+    "ssh_host_key",
+    "allow_paths",
+    "tls_note",
+];
+
+fn serve_config_path() -> PathBuf {
+    if let Ok(p) = std::env::var("ARKS_SERVE_CONFIG") {
+        return PathBuf::from(p);
+    }
+    let home = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    home.join(".config").join("arks").join("serve.conf")
+}
+
+fn load_serve_config_map() -> CliResult<std::collections::BTreeMap<String, String>> {
+    let path = serve_config_path();
+    let mut map = std::collections::BTreeMap::new();
+    if !path.is_file() {
+        return Ok(map);
+    }
+    let raw = std::fs::read_to_string(&path).map_err(|e| CliError::Msg(e.to_string()))?;
+    for (lineno, line) in raw.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((k, v)) = line.split_once('=') else {
+            return Err(CliError::Msg(format!(
+                "serve config: bad line {}: expected key=value",
+                lineno + 1
+            )));
+        };
+        map.insert(k.trim().to_string(), v.trim().to_string());
+    }
+    Ok(map)
+}
+
+fn save_serve_config_map(map: &std::collections::BTreeMap<String, String>) -> CliResult<()> {
+    let path = serve_config_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| CliError::Msg(e.to_string()))?;
+    }
+    let mut out = String::from("# arks serve config (Partial; ≠ arks config / hub)\n");
+    for (k, v) in map {
+        out.push_str(k);
+        out.push('=');
+        out.push_str(v);
+        out.push('\n');
+    }
+    std::fs::write(&path, out).map_err(|e| CliError::Msg(e.to_string()))
+}
+
+fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
+    match key {
+        "http" | "ssh" | "forge" => match value {
+            "on" | "off" | "true" | "false" | "1" | "0" => Ok(()),
+            _ => Err("expected on|off".into()),
+        },
+        "bind" | "forge_listen" => {
+            if value.parse::<SocketAddr>().is_ok() {
+                Ok(())
+            } else {
+                Err("expected HOST:PORT socket address".into())
+            }
+        }
+        "forge_data" | "basic_auth_file" | "ssh_host_key" | "allow_paths" | "tls_note" => {
+            if value.is_empty() {
+                Err("value must not be empty".into())
+            } else {
+                Ok(())
+            }
+        }
+        _ => Err("unknown key".into()),
+    }
+}
+
+fn print_serve_config_defaults() {
+    println!("# Partial clap / product defaults (not written until `set`):");
+    println!("bind=127.0.0.1:8080");
+    println!("http=on");
+    println!("ssh=on");
+    println!("forge=on");
+    println!("forge_listen=127.0.0.1:3920");
+}
+
 fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut listen = "127.0.0.1:8080".to_string();
     let mut dir: Option<PathBuf> = None;
@@ -679,7 +846,7 @@ See:     arks serve --help
 fn print_serve_config_help() {
     print!(
         "\
-arks serve config — self-host server configuration (design / Partial; not Claimed)
+arks serve config — self-host server configuration (Partial; not Claimed)
 
 Usage:
   arks serve config show
@@ -688,10 +855,14 @@ Usage:
   arks serve config validate
 
 Not `arks config` (git-repo config). Not hub forge settings.
-Keys (design): bind, transports, Basic auth refs, TLS notes, SSH key paths, allow-paths.
+File: ~/.config/arks/serve.conf (or ARKS_SERVE_CONFIG).
+Keys (Partial): bind, http, ssh, forge, forge_listen, forge_data,
+  basic_auth_file, ssh_host_key, allow_paths, tls_note.
+Note: clap flags still win at runtime today; file store is Partial persistence only.
 "
     );
 }
+
 fn print_daemon_help() {
     print!(
         "\
