@@ -42,7 +42,7 @@ Public clean-room Definition of Done is **three peer pillars**. Self-host is **a
 | **2. Daemon** | `git-daemon` | `arks daemon` | Flag surface **Partial** deepen; not the GitHub-class host story |
 | **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | **Partial** (stubs/forwards); nested `arks hub …` transitional only |
 
-**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **Partial** (bind + keys + id/KEXINIT scaffold fail-closed; KEX crypto/auth still **Missing** — not handshake Claimed); forge-in-serve **Partial**; dedicated LAN/WAN hosting e2e **scaffold / not Claimed**. See [Self-host](../self-host/) and [Ports](../ports/).
+**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **Partial** (encrypted chacha20-poly1305 + authorized_keys verify + exec→pack dispatch; OpenSSH-exact / Claimed SSH e2e **Missing**); forge-in-serve **Partial**; dedicated LAN/WAN hosting e2e **scaffold / not Claimed**. See [Self-host](../self-host/) and [Ports](../ports/).
 
 Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/verify-cleanroom-symmetry-matrix.sot.md). Residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Program ladder: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md).
 
@@ -52,12 +52,12 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 |---------|-------|-------|
 | Personality / Registry / OverlapFacade | **Partial** | Env/argv0 dispatch exists as shell; not Claimed peer drop-in proof |
 | `arks serve --no-ssh --no-forge` | HTTP wire **Claimed** where evidenced | Practical Claimed hosting path today |
-| In-process SSH under `arks serve` | **Partial** | Bind + keys + id + KEXINIT + ECDH + ed25519 sign/NEWKEYS (when key loads) + offline auth scaffold; fail-closed (encrypted wire auth/channel **Missing**). Ops SSHD + `upload-pack`/`receive-pack` remains valid |
+| In-process SSH under `arks serve` | **Partial** | Bind + keys + id + KEXINIT + ECDH + ed25519 sign/NEWKEYS + chacha20-poly1305 encrypted Partial + authorized_keys verify + exec→pack dispatch; OpenSSH-exact / Claimed SSH e2e **Missing**. Ops SSHD + pack remains valid |
 | Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; no in-process TLS Claimed |
-| `arks serve config` | **Partial** | File seeds + `runtime_*` / `apply`/`reload`/`watch` (file-mtime); clap wins; ≠ Claimed sync e2e |
-| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Many local-API Partial leaves; HTTPS ureq + transport retry Partial; OUT `extension`/`copilot` explicit refuse |
-| `arks daemon` deepen | **Partial** | `--inetd` / `--pid-file` / `--detach` / archive ACK+sideband + `--prefix`/`--exclude` / `--access-hook` stub Partial; still **Missing**: Claimed archive parity, user/group/syslog |
-| `arks agent` | **Partial** | provider error/retry classify + review/cev/run + serve/bot health + chat proxy; Claimed LLM chatbot e2e **Missing** |
+| `arks serve config` | **Partial** | File seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** Partial; Windows signal **Missing**; ≠ Claimed live rebind |
+| Flat forge leaves (`pr`, `issue`, …) | **Partial** | Local-API Partial; `hub smoke` HTTPS harness Partial (or documented Missing); OUT `extension`/`copilot` refuse |
+| `arks daemon` deepen | **Partial** | archive path-filter unit tests + `--prefix`/`--exclude`; honest `--user`/`--group`/`--syslog` **Missing**; Claimed archive parity **Missing** |
+| `arks agent` | **Partial** | `provider smoke` optional local ollama Partial; Claimed LLM chatbot e2e **Missing** |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 
 Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES** where receipts carry — residuals are Impossible / advisory / owner-policy, not casual N/A. That does **not** promote forge/SSH/agent Partial rows to Claimed.

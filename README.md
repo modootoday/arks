@@ -105,11 +105,11 @@ arks serve --no-ssh --no-forge /path/to/repos
 
 | Surface | Role | Tip honesty |
 |---------|------|-------------|
-| `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH **Partial** (bind+keys+id+KEXINIT+ECDH+ed25519 sign/NEWKEYS when key loads; encrypted auth/channel **Missing**); forge-in-serve **Partial** |
-| `arks serve config …` | Server config store | **Partial** (file seeds + `runtime_*` / apply\|reload\|watch; clap wins; ≠ hub client settings) |
-| `arks daemon` | `git://` peer (`git-daemon` symmetry) | **Partial** (`--inetd`/`--pid-file`/`--detach`; archive ACK+sideband + `--prefix`/`--exclude` Partial; `--access-hook` stub); Claimed archive parity **Missing** — **not** the GitHub-class host story |
-| Flat `arks pr` / `issue` / `auth` / … | Forge **client** | **Partial** local-API leaves; OUT `extension`/`copilot` explicit refuse; HTTPS ureq Partial; nested `arks hub …` transitional |
-| `arks agent …` | Optional review / CEV extension | **Partial** (provider error/retry + review/cev/run/serve); Claimed LLM e2e **Missing**; not git-alias DoD |
+| `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH **Partial** (chacha20-poly1305 encrypted + authorized_keys verify + exec→pack dispatch; OpenSSH-exact/Claimed e2e **Missing**); forge-in-serve **Partial** |
+| `arks serve config …` | Server config store | **Partial** (file seeds + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** Partial; Windows signal **Missing**; ≠ hub) |
+| `arks daemon` | `git://` peer (`git-daemon` symmetry) | **Partial** (archive path-filter tests + `--prefix`/`--exclude`; honest `--user`/`--group`/`--syslog` Missing); Claimed archive parity **Missing** |
+| Flat `arks pr` / `issue` / `auth` / … | Forge **client** | **Partial** local-API + `hub smoke` HTTPS harness Partial; OUT `extension`/`copilot` refuse; never `gh` |
+| `arks agent …` | Optional review / CEV extension | **Partial** (`provider smoke` ollama optional; Claimed LLM e2e **Missing**); not git-alias DoD |
 
 Ports: prefer **22 / 80 / 443 / 9418**; label **2222 / 8080** as demo/alternate — [Ports](docs/ports.md), [Self-host](docs/self-host.md).
 
@@ -166,7 +166,7 @@ Short and honest — see [docs/limits.md](docs/limits.md) and [Git vs arks](docs
 - **Not** a GUI embed (`gitk`/`git-gui` handoff only), `scalar` product, agent orchestrator, or “WAN-safe by default” host.
 - The Git **object store** remains ordinary filesystem `.git`. Optional index sidecar may sit beside it; arks does not replace `.git` objects in Git-compatible mode.
 - Forge **client** (`arks pr` / …) and self-host forge-in-serve are **design / Partial** until evidenced — not git-alias DoD.
-- In-process **SSH** under `arks serve` is **Partial** (bind + keys + id + KEXINIT + curve25519 ECDH + ed25519 host-key sign/NEWKEYS when key loads + offline auth scaffold; encrypted wire auth/channel still **Missing** — not handshake Claimed). Ops SSHD + stdio pack remains valid.
+- In-process **SSH** under `arks serve` is **Partial** (bind + keys + id + KEXINIT + ECDH + ed25519 sign/NEWKEYS + chacha20-poly1305 encrypted Partial + authorized_keys publickey verify + session exec→upload/receive-pack dispatch; OpenSSH-exact cipher interop / Claimed SSH e2e still **Missing**). Ops SSHD + stdio pack remains valid.
 - **Claimed** (with receipts): everyday porcelain inventory where matrices say so; `--depth` shallow; partial-clone filter subset; OpenPGP / X.509 / `tag -s` / `verify-tag`; credential helper / askpass / TTY / first-party OS wallets; smart HTTP server wire (G15 / G29–G32 / G36 Basic).
 - **Advisory / Impossible / blocked:** absolute SHA-1 collision **immunity** Impossible (detect+refuse Claimed); full multi-device sync safety Impossible; live G8 latency SLO needs secrets + receipt (never invent PASS); crates.io timing (**L9**) owner policy; trimmed over-design (`arks host-env` product path, in-process LFS, CELIR as product Claimed path).
 
