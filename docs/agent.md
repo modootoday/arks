@@ -31,8 +31,8 @@ arks agent doctor
 | Leaf / area | Class |
 |-------------|-------|
 | provider / config / doctor | **Partial** |
-| review / cev-check / run / serve / bot | **Partial** (health loop long-running / `--once`; not Claimed LLM chatbot) |
-| Long-running bot / Claimed LLM e2e | **Missing** — no Claimed review quality bar from docs alone |
+| review / cev-check / run / serve / bot | **Partial** (health + openai-compat chat proxy; JSON pass-through + `stream=true` SSE Partial; `--once` OK) |
+| Claimed LLM chatbot / review e2e | **Missing** — no Claimed review quality bar from docs alone |
 
 Treat everything on this page as **design / Partial** unless a clean-room receipt says otherwise. See [Completeness](../completion/).
 
