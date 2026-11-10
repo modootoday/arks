@@ -5,9 +5,9 @@
 //!
 //! Claimed: upload-pack service; optional receive-pack when `allow_receive` is set.
 //! Requires `git-daemon-export-ok` unless `export_all`.
-//! Upload-archive: Partial — drains args, sends ACK, streams ustar of treeish as
-//! sideband-64k band-1 pkt-lines (closer to git-daemon multiplex; `--format=` /
-//! path filters / Claimed archive parity still Missing).
+//! Upload-archive: Partial — drains args, sends ACK, optional band-2 progress,
+//! then ustar as sideband-64k band-1 pkt-lines (closer to git-daemon multiplex;
+//! `--format=` / path filters / Claimed archive parity still Missing).
 //! `--inetd` one-shot stdio peer is Partial (no TCP bind).
 //! Never spawns `git` or `gh`.
 
@@ -353,6 +353,26 @@ fn serve_upload_archive_partial<W: Write>(
         }
     }
     let want_raw = args.iter().any(|a| a == "--no-sideband" || a == "--raw-ustar");
+    // Path filters: honor presence honestly — Partial refuse (not silent ignore).
+    let path_filter_args: Vec<&str> = args
+        .iter()
+        .map(String::as_str)
+        .filter(|a| {
+            *a == "--prefix"
+                || *a == "--exclude"
+                || a.starts_with("--prefix=")
+                || a.starts_with("--exclude=")
+        })
+        .collect();
+    if !path_filter_args.is_empty() {
+        return write_err_pkt(
+            out,
+            &format!(
+                "upload-archive Partial: path filters {path_filter_args:?} not wired \
+                 (Claimed path-filter Missing)"
+            ),
+        );
+    }
     let treeish = args
         .iter()
         .find(|a| !a.starts_with('-') && !a.is_empty())
@@ -360,11 +380,11 @@ fn serve_upload_archive_partial<W: Write>(
         .unwrap_or("HEAD");
     if verbose {
         eprintln!(
-            "arks daemon: upload-archive Partial treeish={treeish} (ACK+{}; format flags Claimed Missing)",
+            "arks daemon: upload-archive Partial treeish={treeish} (ACK+{}; format/path-filter Claimed Missing)",
             if want_raw {
                 "raw ustar"
             } else {
-                "sideband-64k ustar"
+                "sideband-64k band1+band2"
             }
         );
     }
@@ -387,16 +407,37 @@ fn serve_upload_archive_partial<W: Write>(
             }
         }
     } else {
-        // Buffer ustar then emit sideband band-1 chunks + flush (Partial stream).
+        // Closer to git: band-2 progress, then band-1 ustar chunks + flush.
+        write_sideband_progress(
+            out,
+            &format!("arks Partial upload-archive: packing {treeish}\n"),
+        )?;
         let mut archive = Vec::new();
         match write_ustar_tree(repo, &tree_oid, &mut archive) {
-            Ok(()) => write_sideband_stream(out, &archive),
+            Ok(()) => {
+                write_sideband_progress(
+                    out,
+                    &format!("arks Partial upload-archive: {} bytes ustar\n", archive.len()),
+                )?;
+                write_sideband_stream(out, &archive)
+            }
             Err(e) => {
                 eprintln!("arks daemon: upload-archive Partial ustar err: {e}");
                 Err(e)
             }
         }
     }
+}
+
+/// Sideband band-2 progress (Partial; closer to git multiplex before data).
+fn write_sideband_progress<W: Write>(out: &mut W, msg: &str) -> Result<(), ServerError> {
+    let mut payload = Vec::with_capacity(1 + msg.len());
+    payload.push(2); // band 2 = progress
+    payload.extend_from_slice(msg.as_bytes());
+    let pkt = encode_packet(&Packet::Data(payload))
+        .map_err(|e| ServerError::Protocol(e.to_string()))?;
+    out.write_all(&pkt)?;
+    Ok(())
 }
 
 /// Sideband-64k data stream: pkt-lines with leading band byte `1`, then flush.
