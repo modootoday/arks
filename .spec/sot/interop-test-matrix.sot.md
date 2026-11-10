@@ -71,6 +71,7 @@ Gates below are **locked** until their prerequisite slice exits. Slice ownership
 | **G38** `gpgsig-openpgp-x509-tag` | OpenPGP `commit -S` / `verify-commit` / `tag -s` / `verify-tag` (+ stock git verify); X.509 via configured `gpg.x509.program` | After G37 SSH path; [[adr:root/20261110110450]] | `verify/scripts/run-g38.sh` / compose `g38`; matrix `verify/matrices/matrix-g38.md` | [[sot:root/arks-object]] v0.1.5; residual **R4** / symmetry **S2** / **S6** |
 | **G39** `partial-clone-blob-none` | `arks clone --filter=blob:none` vs stock `git http-backend` (allowFilter); promisor + `extensions.partialClone` | After R3 host wire; [[adr:root/20261110105547]] | `verify/scripts/run-g39.sh` / compose `g39`; matrix `verify/matrices/matrix-g39.md` | [[sot:root/arks-remote]]; residual **R3** / symmetry **S6** |
 | **G40** `dumb-http-push-delete` | Dumb HTTP push topic + `push :<ref>` WebDAV DELETE vs `arks serve-http --dumb-only` | After S3 host wire; [[adr:root/20261110112600]] | `verify/scripts/run-g40.sh` / compose `g40`; matrix `verify/matrices/matrix-g40.md` | [[sot:root/arks-remote]] / [[sot:root/arks-server]]; symmetry **S3** / **S6** |
+| **G41** `apache-dav-dumb-http` | Dumb HTTP push create/FF/delete vs stock Apache `mod_dav` (`httpd:2.4`) | After O4; [[adr:root/20261110210400]] | `verify/scripts/run-g41.sh` / compose `g41`; matrix `verify/matrices/matrix-g41.md` | [[sot:root/arks-remote]]; optional **O4**; [[evidence:root/20261110211400]] |
 
 **Issue-resolution compare protocol (G17 / G18)**
 

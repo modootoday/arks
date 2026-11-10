@@ -14,7 +14,7 @@ rel:
     - sot:root/arks-server
     - sot:root/production-residual-register
   supersedes: []
-  evidence: [evidence:root/20261110210700]
+  evidence: [evidence:root/20261110210700, evidence:root/20261110211400]
 ---
 
 # O4 — Protocol narrows: force-with-lease, push-options, Apache DAV

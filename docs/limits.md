@@ -40,7 +40,7 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ### Partial clone / dumb push?
 
-`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`). Partial-clone `--filter=blob:none` and `--filter=tree:0` (promisor + `extensions.partialClone`) are claimed on those pack transports; other filter-specs remain refused. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE/DELETE) when receive-pack discovery is dumb, including empty-refspec deletes (`push :<ref>`); stock Apache DAV interop is Claimed only with clean-room G41 receipt. Smart-pack `push --force-with-lease` and `--push-option` are claimed; lease on dumb HTTP is not.
+`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`). Partial-clone `--filter=blob:none` and `--filter=tree:0` (promisor + `extensions.partialClone`) are claimed on those pack transports; other filter-specs remain refused. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE/DELETE) when receive-pack discovery is dumb, including empty-refspec deletes (`push :<ref>`), with stock Apache `mod_dav` interop **Claimed (G41)**. Smart-pack `push --force-with-lease` and `--push-option` are claimed; lease on dumb HTTP is not.
 
 ### Commit and tag signing?
 

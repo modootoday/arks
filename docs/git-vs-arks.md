@@ -49,7 +49,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Smart HTTP clone/fetch/push | Yes | Yes | **Claimed** |
 | SSH clone/fetch/push (OpenSSH helper) | Yes | Yes | **Claimed** |
 | Client `git://` | Yes | Yes | **Claimed** (host wire; ladder L2) |
-| Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE/DELETE; `:<ref>` delete); Apache `mod_dav` twin = G41 when receipted | **Claimed** (host wire; L3 + S3); Apache **reopen-only** until G41 |
+| Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE/DELETE; `:<ref>` delete); Apache `mod_dav` twin **G41** | **Claimed** (host wire; L3 + S3 + O4 G41) |
 | `push --force-with-lease` / `--push-option` | Yes | Yes on smart pack (lease + options→hooks); not on dumb | **Claimed** (O4 host wire) |
 | Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
@@ -81,7 +81,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | R3 filter / promisor | **Claimed `blob:none` + `tree:0` (S1 / O2)**; other specs N/A | Expand further filter-specs via SoT |
 | R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38; S6 re-PASS)** | Re-verify G38 after crypto wire change |
 | R5 live forge scale PASS | Harness Claimed; **O1 secrets hard-block** (Environment `g8-live` secret count=0) | Secrets + receipt; never invent latency |
-| Apache DAV dumb twin | Structural G41 matrix; Claimed only with receipt | Docker G41 PASS |
+| Apache DAV dumb twin | **Claimed (G41 PASS)** | Re-verify after DAV/wire change |
 | R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | crates.io / docs.rs timing | Closed owner policy (L9) | Owner decision |
 
@@ -106,7 +106,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | **O1** | Live G8 remasure | **Done (secrets hard-block)** — Environment secrets=0 |
 | **O2** | Extra filter-specs (`tree:0`) | **Done** (host wire) |
 | **O3** | Interactive scripted subset | **Done** (scripted Claimed; pixel TUI N/A) |
-| **O4** | force-with-lease / push-options / Apache DAV | **Done** (lease+options host); Apache **G41 pending receipt** |
+| **O4** | force-with-lease / push-options / Apache DAV | **Done** (lease+options + G41 PASS) |
 | **O_final** | Docs / residual currency; **L9** closed | **Done** |
 
 See: [O-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110205403-optional-residuals-o-ladder-o1-o-final.research.md) · [symmetry S0–S_final](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md). Limits: [Limits](../limits/).

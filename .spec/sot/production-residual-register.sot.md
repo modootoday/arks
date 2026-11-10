@@ -249,7 +249,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | R4 | OpenPGP / X.509 / `tag -s` | **Claimed (G38)** — OpenPGP commit/tag + stock verify; X.509 via configured program [[adr:root/20261110110450]] + [[evidence:root/20261110110800]]; symmetry **S2 Done** | Re-verify G38 after crypto wire change |
 | R5 | Live forge scale SLO / G8 live PASS | Harness **Claimed**; **O1 secrets hard-block** ([[evidence:root/20261110210200]]; Environment `g8-live` secrets=0); live remasure still needs secrets+receipt (**≠** fake PASS) | Secrets + receipt for any live samples; never invent latency |
 | R6 | Pin advance (Git **2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
-| — | Optional O-ladder O1–O_final | Normative in [[research:root/20261110205403]] — O1 secrets-block Done; O2 `tree:0` Done; O3 scripted interactive Done; O4 lease+push-options Done; Apache G41 pending; **L9** closed | Keep evidence current |
+| — | Optional O-ladder O1–O_final | Normative in [[research:root/20261110205403]] — **O1–O_final Done**; O1 secrets-block; O2 `tree:0`; O3 scripted interactive; O4 lease+push-options + Apache **G41 PASS**; **L9** closed | Keep evidence current |
 
 ## Why
 

@@ -68,8 +68,8 @@ After symmetry ladder **S0–S_final Done** ([[research:root/20261110105436]]) w
 | **O1** | Live G8 remasure | Secrets-gated | Secrets present → measured receipts (latency only if measured); secrets **absent** → structural + fail-closed operator path + documented hard block (**≠** invent PASS) | **Done (secrets hard-block)** ([[adr:root/20261110210100]] + [[evidence:root/20261110210200]]; Environment secrets=0) |
 | **O2** | Extra filter-specs beyond `blob:none` | SoT-amend → implement | Claim `tree:0` (and any other SoTable filter-spec); refuse remainder; expand G39-class e2e | **Done** ([[adr:root/20261110210000]] + [[evidence:root/20261110210500]]; G39 matrix expanded) |
 | **O3** | Interactive TUI reopen | SoT-amend → scripted Claimed subset | Claim non-TTY scripted `rebase -i` (SEQUENCE_EDITOR), editor commit (`GIT_EDITOR`/`-F`), `add -p` scripted stdin; document TTY; full curses TUI remains N/A | **Done** ([[adr:root/20261110210300]] + [[evidence:root/20261110210600]]; pixel TUI N/A) |
-| **O4** | Protocol narrows | SoT-amend → implement | Claim force-with-lease (smart pack), push-options advertise+forward (hooks; no proc-receive product), Apache DAV dumb interop where Docker-SoTable; evidence before Claimed | **Done (lease+options)** ([[adr:root/20261110210400]] + [[evidence:root/20261110210700]]); Apache **G41 pending receipt** |
-| **O_final** | Currency + CI | Docs / DoD | Residual register + `docs/git-vs-arks.md` / limits match evidence; tip CI green; **L9** still closed | **Done** (docs+residual currency; CI after push) |
+| **O4** | Protocol narrows | SoT-amend → implement | Claim force-with-lease (smart pack), push-options advertise+forward (hooks; no proc-receive product), Apache DAV dumb interop where Docker-SoTable; evidence before Claimed | **Done** ([[adr:root/20261110210400]] + [[evidence:root/20261110210700]] + [[evidence:root/20261110211400]] G41 PASS) |
+| **O_final** | Currency + CI | Docs / DoD | Residual register + `docs/git-vs-arks.md` / limits match evidence; tip CI green; **L9** still closed | **Done** (docs+residual currency; tip CI green) |
 
 ### Non-goals
 
