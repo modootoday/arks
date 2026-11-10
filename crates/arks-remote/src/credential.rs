@@ -397,13 +397,33 @@ fn askpass_fill(desc: &mut Credential, program: &Path) -> Result<(), RemoteError
 }
 
 fn run_askpass(program: &Path, prompt: &str) -> Result<String, RemoteError> {
-    let output = Command::new(program)
-        .arg(prompt)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .map_err(|e| RemoteError::Msg(format!("askpass spawn {}: {e}", program.display())))?;
+    // ETXTBSY can race right after writing an executable script (CI tmpfs).
+    let mut attempt = 0u32;
+    let output = loop {
+        match Command::new(program)
+            .arg(prompt)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+        {
+            Ok(out) => break out,
+            Err(e)
+                if attempt < 8
+                    && (e.kind() == std::io::ErrorKind::ExecutableFileBusy
+                        || e.raw_os_error() == Some(26)) =>
+            {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(10 * u64::from(attempt)));
+            }
+            Err(e) => {
+                return Err(RemoteError::Msg(format!(
+                    "askpass spawn {}: {e}",
+                    program.display()
+                )));
+            }
+        }
+    };
     if !output.status.success() {
         return Err(RemoteError::Msg(format!(
             "askpass failed ({}): {}",
@@ -680,13 +700,17 @@ mod tests {
         };
         #[cfg(not(windows))]
         let script = {
-            let p = dir.path().join("askpass.sh");
-            fs::write(
-                &p,
-                "#!/bin/sh\ncase \"$1\" in\n  *sername*) echo askuser ;;\n  *) echo askpass ;;\nesac\n",
-            )
-            .unwrap();
+            use std::io::Write as _;
             use std::os::unix::fs::PermissionsExt;
+            let p = dir.path().join("askpass.sh");
+            {
+                let mut f = fs::File::create(&p).unwrap();
+                f.write_all(
+                    b"#!/bin/sh\ncase \"$1\" in\n  *sername*) echo askuser ;;\n  *) echo askpass ;;\nesac\n",
+                )
+                .unwrap();
+                f.sync_all().unwrap();
+            }
             let mut perms = fs::metadata(&p).unwrap().permissions();
             perms.set_mode(0o755);
             fs::set_permissions(&p, perms).unwrap();
@@ -721,13 +745,17 @@ mod tests {
         };
         #[cfg(not(windows))]
         let helper = {
-            let p = dir.path().join("helper.sh");
-            fs::write(
-                &p,
-                "#!/bin/sh\nif [ \"$1\" = get ]; then\n  printf 'username=huser\\npassword=hpass\\n\\n'\nfi\n",
-            )
-            .unwrap();
+            use std::io::Write as _;
             use std::os::unix::fs::PermissionsExt;
+            let p = dir.path().join("helper.sh");
+            {
+                let mut f = fs::File::create(&p).unwrap();
+                f.write_all(
+                    b"#!/bin/sh\nif [ \"$1\" = get ]; then\n  printf 'username=huser\\npassword=hpass\\n\\n'\nfi\n",
+                )
+                .unwrap();
+                f.sync_all().unwrap();
+            }
             let mut perms = fs::metadata(&p).unwrap().permissions();
             perms.set_mode(0o755);
             fs::set_permissions(&p, perms).unwrap();
