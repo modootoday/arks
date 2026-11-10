@@ -1,9 +1,10 @@
 //! Fetch: smart HTTP (`info/refs` + `git-upload-pack`) or SSH pack protocol.
 //!
 //! Protocol v1. The want line lists only capabilities the peer advertised and
-//! this client implements (`ofs-delta`, `side-band` / `side-band-64k`,
-//! `no-progress`, `agent`, and `shallow` when `--depth` / local shallow file
-//! requires it). `thin-pack` is not requested, so the pack is self-contained.
+//! this client implements (`ofs-delta`, `no-progress`, `agent`, and `shallow`
+//! when `--depth` / local shallow file requires it). Side-band is omitted so
+//! upload-pack returns a contiguous PACK (no pkt-line demux on J-CLONE-LOCAL).
+//! `thin-pack` is not requested, so the pack is self-contained.
 //! Have lines name local tips when present; `done` ends the
 //! stateless request.
 //!
@@ -348,15 +349,10 @@ fn negotiate_fetch_caps(advertised: &[String], want_shallow: bool) -> (String, b
     if cap_advertised(advertised, "ofs-delta") {
         caps.push("ofs-delta");
     }
-    let sideband = if cap_advertised(advertised, "side-band-64k") {
-        caps.push("side-band-64k");
-        true
-    } else if cap_advertised(advertised, "side-band") {
-        caps.push("side-band");
-        true
-    } else {
-        false
-    };
+    // Skip side-band / side-band-64k: progress is unused (no-progress) and a raw
+    // PACK after NAK avoids pkt-line demux copies on J-CLONE-LOCAL. Stock
+    // http-backend and MemoryPeer/arks-server emit contiguous pack when omitted.
+    let sideband = false;
     if cap_advertised(advertised, "no-progress") {
         caps.push("no-progress");
     }
@@ -446,7 +442,8 @@ fn extract_pack_and_shallow(
     sideband: bool,
 ) -> Result<(Option<Vec<u8>>, ShallowUpdate), RemoteError> {
     let mut offset = 0;
-    let mut pack = Vec::new();
+    // Raw-pack path copies the trailing PACK once; reserve ≈ body size.
+    let mut pack = Vec::with_capacity(body.len());
     let mut saw_status = false;
     let mut update = ShallowUpdate::default();
     while offset < body.len() {

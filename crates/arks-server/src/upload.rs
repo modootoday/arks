@@ -53,8 +53,13 @@ pub fn upload_pack_result_with_nak(
     include_nak: bool,
 ) -> Result<Vec<u8>, ServerError> {
     let wants = parse_wants(body)?;
+    let want_sideband = request_wants_sideband(body);
     if wants.is_empty() {
-        return sideband_pack(&[], include_nak);
+        return if want_sideband {
+            sideband_pack(&[], include_nak)
+        } else {
+            raw_pack_result(&[], include_nak)
+        };
     }
     let get = |oid: &Oid| match repo.store().get(oid) {
         Ok(obj) => Ok(Some(obj)),
@@ -64,7 +69,11 @@ pub fn upload_pack_result_with_nak(
     let objects = collect_closure(&wants, get)?;
     let pack = EncodedPack::from_undeltified(FORMAT, &objects)
         .map_err(|e| ServerError::Protocol(format!("pack encode: {e}")))?;
-    sideband_pack(&pack.pack, include_nak)
+    if want_sideband {
+        sideband_pack(&pack.pack, include_nak)
+    } else {
+        raw_pack_result(&pack.pack, include_nak)
+    }
 }
 
 fn list_refs_and_head(repo: &Repository) -> Result<RefsAndHead, ServerError> {
@@ -124,6 +133,32 @@ fn parse_wants(body: &[u8]) -> Result<Vec<Oid>, ServerError> {
     Ok(wants)
 }
 
+/// True when the first `want` line lists `side-band` / `side-band-64k`.
+fn request_wants_sideband(body: &[u8]) -> bool {
+    let mut offset = 0;
+    while offset < body.len() {
+        let Ok((packet, n)) = decode_packet(&body[offset..]) else {
+            break;
+        };
+        offset += n;
+        match packet {
+            Packet::Flush => break,
+            Packet::Data(payload) => {
+                let Ok(text) = decode_text_line(&payload) else {
+                    continue;
+                };
+                if let Some(rest) = text.strip_prefix("want ") {
+                    return rest
+                        .split_whitespace()
+                        .any(|c| c == "side-band" || c == "side-band-64k");
+                }
+            }
+            _ => {}
+        }
+    }
+    false
+}
+
 fn sideband_pack(pack: &[u8], include_nak: bool) -> Result<Vec<u8>, ServerError> {
     // Optional final NAK then side-band-64k pack (gitprotocol-pack).
     let mut out = Vec::new();
@@ -141,5 +176,15 @@ fn sideband_pack(pack: &[u8], include_nak: bool) -> Result<Vec<u8>, ServerError>
         );
     }
     out.extend(encode_packet(&Packet::Flush).map_err(|e| ServerError::Protocol(e.to_string()))?);
+    Ok(out)
+}
+
+/// NAK (optional) + raw PACK when the client omitted side-band caps.
+fn raw_pack_result(pack: &[u8], include_nak: bool) -> Result<Vec<u8>, ServerError> {
+    let mut out = Vec::with_capacity(pack.len() + 8);
+    if include_nak {
+        out.extend(encode_text_line("NAK").map_err(|e| ServerError::Protocol(e.to_string()))?);
+    }
+    out.extend_from_slice(pack);
     Ok(out)
 }

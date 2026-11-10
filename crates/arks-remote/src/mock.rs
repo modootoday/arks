@@ -221,8 +221,13 @@ impl MemoryPeer {
 
     fn upload_result(&self, request_body: &[u8]) -> Result<Vec<u8>, RemoteError> {
         let tips: Vec<Oid> = self.refs.values().copied().collect();
+        let want_sideband = request_wants_sideband(request_body);
         if tips.is_empty() {
-            return sideband_pack(&[]);
+            return if want_sideband {
+                sideband_pack(&[])
+            } else {
+                raw_pack_result(&[])
+            };
         }
         let deepen = parse_deepen(request_body);
         let objects = collect_closure(&tips, |oid| Ok(self.objects.get(oid).cloned()))?;
@@ -242,7 +247,11 @@ impl MemoryPeer {
                 encode_packet(&Packet::Flush).map_err(|e| RemoteError::Protocol(e.to_string()))?,
             );
         }
-        out.extend(sideband_pack(&pack.pack)?);
+        if want_sideband {
+            out.extend(sideband_pack(&pack.pack)?);
+        } else {
+            out.extend(raw_pack_result(&pack.pack)?);
+        }
         Ok(out)
     }
 
@@ -361,6 +370,38 @@ fn parse_deepen(body: &[u8]) -> Option<u32> {
         }
     }
     None
+}
+
+/// True when the first `want` line lists `side-band` / `side-band-64k`.
+fn request_wants_sideband(body: &[u8]) -> bool {
+    let mut offset = 0;
+    while offset < body.len() {
+        let Ok((packet, n)) = decode_packet(&body[offset..]) else {
+            break;
+        };
+        offset += n;
+        match packet {
+            Packet::Flush => break,
+            Packet::Data(payload) => {
+                let text = decode_text_line(&payload).unwrap_or_default();
+                if let Some(rest) = text.strip_prefix("want ") {
+                    return rest
+                        .split_whitespace()
+                        .any(|c| c == "side-band" || c == "side-band-64k");
+                }
+            }
+            _ => {}
+        }
+    }
+    false
+}
+
+/// NAK + raw PACK (no side-band), matching stock upload-pack when the client
+/// omits side-band capabilities.
+fn raw_pack_result(pack: &[u8]) -> Result<Vec<u8>, RemoteError> {
+    let mut out = encode_text_line("NAK").map_err(|e| RemoteError::Protocol(e.to_string()))?;
+    out.extend_from_slice(pack);
+    Ok(out)
 }
 
 fn request_target(url: &str) -> &str {

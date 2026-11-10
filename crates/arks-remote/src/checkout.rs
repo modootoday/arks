@@ -238,100 +238,124 @@ fn materialize_jobs(
             .zip(blobs)
             .map(|((i, rel, path, oid, mode), blob)| (i, rel, path, oid, mode, blob))
             .collect();
-        // 1-CPU Docker: serial writes (spawn tax > overlap). Multi-CPU: parallel fs::write.
-        if prepared.len() < 8 || cpus <= 1 {
-            let mut out = Vec::with_capacity(prepared.len());
-            for (i, rel, path, oid, mode, blob) in prepared {
-                out.push((i, write_cached_blob(&rel, &path, &oid, mode, &blob, stamp)?));
-            }
-            out
-        } else {
-            let workers = cpus.clamp(2, 8).min(prepared.len());
-            let chunk = prepared.len().div_ceil(workers);
-            let mut out = Vec::with_capacity(prepared.len());
-            let mut worker_err: Option<RemoteError> = None;
-            thread::scope(|scope| {
-                let mut handles = Vec::with_capacity(workers);
-                for piece in prepared.chunks(chunk) {
-                    handles.push(scope.spawn(
-                        move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
-                            let mut local = Vec::with_capacity(piece.len());
-                            for (i, rel, path, oid, mode, blob) in piece {
-                                local.push((
-                                    *i,
-                                    write_cached_blob(rel, path, oid, *mode, blob, stamp)?,
-                                ));
-                            }
-                            Ok(local)
-                        },
-                    ));
-                }
-                for h in handles {
-                    match h.join() {
-                        Ok(Ok(local)) => out.extend(local),
-                        Ok(Err(e)) => {
-                            worker_err = Some(e);
-                            break;
-                        }
-                        Err(_) => {
-                            worker_err =
-                                Some(RemoteError::Msg("checkout: worker panicked".into()));
-                            break;
-                        }
-                    }
-                }
-            });
-            if let Some(e) = worker_err {
-                return Err(e);
-            }
-            out
-        }
-    } else if writes.len() < 8 || cpus <= 1 {
-        let mut out = Vec::with_capacity(writes.len());
-        for (i, rel, path, oid, mode) in writes {
-            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode, stamp)?));
-        }
-        out
+        materialize_cached(prepared, stamp, cpus)?
     } else {
-        let workers = cpus.clamp(2, 8).min(writes.len());
-        let chunk = writes.len().div_ceil(workers);
-        let mut out = Vec::with_capacity(writes.len());
-        let mut worker_err: Option<RemoteError> = None;
-        thread::scope(|scope| {
-            let mut handles = Vec::with_capacity(workers);
-            for piece in writes.chunks(chunk) {
-                handles.push(scope.spawn(
-                    move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
-                        let mut local = Vec::with_capacity(piece.len());
-                        for (i, rel, path, oid, mode) in piece {
-                            local.push((*i, write_one_blob(repo, rel, path, oid, *mode, stamp)?));
-                        }
-                        Ok(local)
-                    },
-                ));
-            }
-            for h in handles {
-                match h.join() {
-                    Ok(Ok(local)) => out.extend(local),
-                    Ok(Err(e)) => {
-                        worker_err = Some(e);
-                        break;
-                    }
-                    Err(_) => {
-                        worker_err = Some(RemoteError::Msg("checkout: worker panicked".into()));
-                        break;
-                    }
-                }
-            }
-        });
-        if let Some(e) = worker_err {
-            return Err(e);
-        }
-        out
+        materialize_uncached(repo, writes, stamp, cpus)?
     };
     entries.extend(written);
     entries.sort_by_key(|(i, _)| *i);
     Ok(entries.into_iter().map(|(_, e)| e).collect())
+}
+
+/// Worker count for checkout writes.
+///
+/// `1` = serial. Docker Desktop often advertises ≥8 host CPUs while G19 is
+/// effectively serial; a second writer is pure schedule/FS tax on J-CLONE-LOCAL
+/// (same class of bug as deferred pack-persist threads).
+fn checkout_workers(cpus: usize, jobs: usize) -> usize {
+    if jobs < 8 || cpus <= 1 || cpus >= 8 {
+        return 1;
+    }
+    cpus.clamp(2, 8).min(jobs)
+}
+
+fn materialize_cached(
+    prepared: Vec<(usize, String, PathBuf, Oid, u32, Arc<RawObject>)>,
+    stamp: (u32, u32),
+    cpus: usize,
+) -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+    let workers = checkout_workers(cpus, prepared.len());
+    if workers <= 1 {
+        let mut out = Vec::with_capacity(prepared.len());
+        for (i, rel, path, oid, mode, blob) in prepared {
+            out.push((i, write_cached_blob(&rel, &path, &oid, mode, &blob, stamp)?));
+        }
+        return Ok(out);
+    }
+    let chunk = prepared.len().div_ceil(workers);
+    let mut out = Vec::with_capacity(prepared.len());
+    let mut worker_err: Option<RemoteError> = None;
+    thread::scope(|scope| {
+        let mut handles = Vec::with_capacity(workers);
+        for piece in prepared.chunks(chunk) {
+            handles.push(
+                scope.spawn(move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+                    let mut local = Vec::with_capacity(piece.len());
+                    for (i, rel, path, oid, mode, blob) in piece {
+                        local.push((*i, write_cached_blob(rel, path, oid, *mode, blob, stamp)?));
+                    }
+                    Ok(local)
+                }),
+            );
+        }
+        for h in handles {
+            match h.join() {
+                Ok(Ok(local)) => out.extend(local),
+                Ok(Err(e)) => {
+                    worker_err = Some(e);
+                    break;
+                }
+                Err(_) => {
+                    worker_err = Some(RemoteError::Msg("checkout: worker panicked".into()));
+                    break;
+                }
+            }
+        }
+    });
+    if let Some(e) = worker_err {
+        return Err(e);
+    }
+    Ok(out)
+}
+
+fn materialize_uncached(
+    repo: &Repository,
+    writes: Vec<(usize, String, PathBuf, Oid, u32)>,
+    stamp: (u32, u32),
+    cpus: usize,
+) -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+    let workers = checkout_workers(cpus, writes.len());
+    if workers <= 1 {
+        let mut out = Vec::with_capacity(writes.len());
+        for (i, rel, path, oid, mode) in writes {
+            out.push((i, write_one_blob(repo, &rel, &path, &oid, mode, stamp)?));
+        }
+        return Ok(out);
+    }
+    let chunk = writes.len().div_ceil(workers);
+    let mut out = Vec::with_capacity(writes.len());
+    let mut worker_err: Option<RemoteError> = None;
+    thread::scope(|scope| {
+        let mut handles = Vec::with_capacity(workers);
+        for piece in writes.chunks(chunk) {
+            handles.push(
+                scope.spawn(move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+                    let mut local = Vec::with_capacity(piece.len());
+                    for (i, rel, path, oid, mode) in piece {
+                        local.push((*i, write_one_blob(repo, rel, path, oid, *mode, stamp)?));
+                    }
+                    Ok(local)
+                }),
+            );
+        }
+        for h in handles {
+            match h.join() {
+                Ok(Ok(local)) => out.extend(local),
+                Ok(Err(e)) => {
+                    worker_err = Some(e);
+                    break;
+                }
+                Err(_) => {
+                    worker_err = Some(RemoteError::Msg("checkout: worker panicked".into()));
+                    break;
+                }
+            }
+        }
+    });
+    if let Some(e) = worker_err {
+        return Err(e);
+    }
+    Ok(out)
 }
 
 fn write_cached_blob(
