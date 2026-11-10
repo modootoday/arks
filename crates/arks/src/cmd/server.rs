@@ -455,10 +455,100 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
         // `apply` / `reload`: re-read file store, live-probe binds, write runtime_* —
         // Partial toward sync e2e without inventing Claimed running-server hot-reload.
         "apply" | "reload" => serve_config_apply_reload(sub, /*seed_defaults=*/ false),
+        // File-watch Partial: poll mtime and re-apply; does not signal a running serve.
+        "watch" => serve_config_watch(&args[1..]),
         other => Err(CliError::Usage(format!(
-            "arks serve config: unknown `{other}` (show|set|path|validate|sync|apply|reload); see --help"
+            "arks serve config: unknown `{other}` (show|set|path|validate|sync|apply|reload|watch); see --help"
         ))),
     }
+}
+
+/// Partial hot-reload toward sync e2e: poll serve-config file mtime and re-apply probes.
+/// Does **not** mutate a running `arks serve` (Claimed process signal / SIGHUP Missing).
+fn serve_config_watch(args: &[String]) -> CliResult<()> {
+    let mut duration_secs: u64 = 15;
+    let mut interval_ms: u64 = 500;
+    let mut i = 0usize;
+    while i < args.len() {
+        let a = args[i].as_str();
+        match a {
+            "--duration" => {
+                i += 1;
+                duration_secs = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("watch --duration needs SECONDS".into()))?
+                    .parse()
+                    .map_err(|_| CliError::Usage("watch --duration needs integer seconds".into()))?;
+            }
+            other if let Some(v) = other.strip_prefix("--duration=") => {
+                duration_secs = v.parse().map_err(|_| {
+                    CliError::Usage("watch --duration needs integer seconds".into())
+                })?;
+            }
+            "--interval-ms" => {
+                i += 1;
+                interval_ms = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("watch --interval-ms needs MS".into()))?
+                    .parse()
+                    .map_err(|_| CliError::Usage("watch --interval-ms needs integer".into()))?;
+            }
+            other if let Some(v) = other.strip_prefix("--interval-ms=") => {
+                interval_ms = v
+                    .parse()
+                    .map_err(|_| CliError::Usage("watch --interval-ms needs integer".into()))?;
+            }
+            "-h" | "--help" | "help" => {
+                eprintln!(
+                    "arks serve config watch [--duration SECS] [--interval-ms MS]\n  \
+                     Partial file-watch: poll config mtime and apply/reload probes.\n  \
+                     Does not signal a running `arks serve` (Claimed hot-reload / SIGHUP Missing)."
+                );
+                return Ok(());
+            }
+            other => {
+                return Err(CliError::Usage(format!(
+                    "arks serve config watch: unknown `{other}`"
+                )));
+            }
+        }
+        i += 1;
+    }
+    let path = serve_config_path();
+    let start = std::time::Instant::now();
+    let mut last_mtime = std::fs::metadata(&path).ok().and_then(|m| m.modified().ok());
+    eprintln!(
+        "arks serve config watch: Partial file-watch path={} duration={duration_secs}s \
+         interval={interval_ms}ms (no running-server signal; Claimed sync e2e Missing)",
+        path.display()
+    );
+    // Initial apply so watch always leaves runtime_* stamped.
+    serve_config_apply_reload("watch-initial", /*seed_defaults=*/ false)?;
+    while start.elapsed() < std::time::Duration::from_secs(duration_secs.max(1)) {
+        std::thread::sleep(std::time::Duration::from_millis(interval_ms.max(50)));
+        let mtime = std::fs::metadata(&path).ok().and_then(|m| m.modified().ok());
+        if mtime != last_mtime {
+            eprintln!(
+                "arks serve config watch: mtime change detected → apply/reload Partial"
+            );
+            last_mtime = mtime;
+            let mut map = load_serve_config_map()?;
+            map.insert(
+                "runtime_watch_mtime".into(),
+                format!("{:?}", mtime),
+            );
+            map.insert(
+                "runtime_watch_signal".into(),
+                "file-mtime Partial (SIGHUP/running-serve Claimed Missing)".into(),
+            );
+            save_serve_config_map(&map)?;
+            serve_config_apply_reload("watch-reload", /*seed_defaults=*/ false)?;
+        }
+    }
+    eprintln!(
+        "arks serve config watch: done (Partial; toward sync e2e — not Claimed process hot-reload)"
+    );
+    Ok(())
 }
 
 /// Shared Partial bind apply/reload/sync: probe listens and persist runtime_* keys.
@@ -568,6 +658,8 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "runtime_probe_forge_listen",
     "runtime_probe_ssh_listen",
     "runtime_apply_op",
+    "runtime_watch_mtime",
+    "runtime_watch_signal",
 ];
 
 fn config_bool(
@@ -647,7 +739,8 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
         }
         "forge_data" | "basic_auth_file" | "ssh_host_key" | "ssh_authorized_keys"
         | "allow_paths" | "tls_note" | "runtime_synced_at" | "runtime_probe_bind"
-        | "runtime_probe_forge_listen" | "runtime_probe_ssh_listen" | "runtime_apply_op" => {
+        | "runtime_probe_forge_listen" | "runtime_probe_ssh_listen" | "runtime_apply_op"
+        | "runtime_watch_mtime" | "runtime_watch_signal" => {
             if value.is_empty() {
                 Err("value must not be empty".into())
             } else {
@@ -921,6 +1014,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     let mut inetd = false;
     let mut detach = false;
     let mut pid_file: Option<PathBuf> = None;
+    let mut access_hook: Option<PathBuf> = None;
     let mut bases: Vec<PathBuf> = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -1034,11 +1128,16 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
                      (syslog/informative-errors/base-path-relaxed); use foreground logging today"
                 )));
             }
-            other if other.starts_with("--access-hook") => {
-                return Err(CliError::NotImplemented(format!(
-                    "daemon --access-hook Missing (honest stub): external access-hook spawn \
-                     not wired — design ≠ Claimed; refuse rather than silent-ignore ({other})"
-                )));
+            "--access-hook" => {
+                i += 1;
+                access_hook = Some(PathBuf::from(
+                    args.get(i).ok_or_else(|| {
+                        CliError::Usage("daemon --access-hook needs PATH".into())
+                    })?,
+                ));
+            }
+            other if other.starts_with("--access-hook=") => {
+                access_hook = Some(PathBuf::from(&other["--access-hook=".len()..]));
             }
             other
                 if other.starts_with("--user")
@@ -1091,6 +1190,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
         max_connections,
         verbose,
         reuseaddr,
+        access_hook,
     };
     if let Some(ref path) = pid_file {
         // Partial honesty: write pid while remaining foreground (no --detach).
@@ -1197,13 +1297,14 @@ Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-fo
 
 Honesty ([[sot:root/arks-self-host-server]]):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
-  - In-process SSH listener: Partial stages (bind + id + KEXINIT + curve25519 ECDH) then
-    fail-closed — host-key sign / auth / channel Missing; ops SSHD + upload-pack/receive-pack valid
+  - In-process SSH listener: Partial (bind + id + KEXINIT + curve25519 ECDH + ed25519 host-key
+    sign/NEWKEYS when key loads + offline auth verify scaffold) then fail-closed — encrypted
+    transport / wire auth / channel Missing; ops SSHD + upload-pack/receive-pack valid
   - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
   - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
   - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
   - Hub OAuth is refused as primary git-remote auth
-  - `serve config` seeds defaults + runtime_* / apply|reload probes (Partial); clap wins; ≠ config/hub
+  - `serve config` seeds + runtime_* / apply|reload|watch probes (Partial); clap wins; ≠ config/hub
   - Optional: --ssh-host-key PATH --authorized-keys PATH
 
 Ports ([[sot:root/arks-self-host-server]] / [[research:root/20261111055609]]):
@@ -1239,17 +1340,19 @@ Usage:
   arks serve config validate
   arks serve config sync
   arks serve config apply|reload
+  arks serve config watch [--duration SECS] [--interval-ms MS]
 
 Not `arks config` (git-repo config). Not hub forge settings.
 File: ~/.config/arks/serve.conf (or ARKS_SERVE_CONFIG).
 Keys (Partial): bind, http, ssh, forge, forge_listen, ssh_listen, forge_data,
   basic_auth_file, ssh_host_key, allow_paths, tls_note,
   ssh_authorized_keys, runtime_bind, runtime_forge_listen,
-  runtime_ssh_listen, runtime_synced_at, runtime_probe_*, runtime_apply_op.
+  runtime_ssh_listen, runtime_synced_at, runtime_probe_*, runtime_apply_op,
+  runtime_watch_mtime, runtime_watch_signal.
 Partial: file store seeds `arks serve` defaults; clap flags still win;
-  `serve` / `config sync|apply|reload` write runtime_* + runtime_probe_* live-bind honesty;
+  `serve` / `config sync|apply|reload|watch` write runtime_* + live-bind honesty;
   validate probes bind/forge_listen/ssh_listen. Design ≠ Claimed sync e2e /
-  running-server hot-reload.
+  running-server hot-reload (watch is file-mtime Partial only).
 "
     );
 }
@@ -1265,6 +1368,7 @@ Usage:
               [--timeout N] [--init-timeout N] [--max-connections N]
               [--enable=receive-pack|--enable=upload-archive]
               [--disable=upload-pack] [--verbose] [--reuseaddr|--no-reuseaddr]
+              [--access-hook PATH|--access-hook=PATH]
               <base-path> [more-base-paths…]
 
 Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
@@ -1275,9 +1379,10 @@ Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
   band-1 data + band-2 progress Partial (--format beyond tar Missing; --raw-ustar
   opt-out); --inetd Partial; --pid-file writes pid; --detach Partial re-exec
   (unix setsid / win DETACHED_PROCESS; parent may write --pid-file).
-Fail-closed Missing (honest stubs): --user/--group --syslog --access-hook
-  --interpolated-path --user-path overrides; Claimed archive path-filter/format parity.
-  upload-archive path filters (--prefix/--exclude) refuse closed (Partial).
+Fail-closed Missing (honest stubs): --user/--group --syslog
+  --interpolated-path --user-path overrides; Claimed archive format parity.
+  --access-hook=PATH Partial stub body (spawn; exit 0 allow).
+  upload-archive --prefix=/includes/--exclude= Partial (not Claimed parity).
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
