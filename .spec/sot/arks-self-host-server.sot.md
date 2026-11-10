@@ -3,8 +3,8 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-10T21:00:00Z
-tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed]
+updated: 2026-11-10T22:40:00Z
+tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial]
 verify: manual
 rel:
   depends_on:
@@ -31,7 +31,7 @@ rel:
 
 # arks product self-host server
 
-Version **0.2.1**. Normative **product hosting story** (document revision — **not** a product release; workspace crate remains `0.0.0`): run a **GitHub-class self-host** using **only the published `arks` binary** — **git remotes (HTTP/SSH)** plus **forge API (PR/issue/…)** in **one** `arks serve` process — reachable from **localhost**, **intranet (LAN)**, and/or **internet (WAN)** when the operator chooses bind + ops fronting.
+Version **0.2.2**. Normative **product hosting story** (document revision — **not** a product release; workspace crate remains `0.0.0`): run a **GitHub-class self-host** using **only the published `arks` binary** — **git remotes (HTTP/SSH)** plus **forge API (PR/issue/…)** in **one** `arks serve` process — reachable from **localhost**, **intranet (LAN)**, and/or **internet (WAN)** when the operator chooses bind + ops fronting.
 
 **Honesty:** This SoT makes the story **EXPLICIT**. **Design intent ≠ Claimed.** Do not invent Claimed from this SoT alone. Wire/unit ownership for Git transports remains [[sot:root/arks-server]]. Daemon **flag** symmetry remains [[sot:root/arks-daemon-product-intent]] / [[sot:root/arks-daemon-git-command-matrix]]. **`arks hub`** is the **forge client** ([[sot:root/arks-hub-product-intent]]) — not the primary way to start the host.
 
@@ -83,8 +83,12 @@ Version **0.2.1**. Normative **product hosting story** (document revision — **
 
 15. **Product intent:** default set means the process **attempts** each enabled module.
 16. **Honesty / Partial:** in-process **SSH listener** Missing/Partial until implemented + evidenced. **Forge API in-process under `arks serve`** Missing/Partial until wired + evidenced (today’s Partial scaffold may still live under transitional `arks hub serve` — that does **not** invent forge-in-serve Claimed). In-process **TLS** remains Partial/Missing (ops reverse-proxy is the documented HTTPS pattern).
-17. **Fail-closed (normative):** if a module is **enabled** (default or remaining after disable flags) and that listener/API is **not Claimed/ready**, `arks serve` MUST **fail closed** with an explicit error — MUST NOT silently degrade while advertising default-set success.
-18. **Practical today:** operators run e.g. `arks serve --no-ssh --no-forge …` for Claimed HTTP git wire; or keep using transitional `arks hub serve` for Partial local forge API until forge-in-serve lands. Ops SSHD + stdio pack remains a valid **separate** deploy path and does not satisfy in-process `serve` SSH Claimed.
+17. **Fail-closed (normative):** if a module is **enabled** (default or remaining after disable flags) and that listener/API is **not Claimed/ready**, `arks serve` MUST **not** silently degrade while advertising default-set **Claimed** success.
+    - **(a) Silent degrade forbidden:** dropping an enabled module and continuing as if the default set came up Claimed-ready is illegal.
+    - **(b) Bind failure fail-closed:** failure to bind an enabled listener MUST error explicitly (no half-up Claimed success).
+    - **(c) Partial durable listen allowed (v0.2.2 tradeoff):** an enabled module MAY keep a **durable** accept loop when it **explicitly labels Partial** on stderr/operator surfaces and **never** advertises Claimed readiness / OpenSSH-exact / hosting e2e. Short probe-then-exit Partial remains valid for smokes. Same-process **Partial live rebind** of that durable listen is allowed under the same honesty; **Claimed** zero-downtime / connection-drain hot-rebind stays Missing until evidenced.
+    - **(d) Tradeoff recorded:** durable Partial SSH listen unlocks git-over-SSH smoke closer to e2e and serve-config rebind parity with HTTP/forge Partial — at the cost of operators seeing a long-lived Partial process (not a 2s probe). Claimed SSH git e2e / OpenSSH-exact cipher interop remain Missing until clean-room evidence.
+18. **Practical today:** operators run e.g. `arks serve --no-ssh --no-forge …` for Claimed HTTP git wire; or keep using transitional `arks hub serve` for Partial local forge API until forge-in-serve lands. Ops SSHD + stdio pack remains a valid **separate** deploy path and does not satisfy in-process `serve` SSH Claimed. Durable Partial SSH (when enabled) labels Partial and stays fail-closed on bind failure / silent degrade.
 19. When modules are Claimed: failure to bind any enabled listener MUST fail closed (no half-up “success”).
 
 ### What arks owns vs ops
@@ -95,7 +99,7 @@ Version **0.2.1**. Normative **product hosting story** (document revision — **
 | Forge API (PR/issue/… host) under `arks serve` | **arks (future in umbrella)** | **Missing / Partial** until Claimed; client is `arks hub` |
 | Listen / bind (HTTP and/or SSH and/or forge HTTP) | **arks** | Default loopback-first; LAN/`0.0.0.0` intentional when chosen |
 | In-process HTTP Basic (git remote) | **arks** | G36 Claimed when configured |
-| In-process SSH listener (`arks serve` without `--no-ssh`) | **arks (future)** | **Missing / not Claimed**; fail-closed while Missing |
+| In-process SSH listener (`arks serve` without `--no-ssh`) | **arks (Partial)** | **Partial durable listen** allowed under §17(c); **not Claimed**; OpenSSH-exact / Claimed SSH git e2e Missing; ops SSHD still valid |
 | Pack protocol on SSH stdio | **arks** | Ops supplies SSHD today |
 | `arks serve config` store | **arks (design)** | Partial until Claimed |
 | Firewall / DNS | **ops** | Not Claimed |
@@ -181,7 +185,7 @@ arks product self-host (THIS SoT) — GitHub-class host
 1. Forge **web UI** / Checks / merge queue as the hosting Claimed bar (API host is in-scope; UI is not required for v1 Claimed).
 2. “Safe on the open internet by default” without TLS/keys + firewall honesty.
 3. Inventing Claimed in-process SSHD, in-process TLS, or forge-in-serve from this SoT alone.
-4. Silent degrade when an enabled module is Missing (must fail closed).
+4. Silent degrade when an enabled module is Missing/Partial (must fail closed per §17 — Partial durable listen must label Partial; never invent Claimed success).
 5. Primary nested verbs `arks serve http` / `arks serve ssh` / `arks serve forge` (flags win).
 6. Permanent MUST `serve-http` alias; permanent primary `arks hub serve` as the host story.
 7. Folding self-host into `arks daemon`; inventing `arks self-host`.
