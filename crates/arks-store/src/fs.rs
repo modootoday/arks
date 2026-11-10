@@ -33,10 +33,13 @@ impl PendingPackPersist {
         if let Some(parent) = self.pack_path.parent() {
             fs::create_dir_all(parent).map_err(|e| StoreError::Io(e.to_string()))?;
         }
-        // Fresh clone / first ingest: paths are new — skip is_file stats.
-        fs::write(&self.pack_path, &self.pack[self.pack_at..])
-            .map_err(|e| StoreError::Io(e.to_string()))?;
-        fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
+        if !self.pack_path.is_file() {
+            fs::write(&self.pack_path, &self.pack[self.pack_at..])
+                .map_err(|e| StoreError::Io(e.to_string()))?;
+        }
+        if !self.idx_path.is_file() {
+            fs::write(&self.idx_path, &self.idx).map_err(|e| StoreError::Io(e.to_string()))?;
+        }
         Ok(())
     }
 }
@@ -308,24 +311,6 @@ impl FilesystemGitStore {
         *self.packs_loaded.write().expect("packs_loaded") = true;
     }
 
-    /// Run `f` under one pack-cache read lock (loads on-disk packs if needed).
-    ///
-    /// Returns `None` when the pack map is empty. Overlay / loose are not
-    /// searched. Prefer this over [`Self::lookup_pack_cached`] on the clone
-    /// checkout hot path to avoid 220× `Arc::clone` atomics.
-    pub fn with_pack_cached_map<R>(
-        &self,
-        f: impl FnOnce(&HashMap<Oid, Arc<RawObject>>) -> R,
-    ) -> Option<R> {
-        let _ = self.load_packs_if_needed();
-        let pack = self.pack_objects.read().expect("pack_objects");
-        if pack.is_empty() {
-            None
-        } else {
-            Some(f(&pack))
-        }
-    }
-
     /// Bulk pack-cache lookup under a single read lock (clone checkout hot path).
     ///
     /// Loads on-disk packs if needed so J-CLONE-PATH (hardlinked pack after
@@ -334,13 +319,16 @@ impl FilesystemGitStore {
     /// misses the in-memory pack map (caller falls back to per-OID
     /// [`Self::get_shared`]). Overlay / loose are not searched.
     pub fn lookup_pack_cached(&self, oids: &[Oid]) -> Option<Vec<Arc<RawObject>>> {
-        self.with_pack_cached_map(|pack| {
-            let mut out = Vec::with_capacity(oids.len());
-            for oid in oids {
-                out.push(Arc::clone(pack.get(oid)?));
-            }
-            Some(out)
-        })?
+        let _ = self.load_packs_if_needed();
+        let pack = self.pack_objects.read().expect("pack_objects");
+        if pack.is_empty() {
+            return None;
+        }
+        let mut out = Vec::with_capacity(oids.len());
+        for oid in oids {
+            out.push(Arc::clone(pack.get(oid)?));
+        }
+        Some(out)
     }
 
     /// Shared object handle (cheap `Arc` clone). Prefer for parallel checkout.

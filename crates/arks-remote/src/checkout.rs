@@ -16,6 +16,7 @@ use arks_repo::Repository;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::thread;
 
 /// Write `commit`'s tree into `work` and replace the index to match.
@@ -224,50 +225,26 @@ fn materialize_jobs(
     }
     // One stamp for the whole batch (clone hot path); avoids SystemTime::now per blob.
     let stamp = stamp_now();
+    // Smart-HTTP clone: resolve every blob Arc under one pack-cache read lock,
+    // then fs::write without per-blob RwLock (J-CLONE-LOCAL 220× lock tax).
+    let oids: Vec<Oid> = writes.iter().map(|(_, _, _, oid, _)| *oid).collect();
+    let cached = repo.store().lookup_pack_cached(&oids);
     let cpus = thread::available_parallelism()
         .map(|p| p.get())
         .unwrap_or(1);
-    // Pack-cache hit: write under one read lock (no Arc::clone / thread spawn).
-    // Cap-2 parallel's Arc+spawn tax dominated any second-writer gain on
-    // J-CLONE-LOCAL under --cpus=2; PATH still has headroom to 0.5×.
-    let written = if let Some(out) = try_materialize_pack_locked(repo, &writes, stamp)? {
-        out
+    let written = if let Some(blobs) = cached {
+        let prepared: Vec<(usize, String, PathBuf, Oid, u32, Arc<RawObject>)> = writes
+            .into_iter()
+            .zip(blobs)
+            .map(|((i, rel, path, oid, mode), blob)| (i, rel, path, oid, mode, blob))
+            .collect();
+        materialize_cached(prepared, stamp, cpus)?
     } else {
         materialize_uncached(repo, writes, stamp, cpus)?
     };
     entries.extend(written);
     entries.sort_by_key(|(i, _)| *i);
     Ok(entries.into_iter().map(|(_, e)| e).collect())
-}
-
-/// Materialize blob writes while holding the pack-cache read lock (no Arc clones).
-///
-/// Returns `Ok(None)` when the pack map is empty or any OID misses (caller falls
-/// back to per-OID get).
-fn try_materialize_pack_locked(
-    repo: &Repository,
-    writes: &[(usize, String, PathBuf, Oid, u32)],
-    stamp: (u32, u32),
-) -> Result<Option<Vec<(usize, IndexEntry)>>, RemoteError> {
-    let Some(result) = repo.store().with_pack_cached_map(|pack| {
-        for (_, _, _, oid, _) in writes {
-            if !pack.contains_key(oid) {
-                return Ok(None);
-            }
-        }
-        let mut out = Vec::with_capacity(writes.len());
-        for (i, rel, path, oid, mode) in writes {
-            let blob = pack.get(oid).expect("checked above");
-            out.push((
-                *i,
-                write_cached_blob(rel, path, oid, *mode, blob, stamp)?,
-            ));
-        }
-        Ok(Some(out))
-    }) else {
-        return Ok(None);
-    };
-    result
 }
 
 /// Worker count for checkout writes.
@@ -283,6 +260,55 @@ fn checkout_workers(cpus: usize, jobs: usize) -> usize {
         return 2.min(jobs);
     }
     cpus.clamp(2, 8).min(jobs)
+}
+
+fn materialize_cached(
+    prepared: Vec<(usize, String, PathBuf, Oid, u32, Arc<RawObject>)>,
+    stamp: (u32, u32),
+    cpus: usize,
+) -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+    let workers = checkout_workers(cpus, prepared.len());
+    if workers <= 1 {
+        let mut out = Vec::with_capacity(prepared.len());
+        for (i, rel, path, oid, mode, blob) in prepared {
+            out.push((i, write_cached_blob(&rel, &path, &oid, mode, &blob, stamp)?));
+        }
+        return Ok(out);
+    }
+    let chunk = prepared.len().div_ceil(workers);
+    let mut out = Vec::with_capacity(prepared.len());
+    let mut worker_err: Option<RemoteError> = None;
+    thread::scope(|scope| {
+        let mut handles = Vec::with_capacity(workers);
+        for piece in prepared.chunks(chunk) {
+            handles.push(
+                scope.spawn(move || -> Result<Vec<(usize, IndexEntry)>, RemoteError> {
+                    let mut local = Vec::with_capacity(piece.len());
+                    for (i, rel, path, oid, mode, blob) in piece {
+                        local.push((*i, write_cached_blob(rel, path, oid, *mode, blob, stamp)?));
+                    }
+                    Ok(local)
+                }),
+            );
+        }
+        for h in handles {
+            match h.join() {
+                Ok(Ok(local)) => out.extend(local),
+                Ok(Err(e)) => {
+                    worker_err = Some(e);
+                    break;
+                }
+                Err(_) => {
+                    worker_err = Some(RemoteError::Msg("checkout: worker panicked".into()));
+                    break;
+                }
+            }
+        }
+    });
+    if let Some(e) = worker_err {
+        return Err(e);
+    }
+    Ok(out)
 }
 
 fn materialize_uncached(
