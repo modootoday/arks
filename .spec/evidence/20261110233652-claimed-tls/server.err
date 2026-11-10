@@ -1,0 +1,4 @@
+arks serve: synced runtime_* bind keys → /root/.config/arks/serve.conf (Partial live bind sync; clap still wins)
+arks serve --no-ssh --no-forge listening on https://127.0.0.1:33667/ (dumb_only=false; unauthenticated)
+arks serve --no-ssh --no-forge: in-process TLS terminate armed (operator PEMs; ops reverse-proxy still valid)
+arks serve --no-ssh --no-forge: SIGHUP serve-config reload + live rebind Partial armed (unix; HTTP/forge/SSH same-process; Claimed zero-downtime Missing)

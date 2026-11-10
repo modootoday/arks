@@ -3,7 +3,7 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-10T22:46:00Z
+updated: 2026-11-10T23:45:00Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
@@ -24,7 +24,12 @@ rel:
     - sot:root/production-residual-register
     - sot:root/public-surface
     - sot:root/language-english-only
-  evidence: []
+  evidence:
+    - evidence:root/20261110231959-claimed-agent-llm
+    - evidence:root/20261110233652-claimed-tls
+    - evidence:root/20261110233655-claimed-hub-https
+    - evidence:root/20261110233659-claimed-rebind
+    - evidence:root/20261110233921-claimed-ssh
   governs:
     - verify/scripts/run-claimed-residual-dod.sh
     - verify/scripts/run-claimed-ssh-e2e.sh
@@ -37,7 +42,7 @@ rel:
 
 # Claimed residual gates (post-Partial wiring)
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`).
+Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `f9ebcf4` (verify filename SoT landed; B-gate WIP may remain dirty).
 
 **Honesty:** **Design intent ≠ Claimed.** Scaffold Docker harness greens **MUST NOT** invent PASS/Claimed. Product paths **MUST NOT** spawn `git` / `gh` / `ssh` / `ollama`. Windows host PowerShell is **not** normative DoD — Linux Docker `arks-verify-m1:0.1.0` is the judge ([[sot:root/product-verification-clean-room]]).
 
@@ -47,19 +52,20 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 
 | ID | Gate | Status now | Owning product SoT(s) |
 |----|------|------------|------------------------|
-| **B1** | OpenSSH-exact cipher / binary-packet wire | **Missing** (Partial AEAD selfcheck ≠ interop) | [[sot:root/arks-self-host-server]], [[sot:root/arks-server]] |
-| **B2** | Claimed SSH git e2e | **Missing** (depends B1 + durable SSH) | [[sot:root/arks-self-host-server]] |
-| **B3** | Claimed hub HTTPS forge remote e2e | **Missing** (hub smoke / `--local-tls` ≠ Claimed) | [[sot:root/arks-hub-product-intent]] |
-| **B4** | Claimed LLM chatbot / review e2e | **Missing** (provider/review smoke ≠ e2e) | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-llm-providers]] |
-| **B5** | Claimed daemon archive format parity | **Missing** (protocol-body Partial ≠ stock compare) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |
-| **B5+** | Claimed syslog facility / priority parity | **Missing** (unix `openlog` Partial ≠ Claimed) | [[sot:root/arks-daemon-product-intent]] |
-| **B7** | Claimed zero-downtime hot-rebind | **Missing** (Partial live rebind ≠ drain/dual-bind) | [[sot:root/arks-self-host-server]] §17 |
-| **B9** | Product in-process TLS terminate | **Missing** (ops reverse-proxy still documented HTTPS pattern) | [[sot:root/arks-self-host-server]] ports/TLS |
+| **B1** | OpenSSH-exact cipher / binary-packet wire | **Claimed** (Docker stock OpenSSH ChaCha KEX/NEWKEYS/SERVICE_ACCEPT; [[evidence:root/20261110233921-claimed-ssh]]) | [[sot:root/arks-self-host-server]], [[sot:root/arks-server]] |
+| **B2** | Claimed SSH git e2e | **Missing** (no invent — cited folder clone logs show remote close / empty out; README absent; server still labels git e2e Missing; receipt `b2` corrected) | [[sot:root/arks-self-host-server]] |
+| **B3** | Claimed hub HTTPS forge remote e2e | **Claimed** (Docker forge HTTPS + hub client; [[evidence:root/20261110233655-claimed-hub-https]]) | [[sot:root/arks-hub-product-intent]] |
+| **B4** | Claimed LLM chatbot / review e2e | **Claimed** (Docker fixture e2e; [[evidence:root/20261110231959-claimed-agent-llm]]) | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-llm-providers]] |
+| **B5** | Claimed daemon archive format parity | **Partial (terminal for this goal)** (protocol/structural OK; **byte-identical ≠ Claimed** — SKIP/STRICT-honest; mismatch class below) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |
+| **B5+** | Claimed syslog facility / priority parity | **Refuse (terminal)** — Partial `openlog`/`LOG_DAEMON` ≠ facility/priority Claimed; Windows Event Log ≠ syslog; reopen only with deliberate collector receipt wave | [[sot:root/arks-daemon-product-intent]] |
+| **B7** | Claimed zero-downtime hot-rebind | **Claimed for HTTP** (Docker held-connection + old/new dual-bind overlap; [[evidence:root/20261110233659-claimed-rebind]]) | [[sot:root/arks-self-host-server]] §17 |
+| **B9** | Product in-process TLS terminate | **Claimed** (Docker rustls PEM terminate + stock curl; [[evidence:root/20261110233652-claimed-tls]]) | [[sot:root/arks-self-host-server]] ports/TLS |
 
 **Explicitly out of Claimed graduation here:**
 
 | ID | Disposition |
 |----|-------------|
+| **B5+** | **Refuse (terminal)** this wave — see scope row; residual register closed for facility Claimed |
 | **B6** | Durable SSH listen + Partial live rebind — **Partial landed**; not reopened as Missing |
 | **B8** | Windows SIGHUP — **N/A** (OS); file-mtime reload is Partial substitute |
 
@@ -102,15 +108,16 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 
 #### B5 — Claimed daemon archive parity
 
-- Byte/stream compare of `upload-archive` (or equivalent enable) vs stock `git-daemon` pin **2.39.5** in clean-room.
-- Path-filter Partial may remain labeled until compare gate greens.
-- **Refuse:** expanded protocol-body unit tests alone.
+- **Claimed bar (strict):** byte-identical ustar stream of `upload-archive` vs stock `git-daemon` pin **2.39.5** in clean-room — **not graduated** (no invent Claimed).
+- **Partial (landed / honest):** protocol path + path-filter wiring + structural member list / type / mode / payload semantic agreement — OK as Partial; harness default **SKIP/Partial**, `ARKS_DOD_STRICT=1` fail-closed ([[sot:root/verify-directory-conventions]] tip ≥ `3f1a484`).
+- **Known mismatch class (Docker 501009):** ustar **header encoding** — first differ block0 offset **151** (chksum digits: stock `0x34` vs arks `0x33`) and device major/minor **ASCII `0` vs NUL** (~offsets 329+); member names/types/modes/payloads matched. Stop host/tar hex dump loops; Claimed only via deliberate SoT+receipt wave.
+- **Refuse:** expanded protocol-body unit tests alone; opportunistic `cmp` or semantic-only greens marketed as Claimed.
 
 #### B5+ — Claimed syslog facility parity
 
-- When `--syslog` is Claimed: facility/priority behavior evidenced vs stock git-daemon expectations on unix clean-room.
-- Windows remains documented Missing / Event Log ≠ syslog (not B5+ Claimed).
-- **Refuse:** Partial `openlog`/`syslog` mirror-to-stderr alone.
+- **Terminal close (this goal):** **Refuse** — unix Partial `openlog`/`LOG_DAEMON` arming + stderr mirror is **not** Claimed facility/priority parity; no collector receipt exists; Windows Event Log ≠ POSIX syslog (documented N/A for B5+ Claimed).
+- **Reopen bar (future wave only):** facility/priority evidenced vs stock git-daemon on unix clean-room with Docker receipt + owning daemon SoT amend — **no invent Claimed** from Partial arming alone.
+- **Refuse (normative):** Partial `openlog`/`syslog` mirror-to-stderr alone.
 
 #### B7 — Claimed zero-downtime rebind
 

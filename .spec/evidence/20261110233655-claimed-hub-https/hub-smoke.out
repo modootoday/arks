@@ -1,0 +1,8 @@
+hub_smoke=partial
+base_url=https://127.0.0.1:38147
+path=/user
+spawns_gh=never
+https_smoke=ok
+http_status=200
+body_preview={"id":1,"login":"local","type":"User"}
+note: HTTPS forge smoke Partial succeeded — design ≠ Claimed forge remote e2e

@@ -1,0 +1,18 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B3",
+  "disposition": "verified-product-path",
+  "venue": "docker-forge-https-hub-client",
+  "tip": "3f1a484",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "cipher_path": "rustls-server + operator PEM (forge module)",
+  "client": "arks hub (ureq + ARKS_HUB_CA_FILE); curl --cacert oracle",
+  "checks": [
+    "arks serve --tls-cert/--tls-key forge https banner",
+    "stock curl HTTPS /health 200",
+    "arks hub smoke GET /user over https",
+    "arks hub repo list authenticated"
+  ],
+  "timestamp": "2026-11-10T23:36:55Z",
+  "note": "hub --local-tls smoke alone does not satisfy B3; this receipt is product forge terminate."
+}

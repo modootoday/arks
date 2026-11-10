@@ -1,0 +1,13 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B5",
+  "disposition": "partial-structural-not-byte-identical",
+  "venue": "docker-git-daemon-oracle",
+  "stock_git": "git version 2.39.5",
+  "comparison": [
+    "structural member probe (not Claimed byte stream)"
+  ],
+  "timestamp": "2026-11-10T23:37:03Z",
+  "b5": "Partial",
+  "b5_plus": "Refuse-terminal"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B9",
+  "disposition": "verified-product-path",
+  "venue": "docker-in-process-tls",
+  "tip": "3f1a484",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "cipher_path": "rustls-server + operator PEM",
+  "client": "curl --cacert",
+  "checks": [
+    "arks serve --tls-cert/--tls-key banner https",
+    "stock curl HTTPS info/refs 200"
+  ],
+  "timestamp": "2026-11-10T23:36:52Z",
+  "note": "Ops reverse-proxy alone does not satisfy B9; this receipt is product terminate."
+}

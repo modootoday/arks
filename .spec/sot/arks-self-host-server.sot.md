@@ -3,7 +3,7 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-10T22:52:00Z
+updated: 2026-11-10T23:20:45Z
 tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial, claimed-residual]
 verify: manual
 rel:
@@ -27,6 +27,7 @@ rel:
     - evidence:root/20261109221500
     - evidence:root/20261109223000
     - evidence:root/20261109224717
+    - evidence:root/20261110232045-claimed-rebind
   governs:
     - docs/self-host.md
 ---
@@ -88,8 +89,8 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 17. **Fail-closed (normative):** if a module is **enabled** (default or remaining after disable flags) and that listener/API is **not Claimed/ready**, `arks serve` MUST **not** silently degrade while advertising default-set **Claimed** success.
     - **(a) Silent degrade forbidden:** dropping an enabled module and continuing as if the default set came up Claimed-ready is illegal.
     - **(b) Bind failure fail-closed:** failure to bind an enabled listener MUST error explicitly (no half-up Claimed success).
-    - **(c) Partial durable listen allowed (v0.2.2 tradeoff):** an enabled module MAY keep a **durable** accept loop when it **explicitly labels Partial** on stderr/operator surfaces and **never** advertises Claimed readiness / OpenSSH-exact / hosting e2e. Short probe-then-exit Partial remains valid for smokes. Same-process **Partial live rebind** of that durable listen is allowed under the same honesty; **Claimed** zero-downtime / connection-drain hot-rebind stays Missing until evidenced.
-    - **(d) Tradeoff recorded:** durable Partial SSH listen unlocks git-over-SSH smoke closer to e2e and serve-config rebind parity with HTTP/forge Partial — at the cost of operators seeing a long-lived Partial process (not a 2s probe). Claimed SSH git e2e / OpenSSH-exact cipher interop remain Missing until clean-room evidence.
+    - **(c) Partial durable listen allowed (v0.2.2 tradeoff):** an enabled module MAY keep a **durable** accept loop when it **explicitly labels Partial** on stderr/operator surfaces and **never** advertises Claimed readiness / OpenSSH-exact / hosting e2e. Short probe-then-exit Partial remains valid for smokes. HTTP rebind now has a **Claimed bounded dual-bind drain scenario**: held old connection plus fresh old/new peers completed in Docker ([[evidence:root/20261110232045-claimed-rebind]]). SSH and forge rebind remain Partial unless separately evidenced.
+    - **(d) Tradeoff recorded:** durable Partial SSH listen unlocks git-over-SSH smoke closer to e2e and serve-config rebind parity with HTTP/forge Partial — at the cost of operators seeing a long-lived Partial process (not a 2s probe). **B1 Claimed** for OpenSSH ChaCha wire ([[evidence:root/20261110233921-claimed-ssh]]); **B2** stock `git clone ssh://` remains **Missing** (no invent from B1). SSH **rebind** and process-label Claimed readiness remain Partial/Missing.
 18. **Practical today:** operators run e.g. `arks serve --no-ssh --no-forge …` for Claimed HTTP git wire; or keep using transitional `arks hub serve` for Partial local forge API until forge-in-serve lands. Ops SSHD + stdio pack remains a valid **separate** deploy path and does not satisfy in-process `serve` SSH Claimed. Durable Partial SSH (when enabled) labels Partial and stays fail-closed on bind failure / silent degrade.
 19. When modules are Claimed: failure to bind any enabled listener MUST fail closed (no half-up “success”).
 
@@ -101,11 +102,11 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 | Forge API (PR/issue/… host) under `arks serve` | **arks (future in umbrella)** | **Missing / Partial** until Claimed; client is `arks hub` |
 | Listen / bind (HTTP and/or SSH and/or forge HTTP) | **arks** | Default loopback-first; LAN/`0.0.0.0` intentional when chosen |
 | In-process HTTP Basic (git remote) | **arks** | G36 Claimed when configured |
-| In-process SSH listener (`arks serve` without `--no-ssh`) | **arks (Partial)** | **Partial durable listen** allowed under §17(c); **not Claimed**; OpenSSH-exact / Claimed SSH git e2e Missing; ops SSHD still valid |
+| In-process SSH listener (`arks serve` without `--no-ssh`) | **arks (B1 Claimed wire; B2 Missing; listen label Partial)** | Durable accept loop still Partial-labeled (§17(c)); **B1** ChaCha wire Claimed ([[evidence:root/20261110233921-claimed-ssh]]); **B2** clone e2e Missing; ops SSHD still valid |
 | Pack protocol on SSH stdio | **arks** | Ops supplies SSHD today |
 | `arks serve config` store | **arks (design)** | Partial until Claimed |
 | Firewall / DNS | **ops** | Not Claimed |
-| TLS certificates / HTTPS termination | **ops** (v1 documented) | Prefer ops-terminated TLS in front of HTTP; in-process TLS Partial/Missing |
+| TLS certificates / HTTPS termination | **arks + ops** | **B9 product in-process TLS Claimed** ([[evidence:root/20261110233234-claimed-tls]]); ops reverse-proxy remains a valid alternate and does not by itself satisfy B9 |
 | WAN “secure by default” | **Forbidden** without TLS/keys + ops honesty | |
 
 ### Bind / listen (normative)
@@ -139,7 +140,7 @@ Self-host **Git-remote authentication** MUST align with how stock Git clients al
 |-----------|--------|-------|
 | Unauthenticated loopback HTTP (git) | Allowed when Basic unset | G15 demo path |
 | HTTP Basic on smart HTTP (git) | **In-scope v1** (G36 when configured) | `--basic-auth` / `ARKS_HTTP_BASIC` / file |
-| HTTPS / SSL/TLS | **Prefer off-localhost for HTTP** | Ops reverse-proxy; in-process TLS Partial/Missing |
+| HTTPS / SSL/TLS | **In-process PEM (B9 Claimed) or ops front** | Product `--tls-cert/--tls-key` evidenced ([[evidence:root/20261110233234-claimed-tls]]); ops reverse-proxy still valid |
 | SSH keys / `authorized_keys`-style | **Design for in-process `serve` SSH**; **wire via ops SSHD today** | Align with Git SSH remotes |
 | Hub token / forge auth for **forge API** | **In-scope under forge module** | Client: `arks hub auth …`; ≠ primary git-remote auth |
 | Hub token as primary **git-remote** auth | **Refuse** | Keep Git-remote vs forge-API auth split honest |
@@ -203,7 +204,7 @@ arks product self-host (THIS SoT) — GitHub-class host
 34. **Design intent (now):** this SoT + `docs/self-host.md` + honest CLI help for `arks serve` / `arks serve config` / fail-closed Partial modules; hub SoTs say **client-only** for primary UX; **port policy** (normative vs demo) documented.
 35. **Already carrying (wire, not hosting e2e):** G15 / G29–G32 / G36 — cite residual register; do not re-stamp. Ops-SSHD stdio ≠ in-process serve SSH Claimed. Transitional `arks hub serve` Partial ≠ forge-in-serve Claimed.
 36. **Future hosting e2e:** compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` proving arks-only `arks serve` (with explicit disable flags until SSH/forge Claimed), LAN-shaped bind, Basic, stock Git client + optional `arks hub` against forge base — scaffold/SKIP until Claimed; **no invent hosting Claimed**.
-37. **Claimed residual deepen (adjacent):** OpenSSH-exact / SSH git e2e / zero-downtime rebind / in-process TLS acceptance criteria and Docker slots live under [[sot:root/arks-claimed-residual-gates]] (`dod-claimed-ssh` / `dod-claimed-rebind` / `dod-claimed-tls` / orchestrator `dod-claimed-residual`). Partial durable SSH (§17(c)) ≠ those Claimed rows.
+37. **Claimed residual deepen (adjacent):** Docker slots under [[sot:root/arks-claimed-residual-gates]] — **B1** ([[evidence:root/20261110233921-claimed-ssh]]), **B7 HTTP** ([[evidence:root/20261110233659-claimed-rebind]]), **B9** ([[evidence:root/20261110233652-claimed-tls]]). **B2** SSH git clone remains **Missing** (no invent from B1). Partial durable SSH (§17(c)) ≠ SSH rebind Claimed; **B5+** syslog **Refuse terminal**.
 
 ## Why
 

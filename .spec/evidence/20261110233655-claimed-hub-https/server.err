@@ -1,0 +1,6 @@
+arks serve: synced runtime_* bind keys → /root/.config/arks/serve.conf (Partial live bind sync; clap still wins)
+arks serve --no-http --no-ssh: Partial forge API only ([[sot:root/arks-self-host-server]]); design ≠ Claimed
+arks serve forge-only: SIGHUP serve-config reload + live rebind Partial armed (unix; HTTP/forge/SSH same-process; Claimed zero-downtime Missing)
+arks forge API listening on https://127.0.0.1:38147/ (data=/tmp/arks-b3-hub.X6Br9N; Partial local API — not Claimed)
+arks forge API: in-process TLS terminate armed (operator PEMs; same pattern as arks serve HTTP B9)
+arks forge API: tls handshake: unexpected end of file

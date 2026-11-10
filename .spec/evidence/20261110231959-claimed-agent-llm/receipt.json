@@ -1,0 +1,15 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B4",
+  "disposition": "verified-product-path",
+  "venue": "docker-openai-compat-fixture",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "chat_turns": 2,
+  "review_requests": 1,
+  "checks": [
+    "assistant history retained",
+    "review used native HTTP"
+  ],
+  "timestamp": "2026-11-10T23:19:59Z",
+  "note": "Receipt records observed product behavior; it does not by itself amend SoT status."
+}

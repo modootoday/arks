@@ -3,7 +3,7 @@ id: sot:root/arks-daemon-product-intent
 title: arks-daemon product intent
 status: active
 created: 2026-11-10T19:16:00Z
-updated: 2026-11-10T19:40:00Z
+updated: 2026-11-10T23:45:00Z
 tags: [arks-daemon, git-daemon, daemon, internal-crate, single-release, git-symmetry, self-host]
 verify: manual
 rel:
@@ -38,6 +38,8 @@ Version **0.1.0**. Normative intent for **`git-daemon` symmetry** inside the **s
 5. Keep daemon paths **in-engine** — MUST NOT spawn `git` or `gh`.
 6. Related server porcelain (`upload-pack`, `receive-pack`, `http-backend`, `serve` / transitional `serve-http`, `update-server-info`) remains on the `arks` CLI / `arks-server` graph per [[sot:root/cli-surface]] / [[sot:root/remote-host-compatibility-surface]]; this SoT owns the **daemon peer** responsibility split. Self-host product surface is [[sot:root/arks-self-host-server]] (`arks serve` flags — not folded into daemon).
 7. **Product self-host** (localhost / LAN / WAN reachability using only `arks`) is owned by [[sot:root/arks-self-host-server]]. Daemon flag symmetry is **adjacent**, not a substitute: stock `git-daemon` parity does **not** by itself define the arks self-host product story.
+8. **Upload-archive B5 remains Partial (terminal for Claimed residual goal).** Protocol/structural member agreement may green; byte-identical ustar vs stock 2.39.5 is **not** Claimed (known header encoding class 501009). Opportunistic `cmp` / earlier evidence folders **MUST NOT** invent Claimed ([[sot:root/arks-claimed-residual-gates]]).
+9. **Syslog B5+ is Refuse (terminal) for this residual wave.** Unix `LOG_DAEMON` Partial arming ≠ facility/priority Claimed; Windows Event Log ≠ POSIX syslog. Reopen only with collector receipt + SoT amend.
 
 ### Non-goals
 
