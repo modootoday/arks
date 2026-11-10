@@ -27,10 +27,11 @@ You run the **native** `arks` CLI on your machine. Docker is the verification ve
 - **Venue:** pinned clean-room image; in-image stock Git **2.39.5** vs release-profile `arks`.
 - **Aggregation:** median wall-clock over 3 iterations (`median_p95`).
 - **Ratio:** `arks_median / git_median`. Values below `1.0` mean arks used less wall-clock on that fixture.
-- **Bars:** ≤ **0.8×** on every allow-list journey remains the broad measured bar. ≤ **0.5×** is the aggressive bar — historical **Claimed 8/8** on tip `79fc9bf`; tip after unblock [[evidence:root/20261111015154]] is **Claimed(partial)** (18 ≤0.5× incl. REVERT **0.5000** + `aggressive_na` ALIAS **0.5546**; M17 still 19/19 ≤0.8×).
+- **Bars:** ≤ **0.8×** on every allow-list journey remains the broad measured bar. ≤ **0.5×** is the aggressive bar — historical **Claimed 8/8** on tip `79fc9bf`; tip after G7 PATH/`exec` [[evidence:root/20261111025200]] is **Claimed(partial)** (18 ≤0.5× incl. REVERT **0.4943** + `aggressive_na` ALIAS **0.5489**; M17 still 19/19 ≤0.8×). Prior unblock [[evidence:root/20261111015154]] (ALIAS **0.5546** / REVERT **0.5000**) remains archival.
 
 Carrying receipts:
 
+- [G7 sole G19 ALIAS PATH/`exec`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) — tip aggressive ≤0.5× currency
 - [Full clean-room matrix tip `54c9dc2`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110224814-full-cleanroom-matrix) — tip G19 re-eval
 - [G19 remasure tip `79fc9bf` — PF5 8/8 (historical carrying)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) — charts below
 - [Prior carrying tip `875359e`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8)
@@ -43,8 +44,8 @@ Carrying receipts:
 
 | Claim | Result | Evidence |
 |-------|--------|----------|
-| Full journey allow-list ≤0.8× | **19/19** measured, N/A-free on latest sole remasure | [PF5 8/8 `79fc9bf`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) |
-| Aggressive ≤0.5× | Historical **Claimed 8/8** at `79fc9bf`; tip **Claimed(partial)** 18 + ALIAS `aggressive_na` (REVERT Claimed 0.5000) | [unblock G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111015154-pf5-revert-first-g19-unblock) · [8/8 historical](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) |
+| Full journey allow-list ≤0.8× | **19/19** measured, N/A-free on latest sole remasure | [G7 G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) · [PF5 8/8 `79fc9bf`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) |
+| Aggressive ≤0.5× | Historical **Claimed 8/8** at `79fc9bf`; tip **Claimed(partial)** 18 + ALIAS `aggressive_na` **0.5489** (REVERT Claimed **0.4943**) | [G7 G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) · [prior unblock](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111015154-pf5-revert-first-g19-unblock) · [8/8 historical](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) |
 
 ## Median wall-clock (ms)
 

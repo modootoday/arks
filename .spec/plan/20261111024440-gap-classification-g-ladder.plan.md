@@ -55,7 +55,7 @@ Full acceptance / Claimed vs Hold / halt rules: [[plan:root/20261111024441]].
 | **G5** | Forge recipe deepen | `arks forge recipe` Claimed-closest only | Still not full forge UX |
 | **G6** | Exotic filters `object:type` → `combine:` | SoT + parse/omit + evidence per family | Per-family Claimed; `sparse:oid` Hold unless SoT reopen |
 | **G7** | Pf5 ALIAS PATH/`exec` redesign | Product cut → **exactly one** sole Docker G19 | ≤0.5 Claimed **or** keep `aggressive_na`; **no thrash** |
-| **G_final** | 정본 + public-surface + completion currency | Tip table + `docs/completion.md` + clean-room/symmetry e2e for new Claimed surfaces | Hold forever rows unchanged |
+| **G_final** | Canon + public-surface + completion currency | Tip table + `docs/completion.md` + clean-room/symmetry e2e for new Claimed surfaces | Hold forever rows unchanged |
 
 ## Waves
 

@@ -35,7 +35,7 @@ Tip carrying Pf5 REVERT ≤0.5× Claimed + ALIAS PATH/`exec` G7 remasure, sha1cd
 
 ## Tip remasure notes (PF5)
 
-G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: G7 PATH/`exec` absolute-shim cut → **exactly one** sole Docker G19 (see G-ladder evidence); prior REVERT **0.5000 Claimed**; **no** stampede; halt OOM. Historical **Claimed 8/8** at `79fc9bf` remains archival. Details: [Performance](../performance/).
+G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: G7 PATH/`exec` absolute-shim cut → **exactly one** sole Docker G19 → ALIAS `aggressive_na` **0.5489**, REVERT **0.4943 Claimed** ([[evidence:root/20261111025200]]); **no** stampede; halt OOM. Historical **Claimed 8/8** at `79fc9bf` remains archival. Details: [Performance](../performance/).
 
 ## Remaining partials (ranked unblock)
 

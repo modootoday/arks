@@ -13,7 +13,7 @@ arks will be a **public** repository. Treat every new tracked path as world-read
 - Cite **M16** as the active alias bar; do not market “faster than Git” without clean-room evidence that matches journey-compare honesty.
 - **CELIR honesty:** MAY say dual-path index verified only with G23 receipt and MUST state FS `.git` sole object store + optional `celir-index` sidecar. Bare “CELIR-backed Git” / CELIR as object store is forbidden.
 - **L3 honesty:** Claimed shape is lease + batch-apply + worktree/ref-shard; shared-index N-way is a separate **M26 / G34** claim (do not conflate with L3 or CELIR G22/G24).
-- **Partial honesty:** filter/promisor N/A; Pf5 partial 7/8 (CLONE-LOCAL NA); OpenPGP N/A; OAuth Refuse; credential fill Claimed includes TTY + OS wallets (G33) — no OAuth marketing.
+- **Partial honesty:** tip Pf5 **Claimed(partial)** (18 ≤0.5× + ALIAS `aggressive_na`; REVERT Claimed; historical 8/8 archival); exotic `sparse:oid` Hold; OAuth Refuse; credential fill Claimed includes TTY + OS wallets (G33) — no OAuth marketing. OpenPGP / X.509 / `tag -s` are Claimed (G38).
 - **Live forge journeys:** cite only with receipts; G8 secrets-default-on harness may SKIP without secrets — never invent PASS; tokens stay in env only.
 
 ## Must not
