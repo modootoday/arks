@@ -191,12 +191,13 @@ fn resolve_slots(
             if oids[base_idx].is_none() {
                 continue;
             }
+            // Clone delta only (small); borrow base payload (often large).
+            let delta = delta_bytes(&slots[i])?;
             let (kind, base_payload) = match &slots[base_idx] {
-                Slot::Ready(obj) => (obj.kind, obj.payload.clone()),
+                Slot::Ready(obj) => (obj.kind, obj.payload.as_slice()),
                 _ => continue,
             };
-            let delta = delta_bytes(&slots[i])?;
-            let payload = apply_delta(&base_payload, &delta)?;
+            let payload = apply_delta(base_payload, &delta)?;
             let obj = RawObject::new(kind, payload);
             let oid = obj.oid(format)?;
             slots[i] = Slot::Ready(obj);
@@ -213,14 +214,14 @@ fn resolve_slots(
     }
 
     let mut objects = Vec::with_capacity(n);
-    for i in 0..n {
-        let Slot::Ready(object) = &slots[i] else {
+    for (i, slot) in slots.into_iter().enumerate() {
+        let Slot::Ready(object) = slot else {
             return Err(PackError::DeltaBaseMissing);
         };
         let oid = oids[i].ok_or(PackError::DeltaBaseMissing)?;
         objects.push(ResolvedObject {
             oid,
-            object: object.clone(),
+            object,
             offset: meta[i].offset,
             crc32: meta[i].crc32,
         });
