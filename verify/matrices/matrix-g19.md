@@ -87,7 +87,7 @@ Owning plan: `.spec/plan/20261110150000-m22-residual-terminal-close.plan.md`.
 | Regression | Full allow-list stays ≤**0.8×** (M17; N/A-free measured) |
 | Aggressive claimed | Prior Pf4 ≤**0.5×** IDs + Pf5 flips LOCAL/BRANCH/BUNDLE/ALIAS — [[evidence:root/20261110224500]] |
 | Aggressive N/A (residual) | CLONE-LOCAL (mid; HTTP seed amortization exhausted); CHERRY short-wall flicker guard; STASH/RM-MV/WORKTREE remain NA-capable if measured >0.5× — SoT [[sot:root/pf5-journey-seed-amortization]] |
-| Done | Every journey is ≤0.5× **or** `aggressive_na` with cite; umbrella **Claimed(partial 7/8)** ([[evidence:root/20261111001400]]); **tip remasure** [[evidence:root/20261110111700]] (`91fbf64`; LOCAL **0.7262** `aggressive_na`; PATH **0.4928** PASS; no 8/8); historical best-better-LOCAL [[evidence:root/20261110110900]] (`44dc566`; LOCAL **0.6556** / PATH **0.4675**); prior [[evidence:root/20261110003836]] (`c1b0b24`); no silent keep-at-0.8 |
+| Done | Every journey is ≤0.5× **or** `aggressive_na` with cite; umbrella **Claimed(partial 7/8)** ([[evidence:root/20261111001400]]); **tip remasure** [[evidence:root/20261110113900]] (`7a3d2dc`; LOCAL **0.6703** `aggressive_na`; PATH **0.4615** PASS; no 8/8); historical best-better-LOCAL [[evidence:root/20261110110900]] (`44dc566`; LOCAL **0.6556** / PATH **0.4675**); prior [[evidence:root/20261110003836]] (`c1b0b24`); no silent keep-at-0.8 |
 
 ## Evidence schema
 
