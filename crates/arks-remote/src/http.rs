@@ -239,10 +239,10 @@ fn write_http_request(
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // Heap scratch + extend (no per-read 64KiB zero-fill — that regressed
-    // J-CLONE-LOCAL to ~0.75–0.80). split_off still avoids a second body copy.
-    let mut scratch = vec![0u8; 64 * 1024];
-    let mut buf = Vec::with_capacity(64 * 1024);
+    // Reusable scratch + extend (no per-read zero-fill). 256KiB cuts syscall
+    // count on upload-pack PACK bodies; split_off keeps body ownership.
+    let mut scratch = vec![0u8; 256 * 1024];
+    let mut buf = Vec::with_capacity(256 * 1024);
     let header_end;
     loop {
         let n = stream
