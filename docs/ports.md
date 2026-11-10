@@ -34,7 +34,7 @@ Full self-host bind/auth story: [Self-host](../self-host/). Research: [ports sur
 
 ## Honesty
 
-Binding a port does not invent Claimed module readiness. In-process SSH may prove bind + key paths + identification + KEXINIT + curve25519 ECDH (**Partial**) and still **fail closed** before host-key sign/auth. If SSH or forge modules are enabled and not ready past their Partial wire, `arks serve` **fails closed**. Hub **HTTPS remote client** is **Partial** (ureq); in-process TLS termination remains **Missing**.
+Binding a port does not invent Claimed module readiness. In-process SSH may prove bind + key paths + identification + KEXINIT + ECDH + ed25519 sign/NEWKEYS when a host key loads (**Partial**) and still **fail closed** before encrypted auth/channel. If SSH or forge modules are enabled and not ready past their Partial wire, `arks serve` **fails closed**. Hub **HTTPS remote client** is **Partial** (ureq); in-process TLS termination remains **Missing**.
 
 ## Next
 

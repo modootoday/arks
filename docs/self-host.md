@@ -88,7 +88,7 @@ Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, *
 ## Auth (Git remote vs forge client)
 
 - **HTTP git path:** HTTP Basic when configured; prefer **HTTPS/SSL/TLS** via operator-terminated TLS off-localhost
-- **SSH path:** public keys / `authorized_keys`-style expectations. In-process SSH under `arks serve` is **Partial** — TCP bind + key-path resolve + RFC 4253 identification + KEXINIT + curve25519-sha256 ECDH Partial (self-check / peer shared-secret when offered), then **fail-closed** (host-key **sign** / NEWKEYS / auth verify / channel still **Missing**; not handshake Claimed). Ops SSHD + `upload-pack`/`receive-pack` remains valid until handshake is Claimed
+- **SSH path:** public keys / `authorized_keys`-style expectations. In-process SSH under `arks serve` is **Partial** — TCP bind + key-path resolve + RFC 4253 identification + KEXINIT + curve25519-sha256 ECDH + OpenSSH ed25519 host-key **sign** / NEWKEYS when an unencrypted host key loads + offline publickey verify scaffolding, then **fail-closed** (encrypted transport after NEWKEYS / wire auth / session channel still **Missing**; not handshake Claimed). Ops SSHD + `upload-pack`/`receive-pack` remains valid until handshake is Claimed
 - **Forge API:** tokens / `arks hub auth …` against the forge module base URL
 - **Fail-closed:** if a module is enabled and not ready, `arks serve` errors out — it does **not** silently pretend the default set came up. Until SSH handshake and forge-in-serve are Claimed, use `--no-ssh` / `--no-forge` when you need a Claimed-only path (or transitional `arks hub serve` for Partial local forge)
 - **`git://` (`arks daemon`):** typically unauthenticated, no SSL — prefer `arks serve` when auth matters
@@ -103,7 +103,7 @@ Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, *
 
 ## Honesty
 
-Wire transports (smart HTTP, dumb HTTP, SSH stdio, `git://`) may already be claimed in Specfold with clean-room receipts. HTTP Basic (when configured) is claimed on the wire path. **In-process SSH** is **Partial** (bind + keys + id + KEXINIT + curve25519 ECDH fail-closed at host-key **sign** — do not invent handshake Claimed). **Forge API under `arks serve`**, **in-process TLS termination**, **hub HTTPS remote client** (ureq Partial; not Claimed e2e), **`arks serve config`** (file seed + `runtime_*` / `apply`/`reload` probes Partial; clap wins), and dedicated **self-host LAN/WAN e2e** remain **Partial / scaffold / Missing** as named — do not invent Claimed. Transitional `arks hub serve` Partial does **not** invent forge-in-serve Claimed. See Specfold [[sot:root/arks-self-host-server]].
+Wire transports (smart HTTP, dumb HTTP, SSH stdio, `git://`) may already be claimed in Specfold with clean-room receipts. HTTP Basic (when configured) is claimed on the wire path. **In-process SSH** is **Partial** (bind + keys + id + KEXINIT + ECDH + ed25519 sign/NEWKEYS when key loads; fail-closed before encrypted auth/channel — do not invent handshake Claimed). **Forge API under `arks serve`**, **in-process TLS termination**, **hub HTTPS remote client** (ureq Partial; not Claimed e2e), **`arks serve config`** (file seed + `runtime_*` / `apply`/`reload`/`watch` Partial; clap wins), and dedicated **self-host LAN/WAN e2e** remain **Partial / scaffold / Missing** as named — do not invent Claimed. Transitional `arks hub serve` Partial does **not** invent forge-in-serve Claimed. See Specfold [[sot:root/arks-self-host-server]].
 
 ## Next
 

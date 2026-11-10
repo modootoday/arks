@@ -30,8 +30,8 @@ arks agent doctor
 
 | Leaf / area | Class |
 |-------------|-------|
-| provider / config / doctor | **Partial** |
-| review / cev-check / run / serve / bot | **Partial** (health + openai-compat chat proxy; JSON pass-through + `stream=true` SSE Partial; `--once` OK) |
+| provider / config / doctor | **Partial** (TCP/connect retry + error class; Claimed LLM e2e **Missing**) |
+| review / cev-check / run / serve / bot | **Partial** (health + openai-compat chat proxy; JSON + stream SSE; connect retry Partial; `--once` OK) |
 | Claimed LLM chatbot / review e2e | **Missing** — no Claimed review quality bar from docs alone |
 
 Treat everything on this page as **design / Partial** unless a clean-room receipt says otherwise. See [Completeness](../completion/).

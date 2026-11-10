@@ -38,7 +38,7 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 
 ## Honesty
 
-Daemon flag inventory is largely present as **Partial** deepen: `--inetd` / `--pid-file` / `--detach` (unix `setsid` / Windows DETACHED_PROCESS re-exec + parent pid-file write; not classic double-fork Claimed) / upload-archive **ACK + sideband-64k band-1 data + band-2 progress** are Partial (path filters refuse closed). Still **Missing**: Claimed format-flag/path-filter archive parity, `--access-hook` body, user/group/syslog. **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
+Daemon flag inventory is largely present as **Partial** deepen: `--inetd` / `--pid-file` / `--detach` (unix `setsid` / Windows DETACHED_PROCESS re-exec + parent pid-file write; not classic double-fork Claimed) / upload-archive **ACK + sideband-64k band-1 data + band-2 progress** with `--prefix=` / path includes / `--exclude=` Partial / `--access-hook` stub body (spawn; exit 0 allow). Still **Missing**: Claimed format/archive parity, user/group/syslog. **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
 
 Owning SoTs: [daemon product intent](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-daemon-product-intent.sot.md), [daemon command matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-daemon-git-command-matrix.sot.md).
 
