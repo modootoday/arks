@@ -17,6 +17,7 @@ use arks_server::{
 use std::io::{self, Read, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -190,11 +191,30 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         ));
     }
 
+    // Partial live bind sync: record intended listen targets before fail-closed / listen.
+    let http_bind_for_sync = forwarded
+        .windows(2)
+        .find(|w| w[0] == "--listen")
+        .map(|w| w[1].clone())
+        .or_else(|| {
+            forwarded.iter().find_map(|a| {
+                a.strip_prefix("--listen=")
+                    .map(str::to_string)
+            })
+        })
+        .or(listen_from_cfg.clone())
+        .unwrap_or_else(|| "127.0.0.1:8080".into());
+
     // Fail-closed: SSH enabled but in-process listener Missing/Partial — do not silent-degrade.
     if enable_ssh {
         let ssh_listen: SocketAddr = "127.0.0.1:2222"
             .parse()
             .expect("default ssh listen parses");
+        sync_serve_runtime_to_file(
+            enable_http.then_some(http_bind_for_sync.as_str()),
+            enable_forge.then_some(forge_listen.as_str()),
+            Some("127.0.0.1:2222"),
+        );
         // Directory is optional here — Missing path refuses before bind.
         let dir = forwarded
             .iter()
@@ -233,6 +253,12 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
     } else {
         None
     };
+
+    sync_serve_runtime_to_file(
+        enable_http.then_some(http_bind_for_sync.as_str()),
+        enable_forge.then_some(forge_listen.as_str()),
+        None,
+    );
 
     match (enable_http, forge_opts) {
         (true, Some(opts)) => {
@@ -353,17 +379,61 @@ pub fn cmd_serve_config(args: &[String]) -> CliResult<()> {
                     ok = false;
                 }
             }
+            // Stronger live bind probe (Partial): briefly bind configured listen addrs.
+            for key in ["bind", "forge_listen"] {
+                if let Some(addr) = map.get(key) {
+                    match probe_bind_addr(addr) {
+                        Ok(local) => eprintln!("{key}: live_bind_probe=ok local={local}"),
+                        Err(e) => {
+                            eprintln!("{key}: live_bind_probe=fail ({e})");
+                            ok = false;
+                        }
+                    }
+                }
+            }
             if ok {
-                eprintln!("arks serve config validate: ok (Partial schema)");
+                eprintln!("arks serve config validate: ok (Partial schema + live bind probe)");
                 Ok(())
             } else {
                 Err(CliError::Msg(
-                    "arks serve config validate: failed (Partial schema)".into(),
+                    "arks serve config validate: failed (Partial schema / bind probe)".into(),
                 ))
             }
         }
+        "sync" => {
+            // Write effective product defaults + optional runtime snapshot keys (Partial).
+            let mut map = load_serve_config_map()?;
+            if !map.contains_key("bind") {
+                map.insert("bind".into(), "127.0.0.1:8080".into());
+            }
+            if !map.contains_key("forge_listen") {
+                map.insert("forge_listen".into(), "127.0.0.1:3920".into());
+            }
+            if !map.contains_key("http") {
+                map.insert("http".into(), "on".into());
+            }
+            if !map.contains_key("ssh") {
+                map.insert("ssh".into(), "on".into());
+            }
+            if !map.contains_key("forge") {
+                map.insert("forge".into(), "on".into());
+            }
+            let bind = map.get("bind").cloned().unwrap_or_else(|| "127.0.0.1:8080".into());
+            let forge = map
+                .get("forge_listen")
+                .cloned()
+                .unwrap_or_else(|| "127.0.0.1:3920".into());
+            record_runtime_bind_sync(&mut map, Some(&bind), Some(&forge), Some("127.0.0.1:2222"))?;
+            save_serve_config_map(&map)?;
+            eprintln!(
+                "arks serve config sync: wrote effective defaults + runtime_* → {} (Partial; \
+                 not Claimed live listener sync)",
+                serve_config_path().display()
+            );
+            Ok(())
+        }
         other => Err(CliError::Usage(format!(
-            "arks serve config: unknown `{other}` (show|set|path|validate); see --help"
+            "arks serve config: unknown `{other}` (show|set|path|validate|sync); see --help"
         ))),
     }
 }
@@ -380,6 +450,11 @@ const SERVE_CONFIG_KEYS: &[&str] = &[
     "ssh_authorized_keys",
     "allow_paths",
     "tls_note",
+    // Runtime sync keys (Partial live bind honesty; written by `serve` / `config sync`).
+    "runtime_bind",
+    "runtime_forge_listen",
+    "runtime_ssh_listen",
+    "runtime_synced_at",
 ];
 
 fn config_bool(
@@ -449,7 +524,7 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
             "on" | "off" | "true" | "false" | "1" | "0" => Ok(()),
             _ => Err("expected on|off".into()),
         },
-        "bind" | "forge_listen" => {
+        "bind" | "forge_listen" | "runtime_bind" | "runtime_forge_listen" | "runtime_ssh_listen" => {
             if value.parse::<SocketAddr>().is_ok() {
                 Ok(())
             } else {
@@ -457,7 +532,7 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
             }
         }
         "forge_data" | "basic_auth_file" | "ssh_host_key" | "ssh_authorized_keys"
-        | "allow_paths" | "tls_note" => {
+        | "allow_paths" | "tls_note" | "runtime_synced_at" => {
             if value.is_empty() {
                 Err("value must not be empty".into())
             } else {
@@ -465,6 +540,62 @@ fn validate_serve_config_value(key: &str, value: &str) -> Result<(), String> {
             }
         }
         _ => Err("unknown key".into()),
+    }
+}
+
+fn probe_bind_addr(addr: &str) -> Result<String, String> {
+    let sock: SocketAddr = addr
+        .parse()
+        .map_err(|e| format!("bad address: {e}"))?;
+    let listener = std::net::TcpListener::bind(sock).map_err(|e| e.to_string())?;
+    let local = listener
+        .local_addr()
+        .map(|a| a.to_string())
+        .unwrap_or_else(|_| addr.to_string());
+    drop(listener);
+    Ok(local)
+}
+
+fn record_runtime_bind_sync(
+    map: &mut std::collections::BTreeMap<String, String>,
+    http_bind: Option<&str>,
+    forge_listen: Option<&str>,
+    ssh_listen: Option<&str>,
+) -> CliResult<()> {
+    if let Some(b) = http_bind {
+        map.insert("runtime_bind".into(), b.to_string());
+    }
+    if let Some(f) = forge_listen {
+        map.insert("runtime_forge_listen".into(), f.to_string());
+    }
+    if let Some(s) = ssh_listen {
+        map.insert("runtime_ssh_listen".into(), s.to_string());
+    }
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    map.insert("runtime_synced_at".into(), now.to_string());
+    Ok(())
+}
+
+fn sync_serve_runtime_to_file(
+    http_bind: Option<&str>,
+    forge_listen: Option<&str>,
+    ssh_listen: Option<&str>,
+) {
+    let mut map = match load_serve_config_map() {
+        Ok(m) => m,
+        Err(_) => return,
+    };
+    if record_runtime_bind_sync(&mut map, http_bind, forge_listen, ssh_listen).is_err() {
+        return;
+    }
+    if save_serve_config_map(&map).is_ok() {
+        eprintln!(
+            "arks serve: synced runtime_* bind keys → {} (Partial live bind sync; clap still wins)",
+            serve_config_path().display()
+        );
     }
 }
 
@@ -672,6 +803,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     let mut verbose = false;
     let mut reuseaddr = true;
     let mut inetd = false;
+    let mut detach = false;
     let mut pid_file: Option<PathBuf> = None;
     let mut bases: Vec<PathBuf> = Vec::new();
     let mut i = 0;
@@ -768,14 +900,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
                 return Ok(());
             }
             "--inetd" => inetd = true,
-            "--detach" => {
-                return Err(CliError::NotImplemented(
-                    "daemon --detach: Missing/Partial — no fork/daemonize Claimed on product path \
-                     (Windows host + clean-room Linux); run foreground or ops supervisor \
-                     (systemd/nssm); --pid-file alone writes pid without detaching"
-                        .into(),
-                ));
-            }
+            "--detach" => detach = true,
             "--pid-file" => {
                 i += 1;
                 pid_file = Some(PathBuf::from(
@@ -820,6 +945,14 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
     if bases.is_empty() {
         return Err(CliError::Usage("daemon <base-path> required".into()));
     }
+    if detach && inetd {
+        return Err(CliError::Usage(
+            "daemon: --detach and --inetd are mutually exclusive".into(),
+        ));
+    }
+    if detach {
+        return daemon_detach_reexec(args);
+    }
     let base_path = bases[0].clone();
     let allowed_bases = bases[1..].to_vec();
     let opts = DaemonOptions {
@@ -844,7 +977,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
         let pid = std::process::id();
         std::fs::write(path, format!("{pid}\n")).map_err(|e| CliError::Msg(e.to_string()))?;
         eprintln!(
-            "arks daemon: wrote pid {pid} → {} (Partial; process stays foreground — no --detach)",
+            "arks daemon: wrote pid {pid} → {} (Partial pid-file)",
             path.display()
         );
     }
@@ -934,7 +1067,7 @@ Usage:
   arks serve [--no-http] [--no-ssh] [--no-forge] [--listen ADDR|--listen=ADDR]
              [--forge-listen ADDR] [--forge-data DIR]
              [--dumb-only] [--basic-auth user:pass] [--basic-auth-file PATH] <directory>
-  arks serve config show|set|path|validate …
+  arks serve config show|set|path|validate|sync …
 
 Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-forge
 (preferred over redundant enable flags). Disabling all three is an error.
@@ -942,12 +1075,12 @@ Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-fo
 Honesty ([[sot:root/arks-self-host-server]]):
   - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
   - In-process SSH listener: Partial wire (bind + host_key/authorized_keys paths) then
-    fail-closed — SSH FFI/russh Missing; ops SSHD + upload-pack/receive-pack remains valid
+    fail-closed — KEX/auth/channel FFI Missing; ops SSHD + upload-pack/receive-pack valid
   - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
   - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
   - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
   - Hub OAuth is refused as primary git-remote auth
-  - `serve config` seeds runtime defaults (Partial); clap flags win; ≠ `arks config` / hub
+  - `serve config` seeds defaults + runtime_* live-bind sync (Partial); clap wins; ≠ config/hub
   - Optional: --ssh-host-key PATH --authorized-keys PATH
 
 Ports ([[sot:root/arks-self-host-server]] / [[research:root/20261111055609]]):
@@ -981,14 +1114,17 @@ Usage:
   arks serve config set <key> <value>
   arks serve config path
   arks serve config validate
+  arks serve config sync
 
 Not `arks config` (git-repo config). Not hub forge settings.
 File: ~/.config/arks/serve.conf (or ARKS_SERVE_CONFIG).
 Keys (Partial): bind, http, ssh, forge, forge_listen, forge_data,
-  basic_auth_file, ssh_host_key, allow_paths, tls_note.
-Keys also: ssh_authorized_keys.
-Partial: file store seeds `arks serve` defaults (bind/http/ssh/forge/forge_*/basic_auth_file/
-  ssh_host_key); clap flags still win when present. Design ≠ Claimed.
+  basic_auth_file, ssh_host_key, allow_paths, tls_note,
+  ssh_authorized_keys, runtime_bind, runtime_forge_listen,
+  runtime_ssh_listen, runtime_synced_at.
+Partial: file store seeds `arks serve` defaults; clap flags still win;
+  `serve` / `config sync` write runtime_* live-bind honesty keys.
+  validate probes configured bind/forge_listen briefly. Design ≠ Claimed.
 "
     );
 }
@@ -1010,12 +1146,54 @@ Default listen 127.0.0.1:9418 (IANA/Git-documented git:// port; normative).
 Requires git-daemon-export-ok unless --export-all.
 Multiple positionals / repeated --base-path = allow-list (Partial).
 Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
-  enable/disable upload-pack/receive-pack; upload-archive drains argument pkt-lines
-  then Partial refuse (archive stream not Claimed); --inetd one-shot stdio Partial;
-  --pid-file writes pid in foreground (no detach).
-Fail-closed Missing: --detach (no fork Claimed); --user/--group --syslog
-  --access-hook --interpolated-path --user-path overrides.
+  enable/disable upload-pack/receive-pack; upload-archive ACK+raw ustar Partial
+  (sideband/format flags not Claimed); --inetd one-shot stdio Partial;
+  --pid-file writes pid; --detach Partial re-exec (OS-limited; not classic double-fork).
+Fail-closed Missing: --user/--group --syslog --access-hook
+  --interpolated-path --user-path overrides; Claimed sideband archive.
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
+}
+
+/// Partial `--detach`: re-exec this binary without `--detach` as a background child.
+/// Not classic Unix double-fork/setsid Claimed — OS-limited spawn honesty.
+fn daemon_detach_reexec(args: &[String]) -> CliResult<()> {
+    let exe = std::env::current_exe().map_err(|e| CliError::Msg(e.to_string()))?;
+    let child_args: Vec<String> = args
+        .iter()
+        .filter(|a| a.as_str() != "--detach")
+        .cloned()
+        .collect();
+    let mut cmd = Command::new(&exe);
+    cmd.arg("daemon")
+        .args(&child_args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+        const FLAGS: u32 = 0x00000008 | 0x00000200;
+        cmd.creation_flags(FLAGS);
+    }
+    #[cfg(unix)]
+    {
+        // Partial: spawn and return; no setsid/double-fork Claimed without unsafe FFI.
+        // Ops supervisors (systemd) remain the preferred long-running path.
+    }
+    match cmd.spawn() {
+        Ok(child) => {
+            eprintln!(
+                "arks daemon --detach: Partial re-exec pid={} (OS-limited background spawn; \
+                 classic daemonize/setsid not Claimed; child argv omits --detach)",
+                child.id()
+            );
+            Ok(())
+        }
+        Err(e) => Err(CliError::Msg(format!(
+            "daemon --detach: Partial re-exec failed: {e}"
+        ))),
+    }
 }
