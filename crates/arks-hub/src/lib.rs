@@ -69,13 +69,13 @@ pub const GROUPS: &[&str] = &[
 ];
 
 /// Matrix groups kept as discoverability refuse (OUT / later depth not wired).
+/// `licenses` graduated to a cheap local Partial list (see `cmd_licenses`).
 pub const HUB_OUT_GROUPS: &[&str] = &[
     "cache",
     "ruleset",
     "skill",
     "agent-task",
     "preview",
-    "licenses",
     "attestation",
     "codespace",
     "extension",
@@ -109,6 +109,7 @@ COMMANDS:
     variable      Actions variables list|create (local Partial)
     ssh-key       User SSH keys list|create (local Partial)
     gpg-key       User GPG keys list|create (local Partial)
+    licenses      Common SPDX license ids list (local Partial; no gh)
     browse        Print forge URL (Partial; no browser spawn)
     inbox         Alias → status forge facet (Partial)
     forge-config  Hub client path/token note (Partial; ≠ arks config)
@@ -171,6 +172,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "variable" => cmd_variable(&args[1..]),
         "ssh-key" => cmd_ssh_key(&args[1..]),
         "gpg-key" => cmd_gpg_key(&args[1..]),
+        "licenses" => cmd_licenses(&args[1..]),
         "browse" => cmd_browse(&args[1..]),
         "inbox" => {
             eprintln!("arks hub inbox → status (demoted alias; Partial)");
@@ -407,15 +409,25 @@ fn cmd_auth(args: &[String]) -> ExitCode {
     }
 }
 
-fn require_local_api() -> Result<(String, String), String> {
+fn require_api() -> Result<(String, String), String> {
     let base = api_base();
-    if !base.starts_with("http://") {
+    if !(base.starts_with("http://") || base.starts_with("https://")) {
         return Err(format!(
-            "HTTPS remote execute not Claimed yet; use local forge API (got {base})"
+            "hub API base must be http:// or https:// (got {base})"
         ));
+    }
+    if base.starts_with("https://") {
+        eprintln!(
+            "note: HTTPS remote hub client Partial via ureq TLS — design ≠ Claimed forge remote e2e; never spawns gh"
+        );
     }
     let tok = read_token().ok_or_else(|| "not logged in — arks hub auth login".to_string())?;
     Ok((base, tok))
+}
+
+/// Backward-compatible alias — local http:// still preferred for Partial forge.
+fn require_local_api() -> Result<(String, String), String> {
+    require_api()
 }
 
 fn cmd_pr(args: &[String]) -> ExitCode {
@@ -1521,6 +1533,47 @@ fn cmd_gpg_key(args: &[String]) -> ExitCode {
         None
     };
     local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
+}
+
+/// Cheap OUT graduation: static SPDX-ish inventory (Partial; not Claimed license API).
+fn cmd_licenses(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("list");
+    match sub {
+        "" | "list" | "-h" | "--help" | "help" => {
+            if matches!(sub, "-h" | "--help" | "help") {
+                eprintln!(
+                    "arks hub licenses [list] — common SPDX license ids (Partial local; no gh spawn)"
+                );
+                return ExitCode::SUCCESS;
+            }
+            // Small static set — Partial discoverability only (not full SPDX Claimed).
+            const IDS: &[&str] = &[
+                "MIT",
+                "Apache-2.0",
+                "BSD-3-Clause",
+                "BSD-2-Clause",
+                "GPL-3.0-only",
+                "GPL-3.0-or-later",
+                "LGPL-3.0-only",
+                "MPL-2.0",
+                "Unlicense",
+                "CC0-1.0",
+            ];
+            for id in IDS {
+                println!("{id}");
+            }
+            eprintln!(
+                "note: licenses Partial static inventory — design ≠ Claimed SPDX/forge license API"
+            );
+            ExitCode::SUCCESS
+        }
+        other => {
+            eprintln!(
+                "arks hub licenses {other}: Partial — only `list` wired; depth beyond inventory refused"
+            );
+            ExitCode::from(2)
+        }
+    }
 }
 
 fn cmd_browse(args: &[String]) -> ExitCode {

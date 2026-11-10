@@ -1,7 +1,12 @@
-//! Minimal HTTP/1.1 helpers for local hub serve/client (Partial). No TLS Claimed.
+//! Minimal HTTP/1.1 helpers for hub serve/client (Partial).
+//!
+//! - `http://` loopback: raw `TcpStream` (local forge).
+//! - `https://` remote: `ureq` TLS path (Partial; not Claimed forge remote e2e).
+//! Never spawns `gh` / `git`.
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use std::time::Duration;
 
 #[derive(Debug)]
 pub struct HttpRequest {
@@ -102,7 +107,7 @@ pub fn bearer_token(headers: &[(String, String)]) -> Option<String> {
     None
 }
 
-/// Client GET/POST against `base` (e.g. http://127.0.0.1:3920).
+/// Client GET/POST against `base` (`http://127.0.0.1:3920` or `https://…` Partial).
 pub fn http_exchange(
     base: &str,
     method: &str,
@@ -112,6 +117,9 @@ pub fn http_exchange(
 ) -> Result<(u16, String), String> {
     let base = base.trim_end_matches('/');
     let url = format!("{base}{path}");
+    if url.starts_with("https://") {
+        return http_exchange_https(&url, method, token, body);
+    }
     let (host, port, req_path) = parse_http_url(&url)?;
     let mut stream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
@@ -152,10 +160,40 @@ pub fn http_exchange(
     Ok((status, body))
 }
 
+/// Partial HTTPS remote client via workspace `ureq` (TLS feature). Not Claimed e2e.
+fn http_exchange_https(
+    url: &str,
+    method: &str,
+    token: Option<&str>,
+    body: Option<&str>,
+) -> Result<(u16, String), String> {
+    let agent = ureq::AgentBuilder::new()
+        .timeout_connect(Duration::from_secs(10))
+        .timeout_read(Duration::from_secs(30))
+        .build();
+    let mut req = agent.request(method, url).set("Accept", "application/json");
+    if let Some(t) = token {
+        req = req.set("Authorization", &format!("Bearer {t}"));
+    }
+    let resp = if let Some(b) = body {
+        req.set("Content-Type", "application/json")
+            .send_string(b)
+            .map_err(|e| format!("https Partial request failed: {e}"))?
+    } else {
+        req.call()
+            .map_err(|e| format!("https Partial request failed: {e}"))?
+    };
+    let status = resp.status();
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("https Partial body read: {e}"))?;
+    Ok((status, text))
+}
+
 fn parse_http_url(url: &str) -> Result<(String, u16, String), String> {
     let rest = url
         .strip_prefix("http://")
-        .ok_or_else(|| format!("only http:// local hub supported in Partial (got {url})"))?;
+        .ok_or_else(|| format!("expected http:// or https:// hub URL (got {url})"))?;
     let (hostport, path) = rest
         .split_once('/')
         .map(|(h, p)| (h, format!("/{p}")))
