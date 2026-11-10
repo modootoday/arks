@@ -578,3 +578,83 @@ services:
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
     command: ["/bin/bash", "verify/scripts/run-self-host-e2e.sh"]
+
+  # Claimed residual gates (post-Partial) — sot:root/arks-claimed-residual-gates.
+  # Default SKIP/scaffold; ARKS_DOD_STRICT=1 fails closed until Claimed (no invent PASS).
+  # Usage: docker compose -f verify/docker-compose.yml run --rm dod-claimed-residual
+  dod-claimed-ssh:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-ssh-e2e.sh"]
+
+  dod-claimed-hub-https:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-hub-https-e2e.sh"]
+
+  dod-claimed-agent-llm:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-agent-llm-e2e.sh"]
+
+  dod-claimed-daemon-archive:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-daemon-archive-e2e.sh"]
+
+  dod-claimed-rebind:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-rebind-e2e.sh"]
+
+  dod-claimed-tls:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-tls-e2e.sh"]
+
+  dod-claimed-residual:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-residual-dod.sh"]
