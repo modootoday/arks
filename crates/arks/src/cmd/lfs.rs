@@ -7,7 +7,8 @@ use crate::util::{open_repo, work_tree};
 use arks_object::ObjectKind;
 use arks_remote::{
     LfsPointer, lfs_batch_download, lfs_batch_upload, lfs_lock_create, lfs_lock_unlock,
-    lfs_locks_list, parse_lfs_pointer, read_local_lfs_object, write_local_lfs_object,
+    lfs_locks_list, lfs_locks_verify, parse_lfs_pointer, read_local_lfs_object,
+    write_local_lfs_object,
 };
 use std::process::Command;
 
@@ -19,6 +20,8 @@ pub fn cmd_lfs(args: &[String]) -> CliResult<()> {
         "lock" => lfs_lock(&args[1..]),
         "unlock" => lfs_unlock(&args[1..]),
         "locks" => lfs_locks_cmd(&args[1..]),
+        // tus / custom transfer / S3 agent argv → external git-lfs (Claimed-closest).
+        "tus" | "transfer" | "standalone-transfer" => handoff_git_lfs_exotic(args),
         _ => handoff_git_lfs(args),
     }
 }
@@ -56,7 +59,22 @@ fn lfs_locks_cmd(args: &[String]) -> CliResult<()> {
 fn handoff_git_lfs(args: &[String]) -> CliResult<()> {
     let status = Command::new("git-lfs").args(args).status().map_err(|e| {
         CliError::NotImplemented(format!(
-            "lfs: external git-lfs not found ({e}); use `arks lfs fetch|pull|push` for claimed in-process subset or install git-lfs"
+            "lfs: external git-lfs not found ({e}); use `arks lfs fetch|pull|push|lock|locks|unlock` for claimed in-process subset (basic+locks) or install git-lfs"
+        ))
+    })?;
+    if !status.success() {
+        return Err(CliError::Msg(format!(
+            "git-lfs exited {}",
+            status.code().unwrap_or(-1)
+        )));
+    }
+    Ok(())
+}
+
+fn handoff_git_lfs_exotic(args: &[String]) -> CliResult<()> {
+    let status = Command::new("git-lfs").args(args).status().map_err(|e| {
+        CliError::NotImplemented(format!(
+            "lfs: tus/custom/S3 transfer not claimed in-process ({e}); install git-lfs for exotic transfer agents — arks claims batch/basic + locks only"
         ))
     })?;
     if !status.success() {
@@ -99,6 +117,20 @@ fn lfs_fetch_pull() -> CliResult<()> {
 
 fn lfs_push() -> CliResult<()> {
     let repo = open_repo()?;
+    // Claimed-closest: verify locks before upload when the endpoint answers.
+    match lfs_locks_verify(&repo) {
+        Ok((_ours, theirs)) if !theirs.is_empty() => {
+            return Err(CliError::Msg(format!(
+                "lfs push: {} foreign lock(s) via locks/verify — resolve before push (or use git-lfs)",
+                theirs.len()
+            )));
+        }
+        Ok(_) => {}
+        Err(e) => {
+            // Endpoint without locks/verify stays advisory (basic-only peers).
+            eprintln!("note: lfs locks/verify skipped ({e})");
+        }
+    }
     let index = crate::util::read_index(&repo)?;
     let mut pushed = 0usize;
     for e in index.entries.iter().filter(|e| e.stage() == 0) {

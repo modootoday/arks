@@ -22,7 +22,8 @@
 //! <https://git-scm.com/docs/gitprotocol-pack>
 
 use crate::advertise::{
-    Advertisement, cap_advertised, content_type_is, parse_advertisement, symref_target,
+    Advertisement, cap_advertised, content_type_is, ensure_remote_object_format,
+    parse_advertisement, symref_target,
 };
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
@@ -273,6 +274,7 @@ where
     if let Some(filter) = opts.filter.as_deref() {
         validate_claimed_filter(filter)?;
     }
+    ensure_remote_object_format(repo, ad)?;
 
     let (head_branch, head_oid) = head_from_ad(ad);
     let specs = fetch_specs_for(&repo.git_dir().join("config"), remote_name);
@@ -430,12 +432,13 @@ where
     })
 }
 
-/// Claimed filter-spec gate (S1/O2 + FS4 + G6).
+/// Claimed filter-spec gate (S1/O2 + FS4 + G6 + sparse:oid).
 ///
 /// Claimed: `blob:none`, `tree:0`, `tree:<depth>` (non-neg int), `blob:limit=<n>`
 /// (`n` bytes, optional `k`/`m`/`g` suffix), `object:type=(blob|tree|commit|tag)`,
-/// and `combine:` of already-Claimed children joined by `+`.
-/// `sparse:oid=…` and multi-`--filter` remain refuse. Cite: git-rev-list `--filter`.
+/// `sparse:oid=<hex>` (40/64-char OID of a sparse-checkout blob), and `combine:`
+/// of already-Claimed children joined by `+`. Multi-`--filter` remains refuse.
+/// Cite: git-rev-list `--filter`.
 pub fn validate_claimed_filter(spec: &str) -> Result<(), RemoteError> {
     validate_claimed_filter_inner(spec, 0)
 }
@@ -462,6 +465,19 @@ fn validate_claimed_filter_inner(spec: &str, depth: u8) -> Result<(), RemoteErro
     if let Some("blob" | "tree" | "commit" | "tag") = spec.strip_prefix("object:type=") {
         return Ok(());
     }
+    if let Some(rest) = spec.strip_prefix("sparse:oid=") {
+        // Hex OID of the sparse-checkout blob (sha1 40 / sha256 64). Blob-ish
+        // names beyond raw hex remain refuse (peer resolves object id).
+        if (rest.len() == 40 || rest.len() == 64)
+            && rest.chars().all(|c| c.is_ascii_hexdigit())
+            && Oid::from_hex(rest).is_ok()
+        {
+            return Ok(());
+        }
+        return Err(RemoteError::NotImplemented(
+            "clone/fetch --filter=sparse:oid=<hex> requires a 40- or 64-char object id".into(),
+        ));
+    }
     if let Some(rest) = spec.strip_prefix("combine:") {
         if rest.is_empty() {
             return Err(RemoteError::NotImplemented(
@@ -474,7 +490,7 @@ fn validate_claimed_filter_inner(spec: &str, depth: u8) -> Result<(), RemoteErro
         return Ok(());
     }
     Err(RemoteError::NotImplemented(format!(
-        "clone/fetch --filter={spec} not claimed; claimed: blob:none, tree:0, tree:<depth>, blob:limit=<n>, object:type=<blob|tree|commit|tag>, combine:<claimed>+…"
+        "clone/fetch --filter={spec} not claimed; claimed: blob:none, tree:0, tree:<depth>, blob:limit=<n>, object:type=<blob|tree|commit|tag>, sparse:oid=<hex>, combine:<claimed>+…"
     )))
 }
 

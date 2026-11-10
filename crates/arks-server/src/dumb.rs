@@ -82,6 +82,14 @@ pub fn serve_dumb_path(
         }
         return Ok(None);
     }
+    // Loose ref GETs (git-http-push / CAS-over-DAV re-read under LOCK).
+    if rel.starts_with("refs/") && !rel.contains("..") {
+        let path = git_dir.join(rel);
+        if path.is_file() {
+            return Ok(Some(("text/plain".into(), fs::read(path)?)));
+        }
+        return Ok(None);
+    }
     if rel == "info/refs" || rel.ends_with("/info/refs") {
         // Prefer on-disk file (after update-server-info); else generate.
         let path = git_dir.join("info/refs");

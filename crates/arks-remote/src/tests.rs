@@ -481,6 +481,75 @@ fn stock_git_http_backend_partial_clone_tree_0() {
 }
 
 #[test]
+fn stock_git_http_backend_partial_clone_sparse_oid() {
+    let git_ok = std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !git_ok {
+        return;
+    }
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path().join("peer");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = root.join("src");
+    std::fs::create_dir_all(work.join("keep")).unwrap();
+    std::fs::create_dir_all(work.join("omit")).unwrap();
+    git_ok_at(&work, &["init", "-b", "main"]);
+    git_ok_at(&work, &["config", "user.email", "git@example.com"]);
+    git_ok_at(&work, &["config", "user.name", "Git"]);
+    std::fs::write(work.join("keep/a.txt"), b"keep-blob\n").unwrap();
+    std::fs::write(work.join("omit/b.txt"), b"omit-blob\n").unwrap();
+    git_ok_at(&work, &["add", "keep/a.txt", "omit/b.txt"]);
+    git_ok_at(&work, &["commit", "-m", "c1-sparse"]);
+    // Sparse-checkout cone blob (Git filter object for sparse:oid).
+    let sparse_text = "/*\n!/*/\n/keep/\n";
+    std::fs::write(work.join("sparse.txt"), sparse_text.as_bytes()).unwrap();
+    git_ok_at(&work, &["hash-object", "-w", "sparse.txt"]);
+    let sparse_oid = String::from_utf8(
+        std::process::Command::new("git")
+            .args(["-C", work.to_str().unwrap(), "hash-object", "sparse.txt"])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap()
+    .trim()
+    .to_string();
+    assert_eq!(sparse_oid.len(), 40, "sparse blob oid: {sparse_oid}");
+    git_ok_at(
+        &root,
+        &["clone", "--bare", work.to_str().unwrap(), "app.git"],
+    );
+    let bare = root.join("app.git");
+    git_ok_at(&bare, &["config", "http.receivepack", "true"]);
+    git_ok_at(&bare, &["config", "uploadpack.allowFilter", "true"]);
+    git_ok_at(&bare, &["config", "uploadpack.allowAnySHA1InWant", "true"]);
+
+    let server = GitBackend::spawn(root.clone());
+    let dest = tmp.path().join("partial-sparse");
+    clone_http_with(
+        &format!("{}/app.git", server.url),
+        &dest,
+        &FetchOptions {
+            filter: Some(format!("sparse:oid={sparse_oid}")),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        std::fs::read(dest.join("keep/a.txt")).unwrap(),
+        b"keep-blob\n"
+    );
+    let cfg = std::fs::read_to_string(dest.join(".git/config")).unwrap();
+    assert!(
+        cfg.to_ascii_lowercase().contains("partialclone"),
+        "expected extensions.partialClone in config: {cfg}"
+    );
+}
+
+#[test]
 fn stock_git_http_backend_shallow_clone_depth_1() {
     let git_ok = std::process::Command::new("git")
         .arg("--version")
@@ -1142,6 +1211,71 @@ fn git_daemon_clone_fetch_push_roundtrip() {
         }],
     )
     .expect("push_git");
+
+    stop.store(true, Ordering::SeqCst);
+    let _ = handle.join();
+}
+
+#[test]
+fn dumb_http_force_with_lease_cas_under_lock() {
+    use crate::push::{PushUpdate, push_http};
+    use arks_server::{ServeHttpOptions, spawn_loopback_with_opts, update_server_info};
+    use std::sync::atomic::Ordering;
+    use tempfile::TempDir;
+
+    let base = TempDir::new().unwrap();
+    let bare = base.path().join("repo.git");
+    let (_, tip) = seed_bare_for_daemon(&bare);
+    {
+        let repo = Repository::open(&bare).unwrap();
+        update_server_info(&repo).unwrap();
+    }
+    let (addr, stop, handle) = spawn_loopback_with_opts(
+        bare.clone(),
+        ServeHttpOptions {
+            dumb_only: true,
+            basic_auth: None,
+        },
+    )
+    .unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(30));
+    let url = format!("http://{addr}/");
+
+    let dest = TempDir::new().unwrap();
+    let dest_path = dest.path().join("clone");
+    crate::clone::clone_http(&url, &dest_path).expect("dumb clone");
+    let mut repo = Repository::discover(&dest_path).unwrap();
+    let new_oid = commit_file(&mut repo, "lease.txt", b"dumb lease\n", "lease").unwrap();
+
+    let stale = Oid::from_hex("1111111111111111111111111111111111111111").unwrap();
+    let err = push_http(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid,
+            expected_old: Some(stale),
+        }],
+    )
+    .unwrap_err();
+    assert!(
+        matches!(err, RemoteError::Rejected(_)),
+        "stale dumb lease must reject: {err}"
+    );
+
+    push_http(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid,
+            expected_old: Some(tip),
+        }],
+    )
+    .expect("dumb force-with-lease CAS");
+
+    let peer = Repository::open(&bare).unwrap();
+    assert_eq!(peer.refs().resolve("refs/heads/main").unwrap(), new_oid);
 
     stop.store(true, Ordering::SeqCst);
     let _ = handle.join();

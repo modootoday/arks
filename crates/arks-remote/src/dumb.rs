@@ -93,6 +93,7 @@ pub(crate) fn fetch_dumb_with<T: Transport>(
         ));
     }
 
+    crate::advertise::ensure_remote_object_format(repo, ad)?;
     download_packs(transport, repo, url)?;
 
     let (head_branch, head_oid) = head_from_dumb(transport, url, ad)?;
@@ -311,6 +312,7 @@ pub(crate) fn push_dumb_with<T: Transport>(
     info_body: &[u8],
 ) -> Result<(), RemoteError> {
     let ad = parse_dumb_info_refs(info_body)?;
+    crate::advertise::ensure_remote_object_format(repo, &ad)?;
     // Optional PROPFIND — arks server always supports exclusive write locks.
     let _ = transport.exchange(&HttpRequest {
         method: "PROPFIND".into(),
@@ -323,7 +325,8 @@ pub(crate) fn push_dumb_with<T: Transport>(
 
     let mut tips = Vec::new();
     let mut bases = Vec::new();
-    let mut planned: Vec<(Oid, Oid, String)> = Vec::new();
+    // (advertised_old, new, refname, expected_old lease)
+    let mut planned: Vec<(Oid, Oid, String, Option<Oid>)> = Vec::new();
     let mut deletes: Vec<String> = Vec::new();
     for update in updates {
         let old = ad
@@ -332,6 +335,17 @@ pub(crate) fn push_dumb_with<T: Transport>(
             .find(|r| r.name == update.refname)
             .map(|r| r.oid)
             .unwrap_or_else(zero_oid);
+        if let Some(expect) = update.expected_old {
+            // Fail closed early when the advertised tip already moved.
+            if old != expect {
+                return Err(RemoteError::Rejected(format!(
+                    "force-with-lease failed for {}: expected {}, remote has {}",
+                    update.refname,
+                    expect.to_hex(),
+                    old.to_hex()
+                )));
+            }
+        }
         if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
             if old.as_bytes().iter().all(|b| *b == 0) {
                 continue;
@@ -349,20 +363,30 @@ pub(crate) fn push_dumb_with<T: Transport>(
             continue;
         }
         if !old.as_bytes().iter().all(|b| *b == 0) {
-            let anc =
-                ancestor_set(repo, update.new_oid).map_err(|e| RemoteError::Msg(e.to_string()))?;
-            if !anc.contains(&old) {
-                return Err(RemoteError::Rejected(format!(
-                    "{} non-fast-forward",
-                    update.refname
-                )));
+            // `--force-with-lease` (expected_old set) is a safer force: when the
+            // lease matches, allow non-fast-forward (same honesty as smart-pack).
+            // Without a lease, dumb push stays FF-only.
+            if update.expected_old.is_none() {
+                let anc = ancestor_set(repo, update.new_oid)
+                    .map_err(|e| RemoteError::Msg(e.to_string()))?;
+                if !anc.contains(&old) {
+                    return Err(RemoteError::Rejected(format!(
+                        "{} non-fast-forward",
+                        update.refname
+                    )));
+                }
             }
             if repo.store().exists(&old).unwrap_or(false) {
                 bases.push(old);
             }
         }
         tips.push(update.new_oid);
-        planned.push((old, update.new_oid, update.refname.clone()));
+        planned.push((
+            old,
+            update.new_oid,
+            update.refname.clone(),
+            update.expected_old,
+        ));
     }
     if planned.is_empty() && deletes.is_empty() {
         return Ok(());
@@ -376,8 +400,36 @@ pub(crate) fn push_dumb_with<T: Transport>(
         upload_loose(transport, url, &oid, obj)?;
     }
 
-    for (_old, new, refname) in &planned {
+    for (_old, new, refname, lease) in &planned {
         let token = dav_lock(transport, url, refname)?;
+        // CAS-over-DAV subset: under exclusive LOCK, re-GET the tip and refuse
+        // when `--force-with-lease` expected_old no longer matches (O4 dumb).
+        if let Some(expect) = lease {
+            match dav_get_ref_oid(transport, url, refname) {
+                Ok(Some(current)) if current != *expect => {
+                    let _ = dav_unlock(transport, url, refname, &token);
+                    return Err(RemoteError::Rejected(format!(
+                        "force-with-lease failed for {}: expected {}, remote has {}",
+                        refname,
+                        expect.to_hex(),
+                        current.to_hex()
+                    )));
+                }
+                Ok(None) if !expect.as_bytes().iter().all(|b| *b == 0) => {
+                    let _ = dav_unlock(transport, url, refname, &token);
+                    return Err(RemoteError::Rejected(format!(
+                        "force-with-lease failed for {}: expected {}, remote has no tip",
+                        refname,
+                        expect.to_hex()
+                    )));
+                }
+                Ok(_) => {}
+                Err(e) => {
+                    let _ = dav_unlock(transport, url, refname, &token);
+                    return Err(e);
+                }
+            }
+        }
         let ref_url = join_url(url, refname);
         let body = format!("{}\n", new.to_hex()).into_bytes();
         let put = transport.exchange(&HttpRequest {
@@ -526,6 +578,42 @@ fn upload_loose<T: Transport>(
         )));
     }
     Ok(())
+}
+
+/// Read current tip OID for a ref under dumb HTTP (for CAS-over-DAV lease).
+fn dav_get_ref_oid<T: Transport>(
+    transport: &mut T,
+    base: &str,
+    rel: &str,
+) -> Result<Option<Oid>, RemoteError> {
+    let resp = match transport.exchange(&HttpRequest {
+        method: "GET".into(),
+        url: join_url(base, rel),
+        headers: Vec::new(),
+        body: Vec::new(),
+    }) {
+        Ok(r) => r,
+        // UreqTransport maps non-2xx to Err; treat missing tip as None.
+        Err(RemoteError::Http(msg)) if msg.starts_with("HTTP 404") => return Ok(None),
+        Err(e) => return Err(e),
+    };
+    if resp.status == 404 {
+        return Ok(None);
+    }
+    if !(200..300).contains(&resp.status) {
+        return Err(RemoteError::Http(format!(
+            "GET {rel} -> HTTP {}",
+            resp.status
+        )));
+    }
+    let text = std::str::from_utf8(&resp.body)
+        .map_err(|e| RemoteError::Protocol(format!("ref body utf-8: {e}")))?;
+    let hex = text.split_whitespace().next().unwrap_or("");
+    if hex.is_empty() {
+        return Ok(None);
+    }
+    let oid = Oid::from_hex(hex).map_err(|e| RemoteError::Protocol(format!("ref oid: {e}")))?;
+    Ok(Some(oid))
 }
 
 fn dav_lock<T: Transport>(transport: &mut T, base: &str, rel: &str) -> Result<String, RemoteError> {

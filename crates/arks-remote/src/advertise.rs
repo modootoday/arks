@@ -124,11 +124,9 @@ pub(crate) fn parse_pack_advertisement(body: &[u8]) -> Result<Advertisement, Rem
                 if oid.as_bytes().iter().all(|b| *b == 0) {
                     continue;
                 }
-                if oid.kind() != arks_oid::OidKind::Sha1 {
-                    return Err(RemoteError::NotImplemented(
-                        "SHA-256 object format is not claimed in this remote slice".into(),
-                    ));
-                }
+                // Homogeneous sha1 or sha256 tips are parsed; mixed-format
+                // remotes are refused later via `ensure_remote_object_format`
+                // against the local repo's `extensions.objectFormat`.
                 refs.push(AdvertisedRef {
                     name: name.to_string(),
                     oid,
@@ -170,6 +168,38 @@ pub(crate) fn content_type_is(value: Option<&str>, expected: &str) -> bool {
     }
 }
 
+/// Refuse mixed sha1↔sha256 remotes (honesty ladder slice).
+///
+/// Homogeneous sha1 or sha256 ads are allowed when they match the local
+/// repo's `extensions.objectFormat`. Cross-format fetch/push remains
+/// non-claim (no OID rewrite). Cite: [[adr:root/20261110214800]].
+pub(crate) fn ensure_remote_object_format(
+    repo: &arks_repo::Repository,
+    ad: &Advertisement,
+) -> Result<(), RemoteError> {
+    let want = repo.oid_kind();
+    for r in &ad.refs {
+        if r.oid.as_bytes().iter().all(|b| *b == 0) {
+            continue;
+        }
+        if r.oid.kind() != want {
+            let local = match want {
+                arks_oid::OidKind::Sha1 => "sha1",
+                arks_oid::OidKind::Sha256 => "sha256",
+            };
+            let remote = match r.oid.kind() {
+                arks_oid::OidKind::Sha1 => "sha1",
+                arks_oid::OidKind::Sha256 => "sha256",
+            };
+            return Err(RemoteError::NotImplemented(format!(
+                "mixed objectFormat remotes not claimed (local {local}, remote tip {} is {remote}); use a matching extensions.objectFormat peer — no sha1↔sha256 rewrite",
+                r.name
+            )));
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,5 +234,20 @@ mod tests {
         );
         assert!(cap_advertised(&ad.capabilities, "side-band-64k"));
         assert!(cap_advertised(&ad.capabilities, "agent"));
+    }
+
+    #[test]
+    fn parse_accepts_sha256_ref_lines() {
+        let oid = Oid::from_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+            .unwrap();
+        let body = encode_advertisement(
+            "git-upload-pack",
+            &["ofs-delta".into()],
+            &[("refs/heads/main".into(), oid)],
+        )
+        .unwrap();
+        let ad = parse_advertisement(&body, "git-upload-pack").unwrap();
+        assert_eq!(ad.refs.len(), 1);
+        assert_eq!(ad.refs[0].oid.kind(), arks_oid::OidKind::Sha256);
     }
 }

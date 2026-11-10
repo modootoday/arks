@@ -517,17 +517,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn clone_refuses_unclaimed_filter_spec() {
+    fn clone_refuses_malformed_sparse_oid_filter() {
         let err = cmd_clone(&[
             "--filter=sparse:oid=abc".into(),
             "https://example.invalid/repo.git".into(),
         ])
-        .expect_err("sparse:oid must refuse");
+        .expect_err("sparse:oid needs hex oid");
         let s = err.to_string();
         assert!(
-            s.contains("sparse:oid") && s.contains("not claimed"),
+            s.contains("sparse:oid") && (s.contains("40") || s.contains("hex")),
             "unexpected refuse text: {s}"
         );
+    }
+
+    #[test]
+    fn clone_refuses_unclaimed_filter_spec() {
+        let err = cmd_clone(&[
+            "--filter=blob:limit=*".into(),
+            "https://example.invalid/repo.git".into(),
+        ])
+        .expect_err("blob:limit=* must refuse");
+        let s = err.to_string();
+        assert!(s.contains("not claimed"), "unexpected refuse text: {s}");
     }
 
     #[test]
@@ -539,7 +550,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_filter_accepts_object_type_and_combine() {
+    fn parse_filter_accepts_object_type_combine_and_sparse_oid() {
         assert_eq!(
             parse_filter("object:type=blob").unwrap(),
             "object:type=blob"
@@ -551,6 +562,12 @@ mod tests {
         assert_eq!(
             parse_filter("combine:object:type=blob+blob:limit=1k").unwrap(),
             "combine:object:type=blob+blob:limit=1k"
+        );
+        let sparse = format!("sparse:oid={}", "a".repeat(40));
+        assert_eq!(parse_filter(&sparse).unwrap(), sparse);
+        assert_eq!(
+            parse_filter(&format!("combine:blob:none+{sparse}")).unwrap(),
+            format!("combine:blob:none+{sparse}")
         );
         assert!(parse_filter("combine:blob:none+sparse:oid=x").is_err());
         assert!(parse_filter("object:type=widget").is_err());

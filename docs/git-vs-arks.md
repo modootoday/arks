@@ -42,7 +42,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | Interactive (`rebase -i`, `add -p`/`-i`/`-e`, `stash -p`, editor commit) | Yes | TTY + hunk `-p`, `-i` menu, `-e`, `stash -p` (**FS1/FS3**); scripted env retained | **Claimed** (FS1 / FS3) |
 | `proc-receive` (server) | Yes | Advertise when hook present; divert; ok/ng + rewrite; concurrent lock (**FS2/FS8**) | **Claimed** (FS2 / FS8 closest) |
 | GUI (`gitk`, `git-gui`) | Separate tools | External handoff refuse (**FS7**) | **Claimed** (handoff) |
-| Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push|lock|locks|unlock` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT + **locks**; tus/S3 handoff; other argv → `git-lfs`; `scalar` refuse | **Claimed** (locks G4; tus/S3 Partial) |
+| Git LFS / `scalar` | Companion tools | In-process `arks lfs fetch|pull|push|lock|locks|unlock` + checkout smudge via batch/basic; `serve-http` `info/lfs` batch+GET/PUT + **locks** + `locks/verify`; non-basic/tus/S3 → `git-lfs` handoff; `scalar` refuse | **Claimed** (locks G4; tus/S3 handoff) |
 | `replace` / `--bundle-uri` | Yes | `arks replace`; local + **HTTP(S)** bundle seed (**FS5**); server v2 **`bundle-uri` advertise** (**G3**) | **Claimed** (FS5 / NET-006 / G3) |
 | Object integrity / sha256 repos | Yes (sha1 + sha256) | `fsck` OidMismatch refuse + **sha1cd detect+refuse** (**OBJ-004**); `init --object-format=sha256` porcelain e2e | **Claimed** (detect+refuse) / **Impossible** (crypto immunity) |
 | Cloud sync on `.git` / OneDrive placeholders | Host hazard | `arks host-env` DriveFS/OneDrive/Dropbox/Syncthing **detect + opt-in refuse**; CfAPI `RECALL_ON_DATA_ACCESS` detect; FS-014 LSM detect | **Claimed(advisory+refuse)** detect (FS-007 / WIN-003 / FS-014); full sync / hydration / LSM bypass **Impossible** |
@@ -56,10 +56,10 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 | SSH clone/fetch/push (OpenSSH helper) | Yes | Yes | **Claimed** |
 | Client `git://` | Yes | Yes | **Claimed** (host wire; ladder L2) |
 | Dumb HTTP push (WebDAV write subset) | Yes (peer-dependent) | Yes (LOCK/MKCOL/PUT/MOVE/DELETE; `:<ref>` delete); Apache `mod_dav` twin **G41** | **Claimed** (host wire; L3 + S3 + O4 G41) |
-| `push --force-with-lease` / `--push-option` | Yes | Yes on smart pack (lease + options→hooks); not on dumb | **Claimed** (O4 host wire) |
+| `push --force-with-lease` / `--push-option` | Yes | Smart pack lease + options→hooks; dumb lease = CAS-under-LOCK; options smart-only | **Claimed** (O4 + dumb CAS) |
 | Server smart HTTP / dumb / SSH stdio / `git://` daemon | Yes | Claimed server subset | **Claimed** (M11 / M25 G29–G32) |
 | `--depth` shallow clone/fetch | Yes | Yes on pack transports | **Claimed** (G35) |
-| Partial-clone filters / promisor | Yes | `blob:none`, `tree:0`, `tree:<n>`, `blob:limit=<n>[kmg]`, `object:type=…`, `combine:` of Claimed children (**FS4 + G6**); `sparse:oid` refuse | **Claimed** (R3 / S1 / O2 / FS4 / G6) |
+| Partial-clone filters / promisor | Yes | `blob:none`, `tree:0`, `tree:<n>`, `blob:limit=<n>[kmg]`, `object:type=…`, `combine:` of Claimed children, `sparse:oid=<hex>` (**FS4 + G6 + sparse:oid**) | **Claimed** (R3 / S1 / O2 / FS4 / G6) |
 | Forge Checks / merge-queue / Issues UX | Host APIs | Not a git CLI feature — use `gh` | **Impossible** (documented) |
 | Forge OAuth browser UX | Via helpers | External `credential.helper` MAY speak OAuth; no in-arks browser UX | **Claimed** (helper honor) / **Impossible** (embedded OAuth) |
 

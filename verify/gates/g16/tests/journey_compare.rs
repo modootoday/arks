@@ -88,24 +88,17 @@ fn pin_env(cmd: &mut Command) {
 
 fn peer_command(peer: &str, bin: &Path, shim_dir: Option<&Path>) -> Command {
     if peer == "alias" {
-        // G7 PATH/`exec` cut: invoke the hard-copied shim by absolute path
-        // (documented preferred PATH-shim install) instead of PATH search of
-        // `git` — removes argv/PATH lookup tax while keeping a real `git`-named
-        // binary. Cite: docs/alias-git-arks.md + sot:root/pf5-journey-seed-amortization.
+        // G7+ hardlink/`exec` cut: invoke the `git`-named shim by absolute path
+        // (preferred PATH-shim install). Do **not** rewrite PATH on each spawn —
+        // absolute exec already selects the shim; PATH mutation was residual
+        // process-tax vs direct `arks`. Cite: docs/alias-git-arks.md +
+        // sot:root/pf5-journey-seed-amortization.
         let shim = shim_dir.expect("alias needs shim");
         #[cfg(windows)]
         let git_bin = shim.join("git.cmd");
         #[cfg(not(windows))]
         let git_bin = shim.join("git");
-        let path = format!(
-            "{}{}{}",
-            shim.display(),
-            if cfg!(windows) { ";" } else { ":" },
-            std::env::var("PATH").unwrap_or_default()
-        );
-        let mut c = Command::new(&git_bin);
-        c.env("PATH", path);
-        c
+        Command::new(&git_bin)
     } else if peer == "arks" {
         Command::new(bin)
     } else {
@@ -273,12 +266,15 @@ fn write_git_shim(dir: &Path, arks: &Path) -> PathBuf {
     }
     #[cfg(not(windows))]
     {
-        // Hard-copy the release binary as `git` so PATH argv has zero shell hop
-        // (symlink can fail across Docker bind-mount/tmpfs; script fallback
-        // added multi-ms per spawn and broke J-ALIAS-01 G19). M17 Pf3-2.
+        // Prefer hard link to the release `arks` binary as `git` (same inode /
+        // text pages; documented preferred install). Fall back to byte copy when
+        // link crosses devices (bind-mount/tmpfs). Symlink/script hop rejected:
+        // multi-ms/spawn broke J-ALIAS-01 G19. Cite: docs/alias-git-arks.md.
         let link = shim_dir.join("git");
         let _ = fs::remove_file(&link);
-        fs::copy(arks, &link).unwrap();
+        if fs::hard_link(arks, &link).is_err() {
+            fs::copy(arks, &link).unwrap();
+        }
         use std::os::unix::fs::PermissionsExt;
         let mut perms = fs::metadata(&link).unwrap().permissions();
         perms.set_mode(0o755);

@@ -13,7 +13,10 @@
 //! <https://git-scm.com/docs/gitprotocol-http>,
 //! <https://git-scm.com/docs/git-http-push>
 
-use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
+use crate::advertise::{
+    Advertisement, cap_advertised, content_type_is, ensure_remote_object_format,
+    parse_advertisement,
+};
 use crate::error::RemoteError;
 use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::http::UreqTransport;
@@ -182,11 +185,8 @@ pub(crate) fn push_with<T: Transport>(
                 "push --push-option is not claimed on dumb HTTP (pack-protocol only)".into(),
             ));
         }
-        if updates.iter().any(|u| u.expected_old.is_some()) {
-            return Err(RemoteError::NotImplemented(
-                "push --force-with-lease is not claimed on dumb HTTP (smart pack only)".into(),
-            ));
-        }
+        // Dumb force-with-lease: CAS under exclusive WebDAV LOCK (re-GET tip
+        // before PUT). Smart-pack lease remains the primary Claimed path.
         return crate::dumb::push_dumb_with(transport, repo, url, updates, &info.body);
     }
     if !content_type_is(
@@ -198,6 +198,7 @@ pub(crate) fn push_with<T: Transport>(
         ));
     }
     let ad = parse_advertisement(&info.body, "git-receive-pack")?;
+    ensure_remote_object_format(repo, &ad)?;
     let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
     if skip {
         return Ok(());

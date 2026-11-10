@@ -202,6 +202,7 @@ pub fn lfs_batch_download(repo: &Repository, ptr: &LfsPointer) -> Result<Vec<u8>
             resp.status
         )));
     }
+    refuse_non_basic_transfer(&resp.body)?;
     let href = extract_download_href(&resp.body)
         .ok_or_else(|| RemoteError::Msg("lfs batch: missing actions.download.href".into()))?;
     let headers = extract_download_headers(&resp.body);
@@ -283,6 +284,7 @@ pub fn lfs_batch_upload(
             resp.status
         )));
     }
+    refuse_non_basic_transfer(&resp.body)?;
     // Already present on server → no actions.upload
     let Some(href) = extract_upload_href(&resp.body) else {
         return Ok(());
@@ -308,6 +310,74 @@ pub fn lfs_batch_upload(
         )));
     }
     Ok(())
+}
+
+/// Claimed-closest: in-process path is batch/`basic` only. tus / custom /
+/// S3-redirect transfers hand off to external `git-lfs` (no fake multi-tenant).
+fn refuse_non_basic_transfer(body: &[u8]) -> Result<(), RemoteError> {
+    let Ok(text) = std::str::from_utf8(body) else {
+        return Ok(());
+    };
+    // When the server names a transfer, it must be basic for this slice.
+    if let Some(i) = text.find("\"transfer\"") {
+        let rest = &text[i + "\"transfer\"".len()..];
+        if let Some(colon) = rest.find(':') {
+            let mut v = rest[colon + 1..].trim_start();
+            if v.starts_with('"') {
+                v = &v[1..];
+                if let Some(end) = v.find('"') {
+                    let name = &v[..end];
+                    if !name.eq_ignore_ascii_case("basic") {
+                        return Err(RemoteError::NotImplemented(format!(
+                            "lfs: transfer '{name}' not claimed in-process (basic only); hand off to git-lfs for tus/custom/S3 agents"
+                        )));
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// POST `…/locks/verify` (G4 deepen — Claimed-closest pre-push lock check).
+pub fn lfs_locks_verify(repo: &Repository) -> Result<(Vec<LfsLock>, Vec<LfsLock>), RemoteError> {
+    let endpoint = discover_lfs_endpoint(repo)?
+        .ok_or_else(|| RemoteError::Msg("lfs: no endpoint for locks/verify".into()))?;
+    let url = format!("{endpoint}/locks/verify");
+    let mut transport = UreqTransport::new();
+    let resp = transport.exchange(&HttpRequest {
+        method: "POST".into(),
+        url,
+        headers: vec![
+            ("Accept".into(), "application/vnd.git-lfs+json".into()),
+            ("Content-Type".into(), "application/vnd.git-lfs+json".into()),
+        ],
+        body: b"{}".to_vec(),
+    })?;
+    if resp.status != 200 {
+        return Err(RemoteError::Msg(format!(
+            "lfs locks/verify HTTP {}",
+            resp.status
+        )));
+    }
+    let text = std::str::from_utf8(&resp.body).unwrap_or("");
+    let ours = scrape_locks_section(text, "ours");
+    let theirs = scrape_locks_section(text, "theirs");
+    Ok((ours, theirs))
+}
+
+fn scrape_locks_section(text: &str, key: &str) -> Vec<LfsLock> {
+    let needle = format!("\"{key}\"");
+    let Some(i) = text.find(&needle) else {
+        return Vec::new();
+    };
+    let rest = &text[i..];
+    let Some(bracket) = rest.find('[') else {
+        return Vec::new();
+    };
+    let after = &rest[bracket..];
+    let end = after.find(']').map(|i| i + 1).unwrap_or(after.len());
+    parse_locks_array(&after.as_bytes()[..end])
 }
 
 fn extract_download_href(body: &[u8]) -> Option<String> {
@@ -496,5 +566,12 @@ mod tests {
             extract_download_href(body).as_deref(),
             Some("http://127.0.0.1/x")
         );
+    }
+
+    #[test]
+    fn refuse_tus_transfer_named_in_batch() {
+        let body = br#"{"transfer":"tus","objects":[]}"#;
+        let err = refuse_non_basic_transfer(body).unwrap_err().to_string();
+        assert!(err.contains("tus") && err.contains("git-lfs"), "{err}");
     }
 }

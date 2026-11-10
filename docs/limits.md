@@ -41,7 +41,7 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ### Partial clone / dumb push?
 
-`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`). Partial-clone `--filter=blob:none`, `--filter=tree:0`, FS4 `tree:<n>` / `blob:limit`, and G6 `object:type` / `combine:` of Claimed children (promisor + `extensions.partialClone`) are claimed on those pack transports; `sparse:oid` and other unclaimed exotic specs remain refused. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE/DELETE) when receive-pack discovery is dumb, including empty-refspec deletes (`push :<ref>`), with stock Apache `mod_dav` interop **Claimed (G41)**. Smart-pack `push --force-with-lease` and `--push-option` are claimed; lease on dumb HTTP is not.
+`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`). Partial-clone `--filter=blob:none`, `--filter=tree:0`, FS4 `tree:<n>` / `blob:limit`, G6 `object:type` / `combine:`, and `sparse:oid=<hex>` (promisor + `extensions.partialClone`) are claimed on those pack transports; `blob:limit=*` and other unlisted exotic specs remain refused. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE/DELETE) when receive-pack discovery is dumb, including empty-refspec deletes (`push :<ref>`), with stock Apache `mod_dav` interop **Claimed (G41)**. Smart-pack `push --force-with-lease` and `--push-option` are claimed; dumb HTTP lease is a **CAS-over-DAV** subset (LOCK + re-GET tip) — `--push-option` stays smart-only. Mixed sha1↔sha256 remotes refuse fail-closed (no OID rewrite).
 
 ### Commit and tag signing?
 

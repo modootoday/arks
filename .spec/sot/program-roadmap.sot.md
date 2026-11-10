@@ -129,17 +129,17 @@ Carrying tip class ≥ `1770102` + gap-classification research [[research:root/2
 | Full Symmetry **FS0–FS_final** (git feature DoD) | **Done** | Claimed rows have receipts; no casual N/A for real git features |
 | Catalog Deferred=0 / residual §F terminal | **Done** | No bare development Opens |
 | G19 M17 ≤0.8× (19 journeys) | **Done** | **19/19** measured; N/A-free on tip remasure |
-| Pf5 / G19 aggressive ≤0.5× umbrella | **Partial** | G7 sole G19 [[evidence:root/20261111025200]]: claimed=18 + ALIAS `aggressive_na` **0.5489** (PATH/`exec` absolute-shim); REVERT **0.4943 Claimed**; M17 **19/19**; **no stampede** |
+| Pf5 / G19 aggressive ≤0.5× umbrella | **Claimed 19/19** | Sole G19 [[evidence:root/20261111032000]]: ALIAS **0.4926 Claimed** (hardlink + no PATH rewrite); REVERT **0.4227**; M17 **19/19**; prior G7 aggressive_na archival [[evidence:root/20261111025200]] |
 | OBJ-004 sha1cd **detect+refuse** | **Done** | Claimed; absolute collision **immunity** stays Non-goal / Impossible |
 | FS-007 / WIN-003 host-env | **Partial→Claimed(advisory+opt-in refuse)** | Detect + `ARKS_HOST_ENV_REFUSE_SYNC` / `--refuse-sync`; full sync / hydration = Non-goal |
 | FS-014 SELinux/AppArmor | **Partial→Claimed(detect+errno)** | Sysfs LSM detect + honesty; bypass Impossible |
 | G8 / G28 live harness | **Done** (ops) | Default-on when secrets; live-private G28 Claimed with receipts |
-| Live G8 **latency SLO** remasure | **Blocked** (**G1 Done-as-honesty**) | Secrets hard-block — [[evidence:root/20261111025000]] `g8-live` **total_count=0**; local-forge wire ≠ live PASS |
+| Live G8 **latency SLO** remasure | **Blocked** (**G1 Done-as-honesty**) | Secrets hard-block — [[evidence:root/20261111032001]] / [[evidence:root/20261111025000]] `g8-live` **total_count=0**; local-forge wire ≠ live PASS |
 | **L9** crates.io / docs.rs timing | **Blocked** (**G2 Done-as-honesty**) | Owner policy; reopen pack refreshed; no unauthorized publish |
 | Server `bundle-uri` advertise | **Claimed** (**G3**) | Protocol v2 advertise + command [[evidence:root/20261111025300]]; CDN SLOs separate |
-| LFS locks subset | **Claimed** (**G4**) | `/locks` + client/CLI; tus/S3 still handoff/Partial |
+| LFS locks subset | **Claimed** (**G4**) | `/locks` + `locks/verify` + client/CLI; tus/S3 Claimed-closest handoff |
 | Forge Checks / PR / OAuth UX | **Partial (Claimed-closest thin-wrap)** (**G5 Done**) | Recipe deepen; full forge host UX Non-goal |
-| Exotic filters `object:type` / `combine:` | **Claimed** (**G6**) | Parse/gate Claimed; `sparse:oid` Hold |
+| Exotic filters `object:type` / `combine:` / `sparse:oid=<hex>` | **Claimed** (**G6** + sparse:oid) | Parse/gate Claimed; [[adr:root/20261111031600]] |
 | Absolute SHA-1 collision immunity | **Non-goal / Hold forever** | Crypto Impossible; detect+refuse is the Claimed bar |
 | Full multi-device cloud-sync / hydration / LSM bypass | **Non-goal / Hold forever** | Advisory only |
 | CELIR ObjectStore / “faster than Git” / multi-writer warranty / GUI·scalar embed | **Hold forever** | Do not fake Claimed |
@@ -154,16 +154,15 @@ Carrying tip class ≥ `1770102` + gap-classification research [[research:root/2
 | **G3** Server `bundle-uri` | **Claimed** | [[evidence:root/20261111025300]] |
 | **G4** LFS locks | **Claimed** | locks subset; tus/S3 handoff |
 | **G5** Forge recipe | **Claimed-closest** | Recipe deepen only |
-| **G6** Exotic filters | **Claimed** | `object:type` → `combine:`; `sparse:oid` Hold |
-| **G7** Pf5 ALIAS PATH/`exec` | **Done (partial)** | One sole G19 [[evidence:root/20261111025200]]; ALIAS `aggressive_na` **0.5489** |
+| **G6** Exotic filters | **Claimed** | `object:type` → `combine:` + `sparse:oid=<hex>` |
+| **G7** Pf5 ALIAS PATH/`exec` | **Claimed** | Sole G19 [[evidence:root/20261111032000]] ALIAS **0.4926**; hardlink cut [[adr:root/20261111031600]] |
 | **G_final** Currency | **Done** | Tip + docs + residual + evidence aligned |
 
 **Next milestones (post-G-ladder — not M27 invent):**
 
-1. **Ops — Live G8 latency** — owner fills `g8-live` secrets → remasure (G1 honesty Blocked until then).
+1. **Ops — Live G8 latency** — owner fills `g8-live` secrets → remasure (G1 honesty Blocked until then; re-probe [[evidence:root/20261111032001]]).
 2. **L9** — owner SoT reopen pack only; no agent publish.
-3. **Pf5 ALIAS** — keep `aggressive_na` **0.5489**; forbid G19 stampede (G7 closed partial).
-4. **Hold forever** — immunity / ObjectStore / blanket faster / multi-writer warranty / GUI·scalar embed unchanged.
+3. **Hold forever** — immunity / ObjectStore / blanket faster / multi-writer warranty / GUI·scalar embed unchanged.
 
 Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]]. External-deps still-blocked options: [[research:root/20261111012840]]. Gap classification: [[research:root/20261111022345]]. G-ladder plan + directive: [[plan:root/20261111024440]], [[plan:root/20261111024441]].
 
