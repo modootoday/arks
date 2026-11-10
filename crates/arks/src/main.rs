@@ -15,7 +15,6 @@ use error::{CliError, CliResult};
 use std::env;
 use std::process::ExitCode;
 
-
 const HELP: &str = "\
 arks — Wave L+H+Pa+Pb+Pc + Sv
 
