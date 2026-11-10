@@ -277,7 +277,11 @@ fn receive_post_receive_runs_after_success() {
 fn v2_advertises_and_serves_bundle_uri() {
     let dir = TempDir::new().unwrap();
     let (git, _) = seed_bare(dir.path());
-    std::fs::write(git.join("arks-bundle-uris"), "https://example.test/seed.bundle\n").unwrap();
+    std::fs::write(
+        git.join("arks-bundle-uris"),
+        "https://example.test/seed.bundle\n",
+    )
+    .unwrap();
     let lines = v2_capability_lines();
     assert!(
         lines.iter().any(|l| l == "bundle-uri"),

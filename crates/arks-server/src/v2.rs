@@ -157,8 +157,8 @@ fn ls_refs(repo: &Repository, args: &[String]) -> Result<Vec<u8>, ServerError> {
 /// `$GIT_DIR/config` keys `bundle.<id>.uri`. Empty config still returns
 /// `bundle.version=1` so advertise honesty stays Claimable without inventing CDN SLOs.
 fn bundle_uri_command(repo: &Repository) -> Result<Vec<u8>, ServerError> {
-    let mut out = encode_text_line("bundle.version=1")
-        .map_err(|e| ServerError::Protocol(e.to_string()))?;
+    let mut out =
+        encode_text_line("bundle.version=1").map_err(|e| ServerError::Protocol(e.to_string()))?;
     out.extend(
         encode_text_line("bundle.mode=all").map_err(|e| ServerError::Protocol(e.to_string()))?,
     );
@@ -174,7 +174,10 @@ fn bundle_uri_command(repo: &Repository) -> Result<Vec<u8>, ServerError> {
     let list = repo.git_dir().join("arks-bundle-uris");
     if list.is_file() {
         let text = std::fs::read_to_string(&list).map_err(|e| ServerError::Msg(e.to_string()))?;
-        for uri in text.lines().map(str::trim).filter(|s| !s.is_empty() && !s.starts_with('#'))
+        for uri in text
+            .lines()
+            .map(str::trim)
+            .filter(|s| !s.is_empty() && !s.starts_with('#'))
         {
             n += 1;
             let line = format!("bundle.seed{n}.uri={uri}");

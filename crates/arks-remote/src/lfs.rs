@@ -381,14 +381,12 @@ pub fn lfs_lock_create(repo: &Repository, path: &str) -> Result<LfsLock, RemoteE
             resp.status
         )));
     }
-    parse_lock_from_body(&resp.body).ok_or_else(|| RemoteError::Msg("lfs lock: bad response".into()))
+    parse_lock_from_body(&resp.body)
+        .ok_or_else(|| RemoteError::Msg("lfs lock: bad response".into()))
 }
 
 /// List locks via `GET …/locks` (optional `?path=`).
-pub fn lfs_locks_list(
-    repo: &Repository,
-    path: Option<&str>,
-) -> Result<Vec<LfsLock>, RemoteError> {
+pub fn lfs_locks_list(repo: &Repository, path: Option<&str>) -> Result<Vec<LfsLock>, RemoteError> {
     let endpoint = discover_lfs_endpoint(repo)?
         .ok_or_else(|| RemoteError::Msg("lfs: no endpoint for locks".into()))?;
     let url = match path {
@@ -432,7 +430,8 @@ pub fn lfs_lock_unlock(repo: &Repository, id: &str) -> Result<LfsLock, RemoteErr
             resp.status
         )));
     }
-    parse_lock_from_body(&resp.body).ok_or_else(|| RemoteError::Msg("lfs unlock: bad response".into()))
+    parse_lock_from_body(&resp.body)
+        .ok_or_else(|| RemoteError::Msg("lfs unlock: bad response".into()))
 }
 
 fn parse_lock_from_body(body: &[u8]) -> Option<LfsLock> {

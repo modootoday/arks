@@ -540,7 +540,10 @@ mod tests {
 
     #[test]
     fn parse_filter_accepts_object_type_and_combine() {
-        assert_eq!(parse_filter("object:type=blob").unwrap(), "object:type=blob");
+        assert_eq!(
+            parse_filter("object:type=blob").unwrap(),
+            "object:type=blob"
+        );
         assert_eq!(
             parse_filter("combine:blob:none+tree:0").unwrap(),
             "combine:blob:none+tree:0"
