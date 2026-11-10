@@ -85,11 +85,27 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 
 ## Product-completion DoD (ladder)
 
+### Historical (L0–L_final) — Done
+
 1. **L8** — **Done**: clean-room Docker suite `g14`→`g16`→`g20`→`g21` PASS (see [matrix-l8-e2e](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-l8-e2e.md)).
 2. **L_final** — **Done**: this comparison matrix ships on Pages; keep honest against Specfold residuals (never invent Claimed).
 3. **L9** — Remains closed owner policy unless the owner opens it.
 
-See the ladder research in-tree: [product-completion-goal-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110095142-product-completion-goal-ladder.research.md). Limits summary: [Limits](../limits/).
+### Expanded symmetry DoD (S0–S_final) — active
+
+| Goal | Focus | Status |
+|------|-------|--------|
+| **S0** | Inventory lock (implement / SoT-amend / still-OOS) | **Done** |
+| **S1** | R3 filter / promisor | Next (SoT amend before Claimed) |
+| **S2** | R4 OpenPGP / X.509 / `tag -s` | Open |
+| **S3** | Protocol narrows (e.g. dumb HTTP deletes) | Open |
+| **S4** | Interactive / patch flows or honest defer | Open |
+| **S5** | R5 live forge (secrets) or documented block | Open |
+| **S6** | Symmetry e2e matrix (git vs arks) | Open |
+| **S7** | Refresh this table + residual register | Open |
+| **S_final** | Expanded DoD met; **L9** still closed | Open |
+
+See: [symmetry ladder S0–S_final](https://github.com/modootoday/arks/blob/main/.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md) · historical [L-ladder](https://github.com/modootoday/arks/blob/main/.spec/research/20261110095142-product-completion-goal-ladder.research.md). Limits: [Limits](../limits/).
 
 ## Next
 

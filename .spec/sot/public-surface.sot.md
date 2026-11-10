@@ -3,7 +3,7 @@ id: sot:root/public-surface
 title: Public surface
 status: active
 created: 2026-11-08T08:32:38Z
-updated: 2026-11-10T19:45:00Z
+updated: 2026-11-10T10:54:36Z
 tags: [public, docs, pages, license, security, agents, naming, honesty, alias, dot-git, perf, celir-index, g28, l3]
 verify: manual
 rel:
@@ -167,8 +167,8 @@ Manual:
 | crates.io publish timing | **Closed (owner default)** | Name lock is not a reservation; publish/reserve before relying on exclusivity ([[sot:root/product-naming]]); timing remains operator choice, not a residual Open. Ladder **L9**. |
 | Release-channel ops dry-run (OIDC Environments) | **Done (L4 ops)** | Environments `crates`/`npm`/`pypi`/`rubygems` + `release.yml` dry-run + `docs/release.md`; dry-run ≠ live registry publish PASS ([[research:root/20261110085731]], [[research:root/20261110095142]]). |
 | Forge-scale ops dry-run (secrets-gated G8) | **Done (L5 ops)** | Environment `g8-live` + `g8-forge-scale.yml` dry-run + `docs/forge-scale.md`; dry-run ≠ live forge latency PASS ([[research:root/20261110095142]]). |
-| Partial-clone filter/promisor residual (R3) | **Done (L6 honest N/A)** | SoT remains `--depth` only ([[sot:root/arks-remote]]); filter/`blob:none`/`tree:0`/promisor stay **N/A**; clone/fetch refuse `--filter`; **≠** partial-clone Claimed/PASS ([[research:root/20261110095142]]). |
-| OpenPGP / X.509 / `tag -s` residual (R4) | **Done (L7 honest N/A)** | FW-GPGSIG stays SSH commit create/verify only ([[sot:root/arks-object]]); OpenPGP / X.509 / `tag -s` / `verify-tag` stay **N/A**; CLI refuses fail-closed; **≠** crypto Claimed/PASS ([[research:root/20261110095142]]). |
+| Partial-clone filter/promisor residual (R3) | **L6 honest N/A**; symmetry **S1** reopen | Until S1 evidence: SoT remains `--depth` only; refuse `--filter`; **≠** Claimed. Active order [[research:root/20261110105436]]. |
+| OpenPGP / X.509 / `tag -s` residual (R4) | **L7 honest N/A**; symmetry **S2** reopen | Until S2 evidence: SSH commit create/verify only; refuse signed-tag / OpenPGP / X.509; **≠** Claimed. Active order [[research:root/20261110105436]]. |
 | Clean-room Docker multi-scenario e2e (L8) | **Done** | Sequential Docker PASS `g14`→`g16`(19/19)→`g20`→`g21` (`verify/matrices/matrix-l8-e2e.md` / `run-l8-e2e.sh`); host CI ≠ Verified; no invent PASS ([[research:root/20261110095142]]). |
 | Git↔arks comparison matrix (L_final) | **Done** | Public `docs/git-vs-arks.md` + nav + Specfold residual/CLI honesty; Claimed/N/A/reopen-only only; never invent Claimed ([[research:root/20261110095142]]). |
 | Whether `docs/` links into raw `.spec/` HTML on GitHub | **Closed (docs policy)** | Allowed as “source of truth on GitHub”; still do not Jekyll-publish full SoT trees by default. |

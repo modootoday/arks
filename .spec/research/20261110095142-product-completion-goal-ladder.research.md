@@ -3,7 +3,7 @@ id: research:root/20261110095142
 title: Product completion goal ladder (post-PF5 8/8)
 status: active
 created: 2026-11-10T09:51:42Z
-updated: 2026-11-10T10:45:00Z
+updated: 2026-11-10T10:54:36Z
 tags:
   [
     product-completion,
@@ -85,6 +85,8 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 ### Execution note (this round)
 
 **L0–L8 + L_final Done.** L8 = clean-room Docker multi-scenario e2e green (`g14`+`g16`+`g20`+`g21`). L_final = honest public comparison (`docs/git-vs-arks.md`). **L9** stays closed owner policy. **R6** pin process-closed. Product-completion ladder DoD met without inventing Claimed/PASS.
+
+**Superseding active order:** expanded git↔arks symmetry DoD is [[research:root/20261110105436]] (**S0–S_final**). This L-ladder remains the historical Done record; do not treat L6/L7 honest-N/A closes as blocking SoT-amend reopens under S1/S2.
 
 ## Verification
 

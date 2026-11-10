@@ -35,7 +35,8 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Product intent | `.spec/sot/product-intent.sot.md` |
 | Program roadmap / production exits (M9 CLI-parity; M11 server; M16 active alias; M17 journeys; M21 Deferred=0; M23 L3 Claimed; M24 CELIR index dual-path; M25 server transports; M26 shared-index) / milestones | `.spec/sot/program-roadmap.sot.md` + `.spec/plan/*-program-milestones*.plan.md` + `.spec/plan/*-m[0-9]-*.plan.md` + `.spec/plan/*-m1[0-7]-*.plan.md` + `.spec/plan/*-m2[0-6]-*.plan.md` |
 | Post-bar residual disposition (no bare development Opens; Deferred=0; §F W1–W5 Claimed honesty) | `.spec/sot/production-residual-register.sot.md` |
-| Product-completion ladder (post-PF5 8/8; L0–L9 beyond R1–R6) | `.spec/research/20261110095142-product-completion-goal-ladder.research.md` |
+| Product-completion ladder (post-PF5 8/8; L0–L9 historical Done; L9 closed) | `.spec/research/20261110095142-product-completion-goal-ladder.research.md` |
+| Git symmetry expanded DoD ladder (S0–S_final; active reopen order) | `.spec/research/20261110105436-git-symmetry-expanded-dod-goal-ladder-s0-s-final.research.md` |
 | Git CLI symmetric compatibility | `.spec/sot/cli-surface.sot.md` |
 | Crate architecture | `.spec/sot/crate-architecture.sot.md` |
 | Native engine vs wrapper; zero-gix end state | `.spec/adr/20261108083507-native-rust-git-engine-versus-wrapper-and-gix.adr.md` |
