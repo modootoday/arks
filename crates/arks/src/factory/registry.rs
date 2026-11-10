@@ -1,8 +1,8 @@
 //! CommandLayer Registry skeleton — personality → exclusive / overlap dispatch.
 //! Cite: `.spec/sot/arks-cli-personality-factory.sot.md`
 //!
-//! Hub / agent / flat-forge bodies are honest Partial stubs (exit 2) in this
-//! skeleton commit; later ladder rows wire real surfaces. Design ≠ Claimed.
+//! Flat forge leaves forward to `arks-hub` Partial stubs (exit 2). Agent remains
+//! an in-tree refuse stub until the agent crate lands. Design ≠ Claimed.
 
 use super::exit_code::{ExitClass, ExitCodePolicy, LayerOutcome};
 use super::git_dispatch::{
@@ -28,8 +28,8 @@ Overlap leaves (status|config|repo) under arks: unified Git + Forge-skip stub;
   --git-only / --forge-only / --porcelain select a single peer.
 
 Flat forge leaves (Partial/stub): pr issue auth release label run workflow
-  search api org … — refuse non-zero until hub wiring commit.
-  Transitional: arks hub … → same stub.
+  search api org … — forward to arks-hub lib (refuse Missing).
+  Transitional: arks hub … → same hub lib.
 
 Serve: arks serve [--no-http|--no-ssh|--no-forge] …  (forge/SSH Missing → fail-closed)
   Transitional: arks serve-http ≡ serve --no-ssh --no-forge
@@ -68,13 +68,13 @@ pub fn dispatch_argv() -> ExitCode {
         return ExitCodePolicy::from_class(ExitClass::StubOrUsage);
     }
 
-    // Transitional HubAliasLayer (stub until hub crate commit).
+    // Transitional HubAliasLayer → arks-hub.
     if cmd == "hub" {
-        return stub_hub_or_agent("hub", &args);
+        return arks_hub::run_from_args(&args);
     }
     // AgentLayer (stub until agent crate commit).
     if cmd == "agent" {
-        return stub_hub_or_agent("agent", &args);
+        return stub_agent(&args);
     }
 
     if cmd == "help" {
@@ -91,9 +91,9 @@ pub fn dispatch_argv() -> ExitCode {
         return dispatch_overlap(personality, &cmd, &args).exit;
     }
 
-    // Exclusive forge leaves (flat) — Partial refuse.
+    // Exclusive forge leaves (flat) → arks-hub Partial stubs.
     if is_exclusive_forge_leaf(&cmd) {
-        return dispatch_forge(personality, &cmd);
+        return dispatch_forge(personality, &cmd, &args);
     }
 
     // Serve tip leaf.
@@ -114,24 +114,22 @@ pub fn dispatch_argv() -> ExitCode {
     run_git_preserving(&cmd, &args)
 }
 
-fn stub_hub_or_agent(layer: &str, args: &[String]) -> ExitCode {
+fn stub_agent(args: &[String]) -> ExitCode {
     if args.first().map(String::as_str) == Some("--help")
         || args.first().map(String::as_str) == Some("-h")
         || args.first().map(String::as_str) == Some("help")
     {
-        eprintln!(
-            "arks {layer}: Partial skeleton stub (not Claimed); wiring lands in a later commit"
-        );
+        eprintln!("arks agent: Partial skeleton stub (not Claimed); agent crate lands later");
         return ExitCode::SUCCESS;
     }
     eprintln!(
-        "error: arks {layer}: Partial stub — refuse (exit 2); design ≠ Claimed \
+        "error: arks agent: Partial stub — refuse (exit 2); design ≠ Claimed \
          ([[sot:root/arks-cli-personality-factory]])"
     );
     ExitCodePolicy::from_class(ExitClass::StubOrUsage)
 }
 
-fn dispatch_forge(personality: Personality, leaf: &str) -> ExitCode {
+fn dispatch_forge(personality: Personality, leaf: &str, args: &[String]) -> ExitCode {
     if personality == Personality::Git {
         eprintln!(
             "error: `{leaf}` is a forge leaf; not available under git personality \
@@ -139,11 +137,10 @@ fn dispatch_forge(personality: Personality, leaf: &str) -> ExitCode {
         );
         return ExitCodePolicy::from_class(ExitClass::StubOrUsage);
     }
-    eprintln!(
-        "error: arks {leaf}: flat forge leaf Partial stub — refuse (exit 2); \
-         hub wiring lands later ([[sot:root/arks-cli-output-exit-contract]])"
-    );
-    ExitCodePolicy::from_class(ExitClass::StubOrUsage)
+    let mut hub_argv = Vec::with_capacity(args.len() + 1);
+    hub_argv.push(leaf.to_string());
+    hub_argv.extend(args.iter().cloned());
+    arks_hub::run_from_args(&hub_argv)
 }
 
 fn run_git_preserving(cmd: &str, args: &[String]) -> ExitCode {

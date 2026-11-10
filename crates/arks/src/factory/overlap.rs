@@ -1,8 +1,7 @@
 //! OverlapFacade — git rank-0 → gh rank-1 parse; unified render; fail-closed exit.
 //! Cite: `.spec/sot/arks-cli-personality-factory.sot.md`
 //!
-//! Forge peer is an honest Partial stub (exit class via ExitCodePolicy) until a
-//! later commit wires `arks-hub`. Design ≠ Claimed.
+//! Forge peer routes through `arks-hub` Partial stubs (ExitCodePolicy). Design ≠ Claimed.
 
 use super::exit_code::LayerOutcome;
 use super::git_dispatch::dispatch_git_leaf;
@@ -62,7 +61,7 @@ pub fn dispatch_overlap(
             outcomes.push(run_git(leaf, &rest));
         }
         PeerMode::ForgeOnly => {
-            outcomes.push(run_forge_stub(leaf));
+            outcomes.push(run_forge(leaf, &rest));
         }
         PeerMode::Unified => {
             // Skeleton honesty: run Git (Claimed paths). Forge unified facet is
@@ -101,10 +100,16 @@ fn run_git(leaf: &str, args: &[String]) -> LayerOutcome {
     }
 }
 
-fn run_forge_stub(leaf: &str) -> LayerOutcome {
-    eprintln!(
-        "error: arks {leaf}: forge peer Partial stub (arks-hub not wired in this commit); \
-         refuse ([[sot:root/arks-cli-output-exit-contract]])"
-    );
-    LayerOutcome::StubOrUsage
+fn run_forge(leaf: &str, args: &[String]) -> LayerOutcome {
+    let mut hub_argv = Vec::with_capacity(args.len() + 1);
+    hub_argv.push(leaf.to_string());
+    hub_argv.extend(args.iter().cloned());
+    let code = arks_hub::run_from_args(&hub_argv);
+    if code == ExitCode::SUCCESS {
+        LayerOutcome::Success
+    } else if code == ExitCode::from(2) {
+        LayerOutcome::StubOrUsage
+    } else {
+        LayerOutcome::Failed
+    }
 }
