@@ -102,8 +102,8 @@ Clean-room Docker verification compared stock Git **2.39.5** to release `arks` o
 
 | Bar | Result | Evidence |
 |-----|--------|----------|
-| ≤0.8× median wall-clock on all journeys | **19/19** | [M17 / G19](.spec/evidence/20261109090000-m17-exit-g19-measured-19/) |
-| Progressive ≤0.5× claim set | **11/19** at M18; PF5 aggressive set **partial 7/8** (CLONE-LOCAL remains N/A) | [M18 / G19](.spec/evidence/20261109143000-m18-pf4-3-g19-exit/), [PF5 7/8](.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8/) |
+| ≤0.8× median wall-clock on all journeys | **19/19** | [G19 @ c1b0b24](.spec/evidence/20261110003836-g19-remeasure-c1b0b24/), [M17 historical](.spec/evidence/20261109090000-m17-exit-g19-measured-19/) |
+| Progressive ≤0.5× claim set | **18/19** measured on latest sole run; PF5 leftover set **partial 7/8** (CLONE-LOCAL remains N/A) | [G19 @ c1b0b24](.spec/evidence/20261110003836-g19-remeasure-c1b0b24/), [PF5 7/8](.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8/), [M18 historical](.spec/evidence/20261109143000-m18-pf4-3-g19-exit/) |
 
 Charts and honesty labels: [docs/performance.md](docs/performance.md). Host-only timings are advisory only.
 

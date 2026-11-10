@@ -1,5 +1,6 @@
-# Clean-room M18 / G19 — arks_median / git_median (lower means arks used less wall-clock).
-# Source: .spec/evidence/20261109143000-m18-pf4-3-g19-exit/
+# Clean-room G19 remeasure at tip c1b0b24 — arks_median / git_median.
+# Source: .spec/evidence/20261110003836-g19-remeasure-c1b0b24/receipt.json
+# Lower means arks used less wall-clock. Clone HTTP remains aggressive_na for ≤0.5×.
 label: Journey
 labels:
   - Local
@@ -23,4 +24,4 @@ labels:
   - Submodule
 series:
   - name: arks / Git
-    values: [0.67, 0.67, 0.50, 0.38, 0.67, 0.56, 0.32, 0.67, 0.58, 0.36, 0.67, 0.29, 0.37, 0.75, 0.50, 0.50, 0.33, 0.34, 0.17]
+    values: [0.41, 0.43, 0.50, 0.28, 0.42, 0.66, 0.42, 0.40, 0.40, 0.33, 0.40, 0.43, 0.46, 0.36, 0.38, 0.50, 0.33, 0.34, 0.16]

@@ -1,11 +1,13 @@
 ---
 title: Limits
 description: What arks does not claim on the public product surface
+nav_order: 70
+schema: {faq: auto}
 sections:
   - scope
   - storage
   - concurrency
-  - partial
+  - {c: faq, name: partial}
   - perf
   - deeper
   - {c: cta, name: next}
@@ -36,14 +38,30 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ## Partial or refused features
 
-| Area | Honesty |
-|------|---------|
-| Partial clone | `--depth` shallow clones may be used; filter / `blob:none` / promisor-style partial clone is not claimed |
-| Signing | SSH create/verify for commit `gpgsig` may be used; OpenPGP, X.509, and `tag -s` are not claimed |
-| Credentials | Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`) may be used; forge OAuth is not claimed |
-| Alias coverage | Unimplemented commands fail closed (non-zero, no repo mutation) |
-| Aggressive ≤0.5× journeys | PF5 **partial 7/8**; CLONE-LOCAL remains outside that aggressive set |
-| Live harnesses | May SKIP without secrets; never invent PASS |
+### Partial clone?
+
+`--depth` shallow clones may be used; filter / `blob:none` / promisor-style partial clone is not claimed.
+
+### Commit and tag signing?
+
+SSH create/verify for commit `gpgsig` may be used; OpenPGP, X.509, and `tag -s` are not claimed.
+
+### Credentials?
+
+Helper / askpass / TTY / first-party OS wallets (`wincred` / `libsecret` / `osxkeychain`) may be used; forge OAuth is not claimed.
+
+### Alias coverage?
+
+Unimplemented commands fail closed (non-zero, no repo mutation). See [Alias `git` → `arks`](../alias-git-arks/).
+
+### Aggressive ≤0.5× journeys?
+
+Latest sole G19 remeasure: most allow-list journeys ≤0.5×; **Clone HTTP** remains **aggressive_na**. See [Performance](../performance/).
+
+
+### Live harnesses?
+
+May SKIP without secrets; never invent PASS.
 
 ## Performance wording
 
