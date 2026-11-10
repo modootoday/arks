@@ -27,22 +27,23 @@ You run the **native** `arks` CLI on your machine. Docker is the verification ve
 - **Venue:** pinned clean-room image; in-image stock Git **2.39.5** vs release-profile `arks`.
 - **Aggregation:** median wall-clock over 3 iterations (`median_p95`).
 - **Ratio:** `arks_median / git_median`. Values below `1.0` mean arks used less wall-clock on that fixture.
-- **Bars:** ≤ **0.8×** on every allow-list journey remains the broad measured bar. ≤ **0.5×** is the aggressive bar; **Clone HTTP** stays **aggressive_na** on the latest sole remeasure (needs product smart-HTTP clone work — not seed tricks).
+- **Bars:** ≤ **0.8×** on every allow-list journey remains the broad measured bar. ≤ **0.5×** is the aggressive bar — **Claimed 8/8** on tip `875359e` (Clone HTTP flipped via product `arks serve-http` + on-disk pack reuse).
 
 Carrying receipts:
 
+- [G19 remasure tip `875359e` — PF5 8/8](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8)
 - [G19 remeasure at tip `c1b0b24`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110003836-g19-remeasure-c1b0b24) — charts below
 - [M18 / G19 exit (historical progressive ≤0.5× set)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109143000-m18-pf4-3-g19-exit)
 - [M17 / G19 full allow-list (19/19 ≤0.8×)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109090000-m17-exit-g19-measured-19)
-- [PF5 aggressive_na amortization notes](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8)
+- [PF5 aggressive_na amortization notes (historical 7/8)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8)
 - Journey catalog notes: [verify/matrices/matrix-journey.md](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-journey.md)
 
 ## Claim bars (honesty)
 
 | Claim | Result | Evidence |
 |-------|--------|----------|
-| Full journey allow-list ≤0.8× | **19/19** measured, N/A-free on latest sole remeasure | [G19 remeasure `c1b0b24`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110003836-g19-remeasure-c1b0b24) |
-| Aggressive ≤0.5× | **18** journeys ≤0.5× on that receipt; **Clone HTTP** remains **aggressive_na** | same receipt · PF5 notes above |
+| Full journey allow-list ≤0.8× | **19/19** measured, N/A-free on latest sole remasure | [PF5 8/8 `875359e`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8) |
+| Aggressive ≤0.5× | **19** journeys ≤0.5× (**Claimed 8/8**; Clone HTTP **0.1875**) | same receipt |
 
 ## Median wall-clock (ms)
 
@@ -50,7 +51,7 @@ Carrying receipts:
 
 ## Ratio (arks / Git)
 
-*Lower ratio = less wall-clock for arks on that clean-room fixture. Clone HTTP ≈ 0.66 and stays outside the aggressive ≤0.5× claim set.*
+*Lower ratio = less wall-clock for arks on that clean-room fixture. Charts below are historical (`c1b0b24`); carrying Clone HTTP ratio is **0.1875** on tip `875359e` ([[evidence:root/20261110131600]]).*
 
 ## Summary
 
