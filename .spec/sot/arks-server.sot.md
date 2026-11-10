@@ -3,8 +3,8 @@ id: sot:root/arks-server
 title: arks-server unit
 status: active
 created: 2026-11-08T23:12:49Z
-updated: 2026-11-10T11:26:00Z
-tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, webdav, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g36, r2, s3]
+updated: 2026-11-10T19:40:00Z
+tags: [m11, m25, unit, server, ring-6, phase-sv, phase-sv2, smart-http, dumb-http, webdav, upload-pack, receive-pack, protocol-v2, git-daemon, ssh, production-server, githooks, http-basic, g36, r2, s3, self-host]
 verify: manual
 rel:
   governs: [crates/arks-server]
@@ -50,11 +50,13 @@ Version **0.3.2**. Unit SoT for Ring 6 Git **server** (`crates/arks-server`) und
 
 **M25 gates:** **G29** dumb HTTP; **G30** SSH command-mode; **G31** protocol v2; **G32** `git://` daemon — each Claimed only with its Docker receipt.
 
+**Product self-host story** (localhost / LAN / WAN using only `arks`, bind vs ops TLS): [[sot:root/arks-self-host-server]] — design intent for hosting e2e; does not rewrite G15/G29–G32 wire receipts.
+
 ## Rule
 
 ### Role
 
-1. **Git server only (A).** upload-pack / receive-pack over claimed transports so **stock Git** can clone/fetch/push. No forge UX / scope (B).
+1. **Git server only (A).** upload-pack / receive-pack over claimed transports so **stock Git** can clone/fetch/push. No forge UX / scope (B). Product **self-host reachability** narrative: [[sot:root/arks-self-host-server]].
 2. **Smart HTTP required.** Production-server MUST claim smart HTTP (`info/refs?service=…` + `POST …/git-upload-pack|git-receive-pack`). Dumb-HTTP-only is **forbidden** as the sole claimed path; dumb HTTP MAY be claimed **additively** beside smart HTTP (M25 / G29).
 3. **Protocol v1 baseline; v2 when claimed.** Advertise/negotiate v1 pack protocol for the claimed subset. Protocol v2 (`ls-refs` + `fetch` subset) MAY be advertised only when implemented and gated (M25 / G31) — never invent caps.
 4. **Inward deps.** MAY depend on `arks-protocol`, `arks-pack`, Rings 0–4. MUST NOT depend on `arks-remote`, `arks-lease`, CELIR, or `gix`. MUST NOT depend on `arks` CLI types (CLI composes this crate).

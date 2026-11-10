@@ -1,6 +1,6 @@
 # English only (top-level)
 
-All authored project text is **English only**. Owning SoT: `.spec/sot/language-english-only.sot.md`.
+All authored project text is **English only**. Chat/coordinator briefings in other languages do not waive this for Specfold or `docs/`. Owning SoT: `.spec/sot/language-english-only.sot.md`.
 
 ## Applies to
 

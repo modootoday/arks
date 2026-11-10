@@ -17,9 +17,10 @@ Normative SoT/plan slice: vocabulary, decision rules, non-coverage — **before*
 1. Brief (problem, constraints, non-goals ≤15 lines).
 2. `spec context <path>`; read owning `.spec/sot` / research; cite primary Git docs for any semantic claim.
 3. Check CELIR/lease boundary (rule `50-celir-boundary`) — do not fold storage invention into Git-compat SoTs.
-4. Draft one SoT: version, scope, MUST/MAY/out-of-scope, verification intent, open decisions.
+4. Draft one SoT: document `Version` (start **0.1.0**), scope, MUST/MAY/out-of-scope, verification intent, open decisions. Mark **design / Partial** until Claimed.
 5. Cross-link related SoTs; do not paste large copyrighted primary text.
-6. `spec check`. Do not implement unless the user also asked for code.
+6. When amending an existing SoT: bump `Version` **only** on normative meaning change (see `.spec/README.md` — SoT version ≠ Cargo/`v*` release). Prefer `updated:` for link/typo/honesty refreshes.
+7. `spec check`. Do not implement unless the user also asked for code.
 
 ## Cite
 

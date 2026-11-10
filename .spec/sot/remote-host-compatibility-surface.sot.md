@@ -20,7 +20,7 @@ Version **0.2.0**. Normative intent for arks interoperability as a Git **remote 
 ### Scope split (normative)
 
 1. **(A) Git wire / remote compatibility** — Speaking documented Git protocols (smart HTTPS, SSH pack/v2, and other claimed transports) so clone/fetch/push interoperate. Covers arks as **client** (any Git remote speaking the claimed protocols) and arks as **server** (stock Git / arks clients speaking those protocols to arks).
-2. **(B) Host product APIs** — GitHub REST/GraphQL (PRs, Checks, Apps, Issues, Actions metadata, etc.). These remain **design-mapped** but **out of** CLI-parity production and **out of** production-server. A later SoT may adopt them; inventing forge semantics is forbidden here.
+2. **(B) Host product APIs** — GitHub REST/GraphQL (PRs, Checks, Apps, Issues, Actions metadata, etc.). **Out of** git alias DoD (M9) and **out of** production-server bar as a required gate. Product home: **`arks hub …`** on the **same** published `arks` binary ([[sot:root/arks-hub-product-intent]], [[sot:root/arks-hub-gh-command-matrix]]) — internal `arks-hub` lib; gh-shaped command group; **native** HTTP client only (never spawn `gh`/`git`); **no** separate hub release. Inventing forge semantics outside cited host docs is forbidden.
 
 ### Client remotes — generic protocols + GitHub-class verify peer
 

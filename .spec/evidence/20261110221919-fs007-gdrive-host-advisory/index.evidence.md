@@ -32,7 +32,7 @@ files:
 
 ## What this proves
 
-Single-host throwaway repo under `G:\내 드라이브\.arks-fs007-probe-*` exercised stock Git lock/rename paths on DriveFS without reparse-point placeholders. Useful for **detect / refuse / harness design**, not for inventing FS-007 Claimed or WIN-003 OneDrive parity.
+Single-host throwaway repo under the host Google Drive root (literal path recorded in `probe-receipt.json`) exercised stock Git lock/rename paths on DriveFS without reparse-point placeholders. Useful for **detect / refuse / harness design**, not for inventing FS-007 Claimed or WIN-003 OneDrive parity.
 
 ## What this does not prove
 

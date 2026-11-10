@@ -204,12 +204,12 @@ KEEP-in-intent: unfinished flags are **Missing**, not permanent Refuse.
 - Historical product narrative may stamp daemon wire via G32 scenarios (export-all clone, marker refuse, receive disabled). **This survey does not re-Claim** and does **not** equate G32 wire subset with full git-daemon option parity.
 - Clean-room ELF under `target-cleanroom/release/arks` was **stale** for `daemon` on this host; tip judgment used sources + host PE + pin Docker git.
 
-## Korean summary table (counts)
+## Summary table (counts)
 
-| 구분 | 개수 |
-|------|-----:|
-| 같다 (Parity) | 3 |
-| 일부만 됨 (Partial) | 5 |
-| 아직 없음 (Missing) | 25 |
-| 일부러 안 함 (Refuse) | 0 |
-| arks만 있음 (arks-only) | 2 |
+| Category | Count |
+|----------|------:|
+| Parity | 3 |
+| Partial | 5 |
+| Missing | 25 |
+| Refuse | 0 |
+| arks-only | 2 |

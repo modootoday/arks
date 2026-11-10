@@ -3,7 +3,7 @@ id: sot:root/cli-git-help-matrix
 title: CLI git-help matrix (canonical)
 status: active
 created: 2026-11-10T19:05:00Z
-updated: 2026-11-10T19:15:00Z
+updated: 2026-11-10T19:20:00Z
 tags: [cli, matrix, git-help, parity, m16, pin-2.39.5, sot]
 verify: manual
 rel:
@@ -22,9 +22,9 @@ rel:
 
 # CLI git-help matrix (canonical)
 
-Version **0.1.0**. **정본 (source of truth)** for pin Git **2.39.5** command inventory vs `arks` product CLI. Machine table: `verify/matrices/cli-git-help-matrix.csv`. Survey method/evidence: [[research:root/20261111034805]], [[evidence:root/20261111034600]]. Daemon flag depth: [[research:root/20261111035226]]. Over-design trim: [[research:root/20261111035700]].
+Version **0.1.0**. **Canon (source of truth)** for pin Git **2.39.5** command inventory vs `arks` product CLI. Machine table: `verify/matrices/cli-git-help-matrix.csv`. Survey method/evidence: [[research:root/20261111034805]], [[evidence:root/20261111034600]]. Daemon flag depth: [[research:root/20261111035226]]. Over-design trim: [[research:root/20261111035700]].
 
-**Pin oracle:** Docker `arks-verify-m1:0.1.0` stock `git version 2.39.5` — `git --list-cmds=main,others,alias` (n=**166**). Host Git is skew-only, not the judge.
+**Pin oracle:** Docker `arks-verify-m1:0.1.0` stock `git version 2.39.5` — `git --list-cmds=main,others,alias` (n=**166**). Host Git is skew-only, not the judge (observed host **`git version 2.56.0.windows.4`** — inventory signal only; pin DoD stays 2.39.5).
 
 ## Rule
 
@@ -44,36 +44,43 @@ Version **0.1.0**. **정본 (source of truth)** for pin Git **2.39.5** command i
 
 Survey baseline (`daf7f8a`): Missing **70** / Partial **60** / Parity-candidate **21** / Refuse **15**.
 
-**Currency after matrix-fill + over-design trim (this tip):**
+**Currency (SoT tip `c297e34` + host-skew refresh — pin inventory Missing=0; flag-depth still Partial):**
 
-| status_now | Count |
+Living CSV includes pin rows + host **2.54/2.56** skew inventory (`format-rev`, `url-parse`, …) as Partial — **not** a pin advance. Normative DoD judge remains clean-room **2.39.5**.
+
+| status_now | Count (living CSV) |
 |------------|------:|
 | Parity-candidate | 21 |
-| Partial | 77 |
-| Missing | **53** |
-| Refuse/N/A | 15 |
+| Partial | **117** |
+| Missing | **0** |
+| Refuse/N/A | **47** |
+| Synonym-wired | 4 |
+| arks-only | 6 |
 
 | arks_target | Count |
 |-------------|------:|
-| must-implement | 147 |
+| must-implement | (Partial + Parity-candidate + remaining Missing must-implement) |
 | synonym→ | 4 (`stage`→`add`, `init-db`→`init`, `fsck-objects`→`fsck`, `whatchanged`→`log`) — **wired** |
-| refuse-with-reason | 15 |
+| refuse-with-reason | **34** (GUI/internal + merge backends + remote helpers + `credential-cache` + `imap-send`/`quiltimport`/`pickaxe`) |
 
-**Landed this round (Missing→Partial):** `apply`, `ls-remote`, `prune`, `prune-packed`, `cherry`, `check-ref-format`, `stripspace`, `mktag`, `mktree`, `diff-files`, `diff-index`, `var`, `patch-id` (+ 4 synonyms).
+**Landed Missing→Partial (cumulative):** prior batch + `bugreport`, `diagnose`, `pack-redundant`, `shell`, `upload-archive` (+ 4 synonyms).
+
+**Refuse honesty:** merge-strategy backends, `remote-*` helpers, `credential-cache`, `imap-send`, `quiltimport`, `pickaxe` (option not cmd).
 
 ## Implementation backlog (remainder Missing → Partial → flag gaps)
 
 1. ~~Synonyms (4)~~ **done**
-2. ~~High-traffic batch above~~ **done (subset)** — still Missing high-value: `merge-file`, `merge-tree`, `show-branch`, `hook`, `credential-store` / `credential-cache`, `unpack-objects`, `verify-pack`, …
-3. **Daemon option gaps** per [[research:root/20261111035226]] (Missing ≈25 flags)
-4. **Remainder Missing** (merge backends, remote helpers, niche ancillary)
-5. **Partial flag depth** — [[sot:root/cli-flag-parity-complete]]
+2. ~~High-traffic / ancillary / remainder Missing~~ **done (Partial subsets)** — pin inventory Missing **0** at tip carrying this slice (`commit-graph`…`subtree` included; flag-depth still Partial)
+3. **Daemon option gaps** per [[research:root/20261111035226]] (was Missing ≈25; living CSV now Missing=0 via Partial+Refuse — deepen Partial→Parity); intent SoT [[sot:root/arks-daemon-product-intent]]
+4. **Partial flag depth** — [[sot:root/cli-flag-parity-complete]]
+5. **DoD pillars** — umbrella [[sot:root/verify-cleanroom-symmetry-matrix]]; compose `dod-cli-matrix` / aliases `run-symmetry-*.sh` (strict via `ARKS_DOD_STRICT=1`)
 
 ## Currency
 
 - Survey CSV: `.spec/evidence/20261111034600-git-arks-cli-help-crosscheck/matrix-pin-git-vs-arks.csv`
 - Living machine matrix: `verify/matrices/cli-git-help-matrix.csv` (update `status_now` when dispatch lands)
-- Align [[sot:root/cli-surface]] / public docs when Missing count drops; do not claim “full CLI” while Missing > 0 without N/A rows.
+- Clean-room DoD umbrella: [[sot:root/verify-cleanroom-symmetry-matrix]] (pillar 1)
+- Align [[sot:root/cli-surface]] / public docs: pin **command** inventory Missing=0 ≠ full man-page flag Claimed (Partial remains). Host Git skew ≠ pin advance.
 
 ## Verification
 

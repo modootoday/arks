@@ -47,6 +47,7 @@ When the corresponding product surface ships, these gates MUST be clean-room aut
 - Git-compat fixture round-trips against stock Git ([[sot:root/git-compat-surface]] Verification intent).
 - GitHub-class remote client smoke / recorded remote regression ([[sot:root/remote-host-compatibility-surface]] test-plan sketch).
 - Lease/concurrency product gates when claimed ([[sot:root/lease-concurrency-intent]]) and CELIR-backed store gates when readiness flips ([[sot:root/storage-celir-boundary]]) — same authority rule; no special host exemption. Core build slices list per-slice acceptance in [[plan:root/20261108082110]].
+- **Public-story symmetry DoD pillars** (git↔arks, git-daemon↔arks daemon, gh↔arks hub + local multi-agent framework) under [[sot:root/verify-cleanroom-symmetry-matrix]] — compose `dod-cli-matrix` / `dod-daemon-matrix` / `dod-hub-matrix` / `dod-symmetry`. Default smoke ≠ Claimed; strict via `ARKS_DOD_STRICT=1` + evidence only.
 
 ### What may run on the host (advisory)
 

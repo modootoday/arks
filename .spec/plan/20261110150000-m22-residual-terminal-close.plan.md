@@ -25,7 +25,7 @@ rel:
 
 ## Goal (binding Done bar)
 
-Unattended close **all remaining arks work after M21** so judgment checklist No/부분 items and residual Closed-deferred rows that are still work items become **terminal**.
+Unattended close **all remaining arks work after M21** so judgment checklist No/Partial items and residual Closed-deferred rows that are still work items become **terminal**.
 
 **SUCCESS** only when all hold:
 
@@ -34,7 +34,7 @@ Unattended close **all remaining arks work after M21** so judgment checklist No/
 3. M18 journey-class leftovers promoted so G19 shows **19/19 ≤0.5×** OR each leftover is **Refuse/N/A with SoT cite** (no silent keep-at-0.8).
 4. Server gaps **SSH / `git://` / dumb HTTP / protocol v2** each terminal: implement+verify OR N/A/Refuse with SoT.
 5. **L3** shipped with clean-room bar OR Refuse-closed ADR remains explicit terminal.
-6. Judgment checklist No/부분 items all terminal.
+6. Judgment checklist No/Partial items all terminal.
 7. `spec check` clean; commit+push each wave.
 
 **FORBIDDEN:** stop because historically Closed-deferred or journey-class documented.
@@ -55,8 +55,8 @@ CELIR excluded. No force-push. No fake greens.
 | Checklist | Prior | Terminal target |
 |-----------|-------|-----------------|
 | Live GitHub smoke (G8) | No (policy deferred) | Unlock SoT + Closed or Refuse ADR |
-| Full git server replace | No / 부분 (smart HTTP only) | Each of SSH/`git://`/dumb/v2 terminal |
-| ≤0.5× journeys | 부분 11/19 | 19/19 or Refuse/N/A cite per leftover |
+| Full git server replace | No / Partial (smart HTTP only) | Each of SSH/`git://`/dumb/v2 terminal |
+| ≤0.5× journeys | Partial 11/19 | 19/19 or Refuse/N/A cite per leftover |
 | L3 HighConcurrency | No (refuse) | Ship+bar OR explicit Refuse ADR terminal |
 | Public-flip / G9 Closed-deferred | deferred work items | Terminal Closed / N/A / Refuse |
 

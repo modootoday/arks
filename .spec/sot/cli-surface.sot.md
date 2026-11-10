@@ -3,8 +3,8 @@ id: sot:root/cli-surface
 title: CLI surface
 status: active
 created: 2026-11-08T08:21:48Z
-updated: 2026-11-11T00:10:00Z
-tags: [cli, porcelain, ux, arks, parity, git-cli, alias, drop-in, server, worktree, submodule, m15, m16, full-symmetric, complete-symmetry, credential]
+updated: 2026-11-10T20:15:00Z
+tags: [cli, porcelain, ux, arks, parity, git-cli, alias, drop-in, server, worktree, submodule, m15, m16, full-symmetric, complete-symmetry, credential, personality]
 verify: manual
 rel:
   depends_on:
@@ -20,6 +20,8 @@ rel:
     - sot:root/cli-flag-parity-m9
     - sot:root/cli-flag-parity-full
     - sot:root/cli-flag-parity-complete
+    - sot:root/arks-cli-personality-factory
+    - sot:root/arks-cli-output-exit-contract
     - plan:root/20261109035335
     - plan:root/20261109043910
     - plan:root/20261109043916
@@ -48,7 +50,7 @@ Version **0.5.0**. Normative **porcelain / plumbing CLI intent** for the `arks` 
 2. **Porcelain composes plumbing.** CLI commands MUST wrap library crates from [[sot:root/crate-architecture]]; they MUST NOT invent on-disk or wire semantics. Format/protocol fidelity is owned by [[sot:root/git-compat-surface]].
 3. **Claims must be explicit.** Docs, `--help`, public narrative, and tests MUST name the **currently claimed** command/flag subset. Advertising a Git-compatible command implies the corresponding git-compat rows **and** the man-page option contract for the pin (below).
 4. **Exit and messaging.** Non-zero exit on failure. Prefer clear refuse messages for unimplemented surface. Exact stderr string identity with stock Git is **not** required unless a clean-room gate explicitly asserts it; on-disk / exit-code / documented behavioral outcomes **are** required for claimed parity.
-5. **No forge UX in CLI-parity production.** GitHub PR/Checks/Apps UX remains out of the `arks` binary ([[sot:root/remote-host-compatibility-surface]] scope (B)). Optional companion: [[sot:root/arks-hub-product-intent]] / [[sot:root/arks-hub-cli-surface]] (`arks-hub` — native API client; never `gh`/`git` subprocess).
+5. **Forge UX is not part of git alias DoD.** GitHub PR/Checks/Apps UX is remote-host scope (B), exposed as **flat forge leaves** (and transitional **`arks hub …`**) on the **same** published binary ([[sot:root/arks-hub-product-intent]] / [[sot:root/arks-hub-cli-surface]] / [[sot:root/arks-hub-gh-command-matrix]] — internal `arks-hub` lib; native API; never `gh`/`git` subprocess; **no** separate hub release). **LLM review / CEV bots** are likewise **not** part of git alias DoD — exposed as **`arks agent …`** ([[sot:root/arks-agent-product-intent]] / [[sot:root/arks-agent-cli-surface]]; internal `arks-agent`; never `gh`/`git` subprocess; **no** separate agent release). **Personality dispatch**, overlap unified I/O/exit, and CommandLayer factory: [[sot:root/arks-cli-personality-factory]] (**design / Partial** — not Claimed). Normative stdout/stderr/exit **classes**: [[sot:root/arks-cli-output-exit-contract]]. CI drop-in SHOULD use personality `git` / `gh`; bare `arks` unified overlap is not the CI drop-in path unless single-peer flags are set.
 
 ### Git CLI symmetric compatibility (definition)
 
@@ -91,7 +93,8 @@ These remain **out of the default parity inventory** unless a future SoT amendme
 | GUI / browser tools (`gitk`, `git-gui`, `git-citool`, and similar) | Not CLI replacement surface | git(1) porcelain list; product non-goal |
 | `scalar` | Separate suite / managing large repos; not required for CLI symmetry bar | git(1) |
 | **Git LFS** (`git-lfs` and LFS-aware porcelain) | Separate project; not core Git builtins | defer; claim only with dedicated SoT |
-| Host product APIs (PRs/Checks/Apps) | Remote-host scope (B); optional `arks-hub` | [[sot:root/remote-host-compatibility-surface]], [[sot:root/arks-hub-product-intent]] |
+| Host product APIs (PRs/Checks/Apps) | Remote-host scope (B); `arks hub …` (same binary) | [[sot:root/remote-host-compatibility-surface]], [[sot:root/arks-hub-product-intent]] |
+| LLM review / CEV bots | Explicit extension; `arks agent …` (same binary); not Git man-page inventory | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-cli-surface]] |
 | Forge / GitHub App **as** arks server UX | Not CLI-parity; not production-server | [[sot:root/remote-host-compatibility-surface]] |
 | Lease admin UX / high-concurrency product valves | **Not** Git man-page inventory. Leases = **default product capability** (ships M10); high-concurrency = **opt-in selectable** product mode — exact CLI/config flags owned by [[sot:root/lease-concurrency-intent]], not this parity inventory | [[sot:root/lease-concurrency-intent]], [[sot:root/program-roadmap]] |
 | CELIR admin UX | **Cancelled / non-product** | [[sot:root/storage-celir-boundary]] |
@@ -185,9 +188,10 @@ Server plumbing is an **in-scope product goal** under [[sot:root/remote-host-com
 | `arks upload-pack` | Serve fetch/clone (upload-pack) | gitprotocol-pack duplex stdio (SSH command-mode / local); HTTP ads via serve-http; v2 when G31 Claimed |
 | `arks receive-pack` | Serve push (receive-pack) | report-status (v1); githooks honor list `pre-receive` / `update` / `post-receive` — [[sot:root/arks-server]] |
 | `arks http-backend` | Smart (+ dumb) HTTP CGI/service adapter | gitprotocol-http; git-http-backend |
-| `arks serve-http` | Loopback HTTP listener | Smart HTTP required; dumb GETs when G29 Claimed; optional `--basic-auth` / `ARKS_HTTP_BASIC` (G36) |
+| `arks serve` | GitHub-class self-host umbrella (default HTTP+SSH+forge API) | Prefer `--no-http`/`--no-ssh`/`--no-forge` opt-outs; `serve config` nested; SSH + forge-in-serve Partial/fail-closed until Claimed ([[sot:root/arks-self-host-server]]); HTTP smart+dumb + Basic (G36) |
+| `arks serve-http` | Transitional HTTP-git spelling | Prefer ≡ `arks serve --no-ssh --no-forge`; not a permanent MUST alias |
 | `arks update-server-info` | Refresh dumb HTTP advertisements | [git-update-server-info](https://git-scm.com/docs/git-update-server-info); G29 |
-| `arks daemon` | `git://` TCP daemon | [git-daemon](https://git-scm.com/docs/git-daemon); Claimed on G32 |
+| `arks daemon` | `git://` TCP daemon | [git-daemon](https://git-scm.com/docs/git-daemon); internal crate `arks-daemon` ([[sot:root/arks-daemon-product-intent]]); Claimed on G32; **not** a separate release bin |
 
 Refuse unimplemented server transports/options; never advertise unimplemented capabilities on the wire.
 

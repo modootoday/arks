@@ -3,8 +3,8 @@ id: sot:root/product-intent
 title: Product intent
 status: active
 created: 2026-11-08T08:21:10Z
-updated: 2026-11-11T00:25:00Z
-tags: [product, intent, bottom-up, core, engine, concurrency, cli-parity, alias, dot-git, server, lease]
+updated: 2026-11-10T19:40:00Z
+tags: [product, intent, bottom-up, core, engine, concurrency, cli-parity, alias, dot-git, server, lease, single-release, arks-hub, arks-daemon, arks-agent, self-host]
 verify: manual
 rel:
   depends_on: [sot:root/product-naming, sot:root/git-compat-surface, sot:root/cli-surface, sot:root/remote-host-compatibility-surface, sot:root/product-verification-clean-room, sot:root/program-roadmap, adr:root/20261108083507]
@@ -13,9 +13,11 @@ rel:
 
 # Product intent
 
-Version **0.4.2**. Normative **product goals, non-goals, and success criteria** for **arks** (`arks for Git`; working expansion **Agent Revision Kinetic System** per [[sot:root/product-naming]]). Naming lock: [[sot:root/product-naming]]. Compatibility surfaces: [[sot:root/git-compat-surface]] (formats/protocols / **same `.git` layout**), [[sot:root/cli-surface]] (**Git CLI symmetric compatibility** + **`git`→`arks` alias drop-in**), [[sot:root/remote-host-compatibility-surface]] (**generic remote client** + **Git server role**). Verification authority: [[sot:root/product-verification-clean-room]]. Production exits: [[sot:root/program-roadmap]] (**M9** CLI-parity client; **M11** production-server). Native-engine architecture (hot-path in-house; zero-`gix` end state): [[adr:root/20261108083507]]. Multi-agent concurrency / allocator intent research: [[research:root/20261108083502]]. CLI-parity research: [[research:root/20261108183800]].
+Version **0.5.0**. Normative **product goals, non-goals, and success criteria** for **arks** (`arks for Git`; working expansion **Agent Revision Kinetic System** per [[sot:root/product-naming]]). Naming lock: [[sot:root/product-naming]]. Compatibility surfaces: [[sot:root/git-compat-surface]] (formats/protocols / **same `.git` layout**), [[sot:root/cli-surface]] (**Git CLI symmetric compatibility** + **`git`→`arks` alias drop-in**), [[sot:root/remote-host-compatibility-surface]] (**generic remote client** + **Git server role**). Verification authority: [[sot:root/product-verification-clean-room]]. Production exits: [[sot:root/program-roadmap]] (**M9** CLI-parity client; **M11** production-server). Native-engine architecture (hot-path in-house; zero-`gix` end state): [[adr:root/20261108083507]]. Multi-agent concurrency / allocator intent research: [[research:root/20261108083502]]. CLI-parity research: [[research:root/20261108183800]].
 
-This SoT owns **inner/core product intent** and the **bottom-up build principle**. Command/flag inventory, refuse policy, and alias-drop-in requirements are owned by [[sot:root/cli-surface]]; on-disk `.git` sameness is owned by [[sot:root/git-compat-surface]]; remote client/server roles by [[sot:root/remote-host-compatibility-surface]]. This document locks same-`.git`, CLI/alias parity, **generic remotes**, and **Git server** as **first-class compatibility goals** (server under the separate **M11** bar).
+**Single release = `arks` only.** Conceptual peers remain `git` / `git-daemon` / `gh`, exposed as ordinary `arks` commands, **`arks daemon`**, and **`arks hub …`** (internal crates `arks-daemon` / `arks-hub` — **not** separate published bins). LLM review / CEV bots are the explicit extension **`arks agent …`** (internal crate `arks-agent` — **not** a separate published bin; **not** Git porcelain). **Product self-host** (arks-only Git server for localhost / LAN / WAN) is owned by [[sot:root/arks-self-host-server]] — adjacent to, not identical with, daemon flag symmetry. See `.spec/README.md`, [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-hub-product-intent]], [[sot:root/arks-agent-product-intent]], [[sot:root/arks-self-host-server]].
+
+This SoT owns **inner/core product intent** and the **bottom-up build principle**. Command/flag inventory, refuse policy, and alias-drop-in requirements are owned by [[sot:root/cli-surface]]; on-disk `.git` sameness is owned by [[sot:root/git-compat-surface]]; remote client/server roles by [[sot:root/remote-host-compatibility-surface]]. This document locks same-`.git`, CLI/alias parity, **generic remotes**, and **Git server** as **first-class compatibility goals** (server under the separate **M11** bar). Product **self-host reachability** (bind/listen + auth/ops split) is locked under [[sot:root/arks-self-host-server]].
 
 ## Rule
 
@@ -54,7 +56,7 @@ This SoT owns **inner/core product intent** and the **bottom-up build principle*
 4. **Pretending a CLI subset is production.** Phased delivery waves are allowed; calling Wave L/H “production” or deferring full porcelain as permanent end-state is **not**. Inventory, refuse policy, and exclusions: [[sot:root/cli-surface]].
 5. Host-only “verified” claims.
 6. Forking humanymous Specfold/convention prose — cite `C:\workspaces\humanymous` (especially structural bottom-up patterns in `sot:root/structural-development` there); do not duplicate competing convention SoTs here.
-7. Embedding full **gitk/git-gui/citool** pixel GUIs; shipping **non-git** product CLI (`arks forge`, `arks host-env`, in-process `arks lfs`, `serve-http` `info/lfs` LFS server, CELIR as product path) — these are **trimmed** over-design relative to stock `git` / `git-daemon` ([[research:root/20261111034556]]). Forge collaboration (PR/issue/review/…) belongs in the **optional** sibling binary **`arks-hub`** ([[sot:root/arks-hub-product-intent]]) — **not** required for git alias DoD; hub uses a **native host API client** and MUST NOT spawn `gh` or `git`. External `git-lfs` remains outside the core product binary. Casual “agent non-interactive N/A” for real git interactive flows is **forbidden** under the full-symmetry DoD.
+7. Embedding full **gitk/git-gui/citool** pixel GUIs; shipping **trimmed** non-git product CLI (`arks forge`, `arks host-env`, in-process `arks lfs`, `serve-http` `info/lfs` LFS server, CELIR as product Claimed path) — refuse/trim relative to stock `git` / `git-daemon` ([[research:root/20261111034556]], [[research:root/20261111035700]], tip `9df7fb9`). Forge collaboration belongs under **`arks hub …`** on the **same** `arks` binary via internal crate `arks-hub` ([[sot:root/arks-hub-product-intent]]) — **not** a separate release; **not** required for git alias DoD; native host API only (never spawn `gh`/`git`). Daemon symmetry is **`arks daemon`** via internal `arks-daemon` ([[sot:root/arks-daemon-product-intent]]). LLM code-review / CEV bots belong under **`arks agent …`** via internal `arks-agent` ([[sot:root/arks-agent-product-intent]]) — explicit extension like hub; **not** a general chatbot; **not** required for git alias DoD; never spawn `gh`/`git`. External `git-lfs` remains outside the product binary. Casual “agent non-interactive N/A” for real git interactive flows is **forbidden** under the full-symmetry DoD.
 8. Any permanent Cargo dependency on gitoxide/`gix` (runtime, optional feature, or permanent `dev-dependencies`) — **rejected** as end state. Hot paths always in-house; prefer never introducing `gix`; transitional cold use only under [[adr:root/20261108083507]] with mandatory exit before M4 (gix-exit).
 9. Treating **M9** CLI-parity production as if it included the Git **server** role — server is **M11** / production-server ([[sot:root/program-roadmap]]).
 
@@ -95,7 +97,9 @@ A core slice is **successful** when all of the following hold for the claimed su
 | Remote client + Git server role | [[sot:root/remote-host-compatibility-surface]] |
 | Clean-room verification | [[sot:root/product-verification-clean-room]] |
 | Production / milestone ladder | [[sot:root/program-roadmap]] |
-| Optional forge collaboration CLI (`arks-hub`) | [[sot:root/arks-hub-product-intent]], [[sot:root/arks-hub-cli-surface]] — not part of core alias DoD |
+| Forge collaboration (`arks hub …`) | [[sot:root/arks-hub-product-intent]], [[sot:root/arks-hub-cli-surface]], [[sot:root/arks-hub-gh-command-matrix]] — same `arks` binary; internal `arks-hub` lib; not core git alias DoD; `gh`→`arks hub` for mapped rows |
+| Daemon (`arks daemon`) | [[sot:root/arks-daemon-product-intent]] — same `arks` binary; internal `arks-daemon` lib; peer `git-daemon` |
+| Product self-host (LAN/WAN) | [[sot:root/arks-self-host-server]] — arks-only hosting story; bind/auth vs ops TLS; ≠ daemon flag parity alone |
 | `AGENTS.md`, `.agents/**` | Sibling ownership — do not edit from this zone |
 
 ## Why

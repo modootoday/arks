@@ -131,38 +131,40 @@ Carrying tip class ≥ `1770102` + gap-classification research [[research:root/2
 | G19 M17 ≤0.8× (19 journeys) | **Done** | **19/19** measured; N/A-free on tip remasure |
 | Pf5 / G19 aggressive ≤0.5× umbrella | **Claimed 19/19** | Sole G19 [[evidence:root/20261111032000]]: ALIAS **0.4926 Claimed** (hardlink + no PATH rewrite); REVERT **0.4227**; M17 **19/19**; prior G7 aggressive_na archival [[evidence:root/20261111025200]] |
 | OBJ-004 sha1cd **detect+refuse** | **Done** | Claimed; absolute collision **immunity** stays Non-goal / Impossible |
-| FS-007 / WIN-003 host-env | **Partial→Claimed(advisory+opt-in refuse)** | Detect + `ARKS_HOST_ENV_REFUSE_SYNC` / `--refuse-sync`; full sync / hydration = Non-goal |
-| FS-014 SELinux/AppArmor | **Partial→Claimed(detect+errno)** | Sysfs LSM detect + honesty; bypass Impossible |
-| G8 / G28 live harness | **Done** (ops) | Default-on when secrets; live-private G28 Claimed with receipts |
-| Live G8 **latency SLO** remasure | **Blocked** (**G1 Done-as-honesty**) | Secrets hard-block — [[evidence:root/20261111032001]] / [[evidence:root/20261111025000]] `g8-live` **total_count=0**; local-forge wire ≠ live PASS |
-| **L9** crates.io / docs.rs timing | **Blocked** (**G2 Done-as-honesty**) | Owner policy; reopen pack refreshed; no unauthorized publish |
+| FS-007 / WIN-003 / host-env product CLI | **Trimmed** (not git) | `arks host-env` / hostfs product surface removed; full sync / hydration = Non-goal / Impossible ([[research:root/20261111035700]], tip `9df7fb9`) |
+| FS-014 SELinux/AppArmor product CLI | **Trimmed / honesty-only** | Not a git feature; bypass Impossible |
+| G8 / G28 live harness | **Ops/CI-only** (not product DoD) | Default-on when secrets; G28 functional receipts ≠ forge UX Claimed product |
+| Live G8 **latency SLO** remasure | **Blocked (ops honesty)** | Secrets hard-block — [[evidence:root/20261111032001]]; **not** product Claimed SLO |
+| **L9** crates.io / docs.rs timing | **Blocked** (**G2 Done-as-honesty**) | Owner policy; single published crate story = **`arks`**; no unauthorized publish |
 | Server `bundle-uri` advertise | **Claimed** (**G3**) | Protocol v2 advertise + command [[evidence:root/20261111025300]]; CDN SLOs separate |
-| LFS locks subset | **Claimed** (**G4**) | `/locks` + `locks/verify` + client/CLI; tus/S3 Claimed-closest handoff |
-| Forge Checks / PR / OAuth UX | **Partial (Claimed-closest thin-wrap)** (**G5 Done**) | Recipe deepen; full forge host UX Non-goal |
+| In-process LFS client/server productization | **Trimmed** (**G4 superseded**) | Use external `git-lfs`; stock `filter.*.smudge` only ([[research:root/20261111035700]], tip `9df7fb9`) |
+| Forge Checks / PR / OAuth UX | **Design under `arks hub …`** (**not Claimed**) | Same `arks` binary; internal `arks-hub`; native API; never separate bin / never `gh` spawn ([[sot:root/arks-hub-product-intent]]) |
 | Exotic filters `object:type` / `combine:` / `sparse:oid=<hex>` | **Claimed** (**G6** + sparse:oid) | Parse/gate Claimed; [[adr:root/20261111031600]] |
 | Absolute SHA-1 collision immunity | **Non-goal / Hold forever** | Crypto Impossible; detect+refuse is the Claimed bar |
 | Full multi-device cloud-sync / hydration / LSM bypass | **Non-goal / Hold forever** | Advisory only |
-| CELIR ObjectStore / “faster than Git” / multi-writer warranty / GUI·scalar embed | **Hold forever** | Do not fake Claimed |
-| Operator one-word (“fully complete?”) | **PARTIAL** | FS_final **YES**; live G8 latency + **L9** + Hold-forever rows remain |
+| CELIR ObjectStore / “faster than Git” / multi-writer warranty / GUI·scalar embed | **Hold forever** | CELIR index feature = ops/CI opt-in only; do not fake Claimed |
+| Single release shape | **Normative** | Published CLI = **`arks` only**; `arks daemon` / `arks hub` via internal crates |
+| Operator one-word (“fully complete?”) | **PARTIAL** | FS_final **YES**; live G8 latency + **L9** + Hold-forever / trimmed rows remain |
 
 ### G-ladder tip table (Best ROI — [[plan:root/20261111024440]])
 
 | Goal | Status | Notes |
 |------|--------|-------|
-| **G1** Live G8 | **Done (Blocked honesty)** | [[evidence:root/20261111025000]] secrets=0; never invent PASS |
-| **G2** L9 reopen pack | **Done (Blocked honesty)** | Pack refreshed; no agent publish |
+| **G1** Live G8 | **Ops honesty Blocked** | [[evidence:root/20261111025000]] secrets=0; never invent PASS; not product DoD |
+| **G2** L9 reopen pack | **Done (Blocked honesty)** | Pack refreshed; no agent publish; publish surface = `arks` |
 | **G3** Server `bundle-uri` | **Claimed** | [[evidence:root/20261111025300]] |
-| **G4** LFS locks | **Claimed** | locks subset; tus/S3 handoff |
-| **G5** Forge recipe | **Claimed-closest** | Recipe deepen only |
+| **G4** LFS productization | **Trimmed** | In-process LFS client/server removed; use `git-lfs` |
+| **G5** Forge / hub | **Design (`arks hub`)** | Not Claimed; internal `arks-hub`; no separate bin |
 | **G6** Exotic filters | **Claimed** | `object:type` → `combine:` + `sparse:oid=<hex>` |
 | **G7** Pf5 ALIAS PATH/`exec` | **Claimed** | Sole G19 [[evidence:root/20261111032000]] ALIAS **0.4926**; hardlink cut [[adr:root/20261111031600]] |
-| **G_final** Currency | **Done** | Tip + docs + residual + evidence aligned |
+| **G_final** Currency | **In progress** | Align tip + docs + residual with single-`arks` release + trim |
 
 **Next milestones (post-G-ladder — not M27 invent):**
 
-1. **Ops — Live G8 latency** — owner fills `g8-live` secrets → remasure (G1 honesty Blocked until then; re-probe [[evidence:root/20261111032001]]).
-2. **L9** — owner SoT reopen pack only; no agent publish.
-3. **Hold forever** — immunity / ObjectStore / blanket faster / multi-writer warranty / GUI·scalar embed unchanged.
+1. **Clean-room 3-pillar DoD** — git↔arks / git-daemon↔arks daemon / gh↔arks hub (+ local multi-agent framework). Umbrella [[sot:root/verify-cleanroom-symmetry-matrix]]; compose `dod-symmetry`. Tip ≥ `053e5ef`: CLI pin **Missing=0**; remaining focus **daemon flags** + **hub v1**. Host inventory `git 2.56.0.windows.4` / `gh 2.103.3` vs clean-room pin `git 2.39.5`. Smoke ≠ Claimed.
+2. **Ops — Live G8 latency** — owner fills `g8-live` secrets → remasure (G1 honesty Blocked until then; re-probe [[evidence:root/20261111032001]]).
+3. **L9** — owner SoT reopen pack only; no agent publish.
+4. **Hold forever** — immunity / ObjectStore / blanket faster / multi-writer warranty / GUI·scalar embed unchanged.
 
 Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[sot:root/production-residual-register]]. Unblock research: [[research:root/20261111001816]]. External-deps still-blocked options: [[research:root/20261111012840]]. Gap classification: [[research:root/20261111022345]]. G-ladder plan + directive: [[plan:root/20261111024440]], [[plan:root/20261111024441]].
 
@@ -191,7 +193,7 @@ Public Pages: `docs/completion.md`, `docs/git-vs-arks.md`. Residual ledger: [[so
 | arks as Git **server** | **In-scope goal** — **M11** / Phase Sv; not an M9 gate |
 | CELIR object store | **Cancelled / Refuse** — FS `.git` sole object store |
 | CELIR index-only Cargo (`celir-index`) | **Opt-in (default OFF)** — [[adr:root/20261110052030]]; companion ship = **M24** |
-| Host product APIs (B) | Out of M9 and M11 |
+| Host product APIs (B) | Out of M9 Git DoD; **`arks hub …`** on same binary ([[sot:root/arks-hub-product-intent]], [[sot:root/arks-hub-gh-command-matrix]]) — internal `arks-hub` lib; not required for git alias DoD; no Claimed until implemented; **no** separate hub release |
 | GUI / `scalar` / **Git LFS** | Exclusions per [[sot:root/cli-surface]] |
 | Allocator helper crate identity | **Closed** — ring-internal; no dedicated crate ([[adr:root/20261109122126]]) |
 | G8 live smoke / G9 filters | **Post-M22 Claimed honesty** — G8 default-on when secrets ([[adr:root/20261110220000]]); G9 `--depth` subset via **G35** (filter/promisor N/A); M21 catalog CRED/NET Docker-local Claimed |
@@ -779,7 +781,7 @@ Without an explicit **CLI-parity** production exit, agents treat a porcelain sub
 1. `spec check` clean for this SoT and linked milestone plans.
 2. Implementation PRs that claim a milestone exit cite this SoT, the staged plan, Gate IDs, and clean-room vs advisory.
 3. Do not mark M1+ interop exits verified from host-only runs.
-4. Do not claim **CLI-parity production** before **M9**; **production-server** before **M11**; **issue resolved** before **G17/G18** per claimed IDs; **≥20% faster (frozen allow-list)** before **M14/G19**; **complete flag symmetry** before **M16/G21**; **full G19 journeys** before **M17**; **≤0.5× Pf4 aggressive** before **M18**; **M19/M20 claim expansion** before G17/G18 PASS for every claimed ID; **M21 Deferred=0** before every catalog ID is terminal; **M22 residual terminal close** before treating judgment No/부분 or Closed-deferred work items as Done; **L3 Claimed** before **M23** unlock receipts. Do **not** equate M19/M20 Done or “bucket B exhausted” with “221 catalog solved.”
+4. Do not claim **CLI-parity production** before **M9**; **production-server** before **M11**; **issue resolved** before **G17/G18** per claimed IDs; **≥20% faster (frozen allow-list)** before **M14/G19**; **complete flag symmetry** before **M16/G21**; **full G19 journeys** before **M17**; **≤0.5× Pf4 aggressive** before **M18**; **M19/M20 claim expansion** before G17/G18 PASS for every claimed ID; **M21 Deferred=0** before every catalog ID is terminal; **M22 residual terminal close** before treating judgment No/Partial or Closed-deferred work items as Done; **L3 Claimed** before **M23** unlock receipts. Do **not** equate M19/M20 Done or “bucket B exhausted” with “221 catalog solved.”
 5. Do not call M5/M6 “production.”
 6. Do not redefine M9/M10/M11 historical exits when advancing M12+.
 7. Do not start or claim perf-opt / ≥20% Done in parallel with open M12/M13 issue-resolution — **issue-resolution first, then perf**.

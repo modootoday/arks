@@ -23,7 +23,7 @@ rel:
 
 Tip: **`953be57`** (canon `C:\workspaces\gir`). Research-only; **no invent PASS/Claimed**.
 
-## Clarified product lens (owner 원 — supersedes GitHub-only framing)
+## Clarified product lens (owner Won — supersedes GitHub-only framing)
 
 In-scope **only**:
 

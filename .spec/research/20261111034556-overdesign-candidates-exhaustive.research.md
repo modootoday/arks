@@ -22,7 +22,7 @@ rel:
 
 Tip: **`c45f85e`** (`C:\workspaces\gir`, `origin/main`). Addendum / superseding **C-list completeness** for [[research:root/20261111034141]]. Research-only; **no invent PASS/Claimed**.
 
-## Clarified product lens (owner 원)
+## Clarified product lens (owner Won)
 
 In-scope **only**:
 

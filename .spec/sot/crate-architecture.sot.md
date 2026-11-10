@@ -9,7 +9,7 @@ verify: manual
 rel:
   depends_on: [sot:root/product-intent, sot:root/product-naming, sot:root/git-compat-surface, adr:root/20261108083507, adr:root/20261109122126, adr:root/20261110052030, sot:root/storage-celir-boundary, sot:root/lease-concurrency-intent, sot:root/remote-host-compatibility-surface]
   evidence: [research:root/20261108083502]
-  governs: [crates, crates/arks-hash, crates/arks-oid, crates/arks-object, crates/arks-store, crates/arks-refs, crates/arks-index, crates/arks-repo, crates/arks-pack, crates/arks-protocol, crates/arks-remote, crates/arks-lease, crates/arks-server, crates/arks]
+  governs: [crates, crates/arks-hash, crates/arks-oid, crates/arks-object, crates/arks-store, crates/arks-refs, crates/arks-index, crates/arks-repo, crates/arks-pack, crates/arks-protocol, crates/arks-remote, crates/arks-lease, crates/arks-server, crates/arks-daemon, crates/arks-hub, crates/arks-agent, crates/arks]
 ---
 
 # Crate architecture
@@ -66,16 +66,22 @@ Workspace members present: `crates/arks-hash`, `crates/arks-oid`, `crates/arks-o
 | `arks-repo` | 4 | Repository discovery/layout (`GIT_DIR`, common dir); composes store + refs |
 | `arks-protocol` | 5 | pkt-line framing; capability advertise/parse helpers |
 | `arks-remote` | 6 | Git remote **client** for claimed protocols; GitHub-class = verify peer ([[sot:root/remote-host-compatibility-surface]]); not forge REST |
-| `arks-server` | 6 | Git **server** transport bindings (smart HTTP / claimed SSH / optional daemon) over protocol helpers ([[sot:root/remote-host-compatibility-surface]] **M11**); not forge UX |
+| `arks-server` | 6 | Git **server** transport bindings (smart HTTP / claimed SSH / helpers) over protocol ([[sot:root/remote-host-compatibility-surface]] **M11**); not forge UX |
+| `arks-daemon` | 6 | Internal lib for **`git-daemon`** symmetry; dispatched as **`arks daemon`** ([[sot:root/arks-daemon-product-intent]]); **not** a separate release bin |
 | `arks-lease` | 6 | **Default** product lease runtime + **opt-in** high-concurrency pipeline ([[sot:root/lease-concurrency-intent]], [[research:root/20261108083502]]); must not replace Git lock bytes on Git-compat paths |
-| `arks` | 7 | Primary package + CLI binary `arks` ([[sot:root/product-naming]]) |
+| `arks` | 7 | **Sole published** package + CLI binary `arks` ([[sot:root/product-naming]]) — single release |
+| `arks-hub` | 7 (internal lib) | Forge/host APIs behind **`arks hub …`** ([[sot:root/arks-hub-product-intent]], [[sot:root/arks-hub-gh-command-matrix]]); `arks` depends on it; native API only — no `gh`/`git` spawn; **not** a separate release bin ([[plan:root/20261111040155]]) |
+| `arks-agent` | 7 (internal lib) | LLM review / CEV bots behind **`arks agent …`** ([[sot:root/arks-agent-product-intent]]); OpenAI-compat + vendor providers ([[sot:root/arks-agent-llm-providers]]); may use `arks-hub` for PR comments; native HTTP only — no `gh`/`git`/vendor-CLI spawn; **not** a separate release bin ([[plan:root/20261111042300]]) |
 
 **Object-store exclusion:** `arks-celir` ObjectStore adapter — do **not** add. **Allowed opt-in:** `arks-store` feature `celir-index` → path-deps `celir-index`, `celir-index-runtime` (default OFF) ([[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]]).
 
 ### Graph summary (consumer → dependency)
 
 ```text
-arks (CLI) → arks-repo, arks-protocol, arks-remote?, arks-server?, arks-lease?, arks-index, …
+arks (sole published CLI) → arks-repo, arks-protocol, arks-remote?, arks-server?, arks-daemon?, arks-hub?, arks-agent?, arks-lease?, …
+arks-hub (internal lib) → native HTTP forge client; used by `arks hub`; MUST NOT spawn gh/git
+arks-agent (internal lib) → LLM providers + optional arks-hub for PR comments; used by `arks agent`; MUST NOT spawn gh/git/vendor CLIs
+arks-daemon (internal lib) → git-daemon symmetry; used by `arks daemon`; MUST NOT spawn git/gh
 arks-remote → arks-protocol, arks-repo (or store+refs)
 arks-server → arks-protocol, arks-repo (or store+refs); MUST NOT depend on arks-remote
 arks-lease → arks-repo / arks-refs (coordination); NEVER invents object IDs
@@ -89,7 +95,7 @@ arks-oid → (none workspace)
 arks-hash → (none workspace)
 ```
 
-Forbidden examples: `arks-hash` → `arks`; `arks-object` → `arks-remote`; `arks-store` → `arks` CLI types.
+Forbidden examples: `arks-hash` → `arks`; `arks-object` → `arks-remote`; `arks-store` → `arks` CLI types; publishing a second product bin (`arks-hub` / `arks-daemon` / `arks-agent`). `arks-hub` / `arks-daemon` / `arks-agent` MUST NOT spawn `git`/`gh`.
 
 ### Layout intent
 

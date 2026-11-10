@@ -1,6 +1,6 @@
 ---
 id: research:root/20261111031311
-title: Project convention / 규약 compliance audit (tip ≥ 261f0e3)
+title: Project convention compliance audit (tip ≥ 261f0e3)
 status: active
 created: 2026-11-10T18:13:11Z
 updated: 2026-11-10T18:13:11Z
@@ -39,7 +39,7 @@ rel:
     - evidence:root/20261111003444
 ---
 
-# Project convention / 규약 compliance audit (tip ≥ `261f0e3`)
+# Project convention compliance audit (tip ≥ `261f0e3`)
 
 ## Question
 
@@ -109,7 +109,7 @@ Verdict labels: **PASS** = convention followed; **WARN** = followable gap / proc
 | Verdict | Cite | Note |
 |---------|------|------|
 | **PASS** | Recent research ids `20261111HHMMSS-….research.md` | Timestamp + kebab slug + frontmatter `id`/`rel` pattern holds. |
-| **FAIL** → **fixed** | [[plan:root/20261111024440]] G_final row | Authored Hangul **「정본」** violated [[sot:root/language-english-only]] / rule `05`. Replaced with **Canon**. |
+| **FAIL** → **fixed** | [[plan:root/20261111024440]] G_final row | Authored Hangul for “canon” violated [[sot:root/language-english-only]] / rule `05`. Replaced with **Canon**. |
 | **PASS** | No new competing ADR invented for Hold-forever rows | Survey + gap research keep Non-goal / Impossible honest. |
 | **WARN** | Historical research notes (e.g. [[research:root/20261111022345]]) | Correctly freeze tip-at-writing ratios (**0.5546**); readers must not treat as tip currency — residual/roadmap own tip. |
 
