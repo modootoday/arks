@@ -239,19 +239,20 @@ fn write_http_request(
 }
 
 fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteError> {
-    // Heap scratch + extend (no per-read zero-fill). 64KiB balances
-    // upload-pack frames vs once-per-request zero cost on info/refs.
-    let mut scratch = vec![0u8; 64 * 1024];
-    let mut buf = Vec::with_capacity(64 * 1024);
+    // 8KiB stack scratch matched the LOCAL 0.5778 tip; large heap scratch
+    // (64–256KiB) paid a once-per-request zero tax on info/refs. split_off
+    // still moves the body without a second full copy.
+    let mut tmp = [0u8; 8192];
+    let mut buf = Vec::with_capacity(8192);
     let header_end;
     loop {
         let n = stream
-            .read(&mut scratch)
+            .read(&mut tmp)
             .map_err(|e| RemoteError::Http(e.to_string()))?;
         if n == 0 {
             return Err(RemoteError::Http("cleartext EOF before headers".into()));
         }
-        buf.extend_from_slice(&scratch[..n]);
+        buf.extend_from_slice(&tmp[..n]);
         if let Some(pos) = find_header_end(&buf) {
             header_end = pos;
             break;
@@ -268,12 +269,12 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
         }
         while buf.len() < need {
             let n = stream
-                .read(&mut scratch)
+                .read(&mut tmp)
                 .map_err(|e| RemoteError::Http(e.to_string()))?;
             if n == 0 {
                 break;
             }
-            buf.extend_from_slice(&scratch[..n]);
+            buf.extend_from_slice(&tmp[..n]);
         }
         let mut body = buf.split_off(header_end);
         body.truncate(len);
@@ -281,12 +282,12 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     } else {
         loop {
             let n = stream
-                .read(&mut scratch)
+                .read(&mut tmp)
                 .map_err(|e| RemoteError::Http(e.to_string()))?;
             if n == 0 {
                 break;
             }
-            buf.extend_from_slice(&scratch[..n]);
+            buf.extend_from_slice(&tmp[..n]);
         }
         buf.split_off(header_end)
     };
