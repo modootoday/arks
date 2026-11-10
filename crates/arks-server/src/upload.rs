@@ -107,15 +107,13 @@ fn try_reuse_on_disk_pack(repo: &Repository, wants: &[Oid]) -> Result<Option<Vec
         if !idx_path.is_file() {
             continue;
         }
-        let idx_bytes =
-            std::fs::read(&idx_path).map_err(|e| ServerError::Msg(e.to_string()))?;
+        let idx_bytes = std::fs::read(&idx_path).map_err(|e| ServerError::Msg(e.to_string()))?;
         let idx = match arks_pack::PackIndex::decode(&idx_bytes, FORMAT) {
             Ok(i) => i,
             Err(_) => continue,
         };
         if wants.iter().all(|w| idx.lookup(w).is_some()) {
-            let pack =
-                std::fs::read(&pack_path).map_err(|e| ServerError::Msg(e.to_string()))?;
+            let pack = std::fs::read(&pack_path).map_err(|e| ServerError::Msg(e.to_string()))?;
             if std::env::var_os("ARKS_SERVER_PROFILE").is_some() {
                 eprintln!(
                     "UPLOAD_PACK_REUSE path={} wants={} bytes={}",
