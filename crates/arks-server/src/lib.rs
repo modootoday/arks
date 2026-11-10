@@ -1,10 +1,12 @@
 //! arks-server — Git server role (M11 / M25 / Phase Sv + Sv2).
-//! Claimed: smart HTTP (G15), dumb/SSH/v2/git:// (G29–G32), optional HTTP Basic (G36),
+//! Claimed: smart HTTP (G15), dumb/SSH/v2/git:// (G29–G32), additive WebDAV
+//! write for dumb HTTP push (R2), optional HTTP Basic (G36),
 //! receive-pack githooks honor list (pre-receive/update/post-receive).
 #![forbid(unsafe_code)]
 mod advertise;
 mod auth;
 mod daemon;
+mod dav;
 mod dumb;
 mod error;
 mod hooks;

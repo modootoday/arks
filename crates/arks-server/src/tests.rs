@@ -90,6 +90,8 @@ fn smart_http_info_refs_upload() {
         body: Vec::new(),
         git_protocol: None,
         authorization: None,
+        destination: None,
+        lock_token: None,
     };
     let resp = handle_smart_http(&mut repo, &req).unwrap();
     assert_eq!(resp.status, 200);
@@ -109,6 +111,8 @@ fn smart_http_basic_auth_challenge_and_accept() {
         body: Vec::new(),
         git_protocol: None,
         authorization: None,
+        destination: None,
+        lock_token: None,
     };
     let resp = handle_smart_http_auth(&mut repo, &denied, Some(&cfg)).unwrap();
     assert_eq!(resp.status, 401);
@@ -124,6 +128,8 @@ fn smart_http_basic_auth_challenge_and_accept() {
         body: Vec::new(),
         git_protocol: None,
         authorization: Some(basic_authorization_header("alice", "s3cret")),
+        destination: None,
+        lock_token: None,
     };
     let resp = handle_smart_http_auth(&mut repo, &ok, Some(&cfg)).unwrap();
     assert_eq!(resp.status, 200);

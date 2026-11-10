@@ -1,12 +1,15 @@
-//! Smart + dumb HTTP request dispatch (info/refs + service POST + static dumb GETs).
+//! Smart + dumb HTTP request dispatch (info/refs + service POST + static dumb GETs)
+//! plus additive WebDAV write for dumb HTTP push (R2).
 //!
 //! Auth: unauthenticated loopback when Basic unset (G15). Optional in-process HTTP
 //! Basic when configured (G36 / ADR 20261109224236). Forge OAuth refused.
 //! Ops reverse-proxy / external TLS MAY still front the listener.
 //!
-//! Cite: gitprotocol-http, gitprotocol-v2, RFC 7617 Basic (summarize).
+//! Cite: gitprotocol-http, gitprotocol-v2, RFC 7617 Basic (summarize),
+//! RFC 4918 / git-http-push (dumb push).
 
 use crate::auth::BasicAuthConfig;
+use crate::dav::{handle_dav, is_dav_method};
 use crate::dumb::serve_dumb_path;
 use crate::error::ServerError;
 use crate::receive::{receive_advertisement, receive_pack};
@@ -29,6 +32,10 @@ pub struct HttpRequest {
     pub git_protocol: Option<String>,
     /// Raw `Authorization` header value (e.g. `Basic …`), if present.
     pub authorization: Option<String>,
+    /// WebDAV `Destination` header (MOVE).
+    pub destination: Option<String>,
+    /// WebDAV lock token from `Lock-Token` or `If` header.
+    pub lock_token: Option<String>,
 }
 
 impl HttpRequest {
@@ -45,6 +52,8 @@ impl HttpRequest {
             body,
             git_protocol: None,
             authorization: None,
+            destination: None,
+            lock_token: None,
         }
     }
 }
@@ -56,6 +65,8 @@ pub struct HttpResponse {
     pub body: Vec<u8>,
     /// Set on 401 challenges (`Basic realm="arks"`).
     pub www_authenticate: Option<String>,
+    /// Extra response headers (e.g. WebDAV `Lock-Token`).
+    pub extra_headers: Vec<(String, String)>,
 }
 
 /// Handle one HTTP request against an open repository (smart + dumb + v2).
@@ -79,8 +90,12 @@ pub fn handle_smart_http_auth(
                 content_type: "text/plain".into(),
                 body: b"unauthorized\n".to_vec(),
                 www_authenticate: Some(cfg.challenge_header()),
+                extra_headers: Vec::new(),
             });
         }
+    }
+    if is_dav_method(&req.method) {
+        return handle_dav(repo, req);
     }
     let path = req.path.as_str();
     let wants_v2 = req
@@ -188,6 +203,7 @@ fn typed(status: u16, ct: &str, body: Vec<u8>) -> HttpResponse {
         content_type: ct.into(),
         body,
         www_authenticate: None,
+        extra_headers: Vec::new(),
     }
 }
 
@@ -197,5 +213,6 @@ fn text(status: u16, body: &[u8]) -> HttpResponse {
         content_type: "text/plain".into(),
         body: body.to_vec(),
         www_authenticate: None,
+        extra_headers: Vec::new(),
     }
 }

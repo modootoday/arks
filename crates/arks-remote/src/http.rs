@@ -381,7 +381,8 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
             return Err(RemoteError::Http("cleartext headers too large".into()));
         }
     }
-    let (status, content_length, content_type) = parse_cleartext_headers(&buf[..header_end])?;
+    let (status, content_length, content_type, lock_token) =
+        parse_cleartext_headers(&buf[..header_end])?;
     // Build the body Vec directly — Vec::split_off allocates+copies the whole
     // upload-pack PACK (multi-MB on J-CLONE-LOCAL).
     let body = if let Some(len) = content_length {
@@ -436,6 +437,9 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
     if let Some(ct) = content_type {
         headers.push(("content-type".into(), ct));
     }
+    if let Some(tok) = lock_token {
+        headers.push(("lock-token".into(), tok));
+    }
     Ok(HttpResponse {
         status,
         headers,
@@ -445,7 +449,7 @@ fn read_http_response(stream: &mut TcpStream) -> Result<HttpResponse, RemoteErro
 
 fn parse_cleartext_headers(
     header_bytes: &[u8],
-) -> Result<(u16, Option<usize>, Option<String>), RemoteError> {
+) -> Result<(u16, Option<usize>, Option<String>, Option<String>), RemoteError> {
     let header_text = String::from_utf8_lossy(header_bytes);
     let mut lines = header_text.split("\r\n");
     let status_line = lines.next().unwrap_or("");
@@ -456,6 +460,7 @@ fn parse_cleartext_headers(
         .unwrap_or(0);
     let mut content_length = None;
     let mut content_type = None;
+    let mut lock_token = None;
     for line in lines {
         if line.is_empty() {
             continue;
@@ -468,9 +473,11 @@ fn parse_cleartext_headers(
             content_length = value.trim().parse().ok();
         } else if name.eq_ignore_ascii_case("content-type") {
             content_type = Some(value.trim().to_string());
+        } else if name.eq_ignore_ascii_case("lock-token") {
+            lock_token = Some(value.trim().to_string());
         }
     }
-    Ok((status, content_length, content_type))
+    Ok((status, content_length, content_type, lock_token))
 }
 
 fn find_header_end(buf: &[u8]) -> Option<usize> {
@@ -482,6 +489,9 @@ fn read_ureq_response(response: ureq::Response) -> Result<HttpResponse, RemoteEr
     let mut headers = Vec::new();
     if let Some(ct) = response.header("content-type") {
         headers.push(("content-type".into(), ct.to_string()));
+    }
+    if let Some(tok) = response.header("lock-token") {
+        headers.push(("lock-token".into(), tok.to_string()));
     }
     let mut body = Vec::new();
     response

@@ -40,7 +40,7 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ### Partial clone / dumb push?
 
-`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`); filter / `blob:none` / promisor-style partial clone is not claimed. Dumb HTTP **push** is not claimed (fetch/clone fallback may be used).
+`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`); filter / `blob:none` / promisor-style partial clone is not claimed. Dumb HTTP **push** uses a WebDAV write subset (LOCK/MKCOL/PUT/MOVE) when receive-pack discovery is dumb; deletes and stock Apache DAV interop are not claimed.
 
 ### Commit and tag signing?
 

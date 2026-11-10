@@ -1,21 +1,27 @@
-//! Dumb HTTP client fetch/clone path (additive beside smart HTTP).
+//! Dumb HTTP client fetch/clone + WebDAV push path (additive beside smart HTTP).
 //!
 //! Primary: <https://git-scm.com/docs/gitprotocol-http#_dumb_clients>
-//! Flow: discover refs via dumb `info/refs` body (no smart service pkt-line),
+//! Fetch flow: discover refs via dumb `info/refs` body (no smart service pkt-line),
 //! read `objects/info/packs`, download listed packs, fetch missing loose
 //! objects by OID path, update remote-tracking refs.
 //!
-//! Push over dumb HTTP is not claimed (receive-pack requires smart).
+//! Push flow (R2): when receive-pack discovery is dumb, speak WebDAV write
+//! ([git-http-push](https://git-scm.com/docs/git-http-push),
+//! [RFC 4918](https://datatracker.ietf.org/doc/html/rfc4918),
+//! [[adr:root/20261110190000]]).
 
 use crate::advertise::{AdvertisedRef, Advertisement};
 use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
 use crate::fetch::{FetchOptions, FetchOutcome};
-use crate::transport::{HttpRequest, Transport, require_success};
+use crate::push::{PushUpdate, objects_to_send, zero_oid};
+use crate::transport::{HttpRequest, Transport, header, require_success};
 use crate::url::join_url;
-use arks_object::{Commit, ObjectKind, RawObject, Tree, TreeMode, loose_rel_path, zlib_decompress};
+use arks_object::{
+    Commit, ObjectKind, RawObject, Tree, TreeMode, loose_rel_path, zlib_compress, zlib_decompress,
+};
 use arks_oid::{Oid, OidKind};
-use arks_repo::Repository;
+use arks_repo::{Repository, ancestor_set};
 use arks_store::{ObjectFormat, ObjectStore};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -283,6 +289,233 @@ fn get_bytes<T: Transport>(
     })?;
     require_success(&resp, rel)?;
     Ok(resp.body)
+}
+
+/// Dumb HTTP push via WebDAV (git-http-push subset).
+///
+/// `info_body` is the dumb `info/refs` entity already returned for receive-pack
+/// discovery (smart→dumb fallback; no second GET required).
+pub(crate) fn push_dumb_with<T: Transport>(
+    transport: &mut T,
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    info_body: &[u8],
+) -> Result<(), RemoteError> {
+    let ad = parse_dumb_info_refs(info_body)?;
+    // Optional PROPFIND — arks server always supports exclusive write locks.
+    let _ = transport.exchange(&HttpRequest {
+        method: "PROPFIND".into(),
+        url: join_url(url, ""),
+        headers: vec![("Depth".into(), "0".into())],
+        body: Vec::new(),
+    });
+
+    let mut tips = Vec::new();
+    let mut bases = Vec::new();
+    let mut planned: Vec<(Oid, Oid, String)> = Vec::new();
+    for update in updates {
+        if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
+            return Err(RemoteError::NotImplemented(
+                "dumb HTTP push delete (-d/-D) is not claimed".into(),
+            ));
+        }
+        let old = ad
+            .refs
+            .iter()
+            .find(|r| r.name == update.refname)
+            .map(|r| r.oid)
+            .unwrap_or_else(zero_oid);
+        if old == update.new_oid {
+            continue;
+        }
+        if !old.as_bytes().iter().all(|b| *b == 0) {
+            let anc =
+                ancestor_set(repo, update.new_oid).map_err(|e| RemoteError::Msg(e.to_string()))?;
+            if !anc.contains(&old) {
+                return Err(RemoteError::Rejected(format!(
+                    "{} non-fast-forward",
+                    update.refname
+                )));
+            }
+            if repo.store().exists(&old).unwrap_or(false) {
+                bases.push(old);
+            }
+        }
+        tips.push(update.new_oid);
+        planned.push((old, update.new_oid, update.refname.clone()));
+    }
+    if planned.is_empty() {
+        return Ok(());
+    }
+
+    let needed = objects_to_send(repo, &tips, &bases)?;
+    for obj in &needed {
+        let oid = obj
+            .oid(FORMAT)
+            .map_err(|e| RemoteError::Protocol(e.to_string()))?;
+        upload_loose(transport, url, &oid, obj)?;
+    }
+
+    for (_old, new, refname) in &planned {
+        let token = dav_lock(transport, url, refname)?;
+        let ref_url = join_url(url, refname);
+        let body = format!("{}\n", new.to_hex()).into_bytes();
+        let put = transport.exchange(&HttpRequest {
+            method: "PUT".into(),
+            url: ref_url,
+            headers: vec![
+                ("Content-Type".into(), "text/plain".into()),
+                ("If".into(), format!("(<{token}>)")),
+                ("Lock-Token".into(), format!("<{token}>")),
+            ],
+            body,
+        })?;
+        if !(200..300).contains(&put.status) {
+            let _ = dav_unlock(transport, url, refname, &token);
+            return Err(RemoteError::Http(format!(
+                "PUT {refname} -> HTTP {}",
+                put.status
+            )));
+        }
+        dav_unlock(transport, url, refname, &token)?;
+    }
+    Ok(())
+}
+
+fn upload_loose<T: Transport>(
+    transport: &mut T,
+    base: &str,
+    oid: &Oid,
+    obj: &RawObject,
+) -> Result<(), RemoteError> {
+    let rel = loose_rel_path(oid);
+    let rel = rel.to_string_lossy().replace('\\', "/");
+    let obj_rel = format!("objects/{rel}");
+    // Skip upload when the peer already has the object.
+    // Cleartext transport maps non-2xx to Err — treat HTTP 404 as missing.
+    match transport.exchange(&HttpRequest {
+        method: "GET".into(),
+        url: join_url(base, &obj_rel),
+        headers: Vec::new(),
+        body: Vec::new(),
+    }) {
+        Ok(resp) if resp.status == 200 => return Ok(()),
+        Ok(_) => {}
+        Err(RemoteError::Http(msg)) if msg.starts_with("HTTP 404") => {}
+        Err(e) => return Err(e),
+    }
+    let fanout = &oid.to_hex()[..2];
+    match transport.exchange(&HttpRequest {
+        method: "MKCOL".into(),
+        url: join_url(base, &format!("objects/{fanout}")),
+        headers: Vec::new(),
+        body: Vec::new(),
+    }) {
+        // 201 created; 405 exists — both OK for git-http-push-class clients.
+        Ok(_) => {}
+        Err(RemoteError::Http(msg))
+            if msg.starts_with("HTTP 405") || msg.starts_with("HTTP 409") => {}
+        Err(e) => return Err(e),
+    }
+    let compressed = zlib_compress(&obj.encode_uncompressed())
+        .map_err(|e| RemoteError::Protocol(e.to_string()))?;
+    // PUT to a temp name then MOVE (git-http-push race-safety pattern).
+    let tmp_rel = format!("{obj_rel}_arks_tmp");
+    let put = transport.exchange(&HttpRequest {
+        method: "PUT".into(),
+        url: join_url(base, &tmp_rel),
+        headers: vec![(
+            "Content-Type".into(),
+            "application/x-git-loose-object".into(),
+        )],
+        body: compressed,
+    })?;
+    if !(200..300).contains(&put.status) {
+        return Err(RemoteError::Http(format!(
+            "PUT {tmp_rel} -> HTTP {}",
+            put.status
+        )));
+    }
+    let dest = join_url(base, &obj_rel);
+    let mv = transport.exchange(&HttpRequest {
+        method: "MOVE".into(),
+        url: join_url(base, &tmp_rel),
+        headers: vec![("Destination".into(), dest)],
+        body: Vec::new(),
+    })?;
+    if !(200..300).contains(&mv.status) {
+        return Err(RemoteError::Http(format!(
+            "MOVE {tmp_rel} -> HTTP {}",
+            mv.status
+        )));
+    }
+    Ok(())
+}
+
+fn dav_lock<T: Transport>(transport: &mut T, base: &str, rel: &str) -> Result<String, RemoteError> {
+    let resp = transport.exchange(&HttpRequest {
+        method: "LOCK".into(),
+        url: join_url(base, rel),
+        headers: vec![
+            ("Content-Type".into(), "application/xml".into()),
+            ("Depth".into(), "0".into()),
+            ("Timeout".into(), "Second-600".into()),
+        ],
+        body: br#"<?xml version="1.0" encoding="utf-8"?>
+<D:lockinfo xmlns:D="DAV:">
+  <D:lockscope><D:exclusive/></D:lockscope>
+  <D:locktype><D:write/></D:locktype>
+</D:lockinfo>
+"#
+        .to_vec(),
+    })?;
+    if !(200..300).contains(&resp.status) {
+        return Err(RemoteError::Http(format!(
+            "LOCK {rel} -> HTTP {}",
+            resp.status
+        )));
+    }
+    if let Some(tok) = header(&resp.headers, "lock-token") {
+        return Ok(tok
+            .trim()
+            .trim_start_matches('<')
+            .trim_end_matches('>')
+            .to_string());
+    }
+    // Parse locktoken href from body as fallback.
+    let text = String::from_utf8_lossy(&resp.body);
+    if let Some(idx) = text.find("opaquelocktoken:") {
+        let rest = &text[idx..];
+        let end = rest
+            .find(|c: char| c == '<' || c == '>' || c.is_whitespace())
+            .unwrap_or(rest.len());
+        return Ok(rest[..end].to_string());
+    }
+    Err(RemoteError::Protocol(format!(
+        "LOCK {rel} response missing lock token"
+    )))
+}
+
+fn dav_unlock<T: Transport>(
+    transport: &mut T,
+    base: &str,
+    rel: &str,
+    token: &str,
+) -> Result<(), RemoteError> {
+    let resp = transport.exchange(&HttpRequest {
+        method: "UNLOCK".into(),
+        url: join_url(base, rel),
+        headers: vec![("Lock-Token".into(), format!("<{token}>"))],
+        body: Vec::new(),
+    })?;
+    if !(200..300).contains(&resp.status) {
+        return Err(RemoteError::Http(format!(
+            "UNLOCK {rel} -> HTTP {}",
+            resp.status
+        )));
+    }
+    Ok(())
 }
 
 #[cfg(test)]

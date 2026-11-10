@@ -137,7 +137,7 @@ impl MemoryPeer {
         let (path, query) = target.split_once('?').unwrap_or((target, ""));
         if path.ends_with("/info/refs") {
             let service = query_param(query, "service").unwrap_or("");
-            if self.prefer_dumb && service == "git-upload-pack" {
+            if self.prefer_dumb && (service == "git-upload-pack" || service == "git-receive-pack") {
                 return Ok(text_response(200, &self.dumb_info_refs_body()));
             }
             let (ct, body) = if service == "git-upload-pack" {

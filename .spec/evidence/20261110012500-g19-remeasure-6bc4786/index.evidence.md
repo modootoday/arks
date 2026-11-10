@@ -3,14 +3,14 @@ id: evidence:root/20261110012500
 title: G19 sole-runner remeasure at tip 6bc4786 (PF5 partial 7/8; CLONE-LOCAL aggressive_na)
 status: active
 created: 2026-11-10T01:25:00Z
-updated: 2026-11-10T01:25:00Z
+updated: 2026-11-10T10:03:17Z
 tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, evidence:root/20261110011500]
   evidence: []
 files:
-  - {path: receipt.json, sha256: acd4a98b7217ee61110b558ac926298a03ddbb2bfc3965a57b2055c5adec21da, bytes: 7255, store: repo}
-  - {path: metrics.json, sha256: 6373eefdbd789f037e24a2a0a6610c608ae67568ea29c8e8dbf2a35f1bfb3f2e, bytes: 228218, store: repo}
+  - {path: receipt.json, sha256: 66ff439e27f982c4fe194f0a24fc6ced00a2a93cb7728a90980ceef989ef0329, bytes: 7533, store: repo}
+  - {path: metrics.json, sha256: 8cd86bd53503309ffad3ecf1feede4beb279cce30d6595e9fac967cf1a4493e2, bytes: 236994, store: repo}
 ---
 
 # G19 sole-runner remeasure — tip `6bc4786` (PF5 7/8; A not flipped)

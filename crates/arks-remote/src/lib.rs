@@ -1,13 +1,14 @@
-//! Generic Git remote **client** (M6 Wave H + M16 Sy-4 SSH + `git://`).
+//! Generic Git remote **client** (M6 Wave H + M16 Sy-4 SSH + `git://` + R2).
 //!
 //! Claimed subset: `http://` and `https://` smart HTTP protocol v1
 //! (`info/refs` + `git-upload-pack` / `git-receive-pack`), additive dumb
-//! HTTP fetch/clone fallback ([gitprotocol-http] dumb clients), OpenSSH
-//! client transport for `ssh://` and SCP-like `user@host:path`, `git://`
-//! daemon pack-protocol client (clone/fetch/push), fetch, clone, push with
-//! `report-status` / `delete-refs` when advertised, remote config, additive
-//! local path / same-host `file://` clone via object-directory copy, and
-//! G9/G35 `--depth N` shallow on pack transports. GitHub-class hosts are a
+//! HTTP fetch/clone fallback and WebDAV dumb push ([gitprotocol-http] /
+//! [git-http-push] / RFC 4918), OpenSSH client transport for `ssh://` and
+//! SCP-like `user@host:path`, `git://` daemon pack-protocol client
+//! (clone/fetch/push), fetch, clone, push with `report-status` /
+//! `delete-refs` when advertised, remote config, additive local path /
+//! same-host `file://` clone via object-directory copy, and G9/G35
+//! `--depth N` shallow on pack transports. GitHub-class hosts are a
 //! verify-peer label, not a special code path.
 //!
 //! Primary:

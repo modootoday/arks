@@ -1,12 +1,17 @@
-//! Push: smart HTTP receive-pack or SSH pack protocol.
+//! Push: smart HTTP receive-pack, SSH / `git://` pack protocol, or dumb HTTP
+//! WebDAV fallback when receive-pack advertisement is dumb.
 //!
-//! The client sends update commands and a self-contained undeltified pack, then
-//! requires `report-status` (or `report-status-v2` when that is the only form
-//! advertised). Deletes require peer `delete-refs`. Force-with-lease is not claimed.
+//! Smart path: update commands + undeltified pack, then `report-status` (or
+//! `report-status-v2` when that is the only form advertised). Deletes require
+//! peer `delete-refs`. Force-with-lease is not claimed.
+//!
+//! Dumb path: WebDAV LOCK/MKCOL/PUT/(MOVE)/UNLOCK per git-http-push + RFC 4918
+//! ([[adr:root/20261110190000]]).
 //!
 //! Primary: <https://git-scm.com/docs/gitprotocol-pack> (push-cert / report-status),
 //! <https://git-scm.com/docs/gitprotocol-capabilities> (`delete-refs`),
-//! <https://git-scm.com/docs/gitprotocol-http>
+//! <https://git-scm.com/docs/gitprotocol-http>,
+//! <https://git-scm.com/docs/git-http-push>
 
 use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
 use crate::error::RemoteError;
@@ -124,6 +129,11 @@ pub(crate) fn push_with<T: Transport>(
         body: Vec::new(),
     })?;
     require_success(&info, "info/refs")?;
+    // Smart clients fall back to dumb when the advertisement is not smart
+    // (gitprotocol-http). Dumb push uses WebDAV (git-http-push / RFC 4918).
+    if crate::dumb::looks_like_dumb_info_refs(header(&info.headers, "content-type"), &info.body) {
+        return crate::dumb::push_dumb_with(transport, repo, url, updates, &info.body);
+    }
     if !content_type_is(
         header(&info.headers, "content-type"),
         "git-receive-pack-advertisement",
@@ -282,7 +292,7 @@ fn push_capability_list(advertised: &[String]) -> Result<String, RemoteError> {
     Ok(caps.join(" "))
 }
 
-fn objects_to_send(
+pub(crate) fn objects_to_send(
     repo: &Repository,
     tips: &[Oid],
     bases: &[Oid],

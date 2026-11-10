@@ -150,6 +150,8 @@ fn handle_connection(
     let mut content_encoding = String::new();
     let mut git_protocol = None;
     let mut authorization = None;
+    let mut destination = None;
+    let mut lock_token = None;
     for line in lines {
         let lower = line.to_ascii_lowercase();
         if let Some(v) = lower.strip_prefix("content-length:") {
@@ -172,6 +174,30 @@ fn handle_connection(
         if lower.starts_with("authorization:") {
             if let Some((_, v)) = line.split_once(':') {
                 authorization = Some(v.trim().to_string());
+            }
+        }
+        // WebDAV (RFC 4918) — dumb HTTP push (git-http-push).
+        if lower.starts_with("destination:") {
+            if let Some((_, v)) = line.split_once(':') {
+                destination = Some(v.trim().to_string());
+            }
+        }
+        if lower.starts_with("lock-token:") {
+            if let Some((_, v)) = line.split_once(':') {
+                lock_token = Some(v.trim().to_string());
+            }
+        }
+        if lower.starts_with("if:") && lock_token.is_none() {
+            // git-http-push sends `If: (<opaquelocktoken:…>)` with the lock.
+            if let Some((_, v)) = line.split_once(':') {
+                let v = v.trim();
+                if let Some(start) = v.find("opaquelocktoken:") {
+                    let rest = &v[start..];
+                    let end = rest
+                        .find(|c: char| c == ')' || c == '>' || c.is_whitespace())
+                        .unwrap_or(rest.len());
+                    lock_token = Some(rest[..end].to_string());
+                }
             }
         }
     }
@@ -211,6 +237,8 @@ fn handle_connection(
         body,
         git_protocol,
         authorization,
+        destination,
+        lock_token,
     };
     // dumb_only: strip service= so discovery uses dumb info/refs (smart clients fall back).
     if opts.dumb_only && (req.path.ends_with("info/refs") || req.path.ends_with("/info/refs")) {
@@ -237,14 +265,21 @@ fn handle_connection(
                 content_type: "text/plain".into(),
                 body: msg.into_bytes(),
                 www_authenticate: None,
+                extra_headers: Vec::new(),
             }
         }
     };
     let status_text = match resp.status {
         200 => "OK",
+        201 => "Created",
+        204 => "No Content",
+        207 => "Multi-Status",
         401 => "Unauthorized",
         403 => "Forbidden",
         404 => "Not Found",
+        405 => "Method Not Allowed",
+        409 => "Conflict",
+        423 => "Locked",
         500 => "Internal Server Error",
         _ => "Error",
     };
@@ -257,6 +292,9 @@ fn handle_connection(
     );
     if let Some(ref wa) = resp.www_authenticate {
         header.push_str(&format!("WWW-Authenticate: {wa}\r\n"));
+    }
+    for (k, v) in &resp.extra_headers {
+        header.push_str(&format!("{k}: {v}\r\n"));
     }
     header.push_str("\r\n");
     stream.write_all(header.as_bytes())?;

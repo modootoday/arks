@@ -3,7 +3,7 @@ id: research:root/20261110095142
 title: Product completion goal ladder (post-PF5 8/8)
 status: active
 created: 2026-11-10T09:51:42Z
-updated: 2026-11-10T09:55:00Z
+updated: 2026-11-10T19:00:00Z
 tags:
   [
     product-completion,
@@ -27,6 +27,8 @@ rel:
     - sot:root/clean-room-journey-compare
     - research:root/20261110085731
     - research:root/20261108071916
+    - adr:root/20261110190000
+    - evidence:root/20261110190000
 ---
 
 # Product completion goal ladder (post-PF5 8/8)
@@ -50,17 +52,17 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 |------|-------|
 | Tip residual / PF5 | §F terminal; PF5 **8/8** primary [[evidence:root/20261110142500]] @ ~`79fc9bf` |
 | Bare development Opens | **0** |
-| R1–R6 | Reopen-only (not bare Opens) |
+| R1–R6 | Reopen-only (not bare Opens); **R1** + **R2** Claimed (host wire) |
 | Host CI | Advisory vs Docker gates; tip green does not invent Verified |
 
 ### Ordered product-completion ladder
 
 | # | Goal | Class | Disposition / reopen | Why now |
 |---|------|-------|----------------------|---------|
-| **L0** | Public honesty parity (Pages/README vs PF5 8/8 + residual) | Docs / DoD | Allowed without reopen | Stale “Clone HTTP aggressive_na” (or similar) on human surface contradicts Claimed 8/8 |
-| **L1** | Root `CONTRIBUTING.md` thin pointer → `docs/contribute.md` | Public-surface release | Allowed when contribution path offered ([[sot:root/public-surface]]) | Pages contribute exists; root CONTRIBUTING missing |
-| **L2** | Client **`git://`** clone/fetch/push (**R1**) | Git asymmetry | SoT amend [[sot:root/arks-remote]] + wire tests; optional matrix | Server **G32 Claimed**; client still **Not claimed** — largest remaining pack-protocol hole |
-| **L3** | Dumb HTTP **push** (**R2**) | Git asymmetry | SoT amend + primary-doc subset + evidence | Explicit no today; lower urgency than R1 after smart push exists |
+| **L0** | Public honesty parity (Pages/README vs PF5 8/8 + residual) | Docs / DoD | **Done** | Stale “Clone HTTP aggressive_na” fixed |
+| **L1** | Root `CONTRIBUTING.md` thin pointer → `docs/contribute.md` | Public-surface release | **Done** | Pages contribute exists; root CONTRIBUTING landed |
+| **L2** | Client **`git://`** clone/fetch/push (**R1**) | Git asymmetry | **Done (Claimed host wire)** | [[sot:root/arks-remote]] v0.5.1+ |
+| **L3** | Dumb HTTP **push** (**R2**) | Git asymmetry | **Done (Claimed host wire)** | [[adr:root/20261110190000]] + [[evidence:root/20261110190000]] |
 | **L4** | Release-channel readiness (OIDC registries / checksum Releases) | Release | Follow [[research:root/20261110085731]] / `release.yml`; no invented publish PASS | Workflows landed; operator Environments / tag publish remain ops |
 | **L5** | Live forge scale SLO / G8 live PASS (**R5**) | Secrets-gated | Secrets + receipt only | Harness Claimed; never invent latency |
 | **L6** | Partial-clone filter/promisor (**R3**) | N/A | Dedicated SoT amend beyond `--depth` | Honest N/A |
@@ -77,11 +79,11 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]]) and residual §F **
 
 ### Execution note (this round)
 
-Prefer **L0 → L1 → L2**. L2 is the first reopen that closes a real Git client/server asymmetry without secrets. L3+ stay queued unless L2 is Refuse or tip CI is red.
+**L0–L3 Done.** Next recommended: **L4** release-channel ops (Environments / tag dry-run docs+wiring; no invented publish PASS). L5+ stay queued (secrets / N/A / process).
 
 ## Verification
 
 1. Ladder cited from residual register / AGENTS progressive-disclosure pointer (no second SoT).
 2. Each ladder row maps to an owning SoT/ADR/research cite; no invented Git semantics.
 3. When L2 ships: [[sot:root/arks-remote]] flips `git://` from Not claimed → Claimed with wire tests; residual R1 disposition updates; `spec check` clean.
-)
+4. When L3 ships: [[adr:root/20261110190000]] + dumb WebDAV client/server + residual R2 Claimed + [[evidence:root/20261110190000]]; `spec check` clean.

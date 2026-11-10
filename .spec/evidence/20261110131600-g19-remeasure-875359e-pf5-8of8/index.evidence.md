@@ -3,15 +3,15 @@ id: evidence:root/20261110131600
 title: G19 sole-runner remasure at tip 875359e — PF5 Claimed 8/8 (CLONE-LOCAL ≤0.5×)
 status: active
 created: 2026-11-10T04:16:00Z
-updated: 2026-11-10T04:16:00Z
+updated: 2026-11-10T10:03:17Z
 tags: [g19, g16, pf5, clean-room, perf, journey-compare, verified, clone-local, pf5-8of8]
 rel:
   depends_on: [sot:root/clean-room-journey-compare, sot:root/pf5-journey-seed-amortization, sot:root/production-residual-register, sot:root/product-verification-clean-room, evidence:root/20261111001400, evidence:root/20261110113900]
   evidence: []
 files:
-  - {path: receipt.json, sha256: e1f868c2f6ec485b97f5be16a706d0dbd6ccb92757cdb657f318d7192244aebd, bytes: 7080, store: repo}
-  - {path: metrics.json, sha256: 1c8cd163cb2c649b5f33aad05f9f03ebc50b990a340f7262ed4029481945e117, bytes: 228192, store: repo}
   - {path: sole-rm-875359e.log, sha256: 51117f77df4d0eb13b6319c1ae3c82b02ba412fd362b76d2c5be19c09cfec5e1, bytes: 17158, store: repo}
+  - {path: receipt.json, sha256: da6adb0e65bab5d49598e18d77b9603a56f4396642af324ae2173f8b3c77f6a9, bytes: 7356, store: repo}
+  - {path: metrics.json, sha256: 07c8c5bec5808440b50d2a282df642a695e1383c16e83e730fcd20fd366d1931, bytes: 236968, store: repo}
 ---
 
 # G19 sole-runner remasure — tip `875359e` (PF5 **8/8**)

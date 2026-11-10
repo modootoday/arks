@@ -811,6 +811,89 @@ fn serve_one(mut stream: TcpStream, peer: &Mutex<MemoryPeer>) -> Result<(), Stri
 }
 
 #[test]
+fn dumb_http_push_roundtrip_via_serve_http() {
+    use crate::push::{PushUpdate, push_http};
+    use arks_server::{ServeHttpOptions, spawn_loopback_with_opts, update_server_info};
+    use std::sync::atomic::Ordering;
+    use tempfile::TempDir;
+
+    let base = TempDir::new().unwrap();
+    let bare = base.path().join("repo.git");
+    let (_, tip) = seed_bare_for_daemon(&bare);
+    {
+        let repo = Repository::open(&bare).unwrap();
+        update_server_info(&repo).unwrap();
+    }
+    let (addr, stop, handle) = spawn_loopback_with_opts(
+        bare.clone(),
+        ServeHttpOptions {
+            dumb_only: true,
+            basic_auth: None,
+        },
+    )
+    .unwrap();
+    // Brief settle for accept loop.
+    std::thread::sleep(std::time::Duration::from_millis(30));
+    let url = format!("http://{addr}/");
+
+    let dest = TempDir::new().unwrap();
+    let dest_path = dest.path().join("clone");
+    crate::clone::clone_http(&url, &dest_path).expect("dumb clone");
+    let mut repo = Repository::discover(&dest_path).unwrap();
+    assert_eq!(repo.head_oid().unwrap(), tip);
+
+    let blob = RawObject::new(ObjectKind::Blob, b"hello dumb push\n".to_vec());
+    let blob_oid = repo.store_mut().put(FORMAT, &blob).unwrap();
+    let tree = Tree::new(vec![TreeEntry {
+        mode: TreeMode::File,
+        name: "hello.txt".into(),
+        oid: blob_oid,
+    }])
+    .unwrap();
+    let tree_obj = RawObject::new(ObjectKind::Tree, tree.encode().unwrap());
+    let tree_oid = repo.store_mut().put(FORMAT, &tree_obj).unwrap();
+    let sig = Signature {
+        name: "arks".into(),
+        email: "arks@example.com".into(),
+        timestamp: 1_700_000_002,
+        timezone: "+0000".into(),
+    };
+    let commit = Commit {
+        tree: tree_oid,
+        parents: vec![tip],
+        author: sig.clone(),
+        committer: sig,
+        gpgsig: None,
+        message: "push via dumb HTTP\n".into(),
+    };
+    let commit_obj = RawObject::new(ObjectKind::Commit, commit.encode().unwrap());
+    let new_oid = repo.store_mut().put(FORMAT, &commit_obj).unwrap();
+    repo.refs_mut()
+        .update("refs/heads/main", &new_oid, Some(&tip))
+        .unwrap();
+
+    push_http(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid,
+        }],
+    )
+    .expect("dumb push_http");
+
+    let peer = Repository::open(&bare).unwrap();
+    assert_eq!(
+        peer.refs().resolve("refs/heads/main").unwrap(),
+        new_oid,
+        "bare tip after dumb push"
+    );
+
+    stop.store(true, Ordering::SeqCst);
+    let _ = handle.join();
+}
+
+#[test]
 fn git_daemon_clone_fetch_push_roundtrip() {
     use crate::clone::clone_git;
     use crate::fetch::fetch_git;
