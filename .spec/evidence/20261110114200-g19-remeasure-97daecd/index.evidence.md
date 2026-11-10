@@ -1,6 +1,6 @@
 ---
 id: evidence:root/20261110114200
-title: G19 sole-runner remeasure at tip 97daecd (PF5 partial 7/8; CLONE-LOCAL aggressive_na; REVERT miss)
+title: G19 secondary/historical mimalloc remasure at 97daecd (NOT primary tip pin; PF5 7/8; CLONE-LOCAL aggressive_na; REVERT miss)
 status: active
 created: 2026-11-10T02:42:00Z
 updated: 2026-11-10T02:42:00Z
@@ -14,7 +14,7 @@ files:
   - {path: arks-pf5-rm-97daecd2.log, sha256: 0530575ac9cf54b24b73b59692599fbc0b346bb1b572ada506866fd781a5af4e, bytes: 13758, store: repo}
 ---
 
-# G19 sole-runner remeasure — tip `97daecd` (PF5 7/8; A not flipped)
+# G19 secondary/historical mimalloc remasure — `97daecd` (NOT primary tip pin; PF5 7/8; A not flipped)
 
 ## Context
 
@@ -65,4 +65,4 @@ Authoritative sole Docker remasure (`--name arks-pf5-rm-97daecd2`) at tip `97dae
 
 ## Honesty
 
-Do **not** flip PF5 to 8/8. This tip remasure is **worse** on LOCAL than prior tip pin `7a3d2dc` LOCAL **0.6703** / PATH **0.4615** ([[evidence:root/20261110113900]]). Historical **best-better-LOCAL** remains `44dc566` LOCAL **0.6556** / PATH **0.4675** ([[evidence:root/20261110110900]]) — not this tip. Do **not** invent REVERT `aggressive_na` without SoT reopen; record the miss honestly. No restart of sibling SIGTERM `arks-pf5-rm-83d9732` (outside this pack).
+Do **not** flip PF5 to 8/8. This pack is **secondary/historical mimalloc tip remasure only** — **NOT** the primary tip pin. It is **worse** on LOCAL than primary tip remasure `7a3d2dc` LOCAL **0.6703** / PATH **0.4615** ([[evidence:root/20261110113900]]). Historical **best-better-LOCAL** remains `44dc566` LOCAL **0.6556** / PATH **0.4675** ([[evidence:root/20261110110900]]) — not this tip. Do **not** invent REVERT `aggressive_na` without SoT reopen; record the miss honestly. No restart of sibling SIGTERM `arks-pf5-rm-83d9732` (outside this pack).
