@@ -250,7 +250,9 @@ struct ReceiveCommand {
     name: String,
 }
 
-fn split_commands(body: &[u8]) -> Result<(Vec<ReceiveCommand>, Vec<String>, Vec<u8>), ServerError> {
+type SplitCommands = (Vec<ReceiveCommand>, Vec<String>, Vec<u8>);
+
+fn split_commands(body: &[u8]) -> Result<SplitCommands, ServerError> {
     let mut offset = 0;
     let mut commands = Vec::new();
     let mut saw_push_options_cap = false;

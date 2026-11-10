@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "arks-g41-cleanroom"
+description = "G41 clean-room Apache mod_dav dumb HTTP interop (O4)"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile = "3"

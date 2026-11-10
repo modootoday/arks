@@ -1,4 +1,4 @@
-﻿# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G40 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes).
+﻿# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV).
 # Engine: Linux (Docker Desktop desktop-linux on Windows). Fresh `compose run` per gate.
 name: arks-verify-m1
 
@@ -20,6 +20,7 @@ x-cleanroom: &cleanroom
 volumes:
   arks-cargo-target:
   arks-cargo-target-g33:
+  g41-git-data:
 
 services:
   # Build once; g0–g7/g10–g18 reuse the same tagged image.
@@ -433,3 +434,50 @@ services:
     depends_on:
       - toolchain
     command: ["/bin/bash", "verify/scripts/run-g40.sh"]
+
+  # O4 Apache mod_dav dumb HTTP interop — seed bare repo, then stock httpd DAV.
+  g41-seed:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    volumes:
+      - ..:/workspace:rw
+      - ../../discrete-circuit:/discrete-circuit:ro
+      - arks-cargo-target:/cargo-target
+      - g41-git-data:/git-data
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_G41_DOCROOT: /git-data
+    command: ["/bin/bash", "verify/gates/g41/seed.sh"]
+
+  g41-dav:
+    image: httpd:2.4-bookworm
+    depends_on:
+      g41-seed:
+        condition: service_completed_successfully
+    volumes:
+      - g41-git-data:/usr/local/apache2/htdocs
+      - ./gates/g41/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+    # Ensure DavLockDB parent exists before httpd starts.
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "mkdir -p /usr/local/apache2/var && chown daemon:daemon /usr/local/apache2/var /usr/local/apache2/htdocs/repo.git 2>/dev/null; exec httpd-foreground",
+      ]
+
+  g41:
+    <<: *cleanroom
+    depends_on:
+      toolchain:
+        condition: service_started
+      g41-dav:
+        condition: service_started
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_G41_DAV_URL: http://g41-dav/repo.git/
+    command: ["/bin/bash", "verify/scripts/run-g41.sh"]
