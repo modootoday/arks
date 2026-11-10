@@ -55,7 +55,7 @@ verify/
 
 ### Naming families
 
-Folder ids under `verify/gates/<id>/` are kebab-case and should match compose service names (`gN`, `gN-<suffix>`, `fsNNN-*-advisory`; reserved `dod-*` only when a gate oracle exists); file basenames (`run-*.sh`, `matrix-*`, receipts, compose/lock) follow the same SoT §2a; digit width / zero-pad (`g11` unpadded vs `fs007` three-digit) follow §2b — see `.spec/sot/verify-directory-conventions.sot.md` §1a–§1d / §2a–§2b.
+Folder ids under `verify/gates/<id>/` are kebab-case and should match compose service names (`gN`, `gN-<suffix>`, `fsNNN-*-advisory`; reserved `dod-*` only when a gate oracle exists); file basenames (`run-*.sh`, `matrix-*`, receipts, compose/lock) follow the same SoT §2a; digit width / zero-pad (`g11` unpadded vs `fs007` three-digit) follow §2b — see `.spec/sot/verify-directory-conventions.sot.md` §1a–§1d / §2a–§2b. Migration: live id `g11-l3` (legacy `g11l3`); evaluator `g19-eval.py`. Do **not** zero-pad G-series or un-pad `fsNNN`.
 
 | Family | Compose | Scripts |
 |--------|---------|---------|

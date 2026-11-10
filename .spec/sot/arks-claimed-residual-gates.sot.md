@@ -3,11 +3,12 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-10T23:45:00Z
+updated: 2026-11-11T00:15:00Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
   depends_on:
+    - research:root/20261111084400
     - research:root/20261111074523
     - research:root/20261111072342
     - sot:root/arks-self-host-server
@@ -108,10 +109,11 @@ Document revision **0.1.2** (SoT edit counter only — **not** a product/crate r
 
 #### B5 — Claimed daemon archive parity
 
-- **Claimed bar (strict):** byte-identical ustar stream of `upload-archive` vs stock `git-daemon` pin **2.39.5** in clean-room — **not graduated** (no invent Claimed).
+- **Claimed bar (strict):** byte-identical ustar stream of `upload-archive` vs stock `git-daemon` pin **2.39.5** in clean-room — **not graduated** (no invent Claimed). Oracle encoder is git **v2.39.5** `archive-tar.c` `prepare_header` (`"%07o"` / `"%011o"` NUL-terminated fields, including device major/minor) — **not** a generic tar crate dialect ([[research:root/20261111084400]]).
 - **Partial (landed / honest):** protocol path + path-filter wiring + structural member list / type / mode / payload semantic agreement — OK as Partial; harness default **SKIP/Partial**, `ARKS_DOD_STRICT=1` fail-closed ([[sot:root/verify-directory-conventions]] tip ≥ `3f1a484`).
-- **Known mismatch class (Docker 501009):** ustar **header encoding** — first differ block0 offset **151** (chksum digits: stock `0x34` vs arks `0x33`) and device major/minor **ASCII `0` vs NUL** (~offsets 329+); member names/types/modes/payloads matched. Stop host/tar hex dump loops; Claimed only via deliberate SoT+receipt wave.
-- **Refuse:** expanded protocol-body unit tests alone; opportunistic `cmp` or semantic-only greens marketed as Claimed.
+- **Known mismatch class (Docker 501009):** ustar **header encoding** — first differ block0 offset **151** (chksum digits: stock `0x34` vs arks `0x33`) and device major/minor **ASCII `0` vs NUL** (~offsets 329+); member names/types/modes/payloads matched. Chksum drift is a symptom of header-byte drift (sum-with-spaces). Stop host/tar hex dump loops; Claimed only via deliberate SoT+receipt wave.
+- **Implement path (research):** match git `prepare_header` in `arks-server` + clean-room golden/`cmp -s` acceptance ([[research:root/20261111084400]]); do **not** redefine Claimed as semantic-only.
+- **Refuse:** expanded protocol-body unit tests alone; opportunistic `cmp` or semantic-only greens marketed as Claimed; product spawn of `git archive`.
 
 #### B5+ — Claimed syslog facility parity
 
