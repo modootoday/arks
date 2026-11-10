@@ -66,6 +66,7 @@ pub const GROUPS: &[&str] = &[
     "inbox",
     "forge-config",
     "serve",
+    "smoke",
 ];
 
 /// Matrix groups kept as explicit OUT refuse (marketplace / vendor depth).
@@ -116,6 +117,7 @@ COMMANDS:
     org           Organizations list (local Partial)
     search        Search repos|issues|prs (local Partial)
     api           Raw HTTP against ARKS_HUB_API
+    smoke         HTTPS forge e2e harness Partial (local https or documented Missing; no gh)
     status        Aggregated status (Partial)
     co            Alias for pr checkout
     extension     OUT refuse (marketplace; not local forge)
@@ -211,6 +213,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "org" => cmd_org(&args[1..]),
         "search" => cmd_search(&args[1..]),
         "api" => cmd_api(&args[1..]),
+        "smoke" => cmd_https_smoke(&args[1..]),
         "status" => cmd_status(&args[1..]),
         "co" => {
             eprintln!("arks hub co → pr checkout (alias; checkout worktree not claimed)");
@@ -982,6 +985,98 @@ fn cmd_search(args: &[String]) -> ExitCode {
             eprintln!("arks hub search {other}: use repos|issues|prs (Partial)");
             ExitCode::from(2)
         }
+    }
+}
+
+/// Remote HTTPS forge e2e harness Partial: smoke against `https://` ARKS_HUB_API
+/// (or `--url`), else document Missing and optionally probe local `http://`.
+/// Never spawns `gh`. Design ≠ Claimed forge remote e2e.
+fn cmd_https_smoke(args: &[String]) -> ExitCode {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "arks hub smoke [--url URL] [--path /user]\n  \
+             HTTPS forge e2e harness Partial (ureq TLS). Prefer https:// ARKS_HUB_API.\n  \
+             Without a reachable https endpoint: documents Missing (not Claimed).\n  \
+             Optional local http:// fallback probe — never spawns gh."
+        );
+        return ExitCode::SUCCESS;
+    }
+    let path = flag_value(args, &["--path"]).unwrap_or("/user");
+    let path = if path.starts_with('/') {
+        path.to_string()
+    } else {
+        format!("/{path}")
+    };
+    let url_override = flag_value(args, &["--url"]).map(str::to_string);
+    let base = url_override.unwrap_or_else(api_base);
+    let tok = read_token().unwrap_or_else(|| "local-dev-token".into());
+
+    println!("hub_smoke=partial");
+    println!("base_url={base}");
+    println!("path={path}");
+    println!("spawns_gh=never");
+
+    if base.starts_with("https://") {
+        match http_exchange(&base, "GET", &path, Some(&tok), None) {
+            Ok((code, body)) => {
+                println!("https_smoke=ok");
+                println!("http_status={code}");
+                if !body.is_empty() {
+                    let preview: String = body.chars().take(240).collect();
+                    println!("body_preview={preview}");
+                }
+                eprintln!(
+                    "note: HTTPS forge smoke Partial succeeded — design ≠ Claimed forge remote e2e"
+                );
+                if code >= 400 {
+                    ExitCode::from(1)
+                } else {
+                    ExitCode::SUCCESS
+                }
+            }
+            Err(e) => {
+                println!("https_smoke=fail");
+                println!("error={e}");
+                eprintln!(
+                    "note: HTTPS forge e2e harness Partial — transport/TLS fail; \
+                     Claimed forge remote e2e still Missing; never spawns gh"
+                );
+                ExitCode::from(1)
+            }
+        }
+    } else if is_local_http(&base) {
+        println!("https_smoke=Missing");
+        println!(
+            "missing_reason=ARKS_HUB_API is http local ({base}); set https:// URL for HTTPS harness Partial"
+        );
+        match http_exchange(&base, "GET", &path, Some(&tok), None) {
+            Ok((code, _)) => {
+                println!("local_http_fallback=ok");
+                println!("http_status={code}");
+                eprintln!(
+                    "note: documented HTTPS Missing; local http probe Partial only — \
+                     Claimed forge remote e2e Missing"
+                );
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                println!("local_http_fallback=fail");
+                println!("error={e}");
+                eprintln!(
+                    "note: HTTPS Missing (no local https forge); local http also unreachable — \
+                     start `arks serve --no-ssh` / hub serve, or point ARKS_HUB_API at https://"
+                );
+                ExitCode::from(1)
+            }
+        }
+    } else if base.starts_with("http://") {
+        println!("https_smoke=Missing");
+        println!("missing_reason=non-https ARKS_HUB_API ({base}); use https:// for harness Partial");
+        eprintln!("note: Claimed forge remote e2e Missing; never spawns gh");
+        ExitCode::from(2)
+    } else {
+        eprintln!("arks hub smoke: expected http:// or https:// base (got {base})");
+        ExitCode::from(2)
     }
 }
 
