@@ -1,14 +1,14 @@
-//! Generic Git remote **client** (M6 Wave H + M16 Sy-4 SSH).
+//! Generic Git remote **client** (M6 Wave H + M16 Sy-4 SSH + `git://`).
 //!
 //! Claimed subset: `http://` and `https://` smart HTTP protocol v1
 //! (`info/refs` + `git-upload-pack` / `git-receive-pack`), additive dumb
 //! HTTP fetch/clone fallback ([gitprotocol-http] dumb clients), OpenSSH
-//! client transport for `ssh://` and SCP-like `user@host:path`, fetch,
-//! clone, push with `report-status` / `delete-refs` when advertised,
-//! remote config, additive local path / same-host `file://` clone via
-//! object-directory copy, and G9/G35 `--depth N` shallow on pack
-//! transports. GitHub-class hosts are a verify-peer label, not a special
-//! code path.
+//! client transport for `ssh://` and SCP-like `user@host:path`, `git://`
+//! daemon pack-protocol client (clone/fetch/push), fetch, clone, push with
+//! `report-status` / `delete-refs` when advertised, remote config, additive
+//! local path / same-host `file://` clone via object-directory copy, and
+//! G9/G35 `--depth N` shallow on pack transports. GitHub-class hosts are a
+//! verify-peer label, not a special code path.
 //!
 //! Primary:
 //! - <https://git-scm.com/docs/gitprotocol-http>
@@ -34,6 +34,7 @@ mod credential;
 mod dumb;
 mod error;
 mod fetch;
+mod git;
 mod http;
 mod push;
 mod shallow;
@@ -46,7 +47,8 @@ mod wallet;
 
 pub use checkout::{checkout_commit, checkout_tree};
 pub use clone::{
-    clone_http, clone_http_with, clone_local, clone_local_with, clone_ssh, clone_ssh_with,
+    clone_git, clone_git_with, clone_http, clone_http_with, clone_local, clone_local_with,
+    clone_ssh, clone_ssh_with,
 };
 pub use config::{RemoteConfig, add_remote, list_remotes, remove_remote};
 pub use credential::{
@@ -55,12 +57,12 @@ pub use credential::{
 };
 pub use error::RemoteError;
 pub use fetch::{
-    FetchOptions, FetchOutcome, fetch_http, fetch_http_with, fetch_remote, fetch_remote_with,
-    fetch_ssh, fetch_ssh_with,
+    FetchOptions, FetchOutcome, fetch_git, fetch_git_with, fetch_http, fetch_http_with,
+    fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with,
 };
-pub use push::{PushUpdate, push_http, push_remote, push_ssh};
+pub use push::{PushUpdate, push_git, push_http, push_remote, push_ssh};
 pub use transport::{HttpRequest, HttpResponse, RecordedExchange, RecordedTransport, Transport};
-pub use url::{HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
+pub use url::{GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
 pub use wallet::{WalletKind, cmd_wallet_helper, is_os_wallet_helper, wallet_helper_kind};
 
 #[cfg(test)]

@@ -1,5 +1,6 @@
 //! Claimed remote URL shapes: `http(s)://`, local path / same-host `file://`,
-//! and SSH (`ssh://` / SCP-like `user@host:path`) for M16 Sy-4.
+//! SSH (`ssh://` / SCP-like `user@host:path`) for M16 Sy-4, and `git://`
+//! for daemon pack-protocol clients.
 
 use crate::error::RemoteError;
 use std::path::{Path, PathBuf};
@@ -59,6 +60,53 @@ impl SshRemoteUrl {
             Some(u) => format!("{u}@{}", self.host),
             None => self.host.clone(),
         }
+    }
+}
+
+/// `git://` daemon URL: `git://host[:port]/path`.
+///
+/// Default port **9418** when omitted ([git-daemon](https://git-scm.com/docs/git-daemon)).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GitDaemonUrl {
+    /// Original argv / config string.
+    pub raw: String,
+    /// Host name or address (no brackets for IPv6 literals stored bare).
+    pub host: String,
+    /// Optional explicit port; `None` means default 9418 at connect time.
+    pub port: Option<u16>,
+    /// Repository path including a leading `/` when present in the URL.
+    pub path: String,
+}
+
+impl GitDaemonUrl {
+    /// Accept `git://host[:port]/path` (path required).
+    pub fn parse(raw: &str) -> Result<Self, RemoteError> {
+        let raw_trim = raw.trim();
+        let Some(rest) = raw_trim.strip_prefix("git://") else {
+            return Err(RemoteError::UnsupportedUrl(raw.to_string()));
+        };
+        let rest = rest.trim();
+        if rest.is_empty() {
+            return Err(RemoteError::UnsupportedUrl(raw.to_string()));
+        }
+        let (authority, path) = match rest.find('/') {
+            Some(i) => (&rest[..i], &rest[i..]),
+            None => (rest, ""),
+        };
+        if authority.is_empty() || path.is_empty() || path == "/" {
+            return Err(RemoteError::UnsupportedUrl(raw.to_string()));
+        }
+        let (host, port) =
+            split_host_port(authority).ok_or_else(|| RemoteError::UnsupportedUrl(raw.to_string()))?;
+        if host.is_empty() {
+            return Err(RemoteError::UnsupportedUrl(raw.to_string()));
+        }
+        Ok(Self {
+            raw: raw_trim.to_string(),
+            host,
+            port,
+            path: path.to_string(),
+        })
     }
 }
 
@@ -385,6 +433,21 @@ mod tests {
         assert!(SshRemoteUrl::parse("http://example.com/r.git").is_err());
         assert!(SshRemoteUrl::parse("git://example.com/a.git").is_err());
         assert!(SshRemoteUrl::parse(r"C:\Users\example\repo").is_err());
+    }
+
+    #[test]
+    fn git_daemon_url_ok() {
+        let u = GitDaemonUrl::parse("git://example.com/a/b.git").unwrap();
+        assert_eq!(u.host, "example.com");
+        assert_eq!(u.port, None);
+        assert_eq!(u.path, "/a/b.git");
+        let p = GitDaemonUrl::parse("git://127.0.0.1:9419/repo.git").unwrap();
+        assert_eq!(p.host, "127.0.0.1");
+        assert_eq!(p.port, Some(9419));
+        assert_eq!(p.path, "/repo.git");
+        assert!(GitDaemonUrl::parse("http://example.com/a.git").is_err());
+        assert!(GitDaemonUrl::parse("git://example.com").is_err());
+        assert!(GitDaemonUrl::parse("git://example.com/").is_err());
     }
 
     #[test]

@@ -133,6 +133,7 @@ Human-facing site (GitHub Pages): [`docs/`](docs/)
 | [Performance](docs/performance.md) | Clean-room git vs arks timings |
 | [Limits](docs/limits.md) | What is not claimed |
 | [Contribute](docs/contribute.md) | Bugs, docs, maintainer pointers |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Root pointer to contribute guidance |
 
 Design specs, verification matrices, and agent routing live under [`.spec/`](.spec/), [`verify/`](verify/), and [`AGENTS.md`](AGENTS.md) — they are for maintainers, not the default product read.
 

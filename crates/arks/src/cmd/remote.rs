@@ -21,9 +21,10 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
             let url = &args[2];
             if arks_remote::HttpRemoteUrl::parse(url).is_err()
                 && arks_remote::SshRemoteUrl::parse(url).is_err()
+                && arks_remote::GitDaemonUrl::parse(url).is_err()
             {
                 return Err(CliError::Msg(format!(
-                    "unsupported remote URL '{url}' (claimed: http(s), ssh://, user@host:path)"
+                    "unsupported remote URL '{url}' (claimed: http(s), ssh://, user@host:path, git://)"
                 )));
             }
             arks_remote::add_remote(&cfg, &args[1], url)?;
@@ -238,11 +239,13 @@ pub fn cmd_clone(args: &[String]) -> CliResult<()> {
         arks_remote::clone_http_with(url, &dest, &opts)?;
     } else if arks_remote::SshRemoteUrl::parse(url).is_ok() {
         arks_remote::clone_ssh_with(url, &dest, &opts)?;
+    } else if arks_remote::GitDaemonUrl::parse(url).is_ok() {
+        arks_remote::clone_git_with(url, &dest, &opts)?;
     } else if arks_remote::LocalRemoteUrl::parse(url).is_ok() {
         arks_remote::clone_local_with(url, &dest, &opts)?;
     } else {
         return Err(CliError::Msg(format!(
-            "unsupported clone URL '{url}' (claimed: http(s), ssh://, user@host:path, local path, same-host file://)"
+            "unsupported clone URL '{url}' (claimed: http(s), ssh://, user@host:path, git://, local path, same-host file://)"
         )));
     }
     println!("Cloned into '{}'", dest.display());
@@ -268,6 +271,17 @@ fn clone_dest_name(url: &str) -> String {
             .rsplit('/')
             .next()
             .unwrap_or(ssh.path.as_str())
+            .trim_end_matches(".git");
+        if !leaf.is_empty() {
+            return leaf.to_string();
+        }
+    }
+    if let Ok(git) = arks_remote::GitDaemonUrl::parse(trimmed) {
+        let leaf = git
+            .path
+            .rsplit('/')
+            .next()
+            .unwrap_or(git.path.as_str())
             .trim_end_matches(".git");
         if !leaf.is_empty() {
             return leaf.to_string();

@@ -24,9 +24,10 @@ use crate::config::{fetch_specs_for, map_refspec};
 use crate::error::RemoteError;
 use crate::http::UreqTransport;
 use crate::shallow::{apply_shallow_update, read_shallow, write_shallow};
+use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::ssh::{SshService, SshSession};
 use crate::transport::{HttpRequest, Transport, header, require_success};
-use crate::url::{SshRemoteUrl, join_url};
+use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
 use arks_oid::Oid;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet, encode_text_line};
 use arks_repo::Repository;
@@ -119,7 +120,38 @@ pub fn fetch_ssh_with(
     Ok(outcome)
 }
 
-/// Dispatch HTTP vs SSH from the remote URL scheme.
+/// Fetch over `git://` speaking upload-pack pkt-line (git-daemon transport).
+pub fn fetch_git(
+    repo: &mut Repository,
+    url: &str,
+    remote_name: &str,
+) -> Result<FetchOutcome, RemoteError> {
+    fetch_git_with(repo, url, remote_name, &FetchOptions::default())
+}
+
+pub fn fetch_git_with(
+    repo: &mut Repository,
+    url: &str,
+    remote_name: &str,
+    opts: &FetchOptions,
+) -> Result<FetchOutcome, RemoteError> {
+    let git_url = GitDaemonUrl::parse(url)?;
+    let mut session = GitDaemonSession::connect(&git_url, GitDaemonService::UploadPack)?;
+    let ad = session.read_advertisement()?;
+    apply_fetch_from_ad(
+        repo,
+        remote_name,
+        &ad,
+        opts,
+        |cap_list, haves, wants, client_shallows, depth| {
+            let body = encode_fetch_request(wants, cap_list, haves, client_shallows, depth)?;
+            session.write_all(&body)?;
+            session.read_to_end()
+        },
+    )
+}
+
+/// Dispatch HTTP / SSH / `git://` from the remote URL scheme.
 pub fn fetch_remote(
     repo: &mut Repository,
     url: &str,
@@ -136,6 +168,8 @@ pub fn fetch_remote_with(
 ) -> Result<FetchOutcome, RemoteError> {
     if SshRemoteUrl::parse(url).is_ok() {
         fetch_ssh_with(repo, url, remote_name, opts)
+    } else if GitDaemonUrl::parse(url).is_ok() {
+        fetch_git_with(repo, url, remote_name, opts)
     } else {
         fetch_http_with(repo, url, remote_name, opts)
     }

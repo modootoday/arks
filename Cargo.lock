@@ -112,6 +112,7 @@ dependencies = [
  "arks-protocol",
  "arks-refs",
  "arks-repo",
+ "arks-server",
  "arks-store",
  "libc",
  "tempfile",

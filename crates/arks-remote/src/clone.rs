@@ -11,8 +11,8 @@
 
 use crate::config::add_remote;
 use crate::error::RemoteError;
-use crate::fetch::{FetchOptions, fetch_http_with, fetch_ssh_with};
-use crate::url::{HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
+use crate::fetch::{FetchOptions, fetch_git_with, fetch_http_with, fetch_ssh_with};
+use crate::url::{GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
 use arks_refs::RefTarget;
 use arks_repo::Repository;
 use std::fs;
@@ -53,6 +53,20 @@ pub fn clone_ssh_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(),
     opts.defer_pack_disk = true;
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_ssh_with(repo, url, "origin", &opts)
+    })
+}
+
+/// Clone over `git://` (git-daemon upload-pack).
+pub fn clone_git(url: &str, dest: &Path) -> Result<(), RemoteError> {
+    clone_git_with(url, dest, &FetchOptions::default())
+}
+
+pub fn clone_git_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(), RemoteError> {
+    GitDaemonUrl::parse(url)?;
+    let mut opts = opts.clone();
+    opts.defer_pack_disk = true;
+    clone_via_fetch(url, dest, move |repo, url| {
+        fetch_git_with(repo, url, "origin", &opts)
     })
 }
 

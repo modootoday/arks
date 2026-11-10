@@ -809,3 +809,115 @@ fn serve_one(mut stream: TcpStream, peer: &Mutex<MemoryPeer>) -> Result<(), Stri
         .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[test]
+fn git_daemon_clone_fetch_push_roundtrip() {
+    use crate::clone::clone_git;
+    use crate::fetch::fetch_git;
+    use crate::push::{PushUpdate, push_git};
+    use arks_server::{DaemonOptions, spawn_loopback_daemon};
+    use std::sync::atomic::Ordering;
+    use tempfile::TempDir;
+
+    let base = TempDir::new().unwrap();
+    let bare = base.path().join("repo.git");
+    let (_, tip) = seed_bare_for_daemon(&bare);
+    let (addr, stop, handle) = spawn_loopback_daemon(DaemonOptions {
+        base_path: base.path().to_path_buf(),
+        export_all: true,
+        allow_receive: true,
+        strict_paths: true,
+    })
+    .unwrap();
+    let url = format!("git://{}/repo.git", addr);
+
+    let dest = TempDir::new().unwrap();
+    let dest_path = dest.path().join("clone");
+    clone_git(&url, &dest_path).expect("clone_git");
+    let cloned = Repository::discover(&dest_path).unwrap();
+    assert_eq!(cloned.head_oid().unwrap(), tip);
+
+    // Second fetch should be a no-op success.
+    let mut repo = Repository::discover(&dest_path).unwrap();
+    fetch_git(&mut repo, &url, "origin").expect("fetch_git");
+
+    // Push a new tip (same OID is skip; create a second commit locally then push).
+    let blob = RawObject::new(ObjectKind::Blob, b"hello daemon push\n".to_vec());
+    let blob_oid = repo.store_mut().put(FORMAT, &blob).unwrap();
+    let tree = Tree::new(vec![TreeEntry {
+        mode: TreeMode::File,
+        name: "hello.txt".into(),
+        oid: blob_oid,
+    }])
+    .unwrap();
+    let tree_obj = RawObject::new(ObjectKind::Tree, tree.encode().unwrap());
+    let tree_oid = repo.store_mut().put(FORMAT, &tree_obj).unwrap();
+    let sig = Signature {
+        name: "arks".into(),
+        email: "arks@example.com".into(),
+        timestamp: 1_700_000_001,
+        timezone: "+0000".into(),
+    };
+    let commit = Commit {
+        tree: tree_oid,
+        parents: vec![tip],
+        author: sig.clone(),
+        committer: sig,
+        gpgsig: None,
+        message: "push via git://\n".into(),
+    };
+    let commit_obj = RawObject::new(ObjectKind::Commit, commit.encode().unwrap());
+    let new_oid = repo.store_mut().put(FORMAT, &commit_obj).unwrap();
+    repo.refs_mut()
+        .update("refs/heads/main", &new_oid, Some(&tip))
+        .unwrap();
+    push_git(
+        &repo,
+        &url,
+        &[PushUpdate {
+            refname: "refs/heads/main".into(),
+            new_oid,
+        }],
+    )
+    .expect("push_git");
+
+    stop.store(true, Ordering::SeqCst);
+    let _ = handle.join();
+}
+
+fn seed_bare_for_daemon(git: &Path) -> (std::path::PathBuf, Oid) {
+    std::fs::create_dir_all(git.join("objects")).unwrap();
+    std::fs::create_dir_all(git.join("refs/heads")).unwrap();
+    std::fs::write(git.join("HEAD"), b"ref: refs/heads/main\n").unwrap();
+    let mut repo = Repository::open(git).unwrap();
+    let blob = RawObject::new(ObjectKind::Blob, b"hello daemon\n".to_vec());
+    let blob_oid = repo.store_mut().put(FORMAT, &blob).unwrap();
+    let tree = Tree::new(vec![TreeEntry {
+        mode: TreeMode::File,
+        name: "hello.txt".into(),
+        oid: blob_oid,
+    }])
+    .unwrap();
+    let tree_obj = RawObject::new(ObjectKind::Tree, tree.encode().unwrap());
+    let tree_oid = repo.store_mut().put(FORMAT, &tree_obj).unwrap();
+    let sig = Signature {
+        name: "arks".into(),
+        email: "arks@example.com".into(),
+        timestamp: 1_700_000_000,
+        timezone: "+0000".into(),
+    };
+    let commit = Commit {
+        tree: tree_oid,
+        parents: Vec::new(),
+        author: sig.clone(),
+        committer: sig,
+        gpgsig: None,
+        message: "initial\n".into(),
+    };
+    let commit_obj = RawObject::new(ObjectKind::Commit, commit.encode().unwrap());
+    let commit_oid = repo.store_mut().put(FORMAT, &commit_obj).unwrap();
+    repo.refs_mut()
+        .update("refs/heads/main", &commit_oid, None)
+        .unwrap();
+    (git.to_path_buf(), commit_oid)
+}

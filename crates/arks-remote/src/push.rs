@@ -11,9 +11,10 @@
 use crate::advertise::{Advertisement, cap_advertised, content_type_is, parse_advertisement};
 use crate::error::RemoteError;
 use crate::http::UreqTransport;
+use crate::git::{GitDaemonService, GitDaemonSession};
 use crate::ssh::{SshService, SshSession};
 use crate::transport::{HttpRequest, Transport, header, require_success};
-use crate::url::{SshRemoteUrl, join_url};
+use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
 use crate::walk::collect_closure;
 use arks_object::RawObject;
 use arks_oid::Oid;
@@ -74,7 +75,25 @@ pub fn push_ssh(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<
     Ok(())
 }
 
-/// Dispatch HTTP vs SSH from the remote URL scheme.
+/// Push over `git://` speaking receive-pack (peer must enable receive-pack).
+pub fn push_git(repo: &Repository, url: &str, updates: &[PushUpdate]) -> Result<(), RemoteError> {
+    validate_push_updates(updates)?;
+    let git_url = GitDaemonUrl::parse(url)?;
+    let mut session = GitDaemonSession::connect(&git_url, GitDaemonService::ReceivePack)?;
+    let ad = session.read_advertisement()?;
+    let (body, skip) = build_push_body(repo, &ad, updates)?;
+    if skip {
+        drop(session);
+        return Ok(());
+    }
+    session.write_all(&body)?;
+    session.close_write();
+    let report_bytes = session.read_until_flush()?;
+    apply_report_status(&report_bytes)?;
+    Ok(())
+}
+
+/// Dispatch HTTP / SSH / `git://` from the remote URL scheme.
 pub fn push_remote(
     repo: &Repository,
     url: &str,
@@ -82,6 +101,8 @@ pub fn push_remote(
 ) -> Result<(), RemoteError> {
     if SshRemoteUrl::parse(url).is_ok() {
         push_ssh(repo, url, updates)
+    } else if GitDaemonUrl::parse(url).is_ok() {
+        push_git(repo, url, updates)
     } else {
         push_http(repo, url, updates)
     }

@@ -161,6 +161,7 @@ Manual:
 | Publish entire `.spec/` with the public repo? | **Closed (lean default)** | Default lean: **yes** (transparency). Owner may tighten at flip without reopening development debt. |
 | Root LICENSE (SPDX) | **Done** | **`Apache-2.0 OR MIT`** — matches workspace Cargo license; `LICENSE` + `LICENSE-APACHE` + `LICENSE-MIT`. |
 | `SECURITY.md` template depth | **Done** | Minimal: GitHub Security Advisories channel + pre-1.0 `main`-only supported versions; no secrets. |
+| Root `CONTRIBUTING.md` | **Done** | Thin English pointer to `docs/contribute.md` + SECURITY/AGENTS; product-completion ladder L1 ([[research:root/20261110095142]]). |
 | `.github/CODEOWNERS` | **Done** | Landed under `.github/CODEOWNERS` (`@modootoday`); ownership hints only. |
 | Pages summaries of CELIR / lease | **Closed (honesty)** | Pages MUST stay high-level (“future storage / concurrency”) — no invented APIs until readiness SoT flips. |
 | crates.io publish timing | **Closed (owner default)** | Name lock is not a reservation; publish/reserve before relying on exclusivity ([[sot:root/product-naming]]); timing remains operator choice, not a residual Open. |

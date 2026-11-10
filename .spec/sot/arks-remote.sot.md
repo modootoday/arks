@@ -3,8 +3,8 @@ id: sot:root/arks-remote
 title: arks-remote unit
 status: active
 created: 2026-11-08T11:05:00Z
-updated: 2026-11-10T01:10:00Z
-tags: [m6, m16, unit, remote, client, smart-http, dumb-http, ssh, ring-6, phase-h, local-clone, g9, g35, shallow]
+updated: 2026-11-10T10:00:00Z
+tags: [m6, m16, unit, remote, client, smart-http, dumb-http, ssh, git-daemon, ring-6, phase-h, local-clone, g9, g35, shallow]
 verify: manual
 rel:
   governs: [crates/arks-remote]
@@ -35,7 +35,7 @@ rel:
 
 # arks-remote unit
 
-Version **0.5.0**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `delete-refs`); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]].
+Version **0.5.1**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remote`) under [[plan:root/20261108090651]] / roadmap Phase **H** (**M6**) + additive **G9/G35** shallow + dumb HTTP fetch/clone fallback + **`git://` client (R1)**. Wire bytes cite [gitprotocol-http](https://git-scm.com/docs/gitprotocol-http), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack), [gitprotocol-common](https://git-scm.com/docs/gitprotocol-common), [gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) (`shallow` / `deepen` / `delete-refs`), [git-daemon](https://git-scm.com/docs/git-daemon); catalog [[research:root/20261108071916]] + [[research:root/20261108071917]]. Host verify-peer policy: [[sot:root/remote-host-compatibility-surface]]. Product-completion ladder: [[research:root/20261110095142]].
 
 **Entry:** M5 exit proven — [[evidence:root/20261108104837]]. **Not production** — production is **M9**.
 
@@ -56,25 +56,28 @@ Version **0.5.0**. Unit SoT for Ring 6 Git **remote client** (`crates/arks-remot
 | Local filesystem **path** and same-host `file://` (absolute; empty host or `localhost`) | **Required (v0.2.0 additive; v0.3.0 pack-aware; v0.4.0 hardlink-prefer)** | **Clone composition only** via local object-directory **hardlink-or-copy** (prefer hardlink when the filesystem allows — git-clone(1) local default; fall back to byte copy); packs kept in place and read through pack-aware [[sot:root/arks-store]]. Cite [git-clone(1)](https://git-scm.com/docs/git-clone) local / `file://` forms; [[research:root/20261108071916]] file-transport note. **Not** `--shared` alternates; **not** piped upload-pack over `file://`. Does **not** unlock G8 |
 | SSH (`git@` / `ssh://`) | **Required (M16 Sy-4)** — OpenSSH `ssh` helper speaking upload-pack/receive-pack pkt-line (no product-path `git`) | [[sot:root/cli-flag-parity-complete]]; auth via agent / key files (OpenSSH defaults); askpass / credential-helper N/A |
 | Dumb HTTP fetch/clone | **Claimed (additive)** | Fall back when smart `info/refs` returns dumb body ([gitprotocol-http](https://git-scm.com/docs/gitprotocol-http#_dumb_clients)); packs via `objects/info/packs` + loose OID GETs; **no** dumb push; `--depth` refused on dumb |
-| `git://` | **Not claimed** | — |
+| `git://` | **Claimed (additive; R1)** | TCP pack-protocol client to git-daemon peers ([git-daemon](https://git-scm.com/docs/git-daemon), [gitprotocol-pack](https://git-scm.com/docs/gitprotocol-pack)); clone/fetch (`git-upload-pack`) + push (`git-receive-pack` when peer enables receive); default port **9418**; host wire roundtrip vs `arks daemon` |
 
 ### Operations (MUST for claimed subset)
 
 5. **Remote config.** Read/write `[remote "<name>"]` `url` and `fetch` refspec lines in `.git/config` as Git documents for the claimed subset (add / list / remove).
 6. **Fetch / clone path (HTTP).** `GET …/info/refs?service=git-upload-pack` then `POST …/git-upload-pack`; parse v1 advertisement; send want/have/done; demux side-band when negotiated; decode pack via `arks-pack`; **ingest as pack+idx** (prefer over exploding every object to loose); update remote-tracking refs per fetch refspec.
 6a. **Fetch / clone path (SSH).** OpenSSH `ssh` (or `GIT_SSH_COMMAND` / `ARKS_SSH_COMMAND`) runs peer `git-upload-pack '<path>'`; speak gitprotocol-pack v1 advertisement + want/have/done over the duplex; demux side-band when negotiated; ingest pack+idx; update tracking refs. Cite [[research:root/20261108071916]] SSH/pack note.
+6b. **Fetch / clone path (`git://`).** TCP connect to `host:port` (default **9418**); send initial service pkt-line `git-upload-pack /path\0host=…\0`; then same pack-protocol negotiation/ingest as SSH. Cite [git-daemon](https://git-scm.com/docs/git-daemon) + [[research:root/20261108071916]].
 7. **Push path (HTTP).** `GET …/info/refs?service=git-receive-pack` then `POST …/git-receive-pack`; send update commands + pack; parse `report-status` / `report-status-v2` as advertised for the claimed subset.
 7a. **Push path (SSH).** Same pack-protocol push dialog over OpenSSH running peer `git-receive-pack '<path>'`.
+7b. **Push path (`git://`).** Same receive-pack dialog after service request `git-receive-pack /path\0host=…\0`; peer MUST enable receive-pack (arks: `--enable=receive-pack`). Half-close write after the push body so the peer can finish `report-status`.
 8. **Clone composition (HTTP).** Init repo layout + fetch + baseline checkout of HEAD tree into the work tree (and index) for the claimed non-bare case.
 8a. **Clone composition (local path / `file://`).** Resolve path; discover source `$GIT_DIR`; init dest layout; hardlink-or-copy `objects/` from source (prefer hardlink; packs kept; pack-aware store); copy heads/tags + set `HEAD` / `origin` tracking; baseline checkout. Refuse non-local `file://` hosts and non-path schemes outside this table.
 8b. **Clone composition (SSH).** Init + SSH fetch + baseline checkout (same as HTTP composition after objects arrive).
+8c. **Clone composition (`git://`).** Init + `git://` fetch + baseline checkout (same as HTTP composition after objects arrive).
 9. **Capability honesty.** Prefer protocol v1 for M6 product claim (v2 MAY be parsed later). Never advertise unimplemented caps on the client want line beyond the negotiated subset. Unknown optional peer caps MAY be ignored.
 10. **Auth.** HTTPS: optional credentials via URL userinfo; `ARKS_REMOTE_USERNAME`/`ARKS_REMOTE_PASSWORD`; configured `credential.helper` (including first-party `wincred` / `libsecret` / `osxkeychain`); `GIT_ASKPASS`/`core.askPass`/`SSH_ASKPASS`; and TTY terminal prompt when `GIT_TERMINAL_PROMPT`≠`0` — [[sot:root/credential-helper-askpass]]. No forge OAuth UX. SSH: OpenSSH agent / key files / `GIT_SSH_COMMAND`. Secrets MUST NOT enter the tree or fixtures. Recorded/local peers MAY need no auth.
 11. **Pull.** Incomplete `pull` (fetch+merge without Pa merge) MUST refuse non-zero without mutating remote state. SSH URLs are claimed under Sy-4 (not refuse).
 
 ### Claimed shallow subset (G9 / clean-room **G35**; v0.4.0)
 
-12. **`--depth N` only.** Client MAY request positive commit depth on smart HTTP and SSH clone/fetch when the peer advertises the `shallow` capability ([gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) `shallow`; [git-clone `--depth`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt)). Wire: request `shallow` on the first want line; send `deepen N`; parse server `shallow` / `unshallow` lines; write `$GIT_DIR/shallow` (gitrepository-layout). Existing local shallow OIDs MUST be re-sent as client `shallow` lines on later fetches.
+12. **`--depth N` only.** Client MAY request positive commit depth on smart HTTP, SSH, and `git://` clone/fetch when the peer advertises the `shallow` capability ([gitprotocol-capabilities](https://git-scm.com/docs/gitprotocol-capabilities) `shallow`; [git-clone `--depth`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt)). Wire: request `shallow` on the first want line; send `deepen N`; parse server `shallow` / `unshallow` lines; write `$GIT_DIR/shallow` (gitrepository-layout). Existing local shallow OIDs MUST be re-sent as client `shallow` lines on later fetches.
 13. **Capability honesty.** MUST NOT request `shallow` / `deepen` / `filter` unless implemented and peer-advertised. Depth against a peer that does not advertise `shallow` MUST refuse. Local path / `file://` clone MUST refuse `--depth` (no pack-protocol deepen on the claimed local object-dir path).
 14. **Non-claims (remain out).** Partial-clone `filter` (`blob:none`, `tree:0`), promisor remotes, `extensions.partialClone`, `deepen-since` / `deepen-not` / `deepen-relative`, `--unshallow`, server-side shallow product. Clean-room proof: [[sot:root/interop-test-matrix]] **G9** semantics via compose **G35** (`verify/matrices/matrix-g35.md`) — coordination: G33=CRED, G34=SHARED-IDX.
 

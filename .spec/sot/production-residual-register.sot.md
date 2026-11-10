@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-10T09:45:00Z
+updated: 2026-11-10T10:00:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g28, g29, g30, g31, g32, g33, g34, g35, g36, g37, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential]
 verify: manual
 rel:
@@ -236,12 +236,13 @@ L3 ship is **M23** under [[adr:root/20261109194200]]. M21 catalog **Deferred=0**
 
 ### Post-terminal next-queue (reopen-only; not development Opens)
 
-After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare implementable Opens remain**. Do **not** invent product work. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
+After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`; prior [[evidence:root/20261110131600]]) and §F **38/38** terminal, **no bare development Opens remain**. Product-completion beyond reopen-only R-rows is ordered in [[research:root/20261110095142]] (L0 public honesty → L1 CONTRIBUTING → L2 client `git://` → …). Do **not** invent Claimed/PASS. Do **not** restart sole G19 remasure unless carrying honesty evidence is missing/broken. Tip CI host lint/test remains advisory vs Docker gates.
 
 | Priority | Candidate | Disposition today | Reopen requires |
 |----------|-----------|-------------------|-----------------|
 | — | §F P0–P6 rows | All **Claimed / Refuse / N/A / Closed** | Superseding ADR + SoT amend + gate re-verify (row reopen path) |
-| R1 | Client `git://` clone/fetch/push | **Not claimed** in [[sot:root/arks-remote]] (server daemon **G32 Claimed**) | SoT claim amend + wire tests; optional matrix row |
+| — | Product-completion ladder L0–L9 | Normative order in [[research:root/20261110095142]] | Follow ladder; R-rows still need their reopen paths |
+| R1 | Client `git://` clone/fetch/push | **Claimed (host wire)** — [[sot:root/arks-remote]] v0.5.1; clone/fetch/push vs `arks daemon`; ladder **L2** | Optional clean-room matrix twin of G32 client lane; re-verify after wire change |
 | R2 | Dumb HTTP **push** | Explicit **no** dumb push ([[sot:root/arks-remote]]); dumb-only sole server forbidden | SoT amend + primary-doc subset + evidence |
 | R3 | Partial-clone filter / promisor | **N/A** (FW-G9) | SoT amend beyond `--depth` |
 | R4 | OpenPGP / X.509 / `tag -s` | **N/A** (FW-GPGSIG) | Dedicated crypto harness SoT |

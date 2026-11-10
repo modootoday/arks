@@ -38,9 +38,9 @@ arks aims for Git-compatible CLI use with the same `.git` on disk, aimed at mult
 
 ## Partial or refused features
 
-### Partial clone?
+### Partial clone / dumb push?
 
-`--depth` shallow clones may be used; filter / `blob:none` / promisor-style partial clone is not claimed.
+`--depth` shallow clones may be used on pack transports (smart HTTP, SSH, `git://`); filter / `blob:none` / promisor-style partial clone is not claimed. Dumb HTTP **push** is not claimed (fetch/clone fallback may be used).
 
 ### Commit and tag signing?
 
@@ -56,7 +56,7 @@ Unimplemented commands fail closed (non-zero, no repo mutation). See [Alias `git
 
 ### Aggressive ≤0.5× journeys?
 
-Latest sole G19 remeasure: most allow-list journeys ≤0.5×; **Clone HTTP** remains **aggressive_na**. See [Performance](../performance/).
+Latest sole G19 remeasure: **all 19** allow-list journeys ≤0.5× (**Claimed 8/8**, including Clone HTTP). See [Performance](../performance/).
 
 
 ### Live harnesses?

@@ -4,7 +4,7 @@
 //! Primary: <https://git-scm.com/docs/git-config>
 
 use crate::error::RemoteError;
-use crate::url::{HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
+use crate::url::{GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl};
 use std::fs;
 use std::path::Path;
 
@@ -33,12 +33,13 @@ pub fn list_remotes(config_file: &Path) -> Result<Vec<RemoteConfig>, RemoteError
     Ok(parse_remotes(&text))
 }
 
-/// Append a remote section. Accepts http(s), SSH, and local/file:// URLs.
+/// Append a remote section. Accepts http(s), SSH, `git://`, and local/file:// URLs.
 pub fn add_remote(config_file: &Path, name: &str, url: &str) -> Result<(), RemoteError> {
     validate_name(name)?;
     let url = url.trim();
     if HttpRemoteUrl::parse(url).is_err()
         && SshRemoteUrl::parse(url).is_err()
+        && GitDaemonUrl::parse(url).is_err()
         && LocalRemoteUrl::parse(url).is_err()
     {
         return Err(RemoteError::UnsupportedUrl(url.to_string()));
@@ -233,7 +234,10 @@ mod tests {
         add_remote(&cfg, "origin", "git@example.com:a/b.git").unwrap();
         let remotes = list_remotes(&cfg).unwrap();
         assert_eq!(remotes[0].url, "git@example.com:a/b.git");
-        let err = add_remote(&cfg, "bad", "git://example.com/a.git").unwrap_err();
+        add_remote(&cfg, "daemon", "git://example.com/a.git").unwrap();
+        let remotes = list_remotes(&cfg).unwrap();
+        assert!(remotes.iter().any(|r| r.url == "git://example.com/a.git"));
+        let err = add_remote(&cfg, "bad", "ftp://example.com/a.git").unwrap_err();
         assert!(matches!(err, RemoteError::UnsupportedUrl(_)));
     }
 

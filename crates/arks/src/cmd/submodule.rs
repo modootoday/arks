@@ -14,7 +14,8 @@ use arks_index::{IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_remote::{
-    HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl, clone_http, clone_local, clone_ssh,
+    GitDaemonUrl, HttpRemoteUrl, LocalRemoteUrl, SshRemoteUrl, clone_git, clone_http, clone_local,
+    clone_ssh,
 };
 use arks_repo::Repository;
 use arks_store::ObjectStore;
@@ -88,9 +89,10 @@ fn sm_add(args: &[String]) -> CliResult<()> {
     let local_ok = LocalRemoteUrl::parse(url).is_ok();
     let ssh_ok = SshRemoteUrl::parse(url).is_ok();
     let http_ok = HttpRemoteUrl::parse(url).is_ok();
-    if !local_ok && !ssh_ok && !http_ok {
+    let git_ok = GitDaemonUrl::parse(url).is_ok();
+    if !local_ok && !ssh_ok && !http_ok && !git_ok {
         return Err(CliError::NotImplemented(
-            "submodule add: claimed URLs are local path / file:// / https:// / http:// / ssh:// / user@host:path"
+            "submodule add: claimed URLs are local path / file:// / https:// / http:// / ssh:// / user@host:path / git://"
                 .into(),
         ));
     }
@@ -98,6 +100,13 @@ fn sm_add(args: &[String]) -> CliResult<()> {
         p.to_string()
     } else if let Ok(ssh) = SshRemoteUrl::parse(url) {
         ssh.path
+            .rsplit('/')
+            .next()
+            .unwrap_or("sub")
+            .trim_end_matches(".git")
+            .to_string()
+    } else if let Ok(git) = GitDaemonUrl::parse(url) {
+        git.path
             .rsplit('/')
             .next()
             .unwrap_or("sub")
@@ -138,11 +147,14 @@ fn sm_add(args: &[String]) -> CliResult<()> {
     }
 
     // Clone into path (temporary normal clone), then absorb into .git/modules.
-    // HTTPS/HTTP via arks-remote clone_http (FW-SUBMOD-HTTPS); cite git-submodule(1).
+    // HTTPS/HTTP via arks-remote clone_http (FW-SUBMOD-HTTPS); git:// via clone_git.
+    // Cite git-submodule(1).
     if ssh_ok {
         clone_ssh(url, &abs).map_err(|e| CliError::Msg(e.to_string()))?;
     } else if http_ok {
         clone_http(url, &abs).map_err(|e| CliError::Msg(e.to_string()))?;
+    } else if git_ok {
+        clone_git(url, &abs).map_err(|e| CliError::Msg(e.to_string()))?;
     } else {
         clone_local(url, &abs).map_err(|e| CliError::Msg(e.to_string()))?;
     }
@@ -753,6 +765,10 @@ fn ensure_submodule_checkout(
         }
         if SshRemoteUrl::parse(url).is_ok() {
             clone_ssh(url, abs).map_err(|e| CliError::Msg(e.to_string()))?;
+        } else if HttpRemoteUrl::parse(url).is_ok() {
+            clone_http(url, abs).map_err(|e| CliError::Msg(e.to_string()))?;
+        } else if GitDaemonUrl::parse(url).is_ok() {
+            clone_git(url, abs).map_err(|e| CliError::Msg(e.to_string()))?;
         } else {
             clone_local(url, abs).map_err(|e| CliError::Msg(e.to_string()))?;
         }
