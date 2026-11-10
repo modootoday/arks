@@ -110,6 +110,7 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 | `arks` intent | [[sot:root/product-intent]] |
 | Daemon (`arks daemon`) | [[sot:root/arks-daemon-product-intent]] |
 | Product self-host (LAN/WAN) | [[sot:root/arks-self-host-server]] · public `docs/self-host.md` |
+| Claimed residual gates (B1–B9) | [[sot:root/arks-claimed-residual-gates]] · [[research:root/20261111074523]] — design/SKIP harness; no invent Claimed |
 | Hub (`arks hub`) | [[sot:root/arks-hub-product-intent]] |
 | CLI personality / factory | [[sot:root/arks-cli-personality-factory]] (git\|gh\|arks; OverlapFacade; ExitCodePolicy — design/Partial) |
 | CLI output + exit contract | [[sot:root/arks-cli-output-exit-contract]] (stdout/stderr; porcelain flags; triple exit classes — design/Partial) |
@@ -121,4 +122,4 @@ Before governed edits: `spec context <path>` → edit → `spec check`.
 
 ## Sibling ownership note
 
-Clean-room **3-way symmetry verify matrices** (git↔arks, daemon, hub+multi-agent) live under umbrella [[sot:root/verify-cleanroom-symmetry-matrix]] + compose `dod-cli-matrix` / `dod-daemon-matrix` / `dod-hub-matrix` / `dod-symmetry` / `dod-symmetry-prerelease`. **Release precheck** [[sot:root/release-symmetry-precheck]] blocks tagged `dist` on pin Missing / untracked leaves (Partial + hub v1 Missing advisory by default). **Related hosting** [[sot:root/arks-self-host-server]] is **design-active** (LAN/WAN, arks-only); hosting e2e scaffold ≠ Claimed — do not invent PASS. Future **`arks agent` e2e** MAY join later the same way. This tree owns **governance / classification / product-shape honesty**.
+Clean-room **3-way symmetry verify matrices** (git↔arks, daemon, hub+multi-agent) live under umbrella [[sot:root/verify-cleanroom-symmetry-matrix]] + compose `dod-cli-matrix` / `dod-daemon-matrix` / `dod-hub-matrix` / `dod-symmetry` / `dod-symmetry-prerelease`. **Release precheck** [[sot:root/release-symmetry-precheck]] blocks tagged `dist` on pin Missing / untracked leaves (Partial + hub v1 Missing advisory by default). **Related hosting** [[sot:root/arks-self-host-server]] is **design-active** (LAN/WAN, arks-only); hosting e2e scaffold ≠ Claimed — do not invent PASS. **Adjacent Claimed residual** [[sot:root/arks-claimed-residual-gates]] (`dod-claimed-residual`) is design/SKIP until evidenced — **not** a fourth symmetry pillar; Partial smokes ≠ Claimed. Future **`arks agent` e2e** deepens via B4 under that SoT. This tree owns **governance / classification / product-shape honesty**.

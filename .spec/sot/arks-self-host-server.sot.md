@@ -3,8 +3,8 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-10T22:40:00Z
-tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial]
+updated: 2026-11-10T22:52:00Z
+tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial, claimed-residual]
 verify: manual
 rel:
   depends_on:
@@ -16,10 +16,12 @@ rel:
     - sot:root/cli-surface
     - sot:root/public-surface
     - sot:root/verify-cleanroom-symmetry-matrix
+    - sot:root/arks-claimed-residual-gates
     - sot:root/program-roadmap
     - sot:root/production-residual-register
     - adr:root/20261109224236
     - research:root/20261111055609
+    - research:root/20261111074523
   evidence:
     - evidence:root/20261108231300
     - evidence:root/20261109221500
@@ -31,7 +33,7 @@ rel:
 
 # arks product self-host server
 
-Version **0.2.2**. Normative **product hosting story** (document revision — **not** a product release; workspace crate remains `0.0.0`): run a **GitHub-class self-host** using **only the published `arks` binary** — **git remotes (HTTP/SSH)** plus **forge API (PR/issue/…)** in **one** `arks serve` process — reachable from **localhost**, **intranet (LAN)**, and/or **internet (WAN)** when the operator chooses bind + ops fronting.
+Version **0.2.3**. Normative **product hosting story** (document revision — **not** a product release; workspace crate remains `0.0.0`): run a **GitHub-class self-host** using **only the published `arks` binary** — **git remotes (HTTP/SSH)** plus **forge API (PR/issue/…)** in **one** `arks serve` process — reachable from **localhost**, **intranet (LAN)**, and/or **internet (WAN)** when the operator chooses bind + ops fronting.
 
 **Honesty:** This SoT makes the story **EXPLICIT**. **Design intent ≠ Claimed.** Do not invent Claimed from this SoT alone. Wire/unit ownership for Git transports remains [[sot:root/arks-server]]. Daemon **flag** symmetry remains [[sot:root/arks-daemon-product-intent]] / [[sot:root/arks-daemon-git-command-matrix]]. **`arks hub`** is the **forge client** ([[sot:root/arks-hub-product-intent]]) — not the primary way to start the host.
 
@@ -201,6 +203,7 @@ arks product self-host (THIS SoT) — GitHub-class host
 34. **Design intent (now):** this SoT + `docs/self-host.md` + honest CLI help for `arks serve` / `arks serve config` / fail-closed Partial modules; hub SoTs say **client-only** for primary UX; **port policy** (normative vs demo) documented.
 35. **Already carrying (wire, not hosting e2e):** G15 / G29–G32 / G36 — cite residual register; do not re-stamp. Ops-SSHD stdio ≠ in-process serve SSH Claimed. Transitional `arks hub serve` Partial ≠ forge-in-serve Claimed.
 36. **Future hosting e2e:** compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` proving arks-only `arks serve` (with explicit disable flags until SSH/forge Claimed), LAN-shaped bind, Basic, stock Git client + optional `arks hub` against forge base — scaffold/SKIP until Claimed; **no invent hosting Claimed**.
+37. **Claimed residual deepen (adjacent):** OpenSSH-exact / SSH git e2e / zero-downtime rebind / in-process TLS acceptance criteria and Docker slots live under [[sot:root/arks-claimed-residual-gates]] (`dod-claimed-ssh` / `dod-claimed-rebind` / `dod-claimed-tls` / orchestrator `dod-claimed-residual`). Partial durable SSH (§17(c)) ≠ those Claimed rows.
 
 ## Why
 

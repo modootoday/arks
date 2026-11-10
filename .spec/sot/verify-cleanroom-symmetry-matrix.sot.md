@@ -3,8 +3,8 @@ id: sot:root/verify-cleanroom-symmetry-matrix
 title: Clean-room symmetry matrix (three DoD pillars)
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-10T19:42:00Z
-tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, single-release, no-invent-pass]
+updated: 2026-11-10T22:50:00Z
+tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, claimed-residual, single-release, no-invent-pass]
 verify: manual
 rel:
   depends_on:
@@ -14,6 +14,7 @@ rel:
     - sot:root/arks-hub-gh-command-matrix
     - sot:root/arks-hub-local-multi-agent-pr
     - sot:root/arks-self-host-server
+    - sot:root/arks-claimed-residual-gates
     - sot:root/arks-daemon-product-intent
     - sot:root/arks-hub-product-intent
     - sot:root/cli-surface
@@ -21,6 +22,7 @@ rel:
     - sot:root/production-residual-register
     - research:root/20261111034805
     - research:root/20261111035226
+    - research:root/20261111074523
   evidence:
     - evidence:root/20261111034600
     - evidence:root/20261111035226
@@ -33,11 +35,12 @@ rel:
     - verify/scripts/run-symmetry-daemon.sh
     - verify/scripts/run-symmetry-hub.sh
     - verify/scripts/run-self-host-e2e.sh
+    - verify/scripts/run-claimed-residual-dod.sh
 ---
 
 # Clean-room symmetry matrix (three DoD pillars)
 
-Version **0.1.4**. Umbrella **canon** for the public-story clean-room **Definition of Done**: three peer-symmetry pillars in **Linux Docker** (`arks-verify-m1:0.1.0`), plus **related hosting** e2e for arks-only self-host server (LAN/WAN) under [[sot:root/arks-self-host-server]]. **No invent PASS/Claimed** from SoT alone.
+Version **0.1.5**. Umbrella **canon** for the public-story clean-room **Definition of Done**: three peer-symmetry pillars in **Linux Docker** (`arks-verify-m1:0.1.0`), plus **related hosting** e2e for arks-only self-host server (LAN/WAN) under [[sot:root/arks-self-host-server]], plus **adjacent Claimed residual** scaffolds under [[sot:root/arks-claimed-residual-gates]] (B1–B9 — **not** a fourth symmetry pillar). **No invent PASS/Claimed** from SoT alone.
 
 **Published binary:** **`arks` only** (`arks daemon`, `arks hub …`). Internal crates OK. Product paths **MUST NOT** spawn `git` or `gh`. Stock `git` / surveyed `gh` are oracles only.
 
@@ -51,8 +54,9 @@ Version **0.1.4**. Umbrella **canon** for the public-story clean-room **Definiti
 | **2. Daemon** | former Missing~25 → living CSV **Missing = 0** via Partial accept + Refuse/N/A | deepen Partial → Parity ([[sot:root/arks-daemon-git-command-matrix]]) |
 | **3. Hub/forge client** | Logical **gh↔arks** pillar; target argv = **flat** `arks pr|issue|auth|…` ([[sot:root/arks-hub-product-intent]] v0.4); today Partial often via transitional `arks hub …` + `hub serve`; host = `arks serve` forge module | forge REST Claimed + multi-agent runners ([[sot:root/arks-hub-local-multi-agent-pr]]) |
 | **Related: Self-host** | Design SoT **active** ([[sot:root/arks-self-host-server]] v0.2 — GitHub-class umbrella: HTTP+SSH+forge); wire receipts G15/G29–G32/G36 exist; forge-in-serve Missing/Partial | dedicated LAN-shaped hosting e2e (compose `dod-self-host`) — **scaffold / not Claimed** |
+| **Adjacent: Claimed residual** | Design SoT **active** ([[sot:root/arks-claimed-residual-gates]] v0.1 — B1/B2/B3/B4/B5/B5+/B7/B9 after Partial wiring) | compose `dod-claimed-residual` (+ per-gate `dod-claimed-*`) — **SKIP/scaffold / not Claimed** |
 
-Orchestrator wired: `verify/scripts/run-symmetry-dod.sh` / compose `dod-symmetry`. Related hosting smoke: compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` (SKIP/scaffold until Claimed).
+Orchestrator wired: `verify/scripts/run-symmetry-dod.sh` / compose `dod-symmetry`. Related hosting smoke: compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` (SKIP/scaffold until Claimed). Claimed residual scaffolds: compose `dod-claimed-residual` → `verify/scripts/run-claimed-residual-dod.sh` (SKIP until Claimed; **no invent PASS**).
 
 ## Rule
 
@@ -126,3 +130,4 @@ One umbrella ties exhaustive peer matrices to the same Docker entrypoints operat
 4. Hub scenario SoT defines N-agent local-host framework even if runners are scaffold.
 5. Residual / roadmap cite these three pillars as clean-room public-story DoD — not as invented Claimed.
 6. Related hosting [[sot:root/arks-self-host-server]] is linked; `dod-self-host` scaffold exists; hosting e2e Claimed only with evidence (no invent PASS).
+7. Adjacent Claimed residual [[sot:root/arks-claimed-residual-gates]] is linked; `dod-claimed-residual` scaffold exists; B1–B9 Claimed only with evidence (no invent PASS; not a fourth symmetry pillar).
