@@ -13,7 +13,7 @@ fn require_git() {
 fn arks_bin() -> PathBuf {
     let target = std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../target-cleanroom")
+            .join("../../../target-cleanroom")
             .display()
             .to_string()
     });

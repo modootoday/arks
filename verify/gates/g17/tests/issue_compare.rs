@@ -25,7 +25,7 @@ fn arks_bin() -> PathBuf {
         candidates.push(PathBuf::from(&target).join("debug/arks.exe"));
         candidates.push(PathBuf::from(&target).join("debug/arks"));
     }
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..");
     // Prefer native host binary before cross-built clean-room ELF (Windows host).
     candidates.push(root.join("target/release/arks.exe"));
     candidates.push(root.join("target/debug/arks.exe"));

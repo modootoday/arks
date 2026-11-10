@@ -51,6 +51,8 @@ verify/
 
 `verify/gates/g*` harness crates stay **outside** the root workspace so host default builds stay small; oracles run via `--manifest-path verify/gates/gN/Cargo.toml` or `cargo test -p …` from scripts.
 
+**Repo-root path depth:** gate `CARGO_MANIFEST_DIR` is `verify/gates/gN/`, so host fallbacks to repo `target/` / `target-cleanroom/` use `../../..` (three parents). Prefer `CARGO_TARGET_DIR` / `ARKS_BIN` in clean-room.
+
 ### G19 paths (sole Docker run)
 
 | Artifact | Path |

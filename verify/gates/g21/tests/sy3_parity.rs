@@ -14,7 +14,7 @@ fn arks_bin() -> PathBuf {
             return p;
         }
     }
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..");
     for c in [
         root.join("target/release/arks.exe"),
         root.join("target/release/arks"),
