@@ -3,7 +3,7 @@ id: sot:root/arks-remaining-implement-wave
 title: Remaining implement wave — design SoT (research-gated)
 status: active
 created: 2026-11-11T00:08:27Z
-updated: 2026-11-11T00:35:43Z
+updated: 2026-11-11T01:46:08Z
 tags: [design, residual, implement-wave, b5, b7, cli-stubs, personality, forge-in-serve, daemon, ssh, rebind, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -64,8 +64,8 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 | 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Claimed** ([[evidence:root/20261111092000-claimed-rebind-forge]]) | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
 | 4 | **IW-SSH-LABEL** | Serve SSH process-label / readiness | **Claimed** (B1/B2 + IW-B7-SSH) | Durable listen **must** say Partial while rebind Claimed absent | Operator surfaces may drop Partial readiness label only when B1/B2 **and** IW-B7-SSH Claimed (or SoT explicitly splits wire Claimed vs listen Claimed) | Evidence + `arks-self-host-server` honesty amend |
 | 5 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) | Local forge API under `arks serve` even when SSH enabled (no silent SSH-only cut) | Hosting e2e forge module Claimed (PR/issue host journeys); **B3** alone ≠ this row | `dod-self-host` receipt |
-| 6 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**) | Flat leaves + hub serve forwards remain Partial stubs; B3 HTTPS remote happy path Claimed | Peer-faithful leaf bodies + hub matrix STRICT greens | Symmetry hub pillar / hub matrices — not invent from B3 |
-| 7 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** (skeleton landed) | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | CLI symmetry matrices + personality SoT amend |
+| 6 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Claimed** subset ([[evidence:root/20261111011539-hub-flat-subset]]; + **B3**); full Missing open | Flat leaves + hub serve; B3 HTTPS remote Claimed | Peer-faithful Claimed-subset + `ARKS_HUB_IW_FLAT=1` STRICT | Symmetry hub pillar — not invent full matrix from B3 |
+| 7 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Claimed** sample ([[evidence:root/20261111014608-personality-dropin]]); full CLI CSV open | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | CLI symmetry matrices + personality SoT amend |
 | 8 | **IW-DAEMON-FLAGS** | Daemon deepen (non-B5) | **Partial** / **B5+ Refuse** (terminal for Claimed) | path-filter, `--syslog` openlog, `--user`/`--group`, detach Partial landed | **No** Claimed for classic double-fork or syslog facility (B5+ **Refuse**); archive Claimed is IW-B5 only | daemon matrix / archive slot as applicable |
 
 **B7 HTTP** remains **Claimed** ([[evidence:root/20261110233659-claimed-rebind]]) and is **not** reopened by this SoT. **B1/B2/B3/B4/B9** remain Claimed; do not re-litigate.
@@ -102,7 +102,7 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 - Owning product SoTs remain authoritative for surface grammar.
 - **Partial residual deepen / honesty for these four rows is gated by [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]]** (this SoT keeps historical order + bars; do not thrash without that gate).
 - **IW-FORGE-SERVE Claimed:** default `arks serve` cohosts HTTP + SSH + forge; hosting e2e PR/issue journeys evidenced under `dod-self-host` ([[evidence:root/20261111011425-self-host-forge-e2e]]) — **B3 ≠ this row**.
-- **IW-HUB-FLAT / IW-PERSONALITY:** keep Partial honesty; do not invent Claimed from stub forwards or ExitCodePolicy unit greens alone.
+- **IW-HUB-FLAT Claimed subset:** [[evidence:root/20261111011539-hub-flat-subset]]; full CSV Missing open. **IW-PERSONALITY Claimed sample:** [[evidence:root/20261111014608-personality-dropin]] — ExitCodePolicy units alone ≠ this row; full CLI CSV Missing open.
 - **IW-DAEMON-FLAGS:** Partial deepen closed; **B5+ Refuse** unchanged; no classic double-fork Claimed (peer detach is single-fork+`setsid`).
 
 ### Docker verify slots

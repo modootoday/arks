@@ -1,0 +1,1 @@
+error: `not-a-gh-leaf` is not a gh-personality leaf; use ARKS_PERSONALITY=git|arks or a forge leaf ([[sot:root/arks-cli-personality-factory]])

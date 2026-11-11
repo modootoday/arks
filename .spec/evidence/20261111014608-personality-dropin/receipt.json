@@ -1,0 +1,16 @@
+{
+  "schema": "arks-personality-dropin/v1",
+  "gate": "IW-PERSONALITY",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "4248657",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "checks": [
+    "PD-GIT ARKS_PERSONALITY=git --version peer stdout ^git version + exit 0 vs pin",
+    "PD-GIT bad-flag non-zero exit",
+    "PD-GH pr --help exit 0; unknown leaf exit 2",
+    "PD-GH pr list happy path against local forge"
+  ],
+  "note": "ExitCodePolicy OR-of-failure unit greens alone do not satisfy IW-PERSONALITY Claimed.",
+  "timestamp": "2026-11-11T01:46:08Z"
+}

@@ -3,7 +3,7 @@ id: sot:root/arks-verify-docker-e2e-claim-wave
 title: Verify Docker e2e claim wave — hosting / hub STRICT / personality drop-in
 status: active
 created: 2026-11-11T01:11:52Z
-updated: 2026-11-11T01:15:39Z
+updated: 2026-11-11T01:46:08Z
 tags: [design, verify, docker, e2e, hosting, forge-in-serve, hub-flat, personality, no-invent-claimed, spec-first, clean-room]
 verify: manual
 rel:
@@ -32,7 +32,7 @@ rel:
 
 # Verify Docker e2e claim wave — hosting / hub STRICT / personality drop-in
 
-Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **Design ≠ Claimed.** This SoT freezes the **Docker-under-`verify/`** path to resolve remaining Partial Claimed blockers from [[sot:root/arks-partial-residual-wave]] with the **same pattern** as prior Claimed residual gates: compose service → script → scrubbed `.spec/evidence/` receipt → status flip. Cite [[research:root/20261111093543]] (+ [[research:root/20261111090827]] where still applicable). **No new web research** required for this wave — existing notes cover Forgejo/Githome hosting e2e, hub vs B3 split, `gh` exit classes, and clean-room pin.
 
@@ -64,7 +64,7 @@ B5+ facility/priority and classic double-fork stay **Refuse** ([[sot:root/arks-c
 |------:|----|-----------------|--------|------------|------------------------|
 | 1 | **IW-FORGE-SERVE** | `dod-self-host` | `verify/scripts/run-self-host-e2e.sh` | **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) | Docker receipt: `arks serve` forge module + **issue create/list** + **PR create/list** (arks hub or flat client; **no** `gh` spawn) |
 | 2 | **IW-HUB-FLAT** | `dod-hub-matrix` | `verify/scripts/run-hub-gh-arks-matrix-e2e.sh` | **Claimed** subset ([[evidence:root/20261111011539-hub-flat-subset]]; + B3); full CSV Missing open | Peer-faithful bodies for **Claimed subset** leaves + STRICT greens for that subset (receipt); full-matrix Missing ≠ invent PASS |
-| 3 | **IW-PERSONALITY** | `dod-cli-matrix` | `verify/scripts/run-cli-git-arks-matrix-e2e.sh` (+ personality scenario) | Partial (skeleton + OR) | Drop-in sample under `ARKS_PERSONALITY=git` **and** `gh`: peer stdout shape + peer exit classes with scrubbed receipt |
+| 3 | **IW-PERSONALITY** | `dod-cli-matrix` | `verify/scripts/run-cli-git-arks-matrix-e2e.sh` (+ personality scenario) | **Claimed** sample ([[evidence:root/20261111014608-personality-dropin]]) | Drop-in sample under `ARKS_PERSONALITY=git` **and** `gh`: peer stdout shape + peer exit classes with scrubbed receipt |
 | — | **IW-DAEMON-FLAGS / B5+** | `dod-daemon-matrix` / archive | existing | Partial / **Refuse** | **Out of Claimed scope** — do not schedule |
 
 Do **not** reorder to chase green SKIP. Prefer honest **Partial** / **Refuse** over invent Claimed.

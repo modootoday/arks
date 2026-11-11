@@ -59,14 +59,20 @@ pub fn dispatch_argv() -> ExitCode {
         return ExitCode::SUCCESS;
     }
     if args.first().map(String::as_str) == Some("--version") {
-        println!("arks version {}", env!("CARGO_PKG_VERSION"));
+        print_version(personality);
         return ExitCode::SUCCESS;
     }
 
     let cmd = args.remove(0);
     if cmd.starts_with('-') {
         eprintln!("error: unsupported global option: {cmd}");
-        return ExitCodePolicy::from_class(ExitClass::StubOrUsage);
+        // Peer drop-in: git collapses usage to exit 1; gh/arks keep stub/usage 2.
+        return match personality {
+            Personality::Git => ExitCodePolicy::map(personality, &[LayerOutcome::StubOrUsage]),
+            Personality::Gh | Personality::Arks => {
+                ExitCodePolicy::from_class(ExitClass::StubOrUsage)
+            }
+        };
     }
 
     // Transitional HubAliasLayer → arks-hub.
@@ -83,7 +89,7 @@ pub fn dispatch_argv() -> ExitCode {
         return ExitCode::SUCCESS;
     }
     if cmd == "version" {
-        println!("arks version {}", env!("CARGO_PKG_VERSION"));
+        print_version(personality);
         return ExitCode::SUCCESS;
     }
 
@@ -152,6 +158,23 @@ fn run_serve_leaf(cmd: &str, args: &[String]) -> ExitCode {
         Err(CliError::Msg(m)) => {
             eprintln!("error: {m}");
             ExitCode::from(ExitClass::GenericFailure as u8)
+        }
+    }
+}
+
+fn print_version(personality: Personality) {
+    // IW-PERSONALITY drop-in sample: peer-shaped version line under git/gh
+    // ([[sot:root/arks-verify-docker-e2e-claim-wave]]). Unified arks stays arks-shaped.
+    match personality {
+        Personality::Git => {
+            // Match pin `git --version` shape (`git version X`); harness compares class.
+            println!("git version {}", env!("CARGO_PKG_VERSION"));
+        }
+        Personality::Gh => {
+            println!("gh version {}", env!("CARGO_PKG_VERSION"));
+        }
+        Personality::Arks => {
+            println!("arks version {}", env!("CARGO_PKG_VERSION"));
         }
     }
 }

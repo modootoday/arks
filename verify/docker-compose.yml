@@ -548,6 +548,13 @@ services:
     <<: *cleanroom
     depends_on:
       - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+      # IW-PERSONALITY drop-in sample — sot:root/arks-verify-docker-e2e-claim-wave
+      ARKS_PERSONALITY_DROPIN: "${ARKS_PERSONALITY_DROPIN:-0}"
     command: ["/bin/bash", "verify/scripts/run-cli-git-arks-matrix-e2e.sh"]
 
   dod-daemon-matrix:
@@ -560,6 +567,13 @@ services:
     <<: *cleanroom
     depends_on:
       - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+      # IW-HUB-FLAT Claimed subset STRICT — sot:root/arks-verify-docker-e2e-claim-wave
+      ARKS_HUB_IW_FLAT: "${ARKS_HUB_IW_FLAT:-0}"
     command: ["/bin/bash", "verify/scripts/run-hub-gh-arks-matrix-e2e.sh"]
 
   # Umbrella: all three DoD pillars (sot:root/verify-cleanroom-symmetry-matrix).

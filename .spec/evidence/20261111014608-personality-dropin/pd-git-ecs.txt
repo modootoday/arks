@@ -1,0 +1,3 @@
+pd-git-version-ec=0
+pin-git-version-ec=0
+pd-git-badflag-ec=1
