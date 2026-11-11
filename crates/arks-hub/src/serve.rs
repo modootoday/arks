@@ -412,7 +412,23 @@ fn handle_client<S: Read + Write>(
                 let description = v.get("description").and_then(|x| x.as_str());
                 let private = v.get("private").and_then(|x| x.as_bool());
                 let archived = v.get("archived").and_then(|x| x.as_bool());
-                if let Some(r) = st.patch_repo(owner, repo, description, private, archived) {
+                let new_name = v.get("name").and_then(|x| x.as_str());
+                let r = if let Some(nn) = new_name.filter(|n| *n != repo) {
+                    st.rename_repo(owner, repo, nn)
+                        .and_then(|renamed| {
+                            st.patch_repo(
+                                &renamed.owner,
+                                &renamed.name,
+                                description,
+                                private,
+                                archived,
+                            )
+                            .or(Some(renamed))
+                        })
+                } else {
+                    st.patch_repo(owner, repo, description, private, archived)
+                };
+                if let Some(r) = r {
                     st.save()?;
                     return respond(
                         stream,
@@ -427,6 +443,13 @@ fn handle_client<S: Read + Write>(
                             "owner": {"login": r.owner},
                         }),
                     );
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            if parts.len() == 2 && req.method == "DELETE" {
+                if st.delete_repo(owner, repo) {
+                    st.save()?;
+                    return respond(stream, 204, &json!({}));
                 }
                 return respond(stream, 404, &json!({"message":"Not Found"}));
             }
@@ -477,7 +500,42 @@ fn handle_client<S: Read + Write>(
                     let title = v.get("title").and_then(|x| x.as_str());
                     let body = v.get("body").and_then(|x| x.as_str());
                     let state = v.get("state").and_then(|x| x.as_str());
-                    if let Some(i) = st.patch_issue(owner, repo, n, title, body, state) {
+                    let locked = v.get("locked").and_then(|x| x.as_bool());
+                    let pinned = v.get("pinned").and_then(|x| x.as_bool());
+                    // Transfer: {"owner":"o","repo":"r"} or {"transfer_to":"o/r"}
+                    if let Some(to) = v
+                        .get("transfer_to")
+                        .and_then(|x| x.as_str())
+                        .and_then(|s| s.split_once('/'))
+                        .or_else(|| {
+                            let o = v.get("owner").and_then(|x| x.as_str())?;
+                            let r = v.get("repo").and_then(|x| x.as_str())?;
+                            Some((o, r))
+                        })
+                    {
+                        if let Some(i) = st.transfer_issue(owner, repo, n, to.0, to.1) {
+                            st.save()?;
+                            return respond(
+                                stream,
+                                200,
+                                &json!({
+                                    "number": i.number,
+                                    "title": i.title,
+                                    "body": i.body,
+                                    "state": i.state,
+                                    "locked": i.locked,
+                                    "pinned": i.pinned,
+                                    "owner": {"login": i.owner},
+                                    "repository": {"full_name": format!("{}/{}", i.owner, i.repo)},
+                                    "user": {"login": i.user},
+                                }),
+                            );
+                        }
+                        return respond(stream, 404, &json!({"message":"Not Found"}));
+                    }
+                    if let Some(i) =
+                        st.patch_issue(owner, repo, n, title, body, state, locked, pinned)
+                    {
                         st.save()?;
                         return respond(
                             stream,
@@ -487,6 +545,8 @@ fn handle_client<S: Read + Write>(
                                 "title": i.title,
                                 "body": i.body,
                                 "state": i.state,
+                                "locked": i.locked,
+                                "pinned": i.pinned,
                                 "user": {"login": i.user},
                             }),
                         );
@@ -514,6 +574,8 @@ fn handle_client<S: Read + Write>(
                             "title": i.title,
                             "body": i.body,
                             "state": i.state,
+                            "locked": i.locked,
+                            "pinned": i.pinned,
                             "user": {"login": i.user},
                         }),
                     );
@@ -619,7 +681,10 @@ fn handle_client<S: Read + Write>(
                     let body = v.get("body").and_then(|x| x.as_str());
                     let state = v.get("state").and_then(|x| x.as_str());
                     let draft = v.get("draft").and_then(|x| x.as_bool());
-                    if let Some(p) = st.patch_pull(owner, repo, n, title, body, state, draft) {
+                    let locked = v.get("locked").and_then(|x| x.as_bool());
+                    if let Some(p) =
+                        st.patch_pull(owner, repo, n, title, body, state, draft, locked)
+                    {
                         st.save()?;
                         return respond(
                             stream,
@@ -630,6 +695,7 @@ fn handle_client<S: Read + Write>(
                                 "body": p.body,
                                 "state": p.state,
                                 "draft": p.draft,
+                                "locked": p.locked,
                                 "merged": p.merged,
                                 "head": {"ref": p.head},
                                 "base": {"ref": p.base},
@@ -654,6 +720,7 @@ fn handle_client<S: Read + Write>(
                             "body": p.body,
                             "state": p.state,
                             "draft": p.draft,
+                            "locked": p.locked,
                             "merged": p.merged,
                             "head": {"ref": p.head},
                             "base": {"ref": p.base},
@@ -662,6 +729,52 @@ fn handle_client<S: Read + Write>(
                     );
                 }
                 return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            // PR reviews metadata (≠ CI checks).
+            if parts.len() == 5
+                && parts[2] == "pulls"
+                && parts[4] == "reviews"
+                && let Ok(n) = parts[3].parse::<u64>()
+            {
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
+                    let event = v.get("event").and_then(|x| x.as_str()).unwrap_or("COMMENT");
+                    if let Some(r) = st.create_review(owner, repo, n, body, event) {
+                        st.save()?;
+                        return respond(
+                            stream,
+                            200,
+                            &json!({
+                                "id": r.id,
+                                "body": r.body,
+                                "event": r.event,
+                                "state": r.state,
+                                "user": {"login": r.user},
+                                "pull_request_url": format!("/repos/{owner}/{repo}/pulls/{n}"),
+                            }),
+                        );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .reviews
+                        .iter()
+                        .filter(|r| r.owner == owner && r.repo == repo && r.pull_number == n)
+                        .map(|r| {
+                            json!({
+                                "id": r.id,
+                                "body": r.body,
+                                "event": r.event,
+                                "state": r.state,
+                                "user": {"login": r.user},
+                            })
+                        })
+                        .collect();
+                    return respond(stream, 200, &Value::Array(items));
+                }
             }
             // Metadata merge only (≠ git merge; never spawn git).
             if parts.len() == 5

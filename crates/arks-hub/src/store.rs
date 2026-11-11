@@ -36,6 +36,8 @@ pub struct HubDb {
     #[serde(default)]
     pub next_comment: u64,
     #[serde(default)]
+    pub next_review: u64,
+    #[serde(default)]
     pub next_asset: u64,
     #[serde(default)]
     pub next_artifact: u64,
@@ -74,6 +76,8 @@ pub struct HubDb {
     pub discussions: Vec<Discussion>,
     #[serde(default)]
     pub comments: Vec<Comment>,
+    #[serde(default)]
+    pub reviews: Vec<Review>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,6 +101,10 @@ pub struct Issue {
     pub body: String,
     pub state: String,
     pub user: String,
+    #[serde(default)]
+    pub locked: bool,
+    #[serde(default)]
+    pub pinned: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,6 +124,21 @@ pub struct Pull {
     /// Draft PR metadata (gh `pr ready` clears this).
     #[serde(default)]
     pub draft: bool,
+    #[serde(default)]
+    pub locked: bool,
+}
+
+/// PR review metadata only (≠ CI checks; never spawn git/gh).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Review {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub pull_number: u64,
+    pub body: String,
+    pub event: String,
+    pub user: String,
+    pub state: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -361,6 +384,8 @@ impl HubStore {
             body: body.into(),
             state: "open".into(),
             user: self.db.user_login.clone(),
+            locked: false,
+            pinned: false,
         };
         self.db.issues.push(issue.clone());
         issue
@@ -389,6 +414,7 @@ impl HubStore {
             user: self.db.user_login.clone(),
             merged: false,
             draft: false,
+            locked: false,
         };
         self.db.pulls.push(pull.clone());
         pull
@@ -427,6 +453,8 @@ impl HubStore {
         title: Option<&str>,
         body: Option<&str>,
         state: Option<&str>,
+        locked: Option<bool>,
+        pinned: Option<bool>,
     ) -> Option<Issue> {
         let issue = self
             .db
@@ -442,6 +470,43 @@ impl HubStore {
         if let Some(s) = state {
             issue.state = s.into();
         }
+        if let Some(l) = locked {
+            issue.locked = l;
+        }
+        if let Some(p) = pinned {
+            issue.pinned = p;
+        }
+        Some(issue.clone())
+    }
+
+    pub fn transfer_issue(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        number: u64,
+        to_owner: &str,
+        to_repo: &str,
+    ) -> Option<Issue> {
+        // Ensure destination repo exists in local forge.
+        if !self
+            .db
+            .repos
+            .iter()
+            .any(|r| r.owner == to_owner && r.name == to_repo)
+        {
+            return None;
+        }
+        let issue = self
+            .db
+            .issues
+            .iter_mut()
+            .find(|i| i.owner == owner && i.repo == repo && i.number == number)?;
+        issue.owner = to_owner.into();
+        issue.repo = to_repo.into();
+        // Re-number into destination sequence.
+        let new_number = self.db.next_issue;
+        self.db.next_issue += 1;
+        issue.number = new_number;
         Some(issue.clone())
     }
 
@@ -454,6 +519,7 @@ impl HubStore {
         body: Option<&str>,
         state: Option<&str>,
         draft: Option<bool>,
+        locked: Option<bool>,
     ) -> Option<Pull> {
         let pull = self
             .db
@@ -472,7 +538,130 @@ impl HubStore {
         if let Some(d) = draft {
             pull.draft = d;
         }
+        if let Some(l) = locked {
+            pull.locked = l;
+        }
         Some(pull.clone())
+    }
+
+    pub fn create_review(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        pull_number: u64,
+        body: &str,
+        event: &str,
+    ) -> Option<Review> {
+        if !self
+            .db
+            .pulls
+            .iter()
+            .any(|p| p.owner == owner && p.repo == repo && p.number == pull_number)
+        {
+            return None;
+        }
+        if self.db.next_review == 0 {
+            self.db.next_review = 1;
+        }
+        let id = self.db.next_review;
+        self.db.next_review += 1;
+        let state = match event {
+            "APPROVE" => "APPROVED",
+            "REQUEST_CHANGES" => "CHANGES_REQUESTED",
+            _ => "COMMENTED",
+        };
+        let review = Review {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            pull_number,
+            body: body.into(),
+            event: event.into(),
+            user: self.db.user_login.clone(),
+            state: state.into(),
+        };
+        self.db.reviews.push(review.clone());
+        Some(review)
+    }
+
+    pub fn rename_repo(&mut self, owner: &str, name: &str, new_name: &str) -> Option<Repo> {
+        if self
+            .db
+            .repos
+            .iter()
+            .any(|r| r.owner == owner && r.name == new_name)
+        {
+            return None;
+        }
+        let repo = self
+            .db
+            .repos
+            .iter_mut()
+            .find(|r| r.owner == owner && r.name == name)?;
+        repo.name = new_name.into();
+        let out = repo.clone();
+        // Retarget issues/pulls/labels under old name.
+        for i in self.db.issues.iter_mut().filter(|i| i.owner == owner && i.repo == name) {
+            i.repo = new_name.into();
+        }
+        for p in self.db.pulls.iter_mut().filter(|p| p.owner == owner && p.repo == name) {
+            p.repo = new_name.into();
+        }
+        for l in self.db.labels.iter_mut().filter(|l| l.owner == owner && l.repo == name) {
+            l.repo = new_name.into();
+        }
+        Some(out)
+    }
+
+    pub fn delete_repo(&mut self, owner: &str, name: &str) -> bool {
+        let before = self.db.repos.len();
+        self.db.repos.retain(|r| !(r.owner == owner && r.name == name));
+        if self.db.repos.len() == before {
+            return false;
+        }
+        self.db.issues.retain(|i| !(i.owner == owner && i.repo == name));
+        self.db.pulls.retain(|p| !(p.owner == owner && p.repo == name));
+        self.db.labels.retain(|l| !(l.owner == owner && l.repo == name));
+        self.db.releases.retain(|r| !(r.owner == owner && r.repo == name));
+        true
+    }
+
+    pub fn clone_labels(
+        &mut self,
+        from_owner: &str,
+        from_repo: &str,
+        to_owner: &str,
+        to_repo: &str,
+    ) -> Option<usize> {
+        if !self
+            .db
+            .repos
+            .iter()
+            .any(|r| r.owner == to_owner && r.name == to_repo)
+        {
+            return None;
+        }
+        let src: Vec<Label> = self
+            .db
+            .labels
+            .iter()
+            .filter(|l| l.owner == from_owner && l.repo == from_repo)
+            .cloned()
+            .collect();
+        let mut n = 0usize;
+        for lab in src {
+            if self
+                .db
+                .labels
+                .iter()
+                .any(|l| l.owner == to_owner && l.repo == to_repo && l.name == lab.name)
+            {
+                continue;
+            }
+            self.create_label(to_owner, to_repo, &lab.name, &lab.color, &lab.description);
+            n += 1;
+        }
+        Some(n)
     }
 
     /// Metadata-only merge: marks pull merged+closed. Never touches git objects.

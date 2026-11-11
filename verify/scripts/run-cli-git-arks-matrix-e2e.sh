@@ -117,6 +117,23 @@ if [[ "${ARKS_PERSONALITY_SURVEY:-0}" == "1" ]]; then
   run_sv SV-COUNT zero "$ARKS_BIN" count-objects
   run_sv SV-UPDATEINDEX zero "$ARKS_BIN" update-index --refresh
   run_sv SV-WRITETREE zero "$ARKS_BIN" write-tree
+  # survey3 — further named peer exit-class rows (exhaust; still not stampede 117).
+  run_sv SV-DIFFTREE zero "$ARKS_BIN" diff-tree HEAD
+  run_sv SV-FOR-EACH-REF zero "$ARKS_BIN" for-each-ref --count=1
+  run_sv SV-MERGEBASE zero "$ARKS_BIN" merge-base HEAD HEAD
+  run_sv SV-NAME-REV zero "$ARKS_BIN" name-rev HEAD
+  run_sv SV-SHORTLOG zero "$ARKS_BIN" shortlog -n -1
+  run_sv SV-CHECKREF zero "$ARKS_BIN" check-ref-format refs/heads/main
+  run_sv SV-REVPARSE-GITDIR zero "$ARKS_BIN" rev-parse --git-di
+  run_sv SV-REVPARSE-ISREPO zero "$ARKS_BIN" rev-parse --is-inside-work-tree
+  run_sv SV-LSREMOTE zero "$ARKS_BIN" ls-remote .
+  run_sv SV-DIFFINDEX zero "$ARKS_BIN" diff-index --quiet HEAD
+  run_sv SV-DIFFILES zero "$ARKS_BIN" diff-files --name-only
+  run_sv SV-CHERRY zero "$ARKS_BIN" cherry -v
+  run_sv SV-DESCRIBE zero "$ARKS_BIN" describe --always
+  run_sv SV-VERSION zero "$ARKS_BIN" --version
+  run_sv SV-PACKREFS zero "$ARKS_BIN" pack-refs --all
+  run_sv SV-GC-AUTO zero "$ARKS_BIN" gc --auto
   if [[ "$SV_OK" -ne 1 ]]; then
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
       echo "cli-git-arks-matrix-e2e: FAIL STRICT IW-PERSONALITY-SURVEY" >&2
@@ -149,7 +166,13 @@ receipt = {
         "SV-REVLIST", "SV-REMOTE", "SV-LSTREE", "SV-STASHLIST",
         "SV-SYMBOLIC", "SV-COUNT", "SV-UPDATEINDEX", "SV-WRITETREE",
     ],
-    "note": "Named expand + survey2 only; CLI Partial remainder stay Partial with SoT cite.",
+    "survey3_rows": [
+        "SV-DIFFTREE", "SV-FOR-EACH-REF", "SV-MERGEBASE", "SV-NAME-REV", "SV-SHORTLOG",
+        "SV-CHECKREF", "SV-REVPARSE-GITDIR", "SV-REVPARSE-ISREPO", "SV-LSREMOTE",
+        "SV-DIFFINDEX", "SV-DIFFILES", "SV-CHERRY", "SV-DESCRIBE", "SV-VERSION",
+        "SV-PACKREFS", "SV-GC-AUTO",
+    ],
+    "note": "Named expand + survey2 + survey3; CLI Partial remainder stay Partial with SoT cite.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

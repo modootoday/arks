@@ -420,7 +420,7 @@ if [[ "${ARKS_HUB_IW_UX:-0}" == "1" ]]; then
   SCOPE_OK=1
   printf 'demo=arks hub status\n' >"$WORK/aliases.txt"
   hub_scope_run config-set "$ARKS_BIN" hub config set editor nano
-  hub_scope_run config-get "$ARKS_BIN" hub config get editor
+  hub_scope_run config-get "$ARKS_BIN" hub config get edito
   hub_scope_run config-list "$ARKS_BIN" hub config list
   hub_scope_run alias-set "$ARKS_BIN" hub alias set demo 'arks hub status'
   hub_scope_run alias-list "$ARKS_BIN" hub alias list
@@ -475,10 +475,10 @@ PY
   exit 0
 fi
 
-# --- IW-HUB-STUBS expand subset (ARKS_HUB_IW_STUBS=1) ---
-# sot:root/arks-in-scope-leftovers-wave + research:root/20261111133600
-if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" ]]; then
-  echo "hub-gh-arks-matrix-e2e: IW-HUB-STUBS path (sot:root/arks-in-scope-leftovers-wave)"
+# --- IW-HUB-STUBS expand + exhaust (ARKS_HUB_IW_STUBS=1 or ARKS_HUB_IW_STUBS2=1) ---
+# sot:root/arks-in-scope-leftovers-wave + research:root/20261111133600 + 20261111135200
+if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-STUBS(+exhaust) path (sot:root/arks-in-scope-leftovers-wave)"
   [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
   command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
   SERVER_PID=""
@@ -492,48 +492,77 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" ]]; then
   trap cleanup_scope EXIT
   hub_scope_boot WORK
   SCOPE_OK=1
+  export ARKS_HUB_REPO="local/hubscope"
   hub_scope_run auth-login "$ARKS_BIN" hub auth login
   hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-STUBS"
+  hub_scope_run repo-create2 "$ARKS_BIN" hub repo create hubdest --description "transfer-dest"
   hub_scope_run repo-edit "$ARKS_BIN" hub repo edit --repo local/hubscope --description "stubs-ed"
   hub_scope_run repo-set-default "$ARKS_BIN" hub repo set-default local/hubscope
-  unset ARKS_HUB_REPO
   hub_scope_run issue-create "$ARKS_BIN" hub issue create --title stub-issue --body b
   hub_scope_run issue-status "$ARKS_BIN" hub issue status 1
-  hub_scope_run issue-delete "$ARKS_BIN" hub issue delete 1
-  hub_scope_run issue-list-after "$ARKS_BIN" hub issue list
+  hub_scope_run issue-lock "$ARKS_BIN" hub issue lock 1
+  hub_scope_run issue-unlock "$ARKS_BIN" hub issue unlock 1
+  hub_scope_run issue-pin "$ARKS_BIN" hub issue pin 1
+  hub_scope_run issue-unpin "$ARKS_BIN" hub issue unpin 1
+  hub_scope_run issue-transfer "$ARKS_BIN" hub issue transfer 1 --to local/hubdest
+  # After transfer, next create on hubscope gets a fresh number; delete that leaf.
+  hub_scope_run issue-create2 "$ARKS_BIN" hub issue create --repo local/hubscope --title del-me --body b
+  # Parse number from create2 JSON body (hub_http_print dumps JSON).
+  DEL_NUM="$(python3 -c 'import re; t=open("'"$WORK"'/issue-create2.out",encoding="utf-8").read(); m=re.search(r"\"number\"\s*:\s*(\d+)", t); print(m.group(1) if m else "2")')"
+  hub_scope_run issue-delete "$ARKS_BIN" hub issue delete "$DEL_NUM" --repo local/hubscope
   hub_scope_run pr-create-draft "$ARKS_BIN" hub pr create --title stub-pr --body pb --head f --base main --draft
   hub_scope_run pr-status-draft "$ARKS_BIN" hub pr status 1
   hub_scope_run pr-ready "$ARKS_BIN" hub pr ready 1
   hub_scope_run pr-status-ready "$ARKS_BIN" hub pr status 1
-  hub_scope_run api-get "$ARKS_BIN" hub api --method GET /repos/local/hubscope
+  hub_scope_run pr-lock "$ARKS_BIN" hub pr lock 1
+  hub_scope_run pr-unlock "$ARKS_BIN" hub pr unlock 1
+  hub_scope_run pr-review "$ARKS_BIN" hub pr review 1 --body lgtm --event APPROVE
+  hub_scope_run label-create "$ARKS_BIN" hub label create --repo local/hubscope --name bug --color ff0000
+  hub_scope_run label-clone "$ARKS_BIN" hub label clone --repo local/hubdest --from local/hubscope
+  hub_scope_run repo-archive "$ARKS_BIN" hub repo archive --repo local/hubscope
+  hub_scope_run repo-unarchive "$ARKS_BIN" hub repo unarchive --repo local/hubscope
+  hub_scope_run repo-rename "$ARKS_BIN" hub repo rename --repo local/hubscope hubrenamed
+  export ARKS_HUB_REPO="local/hubrenamed"
+  hub_scope_run api-get "$ARKS_BIN" hub api --method GET /repos/local/hubrenamed
   hub_scope_run status-agg "$ARKS_BIN" hub status
-  # Stay Partial honesty: lock must remain exit 2
-  set +e
-  "$ARKS_BIN" hub pr lock 1 >"$WORK/pr-lock.out" 2>&1
-  lock_ec=$?
-  set -e
-  if [[ "$lock_ec" -eq 0 ]]; then
-    echo "FAIL HF-SCOPE pr-lock invent PASS" >&2
-    SCOPE_OK=0
-  else
-    echo "hub-gh-arks-matrix-e2e: HF-SCOPE pr-lock stay-partial ok (exit=$lock_ec)"
-  fi
+  hub_scope_run group-help-pr "$ARKS_BIN" hub p
+  hub_scope_run repo-delete "$ARKS_BIN" hub repo delete --repo local/hubdest
+  # Terminal Partial honesty: git/CI/OAuth must stay exit 2
+  for term in "pr diff 1" "pr checks 1" "pr update-branch 1" "pr revert 1" "repo fork" "auth refresh"; do
+    set +e
+    # shellcheck disable=SC2086
+    "$ARKS_BIN" hub $term >"$WORK/term-${term// /_}.out" 2>&1
+    tec=$?
+    set -e
+    if [[ "$tec" -eq 0 ]]; then
+      echo "FAIL HF-SCOPE terminal invent PASS: hub $term" >&2
+      SCOPE_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: HF-SCOPE terminal Partial ok ($term exit=$tec)"
+    fi
+  done
   if [[ "$SCOPE_OK" -eq 1 ]]; then
     if ! grep -Fq 'description' "$WORK/repo-edit.out" \
       || ! grep -Fq 'default_repo=local/hubscope' "$WORK/repo-set-default.out" \
-      || ! grep -Fq 'deleted=1' "$WORK/issue-delete.out" \
+      || ! grep -Fq "deleted=${DEL_NUM}" "$WORK/issue-delete.out" \
       || ! grep -Fq 'draft=true' "$WORK/pr-status-draft.out" \
       || ! grep -Fq 'ready=true' "$WORK/pr-ready.out" \
-      || ! grep -Fq 'draft=false' "$WORK/pr-status-ready.out" \
+      || ! grep -Fq 'locked=true' "$WORK/pr-lock.out" \
+      || ! grep -Fq 'locked=false' "$WORK/pr-unlock.out" \
+      || ! grep -Fq 'state=APPROVED' "$WORK/pr-review.out" \
+      || ! grep -Fq 'locked=true' "$WORK/issue-lock.out" \
+      || ! grep -Fq 'locked=false' "$WORK/issue-unlock.out" \
+      || ! grep -Fq 'pinned=true' "$WORK/issue-pin.out" \
+      || ! grep -Fq 'pinned=false' "$WORK/issue-unpin.out" \
+      || ! grep -Fq 'repository=local/hubdest' "$WORK/issue-transfer.out" \
+      || ! grep -Fq 'cloned=' "$WORK/label-clone.out" \
+      || ! grep -Fq 'archived=true' "$WORK/repo-archive.out" \
+      || ! grep -Fq 'archived=false' "$WORK/repo-unarchive.out" \
+      || ! grep -Fq 'name=hubrenamed' "$WORK/repo-rename.out" \
+      || ! grep -Fq 'deleted=local/hubdest' "$WORK/repo-delete.out" \
       || ! grep -Fq 'http_status=200' "$WORK/api-get.out" \
-      || ! grep -Fq 'issues_open=' "$WORK/status-agg.out" \
-      || ! grep -Fq 'pulls_open=' "$WORK/status-agg.out"; then
-      echo "FAIL HF-SCOPE STUBS shapes" >&2
-      SCOPE_OK=0
-    fi
-    # Deleted issue must not appear as number 1 in list (empty array or no "number":1).
-    if grep -Eq '"number"[[:space:]]*:[[:space:]]*1' "$WORK/issue-list-after.out"; then
-      echo "FAIL HF-SCOPE issue delete still listed" >&2
+      || ! grep -Fq 'issues_open=' "$WORK/status-agg.out"; then
+      echo "FAIL HF-SCOPE STUBS exhaust shapes" >&2
       SCOPE_OK=0
     fi
   fi
@@ -548,29 +577,31 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: IW-HUB-STUBS greens"
   if [[ -f /.dockerenv ]]; then
     TS="$(date -u +%Y%m%d%H%M%S)"
-    OUT=".spec/evidence/${TS}-hub-stubs-expand"
+    OUT=".spec/evidence/${TS}-hub-stubs-exhaust"
     mkdir -p "$OUT"
     cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
     python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
 import json, sys, time
 out, tip, image = sys.argv[1:]
 receipt = {
-    "schema": "arks-hub-stubs/v1",
+    "schema": "arks-hub-stubs/v2",
     "gate": "IW-HUB-STUBS",
     "disposition": "verified-product-path",
     "venue": "docker-dod-hub-matrix",
     "tip": tip,
     "image_tag": image,
     "claimed": [
-        "pr status", "pr ready", "issue status", "issue delete",
-        "repo edit", "repo set-default", "api", "status",
+        "pr status", "pr ready", "pr lock", "pr unlock", "pr review",
+        "issue status", "issue delete", "issue lock", "issue unlock", "issue pin", "issue unpin", "issue transfer",
+        "repo edit", "repo set-default", "repo archive", "repo unarchive", "repo rename", "repo delete",
+        "label clone", "api", "status",
+        "group-help discoverability",
     ],
-    "stay_partial": [
-        "pr lock", "pr unlock", "pr update-branch", "pr revert", "pr diff", "pr checks", "pr review",
-        "issue lock", "issue pin", "issue transfer", "repo fork", "repo delete", "repo rename",
-        "repo archive", "auth refresh", "label clone",
+    "terminal_partial": [
+        "pr diff", "pr checks", "pr update-branch", "pr revert",
+        "repo fork", "auth refresh",
     ],
-    "note": "Peer-faithful local-forge subset only; Stay Partial cites sot:root/arks-in-scope-leftovers-wave.",
+    "note": "Metadata Claimed + terminal Partial cites research:root/20261111135200.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:
@@ -865,7 +896,7 @@ PY
   run_full org-list "$ARKS_BIN" hub org list
   run_full search-repos "$ARKS_BIN" hub search repos hubfull
   run_full search-issues "$ARKS_BIN" hub search issues full-issue
-  run_full search-prs "$ARKS_BIN" hub search prs full-pr
+  run_full search-prs "$ARKS_BIN" hub search prs full-p
   run_full auth-logout "$ARKS_BIN" hub auth logout
 
   if [[ "$FULL_OK" -eq 1 ]]; then

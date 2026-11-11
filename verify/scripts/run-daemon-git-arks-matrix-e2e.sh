@@ -171,8 +171,8 @@ receipt = {
         "--enable", "--disable", "<directory>...", "service:upload-pack", "service:receive-pack",
         "service:upload-archive",
     ],
-    "stay_partial": ["related:git:// client"],
-    "note": "upload-archive enable+ustar Parity; path-filter/non-ustar Stay Partial; SysV double-fork Refuse; git:// client pointer Stay Partial.",
+    "parity_pointers": ["related:git:// client"],
+    "note": "upload-archive enable+ustar Parity; path-filter/non-ustar Stay Partial; SysV double-fork Refuse; git:// client Parity pointer (not daemon DoD).",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

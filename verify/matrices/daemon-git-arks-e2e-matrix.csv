@@ -36,5 +36,5 @@
 "default bind 127.0.0.1","arks-only","arks-only","arks-only","safer loopback default vs all-interfaces"
 "related:upload-pack CLI","pointer","Parity","pointer","stdio CLI; not daemon flag DoD"
 "related:receive-pack CLI","pointer","Parity","pointer","stdio CLI; not daemon flag DoD"
-"related:git:// client","pointer","Partial","pointer","R1 client lane; not daemon flag DoD"
+"related:git:// client","pointer","Parity","pointer","Parity pointer — not daemon flag DoD; client lane Claimed elsewhere (same shape as related:upload-pack CLI); [[research:root/20261111135200]]"
 "related:serve-http","pointer","arks-only","pointer","HTTP companion; not git-daemon"

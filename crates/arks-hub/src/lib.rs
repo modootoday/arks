@@ -454,8 +454,18 @@ fn cmd_auth(args: &[String]) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        "refresh" | "switch" | "setup-git" => {
-            eprintln!("arks hub auth {sub}: not claimed");
+        "refresh" => {
+            eprintln!(
+                "arks hub auth refresh: terminal Partial — OAuth refresh not Claimed \
+                 ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])"
+            );
+            ExitCode::from(2)
+        }
+        "switch" | "setup-git" => {
+            eprintln!(
+                "arks hub auth {sub}: terminal Partial/Refuse — not local-forge Claimed \
+                 ([[sot:root/arks-in-scope-leftovers-wave]])"
+            );
             ExitCode::from(2)
         }
         other => {
@@ -492,14 +502,23 @@ fn cmd_pr(args: &[String]) -> ExitCode {
         "" | "-h" | "--help" => {
             eprintln!(
                 "arks hub pr — list|view|create|close|reopen|edit|comment|merge|checkout|\
-                 status|ready (local hub REST; merge=metadata only; checkout=resolve/print, \
-                 never spawn git)"
+                 status|ready|lock|unlock|review (local hub REST; merge=metadata only; \
+                 checkout=resolve/print, never spawn git)"
             );
             ExitCode::SUCCESS
         }
         "checkout" => cmd_pr_checkout(args),
         "status" => cmd_pr_status(args),
         "ready" => cmd_pr_ready(args),
+        "lock" | "unlock" => cmd_pr_lock(args, sub == "lock"),
+        "review" => cmd_pr_review(args),
+        "diff" | "checks" | "update-branch" | "revert" => {
+            eprintln!(
+                "arks hub pr {sub}: terminal Partial — requires git/CI semantics not Claimed \
+                 ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])"
+            );
+            ExitCode::from(2)
+        }
         "list" => {
             let (base, tok) = match require_local_api() {
                 Ok(v) => v,
@@ -704,6 +723,83 @@ fn cmd_pr(args: &[String]) -> ExitCode {
     }
 }
 
+fn cmd_pr_lock(args: &[String], lock: bool) -> ExitCode {
+    let verb = if lock { "lock" } else { "unlock" };
+    let (base, tok) = match require_local_api() {
+        Ok(v) => v,
+        Err(e) => return exit_from_api_err(&format!("pr {verb}"), &e),
+    };
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("arks hub pr {verb}: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let num = positional_num(args).unwrap_or_else(|| "1".into());
+    let path = format!("/repos/{owner}/{repo}/pulls/{num}");
+    let payload = format!(r#"{{"locked":{}}}"#, lock);
+    match http_exchange(&base, "PATCH", &path, Some(&tok), Some(&payload)) {
+        Ok((code, body)) if code < 400 => {
+            let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+            println!(
+                "number={}",
+                v.get("number").and_then(|x| x.as_u64()).unwrap_or(0)
+            );
+            println!(
+                "locked={}",
+                v.get("locked").and_then(|x| x.as_bool()).unwrap_or(lock)
+            );
+            ExitCode::SUCCESS
+        }
+        Ok((code, body)) => hub_http_print(code, &body),
+        Err(e) => {
+            eprintln!("arks hub pr {verb}: {e}");
+            ExitCode::from(1)
+        }
+    }
+}
+
+fn cmd_pr_review(args: &[String]) -> ExitCode {
+    let (base, tok) = match require_local_api() {
+        Ok(v) => v,
+        Err(e) => return exit_from_api_err("pr review", &e),
+    };
+    let (owner, repo) = match repo_slug(args) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("arks hub pr review: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let num = positional_num(args).unwrap_or_else(|| "1".into());
+    let body = flag_value(args, &["--body", "-b"]).unwrap_or("review");
+    let event = flag_value(args, &["--event", "-e"]).unwrap_or("COMMENT");
+    let payload = format!(
+        r#"{{"body":{},"event":{}}}"#,
+        serde_json::to_string(body).unwrap(),
+        serde_json::to_string(event).unwrap()
+    );
+    let path = format!("/repos/{owner}/{repo}/pulls/{num}/reviews");
+    match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
+        Ok((code, body)) if code < 400 => {
+            let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+            println!("id={}", v.get("id").and_then(|x| x.as_u64()).unwrap_or(0));
+            println!(
+                "state={}",
+                v.get("state").and_then(|x| x.as_str()).unwrap_or("")
+            );
+            println!("event={event}");
+            ExitCode::SUCCESS
+        }
+        Ok((code, body)) => hub_http_print(code, &body),
+        Err(e) => {
+            eprintln!("arks hub pr review: {e}");
+            ExitCode::from(1)
+        }
+    }
+}
+
 /// Print peer-faithful PR status lines (IW-HUB-STUBS). Never spawns git/gh.
 fn cmd_pr_status(args: &[String]) -> ExitCode {
     let (base, tok) = match require_local_api() {
@@ -835,10 +931,102 @@ fn cmd_issue(args: &[String]) -> ExitCode {
     match sub {
         "" | "-h" | "--help" => {
             eprintln!(
-                "arks hub issue — list|view|create|close|reopen|edit|comment|status|delete \
-                 (local hub REST)"
+                "arks hub issue — list|view|create|close|reopen|edit|comment|status|delete|\
+                 lock|unlock|pin|unpin|transfer (local hub REST)"
             );
             ExitCode::SUCCESS
+        }
+        "lock" | "unlock" | "pin" | "unpin" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => return exit_from_api_err(&format!("issue {sub}"), &e),
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub issue {sub}: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let num = positional_num(args).unwrap_or_else(|| "1".into());
+            let payload = match sub {
+                "lock" => r#"{"locked":true}"#,
+                "unlock" => r#"{"locked":false}"#,
+                "pin" => r#"{"pinned":true}"#,
+                _ => r#"{"pinned":false}"#,
+            };
+            let path = format!("/repos/{owner}/{repo}/issues/{num}");
+            match http_exchange(&base, "PATCH", &path, Some(&tok), Some(payload)) {
+                Ok((code, body)) if code < 400 => {
+                    let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+                    println!(
+                        "number={}",
+                        v.get("number").and_then(|x| x.as_u64()).unwrap_or(0)
+                    );
+                    println!(
+                        "locked={}",
+                        v.get("locked").and_then(|x| x.as_bool()).unwrap_or(false)
+                    );
+                    println!(
+                        "pinned={}",
+                        v.get("pinned").and_then(|x| x.as_bool()).unwrap_or(false)
+                    );
+                    ExitCode::SUCCESS
+                }
+                Ok((code, body)) => hub_http_print(code, &body),
+                Err(e) => {
+                    eprintln!("arks hub issue {sub}: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "transfer" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => return exit_from_api_err("issue transfer", &e),
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub issue transfer: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let num = positional_num(args).unwrap_or_else(|| "1".into());
+            let to = flag_value(args, &["--to", "-t"]).unwrap_or("");
+            if !to.contains('/') {
+                eprintln!("arks hub issue transfer: --to owner/name required");
+                return ExitCode::from(2);
+            }
+            let payload = format!(
+                r#"{{"transfer_to":{}}}"#,
+                serde_json::to_string(to).unwrap()
+            );
+            let path = format!("/repos/{owner}/{repo}/issues/{num}");
+            match http_exchange(&base, "PATCH", &path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) if code < 400 => {
+                    let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+                    println!(
+                        "number={}",
+                        v.get("number").and_then(|x| x.as_u64()).unwrap_or(0)
+                    );
+                    if let Some(full) = v
+                        .get("repository")
+                        .and_then(|r| r.get("full_name"))
+                        .and_then(|x| x.as_str())
+                    {
+                        println!("repository={full}");
+                    } else {
+                        println!("repository={to}");
+                    }
+                    ExitCode::SUCCESS
+                }
+                Ok((code, body)) => hub_http_print(code, &body),
+                Err(e) => {
+                    eprintln!("arks hub issue transfer: {e}");
+                    ExitCode::from(1)
+                }
+            }
         }
         "status" => {
             let (base, tok) = match require_local_api() {
@@ -1095,8 +1283,8 @@ fn cmd_repo(args: &[String]) -> ExitCode {
     match sub {
         "" | "-h" | "--help" => {
             eprintln!(
-                "arks hub repo — list|view|create|edit|set-default \
-                 (local hub REST; never spawn git/gh)"
+                "arks hub repo — list|view|create|edit|set-default|archive|unarchive|rename|delete \
+                 (local hub REST metadata; never spawn git/gh)"
             );
             ExitCode::SUCCESS
         }
@@ -1270,6 +1458,124 @@ fn cmd_repo(args: &[String]) -> ExitCode {
             println!("default_repo={slug}");
             ExitCode::SUCCESS
         }
+        "archive" | "unarchive" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => return exit_from_api_err(&format!("repo {sub}"), &e),
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub repo {sub}: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let archived = sub == "archive";
+            let payload = format!(r#"{{"archived":{archived}}}"#);
+            let path = format!("/repos/{owner}/{repo}");
+            match http_exchange(&base, "PATCH", &path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) if code < 400 => {
+                    let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+                    println!(
+                        "full_name={}",
+                        v.get("full_name").and_then(|x| x.as_str()).unwrap_or("")
+                    );
+                    println!(
+                        "archived={}",
+                        v.get("archived").and_then(|x| x.as_bool()).unwrap_or(archived)
+                    );
+                    ExitCode::SUCCESS
+                }
+                Ok((code, body)) => hub_http_print(code, &body),
+                Err(e) => {
+                    eprintln!("arks hub repo {sub}: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "rename" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => return exit_from_api_err("repo rename", &e),
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub repo rename: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let new_name = args
+                .iter()
+                .skip(1)
+                .find(|a| !a.starts_with('-') && !a.contains('/'))
+                .map(String::as_str)
+                .or_else(|| flag_value(args, &["--name", "-n"]))
+                .unwrap_or("");
+            if new_name.is_empty() {
+                eprintln!("arks hub repo rename: NEW_NAME required");
+                return ExitCode::from(2);
+            }
+            let payload = format!(
+                r#"{{"name":{}}}"#,
+                serde_json::to_string(new_name).unwrap()
+            );
+            let path = format!("/repos/{owner}/{repo}");
+            match http_exchange(&base, "PATCH", &path, Some(&tok), Some(&payload)) {
+                Ok((code, body)) if code < 400 => {
+                    let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+                    println!(
+                        "full_name={}",
+                        v.get("full_name").and_then(|x| x.as_str()).unwrap_or("")
+                    );
+                    println!(
+                        "name={}",
+                        v.get("name").and_then(|x| x.as_str()).unwrap_or(new_name)
+                    );
+                    ExitCode::SUCCESS
+                }
+                Ok((code, body)) => hub_http_print(code, &body),
+                Err(e) => {
+                    eprintln!("arks hub repo rename: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "delete" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => return exit_from_api_err("repo delete", &e),
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub repo delete: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let path = format!("/repos/{owner}/{repo}");
+            match http_exchange(&base, "DELETE", &path, Some(&tok), None) {
+                Ok((code, body)) => {
+                    if code == 204 || code < 400 {
+                        println!("deleted={owner}/{repo}");
+                        ExitCode::SUCCESS
+                    } else {
+                        hub_http_print(code, &body)
+                    }
+                }
+                Err(e) => {
+                    eprintln!("arks hub repo delete: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        "fork" => {
+            eprintln!(
+                "arks hub repo fork: terminal Partial — git object copy / spawn forbidden \
+                 ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])"
+            );
+            ExitCode::from(2)
+        }
         "clone" | "sync" => {
             eprintln!("arks hub repo {sub}: Deferred — MUST NOT spawn git/gh");
             ExitCode::from(2)
@@ -1288,7 +1594,63 @@ fn cmd_label(args: &[String]) -> ExitCode {
     let sub = args.first().map(String::as_str).unwrap_or("");
     match sub {
         "" | "-h" | "--help" => {
-            eprintln!("arks hub label — list|create|edit|delete (local hub REST)");
+            eprintln!("arks hub label — list|create|edit|delete|clone (local hub REST)");
+            ExitCode::SUCCESS
+        }
+        "clone" => {
+            let (base, tok) = match require_local_api() {
+                Ok(v) => v,
+                Err(e) => return exit_from_api_err("label clone", &e),
+            };
+            let (owner, repo) = match repo_slug(args) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("arks hub label clone: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let from = flag_value(args, &["--from"]).unwrap_or("");
+            if !from.contains('/') {
+                eprintln!("arks hub label clone: --from owner/name required");
+                return ExitCode::from(2);
+            }
+            // Client-side clone: GET source labels, POST each into target (no gh spawn).
+            let src_path = format!("/repos/{from}/labels");
+            let labels = match http_exchange(&base, "GET", &src_path, Some(&tok), None) {
+                Ok((code, body)) if code < 400 => body,
+                Ok((code, body)) => return hub_http_print(code, &body),
+                Err(e) => {
+                    eprintln!("arks hub label clone: {e}");
+                    return ExitCode::from(1);
+                }
+            };
+            let arr: Value = serde_json::from_str(&labels).unwrap_or(json!([]));
+            let mut n = 0usize;
+            if let Some(items) = arr.as_array() {
+                for item in items {
+                    let name = item.get("name").and_then(|x| x.as_str()).unwrap_or("");
+                    if name.is_empty() {
+                        continue;
+                    }
+                    let color = item.get("color").and_then(|x| x.as_str()).unwrap_or("ededed");
+                    let desc = item.get("description").and_then(|x| x.as_str()).unwrap_or("");
+                    let payload = format!(
+                        r#"{{"name":{},"color":{},"description":{}}}"#,
+                        serde_json::to_string(name).unwrap(),
+                        serde_json::to_string(color).unwrap(),
+                        serde_json::to_string(desc).unwrap()
+                    );
+                    let dest = format!("/repos/{owner}/{repo}/labels");
+                    match http_exchange(&base, "POST", &dest, Some(&tok), Some(&payload)) {
+                        Ok((code, _)) if code < 400 || code == 422 => n += 1,
+                        Ok(_) => {}
+                        Err(_) => {}
+                    }
+                }
+            }
+            println!("cloned={n}");
+            println!("from={from}");
+            println!("to={owner}/{repo}");
             ExitCode::SUCCESS
         }
         "list" => {
