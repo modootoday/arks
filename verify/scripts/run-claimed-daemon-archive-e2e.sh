@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Claimed residual gates B5/B5+ — daemon archive parity + syslog facility.
+# Claimed residual gates B5 (+ B5+ pointer) — daemon archive parity.
 # SoT: .spec/sot/arks-claimed-residual-gates.sot.md
 # research:root/20261111090827 + research:root/20261111084400 (IW-B5)
-# verify-directory-conventions: B5 Claimed on cmp -s; B5+ Refuse terminal.
+# B5 Claimed on cmp -s vs git 2.39.5. B5+ Claimed bar is the collector path
+# (dod-daemon-matrix + ARKS_DAEMON_B5_PLUS=1; sot:root/arks-honesty-leftovers-wave) —
+# openlog-armed smoke here MUST NOT invent or demote that Claimed row.
 # Product MUST NOT spawn git. Stock git 2.39.5 is oracle only.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -149,7 +151,7 @@ else
   fi
 fi
 
-# B5+ feasibility: openlog armed only — facility/priority capture deferred (Refuse).
+# B5+ openlog arm only (not the Claimed collector bar).
 "$ARKS_BIN" daemon --syslog --export-all --listen "127.0.0.1:$ARKS_PORT" "$WORK" \
   >"$WORK/syslog.out" 2>"$WORK/syslog.err" &
 DAEMON_PID=$!
@@ -158,7 +160,7 @@ kill "$DAEMON_PID"
 wait "$DAEMON_PID" 2>/dev/null || true
 DAEMON_PID=""
 grep -F "LOG_DAEMON" "$WORK/syslog.err" >/dev/null
-echo "claimed-daemon-archive-e2e: B5+ Refuse-terminal — LOG_DAEMON armed only; facility/priority not Claimed"
+echo "claimed-daemon-archive-e2e: B5+ openlog-arm smoke only — Claimed bar is ARKS_DAEMON_B5_PLUS collector (PRI=30)"
 
 # Docker receipt when Claimed bar is met.
 if [[ "$B5_BYTE_IDENTICAL" -eq 1 ]] && [[ -f /.dockerenv ]]; then
@@ -172,14 +174,14 @@ receipt = {
     "schema": "arks-claimed-residual/v1",
     "gate": "B5",
     "b5": "Claimed",
-    "b5_plus": "Refuse-terminal",
+    "b5_plus": "Claimed-elsewhere-collector",
     "disposition": "verified-byte-identical-ustar",
     "venue": "docker-dod-claimed-daemon-archive",
     "stock_git": stock_git,
     "oracle": "git v2.39.5 archive-tar.c prepare_header",
     "comparison": ["cmp -s stock.tar arks.tar", "tarfile structural/semantic"],
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    "note": "IW-B5; product MUST NOT spawn git archive. B5+ syslog facility remains Refuse.",
+    "note": "IW-B5; product MUST NOT spawn git archive. B5+ Claimed via dod-daemon-matrix ARKS_DAEMON_B5_PLUS=1 collector (not this openlog arm).",
 }
 with open(out, "w", encoding="utf-8") as f:
     json.dump(receipt, f, indent=2)
@@ -199,7 +201,7 @@ elif [[ "$B5_BYTE_IDENTICAL" -eq 1 ]]; then
   echo "claimed-daemon-archive-e2e: host run only; no .spec/evidence receipt written"
 fi
 
-# STRICT: unfinished Claimed rows fail closed. B5+ Refuse is not an unfinished Claimed row.
+# STRICT: unfinished Claimed rows fail closed. B5+ Claimed is collector gate, not this arm.
 if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
   if [[ "$B5_BYTE_IDENTICAL" -ne 1 ]]; then
     echo "claimed-daemon-archive-e2e: STRICT — B5 Claimed bar (cmp -s) not met" >&2
@@ -208,10 +210,10 @@ if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
 fi
 
 if [[ "$B5_BYTE_IDENTICAL" -eq 1 ]]; then
-  echo "claimed-daemon-archive-e2e: PASS — B5 Claimed (byte_identical=1); B5+=Refuse-terminal"
+  echo "claimed-daemon-archive-e2e: PASS — B5 Claimed (byte_identical=1); B5+ Claimed via collector path"
   exit 0
 fi
-echo "claimed-daemon-archive-e2e: SKIP/Partial — B5 residual open (structural=$B5_STRUCTURAL byte_identical=$B5_BYTE_IDENTICAL); B5+=Refuse" >&2
+echo "claimed-daemon-archive-e2e: SKIP/Partial — B5 residual open (structural=$B5_STRUCTURAL byte_identical=$B5_BYTE_IDENTICAL)" >&2
 if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
   exit 1
 fi

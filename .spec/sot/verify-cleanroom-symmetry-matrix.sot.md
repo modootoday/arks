@@ -3,7 +3,7 @@ id: sot:root/verify-cleanroom-symmetry-matrix
 title: Clean-room symmetry matrix (three DoD pillars)
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-10T22:50:00Z
+updated: 2026-11-11T05:15:00Z
 tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, claimed-residual, single-release, no-invent-pass]
 verify: manual
 rel:
@@ -47,17 +47,17 @@ Version **0.1.5**. Umbrella **canon** for the public-story clean-room **Definiti
 
 **Remote empty — no push.** Windows hosts drive compose; authority is Linux-in-container bash, not host `sh`.
 
-### Tip currency (SoT tip `c297e34` + local inventory refresh)
+### Tip currency (living tip ≥ `a21ad01`; inventory refresh)
 
 | Pillar | Inventory honesty now | Remaining gap (not invent PASS) |
 |--------|----------------------|----------------------------------|
-| **1. CLI** (`git`↔`arks`) | **pin** list-cmds **Missing = 0** (normative DoD = clean-room **2.39.5**); host **2.56** skew cmds tracked as Partial inventory reference only | Partial man-page flag depth; host skew ≠ pin advance / ≠ Claimed |
-| **2. Daemon** | former Missing~25 → living CSV **Missing = 0** via Partial accept + Refuse/N/A | deepen Partial → Parity ([[sot:root/arks-daemon-git-command-matrix]]) |
-| **3. Hub/forge client** | Logical **gh↔arks** pillar; target argv = **flat** `arks pr|issue|auth|…` ([[sot:root/arks-hub-product-intent]] v0.4); today Partial often via transitional `arks hub …` + `hub serve`; host = `arks serve` forge module | forge REST Claimed + multi-agent runners ([[sot:root/arks-hub-local-multi-agent-pr]]) |
-| **Related: Self-host** | Design SoT **active** ([[sot:root/arks-self-host-server]] v0.2 — GitHub-class umbrella: HTTP+SSH+forge); wire receipts G15/G29–G32/G36 exist; forge-in-serve Missing/Partial | dedicated LAN-shaped hosting e2e (compose `dod-self-host`) — **scaffold / not Claimed** |
-| **Adjacent: Claimed residual** | Design SoT **active** ([[sot:root/arks-claimed-residual-gates]] v0.1 — B1/B2/B3/B4/B5/B5+/B7/B9 after Partial wiring) | compose `dod-claimed-residual` (+ per-gate `dod-claimed-*`) — **SKIP/scaffold / not Claimed** |
+| **1. CLI** (`git`↔`arks`) | pin list-cmds **Missing = 0** (DoD judge clean-room **2.39.5**); living CSV Partial **117** / Refuse **47** / Parity-candidate **21** | Partial man-page flag depth + survey remainder; host skew ≠ pin advance / ≠ Claimed; personality expand Claimed separately |
+| **2. Daemon** | living CSV **Missing = 0**; **Parity = 20**; Refuse/N/A **16**; Partial **0** ([[sot:root/arks-daemon-git-command-matrix]]) | terminal Refuse honesty only (SysV detach, privilege drop, …); B5+ facility via collector Claimed ([[sot:root/arks-honesty-leftovers-wave]]) |
+| **3. Hub/forge client** | v1 **Missing = 0**; Claimed **94** + terminal Partial **6** (OAuth/CI/git-spawn); later Deferred **119** OUT of v1 DoD; Refuse/N/A **28** | terminal Partial cites; multi-agent runners framework-first ([[sot:root/arks-hub-local-multi-agent-pr]]); later/OUT ≠ pillar incomplete |
+| **Related: Self-host** | [[sot:root/arks-self-host-server]] + IW-FORGE-SERVE hosting journeys green under `dod-self-host` (STRICT); B1/B2/B7/B9 Claimed via residual gates | WAN “secure by default” still forbidden without ops evidence; not a fourth symmetry pillar |
+| **Adjacent: Claimed residual** | [[sot:root/arks-claimed-residual-gates]] — **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9 Claimed** with Docker receipts | not a fourth symmetry pillar; archive-script openlog arm ≠ B5+ Claimed bar (collector is) |
 
-Orchestrator wired: `verify/scripts/run-symmetry-dod.sh` / compose `dod-symmetry`. Related hosting smoke: compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` (SKIP/scaffold until Claimed). Claimed residual scaffolds: compose `dod-claimed-residual` → `verify/scripts/run-claimed-residual-dod.sh` (SKIP until Claimed; **no invent PASS**).
+Orchestrator wired: `verify/scripts/run-symmetry-dod.sh` / compose `dod-symmetry`. Related hosting: compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh`. Claimed residual: compose `dod-claimed-residual` → `verify/scripts/run-claimed-residual-dod.sh` (`ARKS_DOD_STRICT=1` fail-closed; **no invent PASS**). ARKS-native (non-peer) e2e inventory: [[sot:root/arks-native-e2e-checklist]].
 
 ## Rule
 

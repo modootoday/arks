@@ -2,7 +2,7 @@
   "schema": "arks-claimed-residual/v1",
   "gate": "B5",
   "b5": "Claimed",
-  "b5_plus": "Refuse-terminal",
+  "b5_plus": "Claimed-elsewhere-collector",
   "disposition": "verified-byte-identical-ustar",
   "venue": "docker-dod-claimed-daemon-archive",
   "stock_git": "git version 2.39.5",
@@ -11,6 +11,6 @@
     "cmp -s stock.tar arks.tar",
     "tarfile structural/semantic"
   ],
-  "timestamp": "2026-11-11T00:17:45Z",
-  "note": "IW-B5; product MUST NOT spawn git archive. B5+ syslog facility remains Refuse."
+  "timestamp": "2026-11-11T05:16:44Z",
+  "note": "IW-B5; product MUST NOT spawn git archive. B5+ Claimed via dod-daemon-matrix ARKS_DAEMON_B5_PLUS=1 collector (not this openlog arm)."
 }

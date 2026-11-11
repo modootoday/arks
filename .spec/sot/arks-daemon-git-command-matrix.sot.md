@@ -3,7 +3,7 @@ id: sot:root/arks-daemon-git-command-matrix
 title: arks daemon ↔ git-daemon command matrix
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-10T19:30:00Z
+updated: 2026-11-11T05:15:00Z
 tags: [arks-daemon, git-daemon, matrix, symmetry, clean-room, pin-2.39.5, single-release]
 verify: manual
 rel:
@@ -41,20 +41,20 @@ Version **0.1.1**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior
 5. Promoting `status_now` requires tip evidence — **no invent Claimed** from HELP alone.
 6. Clean-room gate: compose `dod-daemon-matrix` → `verify/scripts/run-daemon-git-arks-matrix-e2e.sh` (default smoke; `ARKS_DOD_STRICT=1` for Missing=0 DoD).
 
-## Counts (inventoriable + ledger rows; living CSV tip; was Missing~25 at `c297e34`)
+## Counts (inventoriable + ledger rows; living CSV tip ≥ `a21ad01`; was Missing~25 at `c297e34`)
 
 | status_now | Count (living CSV) |
 |------------|------:|
-| Parity | 5 |
-| Partial | 15 |
+| Parity | **20** |
+| Partial | **0** |
 | Missing | **0** |
 | Refuse/N/A | 16 |
 | arks-only | 3 |
 
-**Parity:** `--export-all`, service `upload-pack`, `git-daemon-export-ok`, (+ related ledger Parity rows).  
-**Partial (deepened):** separate `--init-timeout` vs `--timeout`; max-conn accept-then-drop; `--strict-paths` disables foo↔foo.git alias; multi `--base-path`/positionals allow-list; `--listen`/`--port`; `--reuseaddr` flag (platform SO_REUSEADDR Partial); enable/disable services; upload-archive accept+ERR.  
-**Refuse/N/A (closed from former Missing~25):** `--detach`, `--inetd`, `--pid-file`, `--user`/`--group`, `--syslog`/`--log-destination`, `--access-hook`, informative-errors, `--base-path-relaxed`, `--user-path`, `--interpolated-path`, allow/forbid-override, `daemon.*` config, `REMOTE_ADDR` — honest refuse, not Claimed.  
-Deepen Partial→Parity still open (esp. reuseaddr setsockopt on Windows, upload-archive protocol); see CSV notes. Pin judge remains **2.39.5**.
+**Parity:** inventoriable peer-mapped flags + services (including IW-DAEMON-FLAGS-PARITY deepen — timeouts, listen/port, max-connections, strict-paths, base-path, reuseaddr, enable/disable, dirs, upload-archive/receive-pack, `related:git:// client` **Parity pointer**) per living CSV + [[evidence:root/20261111045108-daemon-flags-parity]] / reconfirm receipts.  
+**Partial:** none remaining on living inventoriable daemon rows (flag-depth / platform SO_REUSEADDR notes stay in CSV `notes` where applicable — not a Missing reopen).  
+**Refuse/N/A (closed from former Missing~25):** `--detach`, `--inetd`, `--pid-file`, `--user`/`--group`, `--syslog`/`--log-destination` CSV dest row (facility Claimed separately via IW-B5-PLUS collector), `--access-hook`, informative-errors, `--base-path-relaxed`, `--user-path`, `--interpolated-path`, allow/forbid-override, `daemon.*` config, `REMOTE_ADDR` — honest refuse, not invent Claimed.  
+Pin judge remains **2.39.5**.
 
 ## Verification
 
