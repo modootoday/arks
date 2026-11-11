@@ -58,8 +58,8 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 | Order | ID | Surface | Status now | Partial bar (honest) | Claimed bar | Docker slot |
 |------:|----|---------|------------|----------------------|-------------|-------------|
 | 1 | **IW-B5** | Daemon `upload-archive` ustar | **Claimed** ([[evidence:root/20261111091600-claimed-daemon-archive]]) | Protocol + structural/semantic member equality | **Byte-identical** ustar vs stock `git-daemon` pin **2.39.5** (`cmp -s`); encoder = git `prepare_header` (`"%07o"` / `"%011o"`, device fields written, chksum sum-with-spaces) | `dod-claimed-daemon-archive` / `run-claimed-daemon-archive-e2e.sh` |
-| 2 | **IW-B7-SSH** | Serve-config SSH rebind drain | **Partial** | Live rebind / durable listen labeled Partial (§17(c)) | Held SSH session survives reload + new SSH peer succeeds across dual-bind/drain; receipt separate from HTTP | `dod-claimed-rebind` scenario `ssh` (SKIP until Claimed) |
-| 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Partial** | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
+| 2 | **IW-B7-SSH** | Serve-config SSH rebind drain | **Implementing** → Claimed on [[evidence:root/20261111092000-claimed-rebind-ssh]] | Live rebind / durable listen labeled Partial (§17(c)) | Held SSH session survives reload + new SSH peer succeeds across dual-bind/drain; receipt separate from HTTP | `dod-claimed-rebind` scenario `ssh` |
+| 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Implementing** → Claimed on [[evidence:root/20261111092000-claimed-rebind-forge]] | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
 | 4 | **IW-SSH-LABEL** | Serve SSH process-label / readiness | **Partial** | Durable listen **must** say Partial while rebind Claimed absent | Operator surfaces may drop Partial readiness label only when B1/B2 **and** IW-B7-SSH Claimed (or SoT explicitly splits wire Claimed vs listen Claimed) | Evidence + `arks-self-host-server` honesty amend |
 | 5 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Partial** | Local forge API scaffold under `arks serve` | Hosting e2e forge module Claimed (PR/issue host journeys); **B3** alone ≠ this row | Future `dod-claimed-*` only after §7 register |
 | 6 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**) | Stubs/forwards; B3 HTTPS remote happy path Claimed | Peer-faithful leaf bodies + hub matrix STRICT greens | Symmetry hub pillar / hub matrices — not invent from B3 |
@@ -84,8 +84,9 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 #### IW-B7-SSH / IW-B7-FORGE
 
 - **Cite:** [[research:root/20261111090827]] (Cloudflare ecdysis / GitHub multibinder / Teleport — `SO_REUSEPORT` orphan risk).
-- **Partial:** same-process live rebind without held-peer drain receipt.
-- **Claimed:** receipt shows concurrent success across reload (held old + fresh new); no hard-cut of in-flight peers.
+- **Implement path:** same-process **bounded dual-bind + drain** mirroring HTTP B7 Claimed (`serve.rs`); SSH sessions spawned on threads so held peers do not block accept/rebind.
+- **Partial (historical):** hard-cut live rebind without held-peer drain receipt.
+- **Claimed:** receipt shows concurrent success across reload (held old + fresh new + fresh old during drain); separate evidence IDs — [[evidence:root/20261111092000-claimed-rebind-ssh]], [[evidence:root/20261111092000-claimed-rebind-forge]].
 - **Refuse as Claimed:** HTTP B7 receipt reused for SSH/forge; dual-bind without drain evidence.
 
 #### IW-SSH-LABEL
