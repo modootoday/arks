@@ -121,7 +121,9 @@ Before any product PR/commit for an IW-* row in this SoT:
 | [[sot:root/verify-directory-conventions]] | §7 + `gNNN`/`dod-*` naming (0.6.0) |
 | [[sot:root/arks-self-host-server]] | Serve umbrella + hosting e2e honesty |
 | [[sot:root/arks-verify-docker-e2e-claim-wave]] | Docker-under-verify Claimed path for IW-FORGE-SERVE / HUB-FLAT / PERSONALITY |
+| [[sot:root/arks-remaining-incompletes-wave]] | Post-sample leftovers: hub Missing→0 + expand; personality expand; B5+ terminal |
 | [[research:root/20261111093543]] | Web research receipt for this wave |
+| [[research:root/20261111105924]] | Remaining incompletes research receipt |
 
 ## Why
 
