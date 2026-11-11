@@ -4,11 +4,11 @@
   "scenario": "forge",
   "disposition": "verified-forge-dual-bind",
   "venue": "docker-dod-claimed-rebind",
-  "old_listener": "127.0.0.1:53607",
-  "new_listener": "127.0.0.1:53055",
+  "old_listener": "127.0.0.1:44643",
+  "new_listener": "127.0.0.1:57135",
   "in_flight_old_connection": "completed",
   "overlap_fresh_old": "completed",
   "overlap_fresh_new": "completed",
-  "timestamp": "2026-11-11T00:22:23Z",
+  "timestamp": "2026-11-11T00:26:30Z",
   "note": "IW-B7-FORGE dual-bind drain; \u2260 B3 client remote Claimed."
 }
