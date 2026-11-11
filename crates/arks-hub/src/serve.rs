@@ -400,6 +400,30 @@ fn handle_client<S: Read + Write>(
                             "full_name": format!("{}/{}", r.owner, r.name),
                             "private": r.private,
                             "description": r.description,
+                            "archived": r.archived,
+                            "owner": {"login": r.owner},
+                        }),
+                    );
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            if parts.len() == 2 && req.method == "PATCH" {
+                let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                let description = v.get("description").and_then(|x| x.as_str());
+                let private = v.get("private").and_then(|x| x.as_bool());
+                let archived = v.get("archived").and_then(|x| x.as_bool());
+                if let Some(r) = st.patch_repo(owner, repo, description, private, archived) {
+                    st.save()?;
+                    return respond(
+                        stream,
+                        200,
+                        &json!({
+                            "id": r.id,
+                            "name": r.name,
+                            "full_name": format!("{}/{}", r.owner, r.name),
+                            "private": r.private,
+                            "description": r.description,
+                            "archived": r.archived,
                             "owner": {"login": r.owner},
                         }),
                     );
@@ -466,6 +490,13 @@ fn handle_client<S: Read + Write>(
                                 "user": {"login": i.user},
                             }),
                         );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "DELETE" {
+                    if st.delete_issue(owner, repo, n) {
+                        st.save()?;
+                        return respond(stream, 204, &json!({}));
                     }
                     return respond(stream, 404, &json!({"message":"Not Found"}));
                 }
@@ -541,6 +572,8 @@ fn handle_client<S: Read + Write>(
                                 "title": p.title,
                                 "body": p.body,
                                 "state": p.state,
+                                "draft": p.draft,
+                                "merged": p.merged,
                                 "head": {"ref": p.head},
                                 "base": {"ref": p.base},
                                 "user": {"login": p.user},
@@ -555,7 +588,9 @@ fn handle_client<S: Read + Write>(
                     let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
                     let head = v.get("head").and_then(|x| x.as_str()).unwrap_or("head");
                     let base = v.get("base").and_then(|x| x.as_str()).unwrap_or("main");
-                    let pull = st.create_pull(owner, repo, title, body, head, base);
+                    let draft = v.get("draft").and_then(|x| x.as_bool()).unwrap_or(false);
+                    let pull =
+                        st.create_pull_draft(owner, repo, title, body, head, base, draft);
                     st.save()?;
                     return respond(
                         stream,
@@ -565,6 +600,8 @@ fn handle_client<S: Read + Write>(
                             "title": pull.title,
                             "body": pull.body,
                             "state": pull.state,
+                            "draft": pull.draft,
+                            "merged": pull.merged,
                             "head": {"ref": pull.head},
                             "base": {"ref": pull.base},
                             "user": {"login": pull.user},
@@ -581,7 +618,8 @@ fn handle_client<S: Read + Write>(
                     let title = v.get("title").and_then(|x| x.as_str());
                     let body = v.get("body").and_then(|x| x.as_str());
                     let state = v.get("state").and_then(|x| x.as_str());
-                    if let Some(p) = st.patch_pull(owner, repo, n, title, body, state) {
+                    let draft = v.get("draft").and_then(|x| x.as_bool());
+                    if let Some(p) = st.patch_pull(owner, repo, n, title, body, state, draft) {
                         st.save()?;
                         return respond(
                             stream,
@@ -591,6 +629,7 @@ fn handle_client<S: Read + Write>(
                                 "title": p.title,
                                 "body": p.body,
                                 "state": p.state,
+                                "draft": p.draft,
                                 "merged": p.merged,
                                 "head": {"ref": p.head},
                                 "base": {"ref": p.base},
@@ -614,6 +653,7 @@ fn handle_client<S: Read + Write>(
                             "title": p.title,
                             "body": p.body,
                             "state": p.state,
+                            "draft": p.draft,
                             "merged": p.merged,
                             "head": {"ref": p.head},
                             "base": {"ref": p.base},

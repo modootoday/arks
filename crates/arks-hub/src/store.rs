@@ -83,6 +83,9 @@ pub struct Repo {
     pub name: String,
     pub description: String,
     pub private: bool,
+    /// Local-forge metadata archive flag (≠ git gc; never spawn git).
+    #[serde(default)]
+    pub archived: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,6 +113,9 @@ pub struct Pull {
     /// Local-forge metadata merge only (≠ git worktree merge; never spawn git).
     #[serde(default)]
     pub merged: bool,
+    /// Draft PR metadata (gh `pr ready` clears this).
+    #[serde(default)]
+    pub draft: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -311,6 +317,7 @@ impl HubStore {
                 name: "playground".into(),
                 description: "local hub seed repo".into(),
                 private: false,
+                archived: false,
             });
             db.next_repo = 2;
             db
@@ -381,8 +388,34 @@ impl HubStore {
             base: base.into(),
             user: self.db.user_login.clone(),
             merged: false,
+            draft: false,
         };
         self.db.pulls.push(pull.clone());
+        pull
+    }
+
+    pub fn create_pull_draft(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        title: &str,
+        body: &str,
+        head: &str,
+        base: &str,
+        draft: bool,
+    ) -> Pull {
+        let mut pull = self.create_pull(owner, repo, title, body, head, base);
+        if draft {
+            if let Some(p) = self
+                .db
+                .pulls
+                .iter_mut()
+                .find(|p| p.owner == owner && p.repo == repo && p.number == pull.number)
+            {
+                p.draft = true;
+                pull = p.clone();
+            }
+        }
         pull
     }
 
@@ -420,6 +453,7 @@ impl HubStore {
         title: Option<&str>,
         body: Option<&str>,
         state: Option<&str>,
+        draft: Option<bool>,
     ) -> Option<Pull> {
         let pull = self
             .db
@@ -434,6 +468,9 @@ impl HubStore {
         }
         if let Some(s) = state {
             pull.state = s.into();
+        }
+        if let Some(d) = draft {
+            pull.draft = d;
         }
         Some(pull.clone())
     }
@@ -539,9 +576,43 @@ impl HubStore {
             name: name.into(),
             description: description.into(),
             private: false,
+            archived: false,
         };
         self.db.repos.push(repo.clone());
         repo
+    }
+
+    pub fn patch_repo(
+        &mut self,
+        owner: &str,
+        name: &str,
+        description: Option<&str>,
+        private: Option<bool>,
+        archived: Option<bool>,
+    ) -> Option<Repo> {
+        let repo = self
+            .db
+            .repos
+            .iter_mut()
+            .find(|r| r.owner == owner && r.name == name)?;
+        if let Some(d) = description {
+            repo.description = d.into();
+        }
+        if let Some(p) = private {
+            repo.private = p;
+        }
+        if let Some(a) = archived {
+            repo.archived = a;
+        }
+        Some(repo.clone())
+    }
+
+    pub fn delete_issue(&mut self, owner: &str, repo: &str, number: u64) -> bool {
+        let before = self.db.issues.len();
+        self.db
+            .issues
+            .retain(|i| !(i.owner == owner && i.repo == repo && i.number == number));
+        self.db.issues.len() < before
     }
 
     pub fn create_label(

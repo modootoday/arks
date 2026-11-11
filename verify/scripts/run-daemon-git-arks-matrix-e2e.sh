@@ -104,6 +104,41 @@ PY
     kill "$DPID" 2>/dev/null || true
     wait "$DPID" 2>/dev/null || true
   fi
+  # upload-archive enable + ustar via git archive --remote (path-filter Stay Partial).
+  PORT_A="$(python3 - <<'PY'
+import socket
+s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()
+PY
+)"
+  # Mirror B5 layout: base-path + repo.git name for --remote path.
+  rm -rf "$WORK/repo.git"
+  mv "$WORK/repo/.git" "$WORK/repo.git"
+  touch "$WORK/repo.git/git-daemon-export-ok"
+  "$ARKS_BIN" daemon --listen=127.0.0.1 --port="$PORT_A" --export-all --reuseaddr \
+    --enable=upload-archive --base-path="$WORK" \
+    >"$WORK/daemon-archive.out" 2>"$WORK/daemon-archive.err" &
+  APID=$!
+  sleep 0.3
+  if ! kill -0 "$APID" 2>/dev/null; then
+    echo "FAIL DF: upload-archive daemon failed to start" >&2
+    cat "$WORK/daemon-archive.err" >&2 || true
+    DF_OK=0
+  else
+    set +e
+    git archive --remote="git://127.0.0.1:${PORT_A}/repo.git" --format=tar HEAD \
+      >"$WORK/remote.tar" 2>"$WORK/archive.err"
+    arch_ec=$?
+    set -e
+    if [[ "$arch_ec" -ne 0 ]] || [[ ! -s "$WORK/remote.tar" ]]; then
+      echo "FAIL DF: git archive --remote upload-archive" >&2
+      cat "$WORK/archive.err" "$WORK/daemon-archive.err" >&2 || true
+      DF_OK=0
+    else
+      echo "daemon-git-arks-matrix-e2e: DF upload-archive ok (bytes=$(wc -c <"$WORK/remote.tar"))"
+    fi
+    kill "$APID" 2>/dev/null || true
+    wait "$APID" 2>/dev/null || true
+  fi
   if [[ "$DF_OK" -ne 1 ]]; then
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
       echo "daemon-git-arks-matrix-e2e: FAIL STRICT IW-DAEMON-FLAGS-PARITY" >&2
@@ -117,7 +152,9 @@ PY
     TS="$(date -u +%Y%m%d%H%M%S)"
     OUT=".spec/evidence/${TS}-daemon-flags-parity"
     mkdir -p "$OUT"
-    cp "$WORK"/daemon.* "$WORK"/clone.err "$WORK"/push.err "$OUT/" 2>/dev/null || true
+    cp "$WORK"/daemon.* "$WORK"/clone.err "$WORK"/push.err \
+      "$WORK"/daemon-archive.* "$WORK"/archive.err "$WORK"/remote.tar \
+      "$OUT/" 2>/dev/null || true
     python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
 import json, sys, time
 out, tip, image = sys.argv[1:]
@@ -132,8 +169,10 @@ receipt = {
         "--verbose", "--timeout", "--init-timeout", "--max-connections",
         "--strict-paths", "--listen", "--port", "--base-path", "--reuseaddr",
         "--enable", "--disable", "<directory>...", "service:upload-pack", "service:receive-pack",
+        "service:upload-archive",
     ],
-    "note": "SysV double-fork remains Refuse; clap-accept-alone ≠ Parity.",
+    "stay_partial": ["related:git:// client"],
+    "note": "upload-archive enable+ustar Parity; path-filter/non-ustar Stay Partial; SysV double-fork Refuse; git:// client pointer Stay Partial.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

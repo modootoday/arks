@@ -27,7 +27,7 @@
 "--log-destination=(stderr|syslog|none)","flag","Refuse/N/A","refuse-with-reason","stderr only"
 "<directory>...","positional","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
 "service:upload-pack","service","Parity","must-implement","always on"
-"service:upload-archive","service","Partial","must-implement","--enable=upload-archive accepted; pkt protocol ERR until claimed"
+"service:upload-archive","service","Parity","must-implement","IW-DAEMON-FLAGS-PARITY enable+ustar (evidence pending Docker); path-filter/non-ustar Stay Partial"
 "service:receive-pack","service","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
 "git-daemon-export-ok","behavior","Parity","must-implement","required unless --export-all"
 "daemon.* config override","behavior","Refuse/N/A","refuse-with-reason","no daemon.* config"
