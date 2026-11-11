@@ -1,4 +1,4 @@
-﻿"gh_command","arks_hub_target","status_now","phase","notes"
+"gh_command","arks_hub_target","status_now","phase","notes"
 "auth","auth","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help wired via arks hub)"
 "auth login","auth login","Claimed","v1","token store + local POST /login; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
 "auth logout","auth logout","Claimed","v1","hub auth logout Partial — clears stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"

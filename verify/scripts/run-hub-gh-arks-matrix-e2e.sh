@@ -88,18 +88,19 @@ if [[ ! -f "$CSV" ]]; then
   exit 0
 fi
 
-header="$(head -n1 "$CSV" || true)"
+header="$(head -n1 "$CSV" | sed 's/^\xEF\xBB\xBF//' || true)"
+# Quoted CSV fields: strip " before compare (BOM-tolerant header above).
 if echo "$header" | grep -q 'status_now'; then
   # Living e2e: gh_command,arks_hub_target,status_now,phase,notes
-  v1=$(awk -F, 'NR>1 && $4=="v1" {c++} END{print c+0}' "$CSV")
-  missing=$(awk -F, 'NR>1 && $4=="v1" && $3=="Missing" {c++} END{print c+0}' "$CSV")
-  refuse=$(awk -F, 'NR>1 && $3=="Refuse/N/A" {c++} END{print c+0}' "$CSV")
+  v1=$(awk -F, 'NR>1 {gsub(/"/,"",$3); gsub(/"/,"",$4); if($4=="v1") c++} END{print c+0}' "$CSV")
+  missing=$(awk -F, 'NR>1 {gsub(/"/,"",$3); gsub(/"/,"",$4); if($4=="v1" && $3=="Missing") c++} END{print c+0}' "$CSV")
+  refuse=$(awk -F, 'NR>1 {gsub(/"/,"",$3); if($3=="Refuse/N/A") c++} END{print c+0}' "$CSV")
   echo "hub-gh-arks-matrix-e2e: csv=$CSV v1=$v1 Missing(v1)=$missing Refuse=$refuse"
 else
   # Design CSV: gh_pin,gh_command,arks_hub_target,phase,notes
-  v1=$(awk -F, 'NR>1 && $4=="v1" {c++} END{print c+0}' "$CSV")
+  v1=$(awk -F, 'NR>1 {gsub(/"/,"",$4); if($4=="v1") c++} END{print c+0}' "$CSV")
   missing=0
-  refuse=$(awk -F, 'NR>1 && ($3=="OUT" || $4=="out-of-scope") {c++} END{print c+0}' "$CSV")
+  refuse=$(awk -F, 'NR>1 {gsub(/"/,"",$3); gsub(/"/,"",$4); if($3=="OUT" || $4=="out-of-scope") c++} END{print c+0}' "$CSV")
   echo "hub-gh-arks-matrix-e2e: csv=$CSV v1=$v1 OUT=$refuse (design table)"
 fi
 
