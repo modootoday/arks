@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-11T02:05:15Z
+updated: 2026-11-11T02:43:12Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g028-live-private-arks, g029-server-dumb-http, g030-server-ssh-command, g031-server-protocol-v2, g032-git-daemon-wire, g033-cred-askpass, g034-shared-index-contention, g035-shallow-depth, g036-http-basic-auth, g037-gpgsig-ssh, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final, claimed-residual, implement-wave]
 verify: manual
 rel:
@@ -19,6 +19,8 @@ rel:
     - sot:root/public-surface
     - sot:root/arks-remaining-implement-wave
     - sot:root/arks-remaining-incompletes-wave
+    - sot:root/arks-honesty-leftovers-wave
+    - research:root/20261111114312
     - research:root/20261111105924
     - research:root/20261111090827
     - research:root/20261111084400
@@ -267,6 +269,7 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | — | Partial residual wave (research-gated) | **Active** [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]] — **IW-FORGE-SERVE Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]); **IW-HUB-FLAT Claimed subset** ([[evidence:root/20261111011539-hub-flat-subset]]; full Missing open); **IW-PERSONALITY Claimed sample** ([[evidence:root/20261111014608-personality-dropin]]); **IW-DAEMON-FLAGS Partial / B5+ Refuse** | Spec-first; prefer Partial/Refuse over invent Claimed |
 | — | Verify Docker e2e claim wave | **Active** [[sot:root/arks-verify-docker-e2e-claim-wave]] — FORGE-SERVE + HUB-FLAT subset + PERSONALITY sample Claimed; B3 ≠ hosting; ExitCodePolicy ≠ drop-in; B5+ Refuse; full hub/CLI CSV leftovers → incompletes wave | Spec-first; Claimed only with `.spec/evidence/` |
 | — | Remaining incompletes wave | **Closed this wave** [[sot:root/arks-remaining-incompletes-wave]] + [[research:root/20261111105924]] — **IW-HUB-FULL Claimed** ([[evidence:root/20261111020350-hub-full-expand]]; Missing=0); **IW-PERSONALITY-FULL Claimed** expand ([[evidence:root/20261111020515-personality-expand]]); **IW-DAEMON-FLAGS Partial / B5+ Refuse terminal**; docs honesty synced | Keep Partial honesty for non-expand hub leaves + per-cmd exit tables; no invent Claimed |
+| — | Honesty leftovers wave | **Active** [[sot:root/arks-honesty-leftovers-wave]] + [[research:root/20261111114312]] — **IW-HUB-MUTATE** / **IW-PERSONALITY-EXIT** / **IW-B5-PLUS** collector reopen-or-Refuse; tip surveyed `812d298` | Spec-first; Claimed only with Docker evidence; Prefer Partial/Refuse over invent Claimed |
 | — | Verify directory conventions | **Design** [[sot:root/verify-directory-conventions]] + [[research:root/20261111082440]] — tree contract, `gN` vs `dod-*` naming, `verify/out/` vs `gates/*/out/`, SKIP vs `ARKS_DOD_STRICT=1`, pin Git **2.39.5** normative, residual registration checklist | Ops/harness only; does not invent product Claimed; coordinate harness edits with in-flight B-gate owners |
 
 ## Why
