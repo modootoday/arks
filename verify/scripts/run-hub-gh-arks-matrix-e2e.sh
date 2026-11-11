@@ -525,7 +525,17 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; 
   export ARKS_HUB_REPO="local/hubrenamed"
   hub_scope_run api-get "$ARKS_BIN" hub api --method GET /repos/local/hubrenamed
   hub_scope_run status-agg "$ARKS_BIN" hub status
-  hub_scope_run group-help-pr "$ARKS_BIN" hub p
+  set +e
+  "$ARKS_BIN" hub pr >"$WORK/group-help-pr.out" 2>&1
+  gh_ec=$?
+  set -e
+  if [[ "$gh_ec" -ne 0 ]]; then
+    echo "FAIL HF-SCOPE group-help-pr exit=$gh_ec" >&2
+    cat "$WORK/group-help-pr.out" >&2 || true
+    SCOPE_OK=0
+  else
+    echo "hub-gh-arks-matrix-e2e: HF-SCOPE group-help-pr ok"
+  fi
   hub_scope_run repo-delete "$ARKS_BIN" hub repo delete --repo local/hubdest
   # Terminal Partial honesty: git/CI/OAuth must stay exit 2
   for term in "pr diff 1" "pr checks 1" "pr update-branch 1" "pr revert 1" "repo fork" "auth refresh"; do
