@@ -1,0 +1,28 @@
+{
+  "schema": "arks-hub-mutate-subset/v1",
+  "gate": "IW-HUB-MUTATE",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "9fe0fce",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed_mutate": [
+    "issue close",
+    "issue reopen",
+    "issue edit",
+    "issue comment",
+    "pr close",
+    "pr reopen",
+    "pr edit",
+    "pr comment",
+    "pr merge",
+    "release view",
+    "label edit",
+    "label delete"
+  ],
+  "checks": [
+    "HF-MUT peer-faithful mutate/view against local forge",
+    "HF-MUT STRICT greens (ARKS_HUB_IW_MUTATE=1)"
+  ],
+  "note": "Actions execute / assets / pr checkout stay Partial; stub exit-2 \u2260 Claimed.",
+  "timestamp": "2026-11-11T02:51:42Z"
+}

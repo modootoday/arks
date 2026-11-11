@@ -33,6 +33,8 @@ pub struct HubDb {
     pub next_gpg_key: u64,
     #[serde(default)]
     pub next_discussion: u64,
+    #[serde(default)]
+    pub next_comment: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
@@ -62,6 +64,8 @@ pub struct HubDb {
     pub gpg_keys: Vec<GpgKey>,
     #[serde(default)]
     pub discussions: Vec<Discussion>,
+    #[serde(default)]
+    pub comments: Vec<Comment>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -94,6 +98,20 @@ pub struct Pull {
     pub state: String,
     pub head: String,
     pub base: String,
+    pub user: String,
+    /// Local-forge metadata merge only (≠ git worktree merge; never spawn git).
+    #[serde(default)]
+    pub merged: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Comment {
+    pub id: u64,
+    pub owner: String,
+    pub repo: String,
+    /// Issue or PR number (GitHub comments API shares issues path).
+    pub number: u64,
+    pub body: String,
     pub user: String,
 }
 
@@ -331,9 +349,154 @@ impl HubStore {
             head: head.into(),
             base: base.into(),
             user: self.db.user_login.clone(),
+            merged: false,
         };
         self.db.pulls.push(pull.clone());
         pull
+    }
+
+    pub fn patch_issue(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        number: u64,
+        title: Option<&str>,
+        body: Option<&str>,
+        state: Option<&str>,
+    ) -> Option<Issue> {
+        let issue = self
+            .db
+            .issues
+            .iter_mut()
+            .find(|i| i.owner == owner && i.repo == repo && i.number == number)?;
+        if let Some(t) = title {
+            issue.title = t.into();
+        }
+        if let Some(b) = body {
+            issue.body = b.into();
+        }
+        if let Some(s) = state {
+            issue.state = s.into();
+        }
+        Some(issue.clone())
+    }
+
+    pub fn patch_pull(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        number: u64,
+        title: Option<&str>,
+        body: Option<&str>,
+        state: Option<&str>,
+    ) -> Option<Pull> {
+        let pull = self
+            .db
+            .pulls
+            .iter_mut()
+            .find(|p| p.owner == owner && p.repo == repo && p.number == number)?;
+        if let Some(t) = title {
+            pull.title = t.into();
+        }
+        if let Some(b) = body {
+            pull.body = b.into();
+        }
+        if let Some(s) = state {
+            pull.state = s.into();
+        }
+        Some(pull.clone())
+    }
+
+    /// Metadata-only merge: marks pull merged+closed. Never touches git objects.
+    pub fn merge_pull(&mut self, owner: &str, repo: &str, number: u64) -> Option<Pull> {
+        let pull = self
+            .db
+            .pulls
+            .iter_mut()
+            .find(|p| p.owner == owner && p.repo == repo && p.number == number)?;
+        pull.merged = true;
+        pull.state = "closed".into();
+        Some(pull.clone())
+    }
+
+    pub fn create_comment(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        number: u64,
+        body: &str,
+    ) -> Comment {
+        if self.db.next_comment == 0 {
+            self.db.next_comment = 1;
+        }
+        let id = self.db.next_comment;
+        self.db.next_comment += 1;
+        let comment = Comment {
+            id,
+            owner: owner.into(),
+            repo: repo.into(),
+            number,
+            body: body.into(),
+            user: self.db.user_login.clone(),
+        };
+        self.db.comments.push(comment.clone());
+        comment
+    }
+
+    pub fn patch_label(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        name: &str,
+        new_name: Option<&str>,
+        color: Option<&str>,
+        description: Option<&str>,
+    ) -> Option<Label> {
+        let label = self
+            .db
+            .labels
+            .iter_mut()
+            .find(|l| l.owner == owner && l.repo == repo && l.name == name)?;
+        if let Some(n) = new_name {
+            label.name = n.into();
+        }
+        if let Some(c) = color {
+            label.color = c.into();
+        }
+        if let Some(d) = description {
+            label.description = d.into();
+        }
+        Some(label.clone())
+    }
+
+    pub fn delete_label(&mut self, owner: &str, repo: &str, name: &str) -> bool {
+        let before = self.db.labels.len();
+        self.db
+            .labels
+            .retain(|l| !(l.owner == owner && l.repo == repo && l.name == name));
+        self.db.labels.len() != before
+    }
+
+    pub fn find_release(
+        &self,
+        owner: &str,
+        repo: &str,
+        tag_or_id: &str,
+    ) -> Option<&Release> {
+        if let Ok(id) = tag_or_id.parse::<u64>() {
+            if let Some(r) = self
+                .db
+                .releases
+                .iter()
+                .find(|r| r.owner == owner && r.repo == repo && r.id == id)
+            {
+                return Some(r);
+            }
+        }
+        self.db
+            .releases
+            .iter()
+            .find(|r| r.owner == owner && r.repo == repo && r.tag_name == tag_or_id)
     }
 
     pub fn create_repo(&mut self, owner: &str, name: &str, description: &str) -> Repo {

@@ -61,7 +61,7 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 | **B3** | Claimed hub HTTPS forge remote e2e | **Claimed** (Docker forge HTTPS + hub client; [[evidence:root/20261110233655-claimed-hub-https]]) | [[sot:root/arks-hub-product-intent]] |
 | **B4** | Claimed LLM chatbot / review e2e | **Claimed** (Docker fixture e2e; [[evidence:root/20261110231959-claimed-agent-llm]]) | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-llm-providers]] |
 | **B5** | Claimed daemon archive format parity | **Claimed** (Docker `cmp -s` vs stock `git-daemon` pin **2.39.5**; [[evidence:root/20261111091600-claimed-daemon-archive]]; IW-B5 via [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] / [[research:root/20261111084400]]) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |
-| **B5+** | Claimed syslog facility / priority parity | **Refuse (terminal)** — Partial `openlog`/`LOG_DAEMON` ≠ facility/priority Claimed; Windows Event Log ≠ syslog; reopen only with deliberate collector receipt wave | [[sot:root/arks-daemon-product-intent]] |
+| **B5+** | Claimed syslog facility / priority parity | **Claimed** — Docker collector PRI=30 (`LOG_DAEMON`+`LOG_INFO`); [[evidence:root/20261111025206-daemon-b5-plus-syslog]]; Windows Event Log ≠ syslog (N/A); reopen gate [[sot:root/arks-honesty-leftovers-wave]] | [[sot:root/arks-daemon-product-intent]] |
 | **B7** | Claimed zero-downtime hot-rebind | **Claimed for HTTP** ([[evidence:root/20261110233659-claimed-rebind]] / [[evidence:root/20261111092000-claimed-rebind-http]]); **SSH Claimed** ([[evidence:root/20261111092000-claimed-rebind-ssh]]); **forge Claimed** ([[evidence:root/20261111092000-claimed-rebind-forge]]) via IW-B7 | [[sot:root/arks-self-host-server]] §17 |
 | **B9** | Product in-process TLS terminate | **Claimed** (Docker rustls PEM terminate + stock curl; [[evidence:root/20261110233652-claimed-tls]]) | [[sot:root/arks-self-host-server]] ports/TLS |
 
@@ -69,7 +69,7 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 
 | ID | Disposition |
 |----|-------------|
-| **B5+** | **Refuse (terminal)** this wave — see scope row; residual register closed for facility Claimed |
+| **B5+** | **Claimed** with collector PRI receipt — see scope row; Windows Event Log still N/A |
 | **B6** | Durable SSH listen + Partial live rebind — **Partial landed**; not reopened as Missing |
 | **B8** | Windows SIGHUP — **N/A** (OS); file-mtime reload is Partial substitute |
 
@@ -119,7 +119,7 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 
 #### B5+ — Claimed syslog facility parity
 
-- **Terminal close (this goal):** **Refuse** — unix Partial `openlog`/`LOG_DAEMON` arming + stderr mirror is **not** Claimed facility/priority parity; no collector receipt exists; Windows Event Log ≠ POSIX syslog (documented N/A for B5+ Claimed).
+- **Claimed** via Docker collector PRI decode ([[evidence:root/20261111025206-daemon-b5-plus-syslog]]): `openlog(LOG_DAEMON)` + `syslog(LOG_INFO, …)` marker → facility=3 severity=6 PRI=30. Windows Event Log ≠ POSIX syslog (**N/A**). Historical Refuse closed by [[sot:root/arks-honesty-leftovers-wave]].
 - **Reopen bar (future wave only):** facility/priority evidenced vs stock git-daemon on unix clean-room with Docker receipt + owning daemon SoT amend — **no invent Claimed** from Partial arming alone.
 - **Refuse (normative):** Partial `openlog`/`syslog` mirror-to-stderr alone.
 
@@ -181,5 +181,5 @@ Partial wiring unlocked honest progress without pretending OpenSSH-exact, forge 
 
 1. Research [[research:root/20261111074523]] + this SoT linked from residual register + verify umbrella + `.spec/README.md`.
 2. Compose services and SKIP/scaffold scripts exist; default `dod-claimed-residual` exits 0 with SKIP language; strict fails closed.
-3. Public `docs/` / README MAY cite residual Claimed / Partial / Refuse rows only as this SoT + listed evidence IDs name — **no invent Claimed** beyond Spec (docs honesty sync cites B1/B2/B3/B4/B7(HTTP)/B9 Claimed; B5 Partial; B5+ Refuse).
+3. Public `docs/` / README MAY cite residual Claimed / Partial / Refuse rows only as this SoT + listed evidence IDs name — **no invent Claimed** beyond Spec (docs honesty sync cites B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9 Claimed where evidenced).
 4. Cross-OS honesty: Windows drives compose; Linux-in-container bash is authoritative.

@@ -1,0 +1,15 @@
+{
+  "schema": "arks-daemon-b5-plus-syslog/v1",
+  "gate": "IW-B5-PLUS",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-daemon-matrix",
+  "tip": "9fe0fce",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "facility": "daemon",
+  "facility_num": 3,
+  "severity": "info",
+  "severity_num": 6,
+  "pri": 30,
+  "marker": "ARKS_B5PLUS_MARKER",
+  "timestamp": "2026-11-11T02:52:07Z"
+}

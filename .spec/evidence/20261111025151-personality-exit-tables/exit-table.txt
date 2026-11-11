@@ -1,0 +1,7 @@
+XT-GIT-VER expected=0 actual=0 note=pin_ver_ec=0
+XT-GIT-BAD expected=nonzero actual=1 note=class non-zero
+XT-GIT-HELP expected=0 actual=0 note=pin_help_ec=0
+XT-GH-HELP expected=0 actual=0 note=pr --help
+XT-GH-UNK expected=2 actual=2 note=usage/stub
+XT-GH-AUTH expected=4 actual=4 note=not logged in → gh auth-required
+XT-GH-OK expected=0 actual=0 note=pr list happy

@@ -3,7 +3,8 @@
 # Reads living CSV verify/matrices/cli-git-help-matrix.csv.
 # Never invents PASS; never spawns gh from product. Stock `git` is pin oracle only.
 # IW-PERSONALITY drop-in: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_PERSONALITY_DROPIN=1).
-# ExitCodePolicy unit greens ≠ drop-in Claimed.
+# IW-PERSONALITY-EXIT named tables: sot:root/arks-honesty-leftovers-wave (ARKS_PERSONALITY_EXIT_TABLES=1).
+# ExitCodePolicy unit greens ≠ drop-in / exit-table Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -12,6 +13,7 @@ CSV="${ARKS_CLI_MATRIX_CSV:-verify/matrices/cli-git-help-matrix.csv}"
 SOT="${ARKS_CLI_MATRIX_SOT:-.spec/sot/cli-git-help-matrix.sot.md}"
 DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-wave.sot.md}"
 PERSONALITY_SOT="${ARKS_PERSONALITY_SOT:-.spec/sot/arks-cli-personality-factory.sot.md}"
+HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
 TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "cli-git-arks-matrix-e2e: tip=${TIP}"
@@ -42,6 +44,168 @@ resolve_arks_bin() {
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
   fi
 }
+
+# --- IW-PERSONALITY-EXIT named peer exit tables (ARKS_PERSONALITY_EXIT_TABLES=1) ---
+if [[ "${ARKS_PERSONALITY_EXIT_TABLES:-0}" == "1" ]]; then
+  echo "cli-git-arks-matrix-e2e: IW-PERSONALITY-EXIT path (sot:root/arks-honesty-leftovers-wave)"
+  for f in "$HONESTY_SOT" "$PERSONALITY_SOT"; do
+    if [[ ! -f "$f" ]]; then
+      echo "FAIL: missing SoT $f" >&2
+      exit 1
+    fi
+  done
+  command -v git >/dev/null || {
+    echo "FAIL: pin git missing for XT-GIT compare" >&2
+    exit 1
+  }
+  resolve_arks_bin
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  ARKS_BIN="${CARGO_TARGET_DIR:-target}/release/arks"
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./.cargo-target/release/arks
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
+  [[ -x "$ARKS_BIN" ]] || {
+    echo "FAIL: arks binary missing after rebuild" >&2
+    exit 1
+  }
+
+  WORK="$(mktemp -d /tmp/arks-xt-exit.XXXXXX)"
+  SERVER_PID=""
+  cleanup_xt() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "$WORK"
+  }
+  trap cleanup_xt EXIT
+  mkdir -p "$WORK/home/.config/arks" "$WORK/hub-data"
+  export HOME="$WORK/home"
+  unset ARKS_HUB_TOKEN || true
+  rm -f "$HOME/.config/arks/hub-token" 2>/dev/null || true
+
+  XT_OK=1
+  record_xt() {
+    local id="$1" expected="$2" actual="$3" note="$4"
+    echo "$id expected=$expected actual=$actual note=$note" >>"$WORK/exit-table.txt"
+    if [[ "$expected" == "nonzero" ]]; then
+      if [[ "$actual" -eq 0 ]]; then
+        echo "FAIL $id expected nonzero got 0" >&2
+        XT_OK=0
+      fi
+    elif [[ "$actual" -ne "$expected" ]]; then
+      echo "FAIL $id expected=$expected got=$actual" >&2
+      XT_OK=0
+    else
+      echo "cli-git-arks-matrix-e2e: $id ok (exit=$actual)"
+    fi
+  }
+
+  set +e
+  pin_ver_ec=0
+  git --version >/dev/null 2>&1 || pin_ver_ec=$?
+  git_ver_ec=0
+  ARKS_PERSONALITY=git "$ARKS_BIN" --version >"$WORK/xt-git-ver.out" 2>&1 || git_ver_ec=$?
+  git_bad_ec=0
+  ARKS_PERSONALITY=git "$ARKS_BIN" --not-a-real-flag >"$WORK/xt-git-bad.out" 2>&1 || git_bad_ec=$?
+  pin_help_ec=0
+  git --help >/dev/null 2>&1 || pin_help_ec=$?
+  git_help_ec=0
+  ARKS_PERSONALITY=git "$ARKS_BIN" --help >"$WORK/xt-git-help.out" 2>&1 || git_help_ec=$?
+  gh_help_ec=0
+  ARKS_PERSONALITY=gh "$ARKS_BIN" pr --help >"$WORK/xt-gh-help.out" 2>&1 || gh_help_ec=$?
+  gh_unk_ec=0
+  ARKS_PERSONALITY=gh "$ARKS_BIN" not-a-gh-leaf >"$WORK/xt-gh-unk.out" 2>&1 || gh_unk_ec=$?
+  gh_auth_ec=0
+  ARKS_PERSONALITY=gh "$ARKS_BIN" pr list --repo local/x >"$WORK/xt-gh-auth.out" 2>&1 || gh_auth_ec=$?
+  set -e
+
+  record_xt XT-GIT-VER 0 "$git_ver_ec" "pin_ver_ec=$pin_ver_ec"
+  record_xt XT-GIT-BAD nonzero "$git_bad_ec" "class non-zero"
+  record_xt XT-GIT-HELP 0 "$git_help_ec" "pin_help_ec=$pin_help_ec"
+  record_xt XT-GH-HELP 0 "$gh_help_ec" "pr --help"
+  record_xt XT-GH-UNK 2 "$gh_unk_ec" "usage/stub"
+  record_xt XT-GH-AUTH 4 "$gh_auth_ec" "not logged in → gh auth-required"
+
+  FORGE_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+  FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
+  export ARKS_HUB_API="http://${FORGE_LISTEN}"
+  export ARKS_HUB_REPO="local/xtexit"
+  export ARKS_HUB_TOKEN="local-dev-token"
+  export ARKS_HUB_TOKEN_FILE="$HOME/.config/arks/hub-token"
+  "$ARKS_BIN" serve --no-ssh --no-http \
+    --forge-listen "$FORGE_LISTEN" \
+    --forge-data "$WORK/hub-data" \
+    . >"$WORK/server.out" 2>"$WORK/server.err" &
+  SERVER_PID=$!
+  python3 - "$FORGE_PORT" <<'PY'
+import socket, sys, time
+port = int(sys.argv[1])
+for _ in range(200):
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=.2):
+            raise SystemExit(0)
+    except OSError:
+        time.sleep(.05)
+raise SystemExit("xt-exit forge not ready")
+PY
+  "$ARKS_BIN" hub auth login >/dev/null
+  "$ARKS_BIN" hub repo create xtexit --description "xt" >/dev/null
+  set +e
+  gh_ok_ec=0
+  ARKS_PERSONALITY=gh "$ARKS_BIN" pr list --repo local/xtexit >"$WORK/xt-gh-ok.out" 2>&1 || gh_ok_ec=$?
+  set -e
+  record_xt XT-GH-OK 0 "$gh_ok_ec" "pr list happy"
+
+  if [[ "$XT_OK" -ne 1 ]]; then
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "cli-git-arks-matrix-e2e: FAIL STRICT IW-PERSONALITY-EXIT (no invent PASS)" >&2
+      exit 1
+    fi
+    echo "cli-git-arks-matrix-e2e: IW-PERSONALITY-EXIT Partial/failed"
+    exit 0
+  fi
+
+  echo "cli-git-arks-matrix-e2e: IW-PERSONALITY-EXIT named rows green"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-personality-exit-tables"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$WORK"/*.txt "$WORK/server.err" "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-personality-exit-tables/v1",
+    "gate": "IW-PERSONALITY-EXIT",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-cli-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "rows": [
+        "XT-GIT-VER", "XT-GIT-BAD", "XT-GIT-HELP",
+        "XT-GH-HELP", "XT-GH-UNK", "XT-GH-OK", "XT-GH-AUTH",
+    ],
+    "note": "Named SoT rows only; CLI survey Partial×117 remain Partial. ExitCodePolicy units ≠ this row.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "cli-git-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  else
+    echo "cli-git-arks-matrix-e2e: host run only; no .spec/evidence receipt (Docker Claimed venue required)"
+  fi
+  exit 0
+fi
 
 # --- IW-PERSONALITY drop-in Claimed sample (ARKS_PERSONALITY_DROPIN=1) ---
 if [[ "${ARKS_PERSONALITY_DROPIN:-0}" == "1" ]]; then

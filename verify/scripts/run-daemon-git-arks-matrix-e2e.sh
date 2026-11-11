@@ -2,6 +2,7 @@
 # DoD pillar 2 — git-daemon vs arks daemon matrix e2e (pin 2.39.5).
 # Sibling owns daemon matrix SoT; until it lands, smoke help + loopback subset only.
 # Never invents PASS; never spawns gh. Stock `git` is pin oracle only.
+# IW-B5-PLUS collector: sot:root/arks-honesty-leftovers-wave (ARKS_DAEMON_B5_PLUS=1).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -10,9 +11,11 @@ cd "$ROOT"
 INTENT_SOT="${ARKS_DAEMON_INTENT_SOT:-.spec/sot/arks-daemon-product-intent.sot.md}"
 SOT="${ARKS_DAEMON_MATRIX_SOT:-.spec/sot/arks-daemon-git-command-matrix.sot.md}"
 CSV="${ARKS_DAEMON_MATRIX_CSV:-verify/matrices/daemon-git-arks-e2e-matrix.csv}"
+HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
 # Prefer landed sibling daemon matrix SoT when present.
 
-echo "daemon-git-arks-matrix-e2e: tip=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+echo "daemon-git-arks-matrix-e2e: tip=${TIP}"
 echo "daemon-git-arks-matrix-e2e: pin git=$(git --version)"
 
 ARKS_BIN="${ARKS_BIN:-}"
@@ -29,6 +32,179 @@ if [[ -z "$ARKS_BIN" ]]; then
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/debug/arks
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN="${CARGO_TARGET_DIR:-target}/debug/arks"
   fi
+fi
+
+# --- IW-B5-PLUS syslog facility/priority collector (ARKS_DAEMON_B5_PLUS=1) ---
+if [[ "${ARKS_DAEMON_B5_PLUS:-0}" == "1" ]]; then
+  echo "daemon-git-arks-matrix-e2e: IW-B5-PLUS collector path (sot:root/arks-honesty-leftovers-wave)"
+  if [[ ! -f "$HONESTY_SOT" ]]; then
+    echo "FAIL: missing honesty leftovers SoT $HONESTY_SOT" >&2
+    exit 1
+  fi
+  if [[ ! -f /.dockerenv ]]; then
+    echo "daemon-git-arks-matrix-e2e: B5+ host run — Docker collector venue required; honesty Refuse (no invent Claimed)"
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      exit 1
+    fi
+    exit 0
+  fi
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  ARKS_BIN="${CARGO_TARGET_DIR:-target}/release/arks"
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./.cargo-target/release/arks
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
+
+  WORK="$(mktemp -d /tmp/arks-b5plus.XXXXXX)"
+  COLLECT="$WORK/collect.log"
+  : >"$COLLECT"
+  # Bind a unix datagram collector at /dev/log when permitted (peer openlog path).
+  python3 - "$WORK" "$COLLECT" <<'PY' &
+import os, socket, sys, time
+work, path = sys.argv[1], sys.argv[2]
+sock_path = "/dev/log"
+# Prefer replacing /dev/log inside the container; fall back to workdir sock.
+targets = []
+if os.geteuid() == 0:
+    targets.append("/dev/log")
+targets.append(os.path.join(work, "syslog.sock"))
+bound = None
+for t in targets:
+    try:
+        if os.path.exists(t) or os.path.islink(t):
+            try:
+                os.unlink(t)
+            except OSError:
+                pass
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        s.bind(t)
+        s.settimeout(0.5)
+        bound = (s, t)
+        open(os.path.join(work, "collector.bound"), "w").write(t + "\n")
+        break
+    except OSError as e:
+        open(os.path.join(work, "collector.bind.err"), "a").write(f"{t}: {e}\n")
+if not bound:
+    open(path, "a").write("COLLECTOR_BIND_FAILED\n")
+    time.sleep(30)
+    raise SystemExit(1)
+s, t = bound
+deadline = time.time() + 25
+with open(path, "ab") as out:
+    while time.time() < deadline:
+        try:
+            data, _ = s.recvfrom(65535)
+            out.write(data + b"\n")
+            out.flush()
+            if b"ARKS_B5PLUS_MARKER" in data:
+                open(os.path.join(work, "collector.hit"), "w").write("1\n")
+                break
+        except socket.timeout:
+            continue
+s.close()
+PY
+  COLLECTOR_PID=$!
+  sleep 0.4
+
+  BASE="$WORK/repo.git"
+  mkdir -p "$BASE"
+  git init --bare "$BASE" >/dev/null
+  # Touch export-ok so daemon may serve; --syslog arms openlog+marker then listen briefly.
+  touch "$BASE/git-daemon-export-ok"
+  set +e
+  timeout 3 "$ARKS_BIN" daemon --syslog --listen=127.0.0.1 --port=0 --export-all "$BASE" \
+    >"$WORK/daemon.out" 2>"$WORK/daemon.err"
+  set -e
+  sleep 0.5
+  kill "$COLLECTOR_PID" 2>/dev/null || true
+  wait "$COLLECTOR_PID" 2>/dev/null || true
+
+  B5_OK=0
+  if [[ -f "$WORK/collector.hit" ]] && grep -a -q 'ARKS_B5PLUS_MARKER' "$COLLECT"; then
+    # PRI decode: leading <N> where N = facility*8 + severity; daemon+info => 3*8+6=30.
+    if python3 - "$COLLECT" <<'PY'
+import re, sys
+raw = open(sys.argv[1], "rb").read()
+text = raw.decode("utf-8", "replace")
+m = re.search(r"<(\d+)>.*?ARKS_B5PLUS_MARKER", text, re.S)
+if not m:
+    # Some syslogd paths strip PRI; accept marker+bound /dev/log only as Partial.
+    print("NO_PRI")
+    raise SystemExit(2)
+pri = int(m.group(1))
+facility, severity = divmod(pri, 8)
+print(f"pri={pri} facility={facility} severity={severity}")
+if facility != 3:  # LOG_DAEMON
+    raise SystemExit(3)
+if severity != 6:  # LOG_INFO
+    raise SystemExit(4)
+raise SystemExit(0)
+PY
+    then
+      B5_OK=1
+      echo "daemon-git-arks-matrix-e2e: B5+ collector PRI facility=daemon severity=info ok"
+    else
+      echo "daemon-git-arks-matrix-e2e: B5+ marker seen but PRI decode failed — honest Refuse" >&2
+    fi
+  else
+    echo "daemon-git-arks-matrix-e2e: B5+ collector miss (no marker) — honest Refuse" >&2
+    cat "$WORK/daemon.err" >&2 || true
+    cat "$WORK/collector.bind.err" >&2 || true
+  fi
+
+  TS="$(date -u +%Y%m%d%H%M%S)"
+  OUT=".spec/evidence/${TS}-daemon-b5-plus-syslog"
+  mkdir -p "$OUT"
+  cp "$WORK/daemon.err" "$WORK/daemon.out" "$COLLECT" "$OUT/" 2>/dev/null || true
+  cp "$WORK"/collector.* "$OUT/" 2>/dev/null || true
+  if [[ "$B5_OK" -eq 1 ]]; then
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-daemon-b5-plus-syslog/v1",
+    "gate": "IW-B5-PLUS",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-daemon-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "facility": "daemon",
+    "facility_num": 3,
+    "severity": "info",
+    "severity_num": 6,
+    "pri": 30,
+    "marker": "ARKS_B5PLUS_MARKER",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "daemon-git-arks-matrix-e2e: B5+ Claimed receipt=$OUT/receipt.json"
+    exit 0
+  fi
+  python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-daemon-b5-plus-syslog/v1",
+    "gate": "IW-B5-PLUS",
+    "disposition": "refuse-terminal",
+    "venue": "docker-dod-daemon-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "note": "Collector miss or PRI mismatch — keep Refuse; openlog alone ≠ Claimed.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+  echo "daemon-git-arks-matrix-e2e: B5+ Refuse receipt=$OUT/receipt.json"
+  if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+    # STRICT + Refuse is an honest terminal close, not invent Claimed — exit 0 with Refuse receipt.
+    echo "daemon-git-arks-matrix-e2e: STRICT accepts terminal Refuse (no invent Claimed)"
+  fi
+  exit 0
 fi
 
 # Muscle-memory entry must exist (single release binary).

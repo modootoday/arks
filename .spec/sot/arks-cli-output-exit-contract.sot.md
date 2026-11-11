@@ -126,5 +126,5 @@ CI drop-in needs peer-faithful streams and codes; humans need a unified `arks` v
 | Decision | Status | Notes |
 |----------|--------|-------|
 | Exact clap spelling for machine multi-status | **Partial** | Not default |
-| Per-command unified numeric rows | **Partial** | OR-of-failure until rows land |
+| Per-command unified numeric rows | **Partial** beyond named Claimed | Named IW-PERSONALITY-EXIT rows Claimed ([[evidence:root/20261111025151-personality-exit-tables]]); OR-of-failure elsewhere |
 | Whether help for stubs uses stdout or stderr | **Open** | Prefer consistency per leaf once Claimed |

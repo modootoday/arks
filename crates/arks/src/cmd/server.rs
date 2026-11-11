@@ -2074,29 +2074,37 @@ fn daemon_windows_user_group_refuse() -> &'static str {
      Claimed privilege-drop / capability model Missing"
 }
 
-/// Unix Partial: openlog + one INFO syslog line. Windows: honest Missing.
+/// Unix: openlog(LOG_DAEMON) + one LOG_INFO syslog line (B5+ collector marker).
+/// Windows: honest Missing. Facility/priority Claimed only with collector receipt
+/// ([[sot:root/arks-honesty-leftovers-wave]]).
 fn daemon_enable_syslog_partial() -> CliResult<()> {
     #[cfg(unix)]
     {
         use std::ffi::CString;
         use std::sync::OnceLock;
         static IDENT: OnceLock<CString> = OnceLock::new();
+        static MSG: OnceLock<CString> = OnceLock::new();
+        static FMT: OnceLock<CString> = OnceLock::new();
         let ident = IDENT.get_or_init(|| CString::new("arks-daemon").expect("arks-daemon ident"));
-        // SAFETY: openlog ident lives for process life via OnceLock.
+        let msg = MSG.get_or_init(|| {
+            CString::new("arks-daemon B5+ marker ARKS_B5PLUS_MARKER").expect("marker")
+        });
+        let fmt = FMT.get_or_init(|| CString::new("%s").expect("fmt"));
+        // SAFETY: openlog ident + syslog format/arg live for process life via OnceLock.
         unsafe {
             libc::openlog(
                 ident.as_ptr(),
-                libc::LOG_PID | libc::LOG_CONS,
+                libc::LOG_PID | libc::LOG_CONS | libc::LOG_NDELAY,
                 libc::LOG_DAEMON,
             );
+            // LOG_INFO severity (6); default facility from openlog = LOG_DAEMON (3) → PRI 30.
+            libc::syslog(libc::LOG_INFO, fmt.as_ptr(), msg.as_ptr());
         }
-        // Partial: facility sink armed via openlog; stderr remains primary operator log.
-        // B5+ facility/priority Claimed is Refuse (collector receipt wave only).
         eprintln!(
-            "arks daemon: --syslog Partial armed (unix openlog LOG_DAEMON; \
-             B5+ facility/priority Claimed Refuse; stderr still mirrors)"
+            "arks daemon: --syslog armed (unix openlog LOG_DAEMON + syslog LOG_INFO marker; \
+             B5+ Claimed only with collector PRI receipt)"
         );
-        let _ = ident;
+        let _ = (ident, msg, fmt);
         Ok(())
     }
     #[cfg(not(unix))]

@@ -1,0 +1,2 @@
+arks daemon: --syslog armed (unix openlog LOG_DAEMON + syslog LOG_INFO marker; B5+ Claimed only with collector PRI receipt)
+arks daemon listening on git://127.0.0.1:0/ (export_all=true; receive=false; upload-archive=false; timeout=30s; init-timeout=5s; max_conn=0; bases=1)

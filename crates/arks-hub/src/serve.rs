@@ -448,6 +448,27 @@ fn handle_client<S: Read + Write>(
                 && parts[2] == "issues"
                 && let Ok(n) = parts[3].parse::<u64>()
             {
+                if req.method == "PATCH" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let title = v.get("title").and_then(|x| x.as_str());
+                    let body = v.get("body").and_then(|x| x.as_str());
+                    let state = v.get("state").and_then(|x| x.as_str());
+                    if let Some(i) = st.patch_issue(owner, repo, n, title, body, state) {
+                        st.save()?;
+                        return respond(
+                            stream,
+                            200,
+                            &json!({
+                                "number": i.number,
+                                "title": i.title,
+                                "body": i.body,
+                                "state": i.state,
+                                "user": {"login": i.user},
+                            }),
+                        );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
                 if let Some(i) = st
                     .db
                     .issues
@@ -467,6 +488,45 @@ fn handle_client<S: Read + Write>(
                     );
                 }
                 return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            // Issue/PR comments (GitHub shares /issues/{n}/comments for both).
+            if parts.len() == 5
+                && parts[2] == "issues"
+                && parts[4] == "comments"
+                && let Ok(n) = parts[3].parse::<u64>()
+            {
+                if req.method == "POST" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
+                    let c = st.create_comment(owner, repo, n, body);
+                    st.save()?;
+                    return respond(
+                        stream,
+                        201,
+                        &json!({
+                            "id": c.id,
+                            "body": c.body,
+                            "user": {"login": c.user},
+                            "issue_url": format!("/repos/{owner}/{repo}/issues/{n}"),
+                        }),
+                    );
+                }
+                if req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .comments
+                        .iter()
+                        .filter(|c| c.owner == owner && c.repo == repo && c.number == n)
+                        .map(|c| {
+                            json!({
+                                "id": c.id,
+                                "body": c.body,
+                                "user": {"login": c.user},
+                            })
+                        })
+                        .collect();
+                    return respond(stream, 200, &Value::Array(items));
+                }
             }
             if parts.len() == 3 && parts[2] == "pulls" {
                 if req.method == "GET" {
@@ -516,6 +576,30 @@ fn handle_client<S: Read + Write>(
                 && parts[2] == "pulls"
                 && let Ok(n) = parts[3].parse::<u64>()
             {
+                if req.method == "PATCH" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let title = v.get("title").and_then(|x| x.as_str());
+                    let body = v.get("body").and_then(|x| x.as_str());
+                    let state = v.get("state").and_then(|x| x.as_str());
+                    if let Some(p) = st.patch_pull(owner, repo, n, title, body, state) {
+                        st.save()?;
+                        return respond(
+                            stream,
+                            200,
+                            &json!({
+                                "number": p.number,
+                                "title": p.title,
+                                "body": p.body,
+                                "state": p.state,
+                                "merged": p.merged,
+                                "head": {"ref": p.head},
+                                "base": {"ref": p.base},
+                                "user": {"login": p.user},
+                            }),
+                        );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
                 if let Some(p) = st
                     .db
                     .pulls
@@ -530,9 +614,33 @@ fn handle_client<S: Read + Write>(
                             "title": p.title,
                             "body": p.body,
                             "state": p.state,
+                            "merged": p.merged,
                             "head": {"ref": p.head},
                             "base": {"ref": p.base},
                             "user": {"login": p.user},
+                        }),
+                    );
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            // Metadata merge only (≠ git merge; never spawn git).
+            if parts.len() == 5
+                && parts[2] == "pulls"
+                && parts[4] == "merge"
+                && let Ok(n) = parts[3].parse::<u64>()
+                && req.method == "PUT"
+            {
+                if let Some(p) = st.merge_pull(owner, repo, n) {
+                    st.save()?;
+                    return respond(
+                        stream,
+                        200,
+                        &json!({
+                            "sha": format!("local-merge-{}", p.number),
+                            "merged": true,
+                            "message": "Pull Request successfully merged (local-forge metadata)",
+                            "number": p.number,
+                            "state": p.state,
                         }),
                     );
                 }
@@ -573,6 +681,37 @@ fn handle_client<S: Read + Write>(
                             "description": label.description,
                         }),
                     );
+                }
+            }
+            if parts.len() == 4 && parts[2] == "labels" {
+                let name = parts[3];
+                if req.method == "PATCH" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let new_name = v.get("new_name").and_then(|x| x.as_str());
+                    let color = v.get("color").and_then(|x| x.as_str());
+                    let desc = v.get("description").and_then(|x| x.as_str());
+                    if let Some(label) = st.patch_label(owner, repo, name, new_name, color, desc)
+                    {
+                        st.save()?;
+                        return respond(
+                            stream,
+                            200,
+                            &json!({
+                                "id": label.id,
+                                "name": label.name,
+                                "color": label.color,
+                                "description": label.description,
+                            }),
+                        );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "DELETE" {
+                    if st.delete_label(owner, repo, name) {
+                        st.save()?;
+                        return respond(stream, 204, &json!({}));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
                 }
             }
             // Releases (Partial local forge).
@@ -619,6 +758,45 @@ fn handle_client<S: Read + Write>(
                         }),
                     );
                 }
+            }
+            // release view by id or tags/{tag}
+            if parts.len() == 4 && parts[2] == "releases" && req.method == "GET" {
+                if let Some(r) = st.find_release(owner, repo, parts[3]) {
+                    return respond(
+                        stream,
+                        200,
+                        &json!({
+                            "id": r.id,
+                            "tag_name": r.tag_name,
+                            "name": r.name,
+                            "body": r.body,
+                            "draft": r.draft,
+                            "prerelease": r.prerelease,
+                        }),
+                    );
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            if parts.len() == 5
+                && parts[2] == "releases"
+                && parts[3] == "tags"
+                && req.method == "GET"
+            {
+                if let Some(r) = st.find_release(owner, repo, parts[4]) {
+                    return respond(
+                        stream,
+                        200,
+                        &json!({
+                            "id": r.id,
+                            "tag_name": r.tag_name,
+                            "name": r.name,
+                            "body": r.body,
+                            "draft": r.draft,
+                            "prerelease": r.prerelease,
+                        }),
+                    );
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
             }
             // Actions workflows / runs (Partial local forge — not CI Claimed).
             if parts.len() == 4 && parts[2] == "actions" && parts[3] == "workflows" {
@@ -1112,6 +1290,7 @@ fn respond<S: Write>(stream: &mut S, status: u16, body: &serde_json::Value) -> R
     let reason = match status {
         200 => "OK",
         201 => "Created",
+        204 => "No Content",
         401 => "Unauthorized",
         404 => "Not Found",
         _ => "Error",

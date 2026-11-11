@@ -13,11 +13,11 @@ pr list,pr list,Claimed,v1,local GET /repos/.../pulls; IW-HUB-FLAT subset Claime
 pr status,pr status,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
 pr view,pr view,Claimed,v1,local GET /repos/.../pulls/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 pr diff,pr diff,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr edit,pr edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr close,pr close,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr reopen,pr reopen,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr comment,pr comment,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr merge,pr merge,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr edit,pr edit,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+pr close,pr close,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+pr reopen,pr reopen,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+pr comment,pr comment,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+pr merge,pr merge,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
 pr ready,pr ready,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
 pr review,pr review,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
 pr checks,pr checks,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
@@ -32,10 +32,10 @@ issue create,issue create,Claimed,v1,local POST /repos/.../issues; IW-HUB-FLAT s
 issue list,issue list,Claimed,v1,local GET /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 issue status,issue status,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 issue view,issue view,Claimed,v1,local GET /repos/.../issues/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-issue close,issue close,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue reopen,issue reopen,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue comment,issue comment,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue edit,issue edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue close,issue close,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+issue reopen,issue reopen,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+issue comment,issue comment,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+issue edit,issue edit,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
 issue delete,issue delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 issue lock,issue lock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 issue unlock,issue unlock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
@@ -53,7 +53,7 @@ issue artifact view,issue artifact view,Deferred,later,Preview
 release,release,Partial,v1,Group help; list|create Partial REST / expand Claimed leaves separate
 release create,release create,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
 release list,release list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-release view,release view,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
+release view,release view,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
 release upload,release upload,Partial,v1,Partial stub — asset upload not Claimed (IW-HUB-FULL)
 release download,release download,Partial,v1,Partial stub — asset download not Claimed (IW-HUB-FULL)
 release edit,release edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
@@ -94,8 +94,8 @@ repo deploy-key list,repo deploy-key list,Deferred,later,
 label,label,Partial,v1,Group help; list|create expand Claimed candidates
 label list,label list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
 label create,label create,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-label edit,label edit,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
-label delete,label delete,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
+label edit,label edit,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
+label delete,label delete,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
 label clone,label clone,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 run,run,Partial,v1,Group help; list|create Partial; not CI Claimed
 run list,run list,Partial,v1,Partial local actions runs list (IW-HUB-FULL); not CI Claimed

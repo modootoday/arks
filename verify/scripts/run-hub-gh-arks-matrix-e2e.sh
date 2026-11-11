@@ -4,6 +4,7 @@
 # Sibling matrix SoT: .spec/sot/arks-hub-gh-command-matrix.sot.md (+ CSV beside it).
 # IW-HUB-FLAT Claimed subset: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_HUB_IW_FLAT=1).
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
+# IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -12,6 +13,7 @@ cd "$ROOT"
 SOT="${ARKS_HUB_MATRIX_SOT:-.spec/sot/arks-hub-gh-command-matrix.sot.md}"
 DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-wave.sot.md}"
 INCOMPLETES_SOT="${ARKS_INCOMPLETES_SOT:-.spec/sot/arks-remaining-incompletes-wave.sot.md}"
+HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
 # Living e2e CSV (preferred) or design CSV from sibling SoT.
 if [[ -z "${ARKS_HUB_MATRIX_CSV:-}" ]]; then
   if [[ -f verify/matrices/hub-gh-arks-e2e-matrix.csv ]]; then
@@ -102,6 +104,183 @@ fi
 if [[ "$v1" -eq 0 ]]; then
   echo "FAIL: hub matrix CSV has no v1 rows"
   exit 1
+fi
+
+# --- IW-HUB-MUTATE subset (ARKS_HUB_IW_MUTATE=1) ---
+# sot:root/arks-honesty-leftovers-wave — mutate/view Claimed list only with receipt.
+if [[ "${ARKS_HUB_IW_MUTATE:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-MUTATE path (sot:root/arks-honesty-leftovers-wave)"
+  if [[ ! -f "$HONESTY_SOT" ]]; then
+    echo "FAIL: missing honesty leftovers SoT $HONESTY_SOT" >&2
+    exit 1
+  fi
+  command -v python3 >/dev/null || {
+    echo "FAIL: python3 missing for IW-HUB-MUTATE" >&2
+    exit 1
+  }
+  # Always rebuild so mutate leaves are present (no stale binary Claimed).
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  ARKS_BIN="${CARGO_TARGET_DIR:-target}/release/arks"
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./.cargo-target/release/arks
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
+  [[ -x "$ARKS_BIN" ]] || {
+    echo "FAIL: arks binary missing after rebuild" >&2
+    exit 1
+  }
+
+  WORK="$(mktemp -d /tmp/arks-hub-mutate.XXXXXX)"
+  SERVER_PID=""
+  cleanup_mut() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "$WORK"
+  }
+  trap cleanup_mut EXIT
+
+  FORGE_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+  FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
+  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
+  export HOME="$WORK/home"
+  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  export ARKS_HUB_TOKEN="local-dev-token"
+  export ARKS_HUB_API="http://${FORGE_LISTEN}"
+  export ARKS_HUB_REPO="local/hubmut"
+
+  "$ARKS_BIN" serve --no-ssh --no-http \
+    --forge-listen "$FORGE_LISTEN" \
+    --forge-data "$WORK/hub-data" \
+    . >"$WORK/server.out" 2>"$WORK/server.err" &
+  SERVER_PID=$!
+
+  python3 - "$FORGE_PORT" <<'PY'
+import socket, sys, time
+port = int(sys.argv[1])
+for _ in range(200):
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=.2):
+            raise SystemExit(0)
+    except OSError:
+        time.sleep(.05)
+raise SystemExit("hub-mutate forge listener not ready")
+PY
+
+  MUT_OK=1
+  run_mut() {
+    local name="$1"
+    shift
+    local out ec
+    set +e
+    out="$("$@" 2>&1)"
+    ec=$?
+    set -e
+    printf '%s\n' "$out" >"$WORK/${name}.out"
+    if [[ "$ec" -ne 0 ]]; then
+      echo "FAIL HF-MUT $name exit=$ec" >&2
+      echo "$out" >&2
+      MUT_OK=0
+      return 0
+    fi
+    echo "hub-gh-arks-matrix-e2e: HF-MUT $name ok"
+  }
+
+  run_mut auth-login "$ARKS_BIN" hub auth login
+  run_mut repo-create "$ARKS_BIN" hub repo create hubmut --description "IW-HUB-MUTATE"
+  run_mut issue-create "$ARKS_BIN" hub issue create --repo local/hubmut --title "mut-issue" --body "body0"
+  run_mut issue-edit "$ARKS_BIN" hub issue edit 1 --repo local/hubmut --title "mut-issue-ed" --body "body1"
+  run_mut issue-comment "$ARKS_BIN" hub issue comment 1 --repo local/hubmut --body "ic1"
+  run_mut issue-close "$ARKS_BIN" hub issue close 1 --repo local/hubmut
+  run_mut issue-view-closed "$ARKS_BIN" hub issue view 1 --repo local/hubmut
+  run_mut issue-reopen "$ARKS_BIN" hub issue reopen 1 --repo local/hubmut
+  run_mut pr-create "$ARKS_BIN" hub pr create --repo local/hubmut --title "mut-pr" --body "pb0" --head f --base main
+  run_mut pr-edit "$ARKS_BIN" hub pr edit 1 --repo local/hubmut --title "mut-pr-ed" --body "pb1"
+  run_mut pr-comment "$ARKS_BIN" hub pr comment 1 --repo local/hubmut --body "pc1"
+  run_mut pr-close "$ARKS_BIN" hub pr close 1 --repo local/hubmut
+  run_mut pr-reopen "$ARKS_BIN" hub pr reopen 1 --repo local/hubmut
+  run_mut pr-merge "$ARKS_BIN" hub pr merge 1 --repo local/hubmut
+  run_mut release-create "$ARKS_BIN" hub release create --repo local/hubmut --tag v0.1.0 --title "r" --notes "n"
+  run_mut release-view "$ARKS_BIN" hub release view --repo local/hubmut --tag v0.1.0
+  run_mut label-create "$ARKS_BIN" hub label create --repo local/hubmut --name bug --color ff0000 --description "b"
+  run_mut label-edit "$ARKS_BIN" hub label edit --repo local/hubmut --name bug --color 00ff00 --description "fixed"
+  run_mut label-list-before-del "$ARKS_BIN" hub label list --repo local/hubmut
+  run_mut label-delete "$ARKS_BIN" hub label delete --repo local/hubmut --name bug
+  run_mut label-list-after-del "$ARKS_BIN" hub label list --repo local/hubmut
+
+  if [[ "$MUT_OK" -eq 1 ]]; then
+    if ! grep -Fq '"state":"closed"' "$WORK/issue-view-closed.out" \
+      || ! grep -Fq 'mut-issue-ed' "$WORK/issue-edit.out" \
+      || ! grep -Fq 'ic1' "$WORK/issue-comment.out" \
+      || ! grep -Fq 'pc1' "$WORK/pr-comment.out" \
+      || ! grep -Fq '"merged":true' "$WORK/pr-merge.out" \
+      || ! grep -Fq 'v0.1.0' "$WORK/release-view.out" \
+      || ! grep -Fq '00ff00' "$WORK/label-edit.out" \
+      || ! grep -Fq 'bug' "$WORK/label-list-before-del.out" \
+      || grep -Fq 'bug' "$WORK/label-list-after-del.out"; then
+      echo "FAIL HF-MUT peer-faithful mutate shapes" >&2
+      MUT_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: HF-MUT peer-faithful shapes ok"
+    fi
+  fi
+
+  if [[ "$MUT_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-MUTATE (no invent PASS)" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-MUTATE Partial/failed"
+    exit 0
+  fi
+
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-MUTATE greens"
+
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-mutate-subset"
+    mkdir -p "$OUT"
+    cp "$WORK/server.err" "$OUT/server.err" 2>/dev/null || true
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-mutate-subset/v1",
+    "gate": "IW-HUB-MUTATE",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "claimed_mutate": [
+        "issue close", "issue reopen", "issue edit", "issue comment",
+        "pr close", "pr reopen", "pr edit", "pr comment", "pr merge",
+        "release view", "label edit", "label delete",
+    ],
+    "checks": [
+        "HF-MUT peer-faithful mutate/view against local forge",
+        "HF-MUT STRICT greens (ARKS_HUB_IW_MUTATE=1)",
+    ],
+    "note": "Actions execute / assets / pr checkout stay Partial; stub exit-2 ≠ Claimed.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  else
+    echo "hub-gh-arks-matrix-e2e: host run only; no .spec/evidence receipt (Docker Claimed venue required)"
+  fi
+  exit 0
 fi
 
 # --- IW-HUB-FULL expand + Missing→0 (ARKS_HUB_IW_FULL=1) ---

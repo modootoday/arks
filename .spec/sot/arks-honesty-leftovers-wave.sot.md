@@ -3,7 +3,7 @@ id: sot:root/arks-honesty-leftovers-wave
 title: Honesty leftovers wave — hub mutate / personality exit tables / B5+ collector
 status: active
 created: 2026-11-11T02:43:12Z
-updated: 2026-11-11T02:43:12Z
+updated: 2026-11-11T02:52:07Z
 tags: [design, residual, hub-mutate, personality-exit-tables, daemon, b5-plus, syslog-collector, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -34,9 +34,9 @@ rel:
 
 # Honesty leftovers wave — design SoT
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release). English-only.
 
-**This SoT gates leftovers after [[sot:root/arks-remaining-incompletes-wave]] tip `812d298`.** **Design ≠ Claimed.** Cite [[research:root/20261111114312]] + this SoT before product Claimed flips.
+**This SoT gates leftovers after [[sot:root/arks-remaining-incompletes-wave]] tip `812d298`.** Phase B Claimed flips cite evidence below. Cite [[research:root/20261111114312]] + this SoT.
 
 ## Rule
 
@@ -52,10 +52,10 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 
 | Order | ID | Surface | Status now | Close bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|-------------------|-----------------|-----------------|
-| 1 | **IW-HUB-MUTATE** | Non-expand v1 mutate/view subset | **Partial** (79 v1 Partial; Missing=0) | Peer-faithful happy paths + Docker receipt for SoT expand list | Invent Claimed for stub exit-2; Actions/assets/checkout | `dod-hub-matrix` + `ARKS_HUB_IW_MUTATE=1` |
-| 2 | **IW-PERSONALITY-EXIT** | Per-command peer numeric exit tables | **Partial** (classes Claimed; tables open) | Named SoT rows + Docker numeric peer compare | Claim all 117 CLI Partial rows | `dod-cli-matrix` + `ARKS_PERSONALITY_EXIT_TABLES=1` |
-| 3 | **IW-B5-PLUS** | Syslog facility/priority | **Refuse (terminal)** at tip | Collector receipt: facility=`daemon`(3) + severity evidenced | Force Claimed from openlog alone | `dod-daemon-matrix` + `ARKS_DAEMON_B5_PLUS=1` (collector) |
-| 4 | **DOCS-REGISTER** | Residual + product SoT honesty | Lag possible | Sync statuses + evidence ids | Invent beyond receipts | Manual |
+| 1 | **IW-HUB-MUTATE** | Non-expand v1 mutate/view subset | **Claimed** ([[evidence:root/20261111025142-hub-mutate-subset]]; v1 Partial leftovers remain) | Peer-faithful happy paths + Docker receipt for SoT expand list | Invent Claimed for stub exit-2; Actions/assets/checkout | `dod-hub-matrix` + `ARKS_HUB_IW_MUTATE=1` |
+| 2 | **IW-PERSONALITY-EXIT** | Per-command peer numeric exit tables | **Claimed** named rows ([[evidence:root/20261111025151-personality-exit-tables]]); CLI Partial×117 remain | Named SoT rows + Docker numeric peer compare | Claim all 117 CLI Partial rows | `dod-cli-matrix` + `ARKS_PERSONALITY_EXIT_TABLES=1` |
+| 3 | **IW-B5-PLUS** | Syslog facility/priority | **Claimed** ([[evidence:root/20261111025206-daemon-b5-plus-syslog]]; PRI=30 facility=3 severity=6) | Collector receipt: facility=`daemon`(3) + severity evidenced | Force Claimed from openlog alone | `dod-daemon-matrix` + `ARKS_DAEMON_B5_PLUS=1` (collector) |
+| 4 | **DOCS-REGISTER** | Residual + product SoT honesty | **Synced** this wave | Sync statuses + evidence ids | Invent beyond receipts | Manual |
 
 ### IW-HUB-MUTATE detail
 

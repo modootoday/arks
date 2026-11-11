@@ -1,0 +1,19 @@
+{
+  "schema": "arks-personality-exit-tables/v1",
+  "gate": "IW-PERSONALITY-EXIT",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "9fe0fce",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "rows": [
+    "XT-GIT-VER",
+    "XT-GIT-BAD",
+    "XT-GIT-HELP",
+    "XT-GH-HELP",
+    "XT-GH-UNK",
+    "XT-GH-OK",
+    "XT-GH-AUTH"
+  ],
+  "note": "Named SoT rows only; CLI survey Partial\u00d7117 remain Partial. ExitCodePolicy units \u2260 this row.",
+  "timestamp": "2026-11-11T02:51:51Z"
+}

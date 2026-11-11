@@ -1,0 +1,4 @@
+arks serve: synced runtime_* bind keys → /tmp/arks-xt-exit.jv6mYx/home/.config/arks/serve.conf (Partial live bind sync; clap still wins)
+arks serve forge-only: SIGHUP serve-config reload + live rebind Partial armed (unix; HTTP/forge/SSH same-process; Claimed zero-downtime Missing)
+arks forge API listening on http://127.0.0.1:40381/ (data=/tmp/arks-xt-exit.jv6mYx/hub-data; Partial local API — IW-B7-FORGE drain)
+arks forge API: incomplete HTTP request

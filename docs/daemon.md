@@ -38,14 +38,14 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 
 ## Honesty
 
-Daemon flag inventory is largely present as **Partial** deepen (IW-DAEMON-FLAGS closed): `--inetd` / `--pid-file` / `--detach` (unix `setsid` / Windows DETACHED_PROCESS re-exec; **classic SysV double-fork Claimed is Refuse** — peer is single-fork+`setsid`) / upload-archive with path-filter Partial oracle + **B5 Claimed** byte-identical ustar / `--access-hook` stub / unix **`--syslog`** (openlog LOG_DAEMON Partial) / unix **`--user` / `--group`** Partial. Windows: `--syslog` / `--user` / `--group` honest **Missing** refuse (Event Log ≠ syslog).
+Daemon flag inventory is largely present as **Partial** deepen (IW-DAEMON-FLAGS closed): `--inetd` / `--pid-file` / `--detach` (unix `setsid` / Windows DETACHED_PROCESS re-exec; **classic SysV double-fork Claimed is Refuse** — peer is single-fork+`setsid`) / upload-archive with path-filter Partial oracle + **B5 Claimed** byte-identical ustar / `--access-hook` stub / unix **`--syslog`** (**B5+ Claimed** facility/priority with collector PRI) / unix **`--user` / `--group`** Partial. Windows: `--syslog` / `--user` / `--group` honest **Missing** refuse (Event Log ≠ syslog).
 
 Residual honesty ([[sot:root/arks-claimed-residual-gates]] / [[sot:root/arks-remaining-incompletes-wave]]):
 
 | Gate | Class | Notes |
 |------|-------|-------|
 | **B5** archive format parity | **Claimed** | Docker `cmp -s` vs stock git-daemon **2.39.5** ([[evidence:root/20261111091600-claimed-daemon-archive]]) |
-| **B5+** syslog facility/priority | **Refuse (terminal)** | No collector receipt; Partial `openlog`/`LOG_DAEMON` ≠ facility Claimed; Windows Event Log ≠ POSIX syslog |
+| **B5+** syslog facility/priority | **Claimed** | Docker collector PRI=30 (`LOG_DAEMON`+`LOG_INFO`); Windows Event Log ≠ POSIX syslog (N/A) |
 | Classic double-fork | **Refuse (terminal)** | Peer detach is single-fork+`setsid` |
 
 **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
