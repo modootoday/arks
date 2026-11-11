@@ -3,14 +3,15 @@ id: sot:root/arks-partial-residual-wave
 title: Partial residual wave — design SoT (research-gated)
 status: active
 created: 2026-11-11T00:35:43Z
-updated: 2026-11-11T00:45:00Z
+updated: 2026-11-11T01:11:52Z
 tags: [design, residual, partial, forge-in-serve, hub-flat, personality, daemon, hosting-e2e, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
-  depends_on:
+    depends_on:
     - research:root/20261111093543
     - research:root/20261111090827
     - sot:root/arks-remaining-implement-wave
+    - sot:root/arks-verify-docker-e2e-claim-wave
     - sot:root/arks-claimed-residual-gates
     - sot:root/production-residual-register
     - sot:root/verify-directory-conventions
@@ -29,7 +30,7 @@ rel:
 
 # Partial residual wave — design SoT (research-gated)
 
-Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **This SoT gates the four Partial leftovers** after [[sot:root/arks-remaining-implement-wave]] Claimed rows (IW-B5 / IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL). Tip surveyed **`ff39b69`**. **Design ≠ Claimed.**
 
@@ -94,9 +95,11 @@ Order is **Spec → research cite → product/harness deepen → Docker/focused 
 
 ### Implementation contract (Phase B)
 
-1. **IW-FORGE-SERVE first:** deepen `run-self-host-e2e.sh` Partial cohost probe; keep STRICT fail-closed; **do not** flip Claimed without receipt.
-2. **IW-HUB-FLAT:** Spec/docs honesty only unless a leaf body already exists — no invent from B3.
-3. **IW-PERSONALITY:** keep skeleton; amend personality SoT if needed; no drop-in Claimed invent.
+Docker Claimed playbook for leftovers **1–3:** [[sot:root/arks-verify-docker-e2e-claim-wave]] (compose services, ports, scenarios, receipts, product-vs-harness; order hosting → hub STRICT subset → personality drop-in). B5+ stays Refuse there too.
+
+1. **IW-FORGE-SERVE first:** deepen `run-self-host-e2e.sh` per Docker e2e SoT (SH-ISSUE + SH-PR); STRICT fail-closed; **do not** flip Claimed without Docker receipt.
+2. **IW-HUB-FLAT:** peer-faithful Claimed-subset leaves + `dod-hub-matrix` subset STRICT (`ARKS_HUB_IW_FLAT=1`) — no invent from B3 or full-CSV Missing.
+3. **IW-PERSONALITY:** drop-in sample under `dod-cli-matrix` (`ARKS_PERSONALITY_DROPIN=1`); ExitCodePolicy units ≠ Claimed.
 4. **IW-DAEMON-FLAGS:** help/SoT honesty for single-fork peer vs classic double-fork Refuse; no new Claimed flags.
 
 ### Spec-first commit contract (mandatory)
@@ -117,6 +120,7 @@ Before any product PR/commit for an IW-* row in this SoT:
 | [[sot:root/production-residual-register]] | Post-terminal next-queue |
 | [[sot:root/verify-directory-conventions]] | §7 + `gNNN`/`dod-*` naming (0.6.0) |
 | [[sot:root/arks-self-host-server]] | Serve umbrella + hosting e2e honesty |
+| [[sot:root/arks-verify-docker-e2e-claim-wave]] | Docker-under-verify Claimed path for IW-FORGE-SERVE / HUB-FLAT / PERSONALITY |
 | [[research:root/20261111093543]] | Web research receipt for this wave |
 
 ## Why
