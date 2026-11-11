@@ -3,11 +3,12 @@ id: sot:root/arks-in-scope-leftovers-wave
 title: In-scope leftovers wave — Phase 0 scope audit + Phase 1+ Claimed bars
 status: active
 created: 2026-11-11T03:35:56Z
-updated: 2026-11-11T04:36:00Z
+updated: 2026-11-11T04:52:00Z
 tags: [design, residual, scope-audit, hub, daemon, personality, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
   depends_on:
+    - research:root/20261111135200
     - research:root/20261111133600
     - research:root/20261111123556
     - research:root/20261111114312
@@ -37,9 +38,9 @@ rel:
 
 # In-scope leftovers wave — design SoT
 
-Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). English-only.
 
-**This SoT gates leftovers after [[sot:root/arks-honesty-leftovers-wave]] tip `484756a`.** Phase 0 Spec tip `9f78458`. Phase 1+ Claimed flips cite evidence + [[research:root/20261111123556]]. Stubs deepen after tip `5ae7ad9` cites [[research:root/20261111133600]].
+**This SoT gates leftovers after [[sot:root/arks-honesty-leftovers-wave]] tip `484756a`.** Phase 0 Spec tip `9f78458`. Phase 1+ Claimed flips cite evidence + [[research:root/20261111123556]]. Stubs deepen after tip `5ae7ad9` cites [[research:root/20261111133600]]. Exhaust wave after tip `442db4a` cites [[research:root/20261111135200]].
 
 **Design scope:** git / git-daemon / gh symmetry pillars + related serve/hosting required for that symmetry ([[sot:root/verify-cleanroom-symmetry-matrix]]). Out-of-scope → document non-goal; **do not invent work to Claim them**.
 
@@ -105,9 +106,9 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | 2 | **IW-HUB-ASSETS** | Release assets (+ edit/delete) | **Claimed** ([[evidence:root/20261111034513-hub-release-assets]]) | Upload/download/delete-asset peer-faithful vs local forge; edit/delete release; Docker receipt | Stub exit-2 Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` |
 | 3 | **IW-HUB-CHECKOUT** | `pr checkout` / `co` | **Claimed** ([[evidence:root/20261111034521-hub-pr-checkout]]) | Resolve head SHA/ref/branch; print recipe; Docker receipt | Spawn git/gh | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` |
 | 4 | **IW-HUB-UX** | config / alias / completion | **Claimed** ([[evidence:root/20261111034525-hub-ux-config-alias]]) | get/set/list/delete (+ completion emit) Claimed subset; Docker receipt | Profile installer invent | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` |
-| 5 | **IW-HUB-STUBS** | Remaining v1 Partial×39 | **Claimed** subset ([[evidence:root/20261111045014-hub-stubs-expand]]) + Stay Partial remainder | Named peer-faithful leaves below; else Stay Partial with cite | Invent full-matrix Claimed; git/gh spawn | `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` |
-| 6 | **IW-PERSONALITY-SURVEY** | CLI Partial×117 | **Claimed** expand + survey2 ([[evidence:root/20261111045130-personality-survey]]); remainder Partial | Named expand ≥10 + additive survey2 rows; Missing=0 retained | Stampede 117 Claimed | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` |
-| 7 | **IW-DAEMON-FLAGS-PARITY** | Daemon flags + upload-archive | **Parity** ([[evidence:root/20261111045108-daemon-flags-parity]]); git:// pointer Stay Partial | Docker peer behavior → Parity; upload-archive enable+ustar; pointer Stay Partial | SysV double-fork; clap-accept-only Parity | `dod-daemon-matrix` + `ARKS_DAEMON_FLAGS_PARITY=1` |
+| 5 | **IW-HUB-STUBS** | Remaining v1 Partial×31 | **Claimed** subset ([[evidence:root/20261111045014-hub-stubs-expand]]) + **exhaust** metadata Claimed ([[research:root/20261111135200]]) + terminal Partial | Metadata leaves + group-help discoverability; terminal Partial for OAuth/CI/git-spawn | Invent CI/OAuth/git spawn Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` (+ STUBS2) |
+| 6 | **IW-PERSONALITY-SURVEY** | CLI Partial×117 | **Claimed** expand + survey2 ([[evidence:root/20261111045130-personality-survey]]) + survey3 | Named + survey2 + survey3 (≥16); Missing=0; remainder Partial | Stampede 117 Claimed | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` |
+| 7 | **IW-DAEMON-FLAGS-PARITY** | Daemon flags + upload-archive | **Parity** ([[evidence:root/20261111045108-daemon-flags-parity]]); git:// **Parity pointer** | upload-archive enable+ustar; client pointer = not daemon DoD (same as upload-pack CLI pointer) | SysV double-fork; invent client Claimed under daemon | `dod-daemon-matrix` + `ARKS_DAEMON_FLAGS_PARITY=1` |
 | 8 | **DOCS-SCOPE** | Register + product SoTs | **Synced** this wave | Sync in/out counts + evidence ids | Invent beyond receipts | Manual |
 
 ### IW-HUB-ACTIONS detail
@@ -165,9 +166,22 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | `api` | `--method` (+ optional `--input` body) passthrough; print `http_status=` |
 | `status` | Aggregated `issues_open=` / `pulls_open=` (+ api/auth lines) |
 
-**Stay Partial with cite when no honest path:** `pr diff|checks|review|lock|unlock|update-branch|revert`, `issue lock|unlock|pin|unpin|transfer`, `repo fork|delete|rename|archive|unarchive`, `auth refresh` OAuth, `label clone`.
+#### Exhaust wave metadata Claimed ([[research:root/20261111135200]])
 
-Group-help-only rows: remain Partial discoverability — do not invent leaf depth.
+| Leaf | Peer-faithful bar |
+|------|-------------------|
+| `repo archive` / `unarchive` | PATCH `archived` |
+| `repo rename` | PATCH rename `name` (local forge only) |
+| `repo delete` | DELETE forge repo record (metadata; never spawn git) |
+| `issue lock` / `unlock` | PATCH `locked` |
+| `issue pin` / `unpin` | PATCH `pinned` |
+| `issue transfer` | PATCH move to local `--to owner/name` |
+| `pr lock` / `unlock` | PATCH pull `locked` |
+| `pr review` | POST review metadata (`--body`/`--event`); GET lists |
+| `label clone` | Copy labels from `--from owner/name` into target |
+| Group-help (`auth`/`pr`/`issue`/…) | Discoverability Claimed: bare group → help exit 0 |
+
+**Terminal Partial (cite; no invent Claimed):** `auth refresh` OAuth; `pr diff` (compare/git); `pr checks` (CI); `pr update-branch` / `pr revert` (git worktree); `repo fork` (object copy / git spawn).
 
 ### IW-PERSONALITY-SURVEY detail
 
@@ -176,6 +190,7 @@ Group-help-only rows: remain Partial discoverability — do not invent leaf dept
 | Retain Missing=0 | Already met — do not reopen Missing |
 | Named expand | Additional peer exit/stdout rows documented in receipt schema `arks-personality-survey/v1` (≥10 main-category commands beyond IW-PERSONALITY-EXIT named set) |
 | Additive survey2 | Further named rows (≥8) in same harness / new Docker receipt; still Missing=0 |
+| Additive survey3 | Further named rows (≥16) peer exit-class; Docker receipt `survey3_rows` |
 | Remainder Partial×(117−expand) | Honest Partial with this SoT cite |
 | Refuse | Claiming all 117 without per-row evidence |
 
@@ -192,7 +207,7 @@ Group-help-only rows: remain Partial discoverability — do not invent leaf dept
 | `--listen` / `--port` | Bind host/port as requested |
 | `--enable`/`--disable` + upload-archive / receive-pack | Service gate matches peer literals |
 | `service:upload-archive` | Enable + `git archive --remote=git://…` ustar ACK (B5 peer); path-filter / non-ustar Stay Partial note |
-| `related:git:// client` | Pointer only — Stay Partial; client lane Claimed elsewhere; do not double-count |
+| `related:git:// client` | **Parity pointer** (not daemon flag DoD) — same disposition as `related:upload-pack CLI`; client lane Claimed elsewhere; do not invent under daemon gate |
 
 **Terminal Refuse (unchanged):** classic SysV double-fork; inetd; privilege drop; templates; access-hook; invent Parity from clap parse alone.
 
@@ -204,7 +219,7 @@ Group-help-only rows: remain Partial discoverability — do not invent leaf dept
 | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` | Assets Claimed |
 | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` | Checkout resolve Claimed |
 | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` | Config/alias/completion Claimed |
-| `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` | Stub expand Claimed |
+| `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` | Stub expand Claimed (subset + exhaust metadata; STUBS2 env may alias) |
 | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` | Survey expand Claimed |
 | `dod-daemon-matrix` + `ARKS_DAEMON_FLAGS_PARITY=1` | Flag Parity Claimed |
 
@@ -235,6 +250,7 @@ docker compose -f verify/docker-compose.yml run --rm -e ARKS_DOD_STRICT=1 -e ARK
 | [[sot:root/production-residual-register]] | Post-terminal next-queue |
 | [[research:root/20261111123556]] | Web research + tip inventory |
 | [[research:root/20261111133600]] | Stubs deepen inventory after tip `5ae7ad9` |
+| [[research:root/20261111135200]] | Exhaust wave after tip `442db4a` |
 
 ## Why
 
