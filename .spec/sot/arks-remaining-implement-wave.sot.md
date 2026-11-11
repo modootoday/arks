@@ -41,7 +41,7 @@ Document revision **0.1.1** (SoT edit counter only — **not** a product/crate r
 2. Supporting research cited ([[research:root/20261111090827]] and, for B5, [[research:root/20261111084400]]), **and**
 3. Docker verify slot + Partial vs Claimed bar below understood (STRICT fail-closed; no invent PASS).
 
-**IW-B5** graduated **Claimed** with [[evidence:root/20261111091600-claimed-daemon-archive]]. IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL Claimed in the same wave. **Partial leftovers** (IW-FORGE-SERVE / HUB-FLAT / PERSONALITY / DAEMON-FLAGS) are gated by [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]] — do not invent Claimed here.
+**IW-B5** graduated **Claimed** with [[evidence:root/20261111091600-claimed-daemon-archive]]. IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL Claimed in the same wave. **Partial leftovers** (HUB-FLAT / PERSONALITY / DAEMON-FLAGS) gated by [[sot:root/arks-partial-residual-wave]] + [[sot:root/arks-verify-docker-e2e-claim-wave]] + [[research:root/20261111093543]]. **IW-FORGE-SERVE Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]).
 
 ## Rule
 
@@ -63,7 +63,7 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 | 2 | **IW-B7-SSH** | Serve-config SSH rebind drain | **Claimed** ([[evidence:root/20261111092000-claimed-rebind-ssh]]) | Live rebind / durable listen labeled Partial (§17(c)) | Held SSH session survives reload + new SSH peer succeeds across dual-bind/drain; receipt separate from HTTP | `dod-claimed-rebind` scenario `ssh` |
 | 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Claimed** ([[evidence:root/20261111092000-claimed-rebind-forge]]) | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
 | 4 | **IW-SSH-LABEL** | Serve SSH process-label / readiness | **Claimed** (B1/B2 + IW-B7-SSH) | Durable listen **must** say Partial while rebind Claimed absent | Operator surfaces may drop Partial readiness label only when B1/B2 **and** IW-B7-SSH Claimed (or SoT explicitly splits wire Claimed vs listen Claimed) | Evidence + `arks-self-host-server` honesty amend |
-| 5 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Partial** (scaffold deepened: default cohost) | Local forge API under `arks serve` even when SSH enabled (no silent SSH-only cut) | Hosting e2e forge module Claimed (PR/issue host journeys); **B3** alone ≠ this row | Future `dod-claimed-*` only after §7 register |
+| 5 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) | Local forge API under `arks serve` even when SSH enabled (no silent SSH-only cut) | Hosting e2e forge module Claimed (PR/issue host journeys); **B3** alone ≠ this row | `dod-self-host` receipt |
 | 6 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**) | Flat leaves + hub serve forwards remain Partial stubs; B3 HTTPS remote happy path Claimed | Peer-faithful leaf bodies + hub matrix STRICT greens | Symmetry hub pillar / hub matrices — not invent from B3 |
 | 7 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** (skeleton landed) | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | CLI symmetry matrices + personality SoT amend |
 | 8 | **IW-DAEMON-FLAGS** | Daemon deepen (non-B5) | **Partial** / **B5+ Refuse** (terminal for Claimed) | path-filter, `--syslog` openlog, `--user`/`--group`, detach Partial landed | **No** Claimed for classic double-fork or syslog facility (B5+ **Refuse**); archive Claimed is IW-B5 only | daemon matrix / archive slot as applicable |
@@ -101,7 +101,7 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 
 - Owning product SoTs remain authoritative for surface grammar.
 - **Partial residual deepen / honesty for these four rows is gated by [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]]** (this SoT keeps historical order + bars; do not thrash without that gate).
-- **IW-FORGE-SERVE Partial deepen (prior wave):** default `arks serve` cohosts HTTP + SSH + forge (no silent SSH-only cut). Hosting e2e PR/issue journeys remain **Partial** until a §7 `dod-claimed-*` / `dod-self-host` receipt — **B3 ≠ this row**.
+- **IW-FORGE-SERVE Claimed:** default `arks serve` cohosts HTTP + SSH + forge; hosting e2e PR/issue journeys evidenced under `dod-self-host` ([[evidence:root/20261111011425-self-host-forge-e2e]]) — **B3 ≠ this row**.
 - **IW-HUB-FLAT / IW-PERSONALITY:** keep Partial honesty; do not invent Claimed from stub forwards or ExitCodePolicy unit greens alone.
 - **IW-DAEMON-FLAGS:** Partial deepen closed; **B5+ Refuse** unchanged; no classic double-fork Claimed (peer detach is single-fork+`setsid`).
 

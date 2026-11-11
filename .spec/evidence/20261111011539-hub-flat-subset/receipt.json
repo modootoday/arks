@@ -1,0 +1,28 @@
+{
+  "schema": "arks-hub-flat-subset/v1",
+  "gate": "IW-HUB-FLAT",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "6355153",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed_subset": [
+    "auth login",
+    "auth status",
+    "repo create",
+    "repo list",
+    "issue create",
+    "issue list",
+    "issue view",
+    "pr create",
+    "pr list",
+    "pr view"
+  ],
+  "checks": [
+    "HF-DISC flat pr/issue discoverable",
+    "HF-SUBSET nested+flat create/list/view against local forge",
+    "HF-STRICT subset greens (ARKS_HUB_IW_FLAT=1)"
+  ],
+  "full_csv_v1_missing": 80,
+  "note": "B3 hub HTTPS remote Claimed alone does not satisfy IW-HUB-FLAT; full-matrix Missing!=0 is not invent PASS.",
+  "timestamp": "2026-11-11T01:15:39Z"
+}

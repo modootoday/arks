@@ -3,7 +3,7 @@ id: sot:root/arks-partial-residual-wave
 title: Partial residual wave — design SoT (research-gated)
 status: active
 created: 2026-11-11T00:35:43Z
-updated: 2026-11-11T01:14:25Z
+updated: 2026-11-11T01:15:39Z
 tags: [design, residual, partial, forge-in-serve, hub-flat, personality, daemon, hosting-e2e, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -30,7 +30,7 @@ rel:
 
 # Partial residual wave — design SoT (research-gated)
 
-Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.4** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **This SoT gates the four Partial leftovers** after [[sot:root/arks-remaining-implement-wave]] Claimed rows (IW-B5 / IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL). Tip surveyed **`ff39b69`**. **Design ≠ Claimed.**
 
@@ -57,7 +57,7 @@ Order is **Spec → research cite → product/harness deepen → Docker/focused 
 | Order | ID | Surface | Status now | Partial bar (honest) | Claimed bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|----------------------|-------------|-------------------|-----------------|
 | 1 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) | Default `arks serve` cohosts HTTP+SSH+forge; `dod-self-host` probes `--no-forge`/forge help markers; STRICT fail-closed | Hosting e2e: local forge module PR **and** issue host journeys under `dod-self-host` + scrubbed receipt; **B3 ≠ this row** | Invent Claimed from cohost smoke / B3 / hub-serve transitional | `dod-self-host` → `run-self-host-e2e.sh` |
-| 2 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**; Spec honesty) | Flat leaves + hub serve forwards remain Partial stubs; B3 HTTPS remote happy path stays Claimed separately | Peer-faithful leaf bodies + hub matrix STRICT greens | Invent leaf Claimed from B3 or stub exit-2 greens | Symmetry `dod-hub-matrix` |
+| 2 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Claimed** subset ([[evidence:root/20261111011539-hub-flat-subset]]; + **B3**); full CSV Missing open | Flat leaves + hub serve forwards; B3 HTTPS remote happy path stays Claimed separately | Peer-faithful Claimed-subset bodies + `ARKS_HUB_IW_FLAT=1` STRICT greens | Invent full-matrix / leaf Claimed from B3 or stub exit-2 greens | Symmetry `dod-hub-matrix` |
 | 3 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** (skeleton + OR; drop-in Missing) | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | Invent drop-in Claimed from ExitCodePolicy units alone; spawn stock peers | Symmetry `dod-cli-matrix` + personality SoT amend |
 | 4 | **IW-DAEMON-FLAGS** | Daemon deepen (non-B5) | **Partial** / **B5+ Refuse** (terminal; deepen closed) | path-filter, `--syslog` openlog, `--user`/`--group`, detach Partial; help cites single-fork peer + Refuse bars | **No** Claimed for classic double-fork or syslog facility/priority; archive Claimed = IW-B5 only | B5+ facility Claimed; classic double-fork Claimed; Windows Event Log as syslog | `dod-daemon-matrix` / archive slot as applicable |
 
@@ -75,9 +75,9 @@ Order is **Spec → research cite → product/harness deepen → Docker/focused 
 #### IW-HUB-FLAT
 
 - **Cite:** [[research:root/20261111093543]]; [[sot:root/arks-hub-cli-surface]] / [[sot:root/arks-hub-product-intent]].
-- **Partial:** stub/Partial local REST bodies; flat argv discoverable; refuse unimplemented with non-zero.
-- **Claimed (future):** peer-faithful stdout/JSON for surveyed v1 leaves + hub matrix STRICT.
-- **Refuse as Claimed:** B3 over-read; treating host forge API smoke as client leaf Claimed.
+- **Partial (remaining):** non-subset v1 Missing leaves; full-matrix STRICT still fail-closed on Missing>0.
+- **Claimed (subset met):** peer-faithful stdout/JSON for surveyed create/list/view leaves + `ARKS_HUB_IW_FLAT=1` STRICT ([[evidence:root/20261111011539-hub-flat-subset]]). Playbook: [[sot:root/arks-verify-docker-e2e-claim-wave]].
+- **Refuse as Claimed:** B3 over-read; invent full gh-matrix Claimed; treating host forge API smoke as client leaf Claimed.
 
 #### IW-PERSONALITY
 

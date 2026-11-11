@@ -1,17 +1,17 @@
 gh_command,arks_hub_target,status_now,phase,notes
 auth,auth,Partial,v1,Group help wired via arks hub
-auth login,auth login,Partial,v1,token store + local POST /login
+auth login,auth login,Claimed,v1,token store + local POST /login; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 auth logout,auth logout,Partial,v1,hub auth logout Partial — clears stored token
-auth status,auth status,Partial,v1,token file + local GET /user probe
+auth status,auth status,Claimed,v1,token file + local GET /user probe; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 auth token,auth token,Partial,v1,hub auth token Partial — prints/redacts stored token
 auth refresh,auth refresh,Missing,v1,Refresh stored hub creds via API
 auth switch,auth switch,Deferred,later,Multi-account
 auth setup-git,OUT,Refuse/N/A,out-of-scope,gh configures git to use gh helper; arks-hub MUST NOT spawn git/gh
 pr,pr,Partial,v1,Group help
-pr create,pr create,Partial,v1,local POST /repos/.../pulls
-pr list,pr list,Partial,v1,local GET /repos/.../pulls
+pr create,pr create,Claimed,v1,local POST /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
+pr list,pr list,Claimed,v1,local GET /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 pr status,pr status,Missing,v1,Same name as gh; native API
-pr view,pr view,Partial,v1,local GET /repos/.../pulls/{n}
+pr view,pr view,Claimed,v1,local GET /repos/.../pulls/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 pr diff,pr diff,Missing,v1,Same name as gh; native API
 pr edit,pr edit,Missing,v1,Same name as gh; native API
 pr close,pr close,Missing,v1,Same name as gh; native API
@@ -28,10 +28,10 @@ pr revert,pr revert,Missing,v1,Same name as gh; native API
 pr checkout,pr checkout,Missing,v1,Resolve PR head via API; local worktree via arks in-process or printed arks cmds — NEVER spawn git/gh
 co,co,Partial,v1,alias → pr checkout stub
 issue,issue,Partial,v1,Group help
-issue create,issue create,Partial,v1,local POST /repos/.../issues
-issue list,issue list,Partial,v1,local GET /repos/.../issues
+issue create,issue create,Claimed,v1,local POST /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
+issue list,issue list,Claimed,v1,local GET /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 issue status,issue status,Missing,v1,
-issue view,issue view,Partial,v1,local GET /repos/.../issues/{n}
+issue view,issue view,Claimed,v1,local GET /repos/.../issues/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 issue close,issue close,Missing,v1,
 issue reopen,issue reopen,Missing,v1,
 issue comment,issue comment,Missing,v1,
@@ -63,8 +63,8 @@ release verify,release verify,Deferred,later,Attestation-related
 release verify-asset,release verify-asset,Deferred,later,Attestation-related
 repo,repo,Partial,v1,Group help
 repo view,repo view,Partial,v1,local GET /repos/{owner}/{repo}
-repo list,repo list,Partial,v1,local GET /user/repos
-repo create,repo create,Partial,v1,local POST /user/repos
+repo list,repo list,Claimed,v1,local GET /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
+repo create,repo create,Claimed,v1,local POST /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 repo edit,repo edit,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
 repo delete,repo delete,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
 repo fork,repo fork,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)

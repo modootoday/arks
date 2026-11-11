@@ -25,7 +25,7 @@ rel:
 
 Version **0.4.1**. Normative **CLI surface** (document revision — **not** a product release) for **flat forge client** leaves on the **single** published binary **`arks`**. Intent: [[sot:root/arks-hub-product-intent]] (**client only**, flat-first). **Authoritative inventory / phases:** [[sot:root/arks-hub-gh-command-matrix]] (+ CSV; logical `gh`↔`arks` pillar — argv need not nest under `hub`). Core git names stay as ordinary `arks <git-cmd>` ([[sot:root/cli-surface]]). Self-host **server**: [[sot:root/arks-self-host-server]] (`arks serve`). Design / Partial until Claimed.
 
-Until implemented: refuse with non-zero exit; **no Claimed**. **IW-HUB-FLAT** ([[sot:root/arks-partial-residual-wave]]): flat-leaf Partial stubs + **B3** Claimed remote happy path **MUST NOT** invent peer-faithful leaf Claimed. Flat client argv ≠ `arks serve` forge host (IW-FORGE-SERVE).
+**IW-HUB-FLAT** ([[sot:root/arks-partial-residual-wave]] + [[sot:root/arks-verify-docker-e2e-claim-wave]]): Claimed **subset** create/list/view leaves evidenced ([[evidence:root/20261111011539-hub-flat-subset]]); remaining v1 Missing stay open. **B3** Claimed remote happy path **MUST NOT** invent full-matrix leaf Claimed. Flat client argv ≠ `arks serve` forge host (IW-FORGE-SERVE Claimed separately).
 
 ## Rule
 
