@@ -58,9 +58,9 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 | Order | ID | Surface | Status now | Partial bar (honest) | Claimed bar | Docker slot |
 |------:|----|---------|------------|----------------------|-------------|-------------|
 | 1 | **IW-B5** | Daemon `upload-archive` ustar | **Claimed** ([[evidence:root/20261111091600-claimed-daemon-archive]]) | Protocol + structural/semantic member equality | **Byte-identical** ustar vs stock `git-daemon` pin **2.39.5** (`cmp -s`); encoder = git `prepare_header` (`"%07o"` / `"%011o"`, device fields written, chksum sum-with-spaces) | `dod-claimed-daemon-archive` / `run-claimed-daemon-archive-e2e.sh` |
-| 2 | **IW-B7-SSH** | Serve-config SSH rebind drain | **Implementing** → Claimed on [[evidence:root/20261111092000-claimed-rebind-ssh]] | Live rebind / durable listen labeled Partial (§17(c)) | Held SSH session survives reload + new SSH peer succeeds across dual-bind/drain; receipt separate from HTTP | `dod-claimed-rebind` scenario `ssh` |
-| 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Implementing** → Claimed on [[evidence:root/20261111092000-claimed-rebind-forge]] | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
-| 4 | **IW-SSH-LABEL** | Serve SSH process-label / readiness | **Partial** | Durable listen **must** say Partial while rebind Claimed absent | Operator surfaces may drop Partial readiness label only when B1/B2 **and** IW-B7-SSH Claimed (or SoT explicitly splits wire Claimed vs listen Claimed) | Evidence + `arks-self-host-server` honesty amend |
+| 2 | **IW-B7-SSH** | Serve-config SSH rebind drain | **Claimed** ([[evidence:root/20261111092000-claimed-rebind-ssh]]) | Live rebind / durable listen labeled Partial (§17(c)) | Held SSH session survives reload + new SSH peer succeeds across dual-bind/drain; receipt separate from HTTP | `dod-claimed-rebind` scenario `ssh` |
+| 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Claimed** ([[evidence:root/20261111092000-claimed-rebind-forge]]) | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
+| 4 | **IW-SSH-LABEL** | Serve SSH process-label / readiness | **Claimed** (B1/B2 + IW-B7-SSH) | Durable listen **must** say Partial while rebind Claimed absent | Operator surfaces may drop Partial readiness label only when B1/B2 **and** IW-B7-SSH Claimed (or SoT explicitly splits wire Claimed vs listen Claimed) | Evidence + `arks-self-host-server` honesty amend |
 | 5 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Partial** | Local forge API scaffold under `arks serve` | Hosting e2e forge module Claimed (PR/issue host journeys); **B3** alone ≠ this row | Future `dod-claimed-*` only after §7 register |
 | 6 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**) | Stubs/forwards; B3 HTTPS remote happy path Claimed | Peer-faithful leaf bodies + hub matrix STRICT greens | Symmetry hub pillar / hub matrices — not invent from B3 |
 | 7 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** | Skeleton dispatch + unified OR-of-failure | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | CLI symmetry matrices + personality SoT amend |
@@ -92,7 +92,8 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 #### IW-SSH-LABEL
 
 - Wire Claimed (B1/B2) **does not** automatically Claim process readiness language.
-- Until IW-B7-SSH Claimed (or owning SoT splits labels), durable listen **MUST** keep Partial labeling on operator stderr/surfaces that imply full hosting readiness ([[sot:root/arks-self-host-server]] §17).
+- **Claimed (this wave):** with B1/B2 **and** IW-B7-SSH Claimed, durable listen operator surfaces **MAY** drop Partial *readiness* labeling and cite wire+rebind Claimed ([[sot:root/arks-self-host-server]] §17). Hosting e2e / forge-in-serve depth remain Partial where those rows say so.
+- Historical rule retained: while rebind Claimed was absent, durable listen **MUST** keep Partial labeling.
 
 #### IW-FORGE-SERVE / IW-HUB-FLAT / IW-PERSONALITY / IW-DAEMON-FLAGS
 

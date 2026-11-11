@@ -1,0 +1,14 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B7",
+  "scenario": "http",
+  "disposition": "verified-http-dual-bind",
+  "venue": "docker-dod-claimed-rebind",
+  "old_listener": "127.0.0.1:51245",
+  "new_listener": "127.0.0.1:48875",
+  "in_flight_old_connection": "completed",
+  "overlap_fresh_old": "completed",
+  "overlap_fresh_new": "completed",
+  "timestamp": "2026-11-11T00:22:22Z",
+  "note": "HTTP dual-bind drain; baseline B7 Claimed (\u2260 SSH/forge)."
+}

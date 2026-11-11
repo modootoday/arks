@@ -62,7 +62,7 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 | **B4** | Claimed LLM chatbot / review e2e | **Claimed** (Docker fixture e2e; [[evidence:root/20261110231959-claimed-agent-llm]]) | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-llm-providers]] |
 | **B5** | Claimed daemon archive format parity | **Claimed** (Docker `cmp -s` vs stock `git-daemon` pin **2.39.5**; [[evidence:root/20261111091600-claimed-daemon-archive]]; IW-B5 via [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] / [[research:root/20261111084400]]) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |
 | **B5+** | Claimed syslog facility / priority parity | **Refuse (terminal)** — Partial `openlog`/`LOG_DAEMON` ≠ facility/priority Claimed; Windows Event Log ≠ syslog; reopen only with deliberate collector receipt wave | [[sot:root/arks-daemon-product-intent]] |
-| **B7** | Claimed zero-downtime hot-rebind | **Claimed for HTTP** ([[evidence:root/20261110233659-claimed-rebind]]); **SSH/forge rebind Partial** — graduate only via **IW-B7-SSH** / **IW-B7-FORGE** ([[sot:root/arks-remaining-implement-wave]]) | [[sot:root/arks-self-host-server]] §17 |
+| **B7** | Claimed zero-downtime hot-rebind | **Claimed for HTTP** ([[evidence:root/20261110233659-claimed-rebind]] / [[evidence:root/20261111092000-claimed-rebind-http]]); **SSH Claimed** ([[evidence:root/20261111092000-claimed-rebind-ssh]]); **forge Claimed** ([[evidence:root/20261111092000-claimed-rebind-forge]]) via IW-B7 | [[sot:root/arks-self-host-server]] §17 |
 | **B9** | Product in-process TLS terminate | **Claimed** (Docker rustls PEM terminate + stock curl; [[evidence:root/20261110233652-claimed-tls]]) | [[sot:root/arks-self-host-server]] ports/TLS |
 
 **Explicitly out of Claimed graduation here:**
@@ -126,10 +126,11 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 #### B7 — Claimed zero-downtime rebind
 
 - Serve-config reload proves **connection-drain** and/or **dual-bind** so in-flight peers are not hard-cut; receipt shows concurrent success across rebind.
-- **HTTP:** **Claimed** ([[evidence:root/20261110233659-claimed-rebind]]).
-- **SSH / forge:** remain **Partial** until [[sot:root/arks-remaining-implement-wave]] **IW-B7-SSH** / **IW-B7-FORGE** receipts; do **not** reuse the HTTP receipt. `SO_REUSEPORT`-style dual-bind without drain evidence is **Refuse as Claimed** ([[research:root/20261111090827]]).
-- Applies to enabled modules under test per scenario matrix in the gate script comments.
-- **Refuse:** Partial same-process live rebind without drain evidence ([[sot:root/arks-self-host-server]] §17(c)); inventing SSH/forge Claimed from HTTP green.
+- **HTTP:** **Claimed** ([[evidence:root/20261110233659-claimed-rebind]], reconfirm [[evidence:root/20261111092000-claimed-rebind-http]]).
+- **SSH:** **Claimed** ([[evidence:root/20261111092000-claimed-rebind-ssh]]) — IW-B7-SSH dual-bind drain; separate from HTTP.
+- **Forge:** **Claimed** ([[evidence:root/20261111092000-claimed-rebind-forge]]) — IW-B7-FORGE dual-bind drain; ≠ B3 client remote.
+- `SO_REUSEPORT`-style dual-bind without drain evidence remains **Refuse as Claimed** ([[research:root/20261111090827]]).
+- **Refuse:** inventing SSH/forge Claimed from HTTP green alone; hard-cut rebind without held+fresh overlap receipt.
 
 #### B9 — Product in-process TLS
 

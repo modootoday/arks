@@ -27,7 +27,7 @@ This site’s **completion milestone** is **design-complete + CLI-shell coherent
 | Honesty | **Partial** / **Refuse** / **Missing** / fail-closed surfaces are **named in public docs** — stubs are not marketed as Claimed |
 | Claimed bodies | Only where clean-room receipts exist (porcelain inventory, HTTP git wire, residual B-gates below, leases, timing bars, …) |
 
-**One-word operator summary:** **PARTIAL** — symmetry design and shell are in place; residual Claimed gates **B1/B2/B3/B4/B5/B7(HTTP)/B9** carry receipts; **B5+** **Refuse (terminal)**; B7 SSH/forge rebind + flat forge / personality / forge-in-serve remain Partial; live G8 / **L9** Not Claimed.
+**One-word operator summary:** **PARTIAL** — symmetry design and shell are in place; residual Claimed gates **B1/B2/B3/B4/B5/B7(HTTP+SSH+forge)/B9** carry receipts; **B5+** **Refuse (terminal)**; flat forge / personality / forge-in-serve hosting depth remain Partial; live G8 / **L9** Not Claimed.
 
 > [!IMPORTANT]
 > Do **not** read this page as “all Claimed.” Design intent ≠ Claimed. Smoke/SKIP ≠ PASS. Residual gate SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
@@ -42,7 +42,7 @@ Public clean-room Definition of Done is **three peer pillars**. Self-host is **a
 | **2. Daemon** | `git-daemon` | `arks daemon` | Flag surface **Partial** deepen; archive byte-identical **B5 Claimed**; syslog facility **B5+ Refuse** |
 | **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | Leaves mostly **Partial**; **B3** HTTPS forge remote e2e **Claimed**; nested `arks hub …` transitional only |
 
-**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **B1/B2 Claimed** ([[evidence:root/20261110235116-claimed-ssh]]); product in-process TLS **B9 Claimed** ([[evidence:root/20261110233652-claimed-tls]]); HTTP zero-downtime rebind **B7 Claimed** ([[evidence:root/20261110233659-claimed-rebind]]); forge-in-serve / dedicated LAN/WAN hosting e2e remain **Partial / scaffold**. See [Self-host](../self-host/) and [Ports](../ports/).
+**Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **B1/B2 Claimed** ([[evidence:root/20261110235116-claimed-ssh]]); product in-process TLS **B9 Claimed** ([[evidence:root/20261110233652-claimed-tls]]); HTTP+SSH+forge zero-downtime rebind **B7 Claimed**; forge-in-serve hosting depth / dedicated LAN/WAN hosting e2e remain **Partial / scaffold**. See [Self-host](../self-host/) and [Ports](../ports/).
 
 Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modootoday/arks/blob/main/.spec/sot/verify-cleanroom-symmetry-matrix.sot.md). Residual ledger: [production residual register](https://github.com/modootoday/arks/blob/main/.spec/sot/production-residual-register.sot.md). Claimed residual gates: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md). Program ladder: [program roadmap](https://github.com/modootoday/arks/blob/main/.spec/sot/program-roadmap.sot.md).
 
@@ -55,7 +55,7 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | In-process SSH under `arks serve` | **B1/B2 Claimed** | OpenSSH-exact ChaCha wire + stock `git clone ssh://` e2e ([[evidence:root/20261110235116-claimed-ssh]]); durable §17(c) listen remains the product path; ops SSHD + pack still valid |
 | Product in-process TLS | **B9 Claimed** | rustls PEM terminate + stock curl ([[evidence:root/20261110233652-claimed-tls]]); ops reverse-proxy remains valid |
 | Forge API under `arks serve` | **Partial** | Local API scaffold ≠ Claimed hosting e2e; **B3** is client↔HTTPS forge remote Claimed, not full forge-in-serve hosting |
-| `arks serve config` rebind | **B7 Claimed (HTTP)** | Held-connection + dual-bind overlap ([[evidence:root/20261110233659-claimed-rebind]]); SSH/forge rebind still **Partial**; Windows file-mtime reload **Partial** (SIGHUP N/A) |
+| `arks serve config` rebind | **B7 Claimed (HTTP+SSH+forge)** | Held-connection + dual-bind overlap ([[evidence:root/20261110233659-claimed-rebind]], [[evidence:root/20261111092000-claimed-rebind-ssh]], [[evidence:root/20261111092000-claimed-rebind-forge]]); Windows file-mtime reload **Partial** (SIGHUP N/A) |
 | `arks serve ssh-smoke` | **Partial** | Banner + `--git-pack` durable self smoke Partial — smoke alone ≠ **B1/B2** Claimed |
 | Flat forge leaves (`pr`, `issue`, …) | **Partial** + **B3 Claimed** | Local-API Partial; `hub smoke` / `--local-tls` Partial; **B3** HTTPS forge remote e2e Claimed ([[evidence:root/20261110233655-claimed-hub-https]]); OUT `extension`/`copilot` refuse |
 | `arks daemon` deepen | **B5 Claimed** / **B5+ Refuse** | Archive byte-identical Claimed ([[evidence:root/20261111091600-claimed-daemon-archive]]); syslog facility/priority **Refuse**; Windows `--syslog`/`--user`/`--group` honest Missing refuse |
