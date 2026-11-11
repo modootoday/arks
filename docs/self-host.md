@@ -69,7 +69,7 @@ arks pr list --host http://host          # flat forge client
 | LAN | Bind to a LAN address (or all interfaces) + open the host firewall | Same |
 | WAN | Bind + firewall + **HTTPS/TLS in front** (HTTP) and/or SSH keys + firewall | Wire after traffic arrives |
 
-**Ops owns:** firewall rules, DNS, TLS certificates, reverse proxies. Prefer HTTPS for HTTP off localhost. **In-process TLS** is not claimed yet. arks does **not** claim “safe on the open internet by default.”
+**Ops owns:** firewall rules, DNS, TLS certificates, reverse proxies. Prefer HTTPS for HTTP off localhost. **In-process TLS** is **B9 Claimed** where evidenced ([[evidence:root/20261110233652-claimed-tls]]); ops reverse-proxy remains a valid deploy pattern. arks does **not** claim “safe on the open internet by default.”
 
 ## Ports (normative vs demo)
 
@@ -88,9 +88,9 @@ Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, *
 ## Auth (Git remote vs forge client)
 
 - **HTTP git path:** HTTP Basic when configured; prefer **HTTPS/SSL/TLS** via operator-terminated TLS off-localhost
-- **SSH path:** public keys / `authorized_keys`-style expectations. In-process SSH under `arks serve` is **Partial durable** (SoT §17(c)) — labeled durable accept + same-process live rebind Partial; TCP bind + key paths + id + KEXINIT + curve25519 ECDH + ed25519 host-key **sign** / NEWKEYS + **chacha20-poly1305** encrypted transport Partial + **authorized_keys** publickey verify + session `exec` → `git-upload-pack`\|`receive-pack` dispatch into pack streams; bind failure fail-closed; OpenSSH-exact / Claimed SSH e2e still **Missing**. Ops SSHD + `upload-pack`/`receive-pack` remains valid until handshake is Claimed
-- **Forge API:** tokens / `arks hub auth …` against the forge module base URL
-- **Fail-closed:** if a module is enabled and not Claimed-ready, `arks serve` MUST NOT silently degrade while advertising Claimed default-set success (§17). Labeled Partial durable listen is allowed; use `--no-ssh` / `--no-forge` when you need a Claimed-only path (or transitional `arks hub serve` for Partial local forge)
+- **SSH path:** public keys / `authorized_keys`-style expectations. In-process SSH under `arks serve` is **B1/B2 Claimed** for OpenSSH-exact ChaCha wire + stock `git clone ssh://` e2e ([[evidence:root/20261110235116-claimed-ssh]]); durable §17(c) listen + key paths + KEX/NEWKEYS + authorized_keys + exec→pack remain the product path; bind failure fail-closed. Ops SSHD + `upload-pack`/`receive-pack` remains a valid alternate
+- **Forge API:** tokens / `arks hub auth …` against the forge module base URL; **B3** HTTPS forge remote client e2e is Claimed ([[evidence:root/20261110233655-claimed-hub-https]]) — local forge-in-serve hosting stays Partial
+- **Fail-closed:** if a module is enabled and not Claimed-ready, `arks serve` MUST NOT silently degrade while advertising Claimed default-set success (§17). Use `--no-ssh` / `--no-forge` when you need a narrower Claimed-only path (or transitional `arks hub serve` for Partial local forge)
 - **`git://` (`arks daemon`):** typically unauthenticated, no SSL — prefer `arks serve` when auth matters
 
 ## Versus other surfaces
@@ -103,7 +103,7 @@ Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, *
 
 ## Honesty
 
-Wire transports (smart HTTP, dumb HTTP, SSH stdio, `git://`) may already be claimed in Specfold with clean-room receipts. HTTP Basic (when configured) is claimed on the wire path. **In-process SSH** is **Partial durable** (encrypted chacha20-poly1305 + authorized_keys verify + exec→pack dispatch + live rebind Partial; OpenSSH-exact / Claimed SSH e2e **Missing** — do not invent handshake Claimed). **`arks serve ssh-smoke [--git-pack]`** is banner / durable self smoke Partial (never invents Claimed OpenSSH git e2e). **Forge API under `arks serve`**, **in-process TLS termination** (product), **hub HTTPS** + `hub smoke` / `--local-tls` harness (Partial or documented Missing; never `gh`), **`arks serve config`** (file seed + `runtime_*` / apply\|reload\|watch; unix **SIGHUP** + same-process **live HTTP/forge/SSH rebind Partial**; Windows **in-process file-mtime reload Partial** (SIGHUP N/A); Claimed zero-downtime hot-rebind **Missing**), and dedicated **self-host LAN/WAN e2e** remain **Partial / scaffold / Missing** as named — do not invent Claimed. Transitional `arks hub serve` Partial does **not** invent forge-in-serve Claimed. See Specfold [[sot:root/arks-self-host-server]].
+Wire transports (smart HTTP, dumb HTTP, SSH stdio, `git://`) may already be claimed in Specfold with clean-room receipts. HTTP Basic (when configured) is claimed on the wire path. **In-process SSH** is **B1/B2 Claimed** ([[evidence:root/20261110235116-claimed-ssh]]) — do not invent beyond that receipt. **`arks serve ssh-smoke [--git-pack]`** stays banner / durable self smoke **Partial** (smoke alone ≠ B1/B2). **Product in-process TLS** is **B9 Claimed** ([[evidence:root/20261110233652-claimed-tls]]); **`hub smoke` / `--local-tls`** stay Partial harnesses; **B3** HTTPS forge remote e2e is Claimed ([[evidence:root/20261110233655-claimed-hub-https]]; never `gh`). **`arks serve config`:** file seed + `runtime_*` / apply\|reload\|watch; **B7 Claimed for HTTP** zero-downtime rebind ([[evidence:root/20261110233659-claimed-rebind]]); SSH/forge live rebind still **Partial**; Windows **file-mtime reload Partial** (SIGHUP N/A). **Forge API under `arks serve`** and dedicated **self-host LAN/WAN e2e** remain **Partial / scaffold** — do not invent Claimed beyond [[sot:root/arks-claimed-residual-gates]]. Transitional `arks hub serve` Partial does **not** invent forge-in-serve Claimed. See Specfold [[sot:root/arks-self-host-server]].
 
 ## Next
 

@@ -177,5 +177,5 @@ Partial wiring unlocked honest progress without pretending OpenSSH-exact, forge 
 
 1. Research [[research:root/20261111074523]] + this SoT linked from residual register + verify umbrella + `.spec/README.md`.
 2. Compose services and SKIP/scaffold scripts exist; default `dod-claimed-residual` exits 0 with SKIP language; strict fails closed.
-3. No product Claimed language added to public `docs/` from this design-only wave.
+3. Public `docs/` / README MAY cite residual Claimed / Partial / Refuse rows only as this SoT + listed evidence IDs name — **no invent Claimed** beyond Spec (docs honesty sync cites B1/B2/B3/B4/B7(HTTP)/B9 Claimed; B5 Partial; B5+ Refuse).
 4. Cross-OS honesty: Windows drives compose; Linux-in-container bash is authoritative.
