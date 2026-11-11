@@ -100,7 +100,7 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 | Concern | Owner | Normative note |
 |---------|-------|----------------|
 | Git wire (upload-pack / receive-pack) on claimed transports | **arks** | [[sot:root/arks-server]], M11 G15 / M25 G29–G32 |
-| Forge API (PR/issue/… host) under `arks serve` | **arks (future in umbrella)** | **Missing / Partial** until Claimed; client is `arks hub` |
+| Forge API (PR/issue/… host) under `arks serve` | **arks (cohost Partial)** | Local API scaffold cohosts with HTTP/SSH by default (IW-FORGE-SERVE Partial); hosting e2e Claimed Missing; client is `arks hub` |
 | Listen / bind (HTTP and/or SSH and/or forge HTTP) | **arks** | Default loopback-first; LAN/`0.0.0.0` intentional when chosen |
 | In-process HTTP Basic (git remote) | **arks** | G36 Claimed when configured |
 | In-process SSH listener (`arks serve` without `--no-ssh`) | **arks (B1+B2 wire/clone Claimed; B7 rebind Claimed; IW-SSH-LABEL Claimed)** | Durable accept (§17(c)/(d)); **B1** ChaCha + **B2** `git clone ssh://` ([[evidence:root/20261110235116-claimed-ssh]]); **B7 SSH** ([[evidence:root/20261111092000-claimed-rebind-ssh]]); ops SSHD still valid |
