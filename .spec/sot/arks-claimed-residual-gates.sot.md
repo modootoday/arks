@@ -3,14 +3,16 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-11T00:20:00Z
+updated: 2026-11-11T00:08:27Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
   depends_on:
+    - research:root/20261111090827
     - research:root/20261111084400
     - research:root/20261111074523
     - research:root/20261111072342
+    - sot:root/arks-remaining-implement-wave
     - sot:root/arks-self-host-server
     - sot:root/arks-server
     - sot:root/arks-hub-product-intent
@@ -44,7 +46,7 @@ rel:
 
 # Claimed residual gates (post-Partial wiring)
 
-Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `bb782db` demoted invented B2; **B2 Claimed** restored only with [[evidence:root/20261110235116-claimed-ssh]] (tip ≥ `f6c5780` + WIP).
+Document revision **0.1.4** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `bb782db` demoted invented B2; **B2 Claimed** restored only with [[evidence:root/20261110235116-claimed-ssh]] (tip ≥ `f6c5780` + WIP). **Future implement order** (B5 reopen, B7 SSH/forge, CLI Partial stubs) is gated by [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] — **do not implement until those are cited**.
 
 **Honesty:** **Design intent ≠ Claimed.** Scaffold Docker harness greens **MUST NOT** invent PASS/Claimed. Product paths **MUST NOT** spawn `git` / `gh` / `ssh` / `ollama`. Windows host PowerShell is **not** normative DoD — Linux Docker `arks-verify-m1:0.1.0` is the judge ([[sot:root/product-verification-clean-room]]).
 
@@ -58,9 +60,9 @@ Document revision **0.1.3** (SoT edit counter only — **not** a product/crate r
 | **B2** | Claimed SSH git e2e | **Claimed** (Docker stock `git clone ssh://` exit 0 + archived README; [[evidence:root/20261110235116-claimed-ssh]]) | [[sot:root/arks-self-host-server]] |
 | **B3** | Claimed hub HTTPS forge remote e2e | **Claimed** (Docker forge HTTPS + hub client; [[evidence:root/20261110233655-claimed-hub-https]]) | [[sot:root/arks-hub-product-intent]] |
 | **B4** | Claimed LLM chatbot / review e2e | **Claimed** (Docker fixture e2e; [[evidence:root/20261110231959-claimed-agent-llm]]) | [[sot:root/arks-agent-product-intent]], [[sot:root/arks-agent-llm-providers]] |
-| **B5** | Claimed daemon archive format parity | **Partial (terminal for this goal)** (protocol/structural OK; **byte-identical ≠ Claimed** — SKIP/STRICT-honest; mismatch class below) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |
+| **B5** | Claimed daemon archive format parity | **Partial** (prior goal terminal; **reopen path** = [[sot:root/arks-remaining-implement-wave]] **IW-B5** + [[research:root/20261111090827]] / [[research:root/20261111084400]]; protocol/structural OK; **byte-identical ≠ Claimed** until `cmp -s` receipt) | [[sot:root/arks-daemon-product-intent]], [[sot:root/arks-daemon-git-command-matrix]] |
 | **B5+** | Claimed syslog facility / priority parity | **Refuse (terminal)** — Partial `openlog`/`LOG_DAEMON` ≠ facility/priority Claimed; Windows Event Log ≠ syslog; reopen only with deliberate collector receipt wave | [[sot:root/arks-daemon-product-intent]] |
-| **B7** | Claimed zero-downtime hot-rebind | **Claimed for HTTP** (Docker held-connection + old/new dual-bind overlap; [[evidence:root/20261110233659-claimed-rebind]]) | [[sot:root/arks-self-host-server]] §17 |
+| **B7** | Claimed zero-downtime hot-rebind | **Claimed for HTTP** ([[evidence:root/20261110233659-claimed-rebind]]); **SSH/forge rebind Partial** — graduate only via **IW-B7-SSH** / **IW-B7-FORGE** ([[sot:root/arks-remaining-implement-wave]]) | [[sot:root/arks-self-host-server]] §17 |
 | **B9** | Product in-process TLS terminate | **Claimed** (Docker rustls PEM terminate + stock curl; [[evidence:root/20261110233652-claimed-tls]]) | [[sot:root/arks-self-host-server]] ports/TLS |
 
 **Explicitly out of Claimed graduation here:**
@@ -110,10 +112,10 @@ Document revision **0.1.3** (SoT edit counter only — **not** a product/crate r
 
 #### B5 — Claimed daemon archive parity
 
-- **Claimed bar (strict):** byte-identical ustar stream of `upload-archive` vs stock `git-daemon` pin **2.39.5** in clean-room — **not graduated** (no invent Claimed). Oracle encoder is git **v2.39.5** `archive-tar.c` `prepare_header` (`"%07o"` / `"%011o"` NUL-terminated fields, including device major/minor) — **not** a generic tar crate dialect ([[research:root/20261111084400]]).
+- **Claimed bar (strict):** byte-identical ustar stream of `upload-archive` vs stock `git-daemon` pin **2.39.5** in clean-room — **not graduated** (no invent Claimed). Oracle encoder is git **v2.39.5** `archive-tar.c` `prepare_header` (`"%07o"` / `"%011o"` NUL-terminated fields, including device major/minor) — **not** a generic tar crate dialect ([[research:root/20261111084400]], pin raw https://raw.githubusercontent.com/git/git/v2.39.5/archive-tar.c). **Do not** adopt GNU-style chksum (`%06o` + NUL + SP) against this pin ([[research:root/20261111090827]]).
 - **Partial (landed / honest):** protocol path + path-filter wiring + structural member list / type / mode / payload semantic agreement — OK as Partial; harness default **SKIP/Partial**, `ARKS_DOD_STRICT=1` fail-closed ([[sot:root/verify-directory-conventions]] tip ≥ `3f1a484`).
 - **Known mismatch class (Docker 501009):** ustar **header encoding** — first differ block0 offset **151** (chksum digits: stock `0x34` vs arks `0x33`) and device major/minor **ASCII `0` vs NUL** (~offsets 329+); member names/types/modes/payloads matched. Chksum drift is a symptom of header-byte drift (sum-with-spaces). Stop host/tar hex dump loops; Claimed only via deliberate SoT+receipt wave.
-- **Implement path (research):** match git `prepare_header` in `arks-server` + clean-room golden/`cmp -s` acceptance ([[research:root/20261111084400]]); do **not** redefine Claimed as semantic-only.
+- **Reopen / implement path:** [[sot:root/arks-remaining-implement-wave]] **IW-B5** — Spec-first + research cite, then match git `prepare_header` in `arks-server` + clean-room golden/`cmp -s`; do **not** redefine Claimed as semantic-only; **do not implement until SoT+research cited**.
 - **Refuse:** expanded protocol-body unit tests alone; opportunistic `cmp` or semantic-only greens marketed as Claimed; product spawn of `git archive`.
 
 #### B5+ — Claimed syslog facility parity
@@ -125,8 +127,10 @@ Document revision **0.1.3** (SoT edit counter only — **not** a product/crate r
 #### B7 — Claimed zero-downtime rebind
 
 - Serve-config reload proves **connection-drain** and/or **dual-bind** so in-flight peers are not hard-cut; receipt shows concurrent success across rebind.
-- Applies to enabled modules under test (HTTP and/or SSH and/or forge) per scenario matrix in the gate script comments.
-- **Refuse:** Partial same-process live rebind without drain evidence ([[sot:root/arks-self-host-server]] §17(c)).
+- **HTTP:** **Claimed** ([[evidence:root/20261110233659-claimed-rebind]]).
+- **SSH / forge:** remain **Partial** until [[sot:root/arks-remaining-implement-wave]] **IW-B7-SSH** / **IW-B7-FORGE** receipts; do **not** reuse the HTTP receipt. `SO_REUSEPORT`-style dual-bind without drain evidence is **Refuse as Claimed** ([[research:root/20261111090827]]).
+- Applies to enabled modules under test per scenario matrix in the gate script comments.
+- **Refuse:** Partial same-process live rebind without drain evidence ([[sot:root/arks-self-host-server]] §17(c)); inventing SSH/forge Claimed from HTTP green.
 
 #### B9 — Product in-process TLS
 

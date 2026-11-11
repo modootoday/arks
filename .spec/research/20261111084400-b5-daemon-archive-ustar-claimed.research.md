@@ -3,17 +3,19 @@ id: research:root/20261111084400
 title: B5 daemon upload-archive ustar Claimed — header encoding path
 status: active
 created: 2026-11-10T23:44:00Z
-updated: 2026-11-10T23:44:00Z
+updated: 2026-11-11T00:08:27Z
 tags: [b5, claimed, residual, daemon, upload-archive, ustar, git-daemon, clean-room, no-invent-claimed, docker]
 verify: manual
 rel:
   depends_on:
     - sot:root/arks-claimed-residual-gates
+    - sot:root/arks-remaining-implement-wave
     - sot:root/arks-daemon-product-intent
     - sot:root/arks-daemon-git-command-matrix
     - sot:root/verify-directory-conventions
     - sot:root/product-verification-clean-room
     - research:root/20261111074523
+    - research:root/20261111090827
     - evidence:root/20261110232923
   related:
     - verify/scripts/run-claimed-daemon-archive-e2e.sh
@@ -135,9 +137,11 @@ Optional follow-on (non-blocking): compose service stays script-only (`dod-claim
 ## Cross-links
 
 - Normative residual row: [[sot:root/arks-claimed-residual-gates]] B5
+- Implement-wave gate (cite before coding): [[sot:root/arks-remaining-implement-wave]] **IW-B5** + [[research:root/20261111090827]]
 - Daemon intent honesty: [[sot:root/arks-daemon-product-intent]]
 - Prior Docker shape research: [[research:root/20261111074523]]
 - Partial evidence note: [[evidence:root/20261110232923]]
+- Pin `prepare_header` raw: https://raw.githubusercontent.com/git/git/v2.39.5/archive-tar.c
 
 ## Verification (this research)
 

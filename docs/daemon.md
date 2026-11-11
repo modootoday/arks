@@ -44,7 +44,7 @@ Residual honesty ([[sot:root/arks-claimed-residual-gates]]):
 
 | Gate | Class | Notes |
 |------|-------|-------|
-| **B5** archive format parity | **Partial (terminal)** | Protocol/structural OK; **byte-identical ≠ Claimed** (ustar header encoding mismatch class; [[research:root/20261111084400]]) |
+| **B5** archive format parity | **Partial** (reopen design-gated) | Protocol/structural OK; **byte-identical ≠ Claimed** until IW-B5 Spec+research+`cmp -s` ([[research:root/20261111084400]], [[research:root/20261111090827]]) |
 | **B5+** syslog facility/priority | **Refuse (terminal)** | Partial `openlog`/`LOG_DAEMON` ≠ facility Claimed; Windows Event Log ≠ POSIX syslog |
 
 **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”

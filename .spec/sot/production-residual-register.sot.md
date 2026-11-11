@@ -3,8 +3,8 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-11T00:20:00Z
-tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g028-live-private-arks, g029-server-dumb-http, g030-server-ssh-command, g031-server-protocol-v2, g032-git-daemon-wire, g033-cred-askpass, g034-shared-index-contention, g035-shallow-depth, g036-http-basic-auth, g037-gpgsig-ssh, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final, claimed-residual]
+updated: 2026-11-11T00:08:27Z
+tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g028-live-private-arks, g029-server-dumb-http, g030-server-ssh-command, g031-server-protocol-v2, g032-git-daemon-wire, g033-cred-askpass, g034-shared-index-contention, g035-shallow-depth, g036-http-basic-auth, g037-gpgsig-ssh, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final, claimed-residual, implement-wave]
 verify: manual
 rel:
   depends_on:
@@ -17,6 +17,9 @@ rel:
     - plan:root/20261109043910
     - plan:root/20261109043916
     - sot:root/public-surface
+    - sot:root/arks-remaining-implement-wave
+    - research:root/20261111090827
+    - research:root/20261111084400
     - sot:root/lease-concurrency-intent
     - sot:root/arks-lease
     - sot:root/arks-server
@@ -257,7 +260,8 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | — | Release symmetry precheck (ops/CI) | **Wired** [[sot:root/release-symmetry-precheck]] — GHA `release-symmetry.yml` + `release.yml` `needs: symmetry-precheck`; pin Missing=0 + untracked leaves **block** `dist`; Partial + hub v1 Missing **advisory** by default; latest inventory continuity ≠ pin Claimed | No invent PASS from green gate; flip hub Missing block only when hub bar lands |
 | — | arks-only self-host server (LAN/WAN) | **Design** [[sot:root/arks-self-host-server]] — related hosting under [[sot:root/verify-cleanroom-symmetry-matrix]] (`dod-self-host` scaffold); ≠ daemon flag parity; wire G15/G29–G32/G36 already Claimed separately | Hosting e2e Claimed only with clean-room evidence; no invent PASS |
 | — | CLI personality / output+exit contract | **Design / Partial skeleton** — [[sot:root/arks-cli-personality-factory]] + [[sot:root/arks-cli-output-exit-contract]]; Registry/OverlapFacade/ExitCodePolicy + flat-leaf stubs; deep forge-in-serve / SSH listener / PR bodies **not** Claimed | Claimed only with peer-faithful evidence; stubs exit non-zero; no invent PASS |
-| — | Claimed residual gates (post-Partial) | **Active** [[sot:root/arks-claimed-residual-gates]] tip ≥ `f6c5780` — **B1/B2/B3/B4/B7(HTTP)/B9 Claimed** with Docker receipts ([[evidence:root/20261110235116-claimed-ssh]] for B1+B2); **B5 Partial terminal** (ustar 501009 / [[research:root/20261111084400]]); **B5+ Refuse terminal** (Partial openlog ≠ facility Claimed). | No invent Claimed; reopen B5/B5+ only with deliberate SoT+receipt waves |
+| — | Claimed residual gates (post-Partial) | **Active** [[sot:root/arks-claimed-residual-gates]] tip ≥ `f6c5780` — **B1/B2/B3/B4/B7(HTTP)/B9 Claimed** with Docker receipts ([[evidence:root/20261110235116-claimed-ssh]] for B1+B2); **B5 Partial** with **reopen path** IW-B5 ([[research:root/20261111084400]], [[research:root/20261111090827]]); **B7 SSH/forge rebind Partial**; **B5+ Refuse terminal**. | No invent Claimed; implement only via [[sot:root/arks-remaining-implement-wave]] Spec+research cite |
+| — | Remaining implement wave (research-gated) | **Design** [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] — ordered IW-B5 → B7-SSH/forge → SSH process-label → forge-in-serve → hub flat → personality → daemon flags; Partial vs Claimed bars + Docker slots; **do not implement until SoT+research cited** | Spec-first only this goal; no product Claimed from design |
 | — | Verify directory conventions | **Design** [[sot:root/verify-directory-conventions]] + [[research:root/20261111082440]] — tree contract, `gN` vs `dod-*` naming, `verify/out/` vs `gates/*/out/`, SKIP vs `ARKS_DOD_STRICT=1`, pin Git **2.39.5** normative, residual registration checklist | Ops/harness only; does not invent product Claimed; coordinate harness edits with in-flight B-gate owners |
 
 ## Why

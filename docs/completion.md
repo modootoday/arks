@@ -27,7 +27,7 @@ This site’s **completion milestone** is **design-complete + CLI-shell coherent
 | Honesty | **Partial** / **Refuse** / **Missing** / fail-closed surfaces are **named in public docs** — stubs are not marketed as Claimed |
 | Claimed bodies | Only where clean-room receipts exist (porcelain inventory, HTTP git wire, residual B-gates below, leases, timing bars, …) |
 
-**One-word operator summary:** **PARTIAL** — symmetry design and shell are in place; residual Claimed gates **B1/B2/B3/B4/B7(HTTP)/B9** carry receipts; **B5** stays **Partial (terminal)** and **B5+** **Refuse (terminal)**; flat forge leaves / LAN-WAN hosting / live G8 / **L9** remain Partial or Not Claimed.
+**One-word operator summary:** **PARTIAL** — symmetry design and shell are in place; residual Claimed gates **B1/B2/B3/B4/B7(HTTP)/B9** carry receipts; **B5** stays **Partial** (byte-identical reopen is design-gated, not Claimed); **B5+** **Refuse (terminal)**; B7 SSH/forge rebind + flat forge / personality / forge-in-serve remain Partial; live G8 / **L9** Not Claimed.
 
 > [!IMPORTANT]
 > Do **not** read this page as “all Claimed.” Design intent ≠ Claimed. Smoke/SKIP ≠ PASS. Residual gate SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
@@ -58,7 +58,8 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | `arks serve config` rebind | **B7 Claimed (HTTP)** | Held-connection + dual-bind overlap ([[evidence:root/20261110233659-claimed-rebind]]); SSH/forge rebind still **Partial**; Windows file-mtime reload **Partial** (SIGHUP N/A) |
 | `arks serve ssh-smoke` | **Partial** | Banner + `--git-pack` durable self smoke Partial — smoke alone ≠ **B1/B2** Claimed |
 | Flat forge leaves (`pr`, `issue`, …) | **Partial** + **B3 Claimed** | Local-API Partial; `hub smoke` / `--local-tls` Partial; **B3** HTTPS forge remote e2e Claimed ([[evidence:root/20261110233655-claimed-hub-https]]); OUT `extension`/`copilot` refuse |
-| `arks daemon` deepen | **B5 Partial (terminal)** / **B5+ Refuse** | Protocol/structural archive OK; **byte-identical ≠ Claimed** ([[research:root/20261111084400]]); syslog facility/priority **Refuse** (Partial `openlog` ≠ Claimed); Windows `--syslog`/`--user`/`--group` honest Missing refuse |
+| `arks daemon` deepen | **B5 Partial** / **B5+ Refuse** | Protocol/structural archive OK; **byte-identical ≠ Claimed** until IW-B5 ([[research:root/20261111084400]], [[research:root/20261111090827]]); syslog facility/priority **Refuse**; Windows `--syslog`/`--user`/`--group` honest Missing refuse |
+| Remaining implement backlog | **Design only** | Ordered IW-* in [arks-remaining-implement-wave](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-remaining-implement-wave.sot.md) — do not treat as Done |
 | `arks agent` | **B4 Claimed** + smoke **Partial** | Docker fixture LLM chatbot/review e2e Claimed ([[evidence:root/20261110231959-claimed-agent-llm]]); `provider smoke` / `review --smoke` remain Partial |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 
