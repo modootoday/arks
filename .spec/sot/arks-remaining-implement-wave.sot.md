@@ -33,13 +33,13 @@ rel:
 
 Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). English-only.
 
-**This SoT is design intent for a future product wave.** Tip surveyed after canon **`8775cc4`**. **Design ≠ Claimed.** **Do not implement product/crate changes until:**
+**This SoT gates the remaining implement wave.** Tip surveyed after canon **`8775cc4`** / design tip **`6dae03d`**. **Design ≠ Claimed.** Product/crate changes for each IW-* row require:
 
-1. This SoT row for the item is cited in the Spec-first commit message / plan, **and**
-2. Supporting research is cited ([[research:root/20261111090827]] and, for B5, [[research:root/20261111084400]]), **and**
-3. Docker verify slot + Partial vs Claimed bar below are understood (STRICT fail-closed; no invent PASS).
+1. This SoT row for the item cited in the Spec-first commit message / plan, **and**
+2. Supporting research cited ([[research:root/20261111090827]] and, for B5, [[research:root/20261111084400]]), **and**
+3. Docker verify slot + Partial vs Claimed bar below understood (STRICT fail-closed; no invent PASS).
 
-Public docs honesty sync (Partial/Claimed labels) MAY land without product code.
+**IW-B5** graduated **Claimed** with [[evidence:root/20261111091600-claimed-daemon-archive]]. Remaining rows stay Partial until their Claimed bars + receipts land.
 
 ## Rule
 
@@ -57,7 +57,7 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 
 | Order | ID | Surface | Status now | Partial bar (honest) | Claimed bar | Docker slot |
 |------:|----|---------|------------|----------------------|-------------|-------------|
-| 1 | **IW-B5** | Daemon `upload-archive` ustar | **Partial** (prior terminal) | Protocol + structural/semantic member equality | **Byte-identical** ustar vs stock `git-daemon` pin **2.39.5** (`cmp -s`); encoder = git `prepare_header` (`"%07o"` / `"%011o"`, device fields written, chksum sum-with-spaces) | `dod-claimed-daemon-archive` / `run-claimed-daemon-archive-e2e.sh` |
+| 1 | **IW-B5** | Daemon `upload-archive` ustar | **Claimed** ([[evidence:root/20261111091600-claimed-daemon-archive]]) | Protocol + structural/semantic member equality | **Byte-identical** ustar vs stock `git-daemon` pin **2.39.5** (`cmp -s`); encoder = git `prepare_header` (`"%07o"` / `"%011o"`, device fields written, chksum sum-with-spaces) | `dod-claimed-daemon-archive` / `run-claimed-daemon-archive-e2e.sh` |
 | 2 | **IW-B7-SSH** | Serve-config SSH rebind drain | **Partial** | Live rebind / durable listen labeled Partial (§17(c)) | Held SSH session survives reload + new SSH peer succeeds across dual-bind/drain; receipt separate from HTTP | `dod-claimed-rebind` scenario `ssh` (SKIP until Claimed) |
 | 3 | **IW-B7-FORGE** | Serve-config forge rebind drain | **Partial** | Forge module live rebind Partial | Held forge HTTP(S) session + new peer across reload; ≠ B3 client remote Claimed | `dod-claimed-rebind` scenario `forge` |
 | 4 | **IW-SSH-LABEL** | Serve SSH process-label / readiness | **Partial** | Durable listen **must** say Partial while rebind Claimed absent | Operator surfaces may drop Partial readiness label only when B1/B2 **and** IW-B7-SSH Claimed (or SoT explicitly splits wire Claimed vs listen Claimed) | Evidence + `arks-self-host-server` honesty amend |
@@ -75,10 +75,11 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 #### IW-B5 — ustar Claimed reopen
 
 - **Cite:** [[research:root/20261111090827]], [[research:root/20261111084400]], pin source https://raw.githubusercontent.com/git/git/v2.39.5/archive-tar.c
-- **Partial (keep):** path-filter + structural/semantic agreement; harness default SKIP/Partial language.
-- **Claimed:** `cmp -s` stock vs arks full stream in Docker; unit tests for first-header / device / chksum fields.
+- **Status:** **Claimed** — Docker `cmp -s` + [[evidence:root/20261111091600-claimed-daemon-archive]].
+- **Partial (historical):** path-filter + structural/semantic agreement remains a weaker oracle.
+- **Claimed bar (met):** `cmp -s` stock vs arks full stream in Docker; unit tests for first-header / device / chksum fields.
 - **Refuse as Claimed:** tarfile-only greens; GNU chksum folklore (`%06o`+NUL+SP) against pin; host Git ≠ 2.39.5; product `git archive` spawn.
-- **Known mismatch class (501009):** header encoding (chksum digit drift; device ASCII `0` vs NUL historically). Treat chksum drift as symptom of earlier field drift.
+- **Closed mismatch class (501009):** header encoding (chksum digit drift; device ASCII `0` vs NUL historically) closed by `prepare_header` parity.
 
 #### IW-B7-SSH / IW-B7-FORGE
 
