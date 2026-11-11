@@ -1,0 +1,16 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B5",
+  "b5": "Claimed",
+  "b5_plus": "Refuse-terminal",
+  "disposition": "verified-byte-identical-ustar",
+  "venue": "docker-dod-claimed-daemon-archive",
+  "stock_git": "git version 2.39.5",
+  "oracle": "git v2.39.5 archive-tar.c prepare_header",
+  "comparison": [
+    "cmp -s stock.tar arks.tar",
+    "tarfile structural/semantic"
+  ],
+  "timestamp": "2026-11-11T00:17:45Z",
+  "note": "IW-B5; product MUST NOT spawn git archive. B5+ syslog facility remains Refuse."
+}

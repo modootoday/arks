@@ -39,7 +39,7 @@ Partial-clone `--filter=blob:none` / `tree:0` / related FS4 filters + G6 `object
 
 SSH, OpenPGP, and X.509 commit signing plus `tag -s` / `verify-tag` are claimed (SSH **G37**; OpenPGP/X.509/`tag -s` **G38**). Forge signature UX remains Impossible — see [Limits](../limits/) and [Git vs arks](../git-vs-arks/).
 
-Honest feature comparison: [Git vs arks](../git-vs-arks/). Completion milestone = design + CLI shell coherent with honest Partial — **not** all Claimed; see [Completeness](../completion/). Git feature-symmetry **FS_final** stays Yes where receipts carry; residual **B1/B2/B3/B4/B7(HTTP)/B9** are Claimed with receipts; **B5** Partial terminal / **B5+** Refuse; flat forge leaves and LAN/WAN hosting stay Partial. Remaining non-goals are Impossible / trimmed / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, host-env/LFS product CLI). Clean-room Docker e2e (L8 / S6 / symmetry pillars + `dod-claimed-residual`) is maintainer verification — not the end-user install path.
+Honest feature comparison: [Git vs arks](../git-vs-arks/). Completion milestone = design + CLI shell coherent with honest Partial — **not** all Claimed; see [Completeness](../completion/). Git feature-symmetry **FS_final** stays Yes where receipts carry; residual **B1/B2/B3/B4/B5/B7(HTTP)/B9** are Claimed with receipts; **B5+** Refuse; flat forge leaves and LAN/WAN hosting stay Partial. Remaining non-goals are Impossible / trimmed / owner-policy (**L9**, live G8 latency without secrets, crypto immunity, host-env/LFS product CLI). Clean-room Docker e2e (L8 / S6 / symmetry pillars + `dod-claimed-residual`) is maintainer verification — not the end-user install path.
 
 ## Next
 

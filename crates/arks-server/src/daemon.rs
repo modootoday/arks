@@ -1353,10 +1353,56 @@ mod archive_path_filter_tests {
             text.contains("ACK"),
             "empty-tree archive still ACKs Partial"
         );
-        // ustar ends with two 512-byte zero blocks; Claimed stock parity still Missing.
+        // ustar ends with two 512-byte zero blocks; Claimed stream parity is Docker cmp -s.
         assert!(
             body.len() >= 512,
-            "ustar Partial body should carry trailer/padding bytes"
+            "ustar body should carry trailer/padding bytes"
         );
+    }
+
+    /// Git v2.39.5 `prepare_header` numeric field shapes (`"%07o"` / `"%011o"`).
+    /// Cite: research:root/20261111084400, research:root/20261111090827.
+    #[test]
+    fn prepare_header_octal_widths_match_git_v2_39_5() {
+        let mut mode = [0u8; 8];
+        write_octal(&mut mode, 0o664);
+        assert_eq!(&mode, b"0000664\0");
+
+        let mut size = [0u8; 12];
+        write_octal(&mut size, 15);
+        assert_eq!(&size, b"00000000017\0");
+
+        let mut zero8 = [0u8; 8];
+        write_octal(&mut zero8, 0);
+        assert_eq!(&zero8, b"0000000\0");
+
+        let mut zero12 = [0u8; 12];
+        write_octal(&mut zero12, 0);
+        assert_eq!(&zero12, b"00000000000\0");
+    }
+
+    #[test]
+    fn prepare_header_writes_device_fields_and_space_chksum() {
+        let mut out = Vec::new();
+        write_ustar_entry(&mut out, "pax_global_header", b"52 comment=deadbeef\n", 0o666, b'g', 1_577_934_245)
+            .unwrap();
+        assert!(out.len() >= 512);
+        let header = &out[..512];
+        // Device major/minor always written as "%07o" of 0 (never left all-NUL).
+        assert_eq!(&header[329..337], b"0000000\0");
+        assert_eq!(&header[337..345], b"0000000\0");
+        assert_eq!(&header[257..263], b"ustar\0");
+        assert_eq!(&header[263..265], b"00");
+        assert_eq!(&header[265..269], b"root");
+        assert_eq!(&header[297..301], b"root");
+        // Chksum is "%07o" of sum-with-spaces (7 digits + NUL), not GNU 6+NUL+SP.
+        assert_eq!(header[155], 0);
+        assert!(header[148..155].iter().all(|&b| (b'0'..=b'7').contains(&b)));
+        let mut spaces = header.to_vec();
+        spaces[148..156].fill(b' ');
+        let sum: u32 = spaces.iter().map(|&b| u32::from(b)).sum();
+        let mut expect = [0u8; 8];
+        write_octal(&mut expect, u64::from(sum));
+        assert_eq!(&header[148..156], &expect);
     }
 }

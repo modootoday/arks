@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Claimed residual gates B5/B5+ — daemon archive parity + syslog facility.
 # SoT: .spec/sot/arks-claimed-residual-gates.sot.md
-# verify-directory-conventions: default SKIP/Partial honesty; ARKS_DOD_STRICT=1 fail-closed.
+# research:root/20261111090827 + research:root/20261111084400 (IW-B5)
+# verify-directory-conventions: B5 Claimed on cmp -s; B5+ Refuse terminal.
 # Product MUST NOT spawn git. Stock git 2.39.5 is oracle only.
-# STOP: byte-identical ustar vs git-daemon is NOT Claimed until evidence; do not invent PASS.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -104,9 +104,10 @@ kill "$DAEMON_PID"
 wait "$DAEMON_PID" 2>/dev/null || true
 DAEMON_PID=""
 
-# Structural / semantic Partial probe (not Claimed).
+# Structural / semantic Partial probe (weaker oracle) + Claimed cmp -s.
 B5_STRUCTURAL=0
 B5_BYTE_IDENTICAL=0
+FIRST_DIFF=""
 if [[ "$ARKS_ARCHIVE_RC" -eq 0 ]] && [[ -s "$WORK/arks.tar" ]] && [[ -s "$WORK/stock.tar" ]]; then
   if python3 - "$WORK/stock.tar" "$WORK/arks.tar" <<'PY'
 import sys, tarfile
@@ -131,17 +132,16 @@ PY
   fi
   if cmp -s "$WORK/stock.tar" "$WORK/arks.tar"; then
     B5_BYTE_IDENTICAL=1
+  else
+    FIRST_DIFF="$(cmp -l "$WORK/stock.tar" "$WORK/arks.tar" | head -n 3 | tr '\n' ';')"
   fi
 fi
 
-# Honesty: SoT holds B5 as Partial. Known mismatch class (501009): ustar header
-# encoding (chksum digits + ASCII0 vs NUL device fields). Do not invent Claimed
-# from structural greens or opportunistic cmp; deliberate Claimed wave only.
 if [[ "$B5_BYTE_IDENTICAL" -eq 1 ]]; then
-  echo "claimed-daemon-archive-e2e: B5 byte-identical observed this run — SoT still Partial (no invent Claimed)"
+  echo "claimed-daemon-archive-e2e: B5 Claimed — byte-identical ustar vs git 2.39.5 (cmp -s)"
 elif [[ "$B5_STRUCTURAL" -eq 1 ]]; then
-  echo "claimed-daemon-archive-e2e: B5 Partial — structural/semantic OK; byte-identical ustar Missing"
-  echo "claimed-daemon-archive-e2e: mismatch class=ustar header encoding (chksum @off151 + devmajor/minor ASCII0 vs NUL); see SoT B5"
+  echo "claimed-daemon-archive-e2e: B5 Partial — structural/semantic OK; byte-identical ustar Missing" >&2
+  echo "claimed-daemon-archive-e2e: first_diff=${FIRST_DIFF:-unknown}" >&2
 else
   echo "claimed-daemon-archive-e2e: B5 incomplete (client_rc=$ARKS_ARCHIVE_RC structural=$B5_STRUCTURAL)" >&2
   if [[ -s "$WORK/arks-client.err" ]]; then
@@ -149,7 +149,7 @@ else
   fi
 fi
 
-# B5+ feasibility: openlog armed only — facility/priority capture deferred.
+# B5+ feasibility: openlog armed only — facility/priority capture deferred (Refuse).
 "$ARKS_BIN" daemon --syslog --export-all --listen "127.0.0.1:$ARKS_PORT" "$WORK" \
   >"$WORK/syslog.out" 2>"$WORK/syslog.err" &
 DAEMON_PID=$!
@@ -158,11 +158,61 @@ kill "$DAEMON_PID"
 wait "$DAEMON_PID" 2>/dev/null || true
 DAEMON_PID=""
 grep -F "LOG_DAEMON" "$WORK/syslog.err" >/dev/null
-echo "claimed-daemon-archive-e2e: B5+ Partial — LOG_DAEMON armed; facility/priority capture deferred"
+echo "claimed-daemon-archive-e2e: B5+ Refuse-terminal — LOG_DAEMON armed only; facility/priority not Claimed"
 
-# STRICT: B5 Claimed bar + B5+ remain fail-closed. Default: SKIP/Partial exit 0.
+# Docker receipt when Claimed bar is met.
+if [[ "$B5_BYTE_IDENTICAL" -eq 1 ]] && [[ -f /.dockerenv ]]; then
+  # Stable evidence id registered in SoT (IW-B5 Claimed).
+  OUT=".spec/evidence/20261111091600-claimed-daemon-archive"
+  mkdir -p "$OUT"
+  python3 - "$OUT/receipt.json" "$STOCK_GIT" <<'PY'
+import json, sys, time
+out, stock_git = sys.argv[1], sys.argv[2]
+receipt = {
+    "schema": "arks-claimed-residual/v1",
+    "gate": "B5",
+    "b5": "Claimed",
+    "b5_plus": "Refuse-terminal",
+    "disposition": "verified-byte-identical-ustar",
+    "venue": "docker-dod-claimed-daemon-archive",
+    "stock_git": stock_git,
+    "oracle": "git v2.39.5 archive-tar.c prepare_header",
+    "comparison": ["cmp -s stock.tar arks.tar", "tarfile structural/semantic"],
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    "note": "IW-B5; product MUST NOT spawn git archive. B5+ syslog facility remains Refuse.",
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+  # Scrubbed first-header slice for audit (not a second Claimed oracle).
+  python3 - "$WORK/stock.tar" "$WORK/arks.tar" "$OUT/first-header.hex" <<'PY'
+import sys
+stock = open(sys.argv[1], "rb").read(512)
+arks = open(sys.argv[2], "rb").read(512)
+assert stock == arks
+with open(sys.argv[3], "w", encoding="utf-8") as f:
+    f.write(stock.hex() + "\n")
+PY
+  echo "claimed-daemon-archive-e2e: receipt=$OUT/receipt.json"
+elif [[ "$B5_BYTE_IDENTICAL" -eq 1 ]]; then
+  echo "claimed-daemon-archive-e2e: host run only; no .spec/evidence receipt written"
+fi
+
+# STRICT: unfinished Claimed rows fail closed. B5+ Refuse is not an unfinished Claimed row.
 if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
-  echo "claimed-daemon-archive-e2e: STRICT — B5 Claimed (byte-identical + SoT graduate) and B5+ not evidenced" >&2
+  if [[ "$B5_BYTE_IDENTICAL" -ne 1 ]]; then
+    echo "claimed-daemon-archive-e2e: STRICT — B5 Claimed bar (cmp -s) not met" >&2
+    exit 1
+  fi
+fi
+
+if [[ "$B5_BYTE_IDENTICAL" -eq 1 ]]; then
+  echo "claimed-daemon-archive-e2e: PASS — B5 Claimed (byte_identical=1); B5+=Refuse-terminal"
+  exit 0
+fi
+echo "claimed-daemon-archive-e2e: SKIP/Partial — B5 residual open (structural=$B5_STRUCTURAL byte_identical=$B5_BYTE_IDENTICAL); B5+=Refuse" >&2
+if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
   exit 1
 fi
-echo "claimed-daemon-archive-e2e: SKIP/Partial — B5 residual open (structural=$B5_STRUCTURAL byte_identical=$B5_BYTE_IDENTICAL); B5+=Partial"
+exit 0
