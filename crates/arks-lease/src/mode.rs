@@ -41,7 +41,7 @@ impl WriterSession {
                 Ok(())
             }
             WriterMode::HighConcurrency => {
-                // Unlocked after Docker g11-l3 (legacy g11l3) dual-path receipts. Feature flag
+                // Unlocked after Docker g011-high-concurrency (legacy g11l3) dual-path receipts. Feature flag
                 // remains available for optional compile-time advertising.
                 let _ = cfg!(feature = "high-concurrency");
                 self.mode = WriterMode::HighConcurrency;

@@ -106,7 +106,7 @@ fn temp_repo() -> std::path::PathBuf {
         .unwrap()
         .as_nanos();
     let tid = format!("{:?}", std::thread::current().id()).replace(['(', ')'], "");
-    let root = std::env::temp_dir().join(format!("arks-g1-{stamp}-{tid}"));
+    let root = std::env::temp_dir().join(format!("arks-g001-loose-object-interop-{stamp}-{tid}"));
     std::fs::create_dir_all(&root).unwrap();
     git_init(&root);
     root

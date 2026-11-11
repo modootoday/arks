@@ -59,7 +59,7 @@ fn query_effect(sidecar: &Path, oid_hex: &str) -> Option<String> {
 
 fn write_stretch_status(tier: &str, status: &str) {
     let root = std::env::var("ARKS_G25_ROOT").unwrap_or_else(|_| ".".into());
-    let out = PathBuf::from(root).join("verify/gates/g25/out");
+    let out = PathBuf::from(root).join("verify/gates/g025-celir-index-scale/out");
     let _ = std::fs::create_dir_all(&out);
     let _ = std::fs::write(out.join(format!("{tier}.status")), status);
 }
@@ -71,7 +71,7 @@ fn concurrent_query_storm(n: usize) -> Result<(), String> {
     let git = dir.path().join(".git");
     let mut store =
         FilesystemGitStore::new(objects_dir(&git)).map_err(|e| format!("store open: {e}"))?;
-    let payload = format!("g25-query-seed-{n}").into_bytes();
+    let payload = format!("g025-celir-index-scale-query-seed-{n}").into_bytes();
     let oid = seed_blob(&mut store, &payload);
     let oid_hex = oid.to_hex();
     let want = payload.len().to_string();
@@ -110,13 +110,13 @@ fn concurrent_query_storm(n: usize) -> Result<(), String> {
 
 /// G25-C01 — required scale tier.
 #[test]
-fn g25_c01_concurrent_query_n256() {
+fn g025-celir-index-scale_c01_concurrent_query_n256() {
     concurrent_query_storm(256).expect("N=256 required scale");
 }
 
 /// G25-C02 — stretch 384.
 #[test]
-fn g25_c02_stretch_n384() {
+fn g025-celir-index-scale_c02_stretch_n384() {
     if std::env::var("ARKS_G25_STRETCH").ok().as_deref() == Some("0") {
         write_stretch_status("n384", "SKIP");
         return;
@@ -135,7 +135,7 @@ fn g25_c02_stretch_n384() {
 
 /// G25-C03 — stretch 512.
 #[test]
-fn g25_c03_stretch_n512() {
+fn g025-celir-index-scale_c03_stretch_n512() {
     if std::env::var("ARKS_G25_STRETCH").ok().as_deref() == Some("0") {
         write_stretch_status("n512", "SKIP");
         return;

@@ -62,7 +62,7 @@ fn publish_once(store: &FilesystemGitStore, git_dir: &Path) -> PathBuf {
 
 /// G24-C01 — HighConcurrency valve unlocks (opt-in).
 #[test]
-fn g24_c01_highconcurrency_opt_in() {
+fn g024-l3-celir-joint_c01_highconcurrency_opt_in() {
     let hc = WriterSession::new(WriterMode::HighConcurrency).unwrap();
     assert_eq!(hc.mode(), WriterMode::HighConcurrency);
     let def = WriterSession::default();
@@ -76,15 +76,15 @@ fn joint_storm(n: usize) {
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let seed = seed_blob(&mut store, b"g24-joint-seed");
+    let seed = seed_blob(&mut store, b"g024-l3-celir-joint-joint-seed");
     let seed_hex = seed.to_hex();
-    let want = (b"g24-joint-seed".len()).to_string();
+    let want = (b"g024-l3-celir-joint-joint-seed".len()).to_string();
     let sidecar = publish_once(&store, &git);
 
     let items: Vec<PrepItem> = (0..n)
         .map(|i| PrepItem {
             kind: ObjectKind::Blob,
-            payload: format!("g24-agent-{i}").into_bytes(),
+            payload: format!("g024-l3-celir-joint-agent-{i}").into_bytes(),
         })
         .collect();
     let prepared = prep_hash_parallel(&items, ObjectFormat::Sha1, 8).unwrap();
@@ -162,18 +162,18 @@ fn joint_storm(n: usize) {
 }
 
 #[test]
-fn g24_c02_joint_n32() {
+fn g024-l3-celir-joint_c02_joint_n32() {
     joint_storm(32);
 }
 
 #[test]
-fn g24_c03_joint_n128() {
+fn g024-l3-celir-joint_c03_joint_n128() {
     joint_storm(128);
 }
 
 /// G24-C04 — competing Git lock still fails; lease ≠ skip locks.
 #[test]
-fn g24_c04_competing_lock_still_fails() {
+fn g024-l3-celir-joint_c04_competing_lock_still_fails() {
     let _session = WriterSession::new(WriterMode::HighConcurrency).unwrap();
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
@@ -215,12 +215,12 @@ fn g24_c04_competing_lock_still_fails() {
 
 /// G24-C05 — ObjectStore honesty under joint feature graph.
 #[test]
-fn g24_c05_object_store_filesystem() {
+fn g024-l3-celir-joint_c05_object_store_filesystem() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let oid = seed_blob(&mut store, b"g24-fs");
+    let oid = seed_blob(&mut store, b"g024-l3-celir-joint-fs");
     assert!(store.exists(&oid).unwrap());
     let _ = rebuild_from_git(&store, &git).unwrap();
     assert_eq!(store.get(&oid).unwrap().kind, ObjectKind::Blob);

@@ -82,7 +82,7 @@ G19 M17 ≤0.8× stays **19/19**. Aggressive ≤0.5×: hardlink + no PATH rewrit
 
 ## How maintainers verify
 
-Clean-room Docker only — L8 (`g14`→`g16`→`g20`→`g21`) and S6 (`g38`→`g39`→`g40`) plus the compose matrix. Symmetry smoke: `dod-symmetry` (git / daemon / hub pillars). Host CI is advisory. Pre-release CLI symmetry inventory is the `release-symmetry` gate before tagged `dist`. Receipts live under `.spec/evidence/`. Never invent PASS for secrets-absent live gates.
+Clean-room Docker only — L8 (`g014-cli-parity-production`→`g016-journey-compare`→`g020-cli-symmetric-parity`→`g021-cli-flag-symmetry`) and S6 (`g038-gpgsig-openpgp`→`g039-partial-clone-filter`→`g040-dumb-http-push-deletes`) plus the compose matrix. Symmetry smoke: `dod-symmetry` (git / daemon / hub pillars). Host CI is advisory. Pre-release CLI symmetry inventory is the `release-symmetry` gate before tagged `dist`. Receipts live under `.spec/evidence/`. Never invent PASS for secrets-absent live gates.
 
 ## Next
 

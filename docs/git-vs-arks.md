@@ -87,7 +87,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 |----------|-------------|-----------------|
 | R3 filter / promisor | **Claimed `blob:none` + `tree:0` + FS4 `blob:limit`/`tree:<n>`**; exotic refuse | SoT amend for further specs |
 | R4 OpenPGP / X.509 / `tag -s` | **Claimed (S2 / G38; S6 re-PASS)** | Re-verify G38 after crypto wire change |
-| R5 live forge scale PASS | Harness Claimed; **O1 secrets hard-block** (Environment `g8-live` secret count=0) | Secrets + receipt; never invent latency |
+| R5 live forge scale PASS | Harness Claimed; **O1 secrets hard-block** (Environment `g008-live-forge-smoke-live` secret count=0) | Secrets + receipt; never invent latency |
 | Apache DAV dumb twin | **Claimed (G41 PASS)** | Re-verify after DAV/wire change |
 | R6 clean-room Git pin (**2.39.5**) | Process-closed | Deliberate pin bump + G14-class re-prove |
 | crates.io / docs.rs timing | Closed owner policy (L9) | Owner decision |
@@ -96,7 +96,7 @@ Side-by-side product honesty for stock **Git** vs **arks**. Status labels are Sp
 
 ### Historical (L0–L_final) — Done
 
-1. **L8** — **Done**: clean-room Docker suite `g14`→`g16`→`g20`→`g21` PASS (see [matrix-l8-e2e](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-l8-e2e.md)).
+1. **L8** — **Done**: clean-room Docker suite `g014-cli-parity-production`→`g016-journey-compare`→`g020-cli-symmetric-parity`→`g021-cli-flag-symmetry` PASS (see [matrix-l8-e2e](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-l8-e2e.md)).
 2. **L_final** — **Done**: this comparison matrix ships on Pages; keep honest against Specfold residuals (never invent Claimed).
 3. **L9** — Remains closed owner policy unless the owner opens it.
 

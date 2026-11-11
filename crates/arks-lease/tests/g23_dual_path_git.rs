@@ -21,7 +21,7 @@ fn arks_bin() -> PathBuf {
             return p;
         }
     }
-    panic!("ARKS_BIN missing or not a file (run-g23.sh must build arks first)");
+    panic!("ARKS_BIN missing or not a file (run-g023-celir-dual-path.sh must build arks first)");
 }
 
 fn arks(repo: &Path, args: &[&str]) -> std::process::Output {
@@ -64,26 +64,26 @@ fn assert_ok(out: &std::process::Output, label: &str) {
 
 /// G23-C01 + G23-C02 — porcelain on FS `.git` while celir-index build/publish/open/query works.
 #[test]
-fn g23_c01_c02_porcelain_and_celir_index_same_repo() {
+fn g023-celir-dual-path_c01_c02_porcelain_and_celir_index_same_repo() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
 
     assert_ok(&arks(repo, &["init"]), "arks init");
     fs::write(repo.join("dual.txt"), b"dual-path-seed").unwrap();
     assert_ok(&arks(repo, &["add", "dual.txt"]), "arks add");
-    assert_ok(&arks(repo, &["commit", "-m", "g23-dual"]), "arks commit");
+    assert_ok(&arks(repo, &["commit", "-m", "g023-celir-dual-path-dual"]), "arks commit");
     assert_ok(&arks(repo, &["status"]), "arks status");
     let log = arks(repo, &["log"]);
     assert_ok(&log, "arks log");
     assert!(
-        String::from_utf8_lossy(&log.stdout).contains("g23-dual"),
+        String::from_utf8_lossy(&log.stdout).contains("g023-celir-dual-path-dual"),
         "arks log missing subject"
     );
 
     let git_log = git(repo, &["log", "--oneline"]);
     assert_ok(&git_log, "git log");
     assert!(
-        String::from_utf8_lossy(&git_log.stdout).contains("g23-dual"),
+        String::from_utf8_lossy(&git_log.stdout).contains("g023-celir-dual-path-dual"),
         "stock git cannot open/read tip"
     );
     let tip = git(repo, &["rev-parse", "HEAD"]);
@@ -114,7 +114,7 @@ fn g23_c01_c02_porcelain_and_celir_index_same_repo() {
 
 /// G23-C03 — ObjectStore remains filesystem; index hint ≠ membership.
 #[test]
-fn g23_c03_object_store_filesystem_only() {
+fn g023-celir-dual-path_c03_object_store_filesystem_only() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
     assert_ok(&arks(repo, &["init"]), "arks init");

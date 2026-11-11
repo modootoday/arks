@@ -1,7 +1,7 @@
 //! G26 — local branch + synthetic PR-env scale + leased concurrent tip workers.
 //!
 //! SoT: `.spec/sot/local-branch-pr-sim-clean-room.sot.md`
-//! Matrix: `verify/matrices/matrix-g26.md`
+//! Matrix: `verify/matrices/matrix-g026-local-branch-pr-sim.md`
 //! Honesty: local sim ≠ GitHub PR throughput.
 
 use arks_hash::ObjectFormat;
@@ -70,12 +70,12 @@ fn write_scale_metrics(path: &Path, branches: usize, pr: usize, workers: usize) 
 
 /// G26-C01 — thousands-class branch heads.
 #[test]
-fn g26_c01_branch_scale_n2048() {
+fn g026-local-branch-pr-sim_c01_branch_scale_n2048() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let oid = seed_blob(&mut store, b"g26-branch-seed");
+    let oid = seed_blob(&mut store, b"g026-local-branch-pr-sim-branch-seed");
 
     let mut refs = FilesystemRefStore::open(&git).unwrap();
     refs.update("refs/heads/main", &oid, None).unwrap();
@@ -102,13 +102,13 @@ fn g26_c01_branch_scale_n2048() {
 
 /// G26-C02 — synthetic PR refs (head + optional merge).
 #[test]
-fn g26_c02_synthetic_pr_refs_n2048() {
+fn g026-local-branch-pr-sim_c02_synthetic_pr_refs_n2048() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let head_oid = seed_blob(&mut store, b"g26-pr-head");
-    let merge_oid = seed_blob(&mut store, b"g26-pr-merge");
+    let head_oid = seed_blob(&mut store, b"g026-local-branch-pr-sim-pr-head");
+    let merge_oid = seed_blob(&mut store, b"g026-local-branch-pr-sim-pr-merge");
 
     let mut refs = FilesystemRefStore::open(&git).unwrap();
     for i in 1..=N_PR {
@@ -148,19 +148,19 @@ fn g26_c02_synthetic_pr_refs_n2048() {
 
 /// G26-C03 — leased concurrent tip workers (merge-style tip advances).
 #[test]
-fn g26_c03_leased_concurrent_tip_workers_n32() {
+fn g026-local-branch-pr-sim_c03_leased_concurrent_tip_workers_n32() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let base = seed_blob(&mut store, b"g26-integ-base");
+    let base = seed_blob(&mut store, b"g026-local-branch-pr-sim-integ-base");
     let mut refs = FilesystemRefStore::open(&git).unwrap();
     refs.update("refs/heads/main", &base, None).unwrap();
     // Distinct PR-like heads (tips to merge into shard outs).
     let items: Vec<PrepItem> = (0..N_WORKERS)
         .map(|i| PrepItem {
             kind: ObjectKind::Blob,
-            payload: format!("g26-pr-body-{i}").into_bytes(),
+            payload: format!("g026-local-branch-pr-sim-pr-body-{i}").into_bytes(),
         })
         .collect();
     let prepared = prep_hash_parallel(&items, ObjectFormat::Sha1, 8).unwrap();
@@ -221,7 +221,7 @@ fn g26_c03_leased_concurrent_tip_workers_n32() {
 
 /// G26-C04 — contended lease on same integration ref fail-closed.
 #[test]
-fn g26_c04_contended_lease_fail_closed() {
+fn g026-local-branch-pr-sim_c04_contended_lease_fail_closed() {
     let resource = refns("refs/heads/main");
     let leases = Arc::new(Mutex::new(LeaseManager::new()));
     let n = N_WORKERS;
@@ -263,13 +263,13 @@ fn g26_c04_contended_lease_fail_closed() {
 
 /// G26-C05 — induce-compare: planted ref lock → stock pathology; arks errors (no skip).
 #[test]
-fn g26_c05_planted_lock_induce_compare() {
+fn g026-local-branch-pr-sim_c05_planted_lock_induce_compare() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let oid = seed_blob(&mut store, b"g26-lock-seed");
-    let next = seed_blob(&mut store, b"g26-lock-next");
+    let oid = seed_blob(&mut store, b"g026-local-branch-pr-sim-lock-seed");
+    let next = seed_blob(&mut store, b"g026-local-branch-pr-sim-lock-next");
     let mut refs = FilesystemRefStore::open(&git).unwrap();
     refs.update("refs/heads/main", &oid, None).unwrap();
     drop(refs);

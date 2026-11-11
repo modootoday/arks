@@ -2,7 +2,7 @@
 //!
 //! Enabled only with `--features celir-index-stress` (pulls `arks-store/celir-index`).
 //! SoT: `.spec/sot/celir-index-contention-clean-room.sot.md`
-//! Matrix: `verify/matrices/matrix-g22.md`
+//! Matrix: `verify/matrices/matrix-g022-celir-index-contention.md`
 
 #![cfg(feature = "celir-index-stress")]
 
@@ -69,7 +69,7 @@ fn concurrent_query_storm(n: usize) {
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let payload = b"g22-query-seed";
+    let payload = b"g022-celir-index-contention-query-seed";
     let oid = seed_blob(&mut store, payload);
     let oid_hex = oid.to_hex();
     let want = payload.len().to_string();
@@ -95,23 +95,23 @@ fn concurrent_query_storm(n: usize) {
 }
 
 #[test]
-fn g22_c01_concurrent_query_n32() {
+fn g022-celir-index-contention_c01_concurrent_query_n32() {
     concurrent_query_storm(32);
 }
 
 #[test]
-fn g22_c02_concurrent_query_n128() {
+fn g022-celir-index-contention_c02_concurrent_query_n128() {
     concurrent_query_storm(128);
 }
 
 /// G22-C03 — concurrent rebuild without index lease must fail closed; leased rebuild restores.
 #[test]
-fn g22_c03_concurrent_rebuild_fail_closed_then_leased() {
+fn g022-celir-index-contention_c03_concurrent_rebuild_fail_closed_then_leased() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let payload = b"g22-rebuild-seed";
+    let payload = b"g022-celir-index-contention-rebuild-seed";
     let oid = seed_blob(&mut store, payload);
     let oid_hex = oid.to_hex();
     let want = payload.len().to_string();
@@ -164,11 +164,11 @@ fn g22_c03_concurrent_rebuild_fail_closed_then_leased() {
     let resource = index_scope("celir-index");
     let mut leases = LeaseManager::new();
     leases
-        .grant(&resource, "g22-publisher", Duration::from_secs(60))
+        .grant(&resource, "g022-celir-index-contention-publisher", Duration::from_secs(60))
         .unwrap();
     let store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
     let report = rebuild_from_git(&store, &git).expect("leased rebuild");
-    leases.release(&resource, "g22-publisher").unwrap();
+    leases.release(&resource, "g022-celir-index-contention-publisher").unwrap();
     assert!(report.rows >= 1);
     let effect = query_effect(&report.sidecar_root, &oid_hex);
     assert_eq!(effect.as_deref(), Some(want.as_str()));
@@ -177,21 +177,21 @@ fn g22_c03_concurrent_rebuild_fail_closed_then_leased() {
 
 /// G22-C04 — lease shard Git writers + concurrent index readers; stock git OK.
 #[test]
-fn g22_c04_shard_writers_and_index_readers() {
+fn g022-celir-index-contention_c04_shard_writers_and_index_readers() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let seed = seed_blob(&mut store, b"g22-mixed-seed");
+    let seed = seed_blob(&mut store, b"g022-celir-index-contention-mixed-seed");
     let seed_hex = seed.to_hex();
-    let want = (b"g22-mixed-seed".len()).to_string();
+    let want = (b"g022-celir-index-contention-mixed-seed".len()).to_string();
     let sidecar = publish_once(&store, &git);
 
     let n = 32;
     let items: Vec<PrepItem> = (0..n)
         .map(|i| PrepItem {
             kind: ObjectKind::Blob,
-            payload: format!("g22-agent-{i}").into_bytes(),
+            payload: format!("g022-celir-index-contention-agent-{i}").into_bytes(),
         })
         .collect();
     let prepared = prep_hash_parallel(&items, ObjectFormat::Sha1, 8).unwrap();
@@ -264,12 +264,12 @@ fn g22_c04_shard_writers_and_index_readers() {
 
 /// G22-C05 — ObjectStore honesty: CELIR companion is not the object store.
 #[test]
-fn g22_c05_object_store_remains_filesystem() {
+fn g022-celir-index-contention_c05_object_store_remains_filesystem() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
     let mut store = FilesystemGitStore::new(objects_dir(&git)).unwrap();
-    let oid = seed_blob(&mut store, b"g22-fs-only");
+    let oid = seed_blob(&mut store, b"g022-celir-index-contention-fs-only");
     assert!(store.exists(&oid).unwrap());
     let _ = rebuild_from_git(&store, &git).unwrap();
     // Index hint ≠ ObjectStore membership proof; FS get still required.

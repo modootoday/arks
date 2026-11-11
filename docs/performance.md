@@ -31,25 +31,25 @@ You run the **native** `arks` CLI on your machine. Docker is the verification ve
 
 Carrying receipts:
 
-- [G7 sole G19 ALIAS PATH/`exec`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) — tip aggressive ≤0.5× currency
+- [G7 sole G19 ALIAS PATH/`exec`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g007-smart-http-client-g019-comparative-performance-alias-path-exec) — tip aggressive ≤0.5× currency
 - [Full clean-room matrix tip `54c9dc2`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110224814-full-cleanroom-matrix) — tip G19 re-eval
-- [G19 remasure tip `79fc9bf` — PF5 8/8 (historical carrying)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) — charts below
-- [Prior carrying tip `875359e`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110131600-g19-remeasure-875359e-pf5-8of8)
-- [M18 / G19 exit (historical progressive ≤0.5× set)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109143000-m18-pf4-3-g19-exit)
-- [M17 / G19 full allow-list (19/19 ≤0.8×)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109090000-m17-exit-g19-measured-19)
-- [PF5 aggressive_na amortization notes (historical 7/8)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111001400-fw-pf5-na-amortization-g19-7of8)
+- [G19 remasure tip `79fc9bf` — PF5 8/8 (historical carrying)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g019-comparative-performance-remeasure-pf5-8of8) — charts below
+- [Prior carrying tip `875359e`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110131600-g019-comparative-performance-remeasure-875359e-pf5-8of8)
+- [M18 / G19 exit (historical progressive ≤0.5× set)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109143000-m18-pf4-3-g019-comparative-performance-exit)
+- [M17 / G19 full allow-list (19/19 ≤0.8×)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261109090000-m17-exit-g019-comparative-performance-measured-19)
+- [PF5 aggressive_na amortization notes (historical 7/8)](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111001400-fw-pf5-na-amortization-g019-comparative-performance-7of8)
 - Journey catalog notes: [verify/matrices/matrix-journey.md](https://github.com/modootoday/arks/blob/main/verify/matrices/matrix-journey.md)
 
 ## Claim bars (honesty)
 
 | Claim | Result | Evidence |
 |-------|--------|----------|
-| Full journey allow-list ≤0.8× | **19/19** measured, N/A-free on latest sole remasure | [G7 G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) · [PF5 8/8 `79fc9bf`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) |
-| Aggressive ≤0.5× | Historical **Claimed 8/8** at `79fc9bf`; tip **Claimed(partial)** 18 + ALIAS `aggressive_na` **0.5489** (REVERT Claimed **0.4943**) | [G7 G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) · [prior unblock](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111015154-pf5-revert-first-g19-unblock) · [8/8 historical](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8) |
+| Full journey allow-list ≤0.8× | **19/19** measured, N/A-free on latest sole remasure | [G7 G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g007-smart-http-client-g019-comparative-performance-alias-path-exec) · [PF5 8/8 `79fc9bf`](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g019-comparative-performance-remeasure-pf5-8of8) |
+| Aggressive ≤0.5× | Historical **Claimed 8/8** at `79fc9bf`; tip **Claimed(partial)** 18 + ALIAS `aggressive_na` **0.5489** (REVERT Claimed **0.4943**) | [G7 G19](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g007-smart-http-client-g019-comparative-performance-alias-path-exec) · [prior unblock](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111015154-pf5-revert-first-g019-comparative-performance-unblock) · [8/8 historical](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g019-comparative-performance-remeasure-pf5-8of8) |
 
 ## Median wall-clock (ms)
 
-*Clean-room G19 remasure — median ms (Git vs arks). Source: `.spec/evidence/20261110142500-g19-remeasure-pf5-8of8/`. Prefer ratios across receipts.*
+*Clean-room G19 remasure — median ms (Git vs arks). Source: `.spec/evidence/20261110142500-g019-comparative-performance-remeasure-pf5-8of8/`. Prefer ratios across receipts.*
 
 ## Ratio (arks / Git)
 
@@ -67,7 +67,7 @@ On tip `79fc9bf`, all 19 allow-list journeys stay ≤0.5× (**Claimed 8/8**). Ab
 | Audience | How arks runs |
 |----------|----------------|
 | **End users / developers trying the product** | Native `arks` binary (`cargo build -p arks --release` or an installed binary on `PATH`) |
-| **Maintainers proving claims** | Docker clean-room compose services (`g16` journey compare, `g19` comparative timing, and related gates) |
+| **Maintainers proving claims** | Docker clean-room compose services (`g016-journey-compare` journey compare, `g019-comparative-performance` comparative timing, and related gates) |
 
 If a page ever sounded like “run arks in Docker,” that was verification framing, not the product runtime.
 
