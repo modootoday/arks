@@ -107,8 +107,8 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 
 | Compose / script | Gates |
 |------------------|-------|
-| `dod-claimed-daemon-archive` → `run-claimed-daemon-archive-e2e.sh` | IW-B5 (Partial default; Claimed on `cmp -s` + SoT amend) |
-| `dod-claimed-rebind` → `run-claimed-rebind-e2e.sh` | B7 HTTP Claimed; IW-B7-SSH / IW-B7-FORGE scenarios SKIP/Partial until Claimed |
+| `dod-claimed-daemon-archive` → `run-claimed-daemon-archive-e2e.sh` | IW-B5 Claimed (`cmp -s` + SoT + evidence) |
+| `dod-claimed-rebind` → `run-claimed-rebind-e2e.sh` | B7 HTTP + IW-B7-SSH + IW-B7-FORGE Claimed (separate receipts) |
 | `dod-claimed-residual` | Orchestrator — STRICT fail-closed for unfinished Claimed rows |
 | Symmetry `dod-*-matrix` | IW-HUB-FLAT / IW-PERSONALITY / IW-DAEMON-FLAGS — not B-gate substitutes |
 
