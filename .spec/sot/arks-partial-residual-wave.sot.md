@@ -3,7 +3,7 @@ id: sot:root/arks-partial-residual-wave
 title: Partial residual wave — design SoT (research-gated)
 status: active
 created: 2026-11-11T00:35:43Z
-updated: 2026-11-11T00:35:43Z
+updated: 2026-11-11T00:45:00Z
 tags: [design, residual, partial, forge-in-serve, hub-flat, personality, daemon, hosting-e2e, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -29,7 +29,7 @@ rel:
 
 # Partial residual wave — design SoT (research-gated)
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **This SoT gates the four Partial leftovers** after [[sot:root/arks-remaining-implement-wave]] Claimed rows (IW-B5 / IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL). Tip surveyed **`ff39b69`**. **Design ≠ Claimed.**
 
@@ -55,10 +55,10 @@ Order is **Spec → research cite → product/harness deepen → Docker/focused 
 
 | Order | ID | Surface | Status now | Partial bar (honest) | Claimed bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|----------------------|-------------|-------------------|-----------------|
-| 1 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Partial** (default cohost landed) | Default `arks serve` cohosts HTTP+SSH+forge (no silent SSH-only cut); hosting scaffold MAY probe cohost discoverability | Hosting e2e: local forge module PR **and** issue host journeys under `dod-self-host` (or §7 `dod-claimed-*`) + scrubbed receipt; **B3 ≠ this row** | Invent Claimed from cohost smoke / B3 / hub-serve transitional | `dod-self-host` → `run-self-host-e2e.sh` |
-| 2 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**) | Flat leaves + hub serve forwards remain Partial stubs; B3 HTTPS remote happy path stays Claimed separately | Peer-faithful leaf bodies + hub matrix STRICT greens | Invent leaf Claimed from B3 or stub exit-2 greens | Symmetry `dod-hub-matrix` |
-| 3 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** (skeleton + OR-of-failure) | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | Invent drop-in Claimed from ExitCodePolicy units alone; spawn stock peers | Symmetry `dod-cli-matrix` + personality SoT amend |
-| 4 | **IW-DAEMON-FLAGS** | Daemon deepen (non-B5) | **Partial** / **B5+ Refuse** (terminal for Claimed) | path-filter, `--syslog` openlog, `--user`/`--group`, detach Partial already landed — **deepen closed** | **No** Claimed for classic double-fork or syslog facility/priority; archive Claimed = IW-B5 only | B5+ facility Claimed; classic double-fork Claimed; Windows Event Log as syslog | `dod-daemon-matrix` / archive slot as applicable |
+| 1 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Partial** (cohost + scaffold probe) | Default `arks serve` cohosts HTTP+SSH+forge; `dod-self-host` probes `--no-forge`/forge help markers; STRICT fail-closed | Hosting e2e: local forge module PR **and** issue host journeys under `dod-self-host` (or §7 `dod-claimed-*`) + scrubbed receipt; **B3 ≠ this row** | Invent Claimed from cohost smoke / B3 / hub-serve transitional | `dod-self-host` → `run-self-host-e2e.sh` |
+| 2 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**; Spec honesty) | Flat leaves + hub serve forwards remain Partial stubs; B3 HTTPS remote happy path stays Claimed separately | Peer-faithful leaf bodies + hub matrix STRICT greens | Invent leaf Claimed from B3 or stub exit-2 greens | Symmetry `dod-hub-matrix` |
+| 3 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** (skeleton + OR; drop-in Missing) | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | Invent drop-in Claimed from ExitCodePolicy units alone; spawn stock peers | Symmetry `dod-cli-matrix` + personality SoT amend |
+| 4 | **IW-DAEMON-FLAGS** | Daemon deepen (non-B5) | **Partial** / **B5+ Refuse** (terminal; deepen closed) | path-filter, `--syslog` openlog, `--user`/`--group`, detach Partial; help cites single-fork peer + Refuse bars | **No** Claimed for classic double-fork or syslog facility/priority; archive Claimed = IW-B5 only | B5+ facility Claimed; classic double-fork Claimed; Windows Event Log as syslog | `dod-daemon-matrix` / archive slot as applicable |
 
 **Explicit non-items (do not schedule as implement this wave):** B5+ syslog facility/priority Claimed (**Refuse**); classic SysV double-fork Claimed (**Refuse** — peer detach is single-fork+`setsid`); B8 Windows SIGHUP (**N/A**); OUT `extension`/`copilot` graduation; product OpenSSH embed; L9 / live G8 invent PASS; full gh-matrix Claimed leaf bodies.
 

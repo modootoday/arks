@@ -3,7 +3,7 @@ id: sot:root/arks-hub-cli-surface
 title: arks hub CLI surface
 status: active
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-10T20:15:00Z
+updated: 2026-11-11T00:40:00Z
 tags: [arks-hub, arks-forge-client, cli, gh-symmetry, flat-cli, pr, issue, auth, repo, release, run, workflow, label, native-api, single-release, client-only, overlap]
 verify: manual
 rel:
@@ -11,6 +11,8 @@ rel:
     - sot:root/arks-hub-product-intent
     - sot:root/arks-hub-gh-command-matrix
     - sot:root/arks-cli-personality-factory
+    - sot:root/arks-partial-residual-wave
+    - research:root/20261111093543
     - sot:root/product-naming
     - sot:root/cli-surface
     - sot:root/remote-host-compatibility-surface
@@ -21,9 +23,9 @@ rel:
 
 # arks hub CLI surface
 
-Version **0.4.0**. Normative **CLI surface** (document revision — **not** a product release) for **flat forge client** leaves on the **single** published binary **`arks`**. Intent: [[sot:root/arks-hub-product-intent]] (**client only**, flat-first). **Authoritative inventory / phases:** [[sot:root/arks-hub-gh-command-matrix]] (+ CSV; logical `gh`↔`arks` pillar — argv need not nest under `hub`). Core git names stay as ordinary `arks <git-cmd>` ([[sot:root/cli-surface]]). Self-host **server**: [[sot:root/arks-self-host-server]] (`arks serve`). Design / Partial until Claimed.
+Version **0.4.1**. Normative **CLI surface** (document revision — **not** a product release) for **flat forge client** leaves on the **single** published binary **`arks`**. Intent: [[sot:root/arks-hub-product-intent]] (**client only**, flat-first). **Authoritative inventory / phases:** [[sot:root/arks-hub-gh-command-matrix]] (+ CSV; logical `gh`↔`arks` pillar — argv need not nest under `hub`). Core git names stay as ordinary `arks <git-cmd>` ([[sot:root/cli-surface]]). Self-host **server**: [[sot:root/arks-self-host-server]] (`arks serve`). Design / Partial until Claimed.
 
-Until implemented: refuse with non-zero exit; **no Claimed**.
+Until implemented: refuse with non-zero exit; **no Claimed**. **IW-HUB-FLAT** ([[sot:root/arks-partial-residual-wave]]): flat-leaf Partial stubs + **B3** Claimed remote happy path **MUST NOT** invent peer-faithful leaf Claimed. Flat client argv ≠ `arks serve` forge host (IW-FORGE-SERVE).
 
 ## Rule
 
@@ -92,3 +94,4 @@ One published CLI keeps release honest. `arks hub` preserves `gh` muscle memory 
 2. Matrix coverage check vs pinned `gh help reference`.
 3. No product-path `gh`/`git` spawn.
 4. No docs claiming a separate `arks-hub` release binary.
+5. **IW-HUB-FLAT:** B3 HTTPS remote Claimed receipts **MUST NOT** flip flat-leaf Claimed; hub matrix STRICT + peer-faithful bodies required ([[research:root/20261111093543]]).

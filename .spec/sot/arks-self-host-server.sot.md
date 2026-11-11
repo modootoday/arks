@@ -3,7 +3,7 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-11T00:20:00Z
+updated: 2026-11-11T00:40:00Z
 tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial, claimed-residual]
 verify: manual
 rel:
@@ -12,6 +12,8 @@ rel:
     - sot:root/arks-server
     - sot:root/arks-daemon-product-intent
     - sot:root/arks-hub-product-intent
+    - sot:root/arks-partial-residual-wave
+    - research:root/20261111093543
     - sot:root/remote-host-compatibility-surface
     - sot:root/cli-surface
     - sot:root/public-surface
@@ -204,8 +206,8 @@ arks product self-host (THIS SoT) — GitHub-class host
 
 34. **Design intent (now):** this SoT + `docs/self-host.md` + honest CLI help for `arks serve` / `arks serve config` / fail-closed Partial modules; hub SoTs say **client-only** for primary UX; **port policy** (normative vs demo) documented.
 35. **Already carrying (wire, not hosting e2e):** G15 / G29–G32 / G36 — cite residual register; do not re-stamp. Ops-SSHD stdio ≠ in-process serve SSH Claimed. Transitional `arks hub serve` Partial ≠ forge-in-serve Claimed.
-36. **Future hosting e2e:** compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` proving arks-only `arks serve` (with explicit disable flags until SSH/forge Claimed), LAN-shaped bind, Basic, stock Git client + optional `arks hub` against forge base — scaffold/SKIP until Claimed; **no invent hosting Claimed**.
-37. **Claimed residual deepen (adjacent):** Docker slots under [[sot:root/arks-claimed-residual-gates]] — **B1+B2** ([[evidence:root/20261110235116-claimed-ssh]]), **B7 HTTP+SSH+forge** ([[evidence:root/20261110233659-claimed-rebind]], [[evidence:root/20261111092000-claimed-rebind-ssh]], [[evidence:root/20261111092000-claimed-rebind-forge]]), **B9** ([[evidence:root/20261110233652-claimed-tls]]), **B5** ([[evidence:root/20261111091600-claimed-daemon-archive]]). **B5+** syslog **Refuse terminal**. Remaining IW rows (forge-in-serve / hub flat / personality / daemon flags) stay under [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]].
+36. **Future hosting e2e (IW-FORGE-SERVE):** compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` proving arks-only `arks serve` cohost + **PR create/list and issue create/list** against the local forge module, LAN-shaped bind, Basic, stock Git client optional — scaffold/SKIP until Claimed; **B3 client remote ≠ this row**; **no invent hosting Claimed**. Gate: [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]].
+37. **Claimed residual deepen (adjacent):** Docker slots under [[sot:root/arks-claimed-residual-gates]] — **B1+B2** ([[evidence:root/20261110235116-claimed-ssh]]), **B7 HTTP+SSH+forge** ([[evidence:root/20261110233659-claimed-rebind]], [[evidence:root/20261111092000-claimed-rebind-ssh]], [[evidence:root/20261111092000-claimed-rebind-forge]]), **B9** ([[evidence:root/20261110233652-claimed-tls]]), **B5** ([[evidence:root/20261111091600-claimed-daemon-archive]]). **B5+** syslog **Refuse terminal**. Partial leftovers (forge-in-serve hosting e2e / hub flat / personality drop-in / daemon flags) stay under [[sot:root/arks-partial-residual-wave]].
 
 ## Why
 

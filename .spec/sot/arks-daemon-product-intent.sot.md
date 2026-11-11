@@ -3,7 +3,7 @@ id: sot:root/arks-daemon-product-intent
 title: arks-daemon product intent
 status: active
 created: 2026-11-10T19:16:00Z
-updated: 2026-11-10T23:45:00Z
+updated: 2026-11-11T00:40:00Z
 tags: [arks-daemon, git-daemon, daemon, internal-crate, single-release, git-symmetry, self-host]
 verify: manual
 rel:
@@ -14,6 +14,8 @@ rel:
     - sot:root/remote-host-compatibility-surface
     - sot:root/arks-server
     - sot:root/arks-self-host-server
+    - sot:root/arks-partial-residual-wave
+    - research:root/20261111093543
     - sot:root/public-surface
     - research:root/20261111035226
   evidence:
@@ -39,7 +41,8 @@ Version **0.1.0**. Normative intent for **`git-daemon` symmetry** inside the **s
 6. Related server porcelain (`upload-pack`, `receive-pack`, `http-backend`, `serve` / transitional `serve-http`, `update-server-info`) remains on the `arks` CLI / `arks-server` graph per [[sot:root/cli-surface]] / [[sot:root/remote-host-compatibility-surface]]; this SoT owns the **daemon peer** responsibility split. Self-host product surface is [[sot:root/arks-self-host-server]] (`arks serve` flags — not folded into daemon).
 7. **Product self-host** (localhost / LAN / WAN reachability using only `arks`) is owned by [[sot:root/arks-self-host-server]]. Daemon flag symmetry is **adjacent**, not a substitute: stock `git-daemon` parity does **not** by itself define the arks self-host product story.
 8. **Upload-archive B5 is Claimed.** Byte-identical ustar vs stock git-daemon pin **2.39.5** evidenced by Docker `cmp -s` ([[evidence:root/20261111091600-claimed-daemon-archive]]; [[sot:root/arks-claimed-residual-gates]]; IW-B5 via [[research:root/20261111084400]] / [[research:root/20261111090827]]). Protocol/structural agreement remains a weaker Partial oracle and **MUST NOT** alone invent Claimed.
-9. **Syslog B5+ is Refuse (terminal) for this residual wave.** Unix `LOG_DAEMON` Partial arming ≠ facility/priority Claimed; Windows Event Log ≠ POSIX syslog. Reopen only with collector receipt + SoT amend.
+9. **Syslog B5+ is Refuse (terminal).** Unix `LOG_DAEMON` Partial arming ≠ facility/priority Claimed ([[research:root/20261111093543]]; man syslog(3) facility≠level); Windows Event Log ≠ POSIX syslog. Reopen only with collector receipt + SoT amend.
+10. **IW-DAEMON-FLAGS deepen is closed (Partial).** path-filter / `--syslog` / `--user`/`--group` / detach Partial stay Partial. **Classic SysV double-fork Claimed is Refuse** — peer `git-daemon --detach` is single-fork + `setsid` ([[research:root/20261111093543]]); arks Partial re-exec detach ≠ Claimed peer parity. Gate: [[sot:root/arks-partial-residual-wave]].
 
 ### Non-goals
 
