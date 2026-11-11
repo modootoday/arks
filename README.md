@@ -99,18 +99,19 @@ Product hosting umbrella — **one** process intended for Git HTTP + SSH + forge
 # Narrow Claimed HTTP git wire path (opt out of SSH/forge modules):
 arks serve --no-ssh --no-forge /path/to/repos
 
-# Product default shape (HTTP+SSH+forge) — residual B1/B2/B9 Claimed; forge-in-serve still Partial:
+# Product default shape (HTTP+SSH+forge) — B1/B2/B9 + IW-FORGE-SERVE hosting e2e Claimed:
 # arks serve /path/to/repos
 ```
 
 | Surface | Role | Tip honesty |
 |---------|------|-------------|
-| `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH **B1/B2 Claimed** ([[evidence:root/20261110235116-claimed-ssh]]); TLS **B9 Claimed** ([[evidence:root/20261110233652-claimed-tls]]); forge-in-serve **Partial** |
-| `arks serve config …` | Server config store | **B7 Claimed (HTTP)** rebind ([[evidence:root/20261110233659-claimed-rebind]]); SSH/forge rebind Partial; Windows file-mtime Partial (≠ hub) |
+| `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH **B1/B2 Claimed**; TLS **B9 Claimed**; forge-in-serve hosting e2e **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) |
+| `arks serve config …` | Server config store | **B7 Claimed (HTTP+SSH+forge)** rebind; Windows file-mtime Partial (≠ hub) |
 | `arks serve ssh-smoke` | Local SSH banner smoke | **Partial** (smoke ≠ B1/B2 Claimed e2e) |
-| `arks daemon` | `git://` peer (`git-daemon` symmetry) | **Partial** deepen; **B5 Partial (terminal)** archive byte-identical; **B5+ Refuse** syslog facility; Windows `--user`/`--group`/`--syslog` Missing refuse |
-| Flat `arks pr` / `issue` / `auth` / … | Forge **client** | Leaves **Partial**; **B3** HTTPS forge remote e2e **Claimed** ([[evidence:root/20261110233655-claimed-hub-https]]); `hub smoke` Partial; OUT refuse; never `gh` |
-| `arks agent …` | Optional review / CEV extension | **B4 Claimed** fixture e2e ([[evidence:root/20261110231959-claimed-agent-llm]]); smokes Partial; not git-alias DoD |
+| `arks daemon` | `git://` peer (`git-daemon` symmetry) | Flag deepen **Partial**; archive **B5 Claimed**; **B5+ Refuse** facility/priority; classic double-fork **Refuse**; Windows `--user`/`--group`/`--syslog` Missing refuse |
+| Flat `arks pr` / `issue` / `auth` / … | Forge **client** | Flat subset + expand **Claimed** where evidenced; other v1 leaves **Partial** (Missing=0); **B3** HTTPS remote **Claimed**; never `gh` |
+| Personality `git`/`gh` | Drop-in sample+expand | **Claimed** sample+expand ([[evidence:root/20261111020515-personality-expand]]); per-cmd exit tables Partial |
+| `arks agent …` | Optional review / CEV extension | **B4 Claimed** fixture e2e; smokes Partial; not git-alias DoD |
 
 Ports: prefer **22 / 80 / 443 / 9418**; label **2222 / 8080** as demo/alternate — [Ports](docs/ports.md), [Self-host](docs/self-host.md).
 
@@ -124,7 +125,7 @@ Public clean-room Definition of Done is **three peer-symmetry pillars** (plus ad
 | **2. Daemon** | `git-daemon` | `arks daemon` |
 | **3. Forge client** | `gh` | flat `arks pr` / `issue` / … (transitional `arks hub …`) |
 
-**Completion milestone** for this docs pass means: owning design SoTs + CLI shell are coherent and honesty matches Spec residual rows (**B1–B4 / B7(HTTP) / B9 Claimed**; **B5 Partial**; **B5+ Refuse**) — **not** that every surface is Claimed. See [Completeness](docs/completion.md).
+**Completion milestone** for this docs pass means: owning design SoTs + CLI shell are coherent and honesty matches Spec residual rows (**B1–B5 / B7(HTTP+SSH+forge) / B9 Claimed**; **B5+ Refuse**; hub/personality Claimed where receipts say so) — **not** that every surface is Claimed. See [Completeness](docs/completion.md).
 
 Product paths **never** spawn `git` or `gh`. Stock peers are oracles for clean-room only.
 

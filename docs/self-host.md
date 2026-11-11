@@ -89,7 +89,7 @@ Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, *
 
 - **HTTP git path:** HTTP Basic when configured; prefer **HTTPS/SSL/TLS** via operator-terminated TLS off-localhost
 - **SSH path:** public keys / `authorized_keys`-style expectations. In-process SSH under `arks serve` is **B1/B2 Claimed** for OpenSSH-exact ChaCha wire + stock `git clone ssh://` e2e ([[evidence:root/20261110235116-claimed-ssh]]); durable §17(c) listen + key paths + KEX/NEWKEYS + authorized_keys + exec→pack remain the product path; bind failure fail-closed. Ops SSHD + `upload-pack`/`receive-pack` remains a valid alternate
-- **Forge API:** tokens / `arks hub auth …` against the forge module base URL; **B3** HTTPS forge remote client e2e is Claimed ([[evidence:root/20261110233655-claimed-hub-https]]) — local forge-in-serve cohosts under default arks serve (Partial depth; hosting e2e not Claimed)
+- **Forge API:** tokens / `arks hub auth …` against the forge module base URL; **B3** HTTPS forge remote client e2e is Claimed ([[evidence:root/20261110233655-claimed-hub-https]]); local forge-in-serve hosting e2e is **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]])
 - **Fail-closed:** if a module is enabled and not Claimed-ready, `arks serve` MUST NOT silently degrade while advertising Claimed default-set success (§17). Use `--no-ssh` / `--no-forge` when you need a narrower Claimed-only path (or transitional `arks hub serve` for Partial local forge)
 - **`git://` (`arks daemon`):** typically unauthenticated, no SSL — prefer `arks serve` when auth matters
 

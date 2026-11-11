@@ -3,7 +3,7 @@ id: sot:root/arks-remaining-incompletes-wave
 title: Remaining incompletes wave — hub full-matrix / personality expand / daemon Refuse / docs
 status: active
 created: 2026-11-11T01:59:24Z
-updated: 2026-11-11T01:59:24Z
+updated: 2026-11-11T02:05:15Z
 tags: [design, residual, hub-full-matrix, personality, daemon, b5-plus, docs-honesty, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -33,7 +33,7 @@ rel:
 
 # Remaining incompletes wave — design SoT
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **This SoT gates leftovers after [[sot:root/arks-verify-docker-e2e-claim-wave]].** Tip surveyed **`7b1f216`**. **Design ≠ Claimed.** Cite [[research:root/20261111105924]] + this SoT before product Claimed flips.
 
@@ -51,10 +51,10 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 
 | Order | ID | Surface | Status now | Close bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|-----------|-------------------|-----------------|
-| 1 | **IW-HUB-FULL** | Hub v1 CSV Missing→0 + expand Claimed | **Open** (Missing=80 beyond flat-10 Claimed) | (a) v1 **Missing=0** via Partial/Claimed/Refuse/later honesty; (b) expanded Claimed subset with Docker receipt | Invent Claimed for all 80; treat stub exit-2 as Claimed body | `dod-hub-matrix` + `ARKS_HUB_IW_FULL=1` |
-| 2 | **IW-PERSONALITY-FULL** | Personality drop-in beyond sample | **Open** (sample Claimed; per-cmd tables Partial) | Expanded Docker sample (git + gh) + receipt; cli survey Missing stays 0; per-cmd peer tables may remain Partial | Claim every CLI Partial row as drop-in | `dod-cli-matrix` + `ARKS_PERSONALITY_DROPIN=1` expand |
-| 3 | **IW-DAEMON-FLAGS / B5+** | Daemon deepen + facility | **Partial** / **Refuse** | Terminal document: Partial deepen closed; B5+ facility/priority **Refuse**; classic double-fork **Refuse** | Force facility Claimed without collector | `dod-daemon-matrix` honesty only |
-| 4 | **DOCS-HONESTY** | README / docs vs Claimed register | **Lag** | Public copy cites IW-FORGE-SERVE / HUB-FLAT subset / PERSONALITY sample / B5 / B7 SSH+forge Claimed | Invent beyond receipts | Manual |
+| 1 | **IW-HUB-FULL** | Hub v1 CSV Missing→0 + expand Claimed | **Claimed** ([[evidence:root/20261111020350-hub-full-expand]]; v1 Missing=0; Partial leftovers honest) | (a) v1 **Missing=0**; (b) expanded Claimed subset with Docker receipt | Invent Claimed for stub exit-2 | `dod-hub-matrix` + `ARKS_HUB_IW_FULL=1` |
+| 2 | **IW-PERSONALITY-FULL** | Personality drop-in beyond sample | **Claimed** expand ([[evidence:root/20261111020515-personality-expand]]); per-cmd tables Partial | Expanded Docker sample + receipt; cli survey Missing=0 | Claim every CLI Partial row as drop-in | `dod-cli-matrix` + `ARKS_PERSONALITY_DROPIN=1` |
+| 3 | **IW-DAEMON-FLAGS / B5+** | Daemon deepen + facility | **Partial** / **Refuse (terminal)** | Documented; no collector → no B5+ Claimed | Force facility Claimed without collector | honesty only |
+| 4 | **DOCS-HONESTY** | README / docs vs Claimed register | **Synced** this wave | Public copy cites Claimed receipts | Invent beyond receipts | Manual |
 
 ### IW-HUB-FULL detail
 

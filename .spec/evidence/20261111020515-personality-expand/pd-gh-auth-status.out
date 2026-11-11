@@ -1,0 +1,4 @@
+arks hub auth status: token present (file=/tmp/arks-personality.3ay19e/home/.config/arks/hub-token)
+api=http://127.0.0.1:43353
+user_probe=ok
+{"id":1,"login":"local","type":"User"}

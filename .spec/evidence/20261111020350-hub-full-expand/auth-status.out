@@ -1,0 +1,4 @@
+arks hub auth status: token present (file=/tmp/arks-hub-full.gJrUlS/home/.config/arks/hub-token)
+api=http://127.0.0.1:59793
+user_probe=ok
+{"id":1,"login":"local","type":"User"}

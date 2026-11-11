@@ -1,0 +1,19 @@
+{
+  "schema": "arks-personality-dropin/v2",
+  "gate": "IW-PERSONALITY-FULL",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "5a46701",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "checks": [
+    "PD-GIT ARKS_PERSONALITY=git --version peer stdout ^git version + exit 0 vs pin",
+    "PD-GIT bad-flag non-zero exit",
+    "PD-GIT-EXPAND --help exit 0 vs pin",
+    "PD-GH pr --help exit 0; unknown leaf exit 2",
+    "PD-GH pr list happy path against local forge",
+    "PD-GH-EXPAND issue --help exit 0; issue list; auth status"
+  ],
+  "cli_survey_missing": 0,
+  "note": "Expanded sample Claimed; per-command peer numeric exit tables remain Partial. ExitCodePolicy units alone \u2260 this row.",
+  "timestamp": "2026-11-11T02:05:15Z"
+}

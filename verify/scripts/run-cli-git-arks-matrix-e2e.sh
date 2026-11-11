@@ -117,6 +117,27 @@ if [[ "${ARKS_PERSONALITY_DROPIN:-0}" == "1" ]]; then
     echo "cli-git-arks-matrix-e2e: PD-GIT ok — version shape + exit classes (badflag ec=$git_bad_ec)"
   fi
 
+  # PD-GIT expand (IW-PERSONALITY-FULL): --help usage-class exit 0 vs pin.
+  set +e
+  pin_help_out="$(git --help 2>&1)"
+  pin_help_ec=$?
+  git_help_out="$(ARKS_PERSONALITY=git "$ARKS_BIN" --help 2>&1)"
+  git_help_ec=$?
+  set -e
+  printf '%s\n' "$pin_help_out" >"$WORK/pin-git-help.out"
+  printf '%s\n' "$git_help_out" >"$WORK/pd-git-help.out"
+  echo "pd-git-help-ec=$git_help_ec" >>"$WORK/pd-git-ecs.txt"
+  echo "pin-git-help-ec=$pin_help_ec" >>"$WORK/pd-git-ecs.txt"
+  if [[ "$pin_help_ec" -ne 0 ]] || [[ "$git_help_ec" -ne 0 ]]; then
+    echo "FAIL PD-GIT-EXPAND: --help exit class (pin=$pin_help_ec arks=$git_help_ec)" >&2
+    DROPIN_OK=0
+  elif ! echo "$git_help_out" | grep -Eqi 'usage|arks|git'; then
+    echo "FAIL PD-GIT-EXPAND: --help missing usage-ish stdout" >&2
+    DROPIN_OK=0
+  else
+    echo "cli-git-arks-matrix-e2e: PD-GIT-EXPAND ok — --help exit 0"
+  fi
+
   # PD-GH: help exit 0; unknown leaf usage-class 2; pr list against local forge.
   set +e
   gh_help_out="$(ARKS_PERSONALITY=gh "$ARKS_BIN" pr --help 2>&1)"
@@ -189,6 +210,36 @@ PY
     echo "cli-git-arks-matrix-e2e: PD-GH pr list happy path ok"
   fi
 
+  # PD-GH expand (IW-PERSONALITY-FULL): issue --help + issue list + auth status.
+  set +e
+  gh_issue_help_out="$(ARKS_PERSONALITY=gh "$ARKS_BIN" issue --help 2>&1)"
+  gh_issue_help_ec=$?
+  gh_issue_list_out="$(ARKS_PERSONALITY=gh "$ARKS_BIN" issue list --repo local/pdropin 2>&1)"
+  gh_issue_list_ec=$?
+  gh_auth_out="$(ARKS_PERSONALITY=gh "$ARKS_BIN" auth status 2>&1)"
+  gh_auth_ec=$?
+  set -e
+  printf '%s\n' "$gh_issue_help_out" >"$WORK/pd-gh-issue-help.out"
+  printf '%s\n' "$gh_issue_list_out" >"$WORK/pd-gh-issue-list.out"
+  printf '%s\n' "$gh_auth_out" >"$WORK/pd-gh-auth-status.out"
+  echo "pd-gh-issue-help-ec=$gh_issue_help_ec" >>"$WORK/pd-gh-ecs.txt"
+  echo "pd-gh-issue-list-ec=$gh_issue_list_ec" >>"$WORK/pd-gh-ecs.txt"
+  echo "pd-gh-auth-status-ec=$gh_auth_ec" >>"$WORK/pd-gh-ecs.txt"
+  if [[ "$gh_issue_help_ec" -ne 0 ]]; then
+    echo "FAIL PD-GH-EXPAND: issue --help exit=$gh_issue_help_ec" >&2
+    DROPIN_OK=0
+  elif [[ "$gh_issue_list_ec" -ne 0 ]]; then
+    echo "FAIL PD-GH-EXPAND: issue list exit=$gh_issue_list_ec" >&2
+    echo "$gh_issue_list_out" >&2
+    DROPIN_OK=0
+  elif [[ "$gh_auth_ec" -ne 0 ]]; then
+    echo "FAIL PD-GH-EXPAND: auth status exit=$gh_auth_ec" >&2
+    echo "$gh_auth_out" >&2
+    DROPIN_OK=0
+  else
+    echo "cli-git-arks-matrix-e2e: PD-GH-EXPAND ok — issue help/list + auth status"
+  fi
+
   if [[ "$DROPIN_OK" -ne 1 ]]; then
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
       echo "cli-git-arks-matrix-e2e: FAIL STRICT IW-PERSONALITY drop-in (no invent PASS)" >&2
@@ -198,19 +249,20 @@ PY
     exit 0
   fi
 
-  echo "cli-git-arks-matrix-e2e: IW-PERSONALITY drop-in sample greens (ExitCodePolicy units ≠ this row)"
+  echo "cli-git-arks-matrix-e2e: IW-PERSONALITY sample+expand greens (ExitCodePolicy units ≠ this row)"
+  echo "cli-git-arks-matrix-e2e: per-cmd peer numeric tables remain Partial (IW-PERSONALITY-FULL honesty)"
 
   if [[ -f /.dockerenv ]]; then
     TS="$(date -u +%Y%m%d%H%M%S)"
-    OUT=".spec/evidence/${TS}-personality-dropin"
+    OUT=".spec/evidence/${TS}-personality-expand"
     mkdir -p "$OUT"
     cp "$WORK"/*.out "$WORK"/*.txt "$WORK/server.err" "$OUT/" 2>/dev/null || true
     python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
 import json, sys, time
 out, tip, image = sys.argv[1:]
 receipt = {
-    "schema": "arks-personality-dropin/v1",
-    "gate": "IW-PERSONALITY",
+    "schema": "arks-personality-dropin/v2",
+    "gate": "IW-PERSONALITY-FULL",
     "disposition": "verified-product-path",
     "venue": "docker-dod-cli-matrix",
     "tip": tip,
@@ -218,10 +270,13 @@ receipt = {
     "checks": [
         "PD-GIT ARKS_PERSONALITY=git --version peer stdout ^git version + exit 0 vs pin",
         "PD-GIT bad-flag non-zero exit",
+        "PD-GIT-EXPAND --help exit 0 vs pin",
         "PD-GH pr --help exit 0; unknown leaf exit 2",
         "PD-GH pr list happy path against local forge",
+        "PD-GH-EXPAND issue --help exit 0; issue list; auth status",
     ],
-    "note": "ExitCodePolicy OR-of-failure unit greens alone do not satisfy IW-PERSONALITY Claimed.",
+    "cli_survey_missing": 0,
+    "note": "Expanded sample Claimed; per-command peer numeric exit tables remain Partial. ExitCodePolicy units alone ≠ this row.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

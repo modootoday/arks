@@ -38,14 +38,15 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 
 ## Honesty
 
-Daemon flag inventory is largely present as **Partial** deepen: `--inetd` / `--pid-file` / `--detach` (unix `setsid` / Windows DETACHED_PROCESS re-exec + parent pid-file write; not classic double-fork Claimed) / upload-archive **ACK + sideband-64k** with `--prefix=` / includes / `--exclude=` Partial (**path-filter applied in stream body** + format honesty tar/ustar; expanded protocol-body unit tests including zip ERR refuse + empty-tree ustar) / `--access-hook` stub body / unix **`--syslog`** (openlog LOG_DAEMON Partial) / unix **`--user` / `--group`** (setgid then setuid Partial; refuse fail-closed on error). Windows: `--syslog` / `--user` / `--group` honest **Missing** refuse (Event Log ≠ syslog and not wired; no setuid/setgid — do not invent Partial).
+Daemon flag inventory is largely present as **Partial** deepen (IW-DAEMON-FLAGS closed): `--inetd` / `--pid-file` / `--detach` (unix `setsid` / Windows DETACHED_PROCESS re-exec; **classic SysV double-fork Claimed is Refuse** — peer is single-fork+`setsid`) / upload-archive with path-filter Partial oracle + **B5 Claimed** byte-identical ustar / `--access-hook` stub / unix **`--syslog`** (openlog LOG_DAEMON Partial) / unix **`--user` / `--group`** Partial. Windows: `--syslog` / `--user` / `--group` honest **Missing** refuse (Event Log ≠ syslog).
 
-Residual honesty ([[sot:root/arks-claimed-residual-gates]]):
+Residual honesty ([[sot:root/arks-claimed-residual-gates]] / [[sot:root/arks-remaining-incompletes-wave]]):
 
 | Gate | Class | Notes |
 |------|-------|-------|
-| **B5** archive format parity | **Claimed** | Docker `cmp -s` vs stock git-daemon **2.39.5** ([[evidence:root/20261111091600-claimed-daemon-archive]]; [[research:root/20261111084400]], [[research:root/20261111090827]]) |
-| **B5+** syslog facility/priority | **Refuse (terminal)** | Partial `openlog`/`LOG_DAEMON` ≠ facility Claimed; Windows Event Log ≠ POSIX syslog |
+| **B5** archive format parity | **Claimed** | Docker `cmp -s` vs stock git-daemon **2.39.5** ([[evidence:root/20261111091600-claimed-daemon-archive]]) |
+| **B5+** syslog facility/priority | **Refuse (terminal)** | No collector receipt; Partial `openlog`/`LOG_DAEMON` ≠ facility Claimed; Windows Event Log ≠ POSIX syslog |
+| Classic double-fork | **Refuse (terminal)** | Peer detach is single-fork+`setsid` |
 
 **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
 

@@ -30,7 +30,7 @@ rel:
 
 Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). Normative **design** for (1) **personality dispatch** on the single published binary `arks`, (2) lean **CommandLayer + Registry** factory in `crates/arks`, and (3) **overlap** input/output/**exit-code** rules for the native `arks` personality.
 
-**Honesty:** This SoT is **design intent**. Deep forge/SSH bodies remain **Partial / not Claimed**. CLI **skeleton** (PersonalityResolver + Registry + OverlapFacade + ExitCodePolicy + stubs) MAY land without inventing Claimed feature depth. **IW-PERSONALITY** drop-in **sample Claimed** via [[evidence:root/20261111014608-personality-dropin]] ([[sot:root/arks-verify-docker-e2e-claim-wave]]); ExitCodePolicy OR-of-failure unit greens **MUST NOT** invent broader drop-in Claimed; full CLI CSV Missing remains open ([[research:root/20261111093543]], `gh` exit-codes 0/1/2/4). Normative stdout/stderr/exit **classes**: [[sot:root/arks-cli-output-exit-contract]]. Document revision ≠ crates.io/`arks` version bump.
+**Honesty:** This SoT is **design intent**. Deep forge/SSH bodies remain **Partial / not Claimed**. CLI **skeleton** (PersonalityResolver + Registry + OverlapFacade + ExitCodePolicy + stubs) MAY land without inventing Claimed feature depth. **IW-PERSONALITY** drop-in **sample Claimed** via [[evidence:root/20261111014608-personality-dropin]]; **IW-PERSONALITY-FULL expand Claimed** via [[evidence:root/20261111020515-personality-expand]] ([[sot:root/arks-remaining-incompletes-wave]]); ExitCodePolicy OR-of-failure unit greens **MUST NOT** invent per-cmd table Claimed; cli survey Missing=0; per-cmd peer numeric tables remain Partial ([[research:root/20261111105924]], `gh` exit-codes 0/1/2/4). Normative stdout/stderr/exit **classes**: [[sot:root/arks-cli-output-exit-contract]]. Document revision ≠ crates.io/`arks` version bump.
 
 Cross-owners: porcelain inventory [[sot:root/cli-surface]]; output/exit contract [[sot:root/arks-cli-output-exit-contract]]; forge client [[sot:root/arks-hub-product-intent]] / [[sot:root/arks-hub-cli-surface]]; host [[sot:root/arks-self-host-server]]; daemon [[sot:root/arks-daemon-product-intent]]; agent [[sot:root/arks-agent-cli-surface]].
 
@@ -178,7 +178,7 @@ argv0 / ARKS_PERSONALITY
 | Flat forge leaves on bare `arks` | **Partial** beyond Claimed subset; nested `hub` transitional; IW-HUB-FLAT subset Claimed elsewhere |
 | `arks serve --no-forge` / forge-in-serve | Cohost + hosting e2e Claimed elsewhere (IW-FORGE-SERVE) |
 | Git porcelain under `arks` / alias | Per [[sot:root/cli-surface]] Claimed inventory — unchanged by this SoT |
-| `git`/`gh` personality drop-in Claimed | **Claimed sample** ([[evidence:root/20261111014608-personality-dropin]]); full CLI CSV Missing open |
+| `git`/`gh` personality drop-in Claimed | **Claimed sample+expand** ([[evidence:root/20261111014608-personality-dropin]], [[evidence:root/20261111020515-personality-expand]]); cli survey Missing=0; per-cmd tables Partial |
 
 ## Why
 

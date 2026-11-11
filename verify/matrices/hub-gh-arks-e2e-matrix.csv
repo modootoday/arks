@@ -1,47 +1,47 @@
 gh_command,arks_hub_target,status_now,phase,notes
 auth,auth,Partial,v1,Group help wired via arks hub
 auth login,auth login,Claimed,v1,token store + local POST /login; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-auth logout,auth logout,Partial,v1,hub auth logout Partial — clears stored token
+auth logout,auth logout,Claimed,v1,hub auth logout Partial — clears stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
 auth status,auth status,Claimed,v1,token file + local GET /user probe; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-auth token,auth token,Partial,v1,hub auth token Partial — prints/redacts stored token
-auth refresh,auth refresh,Missing,v1,Refresh stored hub creds via API
+auth token,auth token,Claimed,v1,hub auth token Partial — prints/redacts stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+auth refresh,auth refresh,Partial,v1,Partial stub — refresh not Claimed; exit 2 honesty (IW-HUB-FULL Missing→0)
 auth switch,auth switch,Deferred,later,Multi-account
 auth setup-git,OUT,Refuse/N/A,out-of-scope,gh configures git to use gh helper; arks-hub MUST NOT spawn git/gh
 pr,pr,Partial,v1,Group help
 pr create,pr create,Claimed,v1,local POST /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 pr list,pr list,Claimed,v1,local GET /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-pr status,pr status,Missing,v1,Same name as gh; native API
+pr status,pr status,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
 pr view,pr view,Claimed,v1,local GET /repos/.../pulls/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-pr diff,pr diff,Missing,v1,Same name as gh; native API
-pr edit,pr edit,Missing,v1,Same name as gh; native API
-pr close,pr close,Missing,v1,Same name as gh; native API
-pr reopen,pr reopen,Missing,v1,Same name as gh; native API
-pr comment,pr comment,Missing,v1,Same name as gh; native API
-pr merge,pr merge,Missing,v1,Same name as gh; native API
-pr ready,pr ready,Missing,v1,Same name as gh; native API
-pr review,pr review,Missing,v1,Same name as gh; native API
-pr checks,pr checks,Missing,v1,Same name as gh; native API
-pr lock,pr lock,Missing,v1,Same name as gh; native API
-pr unlock,pr unlock,Missing,v1,Same name as gh; native API
-pr update-branch,pr update-branch,Missing,v1,Same name as gh; native API
-pr revert,pr revert,Missing,v1,Same name as gh; native API
-pr checkout,pr checkout,Missing,v1,Resolve PR head via API; local worktree via arks in-process or printed arks cmds — NEVER spawn git/gh
+pr diff,pr diff,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr edit,pr edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr close,pr close,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr reopen,pr reopen,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr comment,pr comment,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr merge,pr merge,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr ready,pr ready,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr review,pr review,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr checks,pr checks,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr lock,pr lock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr unlock,pr unlock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr update-branch,pr update-branch,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr revert,pr revert,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
+pr checkout,pr checkout,Partial,v1,Partial stub — resolve/print only; MUST NOT spawn git/gh (IW-HUB-FULL)
 co,co,Partial,v1,alias → pr checkout stub
 issue,issue,Partial,v1,Group help
 issue create,issue create,Claimed,v1,local POST /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 issue list,issue list,Claimed,v1,local GET /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-issue status,issue status,Missing,v1,
+issue status,issue status,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 issue view,issue view,Claimed,v1,local GET /repos/.../issues/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-issue close,issue close,Missing,v1,
-issue reopen,issue reopen,Missing,v1,
-issue comment,issue comment,Missing,v1,
-issue edit,issue edit,Missing,v1,
-issue delete,issue delete,Missing,v1,
-issue lock,issue lock,Missing,v1,
-issue unlock,issue unlock,Missing,v1,
-issue pin,issue pin,Missing,v1,
-issue unpin,issue unpin,Missing,v1,
-issue transfer,issue transfer,Missing,v1,
+issue close,issue close,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue reopen,issue reopen,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue comment,issue comment,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue edit,issue edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue delete,issue delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue lock,issue lock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue unlock,issue unlock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue pin,issue pin,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue unpin,issue unpin,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+issue transfer,issue transfer,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 issue develop,issue develop,Deferred,later,Linked branches metadata via API
 issue artifact,issue artifact,Deferred,later,Preview; GitHub-shaped artifacts
 issue artifact create,issue artifact create,Deferred,later,Preview
@@ -50,28 +50,28 @@ issue artifact download,issue artifact download,Deferred,later,Preview
 issue artifact edit,issue artifact edit,Deferred,later,Preview
 issue artifact list,issue artifact list,Deferred,later,Preview
 issue artifact view,issue artifact view,Deferred,later,Preview
-release,release,Missing,v1,Group
-release create,release create,Missing,v1,
-release list,release list,Missing,v1,
-release view,release view,Missing,v1,
-release upload,release upload,Missing,v1,
-release download,release download,Missing,v1,
-release edit,release edit,Missing,v1,
-release delete,release delete,Missing,v1,
-release delete-asset,release delete-asset,Missing,v1,
+release,release,Partial,v1,Group help; list|create Partial REST / expand Claimed leaves separate
+release create,release create,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+release list,release list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+release view,release view,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
+release upload,release upload,Partial,v1,Partial stub — asset upload not Claimed (IW-HUB-FULL)
+release download,release download,Partial,v1,Partial stub — asset download not Claimed (IW-HUB-FULL)
+release edit,release edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+release delete,release delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+release delete-asset,release delete-asset,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 release verify,release verify,Deferred,later,Attestation-related
 release verify-asset,release verify-asset,Deferred,later,Attestation-related
 repo,repo,Partial,v1,Group help
-repo view,repo view,Partial,v1,local GET /repos/{owner}/{repo}
+repo view,repo view,Claimed,v1,local GET /repos/{owner}/{repo}; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
 repo list,repo list,Claimed,v1,local GET /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
 repo create,repo create,Claimed,v1,local POST /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-repo edit,repo edit,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
-repo delete,repo delete,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
-repo fork,repo fork,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
-repo rename,repo rename,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
-repo archive,repo archive,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
-repo unarchive,repo unarchive,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
-repo set-default,repo set-default,Missing,v1,Host API; set-default writes hub config (not git remote rewrite via git spawn)
+repo edit,repo edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
+repo delete,repo delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
+repo fork,repo fork,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
+repo rename,repo rename,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
+repo archive,repo archive,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
+repo unarchive,repo unarchive,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
+repo set-default,repo set-default,Partial,v1,Partial stub — hub config write not Claimed (IW-HUB-FULL)
 repo clone,repo clone,Deferred,later,MUST NOT spawn git/gh; later: in-process arks clone helper or print arks clone URL
 repo sync,repo sync,Deferred,later,API+arks fetch/push orchestration; no git/gh spawn
 repo read-dir,repo read-dir,Deferred,later,Contents API preview
@@ -91,26 +91,26 @@ repo deploy-key,repo deploy-key,Deferred,later,
 repo deploy-key add,repo deploy-key add,Deferred,later,
 repo deploy-key delete,repo deploy-key delete,Deferred,later,
 repo deploy-key list,repo deploy-key list,Deferred,later,
-label,label,Missing,v1,Group
-label list,label list,Missing,v1,
-label create,label create,Missing,v1,
-label edit,label edit,Missing,v1,
-label delete,label delete,Missing,v1,
-label clone,label clone,Missing,v1,
-run,run,Missing,v1,Actions runs; match gh name
-run list,run list,Missing,v1,Poll/download via API; no gh spawn
-run view,run view,Missing,v1,Poll/download via API; no gh spawn
-run watch,run watch,Missing,v1,Poll/download via API; no gh spawn
-run cancel,run cancel,Missing,v1,Poll/download via API; no gh spawn
-run rerun,run rerun,Missing,v1,Poll/download via API; no gh spawn
-run download,run download,Missing,v1,Poll/download via API; no gh spawn
-run delete,run delete,Missing,v1,Poll/download via API; no gh spawn
-workflow,workflow,Missing,v1,Match gh
-workflow list,workflow list,Missing,v1,
-workflow view,workflow view,Missing,v1,
-workflow run,workflow run,Missing,v1,
-workflow enable,workflow enable,Missing,v1,
-workflow disable,workflow disable,Missing,v1,
+label,label,Partial,v1,Group help; list|create expand Claimed candidates
+label list,label list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+label create,label create,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+label edit,label edit,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
+label delete,label delete,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
+label clone,label clone,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+run,run,Partial,v1,Group help; list|create Partial; not CI Claimed
+run list,run list,Partial,v1,Partial local actions runs list (IW-HUB-FULL); not CI Claimed
+run view,run view,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
+run watch,run watch,Partial,v1,Partial stub — watch/poll not Claimed (IW-HUB-FULL)
+run cancel,run cancel,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+run rerun,run rerun,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+run download,run download,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+run delete,run delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+workflow,workflow,Partial,v1,Group help; list Partial; not CI Claimed
+workflow list,workflow list,Partial,v1,Partial local workflows list (IW-HUB-FULL); not CI Claimed
+workflow view,workflow view,Partial,v1,Partial stub fail-closed beyond list (IW-HUB-FULL)
+workflow run,workflow run,Partial,v1,Partial stub — dispatch not Claimed (IW-HUB-FULL)
+workflow enable,workflow enable,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
+workflow disable,workflow disable,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
 cache,cache,Deferred,later,Actions caches
 cache list,cache list,Deferred,later,
 cache delete,cache delete,Deferred,later,
@@ -123,27 +123,27 @@ variable list,variable list,Deferred,later,
 variable get,variable get,Deferred,later,
 variable set,variable set,Deferred,later,
 variable delete,variable delete,Deferred,later,
-search,search,Missing,v1,Group
-search issues,search issues,Missing,v1,
-search prs,search prs,Missing,v1,
-search repos,search repos,Missing,v1,
+search,search,Partial,v1,Group help; repos|issues|prs expand Claimed candidates
+search issues,search issues,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+search prs,search prs,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+search repos,search repos,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
 search code,search code,Deferred,later,Host code search
 search commits,search commits,Deferred,later,
 status,status,Partial,v1,hub status Partial — aggregated issues/PRs stub
 api,api,Partial,v1,local HTTP GET passthrough
-org,org,Missing,v1,Group
-org list,org list,Missing,v1,
-config,config,Missing,v1,arks-hub config (not gh config file)
-config get,config get,Missing,v1,
-config set,config set,Missing,v1,
-config list,config list,Missing,v1,
-config clear-cache,config clear-cache,Missing,v1,
-alias,alias,Missing,v1,arks-hub command aliases
-alias set,alias set,Missing,v1,
-alias list,alias list,Missing,v1,
-alias delete,alias delete,Missing,v1,
-alias import,alias import,Missing,v1,
-completion,completion,Missing,v1,Shell completion for arks-hub
+org,org,Partial,v1,Group help; list expand Claimed candidate
+org list,org list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
+config,config,Partial,v1,Group help; hub config Partial stubs
+config get,config get,Partial,v1,Partial stub (IW-HUB-FULL)
+config set,config set,Partial,v1,Partial stub (IW-HUB-FULL)
+config list,config list,Partial,v1,Partial stub (IW-HUB-FULL)
+config clear-cache,config clear-cache,Partial,v1,Partial stub (IW-HUB-FULL)
+alias,alias,Partial,v1,Group help; Partial alias snippets
+alias set,alias set,Partial,v1,Partial stub (IW-HUB-FULL)
+alias list,alias list,Partial,v1,Partial alias list snippets (IW-HUB-FULL)
+alias delete,alias delete,Partial,v1,Partial stub (IW-HUB-FULL)
+alias import,alias import,Partial,v1,Partial stub (IW-HUB-FULL)
+completion,completion,Partial,v1,Partial shell completion stubs (IW-HUB-FULL)
 browse,browse,Deferred,later,Open browser URLs from API; no web UI product
 gist,gist,Deferred,later,May be GitHub-shaped; hub API later
 gist list,gist list,Deferred,later,

@@ -3,6 +3,7 @@
 # Entry is `arks hub` (single release binary). MUST NOT spawn `gh` or `git`.
 # Sibling matrix SoT: .spec/sot/arks-hub-gh-command-matrix.sot.md (+ CSV beside it).
 # IW-HUB-FLAT Claimed subset: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_HUB_IW_FLAT=1).
+# IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -10,6 +11,7 @@ cd "$ROOT"
 
 SOT="${ARKS_HUB_MATRIX_SOT:-.spec/sot/arks-hub-gh-command-matrix.sot.md}"
 DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-wave.sot.md}"
+INCOMPLETES_SOT="${ARKS_INCOMPLETES_SOT:-.spec/sot/arks-remaining-incompletes-wave.sot.md}"
 # Living e2e CSV (preferred) or design CSV from sibling SoT.
 if [[ -z "${ARKS_HUB_MATRIX_CSV:-}" ]]; then
   if [[ -f verify/matrices/hub-gh-arks-e2e-matrix.csv ]]; then
@@ -100,6 +102,196 @@ fi
 if [[ "$v1" -eq 0 ]]; then
   echo "FAIL: hub matrix CSV has no v1 rows"
   exit 1
+fi
+
+# --- IW-HUB-FULL expand + Missing→0 (ARKS_HUB_IW_FULL=1) ---
+# Prefer honest Partial for non-expand leaves; Claimed expand list only with receipt.
+if [[ "${ARKS_HUB_IW_FULL:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-FULL path (sot:root/arks-remaining-incompletes-wave)"
+  if [[ ! -f "$INCOMPLETES_SOT" ]]; then
+    echo "FAIL: missing incompletes SoT $INCOMPLETES_SOT" >&2
+    exit 1
+  fi
+  command -v python3 >/dev/null || {
+    echo "FAIL: python3 missing for IW-HUB-FULL" >&2
+    exit 1
+  }
+  if [[ "$missing" -gt 0 ]]; then
+    echo "FAIL IW-HUB-FULL: v1 Missing=$missing (inventory bar requires Missing=0)" >&2
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-FULL Partial — Missing>0"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: HF-FULL inventory Missing=0 ok"
+
+  WORK="$(mktemp -d /tmp/arks-hub-full.XXXXXX)"
+  SERVER_PID=""
+  cleanup_full() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "$WORK"
+  }
+  trap cleanup_full EXIT
+
+  FORGE_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+  FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
+  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
+  export HOME="$WORK/home"
+  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  export ARKS_HUB_TOKEN="local-dev-token"
+  export ARKS_HUB_API="http://${FORGE_LISTEN}"
+  export ARKS_HUB_REPO="local/hubfull"
+
+  "$ARKS_BIN" serve --no-ssh --no-http \
+    --forge-listen "$FORGE_LISTEN" \
+    --forge-data "$WORK/hub-data" \
+    . >"$WORK/server.out" 2>"$WORK/server.err" &
+  SERVER_PID=$!
+
+  python3 - "$FORGE_PORT" <<'PY'
+import socket, sys, time
+port = int(sys.argv[1])
+for _ in range(200):
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=.2):
+            raise SystemExit(0)
+    except OSError:
+        time.sleep(.05)
+raise SystemExit("hub-full forge listener not ready")
+PY
+
+  FULL_OK=1
+  run_full() {
+    local name="$1"
+    shift
+    local out ec
+    set +e
+    out="$("$@" 2>&1)"
+    ec=$?
+    set -e
+    printf '%s\n' "$out" >"$WORK/${name}.out"
+    if [[ "$ec" -ne 0 ]]; then
+      echo "FAIL HF-FULL $name exit=$ec" >&2
+      echo "$out" >&2
+      FULL_OK=0
+      return 0
+    fi
+    echo "hub-gh-arks-matrix-e2e: HF-FULL $name ok"
+  }
+
+  # Flat-10 + expand Claimed leaves (sot:root/arks-remaining-incompletes-wave).
+  run_full auth-login "$ARKS_BIN" hub auth login
+  run_full auth-status "$ARKS_BIN" hub auth status
+  run_full auth-token "$ARKS_BIN" hub auth token
+  run_full repo-create "$ARKS_BIN" hub repo create hubfull --description "IW-HUB-FULL"
+  run_full repo-list "$ARKS_BIN" hub repo list
+  run_full repo-view "$ARKS_BIN" hub repo view local/hubfull
+  run_full issue-create "$ARKS_BIN" hub issue create --repo local/hubfull --title "full-issue" --body "HF"
+  run_full issue-list "$ARKS_BIN" hub issue list --repo local/hubfull
+  run_full issue-view "$ARKS_BIN" hub issue view 1 --repo local/hubfull
+  run_full pr-create "$ARKS_BIN" hub pr create --repo local/hubfull --title "full-pr" --body "HF" --head feature --base main
+  run_full pr-list "$ARKS_BIN" hub pr list --repo local/hubfull
+  run_full pr-view "$ARKS_BIN" hub pr view 1 --repo local/hubfull
+  run_full label-create "$ARKS_BIN" hub label create --repo local/hubfull --name bug --color ff0000 --description "bug"
+  run_full label-list "$ARKS_BIN" hub label list --repo local/hubfull
+  run_full release-create "$ARKS_BIN" hub release create --repo local/hubfull --tag v0.0.1 --title "r1" --notes "n"
+  run_full release-list "$ARKS_BIN" hub release list --repo local/hubfull
+  run_full org-list "$ARKS_BIN" hub org list
+  run_full search-repos "$ARKS_BIN" hub search repos hubfull
+  run_full search-issues "$ARKS_BIN" hub search issues full-issue
+  run_full search-prs "$ARKS_BIN" hub search prs full-pr
+  run_full auth-logout "$ARKS_BIN" hub auth logout
+
+  if [[ "$FULL_OK" -eq 1 ]]; then
+    if ! grep -Fq 'bug' "$WORK/label-list.out" \
+      || ! grep -Fq 'v0.0.1' "$WORK/release-list.out" \
+      || ! grep -Fq 'local' "$WORK/org-list.out" \
+      || ! grep -Fq 'hubfull' "$WORK/search-repos.out" \
+      || ! grep -Fq 'full-issue' "$WORK/search-issues.out" \
+      || ! grep -Fq 'full-pr' "$WORK/search-prs.out"; then
+      echo "FAIL HF-FULL peer-faithful expand shapes" >&2
+      FULL_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: HF-FULL peer-faithful expand shapes ok"
+    fi
+  fi
+
+  if [[ "$FULL_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-FULL expand (no invent PASS)" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-FULL expand Partial/failed"
+    exit 0
+  fi
+
+  echo "hub-gh-arks-matrix-e2e: HF-FULL expand greens (v1 Missing=0)"
+
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-full-expand"
+    mkdir -p "$OUT"
+    cp "$WORK/server.err" "$OUT/server.err" 2>/dev/null || true
+    for f in auth-login auth-status auth-token auth-logout repo-create repo-list repo-view \
+      issue-create issue-list issue-view pr-create pr-list pr-view \
+      label-create label-list release-create release-list org-list \
+      search-repos search-issues search-prs; do
+      cp "$WORK/${f}.out" "$OUT/${f}.out" 2>/dev/null || true
+    done
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-full-expand/v1",
+    "gate": "IW-HUB-FULL",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "v1_missing": 0,
+    "claimed_expand": [
+        "auth logout", "auth token",
+        "repo view",
+        "label list", "label create",
+        "release list", "release create",
+        "org list",
+        "search issues", "search prs", "search repos",
+    ],
+    "claimed_flat_subset_retained": [
+        "auth login", "auth status",
+        "repo create", "repo list",
+        "issue create", "issue list", "issue view",
+        "pr create", "pr list", "pr view",
+    ],
+    "checks": [
+        "HF-FULL inventory v1 Missing=0",
+        "HF-FULL expand leaves peer-faithful against local forge",
+        "HF-FULL STRICT greens (ARKS_HUB_IW_FULL=1)",
+    ],
+    "note": "Non-expand v1 leaves may remain Partial; inventing Claimed for stub exit-2 is forbidden.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  else
+    echo "hub-gh-arks-matrix-e2e: host run only; no .spec/evidence receipt (Docker Claimed venue required)"
+  fi
+  exit 0
 fi
 
 # --- IW-HUB-FLAT Claimed subset (ARKS_HUB_IW_FLAT=1) ---
@@ -320,4 +512,5 @@ if [[ -f "$UMBRELLA" ]]; then
 fi
 echo "hub-gh-arks-matrix-e2e: smoke-only PASS (SoT+CSV+help); Claimed hub e2e waits ARKS_DOD_STRICT=1 + evidence"
 echo "hub-gh-arks-matrix-e2e: IW-HUB-FLAT subset Claimed path: ARKS_HUB_IW_FLAT=1 (+ STRICT)"
+echo "hub-gh-arks-matrix-e2e: IW-HUB-FULL expand Claimed path: ARKS_HUB_IW_FULL=1 (+ STRICT); v1 Missing=$missing"
 exit 0

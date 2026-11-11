@@ -1,0 +1,41 @@
+{
+  "schema": "arks-hub-full-expand/v1",
+  "gate": "IW-HUB-FULL",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "5a46701",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "v1_missing": 0,
+  "claimed_expand": [
+    "auth logout",
+    "auth token",
+    "repo view",
+    "label list",
+    "label create",
+    "release list",
+    "release create",
+    "org list",
+    "search issues",
+    "search prs",
+    "search repos"
+  ],
+  "claimed_flat_subset_retained": [
+    "auth login",
+    "auth status",
+    "repo create",
+    "repo list",
+    "issue create",
+    "issue list",
+    "issue view",
+    "pr create",
+    "pr list",
+    "pr view"
+  ],
+  "checks": [
+    "HF-FULL inventory v1 Missing=0",
+    "HF-FULL expand leaves peer-faithful against local forge",
+    "HF-FULL STRICT greens (ARKS_HUB_IW_FULL=1)"
+  ],
+  "note": "Non-expand v1 leaves may remain Partial; inventing Claimed for stub exit-2 is forbidden.",
+  "timestamp": "2026-11-11T02:03:50Z"
+}

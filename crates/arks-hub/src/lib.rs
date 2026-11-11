@@ -212,6 +212,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "forge-config" => cmd_forge_config(&args[1..]),
         "alias" => cmd_alias(&args[1..]),
         "completion" => cmd_completion(&args[1..]),
+        "config" => cmd_config(&args[1..]),
         "org" => cmd_org(&args[1..]),
         "search" => cmd_search(&args[1..]),
         "api" => cmd_api(&args[1..]),
@@ -1905,17 +1906,80 @@ fn cmd_forge_config(args: &[String]) -> ExitCode {
     ExitCode::SUCCESS
 }
 
+fn cmd_config(args: &[String]) -> ExitCode {
+    let sub = args.first().map(String::as_str).unwrap_or("list");
+    match sub {
+        "" | "list" | "-h" | "--help" => {
+            if matches!(sub, "-h" | "--help") {
+                eprintln!(
+                    "arks hub config — get|set|list|clear-cache (Partial client facets; ≠ git config)"
+                );
+                return ExitCode::SUCCESS;
+            }
+            println!("api={}", api_base());
+            println!("token_file={}", token_path().display());
+            eprintln!("note: hub config list Partial — IW-HUB-FULL honesty; not Claimed");
+            ExitCode::SUCCESS
+        }
+        "get" => {
+            let key = args.get(1).map(String::as_str).unwrap_or("api");
+            match key {
+                "api" => println!("{}", api_base()),
+                "token_file" => println!("{}", token_path().display()),
+                other => {
+                    eprintln!("arks hub config get: unknown key `{other}` (Partial)");
+                    return ExitCode::from(2);
+                }
+            }
+            ExitCode::SUCCESS
+        }
+        "set" => {
+            eprintln!(
+                "arks hub config set: Partial stub — use ARKS_HUB_API / ARKS_HUB_TOKEN_FILE env (not Claimed mutator)"
+            );
+            ExitCode::from(2)
+        }
+        "clear-cache" => {
+            eprintln!("arks hub config clear-cache: Partial no-op (no hub HTTP cache Claimed)");
+            ExitCode::SUCCESS
+        }
+        other => {
+            eprintln!("arks hub config {other}: Partial stub (IW-HUB-FULL)");
+            ExitCode::from(2)
+        }
+    }
+}
+
 fn cmd_alias(args: &[String]) -> ExitCode {
-    if args.iter().any(|a| a == "-h" || a == "--help") {
-        eprintln!("arks hub alias — print local shell alias snippets (Partial)");
+    let sub = args.first().map(String::as_str).unwrap_or("");
+    if matches!(sub, "-h" | "--help") || args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!("arks hub alias — list|set|delete|import (Partial shell snippets)");
         return ExitCode::SUCCESS;
     }
-    println!("# Partial shell aliases (paste manually; not Claimed installer)");
-    println!("alias gh='arks'");
-    println!("alias pr='arks pr'");
-    println!("alias issue='arks issue'");
-    eprintln!("note: alias Partial — no shell profile mutation Claimed");
-    ExitCode::SUCCESS
+    match sub {
+        "" | "list" => {
+            println!("# Partial shell aliases (paste manually; not Claimed installer)");
+            println!("alias gh='arks'");
+            println!("alias pr='arks pr'");
+            println!("alias issue='arks issue'");
+            eprintln!("note: alias list Partial — no shell profile mutation Claimed");
+            ExitCode::SUCCESS
+        }
+        "set" | "delete" | "import" => {
+            eprintln!(
+                "arks hub alias {sub}: Partial stub — prints guidance only; no profile mutation Claimed"
+            );
+            ExitCode::from(2)
+        }
+        _ => {
+            println!("# Partial shell aliases (paste manually; not Claimed installer)");
+            println!("alias gh='arks'");
+            println!("alias pr='arks pr'");
+            println!("alias issue='arks issue'");
+            eprintln!("note: alias Partial — no shell profile mutation Claimed");
+            ExitCode::SUCCESS
+        }
+    }
 }
 
 fn cmd_completion(args: &[String]) -> ExitCode {
