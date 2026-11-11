@@ -122,23 +122,52 @@ pub fn http_exchange(
     token: Option<&str>,
     body: Option<&str>,
 ) -> Result<(u16, String), String> {
+    let (status, bytes) = http_exchange_bytes(
+        base,
+        method,
+        path,
+        token,
+        body.map(|s| s.as_bytes()),
+        "application/json",
+        "application/json",
+    )?;
+    Ok((status, String::from_utf8_lossy(&bytes).into_owned()))
+}
+
+/// Raw body exchange (release assets / run download). Loopback http only for binary Claimed.
+pub fn http_exchange_bytes(
+    base: &str,
+    method: &str,
+    path: &str,
+    token: Option<&str>,
+    body: Option<&[u8]>,
+    content_type: &str,
+    accept: &str,
+) -> Result<(u16, Vec<u8>), String> {
     let base = base.trim_end_matches('/');
     let url = format!("{base}{path}");
     if url.starts_with("https://") {
-        return http_exchange_https(&url, method, token, body);
+        let (st, s) = http_exchange_https(
+            &url,
+            method,
+            token,
+            body.map(|b| String::from_utf8_lossy(b).into_owned())
+                .as_deref(),
+        )?;
+        return Ok((st, s.into_bytes()));
     }
     let (host, port, req_path) = parse_http_url(&url)?;
     let mut stream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
-    let body_bytes = body.unwrap_or("").as_bytes();
+    let body_bytes = body.unwrap_or(&[]);
     let mut req = format!(
-        "{method} {req_path} HTTP/1.1\r\nHost: {host}:{port}\r\nAccept: application/json\r\nConnection: close\r\n"
+        "{method} {req_path} HTTP/1.1\r\nHost: {host}:{port}\r\nAccept: {accept}\r\nConnection: close\r\n"
     );
     if let Some(t) = token {
         req.push_str(&format!("Authorization: Bearer {t}\r\n"));
     }
     if !body_bytes.is_empty() {
-        req.push_str("Content-Type: application/json\r\n");
+        req.push_str(&format!("Content-Type: {content_type}\r\n"));
         req.push_str(&format!("Content-Length: {}\r\n", body_bytes.len()));
     } else {
         req.push_str("Content-Length: 0\r\n");
@@ -154,18 +183,18 @@ pub fn http_exchange(
 
     let mut buf = Vec::new();
     stream.read_to_end(&mut buf).map_err(|e| e.to_string())?;
-    let text = String::from_utf8_lossy(&buf);
-    let (status_line, rest) = text.split_once("\r\n").unwrap_or((&text, ""));
-    let status: u16 = status_line
-        .split_whitespace()
-        .nth(1)
+    let sep = buf
+        .windows(4)
+        .position(|w| w == b"\r\n\r\n")
+        .ok_or_else(|| "http response missing header separator".to_string())?;
+    let head = String::from_utf8_lossy(&buf[..sep]);
+    let status: u16 = head
+        .lines()
+        .next()
+        .and_then(|l| l.split_whitespace().nth(1))
         .and_then(|s| s.parse().ok())
         .unwrap_or(0);
-    let body = if let Some(i) = rest.find("\r\n\r\n") {
-        rest[i + 4..].to_string()
-    } else {
-        rest.to_string()
-    };
+    let body = buf[sep + 4..].to_vec();
     Ok((status, body))
 }
 

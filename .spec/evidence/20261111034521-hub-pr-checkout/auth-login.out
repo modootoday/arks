@@ -1,0 +1,2 @@
+arks hub auth login: local /login → HTTP 200
+arks hub auth login: token stored at /tmp/arks-hub-scope.YkpXTe/home/.config/arks/hub-token

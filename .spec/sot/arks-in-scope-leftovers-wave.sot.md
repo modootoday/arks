@@ -3,7 +3,7 @@ id: sot:root/arks-in-scope-leftovers-wave
 title: In-scope leftovers wave — Phase 0 scope audit + Phase 1+ Claimed bars
 status: active
 created: 2026-11-11T03:35:56Z
-updated: 2026-11-11T03:35:56Z
+updated: 2026-11-11T03:48:16Z
 tags: [design, residual, scope-audit, hub, daemon, personality, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -36,9 +36,9 @@ rel:
 
 # In-scope leftovers wave — design SoT
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release). English-only.
 
-**This SoT gates leftovers after [[sot:root/arks-honesty-leftovers-wave]] tip `484756a`.** Phase 0 = scope audit (this document). Phase 1+ Claimed flips cite evidence + [[research:root/20261111123556]].
+**This SoT gates leftovers after [[sot:root/arks-honesty-leftovers-wave]] tip `484756a`.** Phase 0 Spec tip `9f78458`. Phase 1+ Claimed flips cite evidence + [[research:root/20261111123556]].
 
 **Design scope:** git / git-daemon / gh symmetry pillars + related serve/hosting required for that symmetry ([[sot:root/verify-cleanroom-symmetry-matrix]]). Out-of-scope → document non-goal; **do not invent work to Claim them**.
 
@@ -100,14 +100,14 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 
 | Order | ID | Surface | Status now | Close bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|-----------|-------------------|-----------------|
-| 1 | **IW-HUB-ACTIONS** | Actions execute metadata | Partial | Local-forge view/cancel/rerun/delete + watch-poll status; workflow view/enable/disable/dispatch→run record; Docker receipt | Invent CI runner / Actions compute | `dod-hub-matrix` + `ARKS_HUB_IW_ACTIONS=1` |
-| 2 | **IW-HUB-ASSETS** | Release assets (+ edit/delete) | Partial | Upload/download/delete-asset peer-faithful vs local forge; edit/delete release; Docker receipt | Stub exit-2 Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` |
-| 3 | **IW-HUB-CHECKOUT** | `pr checkout` / `co` | Partial | Resolve head SHA/ref/branch; print recipe and/or in-process arks checkout; Docker receipt | Spawn git/gh | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` |
-| 4 | **IW-HUB-UX** | config / alias / completion | Partial | get/set/list/delete (+ completion emit) Claimed subset; Docker receipt | Profile installer invent | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` |
-| 5 | **IW-HUB-STUBS** | Remaining v1 Partial stubs | Partial | Peer-faithful REST/metadata for SoT expand list; else honest Partial cite | Invent full-matrix Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` |
-| 6 | **IW-PERSONALITY-SURVEY** | CLI Partial×117 | Partial | Named expand Claimed rows beyond IW-PERSONALITY-EXIT; Missing=0 retained; remainder Partial with cite | Stampede 117 Claimed | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` |
-| 7 | **IW-DAEMON-FLAGS-PARITY** | Daemon Partial×15 | Partial | Docker peer behavior → Parity for named flags; services deepen | SysV double-fork; clap-accept-only Parity | `dod-daemon-matrix` + `ARKS_DAEMON_FLAGS_PARITY=1` |
-| 8 | **DOCS-SCOPE** | Register + product SoTs | — | Sync in/out counts + evidence ids | Invent beyond receipts | Manual |
+| 1 | **IW-HUB-ACTIONS** | Actions execute metadata | **Claimed** ([[evidence:root/20261111034505-hub-actions-metadata]]) | Local-forge view/cancel/rerun/delete + watch-poll status; workflow view/enable/disable/dispatch→run record; Docker receipt | Invent CI runner / Actions compute | `dod-hub-matrix` + `ARKS_HUB_IW_ACTIONS=1` |
+| 2 | **IW-HUB-ASSETS** | Release assets (+ edit/delete) | **Claimed** ([[evidence:root/20261111034513-hub-release-assets]]) | Upload/download/delete-asset peer-faithful vs local forge; edit/delete release; Docker receipt | Stub exit-2 Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` |
+| 3 | **IW-HUB-CHECKOUT** | `pr checkout` / `co` | **Claimed** ([[evidence:root/20261111034521-hub-pr-checkout]]) | Resolve head SHA/ref/branch; print recipe; Docker receipt | Spawn git/gh | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` |
+| 4 | **IW-HUB-UX** | config / alias / completion | **Claimed** ([[evidence:root/20261111034525-hub-ux-config-alias]]) | get/set/list/delete (+ completion emit) Claimed subset; Docker receipt | Profile installer invent | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` |
+| 5 | **IW-HUB-STUBS** | Remaining v1 Partial×40 | **Partial** (honest Stay Partial cite) | Peer-faithful REST only when local forge can; else Stay Partial | Invent full-matrix Claimed | honesty cite |
+| 6 | **IW-PERSONALITY-SURVEY** | CLI Partial×117 | **Claimed** expand ([[evidence:root/20261111034718-personality-survey]]); remainder Partial | Named expand ≥10 beyond exit tables; Missing=0 retained | Stampede 117 Claimed | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` |
+| 7 | **IW-DAEMON-FLAGS-PARITY** | Daemon Partial×15 | **Parity** ([[evidence:root/20261111034816-daemon-flags-parity]]); leftover Partial×2 honest | Docker peer behavior → Parity for named flags | SysV double-fork; clap-accept-only Parity | `dod-daemon-matrix` + `ARKS_DAEMON_FLAGS_PARITY=1` |
+| 8 | **DOCS-SCOPE** | Register + product SoTs | **Synced** this wave | Sync in/out counts + evidence ids | Invent beyond receipts | Manual |
 
 ### IW-HUB-ACTIONS detail
 

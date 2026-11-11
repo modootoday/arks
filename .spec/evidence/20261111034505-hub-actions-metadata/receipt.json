@@ -1,0 +1,22 @@
+{
+  "schema": "arks-hub-actions-metadata/v1",
+  "gate": "IW-HUB-ACTIONS",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "9f78458",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed": [
+    "run view",
+    "run watch",
+    "run cancel",
+    "run rerun",
+    "run download",
+    "run delete",
+    "workflow view",
+    "workflow enable",
+    "workflow disable",
+    "workflow run"
+  ],
+  "note": "Local-forge Actions metadata only \u2014 not CI compute Claimed.",
+  "timestamp": "2026-11-11T03:45:05Z"
+}

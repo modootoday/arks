@@ -1,40 +1,40 @@
-git_item,kind,status_now,arks_target,notes
---verbose,flag,Partial,must-implement,CLI --verbose accepted; logs gated
---syslog,flag,Refuse/N/A,refuse-with-reason,stderr logs only
---export-all,flag,Parity,must-implement,skips git-daemon-export-ok
---timeout=<n>,flag,Partial,must-implement,CLI sets session idle timeout after service request
---init-timeout=<n>,flag,Partial,must-implement,separate init timer for first service pkt (default 5s)
---max-connections=<n>,flag,Partial,must-implement,accept-then-drop when over limit (git-like refuse)
---strict-paths,flag,Partial,must-implement,disables foo↔foo.git alias; path must exist under allow-list
---base-path=<path>,flag,Partial,must-implement,repeatable --base-path + multi positionals allow-list
---base-path-relaxed,flag,Refuse/N/A,refuse-with-reason,not claimed
---user-path|--user-path=<path>,flag,Refuse/N/A,refuse-with-reason,~user unsupported
---interpolated-path=<pathtemplate>,flag,Refuse/N/A,refuse-with-reason,templates unsupported
---reuseaddr,flag,Partial,must-implement,flag honored; SO_REUSEADDR platform Partial (Unix bind default)
---detach,flag,Refuse/N/A,refuse-with-reason,foreground only; no daemonize
---pid-file=<file>,flag,Refuse/N/A,refuse-with-reason,not claimed
---enable=<service>,flag,Partial,must-implement,receive-pack + upload-archive + upload-pack literals
---disable=<service>,flag,Partial,must-implement,disable upload-pack/receive-pack/upload-archive
---allow-override=<service>,flag,Refuse/N/A,refuse-with-reason,no per-repo daemon.*
---forbid-override=<service>,flag,Refuse/N/A,refuse-with-reason,not claimed
---access-hook=<path>,flag,Refuse/N/A,refuse-with-reason,no external access-hook
---[no-]informative-errors,flag,Refuse/N/A,refuse-with-reason,ERR packets always; no toggle
---inetd,flag,Refuse/N/A,refuse-with-reason,TCP listen loop only
---listen=<host_or_ipaddr>,flag,Partial,must-implement,host or host:port; combine with --port
---port=<n>,flag,Partial,must-implement,independent --port / --port=
---user=<user>,flag,Refuse/N/A,refuse-with-reason,no privilege drop
---group=<group>,flag,Refuse/N/A,refuse-with-reason,no privilege drop
---log-destination=(stderr|syslog|none),flag,Refuse/N/A,refuse-with-reason,stderr only
-<directory>...,positional,Partial,must-implement,multi base-path allow-list Partial (first + extras)
-service:upload-pack,service,Parity,must-implement,always on
-service:upload-archive,service,Partial,must-implement,--enable=upload-archive accepted; pkt protocol ERR until claimed
-service:receive-pack,service,Partial,must-implement,--enable=receive-pack duplex receive_pack_stream
-git-daemon-export-ok,behavior,Parity,must-implement,required unless --export-all
-daemon.* config override,behavior,Refuse/N/A,refuse-with-reason,no daemon.* config
-REMOTE_ADDR env for hooks,behavior,Refuse/N/A,refuse-with-reason,no access-hook env
---listen host:port form,arks-only,arks-only,arks-only,combined listen address (arks-only shape)
-default bind 127.0.0.1,arks-only,arks-only,arks-only,safer loopback default vs all-interfaces
-related:upload-pack CLI,pointer,Parity,pointer,stdio CLI; not daemon flag DoD
-related:receive-pack CLI,pointer,Parity,pointer,stdio CLI; not daemon flag DoD
-related:git:// client,pointer,Partial,pointer,R1 client lane; not daemon flag DoD
-related:serve-http,pointer,arks-only,pointer,HTTP companion; not git-daemon
+"git_item","kind","status_now","arks_target","notes"
+"--verbose","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--syslog","flag","Refuse/N/A","refuse-with-reason","stderr logs only"
+"--export-all","flag","Parity","must-implement","skips git-daemon-export-ok"
+"--timeout=<n>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--init-timeout=<n>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--max-connections=<n>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--strict-paths","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--base-path=<path>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--base-path-relaxed","flag","Refuse/N/A","refuse-with-reason","not claimed"
+"--user-path|--user-path=<path>","flag","Refuse/N/A","refuse-with-reason","~user unsupported"
+"--interpolated-path=<pathtemplate>","flag","Refuse/N/A","refuse-with-reason","templates unsupported"
+"--reuseaddr","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--detach","flag","Refuse/N/A","refuse-with-reason","foreground only; no daemonize"
+"--pid-file=<file>","flag","Refuse/N/A","refuse-with-reason","not claimed"
+"--enable=<service>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--disable=<service>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--allow-override=<service>","flag","Refuse/N/A","refuse-with-reason","no per-repo daemon.*"
+"--forbid-override=<service>","flag","Refuse/N/A","refuse-with-reason","not claimed"
+"--access-hook=<path>","flag","Refuse/N/A","refuse-with-reason","no external access-hook"
+"--[no-]informative-errors","flag","Refuse/N/A","refuse-with-reason","ERR packets always; no toggle"
+"--inetd","flag","Refuse/N/A","refuse-with-reason","TCP listen loop only"
+"--listen=<host_or_ipaddr>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--port=<n>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"--user=<user>","flag","Refuse/N/A","refuse-with-reason","no privilege drop"
+"--group=<group>","flag","Refuse/N/A","refuse-with-reason","no privilege drop"
+"--log-destination=(stderr|syslog|none)","flag","Refuse/N/A","refuse-with-reason","stderr only"
+"<directory>...","positional","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"service:upload-pack","service","Parity","must-implement","always on"
+"service:upload-archive","service","Partial","must-implement","--enable=upload-archive accepted; pkt protocol ERR until claimed"
+"service:receive-pack","service","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
+"git-daemon-export-ok","behavior","Parity","must-implement","required unless --export-all"
+"daemon.* config override","behavior","Refuse/N/A","refuse-with-reason","no daemon.* config"
+"REMOTE_ADDR env for hooks","behavior","Refuse/N/A","refuse-with-reason","no access-hook env"
+"--listen host:port form","arks-only","arks-only","arks-only","combined listen address (arks-only shape)"
+"default bind 127.0.0.1","arks-only","arks-only","arks-only","safer loopback default vs all-interfaces"
+"related:upload-pack CLI","pointer","Parity","pointer","stdio CLI; not daemon flag DoD"
+"related:receive-pack CLI","pointer","Parity","pointer","stdio CLI; not daemon flag DoD"
+"related:git:// client","pointer","Partial","pointer","R1 client lane; not daemon flag DoD"
+"related:serve-http","pointer","arks-only","pointer","HTTP companion; not git-daemon"

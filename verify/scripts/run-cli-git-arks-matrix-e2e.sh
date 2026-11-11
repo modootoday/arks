@@ -4,6 +4,7 @@
 # Never invents PASS; never spawns gh from product. Stock `git` is pin oracle only.
 # IW-PERSONALITY drop-in: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_PERSONALITY_DROPIN=1).
 # IW-PERSONALITY-EXIT named tables: sot:root/arks-honesty-leftovers-wave (ARKS_PERSONALITY_EXIT_TABLES=1).
+# IW-PERSONALITY-SURVEY expand: sot:root/arks-in-scope-leftovers-wave (ARKS_PERSONALITY_SURVEY=1).
 # ExitCodePolicy unit greens ≠ drop-in / exit-table Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -44,6 +45,108 @@ resolve_arks_bin() {
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
   fi
 }
+
+# --- IW-PERSONALITY-SURVEY expand (≥10 main cmds) (ARKS_PERSONALITY_SURVEY=1) ---
+if [[ "${ARKS_PERSONALITY_SURVEY:-0}" == "1" ]]; then
+  echo "cli-git-arks-matrix-e2e: IW-PERSONALITY-SURVEY (sot:root/arks-in-scope-leftovers-wave)"
+  SCOPE_SOT="${ARKS_IN_SCOPE_LEFTOVERS_SOT:-.spec/sot/arks-in-scope-leftovers-wave.sot.md}"
+  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
+  command -v git >/dev/null || { echo "FAIL: pin git missing" >&2; exit 1; }
+  resolve_arks_bin
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  ARKS_BIN="${CARGO_TARGET_DIR:-target}/release/arks"
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./.cargo-target/release/arks
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
+  WORK="$(mktemp -d /tmp/arks-survey.XXXXXX)"
+  cleanup_sv() { rm -rf "$WORK"; }
+  trap cleanup_sv EXIT
+  mkdir -p "$WORK/repo"
+  (
+    cd "$WORK/repo"
+    git init -q
+    git config user.email t@t
+    git config user.name t
+    echo hi >README
+    git add README
+    git commit -q -m init
+  )
+  SV_OK=1
+  record_sv() {
+    local id="$1" class="$2" actual="$3"
+    echo "$id class=$class actual=$actual" >>"$WORK/survey.txt"
+    if [[ "$class" == "zero" && "$actual" -ne 0 ]]; then
+      echo "FAIL $id expected 0 got $actual" >&2
+      SV_OK=0
+    elif [[ "$class" == "nonzero" && "$actual" -eq 0 ]]; then
+      echo "FAIL $id expected nonzero got 0" >&2
+      SV_OK=0
+    else
+      echo "cli-git-arks-matrix-e2e: $id ok (exit=$actual)"
+    fi
+  }
+  run_sv() {
+    local id="$1" class="$2"
+    shift 2
+    local ec=0
+    set +e
+    (cd "$WORK/repo" && ARKS_PERSONALITY=git "$@" >"$WORK/${id}.out" 2>&1)
+    ec=$?
+    set -e
+    record_sv "$id" "$class" "$ec"
+  }
+  # ≥10 main-category peer exit/stdout class rows beyond IW-PERSONALITY-EXIT named set.
+  run_sv SV-STATUS zero "$ARKS_BIN" status
+  run_sv SV-LOG zero "$ARKS_BIN" log -1 --oneline
+  run_sv SV-SHOW zero "$ARKS_BIN" show HEAD
+  run_sv SV-DIFF zero "$ARKS_BIN" diff --stat
+  run_sv SV-BRANCH zero "$ARKS_BIN" branch
+  run_sv SV-REVPARSE zero "$ARKS_BIN" rev-parse HEAD
+  run_sv SV-LSFILES zero "$ARKS_BIN" ls-files
+  run_sv SV-CONFIG-GET zero "$ARKS_BIN" config --get user.name
+  run_sv SV-HASHZERO zero "$ARKS_BIN" hash-object README
+  run_sv SV-CATFILE zero "$ARKS_BIN" cat-file -t HEAD
+  run_sv SV-BAD nonzero "$ARKS_BIN" totally-unknown-cmd-xyz
+  run_sv SV-HELP zero "$ARKS_BIN" help status
+  if [[ "$SV_OK" -ne 1 ]]; then
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "cli-git-arks-matrix-e2e: FAIL STRICT IW-PERSONALITY-SURVEY" >&2
+      exit 1
+    fi
+    echo "cli-git-arks-matrix-e2e: IW-PERSONALITY-SURVEY Partial/failed"
+    exit 0
+  fi
+  echo "cli-git-arks-matrix-e2e: IW-PERSONALITY-SURVEY greens"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-personality-survey"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$WORK"/survey.txt "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-personality-survey/v1",
+    "gate": "IW-PERSONALITY-SURVEY",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-cli-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "expand_rows": [
+        "SV-STATUS", "SV-LOG", "SV-SHOW", "SV-DIFF", "SV-BRANCH", "SV-REVPARSE",
+        "SV-LSFILES", "SV-CONFIG-GET", "SV-HASHZERO", "SV-CATFILE", "SV-BAD", "SV-HELP",
+    ],
+    "note": "Named expand only; CLI Partial×117 remainder stay Partial with SoT cite.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "cli-git-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
+fi
 
 # --- IW-PERSONALITY-EXIT named peer exit tables (ARKS_PERSONALITY_EXIT_TABLES=1) ---
 if [[ "${ARKS_PERSONALITY_EXIT_TABLES:-0}" == "1" ]]; then

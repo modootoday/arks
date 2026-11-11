@@ -1,0 +1,4 @@
+api=http://127.0.0.1:54937
+token_file=/tmp/arks-hub-scope.hhgD0J/home/.config/arks/hub-token
+client_state=/tmp/arks-hub-scope.hhgD0J/home/.config/arks/hub-client.json
+editor=nano

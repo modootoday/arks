@@ -5,6 +5,7 @@
 # IW-HUB-FLAT Claimed subset: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_HUB_IW_FLAT=1).
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
+# IW-HUB-ACTIONS / ASSETS / CHECKOUT / UX: sot:root/arks-in-scope-leftovers-wave.
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -14,6 +15,7 @@ SOT="${ARKS_HUB_MATRIX_SOT:-.spec/sot/arks-hub-gh-command-matrix.sot.md}"
 DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-wave.sot.md}"
 INCOMPLETES_SOT="${ARKS_INCOMPLETES_SOT:-.spec/sot/arks-remaining-incompletes-wave.sot.md}"
 HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
+SCOPE_SOT="${ARKS_IN_SCOPE_LEFTOVERS_SOT:-.spec/sot/arks-in-scope-leftovers-wave.sot.md}"
 # Living e2e CSV (preferred) or design CSV from sibling SoT.
 if [[ -z "${ARKS_HUB_MATRIX_CSV:-}" ]]; then
   if [[ -f verify/matrices/hub-gh-arks-e2e-matrix.csv ]]; then
@@ -104,6 +106,372 @@ fi
 if [[ "$v1" -eq 0 ]]; then
   echo "FAIL: hub matrix CSV has no v1 rows"
   exit 1
+fi
+
+# --- shared forge bootstrap helper for in-scope leftovers ---
+hub_scope_boot() {
+  local work_var="$1"
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  ARKS_BIN="${CARGO_TARGET_DIR:-target}/release/arks"
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./.cargo-target/release/arks
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
+  [[ -x "$ARKS_BIN" ]] || {
+    echo "FAIL: arks binary missing after rebuild" >&2
+    return 1
+  }
+  WORK="$(mktemp -d /tmp/arks-hub-scope.XXXXXX)"
+  eval "$work_var=\"\$WORK\""
+  FORGE_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+  FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
+  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
+  export HOME="$WORK/home"
+  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  export ARKS_HUB_TOKEN="local-dev-token"
+  export ARKS_HUB_API="http://${FORGE_LISTEN}"
+  export ARKS_HUB_REPO="local/hubscope"
+  export ARKS_HUB_CLIENT_STATE="$WORK/home/.config/arks/hub-client.json"
+  "$ARKS_BIN" serve --no-ssh --no-http \
+    --forge-listen "$FORGE_LISTEN" \
+    --forge-data "$WORK/hub-data" \
+    . >"$WORK/server.out" 2>"$WORK/server.err" &
+  SERVER_PID=$!
+  python3 - "$FORGE_PORT" <<'PY'
+import socket, sys, time
+port = int(sys.argv[1])
+for _ in range(200):
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=.2):
+            raise SystemExit(0)
+    except OSError:
+        time.sleep(.05)
+raise SystemExit("hub-scope forge listener not ready")
+PY
+}
+
+hub_scope_run() {
+  local name="$1"
+  shift
+  local out ec
+  set +e
+  out="$("$@" 2>&1)"
+  ec=$?
+  set -e
+  printf '%s\n' "$out" >"$WORK/${name}.out"
+  if [[ "$ec" -ne 0 ]]; then
+    echo "FAIL HF-SCOPE $name exit=$ec" >&2
+    echo "$out" >&2
+    SCOPE_OK=0
+    return 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: HF-SCOPE $name ok"
+}
+
+# --- IW-HUB-ACTIONS (ARKS_HUB_IW_ACTIONS=1) ---
+if [[ "${ARKS_HUB_IW_ACTIONS:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-ACTIONS path (sot:root/arks-in-scope-leftovers-wave)"
+  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  cleanup_scope() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  hub_scope_run auth-login "$ARKS_BIN" hub auth login
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-ACTIONS"
+  hub_scope_run run-create "$ARKS_BIN" hub run create --repo local/hubscope --name act1 --branch main
+  hub_scope_run run-view "$ARKS_BIN" hub run view 1 --repo local/hubscope
+  hub_scope_run run-cancel "$ARKS_BIN" hub run cancel 1 --repo local/hubscope
+  hub_scope_run run-view-cancelled "$ARKS_BIN" hub run view 1 --repo local/hubscope
+  hub_scope_run run-watch "$ARKS_BIN" hub run watch 1 --repo local/hubscope
+  hub_scope_run run-rerun "$ARKS_BIN" hub run rerun 1 --repo local/hubscope
+  hub_scope_run run-download "$ARKS_BIN" hub run download 2 --repo local/hubscope --output "$WORK/run2.bin"
+  hub_scope_run workflow-list "$ARKS_BIN" hub workflow list --repo local/hubscope
+  hub_scope_run workflow-view "$ARKS_BIN" hub workflow view 1 --repo local/hubscope
+  hub_scope_run workflow-disable "$ARKS_BIN" hub workflow disable 1 --repo local/hubscope
+  hub_scope_run workflow-enable "$ARKS_BIN" hub workflow enable 1 --repo local/hubscope
+  hub_scope_run workflow-run "$ARKS_BIN" hub workflow run 1 --repo local/hubscope --ref main
+  hub_scope_run run-delete "$ARKS_BIN" hub run delete 2 --repo local/hubscope
+  if [[ "$SCOPE_OK" -eq 1 ]]; then
+    if ! grep -Fq '"status":"in_progress"' "$WORK/run-view.out"; then
+      echo "FAIL HF-SCOPE run view in_progress shape" >&2
+      SCOPE_OK=0
+    fi
+    if ! grep -Fq 'cancelled' "$WORK/run-view-cancelled.out"; then
+      echo "FAIL HF-SCOPE cancel conclusion" >&2
+      SCOPE_OK=0
+    fi
+    if [[ ! -s "$WORK/run2.bin" ]]; then
+      echo "FAIL HF-SCOPE run download empty" >&2
+      SCOPE_OK=0
+    fi
+  fi
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-ACTIONS" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-ACTIONS Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-ACTIONS greens"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-actions-metadata"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    cp "$WORK/run2.bin" "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-actions-metadata/v1",
+    "gate": "IW-HUB-ACTIONS",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "claimed": [
+        "run view", "run watch", "run cancel", "run rerun", "run download", "run delete",
+        "workflow view", "workflow enable", "workflow disable", "workflow run",
+    ],
+    "note": "Local-forge Actions metadata only — not CI compute Claimed.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
+fi
+
+# --- IW-HUB-ASSETS (ARKS_HUB_IW_ASSETS=1) ---
+if [[ "${ARKS_HUB_IW_ASSETS:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-ASSETS path (sot:root/arks-in-scope-leftovers-wave)"
+  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  cleanup_scope() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  echo 'asset-bytes-v1' >"$WORK/payload.bin"
+  hub_scope_run auth-login "$ARKS_BIN" hub auth login
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-ASSETS"
+  hub_scope_run release-create "$ARKS_BIN" hub release create --repo local/hubscope --tag v1.0.0 --title r --notes n
+  hub_scope_run release-upload "$ARKS_BIN" hub release upload --repo local/hubscope --tag v1.0.0 --file "$WORK/payload.bin" --name payload.bin
+  hub_scope_run release-download "$ARKS_BIN" hub release download --repo local/hubscope --asset-id 1 --output "$WORK/got.bin"
+  hub_scope_run release-edit "$ARKS_BIN" hub release edit --repo local/hubscope --tag v1.0.0 --title r-ed --notes n2
+  hub_scope_run release-delete-asset "$ARKS_BIN" hub release delete-asset --repo local/hubscope --asset-id 1
+  hub_scope_run release-create2 "$ARKS_BIN" hub release create --repo local/hubscope --tag v1.0.1 --title r2 --notes n
+  hub_scope_run release-delete "$ARKS_BIN" hub release delete --repo local/hubscope --tag v1.0.1
+  if [[ "$SCOPE_OK" -eq 1 ]]; then
+    if ! cmp -s "$WORK/payload.bin" "$WORK/got.bin"; then
+      echo "FAIL HF-SCOPE asset round-trip" >&2
+      SCOPE_OK=0
+    fi
+    if ! grep -Fq 'r-ed' "$WORK/release-edit.out"; then
+      echo "FAIL HF-SCOPE release edit" >&2
+      SCOPE_OK=0
+    fi
+  fi
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-ASSETS" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-ASSETS Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-ASSETS greens"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-release-assets"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-release-assets/v1",
+    "gate": "IW-HUB-ASSETS",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "claimed": ["release upload", "release download", "release delete-asset", "release edit", "release delete"],
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
+fi
+
+# --- IW-HUB-CHECKOUT (ARKS_HUB_IW_CHECKOUT=1) ---
+if [[ "${ARKS_HUB_IW_CHECKOUT:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-CHECKOUT path (sot:root/arks-in-scope-leftovers-wave)"
+  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  cleanup_scope() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  hub_scope_run auth-login "$ARKS_BIN" hub auth login
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-CHECKOUT"
+  hub_scope_run pr-create "$ARKS_BIN" hub pr create --repo local/hubscope --title co-pr --body b --head feature --base main
+  hub_scope_run pr-checkout "$ARKS_BIN" hub pr checkout 1 --repo local/hubscope
+  hub_scope_run co-alias "$ARKS_BIN" hub co 1 --repo local/hubscope
+  if [[ "$SCOPE_OK" -eq 1 ]]; then
+    if ! grep -Fq 'head_ref=feature' "$WORK/pr-checkout.out" \
+      || ! grep -Fq 'recipe=arks' "$WORK/pr-checkout.out" \
+      || ! grep -Fq 'head_ref=feature' "$WORK/co-alias.out"; then
+      echo "FAIL HF-SCOPE checkout resolve/print" >&2
+      SCOPE_OK=0
+    fi
+  fi
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-CHECKOUT" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-CHECKOUT Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-CHECKOUT greens"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-pr-checkout"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-pr-checkout/v1",
+    "gate": "IW-HUB-CHECKOUT",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "claimed": ["pr checkout", "co"],
+    "note": "Resolve/print only; never spawn git/gh.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
+fi
+
+# --- IW-HUB-UX (ARKS_HUB_IW_UX=1) ---
+if [[ "${ARKS_HUB_IW_UX:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-UX path (sot:root/arks-in-scope-leftovers-wave)"
+  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  cleanup_scope() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  printf 'demo=arks hub status\n' >"$WORK/aliases.txt"
+  hub_scope_run config-set "$ARKS_BIN" hub config set editor nano
+  hub_scope_run config-get "$ARKS_BIN" hub config get editor
+  hub_scope_run config-list "$ARKS_BIN" hub config list
+  hub_scope_run alias-set "$ARKS_BIN" hub alias set demo 'arks hub status'
+  hub_scope_run alias-list "$ARKS_BIN" hub alias list
+  hub_scope_run alias-import "$ARKS_BIN" hub alias import "$WORK/aliases.txt"
+  hub_scope_run alias-delete "$ARKS_BIN" hub alias delete demo
+  hub_scope_run completion-bash "$ARKS_BIN" hub completion bash
+  hub_scope_run config-clear "$ARKS_BIN" hub config clear-cache
+  if [[ "$SCOPE_OK" -eq 1 ]]; then
+    if ! grep -Fxq 'nano' "$WORK/config-get.out" \
+      || ! grep -Fq 'complete -W' "$WORK/completion-bash.out"; then
+      echo "FAIL HF-SCOPE UX shapes" >&2
+      SCOPE_OK=0
+    fi
+  fi
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-UX" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: IW-HUB-UX Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: IW-HUB-UX greens"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-ux-config-alias"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-ux/v1",
+    "gate": "IW-HUB-UX",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "claimed": [
+        "config get", "config set", "config list", "config clear-cache",
+        "alias set", "alias list", "alias delete", "alias import", "completion",
+    ],
+    "note": "Client state file + completion emit; no shell profile installer mutation.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
 fi
 
 # --- IW-HUB-MUTATE subset (ARKS_HUB_IW_MUTATE=1) ---

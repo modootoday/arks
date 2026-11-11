@@ -1,249 +1,249 @@
-gh_command,arks_hub_target,status_now,phase,notes
-auth,auth,Partial,v1,Group help wired via arks hub
-auth login,auth login,Claimed,v1,token store + local POST /login; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-auth logout,auth logout,Claimed,v1,hub auth logout Partial — clears stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-auth status,auth status,Claimed,v1,token file + local GET /user probe; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-auth token,auth token,Claimed,v1,hub auth token Partial — prints/redacts stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-auth refresh,auth refresh,Partial,v1,Partial stub — refresh not Claimed; exit 2 honesty (IW-HUB-FULL Missing→0)
-auth switch,auth switch,Deferred,later,Multi-account
-auth setup-git,OUT,Refuse/N/A,out-of-scope,gh configures git to use gh helper; arks-hub MUST NOT spawn git/gh
-pr,pr,Partial,v1,Group help
-pr create,pr create,Claimed,v1,local POST /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-pr list,pr list,Claimed,v1,local GET /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-pr status,pr status,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr view,pr view,Claimed,v1,local GET /repos/.../pulls/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-pr diff,pr diff,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr edit,pr edit,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-pr close,pr close,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-pr reopen,pr reopen,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-pr comment,pr comment,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-pr merge,pr merge,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-pr ready,pr ready,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr review,pr review,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr checks,pr checks,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr lock,pr lock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr unlock,pr unlock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr update-branch,pr update-branch,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr revert,pr revert,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed
-pr checkout,pr checkout,Partial,v1,Partial stub — resolve/print only; MUST NOT spawn git/gh (IW-HUB-FULL)
-co,co,Partial,v1,alias → pr checkout stub
-issue,issue,Partial,v1,Group help
-issue create,issue create,Claimed,v1,local POST /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-issue list,issue list,Claimed,v1,local GET /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-issue status,issue status,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue view,issue view,Claimed,v1,local GET /repos/.../issues/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-issue close,issue close,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-issue reopen,issue reopen,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-issue comment,issue comment,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-issue edit,issue edit,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-issue delete,issue delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue lock,issue lock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue unlock,issue unlock,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue pin,issue pin,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue unpin,issue unpin,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue transfer,issue transfer,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-issue develop,issue develop,Deferred,later,Linked branches metadata via API
-issue artifact,issue artifact,Deferred,later,Preview; GitHub-shaped artifacts
-issue artifact create,issue artifact create,Deferred,later,Preview
-issue artifact delete,issue artifact delete,Deferred,later,Preview
-issue artifact download,issue artifact download,Deferred,later,Preview
-issue artifact edit,issue artifact edit,Deferred,later,Preview
-issue artifact list,issue artifact list,Deferred,later,Preview
-issue artifact view,issue artifact view,Deferred,later,Preview
-release,release,Partial,v1,Group help; list|create Partial REST / expand Claimed leaves separate
-release create,release create,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-release list,release list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-release view,release view,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-release upload,release upload,Partial,v1,Partial stub — asset upload not Claimed (IW-HUB-FULL)
-release download,release download,Partial,v1,Partial stub — asset download not Claimed (IW-HUB-FULL)
-release edit,release edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-release delete,release delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-release delete-asset,release delete-asset,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-release verify,release verify,Deferred,later,Attestation-related
-release verify-asset,release verify-asset,Deferred,later,Attestation-related
-repo,repo,Partial,v1,Group help
-repo view,repo view,Claimed,v1,local GET /repos/{owner}/{repo}; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-repo list,repo list,Claimed,v1,local GET /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-repo create,repo create,Claimed,v1,local POST /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)
-repo edit,repo edit,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
-repo delete,repo delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
-repo fork,repo fork,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
-repo rename,repo rename,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
-repo archive,repo archive,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
-repo unarchive,repo unarchive,Partial,v1,Partial stub fail-closed (IW-HUB-FULL); never spawn git
-repo set-default,repo set-default,Partial,v1,Partial stub — hub config write not Claimed (IW-HUB-FULL)
-repo clone,repo clone,Deferred,later,MUST NOT spawn git/gh; later: in-process arks clone helper or print arks clone URL
-repo sync,repo sync,Deferred,later,API+arks fetch/push orchestration; no git/gh spawn
-repo read-dir,repo read-dir,Deferred,later,Contents API preview
-repo read-file,repo read-file,Deferred,later,Contents API preview
-repo gitignore,repo gitignore,Deferred,later,Template catalog
-repo gitignore list,repo gitignore list,Deferred,later,
-repo gitignore view,repo gitignore view,Deferred,later,
-repo license,repo license,Deferred,later,License template catalog
-repo license list,repo license list,Deferred,later,
-repo license view,repo license view,Deferred,later,
-repo autolink,repo autolink,Deferred,later,
-repo autolink create,repo autolink create,Deferred,later,
-repo autolink delete,repo autolink delete,Deferred,later,
-repo autolink list,repo autolink list,Deferred,later,
-repo autolink view,repo autolink view,Deferred,later,
-repo deploy-key,repo deploy-key,Deferred,later,
-repo deploy-key add,repo deploy-key add,Deferred,later,
-repo deploy-key delete,repo deploy-key delete,Deferred,later,
-repo deploy-key list,repo deploy-key list,Deferred,later,
-label,label,Partial,v1,Group help; list|create expand Claimed candidates
-label list,label list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-label create,label create,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-label edit,label edit,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-label delete,label delete,Claimed,v1,IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)
-label clone,label clone,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-run,run,Partial,v1,Group help; list|create Partial; not CI Claimed
-run list,run list,Partial,v1,Partial local actions runs list (IW-HUB-FULL); not CI Claimed
-run view,run view,Partial,v1,Partial stub fail-closed beyond list/create (IW-HUB-FULL)
-run watch,run watch,Partial,v1,Partial stub — watch/poll not Claimed (IW-HUB-FULL)
-run cancel,run cancel,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-run rerun,run rerun,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-run download,run download,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-run delete,run delete,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-workflow,workflow,Partial,v1,Group help; list Partial; not CI Claimed
-workflow list,workflow list,Partial,v1,Partial local workflows list (IW-HUB-FULL); not CI Claimed
-workflow view,workflow view,Partial,v1,Partial stub fail-closed beyond list (IW-HUB-FULL)
-workflow run,workflow run,Partial,v1,Partial stub — dispatch not Claimed (IW-HUB-FULL)
-workflow enable,workflow enable,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-workflow disable,workflow disable,Partial,v1,Partial stub fail-closed (IW-HUB-FULL)
-cache,cache,Deferred,later,Actions caches
-cache list,cache list,Deferred,later,
-cache delete,cache delete,Deferred,later,
-secret,secret,Deferred,later,Actions/env secrets
-secret list,secret list,Deferred,later,
-secret set,secret set,Deferred,later,
-secret delete,secret delete,Deferred,later,
-variable,variable,Deferred,later,
-variable list,variable list,Deferred,later,
-variable get,variable get,Deferred,later,
-variable set,variable set,Deferred,later,
-variable delete,variable delete,Deferred,later,
-search,search,Partial,v1,Group help; repos|issues|prs expand Claimed candidates
-search issues,search issues,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-search prs,search prs,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-search repos,search repos,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-search code,search code,Deferred,later,Host code search
-search commits,search commits,Deferred,later,
-status,status,Partial,v1,hub status Partial — aggregated issues/PRs stub
-api,api,Partial,v1,local HTTP GET passthrough
-org,org,Partial,v1,Group help; list expand Claimed candidate
-org list,org list,Claimed,v1,IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)
-config,config,Partial,v1,Group help; hub config Partial stubs
-config get,config get,Partial,v1,Partial stub (IW-HUB-FULL)
-config set,config set,Partial,v1,Partial stub (IW-HUB-FULL)
-config list,config list,Partial,v1,Partial stub (IW-HUB-FULL)
-config clear-cache,config clear-cache,Partial,v1,Partial stub (IW-HUB-FULL)
-alias,alias,Partial,v1,Group help; Partial alias snippets
-alias set,alias set,Partial,v1,Partial stub (IW-HUB-FULL)
-alias list,alias list,Partial,v1,Partial alias list snippets (IW-HUB-FULL)
-alias delete,alias delete,Partial,v1,Partial stub (IW-HUB-FULL)
-alias import,alias import,Partial,v1,Partial stub (IW-HUB-FULL)
-completion,completion,Partial,v1,Partial shell completion stubs (IW-HUB-FULL)
-browse,browse,Deferred,later,Open browser URLs from API; no web UI product
-gist,gist,Deferred,later,May be GitHub-shaped; hub API later
-gist list,gist list,Deferred,later,
-gist view,gist view,Deferred,later,
-gist create,gist create,Deferred,later,
-gist edit,gist edit,Deferred,later,
-gist delete,gist delete,Deferred,later,
-gist rename,gist rename,Deferred,later,
-gist clone,gist clone,Deferred,later,No git/gh spawn; arks or URL print
-discussion,discussion,Deferred,later,Preview on gh; hub-shaped forums later
-discussion create,discussion create,Deferred,later,
-discussion list,discussion list,Deferred,later,
-discussion view,discussion view,Deferred,later,
-discussion edit,discussion edit,Deferred,later,
-discussion comment,discussion comment,Deferred,later,
-project,project,Deferred,later,Projects v2; large surface
-project list,project list,Deferred,later,
-project view,project view,Deferred,later,
-project create,project create,Deferred,later,
-project edit,project edit,Deferred,later,
-project delete,project delete,Deferred,later,
-project close,project close,Deferred,later,
-project copy,project copy,Deferred,later,
-project link,project link,Deferred,later,
-project unlink,project unlink,Deferred,later,
-project mark-template,project mark-template,Deferred,later,
-project field-create,project field-create,Deferred,later,
-project field-delete,project field-delete,Deferred,later,
-project field-list,project field-list,Deferred,later,
-project item-add,project item-add,Deferred,later,
-project item-archive,project item-archive,Deferred,later,
-project item-create,project item-create,Deferred,later,
-project item-delete,project item-delete,Deferred,later,
-project item-edit,project item-edit,Deferred,later,
-project item-list,project item-list,Deferred,later,
-ssh-key,ssh-key,Deferred,later,Account SSH keys via API
-ssh-key list,ssh-key list,Deferred,later,
-ssh-key add,ssh-key add,Deferred,later,
-ssh-key delete,ssh-key delete,Deferred,later,
-gpg-key,gpg-key,Deferred,later,
-gpg-key list,gpg-key list,Deferred,later,
-gpg-key add,gpg-key add,Deferred,later,
-gpg-key delete,gpg-key delete,Deferred,later,
-ruleset,ruleset,Deferred,later,gh alias rs
-rs,rs,Deferred,later,Alias of ruleset
-ruleset list,ruleset list,Deferred,later,
-ruleset view,ruleset view,Deferred,later,
-ruleset check,ruleset check,Deferred,later,
-attestation,attestation,Deferred,later,
-attestation verify,attestation verify,Deferred,later,
-attestation download,attestation download,Deferred,later,
-attestation trusted-root,attestation trusted-root,Deferred,later,
-codespace,codespace,Deferred,later,GitHub Codespaces-shaped; may stay GitHub-host-specific
-codespace list,codespace list,Deferred,later,Host-specific
-codespace create,codespace create,Deferred,later,Host-specific
-codespace delete,codespace delete,Deferred,later,Host-specific
-codespace view,codespace view,Deferred,later,Host-specific
-codespace edit,codespace edit,Deferred,later,Host-specific
-codespace stop,codespace stop,Deferred,later,Host-specific
-codespace code,codespace code,Deferred,later,Host-specific
-codespace cp,codespace cp,Deferred,later,Host-specific
-codespace jupyter,codespace jupyter,Deferred,later,Host-specific
-codespace logs,codespace logs,Deferred,later,Host-specific
-codespace rebuild,codespace rebuild,Deferred,later,Host-specific
-codespace ssh,codespace ssh,Deferred,later,Host-specific
-codespace ports,codespace ports,Deferred,later,Host-specific
-codespace ports forward,codespace ports forward,Deferred,later,
-codespace ports visibility,codespace ports visibility,Deferred,later,
-extension,OUT,Refuse/N/A,out-of-scope,gh extension marketplace; not hub product
-extension browse,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension create,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension exec,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension install,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension list,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension remove,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension search,OUT,Refuse/N/A,out-of-scope,gh-specific
-extension upgrade,OUT,Refuse/N/A,out-of-scope,gh-specific
-copilot,OUT,Refuse/N/A,out-of-scope,GitHub Copilot CLI product
-skill,OUT,Refuse/N/A,out-of-scope,gh agent skills preview
-skill install,OUT,Refuse/N/A,out-of-scope,
-skill list,OUT,Refuse/N/A,out-of-scope,
-skill preview,OUT,Refuse/N/A,out-of-scope,
-skill publish,OUT,Refuse/N/A,out-of-scope,
-skill search,OUT,Refuse/N/A,out-of-scope,
-skill update,OUT,Refuse/N/A,out-of-scope,
-agent-task,OUT,Refuse/N/A,out-of-scope,GitHub agent tasks preview
-agent-task create,OUT,Refuse/N/A,out-of-scope,
-agent-task list,OUT,Refuse/N/A,out-of-scope,
-agent-task view,OUT,Refuse/N/A,out-of-scope,
-agent-tasks,OUT,Refuse/N/A,out-of-scope,Alias of agent-task
-agent,OUT,Refuse/N/A,out-of-scope,Alias of agent-task
-agents,OUT,Refuse/N/A,out-of-scope,Alias of agent-task
-licenses,OUT,Refuse/N/A,out-of-scope,gh third-party license dump for gh itself
-preview,OUT,Refuse/N/A,out-of-scope,gh internal prompter preview
-preview prompter,OUT,Refuse/N/A,out-of-scope,
-(none),milestone,Deferred,later,Hub first-class; gh uses issue/pr flags not top-level milestone
-(none),milestone list,Deferred,later,
-(none),milestone create,Deferred,later,
-(none),milestone edit,Deferred,later,
-(none),milestone close,Deferred,later,
-(none),milestone delete,Deferred,later,
-(none),serve,Partial,later,arks hub serve listen/bind Partial (default 127.0.0.1:3920; LAN 0.0.0.0 Partial; sibling self-host SoT not v1)
-(none),review,Deferred,later,Optional richer review group; v1 uses pr review (gh-identical)
+﻿"gh_command","arks_hub_target","status_now","phase","notes"
+"auth","auth","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help wired via arks hub)"
+"auth login","auth login","Claimed","v1","token store + local POST /login; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"auth logout","auth logout","Claimed","v1","hub auth logout Partial — clears stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"auth status","auth status","Claimed","v1","token file + local GET /user probe; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"auth token","auth token","Claimed","v1","hub auth token Partial — prints/redacts stored token; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"auth refresh","auth refresh","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub — refresh not Claimed; exit 2 honesty (IW-HUB-FULL Missing→0))"
+"auth switch","auth switch","Deferred","later","Multi-account"
+"auth setup-git","OUT","Refuse/N/A","out-of-scope","gh configures git to use gh helper; arks-hub MUST NOT spawn git/gh"
+"pr","pr","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help)"
+"pr create","pr create","Claimed","v1","local POST /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"pr list","pr list","Claimed","v1","local GET /repos/.../pulls; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"pr status","pr status","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr view","pr view","Claimed","v1","local GET /repos/.../pulls/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"pr diff","pr diff","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr edit","pr edit","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"pr close","pr close","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"pr reopen","pr reopen","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"pr comment","pr comment","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"pr merge","pr merge","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"pr ready","pr ready","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr review","pr review","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr checks","pr checks","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr lock","pr lock","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr unlock","pr unlock","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr update-branch","pr update-branch","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr revert","pr revert","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); peer-faithful body not Claimed)"
+"pr checkout","pr checkout","Claimed","v1","IW-HUB-CHECKOUT Claimed (evidence:root/20261111034521-hub-pr-checkout)"
+"co","co","Claimed","v1","IW-HUB-CHECKOUT Claimed (evidence:root/20261111034521-hub-pr-checkout)"
+"issue","issue","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help)"
+"issue create","issue create","Claimed","v1","local POST /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"issue list","issue list","Claimed","v1","local GET /repos/.../issues; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"issue status","issue status","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue view","issue view","Claimed","v1","local GET /repos/.../issues/{n}; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"issue close","issue close","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"issue reopen","issue reopen","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"issue comment","issue comment","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"issue edit","issue edit","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"issue delete","issue delete","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue lock","issue lock","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue unlock","issue unlock","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue pin","issue pin","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue unpin","issue unpin","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue transfer","issue transfer","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"issue develop","issue develop","Deferred","later","Linked branches metadata via API"
+"issue artifact","issue artifact","Deferred","later","Preview; GitHub-shaped artifacts"
+"issue artifact create","issue artifact create","Deferred","later","Preview"
+"issue artifact delete","issue artifact delete","Deferred","later","Preview"
+"issue artifact download","issue artifact download","Deferred","later","Preview"
+"issue artifact edit","issue artifact edit","Deferred","later","Preview"
+"issue artifact list","issue artifact list","Deferred","later","Preview"
+"issue artifact view","issue artifact view","Deferred","later","Preview"
+"release","release","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; list|create Partial REST / expand Claimed leaves separate)"
+"release create","release create","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"release list","release list","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"release view","release view","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"release upload","release upload","Claimed","v1","IW-HUB-ASSETS Claimed (evidence:root/20261111034513-hub-release-assets)"
+"release download","release download","Claimed","v1","IW-HUB-ASSETS Claimed (evidence:root/20261111034513-hub-release-assets)"
+"release edit","release edit","Claimed","v1","IW-HUB-ASSETS Claimed (evidence:root/20261111034513-hub-release-assets)"
+"release delete","release delete","Claimed","v1","IW-HUB-ASSETS Claimed (evidence:root/20261111034513-hub-release-assets)"
+"release delete-asset","release delete-asset","Claimed","v1","IW-HUB-ASSETS Claimed (evidence:root/20261111034513-hub-release-assets)"
+"release verify","release verify","Deferred","later","Attestation-related"
+"release verify-asset","release verify-asset","Deferred","later","Attestation-related"
+"repo","repo","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help)"
+"repo view","repo view","Claimed","v1","local GET /repos/{owner}/{repo}; IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"repo list","repo list","Claimed","v1","local GET /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"repo create","repo create","Claimed","v1","local POST /user/repos; IW-HUB-FLAT subset Claimed (evidence:root/20261111011539-hub-flat-subset)"
+"repo edit","repo edit","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); never spawn git)"
+"repo delete","repo delete","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); never spawn git)"
+"repo fork","repo fork","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); never spawn git)"
+"repo rename","repo rename","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); never spawn git)"
+"repo archive","repo archive","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); never spawn git)"
+"repo unarchive","repo unarchive","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL); never spawn git)"
+"repo set-default","repo set-default","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub — hub config write not Claimed (IW-HUB-FULL))"
+"repo clone","repo clone","Deferred","later","MUST NOT spawn git/gh; later: in-process arks clone helper or print arks clone URL"
+"repo sync","repo sync","Deferred","later","API+arks fetch/push orchestration; no git/gh spawn"
+"repo read-dir","repo read-dir","Deferred","later","Contents API preview"
+"repo read-file","repo read-file","Deferred","later","Contents API preview"
+"repo gitignore","repo gitignore","Deferred","later","Template catalog"
+"repo gitignore list","repo gitignore list","Deferred","later",""
+"repo gitignore view","repo gitignore view","Deferred","later",""
+"repo license","repo license","Deferred","later","License template catalog"
+"repo license list","repo license list","Deferred","later",""
+"repo license view","repo license view","Deferred","later",""
+"repo autolink","repo autolink","Deferred","later",""
+"repo autolink create","repo autolink create","Deferred","later",""
+"repo autolink delete","repo autolink delete","Deferred","later",""
+"repo autolink list","repo autolink list","Deferred","later",""
+"repo autolink view","repo autolink view","Deferred","later",""
+"repo deploy-key","repo deploy-key","Deferred","later",""
+"repo deploy-key add","repo deploy-key add","Deferred","later",""
+"repo deploy-key delete","repo deploy-key delete","Deferred","later",""
+"repo deploy-key list","repo deploy-key list","Deferred","later",""
+"label","label","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; list|create expand Claimed candidates)"
+"label list","label list","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"label create","label create","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"label edit","label edit","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"label delete","label delete","Claimed","v1","IW-HUB-MUTATE Claimed (evidence:root/20261111025142-hub-mutate-subset)"
+"label clone","label clone","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Partial stub fail-closed (IW-HUB-FULL))"
+"run","run","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; list|create Partial; not CI Claimed)"
+"run list","run list","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"run view","run view","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"run watch","run watch","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"run cancel","run cancel","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"run rerun","run rerun","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"run download","run download","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"run delete","run delete","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"workflow","workflow","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; list Partial; not CI Claimed)"
+"workflow list","workflow list","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"workflow view","workflow view","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"workflow run","workflow run","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"workflow enable","workflow enable","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"workflow disable","workflow disable","Claimed","v1","IW-HUB-ACTIONS Claimed (evidence:root/20261111034505-hub-actions-metadata)"
+"cache","cache","Deferred","later","Actions caches"
+"cache list","cache list","Deferred","later",""
+"cache delete","cache delete","Deferred","later",""
+"secret","secret","Deferred","later","Actions/env secrets"
+"secret list","secret list","Deferred","later",""
+"secret set","secret set","Deferred","later",""
+"secret delete","secret delete","Deferred","later",""
+"variable","variable","Deferred","later",""
+"variable list","variable list","Deferred","later",""
+"variable get","variable get","Deferred","later",""
+"variable set","variable set","Deferred","later",""
+"variable delete","variable delete","Deferred","later",""
+"search","search","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; repos|issues|prs expand Claimed candidates)"
+"search issues","search issues","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"search prs","search prs","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"search repos","search repos","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"search code","search code","Deferred","later","Host code search"
+"search commits","search commits","Deferred","later",""
+"status","status","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (hub status Partial — aggregated issues/PRs stub)"
+"api","api","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (local HTTP GET passthrough)"
+"org","org","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; list expand Claimed candidate)"
+"org list","org list","Claimed","v1","IW-HUB-FULL expand Claimed (evidence:root/20261111020350-hub-full-expand)"
+"config","config","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; hub config Partial stubs)"
+"config get","config get","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"config set","config set","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"config list","config list","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"config clear-cache","config clear-cache","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"alias","alias","Partial","v1","Stay Partial — [[sot:root/arks-in-scope-leftovers-wave]] IW-HUB-STUBS (Group help; Partial alias snippets)"
+"alias set","alias set","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"alias list","alias list","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"alias delete","alias delete","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"alias import","alias import","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"completion","completion","Claimed","v1","IW-HUB-UX Claimed (evidence:root/20261111034525-hub-ux-config-alias)"
+"browse","browse","Deferred","later","Open browser URLs from API; no web UI product"
+"gist","gist","Deferred","later","May be GitHub-shaped; hub API later"
+"gist list","gist list","Deferred","later",""
+"gist view","gist view","Deferred","later",""
+"gist create","gist create","Deferred","later",""
+"gist edit","gist edit","Deferred","later",""
+"gist delete","gist delete","Deferred","later",""
+"gist rename","gist rename","Deferred","later",""
+"gist clone","gist clone","Deferred","later","No git/gh spawn; arks or URL print"
+"discussion","discussion","Deferred","later","Preview on gh; hub-shaped forums later"
+"discussion create","discussion create","Deferred","later",""
+"discussion list","discussion list","Deferred","later",""
+"discussion view","discussion view","Deferred","later",""
+"discussion edit","discussion edit","Deferred","later",""
+"discussion comment","discussion comment","Deferred","later",""
+"project","project","Deferred","later","Projects v2; large surface"
+"project list","project list","Deferred","later",""
+"project view","project view","Deferred","later",""
+"project create","project create","Deferred","later",""
+"project edit","project edit","Deferred","later",""
+"project delete","project delete","Deferred","later",""
+"project close","project close","Deferred","later",""
+"project copy","project copy","Deferred","later",""
+"project link","project link","Deferred","later",""
+"project unlink","project unlink","Deferred","later",""
+"project mark-template","project mark-template","Deferred","later",""
+"project field-create","project field-create","Deferred","later",""
+"project field-delete","project field-delete","Deferred","later",""
+"project field-list","project field-list","Deferred","later",""
+"project item-add","project item-add","Deferred","later",""
+"project item-archive","project item-archive","Deferred","later",""
+"project item-create","project item-create","Deferred","later",""
+"project item-delete","project item-delete","Deferred","later",""
+"project item-edit","project item-edit","Deferred","later",""
+"project item-list","project item-list","Deferred","later",""
+"ssh-key","ssh-key","Deferred","later","Account SSH keys via API"
+"ssh-key list","ssh-key list","Deferred","later",""
+"ssh-key add","ssh-key add","Deferred","later",""
+"ssh-key delete","ssh-key delete","Deferred","later",""
+"gpg-key","gpg-key","Deferred","later",""
+"gpg-key list","gpg-key list","Deferred","later",""
+"gpg-key add","gpg-key add","Deferred","later",""
+"gpg-key delete","gpg-key delete","Deferred","later",""
+"ruleset","ruleset","Deferred","later","gh alias rs"
+"rs","rs","Deferred","later","Alias of ruleset"
+"ruleset list","ruleset list","Deferred","later",""
+"ruleset view","ruleset view","Deferred","later",""
+"ruleset check","ruleset check","Deferred","later",""
+"attestation","attestation","Deferred","later",""
+"attestation verify","attestation verify","Deferred","later",""
+"attestation download","attestation download","Deferred","later",""
+"attestation trusted-root","attestation trusted-root","Deferred","later",""
+"codespace","codespace","Deferred","later","GitHub Codespaces-shaped; may stay GitHub-host-specific"
+"codespace list","codespace list","Deferred","later","Host-specific"
+"codespace create","codespace create","Deferred","later","Host-specific"
+"codespace delete","codespace delete","Deferred","later","Host-specific"
+"codespace view","codespace view","Deferred","later","Host-specific"
+"codespace edit","codespace edit","Deferred","later","Host-specific"
+"codespace stop","codespace stop","Deferred","later","Host-specific"
+"codespace code","codespace code","Deferred","later","Host-specific"
+"codespace cp","codespace cp","Deferred","later","Host-specific"
+"codespace jupyter","codespace jupyter","Deferred","later","Host-specific"
+"codespace logs","codespace logs","Deferred","later","Host-specific"
+"codespace rebuild","codespace rebuild","Deferred","later","Host-specific"
+"codespace ssh","codespace ssh","Deferred","later","Host-specific"
+"codespace ports","codespace ports","Deferred","later","Host-specific"
+"codespace ports forward","codespace ports forward","Deferred","later",""
+"codespace ports visibility","codespace ports visibility","Deferred","later",""
+"extension","OUT","Refuse/N/A","out-of-scope","gh extension marketplace; not hub product"
+"extension browse","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension create","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension exec","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension install","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension list","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension remove","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension search","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"extension upgrade","OUT","Refuse/N/A","out-of-scope","gh-specific"
+"copilot","OUT","Refuse/N/A","out-of-scope","GitHub Copilot CLI product"
+"skill","OUT","Refuse/N/A","out-of-scope","gh agent skills preview"
+"skill install","OUT","Refuse/N/A","out-of-scope",""
+"skill list","OUT","Refuse/N/A","out-of-scope",""
+"skill preview","OUT","Refuse/N/A","out-of-scope",""
+"skill publish","OUT","Refuse/N/A","out-of-scope",""
+"skill search","OUT","Refuse/N/A","out-of-scope",""
+"skill update","OUT","Refuse/N/A","out-of-scope",""
+"agent-task","OUT","Refuse/N/A","out-of-scope","GitHub agent tasks preview"
+"agent-task create","OUT","Refuse/N/A","out-of-scope",""
+"agent-task list","OUT","Refuse/N/A","out-of-scope",""
+"agent-task view","OUT","Refuse/N/A","out-of-scope",""
+"agent-tasks","OUT","Refuse/N/A","out-of-scope","Alias of agent-task"
+"agent","OUT","Refuse/N/A","out-of-scope","Alias of agent-task"
+"agents","OUT","Refuse/N/A","out-of-scope","Alias of agent-task"
+"licenses","OUT","Refuse/N/A","out-of-scope","gh third-party license dump for gh itself"
+"preview","OUT","Refuse/N/A","out-of-scope","gh internal prompter preview"
+"preview prompter","OUT","Refuse/N/A","out-of-scope",""
+"(none)","milestone","Deferred","later","Hub first-class; gh uses issue/pr flags not top-level milestone"
+"(none)","milestone list","Deferred","later",""
+"(none)","milestone create","Deferred","later",""
+"(none)","milestone edit","Deferred","later",""
+"(none)","milestone close","Deferred","later",""
+"(none)","milestone delete","Deferred","later",""
+"(none)","serve","Partial","later","arks hub serve listen/bind Partial (default 127.0.0.1:3920; LAN 0.0.0.0 Partial; sibling self-host SoT not v1)"
+"(none)","review","Deferred","later","Optional richer review group; v1 uses pr review (gh-identical)"

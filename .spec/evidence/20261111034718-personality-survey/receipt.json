@@ -1,0 +1,24 @@
+{
+  "schema": "arks-personality-survey/v1",
+  "gate": "IW-PERSONALITY-SURVEY",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "9f78458",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "expand_rows": [
+    "SV-STATUS",
+    "SV-LOG",
+    "SV-SHOW",
+    "SV-DIFF",
+    "SV-BRANCH",
+    "SV-REVPARSE",
+    "SV-LSFILES",
+    "SV-CONFIG-GET",
+    "SV-HASHZERO",
+    "SV-CATFILE",
+    "SV-BAD",
+    "SV-HELP"
+  ],
+  "note": "Named expand only; CLI Partial\u00d7117 remainder stay Partial with SoT cite.",
+  "timestamp": "2026-11-11T03:47:18Z"
+}

@@ -35,6 +35,10 @@ pub struct HubDb {
     pub next_discussion: u64,
     #[serde(default)]
     pub next_comment: u64,
+    #[serde(default)]
+    pub next_asset: u64,
+    #[serde(default)]
+    pub next_artifact: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
@@ -45,7 +49,11 @@ pub struct HubDb {
     #[serde(default)]
     pub releases: Vec<Release>,
     #[serde(default)]
+    pub assets: Vec<ReleaseAsset>,
+    #[serde(default)]
     pub runs: Vec<WorkflowRun>,
+    #[serde(default)]
+    pub artifacts: Vec<RunArtifact>,
     #[serde(default)]
     pub workflows: Vec<Workflow>,
     #[serde(default)]
@@ -137,6 +145,18 @@ pub struct Release {
     pub prerelease: bool,
 }
 
+/// Release asset metadata; bytes live under `data_dir/assets/{id}.bin`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReleaseAsset {
+    pub id: u64,
+    pub release_id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+    pub content_type: String,
+    pub size: u64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Workflow {
     pub id: u64,
@@ -157,6 +177,17 @@ pub struct WorkflowRun {
     pub conclusion: String,
     pub workflow_id: u64,
     pub head_branch: String,
+}
+
+/// Run artifact metadata; bytes under `data_dir/artifacts/{id}.bin` (local-forge, not CI).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RunArtifact {
+    pub id: u64,
+    pub run_id: u64,
+    pub owner: String,
+    pub repo: String,
+    pub name: String,
+    pub size: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -613,14 +644,265 @@ impl HubStore {
             owner: owner.into(),
             repo: repo.into(),
             name: name.into(),
-            status: "completed".into(),
-            conclusion: "success".into(),
+            // Local-forge metadata: start in_progress so cancel/watch have peer-shaped lifecycle.
+            status: "in_progress".into(),
+            conclusion: String::new(),
             workflow_id: wf.id,
             head_branch: head_branch.into(),
         };
         self.db.runs.push(run.clone());
+        // Seed a tiny artifact so `run download` has local-forge bytes (≠ CI compute).
+        let _ = self.attach_run_artifact(owner, repo, id, "logs.txt", b"arks-local-forge-run-log\n");
         run
     }
+
+    pub fn find_run(&self, owner: &str, repo: &str, id: u64) -> Option<&WorkflowRun> {
+        self.db
+            .runs
+            .iter()
+            .find(|r| r.owner == owner && r.repo == repo && r.id == id)
+    }
+
+    pub fn cancel_run(&mut self, owner: &str, repo: &str, id: u64) -> Option<WorkflowRun> {
+        let run = self
+            .db
+            .runs
+            .iter_mut()
+            .find(|r| r.owner == owner && r.repo == repo && r.id == id)?;
+        run.status = "completed".into();
+        run.conclusion = "cancelled".into();
+        Some(run.clone())
+    }
+
+    pub fn rerun_run(&mut self, owner: &str, repo: &str, id: u64) -> Option<WorkflowRun> {
+        let prev = self.find_run(owner, repo, id)?.clone();
+        Some(self.create_run(owner, repo, &prev.name, &prev.head_branch))
+    }
+
+    pub fn delete_run(&mut self, owner: &str, repo: &str, id: u64) -> bool {
+        let before = self.db.runs.len();
+        self.db
+            .runs
+            .retain(|r| !(r.owner == owner && r.repo == repo && r.id == id));
+        self.db
+            .artifacts
+            .retain(|a| !(a.owner == owner && a.repo == repo && a.run_id == id));
+        self.db.runs.len() != before
+    }
+
+    pub fn find_workflow(&self, owner: &str, repo: &str, id_or_path: &str) -> Option<&Workflow> {
+        if let Ok(id) = id_or_path.parse::<u64>() {
+            if let Some(w) = self
+                .db
+                .workflows
+                .iter()
+                .find(|w| w.owner == owner && w.repo == repo && w.id == id)
+            {
+                return Some(w);
+            }
+        }
+        self.db.workflows.iter().find(|w| {
+            w.owner == owner
+                && w.repo == repo
+                && (w.path == id_or_path || w.name == id_or_path)
+        })
+    }
+
+    pub fn set_workflow_state(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        id_or_path: &str,
+        state: &str,
+    ) -> Option<Workflow> {
+        let id = self.find_workflow(owner, repo, id_or_path)?.id;
+        let wf = self
+            .db
+            .workflows
+            .iter_mut()
+            .find(|w| w.owner == owner && w.repo == repo && w.id == id)?;
+        wf.state = state.into();
+        Some(wf.clone())
+    }
+
+    pub fn dispatch_workflow(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        id_or_path: &str,
+        r#ref: &str,
+    ) -> Option<WorkflowRun> {
+        let wf = self.find_workflow(owner, repo, id_or_path)?.clone();
+        if wf.state != "active" {
+            return None;
+        }
+        Some(self.create_run(owner, repo, &wf.name, r#ref))
+    }
+
+    fn data_root(&self) -> PathBuf {
+        self.path
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| PathBuf::from("."))
+    }
+
+    fn assets_dir(&self) -> PathBuf {
+        self.data_root().join("assets")
+    }
+
+    fn artifacts_dir(&self) -> PathBuf {
+        self.data_root().join("artifacts")
+    }
+
+    pub fn attach_run_artifact(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        run_id: u64,
+        name: &str,
+        bytes: &[u8],
+    ) -> Option<RunArtifact> {
+        if self.find_run(owner, repo, run_id).is_none() {
+            return None;
+        }
+        if self.db.next_artifact == 0 {
+            self.db.next_artifact = 1;
+        }
+        let id = self.db.next_artifact;
+        self.db.next_artifact += 1;
+        let dir = self.artifacts_dir();
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join(format!("{id}.bin"));
+        fs::write(&path, bytes).ok()?;
+        let art = RunArtifact {
+            id,
+            run_id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: name.into(),
+            size: bytes.len() as u64,
+        };
+        self.db.artifacts.push(art.clone());
+        Some(art)
+    }
+
+    pub fn read_run_artifact_bytes(&self, id: u64) -> Option<Vec<u8>> {
+        let path = self.artifacts_dir().join(format!("{id}.bin"));
+        fs::read(path).ok()
+    }
+
+    pub fn upload_release_asset(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        release_id: u64,
+        name: &str,
+        content_type: &str,
+        bytes: &[u8],
+    ) -> Option<ReleaseAsset> {
+        if !self
+            .db
+            .releases
+            .iter()
+            .any(|r| r.owner == owner && r.repo == repo && r.id == release_id)
+        {
+            return None;
+        }
+        if self.db.next_asset == 0 {
+            self.db.next_asset = 1;
+        }
+        let id = self.db.next_asset;
+        self.db.next_asset += 1;
+        let dir = self.assets_dir();
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join(format!("{id}.bin"));
+        fs::write(&path, bytes).ok()?;
+        let asset = ReleaseAsset {
+            id,
+            release_id,
+            owner: owner.into(),
+            repo: repo.into(),
+            name: name.into(),
+            content_type: if content_type.is_empty() {
+                "application/octet-stream".into()
+            } else {
+                content_type.into()
+            },
+            size: bytes.len() as u64,
+        };
+        self.db.assets.push(asset.clone());
+        Some(asset)
+    }
+
+    pub fn find_asset(&self, owner: &str, repo: &str, id: u64) -> Option<&ReleaseAsset> {
+        self.db
+            .assets
+            .iter()
+            .find(|a| a.owner == owner && a.repo == repo && a.id == id)
+    }
+
+    pub fn read_asset_bytes(&self, id: u64) -> Option<Vec<u8>> {
+        let path = self.assets_dir().join(format!("{id}.bin"));
+        fs::read(path).ok()
+    }
+
+    pub fn delete_asset(&mut self, owner: &str, repo: &str, id: u64) -> bool {
+        let before = self.db.assets.len();
+        self.db
+            .assets
+            .retain(|a| !(a.owner == owner && a.repo == repo && a.id == id));
+        let path = self.assets_dir().join(format!("{id}.bin"));
+        let _ = fs::remove_file(path);
+        self.db.assets.len() != before
+    }
+
+    pub fn update_release(
+        &mut self,
+        owner: &str,
+        repo: &str,
+        tag_or_id: &str,
+        name: Option<&str>,
+        body: Option<&str>,
+        tag_name: Option<&str>,
+    ) -> Option<Release> {
+        let id = self.find_release(owner, repo, tag_or_id)?.id;
+        let rel = self
+            .db
+            .releases
+            .iter_mut()
+            .find(|r| r.owner == owner && r.repo == repo && r.id == id)?;
+        if let Some(n) = name {
+            rel.name = n.into();
+        }
+        if let Some(b) = body {
+            rel.body = b.into();
+        }
+        if let Some(t) = tag_name {
+            rel.tag_name = t.into();
+        }
+        Some(rel.clone())
+    }
+
+    pub fn delete_release(&mut self, owner: &str, repo: &str, tag_or_id: &str) -> bool {
+        let Some(id) = self.find_release(owner, repo, tag_or_id).map(|r| r.id) else {
+            return false;
+        };
+        self.db
+            .releases
+            .retain(|r| !(r.owner == owner && r.repo == repo && r.id == id));
+        let asset_ids: Vec<u64> = self
+            .db
+            .assets
+            .iter()
+            .filter(|a| a.owner == owner && a.repo == repo && a.release_id == id)
+            .map(|a| a.id)
+            .collect();
+        for aid in asset_ids {
+            let _ = self.delete_asset(owner, repo, aid);
+        }
+        true
+    }
+
 
     pub fn create_milestone(
         &mut self,

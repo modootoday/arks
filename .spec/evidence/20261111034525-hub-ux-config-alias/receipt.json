@@ -1,0 +1,21 @@
+{
+  "schema": "arks-hub-ux/v1",
+  "gate": "IW-HUB-UX",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "9f78458",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed": [
+    "config get",
+    "config set",
+    "config list",
+    "config clear-cache",
+    "alias set",
+    "alias list",
+    "alias delete",
+    "alias import",
+    "completion"
+  ],
+  "note": "Client state file + completion emit; no shell profile installer mutation.",
+  "timestamp": "2026-11-11T03:45:25Z"
+}

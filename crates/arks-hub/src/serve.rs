@@ -714,7 +714,7 @@ fn handle_client<S: Read + Write>(
                     return respond(stream, 404, &json!({"message":"Not Found"}));
                 }
             }
-            // Releases (Partial local forge).
+            // Releases (local forge; assets Claimed under IW-HUB-ASSETS).
             if parts.len() == 3 && parts[2] == "releases" {
                 if req.method == "GET" {
                     let items: Vec<Value> = st
@@ -722,16 +722,7 @@ fn handle_client<S: Read + Write>(
                         .releases
                         .iter()
                         .filter(|r| r.owner == owner && r.repo == repo)
-                        .map(|r| {
-                            json!({
-                                "id": r.id,
-                                "tag_name": r.tag_name,
-                                "name": r.name,
-                                "body": r.body,
-                                "draft": r.draft,
-                                "prerelease": r.prerelease,
-                            })
-                        })
+                        .map(|r| release_json(&st, r))
                         .collect();
                     return respond(stream, 200, &Value::Array(items));
                 }
@@ -745,37 +736,36 @@ fn handle_client<S: Read + Write>(
                     let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
                     let rel = st.create_release(owner, repo, tag, name, body);
                     st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "id": rel.id,
-                            "tag_name": rel.tag_name,
-                            "name": rel.name,
-                            "body": rel.body,
-                            "draft": rel.draft,
-                            "prerelease": rel.prerelease,
-                        }),
-                    );
+                    return respond(stream, 201, &release_json(&st, &rel));
                 }
             }
-            // release view by id or tags/{tag}
-            if parts.len() == 4 && parts[2] == "releases" && req.method == "GET" {
-                if let Some(r) = st.find_release(owner, repo, parts[3]) {
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "id": r.id,
-                            "tag_name": r.tag_name,
-                            "name": r.name,
-                            "body": r.body,
-                            "draft": r.draft,
-                            "prerelease": r.prerelease,
-                        }),
-                    );
+            // release view / edit / delete by id
+            if parts.len() == 4 && parts[2] == "releases" {
+                let key = parts[3];
+                if req.method == "GET" {
+                    if let Some(r) = st.find_release(owner, repo, key) {
+                        return respond(stream, 200, &release_json(&st, r));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
                 }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
+                if req.method == "PATCH" {
+                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                    let name = v.get("name").and_then(|x| x.as_str());
+                    let body = v.get("body").and_then(|x| x.as_str());
+                    let tag = v.get("tag_name").and_then(|x| x.as_str());
+                    if let Some(r) = st.update_release(owner, repo, key, name, body, tag) {
+                        st.save()?;
+                        return respond(stream, 200, &release_json(&st, &r));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "DELETE" {
+                    if st.delete_release(owner, repo, key) {
+                        st.save()?;
+                        return respond(stream, 204, &json!({}));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
             }
             if parts.len() == 5
                 && parts[2] == "releases"
@@ -783,22 +773,87 @@ fn handle_client<S: Read + Write>(
                 && req.method == "GET"
             {
                 if let Some(r) = st.find_release(owner, repo, parts[4]) {
+                    return respond(stream, 200, &release_json(&st, r));
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            // POST /repos/{o}/{r}/releases/{id}/assets?name=
+            if parts.len() == 5
+                && parts[2] == "releases"
+                && parts[4] == "assets"
+                && req.method == "POST"
+            {
+                let release_id: u64 = parts[3].parse().unwrap_or(0);
+                let name = query
+                    .split('&')
+                    .find_map(|pair| {
+                        let (k, v) = pair.split_once('=')?;
+                        (k == "name").then(|| v.to_string())
+                    })
+                    .unwrap_or_else(|| "asset.bin".into());
+                let ctype = header_value(&req.headers, "content-type")
+                    .unwrap_or_else(|| "application/octet-stream".into());
+                if let Some(a) =
+                    st.upload_release_asset(owner, repo, release_id, &name, &ctype, &req.body)
+                {
+                    st.save()?;
                     return respond(
                         stream,
-                        200,
+                        201,
                         &json!({
-                            "id": r.id,
-                            "tag_name": r.tag_name,
-                            "name": r.name,
-                            "body": r.body,
-                            "draft": r.draft,
-                            "prerelease": r.prerelease,
+                            "id": a.id,
+                            "name": a.name,
+                            "size": a.size,
+                            "content_type": a.content_type,
+                            "state": "uploaded",
                         }),
                     );
                 }
                 return respond(stream, 404, &json!({"message":"Not Found"}));
             }
-            // Actions workflows / runs (Partial local forge — not CI Claimed).
+            // GET/DELETE /repos/{o}/{r}/releases/assets/{id}
+            if parts.len() == 5
+                && parts[2] == "releases"
+                && parts[3] == "assets"
+            {
+                let asset_id: u64 = parts[4].parse().unwrap_or(0);
+                if req.method == "GET" {
+                    if let Some(a) = st.find_asset(owner, repo, asset_id) {
+                        let accept = header_value(&req.headers, "accept").unwrap_or_default();
+                        if accept.contains("application/octet-stream") {
+                            if let Some(bytes) = st.read_asset_bytes(a.id) {
+                                return write_http_response(
+                                    stream,
+                                    200,
+                                    "OK",
+                                    &a.content_type,
+                                    &bytes,
+                                );
+                            }
+                        }
+                        return respond(
+                            stream,
+                            200,
+                            &json!({
+                                "id": a.id,
+                                "name": a.name,
+                                "size": a.size,
+                                "content_type": a.content_type,
+                                "state": "uploaded",
+                            }),
+                        );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "DELETE" {
+                    if st.delete_asset(owner, repo, asset_id) {
+                        st.save()?;
+                        return respond(stream, 204, &json!({}));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+            }
+            // Actions workflows / runs (local-forge metadata — not CI compute Claimed).
             if parts.len() == 4 && parts[2] == "actions" && parts[3] == "workflows" {
                 if req.method == "GET" {
                     st.ensure_default_workflow(owner, repo);
@@ -824,6 +879,79 @@ fn handle_client<S: Read + Write>(
                     );
                 }
             }
+            // GET/PUT workflow by id|path; POST dispatches
+            if parts.len() == 5 && parts[2] == "actions" && parts[3] == "workflows" {
+                let key = parts[4];
+                if req.method == "GET" {
+                    st.ensure_default_workflow(owner, repo);
+                    st.save()?;
+                    if let Some(w) = st.find_workflow(owner, repo, key) {
+                        return respond(
+                            stream,
+                            200,
+                            &json!({
+                                "id": w.id,
+                                "name": w.name,
+                                "path": w.path,
+                                "state": w.state,
+                            }),
+                        );
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "PUT" && (key == "enable" || key.ends_with("/enable")) {
+                    // unreachable shape; handled below
+                }
+            }
+            if parts.len() == 6
+                && parts[2] == "actions"
+                && parts[3] == "workflows"
+                && parts[5] == "enable"
+                && req.method == "PUT"
+            {
+                st.ensure_default_workflow(owner, repo);
+                if let Some(_w) = st.set_workflow_state(owner, repo, parts[4], "active") {
+                    st.save()?;
+                    return respond(stream, 204, &json!({}));
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            if parts.len() == 6
+                && parts[2] == "actions"
+                && parts[3] == "workflows"
+                && parts[5] == "disable"
+                && req.method == "PUT"
+            {
+                st.ensure_default_workflow(owner, repo);
+                if let Some(_w) = st.set_workflow_state(owner, repo, parts[4], "disabled_manually") {
+                    st.save()?;
+                    return respond(stream, 204, &json!({}));
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
+            }
+            if parts.len() == 6
+                && parts[2] == "actions"
+                && parts[3] == "workflows"
+                && parts[5] == "dispatches"
+                && req.method == "POST"
+            {
+                st.ensure_default_workflow(owner, repo);
+                let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
+                let rref = v.get("ref").and_then(|x| x.as_str()).unwrap_or("main");
+                if let Some(run) = st.dispatch_workflow(owner, repo, parts[4], rref) {
+                    st.save()?;
+                    return respond(
+                        stream,
+                        204,
+                        &json!({
+                            "id": run.id,
+                            "status": run.status,
+                            "head_branch": run.head_branch,
+                        }),
+                    );
+                }
+                return respond(stream, 422, &json!({"message":"workflow not dispatchable"}));
+            }
             if parts.len() == 4 && parts[2] == "actions" && parts[3] == "runs" {
                 if req.method == "GET" {
                     let items: Vec<Value> = st
@@ -831,16 +959,7 @@ fn handle_client<S: Read + Write>(
                         .runs
                         .iter()
                         .filter(|r| r.owner == owner && r.repo == repo)
-                        .map(|r| {
-                            json!({
-                                "id": r.id,
-                                "name": r.name,
-                                "status": r.status,
-                                "conclusion": r.conclusion,
-                                "workflow_id": r.workflow_id,
-                                "head_branch": r.head_branch,
-                            })
-                        })
+                        .map(|r| run_json(r))
                         .collect();
                     return respond(
                         stream,
@@ -857,19 +976,75 @@ fn handle_client<S: Read + Write>(
                         .unwrap_or("main");
                     let run = st.create_run(owner, repo, name, branch);
                     st.save()?;
+                    return respond(stream, 201, &run_json(&run));
+                }
+            }
+            if parts.len() == 5 && parts[2] == "actions" && parts[3] == "runs" {
+                let run_id: u64 = parts[4].parse().unwrap_or(0);
+                if req.method == "GET" {
+                    if let Some(r) = st.find_run(owner, repo, run_id) {
+                        return respond(stream, 200, &run_json(r));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if req.method == "DELETE" {
+                    if st.delete_run(owner, repo, run_id) {
+                        st.save()?;
+                        return respond(stream, 204, &json!({}));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+            }
+            if parts.len() == 6 && parts[2] == "actions" && parts[3] == "runs" {
+                let run_id: u64 = parts[4].parse().unwrap_or(0);
+                let action = parts[5];
+                if action == "cancel" && req.method == "POST" {
+                    if let Some(r) = st.cancel_run(owner, repo, run_id) {
+                        st.save()?;
+                        return respond(stream, 202, &run_json(&r));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if action == "rerun" && req.method == "POST" {
+                    if let Some(r) = st.rerun_run(owner, repo, run_id) {
+                        st.save()?;
+                        return respond(stream, 201, &run_json(&r));
+                    }
+                    return respond(stream, 404, &json!({"message":"Not Found"}));
+                }
+                if action == "artifacts" && req.method == "GET" {
+                    let items: Vec<Value> = st
+                        .db
+                        .artifacts
+                        .iter()
+                        .filter(|a| a.owner == owner && a.repo == repo && a.run_id == run_id)
+                        .map(|a| {
+                            json!({
+                                "id": a.id,
+                                "name": a.name,
+                                "size_in_bytes": a.size,
+                            })
+                        })
+                        .collect();
                     return respond(
                         stream,
-                        201,
-                        &json!({
-                            "id": run.id,
-                            "name": run.name,
-                            "status": run.status,
-                            "conclusion": run.conclusion,
-                            "workflow_id": run.workflow_id,
-                            "head_branch": run.head_branch,
-                        }),
+                        200,
+                        &json!({"total_count": items.len(), "artifacts": items}),
                     );
                 }
+            }
+            // GET /repos/{o}/{r}/actions/artifacts/{id}/zip
+            if parts.len() == 6
+                && parts[2] == "actions"
+                && parts[3] == "artifacts"
+                && parts[5] == "zip"
+                && req.method == "GET"
+            {
+                let aid: u64 = parts[4].parse().unwrap_or(0);
+                if let Some(bytes) = st.read_run_artifact_bytes(aid) {
+                    return write_http_response(stream, 200, "OK", "application/zip", &bytes);
+                }
+                return respond(stream, 404, &json!({"message":"Not Found"}));
             }
             // Milestones / projects / secrets / variables / discussions (Partial local forge).
             if parts.len() == 3 && parts[2] == "milestones" {
@@ -1286,13 +1461,65 @@ fn urlencoding_lite_decode(s: &str) -> String {
     out
 }
 
+fn run_json(r: &crate::store::WorkflowRun) -> Value {
+    json!({
+        "id": r.id,
+        "name": r.name,
+        "status": r.status,
+        "conclusion": r.conclusion,
+        "workflow_id": r.workflow_id,
+        "head_branch": r.head_branch,
+    })
+}
+
+fn release_json(st: &HubStore, r: &crate::store::Release) -> Value {
+    let upload_url = format!(
+        "/repos/{}/{}/releases/{}/assets{{?name,label}}",
+        r.owner, r.repo, r.id
+    );
+    let assets: Vec<Value> = st
+        .db
+        .assets
+        .iter()
+        .filter(|a| a.release_id == r.id)
+        .map(|a| {
+            json!({
+                "id": a.id,
+                "name": a.name,
+                "size": a.size,
+                "content_type": a.content_type,
+                "state": "uploaded",
+            })
+        })
+        .collect();
+    json!({
+        "id": r.id,
+        "tag_name": r.tag_name,
+        "name": r.name,
+        "body": r.body,
+        "draft": r.draft,
+        "prerelease": r.prerelease,
+        "upload_url": upload_url,
+        "assets": assets,
+    })
+}
+
+fn header_value(headers: &[(String, String)], name: &str) -> Option<String> {
+    headers
+        .iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case(name))
+        .map(|(_, v)| v.clone())
+}
+
 fn respond<S: Write>(stream: &mut S, status: u16, body: &serde_json::Value) -> Result<(), String> {
     let reason = match status {
         200 => "OK",
         201 => "Created",
+        202 => "Accepted",
         204 => "No Content",
         401 => "Unauthorized",
         404 => "Not Found",
+        422 => "Unprocessable Entity",
         _ => "Error",
     };
     let bytes = serde_json::to_vec(body).map_err(|e| e.to_string())?;

@@ -1,0 +1,14 @@
+{
+  "schema": "arks-hub-pr-checkout/v1",
+  "gate": "IW-HUB-CHECKOUT",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "9f78458",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed": [
+    "pr checkout",
+    "co"
+  ],
+  "note": "Resolve/print only; never spawn git/gh.",
+  "timestamp": "2026-11-11T03:45:21Z"
+}

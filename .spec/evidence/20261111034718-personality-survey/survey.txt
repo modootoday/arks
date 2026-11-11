@@ -1,0 +1,12 @@
+SV-STATUS class=zero actual=0
+SV-LOG class=zero actual=0
+SV-SHOW class=zero actual=0
+SV-DIFF class=zero actual=0
+SV-BRANCH class=zero actual=0
+SV-REVPARSE class=zero actual=0
+SV-LSFILES class=zero actual=0
+SV-CONFIG-GET class=zero actual=0
+SV-HASHZERO class=zero actual=0
+SV-CATFILE class=zero actual=0
+SV-BAD class=nonzero actual=1
+SV-HELP class=zero actual=0

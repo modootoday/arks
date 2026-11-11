@@ -1,0 +1,16 @@
+{
+  "schema": "arks-hub-release-assets/v1",
+  "gate": "IW-HUB-ASSETS",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "9f78458",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed": [
+    "release upload",
+    "release download",
+    "release delete-asset",
+    "release edit",
+    "release delete"
+  ],
+  "timestamp": "2026-11-11T03:45:13Z"
+}

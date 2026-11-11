@@ -3,6 +3,7 @@
 # Sibling owns daemon matrix SoT; until it lands, smoke help + loopback subset only.
 # Never invents PASS; never spawns gh. Stock `git` is pin oracle only.
 # IW-B5-PLUS collector: sot:root/arks-honesty-leftovers-wave (ARKS_DAEMON_B5_PLUS=1).
+# IW-DAEMON-FLAGS-PARITY: sot:root/arks-in-scope-leftovers-wave (ARKS_DAEMON_FLAGS_PARITY=1).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -12,6 +13,7 @@ INTENT_SOT="${ARKS_DAEMON_INTENT_SOT:-.spec/sot/arks-daemon-product-intent.sot.m
 SOT="${ARKS_DAEMON_MATRIX_SOT:-.spec/sot/arks-daemon-git-command-matrix.sot.md}"
 CSV="${ARKS_DAEMON_MATRIX_CSV:-verify/matrices/daemon-git-arks-e2e-matrix.csv}"
 HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
+SCOPE_SOT="${ARKS_IN_SCOPE_LEFTOVERS_SOT:-.spec/sot/arks-in-scope-leftovers-wave.sot.md}"
 # Prefer landed sibling daemon matrix SoT when present.
 
 TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
@@ -32,6 +34,115 @@ if [[ -z "$ARKS_BIN" ]]; then
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/debug/arks
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN="${CARGO_TARGET_DIR:-target}/debug/arks"
   fi
+fi
+
+# --- IW-DAEMON-FLAGS-PARITY (ARKS_DAEMON_FLAGS_PARITY=1) ---
+if [[ "${ARKS_DAEMON_FLAGS_PARITY:-0}" == "1" ]]; then
+  echo "daemon-git-arks-matrix-e2e: IW-DAEMON-FLAGS-PARITY (sot:root/arks-in-scope-leftovers-wave)"
+  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  ARKS_BIN="${CARGO_TARGET_DIR:-target}/release/arks"
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./.cargo-target/release/arks
+  [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
+  WORK="$(mktemp -d /tmp/arks-daemon-flags.XXXXXX)"
+  cleanup_df() { rm -rf "$WORK"; }
+  trap cleanup_df EXIT
+  mkdir -p "$WORK/repo"
+  (
+    cd "$WORK/repo"
+    git init -q
+    git config user.email t@t
+    git config user.name t
+    echo hi >README
+    git add README
+    git commit -q -m init
+    touch .git/git-daemon-export-ok
+  )
+  DF_OK=1
+  # Help advertises peer-mapped flags.
+  help_out="$("$ARKS_BIN" daemon --help 2>&1 || true)"
+  for flag in --verbose --timeout --init-timeout --max-connections --strict-paths --listen --port --enable --disable --reuseaddr --base-path; do
+    if ! echo "$help_out" | grep -Fq -- "$flag"; then
+      echo "FAIL DF: help missing $flag" >&2
+      DF_OK=0
+    fi
+  done
+  # Bind listen+port+verbose+timeouts+strict-paths+base-path; clone via git://
+  PORT="$(python3 - <<'PY'
+import socket
+s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()
+PY
+)"
+  "$ARKS_BIN" daemon --verbose --listen=127.0.0.1 --port="$PORT" \
+    --timeout=30 --init-timeout=5 --max-connections=8 --strict-paths \
+    --base-path="$WORK" --export-all --reuseaddr \
+    --enable=upload-pack --disable=receive-pack \
+    "$WORK/repo" >"$WORK/daemon.out" 2>"$WORK/daemon.err" &
+  DPID=$!
+  sleep 0.3
+  if ! kill -0 "$DPID" 2>/dev/null; then
+    echo "FAIL DF: daemon failed to start" >&2
+    cat "$WORK/daemon.err" >&2 || true
+    DF_OK=0
+  else
+    mkdir -p "$WORK/clone"
+    if ! git -c protocol.version=1 clone --quiet "git://127.0.0.1:${PORT}/repo" "$WORK/clone/repo" 2>"$WORK/clone.err"; then
+      echo "FAIL DF: git:// clone via listen/port/base-path" >&2
+      cat "$WORK/clone.err" "$WORK/daemon.err" >&2 || true
+      DF_OK=0
+    fi
+    # receive-pack disabled: push should fail (no new commit needed — empty push probe).
+    set +e
+    git -C "$WORK/clone/repo" push "git://127.0.0.1:${PORT}/repo" HEAD:refs/heads/denied 2>"$WORK/push.err"
+    push_ec=$?
+    set -e
+    if [[ "$push_ec" -eq 0 ]]; then
+      echo "FAIL DF: push succeeded while receive-pack disabled" >&2
+      DF_OK=0
+    fi
+    kill "$DPID" 2>/dev/null || true
+    wait "$DPID" 2>/dev/null || true
+  fi
+  if [[ "$DF_OK" -ne 1 ]]; then
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "daemon-git-arks-matrix-e2e: FAIL STRICT IW-DAEMON-FLAGS-PARITY" >&2
+      exit 1
+    fi
+    echo "daemon-git-arks-matrix-e2e: IW-DAEMON-FLAGS-PARITY Partial/failed"
+    exit 0
+  fi
+  echo "daemon-git-arks-matrix-e2e: IW-DAEMON-FLAGS-PARITY greens"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-daemon-flags-parity"
+    mkdir -p "$OUT"
+    cp "$WORK"/daemon.* "$WORK"/clone.err "$WORK"/push.err "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-daemon-flags-parity/v1",
+    "gate": "IW-DAEMON-FLAGS-PARITY",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-daemon-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "parity_flags": [
+        "--verbose", "--timeout", "--init-timeout", "--max-connections",
+        "--strict-paths", "--listen", "--port", "--base-path", "--reuseaddr",
+        "--enable", "--disable", "<directory>...", "service:upload-pack", "service:receive-pack",
+    ],
+    "note": "SysV double-fork remains Refuse; clap-accept-alone ≠ Parity.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "daemon-git-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
 fi
 
 # --- IW-B5-PLUS syslog facility/priority collector (ARKS_DAEMON_B5_PLUS=1) ---

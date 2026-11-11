@@ -1,0 +1,6 @@
+arks daemon listening on git://127.0.0.1:53819/ (export_all=true; receive=false; upload-archive=false; timeout=30s; init-timeout=5s; max_conn=8; bases=2)
+arks daemon: service=git-upload-pack path=/repo base=/tmp/arks-daemon-flags.VAVCWr
+arks daemon: repo=/tmp/arks-daemon-flags.VAVCWr/repo
+arks daemon: upload-pack session ok
+arks daemon: service=git-receive-pack path=/repo base=/tmp/arks-daemon-flags.VAVCWr
+arks daemon: repo=/tmp/arks-daemon-flags.VAVCWr/repo

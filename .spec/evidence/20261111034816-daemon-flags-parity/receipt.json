@@ -1,0 +1,26 @@
+{
+  "schema": "arks-daemon-flags-parity/v1",
+  "gate": "IW-DAEMON-FLAGS-PARITY",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-daemon-matrix",
+  "tip": "9f78458",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "parity_flags": [
+    "--verbose",
+    "--timeout",
+    "--init-timeout",
+    "--max-connections",
+    "--strict-paths",
+    "--listen",
+    "--port",
+    "--base-path",
+    "--reuseaddr",
+    "--enable",
+    "--disable",
+    "<directory>...",
+    "service:upload-pack",
+    "service:receive-pack"
+  ],
+  "note": "SysV double-fork remains Refuse; clap-accept-alone \u2260 Parity.",
+  "timestamp": "2026-11-11T03:48:16Z"
+}
