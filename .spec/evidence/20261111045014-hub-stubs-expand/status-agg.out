@@ -1,0 +1,7 @@
+api=http://127.0.0.1:50465
+auth=token
+repo=local/hubscope
+issues_http=200
+pulls_http=200
+issues_open=0
+pulls_open=1

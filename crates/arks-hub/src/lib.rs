@@ -20,7 +20,7 @@ use http_min::{http_exchange, http_exchange_bytes};
 use serde_json::{Value, json};
 use std::env;
 use std::fs;
-use std::io::{self, Read as IoRead, Write};
+use std::io::{self, Read as IoRead};
 use std::path::PathBuf;
 use std::process::ExitCode;
 

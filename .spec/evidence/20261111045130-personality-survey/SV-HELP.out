@@ -1,0 +1,25 @@
+arks — Wave L+H+Pa+Pb+Pc + Sv (+ CLI personality skeleton)
+
+Usage:
+  arks [--version] [--help] <command> [<args>]
+
+Personality (Partial skeleton — [[sot:root/arks-cli-personality-factory]]):
+  ARKS_PERSONALITY=git|gh|arks   (first wins)
+  else argv0/shim basename git|gh|arks
+  else default arks (git-first merged surface)
+  Thin helpers: scripts/shim-git.sh / scripts/shim-gh.sh (not extra crates.io bins)
+
+Overlap leaves (status|config|repo) under arks: unified Git + Forge-skip stub;
+  --git-only / --forge-only / --porcelain select a single peer.
+
+Flat forge leaves (Partial/stub): pr issue auth release label run workflow
+  search api org … — forward to arks-hub lib (refuse Missing).
+  Transitional: arks hub … → same hub lib.
+
+Serve: arks serve [--no-http|--no-ssh|--no-forge] …  (forge/SSH Missing → fail-closed)
+  Transitional: arks serve-http ≡ serve --no-ssh --no-forge
+
+Git porcelain/plumbing: historical inventory (Claimed rows unchanged).
+Agent: arks agent … → arks-agent lib (Partial stubs; not Claimed)
+
+(active personality: git — Partial skeleton; design ≠ Claimed)

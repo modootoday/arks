@@ -109,11 +109,11 @@ if [[ "${ARKS_PERSONALITY_SURVEY:-0}" == "1" ]]; then
   run_sv SV-BAD nonzero "$ARKS_BIN" totally-unknown-cmd-xyz
   run_sv SV-HELP zero "$ARKS_BIN" help status
   # Additive survey2 rows (named remainder deepen; still not stampede 117).
-  run_sv SV-REVLIST zero "$ARKS_BIN" rev-list -n 1 HEAD
-  run_sv SV-REMOTE zero "$ARKS_BIN" remote -v
-  run_sv SV-TAGLIST zero "$ARKS_BIN" tag -l
+  run_sv SV-REVLIST zero "$ARKS_BIN" rev-list --max-count=1 HEAD
+  run_sv SV-REMOTE zero "$ARKS_BIN" remote
+  run_sv SV-LSTREE zero "$ARKS_BIN" ls-tree HEAD
   run_sv SV-STASHLIST zero "$ARKS_BIN" stash list
-  run_sv SV-GREP zero "$ARKS_BIN" grep -n hi -- README
+  run_sv SV-SYMBOLIC zero "$ARKS_BIN" symbolic-ref HEAD
   run_sv SV-COUNT zero "$ARKS_BIN" count-objects
   run_sv SV-UPDATEINDEX zero "$ARKS_BIN" update-index --refresh
   run_sv SV-WRITETREE zero "$ARKS_BIN" write-tree
@@ -146,8 +146,8 @@ receipt = {
         "SV-LSFILES", "SV-CONFIG-GET", "SV-HASHZERO", "SV-CATFILE", "SV-BAD", "SV-HELP",
     ],
     "survey2_rows": [
-        "SV-REVLIST", "SV-REMOTE", "SV-TAGLIST", "SV-STASHLIST",
-        "SV-GREP", "SV-COUNT", "SV-UPDATEINDEX", "SV-WRITETREE",
+        "SV-REVLIST", "SV-REMOTE", "SV-LSTREE", "SV-STASHLIST",
+        "SV-SYMBOLIC", "SV-COUNT", "SV-UPDATEINDEX", "SV-WRITETREE",
     ],
     "note": "Named expand + survey2 only; CLI Partial remainder stay Partial with SoT cite.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

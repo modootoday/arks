@@ -1,0 +1,38 @@
+{
+  "schema": "arks-hub-stubs/v1",
+  "gate": "IW-HUB-STUBS",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "5bf70f4",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed": [
+    "pr status",
+    "pr ready",
+    "issue status",
+    "issue delete",
+    "repo edit",
+    "repo set-default",
+    "api",
+    "status"
+  ],
+  "stay_partial": [
+    "pr lock",
+    "pr unlock",
+    "pr update-branch",
+    "pr revert",
+    "pr diff",
+    "pr checks",
+    "pr review",
+    "issue lock",
+    "issue pin",
+    "issue transfer",
+    "repo fork",
+    "repo delete",
+    "repo rename",
+    "repo archive",
+    "auth refresh",
+    "label clone"
+  ],
+  "note": "Peer-faithful local-forge subset only; Stay Partial cites sot:root/arks-in-scope-leftovers-wave.",
+  "timestamp": "2026-11-11T04:50:14Z"
+}
