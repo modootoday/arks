@@ -3,7 +3,7 @@ id: sot:root/arks-remaining-implement-wave
 title: Remaining implement wave — design SoT (research-gated)
 status: active
 created: 2026-11-11T00:08:27Z
-updated: 2026-11-11T00:08:27Z
+updated: 2026-11-11T00:35:43Z
 tags: [design, residual, implement-wave, b5, b7, cli-stubs, personality, forge-in-serve, daemon, ssh, rebind, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -12,6 +12,8 @@ rel:
     - research:root/20261111084400
     - research:root/20261111074523
     - research:root/20261111072342
+    - research:root/20261111093543
+    - sot:root/arks-partial-residual-wave
     - sot:root/arks-claimed-residual-gates
     - sot:root/production-residual-register
     - sot:root/verify-directory-conventions
@@ -31,7 +33,7 @@ rel:
 
 # Remaining implement wave — design SoT (research-gated)
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **This SoT gates the remaining implement wave.** Tip surveyed after canon **`8775cc4`** / design tip **`6dae03d`**. **Design ≠ Claimed.** Product/crate changes for each IW-* row require:
 
@@ -39,7 +41,7 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 2. Supporting research cited ([[research:root/20261111090827]] and, for B5, [[research:root/20261111084400]]), **and**
 3. Docker verify slot + Partial vs Claimed bar below understood (STRICT fail-closed; no invent PASS).
 
-**IW-B5** graduated **Claimed** with [[evidence:root/20261111091600-claimed-daemon-archive]]. Remaining rows stay Partial until their Claimed bars + receipts land.
+**IW-B5** graduated **Claimed** with [[evidence:root/20261111091600-claimed-daemon-archive]]. IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL Claimed in the same wave. **Partial leftovers** (IW-FORGE-SERVE / HUB-FLAT / PERSONALITY / DAEMON-FLAGS) are gated by [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]] — do not invent Claimed here.
 
 ## Rule
 
@@ -98,10 +100,10 @@ Order is **Spec → research cite → product → Docker receipt → SoT Claimed
 #### IW-FORGE-SERVE / IW-HUB-FLAT / IW-PERSONALITY / IW-DAEMON-FLAGS
 
 - Owning product SoTs remain authoritative for surface grammar.
-- This SoT only locks **order**, **bars**, and **research gate** so agents do not thrash.
-- **IW-FORGE-SERVE Partial deepen (this wave):** default `arks serve` cohosts HTTP + SSH + forge (no silent SSH-only cut). Hosting e2e PR/issue journeys remain **Partial** until a §7 `dod-claimed-*` receipt — **B3 ≠ this row**.
+- **Partial residual deepen / honesty for these four rows is gated by [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]]** (this SoT keeps historical order + bars; do not thrash without that gate).
+- **IW-FORGE-SERVE Partial deepen (prior wave):** default `arks serve` cohosts HTTP + SSH + forge (no silent SSH-only cut). Hosting e2e PR/issue journeys remain **Partial** until a §7 `dod-claimed-*` / `dod-self-host` receipt — **B3 ≠ this row**.
 - **IW-HUB-FLAT / IW-PERSONALITY:** keep Partial honesty; do not invent Claimed from stub forwards or ExitCodePolicy unit greens alone.
-- **IW-DAEMON-FLAGS:** Partial deepen closed for this wave; **B5+ Refuse** unchanged; no classic double-fork Claimed.
+- **IW-DAEMON-FLAGS:** Partial deepen closed; **B5+ Refuse** unchanged; no classic double-fork Claimed (peer detach is single-fork+`setsid`).
 
 ### Docker verify slots
 
