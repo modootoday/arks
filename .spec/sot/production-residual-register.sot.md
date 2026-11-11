@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-11T01:11:52Z
+updated: 2026-11-11T01:14:25Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g028-live-private-arks, g029-server-dumb-http, g030-server-ssh-command, g031-server-protocol-v2, g032-git-daemon-wire, g033-cred-askpass, g034-shared-index-contention, g035-shallow-depth, g036-http-basic-auth, g037-gpgsig-ssh, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final, claimed-residual, implement-wave]
 verify: manual
 rel:
@@ -262,8 +262,8 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | — | CLI personality / output+exit contract | **Design / Partial skeleton** — [[sot:root/arks-cli-personality-factory]] + [[sot:root/arks-cli-output-exit-contract]]; Registry/OverlapFacade/ExitCodePolicy + flat-leaf stubs; deep forge-in-serve / SSH listener / PR bodies **not** Claimed | Claimed only with peer-faithful evidence; stubs exit non-zero; no invent PASS |
 | — | Claimed residual gates (post-Partial) | **Active** [[sot:root/arks-claimed-residual-gates]] — **B1/B2/B3/B4/B5/B7(HTTP+SSH+forge)/B9 Claimed** with Docker receipts; **B5+ Refuse terminal**. | No invent Claimed; remaining IW rows via [[sot:root/arks-remaining-implement-wave]] |
 | — | Remaining implement wave (research-gated) | **Active** [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] — **IW-B5 / IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL Claimed**; Partial leftovers deferred to next row | Spec-first; Partial honesty over fake Claimed |
-| — | Partial residual wave (research-gated) | **Active** [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]] — **IW-FORGE-SERVE Partial** (cohost + `dod-self-host` probe; hosting e2e Claimed Missing); **IW-HUB-FLAT Partial** (B3 ≠ leaves); **IW-PERSONALITY Partial** (OR skeleton; drop-in Missing); **IW-DAEMON-FLAGS Partial / B5+ Refuse** (deepen closed; double-fork/facility Refuse) | Spec-first; prefer Partial/Refuse over invent Claimed |
-| — | Verify Docker e2e claim wave | **Active** [[sot:root/arks-verify-docker-e2e-claim-wave]] — Docker Claimed playbook: `dod-self-host` hosting PR+issue → `dod-hub-matrix` IW-FLAT subset STRICT → `dod-cli-matrix` personality drop-in; B3 ≠ hosting; ExitCodePolicy ≠ drop-in; B5+ Refuse | Spec-first; Claimed only with `.spec/evidence/` |
+| — | Partial residual wave (research-gated) | **Active** [[sot:root/arks-partial-residual-wave]] + [[research:root/20261111093543]] — **IW-FORGE-SERVE Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]); **IW-HUB-FLAT Partial** (B3 ≠ leaves); **IW-PERSONALITY Partial** (OR skeleton; drop-in Missing); **IW-DAEMON-FLAGS Partial / B5+ Refuse** | Spec-first; prefer Partial/Refuse over invent Claimed |
+| — | Verify Docker e2e claim wave | **Active** [[sot:root/arks-verify-docker-e2e-claim-wave]] — IW-FORGE-SERVE Claimed; next: `dod-hub-matrix` IW-FLAT subset STRICT → `dod-cli-matrix` personality drop-in; B3 ≠ hosting; ExitCodePolicy ≠ drop-in; B5+ Refuse | Spec-first; Claimed only with `.spec/evidence/` |
 | — | Verify directory conventions | **Design** [[sot:root/verify-directory-conventions]] + [[research:root/20261111082440]] — tree contract, `gN` vs `dod-*` naming, `verify/out/` vs `gates/*/out/`, SKIP vs `ARKS_DOD_STRICT=1`, pin Git **2.39.5** normative, residual registration checklist | Ops/harness only; does not invent product Claimed; coordinate harness edits with in-flight B-gate owners |
 
 ## Why

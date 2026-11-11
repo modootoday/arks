@@ -3,7 +3,7 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-11T01:11:52Z
+updated: 2026-11-11T01:14:25Z
 tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial, claimed-residual]
 verify: manual
 rel:
@@ -102,7 +102,7 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 | Concern | Owner | Normative note |
 |---------|-------|----------------|
 | Git wire (upload-pack / receive-pack) on claimed transports | **arks** | [[sot:root/arks-server]], M11 G15 / M25 G29–G32 |
-| Forge API (PR/issue/… host) under `arks serve` | **arks (cohost Partial)** | Local API scaffold cohosts with HTTP/SSH by default (IW-FORGE-SERVE Partial); hosting e2e Claimed Missing; client is `arks hub` |
+| Forge API (PR/issue/… host) under `arks serve` | **arks (IW-FORGE-SERVE Claimed)** | Cohost + hosting e2e PR/issue create/list ([[evidence:root/20261111011425-self-host-forge-e2e]]); client is `arks hub`; **B3 ≠ this row** |
 | Listen / bind (HTTP and/or SSH and/or forge HTTP) | **arks** | Default loopback-first; LAN/`0.0.0.0` intentional when chosen |
 | In-process HTTP Basic (git remote) | **arks** | G36 Claimed when configured |
 | In-process SSH listener (`arks serve` without `--no-ssh`) | **arks (B1+B2 wire/clone Claimed; B7 rebind Claimed; IW-SSH-LABEL Claimed)** | Durable accept (§17(c)/(d)); **B1** ChaCha + **B2** `git clone ssh://` ([[evidence:root/20261110235116-claimed-ssh]]); **B7 SSH** ([[evidence:root/20261111092000-claimed-rebind-ssh]]); ops SSHD still valid |
@@ -206,7 +206,7 @@ arks product self-host (THIS SoT) — GitHub-class host
 
 34. **Design intent (now):** this SoT + `docs/self-host.md` + honest CLI help for `arks serve` / `arks serve config` / fail-closed Partial modules; hub SoTs say **client-only** for primary UX; **port policy** (normative vs demo) documented.
 35. **Already carrying (wire, not hosting e2e):** G15 / G29–G32 / G36 — cite residual register; do not re-stamp. Ops-SSHD stdio ≠ in-process serve SSH Claimed. Transitional `arks hub serve` Partial ≠ forge-in-serve Claimed.
-36. **Future hosting e2e (IW-FORGE-SERVE):** compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` proving arks-only `arks serve` cohost + **PR create/list and issue create/list** against the local forge module, LAN-shaped bind, Basic, stock Git client optional — scaffold/SKIP until Claimed; **B3 client remote ≠ this row**; **no invent hosting Claimed**. Gate: [[sot:root/arks-partial-residual-wave]] + [[sot:root/arks-verify-docker-e2e-claim-wave]] + [[research:root/20261111093543]].
+36. **Hosting e2e (IW-FORGE-SERVE Claimed):** compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh` proves arks-only `arks serve` forge module + **PR create/list and issue create/list** ([[evidence:root/20261111011425-self-host-forge-e2e]]); **B3 client remote ≠ this row**. Gate: [[sot:root/arks-partial-residual-wave]] + [[sot:root/arks-verify-docker-e2e-claim-wave]] + [[research:root/20261111093543]].
 37. **Claimed residual deepen (adjacent):** Docker slots under [[sot:root/arks-claimed-residual-gates]] — **B1+B2** ([[evidence:root/20261110235116-claimed-ssh]]), **B7 HTTP+SSH+forge** ([[evidence:root/20261110233659-claimed-rebind]], [[evidence:root/20261111092000-claimed-rebind-ssh]], [[evidence:root/20261111092000-claimed-rebind-forge]]), **B9** ([[evidence:root/20261110233652-claimed-tls]]), **B5** ([[evidence:root/20261111091600-claimed-daemon-archive]]). **B5+** syslog **Refuse terminal**. Partial leftovers (forge-in-serve hosting e2e / hub flat / personality drop-in / daemon flags) stay under [[sot:root/arks-partial-residual-wave]].
 
 ## Why

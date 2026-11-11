@@ -3,7 +3,7 @@ id: sot:root/arks-partial-residual-wave
 title: Partial residual wave — design SoT (research-gated)
 status: active
 created: 2026-11-11T00:35:43Z
-updated: 2026-11-11T01:11:52Z
+updated: 2026-11-11T01:14:25Z
 tags: [design, residual, partial, forge-in-serve, hub-flat, personality, daemon, hosting-e2e, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -30,7 +30,7 @@ rel:
 
 # Partial residual wave — design SoT (research-gated)
 
-Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release). English-only.
+Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). English-only.
 
 **This SoT gates the four Partial leftovers** after [[sot:root/arks-remaining-implement-wave]] Claimed rows (IW-B5 / IW-B7-SSH / IW-B7-FORGE / IW-SSH-LABEL). Tip surveyed **`ff39b69`**. **Design ≠ Claimed.**
 
@@ -56,7 +56,7 @@ Order is **Spec → research cite → product/harness deepen → Docker/focused 
 
 | Order | ID | Surface | Status now | Partial bar (honest) | Claimed bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|----------------------|-------------|-------------------|-----------------|
-| 1 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Partial** (cohost + scaffold probe) | Default `arks serve` cohosts HTTP+SSH+forge; `dod-self-host` probes `--no-forge`/forge help markers; STRICT fail-closed | Hosting e2e: local forge module PR **and** issue host journeys under `dod-self-host` (or §7 `dod-claimed-*`) + scrubbed receipt; **B3 ≠ this row** | Invent Claimed from cohost smoke / B3 / hub-serve transitional | `dod-self-host` → `run-self-host-e2e.sh` |
+| 1 | **IW-FORGE-SERVE** | Forge-in-serve hosting depth | **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) | Default `arks serve` cohosts HTTP+SSH+forge; `dod-self-host` probes `--no-forge`/forge help markers; STRICT fail-closed | Hosting e2e: local forge module PR **and** issue host journeys under `dod-self-host` + scrubbed receipt; **B3 ≠ this row** | Invent Claimed from cohost smoke / B3 / hub-serve transitional | `dod-self-host` → `run-self-host-e2e.sh` |
 | 2 | **IW-HUB-FLAT** | Hub flat-leaf depth | **Partial** (+ **B3 Claimed**; Spec honesty) | Flat leaves + hub serve forwards remain Partial stubs; B3 HTTPS remote happy path stays Claimed separately | Peer-faithful leaf bodies + hub matrix STRICT greens | Invent leaf Claimed from B3 or stub exit-2 greens | Symmetry `dod-hub-matrix` |
 | 3 | **IW-PERSONALITY** | Personality / Registry / ExitCodePolicy | **Partial** (skeleton + OR; drop-in Missing) | Resolver + Registry + OverlapFacade + ExitCodePolicy OR-of-failure unit-tested | Peer-native stdout/exit drop-in evidence for `git`/`gh` personalities | Invent drop-in Claimed from ExitCodePolicy units alone; spawn stock peers | Symmetry `dod-cli-matrix` + personality SoT amend |
 | 4 | **IW-DAEMON-FLAGS** | Daemon deepen (non-B5) | **Partial** / **B5+ Refuse** (terminal; deepen closed) | path-filter, `--syslog` openlog, `--user`/`--group`, detach Partial; help cites single-fork peer + Refuse bars | **No** Claimed for classic double-fork or syslog facility/priority; archive Claimed = IW-B5 only | B5+ facility Claimed; classic double-fork Claimed; Windows Event Log as syslog | `dod-daemon-matrix` / archive slot as applicable |
@@ -68,8 +68,8 @@ Order is **Spec → research cite → product/harness deepen → Docker/focused 
 #### IW-FORGE-SERVE
 
 - **Cite:** [[research:root/20261111093543]] (Forgejo cohost architecture; Githome/oompa hosting e2e patterns); owning [[sot:root/arks-self-host-server]].
-- **Partial (met / deepen):** default cohost; scaffold may assert help/cohost strings and fail STRICT until host journeys exist.
-- **Claimed (future):** Docker receipt of PR create/list + issue create/list against **in-process** forge under `arks serve` (arks-only; stock git client optional for pack; **no** `gh` spawn). Register per §7 before flipping status.
+- **Partial (met historically):** default cohost; help/cohost probe before host journeys.
+- **Claimed (met):** Docker receipt [[evidence:root/20261111011425-self-host-forge-e2e]] — PR create/list + issue create/list against **in-process** forge under `arks serve` via `dod-self-host` (arks-only; **no** `gh` spawn). Playbook: [[sot:root/arks-verify-docker-e2e-claim-wave]].
 - **Refuse as Claimed:** B3 client remote alone; `arks hub serve` transitional; help-only smoke.
 
 #### IW-HUB-FLAT
