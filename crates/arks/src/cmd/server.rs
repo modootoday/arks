@@ -2042,15 +2042,17 @@ Wired Partial: timeouts, max-connections, verbose, reuseaddr (platform Partial),
   band-1 data + band-2 progress Partial (--format beyond tar Missing; --raw-ustar
   opt-out); --inetd Partial; --pid-file writes pid; --detach Partial re-exec
   (unix setsid / win DETACHED_PROCESS; parent may write --pid-file).
-  Unix Partial: --syslog (openlog/syslog sink); --user/--group (setgid then setuid).
+  Peer git-daemon --detach is single-fork+setsid (not classic SysV double-fork);
+  classic double-fork Claimed is Refuse (IW-DAEMON-FLAGS).
+  Unix Partial: --syslog (openlog LOG_DAEMON sink); --user/--group (setgid then setuid).
   Windows: --syslog/--user/--group honest Missing refuse (no POSIX syslog; Event Log ≠
   syslog and not wired; no setuid/setgid — do not invent Partial).
-Fail-closed Missing (honest): --interpolated-path/--user-path overrides;
-  Claimed archive format parity still Missing; Claimed syslog/user/group parity Missing.
+Fail-closed / Refuse (honest): --interpolated-path/--user-path overrides;
+  B5+ syslog facility/priority Claimed Refuse (openlog ≠ collector parity);
+  classic double-fork Claimed Refuse; Claimed user/group privilege model Missing.
   --access-hook=PATH Partial stub body (spawn; exit 0 allow).
-  upload-archive --prefix=/includes/--exclude= Partial (path-filter applied in
-  stream body + format honesty tar/ustar; Claimed archive parity Missing);
-  not Claimed archive parity.
+  upload-archive path-filter Partial; byte-identical ustar Claimed is IW-B5
+  (Docker cmp vs pin 2.39.5) — not this flag-deepen row.
 Never spawns git/gh. Design ≠ Claimed for full flag parity.
 "
     );
@@ -2061,7 +2063,7 @@ Never spawns git/gh. Design ≠ Claimed for full flag parity.
 fn daemon_windows_syslog_refuse() -> &'static str {
     "daemon --syslog Missing on Windows (honest): no POSIX syslog/openlog facility; \
      Windows Event Log is not a Partial substitute and is not wired; use foreground stderr; \
-     Claimed git-daemon syslog facility/priority parity Missing on all platforms"
+     B5+ syslog facility/priority Claimed is Refuse (terminal) on all platforms"
 }
 
 /// Honest Windows refuse text for `--user`/`--group` (no setuid/setgid).
@@ -2089,10 +2091,10 @@ fn daemon_enable_syslog_partial() -> CliResult<()> {
             );
         }
         // Partial: facility sink armed via openlog; stderr remains primary operator log.
-        // Claimed git-daemon facility/priority parity still Missing (no full vsyslog mirror).
+        // B5+ facility/priority Claimed is Refuse (collector receipt wave only).
         eprintln!(
             "arks daemon: --syslog Partial armed (unix openlog LOG_DAEMON; \
-             Claimed facility/priority parity Missing; stderr still mirrors)"
+             B5+ facility/priority Claimed Refuse; stderr still mirrors)"
         );
         let _ = ident;
         Ok(())
@@ -2278,6 +2280,7 @@ mod windows_daemon_refuse_tests {
         assert!(s.contains("Missing"));
         assert!(s.contains("Event Log"));
         assert!(s.contains("syslog"));
+        assert!(s.contains("Refuse"));
         assert!(!s.to_ascii_lowercase().contains("claimed ok"));
     }
 
