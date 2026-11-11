@@ -14,5 +14,5 @@ echo "G1: CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-2}"
 
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 # Workspace oracle tests (arks-object) + dedicated verify/gates/g001-loose-object-interop matrix runner.
-cargo test -p arks-object --test g001-loose-object-interop_oracle "$@"
+cargo test -p arks-object --test g1_oracle "$@"
 cargo test --manifest-path verify/gates/g001-loose-object-interop/Cargo.toml "$@"

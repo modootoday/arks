@@ -95,18 +95,18 @@ fn concurrent_query_storm(n: usize) {
 }
 
 #[test]
-fn g022-celir-index-contention_c01_concurrent_query_n32() {
+fn g022_celir_index_contention_c01_concurrent_query_n32() {
     concurrent_query_storm(32);
 }
 
 #[test]
-fn g022-celir-index-contention_c02_concurrent_query_n128() {
+fn g022_celir_index_contention_c02_concurrent_query_n128() {
     concurrent_query_storm(128);
 }
 
 /// G22-C03 — concurrent rebuild without index lease must fail closed; leased rebuild restores.
 #[test]
-fn g022-celir-index-contention_c03_concurrent_rebuild_fail_closed_then_leased() {
+fn g022_celir_index_contention_c03_concurrent_rebuild_fail_closed_then_leased() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
@@ -177,7 +177,7 @@ fn g022-celir-index-contention_c03_concurrent_rebuild_fail_closed_then_leased() 
 
 /// G22-C04 — lease shard Git writers + concurrent index readers; stock git OK.
 #[test]
-fn g022-celir-index-contention_c04_shard_writers_and_index_readers() {
+fn g022_celir_index_contention_c04_shard_writers_and_index_readers() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
@@ -264,7 +264,7 @@ fn g022-celir-index-contention_c04_shard_writers_and_index_readers() {
 
 /// G22-C05 — ObjectStore honesty: CELIR companion is not the object store.
 #[test]
-fn g022-celir-index-contention_c05_object_store_remains_filesystem() {
+fn g022_celir_index_contention_c05_object_store_remains_filesystem() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");

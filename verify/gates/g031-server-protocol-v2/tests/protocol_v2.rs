@@ -158,7 +158,7 @@ fn http_get_v2(port: u16) -> String {
 }
 
 #[test]
-fn g031-server-protocol-v2_v2_capability_advertisement() {
+fn g031_server_protocol_v2_v2_capability_advertisement() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -174,7 +174,7 @@ fn g031-server-protocol-v2_v2_capability_advertisement() {
 }
 
 #[test]
-fn g031-server-protocol-v2_stock_git_protocol_v2_clone() {
+fn g031_server_protocol_v2_stock_git_protocol_v2_clone() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -201,7 +201,7 @@ fn g031-server-protocol-v2_stock_git_protocol_v2_clone() {
 }
 
 #[test]
-fn g031-server-protocol-v2_v1_still_works() {
+fn g031_server_protocol_v2_v1_still_works() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());

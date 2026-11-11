@@ -67,7 +67,7 @@ fn apply_with_retry(
 
 /// G34-C01 — two writers, one shared index, both entries land; lease + index.lock.
 #[test]
-fn g034-shared-index-contention_c01_two_writer_shared_index() {
+fn g034_shared_index_contention_c01_two_writer_shared_index() {
     assert_eq!(shared_index_resource(), SHARED_INDEX_RESOURCE);
     let dir = TempDir::new().unwrap();
     let git = dir.path().join(".git");
@@ -101,7 +101,7 @@ fn g034-shared-index-contention_c01_two_writer_shared_index() {
 
 /// G34-C02 — second holder AlreadyHeld while first holds `index:shared`.
 #[test]
-fn g034-shared-index-contention_c02_second_holder_already_held() {
+fn g034_shared_index_contention_c02_second_holder_already_held() {
     let mut mgr = LeaseManager::new();
     try_grant_shared_index(&mut mgr, "holder-a", Duration::from_secs(60)).unwrap();
     match try_grant_shared_index(&mut mgr, "holder-b", Duration::from_secs(60)) {
@@ -118,7 +118,7 @@ fn g034-shared-index-contention_c02_second_holder_already_held() {
 
 /// G34-C03 — live `index.lock` still fails closed (lease ≠ skip).
 #[test]
-fn g034-shared-index-contention_c03_live_index_lock_refuses_write() {
+fn g034_shared_index_contention_c03_live_index_lock_refuses_write() {
     let dir = TempDir::new().unwrap();
     let index_path = dir.path().join("index");
     let lock = index_lock_path(&index_path);

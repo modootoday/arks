@@ -281,7 +281,7 @@ fn count_ls_remote(url: &str, filter: impl Fn(&str) -> bool) -> usize {
 
 /// G27-C01 — seed scale visible via arks smart HTTP ls-remote.
 #[test]
-fn g027-smart-http-pr-contention_c01_seed_scale_via_smart_http() {
+fn g027_smart_http_pr_contention_c01_seed_scale_via_smart_http() {
     require_git();
     let n_br = n_branches();
     let n_pr = n_pr();
@@ -314,7 +314,7 @@ fn g027-smart-http-pr-contention_c01_seed_scale_via_smart_http() {
 
 /// G27-C02 — concurrent stock git clone against arks smart HTTP.
 #[test]
-fn g027-smart-http-pr-contention_c02_concurrent_clone() {
+fn g027_smart_http_pr_contention_c02_concurrent_clone() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8, "minimum N_agents is 8");
@@ -361,7 +361,7 @@ fn g027-smart-http-pr-contention_c02_concurrent_clone() {
 
 /// G27-C03 — concurrent fetch after tip advance.
 #[test]
-fn g027-smart-http-pr-contention_c03_concurrent_fetch() {
+fn g027_smart_http_pr_contention_c03_concurrent_fetch() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8);
@@ -425,7 +425,7 @@ fn g027-smart-http-pr-contention_c03_concurrent_fetch() {
 
 /// G27-C04 — concurrent distinct-ref pushes.
 #[test]
-fn g027-smart-http-pr-contention_c04_concurrent_distinct_push() {
+fn g027_smart_http_pr_contention_c04_concurrent_distinct_push() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8);
@@ -489,7 +489,7 @@ fn g027-smart-http-pr-contention_c04_concurrent_distinct_push() {
 
 /// G27-C05 — contended same-ref push fail-closed; tip stock-resolvable.
 #[test]
-fn g027-smart-http-pr-contention_c05_contended_same_ref_fail_closed() {
+fn g027_smart_http_pr_contention_c05_contended_same_ref_fail_closed() {
     require_git();
     let agents = n_agents();
     assert!(agents >= 8);

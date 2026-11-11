@@ -56,7 +56,7 @@ export ARKS_G24_RECEIPT_OUT="${ARKS_G24_RECEIPT_OUT:-$ROOT/verify/gates/g024-l3-
 export ARKS_G24_DC_ROOT="$DC_ROOT"
 
 echo "G24: joint suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g024-l3-celir-joint_l3_celir_joint "$@"
+cargo test -p arks-lease --features celir-index-stress --test g24_l3_celir_joint "$@"
 
 echo "G24: writing receipt $ARKS_G24_RECEIPT_OUT"
 python3 - <<'PY'

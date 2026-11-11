@@ -163,7 +163,7 @@ fn raw_get_info_refs(hostport: &str, authorization: Option<&str>) -> String {
 }
 
 #[test]
-fn g036-http-basic-auth_c01_challenge_without_auth() {
+fn g036_http_basic_auth_c01_challenge_without_auth() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -181,7 +181,7 @@ fn g036-http-basic-auth_c01_challenge_without_auth() {
 }
 
 #[test]
-fn g036-http-basic-auth_c02_clone_with_url_userinfo() {
+fn g036_http_basic_auth_c02_clone_with_url_userinfo() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -198,7 +198,7 @@ fn g036-http-basic-auth_c02_clone_with_url_userinfo() {
 }
 
 #[test]
-fn g036-http-basic-auth_c03_wrong_then_right_credential() {
+fn g036_http_basic_auth_c03_wrong_then_right_credential() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -257,7 +257,7 @@ fn g036-http-basic-auth_c03_wrong_then_right_credential() {
 }
 
 #[test]
-fn g036-http-basic-auth_c04_unauthenticated_default_still_works() {
+fn g036_http_basic_auth_c04_unauthenticated_default_still_works() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());

@@ -62,7 +62,7 @@ fn publish_once(store: &FilesystemGitStore, git_dir: &Path) -> PathBuf {
 
 /// G24-C01 — HighConcurrency valve unlocks (opt-in).
 #[test]
-fn g024-l3-celir-joint_c01_highconcurrency_opt_in() {
+fn g024_l3_celir_joint_c01_highconcurrency_opt_in() {
     let hc = WriterSession::new(WriterMode::HighConcurrency).unwrap();
     assert_eq!(hc.mode(), WriterMode::HighConcurrency);
     let def = WriterSession::default();
@@ -162,18 +162,18 @@ fn joint_storm(n: usize) {
 }
 
 #[test]
-fn g024-l3-celir-joint_c02_joint_n32() {
+fn g024_l3_celir_joint_c02_joint_n32() {
     joint_storm(32);
 }
 
 #[test]
-fn g024-l3-celir-joint_c03_joint_n128() {
+fn g024_l3_celir_joint_c03_joint_n128() {
     joint_storm(128);
 }
 
 /// G24-C04 — competing Git lock still fails; lease ≠ skip locks.
 #[test]
-fn g024-l3-celir-joint_c04_competing_lock_still_fails() {
+fn g024_l3_celir_joint_c04_competing_lock_still_fails() {
     let _session = WriterSession::new(WriterMode::HighConcurrency).unwrap();
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
@@ -215,7 +215,7 @@ fn g024-l3-celir-joint_c04_competing_lock_still_fails() {
 
 /// G24-C05 — ObjectStore honesty under joint feature graph.
 #[test]
-fn g024-l3-celir-joint_c05_object_store_filesystem() {
+fn g024_l3_celir_joint_c05_object_store_filesystem() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");

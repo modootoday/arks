@@ -109,7 +109,7 @@ fn setup_ephemeral_ssh(dir: &Path) -> (PathBuf, PathBuf) {
 }
 
 #[test]
-fn g037-gpgsig-ssh_ssh_commit_sign_verify_stock_roundtrip() {
+fn g037_gpgsig_ssh_ssh_commit_sign_verify_stock_roundtrip() {
     require_tools();
     let tmp = TempDir::new().unwrap();
     let keys = tmp.path().join("keys");
@@ -152,7 +152,7 @@ fn g037-gpgsig-ssh_ssh_commit_sign_verify_stock_roundtrip() {
 }
 
 #[test]
-fn g037-gpgsig-ssh_ssh_format_still_required_for_ssh_key_path() {
+fn g037_gpgsig_ssh_ssh_format_still_required_for_ssh_key_path() {
     // OpenPGP is Claimed under G38. G37 remains the SSH matrix: with gpg.format=ssh,
     // commit -S must still succeed (smoke that G37 path was not broken by R4).
     require_tools();

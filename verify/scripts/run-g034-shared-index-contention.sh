@@ -47,8 +47,8 @@ fi
 mkdir -p verify/gates/g034-shared-index-contention/out
 export ARKS_G34_RECEIPT_OUT="${ARKS_G34_RECEIPT_OUT:-$ROOT/verify/gates/g034-shared-index-contention/out/receipt.json}"
 
-echo "G34: shared-index contention suite (arks-lease --test g034-shared-index-contention_shared_index_contention)"
-cargo test -p arks-lease --test g034-shared-index-contention_shared_index_contention "$@"
+echo "G34: shared-index contention suite (arks-lease --test g34_shared_index_contention)"
+cargo test -p arks-lease --test g34_shared_index_contention "$@"
 
 echo "G34: writing receipt $ARKS_G34_RECEIPT_OUT"
 python3 - <<'PY'

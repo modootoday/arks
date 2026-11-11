@@ -164,7 +164,7 @@ exit 2
 }
 
 #[test]
-fn g038-gpgsig-openpgp_openpgp_commit_and_tag_stock_roundtrip() {
+fn g038_gpgsig_openpgp_openpgp_commit_and_tag_stock_roundtrip() {
     require_tools();
     let tmp = TempDir::new().unwrap();
     let gnupghome = tmp.path().join("gnupg");
@@ -228,7 +228,7 @@ fn g038-gpgsig-openpgp_openpgp_commit_and_tag_stock_roundtrip() {
 }
 
 #[test]
-fn g038-gpgsig-openpgp_x509_mock_program_roundtrip() {
+fn g038_gpgsig_openpgp_x509_mock_program_roundtrip() {
     require_tools();
     let tmp = TempDir::new().unwrap();
     let mock = tmp.path().join("gpgsm-mock");
@@ -291,7 +291,7 @@ fn g038-gpgsig-openpgp_x509_mock_program_roundtrip() {
 }
 
 #[test]
-fn g038-gpgsig-openpgp_split_signed_tag_helper_smoke() {
+fn g038_gpgsig_openpgp_split_signed_tag_helper_smoke() {
     // Compile-time independent smoke: armor detection shared with CLI.
     let payload = b"object deadbeef\ntype commit\ntag t\ntagger A <a@e.com> 1 +0000\n\nmsg\n-----BEGIN PGP SIGNATURE-----\n\nabc\n-----END PGP SIGNATURE-----\n";
     let text = std::str::from_utf8(payload).unwrap();

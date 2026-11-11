@@ -110,13 +110,13 @@ fn concurrent_query_storm(n: usize) -> Result<(), String> {
 
 /// G25-C01 — required scale tier.
 #[test]
-fn g025-celir-index-scale_c01_concurrent_query_n256() {
+fn g025_celir_index_scale_c01_concurrent_query_n256() {
     concurrent_query_storm(256).expect("N=256 required scale");
 }
 
 /// G25-C02 — stretch 384.
 #[test]
-fn g025-celir-index-scale_c02_stretch_n384() {
+fn g025_celir_index_scale_c02_stretch_n384() {
     if std::env::var("ARKS_G25_STRETCH").ok().as_deref() == Some("0") {
         write_stretch_status("n384", "SKIP");
         return;
@@ -135,7 +135,7 @@ fn g025-celir-index-scale_c02_stretch_n384() {
 
 /// G25-C03 — stretch 512.
 #[test]
-fn g025-celir-index-scale_c03_stretch_n512() {
+fn g025_celir_index_scale_c03_stretch_n512() {
     if std::env::var("ARKS_G25_STRETCH").ok().as_deref() == Some("0") {
         write_stretch_status("n512", "SKIP");
         return;

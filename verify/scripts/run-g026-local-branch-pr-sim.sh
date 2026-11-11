@@ -61,8 +61,8 @@ fi
 export ARKS_G26_RECEIPT_OUT="${ARKS_G26_RECEIPT_OUT:-$ROOT/verify/gates/g026-local-branch-pr-sim/out/receipt.json}"
 export ARKS_G26_SCALE_OUT="${ARKS_G26_SCALE_OUT:-$ROOT/verify/gates/g026-local-branch-pr-sim/out/scale.json}"
 
-echo "G26: branch/PR sim suite (arks-lease --test g026-local-branch-pr-sim_branch_pr_sim)"
-cargo test -p arks-lease --test g026-local-branch-pr-sim_branch_pr_sim -- --nocapture "$@"
+echo "G26: branch/PR sim suite (arks-lease --test g26_branch_pr_sim)"
+cargo test -p arks-lease --test g26_branch_pr_sim -- --nocapture "$@"
 
 # Documented actual N (tests pin these minima).
 export ARKS_G26_N_BRANCHES="${ARKS_G26_N_BRANCHES:-2048}"

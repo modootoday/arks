@@ -270,7 +270,7 @@ fn seed_filter_bare(parent: &Path, name: &str) -> PathBuf {
 }
 
 #[test]
-fn g039-partial-clone-filter_arks_clone_filter_blob_none_vs_stock_peer() {
+fn g039_partial_clone_filter_arks_clone_filter_blob_none_vs_stock_peer() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_filter_bare(root.path(), "app.git");
@@ -302,7 +302,7 @@ fn g039-partial-clone-filter_arks_clone_filter_blob_none_vs_stock_peer() {
 }
 
 #[test]
-fn g039-partial-clone-filter_arks_clone_filter_tree_0_vs_stock_peer() {
+fn g039_partial_clone_filter_arks_clone_filter_tree_0_vs_stock_peer() {
     require_git();
     let root = TempDir::new().unwrap();
     let work = root.path().join("src");
@@ -367,7 +367,7 @@ fn g039-partial-clone-filter_arks_clone_filter_tree_0_vs_stock_peer() {
 }
 
 #[test]
-fn g039-partial-clone-filter_refuse_unclaimed_filter_spec() {
+fn g039_partial_clone_filter_refuse_unclaimed_filter_spec() {
     require_git();
     let root = TempDir::new().unwrap();
     let dest = root.path().join("x");

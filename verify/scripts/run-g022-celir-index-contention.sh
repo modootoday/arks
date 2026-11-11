@@ -70,7 +70,7 @@ export ARKS_G22_RECEIPT_OUT="${ARKS_G22_RECEIPT_OUT:-$ROOT/verify/gates/g022-cel
 export ARKS_G22_DC_ROOT="$DC_ROOT"
 
 echo "G22: stress suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g022-celir-index-contention_index_contention "$@"
+cargo test -p arks-lease --features celir-index-stress --test g22_index_contention "$@"
 
 echo "G22: arks-store feature-on regress"
 cargo test -p arks-store --features celir-index "$@"

@@ -262,7 +262,7 @@ fn seed_chain_bare(parent: &Path, name: &str) -> PathBuf {
 }
 
 #[test]
-fn g035-shallow-depth_clone_depth_1_writes_shallow() {
+fn g035_shallow_depth_clone_depth_1_writes_shallow() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_chain_bare(root.path(), "app.git");
@@ -290,7 +290,7 @@ fn g035-shallow-depth_clone_depth_1_writes_shallow() {
 }
 
 #[test]
-fn g035-shallow-depth_fetch_depth_1_into_tracking_repo() {
+fn g035_shallow_depth_fetch_depth_1_into_tracking_repo() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_chain_bare(root.path(), "app.git");
@@ -312,7 +312,7 @@ fn g035-shallow-depth_fetch_depth_1_into_tracking_repo() {
 }
 
 #[test]
-fn g035-shallow-depth_local_clone_depth_refuses() {
+fn g035_shallow_depth_local_clone_depth_refuses() {
     require_git();
     let root = TempDir::new().unwrap();
     let work = root.path().join("src");

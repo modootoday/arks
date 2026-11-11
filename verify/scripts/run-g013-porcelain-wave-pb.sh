@@ -53,7 +53,7 @@ cargo test --manifest-path verify/gates/g005-protocol-offline-fixtures/Cargo.tom
 cargo test -p arks-protocol "$@"
 cargo test --manifest-path verify/gates/g002-refs-index-roundtrip/Cargo.toml "$@"
 cargo test --manifest-path verify/gates/g010-store-facade/Cargo.toml "$@"
-cargo test -p arks-object --test g001-loose-object-interop_oracle "$@"
+cargo test -p arks-object --test g1_oracle "$@"
 cargo test --manifest-path verify/gates/g001-loose-object-interop/Cargo.toml "$@"
 
 echo "G13: PASS"

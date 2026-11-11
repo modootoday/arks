@@ -152,7 +152,7 @@ fn seed_bare_under(base: &Path) -> PathBuf {
 }
 
 #[test]
-fn g032-git-daemon-wire_clone_with_export_all() {
+fn g032_git_daemon_wire_clone_with_export_all() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_bare_under(root.path());
@@ -168,7 +168,7 @@ fn g032-git-daemon-wire_clone_with_export_all() {
 }
 
 #[test]
-fn g032-git-daemon-wire_refuse_without_export_marker() {
+fn g032_git_daemon_wire_refuse_without_export_marker() {
     require_git();
     let root = TempDir::new().unwrap();
     let _bare = seed_bare_under(root.path());

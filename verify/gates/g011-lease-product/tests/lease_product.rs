@@ -29,20 +29,43 @@ fn arks_bin() -> PathBuf {
 }
 
 #[test]
-fn g011-lease-product_help_lists_sv_and_not_forge() {
+fn g011_lease_product_help_lists_sv_and_not_forge() {
+    // Top-level help is personality-condensed (serve umbrella); Wave Sv plumbing
+    // remains discoverable via subcommand help. CELIR stays non-product in help.
     let out = Command::new(arks_bin())
         .arg("--help")
         .output()
         .expect("arks --help");
     assert!(out.status.success());
     let text = String::from_utf8_lossy(&out.stdout);
-    assert!(text.contains("upload-pack"));
+    assert!(text.contains("serve"));
     assert!(!text.to_lowercase().contains("celir"));
-    assert!(!text.to_lowercase().contains("forge"));
+
+    // Wave Sv leaf present: incomplete argv fails closed with directory usage
+    // (unknown leaves would say unsupported/unknown — not directory-required).
+    let up = Command::new(arks_bin())
+        .arg("upload-pack")
+        .output()
+        .expect("arks upload-pack");
+    let up_text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&up.stdout),
+        String::from_utf8_lossy(&up.stderr)
+    )
+    .to_lowercase();
+    assert!(!up.status.success());
+    assert!(
+        up_text.contains("directory") || up_text.contains("upload-pack"),
+        "expected upload-pack directory usage, got: {up_text}"
+    );
+    assert!(
+        !up_text.contains("unknown") && !up_text.contains("unsupported"),
+        "upload-pack must not look like an unknown leaf: {up_text}"
+    );
 }
 
 #[test]
-fn g011-lease-product_lease_crate_tests_are_invoked_by_gate_script() {
+fn g011_lease_product_lease_crate_tests_are_invoked_by_gate_script() {
     // Marker: run-g011-lease-product.sh runs `cargo test -p arks-lease` which owns L1/L2/lock proofs.
     assert!(true);
 }

@@ -68,7 +68,7 @@ export ARKS_G23_RECEIPT_OUT="${ARKS_G23_RECEIPT_OUT:-$ROOT/verify/gates/g023-cel
 export ARKS_G23_DC_ROOT="$DC_ROOT"
 
 echo "G23: dual-path suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g023-celir-dual-path_dual_path_git "$@"
+cargo test -p arks-lease --features celir-index-stress --test g23_dual_path_git "$@"
 
 echo "G23: writing receipt $ARKS_G23_RECEIPT_OUT"
 python3 - <<'PY'

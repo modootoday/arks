@@ -77,7 +77,7 @@ fn wait_for_peer(url: &str) {
 }
 
 #[test]
-fn g041-apache-dav-interop_arks_push_create_ff_and_delete_vs_apache_dav() {
+fn g041_apache_dav_interop_arks_push_create_ff_and_delete_vs_apache_dav() {
     require_git();
     let url = dav_url();
     wait_for_peer(&url);

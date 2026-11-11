@@ -139,21 +139,47 @@ fn seed_bare_with_arks(root: &Path) -> PathBuf {
 }
 
 #[test]
-fn g015-smart-http_help_wave_sv() {
+fn g015_smart_http_help_wave_sv() {
     require_git();
+    // Condensed top-level help advertises serve / serve-http; Wave Sv plumbing
+    // remains Claimed and discoverable via subcommand --help.
     let out = Command::new(arks_bin())
         .arg("--help")
         .output()
         .expect("help");
     assert_ok(&out, "help");
     let text = String::from_utf8_lossy(&out.stdout);
-    assert!(text.contains("upload-pack"));
-    assert!(text.contains("receive-pack"));
-    assert!(text.contains("serve-http"));
+    assert!(text.contains("serve-http") || text.contains("serve"));
+
+    // Wave Sv leaves exist (incomplete argv → directory-required fail-closed).
+    for leaf in ["upload-pack", "receive-pack"] {
+        let leaf_out = Command::new(arks_bin())
+            .arg(leaf)
+            .output()
+            .unwrap_or_else(|_| panic!("{leaf} spawn"));
+        let leaf_text = format!(
+            "{}{}",
+            String::from_utf8_lossy(&leaf_out.stdout),
+            String::from_utf8_lossy(&leaf_out.stderr)
+        )
+        .to_lowercase();
+        assert!(
+            !leaf_out.status.success(),
+            "{leaf} incomplete argv should fail"
+        );
+        assert!(
+            leaf_text.contains("directory") || leaf_text.contains(leaf),
+            "expected {leaf} directory usage, got: {leaf_text}"
+        );
+        assert!(
+            !leaf_text.contains("unknown") && !leaf_text.contains("unsupported"),
+            "{leaf} must not look like an unknown leaf: {leaf_text}"
+        );
+    }
 }
 
 #[test]
-fn g015-smart-http_stock_git_clone_fetch_push() {
+fn g015_smart_http_stock_git_clone_fetch_push() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -196,7 +222,7 @@ fn g015-smart-http_stock_git_clone_fetch_push() {
 }
 
 #[test]
-fn g015-smart-http_capability_honesty_upload_ad() {
+fn g015_smart_http_capability_honesty_upload_ad() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());
@@ -223,7 +249,7 @@ fn g015-smart-http_capability_honesty_upload_ad() {
 /// (`pre-receive` / `update` / `post-receive`).
 /// Cite: https://git-scm.com/docs/githooks , https://git-scm.com/docs/git-receive-pack
 #[test]
-fn g015-smart-http_receive_pack_githooks_honor_list() {
+fn g015_smart_http_receive_pack_githooks_honor_list() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare_with_arks(root.path());

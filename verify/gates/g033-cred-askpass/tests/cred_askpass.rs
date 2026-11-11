@@ -400,7 +400,7 @@ fn runtime_secret(tag: &str) -> (String, String) {
 }
 
 #[test]
-fn g033-cred-askpass_c01_credential_fill_via_helper() {
+fn g033_cred_askpass_c01_credential_fill_via_helper() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("fill");
@@ -442,7 +442,7 @@ fn g033-cred-askpass_c01_credential_fill_via_helper() {
 }
 
 #[test]
-fn g033-cred-askpass_c02_clone_with_credential_helper() {
+fn g033_cred_askpass_c02_clone_with_credential_helper() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("helper");
@@ -472,7 +472,7 @@ fn g033-cred-askpass_c02_clone_with_credential_helper() {
 }
 
 #[test]
-fn g033-cred-askpass_c03_clone_with_git_askpass() {
+fn g033_cred_askpass_c03_clone_with_git_askpass() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("ask");
@@ -494,7 +494,7 @@ fn g033-cred-askpass_c03_clone_with_git_askpass() {
 }
 
 #[test]
-fn g033-cred-askpass_c04_fail_closed_without_creds() {
+fn g033_cred_askpass_c04_fail_closed_without_creds() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let (user, pass) = runtime_secret("deny");
@@ -509,7 +509,7 @@ fn g033-cred-askpass_c04_fail_closed_without_creds() {
 }
 
 #[test]
-fn g033-cred-askpass_c05_no_secret_in_tree_fixtures() {
+fn g033_cred_askpass_c05_no_secret_in_tree_fixtures() {
     // Static check: committed verify/gates/g033-cred-askpass sources generate secrets at runtime.
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let src = fs::read_to_string(root.join("tests/cred_askpass.rs")).unwrap();
@@ -526,7 +526,7 @@ fn g033-cred-askpass_c05_no_secret_in_tree_fixtures() {
 }
 
 #[test]
-fn g033-cred-askpass_c06_tty_prompt_via_pty() {
+fn g033_cred_askpass_c06_tty_prompt_via_pty() {
     require_git();
     #[cfg(unix)]
     {
@@ -642,7 +642,7 @@ finish(0 if b"Cloned into" in buf else 1)
 }
 
 #[test]
-fn g033-cred-askpass_c07_os_wallet_helpers_file_backend() {
+fn g033_cred_askpass_c07_os_wallet_helpers_file_backend() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let wallet = tmp.path().join("wallet");

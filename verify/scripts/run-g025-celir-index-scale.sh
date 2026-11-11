@@ -57,7 +57,7 @@ export ARKS_G25_DC_ROOT="$DC_ROOT"
 export ARKS_G25_STRETCH="${ARKS_G25_STRETCH:-1}"
 
 echo "G25: scale suite (arks-lease --features celir-index-stress)"
-cargo test -p arks-lease --features celir-index-stress --test g025-celir-index-scale_index_scale -- --nocapture "$@"
+cargo test -p arks-lease --features celir-index-stress --test g25_index_scale -- --nocapture "$@"
 
 echo "G25: writing receipt $ARKS_G25_RECEIPT_OUT"
 python3 - <<'PY'

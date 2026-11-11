@@ -112,7 +112,7 @@ fn write_pack_shim(dir: &Path, service: &str) -> PathBuf {
 }
 
 #[test]
-fn g030-server-ssh-command_pack_ad_no_http_service_prefix() {
+fn g030_server_ssh_command_pack_ad_no_http_service_prefix() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -132,7 +132,7 @@ fn g030-server-ssh-command_pack_ad_no_http_service_prefix() {
 }
 
 #[test]
-fn g030-server-ssh-command_stock_git_clone_fetch_push_via_upload_pack() {
+fn g030_server_ssh_command_stock_git_clone_fetch_push_via_upload_pack() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());

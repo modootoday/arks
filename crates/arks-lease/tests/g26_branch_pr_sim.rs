@@ -70,7 +70,7 @@ fn write_scale_metrics(path: &Path, branches: usize, pr: usize, workers: usize) 
 
 /// G26-C01 — thousands-class branch heads.
 #[test]
-fn g026-local-branch-pr-sim_c01_branch_scale_n2048() {
+fn g026_local_branch_pr_sim_c01_branch_scale_n2048() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
@@ -102,7 +102,7 @@ fn g026-local-branch-pr-sim_c01_branch_scale_n2048() {
 
 /// G26-C02 — synthetic PR refs (head + optional merge).
 #[test]
-fn g026-local-branch-pr-sim_c02_synthetic_pr_refs_n2048() {
+fn g026_local_branch_pr_sim_c02_synthetic_pr_refs_n2048() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
@@ -148,7 +148,7 @@ fn g026-local-branch-pr-sim_c02_synthetic_pr_refs_n2048() {
 
 /// G26-C03 — leased concurrent tip workers (merge-style tip advances).
 #[test]
-fn g026-local-branch-pr-sim_c03_leased_concurrent_tip_workers_n32() {
+fn g026_local_branch_pr_sim_c03_leased_concurrent_tip_workers_n32() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");
@@ -221,7 +221,7 @@ fn g026-local-branch-pr-sim_c03_leased_concurrent_tip_workers_n32() {
 
 /// G26-C04 — contended lease on same integration ref fail-closed.
 #[test]
-fn g026-local-branch-pr-sim_c04_contended_lease_fail_closed() {
+fn g026_local_branch_pr_sim_c04_contended_lease_fail_closed() {
     let resource = refns("refs/heads/main");
     let leases = Arc::new(Mutex::new(LeaseManager::new()));
     let n = N_WORKERS;
@@ -263,7 +263,7 @@ fn g026-local-branch-pr-sim_c04_contended_lease_fail_closed() {
 
 /// G26-C05 — induce-compare: planted ref lock → stock pathology; arks errors (no skip).
 #[test]
-fn g026-local-branch-pr-sim_c05_planted_lock_induce_compare() {
+fn g026_local_branch_pr_sim_c05_planted_lock_induce_compare() {
     let dir = TempDir::new().unwrap();
     init_git(dir.path());
     let git = dir.path().join(".git");

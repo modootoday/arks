@@ -140,7 +140,7 @@ fn seed_bare(parent: &Path) -> PathBuf {
 }
 
 #[test]
-fn g040-dumb-http-push-deletes_dumb_push_topic_then_delete_refspec() {
+fn g040_dumb_http_push_deletes_dumb_push_topic_then_delete_refspec() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());

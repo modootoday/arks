@@ -149,7 +149,7 @@ fn seed_bare(root: &Path) -> PathBuf {
 }
 
 #[test]
-fn g029-server-dumb-http_update_server_info_files() {
+fn g029_server_dumb_http_update_server_info_files() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
@@ -163,7 +163,7 @@ fn g029-server-dumb-http_update_server_info_files() {
 }
 
 #[test]
-fn g029-server-dumb-http_stock_git_clone_dumb_http() {
+fn g029_server_dumb_http_stock_git_clone_dumb_http() {
     require_git();
     let root = TempDir::new().unwrap();
     let bare = seed_bare(root.path());
