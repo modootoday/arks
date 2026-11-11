@@ -1735,6 +1735,17 @@ type LoopbackSsh = (
     thread::JoinHandle<Result<(), ServerError>>,
 );
 
+/// Spawn durable SSH listener on a background thread (cohost with HTTP/forge).
+pub fn spawn_ssh_listener(
+    opts: ServeSshOptions,
+) -> Result<(Arc<AtomicBool>, thread::JoinHandle<Result<(), ServerError>>), ServerError> {
+    let stop = Arc::new(AtomicBool::new(false));
+    let stop2 = stop.clone();
+    let handle = thread::spawn(move || serve_ssh_listener(opts, stop2));
+    thread::sleep(Duration::from_millis(50));
+    Ok((stop, handle))
+}
+
 /// Ephemeral loopback SSH Partial listener for smokes (not Claimed OpenSSH e2e).
 pub fn spawn_loopback_ssh(opts: ServeSshOptions) -> Result<LoopbackSsh, ServerError> {
     let listener = TcpListener::bind("127.0.0.1:0")?;

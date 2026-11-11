@@ -12,7 +12,7 @@ use arks_server::{
     BasicAuthConfig, DaemonOptions, HttpRequest, ListenRebindSlot, ProductTlsServerConfig,
     ServeHttpOptions, ServeSshOptions, default_authorized_keys_path, default_host_key_path,
     handle_smart_http_auth, load_server_config, receive_pack_session, serve_daemon,
-    serve_daemon_inetd, serve_http_scheme, serve_http_with_opts, serve_ssh_listener,
+    serve_daemon_inetd, serve_http_scheme, serve_http_with_opts, spawn_ssh_listener,
     spawn_loopback_ssh, update_server_info, upload_pack_session,
 };
 use std::io::{self, Read, Write};
@@ -254,55 +254,25 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         .or(listen_from_cfg.clone())
         .unwrap_or_else(|| "127.0.0.1:8080".into());
 
-    // Fail-closed: SSH enabled but in-process listener Missing/Partial — do not silent-degrade.
-    if enable_ssh {
-        let ssh_listen: SocketAddr = ssh_listen_cfg
-            .parse()
-            .map_err(|e| CliError::Usage(format!("serve ssh_listen bad ADDR: {e}")))?;
-        sync_serve_runtime_to_file(
-            enable_http.then_some(http_bind_for_sync.as_str()),
-            enable_forge.then_some(forge_listen.as_str()),
-            Some(ssh_listen_cfg.as_str()),
-        );
-        // Directory is optional here — Missing path refuses before bind.
-        let dir = forwarded
-            .iter()
-            .find(|a| !a.starts_with('-') && *a != "--listen" && !a.contains(':'))
-            .cloned()
-            // Prefer last positional (directory); skip seeded listen values.
-            .or_else(|| {
-                forwarded
-                    .iter()
-                    .rev()
-                    .find(|a| !a.starts_with('-'))
-                    .cloned()
-            })
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from("."));
-        // If dir accidentally captured a HOST:PORT from --listen value, fall back.
-        let dir = if dir.to_string_lossy().parse::<SocketAddr>().is_ok() {
-            PathBuf::from(".")
-        } else {
-            dir
-        };
-        // SoT §17(c): durable Partial SSH listen (labeled); bind fail-closed; not Claimed.
-        install_serve_config_sighup_partial("arks serve SSH Partial");
-        let ssh_rebind = register_live_ssh_rebind_slot();
-        let stop = Arc::new(AtomicBool::new(false));
-        let result = serve_ssh_listener(
-            ServeSshOptions {
-                listen: ssh_listen,
-                path: dir,
-                host_key: ssh_host_key,
-                authorized_keys: ssh_authorized_keys,
-                rebind_desired: Some(ssh_rebind),
-            },
-            stop,
-        )
-        .map_err(|e| CliError::Msg(e.to_string()));
-        clear_live_ssh_rebind_slot();
-        return result;
-    }
+    // Directory for SSH (and optional HTTP git_dir): prefer last non-flag positional.
+    let dir = forwarded
+        .iter()
+        .find(|a| !a.starts_with('-') && *a != "--listen" && !a.contains(':'))
+        .cloned()
+        .or_else(|| {
+            forwarded
+                .iter()
+                .rev()
+                .find(|a| !a.starts_with('-'))
+                .cloned()
+        })
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    let dir = if dir.to_string_lossy().parse::<SocketAddr>().is_ok() {
+        PathBuf::from(".")
+    } else {
+        dir
+    };
 
     let product_tls = resolve_product_tls_from_args(&forwarded)?;
     let mut forge_opts = if enable_forge {
@@ -317,41 +287,105 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
     sync_serve_runtime_to_file(
         enable_http.then_some(http_bind_for_sync.as_str()),
         enable_forge.then_some(forge_listen.as_str()),
-        None,
+        enable_ssh.then_some(ssh_listen_cfg.as_str()),
     );
 
-    match (enable_http, forge_opts.as_mut()) {
-        (true, Some(opts)) => {
-            // Cohost: forge on background thread; HTTP blocks on main (Partial).
-            let forge_slot = register_live_forge_rebind_slot();
-            opts.rebind_desired = Some(forge_slot);
-            let (forge_stop, forge_handle) = spawn_forge_api(opts.clone())
-                .map_err(|e| CliError::Msg(format!("arks serve: forge API bind failed: {e}")))?;
-            let label = "arks serve --no-ssh (HTTP + Partial forge)";
-            let http_result = run_serve_http_listener(&forwarded, label);
-            forge_stop.store(true, Ordering::SeqCst);
-            let _ = forge_handle.join();
-            clear_live_forge_rebind_slot();
-            http_result
-        }
-        (true, None) => run_serve_http_listener(&forwarded, "arks serve --no-ssh --no-forge"),
-        (false, Some(opts)) => {
-            eprintln!(
-                "arks serve --no-http --no-ssh: Partial forge API only \
-                 ([[sot:root/arks-self-host-server]]); design ≠ Claimed"
-            );
+    // IW-FORGE-SERVE Partial: default cohost must not silent-cut forge/HTTP when SSH is on.
+    // Background modules + main blocker; bind failure fail-closed (SoT §17).
+    let mut ssh_join: Option<(
+        Arc<AtomicBool>,
+        std::thread::JoinHandle<Result<(), arks_server::ServerError>>,
+    )> = None;
+    if enable_ssh {
+        let ssh_listen: SocketAddr = ssh_listen_cfg
+            .parse()
+            .map_err(|e| CliError::Usage(format!("serve ssh_listen bad ADDR: {e}")))?;
+        install_serve_config_sighup_partial("arks serve");
+        let ssh_rebind = register_live_ssh_rebind_slot();
+        let spawned = spawn_ssh_listener(ServeSshOptions {
+            listen: ssh_listen,
+            path: dir.clone(),
+            host_key: ssh_host_key,
+            authorized_keys: ssh_authorized_keys,
+            rebind_desired: Some(ssh_rebind),
+        })
+        .map_err(|e| CliError::Msg(format!("arks serve: SSH bind failed: {e}")))?;
+        ssh_join = Some(spawned);
+    }
+
+    let mut forge_join: Option<(
+        Arc<AtomicBool>,
+        std::thread::JoinHandle<Result<(), String>>,
+    )> = None;
+    if let Some(opts) = forge_opts.as_mut() {
+        if !enable_http && !enable_ssh {
+            // Forge-only: block on main.
             let forge_slot = register_live_forge_rebind_slot();
             opts.rebind_desired = Some(forge_slot);
             install_serve_config_sighup_partial("arks serve forge-only");
             let stop = Arc::new(AtomicBool::new(false));
             let result = serve_forge_api(opts.clone(), stop).map_err(|e| CliError::Msg(e));
             clear_live_forge_rebind_slot();
-            result
+            return result;
         }
-        (false, None) => Err(CliError::Usage(
-            "arks serve: HTTP disabled, forge disabled, SSH not Claimed — nothing to run".into(),
-        )),
+        let forge_slot = register_live_forge_rebind_slot();
+        opts.rebind_desired = Some(forge_slot);
+        let spawned = spawn_forge_api(opts.clone())
+            .map_err(|e| CliError::Msg(format!("arks serve: forge API bind failed: {e}")))?;
+        forge_join = Some(spawned);
     }
+
+    let result = if enable_http {
+        let label = match (enable_ssh, forge_join.is_some()) {
+            (true, true) => "arks serve (HTTP + SSH + forge cohost; forge-in-serve Partial depth)",
+            (true, false) => "arks serve (HTTP + SSH)",
+            (false, true) => "arks serve --no-ssh (HTTP + forge)",
+            (false, false) => "arks serve --no-ssh --no-forge",
+        };
+        if !enable_ssh {
+            install_serve_config_sighup_partial(label);
+        }
+        run_serve_http_listener(&forwarded, label)
+    } else if enable_ssh {
+        // SSH-only (or SSH+forge with forge already backgrounded): block on SSH thread
+        // until process stop (same lifetime as prior main-thread serve_ssh_listener).
+        eprintln!(
+            "arks serve: SSH primary listener (forge cohost={}); forge-in-serve Partial depth",
+            forge_join.is_some()
+        );
+        if let Some((_stop, handle)) = ssh_join.take() {
+            match handle.join() {
+                Ok(Ok(())) => {}
+                Ok(Err(e)) => return Err(CliError::Msg(e.to_string())),
+                Err(_) => return Err(CliError::Msg("arks serve: SSH thread panicked".into())),
+            }
+            clear_live_ssh_rebind_slot();
+            if let Some((fstop, fhandle)) = forge_join.take() {
+                fstop.store(true, Ordering::SeqCst);
+                let _ = fhandle.join();
+                clear_live_forge_rebind_slot();
+            }
+            Ok(())
+        } else {
+            Err(CliError::Msg("arks serve: SSH join missing".into()))
+        }
+    } else {
+        Err(CliError::Usage(
+            "arks serve: HTTP disabled, forge disabled, SSH disabled — nothing to run".into(),
+        ))
+    };
+
+    if let Some((stop, handle)) = ssh_join.take() {
+        stop.store(true, Ordering::SeqCst);
+        let _ = handle.join();
+        clear_live_ssh_rebind_slot();
+    }
+    if let Some((stop, handle)) = forge_join.take() {
+        stop.store(true, Ordering::SeqCst);
+        let _ = handle.join();
+        clear_live_forge_rebind_slot();
+    }
+    result
 }
 
 fn resolve_forge_opts(
