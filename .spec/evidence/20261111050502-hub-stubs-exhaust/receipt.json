@@ -1,0 +1,42 @@
+{
+  "schema": "arks-hub-stubs/v2",
+  "gate": "IW-HUB-STUBS",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "c654212",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "claimed": [
+    "pr status",
+    "pr ready",
+    "pr lock",
+    "pr unlock",
+    "pr review",
+    "issue status",
+    "issue delete",
+    "issue lock",
+    "issue unlock",
+    "issue pin",
+    "issue unpin",
+    "issue transfer",
+    "repo edit",
+    "repo set-default",
+    "repo archive",
+    "repo unarchive",
+    "repo rename",
+    "repo delete",
+    "label clone",
+    "api",
+    "status",
+    "group-help discoverability"
+  ],
+  "terminal_partial": [
+    "pr diff",
+    "pr checks",
+    "pr update-branch",
+    "pr revert",
+    "repo fork",
+    "auth refresh"
+  ],
+  "note": "Metadata Claimed + terminal Partial cites research:root/20261111135200.",
+  "timestamp": "2026-11-11T05:05:02Z"
+}

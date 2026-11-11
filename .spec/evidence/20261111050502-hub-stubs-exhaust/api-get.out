@@ -1,0 +1,4 @@
+http_status=200
+method=GET
+path=/repos/local/hubrenamed
+{"archived":false,"description":"stubs-ed","full_name":"local/hubrenamed","id":2,"name":"hubrenamed","owner":{"login":"local"},"private":false}

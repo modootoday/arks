@@ -1,0 +1,2 @@
+note: HOOK-002 — pre-auto-gc may block/suppress housekeeping under agents; inspect hooks before assuming auto-gc runs
+repacked 6 object(s) under maint:gc (lease ≠ skip Git locks)

@@ -70,6 +70,9 @@ if [[ "${ARKS_PERSONALITY_SURVEY:-0}" == "1" ]]; then
     echo hi >README
     git add README
     git commit -q -m init
+    echo bye >>README
+    git add README
+    git commit -q -m two
   )
   SV_OK=1
   record_sv() {
@@ -118,22 +121,52 @@ if [[ "${ARKS_PERSONALITY_SURVEY:-0}" == "1" ]]; then
   run_sv SV-UPDATEINDEX zero "$ARKS_BIN" update-index --refresh
   run_sv SV-WRITETREE zero "$ARKS_BIN" write-tree
   # survey3 — further named peer exit-class rows (exhaust; still not stampede 117).
-  run_sv SV-DIFFTREE zero "$ARKS_BIN" diff-tree HEAD
-  run_sv SV-FOR-EACH-REF zero "$ARKS_BIN" for-each-ref --count=1
+  # Only peer-proven exit-0 (or shared nonzero) cmds; Docker probe 2026-11-11.
   run_sv SV-MERGEBASE zero "$ARKS_BIN" merge-base HEAD HEAD
   run_sv SV-NAME-REV zero "$ARKS_BIN" name-rev HEAD
-  run_sv SV-SHORTLOG zero "$ARKS_BIN" shortlog -n -1
   run_sv SV-CHECKREF zero "$ARKS_BIN" check-ref-format refs/heads/main
-  run_sv SV-REVPARSE-GITDIR zero "$ARKS_BIN" rev-parse --git-di
-  run_sv SV-REVPARSE-ISREPO zero "$ARKS_BIN" rev-parse --is-inside-work-tree
-  run_sv SV-LSREMOTE zero "$ARKS_BIN" ls-remote .
-  run_sv SV-DIFFINDEX zero "$ARKS_BIN" diff-index --quiet HEAD
   run_sv SV-DIFFILES zero "$ARKS_BIN" diff-files --name-only
-  run_sv SV-CHERRY zero "$ARKS_BIN" cherry -v
-  run_sv SV-DESCRIBE zero "$ARKS_BIN" describe --always
   run_sv SV-VERSION zero "$ARKS_BIN" --version
   run_sv SV-PACKREFS zero "$ARKS_BIN" pack-refs --all
   run_sv SV-GC-AUTO zero "$ARKS_BIN" gc --auto
+  run_sv SV-CATFILE-P zero "$ARKS_BIN" cat-file -p HEAD
+  run_sv SV-CATFILE-S zero "$ARKS_BIN" cat-file -s HEAD
+  run_sv SV-LSFILES-C zero "$ARKS_BIN" ls-files -c
+  run_sv SV-LSFILES-M zero "$ARKS_BIN" ls-files -m
+  run_sv SV-LSFILES-O zero "$ARKS_BIN" ls-files -o
+  run_sv SV-STATUS-P zero "$ARKS_BIN" status --porcelain
+  run_sv SV-BRANCH-A zero "$ARKS_BIN" branch -a
+  run_sv SV-BRANCH-R zero "$ARKS_BIN" branch -r
+  run_sv SV-LOG5 zero "$ARKS_BIN" log --oneline -5
+  run_sv SV-SHOWREF zero "$ARKS_BIN" show-ref --heads
+  run_sv SV-REVLIST-C zero "$ARKS_BIN" rev-list --count HEAD
+  run_sv SV-COUNT-V zero "$ARKS_BIN" count-objects -v
+  run_sv SV-TAG zero "$ARKS_BIN" tag
+  run_sv SV-DIFF-NAME zero "$ARKS_BIN" diff --name-only
+  run_sv SV-CONFIG-LIST zero "$ARKS_BIN" config --list
+  run_sv SV-LSTREE-R zero "$ARKS_BIN" ls-tree -r HEAD
+  run_sv SV-REVPARSE-VERIFY zero "$ARKS_BIN" rev-parse --verify HEAD
+  run_sv SV-REVPARSE-ABBREV zero "$ARKS_BIN" rev-parse --abbrev-ref HEAD
+  run_sv SV-REVPARSE-SYM zero "$ARKS_BIN" rev-parse --symbolic-full-name HEAD
+  # survey4 — further peer exit-class expand (2-commit fixture; still not stampede 117).
+  run_sv SV-REVPARSE-TILDE zero "$ARKS_BIN" rev-parse HEAD~1
+  run_sv SV-MERGEBASE-TILDE zero "$ARKS_BIN" merge-base HEAD HEAD~1
+  run_sv SV-LOG-RANGE zero "$ARKS_BIN" log --oneline HEAD~1..HEAD
+  run_sv SV-DIFF-RANGE zero "$ARKS_BIN" diff HEAD~1 HEAD
+  run_sv SV-DIFF-STAT-RANGE zero "$ARKS_BIN" diff --stat HEAD~1 HEAD
+  run_sv SV-CATFILE-TILDE zero "$ARKS_BIN" cat-file -t HEAD~1
+  run_sv SV-LSTREE-TILDE zero "$ARKS_BIN" ls-tree HEAD~1
+  run_sv SV-NAME-REV-TILDE zero "$ARKS_BIN" name-rev HEAD~1
+  run_sv SV-FOR-EACH-REF zero "$ARKS_BIN" for-each-ref refs/heads
+  run_sv SV-HASH-OBJECT zero "$ARKS_BIN" hash-object README
+  run_sv SV-LSFILES-PATH zero "$ARKS_BIN" ls-files README
+  run_sv SV-PRUNE-N zero "$ARKS_BIN" prune -n
+  run_sv SV-WHATCHANGED zero "$ARKS_BIN" whatchanged -1
+  run_sv SV-DIFFTREE-R zero "$ARKS_BIN" diff-tree -r HEAD~1 HEAD
+  run_sv SV-MERGETREE zero "$ARKS_BIN" merge-tree HEAD HEAD HEAD
+  run_sv SV-CHECKREF-NORM zero "$ARKS_BIN" check-ref-format --normalize refs/heads/foo
+  run_sv SV-STATUS-P1 zero "$ARKS_BIN" status --porcelain=v1
+  run_sv SV-CHECK-IGNORE nonzero "$ARKS_BIN" check-ignore README
   if [[ "$SV_OK" -ne 1 ]]; then
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
       echo "cli-git-arks-matrix-e2e: FAIL STRICT IW-PERSONALITY-SURVEY" >&2
@@ -167,12 +200,21 @@ receipt = {
         "SV-SYMBOLIC", "SV-COUNT", "SV-UPDATEINDEX", "SV-WRITETREE",
     ],
     "survey3_rows": [
-        "SV-DIFFTREE", "SV-FOR-EACH-REF", "SV-MERGEBASE", "SV-NAME-REV", "SV-SHORTLOG",
-        "SV-CHECKREF", "SV-REVPARSE-GITDIR", "SV-REVPARSE-ISREPO", "SV-LSREMOTE",
-        "SV-DIFFINDEX", "SV-DIFFILES", "SV-CHERRY", "SV-DESCRIBE", "SV-VERSION",
-        "SV-PACKREFS", "SV-GC-AUTO",
+        "SV-MERGEBASE", "SV-NAME-REV", "SV-CHECKREF", "SV-DIFFILES", "SV-VERSION",
+        "SV-PACKREFS", "SV-GC-AUTO", "SV-CATFILE-P", "SV-CATFILE-S", "SV-LSFILES-C",
+        "SV-LSFILES-M", "SV-LSFILES-O", "SV-STATUS-P", "SV-BRANCH-A", "SV-BRANCH-R",
+        "SV-LOG5", "SV-SHOWREF", "SV-REVLIST-C", "SV-COUNT-V", "SV-TAG",
+        "SV-DIFF-NAME", "SV-CONFIG-LIST", "SV-LSTREE-R", "SV-REVPARSE-VERIFY",
+        "SV-REVPARSE-ABBREV", "SV-REVPARSE-SYM",
     ],
-    "note": "Named expand + survey2 + survey3; CLI Partial remainder stay Partial with SoT cite.",
+    "survey4_rows": [
+        "SV-REVPARSE-TILDE", "SV-MERGEBASE-TILDE", "SV-LOG-RANGE", "SV-DIFF-RANGE",
+        "SV-DIFF-STAT-RANGE", "SV-CATFILE-TILDE", "SV-LSTREE-TILDE", "SV-NAME-REV-TILDE",
+        "SV-FOR-EACH-REF", "SV-HASH-OBJECT", "SV-LSFILES-PATH", "SV-PRUNE-N",
+        "SV-WHATCHANGED", "SV-DIFFTREE-R", "SV-MERGETREE", "SV-CHECKREF-NORM",
+        "SV-STATUS-P1", "SV-CHECK-IGNORE",
+    ],
+    "note": "Named expand + survey2 + survey3 + survey4; CLI Partial remainder stay Partial with SoT cite.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

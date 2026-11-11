@@ -1,0 +1,1 @@
+arks hub pr — list|view|create|close|reopen|edit|comment|merge|checkout|status|ready|lock|unlock|review (local hub REST; merge=metadata only; checkout=resolve/print, never spawn git)

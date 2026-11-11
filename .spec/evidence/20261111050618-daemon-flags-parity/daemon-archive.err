@@ -1,0 +1,2 @@
+arks daemon listening on git://127.0.0.1:50881/ (export_all=true; receive=false; upload-archive=true; timeout=30s; init-timeout=5s; max_conn=0; bases=1)
+arks daemon: repo=/tmp/arks-daemon-flags.ZByimL/repo.git

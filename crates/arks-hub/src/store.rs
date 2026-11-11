@@ -626,43 +626,6 @@ impl HubStore {
         true
     }
 
-    pub fn clone_labels(
-        &mut self,
-        from_owner: &str,
-        from_repo: &str,
-        to_owner: &str,
-        to_repo: &str,
-    ) -> Option<usize> {
-        if !self
-            .db
-            .repos
-            .iter()
-            .any(|r| r.owner == to_owner && r.name == to_repo)
-        {
-            return None;
-        }
-        let src: Vec<Label> = self
-            .db
-            .labels
-            .iter()
-            .filter(|l| l.owner == from_owner && l.repo == from_repo)
-            .cloned()
-            .collect();
-        let mut n = 0usize;
-        for lab in src {
-            if self
-                .db
-                .labels
-                .iter()
-                .any(|l| l.owner == to_owner && l.repo == to_repo && l.name == lab.name)
-            {
-                continue;
-            }
-            self.create_label(to_owner, to_repo, &lab.name, &lab.color, &lab.description);
-            n += 1;
-        }
-        Some(n)
-    }
 
     /// Metadata-only merge: marks pull merged+closed. Never touches git objects.
     pub fn merge_pull(&mut self, owner: &str, repo: &str, number: u64) -> Option<Pull> {

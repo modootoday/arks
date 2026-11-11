@@ -3,7 +3,7 @@ id: sot:root/arks-in-scope-leftovers-wave
 title: In-scope leftovers wave — Phase 0 scope audit + Phase 1+ Claimed bars
 status: active
 created: 2026-11-11T03:35:56Z
-updated: 2026-11-11T04:52:00Z
+updated: 2026-11-11T05:06:17Z
 tags: [design, residual, scope-audit, hub, daemon, personality, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -106,8 +106,8 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | 2 | **IW-HUB-ASSETS** | Release assets (+ edit/delete) | **Claimed** ([[evidence:root/20261111034513-hub-release-assets]]) | Upload/download/delete-asset peer-faithful vs local forge; edit/delete release; Docker receipt | Stub exit-2 Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` |
 | 3 | **IW-HUB-CHECKOUT** | `pr checkout` / `co` | **Claimed** ([[evidence:root/20261111034521-hub-pr-checkout]]) | Resolve head SHA/ref/branch; print recipe; Docker receipt | Spawn git/gh | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` |
 | 4 | **IW-HUB-UX** | config / alias / completion | **Claimed** ([[evidence:root/20261111034525-hub-ux-config-alias]]) | get/set/list/delete (+ completion emit) Claimed subset; Docker receipt | Profile installer invent | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` |
-| 5 | **IW-HUB-STUBS** | Remaining v1 Partial×31 | **Claimed** subset ([[evidence:root/20261111045014-hub-stubs-expand]]) + **exhaust** metadata Claimed ([[research:root/20261111135200]]) + terminal Partial | Metadata leaves + group-help discoverability; terminal Partial for OAuth/CI/git-spawn | Invent CI/OAuth/git spawn Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` (+ STUBS2) |
-| 6 | **IW-PERSONALITY-SURVEY** | CLI Partial×117 | **Claimed** expand + survey2 ([[evidence:root/20261111045130-personality-survey]]) + survey3 | Named + survey2 + survey3 (≥16); Missing=0; remainder Partial | Stampede 117 Claimed | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` |
+| 5 | **IW-HUB-STUBS** | Remaining v1 Partial×31 | **Claimed** subset ([[evidence:root/20261111045014-hub-stubs-expand]]) + **exhaust** ([[evidence:root/20261111050502-hub-stubs-exhaust]]; [[research:root/20261111135200]]) + terminal Partial | Metadata leaves + group-help discoverability; terminal Partial for OAuth/CI/git-spawn | Invent CI/OAuth/git spawn Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_STUBS=1` (+ STUBS2) |
+| 6 | **IW-PERSONALITY-SURVEY** | CLI Partial×117 | **Claimed** expand + survey2/3/4 ([[evidence:root/20261111050617-personality-survey]]) | Named + survey2 + survey3 (≥16) + survey4 peer exit-class; Missing=0; remainder Partial | Stampede 117 Claimed | `dod-cli-matrix` + `ARKS_PERSONALITY_SURVEY=1` |
 | 7 | **IW-DAEMON-FLAGS-PARITY** | Daemon flags + upload-archive | **Parity** ([[evidence:root/20261111045108-daemon-flags-parity]]); git:// **Parity pointer** | upload-archive enable+ustar; client pointer = not daemon DoD (same as upload-pack CLI pointer) | SysV double-fork; invent client Claimed under daemon | `dod-daemon-matrix` + `ARKS_DAEMON_FLAGS_PARITY=1` |
 | 8 | **DOCS-SCOPE** | Register + product SoTs | **Synced** this wave | Sync in/out counts + evidence ids | Invent beyond receipts | Manual |
 
@@ -191,6 +191,7 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | Named expand | Additional peer exit/stdout rows documented in receipt schema `arks-personality-survey/v1` (≥10 main-category commands beyond IW-PERSONALITY-EXIT named set) |
 | Additive survey2 | Further named rows (≥8) in same harness / new Docker receipt; still Missing=0 |
 | Additive survey3 | Further named rows (≥16) peer exit-class; Docker receipt `survey3_rows` |
+| Additive survey4 | Further peer exit-class rows (2-commit fixture); Docker receipt `survey4_rows` |
 | Remainder Partial×(117−expand) | Honest Partial with this SoT cite |
 | Refuse | Claiming all 117 without per-row evidence |
 
