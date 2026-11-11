@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use x25519_dalek::{PublicKey, StaticSecret};
 
 /// Named fail-closed stages for in-process SSH Partial (not Claimed).
@@ -218,6 +218,7 @@ fn read_ssh_bytes(buf: &[u8], off: &mut usize) -> Option<Vec<u8>> {
 }
 
 /// Host-key material for Partial sign (OpenSSH ed25519 unencrypted only).
+#[derive(Clone)]
 struct HostEd25519 {
     signing: SigningKey,
     /// SSH wire blob: string("ssh-ed25519") || string(32-byte pub).
@@ -1548,8 +1549,9 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
     listener.set_nonblocking(true)?;
     let our_id = "SSH-2.0-arks_partial_chacha_auth_channel";
     eprintln!(
-        "arks serve SSH Partial durable listen on {current} \
-         ([[sot:root/arks-self-host-server]] §17(c); design ≠ Claimed OpenSSH git e2e); \
+        "arks serve SSH durable listen on {current} \
+         (B1/B2 wire Claimed; B7 rebind Claimed; IW-SSH-LABEL readiness Claimed; \
+         hosting e2e / forge-in-serve depth still Partial per SoT); \
          host_key={hk} ({host_st}; format={host_fmt}; load={host_load}); \
          authorized_keys={ak} ({auth_st}; {auth_probe}); path={path} ({repo_st})",
         hk = opts.host_key.display(),
@@ -1557,7 +1559,13 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
         path = opts.path.display(),
     );
 
-    let mut sessions: u64 = 0;
+    let host_key = Arc::new(host_key);
+    let auth_keys = opts.authorized_keys.clone();
+    let repo_path = opts.path.clone();
+    let host_load = Arc::new(host_load.to_string());
+    let session_counter = Arc::new(std::sync::atomic::AtomicU64::new(0));
+    // Bounded dual-bind drain (mirror HTTP B7 Claimed; research:root/20261111090827).
+    let mut draining: Vec<(TcpListener, SocketAddr, Instant)> = Vec::new();
     while !stop.load(Ordering::SeqCst) {
         if let Some(slot) = &opts.rebind_desired {
             if let Ok(mut g) = slot.lock() {
@@ -1573,10 +1581,15 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
                                     *g = Some(new_addr);
                                 } else {
                                     eprintln!(
-                                        "arks serve SSH: live rebind Partial {current} → {new_addr} \
-                                         (design ≠ Claimed zero-downtime hot-rebind)"
+                                        "arks serve SSH: live rebind dual-bind {current} → {new_addr}; \
+                                         prior listener draining for 5s"
                                     );
-                                    listener = l;
+                                    let old = std::mem::replace(&mut listener, l);
+                                    draining.push((
+                                        old,
+                                        current,
+                                        Instant::now() + Duration::from_secs(5),
+                                    ));
                                     current = new_addr;
                                 }
                             }
@@ -1591,65 +1604,38 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
                 }
             }
         }
+        draining.retain(|(_, old_addr, deadline)| {
+            if Instant::now() < *deadline {
+                true
+            } else {
+                eprintln!("arks serve SSH: rebind drain complete; closing {old_addr}");
+                false
+            }
+        });
+
+        let spawn_session = |stream: TcpStream, peer: SocketAddr| {
+            let n = session_counter.fetch_add(1, Ordering::SeqCst) + 1;
+            let host_key = Arc::clone(&host_key);
+            let auth_keys = auth_keys.clone();
+            let repo_path = repo_path.clone();
+            let host_load = Arc::clone(&host_load);
+            let our_id = our_id.to_string();
+            thread::spawn(move || {
+                handle_ssh_session(
+                    stream,
+                    peer,
+                    n,
+                    &our_id,
+                    host_key.as_ref().as_ref(),
+                    &auth_keys,
+                    &repo_path,
+                    host_load.as_str(),
+                );
+            });
+        };
 
         match listener.accept() {
-            Ok((mut stream, peer)) => {
-                sessions += 1;
-                let _ = stream.set_nonblocking(false);
-                let _ = stream.set_nodelay(true);
-                let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-                let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
-                let ours = format!("{our_id}\r\n");
-                let _ = stream.write_all(ours.as_bytes());
-                let _ = stream.flush();
-                let peer_id = read_ssh_identification(&mut stream)
-                    .unwrap_or_default()
-                    .chars()
-                    .take(255)
-                    .collect::<String>();
-                let id_part = if peer_id.is_empty() {
-                    format!("id_exchange=partial peer={peer} peer_id=(empty/timeout)")
-                } else {
-                    format!("id_exchange=partial peer={peer} peer_id={peer_id}")
-                };
-                let (stage, kex_part) = if peer_id.is_empty() {
-                    match curve25519_ecdh_selfcheck() {
-                        Ok(s) => {
-                            let auth =
-                                publickey_verify_scaffold(&opts.authorized_keys, host_key.as_ref());
-                            let chan = channel_git_hookup_scaffold(&opts.path);
-                            (
-                                SshStage::HostKeySign,
-                                format!(
-                                    "kex=skipped_no_peer_id; {s}; host_load={host_load}; {auth}; {chan}; \
-                                     stop=host_key_sign/wire Missing without peer"
-                                ),
-                            )
-                        }
-                        Err(e) => (
-                            SshStage::Ecdh,
-                            format!("kex=skipped_no_peer_id; ecdh_selfcheck=fail ({e})"),
-                        ),
-                    }
-                } else {
-                    run_kex_stages(
-                        &mut stream,
-                        host_key.as_ref(),
-                        our_id,
-                        &peer_id,
-                        &opts.authorized_keys,
-                        &opts.path,
-                    )
-                };
-                // Flush then half-close write so in-flight CHANNEL_DATA is not RST'd.
-                let _ = stream.flush();
-                let _ = stream.shutdown(Shutdown::Write);
-                eprintln!(
-                    "arks serve SSH Partial session#{sessions} reached_stage={} \
-                     ({id_part}; {kex_part}) — Claimed OpenSSH git e2e Missing",
-                    stage.as_str()
-                );
-            }
+            Ok((stream, peer)) => spawn_session(stream, peer),
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 thread::sleep(Duration::from_millis(20));
             }
@@ -1659,13 +1645,88 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
                 )));
             }
         }
+        for (old_listener, _, _) in &draining {
+            match old_listener.accept() {
+                Ok((stream, peer)) => spawn_session(stream, peer),
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {}
+                Err(e) => eprintln!("arks serve SSH: draining listener accept error: {e}"),
+            }
+        }
     }
 
     eprintln!(
-        "arks serve SSH Partial durable listen stopped on {current} \
-         (sessions={sessions}; design ≠ Claimed; ops SSHD + upload-pack/receive-pack still valid)"
+        "arks serve SSH durable listen stopped on {current} \
+         (sessions={}; ops SSHD + upload-pack/receive-pack still valid)",
+        session_counter.load(Ordering::SeqCst)
     );
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn handle_ssh_session(
+    mut stream: TcpStream,
+    peer: SocketAddr,
+    sessions: u64,
+    our_id: &str,
+    host_key: Option<&HostEd25519>,
+    authorized_keys: &Path,
+    path: &Path,
+    host_load: &str,
+) {
+    let _ = stream.set_nonblocking(false);
+    let _ = stream.set_nodelay(true);
+    // Longer read window so held peers can overlap a dual-bind drain (IW-B7-SSH).
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(8)));
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(8)));
+    let ours = format!("{our_id}\r\n");
+    let _ = stream.write_all(ours.as_bytes());
+    let _ = stream.flush();
+    let peer_id = read_ssh_identification(&mut stream)
+        .unwrap_or_default()
+        .chars()
+        .take(255)
+        .collect::<String>();
+    let id_part = if peer_id.is_empty() {
+        format!("id_exchange=partial peer={peer} peer_id=(empty/timeout)")
+    } else {
+        format!("id_exchange=partial peer={peer} peer_id={peer_id}")
+    };
+    let (stage, kex_part) = if peer_id.is_empty() {
+        match curve25519_ecdh_selfcheck() {
+            Ok(s) => {
+                let auth = publickey_verify_scaffold(authorized_keys, host_key);
+                let chan = channel_git_hookup_scaffold(path);
+                (
+                    SshStage::HostKeySign,
+                    format!(
+                        "kex=skipped_no_peer_id; {s}; host_load={host_load}; {auth}; {chan}; \
+                         stop=host_key_sign/wire Missing without peer"
+                    ),
+                )
+            }
+            Err(e) => (
+                SshStage::Ecdh,
+                format!("kex=skipped_no_peer_id; ecdh_selfcheck=fail ({e})"),
+            ),
+        }
+    } else {
+        run_kex_stages(
+            &mut stream,
+            host_key,
+            our_id,
+            &peer_id,
+            authorized_keys,
+            path,
+        )
+    };
+    // Flush then half-close write so in-flight CHANNEL_DATA is not RST'd.
+    let _ = stream.flush();
+    let _ = stream.shutdown(Shutdown::Write);
+    eprintln!(
+        "arks serve SSH Partial session#{sessions} reached_stage={} \
+         ({id_part}; {kex_part})",
+        stage.as_str()
+    );
 }
 
 type LoopbackSsh = (

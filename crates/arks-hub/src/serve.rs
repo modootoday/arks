@@ -14,7 +14,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// Shared slot for Partial live listen rebind (polled in forge accept loop).
 pub type ForgeListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
@@ -128,7 +128,7 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
     let mut current = opts.listen;
     let scheme = forge_serve_scheme(&opts);
     eprintln!(
-        "arks forge API listening on {scheme}://{}/ (data={}; Partial local API — not Claimed)",
+        "arks forge API listening on {scheme}://{}/ (data={}; Partial local API — IW-B7-FORGE drain)",
         listener.local_addr().map_err(|e| e.to_string())?,
         opts.data_dir.display()
     );
@@ -137,6 +137,8 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
             "arks forge API: in-process TLS terminate armed (operator PEMs; same pattern as arks serve HTTP B9)"
         );
     }
+    // Bounded dual-bind drain (mirror HTTP B7 Claimed; research:root/20261111090827).
+    let mut draining: Vec<(TcpListener, SocketAddr, Instant)> = Vec::new();
     while !stop.load(Ordering::SeqCst) {
         if let Some(slot) = &opts.rebind_desired {
             if let Ok(mut g) = slot.lock() {
@@ -146,10 +148,15 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
                             Ok(l) => match l.set_nonblocking(true) {
                                 Ok(()) => {
                                     eprintln!(
-                                        "arks forge API: live rebind Partial {current} → {new_addr} \
-                                         (design ≠ Claimed zero-downtime hot-rebind)"
+                                        "arks forge API: live rebind dual-bind {current} → {new_addr}; \
+                                         prior listener draining for 5s"
                                     );
-                                    listener = l;
+                                    let old = std::mem::replace(&mut listener, l);
+                                    draining.push((
+                                        old,
+                                        current,
+                                        Instant::now() + Duration::from_secs(5),
+                                    ));
                                     current = new_addr;
                                 }
                                 Err(e) => {
@@ -171,6 +178,14 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
                 }
             }
         }
+        draining.retain(|(_, old_addr, deadline)| {
+            if Instant::now() < *deadline {
+                true
+            } else {
+                eprintln!("arks forge API: rebind drain complete; closing {old_addr}");
+                false
+            }
+        });
         match listener.accept() {
             Ok((stream, _)) => {
                 let store = store.clone();
@@ -185,6 +200,21 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
                 thread::sleep(Duration::from_millis(10));
             }
             Err(e) => return Err(e.to_string()),
+        }
+        for (old_listener, _, _) in &draining {
+            match old_listener.accept() {
+                Ok((stream, _)) => {
+                    let store = store.clone();
+                    let tls = opts.tls.clone();
+                    thread::spawn(move || {
+                        if let Err(e) = handle_forge_connection(stream, &store, &tls) {
+                            eprintln!("arks forge API: {e}");
+                        }
+                    });
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {}
+                Err(e) => eprintln!("arks forge API: draining listener accept error: {e}"),
+            }
         }
     }
     Ok(())
