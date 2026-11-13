@@ -117,6 +117,7 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 | Remaining incompletes wave | [[sot:root/arks-remaining-incompletes-wave]] · [[research:root/20261111105924]] — hub v1 Missing→0 + expand; personality expand; daemon B5+ Refuse; docs honesty |
 | Honesty leftovers wave | [[sot:root/arks-honesty-leftovers-wave]] · [[research:root/20261111114312]] — hub mutate subset; personality exit tables; B5+ collector reopen-or-Refuse; **no invent Claimed** |
 | In-scope leftovers wave | [[sot:root/arks-in-scope-leftovers-wave]] · [[research:root/20261111123556]] — Phase 0 scope audit (git/daemon/gh + serve); Actions/assets/checkout/CLI Partial×117/daemon flags **in**; later/OUT/SysV/L9/G8 **out**; **no invent Claimed** |
+| Optimized DoD renew | [[sot:root/arks-dod-optimized]] · [[research:root/20261113143029]] — must-pass Missing=0 + R-HOST/R-B + OD-UNIFIED/OD-SERVE-CFG/OD-COMMIT-HONESTY; Partial×117/terminal×6/later/OUT/SysV/L9/G8 **non-DoD**; **no invent Claimed** |
 | Verify directory conventions | [[sot:root/verify-directory-conventions]] · [[research:root/20261111082440]] — tree / folder naming / out / SKIP·STRICT / residual registration |
 | Hub (`arks hub`) | [[sot:root/arks-hub-product-intent]] |
 | CLI personality / factory | [[sot:root/arks-cli-personality-factory]] (git\|gh\|arks; OverlapFacade; ExitCodePolicy — design/Partial) |

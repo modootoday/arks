@@ -3,8 +3,8 @@ id: sot:root/verify-cleanroom-symmetry-matrix
 title: Clean-room symmetry matrix (three DoD pillars)
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-11T05:15:00Z
-tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, claimed-residual, single-release, no-invent-pass]
+updated: 2026-11-13T05:30:29Z
+tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, claimed-residual, single-release, no-invent-pass, optimized-dod]
 verify: manual
 rel:
   depends_on:
@@ -15,6 +15,7 @@ rel:
     - sot:root/arks-hub-local-multi-agent-pr
     - sot:root/arks-self-host-server
     - sot:root/arks-claimed-residual-gates
+    - sot:root/arks-dod-optimized
     - sot:root/verify-directory-conventions
     - sot:root/arks-daemon-product-intent
     - sot:root/arks-hub-product-intent
@@ -24,6 +25,7 @@ rel:
     - research:root/20261111034805
     - research:root/20261111035226
     - research:root/20261111074523
+    - research:root/20261113143029
   evidence:
     - evidence:root/20261111034600
     - evidence:root/20261111035226
@@ -41,23 +43,23 @@ rel:
 
 # Clean-room symmetry matrix (three DoD pillars)
 
-Version **0.1.5**. Umbrella **canon** for the public-story clean-room **Definition of Done**: three peer-symmetry pillars in **Linux Docker** (`arks-verify-m1:0.1.0`), plus **related hosting** e2e for arks-only self-host server (LAN/WAN) under [[sot:root/arks-self-host-server]], plus **adjacent Claimed residual** scaffolds under [[sot:root/arks-claimed-residual-gates]] (B1–B9 — **not** a fourth symmetry pillar). **No invent PASS/Claimed** from SoT alone. Directory / naming / SKIP·STRICT / out-path conventions: [[sot:root/verify-directory-conventions]].
+Version **0.1.6**. Umbrella **canon** for the public-story clean-room **Definition of Done**: three peer-symmetry pillars in **Linux Docker** (`arks-verify-m1:0.1.0`), plus **related hosting** e2e for arks-only self-host server (LAN/WAN) under [[sot:root/arks-self-host-server]], plus **adjacent Claimed residual** scaffolds under [[sot:root/arks-claimed-residual-gates]] (B1–B9 — **not** a fourth symmetry pillar). **Renewed must-pass / cut table:** [[sot:root/arks-dod-optimized]] (research [[research:root/20261113143029]]) — Partial×117 / hub terminal×6 / later×119 / OUT / SysV / L9 / G8 are **explicitly non-DoD**; bounded raises OD-UNIFIED / OD-SERVE-CFG / OD-COMMIT-HONESTY only. **No invent PASS/Claimed** from SoT alone. Directory / naming / SKIP·STRICT / out-path conventions: [[sot:root/verify-directory-conventions]].
 
 **Published binary:** **`arks` only** (`arks daemon`, `arks hub …`). Internal crates OK. Product paths **MUST NOT** spawn `git` or `gh`. Stock `git` / surveyed `gh` are oracles only.
 
 **Remote empty — no push.** Windows hosts drive compose; authority is Linux-in-container bash, not host `sh`.
 
-### Tip currency (living tip ≥ `a21ad01`; inventory refresh)
+### Tip currency (living tip ≥ `ea6571c`; optimized DoD)
 
-| Pillar | Inventory honesty now | Remaining gap (not invent PASS) |
-|--------|----------------------|----------------------------------|
-| **1. CLI** (`git`↔`arks`) | pin list-cmds **Missing = 0** (DoD judge clean-room **2.39.5**); living CSV Partial **117** / Refuse **47** / Parity-candidate **21** | Partial man-page flag depth + survey remainder; host skew ≠ pin advance / ≠ Claimed; personality expand Claimed separately |
-| **2. Daemon** | living CSV **Missing = 0**; **Parity = 20**; Refuse/N/A **16**; Partial **0** ([[sot:root/arks-daemon-git-command-matrix]]) | terminal Refuse honesty only (SysV detach, privilege drop, …); B5+ facility via collector Claimed ([[sot:root/arks-honesty-leftovers-wave]]) |
-| **3. Hub/forge client** | v1 **Missing = 0**; Claimed **94** + terminal Partial **6** (OAuth/CI/git-spawn); later Deferred **119** OUT of v1 DoD; Refuse/N/A **28** | terminal Partial cites; multi-agent runners framework-first ([[sot:root/arks-hub-local-multi-agent-pr]]); later/OUT ≠ pillar incomplete |
-| **Related: Self-host** | [[sot:root/arks-self-host-server]] + IW-FORGE-SERVE hosting journeys green under `dod-self-host` (STRICT); B1/B2/B7/B9 Claimed via residual gates | WAN “secure by default” still forbidden without ops evidence; not a fourth symmetry pillar |
-| **Adjacent: Claimed residual** | [[sot:root/arks-claimed-residual-gates]] — **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9 Claimed** with Docker receipts | not a fourth symmetry pillar; archive-script openlog arm ≠ B5+ Claimed bar (collector is) |
+| Pillar | Inventory honesty now | DoD vs non-DoD |
+|--------|----------------------|----------------|
+| **1. CLI** (`git`↔`arks`) | pin list-cmds **Missing = 0** (DoD judge clean-room **2.39.5**); living CSV Partial **117** / Refuse **47** | **DoD:** Missing=0 + OD-UNIFIED + OD-COMMIT-HONESTY. **Non-DoD:** Partial×117 remainder / Refuse |
+| **2. Daemon** | living CSV **Missing = 0**; **Parity = 20**; Refuse/N/A **16**; Partial **0** ([[sot:root/arks-daemon-git-command-matrix]]) | **DoD:** Missing=0 + Parity carrying. **Non-DoD:** SysV / privilege-drop Refuse |
+| **3. Hub/forge client** | v1 **Missing = 0**; Claimed **94** + terminal Partial **6** (OAuth/CI/git-spawn); later Deferred **119** OUT of v1 DoD; Refuse/N/A **28** | **DoD:** v1 Missing=0 + Claimed inventory. **Non-DoD:** terminal×6 keep; later×119; OUT Refuse |
+| **Related: Self-host** | [[sot:root/arks-self-host-server]] + IW-FORGE-SERVE under `dod-self-host`; **OD-SERVE-CFG** smoke under optimized DoD | WAN “secure by default” forbidden; not a fourth pillar |
+| **Adjacent: Claimed residual** | [[sot:root/arks-claimed-residual-gates]] — **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9 Claimed** | not a fourth symmetry pillar |
 
-Orchestrator wired: `verify/scripts/run-symmetry-dod.sh` / compose `dod-symmetry`. Related hosting: compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh`. Claimed residual: compose `dod-claimed-residual` → `verify/scripts/run-claimed-residual-dod.sh` (`ARKS_DOD_STRICT=1` fail-closed; **no invent PASS**). ARKS-native (non-peer) e2e inventory: [[sot:root/arks-native-e2e-checklist]].
+Orchestrator wired: `verify/scripts/run-symmetry-dod.sh` / compose `dod-symmetry`. Related hosting: compose `dod-self-host` → `verify/scripts/run-self-host-e2e.sh`. Claimed residual: compose `dod-claimed-residual` → `verify/scripts/run-claimed-residual-dod.sh` (`ARKS_DOD_STRICT=1` fail-closed; **no invent PASS**). ARKS-native (non-peer) e2e inventory: [[sot:root/arks-native-e2e-checklist]]. Optimized PASS/FAIL: [[sot:root/arks-dod-optimized]].
 
 ## Rule
 
