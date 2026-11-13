@@ -3,8 +3,8 @@ id: sot:root/arks-dod-optimized
 title: Optimized clean-room DoD (symmetry + related serve)
 status: active
 created: 2026-11-13T05:30:29Z
-updated: 2026-11-13T05:35:16Z
-tags: [dod, optimize, verify, clean-room, docker, symmetry, git, daemon, hub, serve, no-invent-claimed, strict]
+updated: 2026-11-13T10:41:23Z
+tags: [dod, optimize, verify, clean-room, docker, symmetry, git, daemon, hub, serve, no-invent-claimed, strict, superseded-as-complete]
 verify: manual
 rel:
   depends_on:
@@ -23,6 +23,9 @@ rel:
     - sot:root/product-verification-clean-room
     - sot:root/verify-directory-conventions
     - sot:root/language-english-only
+  related:
+    - sot:root/arks-dod-behavioral
+    - research:root/20261113194123
   evidence:
     - evidence:root/20261113053511-dod-optimized-cli
     - evidence:root/20261113053516-self-host-forge-e2e
@@ -35,7 +38,7 @@ rel:
 
 # Optimized clean-room DoD (symmetry + related serve)
 
-Version **0.1.1**. Normative **renewed Definition of Done** after tip ≥ `ea6571c` already met the **old** three-pillar Missing=0 bar. Research: [[research:root/20261113143029]]. Umbrella inventory: [[sot:root/verify-cleanroom-symmetry-matrix]]. **Tip ≥ Spec `e90d782` + harness receipts:** OD-UNIFIED + OD-COMMIT-HONESTY [[evidence:root/20261113053511-dod-optimized-cli]]; OD-SERVE-CFG (+ IW-FORGE-SERVE) [[evidence:root/20261113053516-self-host-forge-e2e]]; pillars STRICT Missing=0 reconfirmed.
+Version **0.1.2**. **Floor only** after owner correction: Missing=0 + OD-* is **necessary but insufficient**. Normative complete bar is [[sot:root/arks-dod-behavioral]] ([[research:root/20261113194123]]) — peer **behavioral** symmetry; stubs do not count. Research (optimize cut): [[research:root/20261113143029]]. Umbrella inventory: [[sot:root/verify-cleanroom-symmetry-matrix]]. **Tip ≥ Spec `e90d782` + harness receipts:** OD-UNIFIED + OD-COMMIT-HONESTY [[evidence:root/20261113053511-dod-optimized-cli]]; OD-SERVE-CFG (+ IW-FORGE-SERVE) [[evidence:root/20261113053516-self-host-forge-e2e]]; pillars STRICT Missing=0 reconfirmed — **do not report “DoD met” from this SoT alone**.
 
 **Product goal (owner):** git ↔ `arks` / git-daemon ↔ `arks daemon` / gh ↔ flat forge client symmetry — **not** exhausting every Partial to Claimed. **No invent Claimed/PASS.** Product paths **MUST NOT** spawn `git` / `gh`. Judge = Linux Docker `arks-verify-m1:0.1.0`, pin Git **2.39.5**, `ARKS_DOD_STRICT=1` fail-closed. **No origin push** from this SoT.
 
@@ -117,4 +120,4 @@ Old Missing=0 DoD invited infinite Partial deepening. A renewed bar keeps symmet
 1. `spec check` clean for this SoT + research link.
 2. IN table rows either cite carrying tip evidence or new OD-* receipts under STRICT.
 3. OUT table is never treated as must-pass by agents.
-4. Public docs MAY say “optimized DoD met” only when §A is green — **no invent PASS**.
+4. Public docs MUST NOT say product DoD met from this SoT alone — cite [[sot:root/arks-dod-behavioral]] for behavioral complete; this SoT’s §A green is the **floor** only — **no invent PASS**.
