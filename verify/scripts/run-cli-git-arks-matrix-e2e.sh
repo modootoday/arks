@@ -7,6 +7,8 @@
 # IW-PERSONALITY-SURVEY expand: sot:root/arks-in-scope-leftovers-wave (ARKS_PERSONALITY_SURVEY=1).
 # Optimized DoD OD-UNIFIED / OD-COMMIT-HONESTY: sot:root/arks-dod-optimized
 #   (ARKS_DOD_UNIFIED=1 / ARKS_DOD_COMMIT_HONESTY=1, or both under ARKS_DOD_STRICT=1).
+# Behavioral DoD BP-PORCELAIN: sot:root/arks-dod-behavioral
+#   (ARKS_DOD_BEHAVIORAL=1 or ARKS_DOD_STRICT=1) — peer actions; stubs ≠ PASS.
 # ExitCodePolicy unit greens ≠ drop-in / exit-table Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -18,6 +20,7 @@ DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-
 PERSONALITY_SOT="${ARKS_PERSONALITY_SOT:-.spec/sot/arks-cli-personality-factory.sot.md}"
 HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
 OPT_DOD_SOT="${ARKS_DOD_OPTIMIZED_SOT:-.spec/sot/arks-dod-optimized.sot.md}"
+BEH_DOD_SOT="${ARKS_DOD_BEHAVIORAL_SOT:-.spec/sot/arks-dod-behavioral.sot.md}"
 TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "cli-git-arks-matrix-e2e: tip=${TIP}"
@@ -48,6 +51,157 @@ resolve_arks_bin() {
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
   fi
 }
+
+# --- Behavioral DoD: BP-PORCELAIN named everyday actions (sot:root/arks-dod-behavioral) ---
+RUN_BP=0
+[[ "${ARKS_DOD_BEHAVIORAL:-0}" == "1" || "${ARKS_DOD_STRICT:-0}" == "1" ]] && RUN_BP=1
+if [[ "$RUN_BP" == "1" ]]; then
+  if [[ ! -f "$BEH_DOD_SOT" ]]; then
+    echo "FAIL BP: missing $BEH_DOD_SOT" >&2
+    exit 1
+  fi
+  command -v git >/dev/null || {
+    echo "FAIL BP: pin git missing (oracle only)" >&2
+    exit 1
+  }
+  command -v python3 >/dev/null || {
+    echo "FAIL BP: python3 missing" >&2
+    exit 1
+  }
+  # Always rebuild for BP — stale CARGO_TARGET_DIR binaries must not invent PASS.
+  export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+  cargo build -p arks --release
+  resolve_arks_bin
+  [[ -x "$ARKS_BIN" ]] || {
+    echo "FAIL BP: arks binary missing: $ARKS_BIN" >&2
+    exit 1
+  }
+
+  WORK_BP="$(mktemp -d /tmp/arks-dod-beh.XXXXXX)"
+  cleanup_bp() { rm -rf "$WORK_BP"; }
+  trap cleanup_bp EXIT
+  mkdir -p "$WORK_BP/repo"
+  BP_CHECKS=()
+  BP_FAIL=0
+  bp_run() {
+    local id="$1" expect="$2"
+    shift 2
+    local ec=0
+    set +e
+    (cd "$WORK_BP/repo" && ARKS_PERSONALITY=git "$@" >"$WORK_BP/${id}.out" 2>"$WORK_BP/${id}.err")
+    ec=$?
+    set -e
+    if [[ "$expect" == "zero" && "$ec" -eq 0 ]]; then
+      BP_CHECKS+=("$id exit=0")
+      echo "cli-git-arks-matrix-e2e: BP $id ok"
+    elif [[ "$expect" == "nonzero" && "$ec" -ne 0 ]]; then
+      BP_CHECKS+=("$id exit=$ec nonzero")
+      echo "cli-git-arks-matrix-e2e: BP $id ok (nonzero)"
+    else
+      echo "FAIL BP $id: expect=$expect got=$ec" >&2
+      cat "$WORK_BP/${id}.out" "$WORK_BP/${id}.err" >&2 || true
+      BP_FAIL=1
+    fi
+  }
+  bp_peer_exit() {
+    local id="$1"
+    shift
+    local a_ec=0 g_ec=0
+    set +e
+    (cd "$WORK_BP/repo" && ARKS_PERSONALITY=git "$ARKS_BIN" "$@" >"$WORK_BP/${id}.arks.out" 2>"$WORK_BP/${id}.arks.err")
+    a_ec=$?
+    (cd "$WORK_BP/repo" && git "$@" >"$WORK_BP/${id}.git.out" 2>"$WORK_BP/${id}.git.err")
+    g_ec=$?
+    set -e
+    # Class compare: both zero or both nonzero (diff may use 1=differences — treat as shared class).
+    if { [[ "$a_ec" -eq 0 && "$g_ec" -eq 0 ]] || [[ "$a_ec" -ne 0 && "$g_ec" -ne 0 ]]; }; then
+      BP_CHECKS+=("$id peer-exit class arks=$a_ec git=$g_ec")
+      echo "cli-git-arks-matrix-e2e: BP $id peer-exit ok (arks=$a_ec git=$g_ec)"
+    else
+      echo "FAIL BP $id peer-exit: arks=$a_ec git=$g_ec" >&2
+      BP_FAIL=1
+    fi
+  }
+
+  # Seed repo with arks only (product must not spawn git for setup of arks paths).
+  bp_run BP-INIT zero "$ARKS_BIN" init
+  bp_run BP-CONFIG-NAME zero "$ARKS_BIN" config user.name behavioral
+  bp_run BP-CONFIG-EMAIL zero "$ARKS_BIN" config user.email behavioral@example.com
+  printf 'hello\n' >"$WORK_BP/repo/README"
+  bp_run BP-ADD zero "$ARKS_BIN" add README
+  bp_run BP-COMMIT zero "$ARKS_BIN" commit -m "bp1"
+  bp_peer_exit BP-STATUS status --porcelain
+  # remote show/get-url/set-url — former NotImplemented stubs (DoD gap).
+  bp_run BP-REMOTE-ADD zero "$ARKS_BIN" remote add origin "http://127.0.0.1:9/bp.git"
+  bp_run BP-REMOTE-LIST zero "$ARKS_BIN" remote
+  grep -qx 'origin' "$WORK_BP/BP-REMOTE-LIST.out" || {
+    echo "FAIL BP-REMOTE-LIST: expected origin" >&2
+    BP_FAIL=1
+  }
+  bp_run BP-REMOTE-GETURL zero "$ARKS_BIN" remote get-url origin
+  grep -q 'http://127.0.0.1:9/bp.git' "$WORK_BP/BP-REMOTE-GETURL.out" || {
+    echo "FAIL BP-REMOTE-GETURL payload" >&2
+    BP_FAIL=1
+  }
+  bp_run BP-REMOTE-SHOW zero "$ARKS_BIN" remote show origin
+  grep -q 'Fetch URL:' "$WORK_BP/BP-REMOTE-SHOW.out" || {
+    echo "FAIL BP-REMOTE-SHOW payload" >&2
+    BP_FAIL=1
+  }
+  bp_run BP-REMOTE-SETURL zero "$ARKS_BIN" remote set-url origin "git://127.0.0.1/bp.git"
+  bp_run BP-REMOTE-GETURL2 zero "$ARKS_BIN" remote get-url origin
+  grep -q 'git://127.0.0.1/bp.git' "$WORK_BP/BP-REMOTE-GETURL2.out" || {
+    echo "FAIL BP-REMOTE-GETURL2 after set-url" >&2
+    BP_FAIL=1
+  }
+  bp_peer_exit BP-LOG log -1 --oneline
+  bp_peer_exit BP-BRANCH branch
+  bp_run BP-TAG zero "$ARKS_BIN" tag bp-v0
+  bp_peer_exit BP-TAG-LIST tag
+  bp_run BP-STASH-LIST zero "$ARKS_BIN" stash list
+
+  if [[ "$BP_FAIL" -ne 0 ]]; then
+    echo "cli-git-arks-matrix-e2e: FAIL BP-PORCELAIN (no invent PASS)" >&2
+    exit 1
+  fi
+  echo "cli-git-arks-matrix-e2e: BP-PORCELAIN greens"
+
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-dod-behavioral-cli"
+    mkdir -p "$OUT"
+    cp "$WORK_BP"/*.out "$WORK_BP"/*.err "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-dod-behavioral-cli/v1",
+    "gate": "BP-PORCELAIN",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-cli-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "sot": "sot:root/arks-dod-behavioral",
+    "note": "Named everyday porcelain peer actions; Missing=0 alone insufficient; stubs ≠ PASS.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "cli-git-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  else
+    echo "cli-git-arks-matrix-e2e: host BP arms green; Docker venue required for Claimed receipt"
+  fi
+
+  # Standalone behavioral flag stops here (floor OD / inventory need their own flags).
+  if [[ "${ARKS_DOD_STRICT:-0}" != "1" && "${ARKS_DOD_UNIFIED:-0}" != "1" && "${ARKS_DOD_COMMIT_HONESTY:-0}" != "1" ]]; then
+    echo "cli-git-arks-matrix-e2e: BP arms PASS (STRICT inventory deferred)"
+    exit 0
+  fi
+  echo "cli-git-arks-matrix-e2e: BP arms PASS — continuing"
+  trap - EXIT
+fi
 
 # --- Optimized DoD: OD-UNIFIED + OD-COMMIT-HONESTY (sot:root/arks-dod-optimized) ---
 # Explicit flags OR ARKS_DOD_STRICT=1 (renewed must-pass). Does not stampede Partial×117.

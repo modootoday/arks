@@ -1,0 +1,52 @@
+{
+  "schema": "arks-dod-behavioral-cli/v1",
+  "gate": "BP-PORCELAIN",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "4536ffe",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "sot": "sot:root/arks-dod-behavioral",
+  "pin_git": "2.39.5",
+  "checks_ok": [
+    "BP-INIT",
+    "BP-CONFIG-NAME",
+    "BP-CONFIG-EMAIL",
+    "BP-ADD",
+    "BP-COMMIT",
+    "BP-STATUS peer-exit",
+    "BP-REMOTE-ADD",
+    "BP-REMOTE-LIST",
+    "BP-REMOTE-GETURL",
+    "BP-REMOTE-SHOW",
+    "BP-REMOTE-SETURL",
+    "BP-REMOTE-GETURL2",
+    "BP-LOG peer-exit",
+    "BP-BRANCH peer-exit",
+    "BP-TAG",
+    "BP-TAG-LIST peer-exit",
+    "BP-STASH-LIST"
+  ],
+  "closed_stubs": [
+    "remote show",
+    "remote get-url",
+    "remote set-url"
+  ],
+  "still_open_bp_porcelain": [
+    "show",
+    "diff",
+    "checkout",
+    "switch",
+    "restore",
+    "reset",
+    "rm",
+    "mv",
+    "merge",
+    "rebase",
+    "clone",
+    "fetch",
+    "pull",
+    "push"
+  ],
+  "note": "Named everyday porcelain peer-action subset; Missing=0 alone insufficient; stubs ≠ PASS. Full BP-PORCELAIN bar still open.",
+  "timestamp": "2026-11-13T10:48:52Z"
+}

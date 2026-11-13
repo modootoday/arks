@@ -38,6 +38,41 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
             arks_remote::remove_remote(&cfg, &args[1])?;
             Ok(())
         }
+        // BP-PORCELAIN ([[sot:root/arks-dod-behavioral]]): peer-comparable show/get-url/set-url.
+        "show" => {
+            if args.len() != 2 {
+                return Err(CliError::Usage("remote show <name>".into()));
+            }
+            let name = &args[1];
+            let Some(r) = arks_remote::get_remote(&cfg, name)? else {
+                return Err(CliError::Msg(format!("No such remote: '{name}'")));
+            };
+            println!("* remote {}", r.name);
+            println!("  Fetch URL: {}", r.url);
+            println!("  Push  URL: {}", r.url);
+            for spec in &r.fetch {
+                println!("  Fetch = {spec}");
+            }
+            Ok(())
+        }
+        "get-url" => {
+            if args.len() != 2 {
+                return Err(CliError::Usage("remote get-url <name>".into()));
+            }
+            let name = &args[1];
+            let Some(r) = arks_remote::get_remote(&cfg, name)? else {
+                return Err(CliError::Msg(format!("No such remote: '{name}'")));
+            };
+            println!("{}", r.url);
+            Ok(())
+        }
+        "set-url" => {
+            if args.len() != 3 {
+                return Err(CliError::Usage("remote set-url <name> <newurl>".into()));
+            }
+            arks_remote::set_remote_url(&cfg, &args[1], &args[2])?;
+            Ok(())
+        }
         other => Err(CliError::NotImplemented(format!(
             "remote subcommand not implemented: {other}"
         ))),

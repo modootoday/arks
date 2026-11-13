@@ -558,6 +558,8 @@ services:
       # Optimized DoD OD-UNIFIED / OD-COMMIT-HONESTY — sot:root/arks-dod-optimized
       ARKS_DOD_UNIFIED: "${ARKS_DOD_UNIFIED:-0}"
       ARKS_DOD_COMMIT_HONESTY: "${ARKS_DOD_COMMIT_HONESTY:-0}"
+      # Behavioral DoD BP-PORCELAIN — sot:root/arks-dod-behavioral
+      ARKS_DOD_BEHAVIORAL: "${ARKS_DOD_BEHAVIORAL:-0}"
     command: ["/bin/bash", "verify/scripts/run-cli-git-arks-matrix-e2e.sh"]
 
   dod-daemon-matrix:

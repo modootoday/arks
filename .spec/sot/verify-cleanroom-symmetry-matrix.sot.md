@@ -57,7 +57,7 @@ Version **0.1.7**. Umbrella **canon** for the public-story clean-room **Definiti
 |--------|----------------------|----------------|
 | **1. CLI** (`git`↔`arks`) | pin list-cmds **Missing = 0** (judge **2.39.5**); living CSV Partial **117** / Refuse **47** | **DoD:** BP-PORCELAIN named everyday set + BP-DROPIN + floor OD-*. **Non-DoD:** Partial outside BP set / Refuse. Prior “Missing=0 complete” **superseded** |
 | **2. Daemon** | living CSV **Missing = 0**; **Parity = 20**; Refuse/N/A **16**; Partial **0** ([[sot:root/arks-daemon-git-command-matrix]]) | **DoD:** BP-DAEMON Parity-carrying wire/archive flags. **Non-DoD:** SysV / privilege-drop Refuse |
-| **3. Hub/forge client** | v1 **Missing = 0**; Claimed **94** + terminal Partial **6** (must graduate or Refuse); later Deferred **119** OUT; Refuse/N/A **28** | **DoD:** BP-HUB real Claimed + terminal resolve. **Non-DoD:** later×119; OUT Refuse. Partial stub **≠** OK |
+| **3. Hub/forge client** | v1 **Missing = 0**; Claimed **94**; former terminal×6 → **Refuse/N/A** (OAuth/CI/git-object; [[sot:root/arks-dod-behavioral]] §D); later Deferred **119** OUT; Refuse/N/A **34** | **DoD:** BP-HUB real Claimed + terminal resolved Refuse. **Non-DoD:** later×119; OUT Refuse |
 | **Related: Self-host** | [[sot:root/arks-self-host-server]] + IW-FORGE-SERVE; **OD-SERVE-CFG** floor | WAN “secure by default” forbidden; not a fourth pillar |
 | **Adjacent: Claimed residual** | [[sot:root/arks-claimed-residual-gates]] — **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9 Claimed** | not a fourth symmetry pillar |
 

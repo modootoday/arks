@@ -3,7 +3,7 @@ id: sot:root/arks-dod-behavioral
 title: Behavioral clean-room DoD (peer action symmetry)
 status: active
 created: 2026-11-13T10:41:23Z
-updated: 2026-11-13T10:41:23Z
+updated: 2026-11-13T10:48:51Z
 tags: [dod, behavioral, verify, clean-room, docker, symmetry, git, daemon, hub, porcelain, no-invent-claimed, strict]
 verify: manual
 rel:
@@ -25,7 +25,8 @@ rel:
     - sot:root/product-verification-clean-room
     - sot:root/verify-directory-conventions
     - sot:root/language-english-only
-  evidence: []
+  evidence:
+    - evidence:root/20261113104851-dod-behavioral-cli
   governs:
     - verify/scripts/run-symmetry-dod.sh
     - verify/scripts/run-cli-git-arks-matrix-e2e.sh
@@ -56,12 +57,12 @@ Version **0.1.0**. Normative **Definition of Done** after owner rejection of “
 | ID | Bar | STRICT / compose | Honesty |
 |----|-----|------------------|---------|
 | **BP-FLOOR** | All [[sot:root/arks-dod-optimized]] §A rows still green (P1–P3 Missing=0 floors, R-HOST, R-B, OD-UNIFIED, OD-SERVE-CFG, OD-COMMIT-HONESTY) | existing `dod-*` + STRICT | Floors only — **not** sufficient |
-| **BP-PORCELAIN** | Named porcelain set (§C) under `ARKS_PERSONALITY=git`: peer-comparable **actions** + exit/stdout **classes** vs pin git **2.39.5** for SoT scenarios | `dod-cli-matrix` + `ARKS_DOD_BEHAVIORAL=1` (or STRICT) | Exotic flag depth outside §C **≠** this bar; stub/exit-2 on §C = **FAIL** |
-| **BP-DROPIN** | Personality drop-in: `git` personality peer-pure stdout+exit on §C samples; `gh` personality peer-pure on Claimed hub leaves already in IW drop-in/expand | `dod-cli-matrix` / hub matrix | Unified `arks` overlap ≠ CI drop-in unless single-peer flags |
-| **BP-DAEMON** | Peer-mapped daemon flags that change wire/archive behavior: living Parity rows stay Parity-carrying; no reintroduction of honest-stub for Parity flags | `dod-daemon-matrix` | SysV / privilege-drop / inetd Refuse **≠** gap |
-| **BP-HUB** | Hub v1 leaves marked Claimed are **real** (REST/metadata paths with receipts). Terminal Partial×6 (§D) either **graduate Claimed** with evidence or **Refuse** with reason — Partial stub **≠** DoD OK | `dod-hub-matrix` | later×119 / OUT Refuse **≠** gap |
+| **BP-PORCELAIN** | Named porcelain set (§C) under `ARKS_PERSONALITY=git`: peer-comparable **actions** + exit/stdout **classes** vs pin git **2.39.5** for SoT scenarios | `dod-cli-matrix` + `ARKS_DOD_BEHAVIORAL=1` (or STRICT) | **Partial progress:** subset Claimed [[evidence:root/20261113104851-dod-behavioral-cli]] (`init`/`add`/`commit`/`status`/`remote` list·add·show·get-url·set-url/`log`/`branch`/`tag`/`stash list`). **Still open:** `show`/`diff`/`checkout`/`switch`/`restore`/`reset`/`rm`/`mv`/`merge`/`rebase`/`clone`/`fetch`/`pull`/`push` peer STRICT recipes. Stub/exit-2 on §C = **FAIL** |
+| **BP-DROPIN** | Personality drop-in: `git` personality peer-pure stdout+exit on §C samples; `gh` personality peer-pure on Claimed hub leaves already in IW drop-in/expand | `dod-cli-matrix` / hub matrix | Carrying IW drop-in/expand/survey receipts for samples; full §C drop-in still open |
+| **BP-DAEMON** | Peer-mapped daemon flags that change wire/archive behavior: living Parity rows stay Parity-carrying; no reintroduction of honest-stub for Parity flags | `dod-daemon-matrix` | Parity×20 carrying; SysV / privilege-drop / inetd Refuse **≠** gap |
+| **BP-HUB** | Hub v1 leaves marked Claimed are **real** (REST/metadata paths with receipts). Terminal Partial×6 (§D) either **graduate Claimed** with evidence or **Refuse** with reason — Partial stub **≠** DoD OK | `dod-hub-matrix` | **Terminal×6 → Refuse/N/A** in living CSV (OAuth/CI/git-object). Claimed×94 reality audit still open beyond prior IW receipts |
 
-**PASS** = every IN row green under STRICT with receipt (or carrying evidence cited). **FAIL** = any IN stub/red/Missing under STRICT.
+**PASS** = every IN row green under STRICT with receipt (or carrying evidence cited). **FAIL** = any IN stub/red/Missing under STRICT. **Status now: behavioral DoD NOT met** (BP-PORCELAIN remainder open).
 
 ### B — Explicitly OUT of behavioral DoD
 

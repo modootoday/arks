@@ -56,7 +56,9 @@ pub use clone::{
     clone_git, clone_git_with, clone_http, clone_http_with, clone_local, clone_local_with,
     clone_ssh, clone_ssh_with,
 };
-pub use config::{RemoteConfig, add_remote, list_remotes, remove_remote};
+pub use config::{
+    RemoteConfig, add_remote, get_remote, list_remotes, remove_remote, set_remote_url,
+};
 pub use credential::{
     Credential, CredentialSource, approve as credential_approve, fill as credential_fill,
     reject as credential_reject,

@@ -135,6 +135,67 @@ fn upsert_config_key(text: &str, section: &str, key: &str, value: &str) -> Strin
     out
 }
 
+/// Look up one remote by name (None if missing).
+pub fn get_remote(config_file: &Path, name: &str) -> Result<Option<RemoteConfig>, RemoteError> {
+    Ok(list_remotes(config_file)?
+        .into_iter()
+        .find(|r| r.name == name))
+}
+
+/// Replace the primary `url` for an existing remote (git `remote set-url` subset).
+pub fn set_remote_url(config_file: &Path, name: &str, url: &str) -> Result<(), RemoteError> {
+    validate_name(name)?;
+    let url = url.trim();
+    if HttpRemoteUrl::parse(url).is_err()
+        && SshRemoteUrl::parse(url).is_err()
+        && GitDaemonUrl::parse(url).is_err()
+        && LocalRemoteUrl::parse(url).is_err()
+    {
+        return Err(RemoteError::UnsupportedUrl(url.to_string()));
+    }
+    let text = fs::read_to_string(config_file).map_err(|e| RemoteError::Config(e.to_string()))?;
+    let mut out = String::with_capacity(text.len() + url.len());
+    let mut in_remote = false;
+    let mut found = false;
+    let mut url_written = false;
+    for line in text.split_inclusive('\n') {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') {
+            if in_remote && !url_written {
+                out.push_str(&format!("\turl = {url}\n"));
+                url_written = true;
+            }
+            in_remote = remote_header_name(trimmed).as_deref() == Some(name);
+            if in_remote {
+                found = true;
+                url_written = false;
+            }
+            out.push_str(line);
+            continue;
+        }
+        if in_remote {
+            if let Some((k, _)) = trimmed.split_once('=') {
+                if k.trim().eq_ignore_ascii_case("url") && !url_written {
+                    out.push_str(&format!("\turl = {url}\n"));
+                    url_written = true;
+                    continue;
+                }
+            }
+        }
+        out.push_str(line);
+    }
+    if in_remote && !url_written {
+        out.push_str(&format!("\turl = {url}\n"));
+        url_written = true;
+    }
+    if !found {
+        return Err(RemoteError::Config(format!("No such remote: '{name}'")));
+    }
+    let _ = url_written;
+    fs::write(config_file, out).map_err(|e| RemoteError::Config(e.to_string()))?;
+    Ok(())
+}
+
 /// Delete the `[remote "<name>"]` section. Other sections stay byte-stable aside from that cut.
 pub fn remove_remote(config_file: &Path, name: &str) -> Result<(), RemoteError> {
     validate_name(name)?;
@@ -317,5 +378,21 @@ mod tests {
             Some("refs/remotes/origin/main")
         );
         assert!(map_refspec(spec, "refs/tags/v1").is_none());
+    }
+
+    #[test]
+    fn get_and_set_url() {
+        let dir = TempDir::new().unwrap();
+        let cfg = dir.path().join("config");
+        fs::write(&cfg, "[core]\n").unwrap();
+        add_remote(&cfg, "origin", "http://example.com/a.git").unwrap();
+        let r = get_remote(&cfg, "origin").unwrap().unwrap();
+        assert_eq!(r.url, "http://example.com/a.git");
+        set_remote_url(&cfg, "origin", "git://example.com/b.git").unwrap();
+        let r = get_remote(&cfg, "origin").unwrap().unwrap();
+        assert_eq!(r.url, "git://example.com/b.git");
+        assert!(get_remote(&cfg, "missing").unwrap().is_none());
+        let err = set_remote_url(&cfg, "missing", "http://example.com/x.git").unwrap_err();
+        assert!(matches!(err, RemoteError::Config(_)));
     }
 }
