@@ -3,7 +3,7 @@ id: sot:root/arks-dod-optimized
 title: Optimized clean-room DoD (symmetry + related serve)
 status: active
 created: 2026-11-13T05:30:29Z
-updated: 2026-11-13T05:30:29Z
+updated: 2026-11-13T05:35:16Z
 tags: [dod, optimize, verify, clean-room, docker, symmetry, git, daemon, hub, serve, no-invent-claimed, strict]
 verify: manual
 rel:
@@ -23,7 +23,9 @@ rel:
     - sot:root/product-verification-clean-room
     - sot:root/verify-directory-conventions
     - sot:root/language-english-only
-  evidence: []
+  evidence:
+    - evidence:root/20261113053511-dod-optimized-cli
+    - evidence:root/20261113053516-self-host-forge-e2e
   governs:
     - verify/scripts/run-symmetry-dod.sh
     - verify/scripts/run-cli-git-arks-matrix-e2e.sh
@@ -33,7 +35,7 @@ rel:
 
 # Optimized clean-room DoD (symmetry + related serve)
 
-Version **0.1.0**. Normative **renewed Definition of Done** after tip ≥ `ea6571c` already met the **old** three-pillar Missing=0 bar. Research: [[research:root/20261113143029]]. Umbrella inventory: [[sot:root/verify-cleanroom-symmetry-matrix]].
+Version **0.1.1**. Normative **renewed Definition of Done** after tip ≥ `ea6571c` already met the **old** three-pillar Missing=0 bar. Research: [[research:root/20261113143029]]. Umbrella inventory: [[sot:root/verify-cleanroom-symmetry-matrix]]. **Tip ≥ Spec `e90d782` + harness receipts:** OD-UNIFIED + OD-COMMIT-HONESTY [[evidence:root/20261113053511-dod-optimized-cli]]; OD-SERVE-CFG (+ IW-FORGE-SERVE) [[evidence:root/20261113053516-self-host-forge-e2e]]; pillars STRICT Missing=0 reconfirmed.
 
 **Product goal (owner):** git ↔ `arks` / git-daemon ↔ `arks daemon` / gh ↔ flat forge client symmetry — **not** exhausting every Partial to Claimed. **No invent Claimed/PASS.** Product paths **MUST NOT** spawn `git` / `gh`. Judge = Linux Docker `arks-verify-m1:0.1.0`, pin Git **2.39.5**, `ARKS_DOD_STRICT=1` fail-closed. **No origin push** from this SoT.
 
@@ -48,9 +50,9 @@ Version **0.1.0**. Normative **renewed Definition of Done** after tip ≥ `ea657
 | **P3-HUB** | Hub v1 **Missing = 0**; Claimed inventory green under existing IW arms | `dod-hub-matrix` | Terminal Partial×6 **≠** Missing; later/OUT **≠** gap |
 | **R-HOST** | Related self-host forge hosting e2e Claimed (IW-FORGE-SERVE) | `dod-self-host` | WAN secure-by-default forbidden |
 | **R-B** | Claimed residual **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9** | `dod-claimed-residual` | Not a fourth symmetry pillar |
-| **OD-UNIFIED** | Bounded unified `arks` overlap STRICT arm (below) | `dod-cli-matrix` + `ARKS_DOD_UNIFIED=1` | Full forge unified depth still Partial |
-| **OD-SERVE-CFG** | `arks serve config` smoke Claimed (below) | `dod-self-host` + `ARKS_DOD_SERVE_CFG=1` | Schema completeness still Partial |
-| **OD-COMMIT-HONESTY** | Commit editor / refuse honesty STRICT (below) | `dod-cli-matrix` + `ARKS_DOD_COMMIT_HONESTY=1` | Interactive TUI still deferred |
+| **OD-UNIFIED** | Bounded unified `arks` overlap STRICT arm (below) | `dod-cli-matrix` + `ARKS_DOD_UNIFIED=1` (or STRICT) | **Claimed** [[evidence:root/20261113053511-dod-optimized-cli]]; full forge unified depth still Partial |
+| **OD-SERVE-CFG** | `arks serve config` smoke Claimed (below) | `dod-self-host` + `ARKS_DOD_SERVE_CFG=1` (or STRICT) | **Claimed** [[evidence:root/20261113053516-self-host-forge-e2e]]; schema completeness still Partial |
+| **OD-COMMIT-HONESTY** | Commit editor / refuse honesty STRICT (below) | `dod-cli-matrix` + `ARKS_DOD_COMMIT_HONESTY=1` (or STRICT) | **Claimed** [[evidence:root/20261113053511-dod-optimized-cli]]; interactive TUI still deferred |
 
 **PASS** = every IN row green under STRICT with receipt (or already carrying evidence cited). **FAIL** = any IN Missing/red under STRICT. Smoke/SKIP without STRICT **MUST NOT** invent PASS.
 

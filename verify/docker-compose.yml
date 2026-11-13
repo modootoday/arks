@@ -555,6 +555,9 @@ services:
       ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
       # IW-PERSONALITY drop-in sample — sot:root/arks-verify-docker-e2e-claim-wave
       ARKS_PERSONALITY_DROPIN: "${ARKS_PERSONALITY_DROPIN:-0}"
+      # Optimized DoD OD-UNIFIED / OD-COMMIT-HONESTY — sot:root/arks-dod-optimized
+      ARKS_DOD_UNIFIED: "${ARKS_DOD_UNIFIED:-0}"
+      ARKS_DOD_COMMIT_HONESTY: "${ARKS_DOD_COMMIT_HONESTY:-0}"
     command: ["/bin/bash", "verify/scripts/run-cli-git-arks-matrix-e2e.sh"]
 
   dod-daemon-matrix:
@@ -614,6 +617,8 @@ services:
       CARGO_TARGET_DIR: /cargo-target
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+      # Optimized DoD OD-SERVE-CFG — sot:root/arks-dod-optimized
+      ARKS_DOD_SERVE_CFG: "${ARKS_DOD_SERVE_CFG:-0}"
     command: ["/bin/bash", "verify/scripts/run-self-host-e2e.sh"]
 
   # Claimed residual gates (post-Partial) — sot:root/arks-claimed-residual-gates.

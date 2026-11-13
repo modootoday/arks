@@ -5,6 +5,7 @@
 # Docker claim wave: .spec/sot/arks-verify-docker-e2e-claim-wave.sot.md
 # Research: .spec/research/20261111093543-partial-residual-wave-web-research.research.md
 # Umbrella: .spec/sot/verify-cleanroom-symmetry-matrix.sot.md
+# Optimized DoD OD-SERVE-CFG: sot:root/arks-dod-optimized (ARKS_DOD_SERVE_CFG=1 or STRICT).
 # MUST NOT invent PASS; MUST NOT spawn gh. Stock git is client oracle only.
 # Claimed bar: PR create/list + issue create/list against in-process forge
 # under `arks serve` + scrubbed Docker receipt — B3 client remote ≠ this slot.
@@ -16,6 +17,7 @@ SOT="${ARKS_SELF_HOST_SOT:-.spec/sot/arks-self-host-server.sot.md}"
 PARTIAL_SOT="${ARKS_PARTIAL_RESIDUAL_SOT:-.spec/sot/arks-partial-residual-wave.sot.md}"
 DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-wave.sot.md}"
 UMBRELLA="${ARKS_SYMMETRY_UMBRELLA_SOT:-.spec/sot/verify-cleanroom-symmetry-matrix.sot.md}"
+OPT_DOD_SOT="${ARKS_DOD_OPTIMIZED_SOT:-.spec/sot/arks-dod-optimized.sot.md}"
 TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "self-host-e2e: tip=${TIP}"
@@ -54,6 +56,45 @@ fi
   echo "self-host-e2e: arks binary missing: $ARKS_BIN" >&2
   exit 1
 }
+
+# --- OD-SERVE-CFG: arks serve config smoke (sot:root/arks-dod-optimized) ---
+RUN_OD_SERVE_CFG=0
+[[ "${ARKS_DOD_SERVE_CFG:-0}" == "1" || "${ARKS_DOD_STRICT:-0}" == "1" ]] && RUN_OD_SERVE_CFG=1
+OD_SERVE_CFG_OK=0
+if [[ "$RUN_OD_SERVE_CFG" == "1" ]]; then
+  if [[ ! -f "$OPT_DOD_SOT" ]]; then
+    echo "self-host-e2e: FAIL OD-SERVE-CFG — missing $OPT_DOD_SOT" >&2
+    exit 1
+  fi
+  CFG_HOME="$(mktemp -d /tmp/arks-serve-cfg.XXXXXX)"
+  export HOME="$CFG_HOME"
+  mkdir -p "$CFG_HOME/.config/arks"
+  set +e
+  path_out="$("$ARKS_BIN" serve config path 2>&1)"
+  path_ec=$?
+  set_out="$("$ARKS_BIN" serve config set tls_note "od-smoke" 2>&1)"
+  set_ec=$?
+  show_out="$("$ARKS_BIN" serve config show 2>&1)"
+  show_ec=$?
+  val_out="$("$ARKS_BIN" serve config validate 2>&1)"
+  val_ec=$?
+  set -e
+  if [[ "$path_ec" -eq 0 && "$set_ec" -eq 0 && "$show_ec" -eq 0 && "$val_ec" -eq 0 ]] \
+    && echo "$path_out" | grep -Eq 'serve\.conf|arks' \
+    && echo "$show_out$set_out" | grep -Eq 'tls_note|od-smoke|Partial'; then
+    OD_SERVE_CFG_OK=1
+    echo "self-host-e2e: OD-SERVE-CFG ok — path/set/show/validate"
+  else
+    echo "self-host-e2e: FAIL OD-SERVE-CFG smoke" >&2
+    printf 'path(%s)=%s\nset(%s)=%s\nshow(%s)=%s\nvalidate(%s)=%s\n' \
+      "$path_ec" "$path_out" "$set_ec" "$set_out" "$show_ec" "$show_out" "$val_ec" "$val_out" >&2
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" || "${ARKS_DOD_SERVE_CFG:-0}" == "1" ]]; then
+      rm -rf "$CFG_HOME"
+      exit 1
+    fi
+  fi
+  # Keep HOME isolated for subsequent forge journeys too.
+fi
 
 # --- SH-COHOST: discoverability (Partial deepen; alone ≠ Claimed) ---
 COHOST_OK=0
@@ -177,6 +218,9 @@ if [[ "$COHOST_OK" -ne 1 ]]; then
 fi
 
 echo "self-host-e2e: IW-FORGE-SERVE hosting journeys green (issue+pr create/list)"
+if [[ "$RUN_OD_SERVE_CFG" == "1" && "$OD_SERVE_CFG_OK" == "1" ]]; then
+  echo "self-host-e2e: OD-SERVE-CFG Claimed smoke green with hosting journeys"
+fi
 
 if [[ -f /.dockerenv ]]; then
   TS="$(date -u +%Y%m%d%H%M%S)"
@@ -186,24 +230,28 @@ if [[ -f /.dockerenv ]]; then
   for f in auth-login repo-create issue-create issue-list pr-create pr-list; do
     cp "$WORK/${f}.out" "$OUT/${f}.out" 2>/dev/null || true
   done
-  python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" "$FORGE_LISTEN" <<'PY'
+  python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" "$FORGE_LISTEN" "$OD_SERVE_CFG_OK" <<'PY'
 import json, sys, time
-out, tip, image, listen = sys.argv[1:]
+out, tip, image, listen, od_cfg = sys.argv[1:]
+checks = [
+    "SH-COHOST serve --help forge/--no-forge",
+    "SH-ISSUE issue create/list against arks serve forge module",
+    "SH-PR pr create/list against arks serve forge module",
+]
+if od_cfg == "1":
+    checks.append("OD-SERVE-CFG path/set/show/validate smoke")
 receipt = {
     "schema": "arks-self-host-forge-e2e/v1",
-    "gate": "IW-FORGE-SERVE",
+    "gate": "IW-FORGE-SERVE+OD-SERVE-CFG" if od_cfg == "1" else "IW-FORGE-SERVE",
     "disposition": "verified-product-path",
     "venue": "docker-dod-self-host",
     "tip": tip,
     "image_tag": image,
     "forge_listen": listen,
     "client": "arks hub (in-process; no gh spawn)",
-    "checks": [
-        "SH-COHOST serve --help forge/--no-forge",
-        "SH-ISSUE issue create/list against arks serve forge module",
-        "SH-PR pr create/list against arks serve forge module",
-    ],
-    "note": "B3 hub HTTPS client remote Claimed alone does not satisfy IW-FORGE-SERVE.",
+    "od_serve_cfg": od_cfg == "1",
+    "checks": checks,
+    "note": "B3 hub HTTPS client remote Claimed alone does not satisfy IW-FORGE-SERVE. Serve config schema depth remains Partial.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

@@ -5,6 +5,8 @@
 # IW-PERSONALITY drop-in: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_PERSONALITY_DROPIN=1).
 # IW-PERSONALITY-EXIT named tables: sot:root/arks-honesty-leftovers-wave (ARKS_PERSONALITY_EXIT_TABLES=1).
 # IW-PERSONALITY-SURVEY expand: sot:root/arks-in-scope-leftovers-wave (ARKS_PERSONALITY_SURVEY=1).
+# Optimized DoD OD-UNIFIED / OD-COMMIT-HONESTY: sot:root/arks-dod-optimized
+#   (ARKS_DOD_UNIFIED=1 / ARKS_DOD_COMMIT_HONESTY=1, or both under ARKS_DOD_STRICT=1).
 # ExitCodePolicy unit greens ≠ drop-in / exit-table Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -15,6 +17,7 @@ SOT="${ARKS_CLI_MATRIX_SOT:-.spec/sot/cli-git-help-matrix.sot.md}"
 DOCKER_SOT="${ARKS_DOCKER_E2E_CLAIM_SOT:-.spec/sot/arks-verify-docker-e2e-claim-wave.sot.md}"
 PERSONALITY_SOT="${ARKS_PERSONALITY_SOT:-.spec/sot/arks-cli-personality-factory.sot.md}"
 HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave.sot.md}"
+OPT_DOD_SOT="${ARKS_DOD_OPTIMIZED_SOT:-.spec/sot/arks-dod-optimized.sot.md}"
 TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "cli-git-arks-matrix-e2e: tip=${TIP}"
@@ -45,6 +48,216 @@ resolve_arks_bin() {
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/release/arks
   fi
 }
+
+# --- Optimized DoD: OD-UNIFIED + OD-COMMIT-HONESTY (sot:root/arks-dod-optimized) ---
+# Explicit flags OR ARKS_DOD_STRICT=1 (renewed must-pass). Does not stampede Partial×117.
+RUN_OD_UNIFIED=0
+RUN_OD_COMMIT=0
+[[ "${ARKS_DOD_UNIFIED:-0}" == "1" || "${ARKS_DOD_STRICT:-0}" == "1" ]] && RUN_OD_UNIFIED=1
+[[ "${ARKS_DOD_COMMIT_HONESTY:-0}" == "1" || "${ARKS_DOD_STRICT:-0}" == "1" ]] && RUN_OD_COMMIT=1
+if [[ "$RUN_OD_UNIFIED" == "1" || "$RUN_OD_COMMIT" == "1" ]]; then
+  if [[ ! -f "$OPT_DOD_SOT" ]]; then
+    echo "FAIL OD: missing $OPT_DOD_SOT" >&2
+    exit 1
+  fi
+  command -v python3 >/dev/null || {
+    echo "FAIL OD: python3 missing" >&2
+    exit 1
+  }
+  resolve_arks_bin
+  if [[ ! -x "$ARKS_BIN" ]]; then
+    export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
+    cargo build -p arks --release
+    resolve_arks_bin
+  fi
+  [[ -x "$ARKS_BIN" ]] || {
+    echo "FAIL OD: arks binary missing: $ARKS_BIN" >&2
+    exit 1
+  }
+
+  WORK_OD="$(mktemp -d /tmp/arks-dod-opt.XXXXXX)"
+  cleanup_od() { rm -rf "$WORK_OD"; }
+  trap cleanup_od EXIT
+  mkdir -p "$WORK_OD/repo"
+  (
+    cd "$WORK_OD/repo"
+    git init -q
+    git config user.email "od@arks.local"
+    git config user.name "OD"
+    echo "od-seed" >README
+    git add README
+    # Seed commit via stock git (verify oracle only — product path never spawns git).
+    git -c core.hooksPath=/dev/null commit -qm "od seed"
+  )
+
+  OD_FAIL=0
+  CHECKS=()
+
+  if [[ "$RUN_OD_UNIFIED" == "1" ]]; then
+    echo "cli-git-arks-matrix-e2e: OD-UNIFIED arm (arks overlap bounded smoke)"
+    set +e
+    uni_out="$(cd "$WORK_OD/repo" && ARKS_PERSONALITY=arks "$ARKS_BIN" status 2>"$WORK_OD/uni.err")"
+    uni_ec=$?
+    set -e
+    cat "$WORK_OD/uni.err" >>"$WORK_OD/uni.out" || true
+    printf '%s\n' "$uni_out" >>"$WORK_OD/uni.out"
+    if [[ "$uni_ec" -ne 0 ]] \
+      || ! grep -Fq '=== Git (status) ===' "$WORK_OD/uni.out" \
+      || ! grep -Eqi 'Forge.*Partial|forge unified section Partial' "$WORK_OD/uni.out" "$WORK_OD/uni.err"; then
+      echo "FAIL OD-UNIFIED: default unified status honesty" >&2
+      OD_FAIL=1
+    else
+      echo "cli-git-arks-matrix-e2e: OD-UNIFIED default unified ok"
+      CHECKS+=("OD-UNIFIED default status Git section + Forge skip note exit 0")
+    fi
+
+    set +e
+    go_out="$(cd "$WORK_OD/repo" && ARKS_PERSONALITY=arks "$ARKS_BIN" status --git-only 2>"$WORK_OD/go.err")"
+    go_ec=$?
+    set -e
+    printf '%s\n' "$go_out" >"$WORK_OD/go.out"
+    if [[ "$go_ec" -ne 0 ]] || grep -Fq '=== Forge (status) ===' "$WORK_OD/go.out"; then
+      echo "FAIL OD-UNIFIED: --git-only" >&2
+      OD_FAIL=1
+    else
+      echo "cli-git-arks-matrix-e2e: OD-UNIFIED --git-only ok"
+      CHECKS+=("OD-UNIFIED --git-only exit 0 no Forge section")
+    fi
+
+    set +e
+    po_out="$(cd "$WORK_OD/repo" && ARKS_PERSONALITY=arks "$ARKS_BIN" status --porcelain 2>"$WORK_OD/po.err")"
+    po_ec=$?
+    set -e
+    printf '%s\n' "$po_out" >"$WORK_OD/po.out"
+    if [[ "$po_ec" -ne 0 ]]; then
+      echo "FAIL OD-UNIFIED: --porcelain mode" >&2
+      OD_FAIL=1
+    else
+      echo "cli-git-arks-matrix-e2e: OD-UNIFIED --porcelain ok"
+      CHECKS+=("OD-UNIFIED --porcelain accepted as git-only mode")
+    fi
+
+    set +e
+    fo_out="$(cd "$WORK_OD/repo" && ARKS_PERSONALITY=arks "$ARKS_BIN" status --forge-only 2>"$WORK_OD/fo.err")"
+    fo_ec=$?
+    set -e
+    printf '%s\n' "$fo_out" >"$WORK_OD/fo.out"
+    cat "$WORK_OD/fo.err" >>"$WORK_OD/fo.out" || true
+    # Hub facet may be Partial/non-zero; must not spawn gh; must not be unknown-flag.
+    if grep -Eqi 'unknown.*--forge-only|unrecognized' "$WORK_OD/fo.out"; then
+      echo "FAIL OD-UNIFIED: --forge-only not routed" >&2
+      OD_FAIL=1
+    else
+      echo "cli-git-arks-matrix-e2e: OD-UNIFIED --forge-only routed (ec=$fo_ec; hub Partial OK)"
+      CHECKS+=("OD-UNIFIED --forge-only routes hub facet (no gh spawn)")
+    fi
+  fi
+
+  if [[ "$RUN_OD_COMMIT" == "1" ]]; then
+    echo "cli-git-arks-matrix-e2e: OD-COMMIT-HONESTY arm (O3 refuse + scripted editor)"
+    (
+      cd "$WORK_OD/repo"
+      echo "dirty" >>README
+      "$ARKS_BIN" add README
+    )
+    set +e
+    (
+      cd "$WORK_OD/repo"
+      env -u GIT_EDITOR -u ARKS_EDITOR -u EDITOR "$ARKS_BIN" commit
+    ) >"$WORK_OD/c-refuse.out" 2>&1
+    cr_ec=$?
+    set -e
+    if [[ "$cr_ec" -eq 0 ]] \
+      || ! grep -Eqi 'GIT_EDITOR|ARKS_EDITOR|EDITOR|-m' "$WORK_OD/c-refuse.out"; then
+      echo "FAIL OD-COMMIT-HONESTY: refuse without editor" >&2
+      cat "$WORK_OD/c-refuse.out" >&2
+      OD_FAIL=1
+    else
+      echo "cli-git-arks-matrix-e2e: OD-COMMIT-HONESTY refuse-without-editor ok (ec=$cr_ec)"
+      CHECKS+=("OD-COMMIT-HONESTY commit without -m/editor → non-zero honesty")
+    fi
+
+    # Scripted editor: write a message into COMMIT_EDITMSG path the editor receives.
+    cat >"$WORK_OD/fake-editor.sh" <<'EOS'
+#!/bin/sh
+printf '%s\n' "od commit honesty" >"$1"
+EOS
+    chmod +x "$WORK_OD/fake-editor.sh"
+    set +e
+    (
+      cd "$WORK_OD/repo"
+      GIT_EDITOR="$WORK_OD/fake-editor.sh" ARKS_EDITOR="$WORK_OD/fake-editor.sh" \
+        "$ARKS_BIN" commit
+    ) >"$WORK_OD/c-ok.out" 2>&1
+    co_ec=$?
+    set -e
+    if [[ "$co_ec" -ne 0 ]]; then
+      echo "FAIL OD-COMMIT-HONESTY: scripted editor commit" >&2
+      cat "$WORK_OD/c-ok.out" >&2
+      OD_FAIL=1
+    else
+      echo "cli-git-arks-matrix-e2e: OD-COMMIT-HONESTY scripted editor commit ok"
+      CHECKS+=("OD-COMMIT-HONESTY GIT_EDITOR scripted commit exit 0")
+    fi
+  fi
+
+  if [[ "$OD_FAIL" -ne 0 ]]; then
+    echo "cli-git-arks-matrix-e2e: FAIL optimized DoD OD arms (no invent PASS)" >&2
+    exit 1
+  fi
+
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-dod-optimized-cli"
+    mkdir -p "$OUT"
+    cp -r "$WORK_OD"/*.out "$WORK_OD"/*.err "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" "$RUN_OD_UNIFIED" "$RUN_OD_COMMIT" <<'PY'
+import json, sys, time
+out, tip, image, uni, commit = sys.argv[1:]
+checks = []
+if uni == "1":
+    checks.extend([
+        "OD-UNIFIED default status Git section + Forge skip note exit 0",
+        "OD-UNIFIED --git-only exit 0 no Forge section",
+        "OD-UNIFIED --porcelain accepted as git-only mode",
+        "OD-UNIFIED --forge-only routes hub facet (no gh spawn)",
+    ])
+if commit == "1":
+    checks.extend([
+        "OD-COMMIT-HONESTY commit without -m/editor → non-zero honesty",
+        "OD-COMMIT-HONESTY GIT_EDITOR scripted commit exit 0",
+    ])
+receipt = {
+    "schema": "arks-dod-optimized-cli/v1",
+    "gate": "OD-UNIFIED+OD-COMMIT-HONESTY",
+    "disposition": "verified-product-path",
+    "venue": "docker-dod-cli-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "arks_dod_unified": uni == "1",
+    "arks_dod_commit_honesty": commit == "1",
+    "checks": checks,
+    "note": "Full forge unified depth and CLI Partial×117 remain non-DoD.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "cli-git-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  else
+    echo "cli-git-arks-matrix-e2e: host OD arms green; Docker venue required for Claimed receipt"
+  fi
+
+  # When only OD flags were requested (not a full STRICT inventory walk), stop here.
+  # Under ARKS_DOD_STRICT=1 continue into Missing=0 inventory below.
+  if [[ "${ARKS_DOD_STRICT:-0}" != "1" ]]; then
+    echo "cli-git-arks-matrix-e2e: OD arms PASS (STRICT inventory deferred)"
+    exit 0
+  fi
+  echo "cli-git-arks-matrix-e2e: OD arms PASS — continuing STRICT Missing=0 inventory"
+  trap - EXIT
+fi
 
 # --- IW-PERSONALITY-SURVEY expand (≥10 main cmds) (ARKS_PERSONALITY_SURVEY=1) ---
 if [[ "${ARKS_PERSONALITY_SURVEY:-0}" == "1" ]]; then

@@ -1,0 +1,5 @@
+note: arks status: forge unified section Partial — skipped (not Claimed); use --forge-only or ARKS_PERSONALITY=gh for hub facet ([[sot:root/arks-cli-output-exit-contract]])
+=== Git (status) ===
+On branch master
+nothing to commit, working tree clean
+=== Forge (status) ===

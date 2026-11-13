@@ -1,0 +1,19 @@
+{
+  "schema": "arks-self-host-forge-e2e/v1",
+  "gate": "IW-FORGE-SERVE+OD-SERVE-CFG",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-self-host",
+  "tip": "e90d782",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "forge_listen": "127.0.0.1:40769",
+  "client": "arks hub (in-process; no gh spawn)",
+  "od_serve_cfg": true,
+  "checks": [
+    "SH-COHOST serve --help forge/--no-forge",
+    "SH-ISSUE issue create/list against arks serve forge module",
+    "SH-PR pr create/list against arks serve forge module",
+    "OD-SERVE-CFG path/set/show/validate smoke"
+  ],
+  "note": "B3 hub HTTPS client remote Claimed alone does not satisfy IW-FORGE-SERVE. Serve config schema depth remains Partial.",
+  "timestamp": "2026-11-13T05:35:16Z"
+}

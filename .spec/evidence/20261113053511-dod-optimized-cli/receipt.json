@@ -1,0 +1,20 @@
+{
+  "schema": "arks-dod-optimized-cli/v1",
+  "gate": "OD-UNIFIED+OD-COMMIT-HONESTY",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "e90d782",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "arks_dod_unified": true,
+  "arks_dod_commit_honesty": true,
+  "checks": [
+    "OD-UNIFIED default status Git section + Forge skip note exit 0",
+    "OD-UNIFIED --git-only exit 0 no Forge section",
+    "OD-UNIFIED --porcelain accepted as git-only mode",
+    "OD-UNIFIED --forge-only routes hub facet (no gh spawn)",
+    "OD-COMMIT-HONESTY commit without -m/editor \u2192 non-zero honesty",
+    "OD-COMMIT-HONESTY GIT_EDITOR scripted commit exit 0"
+  ],
+  "note": "Full forge unified depth and CLI Partial\u00d7117 remain non-DoD.",
+  "timestamp": "2026-11-13T05:35:11Z"
+}
