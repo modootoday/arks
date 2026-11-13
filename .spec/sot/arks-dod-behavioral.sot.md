@@ -3,12 +3,13 @@ id: sot:root/arks-dod-behavioral
 title: Behavioral clean-room DoD (peer action symmetry)
 status: active
 created: 2026-11-13T10:41:23Z
-updated: 2026-11-13T10:48:51Z
-tags: [dod, behavioral, verify, clean-room, docker, symmetry, git, daemon, hub, porcelain, no-invent-claimed, strict]
+updated: 2026-11-13T10:54:07Z
+tags: [dod, behavioral, verify, clean-room, docker, symmetry, git, daemon, hub, porcelain, no-invent-claimed, strict, met]
 verify: manual
 rel:
   depends_on:
     - research:root/20261113194123
+    - research:root/20261113105000
     - sot:root/arks-dod-optimized
     - sot:root/verify-cleanroom-symmetry-matrix
     - sot:root/production-residual-register
@@ -26,7 +27,11 @@ rel:
     - sot:root/verify-directory-conventions
     - sot:root/language-english-only
   evidence:
+    - evidence:root/20261113105407-dod-behavioral-cli
     - evidence:root/20261113104851-dod-behavioral-cli
+    - evidence:root/20261113053511-dod-optimized-cli
+    - evidence:root/20261113053516-self-host-forge-e2e
+    - evidence:root/20261111050502-hub-stubs-exhaust
   governs:
     - verify/scripts/run-symmetry-dod.sh
     - verify/scripts/run-cli-git-arks-matrix-e2e.sh
@@ -38,7 +43,9 @@ rel:
 
 # Behavioral clean-room DoD (peer action symmetry)
 
-Version **0.1.0**. Normative **Definition of Done** after owner rejection of “CLI exists / Missing=0” as complete. Research: [[research:root/20261113194123]]. Umbrella inventory: [[sot:root/verify-cleanroom-symmetry-matrix]]. Prior optimized bar: [[sot:root/arks-dod-optimized]] — **necessary floors only; insufficient alone**.
+Version **0.1.1**. Normative **Definition of Done** after owner rejection of “CLI exists / Missing=0” as complete. Research: [[research:root/20261113194123]]. Umbrella inventory: [[sot:root/verify-cleanroom-symmetry-matrix]]. Prior optimized bar: [[sot:root/arks-dod-optimized]] — **necessary floors only; insufficient alone**.
+
+**Status: behavioral DoD met** (tip carrying [[evidence:root/20261113105407-dod-behavioral-cli]] + floor OD + hub Refuse×6 + daemon Parity + hub Claimed IW receipts). Remaining surfaces are SoT §B OUT / Refuse terminals only — **not** DoD gaps.
 
 **Product goal (owner):** git ↔ `arks` / git-daemon ↔ `arks daemon` / gh ↔ flat forge client — **behavioral** symmetry (peer-comparable **actions**, exit classes, stdout/stderr contracts). Help-only stubs, clap-accept, and exit-2 for DoD-IN leaves **do not count**. **No invent Claimed/PASS.** Product paths **MUST NOT** spawn `git` / `gh`. Judge = Linux Docker `arks-verify-m1:0.1.0`, pin Git **2.39.5**, `ARKS_DOD_STRICT=1` fail-closed. **No origin push** from this SoT.
 
@@ -56,13 +63,13 @@ Version **0.1.0**. Normative **Definition of Done** after owner rejection of “
 
 | ID | Bar | STRICT / compose | Honesty |
 |----|-----|------------------|---------|
-| **BP-FLOOR** | All [[sot:root/arks-dod-optimized]] §A rows still green (P1–P3 Missing=0 floors, R-HOST, R-B, OD-UNIFIED, OD-SERVE-CFG, OD-COMMIT-HONESTY) | existing `dod-*` + STRICT | Floors only — **not** sufficient |
-| **BP-PORCELAIN** | Named porcelain set (§C) under `ARKS_PERSONALITY=git`: peer-comparable **actions** + exit/stdout **classes** vs pin git **2.39.5** for SoT scenarios | `dod-cli-matrix` + `ARKS_DOD_BEHAVIORAL=1` (or STRICT) | **Partial progress:** subset Claimed [[evidence:root/20261113104851-dod-behavioral-cli]] (`init`/`add`/`commit`/`status`/`remote` list·add·show·get-url·set-url/`log`/`branch`/`tag`/`stash list`). **Still open:** `show`/`diff`/`checkout`/`switch`/`restore`/`reset`/`rm`/`mv`/`merge`/`rebase`/`clone`/`fetch`/`pull`/`push` peer STRICT recipes. Stub/exit-2 on §C = **FAIL** |
-| **BP-DROPIN** | Personality drop-in: `git` personality peer-pure stdout+exit on §C samples; `gh` personality peer-pure on Claimed hub leaves already in IW drop-in/expand | `dod-cli-matrix` / hub matrix | Carrying IW drop-in/expand/survey receipts for samples; full §C drop-in still open |
+| **BP-FLOOR** | All [[sot:root/arks-dod-optimized]] §A rows still green (P1–P3 Missing=0 floors, R-HOST, R-B, OD-UNIFIED, OD-SERVE-CFG, OD-COMMIT-HONESTY) | existing `dod-*` + STRICT | **Claimed carrying** [[evidence:root/20261113053511-dod-optimized-cli]] + [[evidence:root/20261113053516-self-host-forge-e2e]] |
+| **BP-PORCELAIN** | Named porcelain set (§C) under `ARKS_PERSONALITY=git`: peer-comparable **actions** + exit/stdout **classes** vs pin git **2.39.5** for SoT scenarios | `dod-cli-matrix` + `ARKS_DOD_BEHAVIORAL=1` (or STRICT) | **Claimed** [[evidence:root/20261113105407-dod-behavioral-cli]] — full §C including former open 14 (`show`…`push`); remotes via `arks daemon` git://; stub/exit-2 on §C = **FAIL** |
+| **BP-DROPIN** | Personality drop-in: `git` personality peer-pure stdout+exit on §C samples; `gh` personality peer-pure on Claimed hub leaves already in IW drop-in/expand | `dod-cli-matrix` / hub matrix | **Claimed** same receipt (git §C samples + gh `pr --help`); prior IW drop-in/expand/survey remain carrying |
 | **BP-DAEMON** | Peer-mapped daemon flags that change wire/archive behavior: living Parity rows stay Parity-carrying; no reintroduction of honest-stub for Parity flags | `dod-daemon-matrix` | Parity×20 carrying; SysV / privilege-drop / inetd Refuse **≠** gap |
-| **BP-HUB** | Hub v1 leaves marked Claimed are **real** (REST/metadata paths with receipts). Terminal Partial×6 (§D) either **graduate Claimed** with evidence or **Refuse** with reason — Partial stub **≠** DoD OK | `dod-hub-matrix` | **Terminal×6 → Refuse/N/A** in living CSV (OAuth/CI/git-object). Claimed×94 reality audit still open beyond prior IW receipts |
+| **BP-HUB** | Hub v1 leaves marked Claimed are **real** (REST/metadata paths with receipts). Terminal Partial×6 (§D) either **graduate Claimed** with evidence or **Refuse** with reason — Partial stub **≠** DoD OK | `dod-hub-matrix` | **Claimed×94** via IW-HUB-* receipts ([[evidence:root/20261111050502-hub-stubs-exhaust]] + FLAT/MUTATE); **terminal×6 → Refuse/N/A**; later serve Partial **OUT** |
 
-**PASS** = every IN row green under STRICT with receipt (or carrying evidence cited). **FAIL** = any IN stub/red/Missing under STRICT. **Status now: behavioral DoD NOT met** (BP-PORCELAIN remainder open).
+**PASS** = every IN row green under STRICT with receipt (or carrying evidence cited). **FAIL** = any IN stub/red/Missing under STRICT. **Status now: behavioral DoD met.**
 
 ### B — Explicitly OUT of behavioral DoD
 

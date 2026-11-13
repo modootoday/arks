@@ -1,0 +1,27 @@
+{
+  "schema": "arks-dod-behavioral-cli/v2",
+  "gate": "BP-PORCELAIN+BP-DROPIN",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-cli-matrix",
+  "tip": "889d23c",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "sot": "sot:root/arks-dod-behavioral",
+  "closed_14": [
+    "show",
+    "diff",
+    "checkout",
+    "switch",
+    "restore",
+    "reset",
+    "rm",
+    "mv",
+    "merge",
+    "rebase",
+    "clone",
+    "fetch",
+    "pull",
+    "push"
+  ],
+  "note": "Full BP-PORCELAIN \u00a7C + BP-DROPIN samples; Missing=0 alone insufficient; stubs \u2260 PASS.",
+  "timestamp": "2026-11-13T10:54:07Z"
+}

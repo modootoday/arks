@@ -59,7 +59,7 @@ Document revision **0.1.2** (SoT edit counter only — **not** a product/crate r
 | `arks` personality **unified** overlap I/O (bounded) | [[sot:root/arks-dod-optimized]] OD-UNIFIED | `dod-cli-matrix` + `ARKS_DOD_UNIFIED=1` | Floor OD — bounded smoke; full forge unified still Partial |
 | `arks serve config` smoke | [[sot:root/arks-dod-optimized]] OD-SERVE-CFG | `dod-self-host` + `ARKS_DOD_SERVE_CFG=1` | Floor OD — path/show/set/validate; schema depth Partial |
 | `arks commit` editor/refuse honesty | [[sot:root/arks-dod-optimized]] OD-COMMIT-HONESTY | `dod-cli-matrix` + `ARKS_DOD_COMMIT_HONESTY=1` | Floor OD — O3/FS1; interactive TUI non-DoD |
-| BP-PORCELAIN everyday peer actions | [[sot:root/arks-dod-behavioral]] | `dod-cli-matrix` + `ARKS_DOD_BEHAVIORAL=1` | Behavioral DoD — named porcelain set; stubs ≠ PASS |
+| BP-PORCELAIN + BP-DROPIN everyday peer actions | [[sot:root/arks-dod-behavioral]] | `dod-cli-matrix` + `ARKS_DOD_BEHAVIORAL=1` | **Claimed** [[evidence:root/20261113105407-dod-behavioral-cli]]; behavioral DoD met |
 | Hub native auth/config (not gh clone) | [[sot:root/arks-hub-product-intent]] | `dod-hub-matrix` + `ARKS_HUB_IW_MUTATE=1` / UX | Claimed subsets |
 | Lease product (arks-only) | [[sot:root/arks-lease]] | `g011-lease-product` (+ `g011-high-concurrency` L3) | Claimed M10/M23 |
 | CELIR index dual-path (opt-in) | [[sot:root/storage-celir-boundary]], [[sot:root/celir-index-dual-path]] | `g022`–`g025` | Claimed M24; **CELIR admin CLI = non-product SKIP** |

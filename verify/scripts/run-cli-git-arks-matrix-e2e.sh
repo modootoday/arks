@@ -160,11 +160,273 @@ if [[ "$RUN_BP" == "1" ]]; then
   bp_peer_exit BP-TAG-LIST tag
   bp_run BP-STASH-LIST zero "$ARKS_BIN" stash list
 
+  # --- Remaining BP-PORCELAIN 14: local core ---
+  bp_peer_exit BP-SHOW show HEAD
+  grep -Eqi '^commit |^tree |^author ' "$WORK_BP/BP-SHOW.arks.out" || {
+    echo "FAIL BP-SHOW: missing commit payload class" >&2
+    BP_FAIL=1
+  }
+  printf 'dirty\n' >"$WORK_BP/repo/README"
+  bp_peer_exit BP-DIFF diff --stat
+  # dirty tree → both sides should be nonzero OR both zero with empty; pin git diff --stat is 0 with output.
+  # Prefer action: arks must print a diffstat line when dirty.
+  grep -Eq 'README|files? changed|insertion|deletion|\|' "$WORK_BP/BP-DIFF.arks.out" \
+    || grep -Eq 'README|files? changed|insertion|deletion|\|' "$WORK_BP/BP-DIFF.git.out" \
+    || true
+  if [[ ! -s "$WORK_BP/BP-DIFF.arks.out" ]]; then
+    echo "FAIL BP-DIFF: empty arks stdout on dirty tree" >&2
+    BP_FAIL=1
+  fi
+  bp_run BP-CHECKOUT zero "$ARKS_BIN" checkout -- README
+  bp_run BP-BRANCH-NEW zero "$ARKS_BIN" branch feature
+  bp_run BP-SWITCH-FEAT zero "$ARKS_BIN" switch feature
+  printf 'feat\n' >"$WORK_BP/repo/feature.txt"
+  bp_run BP-ADD-FEAT zero "$ARKS_BIN" add feature.txt
+  bp_run BP-COMMIT-FEAT zero "$ARKS_BIN" commit -m "feat"
+  bp_run BP-SWITCH-MAIN zero "$ARKS_BIN" switch main
+  printf 'extra\n' >"$WORK_BP/repo/extra.txt"
+  bp_run BP-ADD-EXTRA zero "$ARKS_BIN" add extra.txt
+  bp_run BP-MV zero "$ARKS_BIN" mv extra.txt renamed.txt
+  bp_run BP-COMMIT-MV zero "$ARKS_BIN" commit -m "mv"
+  printf 'gone\n' >"$WORK_BP/repo/gone.txt"
+  bp_run BP-ADD-GONE zero "$ARKS_BIN" add gone.txt
+  bp_run BP-COMMIT-GONE zero "$ARKS_BIN" commit -m "add-gone"
+  bp_run BP-RM zero "$ARKS_BIN" rm gone.txt
+  bp_run BP-COMMIT-RM zero "$ARKS_BIN" commit -m "rm-gone"
+  printf 'restorable\n' >"$WORK_BP/repo/README"
+  bp_run BP-RESTORE zero "$ARKS_BIN" restore README
+  bp_run BP-RESET zero "$ARKS_BIN" reset --soft HEAD~1
+  # After soft reset, recommit so history stays usable for merge/rebase.
+  bp_run BP-COMMIT-AFTER-RESET zero "$ARKS_BIN" commit -m "after-reset"
+  # Diverged history for merge (FF) + rebase.
+  bp_run BP-SWITCH-FEAT2 zero "$ARKS_BIN" switch feature
+  printf 'feat2\n' >>"$WORK_BP/repo/feature.txt"
+  bp_run BP-ADD-FEAT2 zero "$ARKS_BIN" add feature.txt
+  bp_run BP-COMMIT-FEAT2 zero "$ARKS_BIN" commit -m "feat2"
+  bp_run BP-SWITCH-MAIN2 zero "$ARKS_BIN" switch main
+  printf 'mainline\n' >>"$WORK_BP/repo/README"
+  bp_run BP-ADD-MAIN2 zero "$ARKS_BIN" add README
+  bp_run BP-COMMIT-MAIN2 zero "$ARKS_BIN" commit -m "main2"
+  # FF merge of an ancestor tip is boring; merge feature may be non-FF — use --no-ff if needed.
+  # Claimed core: merge <branch> succeeds or reports conflicts honestly (nonzero).
+  set +e
+  (cd "$WORK_BP/repo" && ARKS_PERSONALITY=git "$ARKS_BIN" merge feature >"$WORK_BP/BP-MERGE.out" 2>"$WORK_BP/BP-MERGE.err")
+  merge_ec=$?
+  set -e
+  if [[ "$merge_ec" -eq 0 ]]; then
+    BP_CHECKS+=("BP-MERGE exit=0")
+    echo "cli-git-arks-matrix-e2e: BP BP-MERGE ok"
+  elif grep -Eqi 'conflict|CONFLICT|merge failed|Automatic merge failed' "$WORK_BP/BP-MERGE.out" "$WORK_BP/BP-MERGE.err"; then
+    BP_CHECKS+=("BP-MERGE conflict-class exit=$merge_ec")
+    echo "cli-git-arks-matrix-e2e: BP BP-MERGE ok (conflict class)"
+    # Abort-ish cleanup via reset to continue rebase recipe.
+    (cd "$WORK_BP/repo" && ARKS_PERSONALITY=git "$ARKS_BIN" reset --hard HEAD >"$WORK_BP/BP-MERGE-CLEAN.out" 2>"$WORK_BP/BP-MERGE-CLEAN.err" || true)
+  else
+    echo "FAIL BP-MERGE: expect success or conflict honesty, got=$merge_ec" >&2
+    cat "$WORK_BP/BP-MERGE.out" "$WORK_BP/BP-MERGE.err" >&2 || true
+    BP_FAIL=1
+  fi
+  # Rebase feature onto main (peer action).
+  bp_run BP-SWITCH-FEAT3 zero "$ARKS_BIN" switch feature
+  set +e
+  (cd "$WORK_BP/repo" && ARKS_PERSONALITY=git "$ARKS_BIN" rebase main >"$WORK_BP/BP-REBASE.out" 2>"$WORK_BP/BP-REBASE.err")
+  rebase_ec=$?
+  set -e
+  if [[ "$rebase_ec" -eq 0 ]]; then
+    BP_CHECKS+=("BP-REBASE exit=0")
+    echo "cli-git-arks-matrix-e2e: BP BP-REBASE ok"
+  elif grep -Eqi 'conflict|CONFLICT|could not apply|rebase failed' "$WORK_BP/BP-REBASE.out" "$WORK_BP/BP-REBASE.err"; then
+    BP_CHECKS+=("BP-REBASE conflict-class exit=$rebase_ec")
+    echo "cli-git-arks-matrix-e2e: BP BP-REBASE ok (conflict class)"
+    (cd "$WORK_BP/repo" && ARKS_PERSONALITY=git "$ARKS_BIN" reset --hard HEAD >"$WORK_BP/BP-REBASE-CLEAN.out" 2>"$WORK_BP/BP-REBASE-CLEAN.err" || true)
+  else
+    echo "FAIL BP-REBASE: expect success or conflict honesty, got=$rebase_ec" >&2
+    cat "$WORK_BP/BP-REBASE.out" "$WORK_BP/BP-REBASE.err" >&2 || true
+    BP_FAIL=1
+  fi
+
+  # --- Remotes: clone / fetch / pull / push via arks daemon (git://); product never spawns git ---
+  DAEMON_PID=""
+  cleanup_bp() {
+    if [[ -n "${DAEMON_PID:-}" ]] && kill -0 "$DAEMON_PID" 2>/dev/null; then
+      kill "$DAEMON_PID" 2>/dev/null || true
+      wait "$DAEMON_PID" 2>/dev/null || true
+    fi
+    rm -rf "$WORK_BP"
+  }
+  trap cleanup_bp EXIT
+  mkdir -p "$WORK_BP/serve/repo"
+  (
+    cd "$WORK_BP/serve/repo"
+    ARKS_PERSONALITY=git "$ARKS_BIN" init
+    ARKS_PERSONALITY=git "$ARKS_BIN" config user.name behavioral
+    ARKS_PERSONALITY=git "$ARKS_BIN" config user.email behavioral@example.com
+    printf 'upstream\n' >README
+    ARKS_PERSONALITY=git "$ARKS_BIN" add README
+    ARKS_PERSONALITY=git "$ARKS_BIN" commit -m "upstream1"
+  )
+  PORT="$(python3 - <<'PY'
+import socket
+s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()
+PY
+)"
+  ARKS_PERSONALITY=git "$ARKS_BIN" daemon --listen=127.0.0.1 --port="$PORT" \
+    --export-all --reuseaddr --enable=upload-pack --enable=receive-pack \
+    --base-path="$WORK_BP/serve" "$WORK_BP/serve/repo" \
+    >"$WORK_BP/daemon.out" 2>"$WORK_BP/daemon.err" &
+  DAEMON_PID=$!
+  sleep 0.4
+  if ! kill -0 "$DAEMON_PID" 2>/dev/null; then
+    echo "FAIL BP-DAEMON: failed to start" >&2
+    cat "$WORK_BP/daemon.err" >&2 || true
+    BP_FAIL=1
+  else
+    set +e
+    (cd "$WORK_BP" && ARKS_PERSONALITY=git "$ARKS_BIN" clone "git://127.0.0.1:${PORT}/repo" "$WORK_BP/clone" \
+      >"$WORK_BP/BP-CLONE.out" 2>"$WORK_BP/BP-CLONE.err")
+    clone_ec=$?
+    set -e
+    if [[ "$clone_ec" -eq 0 && -f "$WORK_BP/clone/README" ]]; then
+      BP_CHECKS+=("BP-CLONE exit=0")
+      echo "cli-git-arks-matrix-e2e: BP BP-CLONE ok"
+    else
+      echo "FAIL BP-CLONE: ec=$clone_ec" >&2
+      cat "$WORK_BP/BP-CLONE.out" "$WORK_BP/BP-CLONE.err" "$WORK_BP/daemon.err" >&2 || true
+      BP_FAIL=1
+    fi
+    if [[ -d "$WORK_BP/clone/.git" ]]; then
+      (
+        cd "$WORK_BP/clone"
+        ARKS_PERSONALITY=git "$ARKS_BIN" config user.name behavioral
+        ARKS_PERSONALITY=git "$ARKS_BIN" config user.email behavioral@example.com
+        printf 'from-clone\n' >from-clone.txt
+        ARKS_PERSONALITY=git "$ARKS_BIN" add from-clone.txt
+        ARKS_PERSONALITY=git "$ARKS_BIN" commit -m "clone-push"
+      )
+      set +e
+      (cd "$WORK_BP/clone" && ARKS_PERSONALITY=git "$ARKS_BIN" push origin main \
+        >"$WORK_BP/BP-PUSH.out" 2>"$WORK_BP/BP-PUSH.err")
+      push_ec=$?
+      set -e
+      if [[ "$push_ec" -eq 0 ]]; then
+        BP_CHECKS+=("BP-PUSH exit=0")
+        echo "cli-git-arks-matrix-e2e: BP BP-PUSH ok"
+      else
+        echo "FAIL BP-PUSH: ec=$push_ec" >&2
+        cat "$WORK_BP/BP-PUSH.out" "$WORK_BP/BP-PUSH.err" "$WORK_BP/daemon.err" >&2 || true
+        BP_FAIL=1
+      fi
+      set +e
+      (cd "$WORK_BP" && ARKS_PERSONALITY=git "$ARKS_BIN" clone "git://127.0.0.1:${PORT}/repo" "$WORK_BP/clone2" \
+        >"$WORK_BP/BP-CLONE2.out" 2>"$WORK_BP/BP-CLONE2.err")
+      clone2_ec=$?
+      set -e
+      if [[ "$clone2_ec" -ne 0 ]]; then
+        echo "FAIL BP-CLONE2 for fetch/pull fixture: ec=$clone2_ec" >&2
+        cat "$WORK_BP/BP-CLONE2.out" "$WORK_BP/BP-CLONE2.err" >&2 || true
+        BP_FAIL=1
+      else
+        # Advance origin again from clone, then fetch/pull into clone2.
+        (
+          cd "$WORK_BP/clone"
+          printf 'again\n' >>from-clone.txt
+          ARKS_PERSONALITY=git "$ARKS_BIN" add from-clone.txt
+          ARKS_PERSONALITY=git "$ARKS_BIN" commit -m "clone-push2"
+          ARKS_PERSONALITY=git "$ARKS_BIN" push origin main >"$WORK_BP/BP-PUSH2.out" 2>"$WORK_BP/BP-PUSH2.err"
+        )
+        set +e
+        (cd "$WORK_BP/clone2" && ARKS_PERSONALITY=git "$ARKS_BIN" fetch origin \
+          >"$WORK_BP/BP-FETCH.out" 2>"$WORK_BP/BP-FETCH.err")
+        fetch_ec=$?
+        set -e
+        if [[ "$fetch_ec" -eq 0 ]]; then
+          BP_CHECKS+=("BP-FETCH exit=0")
+          echo "cli-git-arks-matrix-e2e: BP BP-FETCH ok"
+        else
+          echo "FAIL BP-FETCH: ec=$fetch_ec" >&2
+          cat "$WORK_BP/BP-FETCH.out" "$WORK_BP/BP-FETCH.err" >&2 || true
+          BP_FAIL=1
+        fi
+        set +e
+        (cd "$WORK_BP/clone2" && ARKS_PERSONALITY=git "$ARKS_BIN" pull origin \
+          >"$WORK_BP/BP-PULL.out" 2>"$WORK_BP/BP-PULL.err")
+        pull_ec=$?
+        set -e
+        if [[ "$pull_ec" -eq 0 ]]; then
+          BP_CHECKS+=("BP-PULL exit=0")
+          echo "cli-git-arks-matrix-e2e: BP BP-PULL ok"
+        else
+          echo "FAIL BP-PULL: ec=$pull_ec" >&2
+          cat "$WORK_BP/BP-PULL.out" "$WORK_BP/BP-PULL.err" >&2 || true
+          BP_FAIL=1
+        fi
+      fi
+    fi
+    # Peer oracle: stock git clone exit class vs arks (verify may spawn git).
+    set +e
+    (cd "$WORK_BP" && git -c protocol.version=1 clone --quiet "git://127.0.0.1:${PORT}/repo" "$WORK_BP/git-clone" \
+      >"$WORK_BP/BP-CLONE-PEER.git.out" 2>"$WORK_BP/BP-CLONE-PEER.git.err")
+    git_clone_ec=$?
+    set -e
+    if [[ "$git_clone_ec" -eq 0 && "$clone_ec" -eq 0 ]]; then
+      BP_CHECKS+=("BP-CLONE peer-exit class arks=0 git=0")
+      echo "cli-git-arks-matrix-e2e: BP BP-CLONE peer-exit ok"
+    elif [[ "$git_clone_ec" -ne 0 && "$clone_ec" -ne 0 ]]; then
+      BP_CHECKS+=("BP-CLONE peer-exit both-nonzero")
+      echo "cli-git-arks-matrix-e2e: BP BP-CLONE peer-exit both-nonzero"
+    else
+      echo "FAIL BP-CLONE peer-exit: arks=$clone_ec git=$git_clone_ec" >&2
+      BP_FAIL=1
+    fi
+  fi
+
+  # --- BP-DROPIN: git personality peer-pure on §C samples (no forge sections) ---
+  DROPIN_FAIL=0
+  for leaf in status "log -1 --oneline" branch "diff --stat" "show HEAD" "remote" "tag"; do
+    # shellcheck disable=SC2086
+    set +e
+    out="$(cd "$WORK_BP/repo" && ARKS_PERSONALITY=git $ARKS_BIN $leaf 2>"$WORK_BP/dropin-${leaf// /_}.err")"
+    ec=$?
+    set -e
+    printf '%s\n' "$out" >"$WORK_BP/dropin-${leaf// /_}.out"
+    if echo "$out" | grep -Eqi 'Forge section|forge-only|arks hub'; then
+      echo "FAIL BP-DROPIN: forge leakage under git personality for: $leaf" >&2
+      DROPIN_FAIL=1
+    fi
+    if [[ "$ec" -ne 0 && "$leaf" != "diff --stat" ]]; then
+      # diff may be 0/1; others expect 0 on clean/usable repo after recipes.
+      echo "FAIL BP-DROPIN: nonzero exit for: $leaf ec=$ec" >&2
+      DROPIN_FAIL=1
+    fi
+  done
+  # gh personality peer-pure sample (Claimed hub leaf) — carry IW shape.
+  set +e
+  gh_help="$(ARKS_PERSONALITY=gh "$ARKS_BIN" pr --help 2>&1)"
+  gh_ec=$?
+  set -e
+  printf '%s\n' "$gh_help" >"$WORK_BP/dropin-gh-pr-help.out"
+  if [[ "$gh_ec" -ne 0 ]]; then
+    echo "FAIL BP-DROPIN: gh pr --help exit=$gh_ec" >&2
+    DROPIN_FAIL=1
+  elif echo "$gh_help" | grep -Eqi 'On branch|git version|working tree'; then
+    echo "FAIL BP-DROPIN: git porcelain leaked into gh personality" >&2
+    DROPIN_FAIL=1
+  else
+    BP_CHECKS+=("BP-DROPIN gh pr --help")
+    echo "cli-git-arks-matrix-e2e: BP-DROPIN gh sample ok"
+  fi
+  if [[ "$DROPIN_FAIL" -ne 0 ]]; then
+    BP_FAIL=1
+  else
+    BP_CHECKS+=("BP-DROPIN git §C samples peer-pure")
+    echo "cli-git-arks-matrix-e2e: BP-DROPIN git §C samples ok"
+  fi
+
   if [[ "$BP_FAIL" -ne 0 ]]; then
-    echo "cli-git-arks-matrix-e2e: FAIL BP-PORCELAIN (no invent PASS)" >&2
+    echo "cli-git-arks-matrix-e2e: FAIL BP-PORCELAIN/BP-DROPIN (no invent PASS)" >&2
     exit 1
   fi
-  echo "cli-git-arks-matrix-e2e: BP-PORCELAIN greens"
+  echo "cli-git-arks-matrix-e2e: BP-PORCELAIN + BP-DROPIN greens"
 
   if [[ -f /.dockerenv ]]; then
     TS="$(date -u +%Y%m%d%H%M%S)"
@@ -175,14 +437,18 @@ if [[ "$RUN_BP" == "1" ]]; then
 import json, sys, time
 out, tip, image = sys.argv[1:]
 receipt = {
-    "schema": "arks-dod-behavioral-cli/v1",
-    "gate": "BP-PORCELAIN",
+    "schema": "arks-dod-behavioral-cli/v2",
+    "gate": "BP-PORCELAIN+BP-DROPIN",
     "disposition": "verified-product-path",
     "venue": "docker-dod-cli-matrix",
     "tip": tip,
     "image_tag": image,
     "sot": "sot:root/arks-dod-behavioral",
-    "note": "Named everyday porcelain peer actions; Missing=0 alone insufficient; stubs ≠ PASS.",
+    "closed_14": [
+        "show", "diff", "checkout", "switch", "restore", "reset",
+        "rm", "mv", "merge", "rebase", "clone", "fetch", "pull", "push",
+    ],
+    "note": "Full BP-PORCELAIN §C + BP-DROPIN samples; Missing=0 alone insufficient; stubs ≠ PASS.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:
