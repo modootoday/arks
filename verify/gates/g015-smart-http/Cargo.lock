@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "arks-g15-cleanroom"
+name = "arks-g015-smart-http-cleanroom"
 version = "0.0.0"
 dependencies = [
  "tempfile",

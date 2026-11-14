@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "arks-g36-cleanroom"
+name = "arks-g036-http-basic-auth-cleanroom"
 version = "0.0.0"
 dependencies = [
  "tempfile",
