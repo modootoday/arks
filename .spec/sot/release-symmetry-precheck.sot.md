@@ -3,7 +3,7 @@ id: sot:root/release-symmetry-precheck
 title: Release symmetry precheck (git / daemon / gh)
 status: active
 created: 2026-11-10T19:45:00Z
-updated: 2026-11-10T19:45:00Z
+updated: 2026-11-14T10:30:00Z
 tags: [release, verify, symmetry, dod, git, daemon, hub, gh, gha, precheck, pin, latest-inventory, no-invent-pass]
 verify: manual
 rel:
@@ -30,7 +30,7 @@ Version **0.1.0**. Normative **ops/CI** gate that blocks a tagged release when c
 
 **Published binary:** **`arks` only.** Product paths MUST NOT spawn `git` or `gh`. Stock `git` / `git-daemon` / surveyed `gh` are **oracles** for inventory + matrices only.
 
-**Remote empty — no push** until the owner authorizes.
+**Remote:** GitHub `https://github.com/modootoday/arks.git`. Push only when the owner authorizes.
 
 ## When the gate runs
 

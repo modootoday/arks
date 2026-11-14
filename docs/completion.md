@@ -27,14 +27,14 @@ This site’s **completion milestone** is **design-complete + CLI-shell coherent
 | Honesty | **Partial** / **Refuse** / **Missing** / fail-closed surfaces are **named in public docs** — stubs are not marketed as Claimed |
 | Claimed bodies | Only where clean-room receipts exist (porcelain inventory, HTTP git wire, residual B-gates below, leases, timing bars, …) |
 
-**One-word operator summary:** **PARTIAL** — symmetry design and shell are in place; residual Claimed gates **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9** carry receipts; IW-FORGE-SERVE hosting e2e Claimed; hub flat+expand+mutate Claimed (Actions/assets/checkout Partial; Missing=0); personality sample+expand+named exit tables Claimed (CLI survey Partial×117 remain); live G8 / **L9** Not Claimed.
+**One-word operator summary:** **PARTIAL** — live G8 / **L9** remain Not Claimed; crypto immunity Impossible. Separately, the **behavioral** clean-room DoD is **met** ([arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md)): everyday porcelain peer actions + daemon Parity + hub Claimed-or-Refuse — **not** “Missing=0 alone.” Residual Claimed gates **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9** carry receipts; IW-FORGE-SERVE hosting e2e Claimed; hub flat+expand+mutate Claimed; personality sample+expand+named exit tables Claimed (CLI survey Partial×117 remain outside the behavioral bar).
 
 > [!IMPORTANT]
-> Do **not** read this page as “all Claimed.” Design intent ≠ Claimed. Smoke/SKIP ≠ PASS. Residual gate SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
+> Do **not** read this page as “all Claimed.” Design intent ≠ Claimed. Smoke/SKIP ≠ PASS. Inventory **Missing=0** is a **floor**, not product-complete. Behavioral SoT: [arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md). Residual gate SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
 
 ## Three symmetry DoD pillars
 
-Public clean-room Definition of Done is **three peer pillars**. Self-host is **adjacent**, not a fourth Claimed pillar.
+Public clean-room Definition of Done is **three peer pillars** under the behavioral bar ([arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md)). Self-host is **adjacent**, not a fourth Claimed pillar. Missing=0 inventory floors alone do **not** mean DoD met.
 
 | Pillar | Stock peer | Product entry | Tip honesty (public) |
 |--------|------------|---------------|----------------------|

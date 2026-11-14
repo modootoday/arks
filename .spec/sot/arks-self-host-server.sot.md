@@ -3,7 +3,7 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-11T01:14:25Z
+updated: 2026-11-14T10:30:00Z
 tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial, claimed-residual]
 verify: manual
 rel:
@@ -109,7 +109,7 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 | Pack protocol on SSH stdio | **arks** | Ops supplies SSHD today |
 | `arks serve config` store | **arks (design)** | Partial until Claimed |
 | Firewall / DNS | **ops** | Not Claimed |
-| TLS certificates / HTTPS termination | **arks + ops** | **B9 product in-process TLS Claimed** ([[evidence:root/20261110233234-claimed-tls]]); ops reverse-proxy remains a valid alternate and does not by itself satisfy B9 |
+| TLS certificates / HTTPS termination | **arks + ops** | **B9 product in-process TLS Claimed** ([[evidence:root/20261110233652-claimed-tls]]); ops reverse-proxy remains a valid alternate and does not by itself satisfy B9 |
 | WAN “secure by default” | **Forbidden** without TLS/keys + ops honesty | |
 
 ### Bind / listen (normative)
@@ -143,7 +143,7 @@ Self-host **Git-remote authentication** MUST align with how stock Git clients al
 |-----------|--------|-------|
 | Unauthenticated loopback HTTP (git) | Allowed when Basic unset | G15 demo path |
 | HTTP Basic on smart HTTP (git) | **In-scope v1** (G36 when configured) | `--basic-auth` / `ARKS_HTTP_BASIC` / file |
-| HTTPS / SSL/TLS | **In-process PEM (B9 Claimed) or ops front** | Product `--tls-cert/--tls-key` evidenced ([[evidence:root/20261110233234-claimed-tls]]); ops reverse-proxy still valid |
+| HTTPS / SSL/TLS | **In-process PEM (B9 Claimed) or ops front** | Product `--tls-cert/--tls-key` evidenced ([[evidence:root/20261110233652-claimed-tls]]); ops reverse-proxy still valid |
 | SSH keys / `authorized_keys`-style | **Design for in-process `serve` SSH**; **wire via ops SSHD today** | Align with Git SSH remotes |
 | Hub token / forge auth for **forge API** | **In-scope under forge module** | Client: `arks hub auth …`; ≠ primary git-remote auth |
 | Hub token as primary **git-remote** auth | **Refuse** | Keep Git-remote vs forge-API auth split honest |

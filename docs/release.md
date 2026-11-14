@@ -14,6 +14,30 @@ sections:
 
 Maintainer notes for shipping **arks** binaries and (later) language-registry packages. End users still install from source or Release assets until registry packaging is flipped on — see [Getting started](../getting-started/).
 
+## Version and tag strategy
+
+| Layer | Rule |
+|-------|------|
+| Workspace / crate `version` | Stays **`0.0.0`** with `publish = false` on `arks` until an intentional product release decision |
+| Spec SoT `Version **0.x.y**` | Document revision only — **not** a crates.io / git-tag release (see `.agents/rules/26-sot-version-vs-release.md`) |
+| Git tag | Push an annotated or lightweight tag matching `v*` (for example `v0.1.0`) when cutting a public binary release |
+| Published artifact | **Single binary `arks` only** (no separate `arks-daemon` / `arks-hub` / `arks-agent` release binaries) |
+
+Do **not** bump crate version or cut a `v*` tag from Spec document revisions alone. Behavioral DoD met ≠ automatic tag — see [arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md). Release inventory gate: [release-symmetry-precheck](https://github.com/modootoday/arks/blob/main/.spec/sot/release-symmetry-precheck.sot.md).
+
+## Pre-release symmetry gate
+
+`.github/workflows/release.yml` job `dist` **needs** `symmetry-precheck` (reusable `.github/workflows/release-symmetry.yml`). Pin Missing=0 + untracked leaves **block** packaging; Partial and hub v1 Missing stay **advisory** by default. Green gate ≠ product Claimed/PASS.
+
+## Release artifacts checklist
+
+On a live `v*` tag (after symmetry-precheck):
+
+1. Cross-OS **dist** builds of **`arks`** only (`linux-gnu`, `windows-msvc`, `aarch64-apple-darwin`).
+2. Archives + `SHA256SUMS` (checksum / unsigned).
+3. **Draft** GitHub Release with those assets.
+4. Optional Environment-gated OIDC registry jobs (`crates` / `npm` / `pypi` / `rubygems`) — skip while packaging/`publish = false`.
+
 ## Channel model
 
 Near-term KEEP channels use **GitHub Actions OIDC** (no long-lived registry tokens) plus per-registry **Environments**:

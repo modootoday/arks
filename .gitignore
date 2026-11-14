@@ -15,6 +15,37 @@ verify/gates/*/.run.lock.dir/
 *.evidence
 **/agent-transcripts/
 
+# Specfold evidence: commit only when a SoT Claimed/Partial cite needs the
+# artifact. Orphan local re-run dumps (superseded ids / intermediate stamps)
+# stay ignored so they cannot invent Claimed by accident.
+.spec/evidence/20261110232045-claimed-rebind/receipt.json
+.spec/evidence/20261110232923-claimed-daemon-archive/receipt.json
+.spec/evidence/20261110233055-claimed-ssh/
+.spec/evidence/20261110233234-claimed-tls/
+.spec/evidence/20261110233238-claimed-hub-https/
+.spec/evidence/20261110233406-claimed-daemon-archive/
+.spec/evidence/20261110233647-claimed-ssh/
+.spec/evidence/20261110234937-claimed-ssh/
+.spec/evidence/20261111050037-hub-stubs-exhaust/
+.spec/evidence/20261111050436-personality-survey/
+.spec/evidence/20261111051341-daemon-flags-parity/
+.spec/evidence/20261111051407-claimed-ssh/
+.spec/evidence/20261111051408-claimed-agent-llm/
+.spec/evidence/20261111051408-claimed-hub-https/
+.spec/evidence/20261111051412-claimed-tls/
+.spec/evidence/20261111051431-self-host-forge-e2e/
+.spec/evidence/20261111051512-daemon-b5-plus-syslog/
+.spec/evidence/20261111052313-self-host-forge-e2e/
+.spec/evidence/20261111052317-claimed-ssh/
+.spec/evidence/20261111052318-claimed-hub-https/
+.spec/evidence/20261111052319-claimed-agent-llm/
+.spec/evidence/20261111052322-claimed-tls/
+.spec/evidence/20261111052342-daemon-b5-plus-syslog/
+.spec/evidence/20261111052345-personality-expand/
+.spec/evidence/20261111052350-personality-exit-tables/
+.spec/evidence/20261111052354-personality-survey/
+.spec/evidence/20261111052359-hub-mutate-subset/
+
 # Secrets / credentials (public-surface: never commit)
 .env
 .env.*

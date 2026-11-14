@@ -3,7 +3,7 @@ id: sot:root/verify-cleanroom-symmetry-matrix
 title: Clean-room symmetry matrix (three DoD pillars)
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-13T10:41:23Z
+updated: 2026-11-14T10:30:00Z
 tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, claimed-residual, single-release, no-invent-pass, behavioral-dod]
 verify: manual
 rel:
@@ -49,7 +49,7 @@ Version **0.1.7**. Umbrella **canon** for the public-story clean-room **Definiti
 
 **Published binary:** **`arks` only** (`arks daemon`, `arks hub …`). Internal crates OK. Product paths **MUST NOT** spawn `git` or `gh`. Stock `git` / surveyed `gh` are oracles only.
 
-**Remote empty — no push.** Windows hosts drive compose; authority is Linux-in-container bash, not host `sh`.
+**Remote:** GitHub `origin` (`https://github.com/modootoday/arks.git`). Push only when the owner authorizes. Windows hosts drive compose; authority is Linux-in-container bash, not host `sh`.
 
 ### Tip currency (behavioral DoD **met**; carrying [[evidence:root/20261113105407-dod-behavioral-cli]])
 

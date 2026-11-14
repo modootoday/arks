@@ -3,7 +3,7 @@ id: sot:root/arks-hub-product-intent
 title: arks hub product intent
 status: active
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-10T20:15:00Z
+updated: 2026-11-14T10:30:00Z
 tags: [arks-hub, arks-forge-client, forge, collaboration, gh-symmetry, flat-cli, pr, issue, review, release, auth, internal-crate, single-release, native-api, client-only, overlap]
 verify: manual
 rel:
@@ -29,7 +29,7 @@ Version **0.4.0**. Normative **product intent** (document revision — **not** a
 
 **Role:** forge **client** leaves (`arks pr`, `arks issue`, `arks auth`, …) talk to a host API base URL (GitHub.com, another forge, or a local **`arks serve`** forge module). This is **not** the way to start the host — that is `arks serve`.
 
-**Honesty:** Design / Partial for most forge leaves — do not invent Claimed from this SoT alone. **B3** forge HTTPS remote happy path is Claimed under [[sot:root/arks-claimed-residual-gates]] ([[evidence:root/20261110233238-claimed-hub-https]]); hub `--local-tls` smoke alone ≠ B3.
+**Honesty:** Design / Partial for most forge leaves — do not invent Claimed from this SoT alone. **B3** forge HTTPS remote happy path is Claimed under [[sot:root/arks-claimed-residual-gates]] ([[evidence:root/20261110233655-claimed-hub-https]]); hub `--local-tls` smoke alone ≠ B3.
 
 **Advice amend (v0.4.0):** Nested **`arks hub …` as the day-to-day forge noun is demoted.** Prefer flat `gh`-shaped leaves beside git porcelain. Transitional `arks hub <leaf> …` MAY forward to `arks <leaf> …`. Internal crate MAY remain named `arks-hub` (library only).
 
