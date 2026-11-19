@@ -460,6 +460,20 @@ pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
             "--is-bare-repository" => {
                 println!("{}", repo.kind() == arks_repo::GitDirKind::Bare)
             }
+            // Object names of every ref under refs/ (or one namespace), by name.
+            "--all" | "--branches" | "--tags" | "--remotes" => {
+                let prefix = match a.as_str() {
+                    "--branches" => "refs/heads/",
+                    "--tags" => "refs/tags/",
+                    "--remotes" => "refs/remotes/",
+                    _ => "refs/",
+                };
+                let mut refs = repo.refs().list_refs(prefix)?;
+                refs.sort_by(|x, y| x.0.cmp(&y.0));
+                for (_, oid) in refs {
+                    println!("{}", oid.to_hex());
+                }
+            }
             x => {
                 if let Some(n) = x.strip_prefix("--short=") {
                     short = Some(
