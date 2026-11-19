@@ -26,6 +26,7 @@ pub mod lease;
 pub mod lock;
 pub mod log_cmd;
 pub mod log_format;
+pub mod log_graph;
 pub mod maint;
 pub mod matrix_cmds;
 pub mod matrix_rest;

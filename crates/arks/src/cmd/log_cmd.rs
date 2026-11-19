@@ -11,8 +11,9 @@
 //! <https://git-scm.com/docs/pretty-formats>.
 //!
 //! Partial: `show` on a merge prints the diffstat against the first parent
-//! and names changed against every parent, but no combined (`--cc`) patch;
-//! `--graph` only renders a linear `* ` column.
+//! and names changed against every parent, but no combined (`--cc`) patch.
+//! `log --graph` draws the full lane graph (see `log_graph`) over a
+//! topo-ordered walk; `show --graph` prints each commit as a lone `*`.
 
 use crate::cmd::bre::Bre;
 use crate::cmd::diff_render::{DiffFormat, changes_between, render};
@@ -20,6 +21,7 @@ use crate::cmd::log_format::{
     ChildFirst, DateMode, FmtCtx, Pretty, child_first_order, expand_ctx, path_in_specs,
     resolve_range, take_pretty, walk_paths,
 };
+use crate::cmd::log_graph::Graph;
 use crate::cmd::shared::{resolve_rev, tag_target, tree_blob_map};
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, work_tree};
@@ -38,7 +40,7 @@ struct LogOpts {
     date: DateMode,
     decorate: bool,
     graph: bool,
-    /// `--topo-order` / `--date-order`.
+    /// `--topo-order` / `--date-order` (`--graph` implies `--topo-order`).
     order: Option<ChildFirst>,
     first_parent: bool,
     no_merges: bool,
@@ -303,6 +305,10 @@ struct Printer<'a> {
     show_merge: bool,
     /// `--left-right` side mark for the current commit.
     mark: Option<char>,
+    /// `log --graph` state (topo-ordered walk).
+    graph: Option<Graph<Oid>>,
+    /// The last record's message did not end in a newline.
+    missing_newline: bool,
 }
 
 impl Printer<'_> {
@@ -410,32 +416,106 @@ impl Printer<'_> {
         c: &Commit,
         changes: &[crate::cmd::diff_render::Change],
     ) -> CliResult<()> {
-        if self.shown_one && !self.uses_terminator() {
-            writeln!(out)?;
-        }
-        self.shown_one = true;
-        let mut text = self.header(oid, c);
+        let header = self.header(oid, c);
+        let mut diff_text = String::new();
         // `show` on a merge prints the separator even when the combined diff
         // is empty (log-tree.c always_show_header + --cc).
         let force_sep = self.show_merge && c.parents.len() > 1;
         if self.opts.diff.any() && (!changes.is_empty() || force_sep) {
             if !matches!(self.opts.pretty, Pretty::Oneline) && !self.format_is_empty() {
                 if self.opts.diff.stat && self.opts.diff.patch {
-                    text.push_str("---");
+                    diff_text.push_str("---");
                 }
-                text.push('\n');
+                diff_text.push('\n');
             }
             let mut buf = Vec::new();
             render(&mut buf, self.repo, &self.opts.diff, changes)?;
-            text.push_str(&String::from_utf8_lossy(&buf));
+            diff_text.push_str(&String::from_utf8_lossy(&buf));
         }
+        if self.graph.is_some() {
+            return self.commit_with_graph(out, &header, &diff_text);
+        }
+        if self.shown_one && !self.uses_terminator() {
+            writeln!(out)?;
+        }
+        self.shown_one = true;
+        let text = header + &diff_text;
         if self.opts.graph {
+            // `show --graph`: every record is a lone commit.
             for (i, line) in text.split_inclusive('\n').enumerate() {
                 out.write_all(if i == 0 { b"* " } else { b"  " })?;
                 out.write_all(line.as_bytes())?;
             }
         } else {
             out.write_all(text.as_bytes())?;
+        }
+        Ok(())
+    }
+
+    /// [`Printer::commit`] for `log --graph`: every output line gets a graph
+    /// row as prefix. Order per record: separator (non-oneline formats),
+    /// pre-commit rows, the `*` row followed by the message, the rows the
+    /// commit still needs, the terminator (oneline formats), then the diff.
+    fn commit_with_graph(
+        &mut self,
+        out: &mut impl Write,
+        header: &str,
+        diff_text: &str,
+    ) -> CliResult<()> {
+        let terminator = self.uses_terminator();
+        let format_is_empty = self.format_is_empty();
+        let Some(g) = self.graph.as_mut() else {
+            return Ok(());
+        };
+        if self.shown_one && !terminator {
+            if !self.missing_newline {
+                out.write_all(g.separator_row().as_bytes())?;
+            }
+            writeln!(out)?;
+        }
+        self.shown_one = true;
+        // Terminator formats end each record with a newline of their own.
+        let msg = if terminator {
+            header.strip_suffix('\n').unwrap_or(header)
+        } else {
+            header
+        };
+        self.missing_newline = !msg.ends_with('\n');
+        while !g.commit_row_next() && !g.finished() {
+            writeln!(out, "{}", g.next_row())?;
+        }
+        out.write_all(g.next_row().as_bytes())?;
+        for (i, line) in msg.split_inclusive('\n').enumerate() {
+            if i > 0 {
+                out.write_all(g.next_row().as_bytes())?;
+            }
+            out.write_all(line.as_bytes())?;
+        }
+        if !g.finished() {
+            if !msg.is_empty() && !msg.ends_with('\n') {
+                writeln!(out)?;
+            }
+            let mut first = true;
+            while !g.finished() {
+                if !first {
+                    writeln!(out)?;
+                }
+                first = false;
+                out.write_all(g.next_row().as_bytes())?;
+            }
+            if msg.ends_with('\n') {
+                writeln!(out)?;
+            }
+        }
+        if terminator && !format_is_empty {
+            if !self.missing_newline {
+                out.write_all(g.next_row().as_bytes())?;
+            }
+            writeln!(out)?;
+        }
+        for line in diff_text.split_inclusive('\n') {
+            out.write_all(g.next_row().as_bytes())?;
+            out.write_all(line.as_bytes())?;
         }
         Ok(())
     }
@@ -550,6 +630,11 @@ fn commit_changes(
 pub fn cmd_log(args: &[String]) -> CliResult<()> {
     // M16 Sy-1 + cloud drop-in §O. Cite: https://git-scm.com/docs/git-log
     let (opts, paths) = parse_opts(args, "log")?;
+    if opts.graph && opts.reverse {
+        return Err(CliError::fatal(
+            "options '--reverse' and '--graph' cannot be used together",
+        ));
+    }
     let repo = open_repo()?;
     let specs = pathspecs(&repo, &paths);
     let mut revs = opts.revs.clone();
@@ -577,7 +662,7 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
     for o in exc {
         excl.push(crate::cmd::shared::peel_tags(&repo, &o)?);
     }
-    let order = opts.order;
+    let order = opts.order.or(opts.graph.then_some(ChildFirst::Topo));
     let mut selected = Vec::new();
     for (oid, c) in walk_paths(&repo, &tips, &excl, opts.first_parent, &specs)? {
         if (opts.no_merges && c.parents.len() > 1) || (opts.merges_only && c.parents.len() < 2) {
@@ -612,18 +697,25 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
             break;
         }
     }
-    // Child-first ordering waits for the children of every shown parent.
+    // Graph edges join the shown parents (`--first-parent`: the first
+    // only); child-first ordering waits for every shown parent's children.
+    let mut graph_parents: HashMap<Oid, Vec<Oid>> = HashMap::new();
     if let Some(mode) = order {
         let shown: HashSet<Oid> = selected.iter().map(|(o, _)| *o).collect();
-        let mut order_parents: HashMap<Oid, Vec<Oid>> = HashMap::new();
-        for (oid, c) in &selected {
+        let shown_parents = |c: &Commit, limit: usize| -> Vec<Oid> {
             let mut kept: Vec<Oid> = Vec::new();
-            for p in &c.parents {
+            for p in c.parents.iter().take(limit) {
                 if shown.contains(p) && !kept.contains(p) {
                     kept.push(*p);
                 }
             }
-            order_parents.insert(*oid, kept);
+            kept
+        };
+        let edge_limit = if opts.first_parent { 1 } else { usize::MAX };
+        let mut order_parents: HashMap<Oid, Vec<Oid>> = HashMap::new();
+        for (oid, c) in &selected {
+            graph_parents.insert(*oid, shown_parents(c, edge_limit));
+            order_parents.insert(*oid, shown_parents(c, usize::MAX));
         }
         let walked: Vec<Oid> = selected.iter().map(|(o, _)| *o).collect();
         let mut by_oid: HashMap<Oid, Commit> = selected.drain(..).collect();
@@ -674,6 +766,8 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
         shown_one: false,
         show_merge: false,
         mark: None,
+        graph: opts.graph.then(Graph::new),
+        missing_newline: false,
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
     for (oid, c) in &selected {
@@ -689,6 +783,9 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
         printer.mark = left
             .as_ref()
             .map(|l| if l.contains(oid) { '<' } else { '>' });
+        if let Some(g) = printer.graph.as_mut() {
+            g.next_commit(*oid, graph_parents.remove(oid).unwrap_or_default());
+        }
         printer.commit(&mut out, oid, c, &changes)?;
     }
     out.flush()?;
@@ -729,6 +826,8 @@ pub fn cmd_show(args: &[String]) -> CliResult<()> {
         shown_one: false,
         show_merge: true,
         mark: None,
+        graph: None,
+        missing_newline: false,
     };
     for rev in &revs {
         let mut oid = resolve_rev(&repo, rev)?;
