@@ -17,7 +17,8 @@
 use crate::cmd::bre::Bre;
 use crate::cmd::diff_render::{DiffFormat, changes_between, render};
 use crate::cmd::log_format::{
-    DateMode, FmtCtx, Pretty, expand_ctx, path_in_specs, resolve_range, take_pretty, walk_paths,
+    ChildFirst, DateMode, FmtCtx, Pretty, child_first_order, expand_ctx, path_in_specs,
+    resolve_range, take_pretty, walk_paths,
 };
 use crate::cmd::shared::{resolve_rev, tag_target, tree_blob_map};
 use crate::error::{CliError, CliResult};
@@ -26,7 +27,7 @@ use arks_object::{Commit, ObjectKind, Signature};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
 use std::path::PathBuf;
 
@@ -37,6 +38,8 @@ struct LogOpts {
     date: DateMode,
     decorate: bool,
     graph: bool,
+    /// `--topo-order` / `--date-order`.
+    order: Option<ChildFirst>,
     first_parent: bool,
     no_merges: bool,
     merges_only: bool,
@@ -70,6 +73,7 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         date: DateMode::Default,
         decorate: false,
         graph: false,
+        order: None,
         first_parent: false,
         no_merges: false,
         merges_only: false,
@@ -166,6 +170,8 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         } else {
             match a.as_str() {
                 "--graph" => o.graph = true,
+                "--topo-order" => o.order = Some(ChildFirst::Topo),
+                "--date-order" => o.order = Some(ChildFirst::Date),
                 "--first-parent" => o.first_parent = true,
                 "--no-merges" => o.no_merges = true,
                 "--merges" => o.merges_only = true,
@@ -571,6 +577,7 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
     for o in exc {
         excl.push(crate::cmd::shared::peel_tags(&repo, &o)?);
     }
+    let order = opts.order;
     let mut selected = Vec::new();
     for (oid, c) in walk_paths(&repo, &tips, &excl, opts.first_parent, &specs)? {
         if (opts.no_merges && c.parents.len() > 1) || (opts.merges_only && c.parents.len() < 2) {
@@ -601,9 +608,35 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
             continue;
         }
         selected.push((oid, c));
-        if !opts.reverse && opts.max_count.is_some_and(|m| selected.len() >= m) {
+        if !opts.reverse && order.is_none() && opts.max_count.is_some_and(|m| selected.len() >= m) {
             break;
         }
+    }
+    // Child-first ordering waits for the children of every shown parent.
+    if let Some(mode) = order {
+        let shown: HashSet<Oid> = selected.iter().map(|(o, _)| *o).collect();
+        let mut order_parents: HashMap<Oid, Vec<Oid>> = HashMap::new();
+        for (oid, c) in &selected {
+            let mut kept: Vec<Oid> = Vec::new();
+            for p in &c.parents {
+                if shown.contains(p) && !kept.contains(p) {
+                    kept.push(*p);
+                }
+            }
+            order_parents.insert(*oid, kept);
+        }
+        let walked: Vec<Oid> = selected.iter().map(|(o, _)| *o).collect();
+        let mut by_oid: HashMap<Oid, Commit> = selected.drain(..).collect();
+        let sorted = child_first_order(
+            &walked,
+            |o| order_parents[o].clone(),
+            |o| by_oid[o].committer.timestamp,
+            mode,
+        );
+        selected = sorted
+            .into_iter()
+            .filter_map(|o| by_oid.remove(&o).map(|c| (o, c)))
+            .collect();
     }
     if let Some(m) = opts.max_count {
         selected.truncate(m);
