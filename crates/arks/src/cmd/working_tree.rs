@@ -689,20 +689,22 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     // below the current directory; without `-d`, wholly untracked directories
     // are left alone. clean.requireForce defaults to true.
     // Cite: https://git-scm.com/docs/git-clean
-    // Partial: ignore rules are not consulted, so `-x` / `-X` behave like the
-    // default and ignored files are treated as untracked.
+    // Ignore rules (gitignore(5)) apply unless `-x`; `-X` removes only ignored files.
     let args = crate::util::split_short_bundles(args, "fndxqX", "");
     let (opts, mut paths) = split_dashdash(&args);
     let mut force = 0;
     let mut dry_run = false;
     let mut dirs = false;
     let mut quiet = false;
+    // 0 = honor ignore rules, 1 = `-x` (also remove ignored), 2 = `-X` (only ignored).
+    let mut exclude_mode = 0u8;
     for a in &opts {
         match a.as_str() {
             "-f" | "--force" => force += 1,
             "-n" | "--dry-run" => dry_run = true,
             "-d" => dirs = true,
-            "-x" | "-X" => {}
+            "-x" => exclude_mode = 1,
+            "-X" => exclude_mode = 2,
             "-q" | "--quiet" => quiet = true,
             x if x.starts_with('-') && x.len() > 1 => {
                 return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
@@ -730,7 +732,17 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     let index = read_index(&repo)?;
     let indexed: HashSet<String> = index.entries.iter().map(|e| e.path.clone()).collect();
     let mut untracked = Vec::new();
-    collect_untracked(&work, &work, &indexed, &mut untracked)?;
+    if exclude_mode == 0 {
+        collect_untracked(&work, &work, &indexed, &mut untracked)?;
+    } else {
+        crate::cmd::shared::collect_untracked_with(&work, &work, &indexed, &mut untracked, None)?;
+        if exclude_mode == 2 {
+            let mut kept = Vec::new();
+            collect_untracked(&work, &work, &indexed, &mut kept)?;
+            let kept: HashSet<String> = kept.into_iter().collect();
+            untracked.retain(|p| !kept.contains(p));
+        }
+    }
     let shown = crate::cmd::core::collapse_untracked_dirs(&untracked, &indexed);
     let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
     let cwd_rel = crate::util::cwd()
