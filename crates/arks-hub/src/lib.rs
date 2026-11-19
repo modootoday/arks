@@ -11,10 +11,14 @@
 
 #![forbid(unsafe_code)]
 
+mod forge_catalog;
+mod forge_git;
+mod forge_repo_issue;
 mod http_min;
 mod local_tls_smoke;
 pub mod serve;
 mod store;
+mod store_repo_issue;
 
 use http_min::{http_exchange, http_exchange_bytes};
 use serde_json::{Value, json};
