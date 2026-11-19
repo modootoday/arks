@@ -1,0 +1,31 @@
+# Commit-history check (playpilot H1–H7; .spec/adr/20261119220000-commit-history-playpilot-h1-h7.adr.md).
+# Stage 1: NOT a required check. Merge method for arks is merge commit (H1).
+name: history
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  history:
+    name: History
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Install playpilot (pinned rev)
+        # Run outside the workspace so rust-toolchain.toml does not apply to the install.
+        working-directory: ${{ runner.temp }}
+        run: >-
+          cargo install --locked --git https://github.com/modootoday/playpilot
+          --rev 0ddc0e1dfd1bac378901817a5fb106935fd5fba1 playpilot
+
+      - name: playpilot history-check (merge commit)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: playpilot history-check --method merge --range "$BASE..$HEAD"
