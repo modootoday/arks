@@ -121,11 +121,26 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_cat_file(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-t", "-s", "-p"])?;
+    // `-e`: exit 0 when the object exists, 1 when a valid name lacks an object,
+    // 128 for an invalid name. Cite: https://git-scm.com/docs/git-cat-file
+    refuse_unknown_flags(args, &["-t", "-s", "-p", "-e"])?;
     let mode = args
         .iter()
-        .find(|a| *a == "-t" || *a == "-s" || *a == "-p")
-        .ok_or_else(|| CliError::Usage("cat-file: require -t, -s, or -p".into()))?;
+        .find(|a| *a == "-t" || *a == "-s" || *a == "-p" || *a == "-e")
+        .ok_or_else(|| CliError::Usage("cat-file: require -t, -s, -e, or -p".into()))?;
+    if mode == "-e" {
+        let object = args
+            .iter()
+            .find(|a| !a.starts_with('-'))
+            .ok_or_else(|| CliError::Usage("cat-file: missing object".into()))?;
+        let repo = open_repo()?;
+        let oid = resolve_rev(&repo, object)
+            .map_err(|_| CliError::fatal(format!("Not a valid object name {object}")))?;
+        return match repo.get_object(&oid) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(CliError::silent(1)),
+        };
+    }
     let object = args
         .iter()
         .find(|a| !a.starts_with('-'))
@@ -251,32 +266,184 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
     // Sy-1: `--abbrev-ref` / `--verify` / `--symbolic-full-name` (git-rev-parse).
-    // Cite: https://git-scm.com/docs/git-rev-parse + [[sot:root/cli-flag-parity-complete]]
-    refuse_unknown_flags(args, &["--abbrev-ref", "--verify", "--symbolic-full-name"])?;
-    let abbrev_ref = args
-        .iter()
-        .any(|a| *a == "--abbrev-ref" || a.starts_with("--abbrev-ref="));
-    let symbolic_full = args.iter().any(|a| a == "--symbolic-full-name");
-    let verify = args.iter().any(|a| a == "--verify");
-    let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if revs.is_empty() {
-        return Err(CliError::Usage("rev-parse: missing revision".into()));
-    }
+    // Cloud drop-in §O: `--short[=n]`, `-q`, `--show-toplevel`, `--git-dir`,
+    // `--absolute-git-dir`, `--git-common-dir`, `--show-prefix`, `--show-cdup`,
+    // `--is-inside-work-tree`, `--is-inside-git-dir`, `--is-bare-repository`,
+    // `^<rev>` and `A..B` ranges. Arguments are processed in order.
+    // Cite: https://git-scm.com/docs/git-rev-parse
+    use crate::cmd::shared::abbrev_hex;
+    let mut abbrev_ref = false;
+    let mut symbolic_full = false;
+    let mut verify = false;
+    let mut quiet = false;
+    let mut short: Option<usize> = None;
+    let mut pending: Vec<String> = Vec::new();
     let repo = open_repo()?;
-    for rev in revs {
+    let cwd = crate::util::cwd()?;
+    let work = repo.work_tree().map(Path::to_path_buf).or_else(|| {
+        (repo.kind() == arks_repo::GitDirKind::DotGitDir)
+            .then(|| repo.git_dir().parent().map(Path::to_path_buf))
+            .flatten()
+    });
+    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let inside_work = work.as_ref().is_some_and(|w| {
+        canon(&cwd).starts_with(canon(w)) && !canon(&cwd).starts_with(canon(repo.git_dir()))
+    });
+    let prefix = work
+        .as_ref()
+        .and_then(|w| {
+            canon(&cwd)
+                .strip_prefix(canon(w))
+                .ok()
+                .map(Path::to_path_buf)
+        })
+        .unwrap_or_default();
+    let git_dir_display = |dir: &Path| -> String {
+        if canon(&cwd.join(".git")) == canon(dir) {
+            ".git".to_string()
+        } else {
+            canon(dir).display().to_string()
+        }
+    };
+    let mut dashdash = false;
+    for a in args {
+        if dashdash {
+            continue;
+        }
+        match a.as_str() {
+            "--" => dashdash = true,
+            "--abbrev-ref" | "--abbrev-ref=strict" | "--abbrev-ref=loose" => abbrev_ref = true,
+            "--symbolic-full-name" => symbolic_full = true,
+            "--verify" => verify = true,
+            "-q" | "--quiet" => quiet = true,
+            "--short" => {
+                short = Some(7);
+                verify = true;
+            }
+            "--show-toplevel" => match &work {
+                Some(w) => println!("{}", canon(w).display()),
+                None => {
+                    return Err(CliError::fatal("this operation must be run in a work tree"));
+                }
+            },
+            "--git-dir" => println!("{}", git_dir_display(repo.git_dir())),
+            "--git-common-dir" => println!("{}", git_dir_display(repo.common_dir())),
+            "--absolute-git-dir" => println!("{}", canon(repo.git_dir()).display()),
+            "--show-prefix" => {
+                let p = prefix.to_string_lossy().replace('\\', "/");
+                if p.is_empty() {
+                    println!();
+                } else {
+                    println!("{p}/");
+                }
+            }
+            "--show-cdup" => {
+                println!("{}", "../".repeat(prefix.components().count()));
+            }
+            "--is-inside-work-tree" => println!("{inside_work}"),
+            "--is-inside-git-dir" => {
+                println!("{}", canon(&cwd).starts_with(canon(repo.git_dir())))
+            }
+            "--is-bare-repository" => {
+                println!("{}", repo.kind() == arks_repo::GitDirKind::Bare)
+            }
+            x => {
+                if let Some(n) = x.strip_prefix("--short=") {
+                    short = Some(
+                        n.parse::<usize>()
+                            .map_err(|_| CliError::fatal(format!("bad --short: {n}")))?
+                            .clamp(4, 40),
+                    );
+                    verify = true;
+                } else if x.starts_with('-') && x.len() > 1 && !x.starts_with("^") {
+                    return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+                } else {
+                    pending.push(a.clone());
+                }
+            }
+        }
+        if !verify && !abbrev_ref && !symbolic_full {
+            for rev in pending.drain(..) {
+                print_rev_arg(&repo, &rev, work.as_deref())?;
+            }
+        }
+    }
+    if verify {
+        if pending.len() != 1 {
+            if quiet {
+                return Err(CliError::silent(1));
+            }
+            return Err(CliError::fatal("Needed a single revision"));
+        }
+        let rev = &pending[0];
+        let oid = match resolve_rev(&repo, rev) {
+            Ok(o) => o,
+            Err(_) if quiet => return Err(CliError::silent(1)),
+            Err(_) => return Err(CliError::fatal("Needed a single revision")),
+        };
         if abbrev_ref {
             println!("{}", abbreviate_ref(&repo, rev)?);
-            continue;
-        }
-        if symbolic_full {
+        } else if symbolic_full {
             println!("{}", symbolic_full_name(&repo, rev)?);
-            continue;
+        } else {
+            match short {
+                Some(n) => println!("{}", abbrev_hex(&repo, &oid, n)),
+                None => println!("{}", oid.to_hex()),
+            }
         }
-        let oid = resolve_rev(&repo, rev)?;
-        if verify {
-            // Existence check only; still print the OID (git --verify default).
+        return Ok(());
+    }
+    for rev in pending {
+        if abbrev_ref {
+            println!("{}", abbreviate_ref(&repo, &rev)?);
+        } else if symbolic_full {
+            println!("{}", symbolic_full_name(&repo, &rev)?);
+        } else {
+            print_rev_arg(&repo, &rev, work.as_deref())?;
         }
-        println!("{}", oid.to_hex());
+    }
+    Ok(())
+}
+
+/// One non-`--verify` rev-parse argument: `<rev>`, `^<rev>`, `A..B`, `A...B`;
+/// an unresolvable argument is echoed and must name a working-tree path.
+fn print_rev_arg(repo: &Repository, rev: &str, work: Option<&Path>) -> CliResult<()> {
+    let res = |r: &str| resolve_rev(repo, if r.is_empty() { "HEAD" } else { r });
+    if let Some((l, r)) = rev.split_once("...") {
+        if let (Ok(a), Ok(b)) = (res(l), res(r)) {
+            println!("{}", b.to_hex());
+            println!("{}", a.to_hex());
+            if let Some(base) = arks_repo::merge_base_oid(repo, &a, &b)? {
+                println!("^{}", base.to_hex());
+            }
+            return Ok(());
+        }
+    } else if let Some((l, r)) = rev.split_once("..") {
+        if let (Ok(a), Ok(b)) = (res(l), res(r)) {
+            println!("{}", b.to_hex());
+            println!("^{}", a.to_hex());
+            return Ok(());
+        }
+    } else if let Some(x) = rev.strip_prefix('^') {
+        if let Ok(o) = resolve_rev(repo, x) {
+            println!("^{}", o.to_hex());
+            return Ok(());
+        }
+    } else if let Ok(o) = resolve_rev(repo, rev) {
+        println!("{}", o.to_hex());
+        return Ok(());
+    }
+    println!("{rev}");
+    let exists = work.is_some_and(|w| {
+        let cwd = crate::util::cwd().unwrap_or_else(|_| w.to_path_buf());
+        cwd.join(rev).exists()
+    });
+    if !exists {
+        return Err(CliError::fatal(format!(
+            "ambiguous argument '{rev}': unknown revision or path not in the working tree.\n\
+             Use '--' to separate paths from revisions, like this:\n\
+             'git <command> [<revision>...] -- [<file>...]'"
+        )));
     }
     Ok(())
 }

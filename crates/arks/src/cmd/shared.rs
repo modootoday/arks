@@ -286,6 +286,20 @@ fn resolve_upstream(repo: &Repository, branch: &str) -> CliResult<Oid> {
     Ok(repo.refs().resolve(&full)?)
 }
 
+/// Shortest unambiguous hex prefix of `oid`, at least `min` digits
+/// (git `find_unique_abbrev`; default `core.abbrev` minimum is 7).
+pub(crate) fn abbrev_hex(repo: &Repository, oid: &Oid, min: usize) -> String {
+    let hex = oid.to_hex();
+    let mut n = min.clamp(4, hex.len());
+    while n < hex.len() {
+        if matches!(resolve_abbrev(repo, &hex[..n]), Ok(Some(_))) {
+            break;
+        }
+        n += 1;
+    }
+    hex[..n].to_string()
+}
+
 /// Unique object whose hex starts with `prefix` (4+ hex digits), loose or packed.
 fn resolve_abbrev(repo: &Repository, prefix: &str) -> CliResult<Option<Oid>> {
     let p = prefix.to_ascii_lowercase();
