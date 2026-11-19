@@ -1,8 +1,0 @@
-# Build output
-/target/
-
-# Backup files written by rustfmt
-**/*.rs.bk
-
-# Debug information written by MSVC
-*.pdb
