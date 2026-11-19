@@ -143,7 +143,7 @@ Carrying tip class ≥ `1770102` + gap-classification research [[research:root/2
 | Absolute SHA-1 collision immunity | **Non-goal / Hold forever** | Crypto Impossible; detect+refuse is the Claimed bar |
 | Full multi-device cloud-sync / hydration / LSM bypass | **Non-goal / Hold forever** | Advisory only |
 | CELIR (any form) / “faster than Git” / multi-writer warranty / GUI·scalar embed | **Hold forever** | CELIR **not adopted** — M24 / G22–G25 Withdrawn ([[adr:root/20261119200000]]); do not fake Claimed |
-| Cloud agent drop-in (C-ladder, `arks` as `git` in hosted agent sessions) | **Partial (host advisory)** | [[sot:root/cloud-agent-dropin]]: proxy/CA, config identity, SSH signing, agent corpus **146/147** vs stock git; installed in hosted sessions from `main`; G42 Docker receipt pending; C8 hub Deferred / C7b remainder open |
+| Cloud agent drop-in (C-ladder, `arks` as `git` in hosted agent sessions) | **Claimed (Docker)** | [[sot:root/cloud-agent-dropin]]: proxy/CA, config identity, SSH signing — G42 15/15 [[evidence:root/20261119222000-g042-cloud-dropin]]; corpora vs pin git 2.39.5 tier A **147/147**, tier B **166/168** [[evidence:root/20261119225600-cli-flag-corpus-cleanroom]]; C8 arks-owned forge rows Claimed; installed in hosted sessions from `main` |
 | Single release shape | **Normative** | Published CLI = **`arks` only**; `arks daemon` / `arks hub` via internal crates |
 | Operator one-word (“fully complete?”) | **PARTIAL** | FS_final **YES**; live G8 latency + **L9** + Hold-forever / trimmed rows remain |
 
