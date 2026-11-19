@@ -996,6 +996,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             ("-uall", "-u"),
             ("--untracked-files=normal", "-unormal"),
             ("--untracked-files=no", "-uno"),
+            ("--ignored=traditional", "--ignored"),
         ],
     );
     let (args, after_dashdash): (Vec<String>, Vec<String>) =
@@ -1009,6 +1010,8 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         &[
             "--no-optional-locks",
             "--porcelain",
+            "--porcelain=v2",
+            "--ignored",
             "-s",
             "-b",
             "-u",
@@ -1018,8 +1021,10 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     )?;
     let untracked_all = args.iter().any(|a| a == "-u");
     let untracked_no = args.iter().any(|a| a == "-uno");
-    let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s");
-    let porcelain_v1 = args.iter().any(|a| a == "--porcelain");
+    let porcelain_v2 = args.iter().any(|a| a == "--porcelain=v2");
+    let show_ignored = args.iter().any(|a| a == "--ignored");
+    let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s") || porcelain_v2;
+    let porcelain_v1 = args.iter().any(|a| a == "--porcelain") || porcelain_v2;
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
     let repo = open_repo()?;
@@ -1050,6 +1055,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         Untracked::Normal
     };
     let mut d = collect(&repo, mode)?;
+    if show_ignored && mode != Untracked::No {
+        d.ignored = crate::cmd::status_report::collect_ignored(&repo)?;
+    }
     // Pathspecs limit every section (git-status `[<pathspec>...]`).
     let specs: Vec<String> = {
         let work = work_tree(&repo)?;
@@ -1071,6 +1079,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         };
         d.staged.retain(|k, _| hit(k));
         d.unstaged.retain(|k, _| hit(k));
+        d.ignored.retain(|k| hit(k));
         // A collapsed untracked directory shown through a deeper pathspec is
         // listed at the pathspec instead.
         let work = work_tree(&repo)?;
@@ -1092,7 +1101,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         d.untracked = shown;
     }
     let mut out = io::BufWriter::new(io::stdout().lock());
-    if porcelain {
+    if porcelain_v2 {
+        write_porcelain_v2(&mut out, &repo, &d, show_branch)?;
+    } else if porcelain {
         // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
         // X = index vs HEAD (A/M/D), Y = worktree vs index (M/D), sorted by path,
         // untracked (`??`) last.
@@ -1125,6 +1136,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         for p in &d.untracked {
             writeln!(out, "?? {}", show(p))?;
         }
+        for p in &d.ignored {
+            writeln!(out, "!! {}", show(p))?;
+        }
     } else {
         write_long(&mut out, &d, mode)?;
     }
@@ -1135,6 +1149,110 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             "internal error: status created index.lock (optional locks forbidden; IDX-002/AGENT-006)"
                 .into(),
         ));
+    }
+    Ok(())
+}
+
+/// `status --porcelain=v2` (git-status §Porcelain Format Version 2):
+/// `# branch.*` headers with `--branch`, `1 <XY> N... <mH> <mI> <mW> <hH>
+/// <hI> <path>` per changed tracked path, then `? <path>` and `! <path>`.
+/// Partial: rename (`2`) and unmerged (`u`) records are not emitted.
+fn write_porcelain_v2(
+    out: &mut impl io::Write,
+    repo: &Repository,
+    d: &crate::cmd::status_report::StatusData,
+    show_branch: bool,
+) -> CliResult<()> {
+    let zero = "0".repeat(repo.oid_kind().hex_len());
+    if show_branch {
+        let head = repo.head_oid().ok();
+        writeln!(
+            out,
+            "# branch.oid {}",
+            head.map_or("(initial)".to_string(), |o| o.to_hex())
+        )?;
+        let name = d.branch.clone().unwrap_or_else(|| "(detached)".to_string());
+        writeln!(out, "# branch.head {name}")?;
+        if let (Some(b), Some(h)) = (&d.branch, head) {
+            let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+            if let (Some(remote), Some(merge)) = (
+                cfg.get(&format!("branch.{b}.remote")),
+                cfg.get(&format!("branch.{b}.merge")),
+            ) {
+                let short = merge.trim_start_matches("refs/heads/").to_string();
+                let (full, shown) = if remote == "." {
+                    (format!("refs/heads/{short}"), short.clone())
+                } else {
+                    (
+                        format!("refs/remotes/{remote}/{short}"),
+                        format!("{remote}/{short}"),
+                    )
+                };
+                writeln!(out, "# branch.upstream {shown}")?;
+                if let Ok(up) = repo.refs().resolve(&full) {
+                    let a = arks_repo::ancestor_set(repo, h)?;
+                    let b = arks_repo::ancestor_set(repo, up)?;
+                    writeln!(
+                        out,
+                        "# branch.ab +{} -{}",
+                        a.difference(&b).count(),
+                        b.difference(&a).count()
+                    )?;
+                }
+            }
+        }
+    }
+    let mut head: std::collections::HashMap<String, (u32, Oid)> = Default::default();
+    if let Ok(h) = repo.head_oid() {
+        let tree = crate::cmd::log_format::read_commit(repo, &h)?.tree;
+        let mut v = Vec::new();
+        crate::cmd::plumbing::flatten_tree_to_index(repo, &tree, "", &mut v)?;
+        head = v.into_iter().map(|e| (e.path, (e.mode, e.oid))).collect();
+    }
+    let index: std::collections::HashMap<String, (u32, Oid)> = read_index(repo)?
+        .entries
+        .into_iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path, (e.mode, e.oid)))
+        .collect();
+    let work = work_tree(repo)?;
+    let mut tracked: std::collections::BTreeMap<&String, (char, char)> = Default::default();
+    for (p, c) in &d.staged {
+        tracked.entry(p).or_insert(('.', '.')).0 = *c;
+    }
+    for (p, c) in &d.unstaged {
+        tracked.entry(p).or_insert(('.', '.')).1 = *c;
+    }
+    for (p, (x, y)) in &tracked {
+        let (mh, hh) = head
+            .get(*p)
+            .map_or((0, zero.clone()), |(m, o)| (*m, o.to_hex()));
+        let (mi, hi) = index
+            .get(*p)
+            .map_or((0, zero.clone()), |(m, o)| (*m, o.to_hex()));
+        let mw = match y {
+            'D' => 0,
+            '.' => mi,
+            _ => fs::symlink_metadata(work.join(p))
+                .map(|m| {
+                    if m.file_type().is_symlink() {
+                        0o120000
+                    } else {
+                        file_mode(&m)
+                    }
+                })
+                .unwrap_or(mi),
+        };
+        writeln!(
+            out,
+            "1 {x}{y} N... {mh:06o} {mi:06o} {mw:06o} {hh} {hi} {p}"
+        )?;
+    }
+    for p in &d.untracked {
+        writeln!(out, "? {p}")?;
+    }
+    for p in &d.ignored {
+        writeln!(out, "! {p}")?;
     }
     Ok(())
 }

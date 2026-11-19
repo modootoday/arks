@@ -33,6 +33,8 @@ pub struct StatusData {
     pub unstaged: BTreeMap<String, char>,
     /// Untracked paths (directories collapsed as `dir/` unless `all`).
     pub untracked: Vec<String>,
+    /// Ignored untracked paths (`--ignored`; directories as `dir/`).
+    pub ignored: Vec<String>,
     /// Current directory relative to the work tree (`""` or `dir/sub/`).
     pub prefix: String,
 }
@@ -136,7 +138,56 @@ pub fn collect(repo: &Repository, mode: Untracked) -> CliResult<StatusData> {
         staged,
         unstaged,
         untracked,
+        ignored: Vec::new(),
     })
+}
+
+/// Ignored, untracked paths below the work tree for `status --ignored`:
+/// an excluded directory without tracked files is listed once as `dir/`.
+pub fn collect_ignored(repo: &Repository) -> CliResult<Vec<String>> {
+    let work = work_tree(repo)?;
+    let indexed: HashSet<String> = read_index(repo)?
+        .entries
+        .into_iter()
+        .map(|e| e.path)
+        .collect();
+    let mut ig = crate::cmd::ignore::Ignore::new(&work);
+    let mut out = Vec::new();
+    ignored_rec(&work, &work, &indexed, &mut ig, &mut out)?;
+    out.sort();
+    Ok(out)
+}
+
+fn ignored_rec(
+    work: &std::path::Path,
+    dir: &std::path::Path,
+    indexed: &HashSet<String>,
+    ig: &mut crate::cmd::ignore::Ignore,
+    out: &mut Vec<String>,
+) -> CliResult<()> {
+    for ent in fs::read_dir(dir)? {
+        let ent = ent?;
+        if ent.file_name() == ".git" {
+            continue;
+        }
+        let path = ent.path();
+        let rel = path
+            .strip_prefix(work)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace('\\', "/");
+        let is_dir = path.is_dir();
+        if indexed.contains(&rel) {
+            continue;
+        }
+        let has_tracked = is_dir && indexed.iter().any(|p| p.starts_with(&format!("{rel}/")));
+        if ig.is_ignored(&rel, is_dir) && !has_tracked {
+            out.push(if is_dir { format!("{rel}/") } else { rel });
+        } else if is_dir {
+            ignored_rec(work, &path, indexed, ig, out)?;
+        }
+    }
+    Ok(())
 }
 
 fn label(code: char) -> &'static str {
@@ -198,6 +249,17 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
             "  (use \"git add <file>...\" to include in what will be committed)"
         )?;
         for p in &d.untracked {
+            writeln!(out, "\t{}", d.show(p))?;
+        }
+        writeln!(out)?;
+    }
+    if !d.ignored.is_empty() {
+        writeln!(out, "Ignored files:")?;
+        writeln!(
+            out,
+            "  (use \"git add -f <file>...\" to include in what will be committed)"
+        )?;
+        for p in &d.ignored {
             writeln!(out, "\t{}", d.show(p))?;
         }
         writeln!(out)?;
