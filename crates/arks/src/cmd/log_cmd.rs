@@ -46,6 +46,15 @@ struct LogOpts {
     authors: Vec<Bre>,
     greps: Vec<Bre>,
     revs: Vec<String>,
+    /// `-S<string>` / `-G<regex>` pickaxe.
+    pickaxe_s: Option<String>,
+    pickaxe_g: Option<Bre>,
+    /// `--since`/`--after` and `--until`/`--before` (committer date, unix).
+    since: Option<i64>,
+    until: Option<i64>,
+    left_right: bool,
+    /// `--diff-filter=<letters>` (upper = include, lower = exclude).
+    diff_filter: Option<String>,
 }
 
 fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
@@ -70,6 +79,17 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         authors: Vec::new(),
         greps: Vec::new(),
         revs: Vec::new(),
+        pickaxe_s: None,
+        pickaxe_g: None,
+        since: None,
+        until: None,
+        left_right: false,
+        diff_filter: None,
+    };
+    let date_arg = |v: &str| -> CliResult<i64> {
+        crate::cmd::shared::parse_git_date(v)
+            .map(|(t, _)| t)
+            .ok_or_else(|| CliError::NotImplemented(format!("unsupported date: {v}")))
     };
     let mut icase = false;
     let mut author_pats = Vec::new();
@@ -107,6 +127,27 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
             author_pats.push(v);
         } else if let Some(v) = value("--grep")? {
             grep_pats.push(v);
+        } else if let Some(v) = value("--since")?.or(value("--after")?) {
+            o.since = Some(date_arg(&v)?);
+        } else if let Some(v) = value("--until")?.or(value("--before")?) {
+            o.until = Some(date_arg(&v)?);
+        } else if let Some(v) = value("--diff-filter")? {
+            o.diff_filter = Some(v);
+        } else if a == "-S" || a == "-G" {
+            let v = head
+                .get(i)
+                .cloned()
+                .ok_or_else(|| CliError::fatal(format!("switch `{}' requires a value", &a[1..])))?;
+            i += 1;
+            if a == "-S" {
+                o.pickaxe_s = Some(v);
+            } else {
+                o.pickaxe_g = Some(Bre::with_mode(&v, false, true));
+            }
+        } else if let Some(v) = a.strip_prefix("-S").filter(|r| !r.is_empty()) {
+            o.pickaxe_s = Some(v.to_string());
+        } else if let Some(v) = a.strip_prefix("-G").filter(|r| !r.is_empty()) {
+            o.pickaxe_g = Some(Bre::with_mode(v, false, true));
         } else if a == "-n" {
             let v = head
                 .get(i)
@@ -130,6 +171,10 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
                 "--merges" => o.merges_only = true,
                 "--reverse" => o.reverse = true,
                 "--all" => o.all = true,
+                "--left-right" => o.left_right = true,
+                // Rename following is not claimed; with no renames in the
+                // walked history this is the plain pathspec limit.
+                "--follow" => {}
                 "--decorate" | "--decorate=short" => o.decorate = true,
                 "--no-decorate" | "--no-color" | "--color=never" => o.decorate = false,
                 "-i" | "--regexp-ignore-case" => icase = true,
@@ -250,6 +295,8 @@ struct Printer<'a> {
     shown_one: bool,
     /// `show` (not `log`): merges get a separator before their empty --cc diff.
     show_merge: bool,
+    /// `--left-right` side mark for the current commit.
+    mark: Option<char>,
 }
 
 impl Printer<'_> {
@@ -260,24 +307,82 @@ impl Printer<'_> {
         } else {
             format!(" ({deco})")
         };
+        let mark = self.mark.map(|m| format!("{m} ")).unwrap_or_default();
+        let commit_line = || {
+            let mut s = format!("commit {mark}{}{deco}\n", oid.to_hex());
+            if c.parents.len() > 1 {
+                let ps: Vec<String> = c
+                    .parents
+                    .iter()
+                    .map(|p| p.to_hex()[..7].to_string())
+                    .collect();
+                s.push_str(&format!("Merge: {}\n", ps.join(" ")));
+            }
+            s
+        };
         match &self.opts.pretty {
             Pretty::Default => {
-                let mut s = format!("commit {}{deco}\n", oid.to_hex());
-                if c.parents.len() > 1 {
-                    let ps: Vec<String> = c
-                        .parents
-                        .iter()
-                        .map(|p| p.to_hex()[..7].to_string())
-                        .collect();
-                    s.push_str(&format!("Merge: {}\n", ps.join(" ")));
-                }
+                let mut s = commit_line();
                 s.push_str(&person_line("Author: ", &c.author));
                 s.push_str(&format!("Date:   {}\n", self.opts.date.format(&c.author)));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
                 s
             }
-            Pretty::Oneline => format!("{}{deco} {}\n", &oid.to_hex()[..7], c.subject()),
+            // pretty-formats: short = author + title; full adds the
+            // committer; fuller adds both dates; raw is the object header.
+            Pretty::Short => {
+                let mut s = commit_line();
+                s.push_str(&person_line("Author: ", &c.author));
+                s.push('\n');
+                s.push_str(&indented_message(&crate::cmd::log_format::subject_line(
+                    &c.message,
+                )));
+                s
+            }
+            Pretty::Full => {
+                let mut s = commit_line();
+                s.push_str(&person_line("Author: ", &c.author));
+                s.push_str(&person_line("Commit: ", &c.committer));
+                s.push('\n');
+                s.push_str(&indented_message(&c.message));
+                s
+            }
+            Pretty::Fuller => {
+                let mut s = commit_line();
+                s.push_str(&person_line("Author:     ", &c.author));
+                s.push_str(&format!(
+                    "AuthorDate: {}\n",
+                    self.opts.date.format(&c.author)
+                ));
+                s.push_str(&person_line("Commit:     ", &c.committer));
+                s.push_str(&format!(
+                    "CommitDate: {}\n",
+                    self.opts.date.format(&c.committer)
+                ));
+                s.push('\n');
+                s.push_str(&indented_message(&c.message));
+                s
+            }
+            Pretty::Raw => {
+                let mut s = format!("commit {mark}{}{deco}\n", oid.to_hex());
+                s.push_str(&format!("tree {}\n", c.tree.to_hex()));
+                for p in &c.parents {
+                    s.push_str(&format!("parent {}\n", p.to_hex()));
+                }
+                let sig = |l: &str, g: &Signature| {
+                    format!(
+                        "{l} {} <{}> {} {}\n",
+                        g.name, g.email, g.timestamp, g.timezone
+                    )
+                };
+                s.push_str(&sig("author", &c.author));
+                s.push_str(&sig("committer", &c.committer));
+                s.push('\n');
+                s.push_str(&indented_message(&c.message));
+                s
+            }
+            Pretty::Oneline => format!("{mark}{}{deco} {}\n", &oid.to_hex()[..7], c.subject()),
             Pretty::TFormat(f) => format!("{}\n", expand_ctx(f, oid, c, &self.ctx)),
             Pretty::Format(f) => expand_ctx(f, oid, c, &self.ctx),
         }
@@ -328,6 +433,101 @@ impl Printer<'_> {
         }
         Ok(())
     }
+}
+
+fn change_status(c: &crate::cmd::diff_render::Change) -> char {
+    match (c.old.is_some(), c.new.is_some()) {
+        (false, _) => 'A',
+        (_, false) => 'D',
+        _ => 'M',
+    }
+}
+
+/// git `--diff-filter`: upper-case letters select, lower-case exclude.
+fn status_passes(st: char, filter: &str) -> bool {
+    let includes: Vec<char> = filter.chars().filter(|c| c.is_ascii_uppercase()).collect();
+    let excluded = filter.contains(st.to_ascii_lowercase());
+    (includes.is_empty() || includes.contains(&st)) && !excluded
+}
+
+/// Commit limiting by its diff (first parent; merges have none):
+/// `-S` (occurrence count of the string changes in some file), `-G` (an
+/// added or removed line matches) and `--diff-filter`.
+/// Cite: https://git-scm.com/docs/git-log#Documentation/git-log.txt--Sltstringgt
+fn diff_selects(
+    repo: &Repository,
+    oid: &Oid,
+    c: &Commit,
+    specs: &[String],
+    o: &LogOpts,
+) -> CliResult<bool> {
+    if c.parents.len() > 1 {
+        return Ok(false);
+    }
+    let mut changes = commit_changes(repo, oid, c, specs)?;
+    if let Some(f) = &o.diff_filter {
+        changes.retain(|x| status_passes(change_status(x), f));
+        if changes.is_empty() {
+            return Ok(false);
+        }
+    }
+    let blob = |x: &Option<Oid>| -> CliResult<Vec<u8>> {
+        Ok(match x {
+            Some(b) => repo.get_object(b)?.payload,
+            None => Vec::new(),
+        })
+    };
+    if let Some(needle) = &o.pickaxe_s {
+        let count = |hay: &[u8]| -> usize {
+            let n = needle.as_bytes();
+            if n.is_empty() {
+                return 0;
+            }
+            hay.windows(n.len()).filter(|w| *w == n).count()
+        };
+        let mut hit = false;
+        for x in &changes {
+            if count(&blob(&x.old)?) != count(&blob(&x.new)?) {
+                hit = true;
+                break;
+            }
+        }
+        if !hit {
+            return Ok(false);
+        }
+    }
+    if let Some(re) = &o.pickaxe_g {
+        let mut hit = false;
+        for x in &changes {
+            let (a, b) = (blob(&x.old)?, blob(&x.new)?);
+            let al: Vec<&[u8]> = a.split_inclusive(|c| *c == b'\n').collect();
+            let bl: Vec<&[u8]> = b.split_inclusive(|c| *c == b'\n').collect();
+            let matched = crate::cmd::unified_diff::matched_lines(&al, &bl);
+            let kept: std::collections::HashSet<usize> =
+                matched.iter().flatten().copied().collect();
+            let added = bl
+                .iter()
+                .zip(&matched)
+                .filter(|(_, m)| m.is_none())
+                .map(|(l, _)| *l);
+            let removed = al
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| !kept.contains(i))
+                .map(|(_, l)| *l);
+            if added
+                .chain(removed)
+                .any(|l| re.is_match(l.strip_suffix(b"\n").unwrap_or(l)))
+            {
+                hit = true;
+                break;
+            }
+        }
+        if !hit {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 /// Diff of a commit against its first parent (root: against the empty tree).
@@ -385,6 +585,16 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
         if (opts.no_merges && c.parents.len() > 1) || (opts.merges_only && c.parents.len() < 2) {
             continue;
         }
+        if opts.since.is_some_and(|t| c.committer.timestamp < t)
+            || opts.until.is_some_and(|t| c.committer.timestamp > t)
+        {
+            continue;
+        }
+        if (opts.pickaxe_s.is_some() || opts.pickaxe_g.is_some() || opts.diff_filter.is_some())
+            && !diff_selects(&repo, &oid, &c, &specs, &opts)?
+        {
+            continue;
+        }
         if !opts.authors.is_empty() {
             let who = format!("{} <{}>", c.author.name, c.author.email);
             if !opts.authors.iter().any(|r| r.is_match(who.as_bytes())) {
@@ -415,6 +625,21 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
     } else {
         None
     };
+    // `--left-right` marks: commits reachable from the left side of `A...B`.
+    let left = if opts.left_right {
+        match revs.iter().find_map(|r| r.split_once("...")) {
+            Some((l, _)) => {
+                let l = resolve_rev(&repo, if l.is_empty() { "HEAD" } else { l })?;
+                Some(arks_repo::ancestor_set(
+                    &repo,
+                    crate::cmd::shared::peel_tags(&repo, &l)?,
+                )?)
+            }
+            None => None,
+        }
+    } else {
+        None
+    };
     let mut printer = Printer {
         repo: &repo,
         opts: &opts,
@@ -424,14 +649,22 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
         },
         shown_one: false,
         show_merge: false,
+        mark: None,
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
     for (oid, c) in &selected {
         let changes = if opts.diff.any() && c.parents.len() < 2 {
-            commit_changes(&repo, oid, c, &specs)?
+            let mut ch = commit_changes(&repo, oid, c, &specs)?;
+            if let Some(f) = &opts.diff_filter {
+                ch.retain(|x| status_passes(change_status(x), f));
+            }
+            ch
         } else {
             Vec::new()
         };
+        printer.mark = left
+            .as_ref()
+            .map(|l| if l.contains(oid) { '<' } else { '>' });
         printer.commit(&mut out, oid, c, &changes)?;
     }
     out.flush()?;
@@ -471,6 +704,7 @@ pub fn cmd_show(args: &[String]) -> CliResult<()> {
         },
         shown_one: false,
         show_merge: true,
+        mark: None,
     };
     for rev in &revs {
         let mut oid = resolve_rev(&repo, rev)?;
