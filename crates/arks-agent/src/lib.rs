@@ -901,8 +901,6 @@ fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, Str
         let rest = rest.trim_end_matches('/');
         if rest.is_empty() {
             "/v1/chat/completions".into()
-        } else if rest.ends_with("/v1") {
-            format!("/{rest}/chat/completions")
         } else {
             format!("/{rest}/chat/completions")
         }
@@ -1735,14 +1733,12 @@ fn ensure_chat_body(req_body: &str, default_model: &str, stream: bool) -> String
             // Inject model after opening brace.
             body.insert_str(1, &format!("\"model\":{},", json_escape(default_model)));
         }
-        if stream && !chat_body_wants_stream(&body) {
-            if body.ends_with('}') {
-                body.pop();
-                if !body.trim_end().ends_with(',') && body.len() > 1 {
-                    body.push(',');
-                }
-                body.push_str("\"stream\":true}");
+        if stream && !chat_body_wants_stream(&body) && body.ends_with('}') {
+            body.pop();
+            if !body.trim_end().ends_with(',') && body.len() > 1 {
+                body.push(',');
             }
+            body.push_str("\"stream\":true}");
         }
         if !stream && chat_body_wants_stream(&body) {
             body = body.replace("\"stream\":true", "\"stream\":false");
@@ -1774,11 +1770,8 @@ fn chat_completions_path(base_url: &str) -> String {
         let rest = rest.trim_end_matches('/');
         if rest.is_empty() {
             return "/v1/chat/completions".into();
-        } else if rest.ends_with("/v1") {
-            return format!("/{rest}/chat/completions");
-        } else {
-            return format!("/{rest}/chat/completions");
         }
+        return format!("/{rest}/chat/completions");
     }
     "/v1/chat/completions".into()
 }

@@ -79,23 +79,6 @@ pub fn dispatch_overlap(personality: Personality, leaf: &str, args: &[String]) -
     FacadeOutcome { exit }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn peer_mode_flags() {
-        let args = vec!["--git-only".into(), "-sb".into()];
-        assert_eq!(PeerMode::from_args(&args).0, PeerMode::GitOnly);
-        let args = vec!["--forge-only".into(), "list".into()];
-        assert_eq!(PeerMode::from_args(&args).0, PeerMode::ForgeOnly);
-        let args = vec!["--porcelain".into()];
-        let (m, rest) = PeerMode::from_args(&args);
-        assert_eq!(m, PeerMode::GitOnly);
-        assert_eq!(rest, vec!["--porcelain".to_string()]);
-    }
-}
-
 fn run_git(leaf: &str, args: &[String]) -> LayerOutcome {
     match dispatch_git_leaf(leaf, args) {
         Ok(()) => LayerOutcome::Success,
@@ -122,5 +105,22 @@ fn run_forge(leaf: &str, args: &[String]) -> LayerOutcome {
         LayerOutcome::StubOrUsage
     } else {
         LayerOutcome::Failed
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn peer_mode_flags() {
+        let args = vec!["--git-only".into(), "-sb".into()];
+        assert_eq!(PeerMode::from_args(&args).0, PeerMode::GitOnly);
+        let args = vec!["--forge-only".into(), "list".into()];
+        assert_eq!(PeerMode::from_args(&args).0, PeerMode::ForgeOnly);
+        let args = vec!["--porcelain".into()];
+        let (m, rest) = PeerMode::from_args(&args);
+        assert_eq!(m, PeerMode::GitOnly);
+        assert_eq!(rest, vec!["--porcelain".to_string()]);
     }
 }

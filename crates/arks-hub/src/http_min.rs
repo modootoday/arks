@@ -2,6 +2,7 @@
 //!
 //! - `http://` loopback: raw `TcpStream` (local forge).
 //! - `https://` remote: `ureq` TLS path; operator CA via `ARKS_HUB_CA_FILE` (B3 harness).
+//!
 //! Never spawns `gh` / `git`.
 
 use std::env;

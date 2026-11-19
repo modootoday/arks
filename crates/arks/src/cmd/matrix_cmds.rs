@@ -804,7 +804,10 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-fn load_gitattributes(work: &Path) -> CliResult<Vec<(String, Vec<(String, String)>)>> {
+/// `.gitattributes` lines as (pattern, [(attr, value)]).
+type AttrRules = Vec<(String, Vec<(String, String)>)>;
+
+fn load_gitattributes(work: &Path) -> CliResult<AttrRules> {
     let path = work.join(".gitattributes");
     let text = match fs::read_to_string(&path) {
         Ok(t) => t,
@@ -1409,7 +1412,7 @@ pub fn cmd_mailinfo(args: &[String]) -> CliResult<()> {
     let mut msg = String::new();
     if !author.is_empty() {
         // Author Name <email> — best-effort
-        if let Some((name, email)) = parse_from(&author) {
+        if let Some((name, email)) = parse_from(author) {
             msg.push_str(&format!("Author: {name}\n"));
             msg.push_str(&format!("Email: {email}\n"));
         } else {
@@ -1426,7 +1429,7 @@ pub fn cmd_mailinfo(args: &[String]) -> CliResult<()> {
     fs::write(msg_out, msg)?;
     fs::write(patch_out, patch_body)?;
     // git mailinfo prints Author/Email/Subject on stdout
-    if let Some((name, email)) = parse_from(&author) {
+    if let Some((name, email)) = parse_from(author) {
         println!("Author: {name}");
         println!("Email: {email}");
     }
@@ -1436,11 +1439,11 @@ pub fn cmd_mailinfo(args: &[String]) -> CliResult<()> {
 
 fn split_mail_headers(raw: &str) -> (Vec<(String, String)>, &str) {
     let mut headers = Vec::new();
-    let mut lines = raw.split_inclusive('\n');
+    let lines = raw.split_inclusive('\n');
     let mut body_start = 0usize;
     let bytes = raw.as_bytes();
     let mut offset = 0usize;
-    while let Some(line) = lines.next() {
+    for line in lines {
         let trimmed = line.trim_end_matches(['\r', '\n']);
         if trimmed.is_empty() {
             offset += line.len();

@@ -12,8 +12,8 @@ use arks_server::{
     BasicAuthConfig, DaemonOptions, HttpRequest, ListenRebindSlot, ProductTlsServerConfig,
     ServeHttpOptions, ServeSshOptions, default_authorized_keys_path, default_host_key_path,
     handle_smart_http_auth, load_server_config, receive_pack_session, serve_daemon,
-    serve_daemon_inetd, serve_http_scheme, serve_http_with_opts, spawn_ssh_listener,
-    spawn_loopback_ssh, update_server_info, upload_pack_session,
+    serve_daemon_inetd, serve_http_scheme, serve_http_with_opts, spawn_loopback_ssh,
+    spawn_ssh_listener, update_server_info, upload_pack_session,
 };
 use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -22,6 +22,11 @@ use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
+
+/// Background SSH listener thread handle.
+type SshListener = std::thread::JoinHandle<Result<(), arks_server::ServerError>>;
+/// Background forge listener thread handle.
+type ForgeListener = std::thread::JoinHandle<Result<(), String>>;
 
 pub fn cmd_upload_pack(args: &[String]) -> CliResult<()> {
     let dir = require_dir(args)?;
@@ -292,10 +297,7 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
 
     // IW-FORGE-SERVE Partial: default cohost must not silent-cut forge/HTTP when SSH is on.
     // Background modules + main blocker; bind failure fail-closed (SoT §17).
-    let mut ssh_join: Option<(
-        Arc<AtomicBool>,
-        std::thread::JoinHandle<Result<(), arks_server::ServerError>>,
-    )> = None;
+    let mut ssh_join: Option<(Arc<AtomicBool>, SshListener)> = None;
     if enable_ssh {
         let ssh_listen: SocketAddr = ssh_listen_cfg
             .parse()
@@ -313,10 +315,7 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         ssh_join = Some(spawned);
     }
 
-    let mut forge_join: Option<(
-        Arc<AtomicBool>,
-        std::thread::JoinHandle<Result<(), String>>,
-    )> = None;
+    let mut forge_join: Option<(Arc<AtomicBool>, ForgeListener)> = None;
     if let Some(opts) = forge_opts.as_mut() {
         if !enable_http && !enable_ssh {
             // Forge-only: block on main.
@@ -324,7 +323,7 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             opts.rebind_desired = Some(forge_slot);
             install_serve_config_sighup_partial("arks serve forge-only");
             let stop = Arc::new(AtomicBool::new(false));
-            let result = serve_forge_api(opts.clone(), stop).map_err(|e| CliError::Msg(e));
+            let result = serve_forge_api(opts.clone(), stop).map_err(CliError::Msg);
             clear_live_forge_rebind_slot();
             return result;
         }
@@ -417,7 +416,7 @@ fn resolve_product_tls_from_args(args: &[String]) -> CliResult<Option<ProductTls
                         CliError::Usage("serve --tls-cert needs PATH".into())
                     })?));
             }
-            ref s if s.starts_with("--tls-cert=") => tls_cert = Some(PathBuf::from(&s[11..])),
+            s if s.starts_with("--tls-cert=") => tls_cert = Some(PathBuf::from(&s[11..])),
             "--tls-key" => {
                 i += 1;
                 tls_key =
@@ -425,7 +424,7 @@ fn resolve_product_tls_from_args(args: &[String]) -> CliResult<Option<ProductTls
                         CliError::Usage("serve --tls-key needs PATH".into())
                     })?));
             }
-            ref s if s.starts_with("--tls-key=") => tls_key = Some(PathBuf::from(&s[10..])),
+            s if s.starts_with("--tls-key=") => tls_key = Some(PathBuf::from(&s[10..])),
             _ => {}
         }
         i += 1;

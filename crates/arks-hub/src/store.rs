@@ -420,6 +420,7 @@ impl HubStore {
         pull
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_pull_draft(
         &mut self,
         owner: &str,
@@ -445,6 +446,7 @@ impl HubStore {
         pull
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn patch_issue(
         &mut self,
         owner: &str,
@@ -510,6 +512,7 @@ impl HubStore {
         Some(issue.clone())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn patch_pull(
         &mut self,
         owner: &str,
@@ -601,13 +604,28 @@ impl HubStore {
         repo.name = new_name.into();
         let out = repo.clone();
         // Retarget issues/pulls/labels under old name.
-        for i in self.db.issues.iter_mut().filter(|i| i.owner == owner && i.repo == name) {
+        for i in self
+            .db
+            .issues
+            .iter_mut()
+            .filter(|i| i.owner == owner && i.repo == name)
+        {
             i.repo = new_name.into();
         }
-        for p in self.db.pulls.iter_mut().filter(|p| p.owner == owner && p.repo == name) {
+        for p in self
+            .db
+            .pulls
+            .iter_mut()
+            .filter(|p| p.owner == owner && p.repo == name)
+        {
             p.repo = new_name.into();
         }
-        for l in self.db.labels.iter_mut().filter(|l| l.owner == owner && l.repo == name) {
+        for l in self
+            .db
+            .labels
+            .iter_mut()
+            .filter(|l| l.owner == owner && l.repo == name)
+        {
             l.repo = new_name.into();
         }
         Some(out)
@@ -615,17 +633,26 @@ impl HubStore {
 
     pub fn delete_repo(&mut self, owner: &str, name: &str) -> bool {
         let before = self.db.repos.len();
-        self.db.repos.retain(|r| !(r.owner == owner && r.name == name));
+        self.db
+            .repos
+            .retain(|r| !(r.owner == owner && r.name == name));
         if self.db.repos.len() == before {
             return false;
         }
-        self.db.issues.retain(|i| !(i.owner == owner && i.repo == name));
-        self.db.pulls.retain(|p| !(p.owner == owner && p.repo == name));
-        self.db.labels.retain(|l| !(l.owner == owner && l.repo == name));
-        self.db.releases.retain(|r| !(r.owner == owner && r.repo == name));
+        self.db
+            .issues
+            .retain(|i| !(i.owner == owner && i.repo == name));
+        self.db
+            .pulls
+            .retain(|p| !(p.owner == owner && p.repo == name));
+        self.db
+            .labels
+            .retain(|l| !(l.owner == owner && l.repo == name));
+        self.db
+            .releases
+            .retain(|r| !(r.owner == owner && r.repo == name));
         true
     }
-
 
     /// Metadata-only merge: marks pull merged+closed. Never touches git objects.
     pub fn merge_pull(&mut self, owner: &str, repo: &str, number: u64) -> Option<Pull> {
@@ -639,13 +666,7 @@ impl HubStore {
         Some(pull.clone())
     }
 
-    pub fn create_comment(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        number: u64,
-        body: &str,
-    ) -> Comment {
+    pub fn create_comment(&mut self, owner: &str, repo: &str, number: u64, body: &str) -> Comment {
         if self.db.next_comment == 0 {
             self.db.next_comment = 1;
         }
@@ -697,12 +718,7 @@ impl HubStore {
         self.db.labels.len() != before
     }
 
-    pub fn find_release(
-        &self,
-        owner: &str,
-        repo: &str,
-        tag_or_id: &str,
-    ) -> Option<&Release> {
+    pub fn find_release(&self, owner: &str, repo: &str, tag_or_id: &str) -> Option<&Release> {
         if let Ok(id) = tag_or_id.parse::<u64>() {
             if let Some(r) = self
                 .db
@@ -875,7 +891,8 @@ impl HubStore {
         };
         self.db.runs.push(run.clone());
         // Seed a tiny artifact so `run download` has local-forge bytes (≠ CI compute).
-        let _ = self.attach_run_artifact(owner, repo, id, "logs.txt", b"arks-local-forge-run-log\n");
+        let _ =
+            self.attach_run_artifact(owner, repo, id, "logs.txt", b"arks-local-forge-run-log\n");
         run
     }
 
@@ -925,9 +942,7 @@ impl HubStore {
             }
         }
         self.db.workflows.iter().find(|w| {
-            w.owner == owner
-                && w.repo == repo
-                && (w.path == id_or_path || w.name == id_or_path)
+            w.owner == owner && w.repo == repo && (w.path == id_or_path || w.name == id_or_path)
         })
     }
 
@@ -985,9 +1000,7 @@ impl HubStore {
         name: &str,
         bytes: &[u8],
     ) -> Option<RunArtifact> {
-        if self.find_run(owner, repo, run_id).is_none() {
-            return None;
-        }
+        self.find_run(owner, repo, run_id)?;
         if self.db.next_artifact == 0 {
             self.db.next_artifact = 1;
         }
@@ -1125,7 +1138,6 @@ impl HubStore {
         }
         true
     }
-
 
     pub fn create_milestone(
         &mut self,
