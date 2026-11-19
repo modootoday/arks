@@ -11,10 +11,15 @@
 
 #![forbid(unsafe_code)]
 
+mod client;
+mod forge_catalog;
+mod forge_git;
+mod forge_repo_issue;
 mod http_min;
 mod local_tls_smoke;
 pub mod serve;
 mod store;
+mod store_repo_issue;
 
 use http_min::{http_exchange, http_exchange_bytes};
 use serde_json::{Value, json};
@@ -938,10 +943,12 @@ fn cmd_issue(args: &[String]) -> ExitCode {
         "" | "-h" | "--help" => {
             eprintln!(
                 "arks hub issue — list|view|create|close|reopen|edit|comment|status|delete|\
-                 lock|unlock|pin|unpin|transfer (local hub REST)"
+                 lock|unlock|pin|unpin|transfer|develop|artifact (local hub REST)"
             );
             ExitCode::SUCCESS
         }
+        "artifact" => client::issue_artifact::run(&args[1..]),
+        "develop" => client::issue_develop::run(&args[1..]),
         "lock" | "unlock" | "pin" | "unpin" => {
             let (base, tok) = match require_local_api() {
                 Ok(v) => v,
@@ -1289,8 +1296,9 @@ fn cmd_repo(args: &[String]) -> ExitCode {
     match sub {
         "" | "-h" | "--help" => {
             eprintln!(
-                "arks hub repo — list|view|create|edit|set-default|archive|unarchive|rename|delete \
-                 (local hub REST metadata; never spawn git/gh)"
+                "arks hub repo — list|view|create|edit|set-default|archive|unarchive|rename|delete|\
+                 clone|sync|read-dir|read-file|gitignore|license|autolink|deploy-key \
+                 (forge REST + in-process git; never spawn git/gh)"
             );
             ExitCode::SUCCESS
         }
@@ -1584,10 +1592,14 @@ fn cmd_repo(args: &[String]) -> ExitCode {
             );
             ExitCode::from(2)
         }
-        "clone" | "sync" => {
-            eprintln!("arks hub repo {sub}: Deferred — MUST NOT spawn git/gh");
-            ExitCode::from(2)
-        }
+        "clone" => client::repo_clone_sync::clone(&args[1..]),
+        "sync" => client::repo_clone_sync::sync(&args[1..]),
+        "read-dir" => client::repo_contents::read_dir(&args[1..]),
+        "read-file" => client::repo_contents::read_file(&args[1..]),
+        "gitignore" => client::repo_catalog::gitignore(&args[1..]),
+        "license" => client::repo_catalog::license(&args[1..]),
+        "autolink" => client::repo_keys_links::autolink(&args[1..]),
+        "deploy-key" => client::repo_keys_links::deploy_key(&args[1..]),
         other => {
             eprintln!(
                 "arks hub repo {other}: Partial stub (not Claimed); refuse exit 2 — \

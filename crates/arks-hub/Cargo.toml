@@ -18,3 +18,14 @@ ureq = { workspace = true }
 arks-net = { workspace = true }
 rustls = { workspace = true }
 rustls-pemfile = { workspace = true }
+# In-process Git for `repo clone|sync|read-*`, `issue develop` (never spawn git).
+arks-remote = { workspace = true }
+arks-repo = { workspace = true }
+arks-refs = { workspace = true }
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+arks-index = { workspace = true }
+base64 = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -78,6 +78,22 @@ pub struct HubDb {
     pub comments: Vec<Comment>,
     #[serde(default)]
     pub reviews: Vec<Review>,
+    #[serde(default)]
+    pub next_autolink: u64,
+    #[serde(default)]
+    pub next_deploy_key: u64,
+    #[serde(default)]
+    pub next_issue_artifact: u64,
+    #[serde(default)]
+    pub next_linked_branch: u64,
+    #[serde(default)]
+    pub autolinks: Vec<crate::store_repo_issue::Autolink>,
+    #[serde(default)]
+    pub deploy_keys: Vec<crate::store_repo_issue::DeployKey>,
+    #[serde(default)]
+    pub issue_artifacts: Vec<crate::store_repo_issue::IssueArtifact>,
+    #[serde(default)]
+    pub linked_branches: Vec<crate::store_repo_issue::LinkedBranch>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -977,7 +993,8 @@ impl HubStore {
         Some(self.create_run(owner, repo, &wf.name, r#ref))
     }
 
-    fn data_root(&self) -> PathBuf {
+    /// Forge data directory (holds `db.json`, blobs and hosted bare repos under `git/`).
+    pub fn data_root(&self) -> PathBuf {
         self.path
             .parent()
             .map(Path::to_path_buf)
@@ -1292,7 +1309,6 @@ impl HubStore {
     }
 }
 
-#[allow(dead_code)] // reserved for future Partial timestamps on forge resources
 pub fn now_secs() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

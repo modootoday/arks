@@ -341,6 +341,14 @@ fn handle_client<S: Read + Write>(
         );
     }
 
+    // C8 repo/issue rows: catalogs, autolinks, deploy keys, contents, issue
+    // artifacts, linked-branch GraphQL ([[sot:root/arks-hub-repo-issue-depth]]).
+    if let Some((status, body)) =
+        crate::forge_repo_issue::route(&mut st, &req.method, &path, &query, &req.body)?
+    {
+        return respond(stream, status, &body);
+    }
+
     if req.method == "GET" && path == "/user/repos" {
         let repos: Vec<Value> = st
             .db
@@ -394,19 +402,23 @@ fn handle_client<S: Read + Write>(
                     .iter()
                     .find(|r| r.owner == owner && r.name == repo)
                 {
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "id": r.id,
-                            "name": r.name,
-                            "full_name": format!("{}/{}", r.owner, r.name),
-                            "private": r.private,
-                            "description": r.description,
-                            "archived": r.archived,
-                            "owner": {"login": r.owner},
-                        }),
-                    );
+                    let mut body = json!({
+                        "id": r.id,
+                        "name": r.name,
+                        "full_name": format!("{}/{}", r.owner, r.name),
+                        "private": r.private,
+                        "description": r.description,
+                        "archived": r.archived,
+                        "owner": {"login": r.owner},
+                    });
+                    if let Some(m) = body.as_object_mut() {
+                        m.extend(crate::forge_git::repo_git_fields(
+                            &st.data_root(),
+                            &r.owner,
+                            &r.name,
+                        ));
+                    }
+                    return respond(stream, 200, &body);
                 }
                 return respond(stream, 404, &json!({"message":"Not Found"}));
             }
@@ -1670,6 +1682,7 @@ fn respond<S: Write>(stream: &mut S, status: u16, body: &serde_json::Value) -> R
         201 => "Created",
         202 => "Accepted",
         204 => "No Content",
+        400 => "Bad Request",
         401 => "Unauthorized",
         404 => "Not Found",
         422 => "Unprocessable Entity",

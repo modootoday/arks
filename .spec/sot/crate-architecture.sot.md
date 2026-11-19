@@ -3,7 +3,7 @@ id: sot:root/crate-architecture
 title: Crate architecture
 status: active
 created: 2026-11-08T08:21:10Z
-updated: 2026-11-10T05:20:30Z
+updated: 2026-11-19T21:00:00Z
 tags: [crates, architecture, rust, bottom-up, engine]
 verify: manual
 rel:
@@ -14,7 +14,7 @@ rel:
 
 # Crate architecture
 
-Version 0.2.12. Normative **workspace crate graph** and **inner → outer dependency rule** for arks. Product name / primary crate / bin: [[sot:root/product-naming]]. Build principle: [[sot:root/product-intent]]. Compatibility envelope: [[sot:root/git-compat-surface]]. Native engine + zero-`gix` end state: [[adr:root/20261108083507]]. CELIR dual-path (index-only opt-in): [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]].
+Version 0.2.13. Normative **workspace crate graph** and **inner → outer dependency rule** for arks. Product name / primary crate / bin: [[sot:root/product-naming]]. Build principle: [[sot:root/product-intent]]. Compatibility envelope: [[sot:root/git-compat-surface]]. Native engine + zero-`gix` end state: [[adr:root/20261108083507]]. CELIR dual-path (index-only opt-in): [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]].
 
 Convention affinity (cite, do not fork): humanymous crate-architecture patterns at `C:\workspaces\humanymous\.spec\sot\crate-architecture.sot.md` — kebab-case packages, acyclic responsibility graph, no artificial fragmentation. Cross-cutting SRP / flat-list / context-dir / language-standard layout rules: [[sot:root/structural-conventions]].
 
@@ -83,6 +83,7 @@ Workspace members present: `crates/arks-hash`, `crates/arks-oid`, `crates/arks-o
 arks (sole published CLI) → arks-repo, arks-protocol, arks-remote?, arks-server?, arks-daemon?, arks-hub?, arks-agent?, arks-lease?, …
 arks-remote, arks-hub → arks-net → arks-config (HTTPS policy; no other arks deps)
 arks-hub (internal lib) → native HTTP forge client; used by `arks hub`; MUST NOT spawn gh/git
+arks-hub → arks-remote, arks-repo, arks-refs, arks-index, arks-object, arks-oid (in-process clone/fetch/fast-forward + local forge contents for `repo clone|sync|read-*`, `issue develop`; [[sot:root/arks-hub-repo-issue-depth]])
 arks-agent (internal lib) → LLM providers + optional arks-hub for PR comments; used by `arks agent`; MUST NOT spawn gh/git/vendor CLIs
 arks-daemon (internal lib) → git-daemon symmetry; used by `arks daemon`; MUST NOT spawn git/gh
 arks-remote → arks-protocol, arks-repo (or store+refs)
