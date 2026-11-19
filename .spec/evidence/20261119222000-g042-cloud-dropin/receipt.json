@@ -1,0 +1,8 @@
+{
+  "gate": "g042-cloud-dropin",
+  "git": "git version 2.39.5",
+  "tip": "34367a5",
+  "must_failures": 0,
+  "rows": {"T-CLONE-VIA-PROXY":"PASS","T-PROXY-USED":"PASS","C-IDENTITY-CONFIG":"PASS","W-BRANCH":"PASS","W-COMMIT-AM":"PASS","S-GPGSIG":"PASS","S-VERIFY-COMMIT":"PASS","C-AUTHOR":"PASS","W-PUSH-U":"PASS","W-FETCH-HEAD":"PASS","W-MERGE":"PASS","O-PEER-CLONE":"PASS","O-PEER-FSCK":"PASS","O-PEER-VERIFY":"PASS","O-PEER-TIP":"PASS"},
+  "corpus": {"corpus":"agent-tier-a.txt","git":"git version 2.39.5","lines":147,"same":146,"diff":1}
+}

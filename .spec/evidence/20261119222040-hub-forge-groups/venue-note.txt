@@ -1,0 +1,8 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip 34367a5,
+run 2026-11-19 inside a hosted cloud session with a local dockerd.
+Cargo ran offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted
+read-only at /usr/local/cargo/registry, because the container could not use the
+session egress proxy. Dependencies are pinned and checksummed by Cargo.lock; the
+build and every gate step ran inside the image. Override file (session-local, not
+tracked): services g042-cloud-dropin / dod-hub-matrix / dod-daemon-matrix add that
+volume and env only.

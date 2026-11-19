@@ -1,0 +1,49 @@
+{
+  "projects": [
+    {
+      "closed": true,
+      "fields": {
+        "totalCount": 1
+      },
+      "id": "1",
+      "items": {
+        "totalCount": 1
+      },
+      "linkedRepositories": [],
+      "number": 1,
+      "owner": {
+        "login": "local",
+        "type": "User"
+      },
+      "public": true,
+      "readme": "",
+      "shortDescription": "short",
+      "template": true,
+      "title": "Roadmap",
+      "url": "http://127.0.0.1:48291/users/local/projectsV2/1"
+    },
+    {
+      "closed": false,
+      "fields": {
+        "totalCount": 2
+      },
+      "id": "2",
+      "items": {
+        "totalCount": 1
+      },
+      "linkedRepositories": [],
+      "number": 2,
+      "owner": {
+        "login": "local",
+        "type": "User"
+      },
+      "public": true,
+      "readme": "",
+      "shortDescription": "short",
+      "template": false,
+      "title": "Copy",
+      "url": "http://127.0.0.1:48291/users/local/projectsV2/2"
+    }
+  ],
+  "totalCount": 2
+}
