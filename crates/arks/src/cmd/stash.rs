@@ -31,8 +31,12 @@ use std::fs;
 use std::path::Path;
 
 pub fn cmd_stash(args: &[String]) -> CliResult<()> {
-    // FS3: `-p` / `--patch` on bare `stash` or `stash push -p`.
-    if args.iter().any(|a| a == "-p" || a == "--patch") {
+    // FS3: `-p` / `--patch` on bare `stash` or `stash push -p` (not `stash show -p`).
+    let push_like = matches!(
+        args.first().map(String::as_str),
+        None | Some("push") | Some("save")
+    ) || args.first().is_some_and(|a| a.starts_with('-'));
+    if push_like && args.iter().any(|a| a == "-p" || a == "--patch") {
         return cmd_stash_patch(args);
     }
     let (sub, rest) = match args.first().map(String::as_str) {
@@ -65,6 +69,7 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
             stash_drop(&repo, n, rest.iter().any(|a| a == "-q" || a == "--quiet"))
         }
         "clear" => stash_clear(),
+        "branch" => stash_branch(rest),
         other => Err(CliError::NotImplemented(format!(
             "stash {other} not claimed (push/save/list/pop/show/apply/drop/clear/patch)"
         ))),
@@ -273,6 +278,27 @@ fn entry(repo: &Repository, n: usize) -> CliResult<Oid> {
         .get(n)
         .map(|(o, _)| *o)
         .ok_or_else(|| CliError::Exit(1, format!("error: stash@{{{n}}} is not a valid reference")))
+}
+
+/// `stash branch <name> [<stash>]`: create and switch to `<name>` at the
+/// stash's base commit, apply the entry there, then drop it.
+/// Cite: https://git-scm.com/docs/git-stash#Documentation/git-stash.txt-branch
+fn stash_branch(args: &[String]) -> CliResult<()> {
+    let name = args
+        .first()
+        .filter(|a| !a.starts_with('-'))
+        .ok_or_else(|| CliError::fatal("No branch name specified"))?;
+    let rest = &args[1..];
+    let base = {
+        let repo = open_repo()?;
+        let w = entry(&repo, entry_index(rest)?)?;
+        let c = crate::cmd::log_format::read_commit(&repo, &w)?;
+        *c.parents
+            .first()
+            .ok_or_else(|| CliError::Msg("stash commit has no parent".into()))?
+    };
+    crate::cmd::cmd_switch(&["-c".to_string(), name.clone(), base.to_hex()])?;
+    stash_apply(rest, true)
 }
 
 fn stash_show(args: &[String]) -> CliResult<()> {
