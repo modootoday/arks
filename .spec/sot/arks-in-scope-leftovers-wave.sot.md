@@ -3,7 +3,7 @@ id: sot:root/arks-in-scope-leftovers-wave
 title: In-scope leftovers wave — Phase 0 scope audit + Phase 1+ Claimed bars
 status: active
 created: 2026-11-11T03:35:56Z
-updated: 2026-11-11T05:06:17Z
+updated: 2026-11-19T23:30:00Z
 tags: [design, residual, scope-audit, hub, daemon, personality, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -102,7 +102,7 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 
 | Order | ID | Surface | Status now | Close bar | Refuse / non-goal | Docker / verify |
 |------:|----|---------|------------|-----------|-------------------|-----------------|
-| 1 | **IW-HUB-ACTIONS** | Actions execute metadata | **Claimed** ([[evidence:root/20261111034505-hub-actions-metadata]]) | Local-forge view/cancel/rerun/delete + watch-poll status; workflow view/enable/disable/dispatch→run record; Docker receipt | Invent CI runner / Actions compute | `dod-hub-matrix` + `ARKS_HUB_IW_ACTIONS=1` |
+| 1 | **IW-HUB-ACTIONS** | Actions execute metadata | **Withdrawn** — GitHub-platform-only, out of scope ([[adr:root/20261119230000]]); historical receipt [[evidence:root/20261111034505-hub-actions-metadata]] | Local-forge view/cancel/rerun/delete + watch-poll status; workflow view/enable/disable/dispatch→run record; Docker receipt | Invent CI runner / Actions compute | `dod-hub-matrix` + `ARKS_HUB_IW_ACTIONS=1` |
 | 2 | **IW-HUB-ASSETS** | Release assets (+ edit/delete) | **Claimed** ([[evidence:root/20261111034513-hub-release-assets]]) | Upload/download/delete-asset peer-faithful vs local forge; edit/delete release; Docker receipt | Stub exit-2 Claimed | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` |
 | 3 | **IW-HUB-CHECKOUT** | `pr checkout` / `co` | **Claimed** ([[evidence:root/20261111034521-hub-pr-checkout]]) | Resolve head SHA/ref/branch; print recipe; Docker receipt | Spawn git/gh | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` |
 | 4 | **IW-HUB-UX** | config / alias / completion | **Claimed** ([[evidence:root/20261111034525-hub-ux-config-alias]]) | get/set/list/delete (+ completion emit) Claimed subset; Docker receipt | Profile installer invent | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` |
@@ -112,6 +112,8 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | 8 | **DOCS-SCOPE** | Register + product SoTs | **Synced** this wave | Sync in/out counts + evidence ids | Invent beyond receipts | Manual |
 
 ### IW-HUB-ACTIONS detail
+
+**Withdrawn** by [[adr:root/20261119230000]]: `run` / `workflow` refuse exit 2 as out-of-scope. The table below is historical; `ARKS_HUB_IW_ACTIONS=1` now checks only that the platform-only leaves refuse.
 
 #### Normative Claimed expand list
 
@@ -216,7 +218,7 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 
 | Flag / service | Role |
 |----------------|------|
-| `dod-hub-matrix` + `ARKS_HUB_IW_ACTIONS=1` | Actions metadata Claimed |
+| `dod-hub-matrix` + `ARKS_HUB_IW_ACTIONS=1` | Platform-only leaves refuse (Actions Withdrawn) |
 | `dod-hub-matrix` + `ARKS_HUB_IW_ASSETS=1` | Assets Claimed |
 | `dod-hub-matrix` + `ARKS_HUB_IW_CHECKOUT=1` | Checkout resolve Claimed |
 | `dod-hub-matrix` + `ARKS_HUB_IW_UX=1` | Config/alias/completion Claimed |
