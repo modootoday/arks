@@ -376,70 +376,95 @@ pub fn cmd_for_each_ref(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: commit list; `--count`; `--max-count`.
-    refuse_unknown_flags(args, &["--count", "--max-count"])?;
-    let count_only = args.iter().any(|a| a == "--count");
+    // M16 Sy-3 + cloud drop-in §O: revision ranges (`A..B`, `A...B`, `^A`),
+    // `--count`, `--max-count`/`-n`/`-<n>`, `--all`, `--first-parent`,
+    // `--no-merges`, `--merges`, `--reverse`. Default order = committer date.
+    // Cite: https://git-scm.com/docs/git-rev-list
+    use crate::cmd::log_format::{resolve_range, walk};
+    let mut count_only = false;
     let mut max_count: Option<usize> = None;
-    let mut filtered = Vec::new();
+    let (mut all, mut first_parent, mut no_merges, mut merges, mut reverse) =
+        (false, false, false, false, false);
+    let mut revs = Vec::new();
+    let bad_n = |v: &str| CliError::fatal(format!("'{v}': not an integer"));
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "--max-count" {
-            i += 1;
-            max_count = Some(
-                args.get(i)
-                    .ok_or_else(|| CliError::Usage("rev-list --max-count <n>".into()))?
-                    .parse()
-                    .map_err(|_| CliError::Usage("rev-list --max-count: bad n".into()))?,
-            );
-        } else if let Some(rest) = args[i].strip_prefix("--max-count=") {
-            max_count = Some(
-                rest.parse()
-                    .map_err(|_| CliError::Usage("rev-list --max-count: bad n".into()))?,
-            );
-        } else {
-            filtered.push(args[i].clone());
-        }
+        let a = args[i].as_str();
         i += 1;
-    }
-    refuse_unknown_flags(
-        &filtered
-            .iter()
-            .filter(|a| a.starts_with('-'))
-            .cloned()
-            .collect::<Vec<_>>(),
-        &["--count"],
-    )?;
-    let start = filtered
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("HEAD");
-    let repo = open_repo()?;
-    let mut oid = resolve_rev(&repo, start)?;
-    let mut n = 0usize;
-    loop {
-        if let Some(max) = max_count {
-            if n >= max {
-                break;
+        match a {
+            "--count" => count_only = true,
+            "--all" => all = true,
+            "--first-parent" => first_parent = true,
+            "--no-merges" => no_merges = true,
+            "--merges" => merges = true,
+            "--reverse" => reverse = true,
+            "--max-count" | "-n" => {
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("rev-list --max-count <n>".into()))?;
+                i += 1;
+                max_count = Some(v.parse().map_err(|_| bad_n(v))?);
+            }
+            "--" => break,
+            _ => {
+                if let Some(v) = a.strip_prefix("--max-count=") {
+                    max_count = Some(v.parse().map_err(|_| bad_n(v))?);
+                } else if a.len() > 1
+                    && a.starts_with('-')
+                    && a[1..].bytes().all(|b| b.is_ascii_digit())
+                {
+                    max_count = Some(a[1..].parse().map_err(|_| bad_n(a))?);
+                } else if a.starts_with('-') {
+                    return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+                } else {
+                    revs.push(a.to_string());
+                }
             }
         }
-        let obj = repo.get_object(&oid)?;
-        if obj.kind != ObjectKind::Commit {
-            break;
+    }
+    let repo = open_repo()?;
+    if all {
+        let mut refs = repo.refs().list_refs("refs/")?;
+        refs.sort_by(|a, b| a.0.cmp(&b.0));
+        revs.extend(refs.into_iter().map(|(n, _)| n));
+        if repo.head_oid().is_ok() {
+            revs.push("HEAD".into());
         }
-        if !count_only {
-            println!("{}", oid.to_hex());
+    }
+    if revs.is_empty() {
+        return Err(CliError::Usage("rev-list <commit>...".into()));
+    }
+    let (inc, exc) = resolve_range(&repo, &revs)?;
+    let peel = |v: Vec<Oid>| -> CliResult<Vec<Oid>> {
+        let mut out = Vec::new();
+        for o in v {
+            let p = crate::cmd::shared::peel_tags(&repo, &o)?;
+            if !out.contains(&p) {
+                out.push(p);
+            }
         }
-        n += 1;
-        let c = Commit::decode(&obj.payload)?;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
+        Ok(out)
+    };
+    let mut list: Vec<Oid> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
+        .into_iter()
+        .filter(|(_, c)| !(no_merges && c.parents.len() > 1) && !(merges && c.parents.len() < 2))
+        .map(|(o, _)| o)
+        .collect();
+    if let Some(m) = max_count {
+        list.truncate(m);
+    }
+    if reverse {
+        list.reverse();
     }
     if count_only {
-        println!("{n}");
+        println!("{}", list.len());
+        return Ok(());
     }
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    for o in list {
+        writeln!(out, "{}", o.to_hex())?;
+    }
+    out.flush()?;
     Ok(())
 }
 
