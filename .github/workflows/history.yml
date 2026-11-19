@@ -22,7 +22,7 @@ jobs:
         working-directory: ${{ runner.temp }}
         run: >-
           cargo install --locked --git https://github.com/modootoday/playpilot
-          --rev 4ed7daee4b5bfa4a3b0a89e7f5e2281690efec48 playpilot
+          --rev 39918859deb3a63987bd0a19ebfb841ec84e4e13 playpilot
 
       - name: playpilot history-check (merge commit)
         env:
