@@ -123,10 +123,45 @@ pub fn cmd_cat_file(args: &[String]) -> CliResult<()> {
     // `-e`: exit 0 when the object exists, 1 when a valid name lacks an object,
     // 128 for an invalid name. Cite: https://git-scm.com/docs/git-cat-file
     refuse_unknown_flags(args, &["-t", "-s", "-p", "-e"])?;
-    let mode = args
+    let Some(mode) = args
         .iter()
         .find(|a| *a == "-t" || *a == "-s" || *a == "-p" || *a == "-e")
-        .ok_or_else(|| CliError::Usage("cat-file: require -t, -s, -e, or -p".into()))?;
+    else {
+        // `cat-file <type> <object>`: raw content, peeling tags/commits to
+        // `<type>` when the object is not already of that type.
+        let [kind, object] = args else {
+            return Err(CliError::Usage(
+                "cat-file: require -t, -s, -e, -p or <type> <object>".into(),
+            ));
+        };
+        let repo = open_repo()?;
+        let oid = resolve_rev(&repo, object)
+            .map_err(|_| CliError::fatal(format!("Not a valid object name {object}")))?;
+        let want = ObjectKind::parse(kind)
+            .map_err(|_| CliError::fatal(format!("invalid object type \"{kind}\"")))?;
+        let mut obj = repo.get_object(&oid)?;
+        if obj.kind != want {
+            let peeled = match want {
+                ObjectKind::Commit => crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Commit,
+                    object,
+                ),
+                ObjectKind::Tree => crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Tree,
+                    object,
+                ),
+                _ => Err(CliError::Msg(String::new())),
+            }
+            .map_err(|_| CliError::fatal(format!("git cat-file {object}: bad file")))?;
+            obj = repo.get_object(&peeled)?;
+        }
+        io::Write::write_all(&mut io::stdout(), &obj.payload)?;
+        return Ok(());
+    };
     if mode == "-e" {
         let object = args
             .iter()
