@@ -559,10 +559,50 @@ pub fn cmd_var(args: &[String]) -> CliResult<()> {
         }
         return Ok(());
     }
+    // git-var logical variables. Cite: https://git-scm.com/docs/git-var
+    let cfg = arks_config::ConfigSet::load_discovered(&crate::util::cwd()?);
+    let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+    let ident = |author: bool| -> CliResult<String> {
+        let s = if author {
+            crate::cmd::shared::commit_signature()?
+        } else {
+            crate::cmd::shared::committer_signature()?
+        };
+        Ok(format!(
+            "{} <{}> {} {}",
+            s.name, s.email, s.timestamp, s.timezone
+        ))
+    };
     let key = args
         .iter()
         .find(|a| !a.starts_with('-'))
         .ok_or_else(|| CliError::Usage("var [-l] <variable>".into()))?;
+    let logical = match key.as_str() {
+        "GIT_AUTHOR_IDENT" => Some(ident(true)?),
+        "GIT_COMMITTER_IDENT" => Some(ident(false)?),
+        "GIT_EDITOR" => Some(
+            env("GIT_EDITOR")
+                .or_else(|| cfg.get("core.editor"))
+                .or_else(|| env("VISUAL"))
+                .or_else(|| env("EDITOR"))
+                .unwrap_or_else(|| "vi".into()),
+        ),
+        "GIT_PAGER" => Some(
+            env("GIT_PAGER")
+                .or_else(|| cfg.get("core.pager"))
+                .or_else(|| env("PAGER"))
+                .unwrap_or_else(|| "less".into()),
+        ),
+        "GIT_DEFAULT_BRANCH" => Some(
+            cfg.get("init.defaultBranch")
+                .unwrap_or_else(|| "master".into()),
+        ),
+        _ => None,
+    };
+    if let Some(v) = logical {
+        println!("{v}");
+        return Ok(());
+    }
     for (k, v) in pairs {
         if k == key.as_str() {
             println!("{v}");
