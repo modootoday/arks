@@ -8,6 +8,7 @@ pub mod bundle;
 pub mod config;
 pub mod core;
 pub mod credential;
+pub mod diff_render;
 pub mod grep;
 pub mod history;
 pub mod hooks;
