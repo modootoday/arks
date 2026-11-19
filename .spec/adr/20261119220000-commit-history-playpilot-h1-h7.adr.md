@@ -49,11 +49,12 @@ evidence honesty, push only to the session `claude/*` branch).
    on demand) as a `PreToolUse` hook for `Bash|PowerShell` with `PLAYPILOT_PROTECTED_BRANCHES=main`.
    Measured: push to `main` (incl. `HEAD:main`, `git -C`, `cd … &&`), `--force`, `--tags` refused
    (exit 2); topic-branch push and `--force-with-lease=<branch>:<full-sha>` allowed (exit 0).
-   **Known gap:** the guard inspects only the `git` program, so `arks push origin main` (with or
-   without `ARKS_PERSONALITY=git`) is not seen. Until playpilot covers `arks`, rule `92` forbids
-   pushing protected branches with arks, and the base-branch ruleset stays the server-side backstop.
-10. **Tool pin:** the `History` job and the guard hook pin playpilot at `4ed7dae` (playpilot #12:
-    no false refusals for `2>&1` redirects, `$VAR` lease values and quotes inside heredocs). The
+   **Gap (closed by §10):** at `0ddc0e1`/`4ed7dae` the guard inspected only the `git` program, so
+   `arks push origin main` was not seen; the base-branch ruleset is the server-side backstop either way.
+10. **Tool pin:** the `History` job and the guard hook pin playpilot at `3991885` (playpilot #12:
+    no false refusals for `2>&1` redirects, `$VAR` lease values and quotes inside heredocs; playpilot
+    #16: `arks` commands are checked like `git`, closing the §9 gap — `arks push origin main`, `--force`
+    and `--tags` now exit 2). The
     H1–H7 canon text above stays cited at `0ddc0e1`.
 11. **Ruleset canon:** `.github/rulesets/main-protected.json` mirrors the applied ruleset `main-protected`
     (id 27672739): default branch, no deletion, no force push, pull request required with merge commit
