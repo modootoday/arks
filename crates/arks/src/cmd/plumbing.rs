@@ -667,6 +667,8 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
     let (mut all, mut first_parent, mut no_merges, mut merges, mut reverse) =
         (false, false, false, false, false);
     let mut revs = Vec::new();
+    // C7b: `--parents`, `--left-right` (with `A...B`).
+    let (mut parents, mut left_right) = (false, false);
     let bad_n = |v: &str| CliError::fatal(format!("'{v}': not an integer"));
     let mut i = 0;
     while i < args.len() {
@@ -679,6 +681,8 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
             "--no-merges" => no_merges = true,
             "--merges" => merges = true,
             "--reverse" => reverse = true,
+            "--parents" => parents = true,
+            "--left-right" => left_right = true,
             "--max-count" | "-n" => {
                 let v = args
                     .get(i)
@@ -726,10 +730,10 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         }
         Ok(out)
     };
-    let mut list: Vec<Oid> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
+    let mut list: Vec<(Oid, Vec<Oid>)> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
         .into_iter()
         .filter(|(_, c)| !(no_merges && c.parents.len() > 1) && !(merges && c.parents.len() < 2))
-        .map(|(o, _)| o)
+        .map(|(o, c)| (o, c.parents))
         .collect();
     if let Some(m) = max_count {
         list.truncate(m);
@@ -737,13 +741,45 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
     if reverse {
         list.reverse();
     }
+    // `--left-right`: `<` for commits reachable from the left side of the
+    // symmetric range `A...B`, `>` for the right.
+    let left_set = if left_right {
+        let sym = revs
+            .iter()
+            .find_map(|r| r.split_once("..."))
+            .ok_or_else(|| CliError::fatal("--left-right needs a symmetric range A...B"))?;
+        let left = resolve_rev(&repo, if sym.0.is_empty() { "HEAD" } else { sym.0 })?;
+        Some(arks_repo::ancestor_set(
+            &repo,
+            crate::cmd::shared::peel_tags(&repo, &left)?,
+        )?)
+    } else {
+        None
+    };
     if count_only {
-        println!("{}", list.len());
+        match &left_set {
+            Some(l) => {
+                let left = list.iter().filter(|(o, _)| l.contains(o)).count();
+                println!("{left}\t{}", list.len() - left);
+            }
+            None => println!("{}", list.len()),
+        }
         return Ok(());
     }
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
-    for o in list {
-        writeln!(out, "{}", o.to_hex())?;
+    for (o, ps) in list {
+        let mark = match &left_set {
+            Some(l) if l.contains(&o) => "<",
+            Some(_) => ">",
+            None => "",
+        };
+        write!(out, "{mark}{}", o.to_hex())?;
+        if parents {
+            for p in &ps {
+                write!(out, " {}", p.to_hex())?;
+            }
+        }
+        writeln!(out)?;
     }
     out.flush()?;
     Ok(())
