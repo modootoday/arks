@@ -80,7 +80,7 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         };
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        for l in carried {
+        for l in carried.iter().filter(|_| !crate::util::quiet()) {
             println!("{l}");
         }
         if existed {
@@ -215,7 +215,7 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
         };
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        for l in carried {
+        for l in carried.iter().filter(|_| !crate::util::quiet()) {
             println!("{l}");
         }
         if existed {
@@ -301,7 +301,7 @@ fn switch_branch(name: &str, _detach: bool) -> CliResult<()> {
     }
     let was_current = matches!(repo.head_target(), Ok(RefTarget::Symbolic(ref s)) if *s == full);
     repo.refs_mut().set_symbolic("HEAD", &full)?;
-    for l in carried {
+    for l in carried.iter().filter(|_| !crate::util::quiet()) {
         println!("{l}");
     }
     if was_current {
@@ -325,7 +325,7 @@ fn detach_to(rev: &str) -> CliResult<()> {
     let work = work_tree(&repo)?;
     let carried = crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?;
     repo.refs_mut().update("HEAD", &oid, None)?;
-    for l in carried {
+    for l in carried.iter().filter(|_| !crate::util::quiet()) {
         println!("{l}");
     }
     let subject = crate::cmd::log_format::read_commit(&repo, &oid)
