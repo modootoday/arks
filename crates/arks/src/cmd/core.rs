@@ -22,23 +22,45 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::thread;
 pub fn cmd_init(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1: `--bare` claimed (git-init). Cite: https://git-scm.com/docs/git-init
-    // Sha256: `init --object-format=sha256` ([[adr:root/20261110214800]]).
-    refuse_unknown_flags(args, &["--bare", "--object-format"])?;
+    // git-init: https://git-scm.com/docs/git-init
+    // `--bare` (M16 Sy-1), `--object-format=sha256` ([[adr:root/20261110214800]]),
+    // `-q/--quiet`, `-b/--initial-branch`, and re-initialisation of an existing repository.
+    refuse_unknown_flags(
+        args,
+        &[
+            "--bare",
+            "--object-format",
+            "-q",
+            "--quiet",
+            "-b",
+            "--initial-branch",
+        ],
+    )?;
     let bare = args.iter().any(|a| a == "--bare");
+    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
     let mut object_format = "sha1".to_string();
+    let mut initial_branch: Option<String> = None;
     let mut positional = Vec::new();
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "--object-format" {
+        let a = args[i].as_str();
+        if a == "--object-format" {
             i += 1;
             let v = args
                 .get(i)
                 .ok_or_else(|| CliError::Usage("init --object-format <sha1|sha256>".into()))?;
             object_format = v.to_ascii_lowercase();
-        } else if let Some(rest) = args[i].strip_prefix("--object-format=") {
+        } else if let Some(rest) = a.strip_prefix("--object-format=") {
             object_format = rest.to_ascii_lowercase();
-        } else if !args[i].starts_with('-') {
+        } else if a == "-b" || a == "--initial-branch" {
+            i += 1;
+            let v = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage(format!("init: option `{a}` requires a value")))?;
+            initial_branch = Some(v.clone());
+        } else if let Some(rest) = a.strip_prefix("--initial-branch=") {
+            initial_branch = Some(rest.to_string());
+        } else if !a.starts_with('-') {
             positional.push(args[i].clone());
         }
         i += 1;
@@ -55,16 +77,58 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
     };
     fs::create_dir_all(&dir)?;
     let git_dir = if bare { dir.clone() } else { dir.join(".git") };
-    if git_dir.join("HEAD").exists() || (!bare && git_dir.exists()) {
+    let display_dir = |p: &Path| {
+        let shown = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+        format!("{}/", shown.display())
+    };
+    if git_dir.join("HEAD").exists() {
+        // Re-init keeps HEAD, refs and objects (git-init "Running git init in an
+        // existing repository is safe").
+        if let Some(b) = &initial_branch {
+            eprintln!("warning: re-init: ignored --initial-branch={b}");
+        }
+        if !quiet {
+            println!(
+                "Reinitialized existing Git repository in {}",
+                display_dir(&git_dir)
+            );
+        }
+        return Ok(());
+    }
+    let cfg = arks_config::ConfigSet::load(None);
+    let configured = initial_branch.or_else(|| cfg.get("init.defaultBranch"));
+    let advise = configured.is_none()
+        && !cfg.get("advice.defaultBranchName").is_some_and(|v| {
+            matches!(
+                v.to_ascii_lowercase().as_str(),
+                "false" | "no" | "off" | "0"
+            )
+        });
+    let branch = configured.unwrap_or_else(|| "master".into());
+    if advise {
+        // git-init advice.defaultBranchName (shown when no name was configured).
+        eprint!(
+            "hint: Using 'master' as the name for the initial branch. This default branch name\n\
+             hint: is subject to change. To configure the initial branch name to use in all\n\
+             hint: of your new repositories, which will suppress this warning, call:\n\
+             hint: \n\
+             hint: \tgit config --global init.defaultBranch <name>\n\
+             hint: \n\
+             hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\n\
+             hint: 'development'. The just-created branch can be renamed via this command:\n\
+             hint: \n\
+             hint: \tgit branch -m <name>\n"
+        );
+    }
+    if branch.is_empty() || branch.starts_with('-') || branch.contains(char::is_whitespace) {
         return Err(CliError::Msg(format!(
-            "repository already exists: {}",
-            git_dir.display()
+            "invalid initial branch name: '{branch}'"
         )));
     }
     fs::create_dir_all(git_dir.join("objects"))?;
     fs::create_dir_all(git_dir.join("refs/heads"))?;
     fs::create_dir_all(git_dir.join("refs/tags"))?;
-    fs::write(git_dir.join("HEAD"), b"ref: refs/heads/main\n")?;
+    fs::write(git_dir.join("HEAD"), format!("ref: refs/heads/{branch}\n"))?;
     let bare_cfg = if bare { "true" } else { "false" };
     let cfg = if object_format == "sha256" {
         format!(
@@ -76,10 +140,12 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
         )
     };
     fs::write(git_dir.join("config"), cfg)?;
-    println!(
-        "Initialized empty arks repository in {}",
-        git_dir.canonicalize().unwrap_or(git_dir).display()
-    );
+    if !quiet {
+        println!(
+            "Initialized empty Git repository in {}",
+            display_dir(&git_dir)
+        );
+    }
     Ok(())
 }
 
