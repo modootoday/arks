@@ -4,7 +4,7 @@ use crate::cmd::replay::{
     PathDelta, apply_checked, deltas_for_commit, ensure_clean, ensure_nl, first_parent_set,
     put_blob, read_commit, resolve_commit,
 };
-use crate::cmd::shared::commit_signature;
+use crate::cmd::shared::{commit_signature, committer_signature};
 use crate::error::{CliError, CliResult};
 use crate::util::{cwd, open_repo, refuse_unknown_flags};
 use arks_object::{ObjectKind, parse_patch};
@@ -138,7 +138,7 @@ pub fn cmd_am(args: &[String]) -> CliResult<()> {
         author.name = name;
         author.email = email;
     }
-    let committer = commit_signature()?;
+    let committer = committer_signature()?;
     // Claimed `--3way` subset: when clean apply would refuse and both sides of each
     // delta resolve in the object store (we just stored reconstructed blobs), take tip.
     if three_way {

@@ -181,14 +181,26 @@ pub(crate) fn file_mode(meta: &fs::Metadata) -> u32 {
     }
 }
 
+/// Author identity + date from env and merged config
+/// ([[sot:root/cloud-agent-dropin]] §C). Missing identity is an error.
 pub(crate) fn commit_signature() -> CliResult<Signature> {
-    let name = std::env::var("GIT_AUTHOR_NAME")
-        .or_else(|_| std::env::var("GIT_COMMITTER_NAME"))
-        .unwrap_or_else(|_| "arks".into());
-    let email = std::env::var("GIT_AUTHOR_EMAIL")
-        .or_else(|_| std::env::var("GIT_COMMITTER_EMAIL"))
-        .unwrap_or_else(|_| "arks@example.com".into());
-    let timestamp = std::env::var("GIT_AUTHOR_DATE")
+    ident_signature(arks_config::IdentRole::Author)
+}
+
+/// Committer identity + date (`GIT_COMMITTER_*` / `committer.*` / `user.*`).
+pub(crate) fn committer_signature() -> CliResult<Signature> {
+    ident_signature(arks_config::IdentRole::Committer)
+}
+
+fn ident_signature(role: arks_config::IdentRole) -> CliResult<Signature> {
+    let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+    let ident = arks_config::resolve_ident(&cfg, role).map_err(|e| CliError::Msg(e.to_string()))?;
+    let date_var = match role {
+        arks_config::IdentRole::Author => "GIT_AUTHOR_DATE",
+        arks_config::IdentRole::Committer => "GIT_COMMITTER_DATE",
+    };
+    let timestamp = std::env::var(date_var)
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or_else(|| {
@@ -198,8 +210,8 @@ pub(crate) fn commit_signature() -> CliResult<Signature> {
                 .unwrap_or(0)
         });
     Ok(Signature {
-        name,
-        email,
+        name: ident.name,
+        email: ident.email,
         timestamp,
         timezone: "+0000".into(),
     })

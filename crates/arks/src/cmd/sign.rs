@@ -120,8 +120,8 @@ pub(crate) fn sign_bytes(
         GpgFormat::Ssh => {
             let program =
                 repo_config_get(repo, "gpg.ssh.program").unwrap_or_else(|| "ssh-keygen".into());
-            let key_path = resolve_ssh_signing_key(&signing_key)?;
-            ssh_keygen_sign(&program, &key_path, payload)
+            let key = resolve_ssh_signing_key(&signing_key)?;
+            ssh_keygen_sign(&program, &key, payload)
         }
         GpgFormat::OpenPgp => {
             let program = repo_config_get(repo, "gpg.openpgp.program")
@@ -137,41 +137,59 @@ pub(crate) fn sign_bytes(
     }
 }
 
-fn resolve_ssh_signing_key(signing_key: &str) -> CliResult<PathBuf> {
-    if let Some(literal) = signing_key.strip_prefix("key::") {
-        return Err(CliError::NotImplemented(format!(
-            "literal key:: signing keys not claimed (got key::{}…); use a key file path",
-            literal.chars().take(12).collect::<String>()
-        )));
+/// Git `sign_buffer_ssh` shape: a key path (private, or public with an agent)
+/// goes to `-f` unchanged; a literal `key::…` / `ssh-…` public key is written to a
+/// temp file and signed with `-U` (agent).
+/// Primary: git-config `user.signingKey`, gitformat-signature.
+enum SshKeyArg {
+    Path(PathBuf),
+    Literal(String),
+}
+
+fn resolve_ssh_signing_key(signing_key: &str) -> CliResult<SshKeyArg> {
+    let trimmed = signing_key.trim();
+    if let Some(literal) = trimmed.strip_prefix("key::") {
+        return Ok(SshKeyArg::Literal(literal.trim().to_string()));
     }
-    if let Some(stem) = signing_key.strip_suffix(".pub") {
-        let priv_path = PathBuf::from(stem);
-        if !priv_path.is_file() {
-            return Err(CliError::Msg(format!(
-                "private key not found for {}: {}",
-                signing_key,
-                priv_path.display()
-            )));
-        }
-        return Ok(priv_path);
+    if trimmed.starts_with("ssh-") {
+        return Ok(SshKeyArg::Literal(trimmed.to_string()));
     }
-    let path = PathBuf::from(signing_key);
+    let path = expand_home(trimmed);
     if !path.is_file() {
         return Err(CliError::Msg(format!(
             "signing key file not found: {}",
             path.display()
         )));
     }
-    Ok(path)
+    Ok(SshKeyArg::Path(path))
 }
 
-fn ssh_keygen_sign(program: &str, key_path: &Path, payload: &[u8]) -> CliResult<String> {
+fn expand_home(p: &str) -> PathBuf {
+    if let Some(rest) = p.strip_prefix("~/") {
+        if let Some(h) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) {
+            return PathBuf::from(h).join(rest);
+        }
+    }
+    PathBuf::from(p)
+}
+
+fn ssh_keygen_sign(program: &str, key: &SshKeyArg, payload: &[u8]) -> CliResult<String> {
     let dir = tempfile_dir("arks-ssh-sign")?;
     let payload_path = dir.join("payload");
     fs::write(&payload_path, payload)?;
-    let output = Command::new(program)
-        .args(["-Y", "sign", "-n", "git", "-f"])
-        .arg(key_path)
+    let mut cmd = Command::new(program);
+    cmd.args(["-Y", "sign", "-n", "git", "-f"]);
+    match key {
+        SshKeyArg::Path(p) => {
+            cmd.arg(p);
+        }
+        SshKeyArg::Literal(k) => {
+            let key_file = dir.join("signing_key.pub");
+            fs::write(&key_file, format!("{k}\n"))?;
+            cmd.arg(&key_file).arg("-U");
+        }
+    }
+    let output = cmd
         .arg(&payload_path)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -513,12 +531,13 @@ fn tempfile_dir(prefix: &str) -> CliResult<PathBuf> {
     Ok(dir)
 }
 
+/// Merged config (system → global → repo → env → `-c`) per
+/// [[sot:root/cloud-agent-dropin]] §C.
 fn repo_config_get(repo: &Repository, key: &str) -> Option<String> {
-    let path = repo.git_dir().join("config");
-    let text = fs::read_to_string(path).ok()?;
-    config_get_simple(&text, key)
+    arks_config::ConfigSet::load(Some(repo.common_dir())).get(key)
 }
 
+#[cfg(test)]
 fn config_get_simple(text: &str, key: &str) -> Option<String> {
     let (section_norm, name) = key.rsplit_once('.')?;
     let name_l = name.to_ascii_lowercase();
@@ -542,6 +561,7 @@ fn config_get_simple(text: &str, key: &str) -> Option<String> {
     None
 }
 
+#[cfg(test)]
 fn normalize_section_inner(inner: &str) -> String {
     let inner = inner.trim();
     if let Some((sec, rest)) = inner.split_once(' ') {
@@ -553,12 +573,7 @@ fn normalize_section_inner(inner: &str) -> String {
 }
 
 fn repo_config_bool(repo: &Repository, key: &str) -> Option<bool> {
-    let v = repo_config_get(repo, key)?;
-    match v.to_ascii_lowercase().as_str() {
-        "1" | "true" | "yes" | "on" => Some(true),
-        "0" | "false" | "no" | "off" => Some(false),
-        _ => None,
-    }
+    arks_config::parse_bool(&repo_config_get(repo, key)?)
 }
 
 #[cfg(test)]
@@ -668,7 +683,8 @@ mod tests {
 
         let mut commit = sample_commit(principal);
         let payload = commit.signing_payload().unwrap();
-        let armor = ssh_keygen_sign("ssh-keygen", &priv_key, &payload).expect("sign");
+        let armor = ssh_keygen_sign("ssh-keygen", &SshKeyArg::Path(priv_key.clone()), &payload)
+            .expect("sign");
         assert!(armor.contains("BEGIN SSH SIGNATURE"));
         commit.gpgsig = Some(armor.clone());
 

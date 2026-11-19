@@ -19,6 +19,9 @@ pub fn cmd_config(args: &[String]) -> CliResult<()> {
             "--worktree",
         ],
     )?;
+    if let Some(done) = merged_read(args)? {
+        return Ok(done);
+    }
     let want_global = args.iter().any(|a| a == "--global");
     let want_system = args.iter().any(|a| a == "--system");
     let want_worktree = args.iter().any(|a| a == "--worktree");
@@ -127,6 +130,46 @@ pub fn cmd_config(args: &[String]) -> CliResult<()> {
                 "config [--get|--set|--list|--unset] ...".into(),
             )),
         }
+    }
+}
+
+/// Unscoped reads see every file in git precedence (git-config §FILES):
+/// system → global → repo → `GIT_CONFIG_COUNT` → `-c`
+/// ([[sot:root/cloud-agent-dropin]] §C). Returns `None` for writes / scoped ops.
+fn merged_read(args: &[String]) -> CliResult<Option<()>> {
+    let scoped = args.iter().any(|a| {
+        matches!(
+            a.as_str(),
+            "--local" | "--global" | "--system" | "--worktree"
+        )
+    });
+    let writes = args.iter().any(|a| a == "--set" || a == "--unset");
+    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    let list = args.iter().any(|a| a == "--list");
+    let get = args.iter().any(|a| a == "--get") || (!list && positional.len() == 1);
+    if scoped || writes || !(list || get) {
+        return Ok(None);
+    }
+    let cwd = std::env::current_dir()?;
+    let set = arks_config::ConfigSet::load_discovered(&cwd);
+    if list {
+        for e in set.entries() {
+            match &e.value {
+                Some(v) => println!("{}={v}", e.key),
+                None => println!("{}", e.key),
+            }
+        }
+        return Ok(Some(()));
+    }
+    let key = positional
+        .first()
+        .ok_or_else(|| CliError::Usage("config --get <key>".into()))?;
+    match set.get(key) {
+        Some(v) => {
+            println!("{v}");
+            Ok(Some(()))
+        }
+        None => Err(CliError::Msg(format!("key not found: {key}"))),
     }
 }
 

@@ -1,8 +1,8 @@
 //! Core porcelain: init / objects / index / commit / log / show.
 
 use crate::cmd::shared::{
-    collect_untracked, commit_signature, current_branch_name, file_mode, file_times, head_blob_map,
-    index_stat_matches, resolve_rev,
+    collect_untracked, commit_signature, committer_signature, current_branch_name, file_mode,
+    file_times, head_blob_map, index_stat_matches, resolve_rev,
 };
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
@@ -928,7 +928,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         if prev.tree == tree && message == prev.message && !allow_empty {
             return Err(CliError::Msg("nothing to commit (amend unchanged)".into()));
         }
-        let sig = commit_signature()?;
+        let sig = committer_signature()?;
         let subject = message.lines().next().unwrap_or("").to_owned();
         let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
         let mut commit = Commit {
@@ -992,14 +992,15 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             }
         }
     }
-    let sig = commit_signature()?;
+    let author = commit_signature()?;
+    let committer = committer_signature()?;
     let subject = message.lines().next().unwrap_or("").to_owned();
     let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
     let mut commit = Commit {
         tree,
         parents: parents.clone(),
-        author: sig.clone(),
-        committer: sig,
+        author,
+        committer,
         gpgsig: None,
         message,
     };
