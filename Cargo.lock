@@ -57,19 +57,11 @@ dependencies = [
 name = "arks-hub"
 version = "0.0.0"
 dependencies = [
- "arks-index",
  "arks-net",
- "arks-object",
- "arks-oid",
- "arks-refs",
- "arks-remote",
- "arks-repo",
- "base64",
  "rustls",
  "rustls-pemfile",
  "serde",
  "serde_json",
- "tempfile",
  "ureq",
 ]
 
