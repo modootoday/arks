@@ -53,10 +53,15 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
-    fn testdata(name: &str) -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("testdata")
-            .join(name)
+    /// Write a fresh self-signed `localhost` certificate + key (test-only; no tracked PEMs).
+    fn temp_pems(dir: &std::path::Path) -> (PathBuf, PathBuf) {
+        let ck = rcgen::generate_simple_self_signed(vec!["localhost".to_string()])
+            .expect("rcgen self-signed");
+        let crt = dir.join("localhost.crt.pem");
+        let key = dir.join("localhost.key.pem");
+        std::fs::write(&crt, ck.cert.pem()).unwrap();
+        std::fs::write(&key, ck.key_pair.serialize_pem()).unwrap();
+        (crt, key)
     }
 
     #[test]
@@ -67,8 +72,9 @@ mod tests {
 
     #[test]
     fn load_server_config_from_testdata_pems() {
-        let cfg = load_server_config(testdata("localhost.crt.pem"), testdata("localhost.key.pem"))
-            .expect("load testdata PEMs");
+        let dir = tempfile::tempdir().unwrap();
+        let (crt, key) = temp_pems(dir.path());
+        let cfg = load_server_config(&crt, &key).expect("load generated PEMs");
         assert_eq!(cfg.alpn_protocols, vec![b"http/1.1".to_vec()]);
     }
 }
