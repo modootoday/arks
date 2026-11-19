@@ -10,6 +10,20 @@ use std::path::{Path, PathBuf};
 /// Default object format for non-repo contexts (e.g. standalone index-pack).
 pub const FORMAT: ObjectFormat = ObjectFormat::Sha1;
 
+/// Process-wide `-q` / `--quiet` for porcelain progress lines on stderr.
+static QUIET: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Record `-q`/`--quiet` from `args` (call once per command).
+pub fn set_quiet_from(args: &[String]) {
+    if args.iter().any(|a| a == "-q" || a == "--quiet") {
+        QUIET.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+pub fn quiet() -> bool {
+    QUIET.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn cwd() -> CliResult<PathBuf> {
     env::current_dir().map_err(|e| CliError::Msg(e.to_string()))
 }

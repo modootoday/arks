@@ -35,6 +35,18 @@ pub fn write_file_patch(
     old: Option<&[u8]>,
     new: Option<&[u8]>,
 ) -> CliResult<()> {
+    write_file_patch_ctx(out, format, path, old, new, CONTEXT)
+}
+
+/// [`write_file_patch`] with `-U<n>` / `--unified=<n>` context lines.
+pub fn write_file_patch_ctx(
+    out: &mut impl Write,
+    format: ObjectFormat,
+    path: &str,
+    old: Option<&[u8]>,
+    new: Option<&[u8]>,
+    context: usize,
+) -> CliResult<()> {
     let abbrev = |b: Option<&[u8]>| -> CliResult<String> {
         Ok(match b {
             Some(bytes) => RawObject::new(ObjectKind::Blob, bytes.to_vec())
@@ -87,7 +99,7 @@ pub fn write_file_patch(
     } else {
         myers(&al, &bl)
     };
-    emit_hunks(out, &al, &bl, &script)
+    emit_hunks(out, &al, &bl, &script, context)
 }
 
 /// One `--stat` row: path plus `(insertions, deletions)`, or binary sizes.
@@ -262,6 +274,29 @@ fn summary_line(files: usize, tot_ins: usize, tot_del: usize) -> String {
     summary
 }
 
+/// For each line of `b`, the index of the equal line in `a` it is matched
+/// with by the same Myers edit script the patch output uses (`None` for
+/// inserted lines). Used by `blame` to pass lines to a parent.
+pub fn matched_lines(a: &[&[u8]], b: &[&[u8]]) -> Vec<Option<usize>> {
+    let mut out = vec![None; b.len()];
+    if a.len() + b.len() > MAX_LINES {
+        return out;
+    }
+    let (mut ai, mut bi) = (0usize, 0usize);
+    for op in myers(a, b) {
+        match op {
+            Op::Eq => {
+                out[bi] = Some(ai);
+                ai += 1;
+                bi += 1;
+            }
+            Op::Del => ai += 1,
+            Op::Ins => bi += 1,
+        }
+    }
+    out
+}
+
 fn is_binary(b: &[u8]) -> bool {
     b[..b.len().min(8000)].contains(&0)
 }
@@ -361,7 +396,13 @@ fn normalize_runs(ops: &mut [Op]) {
     }
 }
 
-fn emit_hunks(out: &mut impl Write, a: &[&[u8]], b: &[&[u8]], ops: &[Op]) -> CliResult<()> {
+fn emit_hunks(
+    out: &mut impl Write,
+    a: &[&[u8]],
+    b: &[&[u8]],
+    ops: &[Op],
+    ctx: usize,
+) -> CliResult<()> {
     // Positions (ai, bi) before each op.
     let mut pos = Vec::with_capacity(ops.len() + 1);
     let (mut ai, mut bi) = (0usize, 0usize);
@@ -385,13 +426,13 @@ fn emit_hunks(out: &mut impl Write, a: &[&[u8]], b: &[&[u8]], ops: &[Op]) -> Cli
     let mut groups: Vec<(usize, usize)> = Vec::new();
     for &c in &changes {
         match groups.last_mut() {
-            Some((_, end)) if c <= *end + 2 * CONTEXT + 1 => *end = c,
+            Some((_, end)) if c <= *end + 2 * ctx + 1 => *end = c,
             _ => groups.push((c, c)),
         }
     }
     for (first, last) in groups {
-        let start = first.saturating_sub(CONTEXT);
-        let end = (last + CONTEXT + 1).min(ops.len());
+        let start = first.saturating_sub(ctx);
+        let end = (last + ctx + 1).min(ops.len());
         let (a0, b0) = pos[start];
         let a_len = ops[start..end].iter().filter(|o| **o != Op::Ins).count();
         let b_len = ops[start..end].iter().filter(|o| **o != Op::Del).count();

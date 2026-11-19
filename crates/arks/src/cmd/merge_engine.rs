@@ -36,6 +36,20 @@ pub(crate) fn merge_commits_three_way(
     ours: &Oid,
     theirs: &Oid,
 ) -> CliResult<MergeResult> {
+    merge_three_way_opts(repo, work, ours, theirs, false)
+}
+
+/// [`merge_commits_three_way`]; with `ours_checked_out` the work tree already
+/// holds `ours`, so paths whose result is the `ours` blob are not rewritten
+/// (unrelated local edits survive, as with git-merge).
+pub(crate) fn merge_three_way_opts(
+    repo: &mut Repository,
+    work: &Path,
+    ours: &Oid,
+    theirs: &Oid,
+    ours_checked_out: bool,
+) -> CliResult<MergeResult> {
+    let keep = ours_checked_out;
     let base = merge_base_oid(repo, ours, theirs)?
         .ok_or_else(|| CliError::Msg("merge: no common ancestor".into()))?;
     let ours_c = load_commit(repo, ours)?;
@@ -62,11 +76,15 @@ pub(crate) fn merge_commits_three_way(
             (None, None, None) => {}
             (Some(x), Some(y), Some(z)) if x.oid == y.oid && y.oid == z.oid => {
                 entries.push(stage0(&path, y));
-                write_blob(repo, work, &path, y)?;
+                if !keep {
+                    write_blob(repo, work, &path, y)?;
+                }
             }
             (_, Some(y), Some(z)) if y.oid == z.oid && y.mode == z.mode => {
                 entries.push(stage0(&path, y));
-                write_blob(repo, work, &path, y)?;
+                if !keep {
+                    write_blob(repo, work, &path, y)?;
+                }
             }
             (Some(x), Some(y), Some(z)) if x.oid == y.oid && x.mode == y.mode => {
                 // unchanged in ours → take theirs
@@ -76,11 +94,15 @@ pub(crate) fn merge_commits_three_way(
             (Some(x), Some(y), Some(z)) if x.oid == z.oid && x.mode == z.mode => {
                 // unchanged in theirs → take ours
                 entries.push(stage0(&path, y));
-                write_blob(repo, work, &path, y)?;
+                if !keep {
+                    write_blob(repo, work, &path, y)?;
+                }
             }
             (None, Some(y), None) => {
                 entries.push(stage0(&path, y));
-                write_blob(repo, work, &path, y)?;
+                if !keep {
+                    write_blob(repo, work, &path, y)?;
+                }
             }
             (None, None, Some(z)) => {
                 entries.push(stage0(&path, z));

@@ -4,7 +4,7 @@
 //! `oldhex newhex Name <email> timestamp tz\tmessage\n`
 //! Cite: git-update-ref(1) / gitrepository-layout `logs/`.
 
-use crate::cmd::shared::commit_signature;
+use crate::cmd::shared::committer_signature;
 use crate::error::{CliError, CliResult};
 use arks_oid::Oid;
 use arks_repo::Repository;
@@ -16,15 +16,14 @@ fn zero_oid_hex() -> String {
     "0".repeat(40)
 }
 
+/// `$GIT_DIR/logs/<refname>` per gitrepository-layout: `logs/HEAD` is
+/// per-worktree, `logs/refs/...` lives in the common directory.
 fn log_path_for_ref(repo: &Repository, refname: &str) -> PathBuf {
-    let rel = if refname == "HEAD" {
-        "HEAD".to_owned()
-    } else if let Some(rest) = refname.strip_prefix("refs/") {
-        rest.to_owned()
+    if refname.starts_with("refs/") {
+        repo.common_dir().join("logs").join(refname)
     } else {
-        refname.to_owned()
-    };
-    repo.git_dir().join("logs").join(rel)
+        repo.git_dir().join("logs").join(refname)
+    }
 }
 
 /// Lock sibling for a reflog path (`logs/HEAD` → `logs/HEAD.lock`).
@@ -56,7 +55,7 @@ pub fn append_reflog(
 ) -> CliResult<()> {
     // REF-009: honor exclusive logs/*.lock (api-lockfile / update-ref LOGGING).
     refuse_if_reflog_locked(repo, refname)?;
-    let sig = commit_signature()?;
+    let sig = committer_signature()?;
     let old_hex = old.map(Oid::to_hex).unwrap_or_else(zero_oid_hex);
     let line = format!(
         "{} {} {} <{}> {} {}\t{}\n",
@@ -75,6 +74,37 @@ pub fn append_reflog(
     let mut f = OpenOptions::new().create(true).append(true).open(&path)?;
     f.write_all(line.as_bytes())?;
     Ok(())
+}
+
+/// `HEAD`'s name for `checkout: moving from <x> to <y>` reflog messages:
+/// the branch short name, else the full commit hex.
+pub fn head_label(repo: &Repository) -> String {
+    match repo.head_target() {
+        Ok(arks_refs::RefTarget::Symbolic(s)) => s
+            .strip_prefix("refs/heads/")
+            .unwrap_or(s.as_str())
+            .to_string(),
+        Ok(arks_refs::RefTarget::Direct(o)) => o.to_hex(),
+        Err(_) => "HEAD".to_string(),
+    }
+}
+
+/// Entries of `refname`'s reflog, oldest first: (old, new) OIDs.
+pub fn read_entries(repo: &Repository, refname: &str) -> Vec<(Option<Oid>, Oid, String)> {
+    let Ok(text) = fs::read_to_string(log_path_for_ref(repo, refname)) else {
+        return Vec::new();
+    };
+    text.lines()
+        .filter_map(|l| {
+            let (head, msg) = l.split_once('\t').unwrap_or((l, ""));
+            let mut it = head.split(' ');
+            let old = Oid::from_hex(it.next()?)
+                .ok()
+                .filter(|o| o.to_hex() != zero_oid_hex());
+            let new = Oid::from_hex(it.next()?).ok()?;
+            Some((old, new, msg.to_string()))
+        })
+        .collect()
 }
 
 /// After a branch tip update that also moves HEAD, append both logs.

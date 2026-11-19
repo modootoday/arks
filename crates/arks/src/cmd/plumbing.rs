@@ -116,56 +116,183 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: `-c`/`-o`/`-d`/`-m`/`-u` claimed (git-ls-files).
-    refuse_unknown_flags(args, &["-c", "-o", "-d", "-m", "-u"])?;
-    let cached = args.iter().any(|a| a == "-c")
-        || !args
-            .iter()
-            .any(|a| a == "-o" || a == "-d" || a == "-m" || a == "-u");
-    let others = args.iter().any(|a| a == "-o");
-    let deleted = args.iter().any(|a| a == "-d");
-    let modified = args.iter().any(|a| a == "-m");
-    let unmerged = args.iter().any(|a| a == "-u");
+    // M16 Sy-3 + cloud drop-in §O: `-c`/`-o`/`-d`/`-m`/`-u`/`-s`, `--exclude-standard`,
+    // `-z`, `--full-name`, `--error-unmatch`, pathspecs. Output order follows
+    // ls-files.c `show_files`: others, then cached/stage, then deleted/modified.
+    // Paths are shown relative to (and limited to) the current directory.
+    // Cite: https://git-scm.com/docs/git-ls-files
+    let args = crate::util::split_short_bundles(args, "cdmosuz", "");
+    let mut flags = HashSet::new();
+    let mut specs_raw: Vec<String> = Vec::new();
+    let mut dashdash = false;
+    for a in &args {
+        if dashdash || !a.starts_with('-') {
+            specs_raw.push(a.clone());
+            continue;
+        }
+        match a.as_str() {
+            "--" => dashdash = true,
+            "-c" | "--cached" => {
+                flags.insert('c');
+            }
+            "-d" | "--deleted" => {
+                flags.insert('d');
+            }
+            "-m" | "--modified" => {
+                flags.insert('m');
+            }
+            "-o" | "--others" => {
+                flags.insert('o');
+            }
+            "-s" | "--stage" => {
+                flags.insert('s');
+            }
+            "-u" | "--unmerged" => {
+                flags.insert('u');
+            }
+            "-z" => {
+                flags.insert('z');
+            }
+            "--exclude-standard" => {
+                flags.insert('x');
+            }
+            "--full-name" => {
+                flags.insert('f');
+            }
+            "--error-unmatch" => {
+                flags.insert('e');
+            }
+            x => return Err(CliError::NotImplemented(format!("unsupported option: {x}"))),
+        }
+    }
+    let has = |c: char| flags.contains(&c);
+    let stage_fmt = has('s') || has('u');
+    let cached = has('c') || has('s') || has('u') || !(has('o') || has('d') || has('m'));
+    let term = if has('z') { "\0" } else { "\n" };
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let index = read_index(&repo)?;
-    if unmerged {
-        for e in index.entries.iter().filter(|e| e.stage() != 0) {
-            println!("{}", e.path);
-        }
+    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let prefix = canon(&crate::util::cwd()?)
+        .strip_prefix(canon(&work))
+        .map(|r| r.to_string_lossy().replace('\\', "/"))
+        .unwrap_or_default();
+    let mut specs: Vec<String> = Vec::new();
+    for sp in &specs_raw {
+        specs.push(crate::cmd::core::pathspec_rel(&work, sp)?);
     }
-    if cached && !others && !deleted && !modified {
-        for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            println!("{}", e.path);
+    if specs.is_empty() && !prefix.is_empty() {
+        specs.push(prefix.clone());
+    }
+    let mut matched = vec![false; specs.len()];
+    let mut in_spec = |p: &str| -> bool {
+        if specs.is_empty() {
+            return true;
         }
-        return Ok(());
+        let mut any = false;
+        for (i, s) in specs.iter().enumerate() {
+            if s.is_empty() || p == s || p.starts_with(&format!("{s}/")) {
+                matched[i] = true;
+                any = true;
+            }
+        }
+        any
+    };
+    let show = |p: &str| -> String {
+        if has('f') || prefix.is_empty() {
+            return p.to_string();
+        }
+        let pre: Vec<&str> = prefix.split('/').collect();
+        let comps: Vec<&str> = p.split('/').collect();
+        let mut common = 0;
+        while common < pre.len() && common + 1 < comps.len() && pre[common] == comps[common] {
+            common += 1;
+        }
+        format!(
+            "{}{}",
+            "../".repeat(pre.len() - common),
+            comps[common..].join("/")
+        )
+    };
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    if has('o') {
+        let indexed: HashSet<_> = index.entries.iter().map(|e| e.path.clone()).collect();
+        let mut untracked = Vec::new();
+        let mut ig = crate::cmd::ignore::Ignore::new(&work);
+        crate::cmd::shared::collect_untracked_with(
+            &work,
+            &work,
+            &indexed,
+            &mut untracked,
+            has('x').then_some(&mut ig),
+        )?;
+        for p in untracked {
+            if in_spec(&p) {
+                write!(out, "{}{term}", show(&p))?;
+            }
+        }
     }
     if cached {
-        for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            println!("{}", e.path);
+        for e in &index.entries {
+            if has('u') && !has('s') && !has('c') && e.stage() == 0 {
+                continue;
+            }
+            if !in_spec(&e.path) {
+                continue;
+            }
+            if stage_fmt {
+                write!(
+                    out,
+                    "{:06o} {} {}\t{}{term}",
+                    e.mode,
+                    e.oid.to_hex(),
+                    e.stage(),
+                    show(&e.path)
+                )?;
+            } else {
+                // Unmerged paths are listed once.
+                if e.stage() > 1 {
+                    continue;
+                }
+                write!(out, "{}{term}", show(&e.path))?;
+            }
         }
     }
-    if deleted || modified {
+    if has('d') || has('m') {
         for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            let abs = work.join(&e.path);
-            if deleted && !abs.is_file() {
-                println!("{}", e.path);
+            if !in_spec(&e.path) {
+                continue;
             }
-            if modified && abs.is_file() {
-                let bytes = fs::read(&abs)?;
-                let oid = RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?;
-                if oid != e.oid {
-                    println!("{}", e.path);
+            let abs = work.join(&e.path);
+            let gone = !abs.is_file();
+            if has('d') && gone {
+                write!(out, "{}{term}", show(&e.path))?;
+            }
+            if has('m') {
+                let changed = gone || {
+                    let meta = fs::metadata(&abs)?;
+                    !crate::cmd::shared::index_stat_matches(e, &meta)
+                        && RawObject::new(ObjectKind::Blob, fs::read(&abs)?)
+                            .oid(repo.object_format())?
+                            != e.oid
+                };
+                if changed {
+                    write!(out, "{}{term}", show(&e.path))?;
                 }
             }
         }
     }
-    if others {
-        let indexed: HashSet<_> = index.entries.iter().map(|e| e.path.clone()).collect();
-        let mut untracked = Vec::new();
-        crate::cmd::shared::collect_untracked(&work, &work, &indexed, &mut untracked)?;
-        for p in untracked {
-            println!("{p}");
+    out.flush()?;
+    if has('e') {
+        if let Some(i) = matched.iter().position(|m| !m) {
+            return Err(CliError::Exit(
+                1,
+                format!(
+                    "error: pathspec '{}' did not match any file(s) known to git\n\
+                     Did you forget to 'git add'?",
+                    specs_raw.get(i).cloned().unwrap_or_default()
+                ),
+            ));
         }
     }
     Ok(())
@@ -286,9 +413,32 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
     // M16 Sy-3: `--all` claimed (emit all common ancestors found by pairwise walk).
-    refuse_unknown_flags(args, &["--all"])?;
+    // `--is-ancestor A B`: exit 0 when A is an ancestor of B, else 1 (no output).
+    // Cite: https://git-scm.com/docs/git-merge-base
+    refuse_unknown_flags(args, &["--all", "--is-ancestor"])?;
     let all = args.iter().any(|a| a == "--all");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    if args.iter().any(|a| a == "--is-ancestor") {
+        if positional.len() != 2 {
+            return Err(CliError::fatal("--is-ancestor takes exactly two commits"));
+        }
+        let repo = open_repo()?;
+        let peel = |r: &str| -> CliResult<Oid> {
+            crate::cmd::shared::peel_to_kind(
+                &repo,
+                &resolve_rev(&repo, r)
+                    .map_err(|_| CliError::fatal(format!("Not a valid commit name {r}")))?,
+                crate::cmd::shared::ObjKind::Commit,
+                r,
+            )
+        };
+        let (a, b) = (peel(positional[0])?, peel(positional[1])?);
+        return if crate::cmd::shared::is_ancestor(&repo, &a, &b)? {
+            Ok(())
+        } else {
+            Err(CliError::silent(1))
+        };
+    }
     if positional.len() != 2 {
         return Err(CliError::Usage(
             "merge-base [--all] <commit> <commit>".into(),
@@ -341,105 +491,96 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-pub fn cmd_for_each_ref(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: pattern + `--format=%(refname)` minimal.
-    refuse_unknown_flags(args, &["--format"])?;
-    let mut format = "%(refname)".to_string();
-    let mut pattern = "refs/".to_string();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--format" {
-            i += 1;
-            format = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("for-each-ref --format <fmt>".into()))?
-                .clone();
-        } else if let Some(rest) = args[i].strip_prefix("--format=") {
-            format = rest.to_string();
-        } else if !args[i].starts_with('-') {
-            pattern = args[i].clone();
-        }
-        i += 1;
-    }
-    let repo = open_repo()?;
-    // REF-022 (M20 Cx-4): readers remain safe under packed-refs.lock (no writer dialect).
-    // Cite: https://git-scm.com/docs/git-for-each-ref + pack-refs lore — readers do not take the lock.
-    let mut refs = repo.refs().list_refs(&pattern)?;
-    refs.sort_by(|a, b| a.0.cmp(&b.0));
-    for (name, oid) in refs {
-        let line = format
-            .replace("%(refname)", &name)
-            .replace("%(objectname)", &oid.to_hex());
-        println!("{line}");
-    }
-    Ok(())
-}
-
 pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: commit list; `--count`; `--max-count`.
-    refuse_unknown_flags(args, &["--count", "--max-count"])?;
-    let count_only = args.iter().any(|a| a == "--count");
+    // M16 Sy-3 + cloud drop-in §O: revision ranges (`A..B`, `A...B`, `^A`),
+    // `--count`, `--max-count`/`-n`/`-<n>`, `--all`, `--first-parent`,
+    // `--no-merges`, `--merges`, `--reverse`. Default order = committer date.
+    // Cite: https://git-scm.com/docs/git-rev-list
+    use crate::cmd::log_format::{resolve_range, walk};
+    let mut count_only = false;
     let mut max_count: Option<usize> = None;
-    let mut filtered = Vec::new();
+    let (mut all, mut first_parent, mut no_merges, mut merges, mut reverse) =
+        (false, false, false, false, false);
+    let mut revs = Vec::new();
+    let bad_n = |v: &str| CliError::fatal(format!("'{v}': not an integer"));
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "--max-count" {
-            i += 1;
-            max_count = Some(
-                args.get(i)
-                    .ok_or_else(|| CliError::Usage("rev-list --max-count <n>".into()))?
-                    .parse()
-                    .map_err(|_| CliError::Usage("rev-list --max-count: bad n".into()))?,
-            );
-        } else if let Some(rest) = args[i].strip_prefix("--max-count=") {
-            max_count = Some(
-                rest.parse()
-                    .map_err(|_| CliError::Usage("rev-list --max-count: bad n".into()))?,
-            );
-        } else {
-            filtered.push(args[i].clone());
-        }
+        let a = args[i].as_str();
         i += 1;
-    }
-    refuse_unknown_flags(
-        &filtered
-            .iter()
-            .filter(|a| a.starts_with('-'))
-            .cloned()
-            .collect::<Vec<_>>(),
-        &["--count"],
-    )?;
-    let start = filtered
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("HEAD");
-    let repo = open_repo()?;
-    let mut oid = resolve_rev(&repo, start)?;
-    let mut n = 0usize;
-    loop {
-        if let Some(max) = max_count {
-            if n >= max {
-                break;
+        match a {
+            "--count" => count_only = true,
+            "--all" => all = true,
+            "--first-parent" => first_parent = true,
+            "--no-merges" => no_merges = true,
+            "--merges" => merges = true,
+            "--reverse" => reverse = true,
+            "--max-count" | "-n" => {
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::Usage("rev-list --max-count <n>".into()))?;
+                i += 1;
+                max_count = Some(v.parse().map_err(|_| bad_n(v))?);
+            }
+            "--" => break,
+            _ => {
+                if let Some(v) = a.strip_prefix("--max-count=") {
+                    max_count = Some(v.parse().map_err(|_| bad_n(v))?);
+                } else if a.len() > 1
+                    && a.starts_with('-')
+                    && a[1..].bytes().all(|b| b.is_ascii_digit())
+                {
+                    max_count = Some(a[1..].parse().map_err(|_| bad_n(a))?);
+                } else if a.starts_with('-') {
+                    return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+                } else {
+                    revs.push(a.to_string());
+                }
             }
         }
-        let obj = repo.get_object(&oid)?;
-        if obj.kind != ObjectKind::Commit {
-            break;
+    }
+    let repo = open_repo()?;
+    if all {
+        let mut refs = repo.refs().list_refs("refs/")?;
+        refs.sort_by(|a, b| a.0.cmp(&b.0));
+        revs.extend(refs.into_iter().map(|(n, _)| n));
+        if repo.head_oid().is_ok() {
+            revs.push("HEAD".into());
         }
-        if !count_only {
-            println!("{}", oid.to_hex());
+    }
+    if revs.is_empty() {
+        return Err(CliError::Usage("rev-list <commit>...".into()));
+    }
+    let (inc, exc) = resolve_range(&repo, &revs)?;
+    let peel = |v: Vec<Oid>| -> CliResult<Vec<Oid>> {
+        let mut out = Vec::new();
+        for o in v {
+            let p = crate::cmd::shared::peel_tags(&repo, &o)?;
+            if !out.contains(&p) {
+                out.push(p);
+            }
         }
-        n += 1;
-        let c = Commit::decode(&obj.payload)?;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
+        Ok(out)
+    };
+    let mut list: Vec<Oid> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
+        .into_iter()
+        .filter(|(_, c)| !(no_merges && c.parents.len() > 1) && !(merges && c.parents.len() < 2))
+        .map(|(o, _)| o)
+        .collect();
+    if let Some(m) = max_count {
+        list.truncate(m);
+    }
+    if reverse {
+        list.reverse();
     }
     if count_only {
-        println!("{n}");
+        println!("{}", list.len());
+        return Ok(());
     }
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    for o in list {
+        writeln!(out, "{}", o.to_hex())?;
+    }
+    out.flush()?;
     Ok(())
 }
 

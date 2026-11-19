@@ -35,8 +35,20 @@ pub(crate) fn is_ancestor(repo: &Repository, ancestor: &Oid, tip: &Oid) -> CliRe
 
 /// Resolve a revision per gitrevisions(7) (claimed subset): full or abbreviated
 /// hex, `HEAD`/`@`, `FETCH_HEAD`, ref DWIM (`refs/`, heads, remotes, tags),
-/// `<rev>@{u}` / `@{upstream}`, and any chain of `~N`, `^N`, `^` suffixes.
+/// `<rev>@{u}` / `@{upstream}`, any chain of `~N`, `^N`, `^`, `^{<type>}`,
+/// `^{}` suffixes, `<rev>:<path>` (tree entry) and `:<path>` / `:<n>:<path>`
+/// (index entry). `~`/`^N` peel annotated tags to their commit first.
+/// Cite: <https://git-scm.com/docs/gitrevisions#_specifying_revisions>.
 pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
+    if let Some(rest) = rev.strip_prefix(':') {
+        return resolve_index_path(repo, rev, rest);
+    }
+    if let Some(colon) = rev_path_colon(rev) {
+        let (r, path) = (&rev[..colon], &rev[colon + 1..]);
+        let tree = peel_to_kind(repo, &resolve_rev(repo, r)?, ObjKind::Tree, rev)?;
+        return tree_entry_at(repo, &tree, path)
+            .ok_or_else(|| CliError::fatal(format!("path '{path}' does not exist in '{r}'")));
+    }
     let cut = rev
         .char_indices()
         .find(|(i, c)| (*c == '~' || *c == '^') && *i > 0)
@@ -46,6 +58,28 @@ pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
     let mut oid = resolve_rev_base(repo, base)?;
     while !ops.is_empty() {
         let op = ops.as_bytes()[0];
+        if op == b'^' && ops[1..].starts_with('{') {
+            let close = ops
+                .find('}')
+                .ok_or_else(|| CliError::Msg(format!("unknown revision: {rev}")))?;
+            let want = &ops[2..close];
+            ops = &ops[close + 1..];
+            oid = match want {
+                "" => peel_tags(repo, &oid)?,
+                "commit" => peel_to_kind(repo, &oid, ObjKind::Commit, rev)?,
+                "tree" => peel_to_kind(repo, &oid, ObjKind::Tree, rev)?,
+                "object" => oid,
+                "blob" | "tag" => {
+                    let k = repo.get_object(&oid)?.kind;
+                    if k.as_str() != want {
+                        return Err(CliError::Msg(format!("{rev}: not a {want}")));
+                    }
+                    oid
+                }
+                _ => return Err(CliError::Msg(format!("unknown revision: {rev}"))),
+            };
+            continue;
+        }
         let digits: String = ops[1..]
             .chars()
             .take_while(|c| c.is_ascii_digit())
@@ -58,11 +92,9 @@ pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
                 .parse()
                 .map_err(|_| CliError::Msg(format!("unknown revision: {rev}")))?
         };
+        oid = peel_to_kind(repo, &oid, ObjKind::Commit, rev)?;
         let parents = |o: &Oid| -> CliResult<Vec<Oid>> {
             let obj = repo.get_object(o)?;
-            if obj.kind != arks_object::ObjectKind::Commit {
-                return Err(CliError::Msg(format!("{rev}: not a commit")));
-            }
             Ok(arks_object::Commit::decode(&obj.payload)?.parents)
         };
         if op == b'~' {
@@ -80,12 +112,119 @@ pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
     Ok(oid)
 }
 
+/// Peel target for `^{<type>}` and tree-ish contexts.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ObjKind {
+    Commit,
+    Tree,
+}
+
+/// Byte offset of the `<rev>:<path>` separator (outside any `@{...}`).
+fn rev_path_colon(rev: &str) -> Option<usize> {
+    let mut depth = 0usize;
+    for (i, c) in rev.char_indices() {
+        match c {
+            '{' => depth += 1,
+            '}' => depth = depth.saturating_sub(1),
+            ':' if depth == 0 => return Some(i),
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Target of an annotated tag object (`object <hex>` header line).
+pub(crate) fn tag_target(payload: &[u8]) -> Option<Oid> {
+    let text = String::from_utf8_lossy(payload);
+    text.lines()
+        .take_while(|l| !l.is_empty())
+        .find_map(|l| l.strip_prefix("object "))
+        .and_then(|h| Oid::from_hex(h.trim()).ok())
+}
+
+/// Recursively dereference annotated tags (`<rev>^{}`).
+pub(crate) fn peel_tags(repo: &Repository, oid: &Oid) -> CliResult<Oid> {
+    let mut cur = *oid;
+    loop {
+        let obj = repo.get_object(&cur)?;
+        if obj.kind != arks_object::ObjectKind::Tag {
+            return Ok(cur);
+        }
+        cur = tag_target(&obj.payload)
+            .ok_or_else(|| CliError::Msg(format!("bad tag object {}", cur.to_hex())))?;
+    }
+}
+
+/// Peel tags (and commit -> tree) until an object of `want` kind is reached.
+pub(crate) fn peel_to_kind(
+    repo: &Repository,
+    oid: &Oid,
+    want: ObjKind,
+    rev: &str,
+) -> CliResult<Oid> {
+    let cur = peel_tags(repo, oid)?;
+    let obj = repo.get_object(&cur)?;
+    match (obj.kind, want) {
+        (arks_object::ObjectKind::Commit, ObjKind::Commit)
+        | (arks_object::ObjectKind::Tree, ObjKind::Tree) => Ok(cur),
+        (arks_object::ObjectKind::Commit, ObjKind::Tree) => {
+            Ok(arks_object::Commit::decode(&obj.payload)?.tree)
+        }
+        _ => Err(CliError::Msg(format!(
+            "{rev}: expected {}",
+            if want == ObjKind::Commit {
+                "commit"
+            } else {
+                "tree"
+            }
+        ))),
+    }
+}
+
+/// Object at `path` below `tree` (empty path = the tree itself).
+pub(crate) fn tree_entry_at(repo: &Repository, tree: &Oid, path: &str) -> Option<Oid> {
+    let mut cur = *tree;
+    for comp in path.split('/').filter(|c| !c.is_empty() && *c != ".") {
+        let obj = repo.get_object(&cur).ok()?;
+        if obj.kind != arks_object::ObjectKind::Tree {
+            return None;
+        }
+        let t = arks_object::Tree::decode(&obj.payload, repo.oid_kind()).ok()?;
+        cur = t.entries.iter().find(|e| e.name == comp)?.oid;
+    }
+    Some(cur)
+}
+
+/// `:<path>` / `:<n>:<path>` -- blob recorded in the index at stage `n` (default 0).
+fn resolve_index_path(repo: &Repository, rev: &str, rest: &str) -> CliResult<Oid> {
+    let (stage, path) = match rest.split_once(':') {
+        Some((n, p)) if n.len() == 1 && n.as_bytes()[0].is_ascii_digit() => {
+            (u16::from(n.as_bytes()[0] - b'0'), p)
+        }
+        _ => (0, rest),
+    };
+    let index = crate::util::read_index(repo)?;
+    index
+        .entries
+        .iter()
+        .find(|e| e.path == path && e.stage() == stage)
+        .map(|e| e.oid)
+        .ok_or_else(|| {
+            CliError::fatal(format!(
+                "path '{path}' does not exist (neither on disk nor in the index) ({rev})"
+            ))
+        })
+}
+
 fn resolve_rev_base(repo: &Repository, rev: &str) -> CliResult<Oid> {
     if let Ok(oid) = Oid::from_hex(rev) {
         return Ok(oid);
     }
     if rev == "HEAD" || rev == "@" {
         return Ok(repo.head_oid()?);
+    }
+    if let Some(o) = resolve_reflog_spec(repo, rev)? {
+        return Ok(o);
     }
     for suffix in ["@{upstream}", "@{u}", "@{UPSTREAM}", "@{U}"] {
         if let Some(branch) = rev.strip_suffix(suffix) {
@@ -120,6 +259,68 @@ fn resolve_rev_base(repo: &Repository, rev: &str) -> CliResult<Oid> {
     Err(CliError::Msg(format!("unknown revision: {rev}")))
 }
 
+/// `<ref>@{<n>}` (n-th prior value from the ref's reflog; `@{n}` = current
+/// branch) and `@{-<n>}` (n-th previously checked-out branch from the HEAD
+/// reflog `checkout: moving from X to Y` entries).
+/// Cite: <https://git-scm.com/docs/gitrevisions> (`@{<n>}`, `@{-<n>}`).
+fn resolve_reflog_spec(repo: &Repository, rev: &str) -> CliResult<Option<Oid>> {
+    let Some(open) = rev.find("@{") else {
+        return Ok(None);
+    };
+    let Some(inner) = rev[open + 2..].strip_suffix('}') else {
+        return Ok(None);
+    };
+    let base = &rev[..open];
+    if let Some(n) = inner.strip_prefix('-') {
+        let Ok(n) = n.parse::<usize>() else {
+            return Ok(None);
+        };
+        if !base.is_empty() || n == 0 {
+            return Ok(None);
+        }
+        let mut seen = 0;
+        for (_, _, msg) in crate::reflog::read_entries(repo, "HEAD").iter().rev() {
+            if let Some(rest) = msg.strip_prefix("checkout: moving from ") {
+                if let Some((from, _)) = rest.split_once(" to ") {
+                    seen += 1;
+                    if seen == n {
+                        return resolve_rev(repo, from).map(Some);
+                    }
+                }
+            }
+        }
+        return Err(CliError::fatal(format!(
+            "{rev}: not enough branch switches"
+        )));
+    }
+    let Ok(n) = inner.parse::<usize>() else {
+        return Ok(None);
+    };
+    let refname = match base {
+        "" => match repo.head_target()? {
+            RefTarget::Symbolic(s) => s,
+            RefTarget::Direct(_) => "HEAD".to_string(),
+        },
+        "HEAD" => "HEAD".to_string(),
+        b if b.starts_with("refs/") => b.to_string(),
+        b => format!("refs/heads/{b}"),
+    };
+    let entries = crate::reflog::read_entries(repo, &refname);
+    if n < entries.len() {
+        return Ok(Some(entries[entries.len() - 1 - n].1));
+    }
+    if n == entries.len() {
+        if let Some((Some(old), _, _)) = entries.first() {
+            return Ok(Some(*old));
+        }
+    }
+    Err(CliError::fatal(format!(
+        "log for '{}' only has {} entries",
+        base.trim_start_matches("refs/heads/"),
+        entries.len()
+    )))
+}
+
 /// `<branch>@{upstream}` → `refs/remotes/<remote>/<merge-branch>` from
 /// `branch.<name>.remote` / `branch.<name>.merge`.
 fn resolve_upstream(repo: &Repository, branch: &str) -> CliResult<Oid> {
@@ -148,6 +349,20 @@ fn resolve_upstream(repo: &Repository, branch: &str) -> CliResult<Oid> {
         format!("refs/remotes/{remote}/{short}")
     };
     Ok(repo.refs().resolve(&full)?)
+}
+
+/// Shortest unambiguous hex prefix of `oid`, at least `min` digits
+/// (git `find_unique_abbrev`; default `core.abbrev` minimum is 7).
+pub(crate) fn abbrev_hex(repo: &Repository, oid: &Oid, min: usize) -> String {
+    let hex = oid.to_hex();
+    let mut n = min.clamp(4, hex.len());
+    while n < hex.len() {
+        if matches!(resolve_abbrev(repo, &hex[..n]), Ok(Some(_))) {
+            break;
+        }
+        n += 1;
+    }
+    hex[..n].to_string()
 }
 
 /// Unique object whose hex starts with `prefix` (4+ hex digits), loose or packed.
@@ -204,15 +419,30 @@ pub(crate) fn current_branch_name(repo: &Repository) -> CliResult<String> {
     }
 }
 
+/// Untracked files below `dir` (work-tree relative, sorted), skipping paths
+/// excluded by gitignore(5) rules; excluded directories are not descended.
 pub(crate) fn collect_untracked(
     work: &Path,
     dir: &Path,
     indexed: &std::collections::HashSet<String>,
     out: &mut Vec<String>,
 ) -> CliResult<()> {
+    let mut ignore = crate::cmd::ignore::Ignore::new(work);
+    collect_untracked_with(work, dir, indexed, out, Some(&mut ignore))
+}
+
+/// [`collect_untracked`] with explicit exclude handling (`None` lists
+/// ignored files too, e.g. `ls-files --others` without `--exclude-standard`).
+pub(crate) fn collect_untracked_with(
+    work: &Path,
+    dir: &Path,
+    indexed: &std::collections::HashSet<String>,
+    out: &mut Vec<String>,
+    mut ignore: Option<&mut crate::cmd::ignore::Ignore>,
+) -> CliResult<()> {
     // Pf4-1: recurse without per-directory sort; sort once at the top call.
     let before = out.len();
-    collect_untracked_rec(work, dir, indexed, out)?;
+    collect_untracked_rec(work, dir, indexed, out, &mut ignore)?;
     out[before..].sort();
     Ok(())
 }
@@ -222,6 +452,7 @@ fn collect_untracked_rec(
     dir: &Path,
     indexed: &std::collections::HashSet<String>,
     out: &mut Vec<String>,
+    ignore: &mut Option<&mut crate::cmd::ignore::Ignore>,
 ) -> CliResult<()> {
     let rd = fs::read_dir(dir)?;
     for ent in rd {
@@ -236,8 +467,16 @@ fn collect_untracked_rec(
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");
-        if path.is_dir() {
-            collect_untracked_rec(work, &path, indexed, out)?;
+        let is_dir = path.is_dir();
+        if !indexed.contains(&rel) {
+            if let Some(ig) = ignore.as_deref_mut() {
+                if ig.is_ignored(&rel, is_dir) {
+                    continue;
+                }
+            }
+        }
+        if is_dir {
+            collect_untracked_rec(work, &path, indexed, out, ignore)?;
         } else if !indexed.contains(&rel) {
             out.push(rel);
         }

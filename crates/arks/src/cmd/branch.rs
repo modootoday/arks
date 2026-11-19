@@ -1,145 +1,18 @@
 //! Branch / checkout / switch.
 
-use crate::cmd::shared::{current_branch_name, head_blob_map, resolve_rev, tree_blob_map};
+use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
-};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use arks_index::{IndexEntry, sort_entries};
 use arks_refs::RefTarget;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
-pub fn cmd_branch(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1: `-a`/`--all`, `-r`/`--remotes`, `-v` claimed (git-branch).
-    // Cloud drop-in §O: `--show-current`, `--list`, `-vv`, `--delete`, `-f`.
-    let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "dDmarvf", ""),
-        &[
-            ("--delete", "-d"),
-            ("--move", "-m"),
-            ("--verbose", "-v"),
-            ("--list", "-l"),
-            ("--force", "-f"),
-        ],
-    );
-    refuse_unknown_flags(
-        args,
-        &[
-            "-d",
-            "-D",
-            "-m",
-            "-a",
-            "--all",
-            "-r",
-            "--remotes",
-            "-v",
-            "-l",
-            "-f",
-            "--show-current",
-        ],
-    )?;
-    let mut repo = open_repo()?;
-    if args.iter().any(|a| a == "--show-current") {
-        if let Ok(RefTarget::Symbolic(s)) = repo.head_target() {
-            println!("{}", s.strip_prefix("refs/heads/").unwrap_or(&s));
-        }
-        return Ok(());
-    }
-    if args.iter().any(|a| a == "-d" || a == "-D") {
-        let force = args.iter().any(|a| a == "-D");
-        let name = args
-            .iter()
-            .find(|a| !a.starts_with('-'))
-            .ok_or_else(|| CliError::Usage("branch -d|-D <name>".into()))?;
-        let full = branch_ref(name);
-        if !force {
-            let head = current_branch_name(&repo)?;
-            if head == *name {
-                return Err(CliError::Msg(format!(
-                    "cannot delete branch '{name}' checked out"
-                )));
-            }
-        }
-        repo.refs_mut().delete(&full, None)?;
-        return Ok(());
-    }
-    if args.iter().any(|a| a == "-m") {
-        let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-        if positional.len() != 2 {
-            return Err(CliError::Usage("branch -m <old> <new>".into()));
-        }
-        let old = branch_ref(positional[0]);
-        let new = branch_ref(positional[1]);
-        let oid = repo.refs().resolve(&old)?;
-        repo.refs_mut().update(&new, &oid, None)?;
-        repo.refs_mut().delete(&old, Some(&oid))?;
-        if let Ok(RefTarget::Symbolic(s)) = repo.head_target() {
-            if s == old {
-                repo.refs_mut().set_symbolic("HEAD", &new)?;
-            }
-        }
-        return Ok(());
-    }
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.is_empty() {
-        let list_all = args.iter().any(|a| a == "-a" || a == "--all");
-        let list_remote = args.iter().any(|a| a == "-r" || a == "--remotes");
-        let verbose = args.iter().any(|a| a == "-v");
-        let cur = current_branch_name(&repo).unwrap_or_default();
-        if !list_remote {
-            let mut refs = repo.refs().list_refs("refs/heads/")?;
-            refs.sort_by(|a, b| a.0.cmp(&b.0));
-            for (name, oid) in refs {
-                let short = name.strip_prefix("refs/heads/").unwrap_or(&name);
-                let mark = if short == cur { "*" } else { " " };
-                if verbose {
-                    println!("{mark} {short} {}", &oid.to_hex()[..7]);
-                } else {
-                    println!("{mark} {short}");
-                }
-            }
-        }
-        if list_all || list_remote {
-            let mut remotes = repo.refs().list_refs("refs/remotes/")?;
-            remotes.sort_by(|a, b| a.0.cmp(&b.0));
-            for (name, oid) in remotes {
-                let short = name.strip_prefix("refs/remotes/").unwrap_or(&name);
-                if verbose {
-                    println!("  remotes/{short} {}", &oid.to_hex()[..7]);
-                } else if list_remote && !list_all {
-                    println!("  {short}");
-                } else {
-                    println!("  remotes/{short}");
-                }
-            }
-        }
-        return Ok(());
-    }
-    if positional.len() > 2 {
-        return Err(CliError::Usage("branch [-f] <name> [<start-point>]".into()));
-    }
-    let name = positional[0];
-    let full = branch_ref(name);
-    let force = args.iter().any(|a| a == "-f");
-    if !force && repo.refs().resolve(&full).is_ok() {
-        return Err(CliError::Msg(format!(
-            "a branch named '{name}' already exists"
-        )));
-    }
-    let oid = match positional.get(1) {
-        Some(start) => resolve_rev(&repo, start)?,
-        None => repo.head_oid()?,
-    };
-    repo.refs_mut().update(&full, &oid, None)?;
-    Ok(())
-}
-
 pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     // M16 Sy-1/Sy-2: `--detach` + `--orphan` claimed (git-checkout 2.39.0).
     // Cite: https://git-scm.com/docs/git-checkout/2.39.0
     // Cloud drop-in §O: `-B <branch> [<start>]`, `-b <branch> <start>`, `-q`.
     let args = &crate::util::split_short_bundles(args, "qf", "bB");
+    crate::util::set_quiet_from(args);
     refuse_unknown_flags(
         args,
         &["-b", "-B", "--", "--detach", "--orphan", "-q", "--quiet"],
@@ -154,7 +27,12 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         if paths.is_empty() {
             return Err(CliError::Usage("checkout -- <path>...".into()));
         }
-        return restore_paths(&paths, false, true, None);
+        // `checkout <tree-ish> -- <path>` updates both the index and the work tree.
+        let source = args[..i].iter().find(|a| !a.starts_with('-'));
+        return match source {
+            Some(rev) => restore_paths_mode(&paths, true, true, Some(rev), true),
+            None => restore_paths_mode(&paths, false, true, None, true),
+        };
     }
     if let Some(i) = orphan_idx {
         let name = args
@@ -200,24 +78,71 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         } else {
             Vec::new()
         };
+        let from = crate::reflog::head_label(&repo);
+        let old_tip = repo.refs().resolve(&full).ok();
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        for l in carried {
+        let start = positional.get(1).map(|s| s.as_str()).unwrap_or("HEAD");
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            &full,
+            old_tip.as_ref(),
+            &oid,
+            &format!("branch: Created from {start}"),
+        );
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            "HEAD",
+            head.as_ref(),
+            &oid,
+            &format!("checkout: moving from {from} to {name}"),
+        );
+        for l in carried.iter().filter(|_| !crate::util::quiet()) {
             println!("{l}");
         }
         if existed {
-            eprintln!("Switched to and reset branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to and reset branch '{name}'");
+            }
         } else {
-            eprintln!("Switched to a new branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to a new branch '{name}'");
+            }
         }
         return Ok(());
     }
     if detach {
-        if positional.len() != 1 {
-            return Err(CliError::Usage("checkout --detach <commit>".into()));
-        }
-        return detach_to(positional[0]);
+        return match positional.as_slice() {
+            [] => detach_to("HEAD"),
+            [rev] => detach_to(rev),
+            _ => Err(CliError::Usage("checkout --detach [<commit>]".into())),
+        };
     }
+    if positional.is_empty() {
+        return Err(CliError::Usage(
+            "checkout <branch> | checkout -- <path>".into(),
+        ));
+    }
+    // git-checkout: an argument that names no branch or commit but a path is a
+    // pathspec (`checkout <path>` == `checkout -- <path>`).
+    let repo = open_repo()?;
+    let first = positional[0];
+    let is_rev =
+        repo.refs().resolve(&branch_ref(first)).is_ok() || resolve_rev(&repo, first).is_ok();
+    if !is_rev {
+        let work = work_tree(&repo)?;
+        let rel = crate::cmd::core::pathspec_rel(&work, first).unwrap_or_default();
+        let tracked = read_index(&repo)?
+            .entries
+            .iter()
+            .any(|e| e.path == rel || e.path.starts_with(&format!("{rel}/")));
+        if tracked {
+            return restore_paths_mode(&positional, false, true, None, true);
+        }
+    } else if positional.len() > 1 {
+        return restore_paths_mode(&positional[1..], true, true, Some(first), true);
+    }
+    drop(repo);
     if positional.len() != 1 {
         return Err(CliError::Usage(
             "checkout <branch> | checkout -- <path>".into(),
@@ -261,6 +186,7 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
         ],
     );
     refuse_unknown_flags(args, &["-c", "-C", "--detach", "--orphan", "-q"])?;
+    crate::util::set_quiet_from(args);
     let create = args.iter().any(|a| a == "-c" || a == "-C");
     let force_create = args.iter().any(|a| a == "-C");
     let detach = args.iter().any(|a| a == "--detach");
@@ -304,15 +230,36 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
         } else {
             Vec::new()
         };
+        let from = crate::reflog::head_label(&repo);
+        let old_tip = repo.refs().resolve(&full).ok();
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        for l in carried {
+        let start = positional.get(1).map(|s| s.as_str()).unwrap_or("HEAD");
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            &full,
+            old_tip.as_ref(),
+            &oid,
+            &format!("branch: Created from {start}"),
+        );
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            "HEAD",
+            head.as_ref(),
+            &oid,
+            &format!("checkout: moving from {from} to {name}"),
+        );
+        for l in carried.iter().filter(|_| !crate::util::quiet()) {
             println!("{l}");
         }
         if existed {
-            eprintln!("Switched to and reset branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to and reset branch '{name}'");
+            }
         } else {
-            eprintln!("Switched to a new branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to a new branch '{name}'");
+            }
         }
         Ok(())
     } else {
@@ -352,7 +299,7 @@ fn switch_orphan(name: &str) -> CliResult<()> {
     Ok(())
 }
 
-fn branch_ref(name: &str) -> String {
+pub(crate) fn branch_ref(name: &str) -> String {
     if name.starts_with("refs/heads/") {
         name.to_string()
     } else {
@@ -387,14 +334,27 @@ fn switch_branch(name: &str, _detach: bool) -> CliResult<()> {
         }
     }
     let was_current = matches!(repo.head_target(), Ok(RefTarget::Symbolic(ref s)) if *s == full);
+    let from = crate::reflog::head_label(&repo);
+    let old_head = repo.head_oid().ok();
     repo.refs_mut().set_symbolic("HEAD", &full)?;
-    for l in carried {
+    let _ = crate::reflog::append_reflog(
+        &repo,
+        "HEAD",
+        old_head.as_ref(),
+        &oid,
+        &format!("checkout: moving from {from} to {name}"),
+    );
+    for l in carried.iter().filter(|_| !crate::util::quiet()) {
         println!("{l}");
     }
     if was_current {
-        eprintln!("Already on '{name}'");
+        if !crate::util::quiet() {
+            eprintln!("Already on '{name}'");
+        }
     } else {
-        eprintln!("Switched to branch '{name}'");
+        if !crate::util::quiet() {
+            eprintln!("Switched to branch '{name}'");
+        }
     }
     Ok(())
 }
@@ -404,81 +364,151 @@ fn detach_to(rev: &str) -> CliResult<()> {
     let mut repo = open_repo()?;
     let oid = resolve_rev(&repo, rev)?;
     let head = repo.head_oid().ok();
-    let carried = if head != Some(oid) {
-        let work = work_tree(&repo)?;
-        crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
-    } else {
-        Vec::new()
-    };
+    // The two-way switch also reports carried local changes for a same-commit detach.
+    let work = work_tree(&repo)?;
+    let carried = crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?;
+    let from = crate::reflog::head_label(&repo);
     repo.refs_mut().update("HEAD", &oid, None)?;
-    for l in carried {
+    let _ = crate::reflog::append_reflog(
+        &repo,
+        "HEAD",
+        head.as_ref(),
+        &oid,
+        &format!("checkout: moving from {from} to {rev}"),
+    );
+    for l in carried.iter().filter(|_| !crate::util::quiet()) {
         println!("{l}");
     }
     let subject = crate::cmd::log_format::read_commit(&repo, &oid)
         .map(|c| c.subject().to_string())
         .unwrap_or_default();
-    eprintln!("HEAD is now at {} {subject}", &oid.to_hex()[..7]);
+    if !crate::util::quiet() {
+        eprintln!("HEAD is now at {} {subject}", &oid.to_hex()[..7]);
+    }
     Ok(())
 }
 
+/// git-restore core (also `checkout -- <path>`): copy `<pathspec>` matches
+/// from the source (`--source`, else HEAD for `--staged`, else the index)
+/// into the index and/or working tree. Matched paths missing from the
+/// source are removed from the destination (an added file is unstaged).
+/// Cite: <https://git-scm.com/docs/git-restore>.
 pub(crate) fn restore_paths(
     paths: &[&String],
     staged: bool,
     worktree: bool,
     source: Option<&str>,
 ) -> CliResult<()> {
+    restore_paths_mode(paths, staged, worktree, source, false)
+}
+
+/// [`restore_paths`]; `overlay` (git-checkout default) never removes paths
+/// missing from the source.
+pub(crate) fn restore_paths_mode(
+    paths: &[&String],
+    staged: bool,
+    worktree: bool,
+    source: Option<&str>,
+    overlay: bool,
+) -> CliResult<()> {
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let mut index = read_index(&repo)?;
-    let src_map = if let Some(rev) = source {
-        let oid = resolve_rev(&repo, rev)?;
-        tree_blob_map(&repo, &oid)?
-    } else if staged {
-        // restore --staged defaults from HEAD
-        head_blob_map(&repo)?
-    } else {
-        // restore worktree from index
-        let mut m = HashMap::new();
-        for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            m.insert(e.path.clone(), e.oid);
-        }
-        m
+    let idx_map: HashMap<String, (arks_oid::Oid, u32)> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.clone(), (e.oid, e.mode)))
+        .collect();
+    let tree_files = |oid: &arks_oid::Oid| -> CliResult<HashMap<String, (arks_oid::Oid, u32)>> {
+        let peeled = crate::cmd::shared::peel_tags(&repo, oid)?;
+        Ok(crate::cmd::switch_tree::commit_files(&repo, &peeled)?
+            .into_iter()
+            .map(|(k, f)| (k, (f.oid, f.mode)))
+            .collect())
     };
-    for p in paths {
-        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| (*p).clone());
-        let oid = src_map
-            .get(&rel)
-            .copied()
-            .ok_or_else(|| CliError::Msg(format!("path '{rel}' not in source")))?;
-        let blob = repo.get_object(&oid)?;
-        if worktree {
-            let abs = work.join(&rel);
-            if let Some(parent) = abs.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            let payload = arks_remote::smudge_worktree_blob(&repo, &work, &rel, &blob.payload)
-                .map_err(|e| CliError::Msg(e.to_string()))?;
-            fs::write(&abs, &payload)?;
+    let src_map = if let Some(rev) = source {
+        tree_files(&resolve_rev(&repo, rev)?)?
+    } else if staged {
+        match repo.head_oid() {
+            Ok(h) => tree_files(&h)?,
+            Err(_) => HashMap::new(),
         }
-        if staged {
-            let meta_size = blob.payload.len().min(u32::MAX as usize) as u32;
-            index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
-            index.entries.push(IndexEntry {
-                ctime_sec: 0,
-                ctime_nsec: 0,
-                mtime_sec: 0,
-                mtime_nsec: 0,
-                dev: 0,
-                ino: 0,
-                mode: 0o100644,
-                uid: 0,
-                gid: 0,
-                size: meta_size,
-                oid,
-                flags: (rel.len().min(0x0fff)) as u16,
-                flags_extended: None,
-                path: rel,
-            });
+    } else {
+        idx_map.clone()
+    };
+    let mut matched: Vec<String> = Vec::new();
+    for p in paths {
+        let rel = crate::cmd::core::pathspec_rel(&work, p)?;
+        let prefix = format!("{rel}/");
+        let hit = |k: &String| rel.is_empty() || *k == rel || k.starts_with(&prefix);
+        let before = matched.len();
+        matched.extend(src_map.keys().filter(|k| hit(k)).cloned());
+        let dest_known: Vec<String> = if overlay {
+            Vec::new()
+        } else if staged {
+            idx_map.keys().filter(|k| hit(k)).cloned().collect()
+        } else {
+            // Work-tree restore from a tree also drops tracked paths absent there.
+            idx_map
+                .keys()
+                .filter(|k| source.is_some() && hit(k))
+                .cloned()
+                .collect()
+        };
+        matched.extend(dest_known);
+        if matched.len() == before {
+            return Err(CliError::Exit(
+                1,
+                format!("error: pathspec '{p}' did not match any file(s) known to git"),
+            ));
+        }
+    }
+    matched.sort();
+    matched.dedup();
+    for rel in matched {
+        let abs = work.join(&rel);
+        match src_map.get(&rel) {
+            Some((oid, mode)) => {
+                if worktree {
+                    let blob = repo.get_object(oid)?;
+                    if let Some(parent) = abs.parent() {
+                        fs::create_dir_all(parent)?;
+                    }
+                    let payload =
+                        arks_remote::smudge_worktree_blob(&repo, &work, &rel, &blob.payload)
+                            .map_err(|e| CliError::Msg(e.to_string()))?;
+                    fs::write(&abs, &payload)?;
+                }
+                if staged {
+                    let size = repo.get_object(oid)?.payload.len().min(u32::MAX as usize) as u32;
+                    index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
+                    index.entries.push(IndexEntry {
+                        ctime_sec: 0,
+                        ctime_nsec: 0,
+                        mtime_sec: 0,
+                        mtime_nsec: 0,
+                        dev: 0,
+                        ino: 0,
+                        mode: *mode,
+                        uid: 0,
+                        gid: 0,
+                        size,
+                        oid: *oid,
+                        flags: (rel.len().min(0x0fff)) as u16,
+                        flags_extended: None,
+                        path: rel,
+                    });
+                }
+            }
+            None => {
+                if worktree && (abs.is_file() || abs.is_symlink()) {
+                    fs::remove_file(&abs)?;
+                }
+                if staged {
+                    index.entries.retain(|e| e.path != rel);
+                }
+            }
         }
     }
     if staged {

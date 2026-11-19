@@ -170,6 +170,12 @@ fn dispatch_forge(personality: Personality, leaf: &str, args: &[String]) -> Exit
 fn run_git_preserving(cmd: &str, args: &[String]) -> ExitCode {
     match dispatch_git_leaf(cmd, args) {
         Ok(()) => ExitCode::SUCCESS,
+        Err(crate::error::CliError::Exit(code, m)) => {
+            if !m.is_empty() {
+                eprintln!("{m}");
+            }
+            ExitCode::from(code)
+        }
         Err(e) => {
             // Historical tip: all git-path CliError → exit 1 (Claimed gates).
             eprintln!("error: {e}");
@@ -190,6 +196,12 @@ fn run_serve_leaf(cmd: &str, args: &[String]) -> ExitCode {
         Err(CliError::Msg(m)) => {
             eprintln!("error: {m}");
             ExitCode::from(ExitClass::GenericFailure as u8)
+        }
+        Err(CliError::Exit(code, m)) => {
+            if !m.is_empty() {
+                eprintln!("{m}");
+            }
+            ExitCode::from(code)
         }
     }
 }

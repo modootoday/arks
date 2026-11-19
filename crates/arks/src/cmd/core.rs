@@ -1,14 +1,13 @@
 //! Core porcelain: init / objects / index / commit / log / show.
 
 use crate::cmd::shared::{
-    collect_untracked, commit_signature, committer_signature, current_branch_name, file_mode,
-    file_times, head_blob_map, index_stat_matches, resolve_rev,
+    collect_untracked, commit_signature, committer_signature, file_mode, file_times,
+    index_stat_matches, resolve_rev,
 };
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
-    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
-    write_index,
+    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, work_tree, write_index,
 };
 use crate::write_tree::write_tree_from_index;
 use arks_index::{IndexEntry, sort_entries};
@@ -121,11 +120,26 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_cat_file(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-t", "-s", "-p"])?;
+    // `-e`: exit 0 when the object exists, 1 when a valid name lacks an object,
+    // 128 for an invalid name. Cite: https://git-scm.com/docs/git-cat-file
+    refuse_unknown_flags(args, &["-t", "-s", "-p", "-e"])?;
     let mode = args
         .iter()
-        .find(|a| *a == "-t" || *a == "-s" || *a == "-p")
-        .ok_or_else(|| CliError::Usage("cat-file: require -t, -s, or -p".into()))?;
+        .find(|a| *a == "-t" || *a == "-s" || *a == "-p" || *a == "-e")
+        .ok_or_else(|| CliError::Usage("cat-file: require -t, -s, -e, or -p".into()))?;
+    if mode == "-e" {
+        let object = args
+            .iter()
+            .find(|a| !a.starts_with('-'))
+            .ok_or_else(|| CliError::Usage("cat-file: missing object".into()))?;
+        let repo = open_repo()?;
+        let oid = resolve_rev(&repo, object)
+            .map_err(|_| CliError::fatal(format!("Not a valid object name {object}")))?;
+        return match repo.get_object(&oid) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(CliError::silent(1)),
+        };
+    }
     let object = args
         .iter()
         .find(|a| !a.starts_with('-'))
@@ -251,32 +265,184 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
     // Sy-1: `--abbrev-ref` / `--verify` / `--symbolic-full-name` (git-rev-parse).
-    // Cite: https://git-scm.com/docs/git-rev-parse + [[sot:root/cli-flag-parity-complete]]
-    refuse_unknown_flags(args, &["--abbrev-ref", "--verify", "--symbolic-full-name"])?;
-    let abbrev_ref = args
-        .iter()
-        .any(|a| *a == "--abbrev-ref" || a.starts_with("--abbrev-ref="));
-    let symbolic_full = args.iter().any(|a| a == "--symbolic-full-name");
-    let verify = args.iter().any(|a| a == "--verify");
-    let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if revs.is_empty() {
-        return Err(CliError::Usage("rev-parse: missing revision".into()));
-    }
+    // Cloud drop-in §O: `--short[=n]`, `-q`, `--show-toplevel`, `--git-dir`,
+    // `--absolute-git-dir`, `--git-common-dir`, `--show-prefix`, `--show-cdup`,
+    // `--is-inside-work-tree`, `--is-inside-git-dir`, `--is-bare-repository`,
+    // `^<rev>` and `A..B` ranges. Arguments are processed in order.
+    // Cite: https://git-scm.com/docs/git-rev-parse
+    use crate::cmd::shared::abbrev_hex;
+    let mut abbrev_ref = false;
+    let mut symbolic_full = false;
+    let mut verify = false;
+    let mut quiet = false;
+    let mut short: Option<usize> = None;
+    let mut pending: Vec<String> = Vec::new();
     let repo = open_repo()?;
-    for rev in revs {
+    let cwd = crate::util::cwd()?;
+    let work = repo.work_tree().map(Path::to_path_buf).or_else(|| {
+        (repo.kind() == arks_repo::GitDirKind::DotGitDir)
+            .then(|| repo.git_dir().parent().map(Path::to_path_buf))
+            .flatten()
+    });
+    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let inside_work = work.as_ref().is_some_and(|w| {
+        canon(&cwd).starts_with(canon(w)) && !canon(&cwd).starts_with(canon(repo.git_dir()))
+    });
+    let prefix = work
+        .as_ref()
+        .and_then(|w| {
+            canon(&cwd)
+                .strip_prefix(canon(w))
+                .ok()
+                .map(Path::to_path_buf)
+        })
+        .unwrap_or_default();
+    let git_dir_display = |dir: &Path| -> String {
+        if canon(&cwd.join(".git")) == canon(dir) {
+            ".git".to_string()
+        } else {
+            canon(dir).display().to_string()
+        }
+    };
+    let mut dashdash = false;
+    for a in args {
+        if dashdash {
+            continue;
+        }
+        match a.as_str() {
+            "--" => dashdash = true,
+            "--abbrev-ref" | "--abbrev-ref=strict" | "--abbrev-ref=loose" => abbrev_ref = true,
+            "--symbolic-full-name" => symbolic_full = true,
+            "--verify" => verify = true,
+            "-q" | "--quiet" => quiet = true,
+            "--short" => {
+                short = Some(7);
+                verify = true;
+            }
+            "--show-toplevel" => match &work {
+                Some(w) => println!("{}", canon(w).display()),
+                None => {
+                    return Err(CliError::fatal("this operation must be run in a work tree"));
+                }
+            },
+            "--git-dir" => println!("{}", git_dir_display(repo.git_dir())),
+            "--git-common-dir" => println!("{}", git_dir_display(repo.common_dir())),
+            "--absolute-git-dir" => println!("{}", canon(repo.git_dir()).display()),
+            "--show-prefix" => {
+                let p = prefix.to_string_lossy().replace('\\', "/");
+                if p.is_empty() {
+                    println!();
+                } else {
+                    println!("{p}/");
+                }
+            }
+            "--show-cdup" => {
+                println!("{}", "../".repeat(prefix.components().count()));
+            }
+            "--is-inside-work-tree" => println!("{inside_work}"),
+            "--is-inside-git-dir" => {
+                println!("{}", canon(&cwd).starts_with(canon(repo.git_dir())))
+            }
+            "--is-bare-repository" => {
+                println!("{}", repo.kind() == arks_repo::GitDirKind::Bare)
+            }
+            x => {
+                if let Some(n) = x.strip_prefix("--short=") {
+                    short = Some(
+                        n.parse::<usize>()
+                            .map_err(|_| CliError::fatal(format!("bad --short: {n}")))?
+                            .clamp(4, 40),
+                    );
+                    verify = true;
+                } else if x.starts_with('-') && x.len() > 1 && !x.starts_with("^") {
+                    return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+                } else {
+                    pending.push(a.clone());
+                }
+            }
+        }
+        if !verify && !abbrev_ref && !symbolic_full {
+            for rev in pending.drain(..) {
+                print_rev_arg(&repo, &rev, work.as_deref())?;
+            }
+        }
+    }
+    if verify {
+        if pending.len() != 1 {
+            if quiet {
+                return Err(CliError::silent(1));
+            }
+            return Err(CliError::fatal("Needed a single revision"));
+        }
+        let rev = &pending[0];
+        let oid = match resolve_rev(&repo, rev) {
+            Ok(o) => o,
+            Err(_) if quiet => return Err(CliError::silent(1)),
+            Err(_) => return Err(CliError::fatal("Needed a single revision")),
+        };
         if abbrev_ref {
             println!("{}", abbreviate_ref(&repo, rev)?);
-            continue;
-        }
-        if symbolic_full {
+        } else if symbolic_full {
             println!("{}", symbolic_full_name(&repo, rev)?);
-            continue;
+        } else {
+            match short {
+                Some(n) => println!("{}", abbrev_hex(&repo, &oid, n)),
+                None => println!("{}", oid.to_hex()),
+            }
         }
-        let oid = resolve_rev(&repo, rev)?;
-        if verify {
-            // Existence check only; still print the OID (git --verify default).
+        return Ok(());
+    }
+    for rev in pending {
+        if abbrev_ref {
+            println!("{}", abbreviate_ref(&repo, &rev)?);
+        } else if symbolic_full {
+            println!("{}", symbolic_full_name(&repo, &rev)?);
+        } else {
+            print_rev_arg(&repo, &rev, work.as_deref())?;
         }
-        println!("{}", oid.to_hex());
+    }
+    Ok(())
+}
+
+/// One non-`--verify` rev-parse argument: `<rev>`, `^<rev>`, `A..B`, `A...B`;
+/// an unresolvable argument is echoed and must name a working-tree path.
+fn print_rev_arg(repo: &Repository, rev: &str, work: Option<&Path>) -> CliResult<()> {
+    let res = |r: &str| resolve_rev(repo, if r.is_empty() { "HEAD" } else { r });
+    if let Some((l, r)) = rev.split_once("...") {
+        if let (Ok(a), Ok(b)) = (res(l), res(r)) {
+            println!("{}", b.to_hex());
+            println!("{}", a.to_hex());
+            if let Some(base) = arks_repo::merge_base_oid(repo, &a, &b)? {
+                println!("^{}", base.to_hex());
+            }
+            return Ok(());
+        }
+    } else if let Some((l, r)) = rev.split_once("..") {
+        if let (Ok(a), Ok(b)) = (res(l), res(r)) {
+            println!("{}", b.to_hex());
+            println!("^{}", a.to_hex());
+            return Ok(());
+        }
+    } else if let Some(x) = rev.strip_prefix('^') {
+        if let Ok(o) = resolve_rev(repo, x) {
+            println!("^{}", o.to_hex());
+            return Ok(());
+        }
+    } else if let Ok(o) = resolve_rev(repo, rev) {
+        println!("{}", o.to_hex());
+        return Ok(());
+    }
+    println!("{rev}");
+    let exists = work.is_some_and(|w| {
+        let cwd = crate::util::cwd().unwrap_or_else(|_| w.to_path_buf());
+        cwd.join(rev).exists()
+    });
+    if !exists {
+        return Err(CliError::fatal(format!(
+            "ambiguous argument '{rev}': unknown revision or path not in the working tree.\n\
+             Use '--' to separate paths from revisions, like this:\n\
+             'git <command> [<revision>...] -- [<file>...]'"
+        )));
     }
     Ok(())
 }
@@ -474,23 +640,42 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         paths.sort();
         paths.dedup();
     }
+    // Pathspecs (git-add §DESCRIPTION): a directory (including `.` = the whole
+    // tree) adds untracked files below it and stages modifications and
+    // removals of tracked files below it.
+    let mut removable: HashSet<String> = HashSet::new();
     for p in &positional {
-        let rel = rel_path_from_worktree(&work, Path::new(p))?;
-        let abs = work.join(&rel);
+        let rel = pathspec_rel(&work, p)?;
+        let abs = if rel.is_empty() {
+            work.clone()
+        } else {
+            work.join(&rel)
+        };
+        let prefix = if rel.is_empty() {
+            String::new()
+        } else {
+            format!("{rel}/")
+        };
+        let tracked: Vec<String> = index
+            .entries
+            .iter()
+            .filter(|e| e.stage() == 0 && (e.path == rel || e.path.starts_with(&prefix)))
+            .map(|e| e.path.clone())
+            .collect();
         if abs.is_dir() {
             let mut nested = Vec::new();
             let indexed: std::collections::HashSet<_> = std::collections::HashSet::new();
             collect_untracked(&work, &abs, &indexed, &mut nested)?;
-            let prefix = format!("{rel}/");
-            for e in index.entries.iter().filter(|e| e.stage() == 0) {
-                if e.path == rel || e.path.starts_with(&prefix) {
-                    paths.push(e.path.clone());
-                }
-            }
             paths.extend(nested);
-        } else {
-            paths.push(rel);
+        } else if !abs.exists() && tracked.is_empty() {
+            return Err(CliError::fatal(format!(
+                "pathspec '{p}' did not match any files"
+            )));
+        } else if !tracked.contains(&rel) {
+            paths.push(rel.clone());
         }
+        removable.extend(tracked.iter().cloned());
+        paths.extend(tracked);
     }
     paths.sort();
     paths.dedup();
@@ -509,7 +694,7 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         for rel in paths {
             let abs = work.join(&rel);
             if !abs.is_file() {
-                if all || update {
+                if all || update || removable.contains(&rel) {
                     removals.insert(rel);
                 }
                 continue;
@@ -601,6 +786,37 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
+/// Worktree-relative form of a cwd-relative pathspec (`""` = whole tree).
+pub(crate) fn pathspec_rel(work: &Path, p: &str) -> CliResult<String> {
+    let cwd = cwd()?;
+    let abs = cwd.join(p);
+    let canon = |x: &Path| x.canonicalize().unwrap_or_else(|_| x.to_path_buf());
+    let work_c = canon(work);
+    // Normalize lexically when the path does not exist (deleted tracked file).
+    let abs_c = if abs.exists() {
+        canon(&abs)
+    } else {
+        let mut out = canon(&cwd);
+        for comp in Path::new(p).components() {
+            match comp {
+                std::path::Component::ParentDir => {
+                    out.pop();
+                }
+                std::path::Component::CurDir => {}
+                other => out.push(other),
+            }
+        }
+        out
+    };
+    let rel = abs_c.strip_prefix(&work_c).map_err(|_| {
+        CliError::fatal(format!(
+            "{p}: '{p}' is outside repository at '{}'",
+            work_c.display()
+        ))
+    })?;
+    Ok(rel.to_string_lossy().replace('\\', "/"))
+}
+
 fn parallel_workers(n: usize) -> usize {
     if n < 32 {
         return 1;
@@ -668,6 +884,12 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             ("--untracked-files=no", "-uno"),
         ],
     );
+    let (args, after_dashdash): (Vec<String>, Vec<String>) =
+        match args.iter().position(|a| a == "--") {
+            Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
+            None => (args.clone(), Vec::new()),
+        };
+    let args = &args;
     refuse_unknown_flags(
         args,
         &[
@@ -683,6 +905,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let untracked_all = args.iter().any(|a| a == "-u");
     let untracked_no = args.iter().any(|a| a == "-uno");
     let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s");
+    let porcelain_v1 = args.iter().any(|a| a == "--porcelain");
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
     let repo = open_repo()?;
@@ -703,110 +926,95 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let index_path = repo.index_path();
     let lock_before = arks_index::index_lock_path(&index_path);
     let had_lock = lock_before.is_file();
-    let work = work_tree(&repo)?;
-    let index = read_index(&repo)?;
-    let head_paths = head_blob_map(&repo)?;
-    let branch = current_branch_name(&repo)?;
-
-    let mut staged = Vec::new();
-    let mut modified = Vec::new();
-    let mut deleted = Vec::new();
-
-    for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        let abs = work.join(&e.path);
-        match head_paths.get(&e.path) {
-            None => staged.push(e.path.clone()),
-            Some(oid) if *oid != e.oid => staged.push(e.path.clone()),
-            Some(_) => {}
+    use crate::cmd::status_report::{Untracked, collect, write_long};
+    use std::io::Write as _;
+    let mode = if untracked_no {
+        Untracked::No
+    } else if untracked_all {
+        Untracked::All
+    } else {
+        Untracked::Normal
+    };
+    let mut d = collect(&repo, mode)?;
+    // Pathspecs limit every section (git-status `[<pathspec>...]`).
+    let specs: Vec<String> = {
+        let work = work_tree(&repo)?;
+        args.iter()
+            .filter(|a| !a.starts_with('-'))
+            .chain(after_dashdash.iter())
+            .map(|p| pathspec_rel(&work, p))
+            .collect::<CliResult<_>>()?
+    };
+    if !specs.is_empty() {
+        let hit = |p: &str| {
+            let p = p.trim_end_matches('/');
+            specs.iter().any(|s| {
+                s.is_empty()
+                    || p == s
+                    || p.starts_with(&format!("{s}/"))
+                    || s.starts_with(&format!("{p}/"))
+            })
+        };
+        d.staged.retain(|k, _| hit(k));
+        d.unstaged.retain(|k, _| hit(k));
+        // A collapsed untracked directory shown through a deeper pathspec is
+        // listed at the pathspec instead.
+        let work = work_tree(&repo)?;
+        let mut shown = Vec::new();
+        for u in d.untracked.drain(..) {
+            if !hit(&u) {
+                continue;
+            }
+            match specs
+                .iter()
+                .find(|s| u.ends_with('/') && s.starts_with(u.as_str()) && s.len() > u.len())
+            {
+                Some(s) if work.join(s).is_dir() => shown.push(format!("{s}/")),
+                Some(s) => shown.push(s.clone()),
+                None => shown.push(u),
+            }
         }
-        if !abs.is_file() {
-            deleted.push(e.path.clone());
-            continue;
-        }
-        // Skip re-hash when index stat cache matches (git ce_match_stat class).
-        let meta = fs::metadata(&abs)?;
-        if index_stat_matches(e, &meta) {
-            continue;
-        }
-        let bytes = fs::read(&abs)?;
-        let blob = RawObject::new(ObjectKind::Blob, bytes);
-        let oid = blob.oid(repo.object_format())?;
-        if oid != e.oid {
-            modified.push(e.path.clone());
-        }
+        shown.dedup();
+        d.untracked = shown;
     }
-
-    let indexed: std::collections::HashSet<_> =
-        index.entries.iter().map(|e| e.path.clone()).collect();
-    let mut untracked = Vec::new();
-    if !untracked_no {
-        collect_untracked(&work, &work, &indexed, &mut untracked)?;
-    }
-    if !untracked_all {
-        untracked = collapse_untracked_dirs(&untracked, &indexed);
-    }
-
+    let mut out = io::BufWriter::new(io::stdout().lock());
     if porcelain {
         // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
         // X = index vs HEAD (A/M/D), Y = worktree vs index (M/D), sorted by path,
         // untracked (`??`) last.
         if show_branch {
-            println!("## {branch}");
+            match (&d.branch, d.initial) {
+                (Some(b), true) => writeln!(out, "## No commits yet on {b}")?,
+                (Some(b), false) => writeln!(out, "## {b}")?,
+                (None, _) => writeln!(out, "## HEAD (no branch)")?,
+            }
         }
-        let staged_deleted: Vec<String> = head_paths
-            .keys()
-            .filter(|p| !indexed.contains(*p))
-            .cloned()
-            .collect();
-        let mut tracked: std::collections::BTreeMap<String, (char, char)> =
+        let mut tracked: std::collections::BTreeMap<&String, (char, char)> =
             std::collections::BTreeMap::new();
-        for p in &staged {
-            let x = if head_paths.contains_key(p) { 'M' } else { 'A' };
-            tracked.entry(p.clone()).or_insert((' ', ' ')).0 = x;
+        for (p, c) in &d.staged {
+            tracked.entry(p).or_insert((' ', ' ')).0 = *c;
         }
-        for p in &staged_deleted {
-            tracked.entry(p.clone()).or_insert((' ', ' ')).0 = 'D';
+        for (p, c) in &d.unstaged {
+            tracked.entry(p).or_insert((' ', ' ')).1 = *c;
         }
-        for p in &modified {
-            tracked.entry(p.clone()).or_insert((' ', ' ')).1 = 'M';
-        }
-        for p in &deleted {
-            tracked.entry(p.clone()).or_insert((' ', ' ')).1 = 'D';
-        }
+        // `--porcelain` paths are always root-relative; `-s` follows cwd.
+        let show = |p: &str| {
+            if porcelain_v1 {
+                p.to_string()
+            } else {
+                d.show(p)
+            }
+        };
         for (p, (x, y)) in &tracked {
-            println!("{x}{y} {p}");
+            writeln!(out, "{x}{y} {}", show(p))?;
         }
-        for p in &untracked {
-            println!("?? {p}");
+        for p in &d.untracked {
+            writeln!(out, "?? {}", show(p))?;
         }
     } else {
-        println!("On branch {branch}");
-        if staged.is_empty() && modified.is_empty() && deleted.is_empty() && untracked.is_empty() {
-            println!("nothing to commit, working tree clean");
-        } else {
-            if !staged.is_empty() {
-                println!("Changes to be committed:");
-                for p in &staged {
-                    println!("\tnew file / modified: {p}");
-                }
-            }
-            if !modified.is_empty() || !deleted.is_empty() {
-                println!("Changes not staged for commit:");
-                for p in &modified {
-                    println!("\tmodified: {p}");
-                }
-                for p in &deleted {
-                    println!("\tdeleted: {p}");
-                }
-            }
-            if !untracked.is_empty() {
-                println!("Untracked files:");
-                for p in &untracked {
-                    println!("\t{p}");
-                }
-            }
-        }
+        write_long(&mut out, &d, mode)?;
     }
+    io::Write::flush(&mut out)?;
     // Honesty: status must not create optional index.lock (AGENT-006 / IDX-008 / IDX-002).
     if !had_lock && lock_before.is_file() {
         return Err(CliError::Msg(
@@ -819,7 +1027,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
 
 /// `-unormal` (default): show a wholly untracked directory once as `dir/`
 /// (git-status `--untracked-files`).
-fn collapse_untracked_dirs(
+pub(crate) fn collapse_untracked_dirs(
     untracked: &[String],
     indexed: &std::collections::HashSet<String>,
 ) -> Vec<String> {
@@ -1143,7 +1351,14 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
 /// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,
 /// ` Author:` when it differs from the committer, ` Date:` for amend, then the
 /// shortstat line and `create mode` / `delete mode` lines.
-fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult<()> {
+/// git `print_commit_summary`; `show_date` = SUMMARY_SHOW_AUTHOR_DATE (amend,
+/// sequencer commits).
+pub(crate) fn print_commit_summary(
+    repo: &Repository,
+    coid: &Oid,
+    show_date: bool,
+) -> CliResult<()> {
+    let amend = show_date;
     use crate::cmd::switch_tree::commit_files;
     use crate::cmd::unified_diff::{StatRow, shortstat_line, stat_change};
     let c = crate::cmd::log_format::read_commit(repo, coid)?;
@@ -1158,7 +1373,7 @@ fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult
     };
     let mut out = format!(
         "[{label}{root} {}] {}\n",
-        &coid.to_hex()[..7],
+        crate::cmd::shared::abbrev_hex(repo, coid, 7),
         crate::cmd::log_format::subject_line(&c.message)
     );
     if (c.author.name.as_str(), c.author.email.as_str())
@@ -1220,233 +1435,6 @@ fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult
         out.push('\n');
     }
     print!("{out}");
-    Ok(())
-}
-
-pub fn cmd_log(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1: `--oneline`, `--graph`, `-n`/`-<n>` claimed (git-log).
-    // Cloud drop-in §O: revision ranges, `--format`/`--pretty`, `--first-parent`,
-    // `--no-merges`/`--merges`, `--reverse`, `-- <path>`.
-    // Cite: https://git-scm.com/docs/git-log
-    use crate::cmd::log_format::{Pretty, expand, resolve_range, take_pretty, touches_paths, walk};
-    use std::io::Write;
-    let (head_args, paths): (Vec<String>, Vec<String>) = match args.iter().position(|a| a == "--") {
-        Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
-        None => (args.to_vec(), Vec::new()),
-    };
-    let mut head_args = head_args;
-    let pretty = take_pretty(&mut head_args)?;
-    let graph = head_args.iter().any(|a| a == "--graph");
-    let first_parent = head_args.iter().any(|a| a == "--first-parent");
-    let no_merges = head_args.iter().any(|a| a == "--no-merges");
-    let merges_only = head_args.iter().any(|a| a == "--merges");
-    let reverse = head_args.iter().any(|a| a == "--reverse");
-    let mut max_count: Option<usize> = None;
-    let mut filtered: Vec<String> = Vec::new();
-    let mut i = 0;
-    while i < head_args.len() {
-        let a = &head_args[i];
-        if a == "-n" || a == "--max-count" {
-            i += 1;
-            let n = head_args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("log -n <count>".into()))?;
-            max_count = Some(
-                n.parse()
-                    .map_err(|_| CliError::Usage("log -n: count must be integer".into()))?,
-            );
-        } else if let Some(rest) = a.strip_prefix("--max-count=") {
-            max_count = Some(
-                rest.parse()
-                    .map_err(|_| CliError::Usage("log --max-count: integer".into()))?,
-            );
-        } else if let Some(rest) = a.strip_prefix("-n") {
-            if !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit()) {
-                max_count = Some(
-                    rest.parse()
-                        .map_err(|_| CliError::Usage("log -n: count must be integer".into()))?,
-                );
-            } else {
-                filtered.push(a.clone());
-            }
-        } else if a.starts_with('-')
-            && a.len() > 1
-            && a.as_bytes()[1].is_ascii_digit()
-            && !a.starts_with("--")
-        {
-            max_count = Some(
-                a[1..]
-                    .parse()
-                    .map_err(|_| CliError::Usage("log -<n>: count must be integer".into()))?,
-            );
-        } else {
-            filtered.push(a.clone());
-        }
-        i += 1;
-    }
-    refuse_unknown_flags(
-        &filtered,
-        &[
-            "--graph",
-            "--first-parent",
-            "--no-merges",
-            "--merges",
-            "--reverse",
-            "--no-color",
-            "--no-decorate",
-        ],
-    )?;
-    let revs: Vec<String> = filtered
-        .into_iter()
-        .filter(|a| !a.starts_with('-'))
-        .collect();
-    let repo = open_repo()?;
-    let (inc, exc) = resolve_range(&repo, &revs)?;
-    if inc.is_empty() {
-        return Ok(());
-    }
-    let work = work_tree(&repo).ok();
-    let specs: Vec<String> = paths
-        .iter()
-        .map(|p| {
-            let abs = std::env::current_dir()
-                .map(|c| c.join(p))
-                .unwrap_or_else(|_| PathBuf::from(p));
-            work.as_ref()
-                .and_then(|w| {
-                    abs.strip_prefix(w)
-                        .ok()
-                        .map(|r| r.to_string_lossy().replace('\\', "/"))
-                })
-                .unwrap_or_else(|| p.clone())
-                .trim_end_matches('/')
-                .to_string()
-        })
-        .collect();
-    let mut selected = Vec::new();
-    for (oid, c) in walk(&repo, &inc, &exc, first_parent)? {
-        if (no_merges && c.parents.len() > 1) || (merges_only && c.parents.len() < 2) {
-            continue;
-        }
-        if !touches_paths(&repo, &c, &specs)? {
-            continue;
-        }
-        selected.push((oid, c));
-        if !reverse && max_count.is_some_and(|m| selected.len() >= m) {
-            break;
-        }
-    }
-    if let Some(m) = max_count {
-        selected.truncate(m);
-    }
-    if reverse {
-        selected.reverse();
-    }
-    let mut out = io::BufWriter::new(io::stdout().lock());
-    let n = selected.len();
-    for (idx, (oid, c)) in selected.iter().enumerate() {
-        let prefix = if graph { "* " } else { "" };
-        match &pretty {
-            Pretty::Oneline => writeln!(out, "{prefix}{} {}", &oid.to_hex()[..7], c.subject())?,
-            Pretty::TFormat(f) => writeln!(out, "{prefix}{}", expand(f, oid, c))?,
-            Pretty::Format(f) => {
-                write!(out, "{prefix}{}", expand(f, oid, c))?;
-                if idx + 1 < n {
-                    writeln!(out)?;
-                }
-            }
-            Pretty::Default if graph => writeln!(out, "* {} {}", &oid.to_hex()[..7], c.subject())?,
-            Pretty::Default => writeln!(out, "{} {}", oid.to_hex(), c.subject())?,
-        }
-    }
-    out.flush()?;
-    Ok(())
-}
-
-pub fn cmd_show(args: &[String]) -> CliResult<()> {
-    // Cloud drop-in §O: `--stat`, `--name-only`, `--name-status`, `--format`,
-    // `-s`/`--no-patch`; commits print their patch vs first parent by default.
-    use crate::cmd::log_format::{Pretty, expand, take_pretty};
-    use crate::cmd::shared::tree_blob_map;
-    let mut args = args.to_vec();
-    let pretty = take_pretty(&mut args)?;
-    refuse_unknown_flags(
-        &args,
-        &[
-            "--stat",
-            "--name-only",
-            "--name-status",
-            "-s",
-            "--no-patch",
-            "--quiet",
-            "--no-color",
-        ],
-    )?;
-    let stat = args.iter().any(|a| a == "--stat");
-    let name_only = args.iter().any(|a| a == "--name-only");
-    let name_status = args.iter().any(|a| a == "--name-status");
-    let no_patch = args
-        .iter()
-        .any(|a| a == "-s" || a == "--no-patch" || a == "--quiet");
-    let rev = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("HEAD");
-    let repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev)?;
-    let obj = repo.get_object(&oid)?;
-    match obj.kind {
-        ObjectKind::Commit => {
-            let c = Commit::decode(&obj.payload)?;
-            match &pretty {
-                Pretty::Default => {
-                    println!("commit {}", oid.to_hex());
-                    println!("tree {}", c.tree.to_hex());
-                    for p in &c.parents {
-                        println!("parent {}", p.to_hex());
-                    }
-                    println!("author {}", c.author.format_line());
-                    println!("committer {}", c.committer.format_line());
-                    println!();
-                    print!("{}", c.message);
-                }
-                Pretty::Oneline => println!("{} {}", oid.to_hex(), c.subject()),
-                Pretty::TFormat(f) | Pretty::Format(f) => println!("{}", expand(f, &oid, &c)),
-            }
-            if no_patch && !(stat || name_only || name_status) {
-                return Ok(());
-            }
-            let parent = match c.parents.first() {
-                Some(p) => tree_blob_map(&repo, p)?,
-                None => HashMap::new(),
-            };
-            let mine = tree_blob_map(&repo, &oid)?;
-            if stat || name_only || name_status {
-                println!();
-                if stat && !(name_only || name_status) {
-                    crate::cmd::working_tree::print_maps_stat(&repo, None, &parent, &mine)?;
-                } else {
-                    crate::cmd::working_tree::print_maps_summary(
-                        &parent,
-                        &mine,
-                        name_only,
-                        name_status,
-                        stat,
-                    )?;
-                }
-            } else {
-                println!();
-                crate::cmd::working_tree::print_maps_diff(&repo, &parent, &mine)?;
-            }
-        }
-        ObjectKind::Blob => {
-            io::Write::write_all(&mut io::stdout(), &obj.payload)?;
-        }
-        other => {
-            println!("{} {}", other.as_str(), oid.to_hex());
-        }
-    }
     Ok(())
 }
 

@@ -199,7 +199,9 @@ fn rm_mv_clean_tag_describe_config_grep_stash() {
     assert_ok(&arks(repo, &["stash", "push"]), "stash push");
     assert_ok(&arks(repo, &["stash", "list"]), "stash list");
     assert_ok(&arks(repo, &["stash", "pop"]), "stash pop");
-    assert_ok(&arks(repo, &["rm", "c.txt"]), "rm");
+    // git-rm refuses a file with local modifications (c.txt is dirty after the pop);
+    // -f forces removal, matching stock git.
+    assert_ok(&arks(repo, &["rm", "-f", "c.txt"]), "rm");
     assert!(!repo.join("c.txt").exists());
 }
 

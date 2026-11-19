@@ -8,7 +8,7 @@
 //! `--topo-order` is given). Partial: `%d`/`%D` decorations, `%ar`/`%cr`
 //! relative dates, and pathspec rename following are not implemented.
 
-use crate::cmd::shared::{resolve_rev, tree_blob_map};
+use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use arks_object::{Commit, ObjectKind, Signature};
 use arks_oid::Oid;
@@ -87,6 +87,33 @@ pub fn walk(
     exclude: &[Oid],
     first_parent: bool,
 ) -> CliResult<Vec<(Oid, Commit)>> {
+    walk_paths(repo, include, exclude, first_parent, &[])
+}
+
+/// [`walk`] limited to `specs` with git's default history simplification:
+/// a commit TREESAME (on `specs`) to a parent is not shown, and a merge
+/// TREESAME to some parent follows only that parent.
+/// Cite: <https://git-scm.com/docs/git-log#_history_simplification>.
+pub fn walk_paths(
+    repo: &Repository,
+    include: &[Oid],
+    exclude: &[Oid],
+    first_parent: bool,
+    specs: &[String],
+) -> CliResult<Vec<(Oid, Commit)>> {
+    let mut tree_cache: std::collections::HashMap<Oid, std::collections::HashMap<String, Oid>> =
+        std::collections::HashMap::new();
+    let mut filtered = |tree: Oid| -> CliResult<std::collections::HashMap<String, Oid>> {
+        if let Some(m) = tree_cache.get(&tree) {
+            return Ok(m.clone());
+        }
+        let m: std::collections::HashMap<String, Oid> = tree_blob_map_of_tree(repo, &tree)?
+            .into_iter()
+            .filter(|(k, _)| path_in_specs(k, specs))
+            .collect();
+        tree_cache.insert(tree, m.clone());
+        Ok(m)
+    };
     let mut hidden: HashSet<Oid> = HashSet::new();
     for x in exclude {
         hidden.extend(arks_repo::ancestor_set(repo, *x)?);
@@ -108,11 +135,30 @@ pub fn walk(
     while let Some((_, key)) = heap.pop() {
         let oid = by_seq.remove(&key).expect("seq registered on push");
         let c = read_commit(repo, &oid)?;
-        let parents: Vec<Oid> = if first_parent {
+        let mut parents: Vec<Oid> = if first_parent {
             c.parents.iter().take(1).copied().collect()
         } else {
             c.parents.clone()
         };
+        let mut show = true;
+        if !specs.is_empty() {
+            let mine = filtered(c.tree)?;
+            if parents.is_empty() {
+                show = !mine.is_empty();
+            } else {
+                let mut same = None;
+                for p in &parents {
+                    if filtered(read_commit(repo, p)?.tree)? == mine {
+                        same = Some(*p);
+                        break;
+                    }
+                }
+                if let Some(p) = same {
+                    show = false;
+                    parents = vec![p];
+                }
+            }
+        }
         for p in parents {
             if seen.insert(p) {
                 let pc = read_commit(repo, &p)?;
@@ -121,7 +167,7 @@ pub fn walk(
                 seq -= 1;
             }
         }
-        if !hidden.contains(&oid) {
+        if show && !hidden.contains(&oid) {
             out.push((oid, c));
         }
     }
@@ -169,23 +215,16 @@ pub fn resolve_range(repo: &Repository, revs: &[String]) -> CliResult<(Vec<Oid>,
     Ok((inc, exc))
 }
 
-/// True when the commit changes any path under `specs` relative to its first parent.
-pub fn touches_paths(repo: &Repository, c: &Commit, specs: &[String]) -> CliResult<bool> {
-    if specs.is_empty() {
-        return Ok(true);
-    }
-    let mine = tree_blob_map_of_tree(repo, &c.tree)?;
-    let parent = match c.parents.first() {
-        Some(p) => tree_blob_map(repo, p)?,
-        None => Default::default(),
-    };
-    let hit = |k: &String| {
-        specs
-            .iter()
-            .any(|s| s.is_empty() || k == s || k.starts_with(&format!("{s}/")))
-    };
-    Ok(mine.iter().any(|(k, v)| hit(k) && parent.get(k) != Some(v))
-        || parent.keys().any(|k| hit(k) && !mine.contains_key(k)))
+/// Pathspec prefix match (`""` matches everything).
+pub fn path_in_specs(path: &str, specs: &[String]) -> bool {
+    specs.is_empty()
+        || specs.iter().any(|s| {
+            s.is_empty()
+                || path == s
+                || (path.len() > s.len()
+                    && path.starts_with(s.as_str())
+                    && path.as_bytes()[s.len()] == b'/')
+        })
 }
 
 fn tree_blob_map_of_tree(
@@ -197,8 +236,76 @@ fn tree_blob_map_of_tree(
     Ok(out)
 }
 
+/// `--date=<format>` selection (git-log §Commit Formatting, `--date`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DateMode {
+    #[default]
+    Default,
+    Iso,
+    IsoStrict,
+    Short,
+    Raw,
+    Unix,
+    Rfc2822,
+}
+
+impl DateMode {
+    /// Parse a `--date=` value (claimed subset; `relative`/`local`/`human` refuse).
+    pub fn parse(v: &str) -> CliResult<Self> {
+        Ok(match v {
+            "default" => Self::Default,
+            "iso" | "iso8601" => Self::Iso,
+            "iso-strict" | "iso8601-strict" => Self::IsoStrict,
+            "short" => Self::Short,
+            "raw" => Self::Raw,
+            "unix" => Self::Unix,
+            "rfc" | "rfc2822" => Self::Rfc2822,
+            other => {
+                return Err(CliError::NotImplemented(format!(
+                    "unsupported --date format: {other}"
+                )));
+            }
+        })
+    }
+
+    pub fn format(self, sig: &Signature) -> String {
+        match self {
+            Self::Default => default_date(sig),
+            Self::Iso => iso_like(sig),
+            Self::IsoStrict => iso_strict(sig),
+            Self::Short => short_date(sig),
+            Self::Raw => format!("{} {}", sig.timestamp, sig.timezone),
+            Self::Unix => sig.timestamp.to_string(),
+            Self::Rfc2822 => rfc2822(sig),
+        }
+    }
+}
+
+/// Per-walk formatting context: date mode and ref decorations (`%d`/`%D`).
+#[derive(Default)]
+pub struct FmtCtx<'a> {
+    pub date: DateMode,
+    pub decorations: Option<&'a std::collections::HashMap<Oid, Vec<String>>>,
+}
+
+impl FmtCtx<'_> {
+    /// Decoration names for `oid` joined with `, ` (empty when none).
+    pub fn decoration(&self, oid: &Oid) -> String {
+        self.decorations
+            .and_then(|d| d.get(oid))
+            .map(|v| v.join(", "))
+            .unwrap_or_default()
+    }
+}
+
 /// Expand pretty-format placeholders for one commit.
+#[cfg(test)]
 pub fn expand(fmt: &str, oid: &Oid, c: &Commit) -> String {
+    expand_ctx(fmt, oid, c, &FmtCtx::default())
+}
+
+/// [`expand`] honouring `--date=` and decorations.
+pub fn expand_ctx(fmt: &str, oid: &Oid, c: &Commit, ctx: &FmtCtx<'_>) -> String {
     let hex = oid.to_hex();
     let mut out = String::new();
     let mut chars = fmt.chars().peekable();
@@ -223,6 +330,14 @@ pub fn expand(fmt: &str, oid: &Oid, c: &Commit) -> String {
             's' => out.push_str(&subject_line(&c.message)),
             'b' => out.push_str(&body(&c.message)),
             'B' => out.push_str(&c.message),
+            'd' | 'D' => {
+                let d = ctx.decoration(oid);
+                if n == 'D' {
+                    out.push_str(&d);
+                } else if !d.is_empty() {
+                    out.push_str(&format!(" ({d})"));
+                }
+            }
             'a' | 'c' => {
                 let sig = if n == 'a' { &c.author } else { &c.committer };
                 let Some(k) = chars.next() else {
@@ -230,7 +345,7 @@ pub fn expand(fmt: &str, oid: &Oid, c: &Commit) -> String {
                     out.push(n);
                     break;
                 };
-                match person(sig, k) {
+                match person(sig, k, ctx.date) {
                     Some(v) => out.push_str(&v),
                     None => {
                         out.push('%');
@@ -270,13 +385,14 @@ fn body(msg: &str) -> String {
     }
 }
 
-fn person(sig: &Signature, k: char) -> Option<String> {
+fn person(sig: &Signature, k: char, mode: DateMode) -> Option<String> {
     Some(match k {
         'n' | 'N' => sig.name.clone(),
         'e' | 'E' => sig.email.clone(),
         'l' => sig.email.split('@').next().unwrap_or("").to_string(),
         't' => sig.timestamp.to_string(),
-        'd' | 'D' => default_date(sig),
+        'd' => mode.format(sig),
+        'D' => rfc2822(sig),
         'I' => iso_strict(sig),
         'i' => iso_like(sig),
         's' => short_date(sig),
@@ -371,6 +487,22 @@ fn iso_like(sig: &Signature) -> String {
     format!(
         "{:04}-{:02}-{:02} {:02}:{:02}:{:02} {}",
         c.y, c.mo, c.d, c.h, c.mi, c.s, sig.timezone
+    )
+}
+
+/// git `--date=rfc2822`: `Wed, 15 Nov 2023 05:13:20 +0000`.
+fn rfc2822(sig: &Signature) -> String {
+    let c = civil(sig.timestamp, &sig.timezone);
+    format!(
+        "{}, {} {} {} {:02}:{:02}:{:02} {}",
+        WD[c.wd as usize],
+        c.d,
+        MO[(c.mo - 1) as usize],
+        c.y,
+        c.h,
+        c.mi,
+        c.s,
+        sig.timezone
     )
 }
 

@@ -1,92 +1,18 @@
-//! Ancillary interrogators: blame / annotate / fsck / count-objects / pack-refs.
+//! Ancillary interrogators: fsck / count-objects / pack-refs (blame lives in `blame`).
 //!
-//! Cite: <https://git-scm.com/docs/git-blame/2.39.0>
 //! Cite: <https://git-scm.com/docs/git-fsck/2.39.0>
 //! Cite: <https://git-scm.com/docs/git-count-objects/2.39.0>
 //! Cite: <https://git-scm.com/docs/git-pack-refs/2.39.0>
 //! Connectivity fsck is a claimed subset (reachable objects must load).
 
-use crate::cmd::replay::{read_commit, tree_map};
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, refuse_unknown_flags, work_tree};
+use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, Tree};
 use arks_oid::Oid;
 use arks_repo::Repository;
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
-
-pub fn cmd_blame(args: &[String]) -> CliResult<()> {
-    blame_path(args)
-}
-
-pub fn cmd_annotate(args: &[String]) -> CliResult<()> {
-    // git-annotate is a synonym for blame (claimed minimal path form).
-    blame_path(args)
-}
-
-fn blame_path(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let path = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("blame <path>".into()))?;
-    let repo = open_repo()?;
-    let mut oid = repo.head_oid()?;
-    let work = work_tree(&repo)?;
-    let abs = work.join(path);
-    let current = fs::read(&abs).map_err(|_| CliError::Msg(format!("no such path: {path}")))?;
-    let lines: Vec<&[u8]> = split_lines(&current);
-    // Walk first-parent; attribute each line to the newest commit whose blob still matches.
-    let mut attrs: Vec<(Oid, String)> = Vec::with_capacity(lines.len());
-    for _ in &lines {
-        attrs.push((oid, String::new()));
-    }
-    loop {
-        let commit = read_commit(&repo, &oid)?;
-        let map = tree_map(&repo, &oid)?;
-        if let Some(blob_oid) = map.get(path.as_str()) {
-            let blob = repo.get_object(blob_oid)?;
-            let blob_lines = split_lines(&blob.payload);
-            for (i, line) in lines.iter().enumerate() {
-                if i < blob_lines.len() && blob_lines[i] == *line {
-                    attrs[i] = (oid, commit.author.name.clone());
-                }
-            }
-        }
-        match commit.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
-    }
-    for (i, line) in lines.iter().enumerate() {
-        let (coid, author) = &attrs[i];
-        let short = &coid.to_hex()[..7];
-        let text = String::from_utf8_lossy(line);
-        println!("{short} ({author} {}) {text}", i + 1);
-    }
-    Ok(())
-}
-
-fn split_lines(bytes: &[u8]) -> Vec<&[u8]> {
-    if bytes.is_empty() {
-        return Vec::new();
-    }
-    let mut out = Vec::new();
-    let mut start = 0;
-    for (i, b) in bytes.iter().enumerate() {
-        if *b == b'\n' {
-            out.push(&bytes[start..i]);
-            start = i + 1;
-        }
-    }
-    if start < bytes.len() {
-        out.push(&bytes[start..]);
-    } else if bytes.ends_with(b"\n") {
-        // trailing newline → no extra empty line (git blame style for final \n)
-    }
-    out
-}
 
 pub fn cmd_fsck(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &[])?;

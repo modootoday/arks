@@ -295,6 +295,14 @@ fn wt_list(args: &[String]) -> CliResult<()> {
         }
         return Ok(());
     }
+    // git worktree.c show_worktree: path padded to 1 + the longest path, a
+    // space, the abbreviated HEAD, then `[branch]` / `(detached HEAD)`.
+    let w = trees
+        .iter()
+        .map(|t| t.path.display().to_string().chars().count())
+        .max()
+        .unwrap_or(0)
+        + 1;
     for wt in trees {
         let short = short_oid(&wt.oid);
         let trail = if let Some(b) = &wt.branch {
@@ -307,7 +315,7 @@ fn wt_list(args: &[String]) -> CliResult<()> {
             if verbose {
                 match wt.lock_reason.as_deref().map(str::trim) {
                     Some(r) if !r.is_empty() => {
-                        println!("{}\t{} {}", wt.path.display(), short, trail);
+                        println!("{:<w$} {} {}", wt.path.display().to_string(), short, trail);
                         println!("\tlocked: {r}");
                         continue;
                     }
@@ -320,8 +328,8 @@ fn wt_list(args: &[String]) -> CliResult<()> {
             ""
         };
         println!(
-            "{}\t{} {}{}",
-            wt.path.display(),
+            "{:<w$} {} {}{}",
+            wt.path.display().to_string(),
             short,
             trail,
             lock_same_line

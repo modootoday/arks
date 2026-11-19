@@ -49,8 +49,63 @@ pub fn cmd_reflog(args: &[String]) -> CliResult<()> {
             "reflog delete/exists not claimed".into(),
         ));
     }
-    refuse_unknown_flags(args, &[])?;
+    // `reflog [show] [-n <n>|-<n>] [<ref>]`: newest first,
+    // `<abbrev> <ref>@{<i>}: <message>` (git reflog show = log -g --oneline).
+    // Cite: https://git-scm.com/docs/git-reflog
+    let mut max: Option<usize> = None;
+    let mut rest: Vec<String> = Vec::new();
+    let mut raw = false;
+    let mut i = 0;
+    while i < args.len() {
+        let a = args[i].as_str();
+        i += 1;
+        if a == "-n" || a == "--max-count" {
+            let v = args
+                .get(i)
+                .ok_or_else(|| CliError::fatal("switch `n' requires a value"))?;
+            i += 1;
+            max = Some(
+                v.parse()
+                    .map_err(|_| CliError::fatal(format!("'{v}': not an integer")))?,
+            );
+        } else if let Some(v) = a.strip_prefix("--max-count=") {
+            max = Some(
+                v.parse()
+                    .map_err(|_| CliError::fatal(format!("'{v}': not an integer")))?,
+            );
+        } else if a.len() > 1 && a.starts_with('-') && a[1..].bytes().all(|b| b.is_ascii_digit()) {
+            max = Some(a[1..].parse().unwrap_or(0));
+        } else if a == "--raw-log" {
+            // arks-only: print the raw log file (historical behavior).
+            raw = true;
+        } else {
+            rest.push(a.to_string());
+        }
+    }
     let repo = open_repo()?;
-    let name = resolve_reflog_name(args)?;
-    show_reflog(&repo, &name)
+    let name = resolve_reflog_name(&rest)?;
+    if raw {
+        return show_reflog(&repo, &name);
+    }
+    let shown = match name.as_str() {
+        "HEAD" => "HEAD".to_string(),
+        n => n.strip_prefix("refs/heads/").unwrap_or(n).to_string(),
+    };
+    let entries = crate::reflog::read_entries(&repo, &name);
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    for (idx, (_, new, msg)) in entries.iter().rev().enumerate() {
+        if max.is_some_and(|m| idx >= m) {
+            break;
+        }
+        std::io::Write::write_all(
+            &mut out,
+            format!(
+                "{} {shown}@{{{idx}}}: {msg}\n",
+                crate::cmd::shared::abbrev_hex(&repo, new, 7)
+            )
+            .as_bytes(),
+        )?;
+    }
+    std::io::Write::flush(&mut out)?;
+    Ok(())
 }

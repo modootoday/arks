@@ -3,19 +3,26 @@
 
 pub mod archive;
 pub mod bisect;
+pub mod blame;
 pub mod branch;
+pub mod branch_cmd;
+pub mod bre;
 pub mod bundle;
 pub mod config;
 pub mod core;
 pub mod credential;
+pub mod diff_render;
+pub mod for_each_ref;
 pub mod grep;
 pub mod history;
 pub mod hooks;
 pub mod host_skew;
+pub mod ignore;
 pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
 pub mod lock;
+pub mod log_cmd;
 pub mod log_format;
 pub mod maint;
 pub mod matrix_cmds;
@@ -34,6 +41,7 @@ pub mod shared;
 pub mod sign;
 pub mod sparse_checkout;
 pub mod stash;
+pub mod status_report;
 pub mod submodule;
 pub mod switch_tree;
 pub mod tag;
@@ -43,25 +51,29 @@ pub mod worktree;
 
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
 pub use bisect::cmd_bisect;
-pub use branch::{cmd_branch, cmd_checkout, cmd_switch};
+pub use blame::{cmd_annotate, cmd_blame};
+pub use branch::{cmd_checkout, cmd_switch};
+pub use branch_cmd::cmd_branch;
 pub use bundle::cmd_bundle;
 pub use config::cmd_config;
 pub use core::{
-    cmd_add, cmd_cat_file, cmd_commit, cmd_hash_object, cmd_init, cmd_log, cmd_rev_parse, cmd_show,
-    cmd_status, cmd_update_ref,
+    cmd_add, cmd_cat_file, cmd_commit, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status,
+    cmd_update_ref,
 };
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
+pub use for_each_ref::cmd_for_each_ref;
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use host_skew::{
     cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_replay_exp,
     cmd_survey, cmd_url_parse,
 };
-pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
+pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
+pub use log_cmd::{cmd_log, cmd_show};
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_apply, cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry,
@@ -80,9 +92,9 @@ pub use merge::{cmd_merge, cmd_pull};
 pub use notes::cmd_notes;
 pub use patch::{cmd_am, cmd_format_patch};
 pub use plumbing::{
-    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree, cmd_for_each_ref,
-    cmd_index_pack, cmd_ls_files, cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects,
-    cmd_read_tree, cmd_rev_list, cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
+    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree, cmd_index_pack,
+    cmd_ls_files, cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree,
+    cmd_rev_list, cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
 pub use range_diff::cmd_range_diff;
 pub use remote::{cmd_clone, cmd_fetch, cmd_push, cmd_remote};
