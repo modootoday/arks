@@ -117,7 +117,8 @@ fn precheck_error(e: CliError, op: &str) -> CliError {
 
 pub fn cmd_revert(args: &[String]) -> CliResult<()> {
     // `--no-edit` accepted: arks never opens an editor for the revert message.
-    refuse_unknown_flags(args, &["--no-edit"])?;
+    refuse_unknown_flags(args, &["--no-edit", "-n", "--no-commit"])?;
+    let no_commit = args.iter().any(|a| a == "-n" || a == "--no-commit");
     let rev = one_rev(args, "revert <commit>|A..B")?;
     let repo = open_repo()?;
     let commits = resolve_pick_list(&repo, rev)?;
@@ -128,6 +129,9 @@ pub fn cmd_revert(args: &[String]) -> CliResult<()> {
     let mut commits = commits;
     commits.reverse();
     drop(repo);
+    if no_commit {
+        return revert_into_index(&commits);
+    }
     for oid in &commits {
         let repo = open_repo()?;
         let head_map = ensure_clean(&repo).map_err(|e| precheck_error(e, "revert"))?;
@@ -148,6 +152,72 @@ pub fn cmd_revert(args: &[String]) -> CliResult<()> {
         drop(repo);
         apply_checked(&head_map, &deltas, message, author, committer)?;
     }
+    Ok(())
+}
+
+/// `revert -n`: apply the inverse of each commit to the index and work tree
+/// without committing. The index need not match HEAD; only the paths a revert
+/// touches must be unmodified (index == base, work tree == index), otherwise
+/// arks refuses instead of merging.
+/// Cite: https://git-scm.com/docs/git-revert#Documentation/git-revert.txt---no-commit
+fn revert_into_index(commits: &[Oid]) -> CliResult<()> {
+    let repo = open_repo()?;
+    let work = work_tree(&repo)?;
+    let mut index = read_index(&repo)?;
+    if index.entries.iter().any(|e| e.stage() != 0) {
+        return Err(CliError::fatal("revert failed: index has unmerged entries"));
+    }
+    for oid in commits {
+        let commit = read_commit(&repo, oid)?;
+        if commit.parents.len() > 1 {
+            return Err(CliError::NotImplemented(
+                "revert of a merge commit is not claimed".into(),
+            ));
+        }
+        for d in inverse_deltas(&repo, &commit)? {
+            let have = index
+                .entries
+                .iter()
+                .find(|e| e.path == d.path)
+                .map(|e| e.oid);
+            let abs = work.join(&d.path);
+            let on_disk = match fs::read(&abs) {
+                Ok(bytes) => {
+                    Some(RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?)
+                }
+                Err(_) => None,
+            };
+            if have != d.base || on_disk != have {
+                return Err(CliError::Exit(
+                    128,
+                    format!(
+                        "error: Your local changes to the following files would be overwritten by merge:\n\t{}\n\
+                         Please commit your changes or stash them before you merge.\nAborting\n\
+                         fatal: revert failed",
+                        d.path
+                    ),
+                ));
+            }
+            index.entries.retain(|e| e.path != d.path);
+            match d.tip {
+                Some(tip) => {
+                    if let Some(parent) = abs.parent() {
+                        fs::create_dir_all(parent)?;
+                    }
+                    fs::write(&abs, repo.get_object(&tip)?.payload)?;
+                    let meta = fs::metadata(&abs)?;
+                    index
+                        .entries
+                        .push(crate::cmd::working_tree::stat_entry(&d.path, tip, &meta));
+                }
+                None => {
+                    let _ = fs::remove_file(&abs);
+                }
+            }
+        }
+    }
+    sort_entries(&mut index.entries);
+    write_index(&repo, &index)?;
     Ok(())
 }
 
