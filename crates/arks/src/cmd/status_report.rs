@@ -33,6 +33,27 @@ pub struct StatusData {
     pub unstaged: BTreeMap<String, char>,
     /// Untracked paths (directories collapsed as `dir/` unless `all`).
     pub untracked: Vec<String>,
+    /// Current directory relative to the work tree (`""` or `dir/sub/`).
+    pub prefix: String,
+}
+
+impl StatusData {
+    /// Path as shown by short / long status (`status.relativePaths`
+    /// default): relative to the current directory.
+    pub fn show(&self, path: &str) -> String {
+        if self.prefix.is_empty() {
+            return path.to_string();
+        }
+        let pre: Vec<&str> = self.prefix.trim_end_matches('/').split('/').collect();
+        let comps: Vec<&str> = path.split('/').collect();
+        let mut common = 0;
+        while common < pre.len() && common + 1 < comps.len() && pre[common] == comps[common] {
+            common += 1;
+        }
+        let mut out = "../".repeat(pre.len() - common);
+        out.push_str(&comps[common..].join("/"));
+        out
+    }
 }
 
 /// Untracked-file listing mode (`-u<mode>`).
@@ -95,7 +116,20 @@ pub fn collect(repo: &Repository, mode: Untracked) -> CliResult<StatusData> {
     if mode == Untracked::Normal {
         untracked = crate::cmd::core::collapse_untracked_dirs(&untracked, &indexed);
     }
+    let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let prefix = crate::util::cwd()
+        .ok()
+        .and_then(|c| {
+            canon(&c)
+                .strip_prefix(canon(&work))
+                .ok()
+                .map(|r| r.to_string_lossy().replace('\\', "/"))
+        })
+        .filter(|r| !r.is_empty())
+        .map(|r| format!("{r}/"))
+        .unwrap_or_default();
     Ok(StatusData {
+        prefix,
         branch,
         head_abbrev,
         initial,
@@ -131,7 +165,7 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
             writeln!(out, "  (use \"git restore --staged <file>...\" to unstage)")?;
         }
         for (p, c) in &d.staged {
-            writeln!(out, "\t{:<12}{p}", label(*c))?;
+            writeln!(out, "\t{:<12}{}", label(*c), d.show(p))?;
         }
         writeln!(out)?;
     }
@@ -153,7 +187,7 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
             "  (use \"git restore <file>...\" to discard changes in working directory)"
         )?;
         for (p, c) in &d.unstaged {
-            writeln!(out, "\t{:<12}{p}", label(*c))?;
+            writeln!(out, "\t{:<12}{}", label(*c), d.show(p))?;
         }
         writeln!(out)?;
     }
@@ -164,7 +198,7 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
             "  (use \"git add <file>...\" to include in what will be committed)"
         )?;
         for p in &d.untracked {
-            writeln!(out, "\t{p}")?;
+            writeln!(out, "\t{}", d.show(p))?;
         }
         writeln!(out)?;
     }
