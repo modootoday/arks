@@ -33,9 +33,10 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
             if arks_remote::HttpRemoteUrl::parse(url).is_err()
                 && arks_remote::SshRemoteUrl::parse(url).is_err()
                 && arks_remote::GitDaemonUrl::parse(url).is_err()
+                && arks_remote::LocalRemoteUrl::parse(url).is_err()
             {
                 return Err(CliError::Msg(format!(
-                    "unsupported remote URL '{url}' (claimed: http(s), ssh://, user@host:path, git://)"
+                    "unsupported remote URL '{url}' (claimed: http(s), ssh://, user@host:path, git://, local path, file://)"
                 )));
             }
             arks_remote::add_remote(&cfg, &args[1], url)?;
@@ -91,6 +92,8 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
     // Cloud drop-in §O: `fetch <remote> <branch>...` writes FETCH_HEAD; `-q`.
+    // C7b: local path / file:// remotes and `<src>:<dst>` refspecs on them.
+    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
     let args = &args
         .iter()
         .filter(|a| *a != "-q" && *a != "--quiet")
@@ -145,10 +148,30 @@ pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
     }
     let cfg = repo.git_dir().join("config");
     let remotes = arks_remote::list_remotes(&cfg)?;
-    let remote = remotes
-        .iter()
-        .find(|r| r.name == remote_name)
-        .ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
+    let configured = remotes.iter().find(|r| r.name == remote_name);
+    let local_url = match configured {
+        Some(r) if arks_remote::is_local_remote(&r.url) => Some(r.url.clone()),
+        None if arks_remote::is_local_remote(remote_name) => Some(remote_name.to_string()),
+        _ => None,
+    };
+    if let Some(url) = local_url {
+        if depth.is_some() || filter.is_some() {
+            return Err(CliError::NotImplemented(
+                "fetch --depth/--filter from a local path is not claimed".into(),
+            ));
+        }
+        drop(repo);
+        let specs = configured.map(|r| r.fetch.clone()).unwrap_or_default();
+        return crate::cmd::remote_local::fetch_local(
+            &url,
+            configured.map(|r| r.name.as_str()),
+            &specs,
+            &positional[1.min(positional.len())..],
+            quiet,
+        );
+    }
+    let remote =
+        configured.ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
     let opts = arks_remote::FetchOptions {
         depth,
         filter,
@@ -240,6 +263,7 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         &[("-n", "--dry-run"), ("--quiet", "-q")],
     );
     let dry_run = args.iter().any(|a| a == "--dry-run");
+    let quiet = args.iter().any(|a| a == "-q");
     let args = &args
         .iter()
         .filter(|a| *a != "--dry-run" && *a != "-q")
@@ -292,10 +316,18 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
     let repo = open_repo()?;
     let cfg = repo.git_dir().join("config");
     let remotes = arks_remote::list_remotes(&cfg)?;
-    let remote = remotes
-        .iter()
-        .find(|r| r.name == remote_name)
-        .ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
+    let configured = remotes.iter().find(|r| r.name == remote_name).cloned();
+    // C7b: a local path / file:// URL works without a configured remote.
+    let remote = match configured.clone() {
+        Some(r) => r,
+        None if arks_remote::is_local_remote(remote_name) => arks_remote::RemoteConfig {
+            name: remote_name.to_string(),
+            url: remote_name.to_string(),
+            fetch: Vec::new(),
+        },
+        None => return Err(CliError::Msg(format!("No such remote: {remote_name}"))),
+    };
+    let remote = &remote;
     let (refname, oid) = match refspec {
         // Empty-source delete: `arks push <remote> :<ref>` (S3 / git push shape).
         Some(rs) if rs.starts_with(':') => {
@@ -401,18 +433,42 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         eprintln!(" * {} -> {} (dry run)", &oid.to_hex()[..7], refname);
         return Ok(());
     }
-    arks_remote::push_remote_with(
-        &repo,
-        &remote.url,
-        &[arks_remote::PushUpdate {
-            refname: refname.clone(),
-            new_oid: oid,
-            expected_old,
-        }],
-        &arks_remote::PushOptions { push_options },
-    )?;
+    let is_zero = oid.to_hex().bytes().all(|b| b == b'0');
+    if arks_remote::is_local_remote(&remote.url) {
+        if expected_old.is_some() || !push_options.is_empty() {
+            return Err(CliError::NotImplemented(
+                "push --force-with-lease/--push-option to a local path is not claimed".into(),
+            ));
+        }
+        let src_label = refspec
+            .map(|r| r.split(':').next().unwrap_or(r))
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| refname.strip_prefix("refs/heads/").unwrap_or(&refname))
+            .to_string();
+        crate::cmd::remote_local::push_local(
+            &remote.url,
+            &[crate::cmd::remote_local::LocalPush {
+                src_label,
+                dst: refname.clone(),
+                new: (!is_zero).then_some(oid),
+                force: false,
+            }],
+            quiet,
+        )?;
+    } else {
+        arks_remote::push_remote_with(
+            &repo,
+            &remote.url,
+            &[arks_remote::PushUpdate {
+                refname: refname.clone(),
+                new_oid: oid,
+                expected_old,
+            }],
+            &arks_remote::PushOptions { push_options },
+        )?;
+    }
     // git-push: update refs/remotes/<remote>/<branch> after a successful branch push.
-    if let Some(branch) = refname.strip_prefix("refs/heads/") {
+    if let (Some(branch), true) = (refname.strip_prefix("refs/heads/"), configured.is_some()) {
         let tracking = format!("refs/remotes/{remote_name}/{branch}");
         let mut repo_mut = open_repo()?;
         if oid.to_hex().bytes().all(|b| b == b'0') {

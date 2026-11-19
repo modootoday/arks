@@ -34,6 +34,7 @@ pub mod patch;
 pub mod plumbing;
 pub mod range_diff;
 pub mod remote;
+pub mod remote_local;
 pub mod replace;
 pub mod replay;
 pub mod server;
