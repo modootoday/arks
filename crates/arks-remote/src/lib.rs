@@ -39,6 +39,7 @@ mod error;
 mod fetch;
 mod git;
 mod http;
+mod local;
 mod ls_remote;
 mod push;
 mod shallow;
@@ -69,6 +70,7 @@ pub use fetch::{
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
 pub use http::http_get;
+pub use local::{copy_objects, is_local_remote, local_refs, open_local_remote};
 pub use ls_remote::{RemoteRef, ls_remote};
 pub use push::{
     PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,

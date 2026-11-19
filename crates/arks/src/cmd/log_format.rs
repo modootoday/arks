@@ -18,9 +18,14 @@ use std::collections::{BinaryHeap, HashSet};
 /// Parsed `--format` / `--pretty`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pretty {
-    /// No format flag: command default.
+    /// No format flag (or `medium`): command default.
     Default,
     Oneline,
+    /// Built-in `short`, `full`, `fuller` and `raw` formats.
+    Short,
+    Full,
+    Fuller,
+    Raw,
     /// `--pretty=format:` — separator semantics (no newline after the last entry).
     Format(String),
     /// `--format=` / `--pretty=tformat:` — terminator semantics.
@@ -66,7 +71,11 @@ pub fn take_pretty(args: &mut Vec<String>) -> CliResult<Pretty> {
         } else {
             match v.as_str() {
                 "oneline" => Pretty::Oneline,
-                "medium" | "short" | "full" | "fuller" | "raw" => Pretty::Default,
+                "medium" => Pretty::Default,
+                "short" => Pretty::Short,
+                "full" => Pretty::Full,
+                "fuller" => Pretty::Fuller,
+                "raw" => Pretty::Raw,
                 _ if v.contains('%') || is_format_flag => Pretty::TFormat(v),
                 other => {
                     return Err(CliError::NotImplemented(format!(
@@ -224,6 +233,10 @@ pub fn path_in_specs(path: &str, specs: &[String]) -> bool {
                 || (path.len() > s.len()
                     && path.starts_with(s.as_str())
                     && path.as_bytes()[s.len()] == b'/')
+                // Glob pathspecs match the whole path; `*` crosses `/`
+                // (gitglossary "pathspec", no `:(glob)` magic).
+                || (s.contains(['*', '?', '['])
+                    && crate::cmd::branch_cmd::fnmatch(s.as_bytes(), path.as_bytes()))
         })
 }
 

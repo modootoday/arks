@@ -33,6 +33,16 @@ pub(crate) fn is_ancestor(repo: &Repository, ancestor: &Oid, tip: &Oid) -> CliRe
     Ok(ancestor == tip || arks_repo::ancestor_set(repo, *tip)?.contains(ancestor))
 }
 
+/// Every commit reachable from `tip` (including it).
+pub(crate) fn is_ancestor_set(
+    repo: &Repository,
+    tip: Oid,
+) -> CliResult<std::collections::HashSet<Oid>> {
+    let mut set = arks_repo::ancestor_set(repo, tip)?;
+    set.insert(tip);
+    Ok(set)
+}
+
 /// Resolve a revision per gitrevisions(7) (claimed subset): full or abbreviated
 /// hex, `HEAD`/`@`, `FETCH_HEAD`, ref DWIM (`refs/`, heads, remotes, tags),
 /// `<rev>@{u}` / `@{upstream}`, any chain of `~N`, `^N`, `^`, `^{<type>}`,
@@ -484,12 +494,21 @@ fn collect_untracked_rec(
     Ok(())
 }
 
+/// `(ctime_sec, ctime_nsec, mtime_sec, mtime_nsec)` for an index entry.
+/// ctime is the inode change time (`st_ctime`) git records, not the birth
+/// time. Cite: https://git-scm.com/docs/gitformat-index
 pub(crate) fn file_times(meta: &fs::Metadata) -> (u32, u32, u32, u32) {
     let to_parts = |t: SystemTime| {
         let dur = t.duration_since(UNIX_EPOCH).unwrap_or_default();
         (dur.as_secs() as u32, dur.subsec_nanos())
     };
     let (mtime_sec, mtime_nsec) = meta.modified().ok().map(to_parts).unwrap_or((0, 0));
+    #[cfg(unix)]
+    let (ctime_sec, ctime_nsec) = {
+        use std::os::unix::fs::MetadataExt;
+        (meta.ctime() as u32, meta.ctime_nsec() as u32)
+    };
+    #[cfg(not(unix))]
     let (ctime_sec, ctime_nsec) = meta
         .created()
         .ok()

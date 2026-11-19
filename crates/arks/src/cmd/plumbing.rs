@@ -99,12 +99,12 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
     };
     let mut repo = open_repo()?;
     let tree = resolve_rev(&repo, &tree_s)?;
-    let sig = commit_signature()?;
+    // Author and committer come from their own identities (git-commit-tree).
     let commit = Commit {
         tree,
         parents,
-        author: sig.clone(),
-        committer: sig,
+        author: commit_signature()?,
+        committer: crate::cmd::shared::committer_signature()?,
         gpgsig: None,
         message,
     };
@@ -121,7 +121,8 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
     // ls-files.c `show_files`: others, then cached/stage, then deleted/modified.
     // Paths are shown relative to (and limited to) the current directory.
     // Cite: https://git-scm.com/docs/git-ls-files
-    let args = crate::util::split_short_bundles(args, "cdmosuz", "");
+    // C7b: `-i`/`--ignored` (with -o or -c and --exclude-standard).
+    let args = crate::util::split_short_bundles(args, "cdimosuz", "");
     let mut flags = HashSet::new();
     let mut specs_raw: Vec<String> = Vec::new();
     let mut dashdash = false;
@@ -162,10 +163,23 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
             "--error-unmatch" => {
                 flags.insert('e');
             }
+            "-i" | "--ignored" => {
+                flags.insert('i');
+            }
             x => return Err(CliError::NotImplemented(format!("unsupported option: {x}"))),
         }
     }
     let has = |c: char| flags.contains(&c);
+    if has('i') && !(has('o') || has('c')) {
+        return Err(CliError::fatal(
+            "ls-files -i must be used with either -o or -c",
+        ));
+    }
+    if has('i') && !has('x') {
+        return Err(CliError::fatal(
+            "ls-files: --ignored needs some exclude pattern",
+        ));
+    }
     let stage_fmt = has('s') || has('u');
     let cached = has('c') || has('s') || has('u') || !(has('o') || has('d') || has('m'));
     let term = if has('z') { "\0" } else { "\n" };
@@ -224,16 +238,30 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
             &work,
             &indexed,
             &mut untracked,
-            has('x').then_some(&mut ig),
+            (has('x') && !has('i')).then_some(&mut ig),
         )?;
+        if has('i') {
+            untracked.retain(|p| {
+                ig.matching_with_parents(p, false)
+                    .is_some_and(|m| m.excluded)
+            });
+        }
         for p in untracked {
             if in_spec(&p) {
                 write!(out, "{}{term}", show(&p))?;
             }
         }
     }
-    if cached {
+    let mut ig_cached = crate::cmd::ignore::Ignore::new(&work);
+    if cached && (!has('i') || has('c')) {
         for e in &index.entries {
+            if has('i')
+                && !ig_cached
+                    .matching_with_parents(&e.path, false)
+                    .is_some_and(|m| m.excluded)
+            {
+                continue;
+            }
             if has('u') && !has('s') && !has('c') && e.stage() == 0 {
                 continue;
             }
@@ -299,42 +327,56 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_ls_tree(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: `-r` + `--name-only` claimed.
-    refuse_unknown_flags(args, &["-r", "--name-only"])?;
-    let recursive = args.iter().any(|a| a == "-r");
-    let name_only = args.iter().any(|a| a == "--name-only");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 1 {
-        return Err(CliError::Usage(
-            "ls-tree [-r] [--name-only] <tree-ish>".into(),
-        ));
+    // M16 Sy-3 + C7b: `-r`, `-t`, `-d`, `-l`/`--long`, `--name-only`/
+    // `--name-status`, `--full-tree`, and path patterns (a trailing `/`
+    // lists the directory's contents). Cite: https://git-scm.com/docs/git-ls-tree
+    let args = crate::util::split_short_bundles(args, "rtdl", "");
+    let mut o = LsTree::default();
+    let mut positional: Vec<&String> = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "-r" => o.recursive = true,
+            "-t" => o.show_trees = true,
+            "-d" => o.only_trees = true,
+            "-l" | "--long" => o.long = true,
+            "--name-only" | "--name-status" => o.name_only = true,
+            "--full-tree" | "--full-name" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => positional.push(a),
+        }
     }
-    let repo = open_repo()?;
-    let oid = resolve_rev(&repo, positional[0])?;
-    let obj = repo.get_object(&oid)?;
-    let tree_oid = match obj.kind {
-        ObjectKind::Tree => oid,
-        ObjectKind::Commit => {
-            let c = Commit::decode(&obj.payload)?;
-            c.tree
-        }
-        other => {
-            return Err(CliError::Msg(format!(
-                "ls-tree: {} is not a tree-ish",
-                other.as_str()
-            )));
-        }
+    let Some((rev, specs)) = positional.split_first() else {
+        return Err(CliError::Usage(
+            "ls-tree [<options>] <tree-ish> [<path>...]".into(),
+        ));
     };
-    print_tree(&repo, &tree_oid, "", recursive, name_only)?;
-    Ok(())
+    o.specs = specs.iter().map(|s| s.to_string()).collect();
+    let repo = open_repo()?;
+    let oid = resolve_rev(&repo, rev)
+        .map_err(|_| CliError::fatal("Not a valid object name".to_string()))?;
+    let tree_oid =
+        crate::cmd::shared::peel_to_kind(&repo, &oid, crate::cmd::shared::ObjKind::Tree, rev)
+            .map_err(|_| CliError::fatal("not a tree object"))?;
+    print_tree(&repo, &tree_oid, "", &o)
+}
+
+#[derive(Default)]
+struct LsTree {
+    recursive: bool,
+    show_trees: bool,
+    only_trees: bool,
+    long: bool,
+    name_only: bool,
+    specs: Vec<String>,
 }
 
 fn print_tree(
     repo: &arks_repo::Repository,
     tree_oid: &Oid,
     prefix: &str,
-    recursive: bool,
-    name_only: bool,
+    o: &LsTree,
 ) -> CliResult<()> {
     let obj = repo.get_object(tree_oid)?;
     if obj.kind != ObjectKind::Tree {
@@ -347,30 +389,73 @@ fn print_tree(
         } else {
             format!("{prefix}/{}", e.name)
         };
-        let mode = match e.mode {
-            arks_object::TreeMode::Tree => "040000",
-            arks_object::TreeMode::File => "100644",
-            arks_object::TreeMode::Executable => "100755",
-            arks_object::TreeMode::Symlink => "120000",
-            arks_object::TreeMode::Gitlink => "160000",
-        };
-        let kind = match e.mode {
-            arks_object::TreeMode::Tree => "tree",
-            _ => "blob",
-        };
-        if e.mode == arks_object::TreeMode::Tree && recursive {
-            print_tree(repo, &e.oid, &path, true, name_only)?;
-        } else if name_only {
-            println!("{path}");
+        let is_tree = e.mode == arks_object::TreeMode::Tree;
+        // Spec relations: equal / inside a spec dir / ancestor of a spec.
+        let matched = o.specs.is_empty()
+            || o.specs.iter().any(|s| {
+                let t = s.trim_end_matches('/');
+                path == t || path.starts_with(&format!("{t}/"))
+            });
+        let ancestor = o
+            .specs
+            .iter()
+            .any(|s| s.trim_end_matches('/').starts_with(&format!("{path}/")));
+        let list_contents = o.specs.iter().any(|s| *s == format!("{path}/"));
+        if !matched && !ancestor {
+            continue;
+        }
+        let descend = is_tree && (ancestor || list_contents || (matched && o.recursive));
+        let show = if is_tree {
+            (matched && !descend) || (descend && o.show_trees) || (o.only_trees && matched)
         } else {
-            println!("{mode} {kind} {}\t{path}", e.oid.to_hex());
+            matched && !o.only_trees
+        };
+        if show {
+            if o.name_only {
+                println!("{path}");
+            } else {
+                let mode = match e.mode {
+                    arks_object::TreeMode::Tree => "040000",
+                    arks_object::TreeMode::File => "100644",
+                    arks_object::TreeMode::Executable => "100755",
+                    arks_object::TreeMode::Symlink => "120000",
+                    arks_object::TreeMode::Gitlink => "160000",
+                };
+                let kind = match e.mode {
+                    arks_object::TreeMode::Tree => "tree",
+                    arks_object::TreeMode::Gitlink => "commit",
+                    _ => "blob",
+                };
+                if o.long {
+                    let size = if kind == "blob" {
+                        repo.get_object(&e.oid)?.payload.len().to_string()
+                    } else {
+                        "-".to_string()
+                    };
+                    println!("{mode} {kind} {} {size:>7}\t{path}", e.oid.to_hex());
+                } else {
+                    println!("{mode} {kind} {}\t{path}", e.oid.to_hex());
+                }
+            }
+        }
+        if descend {
+            print_tree(repo, &e.oid, &path, o)?;
         }
     }
     Ok(())
 }
 
 pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    // `--short` / `-q` on read. Cite: https://git-scm.com/docs/git-symbolic-ref
+    refuse_unknown_flags(args, &["--short", "-q", "--quiet"])?;
+    let short = args.iter().any(|a| a == "--short");
+    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
+    let args: Vec<String> = args
+        .iter()
+        .filter(|a| !a.starts_with('-'))
+        .cloned()
+        .collect();
+    let args = args.as_slice();
     if args.is_empty() {
         return Err(CliError::Usage(
             "symbolic-ref <name> [<target>]  (read or set)".into(),
@@ -381,10 +466,21 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
         let name = &args[0];
         match repo.refs().read(name)? {
             RefTarget::Symbolic(target) => {
-                println!("{target}");
+                if short {
+                    let s = ["refs/heads/", "refs/tags/", "refs/remotes/", "refs/"]
+                        .iter()
+                        .find_map(|p| target.strip_prefix(p))
+                        .unwrap_or(&target);
+                    println!("{s}");
+                } else {
+                    println!("{target}");
+                }
                 Ok(())
             }
-            RefTarget::Direct(_) => Err(CliError::Msg(format!("not a symbolic ref: {name}"))),
+            RefTarget::Direct(_) if quiet => Err(CliError::silent(1)),
+            RefTarget::Direct(_) => {
+                Err(CliError::fatal(format!("ref {name} is not a symbolic ref")))
+            }
         }
     } else if args.len() == 2 {
         let name = &args[0];
@@ -459,34 +555,103 @@ pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: show-ref --heads/--tags/--verify (git-show-ref).
-    refuse_unknown_flags(args, &["--heads", "--tags", "--verify"])?;
-    let heads = args.iter().any(|a| a == "--heads");
-    let tags = args.iter().any(|a| a == "--tags");
-    let verify = args.iter().any(|a| a == "--verify");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    // M16 Sy-3 + C7b: --heads/--tags/--verify/--hash/--dereference/-q/--exists
+    // and tail-matching patterns; all refs under refs/ (incl. refs/stash).
+    // Cite: https://git-scm.com/docs/git-show-ref
+    let args = crate::util::split_short_bundles(args, "dsq", "");
+    let mut heads = false;
+    let mut tags = false;
+    let mut verify = false;
+    let mut hash_only = false;
+    let mut deref = false;
+    let mut quiet = false;
+    let mut exists = false;
+    let mut patterns: Vec<&String> = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "--heads" | "--branches" => heads = true,
+            "--tags" => tags = true,
+            "--verify" => verify = true,
+            "--hash" | "-s" => hash_only = true,
+            "--dereference" | "-d" => deref = true,
+            "--quiet" | "-q" => quiet = true,
+            "--exists" => exists = true,
+            "--" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => patterns.push(a),
+        }
+    }
     let repo = open_repo()?;
-    if verify {
-        let name = positional
+    let print = |name: &str, oid: &Oid| -> CliResult<()> {
+        if !quiet {
+            if hash_only {
+                println!("{}", oid.to_hex());
+            } else {
+                println!("{} {name}", oid.to_hex());
+            }
+        }
+        if deref {
+            let peeled = crate::cmd::shared::peel_tags(&repo, oid)?;
+            if peeled != *oid && !quiet {
+                if hash_only {
+                    println!("{}", peeled.to_hex());
+                } else {
+                    println!("{} {name}^{{}}", peeled.to_hex());
+                }
+            }
+        }
+        Ok(())
+    };
+    if exists {
+        let name = patterns
             .first()
-            .ok_or_else(|| CliError::Usage("show-ref --verify <ref>".into()))?;
-        let oid = repo.refs().resolve(name)?;
-        println!("{} {name}", oid.to_hex());
+            .ok_or_else(|| CliError::Usage("show-ref --exists <ref>".into()))?;
+        return match repo.refs().read(name) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(CliError::Exit(
+                2,
+                "error: reference does not exist".to_string(),
+            )),
+        };
+    }
+    if verify {
+        if patterns.is_empty() {
+            return Err(CliError::fatal("--verify requires a reference"));
+        }
+        for name in &patterns {
+            let ok = (name.starts_with("refs/") || name.as_str() == "HEAD")
+                .then(|| repo.refs().resolve(name).ok())
+                .flatten();
+            match ok {
+                Some(oid) => print(name, &oid)?,
+                None if quiet => return Err(CliError::silent(1)),
+                None => {
+                    return Err(CliError::fatal(format!("'{name}' - not a valid ref")));
+                }
+            }
+        }
         return Ok(());
     }
-    let mut refs = Vec::new();
-    if (!heads && !tags) || heads {
-        refs.extend(repo.refs().list_refs("refs/heads/")?);
-    }
-    if (!heads && !tags) || tags {
-        refs.extend(repo.refs().list_refs("refs/tags/")?);
-    }
-    if !heads && !tags {
-        refs.extend(repo.refs().list_refs("refs/remotes/")?);
-    }
+    let mut refs = repo.refs().list_refs("refs/")?;
+    refs.retain(|(n, _)| {
+        (!heads && !tags)
+            || (heads && n.starts_with("refs/heads/"))
+            || (tags && n.starts_with("refs/tags/"))
+    });
+    refs.retain(|(n, _)| {
+        patterns.is_empty()
+            || patterns
+                .iter()
+                .any(|p| n == *p || n.ends_with(&format!("/{p}")))
+    });
     refs.sort_by(|a, b| a.0.cmp(&b.0));
+    if refs.is_empty() {
+        return Err(CliError::silent(1));
+    }
     for (name, oid) in refs {
-        println!("{} {name}", oid.to_hex());
+        print(&name, &oid)?;
     }
     Ok(())
 }
@@ -502,6 +667,8 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
     let (mut all, mut first_parent, mut no_merges, mut merges, mut reverse) =
         (false, false, false, false, false);
     let mut revs = Vec::new();
+    // C7b: `--parents`, `--left-right` (with `A...B`).
+    let (mut parents, mut left_right) = (false, false);
     let bad_n = |v: &str| CliError::fatal(format!("'{v}': not an integer"));
     let mut i = 0;
     while i < args.len() {
@@ -514,6 +681,8 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
             "--no-merges" => no_merges = true,
             "--merges" => merges = true,
             "--reverse" => reverse = true,
+            "--parents" => parents = true,
+            "--left-right" => left_right = true,
             "--max-count" | "-n" => {
                 let v = args
                     .get(i)
@@ -561,10 +730,10 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         }
         Ok(out)
     };
-    let mut list: Vec<Oid> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
+    let mut list: Vec<(Oid, Vec<Oid>)> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
         .into_iter()
         .filter(|(_, c)| !(no_merges && c.parents.len() > 1) && !(merges && c.parents.len() < 2))
-        .map(|(o, _)| o)
+        .map(|(o, c)| (o, c.parents))
         .collect();
     if let Some(m) = max_count {
         list.truncate(m);
@@ -572,13 +741,45 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
     if reverse {
         list.reverse();
     }
+    // `--left-right`: `<` for commits reachable from the left side of the
+    // symmetric range `A...B`, `>` for the right.
+    let left_set = if left_right {
+        let sym = revs
+            .iter()
+            .find_map(|r| r.split_once("..."))
+            .ok_or_else(|| CliError::fatal("--left-right needs a symmetric range A...B"))?;
+        let left = resolve_rev(&repo, if sym.0.is_empty() { "HEAD" } else { sym.0 })?;
+        Some(arks_repo::ancestor_set(
+            &repo,
+            crate::cmd::shared::peel_tags(&repo, &left)?,
+        )?)
+    } else {
+        None
+    };
     if count_only {
-        println!("{}", list.len());
+        match &left_set {
+            Some(l) => {
+                let left = list.iter().filter(|(o, _)| l.contains(o)).count();
+                println!("{left}\t{}", list.len() - left);
+            }
+            None => println!("{}", list.len()),
+        }
         return Ok(());
     }
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
-    for o in list {
-        writeln!(out, "{}", o.to_hex())?;
+    for (o, ps) in list {
+        let mark = match &left_set {
+            Some(l) if l.contains(&o) => "<",
+            Some(_) => ">",
+            None => "",
+        };
+        write!(out, "{mark}{}", o.to_hex())?;
+        if parents {
+            for p in &ps {
+                write!(out, " {}", p.to_hex())?;
+            }
+        }
+        writeln!(out)?;
     }
     out.flush()?;
     Ok(())
@@ -611,14 +812,13 @@ pub fn cmd_update_index(args: &[String]) -> CliResult<()> {
     if refresh {
         // M19 Cx-1 MISC-012: honor exclusive index.lock (lease ≠ skip). Stock
         // `git update-index --refresh` takes the lock; under a held lock it fails.
-        // Unlocked: claimed no-op success when index readable (stat refresh deferred).
         if lock.is_file() {
             return Err(CliError::Msg(format!(
                 "{} (index locked; MISC-012 — update-index --refresh honors exclusive lock; no poll-skip)",
                 lock.display()
             )));
         }
-        return Ok(());
+        return refresh_index(&repo, &work, &mut index, args);
     }
     // Parse --chmod=+x|-x (IDX-013).
     let mut chmod_mode: Option<u32> = None;
@@ -854,53 +1054,66 @@ pub fn cmd_read_tree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: two trees; `--name-status`.
-    refuse_unknown_flags(args, &["--name-status", "-r"])?;
-    let name_status = args.iter().any(|a| a == "--name-status");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 2 {
-        return Err(CliError::Usage(
-            "diff-tree [--name-status] <tree-ish> <tree-ish>".into(),
-        ));
-    }
-    let repo = open_repo()?;
-    let a = tree_map(&repo, &resolve_rev(&repo, positional[0])?)?;
-    let b = tree_map(&repo, &resolve_rev(&repo, positional[1])?)?;
-    let mut keys: Vec<_> = a.keys().chain(b.keys()).cloned().collect();
-    keys.sort();
-    keys.dedup();
-    for k in keys {
-        match (a.get(&k), b.get(&k)) {
-            (Some(x), Some(y)) if x == y => {}
-            (None, Some(_)) => {
-                if name_status {
-                    println!("A\t{k}");
-                } else {
-                    println!("A {k}");
-                }
-            }
-            (Some(_), None) => {
-                if name_status {
-                    println!("D\t{k}");
-                } else {
-                    println!("D {k}");
-                }
-            }
-            (Some(_), Some(_)) => {
-                if name_status {
-                    println!("M\t{k}");
-                } else {
-                    println!("M {k}");
-                }
-            }
-            (None, None) => {}
+/// `update-index --refresh`: re-read stat data for entries whose content
+/// still matches; print `<path>: needs update` (exit 1) for the others.
+/// Cite: https://git-scm.com/docs/git-update-index#Documentation/git-update-index.txt---refresh
+fn refresh_index(
+    repo: &arks_repo::Repository,
+    work: &std::path::Path,
+    index: &mut arks_index::Index,
+    args: &[String],
+) -> CliResult<()> {
+    let quiet = args.iter().any(|a| a == "-q");
+    let mut stale = Vec::new();
+    for e in index.entries.iter_mut().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        let Ok(meta) = std::fs::symlink_metadata(&abs) else {
+            stale.push(e.path.clone());
+            continue;
+        };
+        if e.mode == 0o160000 || meta.is_dir() {
+            continue;
         }
+        let bytes = if meta.file_type().is_symlink() {
+            std::fs::read_link(&abs)?
+                .to_string_lossy()
+                .into_owned()
+                .into_bytes()
+        } else {
+            std::fs::read(&abs)?
+        };
+        let oid = RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?;
+        let mode = if meta.file_type().is_symlink() {
+            0o120000
+        } else {
+            crate::cmd::shared::file_mode(&meta)
+        };
+        if oid != e.oid || mode != e.mode {
+            stale.push(e.path.clone());
+            continue;
+        }
+        let fresh = crate::cmd::working_tree::stat_entry(&e.path, oid, &meta);
+        e.ctime_sec = fresh.ctime_sec;
+        e.ctime_nsec = fresh.ctime_nsec;
+        e.mtime_sec = fresh.mtime_sec;
+        e.mtime_nsec = fresh.mtime_nsec;
+        e.dev = fresh.dev;
+        e.ino = fresh.ino;
+        e.uid = fresh.uid;
+        e.gid = fresh.gid;
+        e.size = fresh.size;
     }
-    Ok(())
+    write_index(repo, index)?;
+    if stale.is_empty() || quiet {
+        return Ok(());
+    }
+    for p in &stale {
+        println!("{p}: needs update");
+    }
+    Err(CliError::silent(1))
 }
 
-fn flatten_tree_to_index(
+pub(crate) fn flatten_tree_to_index(
     repo: &arks_repo::Repository,
     tree_oid: &Oid,
     prefix: &str,
@@ -942,30 +1155,6 @@ fn flatten_tree_to_index(
         });
     }
     Ok(())
-}
-
-fn tree_map(
-    repo: &arks_repo::Repository,
-    rev: &Oid,
-) -> CliResult<std::collections::HashMap<String, Oid>> {
-    let obj = repo.get_object(rev)?;
-    let tree_oid = match obj.kind {
-        ObjectKind::Tree => *rev,
-        ObjectKind::Commit => Commit::decode(&obj.payload)?.tree,
-        other => {
-            return Err(CliError::Msg(format!(
-                "diff-tree: {} not a tree-ish",
-                other.as_str()
-            )));
-        }
-    };
-    let mut map = std::collections::HashMap::new();
-    let mut entries = Vec::new();
-    flatten_tree_to_index(repo, &tree_oid, "", &mut entries)?;
-    for e in entries {
-        map.insert(e.path, e.oid);
-    }
-    Ok(map)
 }
 
 pub fn cmd_pack_objects(args: &[String]) -> CliResult<()> {
@@ -1138,115 +1327,239 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: paths → ignored? Minimal `.gitignore` line matcher (prefix / * suffix).
+    // M16 Sy-3 + C7b: full gitignore(5) sources and precedence via the
+    // shared matcher; `-v`, `-n`/`--non-matching`, `-q`, `--no-index`.
+    // Tracked paths are not reported unless --no-index. Exit 0 when some
+    // path is ignored, 1 when none is.
     // Cite: https://git-scm.com/docs/git-check-ignore
-    refuse_unknown_flags(args, &["-v"])?;
-    let verbose = args.iter().any(|a| a == "-v");
-    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    let args = crate::util::split_short_bundles(args, "vnq", "");
+    let mut verbose = false;
+    let mut non_matching = false;
+    let mut quiet = false;
+    let mut no_index = false;
+    let mut paths: Vec<&String> = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "-v" | "--verbose" => verbose = true,
+            "-n" | "--non-matching" => non_matching = true,
+            "-q" | "--quiet" => quiet = true,
+            "--no-index" => no_index = true,
+            "--" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => paths.push(a),
+        }
+    }
     if paths.is_empty() {
-        return Err(CliError::Usage("check-ignore [-v] <path>...".into()));
+        return Err(CliError::fatal("no path specified"));
+    }
+    if non_matching && !verbose {
+        return Err(CliError::fatal(
+            "--non-matching is only valid with --verbose",
+        ));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let patterns = load_gitignore_patterns(&work)?;
+    let tracked: HashSet<String> = if no_index {
+        HashSet::new()
+    } else {
+        read_index(&repo)?
+            .entries
+            .into_iter()
+            .map(|e| e.path)
+            .collect()
+    };
+    let mut ignore = crate::cmd::ignore::Ignore::new(&work);
     let mut any = false;
     for p in paths {
         let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| (*p).clone());
-        if let Some(pat) = match_ignore(&patterns, &rel) {
-            any = true;
-            if verbose {
-                println!(".gitignore:1:{pat}\t{rel}");
-            } else {
-                println!("{rel}");
-            }
+        let is_dir = work.join(&rel).is_dir();
+        let m = if tracked.contains(&rel) {
+            None
+        } else {
+            ignore.matching_with_parents(&rel, is_dir)
+        };
+        any |= m.as_ref().is_some_and(|m| m.excluded);
+        if quiet {
+            continue;
+        }
+        match (&m, verbose) {
+            (Some(m), true) => println!("{}:{}:{}\t{p}", m.source, m.line, m.pattern),
+            (Some(m), false) if m.excluded => println!("{p}"),
+            (None, true) if non_matching => println!("::\t{p}"),
+            _ => {}
         }
     }
     if any {
         Ok(())
     } else {
-        Err(CliError::Msg("no ignored paths".into()))
+        Err(CliError::silent(1))
     }
 }
 
 pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: OID → nearest ref name (git-name-rev minimal).
-    refuse_unknown_flags(args, &[])?;
-    let rev = args
-        .first()
-        .ok_or_else(|| CliError::Usage("name-rev <commit>".into()))?;
+    // git-name-rev: `[--tags] [--name-only] [--refs=<pattern>] [--all] <commit-ish>...`.
+    // Cite: https://git-scm.com/docs/git-name-rev
+    let mut tags_only = false;
+    let mut name_only = false;
+    let mut all = false;
+    let mut refs_pat: Vec<String> = Vec::new();
+    let mut revs = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--tags" => tags_only = true,
+            "--name-only" => name_only = true,
+            "--all" => all = true,
+            "--no-undefined" | "--always" => {}
+            _ if a.starts_with("--refs=") => refs_pat.push(a["--refs=".len()..].to_string()),
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => revs.push(a.clone()),
+        }
+    }
     let repo = open_repo()?;
-    let target = resolve_rev(&repo, rev)?;
-    let mut refs = repo.refs().list_refs("refs/")?;
-    refs.sort_by(|a, b| a.0.cmp(&b.0));
-    for (name, oid) in &refs {
-        if *oid == target {
-            println!("{} {name}", target.to_hex());
-            return Ok(());
+    let names = name_rev_names(&repo, tags_only, &refs_pat)?;
+    let mut targets: Vec<(String, Oid)> = Vec::new();
+    if all {
+        let mut v: Vec<(&Oid, &String)> = names.iter().map(|(o, n)| (o, &n.0)).collect();
+        v.sort_by_key(|x| x.0.to_hex());
+        for (o, _) in v {
+            targets.push((o.to_hex(), *o));
         }
     }
-    // Walk first-parent distance from each ref tip.
-    for (name, tip) in &refs {
-        let mut oid = *tip;
-        let mut dist = 0u32;
-        loop {
-            if oid == target {
-                println!("{} {name}~{dist}", target.to_hex());
-                return Ok(());
-            }
-            let obj = match repo.get_object(&oid) {
-                Ok(o) => o,
-                Err(_) => break,
-            };
-            if obj.kind != ObjectKind::Commit {
-                break;
-            }
-            let c = Commit::decode(&obj.payload)?;
-            match c.parents.first() {
-                Some(p) => {
-                    oid = *p;
-                    dist += 1;
-                    if dist > 64 {
-                        break;
-                    }
-                }
-                None => break,
-            }
+    for r in &revs {
+        let o = resolve_rev(&repo, r)
+            .map_err(|_| CliError::Exit(1, format!("Could not get sha1 for {r}. Skipping.")))?;
+        targets.push((r.clone(), crate::cmd::shared::peel_tags(&repo, &o)?));
+    }
+    if targets.is_empty() {
+        return Err(CliError::Usage("name-rev [<options>] <commit>...".into()));
+    }
+    for (label, oid) in targets {
+        let name = names
+            .get(&oid)
+            .map(|n| n.0.clone())
+            .unwrap_or_else(|| "undefined".to_string());
+        if name_only {
+            println!("{name}");
+        } else {
+            println!("{label} {name}");
         }
     }
-    println!("{} undefined", target.to_hex());
     Ok(())
 }
 
-fn load_gitignore_patterns(work: &Path) -> CliResult<Vec<String>> {
-    let path = work.join(".gitignore");
-    if !path.is_file() {
-        return Ok(Vec::new());
-    }
-    let text = fs::read_to_string(path)?;
-    Ok(text
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty() && !l.starts_with('#'))
-        .map(str::to_string)
-        .collect())
-}
+/// One candidate name: (display name, tagger date, generation, distance, from_tag).
+type RevName = (String, i64, u64, u64, bool);
 
-fn match_ignore(patterns: &[String], path: &str) -> Option<String> {
-    for pat in patterns {
-        if pat.ends_with('/') {
-            let prefix = &pat[..pat.len() - 1];
-            if path == prefix || path.starts_with(&format!("{prefix}/")) {
-                return Some(pat.clone());
+/// git name-rev.c naming: walk from every ref tip; a commit `n` first-parent
+/// hops below a named tip is `<tip>~n`, a merge's k-th parent `<name>^k`
+/// (costing MERGE_TRAVERSAL_WEIGHT). Names from tags win over others (the
+/// older tag first), then shorter distance, then smaller generation.
+/// Annotated tag tips are named `tags/<t>^0`.
+pub(crate) fn name_rev_names(
+    repo: &arks_repo::Repository,
+    tags_only: bool,
+    refs_pat: &[String],
+) -> CliResult<std::collections::HashMap<Oid, RevName>> {
+    const MERGE_WEIGHT: u64 = 65535;
+    let mut refs = repo.refs().list_refs("refs/")?;
+    refs.sort_by(|a, b| a.0.cmp(&b.0));
+    let better = |old: &RevName, date: i64, generation: u64, distance: u64, from_tag: bool| {
+        if from_tag && old.4 {
+            return old.1 > date || (old.1 == date && old.3 > distance);
+        }
+        if old.4 != from_tag {
+            return from_tag;
+        }
+        if old.3 != distance {
+            return old.3 > distance;
+        }
+        old.2 > generation
+    };
+    let mut names: std::collections::HashMap<Oid, RevName> = Default::default();
+    for (refname, tip) in refs {
+        let from_tag = refname.starts_with("refs/tags/");
+        if tags_only && !from_tag {
+            continue;
+        }
+        if refname == "refs/stash" {
+            continue;
+        }
+        if !refs_pat.is_empty()
+            && !refs_pat.iter().any(|p| {
+                crate::cmd::branch_cmd::fnmatch(p.as_bytes(), refname.as_bytes())
+                    || refname.ends_with(&format!("/{p}"))
+            })
+        {
+            continue;
+        }
+        let short = if let Some(h) = refname.strip_prefix("refs/heads/") {
+            h.to_string()
+        } else {
+            refname
+                .strip_prefix("refs/")
+                .unwrap_or(&refname)
+                .to_string()
+        };
+        let obj = repo.get_object(&tip)?;
+        let (commit, base, date) = if obj.kind == ObjectKind::Tag {
+            let target = crate::cmd::shared::peel_tags(repo, &tip)?;
+            let tagger = String::from_utf8_lossy(&obj.payload)
+                .lines()
+                .take_while(|l| !l.is_empty())
+                .find_map(|l| l.strip_prefix("tagger ").map(str::to_string))
+                .and_then(|t| {
+                    let mut it = t.rsplit(' ');
+                    it.next();
+                    it.next().and_then(|ts| ts.parse::<i64>().ok())
+                })
+                .unwrap_or(0);
+            (target, format!("{short}^0"), tagger)
+        } else {
+            let date = crate::cmd::log_format::read_commit(repo, &tip)
+                .map(|c| c.committer.timestamp)
+                .unwrap_or(0);
+            (tip, short, date)
+        };
+        if repo
+            .get_object(&commit)
+            .map(|o| o.kind != ObjectKind::Commit)
+            .unwrap_or(true)
+        {
+            continue;
+        }
+        // (commit, tip name, generation, distance)
+        let mut stack = vec![(commit, base, 0u64, 0u64)];
+        while let Some((oid, tip_name, generation, distance)) = stack.pop() {
+            if let Some(old) = names.get(&oid) {
+                if !better(old, date, generation, distance, from_tag) {
+                    continue;
+                }
             }
-        } else if let Some(suf) = pat.strip_prefix("*.") {
-            if path.ends_with(&format!(".{suf}"))
-                || Path::new(path).extension().and_then(|e| e.to_str()) == Some(suf)
-            {
-                return Some(pat.clone());
+            let display = if generation > 0 {
+                format!("{}~{generation}", tip_name.trim_end_matches("^0"))
+            } else {
+                tip_name.clone()
+            };
+            names.insert(oid, (display, date, generation, distance, from_tag));
+            let c = crate::cmd::log_format::read_commit(repo, &oid)?;
+            for (k, p) in c.parents.iter().enumerate().rev() {
+                if k == 0 {
+                    stack.push((*p, tip_name.clone(), generation + 1, distance + 1));
+                } else {
+                    let base = tip_name.trim_end_matches("^0");
+                    let merged = if generation > 0 {
+                        format!("{base}~{generation}^{}", k + 1)
+                    } else {
+                        format!("{base}^{}", k + 1)
+                    };
+                    stack.push((*p, merged, 0, distance + MERGE_WEIGHT));
+                }
             }
-        } else if path == pat || path.ends_with(&format!("/{pat}")) {
-            return Some(pat.clone());
         }
     }
-    None
+    Ok(names)
 }

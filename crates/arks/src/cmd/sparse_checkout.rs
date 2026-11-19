@@ -113,11 +113,20 @@ fn sparse_set(args: &[String]) -> CliResult<()> {
 fn sparse_list(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &[])?;
     let repo = open_repo()?;
+    let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+    let sparse = cfg
+        .get("core.sparseCheckout")
+        .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "true" | "yes" | "on" | "1"));
+    if !sparse {
+        return Err(CliError::fatal("this worktree is not sparse"));
+    }
     let path = repo.git_dir().join("info/sparse-checkout");
     if !path.is_file() {
         return Ok(());
     }
     let text = fs::read_to_string(&path)?;
+    // Partial: cone mode prints the raw pattern file (git prints the cone
+    // directories); kept for the G20 M15-FS3-02 row.
     print!("{text}");
     Ok(())
 }

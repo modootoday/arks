@@ -16,7 +16,6 @@ use arks_object::{ObjectKind, RawObject};
 use arks_store::ObjectFormat;
 use std::io::Write;
 
-const CONTEXT: usize = 3;
 /// Above this many lines on both sides combined, fall back to one replace hunk.
 const MAX_LINES: usize = 400_000;
 
@@ -27,22 +26,23 @@ enum Op {
     Ins,
 }
 
-/// Emit one file's patch. `None` = side absent (new / deleted file).
-pub fn write_file_patch(
+/// One file's `diff --git` patch with `-U<n>` / `--unified=<n>` context lines.
+pub fn write_file_patch_ctx(
     out: &mut impl Write,
     format: ObjectFormat,
     path: &str,
     old: Option<&[u8]>,
     new: Option<&[u8]>,
+    context: usize,
 ) -> CliResult<()> {
-    write_file_patch_ctx(out, format, path, old, new, CONTEXT)
+    write_file_patch_paths(out, format, (path, path), old, new, context)
 }
 
-/// [`write_file_patch`] with `-U<n>` / `--unified=<n>` context lines.
-pub fn write_file_patch_ctx(
+/// [`write_file_patch_ctx`] with distinct old/new names (`diff --no-index`).
+pub fn write_file_patch_paths(
     out: &mut impl Write,
     format: ObjectFormat,
-    path: &str,
+    (old_path, path): (&str, &str),
     old: Option<&[u8]>,
     new: Option<&[u8]>,
     context: usize,
@@ -57,7 +57,7 @@ pub fn write_file_patch_ctx(
         })
     };
     let (ao, bo) = (abbrev(old)?, abbrev(new)?);
-    writeln!(out, "diff --git a/{path} b/{path}")?;
+    writeln!(out, "diff --git a/{old_path} b/{path}")?;
     match (old, new) {
         (None, Some(_)) => {
             writeln!(out, "new file mode 100644")?;
@@ -70,7 +70,7 @@ pub fn write_file_patch_ctx(
         _ => writeln!(out, "index {ao}..{bo} 100644")?,
     }
     let a_name = if old.is_some() {
-        format!("a/{path}")
+        format!("a/{old_path}")
     } else {
         "/dev/null".into()
     };
@@ -494,12 +494,13 @@ mod tests {
 
     fn patch(old: Option<&str>, new: Option<&str>) -> String {
         let mut v = Vec::new();
-        write_file_patch(
+        write_file_patch_ctx(
             &mut v,
             ObjectFormat::Sha1,
             "f",
             old.map(str::as_bytes),
             new.map(str::as_bytes),
+            3,
         )
         .unwrap();
         String::from_utf8(v).unwrap()

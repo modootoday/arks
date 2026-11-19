@@ -123,10 +123,45 @@ pub fn cmd_cat_file(args: &[String]) -> CliResult<()> {
     // `-e`: exit 0 when the object exists, 1 when a valid name lacks an object,
     // 128 for an invalid name. Cite: https://git-scm.com/docs/git-cat-file
     refuse_unknown_flags(args, &["-t", "-s", "-p", "-e"])?;
-    let mode = args
+    let Some(mode) = args
         .iter()
         .find(|a| *a == "-t" || *a == "-s" || *a == "-p" || *a == "-e")
-        .ok_or_else(|| CliError::Usage("cat-file: require -t, -s, -e, or -p".into()))?;
+    else {
+        // `cat-file <type> <object>`: raw content, peeling tags/commits to
+        // `<type>` when the object is not already of that type.
+        let [kind, object] = args else {
+            return Err(CliError::Usage(
+                "cat-file: require -t, -s, -e, -p or <type> <object>".into(),
+            ));
+        };
+        let repo = open_repo()?;
+        let oid = resolve_rev(&repo, object)
+            .map_err(|_| CliError::fatal(format!("Not a valid object name {object}")))?;
+        let want = ObjectKind::parse(kind)
+            .map_err(|_| CliError::fatal(format!("invalid object type \"{kind}\"")))?;
+        let mut obj = repo.get_object(&oid)?;
+        if obj.kind != want {
+            let peeled = match want {
+                ObjectKind::Commit => crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Commit,
+                    object,
+                ),
+                ObjectKind::Tree => crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Tree,
+                    object,
+                ),
+                _ => Err(CliError::Msg(String::new())),
+            }
+            .map_err(|_| CliError::fatal(format!("git cat-file {object}: bad file")))?;
+            obj = repo.get_object(&peeled)?;
+        }
+        io::Write::write_all(&mut io::stdout(), &obj.payload)?;
+        return Ok(());
+    };
     if mode == "-e" {
         let object = args
             .iter()
@@ -211,10 +246,37 @@ pub(crate) fn run_claimed_hooks(
 }
 
 pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-d", "--no-verify"])?;
-    let delete = args.iter().any(|a| a == "-d");
-    let no_verify = args.iter().any(|a| a == "--no-verify");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    // `-m <reason>`, `--no-deref`, `--create-reflog`; `<new>`/`<old>` are any
+    // revision (get_oid), not only full hex.
+    // Cite: https://git-scm.com/docs/git-update-ref
+    let mut delete = false;
+    let mut no_verify = false;
+    let mut no_deref = false;
+    let mut message: Option<String> = None;
+    let mut positional: Vec<&String> = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        match a.as_str() {
+            "-d" => delete = true,
+            "--no-verify" => no_verify = true,
+            "--no-deref" => no_deref = true,
+            "--create-reflog" => {}
+            "-m" => {
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::fatal("switch `m' requires a value"))?;
+                i += 1;
+                message = Some(v.clone());
+            }
+            _ if a.starts_with("-m") && a.len() > 2 => message = Some(a[2..].to_string()),
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => positional.push(a),
+        }
+    }
     let mut repo = open_repo()?;
     // CORR-003 (M20 Cx-7): replace-refs concurrent honesty — refuse under replace.lock.
     // Cite: https://git-scm.com/docs/git-replace + lockfile (never delete live locks).
@@ -245,20 +307,72 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
         )));
     }
     run_claimed_hooks(&repo, no_verify, &["reference-transaction", "update"], None)?;
-    if delete {
+    let rev = |r: &str| -> CliResult<Oid> {
+        resolve_rev(&repo, r).map_err(|_| CliError::fatal(format!("{r}: not a valid SHA1")))
+    };
+    let (name, new, old) = if delete {
         let name = positional
             .first()
             .ok_or_else(|| CliError::Usage("update-ref -d <ref> [<old>]".into()))?;
-        let old = positional.get(1).map(|s| Oid::from_hex(s)).transpose()?;
-        repo.refs_mut().delete(name, old.as_ref())?;
+        (
+            name.as_str(),
+            None,
+            positional.get(1).map(|s| rev(s)).transpose()?,
+        )
     } else {
         if positional.len() < 2 {
             return Err(CliError::Usage("update-ref <ref> <new> [<old>]".into()));
         }
-        let name = positional[0];
-        let new = Oid::from_hex(positional[1])?;
-        let old = positional.get(2).map(|s| Oid::from_hex(s)).transpose()?;
-        repo.refs_mut().update(name, &new, old.as_ref())?;
+        let old = positional.get(2).map(|s| rev(s)).transpose()?;
+        (positional[0].as_str(), Some(rev(positional[1])?), old)
+    };
+    // Follow a symbolic ref (HEAD -> refs/heads/main) unless --no-deref.
+    let mut target = name.to_string();
+    if !no_deref {
+        for _ in 0..5 {
+            match repo.refs().read(&target) {
+                Ok(RefTarget::Symbolic(next)) => target = next,
+                _ => break,
+            }
+        }
+    }
+    let current = repo.refs().resolve(&target).ok();
+    if let (Some(want), Some(have)) = (old.as_ref(), current.as_ref())
+        && want != have
+    {
+        return Err(CliError::fatal(format!(
+            "update_ref failed for ref '{target}': cannot lock ref '{target}': is at {} but expected {}",
+            have.to_hex(),
+            want.to_hex()
+        )));
+    }
+    if current.is_none() && (old.is_some() || delete) {
+        let msg = format!("cannot lock ref '{target}': unable to resolve reference '{target}'");
+        return Err(if delete {
+            CliError::Exit(1, format!("error: {msg}"))
+        } else {
+            CliError::fatal(format!("update_ref failed for ref '{target}': {msg}"))
+        });
+    }
+    match new {
+        None => repo.refs_mut().delete(&target, old.as_ref())?,
+        Some(new) => {
+            repo.refs_mut().update(&target, &new, old.as_ref())?;
+            // core.logAllRefUpdates default (non-bare): heads, remotes, notes, HEAD.
+            let logged = |r: &str| {
+                r == "HEAD"
+                    || ["refs/heads/", "refs/remotes/", "refs/notes/"]
+                        .iter()
+                        .any(|p| r.starts_with(p))
+            };
+            let msg = message.as_deref().unwrap_or("");
+            if logged(&target) {
+                crate::reflog::append_reflog(&repo, &target, current.as_ref(), &new, msg)?;
+            }
+            if target != name && name == "HEAD" {
+                crate::reflog::append_reflog(&repo, "HEAD", current.as_ref(), &new, msg)?;
+            }
+        }
     }
     Ok(())
 }
@@ -345,6 +459,20 @@ pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
             }
             "--is-bare-repository" => {
                 println!("{}", repo.kind() == arks_repo::GitDirKind::Bare)
+            }
+            // Object names of every ref under refs/ (or one namespace), by name.
+            "--all" | "--branches" | "--tags" | "--remotes" => {
+                let prefix = match a.as_str() {
+                    "--branches" => "refs/heads/",
+                    "--tags" => "refs/tags/",
+                    "--remotes" => "refs/remotes/",
+                    _ => "refs/",
+                };
+                let mut refs = repo.refs().list_refs(prefix)?;
+                refs.sort_by(|x, y| x.0.cmp(&y.0));
+                for (_, oid) in refs {
+                    println!("{}", oid.to_hex());
+                }
             }
             x => {
                 if let Some(n) = x.strip_prefix("--short=") {
@@ -882,6 +1010,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             ("-uall", "-u"),
             ("--untracked-files=normal", "-unormal"),
             ("--untracked-files=no", "-uno"),
+            ("--ignored=traditional", "--ignored"),
         ],
     );
     let (args, after_dashdash): (Vec<String>, Vec<String>) =
@@ -895,6 +1024,8 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         &[
             "--no-optional-locks",
             "--porcelain",
+            "--porcelain=v2",
+            "--ignored",
             "-s",
             "-b",
             "-u",
@@ -904,8 +1035,10 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     )?;
     let untracked_all = args.iter().any(|a| a == "-u");
     let untracked_no = args.iter().any(|a| a == "-uno");
-    let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s");
-    let porcelain_v1 = args.iter().any(|a| a == "--porcelain");
+    let porcelain_v2 = args.iter().any(|a| a == "--porcelain=v2");
+    let show_ignored = args.iter().any(|a| a == "--ignored");
+    let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s") || porcelain_v2;
+    let porcelain_v1 = args.iter().any(|a| a == "--porcelain") || porcelain_v2;
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
     let repo = open_repo()?;
@@ -936,6 +1069,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         Untracked::Normal
     };
     let mut d = collect(&repo, mode)?;
+    if show_ignored && mode != Untracked::No {
+        d.ignored = crate::cmd::status_report::collect_ignored(&repo)?;
+    }
     // Pathspecs limit every section (git-status `[<pathspec>...]`).
     let specs: Vec<String> = {
         let work = work_tree(&repo)?;
@@ -957,6 +1093,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         };
         d.staged.retain(|k, _| hit(k));
         d.unstaged.retain(|k, _| hit(k));
+        d.ignored.retain(|k| hit(k));
         // A collapsed untracked directory shown through a deeper pathspec is
         // listed at the pathspec instead.
         let work = work_tree(&repo)?;
@@ -978,7 +1115,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         d.untracked = shown;
     }
     let mut out = io::BufWriter::new(io::stdout().lock());
-    if porcelain {
+    if porcelain_v2 {
+        write_porcelain_v2(&mut out, &repo, &d, show_branch)?;
+    } else if porcelain {
         // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
         // X = index vs HEAD (A/M/D), Y = worktree vs index (M/D), sorted by path,
         // untracked (`??`) last.
@@ -1011,6 +1150,9 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         for p in &d.untracked {
             writeln!(out, "?? {}", show(p))?;
         }
+        for p in &d.ignored {
+            writeln!(out, "!! {}", show(p))?;
+        }
     } else {
         write_long(&mut out, &d, mode)?;
     }
@@ -1021,6 +1163,110 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             "internal error: status created index.lock (optional locks forbidden; IDX-002/AGENT-006)"
                 .into(),
         ));
+    }
+    Ok(())
+}
+
+/// `status --porcelain=v2` (git-status §Porcelain Format Version 2):
+/// `# branch.*` headers with `--branch`, `1 <XY> N... <mH> <mI> <mW> <hH>
+/// <hI> <path>` per changed tracked path, then `? <path>` and `! <path>`.
+/// Partial: rename (`2`) and unmerged (`u`) records are not emitted.
+fn write_porcelain_v2(
+    out: &mut impl io::Write,
+    repo: &Repository,
+    d: &crate::cmd::status_report::StatusData,
+    show_branch: bool,
+) -> CliResult<()> {
+    let zero = "0".repeat(repo.oid_kind().hex_len());
+    if show_branch {
+        let head = repo.head_oid().ok();
+        writeln!(
+            out,
+            "# branch.oid {}",
+            head.map_or("(initial)".to_string(), |o| o.to_hex())
+        )?;
+        let name = d.branch.clone().unwrap_or_else(|| "(detached)".to_string());
+        writeln!(out, "# branch.head {name}")?;
+        if let (Some(b), Some(h)) = (&d.branch, head) {
+            let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+            if let (Some(remote), Some(merge)) = (
+                cfg.get(&format!("branch.{b}.remote")),
+                cfg.get(&format!("branch.{b}.merge")),
+            ) {
+                let short = merge.trim_start_matches("refs/heads/").to_string();
+                let (full, shown) = if remote == "." {
+                    (format!("refs/heads/{short}"), short.clone())
+                } else {
+                    (
+                        format!("refs/remotes/{remote}/{short}"),
+                        format!("{remote}/{short}"),
+                    )
+                };
+                writeln!(out, "# branch.upstream {shown}")?;
+                if let Ok(up) = repo.refs().resolve(&full) {
+                    let a = arks_repo::ancestor_set(repo, h)?;
+                    let b = arks_repo::ancestor_set(repo, up)?;
+                    writeln!(
+                        out,
+                        "# branch.ab +{} -{}",
+                        a.difference(&b).count(),
+                        b.difference(&a).count()
+                    )?;
+                }
+            }
+        }
+    }
+    let mut head: std::collections::HashMap<String, (u32, Oid)> = Default::default();
+    if let Ok(h) = repo.head_oid() {
+        let tree = crate::cmd::log_format::read_commit(repo, &h)?.tree;
+        let mut v = Vec::new();
+        crate::cmd::plumbing::flatten_tree_to_index(repo, &tree, "", &mut v)?;
+        head = v.into_iter().map(|e| (e.path, (e.mode, e.oid))).collect();
+    }
+    let index: std::collections::HashMap<String, (u32, Oid)> = read_index(repo)?
+        .entries
+        .into_iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path, (e.mode, e.oid)))
+        .collect();
+    let work = work_tree(repo)?;
+    let mut tracked: std::collections::BTreeMap<&String, (char, char)> = Default::default();
+    for (p, c) in &d.staged {
+        tracked.entry(p).or_insert(('.', '.')).0 = *c;
+    }
+    for (p, c) in &d.unstaged {
+        tracked.entry(p).or_insert(('.', '.')).1 = *c;
+    }
+    for (p, (x, y)) in &tracked {
+        let (mh, hh) = head
+            .get(*p)
+            .map_or((0, zero.clone()), |(m, o)| (*m, o.to_hex()));
+        let (mi, hi) = index
+            .get(*p)
+            .map_or((0, zero.clone()), |(m, o)| (*m, o.to_hex()));
+        let mw = match y {
+            'D' => 0,
+            '.' => mi,
+            _ => fs::symlink_metadata(work.join(p))
+                .map(|m| {
+                    if m.file_type().is_symlink() {
+                        0o120000
+                    } else {
+                        file_mode(&m)
+                    }
+                })
+                .unwrap_or(mi),
+        };
+        writeln!(
+            out,
+            "1 {x}{y} N... {mh:06o} {mi:06o} {mw:06o} {hh} {hi} {p}"
+        )?;
+    }
+    for p in &d.untracked {
+        writeln!(out, "? {p}")?;
+    }
+    for p in &d.ignored {
+        writeln!(out, "! {p}")?;
     }
     Ok(())
 }
@@ -1092,12 +1338,16 @@ pub fn wants_no_optional_locks(args: &[String]) -> bool {
 
 pub fn cmd_commit(args: &[String]) -> CliResult<()> {
     // Cloud drop-in §O: bundled short options (`-am <msg>`), `-q`, `-n`.
+    // C7b: `--author`, `--date`, `-s`/`--signoff`, `--no-edit` and
+    // `[--] <pathspec>...` (commit only those paths, git `--only`).
+    // Cite: https://git-scm.com/docs/git-commit
     let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "aqvn", "mFt"),
+        crate::util::split_short_bundles(args, "aqvns", "mFt"),
         &[
             ("-n", "--no-verify"),
             ("--quiet", "-q"),
             ("--message", "-m"),
+            ("-s", "--signoff"),
         ],
     );
     let args = &args
@@ -1124,8 +1374,16 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             "--all",
             "-q",
             "-v",
+            "--author",
+            "--date",
+            "--signoff",
+            "--no-edit",
+            "--only",
+            "-o",
+            "--",
         ],
     )?;
+    let signoff = args.iter().any(|a| a == "--signoff");
     let allow_empty = args.iter().any(|a| a == "--allow-empty");
     let no_verify = args.iter().any(|a| a == "--no-verify");
     let amend = args.iter().any(|a| a == "--amend");
@@ -1141,9 +1399,31 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
     let mut message: Option<String> = None;
     let mut file_msg: Option<PathBuf> = None;
     let mut template: Option<PathBuf> = None;
+    let mut author_ident: Option<String> = None;
+    let mut author_date: Option<String> = None;
+    let mut pathspecs: Vec<String> = Vec::new();
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "-m" {
+        if args[i] == "--" {
+            pathspecs.extend(args[i + 1..].iter().cloned());
+            break;
+        } else if args[i] == "--author" || args[i] == "--date" {
+            let v = args.get(i + 1).cloned().ok_or_else(|| {
+                CliError::fatal(format!("option `{}' requires a value", &args[i][2..]))
+            })?;
+            if args[i] == "--author" {
+                author_ident = Some(v);
+            } else {
+                author_date = Some(v);
+            }
+            i += 1;
+        } else if let Some(v) = args[i].strip_prefix("--author=") {
+            author_ident = Some(v.to_string());
+        } else if let Some(v) = args[i].strip_prefix("--date=") {
+            author_date = Some(v.to_string());
+        } else if !args[i].starts_with('-') {
+            pathspecs.push(args[i].clone());
+        } else if args[i] == "-m" {
             i += 1;
             let part = args
                 .get(i)
@@ -1188,15 +1468,66 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         message = Some(commit_message_via_editor(template.as_deref())?);
     }
 
+    if all && !pathspecs.is_empty() {
+        return Err(CliError::fatal(format!(
+            "paths '{} ...' with -a does not make sense",
+            pathspecs[0]
+        )));
+    }
     // Fs-5: `-a` / `--all` stages tracked updates then commits (git-commit).
     if all {
         cmd_add(&["-u".into()])?;
+    }
+    // `commit <pathspec>`: stage those paths, then commit HEAD + only them.
+    if !pathspecs.is_empty() {
+        cmd_add(&pathspecs)?;
     }
 
     let mut repo = open_repo()?;
     run_claimed_hooks(&repo, no_verify, &["pre-commit"], None)?;
 
-    let index = read_index(&repo)?;
+    let mut index = read_index(&repo)?;
+    if !pathspecs.is_empty() {
+        let work = work_tree(&repo)?;
+        let specs = pathspecs
+            .iter()
+            .map(|p| pathspec_rel(&work, p))
+            .collect::<CliResult<Vec<_>>>()?;
+        let mut entries = Vec::new();
+        if let Ok(head) = repo.head_oid() {
+            let tree = crate::cmd::log_format::read_commit(&repo, &head)?.tree;
+            crate::cmd::plumbing::flatten_tree_to_index(&repo, &tree, "", &mut entries)?;
+        }
+        entries.retain(|e| !crate::cmd::log_format::path_in_specs(&e.path, &specs));
+        entries.extend(
+            index
+                .entries
+                .iter()
+                .filter(|e| crate::cmd::log_format::path_in_specs(&e.path, &specs))
+                .cloned(),
+        );
+        sort_entries(&mut entries);
+        index.entries = entries;
+    }
+    let index = index;
+    let message = message.map(|m| if signoff { add_signoff(&m) } else { m });
+    let override_author = |mut sig: arks_object::Signature| -> CliResult<arks_object::Signature> {
+        if let Some(id) = &author_ident {
+            let (name, email) = id
+                .split_once('<')
+                .and_then(|(n, rest)| Some((n.trim(), rest.strip_suffix('>')?)))
+                .ok_or_else(|| CliError::fatal(format!("--author '{id}' is not 'Name <email>'")))?;
+            sig.name = name.to_string();
+            sig.email = email.to_string();
+        }
+        if let Some(d) = &author_date {
+            let (ts, tz) = crate::cmd::shared::parse_git_date(d)
+                .ok_or_else(|| CliError::fatal(format!("invalid date format: {d}")))?;
+            sig.timestamp = ts;
+            sig.timezone = tz;
+        }
+        Ok(sig)
+    };
     if index.entries.is_empty() && !allow_empty && !amend {
         return Err(CliError::Msg("nothing to commit (empty index)".into()));
     }
@@ -1227,6 +1558,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
                     format!("{m}\n")
                 }
             }
+            None if signoff => add_signoff(&prev.message),
             None => prev.message.clone(),
         };
         run_claimed_hooks(&repo, no_verify, &["commit-msg"], Some(message.as_bytes()))?;
@@ -1239,7 +1571,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         let mut commit = Commit {
             tree,
             parents: prev.parents.clone(),
-            author: prev.author.clone(),
+            author: override_author(prev.author.clone())?,
             committer: sig,
             gpgsig: None,
             message,
@@ -1299,7 +1631,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             }
         }
     }
-    let author = commit_signature()?;
+    let author = override_author(commit_signature()?)?;
     let committer = committer_signature()?;
     let subject = message.lines().next().unwrap_or("").to_owned();
     let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
@@ -1346,6 +1678,32 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         print_commit_summary(&repo, &coid, false)?;
     }
     Ok(())
+}
+
+/// `-s`: append `Signed-off-by: <committer>` unless it is already the last
+/// trailer; a message ending in a trailer block gets no blank separator.
+/// Cite: https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff
+fn add_signoff(message: &str) -> String {
+    let Ok(c) = committer_signature() else {
+        return message.to_string();
+    };
+    let line = format!("Signed-off-by: {} <{}>", c.name, c.email);
+    let body = message.trim_end_matches('\n');
+    if body.lines().last() == Some(line.as_str()) {
+        return format!("{body}\n");
+    }
+    let last_para = body.rsplit("\n\n").next().unwrap_or("");
+    let is_trailer = |l: &str| {
+        l.split_once(": ").is_some_and(|(k, _)| {
+            !k.is_empty() && k.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
+        })
+    };
+    let has_paragraphs = body.contains("\n\n");
+    if has_paragraphs && !last_para.is_empty() && last_para.lines().all(is_trailer) {
+        format!("{body}\n{line}\n")
+    } else {
+        format!("{body}\n\n{line}\n")
+    }
 }
 
 /// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,
@@ -1405,14 +1763,15 @@ pub(crate) fn print_commit_summary(
         if a == b {
             continue;
         }
-        let ap = match a {
-            Some(f) => Some(repo.get_object(&f.oid)?.payload),
-            None => None,
+        // A gitlink has no object here; git diffs it as `Subproject commit <oid>`.
+        let content = |f: &crate::cmd::switch_tree::TreeFile| -> CliResult<Vec<u8>> {
+            if f.mode == 0o160000 {
+                return Ok(format!("Subproject commit {}\n", f.oid.to_hex()).into_bytes());
+            }
+            Ok(repo.get_object(&f.oid)?.payload)
         };
-        let bp = match b {
-            Some(f) => Some(repo.get_object(&f.oid)?.payload),
-            None => None,
-        };
+        let ap = a.map(content).transpose()?;
+        let bp = b.map(content).transpose()?;
         rows.push(StatRow {
             path: k.clone(),
             change: stat_change(ap.as_deref(), bp.as_deref()),

@@ -15,6 +15,26 @@ use arks_store::ObjectStore;
 pub fn cmd_merge(args: &[String]) -> CliResult<()> {
     // Cloud drop-in §O: `--no-edit` (arks never opens an editor for merges),
     // `-m <msg>`, `-q`. Cite: https://git-scm.com/docs/git-merge
+    if let Some(op) = args
+        .iter()
+        .find(|a| *a == "--abort" || *a == "--continue" || *a == "--quit")
+    {
+        // git-merge --abort/--continue need a merge in progress (MERGE_HEAD).
+        // Cite: https://git-scm.com/docs/git-merge#Documentation/git-merge.txt---abort
+        let repo = open_repo()?;
+        if !repo.git_dir().join("MERGE_HEAD").is_file() {
+            return Err(match op.as_str() {
+                "--abort" => CliError::fatal("There is no merge to abort (MERGE_HEAD missing)."),
+                "--continue" => {
+                    CliError::fatal("There is no merge in progress (MERGE_HEAD missing).")
+                }
+                _ => return Ok(()),
+            });
+        }
+        return Err(CliError::NotImplemented(format!(
+            "merge {op} with a merge in progress is not claimed"
+        )));
+    }
     let (args, message) = take_merge_message(args)?;
     let args = &args;
     refuse_unknown_flags(

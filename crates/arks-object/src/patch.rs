@@ -23,6 +23,96 @@ pub struct ParsedPatch {
     pub files: Vec<ParsedFile>,
 }
 
+/// Commit message and author of one format-patch mailbox message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MailMessage {
+    pub message: String,
+    pub author_name: Option<String>,
+    pub author_email: Option<String>,
+    /// The `Date:` header value (RFC 2822), the author date `am` records.
+    pub date: Option<String>,
+    /// The raw text of this message (headers, body and diff).
+    pub raw: String,
+}
+
+/// Split a mailbox (one or more format-patch messages) and read each
+/// message's `From:` / `Subject:` headers (folded subjects joined, `[PATCH
+/// ...]` prefix stripped) and body up to the `---` separator.
+pub fn parse_mailbox(text: &str) -> Result<Vec<MailMessage>, ObjectError> {
+    let mut chunks: Vec<Vec<&str>> = Vec::new();
+    for line in text.lines() {
+        if is_mailbox_from(line) {
+            chunks.push(Vec::new());
+        }
+        if let Some(c) = chunks.last_mut() {
+            c.push(line);
+        }
+    }
+    if chunks.is_empty() {
+        return Err(ObjectError::BadPatch(
+            "patch is not a format-patch mailbox".into(),
+        ));
+    }
+    let mut out = Vec::new();
+    for lines in chunks {
+        let mut i = 1;
+        let mut author_name = None;
+        let mut author_email = None;
+        let mut subject = String::new();
+        let mut date = None;
+        let mut in_subject = false;
+        while i < lines.len() && !lines[i].is_empty() {
+            let l = lines[i];
+            if in_subject && (l.starts_with(' ') || l.starts_with('\t')) {
+                subject.push(' ');
+                subject.push_str(l.trim());
+            } else if let Some(rest) = l.strip_prefix("From: ") {
+                in_subject = false;
+                if let Some((name, email)) = parse_author(rest) {
+                    author_name = Some(name);
+                    author_email = Some(email);
+                }
+            } else if let Some(rest) = l.strip_prefix("Subject: ") {
+                in_subject = true;
+                subject = rest.to_string();
+            } else if let Some(rest) = l.strip_prefix("Date: ") {
+                in_subject = false;
+                date = Some(rest.trim().to_string());
+            } else {
+                in_subject = false;
+            }
+            i += 1;
+        }
+        let subject = strip_patch_subject(&subject);
+        while i < lines.len() && lines[i].is_empty() {
+            i += 1;
+        }
+        let mut body = Vec::new();
+        while i < lines.len() && lines[i] != "---" && !lines[i].starts_with("diff --git ") {
+            body.push(lines[i]);
+            i += 1;
+        }
+        while body.last().is_some_and(|l| l.trim().is_empty()) {
+            body.pop();
+        }
+        let message = if body.is_empty() {
+            ensure_nl(subject)
+        } else {
+            ensure_nl(format!("{subject}\n\n{}", body.join("\n")))
+        };
+        let mut raw = lines.join("\n");
+        raw.push('\n');
+        out.push(MailMessage {
+            message,
+            author_name,
+            author_email,
+            date,
+            raw,
+        });
+    }
+    Ok(out)
+}
+
 /// Parse one format-patch mailbox. Multi-patch mailboxes and multi-hunk diffs error.
 pub fn parse_patch(text: &str) -> Result<ParsedPatch, ObjectError> {
     let lines: Vec<&str> = text.lines().collect();

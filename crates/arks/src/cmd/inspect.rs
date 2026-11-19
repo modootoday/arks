@@ -27,7 +27,7 @@ pub fn cmd_fsck(args: &[String]) -> CliResult<()> {
         walk_check(&repo, &head, &mut seen, &mut missing)?;
     }
     if missing.is_empty() {
-        println!("fsck: {} reachable object(s) ok", seen.len());
+        // git fsck prints nothing for a healthy repository.
         Ok(())
     } else {
         for m in &missing {
@@ -161,11 +161,24 @@ fn count_loose(objects: &Path) -> CliResult<(u64, u64)> {
             let obj = obj?;
             if obj.file_type()?.is_file() {
                 count += 1;
-                bytes += obj.metadata()?.len();
+                bytes += on_disk_bytes(&obj.metadata()?);
             }
         }
     }
-    Ok((count, (bytes + 512) / 1024))
+    Ok((count, bytes / 1024))
+}
+
+/// Disk space a file occupies (git `on_disk_bytes`: allocated blocks).
+fn on_disk_bytes(meta: &fs::Metadata) -> u64 {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        meta.blocks() * 512
+    }
+    #[cfg(not(unix))]
+    {
+        meta.len()
+    }
 }
 
 fn count_packs(objects: &Path) -> CliResult<(u64, u64, u64)> {

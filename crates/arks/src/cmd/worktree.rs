@@ -195,16 +195,26 @@ fn wt_add(args: &[String]) -> CliResult<()> {
     let linked = Repository::open(&admin)?;
     arks_remote::checkout_commit(&linked, &abs_path, &oid)
         .map_err(|e| CliError::Msg(e.to_string()))?;
+    // git-worktree add: progress on stderr, `HEAD is now at` on stdout.
     if detach {
-        println!("Preparing worktree (detached HEAD {})", &oid.to_hex()[..7]);
+        eprintln!("Preparing worktree (detached HEAD {})", &oid.to_hex()[..7]);
+    } else if let Some(name) = &new_branch {
+        eprintln!("Preparing worktree (new branch '{name}')");
     } else {
         let label = head_payload
             .trim()
             .strip_prefix("ref: refs/heads/")
             .or_else(|| head_payload.trim().strip_prefix("ref: "))
             .unwrap_or(head_payload.trim());
-        println!("Preparing worktree (checking out '{label}')");
+        eprintln!("Preparing worktree (checking out '{label}')");
     }
+    let subject = crate::cmd::log_format::read_commit(&repo, &oid)
+        .map(|c| c.subject().to_string())
+        .unwrap_or_default();
+    println!(
+        "HEAD is now at {} {subject}",
+        crate::cmd::shared::abbrev_hex(&repo, &oid, 7)
+    );
     Ok(())
 }
 

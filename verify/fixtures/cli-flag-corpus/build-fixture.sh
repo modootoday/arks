@@ -34,6 +34,20 @@ GIT_COMMITTER_DATE="$((t + 60)) +0000" git tag -a v1 -m "release v1"
 t=$((t + 3600)); GIT_AUTHOR_DATE="$t +0000" GIT_COMMITTER_DATE="$t +0000" git merge -q --no-ff feature -m "Merge branch 'feature'"
 printf 'readme\nmore readme\nlast\n' > README.md
 git add README.md && c -m "main: tail readme"
+# Tier B extras (no new reachable commits, so tier A hashes are unchanged):
+# an mbox from a throwaway branch, a diff patch, one stash entry, an ignore
+# rule with an ignored file, and info/attributes.
+git checkout -q -b tmp
+printf 'one\nTWO\nthree\nfour\nfive\n' > src/b.txt
+git add src/b.txt && c -m "tmp: extend b"
+git format-patch -q --stdout -1 > .git/fixture.mbox
+git checkout -q main && git branch -q -D tmp
+git diff HEAD~1 HEAD > .git/fixture.patch
+printf 'readme\nmore readme\nlast\nstashed\n' > README.md
+t=$((t + 3600)); GIT_AUTHOR_DATE="$t +0000" GIT_COMMITTER_DATE="$t +0000" git stash push -q -m fixture-stash
+printf '*.log\n' >> .git/info/exclude
+printf 'debug\n' > debug.log
+printf '*.bin binary\nsrc/*.txt label=src\n' > .git/info/attributes
 # Working tree state: unstaged edit, staged new file, untracked file.
 printf 'alpha\nbeta\nGAMMA\ndelta!\nepsilon\nzeta\neta\ntheta\niota\n' > src/a.txt
 printf 'staged\n' > src/new.txt && git add src/new.txt

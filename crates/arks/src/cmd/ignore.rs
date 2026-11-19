@@ -20,11 +20,26 @@ struct Pat {
     negate: bool,
     dir_only: bool,
     anchored: bool,
+    /// 1-based line in its source and the line as written (`check-ignore -v`).
+    line: usize,
+    text: String,
+}
+
+/// The pattern that decided a path (`git check-ignore -v`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IgnoreMatch {
+    /// Source file as git shows it (`.gitignore`, `dir/.gitignore`,
+    /// `.git/info/exclude`, or the global excludes path).
+    pub source: String,
+    pub line: usize,
+    pub pattern: String,
+    /// `false` when a `!` pattern matched (the path is re-included).
+    pub excluded: bool,
 }
 
 fn parse(text: &str) -> Vec<Pat> {
     let mut out = Vec::new();
-    for raw in text.lines() {
+    for (lineno, raw) in text.lines().enumerate() {
         let mut line = raw.trim_end_matches('\r');
         if line.is_empty() || line.starts_with('#') {
             continue;
@@ -58,13 +73,15 @@ fn parse(text: &str) -> Vec<Pat> {
             negate,
             dir_only,
             anchored,
+            line: lineno + 1,
+            text: raw.trim_end_matches('\r').to_string(),
         });
     }
     out
 }
 
 /// wildmatch with `WM_PATHNAME` semantics.
-fn wildmatch(p: &[u8], t: &[u8]) -> bool {
+pub(crate) fn wildmatch(p: &[u8], t: &[u8]) -> bool {
     let (mut pi, mut ti) = (0usize, 0usize);
     while pi < p.len() {
         match p[pi] {
@@ -176,6 +193,7 @@ pub struct Ignore {
     per_dir: HashMap<String, Vec<Pat>>,
     info: Vec<Pat>,
     global: Vec<Pat>,
+    global_name: String,
 }
 
 impl Ignore {
@@ -209,12 +227,16 @@ impl Ignore {
                             .map(|h| PathBuf::from(h).join(".config").join("git").join("ignore"))
                     })
             });
-        let global = global_path.map(|p| read(&p)).unwrap_or_default();
+        let global = global_path.as_deref().map(read).unwrap_or_default();
+        let global_name = global_path
+            .map(|p| p.display().to_string())
+            .unwrap_or_default();
         Self {
             work: work.to_path_buf(),
             per_dir: HashMap::new(),
             info,
             global,
+            global_name,
         }
     }
 
@@ -232,20 +254,36 @@ impl Ignore {
         }
     }
 
-    /// Decision of the last matching pattern in `pats` (`Some(true)` = excluded).
-    fn decide(pats: &[Pat], rel_to_base: &str, basename: &str, is_dir: bool) -> Option<bool> {
-        pats.iter().rev().find_map(|p| {
+    /// The last pattern in `pats` matching the path.
+    fn decide<'a>(
+        pats: &'a [Pat],
+        rel_to_base: &str,
+        basename: &str,
+        is_dir: bool,
+    ) -> Option<&'a Pat> {
+        pats.iter().rev().find(|p| {
             if p.dir_only && !is_dir {
-                return None;
+                return false;
             }
             let subject = if p.anchored { rel_to_base } else { basename };
-            wildmatch(&p.glob, subject.as_bytes()).then_some(!p.negate)
+            wildmatch(&p.glob, subject.as_bytes())
         })
     }
 
     /// Is the work-tree-relative `rel` excluded? Callers must not ask about
     /// paths below an excluded directory (git never re-includes those).
     pub fn is_ignored(&mut self, rel: &str, is_dir: bool) -> bool {
+        self.matching(rel, is_dir).is_some_and(|m| m.excluded)
+    }
+
+    /// The pattern deciding `rel` itself (no parent-directory check).
+    pub fn matching(&mut self, rel: &str, is_dir: bool) -> Option<IgnoreMatch> {
+        let found = |src: String, p: &Pat| IgnoreMatch {
+            source: src,
+            line: p.line,
+            pattern: p.text.clone(),
+            excluded: !p.negate,
+        };
         let basename = rel.rsplit('/').next().unwrap_or(rel).to_string();
         let mut dir = match rel.rfind('/') {
             Some(i) => rel[..i].to_string(),
@@ -258,8 +296,13 @@ impl Ignore {
                 rel[dir.len() + 1..].to_string()
             };
             self.load_dir(&dir);
-            if let Some(d) = Self::decide(&self.per_dir[&dir], &base_rel, &basename, is_dir) {
-                return d;
+            if let Some(p) = Self::decide(&self.per_dir[&dir], &base_rel, &basename, is_dir) {
+                let src = if dir.is_empty() {
+                    ".gitignore".to_string()
+                } else {
+                    format!("{dir}/.gitignore")
+                };
+                return Some(found(src, p));
             }
             if dir.is_empty() {
                 break;
@@ -269,10 +312,24 @@ impl Ignore {
                 None => String::new(),
             };
         }
-        if let Some(d) = Self::decide(&self.info, rel, &basename, is_dir) {
-            return d;
+        if let Some(p) = Self::decide(&self.info, rel, &basename, is_dir) {
+            return Some(found(".git/info/exclude".to_string(), p));
         }
-        Self::decide(&self.global, rel, &basename, is_dir).unwrap_or(false)
+        Self::decide(&self.global, rel, &basename, is_dir)
+            .map(|p| found(self.global_name.clone(), p))
+    }
+
+    /// `check-ignore` view: the pattern excluding a leading directory of
+    /// `rel` (git never re-includes below it), else the one matching `rel`.
+    pub fn matching_with_parents(&mut self, rel: &str, is_dir: bool) -> Option<IgnoreMatch> {
+        let parts: Vec<&str> = rel.split('/').collect();
+        for i in 1..parts.len() {
+            let dir = parts[..i].join("/");
+            if let Some(m) = self.matching(&dir, true).filter(|m| m.excluded) {
+                return Some(m);
+            }
+        }
+        self.matching(rel, is_dir)
     }
 }
 

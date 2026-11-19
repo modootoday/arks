@@ -15,13 +15,15 @@
 mod commit;
 mod patch;
 mod tree;
+mod unified_patch;
 
 pub use commit::{Commit, Signature};
-pub use patch::{ParsedFile, ParsedPatch, parse_patch};
+pub use patch::{MailMessage, ParsedFile, ParsedPatch, parse_mailbox, parse_patch};
 pub use tree::{
     Tree, TreeEntry, TreeMode, cmp_tree_entries, sort_tree_entries, tree_entries_sorted,
     tree_sort_key,
 };
+pub use unified_patch::{FilePatch, Hunk, HunkLine, apply_hunks, parse_unified_diff};
 
 use arks_hash::{Digest, HashError, ObjectFormat, hash_object};
 use arks_oid::{Oid, OidError, OidKind};

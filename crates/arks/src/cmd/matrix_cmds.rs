@@ -2,13 +2,10 @@
 //!
 //! Cite: pin git 2.39.5 man pages; survey [[research:root/20261111034805]].
 
-use crate::cmd::replay::put_blob;
-use crate::cmd::shared::{resolve_rev, tree_blob_map};
-use crate::cmd::working_tree::{cmd_diff, print_maps_diff, print_maps_summary};
+use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
-use arks_index::{IndexEntry, sort_entries};
-use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode, parse_patch};
+use crate::util::{open_repo, refuse_unknown_flags, work_tree};
+use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
 use arks_repo::Repository;
 use arks_store::ObjectStore;
@@ -16,71 +13,6 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-
-/// `arks apply [<patch>]` — apply a format-patch mailbox to the worktree (+ optional index).
-pub fn cmd_apply(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--index", "--cached"])?;
-    let to_index = args.iter().any(|a| a == "--index" || a == "--cached");
-    let file = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("apply [--index] <patch>".into()))?;
-    let bytes = fs::read(file)?;
-    let text = std::str::from_utf8(&bytes)
-        .map_err(|_| CliError::NotImplemented("apply: non-utf8 patch not claimed".into()))?;
-    let patch = parse_patch(text).map_err(|e| CliError::Msg(e.to_string()))?;
-    let mut repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let mut index = read_index(&repo)?;
-    for file in &patch.files {
-        let abs = work.join(&file.path);
-        match &file.tip {
-            Some(payload) => {
-                if let Some(parent) = abs.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                fs::write(&abs, payload)?;
-                if to_index {
-                    let oid = put_blob(&mut repo, payload)?;
-                    upsert_index(&mut index, &file.path, oid, payload.len() as u32);
-                }
-            }
-            None => {
-                if abs.is_file() {
-                    fs::remove_file(&abs)?;
-                }
-                if to_index {
-                    index.entries.retain(|e| e.path != file.path);
-                }
-            }
-        }
-    }
-    if to_index {
-        sort_entries(&mut index.entries);
-        write_index(&repo, &index)?;
-    }
-    Ok(())
-}
-
-fn upsert_index(index: &mut arks_index::Index, path: &str, oid: Oid, size: u32) {
-    index.entries.retain(|e| e.path != path);
-    index.entries.push(IndexEntry {
-        ctime_sec: 0,
-        ctime_nsec: 0,
-        mtime_sec: 0,
-        mtime_nsec: 0,
-        dev: 0,
-        ino: 0,
-        mode: 0o100644,
-        uid: 0,
-        gid: 0,
-        size,
-        oid,
-        flags: (path.len().min(0x0fff)) as u16,
-        flags_extended: None,
-        path: path.to_owned(),
-    });
-}
 
 /// `arks ls-remote [<options>] [<remote> [<patterns>…]]`
 pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
@@ -99,13 +31,11 @@ pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
         if tags && !r.name.starts_with("refs/tags/") {
             continue;
         }
+        // git-ls-remote: patterns match the tail of a ref name (path components).
         if !patterns.is_empty()
-            && !patterns.iter().any(|p| {
-                r.name == *p
-                    || r.name.strip_prefix("refs/heads/") == Some(*p)
-                    || r.name.strip_prefix("refs/tags/") == Some(*p)
-                    || r.name.contains(p)
-            })
+            && !patterns
+                .iter()
+                .any(|p| r.name == *p || r.name.ends_with(&format!("/{p}")))
         {
             continue;
         }
@@ -339,6 +269,8 @@ fn parse_pack_idx_oids(bytes: &[u8]) -> CliResult<Vec<Oid>> {
 
 /// `arks cherry [<upstream> [<head>]]`
 pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
+    // git-cherry: `[-v] [<upstream> [<head> [<limit>]]]`.
+    // Cite: https://git-scm.com/docs/git-cherry
     refuse_unknown_flags(args, &["-v"])?;
     let verbose = args.iter().any(|a| a == "-v");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
@@ -351,31 +283,69 @@ pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
         Some(u) => resolve_rev(&repo, u)?,
         None => default_upstream(&repo)?,
     };
-    let up_set = first_parent_set(&repo, upstream)?;
-    let mut oid = head;
-    let mut listed = Vec::new();
-    loop {
-        if up_set.contains(&oid) {
-            break;
-        }
-        listed.push(oid);
-        let obj = repo.get_object(&oid)?;
-        let c = arks_object::Commit::decode(&obj.payload)?;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
-    }
+    // Commits in <upstream>..<head> (no merges, oldest first); `-` when an
+    // equivalent change is already in <head>..<upstream>.
+    let walk = |inc: Oid, exc: Oid| -> CliResult<Vec<Oid>> {
+        Ok(crate::cmd::log_format::walk(&repo, &[inc], &[exc], false)?
+            .into_iter()
+            .filter(|(_, c)| c.parents.len() < 2)
+            .map(|(o, _)| o)
+            .collect())
+    };
+    let mut listed = walk(head, upstream)?;
     listed.reverse();
+    let mut upstream_ids = HashSet::new();
+    for o in walk(upstream, head)? {
+        upstream_ids.insert(patch_identity(&repo, &o)?);
+    }
+    let limit = positional
+        .get(2)
+        .map(|l| resolve_rev(&repo, l))
+        .transpose()?
+        .map(|l| crate::cmd::shared::is_ancestor_set(&repo, l))
+        .transpose()?;
     for oid in listed {
+        if limit.as_ref().is_some_and(|set| set.contains(&oid)) {
+            continue;
+        }
+        let mark = if upstream_ids.contains(&patch_identity(&repo, &oid)?) {
+            '-'
+        } else {
+            '+'
+        };
         if verbose {
             let c = arks_object::Commit::decode(&repo.get_object(&oid)?.payload)?;
-            println!("+ {} {}", oid.to_hex(), c.subject());
+            println!("{mark} {} {}", oid.to_hex(), c.subject());
         } else {
-            println!("+ {}", oid.to_hex());
+            println!("{mark} {}", oid.to_hex());
         }
     }
     Ok(())
+}
+
+/// Change identity of a non-merge commit for `cherry`: its patch text with
+/// `index` lines and hunk positions dropped (the `git patch-id --stable`
+/// idea: equal changes on different bases compare equal).
+fn patch_identity(repo: &Repository, oid: &Oid) -> CliResult<String> {
+    let c = crate::cmd::log_format::read_commit(repo, oid)?;
+    let old = match c.parents.first() {
+        Some(p) => crate::cmd::shared::tree_blob_map(repo, p)?,
+        None => Default::default(),
+    };
+    let new = crate::cmd::shared::tree_blob_map(repo, oid)?;
+    let changes = crate::cmd::diff_render::changes_between(&old, &new, None);
+    let fmt = crate::cmd::diff_render::DiffFormat {
+        patch: true,
+        ..Default::default()
+    };
+    let mut buf = Vec::new();
+    crate::cmd::diff_render::render(&mut buf, repo, &fmt, &changes)?;
+    Ok(String::from_utf8_lossy(&buf)
+        .lines()
+        .filter(|l| !l.starts_with("index "))
+        .map(|l| if l.starts_with("@@") { "@@" } else { l })
+        .collect::<Vec<_>>()
+        .join("\n"))
 }
 
 fn default_upstream(repo: &Repository) -> CliResult<Oid> {
@@ -438,23 +408,6 @@ fn config_val(cfg: &str, key: &str) -> Option<String> {
         }
     }
     None
-}
-
-fn first_parent_set(repo: &Repository, tip: Oid) -> CliResult<HashSet<Oid>> {
-    let mut set = HashSet::new();
-    let mut oid = tip;
-    loop {
-        if !set.insert(oid) {
-            break;
-        }
-        let obj = repo.get_object(&oid)?;
-        let c = arks_object::Commit::decode(&obj.payload)?;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
-    }
-    Ok(set)
 }
 
 /// `arks check-ref-format <refname>`
@@ -606,46 +559,6 @@ pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks diff-files` — worktree vs index.
-pub fn cmd_diff_files(args: &[String]) -> CliResult<()> {
-    let mut forwarded = Vec::new();
-    for a in args {
-        if a == "--cached" || a == "--staged" {
-            return Err(CliError::Usage(
-                "diff-files: use diff-index --cached for index vs tree".into(),
-            ));
-        }
-        forwarded.push(a.clone());
-    }
-    cmd_diff(&forwarded)
-}
-
-/// `arks diff-index [--cached] <tree-ish>`
-pub fn cmd_diff_index(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(
-        args,
-        &["--cached", "--name-only", "--name-status", "--stat"],
-    )?;
-    let name_only = args.iter().any(|a| a == "--name-only");
-    let name_status = args.iter().any(|a| a == "--name-status");
-    let stat = args.iter().any(|a| a == "--stat");
-    let treeish = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("diff-index [--cached] <tree-ish>".into()))?;
-    let repo = open_repo()?;
-    let tree_map = tree_blob_map(&repo, &resolve_rev(&repo, treeish)?)?;
-    let index = read_index(&repo)?;
-    let mut idx_map = std::collections::HashMap::new();
-    for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        idx_map.insert(e.path.clone(), e.oid);
-    }
-    if name_only || name_status || stat {
-        return print_maps_summary(&tree_map, &idx_map, name_only, name_status, stat);
-    }
-    print_maps_diff(&repo, &tree_map, &idx_map)
-}
-
 /// `arks var [-l] <variable>`
 pub fn cmd_var(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-l"])?;
@@ -669,10 +582,50 @@ pub fn cmd_var(args: &[String]) -> CliResult<()> {
         }
         return Ok(());
     }
+    // git-var logical variables. Cite: https://git-scm.com/docs/git-var
+    let cfg = arks_config::ConfigSet::load_discovered(&crate::util::cwd()?);
+    let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+    let ident = |author: bool| -> CliResult<String> {
+        let s = if author {
+            crate::cmd::shared::commit_signature()?
+        } else {
+            crate::cmd::shared::committer_signature()?
+        };
+        Ok(format!(
+            "{} <{}> {} {}",
+            s.name, s.email, s.timestamp, s.timezone
+        ))
+    };
     let key = args
         .iter()
         .find(|a| !a.starts_with('-'))
         .ok_or_else(|| CliError::Usage("var [-l] <variable>".into()))?;
+    let logical = match key.as_str() {
+        "GIT_AUTHOR_IDENT" => Some(ident(true)?),
+        "GIT_COMMITTER_IDENT" => Some(ident(false)?),
+        "GIT_EDITOR" => Some(
+            env("GIT_EDITOR")
+                .or_else(|| cfg.get("core.editor"))
+                .or_else(|| env("VISUAL"))
+                .or_else(|| env("EDITOR"))
+                .unwrap_or_else(|| "vi".into()),
+        ),
+        "GIT_PAGER" => Some(
+            env("GIT_PAGER")
+                .or_else(|| cfg.get("core.pager"))
+                .or_else(|| env("PAGER"))
+                .unwrap_or_else(|| "less".into()),
+        ),
+        "GIT_DEFAULT_BRANCH" => Some(
+            cfg.get("init.defaultBranch")
+                .unwrap_or_else(|| "master".into()),
+        ),
+        _ => None,
+    };
+    if let Some(v) = logical {
+        println!("{v}");
+        return Ok(());
+    }
     for (k, v) in pairs {
         if k == key.as_str() {
             println!("{v}");
@@ -762,107 +715,64 @@ pub fn cmd_show_index(args: &[String]) -> CliResult<()> {
 
 /// `arks check-attr` — report attributes for paths from `.gitattributes` (subset).
 pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-a", "--all", "-z"])?;
-    let all = args.iter().any(|a| a == "-a" || a == "--all");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.is_empty() {
-        return Err(CliError::Usage(
-            "check-attr [-a] <attr>… [--] <pathname>…".into(),
-        ));
+    // `[-a | --all | <attr>...] [--] <pathname>...` over the gitattributes(5)
+    // sources (see `cmd::attr`). Cite: https://git-scm.com/docs/git-check-attr
+    let mut all = false;
+    let mut before: Vec<&String> = Vec::new();
+    let mut after: Option<Vec<&String>> = None;
+    for a in args {
+        if let Some(v) = after.as_mut() {
+            v.push(a);
+            continue;
+        }
+        match a.as_str() {
+            "-a" | "--all" => all = true,
+            "--" => after = Some(Vec::new()),
+            "--cached" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => before.push(a),
+        }
     }
-    // Split attrs vs paths at `--` when present.
-    let (attrs, paths) = if let Some(i) = positional.iter().position(|a| *a == "--") {
-        (positional[..i].to_vec(), positional[i + 1..].to_vec())
-    } else if all {
-        (Vec::new(), positional)
-    } else if positional.len() >= 2 {
-        (vec![positional[0]], positional[1..].to_vec())
-    } else {
-        return Err(CliError::Usage(
-            "check-attr: need attribute name(s) and path(s)".into(),
-        ));
+    let (attrs, paths): (Vec<&String>, Vec<&String>) = match after {
+        Some(p) => (before, p),
+        None if all => (Vec::new(), before),
+        None if before.len() >= 2 => (vec![before[0]], before[1..].to_vec()),
+        None => {
+            return Err(CliError::Exit(129, "error: No attribute specified".into()));
+        }
     };
+    if paths.is_empty() {
+        return Err(CliError::fatal("No file specified"));
+    }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let rules = load_gitattributes(&work)?;
     for path in paths {
-        let matched = match_attrs(&rules, path);
-        if all || attrs.is_empty() {
-            for (k, v) in &matched {
-                println!("{path}: {k}: {v}");
+        let rel = crate::util::rel_path_from_worktree(&work, Path::new(path))
+            .unwrap_or_else(|_| path.to_string());
+        let rules = crate::cmd::attr::Attributes::load(&work, repo.git_dir(), &rel);
+        let found = rules.for_path(&rel);
+        if all {
+            for k in rules.order() {
+                match found.get(k) {
+                    Some(v) if *v != crate::cmd::attr::AttrValue::Unspecified => {
+                        println!("{path}: {k}: {}", v.display());
+                    }
+                    _ => {}
+                }
             }
         } else {
             for a in &attrs {
-                let v = matched
+                let v = found
                     .get(a.as_str())
-                    .map(String::as_str)
+                    .map(|v| v.display())
                     .unwrap_or("unspecified");
                 println!("{path}: {a}: {v}");
             }
         }
     }
     Ok(())
-}
-
-/// `.gitattributes` lines as (pattern, [(attr, value)]).
-type AttrRules = Vec<(String, Vec<(String, String)>)>;
-
-fn load_gitattributes(work: &Path) -> CliResult<AttrRules> {
-    let path = work.join(".gitattributes");
-    let text = match fs::read_to_string(&path) {
-        Ok(t) => t,
-        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(e) => return Err(CliError::Msg(e.to_string())),
-    };
-    let mut out = Vec::new();
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let mut parts = line.split_whitespace();
-        let Some(pat) = parts.next() else {
-            continue;
-        };
-        let mut attrs = Vec::new();
-        for a in parts {
-            if let Some((k, v)) = a.split_once('=') {
-                attrs.push((k.to_string(), v.to_string()));
-            } else if let Some(k) = a.strip_prefix('-') {
-                attrs.push((k.to_string(), "unset".into()));
-            } else {
-                attrs.push((a.to_string(), "set".into()));
-            }
-        }
-        out.push((pat.to_string(), attrs));
-    }
-    Ok(out)
-}
-
-fn match_attrs(
-    rules: &[(String, Vec<(String, String)>)],
-    path: &str,
-) -> std::collections::BTreeMap<String, String> {
-    let mut map = std::collections::BTreeMap::new();
-    let base = Path::new(path)
-        .file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or(path);
-    for (pat, attrs) in rules {
-        let ok = if pat == "*" || pat == "**" {
-            true
-        } else if let Some(suf) = pat.strip_prefix('*') {
-            path.ends_with(suf) || base.ends_with(suf)
-        } else {
-            path == pat || base == pat
-        };
-        if ok {
-            for (k, v) in attrs {
-                map.insert(k.clone(), v.clone());
-            }
-        }
-    }
-    map
 }
 
 /// `arks merge-file` — three-way line merge of `<base> <ours> <theirs>` files.
@@ -921,42 +831,76 @@ fn merge_lines(base: &str, ours: &str, theirs: &str) -> (String, usize) {
     (out, 1)
 }
 
-/// `arks merge-tree <base> <ours> <theirs>` — print merged tree oid (conflict → err).
+/// `arks merge-tree [--write-tree] [--merge-base=<c>] <branch1> <branch2>` and the
+/// legacy `merge-tree <base> <ours> <theirs>` — print the merged tree oid
+/// (conflict → exit 1). Never touches the index or the work tree.
+/// Cite: https://git-scm.com/docs/git-merge-tree
 pub fn cmd_merge_tree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 3 {
+    let mut write_tree = false;
+    let mut name_only = false;
+    let mut merge_base: Option<String> = None;
+    let mut positional: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--write-tree" => write_tree = true,
+            "--name-only" => name_only = true,
+            "--messages" | "--no-messages" | "--allow-unrelated-histories" => {}
+            _ if a.starts_with("--merge-base=") => {
+                merge_base = Some(a["--merge-base=".len()..].to_string());
+            }
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => positional.push(a),
+        }
+    }
+    let legacy = !write_tree && positional.len() == 3;
+    if !(positional.len() == 2 || legacy) {
         return Err(CliError::Usage(
-            "merge-tree <base-tree> <our-tree> <their-tree>".into(),
+            "merge-tree [--write-tree] <branch1> <branch2> | merge-tree <base> <b1> <b2>".into(),
         ));
     }
-    // Accept commit-ish or tree-ish; resolve to commit tips when possible for three-way.
     let mut repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let ours = resolve_rev(&repo, positional[1])?;
-    let theirs = resolve_rev(&repo, positional[2])?;
-    // Prefer commit three-way; if args are pure trees, refuse for now.
-    let ours_obj = repo
-        .get_object(&ours)
-        .map_err(|e| CliError::Msg(e.to_string()))?;
-    let theirs_obj = repo
-        .get_object(&theirs)
-        .map_err(|e| CliError::Msg(e.to_string()))?;
-    if ours_obj.kind != ObjectKind::Commit || theirs_obj.kind != ObjectKind::Commit {
-        return Err(CliError::NotImplemented(
-            "merge-tree: tree-only args not claimed; pass commit-ish tips".into(),
-        ));
-    }
-    let result =
-        crate::cmd::merge_engine::merge_commits_three_way(&mut repo, &work, &ours, &theirs)?;
+    let (base_rev, ours_rev, theirs_rev) = if legacy {
+        (Some(positional[0].as_str()), positional[1], positional[2])
+    } else {
+        (merge_base.as_deref(), positional[0], positional[1])
+    };
+    let to_tree = |repo: &arks_repo::Repository, r: &str| -> CliResult<Oid> {
+        let oid = resolve_rev(repo, r)
+            .map_err(|_| CliError::fatal(format!("could not parse as tree '{r}'")))?;
+        crate::cmd::shared::peel_to_kind(repo, &oid, crate::cmd::shared::ObjKind::Tree, r)
+    };
+    let ours = to_tree(&repo, ours_rev)?;
+    let theirs = to_tree(&repo, theirs_rev)?;
+    let base = match base_rev {
+        Some(b) => to_tree(&repo, b)?,
+        None => {
+            let commit = |r: &str| -> CliResult<Oid> {
+                let oid = resolve_rev(&repo, r)?;
+                crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Commit,
+                    r,
+                )
+            };
+            let (o, t) = (commit(ours_rev)?, commit(theirs_rev)?);
+            let mb = arks_repo::merge_base_oid(&repo, &o, &t)?
+                .ok_or_else(|| CliError::fatal("refusing to merge unrelated histories"))?;
+            to_tree(&repo, &mb.to_hex())?
+        }
+    };
+    let result = crate::cmd::merge_engine::merge_trees_in_memory(&mut repo, &base, &ours, &theirs)?;
     if !result.conflicts.is_empty() {
         for c in &result.conflicts {
-            println!("CONFLICT {c}");
+            if name_only {
+                println!("{c}");
+            } else {
+                println!("CONFLICT {c}");
+            }
         }
-        return Err(CliError::Msg(format!(
-            "merge-tree: {} conflict(s)",
-            result.conflicts.len()
-        )));
+        return Err(CliError::silent(1));
     }
     let tree = result
         .tree

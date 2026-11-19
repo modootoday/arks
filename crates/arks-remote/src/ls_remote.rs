@@ -21,8 +21,12 @@ pub struct RemoteRef {
     pub oid: Oid,
 }
 
-/// List refs advertised by `url` (HTTP smart/dumb, SSH, `git://`).
+/// List refs advertised by `url` (HTTP smart/dumb, SSH, `git://`, local path).
 pub fn ls_remote(url: &str) -> Result<Vec<RemoteRef>, RemoteError> {
+    if crate::local::is_local_remote(url) {
+        let repo = crate::local::open_local_remote(url)?;
+        return crate::local::local_refs(&repo);
+    }
     if let Ok(ssh) = SshRemoteUrl::parse(url) {
         let mut sess = SshSession::connect(&ssh, SshService::UploadPack)?;
         return Ok(from_ad(sess.read_advertisement()?));
