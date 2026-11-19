@@ -154,6 +154,9 @@ pub fn write_stat(out: &mut impl Write, rows: &[StatRow]) -> CliResult<()> {
         let name_cap = WIDTH.saturating_sub(number_width + 6 + graph_width);
         if name_width > name_cap {
             name_width = name_cap;
+        } else {
+            // diff.c: names fit, so the graph takes the remaining columns.
+            graph_width = WIDTH.saturating_sub(number_width + 6 + name_width);
         }
     }
     let scale = |it: usize| -> usize {
