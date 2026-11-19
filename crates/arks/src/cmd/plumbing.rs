@@ -299,42 +299,56 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_ls_tree(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: `-r` + `--name-only` claimed.
-    refuse_unknown_flags(args, &["-r", "--name-only"])?;
-    let recursive = args.iter().any(|a| a == "-r");
-    let name_only = args.iter().any(|a| a == "--name-only");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 1 {
-        return Err(CliError::Usage(
-            "ls-tree [-r] [--name-only] <tree-ish>".into(),
-        ));
+    // M16 Sy-3 + C7b: `-r`, `-t`, `-d`, `-l`/`--long`, `--name-only`/
+    // `--name-status`, `--full-tree`, and path patterns (a trailing `/`
+    // lists the directory's contents). Cite: https://git-scm.com/docs/git-ls-tree
+    let args = crate::util::split_short_bundles(args, "rtdl", "");
+    let mut o = LsTree::default();
+    let mut positional: Vec<&String> = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "-r" => o.recursive = true,
+            "-t" => o.show_trees = true,
+            "-d" => o.only_trees = true,
+            "-l" | "--long" => o.long = true,
+            "--name-only" | "--name-status" => o.name_only = true,
+            "--full-tree" | "--full-name" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => positional.push(a),
+        }
     }
-    let repo = open_repo()?;
-    let oid = resolve_rev(&repo, positional[0])?;
-    let obj = repo.get_object(&oid)?;
-    let tree_oid = match obj.kind {
-        ObjectKind::Tree => oid,
-        ObjectKind::Commit => {
-            let c = Commit::decode(&obj.payload)?;
-            c.tree
-        }
-        other => {
-            return Err(CliError::Msg(format!(
-                "ls-tree: {} is not a tree-ish",
-                other.as_str()
-            )));
-        }
+    let Some((rev, specs)) = positional.split_first() else {
+        return Err(CliError::Usage(
+            "ls-tree [<options>] <tree-ish> [<path>...]".into(),
+        ));
     };
-    print_tree(&repo, &tree_oid, "", recursive, name_only)?;
-    Ok(())
+    o.specs = specs.iter().map(|s| s.to_string()).collect();
+    let repo = open_repo()?;
+    let oid = resolve_rev(&repo, rev)
+        .map_err(|_| CliError::fatal("Not a valid object name".to_string()))?;
+    let tree_oid =
+        crate::cmd::shared::peel_to_kind(&repo, &oid, crate::cmd::shared::ObjKind::Tree, rev)
+            .map_err(|_| CliError::fatal("not a tree object"))?;
+    print_tree(&repo, &tree_oid, "", &o)
+}
+
+#[derive(Default)]
+struct LsTree {
+    recursive: bool,
+    show_trees: bool,
+    only_trees: bool,
+    long: bool,
+    name_only: bool,
+    specs: Vec<String>,
 }
 
 fn print_tree(
     repo: &arks_repo::Repository,
     tree_oid: &Oid,
     prefix: &str,
-    recursive: bool,
-    name_only: bool,
+    o: &LsTree,
 ) -> CliResult<()> {
     let obj = repo.get_object(tree_oid)?;
     if obj.kind != ObjectKind::Tree {
@@ -347,23 +361,57 @@ fn print_tree(
         } else {
             format!("{prefix}/{}", e.name)
         };
-        let mode = match e.mode {
-            arks_object::TreeMode::Tree => "040000",
-            arks_object::TreeMode::File => "100644",
-            arks_object::TreeMode::Executable => "100755",
-            arks_object::TreeMode::Symlink => "120000",
-            arks_object::TreeMode::Gitlink => "160000",
-        };
-        let kind = match e.mode {
-            arks_object::TreeMode::Tree => "tree",
-            _ => "blob",
-        };
-        if e.mode == arks_object::TreeMode::Tree && recursive {
-            print_tree(repo, &e.oid, &path, true, name_only)?;
-        } else if name_only {
-            println!("{path}");
+        let is_tree = e.mode == arks_object::TreeMode::Tree;
+        // Spec relations: equal / inside a spec dir / ancestor of a spec.
+        let matched = o.specs.is_empty()
+            || o.specs.iter().any(|s| {
+                let t = s.trim_end_matches('/');
+                path == t || path.starts_with(&format!("{t}/"))
+            });
+        let ancestor = o
+            .specs
+            .iter()
+            .any(|s| s.trim_end_matches('/').starts_with(&format!("{path}/")));
+        let list_contents = o.specs.iter().any(|s| *s == format!("{path}/"));
+        if !matched && !ancestor {
+            continue;
+        }
+        let descend = is_tree && (ancestor || list_contents || (matched && o.recursive));
+        let show = if is_tree {
+            (matched && !descend) || (descend && o.show_trees) || (o.only_trees && matched)
         } else {
-            println!("{mode} {kind} {}\t{path}", e.oid.to_hex());
+            matched && !o.only_trees
+        };
+        if show {
+            if o.name_only {
+                println!("{path}");
+            } else {
+                let mode = match e.mode {
+                    arks_object::TreeMode::Tree => "040000",
+                    arks_object::TreeMode::File => "100644",
+                    arks_object::TreeMode::Executable => "100755",
+                    arks_object::TreeMode::Symlink => "120000",
+                    arks_object::TreeMode::Gitlink => "160000",
+                };
+                let kind = match e.mode {
+                    arks_object::TreeMode::Tree => "tree",
+                    arks_object::TreeMode::Gitlink => "commit",
+                    _ => "blob",
+                };
+                if o.long {
+                    let size = if kind == "blob" {
+                        repo.get_object(&e.oid)?.payload.len().to_string()
+                    } else {
+                        "-".to_string()
+                    };
+                    println!("{mode} {kind} {} {size:>7}\t{path}", e.oid.to_hex());
+                } else {
+                    println!("{mode} {kind} {}\t{path}", e.oid.to_hex());
+                }
+            }
+        }
+        if descend {
+            print_tree(repo, &e.oid, &path, o)?;
         }
     }
     Ok(())
