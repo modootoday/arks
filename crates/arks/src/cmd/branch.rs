@@ -1,137 +1,12 @@
 //! Branch / checkout / switch.
 
-use crate::cmd::shared::{current_branch_name, resolve_rev};
+use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use arks_index::{IndexEntry, sort_entries};
 use arks_refs::RefTarget;
 use std::collections::HashMap;
 use std::fs;
-pub fn cmd_branch(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1: `-a`/`--all`, `-r`/`--remotes`, `-v` claimed (git-branch).
-    // Cloud drop-in §O: `--show-current`, `--list`, `-vv`, `--delete`, `-f`.
-    let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "dDmarvf", ""),
-        &[
-            ("--delete", "-d"),
-            ("--move", "-m"),
-            ("--verbose", "-v"),
-            ("--list", "-l"),
-            ("--force", "-f"),
-        ],
-    );
-    refuse_unknown_flags(
-        args,
-        &[
-            "-d",
-            "-D",
-            "-m",
-            "-a",
-            "--all",
-            "-r",
-            "--remotes",
-            "-v",
-            "-l",
-            "-f",
-            "--show-current",
-        ],
-    )?;
-    let mut repo = open_repo()?;
-    if args.iter().any(|a| a == "--show-current") {
-        if let Ok(RefTarget::Symbolic(s)) = repo.head_target() {
-            println!("{}", s.strip_prefix("refs/heads/").unwrap_or(&s));
-        }
-        return Ok(());
-    }
-    if args.iter().any(|a| a == "-d" || a == "-D") {
-        let force = args.iter().any(|a| a == "-D");
-        let name = args
-            .iter()
-            .find(|a| !a.starts_with('-'))
-            .ok_or_else(|| CliError::Usage("branch -d|-D <name>".into()))?;
-        let full = branch_ref(name);
-        if !force {
-            let head = current_branch_name(&repo)?;
-            if head == *name {
-                return Err(CliError::Msg(format!(
-                    "cannot delete branch '{name}' checked out"
-                )));
-            }
-        }
-        repo.refs_mut().delete(&full, None)?;
-        return Ok(());
-    }
-    if args.iter().any(|a| a == "-m") {
-        let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-        if positional.len() != 2 {
-            return Err(CliError::Usage("branch -m <old> <new>".into()));
-        }
-        let old = branch_ref(positional[0]);
-        let new = branch_ref(positional[1]);
-        let oid = repo.refs().resolve(&old)?;
-        repo.refs_mut().update(&new, &oid, None)?;
-        repo.refs_mut().delete(&old, Some(&oid))?;
-        if let Ok(RefTarget::Symbolic(s)) = repo.head_target() {
-            if s == old {
-                repo.refs_mut().set_symbolic("HEAD", &new)?;
-            }
-        }
-        return Ok(());
-    }
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.is_empty() {
-        let list_all = args.iter().any(|a| a == "-a" || a == "--all");
-        let list_remote = args.iter().any(|a| a == "-r" || a == "--remotes");
-        let verbose = args.iter().any(|a| a == "-v");
-        let cur = current_branch_name(&repo).unwrap_or_default();
-        if !list_remote {
-            let mut refs = repo.refs().list_refs("refs/heads/")?;
-            refs.sort_by(|a, b| a.0.cmp(&b.0));
-            for (name, oid) in refs {
-                let short = name.strip_prefix("refs/heads/").unwrap_or(&name);
-                let mark = if short == cur { "*" } else { " " };
-                if verbose {
-                    println!("{mark} {short} {}", &oid.to_hex()[..7]);
-                } else {
-                    println!("{mark} {short}");
-                }
-            }
-        }
-        if list_all || list_remote {
-            let mut remotes = repo.refs().list_refs("refs/remotes/")?;
-            remotes.sort_by(|a, b| a.0.cmp(&b.0));
-            for (name, oid) in remotes {
-                let short = name.strip_prefix("refs/remotes/").unwrap_or(&name);
-                if verbose {
-                    println!("  remotes/{short} {}", &oid.to_hex()[..7]);
-                } else if list_remote && !list_all {
-                    println!("  {short}");
-                } else {
-                    println!("  remotes/{short}");
-                }
-            }
-        }
-        return Ok(());
-    }
-    if positional.len() > 2 {
-        return Err(CliError::Usage("branch [-f] <name> [<start-point>]".into()));
-    }
-    let name = positional[0];
-    let full = branch_ref(name);
-    let force = args.iter().any(|a| a == "-f");
-    if !force && repo.refs().resolve(&full).is_ok() {
-        return Err(CliError::Msg(format!(
-            "a branch named '{name}' already exists"
-        )));
-    }
-    let oid = match positional.get(1) {
-        Some(start) => resolve_rev(&repo, start)?,
-        None => repo.head_oid()?,
-    };
-    repo.refs_mut().update(&full, &oid, None)?;
-    Ok(())
-}
-
 pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     // M16 Sy-1/Sy-2: `--detach` + `--orphan` claimed (git-checkout 2.39.0).
     // Cite: https://git-scm.com/docs/git-checkout/2.39.0
@@ -151,7 +26,12 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         if paths.is_empty() {
             return Err(CliError::Usage("checkout -- <path>...".into()));
         }
-        return restore_paths(&paths, false, true, None);
+        // `checkout <tree-ish> -- <path>` updates both the index and the work tree.
+        let source = args[..i].iter().find(|a| !a.starts_with('-'));
+        return match source {
+            Some(rev) => restore_paths_mode(&paths, true, true, Some(rev), true),
+            None => restore_paths_mode(&paths, false, true, None, true),
+        };
     }
     if let Some(i) = orphan_idx {
         let name = args
@@ -210,11 +90,37 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         return Ok(());
     }
     if detach {
-        if positional.len() != 1 {
-            return Err(CliError::Usage("checkout --detach <commit>".into()));
-        }
-        return detach_to(positional[0]);
+        return match positional.as_slice() {
+            [] => detach_to("HEAD"),
+            [rev] => detach_to(rev),
+            _ => Err(CliError::Usage("checkout --detach [<commit>]".into())),
+        };
     }
+    if positional.is_empty() {
+        return Err(CliError::Usage(
+            "checkout <branch> | checkout -- <path>".into(),
+        ));
+    }
+    // git-checkout: an argument that names no branch or commit but a path is a
+    // pathspec (`checkout <path>` == `checkout -- <path>`).
+    let repo = open_repo()?;
+    let first = positional[0];
+    let is_rev =
+        repo.refs().resolve(&branch_ref(first)).is_ok() || resolve_rev(&repo, first).is_ok();
+    if !is_rev {
+        let work = work_tree(&repo)?;
+        let rel = crate::cmd::core::pathspec_rel(&work, first).unwrap_or_default();
+        let tracked = read_index(&repo)?
+            .entries
+            .iter()
+            .any(|e| e.path == rel || e.path.starts_with(&format!("{rel}/")));
+        if tracked {
+            return restore_paths_mode(&positional, false, true, None, true);
+        }
+    } else if positional.len() > 1 {
+        return restore_paths_mode(&positional[1..], true, true, Some(first), true);
+    }
+    drop(repo);
     if positional.len() != 1 {
         return Err(CliError::Usage(
             "checkout <branch> | checkout -- <path>".into(),
@@ -349,7 +255,7 @@ fn switch_orphan(name: &str) -> CliResult<()> {
     Ok(())
 }
 
-fn branch_ref(name: &str) -> String {
+pub(crate) fn branch_ref(name: &str) -> String {
     if name.starts_with("refs/heads/") {
         name.to_string()
     } else {
@@ -401,12 +307,9 @@ fn detach_to(rev: &str) -> CliResult<()> {
     let mut repo = open_repo()?;
     let oid = resolve_rev(&repo, rev)?;
     let head = repo.head_oid().ok();
-    let carried = if head != Some(oid) {
-        let work = work_tree(&repo)?;
-        crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
-    } else {
-        Vec::new()
-    };
+    // The two-way switch also reports carried local changes for a same-commit detach.
+    let work = work_tree(&repo)?;
+    let carried = crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?;
     repo.refs_mut().update("HEAD", &oid, None)?;
     for l in carried {
         println!("{l}");
@@ -428,6 +331,18 @@ pub(crate) fn restore_paths(
     staged: bool,
     worktree: bool,
     source: Option<&str>,
+) -> CliResult<()> {
+    restore_paths_mode(paths, staged, worktree, source, false)
+}
+
+/// [`restore_paths`]; `overlay` (git-checkout default) never removes paths
+/// missing from the source.
+pub(crate) fn restore_paths_mode(
+    paths: &[&String],
+    staged: bool,
+    worktree: bool,
+    source: Option<&str>,
+    overlay: bool,
 ) -> CliResult<()> {
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
@@ -462,7 +377,9 @@ pub(crate) fn restore_paths(
         let hit = |k: &String| rel.is_empty() || *k == rel || k.starts_with(&prefix);
         let before = matched.len();
         matched.extend(src_map.keys().filter(|k| hit(k)).cloned());
-        let dest_known: Vec<String> = if staged {
+        let dest_known: Vec<String> = if overlay {
+            Vec::new()
+        } else if staged {
             idx_map.keys().filter(|k| hit(k)).cloned().collect()
         } else {
             // Work-tree restore from a tree also drops tracked paths absent there.

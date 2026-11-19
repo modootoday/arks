@@ -4,6 +4,7 @@
 pub mod archive;
 pub mod bisect;
 pub mod branch;
+pub mod branch_cmd;
 pub mod bre;
 pub mod bundle;
 pub mod config;
@@ -48,7 +49,8 @@ pub mod worktree;
 
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
 pub use bisect::cmd_bisect;
-pub use branch::{cmd_branch, cmd_checkout, cmd_switch};
+pub use branch::{cmd_checkout, cmd_switch};
+pub use branch_cmd::cmd_branch;
 pub use bundle::cmd_bundle;
 pub use config::cmd_config;
 pub use core::{
