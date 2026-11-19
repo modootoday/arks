@@ -1,6 +1,6 @@
 ---
 title: Self-host with arks
-description: Run a GitHub-class self-host with only arks — git remotes plus forge API in one serve process
+description: Run a self-hosted arks forge with only arks — git remotes plus forge API in one serve process
 nav_order: 42
 sections:
   - what
@@ -15,7 +15,7 @@ sections:
 
 # Self-host with arks
 
-You can host a **GitHub-class** stack with the **same** `arks` CLI — git remotes **and** a forge API for PRs/issues — no separate server product, and no need to run `git` or `gh` underneath.
+You can host an **independent arks forge** with the **same** `arks` CLI — git remotes **and** a forge API for PRs/issues — no separate server product, and no need to run `git` or `gh` underneath.
 
 This is the **arks product self-host** story: localhost, intranet (LAN), and optionally the internet (WAN). Stock `git-daemon` flag parity is related but **not** the same story. Forge **client** ops are **flat** on the same binary (`arks pr`, `arks issue`, … — like `gh` without a second CLI).
 
@@ -53,7 +53,7 @@ There is **no** `arks self-host` command. Nested `arks serve http` / `serve ssh`
 ## Target journey
 
 ```text
-# one host process (GitHub-class self-host)
+# one host process (self-hosted arks forge)
 arks serve /path/to/repos
 
 # clients (merged git + gh surface)
@@ -97,7 +97,7 @@ Today’s process listen defaults stay loopback-friendly demos (**8080** HTTP, *
 
 | | Self-host (`arks serve`) | `arks daemon` | Flat forge client |
 |--|--------------------------|---------------|------------------|
-| Job | GitHub-class host (git + forge API) | Match `git-daemon` flags | `arks pr` / `issue` / … (peer: `gh`) |
+| Job | Self-hosted forge (git + arks forge API) | Match `git-daemon` flags | `arks pr` / `issue` / … (peer: `gh`) |
 | Required for git alias? | No (server bar) | No | No |
 | Separate binary? | No | No | No |
 

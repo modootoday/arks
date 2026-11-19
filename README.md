@@ -93,7 +93,7 @@ More detail: [docs/alias-git-arks.md](docs/alias-git-arks.md).
 
 ## Self-host (`arks serve`)
 
-Product hosting umbrella — **one** process intended for Git HTTP + SSH + forge API (GitHub-class self-host). **`arks serve` ≠ forge client.** Flat client leaves (`arks pr`, `arks issue`, …) talk *to* a forge base URL; they do not start the host.
+Product hosting umbrella — **one** process intended for Git HTTP + SSH + forge API (independent self-hosted forge). **`arks serve` ≠ forge client.** Flat client leaves (`arks pr`, `arks issue`, …) talk *to* a forge base URL; they do not start the host.
 
 ```bash
 # Narrow Claimed HTTP git wire path (opt out of SSH/forge modules):
@@ -185,7 +185,7 @@ Human-facing site (GitHub Pages): [`docs/`](docs/)
 | [CLI personality](docs/cli-personality.md) | `git` / `gh` / `arks` dispatch |
 | [Alias `git` → `arks`](docs/alias-git-arks.md) | Drop-in adoption path |
 | [Workflows](docs/workflows.md) | Everyday command map |
-| [Self-host](docs/self-host.md) | `arks serve` GitHub-class host |
+| [Self-host](docs/self-host.md) | `arks serve` self-hosted forge |
 | [Ports](docs/ports.md) | Normative **22/80/443/9418** vs demo **2222/8080** |
 | [Forge client](docs/arks-hub.md) | Flat `arks pr` / … (≠ host) |
 | [Daemon](docs/daemon.md) | `arks daemon` ↔ `git-daemon` |

@@ -1,6 +1,6 @@
 ---
 title: arks daemon
-description: git-daemon symmetry peer — not the GitHub-class self-host story
+description: git-daemon symmetry peer — not the self-hosted forge story
 nav_order: 44
 sections:
   - what
@@ -13,7 +13,7 @@ sections:
 
 `arks daemon` is the **`git-daemon` peer** on the **same** published `arks` binary. It serves the native **`git://`** transport (default listen **9418** on loopback-friendly binds).
 
-It is **not** the product GitHub-class host. For HTTP/SSH/forge API hosting, use [`arks serve`](../self-host/).
+It is **not** the product forge host. For HTTP/SSH/forge API hosting, use [`arks serve`](../self-host/).
 
 ## What it is
 
@@ -31,7 +31,7 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 
 | | `arks daemon` | `arks serve` |
 |--|---------------|--------------|
-| Peer | `git-daemon` | GitHub-class self-host |
+| Peer | `git-daemon` | Self-hosted arks forge |
 | Transports | `git://` | HTTP (+ SSH + forge API modules) |
 | Auth story | Weak / usually none | HTTP Basic + ops/in-process TLS (**B9**); SSH keys (**B1/B2** Claimed where evidenced) |
 | Required for git alias DoD? | No | No |
