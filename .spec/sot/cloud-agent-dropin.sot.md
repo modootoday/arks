@@ -3,7 +3,7 @@ id: sot:root/cloud-agent-dropin
 title: Cloud agent drop-in (arks as git for cloud agent sessions)
 status: active
 created: 2026-11-19T18:00:00Z
-updated: 2026-11-19T18:00:00Z
+updated: 2026-11-19T19:40:00Z
 tags: [cloud, agent, dropin, proxy, tls, ca, config, signing, ssh-signing, personality, corpus, no-invent-claimed]
 verify: manual
 rel:
@@ -23,7 +23,7 @@ rel:
 
 # Cloud agent drop-in
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release).
+Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release).
 
 Normative contract for running `arks` (personality `git`) as the version-control CLI of
 hosted coding-agent sessions (for example Claude Code cloud containers). The
@@ -42,6 +42,18 @@ Decisions D1–D6: [[adr:root/20261119180100]].
 | Signing | `commit.gpgsign`, `gpg.format=ssh`, `gpg.ssh.program` ignored | Missing |
 | Options | Corpus rows in §Corpus fail with `unsupported option` | Missing |
 | Build | Fresh clone needs sibling `discrete-circuit` path deps | Build hygiene |
+
+## Tip state (host advisory, [[evidence:root/20261119190000-cloud-dropin-host-probe]])
+
+| Area | State | Notes |
+|------|-------|-------|
+| T transport | **Partial (host advisory)** | CA + proxy via `arks-net`; clone / ls-remote / fetch / push through a TLS-intercepting proxy succeed; push honors `$GIT_DIR/shallow` ([[sot:root/arks-remote]] 14a). `url.*.insteadOf` not yet applied |
+| C config | **Partial (host advisory)** | `arks-config` precedence + identity; `-c` global option; unscoped `config` reads merged |
+| S signing | **Partial (host advisory)** | `commit.gpgsign` + `gpg.format=ssh` + `gpg.ssh.program` produce `gpgsig`; forge-side verification not observed |
+| O corpus | **Partial (host advisory)** | 19/19 corpus compare rows byte-identical vs git 2.43; patches 28/40 identical (xdiff heuristics + renames Missing); `--git-dir` / `--work-tree` Missing |
+| B build | **Missing** | sibling `discrete-circuit` path deps still required (owner layout decision pending) |
+| Index interop | **Fixed** | entry-dependent extensions dropped on rewrite ([[sot:root/arks-index]] v0.1.2) |
+| V clean-room | **Missing** | Docker gate simulating the sandbox not written; sandbox had no Docker daemon |
 
 ## Rule
 
