@@ -1,5 +1,10 @@
 //! File-backed local hub store (Partial; not Claimed). Never spawns git/gh.
 
+use crate::forge::autolink::Autolink;
+use crate::forge::discussion::{Discussion, DiscussionComment};
+use crate::forge::gist::Gist;
+use crate::forge::keys::{DeployKey, GpgKey, SshKey};
+use crate::forge::project::{Project, ProjectField, ProjectItem};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -31,6 +36,16 @@ pub struct HubDb {
     pub next_review: u64,
     #[serde(default)]
     pub next_asset: u64,
+    #[serde(default)]
+    pub next_deploy_key: u64,
+    #[serde(default)]
+    pub next_autolink: u64,
+    #[serde(default)]
+    pub next_project_field: u64,
+    #[serde(default)]
+    pub next_project_item: u64,
+    #[serde(default)]
+    pub next_discussion_comment: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
@@ -58,6 +73,16 @@ pub struct HubDb {
     pub comments: Vec<Comment>,
     #[serde(default)]
     pub reviews: Vec<Review>,
+    #[serde(default)]
+    pub discussion_comments: Vec<DiscussionComment>,
+    #[serde(default)]
+    pub project_fields: Vec<ProjectField>,
+    #[serde(default)]
+    pub project_items: Vec<ProjectItem>,
+    #[serde(default)]
+    pub deploy_keys: Vec<DeployKey>,
+    #[serde(default)]
+    pub autolinks: Vec<Autolink>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -174,48 +199,6 @@ pub struct Milestone {
     pub title: String,
     pub description: String,
     pub state: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Gist {
-    pub id: String,
-    pub description: String,
-    pub public: bool,
-    pub files: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Project {
-    pub id: u64,
-    pub owner: String,
-    pub repo: String,
-    pub title: String,
-    pub body: String,
-    pub state: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SshKey {
-    pub id: u64,
-    pub title: String,
-    pub key: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GpgKey {
-    pub id: u64,
-    pub name: String,
-    pub key_id: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Discussion {
-    pub number: u64,
-    pub owner: String,
-    pub repo: String,
-    pub title: String,
-    pub body: String,
-    pub category: String,
 }
 
 pub struct HubStore {
@@ -910,98 +893,8 @@ impl HubStore {
         self.db.milestones.push(m.clone());
         m
     }
-
-    pub fn create_gist(&mut self, description: &str, public: bool, files: Vec<String>) -> Gist {
-        if self.db.next_gist == 0 {
-            self.db.next_gist = 1;
-        }
-        let id = format!("gist{}", self.db.next_gist);
-        self.db.next_gist += 1;
-        let g = Gist {
-            id,
-            description: description.into(),
-            public,
-            files,
-        };
-        self.db.gists.push(g.clone());
-        g
-    }
-
-    pub fn create_project(&mut self, owner: &str, repo: &str, title: &str, body: &str) -> Project {
-        if self.db.next_project == 0 {
-            self.db.next_project = 1;
-        }
-        let id = self.db.next_project;
-        self.db.next_project += 1;
-        let p = Project {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            title: title.into(),
-            body: body.into(),
-            state: "open".into(),
-        };
-        self.db.projects.push(p.clone());
-        p
-    }
-
-    pub fn create_ssh_key(&mut self, title: &str, key: &str) -> SshKey {
-        if self.db.next_ssh_key == 0 {
-            self.db.next_ssh_key = 1;
-        }
-        let id = self.db.next_ssh_key;
-        self.db.next_ssh_key += 1;
-        let k = SshKey {
-            id,
-            title: title.into(),
-            key: key.into(),
-        };
-        self.db.ssh_keys.push(k.clone());
-        k
-    }
-
-    pub fn create_gpg_key(&mut self, name: &str, key_id: &str) -> GpgKey {
-        if self.db.next_gpg_key == 0 {
-            self.db.next_gpg_key = 1;
-        }
-        let id = self.db.next_gpg_key;
-        self.db.next_gpg_key += 1;
-        let k = GpgKey {
-            id,
-            name: name.into(),
-            key_id: key_id.into(),
-        };
-        self.db.gpg_keys.push(k.clone());
-        k
-    }
-
-    pub fn create_discussion(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        title: &str,
-        body: &str,
-        category: &str,
-    ) -> Discussion {
-        if self.db.next_discussion == 0 {
-            self.db.next_discussion = 1;
-        }
-        let number = self.db.next_discussion;
-        self.db.next_discussion += 1;
-        let d = Discussion {
-            number,
-            owner: owner.into(),
-            repo: repo.into(),
-            title: title.into(),
-            body: body.into(),
-            category: category.into(),
-        };
-        self.db.discussions.push(d.clone());
-        d
-    }
 }
 
-#[allow(dead_code)] // reserved for future Partial timestamps on forge resources
 pub fn now_secs() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -1036,5 +929,31 @@ mod tests {
         let out = serde_json::to_string(&db).unwrap();
         assert!(!out.contains("workflows"));
         assert!(!out.contains("next_run"));
+    }
+
+    /// DB files written before the arks-owned forge groups landed must still load,
+    /// including list-only gists/projects/keys/discussions from the old Partial leaves.
+    #[test]
+    fn legacy_db_with_old_group_records_loads() {
+        let raw = r#"{
+            "next_issue": 1, "next_pr": 1, "next_repo": 2, "next_label": 1,
+            "next_gist": 2, "next_project": 2, "next_ssh_key": 2, "next_gpg_key": 2,
+            "next_discussion": 2,
+            "tokens": ["t"], "user_login": "local",
+            "repos": [], "issues": [], "pulls": [],
+            "gists": [{"id": "gist1", "description": "d", "public": true, "files": ["a.txt"]}],
+            "projects": [{"id": 1, "owner": "local", "repo": "x", "title": "p", "body": "", "state": "open"}],
+            "ssh_keys": [{"id": 1, "title": "k", "key": "ssh-ed25519 AAAA Partial"}],
+            "gpg_keys": [{"id": 1, "name": "g", "key_id": "00000000"}],
+            "discussions": [{"number": 1, "owner": "local", "repo": "x", "title": "t",
+                             "body": "b", "category": "General"}]
+        }"#;
+        let db: HubDb = serde_json::from_str(raw).expect("legacy group records load");
+        assert_eq!(db.gists[0].files.len(), 1);
+        assert_eq!(db.projects[0].owner, "local");
+        assert!(db.ssh_keys[0].key_type.is_empty());
+        assert_eq!(db.gpg_keys[0].key_id, "00000000");
+        assert_eq!(db.discussions[0].state, "open");
+        assert!(db.deploy_keys.is_empty() && db.autolinks.is_empty());
     }
 }

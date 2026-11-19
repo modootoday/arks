@@ -11,7 +11,9 @@
 
 #![forbid(unsafe_code)]
 
+mod forge;
 mod http_min;
+mod key_formats;
 mod local_tls_smoke;
 pub mod serve;
 mod store;

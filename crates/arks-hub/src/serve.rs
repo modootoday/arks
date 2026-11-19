@@ -341,6 +341,17 @@ fn handle_client<S: Read + Write>(
         );
     }
 
+    // arks-owned forge groups (gist, keys, projects, discussions, autolinks).
+    let forge_req = crate::forge::Req {
+        method: &req.method,
+        path: &path,
+        query: &query,
+        body: &req.body,
+    };
+    if let Some((status, body)) = crate::forge::route(&mut st, &forge_req)? {
+        return respond(stream, status, &body);
+    }
+
     if req.method == "GET" && path == "/user/repos" {
         let repos: Vec<Value> = st
             .db
@@ -1003,7 +1014,7 @@ fn handle_client<S: Read + Write>(
                     return respond(stream, 404, &json!({"message":"Not Found"}));
                 }
             }
-            // Milestones / projects / discussions (Partial local forge).
+            // Milestones (Partial local forge).
             if parts.len() == 3 && parts[2] == "milestones" {
                 if req.method == "GET" {
                     let items: Vec<Value> = st
@@ -1043,180 +1054,6 @@ fn handle_client<S: Read + Write>(
                     );
                 }
             }
-            if parts.len() == 3 && parts[2] == "projects" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .projects
-                        .iter()
-                        .filter(|p| p.owner == owner && p.repo == repo)
-                        .map(|p| {
-                            json!({
-                                "id": p.id,
-                                "title": p.title,
-                                "body": p.body,
-                                "state": p.state,
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("project");
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let p = st.create_project(owner, repo, title, body);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "id": p.id,
-                            "title": p.title,
-                            "body": p.body,
-                            "state": p.state,
-                        }),
-                    );
-                }
-            }
-            if parts.len() == 3 && parts[2] == "discussions" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .discussions
-                        .iter()
-                        .filter(|d| d.owner == owner && d.repo == repo)
-                        .map(|d| {
-                            json!({
-                                "number": d.number,
-                                "title": d.title,
-                                "body": d.body,
-                                "category": d.category,
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v
-                        .get("title")
-                        .and_then(|x| x.as_str())
-                        .unwrap_or("discussion");
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let cat = v
-                        .get("category")
-                        .and_then(|x| x.as_str())
-                        .unwrap_or("General");
-                    let d = st.create_discussion(owner, repo, title, body, cat);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "number": d.number,
-                            "title": d.title,
-                            "body": d.body,
-                            "category": d.category,
-                        }),
-                    );
-                }
-            }
-        }
-    }
-
-    // Gists / user keys (Partial local forge).
-    if path == "/gists" {
-        if req.method == "GET" {
-            let items: Vec<Value> = st
-                .db
-                .gists
-                .iter()
-                .map(|g| {
-                    json!({
-                        "id": g.id,
-                        "description": g.description,
-                        "public": g.public,
-                        "files": g.files,
-                    })
-                })
-                .collect();
-            return respond(stream, 200, &Value::Array(items));
-        }
-        if req.method == "POST" {
-            let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-            let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
-            let public = v.get("public").and_then(|x| x.as_bool()).unwrap_or(true);
-            let files = v
-                .get("files")
-                .and_then(|x| x.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|f| f.as_str().map(str::to_string))
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
-            let g = st.create_gist(desc, public, files);
-            st.save()?;
-            return respond(
-                stream,
-                201,
-                &json!({
-                    "id": g.id,
-                    "description": g.description,
-                    "public": g.public,
-                    "files": g.files,
-                }),
-            );
-        }
-    }
-    if path == "/user/keys" {
-        if req.method == "GET" {
-            let items: Vec<Value> = st
-                .db
-                .ssh_keys
-                .iter()
-                .map(|k| json!({"id": k.id, "title": k.title, "key": k.key}))
-                .collect();
-            return respond(stream, 200, &Value::Array(items));
-        }
-        if req.method == "POST" {
-            let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-            let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("key");
-            let key = v.get("key").and_then(|x| x.as_str()).unwrap_or("");
-            let k = st.create_ssh_key(title, key);
-            st.save()?;
-            return respond(
-                stream,
-                201,
-                &json!({"id": k.id, "title": k.title, "key": k.key}),
-            );
-        }
-    }
-    if path == "/user/gpg_keys" {
-        if req.method == "GET" {
-            let items: Vec<Value> = st
-                .db
-                .gpg_keys
-                .iter()
-                .map(|k| json!({"id": k.id, "name": k.name, "key_id": k.key_id}))
-                .collect();
-            return respond(stream, 200, &Value::Array(items));
-        }
-        if req.method == "POST" {
-            let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-            let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("gpg");
-            let key_id = v
-                .get("key_id")
-                .and_then(|x| x.as_str())
-                .unwrap_or("00000000");
-            let k = st.create_gpg_key(name, key_id);
-            st.save()?;
-            return respond(
-                stream,
-                201,
-                &json!({"id": k.id, "name": k.name, "key_id": k.key_id}),
-            );
         }
     }
 
@@ -1320,7 +1157,7 @@ fn handle_client<S: Read + Write>(
 }
 
 /// Minimal percent-decode for `q=` (Partial; spaces via `+` or `%20`).
-fn urlencoding_lite_decode(s: &str) -> String {
+pub(crate) fn urlencoding_lite_decode(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let bytes = s.as_bytes();
     let mut i = 0;
@@ -1403,6 +1240,7 @@ fn respond<S: Write>(stream: &mut S, status: u16, body: &serde_json::Value) -> R
         204 => "No Content",
         401 => "Unauthorized",
         404 => "Not Found",
+        405 => "Method Not Allowed",
         422 => "Unprocessable Entity",
         _ => "Error",
     };

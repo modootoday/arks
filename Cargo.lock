@@ -58,10 +58,13 @@ name = "arks-hub"
 version = "0.0.0"
 dependencies = [
  "arks-net",
+ "base64",
  "rustls",
  "rustls-pemfile",
  "serde",
  "serde_json",
+ "sha1collisiondetection",
+ "sha2",
  "ureq",
 ]
 
