@@ -121,7 +121,8 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
     // ls-files.c `show_files`: others, then cached/stage, then deleted/modified.
     // Paths are shown relative to (and limited to) the current directory.
     // Cite: https://git-scm.com/docs/git-ls-files
-    let args = crate::util::split_short_bundles(args, "cdmosuz", "");
+    // C7b: `-i`/`--ignored` (with -o or -c and --exclude-standard).
+    let args = crate::util::split_short_bundles(args, "cdimosuz", "");
     let mut flags = HashSet::new();
     let mut specs_raw: Vec<String> = Vec::new();
     let mut dashdash = false;
@@ -162,10 +163,23 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
             "--error-unmatch" => {
                 flags.insert('e');
             }
+            "-i" | "--ignored" => {
+                flags.insert('i');
+            }
             x => return Err(CliError::NotImplemented(format!("unsupported option: {x}"))),
         }
     }
     let has = |c: char| flags.contains(&c);
+    if has('i') && !(has('o') || has('c')) {
+        return Err(CliError::fatal(
+            "ls-files -i must be used with either -o or -c",
+        ));
+    }
+    if has('i') && !has('x') {
+        return Err(CliError::fatal(
+            "ls-files: --ignored needs some exclude pattern",
+        ));
+    }
     let stage_fmt = has('s') || has('u');
     let cached = has('c') || has('s') || has('u') || !(has('o') || has('d') || has('m'));
     let term = if has('z') { "\0" } else { "\n" };
@@ -224,16 +238,30 @@ pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
             &work,
             &indexed,
             &mut untracked,
-            has('x').then_some(&mut ig),
+            (has('x') && !has('i')).then_some(&mut ig),
         )?;
+        if has('i') {
+            untracked.retain(|p| {
+                ig.matching_with_parents(p, false)
+                    .is_some_and(|m| m.excluded)
+            });
+        }
         for p in untracked {
             if in_spec(&p) {
                 write!(out, "{}{term}", show(&p))?;
             }
         }
     }
-    if cached {
+    let mut ig_cached = crate::cmd::ignore::Ignore::new(&work);
+    if cached && (!has('i') || has('c')) {
         for e in &index.entries {
+            if has('i')
+                && !ig_cached
+                    .matching_with_parents(&e.path, false)
+                    .is_some_and(|m| m.excluded)
+            {
+                continue;
+            }
             if has('u') && !has('s') && !has('c') && e.stage() == 0 {
                 continue;
             }
