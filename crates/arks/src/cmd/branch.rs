@@ -1,15 +1,12 @@
 //! Branch / checkout / switch.
 
-use crate::cmd::shared::{current_branch_name, head_blob_map, resolve_rev, tree_blob_map};
+use crate::cmd::shared::{current_branch_name, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
-};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
 use arks_index::{IndexEntry, sort_entries};
 use arks_refs::RefTarget;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
 pub fn cmd_branch(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `-a`/`--all`, `-r`/`--remotes`, `-v` claimed (git-branch).
     // Cloud drop-in §O: `--show-current`, `--list`, `-vv`, `--delete`, `-f`.
@@ -421,6 +418,11 @@ fn detach_to(rev: &str) -> CliResult<()> {
     Ok(())
 }
 
+/// git-restore core (also `checkout -- <path>`): copy `<pathspec>` matches
+/// from the source (`--source`, else HEAD for `--staged`, else the index)
+/// into the index and/or working tree. Matched paths missing from the
+/// source are removed from the destination (an added file is unstaged).
+/// Cite: <https://git-scm.com/docs/git-restore>.
 pub(crate) fn restore_paths(
     paths: &[&String],
     staged: bool,
@@ -430,55 +432,99 @@ pub(crate) fn restore_paths(
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let mut index = read_index(&repo)?;
-    let src_map = if let Some(rev) = source {
-        let oid = resolve_rev(&repo, rev)?;
-        tree_blob_map(&repo, &oid)?
-    } else if staged {
-        // restore --staged defaults from HEAD
-        head_blob_map(&repo)?
-    } else {
-        // restore worktree from index
-        let mut m = HashMap::new();
-        for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            m.insert(e.path.clone(), e.oid);
-        }
-        m
+    let idx_map: HashMap<String, (arks_oid::Oid, u32)> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.clone(), (e.oid, e.mode)))
+        .collect();
+    let tree_files = |oid: &arks_oid::Oid| -> CliResult<HashMap<String, (arks_oid::Oid, u32)>> {
+        let peeled = crate::cmd::shared::peel_tags(&repo, oid)?;
+        Ok(crate::cmd::switch_tree::commit_files(&repo, &peeled)?
+            .into_iter()
+            .map(|(k, f)| (k, (f.oid, f.mode)))
+            .collect())
     };
-    for p in paths {
-        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| (*p).clone());
-        let oid = src_map
-            .get(&rel)
-            .copied()
-            .ok_or_else(|| CliError::Msg(format!("path '{rel}' not in source")))?;
-        let blob = repo.get_object(&oid)?;
-        if worktree {
-            let abs = work.join(&rel);
-            if let Some(parent) = abs.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            let payload = arks_remote::smudge_worktree_blob(&repo, &work, &rel, &blob.payload)
-                .map_err(|e| CliError::Msg(e.to_string()))?;
-            fs::write(&abs, &payload)?;
+    let src_map = if let Some(rev) = source {
+        tree_files(&resolve_rev(&repo, rev)?)?
+    } else if staged {
+        match repo.head_oid() {
+            Ok(h) => tree_files(&h)?,
+            Err(_) => HashMap::new(),
         }
-        if staged {
-            let meta_size = blob.payload.len().min(u32::MAX as usize) as u32;
-            index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
-            index.entries.push(IndexEntry {
-                ctime_sec: 0,
-                ctime_nsec: 0,
-                mtime_sec: 0,
-                mtime_nsec: 0,
-                dev: 0,
-                ino: 0,
-                mode: 0o100644,
-                uid: 0,
-                gid: 0,
-                size: meta_size,
-                oid,
-                flags: (rel.len().min(0x0fff)) as u16,
-                flags_extended: None,
-                path: rel,
-            });
+    } else {
+        idx_map.clone()
+    };
+    let mut matched: Vec<String> = Vec::new();
+    for p in paths {
+        let rel = crate::cmd::core::pathspec_rel(&work, p)?;
+        let prefix = format!("{rel}/");
+        let hit = |k: &String| rel.is_empty() || *k == rel || k.starts_with(&prefix);
+        let before = matched.len();
+        matched.extend(src_map.keys().filter(|k| hit(k)).cloned());
+        let dest_known: Vec<String> = if staged {
+            idx_map.keys().filter(|k| hit(k)).cloned().collect()
+        } else {
+            // Work-tree restore from a tree also drops tracked paths absent there.
+            idx_map
+                .keys()
+                .filter(|k| source.is_some() && hit(k))
+                .cloned()
+                .collect()
+        };
+        matched.extend(dest_known);
+        if matched.len() == before {
+            return Err(CliError::Exit(
+                1,
+                format!("error: pathspec '{p}' did not match any file(s) known to git"),
+            ));
+        }
+    }
+    matched.sort();
+    matched.dedup();
+    for rel in matched {
+        let abs = work.join(&rel);
+        match src_map.get(&rel) {
+            Some((oid, mode)) => {
+                if worktree {
+                    let blob = repo.get_object(oid)?;
+                    if let Some(parent) = abs.parent() {
+                        fs::create_dir_all(parent)?;
+                    }
+                    let payload =
+                        arks_remote::smudge_worktree_blob(&repo, &work, &rel, &blob.payload)
+                            .map_err(|e| CliError::Msg(e.to_string()))?;
+                    fs::write(&abs, &payload)?;
+                }
+                if staged {
+                    let size = repo.get_object(oid)?.payload.len().min(u32::MAX as usize) as u32;
+                    index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
+                    index.entries.push(IndexEntry {
+                        ctime_sec: 0,
+                        ctime_nsec: 0,
+                        mtime_sec: 0,
+                        mtime_nsec: 0,
+                        dev: 0,
+                        ino: 0,
+                        mode: *mode,
+                        uid: 0,
+                        gid: 0,
+                        size,
+                        oid: *oid,
+                        flags: (rel.len().min(0x0fff)) as u16,
+                        flags_extended: None,
+                        path: rel,
+                    });
+                }
+            }
+            None => {
+                if worktree && (abs.is_file() || abs.is_symlink()) {
+                    fs::remove_file(&abs)?;
+                }
+                if staged {
+                    index.entries.retain(|e| e.path != rel);
+                }
+            }
         }
     }
     if staged {

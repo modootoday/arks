@@ -787,7 +787,7 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
 }
 
 /// Worktree-relative form of a cwd-relative pathspec (`""` = whole tree).
-fn pathspec_rel(work: &Path, p: &str) -> CliResult<String> {
+pub(crate) fn pathspec_rel(work: &Path, p: &str) -> CliResult<String> {
     let cwd = cwd()?;
     let abs = cwd.join(p);
     let canon = |x: &Path| x.canonicalize().unwrap_or_else(|_| x.to_path_buf());

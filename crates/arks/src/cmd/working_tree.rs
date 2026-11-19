@@ -16,25 +16,45 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
 pub fn cmd_restore(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--staged", "--worktree", "--source"])?;
-    let staged = args.iter().any(|a| a == "--staged");
-    let worktree = args.iter().any(|a| a == "--worktree") || !staged;
+    // Cite: https://git-scm.com/docs/git-restore (`-s`/`--source`, `-S`/`--staged`,
+    // `-W`/`--worktree`, `--` separator).
+    let args = crate::util::split_short_bundles(args, "SWq", "s");
+    let mut staged = false;
+    let mut wt_flag = false;
     let mut source: Option<String> = None;
     let mut paths = Vec::new();
     let mut i = 0;
+    let mut dashdash = false;
     while i < args.len() {
-        if args[i] == "--source" {
-            i += 1;
-            source = Some(
-                args.get(i)
-                    .ok_or_else(|| CliError::Usage("restore: --source <tree-ish>".into()))?
-                    .clone(),
-            );
-        } else if !args[i].starts_with('-') {
-            paths.push(&args[i]);
-        }
+        let a = &args[i];
         i += 1;
+        if dashdash || !a.starts_with('-') || a == "-" {
+            paths.push(a);
+            continue;
+        }
+        match a.as_str() {
+            "--" => dashdash = true,
+            "--staged" | "-S" => staged = true,
+            "--worktree" | "-W" => wt_flag = true,
+            "-q" | "--quiet" => {}
+            "--source" | "-s" => {
+                source = Some(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("restore: --source <tree-ish>".into()))?
+                        .clone(),
+                );
+                i += 1;
+            }
+            x => {
+                if let Some(v) = x.strip_prefix("--source=") {
+                    source = Some(v.to_string());
+                } else {
+                    return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+                }
+            }
+        }
     }
+    let worktree = wt_flag || !staged;
     if paths.is_empty() {
         return Err(CliError::Usage("restore: path required".into()));
     }
