@@ -18,3 +18,7 @@ ureq = { workspace = true }
 arks-net = { workspace = true }
 rustls = { workspace = true }
 rustls-pemfile = { workspace = true }
+# Key fingerprints for forge key records (OpenSSH SHA-256; OpenPGP v4 SHA-1 / v6 SHA-256).
+base64 = { workspace = true }
+sha1collisiondetection = { workspace = true }
+sha2 = { workspace = true }

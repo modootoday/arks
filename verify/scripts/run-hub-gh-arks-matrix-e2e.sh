@@ -6,7 +6,9 @@
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
 # IW-HUB-ASSETS / CHECKOUT / UX / STUBS: sot:root/arks-in-scope-leftovers-wave.
-# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse check (adr:root/20261119230000).
+# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse + in-scope `later` refuse check (adr:root/20261119230000).
+# ARKS_HUB_IW_FORGE_GROUPS=1: arks-owned gist/discussion/project/ssh-key/gpg-key/
+#   repo autolink/repo deploy-key leaves against `arks serve` (host run = Partial; adr:root/20261119230000).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -176,13 +178,14 @@ hub_scope_run() {
   echo "hub-gh-arks-matrix-e2e: HF-SCOPE $name ok"
 }
 
-# --- Platform-only OUT refuse (ARKS_HUB_IW_ACTIONS=1) ---
+# --- Platform-only OUT refuse + in-scope later refuse (ARKS_HUB_IW_ACTIONS=1) ---
 # GitHub-platform-only groups (Actions run/workflow/cache/secret/variable,
-# rulesets, attestations, Codespaces) and leaves (release verify*,
-# repo gitignore|license) are out of scope for the arks forge, and `pr checks`
-# is `later` ([[adr:root/20261119230000]]). Each must refuse with exit 2 and
-# make no forge call: ARKS_HUB_API points at a closed port so a stray network
-# call fails instead of greening. This is refuse honesty, not a Claimed feature.
+# attestations, Codespaces) and leaves (release verify*) are out of scope for
+# the arks forge. Rulesets (`ruleset` / `rs`), `repo gitignore|license` and
+# `pr checks` are in scope but `later` ([[adr:root/20261119230000]]). Each must
+# refuse with exit 2 and make no forge call: ARKS_HUB_API points at a closed
+# port so a stray network call fails instead of greening. Later rows must say
+# "later — in scope". This is refuse honesty, not a Claimed feature.
 if [[ "${ARKS_HUB_IW_ACTIONS:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse path (adr:root/20261119230000)"
   OUT_WORK="$(mktemp -d /tmp/arks-hub-out.XXXXXX)"
@@ -215,14 +218,34 @@ workflow run 1
 cache list
 secret list
 variable list
-ruleset list
-rs list
 attestation verify
 codespace list
 release verify v1.0.0
 release verify-asset v1.0.0 a.bin
+LEAVES
+  while IFS= read -r leaf; do
+    [[ -z "$leaf" ]] && continue
+    set +e
+    # shellcheck disable=SC2086
+    "$ARKS_BIN" hub $leaf >"$OUT_WORK/out.txt" 2>&1
+    oec=$?
+    set -e
+    if [[ "$oec" -ne 2 ]] || ! grep -Fq 'later — in scope, not yet implemented' "$OUT_WORK/out.txt"; then
+      echo "FAIL in-scope later refuse: hub $leaf exit=$oec (want 2 + later text)" >&2
+      cat "$OUT_WORK/out.txt" >&2 || true
+      OUT_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: later refuse ok (hub $leaf exit=2)"
+    fi
+  done <<'LEAVES'
+ruleset list
+rs list
+ruleset view 1
+ruleset check main
 repo gitignore list
+repo gitignore view Rust
 repo license list
+repo license view MIT
 pr checks 1
 LEAVES
   if [[ "$OUT_OK" -ne 1 ]]; then
@@ -234,6 +257,174 @@ LEAVES
     exit 0
   fi
   echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse greens"
+  exit 0
+fi
+
+# --- arks-owned forge groups (ARKS_HUB_IW_FORGE_GROUPS=1) ---
+# gist / discussion / project / ssh-key / gpg-key / repo autolink / repo deploy-key
+# against a local `arks serve` forge ([[adr:root/20261119230000]] item 7). Key inputs
+# are public halves of ephemeral fixtures (the same ones crate unit tests pin against
+# GnuPG / OpenSSH fingerprints). Host run = Partial (host-advisory); a Docker run only
+# writes a receipt, it does not promote rows by itself.
+if [[ "${ARKS_HUB_IW_FORGE_GROUPS:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: arks-owned forge groups path (adr:root/20261119230000)"
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  cleanup_scope() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  export ARKS_HUB_REPO="local/hubscope"
+  printf 'alpha\n' >"$WORK/a.txt"
+  printf 'alpha v2\n' >"$WORK/a2.txt"
+  printf '# notes\n' >"$WORK/notes.md"
+  cat >"$WORK/id.pub" <<'KEY'
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOeNU8Aa/AgRlkpxyZRX7JNqG5QCAhOXZdT1/GhUi3TM fixture@example.invalid
+KEY
+  cat >"$WORK/pub.asc" <<'KEY'
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEav9wixYJKwYBBAHaRw8BAQdAQjLeQBeoT4aDP0hMcp8V0S5KliR4Wo7OTC0l
+qsx/yCK0JUZpeHR1cmUgS2V5IDxmaXh0dXJlQGV4YW1wbGUuaW52YWxpZD6IkwQT
+FgoAOxYhBI7bByOhOpVqZC07Mi8wt6QweLGoBQJq/3CLAhsDBQsJCAcCAiICBhUK
+CQgLAgQWAgMBAh4HAheAAAoJEC8wt6QweLGoQmcA/j1iFqpGmluCZTSL06ANxSXg
+tb3A038eqruIHmAhLWu5AQDLo/2RiEm7W4TOdcPttVtdoGWKtQK53SBDHVsTh/EZ
+AA==
+=SSXi
+-----END PGP PUBLIC KEY BLOCK-----
+KEY
+  hub_scope_run auth-login "$ARKS_BIN" hub auth login
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "forge groups"
+  hub_scope_run issue-create "$ARKS_BIN" hub issue create --title tracked --body b
+  # gist
+  hub_scope_run gist-create "$ARKS_BIN" gist create "$WORK/a.txt" "$WORK/notes.md" -d demo --public
+  GIST_ID="$(sed -n 's#.*/gists/##p' "$WORK/gist-create.out" | tail -n1)"
+  hub_scope_run gist-list "$ARKS_BIN" gist list
+  hub_scope_run gist-view "$ARKS_BIN" gist view "$GIST_ID" -f a.txt
+  hub_scope_run gist-edit "$ARKS_BIN" gist edit "$GIST_ID" "$WORK/a2.txt" -f a.txt
+  hub_scope_run gist-rename "$ARKS_BIN" gist rename "$GIST_ID" notes.md readme.md
+  hub_scope_run gist-clone "$ARKS_BIN" gist clone "$GIST_ID" "$WORK/gist-dir"
+  # discussion
+  hub_scope_run disc-create "$ARKS_BIN" discussion create -t plan -b body -c Ideas
+  hub_scope_run disc-list "$ARKS_BIN" discussion list --json number,title,category
+  hub_scope_run disc-edit "$ARKS_BIN" discussion edit 1 -t plan-v2
+  hub_scope_run disc-comment "$ARKS_BIN" discussion comment 1 -b hello
+  hub_scope_run disc-view "$ARKS_BIN" discussion view 1 --comments
+  # project
+  hub_scope_run proj-create "$ARKS_BIN" project create --title Roadmap
+  hub_scope_run proj-edit "$ARKS_BIN" project edit 1 -d short --visibility PUBLIC
+  hub_scope_run proj-field "$ARKS_BIN" project field-create 1 --name Status --data-type SINGLE_SELECT --single-select-options Todo,Done --format json
+  hub_scope_run proj-field2 "$ARKS_BIN" project field-create 1 --name Note --data-type TEXT
+  hub_scope_run proj-fields "$ARKS_BIN" project field-list 1
+  hub_scope_run proj-item-add "$ARKS_BIN" project item-add 1 --url "local/hubscope#1"
+  hub_scope_run proj-item-create "$ARKS_BIN" project item-create 1 --title draft --format json
+  ITEM_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$WORK/proj-item-create.out")"
+  hub_scope_run proj-item-edit "$ARKS_BIN" project item-edit --id "$ITEM_ID" --project-id 1 --field-id 2 --text hi
+  hub_scope_run proj-items "$ARKS_BIN" project item-list 1 --format json
+  hub_scope_run proj-item-archive "$ARKS_BIN" project item-archive 1 --id "$ITEM_ID"
+  hub_scope_run proj-copy "$ARKS_BIN" project copy 1 --title Copy --drafts
+  hub_scope_run proj-item-delete "$ARKS_BIN" project item-delete 1 --id "$ITEM_ID"
+  hub_scope_run proj-field-delete "$ARKS_BIN" project field-delete --id 2
+  hub_scope_run proj-link "$ARKS_BIN" project link 1 -R local/hubscope
+  hub_scope_run proj-unlink "$ARKS_BIN" project unlink 1 -R local/hubscope
+  hub_scope_run proj-template "$ARKS_BIN" project mark-template 1
+  hub_scope_run proj-close "$ARKS_BIN" project close 1
+  hub_scope_run proj-list "$ARKS_BIN" project list --closed --format json
+  hub_scope_run proj-view "$ARKS_BIN" project view 1
+  hub_scope_run proj-delete "$ARKS_BIN" project delete 2
+  # keys
+  hub_scope_run ssh-add "$ARKS_BIN" ssh-key add "$WORK/id.pub" -t laptop
+  hub_scope_run ssh-list "$ARKS_BIN" ssh-key list
+  hub_scope_run ssh-delete "$ARKS_BIN" ssh-key delete 1 --yes
+  hub_scope_run gpg-add "$ARKS_BIN" gpg-key add "$WORK/pub.asc"
+  hub_scope_run gpg-list "$ARKS_BIN" gpg-key list
+  hub_scope_run gpg-delete "$ARKS_BIN" gpg-key delete 2F30B7A43078B1A8 --yes
+  hub_scope_run dk-add "$ARKS_BIN" hub repo deploy-key add "$WORK/id.pub" -t ci -w
+  hub_scope_run dk-list "$ARKS_BIN" hub repo deploy-key list --json id,title,readOnly
+  hub_scope_run dk-delete "$ARKS_BIN" hub repo deploy-key delete 1
+  # autolink
+  hub_scope_run al-create "$ARKS_BIN" hub repo autolink create TICKET- 'https://tracker.example/t/<num>'
+  hub_scope_run al-list "$ARKS_BIN" hub repo autolink list
+  hub_scope_run al-view "$ARKS_BIN" hub repo autolink view 1 --json keyPrefix,urlTemplate
+  hub_scope_run al-delete "$ARKS_BIN" hub repo autolink delete 1 --yes
+  # Invalid input must fail closed (non-zero), never invent success.
+  for bad in "ssh-key add $WORK/a.txt" "gpg-key add $WORK/a.txt" \
+             "hub repo autolink create X- https://no-placeholder" "gist edit $GIST_ID"; do
+    set +e
+    # shellcheck disable=SC2086
+    "$ARKS_BIN" $bad >"$WORK/bad.out" 2>&1
+    bec=$?
+    set -e
+    if [[ "$bec" -eq 0 ]]; then
+      echo "FAIL forge-groups invalid input greened: $bad" >&2
+      SCOPE_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: forge-groups refuse ok ($bad exit=$bec)"
+    fi
+  done
+  hub_scope_run gist-delete "$ARKS_BIN" gist delete "$GIST_ID" --yes
+  if [[ "$SCOPE_OK" -eq 1 ]]; then
+    if ! grep -Fq $'demo\t2 files\tpublic' "$WORK/gist-list.out" \
+      || ! grep -Fxq 'alpha' "$WORK/gist-view.out" \
+      || ! grep -Fxq 'alpha v2' "$WORK/gist-dir/a.txt" \
+      || [[ ! -f "$WORK/gist-dir/readme.md" ]] \
+      || ! grep -Fq 'recipe=' "$WORK/gist-clone.out" \
+      || ! grep -Fq '"Ideas"' "$WORK/disc-list.out" \
+      || ! grep -Fq 'hello' "$WORK/disc-view.out" \
+      || ! grep -Fq $'Status\tSINGLE_SELECT' "$WORK/proj-fields.out" \
+      || ! grep -Fq '"note": "hi"' "$WORK/proj-items.out" \
+      || ! grep -Fq '"template": true' "$WORK/proj-list.out" \
+      || ! grep -Fq 'SHA256:MO2X5WSxNRrSc36ZeuLqwBzZc44TWFE2llj7/mJ1s2w' "$WORK/ssh-add.out" \
+      || ! grep -Fq $'laptop\t1\tssh-ed25519' "$WORK/ssh-list.out" \
+      || ! grep -Fq $'fixture@example.invalid\t2F30B7A43078B1A8\t8EDB0723A13A956A642D3B322F30B7A43078B1A8' "$WORK/gpg-list.out" \
+      || ! grep -Fq '"readOnly": false' "$WORK/dk-list.out" \
+      || ! grep -Fq $'TICKET-\thttps://tracker.example/t/<num>\ttrue' "$WORK/al-list.out"; then
+      echo "FAIL forge-groups output shapes" >&2
+      SCOPE_OK=0
+    fi
+  fi
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT forge groups" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: forge groups Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: forge groups greens (host run = Partial unless Docker receipt)"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-forge-groups"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-forge-groups/v1",
+    "gate": "IW-HUB-FORGE-GROUPS",
+    "disposition": "product-path-run",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "groups": ["gist", "discussion", "project", "ssh-key", "gpg-key",
+               "repo autolink", "repo deploy-key"],
+    "note": "Receipt only; row promotion needs an owning SoT update.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
   exit 0
 fi
 

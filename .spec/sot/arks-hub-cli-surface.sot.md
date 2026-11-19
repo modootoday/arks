@@ -3,7 +3,7 @@ id: sot:root/arks-hub-cli-surface
 title: arks hub CLI surface
 status: active
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-19T23:00:00Z
+updated: 2026-11-19T23:59:00Z
 tags: [arks-hub, arks-forge-client, cli, gh-symmetry, flat-cli, pr, issue, auth, repo, release, run, workflow, label, native-api, single-release, client-only, overlap]
 verify: manual
 rel:
@@ -61,7 +61,8 @@ Authoritative leaves + flags depth: matrix CSV. Invoked as `arks <group> …` (n
 
 ### Later / out-of-scope / transitional
 
-7. **Later (in scope):** `project`, `discussion`, `gist`, `browse`, `ssh-key`, `gpg-key`, `ruleset`/`rs`, `repo gitignore|license|autolink|deploy-key`, `pr checks`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
+7. **v1 arks-owned groups (host-tested Partial):** `discussion`, `gist`, `project`, `repo autolink`, `repo deploy-key`, `ssh-key`, `gpg-key` — arks forge storage and semantics, gh-symmetric argv ([[adr:root/20261119230000]]). Flat `arks repo autolink|deploy-key` needs `arks hub repo …` or the gh personality because `repo` is a shared git/forge noun.
+7a. **Later (in scope):** `browse`, `ruleset`/`rs`, `repo gitignore|license`, `pr checks`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
 8. **Out-of-scope:** `extension`, `copilot`, `skill`, `agent-task`, `licenses`, `preview`, `auth setup-git`, and GitHub-platform-only groups `run`, `workflow`, `cache`, `secret`, `variable`, `attestation`, `codespace` — see matrix and [[adr:root/20261119230000]].
 9. **Transitional:** `arks hub …` forwards to flat leaves; `arks hub serve` / `hub listen` → `arks serve` forge module ([[sot:root/arks-self-host-server]]). Optional top-level `milestone`; `pr review` remains v1.
 
