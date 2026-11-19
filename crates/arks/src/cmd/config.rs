@@ -6,6 +6,9 @@ use std::fs;
 pub fn cmd_config(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `--local` / `--global` / `--system` / `--worktree` claimed (git-config).
     // Cite: https://git-scm.com/docs/git-config
+    if let Some(done) = query(args)? {
+        return Ok(done);
+    }
     refuse_unknown_flags(
         args,
         &[
@@ -130,6 +133,210 @@ pub fn cmd_config(args: &[String]) -> CliResult<()> {
                 "config [--get|--set|--list|--unset] ...".into(),
             )),
         }
+    }
+}
+
+/// Read queries over the merged view (C7b): `--get-regexp <re> [<value-re>]`,
+/// `--get-all`, `--show-origin`, `--show-scope`, `--name-only`,
+/// `--type=bool|int` (`--bool`, `--int`), `--default`, `-l`; scope flags
+/// filter the files read. Returns `None` when none of these is present.
+/// Exit 1 (silent) when nothing matches, as git does.
+/// Cite: https://git-scm.com/docs/git-config
+fn query(args: &[String]) -> CliResult<Option<()>> {
+    let triggers = [
+        "--get-regexp",
+        "--get-all",
+        "--show-origin",
+        "--show-scope",
+        "--name-only",
+        "--bool",
+        "--int",
+        "--default",
+        "-l",
+    ];
+    if !args.iter().any(|a| {
+        triggers.contains(&a.as_str()) || a.starts_with("--type=") || a.starts_with("--default=")
+    }) {
+        return Ok(None);
+    }
+    let mut op = "get";
+    let (mut origin, mut scope_col, mut name_only) = (false, false, false);
+    let mut ty: Option<String> = None;
+    let mut default: Option<String> = None;
+    let mut only: Option<arks_config::ConfigScope> = None;
+    let mut pos: Vec<&String> = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        let a = args[i].as_str();
+        i += 1;
+        match a {
+            "--get" => op = "get",
+            "--get-all" => op = "get-all",
+            "--get-regexp" => op = "get-regexp",
+            "--list" | "-l" => op = "list",
+            "--show-origin" => origin = true,
+            "--show-scope" => scope_col = true,
+            "--name-only" => name_only = true,
+            "--bool" => ty = Some("bool".into()),
+            "--int" => ty = Some("int".into()),
+            "--local" => only = Some(arks_config::ConfigScope::Local),
+            "--global" => only = Some(arks_config::ConfigScope::Global),
+            "--system" => only = Some(arks_config::ConfigScope::System),
+            "--default" => {
+                default = args.get(i).cloned();
+                i += 1;
+            }
+            _ if a.starts_with("--type=") => ty = Some(a["--type=".len()..].to_string()),
+            _ if a.starts_with("--default=") => default = Some(a["--default=".len()..].to_string()),
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => pos.push(&args[i - 1]),
+        }
+    }
+    let cwd = std::env::current_dir()?;
+    let set = arks_config::ConfigSet::load_discovered(&cwd);
+    let entries: Vec<&arks_config::ConfigEntry> = set
+        .entries()
+        .iter()
+        .filter(|e| only.is_none_or(|s| e.scope == s))
+        .collect();
+    let scope_name = |s: arks_config::ConfigScope| match s {
+        arks_config::ConfigScope::System => "system",
+        arks_config::ConfigScope::Global => "global",
+        arks_config::ConfigScope::Local => "local",
+        arks_config::ConfigScope::Env | arks_config::ConfigScope::Command => "command",
+    };
+    let origin_name = |e: &arks_config::ConfigEntry| match &e.origin {
+        Some(p) => {
+            let shown = p
+                .strip_prefix(&cwd)
+                .map(|r| r.to_path_buf())
+                .unwrap_or_else(|_| p.clone());
+            format!("file:{}", shown.display())
+        }
+        None => "command line:".to_string(),
+    };
+    let typed = |v: Option<&str>| -> CliResult<String> {
+        match ty.as_deref() {
+            Some("bool") => match v.map_or(Some(true), arks_config::parse_bool) {
+                Some(b) => Ok(b.to_string()),
+                None => Err(CliError::fatal(format!(
+                    "bad boolean config value '{}'",
+                    v.unwrap_or("")
+                ))),
+            },
+            Some("int") => {
+                let raw = v.unwrap_or("");
+                let (num, mult) = match raw.chars().last().map(|c| c.to_ascii_lowercase()) {
+                    Some('k') => (&raw[..raw.len() - 1], 1024i64),
+                    Some('m') => (&raw[..raw.len() - 1], 1024 * 1024),
+                    Some('g') => (&raw[..raw.len() - 1], 1024 * 1024 * 1024),
+                    _ => (raw, 1),
+                };
+                num.trim()
+                    .parse::<i64>()
+                    .map(|n| (n * mult).to_string())
+                    .map_err(|_| CliError::fatal(format!("bad numeric config value '{raw}'")))
+            }
+            _ => Ok(v.unwrap_or("").to_string()),
+        }
+    };
+    let prefix = |e: &arks_config::ConfigEntry| {
+        let mut p = String::new();
+        if scope_col {
+            p.push_str(scope_name(e.scope));
+            p.push('\t');
+        }
+        if origin {
+            p.push_str(&origin_name(e));
+            p.push('\t');
+        }
+        p
+    };
+    let mut out = Vec::new();
+    match op {
+        "list" => {
+            for e in &entries {
+                let line = match (&e.value, name_only) {
+                    (_, true) | (None, _) => e.key.clone(),
+                    (Some(v), false) => format!("{}={v}", e.key),
+                };
+                out.push(format!("{}{line}", prefix(e)));
+            }
+            for l in &out {
+                println!("{l}");
+            }
+            return Ok(Some(()));
+        }
+        "get-regexp" => {
+            let re = pos.first().ok_or_else(|| {
+                CliError::Usage("config --get-regexp <regex> [<value-regex>]".into())
+            })?;
+            let key_re = crate::cmd::bre::Bre::with_mode(re, false, true);
+            let val_re = pos
+                .get(1)
+                .map(|v| crate::cmd::bre::Bre::with_mode(v, false, true));
+            for e in &entries {
+                if !key_re.is_match(e.key.as_bytes()) {
+                    continue;
+                }
+                if let Some(vr) = &val_re {
+                    if !vr.is_match(e.value.as_deref().unwrap_or("").as_bytes()) {
+                        continue;
+                    }
+                }
+                let line = if name_only || (e.value.is_none() && ty.is_none()) {
+                    e.key.clone()
+                } else {
+                    format!("{} {}", e.key, typed(e.value.as_deref())?)
+                };
+                out.push(format!("{}{line}", prefix(e)));
+            }
+        }
+        _ => {
+            let key = pos
+                .first()
+                .ok_or_else(|| CliError::Usage("config --get <key>".into()))?;
+            let want = normalize_query_key(key);
+            let hits: Vec<&&arks_config::ConfigEntry> =
+                entries.iter().filter(|e| e.key == want).collect();
+            let picked: Vec<&&arks_config::ConfigEntry> = if op == "get-all" {
+                hits
+            } else {
+                hits.last().into_iter().copied().collect()
+            };
+            for e in picked {
+                out.push(format!("{}{}", prefix(e), typed(e.value.as_deref())?));
+            }
+            if out.is_empty() {
+                if let Some(d) = &default {
+                    out.push(typed(Some(d))?);
+                }
+            }
+        }
+    }
+    if out.is_empty() {
+        return Err(CliError::silent(1));
+    }
+    for l in &out {
+        println!("{l}");
+    }
+    Ok(Some(()))
+}
+
+/// `section.sub.name` with section and name lower-cased (subsection kept).
+fn normalize_query_key(key: &str) -> String {
+    let first = key.find('.');
+    let last = key.rfind('.');
+    match (first, last) {
+        (Some(f), Some(l)) if f != l => format!(
+            "{}{}{}",
+            key[..f].to_ascii_lowercase(),
+            &key[f..l],
+            key[l..].to_ascii_lowercase()
+        ),
+        _ => key.to_ascii_lowercase(),
     }
 }
 

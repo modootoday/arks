@@ -20,6 +20,8 @@ pub struct ConfigEntry {
     pub key: String,
     pub value: Option<String>,
     pub scope: ConfigScope,
+    /// File the entry was read from (`None` for environment / command line).
+    pub origin: Option<PathBuf>,
 }
 
 /// Ordered entries; later entries override earlier ones for single-valued reads.
@@ -90,6 +92,7 @@ impl ConfigSet {
             key: normalize_key(&key),
             value,
             scope,
+            origin: None,
         });
     }
 
@@ -123,6 +126,7 @@ impl ConfigSet {
                 key: e.key,
                 value: e.value,
                 scope,
+                origin: Some(path.to_path_buf()),
             });
         }
         Ok(())
