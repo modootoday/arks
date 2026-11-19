@@ -34,6 +34,7 @@ pub mod notes;
 pub mod patch;
 pub mod plumbing;
 pub mod range_diff;
+pub mod raw_diff;
 pub mod remote;
 pub mod remote_local;
 pub mod replace;
@@ -80,12 +81,12 @@ pub use log_cmd::{cmd_log, cmd_show};
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
-    cmd_credential_store, cmd_diagnose, cmd_diff_files, cmd_diff_index, cmd_fmt_merge_msg,
-    cmd_for_each_repo, cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_ls_remote,
-    cmd_mailinfo, cmd_mailsplit, cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree,
-    cmd_pack_redundant, cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_request_pull, cmd_shell,
-    cmd_show_branch, cmd_show_index, cmd_stripspace, cmd_unpack_file, cmd_unpack_objects,
-    cmd_upload_archive, cmd_var, cmd_verify_pack,
+    cmd_credential_store, cmd_diagnose, cmd_fmt_merge_msg, cmd_for_each_repo,
+    cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_ls_remote, cmd_mailinfo,
+    cmd_mailsplit, cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant,
+    cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_request_pull, cmd_shell, cmd_show_branch,
+    cmd_show_index, cmd_stripspace, cmd_unpack_file, cmd_unpack_objects, cmd_upload_archive,
+    cmd_var, cmd_verify_pack,
 };
 pub use matrix_rest::{
     cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_fetch_pack, cmd_http_fetch,
@@ -95,11 +96,12 @@ pub use merge::{cmd_merge, cmd_pull};
 pub use notes::cmd_notes;
 pub use patch::{cmd_am, cmd_format_patch};
 pub use plumbing::{
-    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree, cmd_index_pack,
-    cmd_ls_files, cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree,
-    cmd_rev_list, cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
+    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_ls_files,
+    cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_rev_list,
+    cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
 pub use range_diff::cmd_range_diff;
+pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
 pub use remote::{cmd_clone, cmd_fetch, cmd_push, cmd_remote};
 pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};

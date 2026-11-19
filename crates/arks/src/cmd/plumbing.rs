@@ -942,52 +942,6 @@ pub fn cmd_read_tree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: two trees; `--name-status`.
-    refuse_unknown_flags(args, &["--name-status", "-r"])?;
-    let name_status = args.iter().any(|a| a == "--name-status");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 2 {
-        return Err(CliError::Usage(
-            "diff-tree [--name-status] <tree-ish> <tree-ish>".into(),
-        ));
-    }
-    let repo = open_repo()?;
-    let a = tree_map(&repo, &resolve_rev(&repo, positional[0])?)?;
-    let b = tree_map(&repo, &resolve_rev(&repo, positional[1])?)?;
-    let mut keys: Vec<_> = a.keys().chain(b.keys()).cloned().collect();
-    keys.sort();
-    keys.dedup();
-    for k in keys {
-        match (a.get(&k), b.get(&k)) {
-            (Some(x), Some(y)) if x == y => {}
-            (None, Some(_)) => {
-                if name_status {
-                    println!("A\t{k}");
-                } else {
-                    println!("A {k}");
-                }
-            }
-            (Some(_), None) => {
-                if name_status {
-                    println!("D\t{k}");
-                } else {
-                    println!("D {k}");
-                }
-            }
-            (Some(_), Some(_)) => {
-                if name_status {
-                    println!("M\t{k}");
-                } else {
-                    println!("M {k}");
-                }
-            }
-            (None, None) => {}
-        }
-    }
-    Ok(())
-}
-
 /// `update-index --refresh`: re-read stat data for entries whose content
 /// still matches; print `<path>: needs update` (exit 1) for the others.
 /// Cite: https://git-scm.com/docs/git-update-index#Documentation/git-update-index.txt---refresh
@@ -1089,30 +1043,6 @@ pub(crate) fn flatten_tree_to_index(
         });
     }
     Ok(())
-}
-
-fn tree_map(
-    repo: &arks_repo::Repository,
-    rev: &Oid,
-) -> CliResult<std::collections::HashMap<String, Oid>> {
-    let obj = repo.get_object(rev)?;
-    let tree_oid = match obj.kind {
-        ObjectKind::Tree => *rev,
-        ObjectKind::Commit => Commit::decode(&obj.payload)?.tree,
-        other => {
-            return Err(CliError::Msg(format!(
-                "diff-tree: {} not a tree-ish",
-                other.as_str()
-            )));
-        }
-    };
-    let mut map = std::collections::HashMap::new();
-    let mut entries = Vec::new();
-    flatten_tree_to_index(repo, &tree_oid, "", &mut entries)?;
-    for e in entries {
-        map.insert(e.path, e.oid);
-    }
-    Ok(map)
 }
 
 pub fn cmd_pack_objects(args: &[String]) -> CliResult<()> {

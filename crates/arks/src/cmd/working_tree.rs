@@ -408,42 +408,6 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-pub(crate) fn print_maps_summary(
-    a: &HashMap<String, Oid>,
-    b: &HashMap<String, Oid>,
-    name_only: bool,
-    name_status: bool,
-    stat: bool,
-) -> CliResult<()> {
-    let mut keys: Vec<_> = a.keys().chain(b.keys()).cloned().collect();
-    keys.sort();
-    keys.dedup();
-    let mut n = 0usize;
-    for k in keys {
-        let left = a.get(&k);
-        let right = b.get(&k);
-        let status = match (left, right) {
-            (Some(x), Some(y)) if x == y => continue,
-            (None, Some(_)) => "A",
-            (Some(_), None) => "D",
-            (Some(_), Some(_)) => "M",
-            (None, None) => continue,
-        };
-        n += 1;
-        if name_only {
-            println!("{k}");
-        } else if name_status {
-            println!("{status}\t{k}");
-        } else if stat {
-            println!(" {k} | 1 +");
-        }
-    }
-    if stat && n > 0 {
-        println!(" {n} files changed");
-    }
-    Ok(())
-}
-
 pub fn cmd_rm(args: &[String]) -> CliResult<()> {
     // git-rm: `--cached`, `-r`, `-f`, `-q`, `-n`, directory pathspecs, the
     // up-to-date safety checks, and `rm '<path>'` output per removed entry.
@@ -879,51 +843,4 @@ fn worktree_map(repo: &Repository, work: &Path) -> CliResult<HashMap<String, Oid
         out.insert(e.path.clone(), obj.oid(repo.object_format())?);
     }
     Ok(out)
-}
-
-pub(crate) fn print_maps_diff(
-    repo: &Repository,
-    a: &HashMap<String, Oid>,
-    b: &HashMap<String, Oid>,
-) -> CliResult<()> {
-    // Pf4-1: BufWriter cuts syscall tax on bulk `diff --cached` (G19 DIFF hotspot).
-    let mut out = io::BufWriter::with_capacity(256 * 1024, io::stdout().lock());
-    let mut keys: HashSet<&String> = a.keys().collect();
-    keys.extend(b.keys());
-    let mut keys: Vec<_> = keys.into_iter().collect();
-    keys.sort();
-    for k in keys {
-        let ao = a.get(k);
-        let bo = b.get(k);
-        if ao == bo {
-            continue;
-        }
-        let ap = match ao {
-            Some(o) => Some(repo.get_object(o)?.payload),
-            None => None,
-        };
-        let bp = match bo {
-            Some(o) => Some(repo.get_object(o)?.payload),
-            None => None,
-        };
-        print_unified_to(
-            &mut out,
-            repo.object_format(),
-            k,
-            ap.as_deref(),
-            bp.as_deref(),
-        )?;
-    }
-    out.flush()?;
-    Ok(())
-}
-
-fn print_unified_to(
-    out: &mut impl Write,
-    format: arks_store::ObjectFormat,
-    path: &str,
-    old: Option<&[u8]>,
-    new: Option<&[u8]>,
-) -> CliResult<()> {
-    crate::cmd::unified_diff::write_file_patch(out, format, path, old, new)
 }

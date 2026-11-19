@@ -2,10 +2,9 @@
 //!
 //! Cite: pin git 2.39.5 man pages; survey [[research:root/20261111034805]].
 
-use crate::cmd::shared::{resolve_rev, tree_blob_map};
-use crate::cmd::working_tree::{cmd_diff, print_maps_diff, print_maps_summary};
+use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree};
+use crate::util::{open_repo, refuse_unknown_flags, work_tree};
 use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
 use arks_repo::Repository;
@@ -535,46 +534,6 @@ pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
     let oid = repo.store_mut().put(format, &obj)?;
     println!("{}", oid.to_hex());
     Ok(())
-}
-
-/// `arks diff-files` — worktree vs index.
-pub fn cmd_diff_files(args: &[String]) -> CliResult<()> {
-    let mut forwarded = Vec::new();
-    for a in args {
-        if a == "--cached" || a == "--staged" {
-            return Err(CliError::Usage(
-                "diff-files: use diff-index --cached for index vs tree".into(),
-            ));
-        }
-        forwarded.push(a.clone());
-    }
-    cmd_diff(&forwarded)
-}
-
-/// `arks diff-index [--cached] <tree-ish>`
-pub fn cmd_diff_index(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(
-        args,
-        &["--cached", "--name-only", "--name-status", "--stat"],
-    )?;
-    let name_only = args.iter().any(|a| a == "--name-only");
-    let name_status = args.iter().any(|a| a == "--name-status");
-    let stat = args.iter().any(|a| a == "--stat");
-    let treeish = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("diff-index [--cached] <tree-ish>".into()))?;
-    let repo = open_repo()?;
-    let tree_map = tree_blob_map(&repo, &resolve_rev(&repo, treeish)?)?;
-    let index = read_index(&repo)?;
-    let mut idx_map = std::collections::HashMap::new();
-    for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        idx_map.insert(e.path.clone(), e.oid);
-    }
-    if name_only || name_status || stat {
-        return print_maps_summary(&tree_map, &idx_map, name_only, name_status, stat);
-    }
-    print_maps_diff(&repo, &tree_map, &idx_map)
 }
 
 /// `arks var [-l] <variable>`
