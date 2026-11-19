@@ -4,8 +4,11 @@
 //!
 //! Primary: <https://git-scm.com/docs/git-branch>.
 //!
-//! Partial: `--sort`, `--format`, `--column`, `-c` (copy) and setting
-//! upstreams (`-u`, `--track`) are not claimed.
+//! `-c`/`-C` copy a branch (ref + reflog); `--sort=[-]<key>` orders the
+//! list by `refname`, `committerdate`, `authordate` or `objectname`.
+//!
+//! Partial: `--format`, `--column` and setting upstreams (`-u`, `--track`)
+//! are not claimed.
 
 use crate::cmd::branch::branch_ref;
 use crate::cmd::shared::{abbrev_hex, is_ancestor, resolve_rev};
@@ -99,12 +102,14 @@ struct ListOpts {
     no_merged: Option<Oid>,
     contains: Option<Oid>,
     no_contains: Option<Oid>,
+    sort: Option<String>,
 }
 
 pub fn cmd_branch(args: &[String]) -> CliResult<()> {
-    let args = crate::util::split_short_bundles(args, "dDmMarvlfq", "");
+    let args = crate::util::split_short_bundles(args, "dDmMcCarvlfq", "");
     let mut delete = 0u8;
     let mut rename = false;
+    let mut copy = false;
     let mut force = false;
     let mut quiet = false;
     let mut list = false;
@@ -118,6 +123,7 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
         no_merged: None,
         contains: None,
         no_contains: None,
+        sort: None,
     };
     let mut positional: Vec<String> = Vec::new();
     // Filters take an optional commit argument (default HEAD).
@@ -152,6 +158,11 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
                 rename = true;
                 force = true;
             }
+            "-c" | "--copy" => copy = true,
+            "-C" => {
+                copy = true;
+                force = true;
+            }
             "-f" | "--force" => force = true,
             "-q" | "--quiet" => quiet = true,
             "-a" | "--all" => lo.all = true,
@@ -184,6 +195,10 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
                         handled = true;
                     }
                 }
+                if let Some(v) = x.strip_prefix("--sort=") {
+                    lo.sort = Some(v.to_string());
+                    handled = true;
+                }
                 if !handled {
                     return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
                 }
@@ -203,8 +218,8 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
     if delete > 0 {
         return delete_branches(&positional, delete == 2 || force, lo.remotes, quiet);
     }
-    if rename {
-        return rename_branch(&positional, force);
+    if rename || copy {
+        return rename_branch(&positional, force, copy);
     }
     if list || positional.is_empty() {
         lo.patterns = positional;
@@ -259,6 +274,40 @@ fn list_branches(repo: &Repository, o: &ListOpts) -> CliResult<()> {
                 _ => None,
             };
             rows.push((shown, oid, false, None, sym));
+        }
+    }
+    if let Some(key) = &o.sort {
+        let (desc, key) = match key.strip_prefix('-') {
+            Some(k) => (true, k),
+            None => (false, key.as_str()),
+        };
+        let date = |oid: &Oid, author: bool| -> i64 {
+            crate::cmd::log_format::read_commit(repo, oid)
+                .map(|c| {
+                    if author {
+                        c.author.timestamp
+                    } else {
+                        c.committer.timestamp
+                    }
+                })
+                .unwrap_or(0)
+        };
+        // Detached HEAD row stays first; ties keep refname order (stable sort).
+        let detached = rows.first().is_some_and(|r| r.0.starts_with('('));
+        let tail = &mut rows[usize::from(detached)..];
+        match key {
+            "refname" => tail.sort_by(|a, b| a.0.cmp(&b.0)),
+            "committerdate" | "creatordate" => tail.sort_by_key(|r| date(&r.1, false)),
+            "authordate" => tail.sort_by_key(|r| date(&r.1, true)),
+            "objectname" => tail.sort_by_key(|r| r.1.to_hex()),
+            other => {
+                return Err(CliError::NotImplemented(format!(
+                    "branch --sort={other} not claimed"
+                )));
+            }
+        }
+        if desc {
+            tail.reverse();
         }
     }
     let mut kept = Vec::new();
@@ -418,7 +467,9 @@ fn upstream_oid(repo: &Repository, branch: &str) -> Option<Oid> {
     repo.refs().resolve(&full).ok()
 }
 
-fn rename_branch(pos: &[String], force: bool) -> CliResult<()> {
+/// `-m`/`-M` rename, or with `copy` the `-c`/`-C` copy (old branch, HEAD
+/// and the old reflog stay; the new branch gets a copy of the reflog).
+fn rename_branch(pos: &[String], force: bool, copy: bool) -> CliResult<()> {
     let mut repo = open_repo()?;
     let cur = match repo.head_target()? {
         RefTarget::Symbolic(s) => Some(s),
@@ -427,7 +478,11 @@ fn rename_branch(pos: &[String], force: bool) -> CliResult<()> {
     let (old, new) = match pos {
         [new] => (
             cur.clone().ok_or_else(|| {
-                CliError::fatal("cannot rename the current branch while not on any")
+                CliError::fatal(if copy {
+                    "cannot copy the current branch while not on any"
+                } else {
+                    "cannot rename the current branch while not on any"
+                })
             })?,
             branch_ref(new),
         ),
@@ -443,7 +498,7 @@ fn rename_branch(pos: &[String], force: bool) -> CliResult<()> {
     let old_short = old.trim_start_matches("refs/heads/").to_string();
     let oid = match repo.refs().resolve(&old) {
         Ok(o) => o,
-        Err(_) if cur.as_deref() == Some(old.as_str()) => {
+        Err(_) if cur.as_deref() == Some(old.as_str()) && !copy => {
             // Unborn current branch: only HEAD moves.
             repo.refs_mut().set_symbolic("HEAD", &new)?;
             return Ok(());
@@ -458,6 +513,16 @@ fn rename_branch(pos: &[String], force: bool) -> CliResult<()> {
         )));
     }
     repo.refs_mut().update(&new, &oid, None)?;
+    if copy {
+        let logs = repo.common_dir().join("logs");
+        if old != new && logs.join(&old).is_file() {
+            if let Some(parent) = logs.join(&new).parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            let _ = std::fs::copy(logs.join(&old), logs.join(&new));
+        }
+        return Ok(());
+    }
     if old != new {
         repo.refs_mut().delete(&old, Some(&oid))?;
         let logs = repo.common_dir().join("logs");
