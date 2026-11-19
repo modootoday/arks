@@ -1304,7 +1304,14 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
 /// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,
 /// ` Author:` when it differs from the committer, ` Date:` for amend, then the
 /// shortstat line and `create mode` / `delete mode` lines.
-fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult<()> {
+/// git `print_commit_summary`; `show_date` = SUMMARY_SHOW_AUTHOR_DATE (amend,
+/// sequencer commits).
+pub(crate) fn print_commit_summary(
+    repo: &Repository,
+    coid: &Oid,
+    show_date: bool,
+) -> CliResult<()> {
+    let amend = show_date;
     use crate::cmd::switch_tree::commit_files;
     use crate::cmd::unified_diff::{StatRow, shortstat_line, stat_change};
     let c = crate::cmd::log_format::read_commit(repo, coid)?;
@@ -1319,7 +1326,7 @@ fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult
     };
     let mut out = format!(
         "[{label}{root} {}] {}\n",
-        &coid.to_hex()[..7],
+        crate::cmd::shared::abbrev_hex(repo, coid, 7),
         crate::cmd::log_format::subject_line(&c.message)
     );
     if (c.author.name.as_str(), c.author.email.as_str())

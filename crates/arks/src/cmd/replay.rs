@@ -12,8 +12,8 @@
 //! `.spec/sot/multi-agent-git-concurrency-scenarios.sot.md`.
 
 use crate::cmd::shared::{
-    commit_signature, committer_signature, current_branch_name, flatten_tree, head_blob_map,
-    index_stat_matches, resolve_rev,
+    commit_signature, committer_signature, flatten_tree, head_blob_map, index_stat_matches,
+    resolve_rev,
 };
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
@@ -45,7 +45,7 @@ pub fn cmd_cherry_pick(args: &[String]) -> CliResult<()> {
         refuse_unknown_flags(args, &["--abort"])?;
         return cherry_pick_abort();
     }
-    refuse_unknown_flags(args, &["--no-commit", "-n"])?;
+    refuse_unknown_flags(args, &["--no-commit", "-n", "--no-edit", "--ff"])?;
     let no_commit = args.iter().any(|a| a == "--no-commit" || a == "-n");
     let rev = one_rev(args, "cherry-pick <commit>|A..B")?;
     let repo = open_repo()?;
@@ -70,7 +70,7 @@ pub fn cmd_cherry_pick(args: &[String]) -> CliResult<()> {
                     return Err(e);
                 }
                 clear_sequencer_state()?;
-                return Err(e);
+                return Err(precheck_error(e, "cherry-pick"));
             }
         }
     }
@@ -78,8 +78,46 @@ pub fn cmd_cherry_pick(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
+/// git sequencer refusal shape for a dirty index / work tree before
+/// cherry-pick or revert (exit 128). Partial: arks refuses any dirty tracked
+/// path, git only paths the picked commit touches.
+/// Cite: https://git-scm.com/docs/git-cherry-pick, https://git-scm.com/docs/git-revert
+fn precheck_error(e: CliError, op: &str) -> CliError {
+    let CliError::Msg(m) = &e else {
+        return e;
+    };
+    if m.contains("index does not match HEAD") || m.contains("unmerged entries") {
+        return CliError::Exit(
+            128,
+            format!(
+                "error: your local changes would be overwritten by {op}.\n\
+                 hint: commit your changes or stash them to proceed.\n\
+                 fatal: {op} failed"
+            ),
+        );
+    }
+    if let Some(path) = m
+        .strip_prefix("worktree path '")
+        .and_then(|r| r.split_once("' is dirty"))
+        .map(|(p, _)| p.to_string())
+    {
+        return CliError::Exit(
+            128,
+            format!(
+                "error: Your local changes to the following files would be overwritten by merge:\n\
+                 \t{path}\n\
+                 Please commit your changes or stash them before you merge.\n\
+                 Aborting\n\
+                 fatal: {op} failed"
+            ),
+        );
+    }
+    e
+}
+
 pub fn cmd_revert(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    // `--no-edit` accepted: arks never opens an editor for the revert message.
+    refuse_unknown_flags(args, &["--no-edit"])?;
     let rev = one_rev(args, "revert <commit>|A..B")?;
     let repo = open_repo()?;
     let commits = resolve_pick_list(&repo, rev)?;
@@ -92,7 +130,7 @@ pub fn cmd_revert(args: &[String]) -> CliResult<()> {
     drop(repo);
     for oid in &commits {
         let repo = open_repo()?;
-        let head_map = ensure_clean(&repo)?;
+        let head_map = ensure_clean(&repo).map_err(|e| precheck_error(e, "revert"))?;
         let commit = read_commit(&repo, oid)?;
         if commit.parents.len() > 1 {
             return Err(CliError::NotImplemented(
@@ -106,7 +144,7 @@ pub fn cmd_revert(args: &[String]) -> CliResult<()> {
             oid.to_hex()
         );
         let author = commit_signature()?;
-        let committer = author.clone();
+        let committer = committer_signature()?;
         drop(repo);
         apply_checked(&head_map, &deltas, message, author, committer)?;
     }
@@ -1056,8 +1094,8 @@ pub(crate) fn commit_tree(
     drop(repo);
     materialize_tree_only(files)?;
     let repo = open_repo()?;
-    let label = current_branch_name(&repo)?;
-    println!("[{label}] {}", oid.to_hex());
+    // git sequencer commit summary (`[branch abbrev] subject`, Author/Date, stat).
+    crate::cmd::core::print_commit_summary(&repo, &oid, true)?;
     Ok(oid)
 }
 
