@@ -45,7 +45,7 @@ Authoritative leaves + flags depth: matrix CSV. Invoked as `arks <group> …` (n
 | Group | Role | Notes |
 |-------|------|-------|
 | `auth` | login/logout/status/token/refresh (+ later switch) | No `setup-git`; ≠ credential helpers |
-| `pr` | create/list/view/diff/edit/close/reopen/comment/merge/ready/review/… + `checkout` | `co` alias; `checks` = later (needs an arks-owned status primitive) |
+| `pr` | create/list/view/diff/edit/close/reopen/comment/merge/ready/review/… + `checkout` | `co` alias; `checks` = later (arks-owned commit status) |
 | `issue` | create/list/view/edit/close/reopen/comment/… | artifact/develop = later |
 | `release` | create/list/view/upload/download/edit/delete/… | verify* = later |
 | `repo` | forge create/list/view/fork/… **and** git skew forms | **Overlap** under `arks`: git0→gh1 parse; unified output ([[sot:root/arks-cli-personality-factory]]) |
@@ -61,8 +61,8 @@ Authoritative leaves + flags depth: matrix CSV. Invoked as `arks <group> …` (n
 
 ### Later / out-of-scope / transitional
 
-7. **Later:** `project`, `discussion`, `gist`, `browse`, `ssh-key`, `gpg-key`, `pr checks`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
-8. **Out-of-scope:** `extension`, `copilot`, `skill`, `agent-task`, `licenses`, `preview`, `auth setup-git`, and GitHub-platform-only groups `run`, `workflow`, `cache`, `secret`, `variable`, `ruleset`, `attestation`, `codespace` — see matrix and [[adr:root/20261119230000]].
+7. **Later (in scope):** `project`, `discussion`, `gist`, `browse`, `ssh-key`, `gpg-key`, `ruleset`/`rs`, `repo gitignore|license|autolink|deploy-key`, `pr checks`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
+8. **Out-of-scope:** `extension`, `copilot`, `skill`, `agent-task`, `licenses`, `preview`, `auth setup-git`, and GitHub-platform-only groups `run`, `workflow`, `cache`, `secret`, `variable`, `attestation`, `codespace` — see matrix and [[adr:root/20261119230000]].
 9. **Transitional:** `arks hub …` forwards to flat leaves; `arks hub serve` / `hub listen` → `arks serve` forge module ([[sot:root/arks-self-host-server]]). Optional top-level `milestone`; `pr review` remains v1.
 
 ### Name hygiene vs core Git commands

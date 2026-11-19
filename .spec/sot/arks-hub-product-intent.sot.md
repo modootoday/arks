@@ -69,7 +69,7 @@ Matrix rows are **surface** targets for humans. Implementing a row by shelling t
 11. **`credential*` vs `auth`:** git credential helpers remain unrelated to `arks auth` (forge tokens) — not an OverlapFacade noun.
 12. **`repo`:** one top-level `arks repo` under OverlapFacade / Registry overlap mark — Git-applicable forms (e.g. skew `info`) rank 0; forge `create`/`list`/`view`/`fork`/… rank 1 fallthrough; unified render when both apply. Do not invent a second top-level `repository` unless dispatch fails review.
 13. **Peer personalities:** `ARKS_PERSONALITY=git|gh` / argv0 alias stay peer-pure (no unified output/exit). CI SHOULD use those for drop-in.
-14. **Safe exclusive flat leaves (no Git top-level peer):** `auth`, `pr`, `issue`, `release`, `label`, `run`, `workflow`, `search`, `api`, `org`, `alias`, `completion`, `browse`, `gist`, `discussion`, `project`, `ssh-key`, `gpg-key`, `ruleset`, `attestation`, `codespace`, `secret`, `variable`, `cache` (Actions — ≠ `credential-cache`), `co` (alias of `pr checkout` only; document vs user `checkout` aliases).
+14. **Safe exclusive flat leaves (no Git top-level peer):** `auth`, `pr`, `issue`, `release`, `label`, `search`, `api`, `org`, `alias`, `completion`, `browse`, `gist`, `discussion`, `project`, `ssh-key`, `gpg-key`, `ruleset`, `co` (alias of `pr checkout` only; document vs user `checkout` aliases).
 15. **`arks auth` ≠ credential helpers.** Forge login/token only. Git remote auth stays `credential` / Basic / SSH keys.
 16. **Transitional:** `arks hub <args…>` MAY rewrite to flat `arks <args…>` (and `hub serve` → `arks serve` forge module). MUST NOT remain the taught primary surface.
 
