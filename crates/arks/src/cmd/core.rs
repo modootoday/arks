@@ -884,6 +884,12 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             ("--untracked-files=no", "-uno"),
         ],
     );
+    let (args, after_dashdash): (Vec<String>, Vec<String>) =
+        match args.iter().position(|a| a == "--") {
+            Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
+            None => (args.clone(), Vec::new()),
+        };
+    let args = &args;
     refuse_unknown_flags(
         args,
         &[
@@ -929,7 +935,48 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     } else {
         Untracked::Normal
     };
-    let d = collect(&repo, mode)?;
+    let mut d = collect(&repo, mode)?;
+    // Pathspecs limit every section (git-status `[<pathspec>...]`).
+    let specs: Vec<String> = {
+        let work = work_tree(&repo)?;
+        args.iter()
+            .filter(|a| !a.starts_with('-'))
+            .chain(after_dashdash.iter())
+            .map(|p| pathspec_rel(&work, p))
+            .collect::<CliResult<_>>()?
+    };
+    if !specs.is_empty() {
+        let hit = |p: &str| {
+            let p = p.trim_end_matches('/');
+            specs.iter().any(|s| {
+                s.is_empty()
+                    || p == s
+                    || p.starts_with(&format!("{s}/"))
+                    || s.starts_with(&format!("{p}/"))
+            })
+        };
+        d.staged.retain(|k, _| hit(k));
+        d.unstaged.retain(|k, _| hit(k));
+        // A collapsed untracked directory shown through a deeper pathspec is
+        // listed at the pathspec instead.
+        let work = work_tree(&repo)?;
+        let mut shown = Vec::new();
+        for u in d.untracked.drain(..) {
+            if !hit(&u) {
+                continue;
+            }
+            match specs
+                .iter()
+                .find(|s| u.ends_with('/') && s.starts_with(u.as_str()) && s.len() > u.len())
+            {
+                Some(s) if work.join(s).is_dir() => shown.push(format!("{s}/")),
+                Some(s) => shown.push(s.clone()),
+                None => shown.push(u),
+            }
+        }
+        shown.dedup();
+        d.untracked = shown;
+    }
     let mut out = io::BufWriter::new(io::stdout().lock());
     if porcelain {
         // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
