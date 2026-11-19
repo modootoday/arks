@@ -122,32 +122,7 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         return Ok(());
     }
     if mode == "hard" {
-        // Prior tracked paths absent from the target are removed (incl. staged new files).
-        for p in &prior_paths {
-            if !target_files.contains_key(p) {
-                let abs = work.join(p);
-                if abs.is_file() || abs.is_symlink() {
-                    let _ = fs::remove_file(&abs);
-                }
-            }
-        }
-        // Zero-stat index forces a rewrite of every tracked file below.
-        let mut entries = Vec::new();
-        for (path, f) in &target_files {
-            let mut e = index_entry_for(&repo, path, f.oid, f.mode)?;
-            e.size = u32::MAX;
-            entries.push(e);
-        }
-        sort_entries(&mut entries);
-        write_index(
-            &repo,
-            &Index {
-                version: 2,
-                entries,
-                extensions: Vec::new(),
-            },
-        )?;
-        arks_remote::checkout_commit(&repo, &work, &target)?;
+        reset_tree_paths(&repo, &work, &target, &prior_paths)?;
         if !quiet {
             let subject = crate::cmd::log_format::read_commit(&repo, &target)
                 .map(|c| c.subject().to_string())
@@ -174,6 +149,81 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         print_unstaged(&repo, &work)?;
     }
     Ok(())
+}
+
+/// Make the index and working tree match `target` (the tree half of
+/// `reset --hard`): tracked paths absent from `target` are removed, every
+/// tracked file is rewritten, untracked files are left alone.
+pub(crate) fn hard_reset_tree(repo: &Repository, work: &Path, target: &Oid) -> CliResult<()> {
+    let prior_paths: Vec<String> = read_index(repo)
+        .map(|i| i.entries.into_iter().map(|e| e.path).collect())
+        .unwrap_or_default();
+    reset_tree_paths(repo, work, target, &prior_paths)
+}
+
+fn reset_tree_paths(
+    repo: &Repository,
+    work: &Path,
+    target: &Oid,
+    prior_paths: &[String],
+) -> CliResult<()> {
+    let target_files = crate::cmd::switch_tree::commit_files(repo, target)?;
+    // Prior tracked paths absent from the target are removed (incl. staged new files).
+    for p in prior_paths {
+        if !target_files.contains_key(p) {
+            let abs = work.join(p);
+            if abs.is_file() || abs.is_symlink() {
+                let _ = fs::remove_file(&abs);
+            }
+        }
+    }
+    // Zero-stat index forces a rewrite of every tracked file below.
+    let mut entries = Vec::new();
+    for (path, f) in &target_files {
+        let mut e = index_entry_for(repo, path, f.oid, f.mode)?;
+        e.size = u32::MAX;
+        entries.push(e);
+    }
+    sort_entries(&mut entries);
+    write_index(
+        repo,
+        &Index {
+            version: 2,
+            entries,
+            extensions: Vec::new(),
+        },
+    )?;
+    arks_remote::checkout_commit(repo, work, target)?;
+    Ok(())
+}
+
+/// Index entry for a working-tree file whose blob is `oid`, with stat data
+/// from `meta` (so later status reads take the stat fast path).
+pub(crate) fn stat_entry(path: &str, oid: Oid, meta: &fs::Metadata) -> IndexEntry {
+    let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec) = crate::cmd::shared::file_times(meta);
+    #[cfg(unix)]
+    let (dev, ino, uid, gid) = {
+        use std::os::unix::fs::MetadataExt;
+        (meta.dev() as u32, meta.ino() as u32, meta.uid(), meta.gid())
+    };
+    #[cfg(not(unix))]
+    let (dev, ino, uid, gid) = (0, 0, 0, 0);
+    IndexEntry {
+        ctime_sec,
+        ctime_nsec,
+        mtime_sec,
+        mtime_nsec,
+        dev,
+        ino,
+        mode: crate::cmd::shared::file_mode(meta),
+        uid,
+        gid,
+        size: meta.len().min(u32::MAX as u64) as u32,
+        oid,
+        flags: (path.len().min(0x0fff)) as u16,
+        flags_extended: None,
+        path: path.to_owned(),
+    }
 }
 
 /// Zero-stat index entry for a tree blob (stat refresh happens on later reads).
