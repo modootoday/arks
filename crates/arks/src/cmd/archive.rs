@@ -1,6 +1,6 @@
 //! Tar archive of a tree.
 
-use crate::cmd::shared::{commit_signature, resolve_rev};
+use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, RawObject};
@@ -286,8 +286,10 @@ pub fn write_annotated_tag(
     target: &Oid,
     message: &str,
 ) -> CliResult<Oid> {
-    let sig = commit_signature()?;
-    let payload = encode_tag_payload(target, "commit", name, &sig.format_line(), message);
+    // git-tag: the tagger is the committer identity; `type` names the target kind.
+    let sig = crate::cmd::shared::committer_signature()?;
+    let kind = repo.get_object(target)?.kind;
+    let payload = encode_tag_payload(target, kind.as_str(), name, &sig.format_line(), message);
     let obj = RawObject::new(ObjectKind::Tag, payload);
     let format = repo.object_format();
     let tag_oid = repo.store_mut().put(format, &obj)?;
