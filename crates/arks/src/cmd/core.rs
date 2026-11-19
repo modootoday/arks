@@ -1,8 +1,8 @@
 //! Core porcelain: init / objects / index / commit / log / show.
 
 use crate::cmd::shared::{
-    collect_untracked, commit_signature, committer_signature, current_branch_name, file_mode,
-    file_times, head_blob_map, index_stat_matches, resolve_rev,
+    collect_untracked, commit_signature, committer_signature, file_mode, file_times,
+    index_stat_matches, resolve_rev,
 };
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
@@ -870,110 +870,46 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let index_path = repo.index_path();
     let lock_before = arks_index::index_lock_path(&index_path);
     let had_lock = lock_before.is_file();
-    let work = work_tree(&repo)?;
-    let index = read_index(&repo)?;
-    let head_paths = head_blob_map(&repo)?;
-    let branch = current_branch_name(&repo)?;
-
-    let mut staged = Vec::new();
-    let mut modified = Vec::new();
-    let mut deleted = Vec::new();
-
-    for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        let abs = work.join(&e.path);
-        match head_paths.get(&e.path) {
-            None => staged.push(e.path.clone()),
-            Some(oid) if *oid != e.oid => staged.push(e.path.clone()),
-            Some(_) => {}
-        }
-        if !abs.is_file() {
-            deleted.push(e.path.clone());
-            continue;
-        }
-        // Skip re-hash when index stat cache matches (git ce_match_stat class).
-        let meta = fs::metadata(&abs)?;
-        if index_stat_matches(e, &meta) {
-            continue;
-        }
-        let bytes = fs::read(&abs)?;
-        let blob = RawObject::new(ObjectKind::Blob, bytes);
-        let oid = blob.oid(repo.object_format())?;
-        if oid != e.oid {
-            modified.push(e.path.clone());
-        }
-    }
-
-    let indexed: std::collections::HashSet<_> =
-        index.entries.iter().map(|e| e.path.clone()).collect();
-    let mut untracked = Vec::new();
-    if !untracked_no {
-        collect_untracked(&work, &work, &indexed, &mut untracked)?;
-    }
-    if !untracked_all {
-        untracked = collapse_untracked_dirs(&untracked, &indexed);
-    }
-
+    use crate::cmd::status_report::{Untracked, collect, write_long};
+    use std::io::Write as _;
+    let mode = if untracked_no {
+        Untracked::No
+    } else if untracked_all {
+        Untracked::All
+    } else {
+        Untracked::Normal
+    };
+    let d = collect(&repo, mode)?;
+    let mut out = io::BufWriter::new(io::stdout().lock());
     if porcelain {
         // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
         // X = index vs HEAD (A/M/D), Y = worktree vs index (M/D), sorted by path,
         // untracked (`??`) last.
         if show_branch {
-            println!("## {branch}");
+            match (&d.branch, d.initial) {
+                (Some(b), true) => writeln!(out, "## No commits yet on {b}")?,
+                (Some(b), false) => writeln!(out, "## {b}")?,
+                (None, _) => writeln!(out, "## HEAD (no branch)")?,
+            }
         }
-        let staged_deleted: Vec<String> = head_paths
-            .keys()
-            .filter(|p| !indexed.contains(*p))
-            .cloned()
-            .collect();
-        let mut tracked: std::collections::BTreeMap<String, (char, char)> =
+        let mut tracked: std::collections::BTreeMap<&String, (char, char)> =
             std::collections::BTreeMap::new();
-        for p in &staged {
-            let x = if head_paths.contains_key(p) { 'M' } else { 'A' };
-            tracked.entry(p.clone()).or_insert((' ', ' ')).0 = x;
+        for (p, c) in &d.staged {
+            tracked.entry(p).or_insert((' ', ' ')).0 = *c;
         }
-        for p in &staged_deleted {
-            tracked.entry(p.clone()).or_insert((' ', ' ')).0 = 'D';
-        }
-        for p in &modified {
-            tracked.entry(p.clone()).or_insert((' ', ' ')).1 = 'M';
-        }
-        for p in &deleted {
-            tracked.entry(p.clone()).or_insert((' ', ' ')).1 = 'D';
+        for (p, c) in &d.unstaged {
+            tracked.entry(p).or_insert((' ', ' ')).1 = *c;
         }
         for (p, (x, y)) in &tracked {
-            println!("{x}{y} {p}");
+            writeln!(out, "{x}{y} {p}")?;
         }
-        for p in &untracked {
-            println!("?? {p}");
+        for p in &d.untracked {
+            writeln!(out, "?? {p}")?;
         }
     } else {
-        println!("On branch {branch}");
-        if staged.is_empty() && modified.is_empty() && deleted.is_empty() && untracked.is_empty() {
-            println!("nothing to commit, working tree clean");
-        } else {
-            if !staged.is_empty() {
-                println!("Changes to be committed:");
-                for p in &staged {
-                    println!("\tnew file / modified: {p}");
-                }
-            }
-            if !modified.is_empty() || !deleted.is_empty() {
-                println!("Changes not staged for commit:");
-                for p in &modified {
-                    println!("\tmodified: {p}");
-                }
-                for p in &deleted {
-                    println!("\tdeleted: {p}");
-                }
-            }
-            if !untracked.is_empty() {
-                println!("Untracked files:");
-                for p in &untracked {
-                    println!("\t{p}");
-                }
-            }
-        }
+        write_long(&mut out, &d, mode)?;
     }
+    io::Write::flush(&mut out)?;
     // Honesty: status must not create optional index.lock (AGENT-006 / IDX-008 / IDX-002).
     if !had_lock && lock_before.is_file() {
         return Err(CliError::Msg(
@@ -986,7 +922,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
 
 /// `-unormal` (default): show a wholly untracked directory once as `dir/`
 /// (git-status `--untracked-files`).
-fn collapse_untracked_dirs(
+pub(crate) fn collapse_untracked_dirs(
     untracked: &[String],
     indexed: &std::collections::HashSet<String>,
 ) -> Vec<String> {

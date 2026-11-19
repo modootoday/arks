@@ -37,6 +37,7 @@ pub mod shared;
 pub mod sign;
 pub mod sparse_checkout;
 pub mod stash;
+pub mod status_report;
 pub mod submodule;
 pub mod switch_tree;
 pub mod tag;
