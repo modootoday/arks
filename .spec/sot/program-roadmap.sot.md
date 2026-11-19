@@ -142,7 +142,8 @@ Carrying tip class ≥ `1770102` + gap-classification research [[research:root/2
 | Exotic filters `object:type` / `combine:` / `sparse:oid=<hex>` | **Claimed** (**G6** + sparse:oid) | Parse/gate Claimed; [[adr:root/20261111031600]] |
 | Absolute SHA-1 collision immunity | **Non-goal / Hold forever** | Crypto Impossible; detect+refuse is the Claimed bar |
 | Full multi-device cloud-sync / hydration / LSM bypass | **Non-goal / Hold forever** | Advisory only |
-| CELIR ObjectStore / “faster than Git” / multi-writer warranty / GUI·scalar embed | **Hold forever** | CELIR index feature = ops/CI opt-in only; do not fake Claimed |
+| CELIR (any form) / “faster than Git” / multi-writer warranty / GUI·scalar embed | **Hold forever** | CELIR **not adopted** — M24 / G22–G25 Withdrawn ([[adr:root/20261119200000]]); do not fake Claimed |
+| Cloud agent drop-in (C-ladder, `arks` as `git` in hosted agent sessions) | **Partial (host advisory)** | [[sot:root/cloud-agent-dropin]]: proxy/CA, config identity, SSH signing, agent corpus **146/147** vs stock git; installed in hosted sessions from `main`; G42 Docker receipt pending; C8 hub Deferred / C7b remainder open |
 | Single release shape | **Normative** | Published CLI = **`arks` only**; `arks daemon` / `arks hub` via internal crates |
 | Operator one-word (“fully complete?”) | **PARTIAL** | FS_final **YES**; live G8 latency + **L9** + Hold-forever / trimmed rows remain |
 
