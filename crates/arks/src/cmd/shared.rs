@@ -28,8 +28,9 @@ pub(crate) fn tree_blob_map(repo: &Repository, rev_oid: &Oid) -> CliResult<HashM
     Ok(arks_repo::tree_blob_map(repo, rev_oid)?)
 }
 
+/// `ancestor` is reachable from `tip` through any parents (git-merge-base --is-ancestor).
 pub(crate) fn is_ancestor(repo: &Repository, ancestor: &Oid, tip: &Oid) -> CliResult<bool> {
-    Ok(arks_repo::is_ancestor_first_parent(repo, ancestor, tip)?)
+    Ok(ancestor == tip || arks_repo::ancestor_set(repo, *tip)?.contains(ancestor))
 }
 
 /// Resolve a revision per gitrevisions(7) (claimed subset): full or abbreviated
@@ -307,19 +308,109 @@ fn ident_signature(role: arks_config::IdentRole) -> CliResult<Signature> {
         arks_config::IdentRole::Author => "GIT_AUTHOR_DATE",
         arks_config::IdentRole::Committer => "GIT_COMMITTER_DATE",
     };
-    let timestamp = std::env::var(date_var)
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or_else(|| {
+    let (timestamp, timezone) = match std::env::var(date_var) {
+        Ok(v) if !v.trim().is_empty() => {
+            parse_git_date(&v).ok_or_else(|| CliError::Msg(format!("invalid date format: {v}")))?
+        }
+        _ => (
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .map(|d| d.as_secs() as i64)
-                .unwrap_or(0)
-        });
+                .unwrap_or(0),
+            "+0000".to_string(),
+        ),
+    };
     Ok(Signature {
         name: ident.name,
         email: ident.email,
         timestamp,
-        timezone: "+0000".into(),
+        timezone,
     })
+}
+
+/// git date forms (git-commit §DATE FORMATS, claimed subset): Git internal
+/// `<unix> <+hhmm>`, `@<unix> [<+hhmm>]`, bare `<unix>`, and ISO 8601
+/// `YYYY-MM-DD[T ]HH:MM[:SS][Z|<+hh:mm>|<+hhmm>]`.
+pub(crate) fn parse_git_date(v: &str) -> Option<(i64, String)> {
+    let v = v.trim();
+    let norm_tz = |tz: &str| -> Option<String> {
+        let tz = tz.replace(':', "");
+        if tz == "Z" {
+            return Some("+0000".into());
+        }
+        let ok = tz.len() == 5
+            && (tz.starts_with('+') || tz.starts_with('-'))
+            && tz[1..].bytes().all(|b| b.is_ascii_digit());
+        ok.then_some(tz)
+    };
+    let raw = v.strip_prefix('@').unwrap_or(v);
+    let mut parts = raw.split_whitespace();
+    if let Some(first) = parts.next() {
+        if let Ok(secs) = first.parse::<i64>() {
+            let tz = match parts.next() {
+                Some(t) => norm_tz(t)?,
+                None => "+0000".into(),
+            };
+            return Some((secs, tz));
+        }
+    }
+    // ISO 8601.
+    let (date, rest) = v.split_at(v.find(['T', ' '])?);
+    let rest = &rest[1..];
+    let mut d = date.split('-').map(|x| x.parse::<i64>().ok());
+    let (y, mo, dd) = (d.next()??, d.next()??, d.next()??);
+    let tz_at = rest.find(['Z', '+', '-', ' ']).unwrap_or(rest.len());
+    let (time, tz) = rest.split_at(tz_at);
+    let tz = tz.trim();
+    let mut t = time.split(':').map(|x| x.parse::<i64>().ok());
+    let (h, mi) = (t.next()??, t.next()??);
+    let sec = t.next().flatten().unwrap_or(0);
+    let tz = if tz.is_empty() {
+        "+0000".to_string()
+    } else {
+        norm_tz(tz)?
+    };
+    let off = {
+        let sign = if tz.starts_with('-') { -1 } else { 1 };
+        sign * (tz[1..3].parse::<i64>().ok()? * 3600 + tz[3..5].parse::<i64>().ok()? * 60)
+    };
+    // days_from_civil (Howard Hinnant).
+    let yy = if mo <= 2 { y - 1 } else { y };
+    let era = yy.div_euclid(400);
+    let yoe = yy - era * 400;
+    let mp = (mo + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + dd - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    Some((days * 86_400 + h * 3600 + mi * 60 + sec - off, tz))
+}
+
+#[cfg(test)]
+mod date_tests {
+    use super::parse_git_date;
+
+    #[test]
+    fn git_date_forms() {
+        assert_eq!(
+            parse_git_date("1700000000 +0000"),
+            Some((1_700_000_000, "+0000".into()))
+        );
+        assert_eq!(
+            parse_git_date("@1112911993 -0700"),
+            Some((1_112_911_993, "-0700".into()))
+        );
+        assert_eq!(
+            parse_git_date("1112911993"),
+            Some((1_112_911_993, "+0000".into()))
+        );
+        assert_eq!(
+            parse_git_date("2005-04-07T15:13:13-07:00"),
+            Some((1_112_911_993, "-0700".into()))
+        );
+        assert_eq!(
+            parse_git_date("2005-04-07 22:13:13Z"),
+            Some((1_112_911_993, "+0000".into()))
+        );
+        assert_eq!(parse_git_date("garbage"), None);
+    }
 }

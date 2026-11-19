@@ -1064,7 +1064,9 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
                 );
             }
         }
-        println!("[{}] {}", current_branch_name(&repo)?, coid.to_hex());
+        if !args.iter().any(|a| a == "-q") {
+            print_commit_summary(&repo, &coid, true)?;
+        }
         return Ok(());
     }
 
@@ -1131,7 +1133,92 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             );
         }
     }
-    println!("[{}] {}", current_branch_name(&repo)?, coid.to_hex());
+    if !args.iter().any(|a| a == "-q") {
+        print_commit_summary(&repo, &coid, false)?;
+    }
+    Ok(())
+}
+
+/// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,
+/// ` Author:` when it differs from the committer, ` Date:` for amend, then the
+/// shortstat line and `create mode` / `delete mode` lines.
+fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult<()> {
+    use crate::cmd::switch_tree::commit_files;
+    use crate::cmd::unified_diff::{StatRow, shortstat_line, stat_change};
+    let c = crate::cmd::log_format::read_commit(repo, coid)?;
+    let label = match repo.head_target()? {
+        RefTarget::Symbolic(s) => s.strip_prefix("refs/heads/").unwrap_or(&s).to_string(),
+        RefTarget::Direct(_) => "detached HEAD".to_string(),
+    };
+    let root = if c.parents.is_empty() {
+        " (root-commit)"
+    } else {
+        ""
+    };
+    let mut out = format!(
+        "[{label}{root} {}] {}\n",
+        &coid.to_hex()[..7],
+        crate::cmd::log_format::subject_line(&c.message)
+    );
+    if (c.author.name.as_str(), c.author.email.as_str())
+        != (c.committer.name.as_str(), c.committer.email.as_str())
+    {
+        out.push_str(&format!(
+            " Author: {} <{}>\n",
+            c.author.name, c.author.email
+        ));
+    }
+    if amend {
+        out.push_str(&format!(
+            " Date: {}\n",
+            crate::cmd::log_format::default_date(&c.author)
+        ));
+    }
+    let mine = commit_files(repo, coid)?;
+    let parent = match c.parents.first() {
+        Some(p) => commit_files(repo, p)?,
+        None => HashMap::new(),
+    };
+    let mut keys: Vec<&String> = mine.keys().chain(parent.keys()).collect();
+    keys.sort();
+    keys.dedup();
+    let mut rows = Vec::new();
+    let mut modes = Vec::new();
+    for k in keys {
+        let (a, b) = (parent.get(k), mine.get(k));
+        if a == b {
+            continue;
+        }
+        let ap = match a {
+            Some(f) => Some(repo.get_object(&f.oid)?.payload),
+            None => None,
+        };
+        let bp = match b {
+            Some(f) => Some(repo.get_object(&f.oid)?.payload),
+            None => None,
+        };
+        rows.push(StatRow {
+            path: k.clone(),
+            change: stat_change(ap.as_deref(), bp.as_deref()),
+        });
+        match (a, b) {
+            (None, Some(f)) => modes.push(format!(" create mode {:o} {k}", f.mode)),
+            (Some(f), None) => modes.push(format!(" delete mode {:o} {k}", f.mode)),
+            (Some(x), Some(y)) if x.mode != y.mode => {
+                modes.push(format!(" mode change {:o} => {:o} {k}", x.mode, y.mode))
+            }
+            _ => {}
+        }
+    }
+    if let Some(line) = shortstat_line(&rows) {
+        out.push_str(&line);
+        out.push('\n');
+    }
+    for m in modes {
+        out.push_str(&m);
+        out.push('\n');
+    }
+    print!("{out}");
     Ok(())
 }
 

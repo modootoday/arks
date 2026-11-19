@@ -1,15 +1,13 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
 use crate::cmd::branch::restore_paths;
-use crate::cmd::shared::{
-    collect_untracked, flatten_tree, head_blob_map, resolve_rev, tree_blob_map,
-};
+use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev, tree_blob_map};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
 };
 use arks_index::{Index, IndexEntry, sort_entries};
-use arks_object::{Commit, ObjectKind, RawObject};
+use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
@@ -44,20 +42,28 @@ pub fn cmd_restore(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_reset(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--soft", "--mixed", "--hard"])?;
-    let mode = if args.iter().any(|a| a == "--soft") {
+    // git-reset: `[--soft|--mixed|--hard] [<commit>]` and `[<tree-ish>] [--] <pathspec>...`.
+    // Cloud drop-in §O: pathspec form, detached HEAD, tree modes, git output lines.
+    let (opts, mut paths) = split_dashdash(args);
+    refuse_unknown_flags(&opts, &["--soft", "--mixed", "--hard", "-q", "--quiet"])?;
+    let quiet = opts.iter().any(|a| a == "-q" || a == "--quiet");
+    let mode = if opts.iter().any(|a| a == "--soft") {
         "soft"
-    } else if args.iter().any(|a| a == "--hard") {
+    } else if opts.iter().any(|a| a == "--hard") {
         "hard"
     } else {
         "mixed"
     };
-    let rev = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("HEAD");
     let mut repo = open_repo()?;
+    let positional: Vec<&String> = opts.iter().filter(|a| !a.starts_with('-')).collect();
+    let mut rev = "HEAD".to_string();
+    for (i, p) in positional.iter().enumerate() {
+        if i == 0 && resolve_rev(&repo, p).is_ok() {
+            rev = (*p).clone();
+        } else {
+            paths.push((*p).clone());
+        }
+    }
     // MISC-005 (M19 Cx-2): parallel reset --hard contends on index.lock.
     if mode != "soft" {
         let mut lock = repo.index_path().into_os_string();
@@ -69,46 +75,68 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
             ));
         }
     }
-    let target = resolve_rev(&repo, rev)?;
+    let target = resolve_rev(&repo, &rev)?;
+    let target_files = crate::cmd::switch_tree::commit_files(&repo, &target)?;
+    let work = work_tree(&repo)?;
+    if !paths.is_empty() {
+        if mode != "mixed" {
+            return Err(CliError::Msg(format!("Cannot do {mode} reset with paths.")));
+        }
+        let specs: Vec<String> = paths.iter().map(|p| pathspec(&work, p)).collect();
+        let mut index = read_index(&repo)?;
+        let mut kept: Vec<IndexEntry> = index
+            .entries
+            .drain(..)
+            .filter(|e| !path_matches(&e.path, &specs))
+            .collect();
+        for (path, f) in &target_files {
+            if path_matches(path, &specs) {
+                kept.push(index_entry_for(&repo, path, f.oid, f.mode)?);
+            }
+        }
+        sort_entries(&mut kept);
+        index.entries = kept;
+        index.extensions.clear();
+        write_index(&repo, &index)?;
+        if !quiet {
+            print_unstaged(&repo, &work)?;
+        }
+        return Ok(());
+    }
+    let prior_paths: Vec<String> = read_index(&repo)
+        .map(|i| i.entries.into_iter().map(|e| e.path).collect())
+        .unwrap_or_default();
+    let old = repo.head_oid().ok();
     match repo.head_target()? {
         RefTarget::Symbolic(name) => {
-            let old = repo.head_oid().ok();
             repo.refs_mut().update(&name, &target, old.as_ref())?;
         }
         RefTarget::Direct(_) => {
-            return Err(CliError::NotImplemented(
-                "reset: detached HEAD not claimed in Wave Pa".into(),
-            ));
+            repo.refs_mut().update("HEAD", &target, old.as_ref())?;
         }
+    }
+    if let Some(o) = old {
+        let _ = repo.refs_mut().update("ORIG_HEAD", &o, None);
     }
     if mode == "soft" {
         return Ok(());
     }
-    let obj = repo.get_object(&target)?;
-    let c = Commit::decode(&obj.payload)?;
-    if mode == "mixed" || mode == "hard" {
-        // Rebuild index from tree without necessarily rewriting worktree for mixed.
-        let mut map = HashMap::new();
-        flatten_tree(&repo, &c.tree, "", &mut map)?;
+    if mode == "hard" {
+        // Prior tracked paths absent from the target are removed (incl. staged new files).
+        for p in &prior_paths {
+            if !target_files.contains_key(p) {
+                let abs = work.join(p);
+                if abs.is_file() || abs.is_symlink() {
+                    let _ = fs::remove_file(&abs);
+                }
+            }
+        }
+        // Zero-stat index forces a rewrite of every tracked file below.
         let mut entries = Vec::new();
-        for (path, oid) in &map {
-            let blob = repo.get_object(oid)?;
-            entries.push(IndexEntry {
-                ctime_sec: 0,
-                ctime_nsec: 0,
-                mtime_sec: 0,
-                mtime_nsec: 0,
-                dev: 0,
-                ino: 0,
-                mode: 0o100644,
-                uid: 0,
-                gid: 0,
-                size: blob.payload.len().min(u32::MAX as usize) as u32,
-                oid: *oid,
-                flags: (path.len().min(0x0fff)) as u16,
-                flags_extended: None,
-                path: path.clone(),
-            });
+        for (path, f) in &target_files {
+            let mut e = index_entry_for(&repo, path, f.oid, f.mode)?;
+            e.size = u32::MAX;
+            entries.push(e);
         }
         sort_entries(&mut entries);
         write_index(
@@ -119,10 +147,81 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
                 extensions: Vec::new(),
             },
         )?;
-    }
-    if mode == "hard" {
-        let work = work_tree(&repo)?;
         arks_remote::checkout_commit(&repo, &work, &target)?;
+        if !quiet {
+            let subject = crate::cmd::log_format::read_commit(&repo, &target)
+                .map(|c| c.subject().to_string())
+                .unwrap_or_default();
+            println!("HEAD is now at {} {subject}", &target.to_hex()[..7]);
+        }
+        return Ok(());
+    }
+    // mixed: index from target tree (modes kept); worktree untouched.
+    let mut entries = Vec::new();
+    for (path, f) in &target_files {
+        entries.push(index_entry_for(&repo, path, f.oid, f.mode)?);
+    }
+    sort_entries(&mut entries);
+    write_index(
+        &repo,
+        &Index {
+            version: 2,
+            entries,
+            extensions: Vec::new(),
+        },
+    )?;
+    if !quiet {
+        print_unstaged(&repo, &work)?;
+    }
+    Ok(())
+}
+
+/// Zero-stat index entry for a tree blob (stat refresh happens on later reads).
+fn index_entry_for(repo: &Repository, path: &str, oid: Oid, mode: u32) -> CliResult<IndexEntry> {
+    let size = repo.get_object(&oid)?.payload.len().min(u32::MAX as usize) as u32;
+    Ok(IndexEntry {
+        ctime_sec: 0,
+        ctime_nsec: 0,
+        mtime_sec: 0,
+        mtime_nsec: 0,
+        dev: 0,
+        ino: 0,
+        mode,
+        uid: 0,
+        gid: 0,
+        size,
+        oid,
+        flags: (path.len().min(0x0fff)) as u16,
+        flags_extended: None,
+        path: path.to_owned(),
+    })
+}
+
+/// git-reset (mixed) report: `Unstaged changes after reset:` + `M`/`D` lines.
+fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
+    let index = read_index(repo)?;
+    let mut lines = Vec::new();
+    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        match fs::metadata(&abs) {
+            Err(_) => lines.push(format!("D\t{}", e.path)),
+            Ok(m) => {
+                if crate::cmd::shared::index_stat_matches(e, &m) {
+                    continue;
+                }
+                let oid =
+                    RawObject::new(ObjectKind::Blob, fs::read(&abs)?).oid(repo.object_format())?;
+                if oid != e.oid {
+                    lines.push(format!("M\t{}", e.path));
+                }
+            }
+        }
+    }
+    if !lines.is_empty() {
+        println!("Unstaged changes after reset:");
+        for l in lines {
+            println!("{l}");
+        }
     }
     Ok(())
 }

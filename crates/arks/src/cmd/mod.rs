@@ -33,6 +33,7 @@ pub mod server;
 pub mod shared;
 pub mod sign;
 pub mod sparse_checkout;
+pub mod switch_tree;
 pub mod stash;
 pub mod submodule;
 pub mod tag;

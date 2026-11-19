@@ -226,6 +226,26 @@ pub fn write_stat(out: &mut impl Write, rows: &[StatRow]) -> CliResult<()> {
             }
         }
     }
+    writeln!(out, "{}", summary_line(files, tot_ins, tot_del))?;
+    Ok(())
+}
+
+/// `--shortstat` line for the given rows (`None` when nothing changed).
+pub fn shortstat_line(rows: &[StatRow]) -> Option<String> {
+    if rows.is_empty() {
+        return None;
+    }
+    let (mut ins, mut del) = (0, 0);
+    for r in rows {
+        if let StatChange::Lines(i, d) = r.change {
+            ins += i;
+            del += d;
+        }
+    }
+    Some(summary_line(rows.len(), ins, del))
+}
+
+fn summary_line(files: usize, tot_ins: usize, tot_del: usize) -> String {
     let mut summary = format!(" {files} file{} changed", if files == 1 { "" } else { "s" });
     if tot_ins > 0 || tot_del == 0 {
         summary.push_str(&format!(
@@ -239,8 +259,7 @@ pub fn write_stat(out: &mut impl Write, rows: &[StatRow]) -> CliResult<()> {
             if tot_del == 1 { "" } else { "s" }
         ));
     }
-    writeln!(out, "{summary}")?;
-    Ok(())
+    summary
 }
 
 fn is_binary(b: &[u8]) -> bool {

@@ -193,17 +193,22 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
                 "a branch named '{name}' already exists"
             )));
         }
+        // Two-way switch first: refuse without moving refs when local changes conflict.
+        let carried = if head != Some(oid) {
+            let work = work_tree(&repo)?;
+            crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
+        } else {
+            Vec::new()
+        };
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        // Same commit: keep index + worktree (local changes carry over, as in git).
-        if head != Some(oid) {
-            let work = work_tree(&repo)?;
-            arks_remote::checkout_commit(&repo, &work, &oid)?;
+        for l in carried {
+            println!("{l}");
         }
         if existed {
-            println!("Switched to and reset branch '{name}'");
+            eprintln!("Switched to and reset branch '{name}'");
         } else {
-            println!("Switched to a new branch '{name}'");
+            eprintln!("Switched to a new branch '{name}'");
         }
         return Ok(());
     }
@@ -211,13 +216,7 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         if positional.len() != 1 {
             return Err(CliError::Usage("checkout --detach <commit>".into()));
         }
-        let mut repo = open_repo()?;
-        let oid = resolve_rev(&repo, positional[0])?;
-        repo.refs_mut().update("HEAD", &oid, None)?;
-        let work = work_tree(&repo)?;
-        arks_remote::checkout_commit(&repo, &work, &oid)?;
-        println!("HEAD is now at {}", &oid.to_hex()[..7]);
-        return Ok(());
+        return detach_to(positional[0]);
     }
     if positional.len() != 1 {
         return Err(CliError::Usage(
@@ -252,7 +251,16 @@ fn checkout_orphan(name: &str, start_point: Option<&str>) -> CliResult<()> {
 
 pub fn cmd_switch(args: &[String]) -> CliResult<()> {
     // M16 Sy-1/Sy-2: `--detach` + `--orphan` claimed (git-switch). Cite: https://git-scm.com/docs/git-switch/2.39.0
-    refuse_unknown_flags(args, &["-c", "-C", "--detach", "--orphan"])?;
+    let args = &crate::util::alias_flags(
+        crate::util::split_short_bundles(args, "qd", "cC"),
+        &[
+            ("--create", "-c"),
+            ("--force-create", "-C"),
+            ("-d", "--detach"),
+            ("--quiet", "-q"),
+        ],
+    );
+    refuse_unknown_flags(args, &["-c", "-C", "--detach", "--orphan", "-q"])?;
     let create = args.iter().any(|a| a == "-c" || a == "-C");
     let force_create = args.iter().any(|a| a == "-C");
     let detach = args.iter().any(|a| a == "--detach");
@@ -267,33 +275,45 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
         return switch_orphan(name);
     }
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 1 {
+    if positional.is_empty() || positional.len() > 2 || (!create && positional.len() != 1) {
         return Err(CliError::Usage(
-            "switch [-c|-C|--detach|--orphan] <branch|commit>".into(),
+            "switch [-c|-C <new-branch> [<start>]] [--detach] <branch|commit>".into(),
         ));
     }
     let name = positional[0];
     if detach {
-        let mut repo = open_repo()?;
-        let oid = resolve_rev(&repo, name)?;
-        repo.refs_mut().update("HEAD", &oid, None)?;
-        let work = work_tree(&repo)?;
-        arks_remote::checkout_commit(&repo, &work, &oid)?;
-        println!("HEAD is now at {}", &oid.to_hex()[..7]);
-        return Ok(());
+        return detach_to(name);
     }
     if create {
         let mut repo = open_repo()?;
-        let oid = repo.head_oid()?;
+        let head = repo.head_oid().ok();
+        let oid = match positional.get(1) {
+            Some(start) => resolve_rev(&repo, start)?,
+            None => head.ok_or_else(|| CliError::Msg("HEAD has no commit".into()))?,
+        };
         let full = branch_ref(name);
-        if force_create {
-            let _ = repo.refs_mut().delete(&full, None);
+        let existed = repo.refs().resolve(&full).is_ok();
+        if existed && !force_create {
+            return Err(CliError::Msg(format!(
+                "a branch named '{name}' already exists"
+            )));
         }
+        let carried = if head != Some(oid) {
+            let work = work_tree(&repo)?;
+            crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
+        } else {
+            Vec::new()
+        };
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        let work = work_tree(&repo)?;
-        arks_remote::checkout_commit(&repo, &work, &oid)?;
-        println!("Switched to a new branch '{name}'");
+        for l in carried {
+            println!("{l}");
+        }
+        if existed {
+            eprintln!("Switched to and reset branch '{name}'");
+        } else {
+            eprintln!("Switched to a new branch '{name}'");
+        }
         Ok(())
     } else {
         switch_branch(name, false)
@@ -353,19 +373,51 @@ fn switch_branch(name: &str, _detach: bool) -> CliResult<()> {
     let index_populated = read_index(&repo)
         .map(|idx| !idx.entries.is_empty())
         .unwrap_or(false);
-    // TOCTOU-003 (M19 Cx-2): refuse checkout that would overwrite dirty worktree edits.
-    if !(same_oid && index_populated) && crate::cmd::tag::worktree_dirty(&repo)? {
-        return Err(CliError::Msg(
-            "Your local changes would be overwritten by checkout (TOCTOU-003); commit, stash, or restore first"
-                .into(),
-        ));
-    }
-    repo.refs_mut().set_symbolic("HEAD", &full)?;
+    // TOCTOU-003 (M19 Cx-2): refuse checkouts that would overwrite local edits — now
+    // per path via the two-way switch (git semantics: non-conflicting changes carry over).
+    let mut carried = Vec::new();
     if !(same_oid && index_populated) {
         let work = work_tree(&repo)?;
-        arks_remote::checkout_commit(&repo, &work, &oid)?;
+        let head = repo.head_oid().ok();
+        if index_populated {
+            carried = crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)
+                .map_err(|e| CliError::Msg(format!("{e} (TOCTOU-003)")))?;
+        } else {
+            arks_remote::checkout_commit(&repo, &work, &oid)?;
+        }
     }
-    println!("Switched to branch '{name}'");
+    let was_current = matches!(repo.head_target(), Ok(RefTarget::Symbolic(ref s)) if *s == full);
+    repo.refs_mut().set_symbolic("HEAD", &full)?;
+    for l in carried {
+        println!("{l}");
+    }
+    if was_current {
+        eprintln!("Already on '{name}'");
+    } else {
+        eprintln!("Switched to branch '{name}'");
+    }
+    Ok(())
+}
+
+/// `checkout --detach <rev>` / `switch --detach <rev>` with a two-way switch.
+fn detach_to(rev: &str) -> CliResult<()> {
+    let mut repo = open_repo()?;
+    let oid = resolve_rev(&repo, rev)?;
+    let head = repo.head_oid().ok();
+    let carried = if head != Some(oid) {
+        let work = work_tree(&repo)?;
+        crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
+    } else {
+        Vec::new()
+    };
+    repo.refs_mut().update("HEAD", &oid, None)?;
+    for l in carried {
+        println!("{l}");
+    }
+    let subject = crate::cmd::log_format::read_commit(&repo, &oid)
+        .map(|c| c.subject().to_string())
+        .unwrap_or_default();
+    eprintln!("HEAD is now at {} {subject}", &oid.to_hex()[..7]);
     Ok(())
 }
 

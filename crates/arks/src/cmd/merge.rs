@@ -52,6 +52,42 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
     merge_onto_msg(positional[0], ff_only, no_ff, message)
 }
 
+/// Refuse when the index differs from HEAD or a tracked file differs from the index.
+fn refuse_dirty_tracked(repo: &arks_repo::Repository) -> CliResult<()> {
+    let head = crate::cmd::shared::head_blob_map(repo)?;
+    let index = crate::util::read_index(repo)?;
+    let work = work_tree(repo)?;
+    let mut dirty = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+        seen.insert(e.path.clone());
+        let abs = work.join(&e.path);
+        let wt_same = match std::fs::metadata(&abs) {
+            Ok(m) if crate::cmd::shared::index_stat_matches(e, &m) => true,
+            Ok(_) => {
+                std::fs::read(&abs).ok().and_then(|b| {
+                    RawObject::new(ObjectKind::Blob, b)
+                        .oid(repo.object_format())
+                        .ok()
+                }) == Some(e.oid)
+            }
+            Err(_) => false,
+        };
+        if head.get(&e.path) != Some(&e.oid) || !wt_same {
+            dirty.push(e.path.clone());
+        }
+    }
+    dirty.extend(head.keys().filter(|k| !seen.contains(*k)).cloned());
+    if dirty.is_empty() {
+        return Ok(());
+    }
+    dirty.sort();
+    let list: String = dirty.iter().map(|p| format!("\t{p}\n")).collect();
+    Err(CliError::Msg(format!(
+        "Your local changes to the following files would be overwritten by merge:\n{list}Please commit your changes or stash them before you merge.\nAborting"
+    )))
+}
+
 /// Split `-m <msg>` / `--message=<msg>` out of merge args.
 fn take_merge_message(args: &[String]) -> CliResult<(Vec<String>, Option<String>)> {
     let mut out = Vec::new();
@@ -143,21 +179,28 @@ fn merge_onto_msg(
         println!("Already up to date.");
         return Ok(());
     }
+    // Full ancestry (all parents), git-merge-base --is-ancestor semantics.
+    if is_ancestor(&repo, &theirs, &head)? {
+        println!("Already up to date.");
+        return Ok(());
+    }
     let can_ff = is_ancestor(&repo, &head, &theirs)?;
     if can_ff {
         if ff_only || !no_ff {
+            // Fast-forward keeps non-conflicting local changes (two-way switch).
+            let work = work_tree(&repo)?;
+            let carried =
+                crate::cmd::switch_tree::two_way_switch(&repo, &work, Some(&head), &theirs)
+                    .map_err(|e| CliError::Msg(e.to_string().replace("checkout", "merge")))?;
+            let _ = carried;
             match repo.head_target()? {
                 RefTarget::Symbolic(branch) => {
                     repo.refs_mut().update(&branch, &theirs, Some(&head))?;
                 }
                 RefTarget::Direct(_) => {
-                    return Err(CliError::NotImplemented(
-                        "merge: detached HEAD not claimed".into(),
-                    ));
+                    repo.refs_mut().update("HEAD", &theirs, Some(&head))?;
                 }
             }
-            let work = work_tree(&repo)?;
-            arks_remote::checkout_commit(&repo, &work, &theirs)?;
             println!(
                 "Updating {}..{}",
                 &head.to_hex()[..7],
@@ -166,17 +209,16 @@ fn merge_onto_msg(
             println!("Fast-forward");
             return Ok(());
         }
+        refuse_dirty_tracked(&repo)?;
         return create_merge_commit(&mut repo, &head, &theirs, name, None, message);
-    }
-    if is_ancestor(&repo, &theirs, &head)? {
-        println!("Already up to date.");
-        return Ok(());
     }
     if ff_only {
         return Err(CliError::Msg("Not possible to fast-forward".into()));
     }
 
-    // Fs-2: diverged three-way merge.
+    // Fs-2: diverged three-way merge. Refuse when tracked files carry local changes
+    // (conservative superset of git's per-path check; never overwrites local edits).
+    refuse_dirty_tracked(&repo)?;
     let work = work_tree(&repo)?;
     let result = merge_commits_three_way(&mut repo, &work, &head, &theirs)?;
     if !result.conflicts.is_empty() {
