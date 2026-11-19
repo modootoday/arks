@@ -53,7 +53,7 @@ Decisions D1–D6: [[adr:root/20261119180100]].
 | O corpus | **Partial (host advisory)** | 19/19 corpus compare rows byte-identical vs git 2.43; patches 28/40 identical (xdiff heuristics + renames Missing); `--git-dir` / `--work-tree` Missing |
 | B build | **Closing** | CELIR not adopted; sibling `discrete-circuit` path deps removed ([[adr:root/20261119200000]]) |
 | Index interop | **Fixed** | entry-dependent extensions dropped on rewrite ([[sot:root/arks-index]] v0.1.2) |
-| V clean-room | **Missing** | Docker gate simulating the sandbox not written; sandbox had no Docker daemon |
+| V clean-room | **Gate written; Docker run pending** | G42 `verify/scripts/run-g042-cloud-dropin.sh` (15 must rows) — host-advisory run all PASS; Docker receipt needs a host with a Docker daemon |
 
 ## Rule
 
