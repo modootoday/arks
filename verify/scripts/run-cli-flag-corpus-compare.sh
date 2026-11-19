@@ -32,11 +32,15 @@ n=0; same=0; rows=()
 while IFS= read -r line || [[ -n "$line" ]]; do
   [[ -z "$line" || "$line" == \#* ]] && continue
   n=$((n + 1)); id=$(printf 'L%03d' "$n")
-  rm -rf "$WORK/a" "$WORK/g"; cp -a "$WORK/fixture" "$WORK/a"; cp -a "$WORK/fixture" "$WORK/g"
+  # Both sides run at the same path ($WORK/r) so path-printing commands
+  # (rev-parse --show-toplevel, worktree list) compare equal.
+  rm -rf "$WORK/r"; cp -a "$WORK/fixture" "$WORK/r"
   eval "set -- $line"
-  ao="$(cd "$WORK/a" && ARKS_PERSONALITY=git "$ARKS" "$@" 2>"$OUT/$id.arks.err")"; ac=$?
-  go="$(cd "$WORK/g" && git "$@" 2>"$OUT/$id.git.err")"; gc=$?
-  as="$(state "$WORK/a")"; gs="$(state "$WORK/g")"
+  ao="$(cd "$WORK/r" && ARKS_PERSONALITY=git "$ARKS" "$@" 2>"$OUT/$id.arks.err")"; ac=$?
+  as="$(state "$WORK/r")"
+  rm -rf "$WORK/r"; cp -a "$WORK/fixture" "$WORK/r"
+  go="$(cd "$WORK/r" && git "$@" 2>"$OUT/$id.git.err")"; gc=$?
+  gs="$(state "$WORK/r")"
   verdict=SAME; why=""
   [[ $ac -ne $gc ]] && { verdict=DIFF; why="exit $ac!=$gc"; }
   [[ "$ao" != "$go" ]] && { verdict=DIFF; why="${why:+$why; }stdout"; }
