@@ -71,8 +71,9 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
                 "a branch named '{name}' already exists"
             )));
         }
-        // Two-way switch first: refuse without moving refs when local changes conflict.
-        let carried = if head != Some(oid) {
+        // Two-way switch first: refuse without moving refs when local changes conflict;
+        // git skips the tree switch only for `-b <new>` without a start point.
+        let carried = if head != Some(oid) || positional.len() > 1 {
             let work = work_tree(&repo)?;
             crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
         } else {
@@ -142,11 +143,16 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     } else if positional.len() > 1 {
         return restore_paths_mode(&positional[1..], true, true, Some(first), true);
     }
+    let is_branch = repo.refs().resolve(&branch_ref(first)).is_ok();
     drop(repo);
     if positional.len() != 1 {
         return Err(CliError::Usage(
             "checkout <branch> | checkout -- <path>".into(),
         ));
+    }
+    // A commit-ish that is not a branch name detaches HEAD (git-checkout).
+    if !is_branch {
+        return detach_to(first);
     }
     switch_branch(positional[0], false)
 }
@@ -224,7 +230,8 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
                 "a branch named '{name}' already exists"
             )));
         }
-        let carried = if head != Some(oid) {
+        // git skips the tree switch only for `-b <new>` without a start point.
+        let carried = if head != Some(oid) || positional.len() > 1 {
             let work = work_tree(&repo)?;
             crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?
         } else {
@@ -362,7 +369,12 @@ fn switch_branch(name: &str, _detach: bool) -> CliResult<()> {
 /// `checkout --detach <rev>` / `switch --detach <rev>` with a two-way switch.
 fn detach_to(rev: &str) -> CliResult<()> {
     let mut repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev)?;
+    let oid = crate::cmd::shared::peel_to_kind(
+        &repo,
+        &resolve_rev(&repo, rev)?,
+        crate::cmd::shared::ObjKind::Commit,
+        rev,
+    )?;
     let head = repo.head_oid().ok();
     // The two-way switch also reports carried local changes for a same-commit detach.
     let work = work_tree(&repo)?;
