@@ -921,42 +921,76 @@ fn merge_lines(base: &str, ours: &str, theirs: &str) -> (String, usize) {
     (out, 1)
 }
 
-/// `arks merge-tree <base> <ours> <theirs>` — print merged tree oid (conflict → err).
+/// `arks merge-tree [--write-tree] [--merge-base=<c>] <branch1> <branch2>` and the
+/// legacy `merge-tree <base> <ours> <theirs>` — print the merged tree oid
+/// (conflict → exit 1). Never touches the index or the work tree.
+/// Cite: https://git-scm.com/docs/git-merge-tree
 pub fn cmd_merge_tree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 3 {
+    let mut write_tree = false;
+    let mut name_only = false;
+    let mut merge_base: Option<String> = None;
+    let mut positional: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--write-tree" => write_tree = true,
+            "--name-only" => name_only = true,
+            "--messages" | "--no-messages" | "--allow-unrelated-histories" => {}
+            _ if a.starts_with("--merge-base=") => {
+                merge_base = Some(a["--merge-base=".len()..].to_string());
+            }
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => positional.push(a),
+        }
+    }
+    let legacy = !write_tree && positional.len() == 3;
+    if !(positional.len() == 2 || legacy) {
         return Err(CliError::Usage(
-            "merge-tree <base-tree> <our-tree> <their-tree>".into(),
+            "merge-tree [--write-tree] <branch1> <branch2> | merge-tree <base> <b1> <b2>".into(),
         ));
     }
-    // Accept commit-ish or tree-ish; resolve to commit tips when possible for three-way.
     let mut repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let ours = resolve_rev(&repo, positional[1])?;
-    let theirs = resolve_rev(&repo, positional[2])?;
-    // Prefer commit three-way; if args are pure trees, refuse for now.
-    let ours_obj = repo
-        .get_object(&ours)
-        .map_err(|e| CliError::Msg(e.to_string()))?;
-    let theirs_obj = repo
-        .get_object(&theirs)
-        .map_err(|e| CliError::Msg(e.to_string()))?;
-    if ours_obj.kind != ObjectKind::Commit || theirs_obj.kind != ObjectKind::Commit {
-        return Err(CliError::NotImplemented(
-            "merge-tree: tree-only args not claimed; pass commit-ish tips".into(),
-        ));
-    }
-    let result =
-        crate::cmd::merge_engine::merge_commits_three_way(&mut repo, &work, &ours, &theirs)?;
+    let (base_rev, ours_rev, theirs_rev) = if legacy {
+        (Some(positional[0].as_str()), positional[1], positional[2])
+    } else {
+        (merge_base.as_deref(), positional[0], positional[1])
+    };
+    let to_tree = |repo: &arks_repo::Repository, r: &str| -> CliResult<Oid> {
+        let oid = resolve_rev(repo, r)
+            .map_err(|_| CliError::fatal(format!("could not parse as tree '{r}'")))?;
+        crate::cmd::shared::peel_to_kind(repo, &oid, crate::cmd::shared::ObjKind::Tree, r)
+    };
+    let ours = to_tree(&repo, ours_rev)?;
+    let theirs = to_tree(&repo, theirs_rev)?;
+    let base = match base_rev {
+        Some(b) => to_tree(&repo, b)?,
+        None => {
+            let commit = |r: &str| -> CliResult<Oid> {
+                let oid = resolve_rev(&repo, r)?;
+                crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Commit,
+                    r,
+                )
+            };
+            let (o, t) = (commit(ours_rev)?, commit(theirs_rev)?);
+            let mb = arks_repo::merge_base_oid(&repo, &o, &t)?
+                .ok_or_else(|| CliError::fatal("refusing to merge unrelated histories"))?;
+            to_tree(&repo, &mb.to_hex())?
+        }
+    };
+    let result = crate::cmd::merge_engine::merge_trees_in_memory(&mut repo, &base, &ours, &theirs)?;
     if !result.conflicts.is_empty() {
         for c in &result.conflicts {
-            println!("CONFLICT {c}");
+            if name_only {
+                println!("{c}");
+            } else {
+                println!("CONFLICT {c}");
+            }
         }
-        return Err(CliError::Msg(format!(
-            "merge-tree: {} conflict(s)",
-            result.conflicts.len()
-        )));
+        return Err(CliError::silent(1));
     }
     let tree = result
         .tree

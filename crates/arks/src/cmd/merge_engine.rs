@@ -27,19 +27,10 @@ pub(crate) struct MergeResult {
     pub conflicts: Vec<String>,
 }
 
-/// Three-way merge of commit tips into the index + worktree; returns merge tree
-/// when conflict-free. On conflicts, index/worktree are left conflicted and
-/// `conflicts` is non-empty (caller MUST NOT create a merge commit).
-pub(crate) fn merge_commits_three_way(
-    repo: &mut Repository,
-    work: &Path,
-    ours: &Oid,
-    theirs: &Oid,
-) -> CliResult<MergeResult> {
-    merge_three_way_opts(repo, work, ours, theirs, false)
-}
-
-/// [`merge_commits_three_way`]; with `ours_checked_out` the work tree already
+/// Three-way merge of commit tips into the index + worktree; returns the merge
+/// tree when conflict-free. On conflicts, index/worktree are left conflicted
+/// and `conflicts` is non-empty (caller MUST NOT create a merge commit).
+/// With `ours_checked_out` the work tree already
 /// holds `ours`, so paths whose result is the `ours` blob are not rewritten
 /// (unrelated local edits survive, as with git-merge).
 pub(crate) fn merge_three_way_opts(
@@ -55,87 +46,21 @@ pub(crate) fn merge_three_way_opts(
     let ours_c = load_commit(repo, ours)?;
     let theirs_c = load_commit(repo, theirs)?;
     let base_c = load_commit(repo, &base)?;
-
-    let base_side = blob_sides(repo, &base_c.tree)?;
-    let ours_side = blob_sides(repo, &ours_c.tree)?;
-    let theirs_side = blob_sides(repo, &theirs_c.tree)?;
-
-    let mut paths = BTreeSet::new();
-    paths.extend(base_side.keys().cloned());
-    paths.extend(ours_side.keys().cloned());
-    paths.extend(theirs_side.keys().cloned());
-
-    let mut entries: Vec<IndexEntry> = Vec::new();
-    let mut conflicts = Vec::new();
-
-    for path in paths {
-        let b = base_side.get(&path);
-        let o = ours_side.get(&path);
-        let t = theirs_side.get(&path);
-        match (b, o, t) {
-            (None, None, None) => {}
-            (Some(x), Some(y), Some(z)) if x.oid == y.oid && y.oid == z.oid => {
-                entries.push(stage0(&path, y));
-                if !keep {
-                    write_blob(repo, work, &path, y)?;
+    let plan = plan_trees(repo, &base_c.tree, &ours_c.tree, &theirs_c.tree)?;
+    let mut entries = plan.entries;
+    let conflicts = plan.conflicts;
+    for op in plan.ops {
+        match op {
+            WorkOp::Write { path, side, ours } => {
+                if !(keep && ours) {
+                    write_blob(repo, work, &path, &side)?;
                 }
             }
-            (_, Some(y), Some(z)) if y.oid == z.oid && y.mode == z.mode => {
-                entries.push(stage0(&path, y));
-                if !keep {
-                    write_blob(repo, work, &path, y)?;
-                }
+            WorkOp::Remove(path) => {
+                let _ = fs::remove_file(work.join(&path));
             }
-            (Some(x), Some(y), Some(z)) if x.oid == y.oid && x.mode == y.mode => {
-                // unchanged in ours → take theirs
-                entries.push(stage0(&path, z));
-                write_blob(repo, work, &path, z)?;
-            }
-            (Some(x), Some(y), Some(z)) if x.oid == z.oid && x.mode == z.mode => {
-                // unchanged in theirs → take ours
-                entries.push(stage0(&path, y));
-                if !keep {
-                    write_blob(repo, work, &path, y)?;
-                }
-            }
-            (None, Some(y), None) => {
-                entries.push(stage0(&path, y));
-                if !keep {
-                    write_blob(repo, work, &path, y)?;
-                }
-            }
-            (None, None, Some(z)) => {
-                entries.push(stage0(&path, z));
-                write_blob(repo, work, &path, z)?;
-            }
-            (Some(_), None, None) => {
-                // deleted both sides relative to keep? deleted in both → omit
-                let abs = work.join(&path);
-                let _ = fs::remove_file(&abs);
-            }
-            (Some(x), Some(y), None) if x.oid == y.oid => {
-                // deleted in theirs, unchanged in ours → delete
-                let abs = work.join(&path);
-                let _ = fs::remove_file(&abs);
-            }
-            (Some(x), None, Some(z)) if x.oid == z.oid => {
-                // deleted in ours, unchanged in theirs → delete
-                let abs = work.join(&path);
-                let _ = fs::remove_file(&abs);
-            }
-            _ => {
-                // Conflict: stages 1/2/3 + markers
-                conflicts.push(path.clone());
-                if let Some(x) = b {
-                    entries.push(stage_n(&path, x, 1));
-                }
-                if let Some(y) = o {
-                    entries.push(stage_n(&path, y, 2));
-                }
-                if let Some(z) = t {
-                    entries.push(stage_n(&path, z, 3));
-                }
-                write_conflict_file(repo, work, &path, o, t)?;
+            WorkOp::Conflict { path, ours, theirs } => {
+                write_conflict_file(repo, work, &path, ours.as_ref(), theirs.as_ref())?;
             }
         }
     }
@@ -166,6 +91,136 @@ pub(crate) fn merge_three_way_opts(
     Ok(MergeResult {
         tree: Some(tree),
         conflicts,
+    })
+}
+
+/// Work-tree side effect of a planned three-way merge.
+enum WorkOp {
+    /// Write `side` at `path`; `ours` = the result equals our version.
+    Write {
+        path: String,
+        side: Side,
+        ours: bool,
+    },
+    Remove(String),
+    Conflict {
+        path: String,
+        ours: Option<Side>,
+        theirs: Option<Side>,
+    },
+}
+
+/// Pure three-way tree merge plan: result index entries (stage 0 or 1/2/3),
+/// conflicted paths and the work-tree operations a checkout merge applies.
+struct MergePlan {
+    entries: Vec<IndexEntry>,
+    conflicts: Vec<String>,
+    ops: Vec<WorkOp>,
+}
+
+fn plan_trees(repo: &Repository, base: &Oid, ours: &Oid, theirs: &Oid) -> CliResult<MergePlan> {
+    let base_side = blob_sides(repo, base)?;
+    let ours_side = blob_sides(repo, ours)?;
+    let theirs_side = blob_sides(repo, theirs)?;
+
+    let mut paths = BTreeSet::new();
+    paths.extend(base_side.keys().cloned());
+    paths.extend(ours_side.keys().cloned());
+    paths.extend(theirs_side.keys().cloned());
+
+    let mut entries: Vec<IndexEntry> = Vec::new();
+    let mut conflicts = Vec::new();
+    let mut ops = Vec::new();
+    let take = |entries: &mut Vec<IndexEntry>, path: &str, s: &Side, ours: bool| {
+        entries.push(stage0(path, s));
+        WorkOp::Write {
+            path: path.to_string(),
+            side: s.clone(),
+            ours,
+        }
+    };
+
+    for path in paths {
+        let b = base_side.get(&path);
+        let o = ours_side.get(&path);
+        let t = theirs_side.get(&path);
+        match (b, o, t) {
+            (None, None, None) => {}
+            (Some(x), Some(y), Some(z)) if x.oid == y.oid && y.oid == z.oid => {
+                ops.push(take(&mut entries, &path, y, true));
+            }
+            (_, Some(y), Some(z)) if y.oid == z.oid && y.mode == z.mode => {
+                ops.push(take(&mut entries, &path, y, true));
+            }
+            (Some(x), Some(y), Some(z)) if x.oid == y.oid && x.mode == y.mode => {
+                // unchanged in ours → take theirs
+                ops.push(take(&mut entries, &path, z, false));
+            }
+            (Some(x), Some(y), Some(z)) if x.oid == z.oid && x.mode == z.mode => {
+                // unchanged in theirs → take ours
+                ops.push(take(&mut entries, &path, y, true));
+            }
+            (None, Some(y), None) => ops.push(take(&mut entries, &path, y, true)),
+            (None, None, Some(z)) => ops.push(take(&mut entries, &path, z, false)),
+            // deleted in both, or deleted on one side and unchanged on the other
+            (Some(_), None, None) => ops.push(WorkOp::Remove(path.clone())),
+            (Some(x), Some(y), None) if x.oid == y.oid => ops.push(WorkOp::Remove(path.clone())),
+            (Some(x), None, Some(z)) if x.oid == z.oid => ops.push(WorkOp::Remove(path.clone())),
+            _ => {
+                // Conflict: stages 1/2/3 + markers
+                conflicts.push(path.clone());
+                if let Some(x) = b {
+                    entries.push(stage_n(&path, x, 1));
+                }
+                if let Some(y) = o {
+                    entries.push(stage_n(&path, y, 2));
+                }
+                if let Some(z) = t {
+                    entries.push(stage_n(&path, z, 3));
+                }
+                ops.push(WorkOp::Conflict {
+                    path: path.clone(),
+                    ours: o.cloned(),
+                    theirs: t.cloned(),
+                });
+            }
+        }
+    }
+    Ok(MergePlan {
+        entries,
+        conflicts,
+        ops,
+    })
+}
+
+/// Merge three trees in memory (git-merge-tree): writes result tree objects
+/// only — never the index or the work tree. Returns the result tree when
+/// conflict-free, else the conflicted paths.
+/// Cite: <https://git-scm.com/docs/git-merge-tree>
+pub(crate) fn merge_trees_in_memory(
+    repo: &mut Repository,
+    base: &Oid,
+    ours: &Oid,
+    theirs: &Oid,
+) -> CliResult<MergeResult> {
+    let mut plan = plan_trees(repo, base, ours, theirs)?;
+    if !plan.conflicts.is_empty() {
+        return Ok(MergeResult {
+            tree: None,
+            conflicts: plan.conflicts,
+        });
+    }
+    sort_entries(&mut plan.entries);
+    let format = repo.object_format();
+    let tree = if plan.entries.is_empty() {
+        let obj = RawObject::new(ObjectKind::Tree, Vec::new());
+        repo.store_mut().put(format, &obj)?
+    } else {
+        write_tree_from_index(repo.store_mut(), &plan.entries, format)?
+    };
+    Ok(MergeResult {
+        tree: Some(tree),
+        conflicts: Vec::new(),
     })
 }
 
