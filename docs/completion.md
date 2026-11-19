@@ -62,6 +62,7 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | Honesty leftovers backlog | **Closed this wave** | [[sot:root/arks-honesty-leftovers-wave]] — hub mutate + named exit tables + B5+ collector Claimed |
 | `arks agent` | **B4 Claimed** + smoke **Partial** | Docker fixture LLM chatbot/review e2e Claimed ([[evidence:root/20261110231959-claimed-agent-llm]]); `provider smoke` / `review --smoke` remain Partial |
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
+| `arks` as `git` in hosted agent sessions (proxy/CA, config identity, SSH signing, agent flag set) | **Partial (host advisory)** | Works end to end in a hosted sandbox (clone, signed commit, push through the egress proxy); agent flag corpus partly matches stock git; Docker gate G42 written, receipt pending ([cloud-agent-dropin](https://github.com/modootoday/arks/blob/main/.spec/sot/cloud-agent-dropin.sot.md)) |
 
 Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES** where receipts carry — residuals are Impossible / advisory / owner-policy, not casual N/A. Residual **B** rows above are Claimed / Partial / Refuse **only** as Spec + receipts name — do not invent beyond [[sot:root/arks-claimed-residual-gates]].
 
