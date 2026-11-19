@@ -806,11 +806,9 @@ fn pathspec(work: &Path, p: &str) -> String {
     if rel == "." { String::new() } else { rel }
 }
 
+/// Same pathspec rules as `log` (prefix match or whole-path glob).
 fn path_matches(path: &str, specs: &[String]) -> bool {
-    specs.is_empty()
-        || specs
-            .iter()
-            .any(|s| s.is_empty() || path == s || path.starts_with(&format!("{s}/")))
+    crate::cmd::log_format::path_in_specs(path, specs)
 }
 
 fn filter_paths(map: HashMap<String, Oid>, specs: &[String]) -> HashMap<String, Oid> {

@@ -224,6 +224,10 @@ pub fn path_in_specs(path: &str, specs: &[String]) -> bool {
                 || (path.len() > s.len()
                     && path.starts_with(s.as_str())
                     && path.as_bytes()[s.len()] == b'/')
+                // Glob pathspecs match the whole path; `*` crosses `/`
+                // (gitglossary "pathspec", no `:(glob)` magic).
+                || (s.contains(['*', '?', '['])
+                    && crate::cmd::branch_cmd::fnmatch(s.as_bytes(), path.as_bytes()))
         })
 }
 
