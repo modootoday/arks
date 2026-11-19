@@ -16,6 +16,14 @@ log --format='%H %P' -3
 log --format=%ad --date=unix -2
 log --oneline --graph --all
 log --graph --format='%h %s' -5
+log --graph --oneline -10
+log --graph --all --decorate --oneline
+log --graph --all
+log --graph --format='%h%d %s' --all
+log --graph --first-parent --oneline
+log --graph --oneline --stat -3
+log --graph --date-order --oneline --all
+log --topo-order --oneline --all
 log --oneline --left-right main...feature
 log --oneline --diff-filter=A
 log --shortstat --oneline -3

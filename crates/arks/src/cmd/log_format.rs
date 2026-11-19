@@ -5,7 +5,8 @@
 //! Cite: `.spec/sot/cloud-agent-dropin.sot.md` §O.
 //!
 //! Default walk order is committer-date descending (git default when no
-//! `--topo-order` is given). Partial: `%d`/`%D` decorations, `%ar`/`%cr`
+//! `--topo-order` is given); [`child_first_order`] reorders a walk for
+//! `--topo-order` / `--date-order` (and `--graph`). Partial: `%d`/`%D` decorations, `%ar`/`%cr`
 //! relative dates, and pathspec rename following are not implemented.
 
 use crate::cmd::shared::resolve_rev;
@@ -181,6 +182,79 @@ pub fn walk_paths(
         }
     }
     Ok(out)
+}
+
+/// Child-before-parent orderings (git-log "Commit Ordering").
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChildFirst {
+    /// `--topo-order` (also implied by `--graph`).
+    Topo,
+    /// `--date-order`.
+    Date,
+}
+
+/// Reorder a walk (`commits`, committer-date order) so that no parent is
+/// shown before all of its children; `parents` gives each commit's parents
+/// within the walk. `Topo` keeps a line of history contiguous: after a
+/// commit, the parent queued last comes next (a merge's last parent
+/// first). `Date` shows, among commits whose children are all shown, the
+/// newest committer date first (ties: the one queued first).
+/// Cite: <https://git-scm.com/docs/git-log#_commit_ordering>.
+pub fn child_first_order<T: Copy + Eq + std::hash::Hash>(
+    commits: &[T],
+    parents: impl Fn(&T) -> Vec<T>,
+    date: impl Fn(&T) -> i64,
+    mode: ChildFirst,
+) -> Vec<T> {
+    use std::cmp::Reverse;
+    use std::collections::HashMap;
+    let mut children: HashMap<T, usize> = commits.iter().map(|c| (*c, 0)).collect();
+    for c in commits {
+        for p in parents(c) {
+            if let Some(n) = children.get_mut(&p) {
+                *n += 1;
+            }
+        }
+    }
+    // Ready commits, keyed so that the heap pops the next one to show:
+    // `Topo` = last queued first (a stack), `Date` = newest, then first
+    // queued. Tips are queued in walk order (the stack pops the first tip
+    // first).
+    let mut queued: Vec<T> = Vec::new();
+    let mut heap: BinaryHeap<(i64, Reverse<usize>, usize)> = BinaryHeap::new();
+    let push = |c: T, heap: &mut BinaryHeap<(i64, Reverse<usize>, usize)>, queued: &mut Vec<T>| {
+        let seq = queued.len();
+        queued.push(c);
+        match mode {
+            ChildFirst::Topo => heap.push((0, Reverse(0), seq)),
+            ChildFirst::Date => heap.push((date(&c), Reverse(seq), seq)),
+        }
+    };
+    let mut tips: Vec<T> = commits
+        .iter()
+        .filter(|c| children[*c] == 0)
+        .copied()
+        .collect();
+    if mode == ChildFirst::Topo {
+        tips.reverse();
+    }
+    for c in tips {
+        push(c, &mut heap, &mut queued);
+    }
+    let mut out = Vec::with_capacity(commits.len());
+    while let Some((_, _, seq)) = heap.pop() {
+        let c = queued[seq];
+        for p in parents(&c) {
+            if let Some(n) = children.get_mut(&p) {
+                *n -= 1;
+                if *n == 0 {
+                    push(p, &mut heap, &mut queued);
+                }
+            }
+        }
+        out.push(c);
+    }
+    out
 }
 
 pub fn read_commit(repo: &Repository, oid: &Oid) -> CliResult<Commit> {
@@ -526,6 +600,35 @@ fn short_date(sig: &Signature) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn child_first_orders() {
+        use super::{ChildFirst, child_first_order};
+        // m merges a (first parent) and b; both fork from r. Dates:
+        // m=4, a=3, b=2, r=1; walk order is date order.
+        let parents = |c: &char| -> Vec<char> {
+            match c {
+                'm' => vec!['a', 'b'],
+                'a' | 'b' => vec!['r'],
+                _ => vec![],
+            }
+        };
+        let date = |c: &char| match c {
+            'm' => 4,
+            'a' => 3,
+            'b' => 2,
+            _ => 1,
+        };
+        let walk = ['m', 'a', 'b', 'r'];
+        assert_eq!(
+            child_first_order(&walk, parents, date, ChildFirst::Topo),
+            vec!['m', 'b', 'a', 'r']
+        );
+        assert_eq!(
+            child_first_order(&walk, parents, date, ChildFirst::Date),
+            vec!['m', 'a', 'b', 'r']
+        );
+    }
+
     use super::*;
 
     fn sig(ts: i64, tz: &str) -> Signature {
