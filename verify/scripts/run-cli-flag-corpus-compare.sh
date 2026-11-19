@@ -36,10 +36,10 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   # (rev-parse --show-toplevel, worktree list) compare equal.
   rm -rf "$WORK/r"; cp -a "$WORK/fixture" "$WORK/r"
   eval "set -- $line"
-  ao="$(cd "$WORK/r" && ARKS_PERSONALITY=git "$ARKS" "$@" 2>"$OUT/$id.arks.err")"; ac=$?
+  ao="$(cd "$WORK/r" && ARKS_PERSONALITY=git "$ARKS" "$@" </dev/null 2>"$OUT/$id.arks.err")"; ac=$?
   as="$(state "$WORK/r")"
   rm -rf "$WORK/r"; cp -a "$WORK/fixture" "$WORK/r"
-  go="$(cd "$WORK/r" && git "$@" 2>"$OUT/$id.git.err")"; gc=$?
+  go="$(cd "$WORK/r" && git "$@" </dev/null 2>"$OUT/$id.git.err")"; gc=$?
   gs="$(state "$WORK/r")"
   verdict=SAME; why=""
   [[ $ac -ne $gc ]] && { verdict=DIFF; why="exit $ac!=$gc"; }

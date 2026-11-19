@@ -1,0 +1,167 @@
+# Agent tier B corpus (cloud-agent-dropin §O / plan 20261119210000 C7b).
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null.
+# Fixture extras used here: .git/fixture.mbox, .git/fixture.patch,
+# one stash entry, `*.log` in info/exclude (debug.log), info/attributes.
+#
+# --- history queries ---
+log --oneline -S beta
+log --oneline -G GAMMA
+log --oneline --since='2023-11-15 01:00:00 +0000'
+log --oneline --until='2023-11-15 02:00:00 +0000'
+log --oneline --follow -- src/b.txt
+log --pretty=fuller -1
+log --format='%an <%ae>' -2
+log --format='%H %P' -3
+log --format=%ad --date=unix -2
+log --oneline --graph --all
+log --graph --format='%h %s' -5
+log --oneline --left-right main...feature
+log --oneline --diff-filter=A
+log --shortstat --oneline -3
+log --numstat --format=%h -2
+log --oneline -- '*.txt'
+shortlog -sn HEAD
+reflog -3
+reflog show main
+cherry main feature
+cherry -v main feature
+range-diff t0..feature t0..main~1
+name-rev HEAD~2
+# --- show / cat-file / blame ---
+show --pretty=fuller -s
+show -s --format=%P HEAD~1
+show HEAD~1 --name-status
+cat-file -p v1
+cat-file commit HEAD
+blame --porcelain -L 1,1 README.md
+blame HEAD~3 -- src/b.txt
+# --- patches ---
+format-patch --stdout -1
+format-patch -2
+apply --stat .git/fixture.patch
+apply --check .git/fixture.patch
+apply --check -R .git/fixture.patch
+apply -R .git/fixture.patch
+am .git/fixture.mbox
+# --- plumbing ---
+ls-tree HEAD
+ls-tree -r HEAD
+ls-tree -r --name-only HEAD
+ls-tree --name-only HEAD src
+ls-tree HEAD:src
+hash-object README.md
+hash-object -w untracked.txt
+rev-parse --git-common-dir
+rev-parse --absolute-git-dir
+rev-parse --symbolic-full-name HEAD
+rev-parse --symbolic-full-name main
+rev-parse --show-prefix
+rev-parse --verify --quiet nosuch
+rev-parse :src/new.txt
+rev-parse --all
+var GIT_AUTHOR_IDENT
+check-ignore debug.log
+check-ignore -v debug.log
+check-ignore README.md
+check-attr -a src/data.bin
+check-attr --all -- src/a.txt
+check-ref-format refs/heads/ok
+check-ref-format refs/heads/a..b
+count-objects -v
+fsck
+show-ref --heads
+show-ref --verify refs/heads/main
+show-ref --verify refs/heads/nope
+show-ref --dereference --tags
+symbolic-ref HEAD
+symbolic-ref --short HEAD
+symbolic-ref HEAD refs/heads/feature
+update-ref refs/heads/new HEAD~1
+update-ref -d refs/heads/feature
+update-ref refs/heads/main HEAD~1 HEAD
+update-ref refs/heads/main HEAD~1 HEAD~2
+update-ref -m msg refs/tags/x HEAD
+diff-tree -r HEAD~1 HEAD
+diff-tree --stat HEAD~1 HEAD
+diff-tree --name-status -r HEAD~1 HEAD
+diff-tree --no-commit-id --name-only -r HEAD
+diff-index HEAD
+diff-index --cached HEAD
+diff-index --quiet HEAD
+diff-files
+diff-files --name-only
+merge-tree main feature
+merge-tree --write-tree main~2 feature
+commit-tree HEAD^{tree} -p HEAD -m plumbing
+write-tree
+update-index --add untracked.txt
+ls-files --error-unmatch nosuch
+ls-files -i -o --exclude-standard
+ls-remote .
+ls-remote --heads .
+# --- config ---
+config --get-regexp user
+config --get-regexp '^core\.'
+config --show-origin --get user.name
+config --get nosuch.key
+config user.name 'New Name'
+config --unset core.autocrlf
+# --- refs / branches / tags ---
+branch -m feature renamed
+branch -c feature copy
+branch -D feature
+branch -f feature HEAD
+branch --sort=-committerdate
+branch -vv
+branch --no-merged
+tag -d v1
+tag lw HEAD~1
+tag -a v2 -m 'release v2'
+tag -f v1 HEAD
+tag --contains HEAD~3
+describe --dirty
+describe --tags --dirty
+describe --long
+describe --contains HEAD~3
+# --- stash / worktree / misc porcelain ---
+stash show
+stash show -p
+stash apply
+stash pop
+stash branch sb
+worktree add wt feature
+worktree add -b nb wt2
+worktree list --porcelain
+submodule status
+sparse-checkout list
+status --ignored -s
+status --porcelain=v2 --branch
+grep -i BETA
+grep --cached staged
+grep -e alpha -e beta
+grep beta HEAD~3
+rev-list --all --count
+rev-list --left-right --count main...feature
+rev-list --parents -2 HEAD
+for-each-ref --sort=-committerdate --format='%(refname)' refs/heads
+for-each-ref --points-at HEAD
+diff --diff-filter=M HEAD --name-only
+diff --no-index src/a.txt src/b.txt
+commit --author='X Y <x@example.com>' -m authored
+commit -s -m signed
+commit -m partial -- src/a.txt
+rm -r --cached src
+rm -f src/new.txt
+mv src/b.txt docs/
+checkout HEAD~1 -- README.md
+checkout v1
+reset --mixed HEAD~1
+clean -fdx
+merge --no-edit feature
+merge --abort
+merge-base --all main feature
+revert -n HEAD
+fetch -q . feature:f2
+push -q . HEAD:refs/heads/pushed
+remote add up .
