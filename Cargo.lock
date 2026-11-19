@@ -29,6 +29,13 @@ name = "arks-agent"
 version = "0.0.0"
 
 [[package]]
+name = "arks-config"
+version = "0.0.0"
+dependencies = [
+ "tempfile",
+]
+
+[[package]]
 name = "arks-hash"
 version = "0.0.0"
 dependencies = [
@@ -80,6 +87,17 @@ dependencies = [
  "serde_json",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "arks-net"
+version = "0.0.0"
+dependencies = [
+ "arks-config",
+ "rustls",
+ "rustls-pemfile",
+ "ureq",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -236,43 +254,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "celir-byte-codec"
-version = "0.1.0"
-
-[[package]]
 name = "celir-data"
-version = "0.1.0"
-
-[[package]]
-name = "celir-file-region"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "celir-index"
-version = "0.1.0"
-dependencies = [
- "celir-byte-codec",
- "celir-data",
- "celir-file-region",
-]
+version = "0.0.0"
 
 [[package]]
 name = "celir-index-runtime"
-version = "0.1.0"
-dependencies = [
- "celir-byte-codec",
- "celir-data",
- "celir-file-region",
- "celir-index",
- "celir-sorted-run",
-]
-
-[[package]]
-name = "celir-sorted-run"
-version = "0.1.0"
-dependencies = [
- "celir-byte-codec",
-]
+version = "0.0.0"
 
 [[package]]
 name = "cfg-if"
