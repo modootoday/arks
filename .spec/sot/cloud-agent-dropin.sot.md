@@ -23,7 +23,7 @@ rel:
 
 # Cloud agent drop-in
 
-Document revision **0.1.1** (SoT edit counter only — **not** a product/crate release).
+Document revision **0.1.2** (SoT edit counter only — **not** a product/crate release).
 
 Normative contract for running `arks` (personality `git`) as the version-control CLI of
 hosted coding-agent sessions (for example Claude Code cloud containers). The
@@ -52,6 +52,7 @@ Decisions D1–D6: [[adr:root/20261119180100]].
 | S signing | **Partial (host advisory)** | `commit.gpgsign` + `gpg.format=ssh` + `gpg.ssh.program` produce `gpgsig`; forge-side verification not observed |
 | O corpus | **Partial (host advisory)** | 19/19 corpus compare rows byte-identical vs git 2.43; patches 28/40 identical (xdiff heuristics + renames Missing); `--git-dir` / `--work-tree` Missing |
 | B build | **Closing** | CELIR not adopted; sibling `discrete-circuit` path deps removed ([[adr:root/20261119200000]]) |
+| C9 rollout | **Applied (opt-in install)** | Hosted sessions install `arks` from `main` at container build (`cargo install --locked --git`, about one minute); `git` untouched (D5). Canon: `modootoday/x.ws.fleet` `infra/claude-env/default/setup.d/20-arks.sh` → `compose.sh` → `setup.sh`; applied only by the fleet design session — arks sessions open PRs there and never call the environment API. Fresh-session install not yet observed |
 | Index interop | **Fixed** | entry-dependent extensions dropped on rewrite ([[sot:root/arks-index]] v0.1.2) |
 | V clean-room | **Gate written; Docker run pending** | G42 `verify/scripts/run-g042-cloud-dropin.sh` (15 must rows) — host-advisory run all PASS; Docker receipt needs a host with a Docker daemon |
 
