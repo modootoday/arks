@@ -77,7 +77,7 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Review Git-compat claims | skill `review-git-compat` |
 | Review CELIR / lease seams | skills `review-celir-boundary`, `review-lease` |
 | Rust style | rule `10-rust-conventions` → cite humanymous (no fork) |
-| Session overlap + commit hygiene | rules `90-session-overlap`, `91-commit-hygiene` |
+| Session overlap + commit hygiene + commit history (playpilot H1–H7, merge commit) | rules `90-session-overlap`, `91-commit-hygiene`, `92-commit-history` + ADR `20261119220000` |
 | Public surface / human vs agent vocabulary | `.spec/sot/public-surface.sot.md` + rule `80-public-surface`; site `docs/` (`remote_theme: modootoday/jekyll-theme-modootoday`) |
 | Spec classification (`.spec` vs `.spec.local`) | `.spec/README.md` + rules `25-spec-classification`, `35-spec-local-journey` + `.spec/sot/agent-governance.sot.md` |
 | Stub vs Claimed wording | rule `29-stub-vs-claimed` |
