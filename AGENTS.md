@@ -81,6 +81,7 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Public surface / human vs agent vocabulary | `.spec/sot/public-surface.sot.md` + rule `80-public-surface`; site `docs/` (`remote_theme: modootoday/jekyll-theme-modootoday`) |
 | Spec classification (`.spec` vs `.spec.local`) | `.spec/README.md` + rules `25-spec-classification`, `35-spec-local-journey` + `.spec/sot/agent-governance.sot.md` |
 | Stub vs Claimed wording | rule `29-stub-vs-claimed` |
+| Cloud agent drop-in (arks as git in hosted agent sessions; C-ladder) | `.spec/sot/cloud-agent-dropin.sot.md` + plan `20261119180000` + ADR `20261119180100` + rule `36-cloud-agent-dropin` |
 | Ports normative vs demo | rule `34-ports-normative-vs-demo` + `.spec/sot/arks-self-host-server.sot.md` + research `20261111055609` |
 | Cross-OS / pin honesty | rule `61-cross-os-pin-honesty` |
 | Symmetry matrices / release gate | skills `run-symmetry-matrix`, `release-symmetry-gate` + `.spec/sot/verify-cleanroom-symmetry-matrix.sot.md` + `.spec/sot/release-symmetry-precheck.sot.md` |
