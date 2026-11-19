@@ -1,5 +1,5 @@
 # G22–G25 (CELIR) withdrawn — ADR 20261119200000.
-# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV).
+# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV + G42 cloud drop-in).
 # Engine: Linux (Docker Desktop desktop-linux on Windows). Fresh `compose run` per gate.
 name: arks-verify-m1
 
@@ -438,6 +438,14 @@ services:
       RUSTUP_TOOLCHAIN: "1.99.1"
       ARKS_G41_DAV_URL: http://g041-dav/repo.git/
     command: ["/bin/bash", "verify/scripts/run-g041-apache-dav-interop.sh"]
+
+  # G42 cloud agent drop-in: private-CA HTTPS behind a CONNECT-only proxy + SSH signing.
+  g042-cloud-dropin:
+    <<: *cleanroom
+    depends_on:
+      toolchain:
+        condition: service_started
+    command: ["/bin/bash", "verify/scripts/run-g042-cloud-dropin.sh"]
 
   # Clean-room DoD pillars (umbrella SoT: verify-cleanroom-symmetry-matrix).
   # Default = smoke honesty; Claimed needs ARKS_DOD_STRICT=1 + evidence (no invent PASS).
