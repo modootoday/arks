@@ -1384,8 +1384,15 @@ mod archive_path_filter_tests {
     #[test]
     fn prepare_header_writes_device_fields_and_space_chksum() {
         let mut out = Vec::new();
-        write_ustar_entry(&mut out, "pax_global_header", b"52 comment=deadbeef\n", 0o666, b'g', 1_577_934_245)
-            .unwrap();
+        write_ustar_entry(
+            &mut out,
+            "pax_global_header",
+            b"52 comment=deadbeef\n",
+            0o666,
+            b'g',
+            1_577_934_245,
+        )
+        .unwrap();
         assert!(out.len() >= 512);
         let header = &out[..512];
         // Device major/minor always written as "%07o" of 0 (never left all-NUL).

@@ -11,8 +11,8 @@ arks will be a **public** repository. Treat every new tracked path as world-read
 - Use product lock **arks** / tagline **arks for Git**; no literal `git` in crate/bin/product short name.
 - Do not label host-only results as product-verified (rule `60-clean-room-verify`).
 - Cite **M16** as the active alias bar; do not market “faster than Git” without clean-room evidence that matches journey-compare honesty.
-- **CELIR honesty:** MAY say dual-path index verified only with G23 receipt and MUST state FS `.git` sole object store + optional `celir-index` sidecar. Bare “CELIR-backed Git” / CELIR as object store is forbidden.
-- **L3 honesty:** Claimed shape is lease + batch-apply + worktree/ref-shard; shared-index N-way is a separate **M26 / G34** claim (do not conflate with L3 or CELIR G22/G24).
+- **CELIR honesty:** CELIR is **not adopted** (ADR `20261119200000`); public copy MUST NOT present CELIR as a product path, sidecar or dual-path feature.
+- **L3 honesty:** Claimed shape is lease + batch-apply + worktree/ref-shard; shared-index N-way is a separate **M26 / G34** claim (do not conflate with L3; CELIR G22/G24 are Withdrawn).
 - **Partial honesty:** tip Pf5 **Claimed 19/19 ≤0.5×** (ALIAS hardlink cut [[evidence:root/20261111032000]]); historical 8/8 archival; `sparse:oid=<hex>` Claimed; OAuth Refuse; credential fill Claimed includes TTY + OS wallets (G33) — no OAuth marketing. OpenPGP / X.509 / `tag -s` are Claimed (G38). Operator one-word stays **PARTIAL** while live G8 secrets=0 and L9 closed.
 - **Live forge journeys:** cite only with receipts; G8 secrets-default-on harness may SKIP without secrets — never invent PASS; tokens stay in env only.
 
@@ -32,6 +32,6 @@ arks will be a **public** repository. Treat every new tracked path as world-read
 - Language: `.spec/sot/language-english-only.sot.md`
 - Verification: `.spec/sot/product-verification-clean-room.sot.md`
 - Residual honesty: `.spec/sot/production-residual-register.sot.md`
-- CELIR dual-path: `.spec/sot/celir-index-dual-path.sot.md`
+- CELIR not adopted: `.spec/adr/20261119200000-celir-not-adopted-withdraw-m24.adr.md`
 
 If public-vs-private placement is unclear: **stop and ask** (rule `40-ambiguity-ask`).

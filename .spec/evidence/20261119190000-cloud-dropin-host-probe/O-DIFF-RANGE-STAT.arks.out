@@ -1,0 +1,204 @@
+ .gitignore                                         |  31 ++
+ .spec/README.md                                    |   3 +-
+ .../20261113104851-dod-behavioral-cli/BP-ADD.err   |   0
+ .../20261113104851-dod-behavioral-cli/BP-ADD.out   |   0
+ .../BP-BRANCH.arks.err                             |   0
+ .../BP-BRANCH.arks.out                             |   1 +
+ .../BP-BRANCH.git.err                              |   0
+ .../BP-BRANCH.git.out                              |   1 +
+ .../BP-COMMIT.err                                  |   0
+ .../BP-COMMIT.out                                  |   1 +
+ .../BP-CONFIG-EMAIL.err                            |   0
+ .../BP-CONFIG-EMAIL.out                            |   0
+ .../BP-CONFIG-NAME.err                             |   0
+ .../BP-CONFIG-NAME.out                             |   0
+ .../20261113104851-dod-behavioral-cli/BP-INIT.err  |   0
+ .../20261113104851-dod-behavioral-cli/BP-INIT.out  |   1 +
+ .../BP-LOG.arks.err                                |   0
+ .../BP-LOG.arks.out                                |   1 +
+ .../BP-LOG.git.err                                 |   0
+ .../BP-LOG.git.out                                 |   1 +
+ .../BP-REMOTE-ADD.err                              |   0
+ .../BP-REMOTE-ADD.out                              |   0
+ .../BP-REMOTE-GETURL.err                           |   0
+ .../BP-REMOTE-GETURL.out                           |   1 +
+ .../BP-REMOTE-GETURL2.err                          |   0
+ .../BP-REMOTE-GETURL2.out                          |   1 +
+ .../BP-REMOTE-LIST.err                             |   0
+ .../BP-REMOTE-LIST.out                             |   1 +
+ .../BP-REMOTE-SETURL.err                           |   0
+ .../BP-REMOTE-SETURL.out                           |   0
+ .../BP-REMOTE-SHOW.err                             |   0
+ .../BP-REMOTE-SHOW.out                             |   4 +
+ .../BP-STASH-LIST.err                              |   0
+ .../BP-STASH-LIST.out                              |   0
+ .../BP-STATUS.arks.err                             |   0
+ .../BP-STATUS.arks.out                             |   0
+ .../BP-STATUS.git.err                              |   0
+ .../BP-STATUS.git.out                              |   0
+ .../BP-TAG-LIST.arks.err                           |   0
+ .../BP-TAG-LIST.arks.out                           |   1 +
+ .../BP-TAG-LIST.git.err                            |   0
+ .../BP-TAG-LIST.git.out                            |   1 +
+ .../20261113104851-dod-behavioral-cli/BP-TAG.err   |   0
+ .../20261113104851-dod-behavioral-cli/BP-TAG.out   |   0
+ .../20261113104851-dod-behavioral-cli/receipt.json |  52 +++
+ .../BP-ADD-EXTRA.err                               |   0
+ .../BP-ADD-EXTRA.out                               |   0
+ .../BP-ADD-FEAT.err                                |   0
+ .../BP-ADD-FEAT.out                                |   0
+ .../BP-ADD-FEAT2.err                               |   0
+ .../BP-ADD-FEAT2.out                               |   0
+ .../BP-ADD-GONE.err                                |   0
+ .../BP-ADD-GONE.out                                |   0
+ .../BP-ADD-MAIN2.err                               |   0
+ .../BP-ADD-MAIN2.out                               |   0
+ .../20261113105407-dod-behavioral-cli/BP-ADD.err   |   0
+ .../20261113105407-dod-behavioral-cli/BP-ADD.out   |   0
+ .../BP-BRANCH-NEW.err                              |   0
+ .../BP-BRANCH-NEW.out                              |   0
+ .../BP-BRANCH.arks.err                             |   0
+ .../BP-BRANCH.arks.out                             |   1 +
+ .../BP-BRANCH.git.err                              |   0
+ .../BP-BRANCH.git.out                              |   1 +
+ .../BP-CHECKOUT.err                                |   0
+ .../BP-CHECKOUT.out                                |   0
+ .../BP-CLONE-PEER.git.err                          |   0
+ .../BP-CLONE-PEER.git.out                          |   0
+ .../20261113105407-dod-behavioral-cli/BP-CLONE.err |   0
+ .../20261113105407-dod-behavioral-cli/BP-CLONE.out |   1 +
+ .../BP-CLONE2.err                                  |   0
+ .../BP-CLONE2.out                                  |   1 +
+ .../BP-COMMIT-AFTER-RESET.err                      |   0
+ .../BP-COMMIT-AFTER-RESET.out                      |   1 +
+ .../BP-COMMIT-FEAT.err                             |   0
+ .../BP-COMMIT-FEAT.out                             |   1 +
+ .../BP-COMMIT-FEAT2.err                            |   0
+ .../BP-COMMIT-FEAT2.out                            |   1 +
+ .../BP-COMMIT-GONE.err                             |   0
+ .../BP-COMMIT-GONE.out                             |   1 +
+ .../BP-COMMIT-MAIN2.err                            |   0
+ .../BP-COMMIT-MAIN2.out                            |   1 +
+ .../BP-COMMIT-MV.err                               |   0
+ .../BP-COMMIT-MV.out                               |   1 +
+ .../BP-COMMIT-RM.err                               |   0
+ .../BP-COMMIT-RM.out                               |   1 +
+ .../BP-COMMIT.err                                  |   0
+ .../BP-COMMIT.out                                  |   1 +
+ .../BP-CONFIG-EMAIL.err                            |   0
+ .../BP-CONFIG-EMAIL.out                            |   0
+ .../BP-CONFIG-NAME.err                             |   0
+ .../BP-CONFIG-NAME.out                             |   0
+ .../BP-DIFF.arks.err                               |   0
+ .../BP-DIFF.arks.out                               |   2 +
+ .../BP-DIFF.git.err                                |   0
+ .../BP-DIFF.git.out                                |   2 +
+ .../20261113105407-dod-behavioral-cli/BP-FETCH.err |   0
+ .../20261113105407-dod-behavioral-cli/BP-FETCH.out |   1 +
+ .../20261113105407-dod-behavioral-cli/BP-INIT.err  |   0
+ .../20261113105407-dod-behavioral-cli/BP-INIT.out  |   1 +
+ .../BP-LOG.arks.err                                |   0
+ .../BP-LOG.arks.out                                |   1 +
+ .../BP-LOG.git.err                                 |   0
+ .../BP-LOG.git.out                                 |   1 +
+ .../20261113105407-dod-behavioral-cli/BP-MERGE.err |   0
+ .../20261113105407-dod-behavioral-cli/BP-MERGE.out |   1 +
+ .../20261113105407-dod-behavioral-cli/BP-MV.err    |   0
+ .../20261113105407-dod-behavioral-cli/BP-MV.out    |   0
+ .../20261113105407-dod-behavioral-cli/BP-PULL.err  |   0
+ .../20261113105407-dod-behavioral-cli/BP-PULL.out  |   3 +
+ .../20261113105407-dod-behavioral-cli/BP-PUSH.err  |   0
+ .../20261113105407-dod-behavioral-cli/BP-PUSH.out  |   0
+ .../20261113105407-dod-behavioral-cli/BP-PUSH2.err |   0
+ .../20261113105407-dod-behavioral-cli/BP-PUSH2.out |   0
+ .../BP-REBASE-CLEAN.err                            |   0
+ .../BP-REBASE-CLEAN.out                            |   0
+ .../BP-REBASE.err                                  |   1 +
+ .../BP-REBASE.out                                  |   0
+ .../BP-REMOTE-ADD.err                              |   0
+ .../BP-REMOTE-ADD.out                              |   0
+ .../BP-REMOTE-GETURL.err                           |   0
+ .../BP-REMOTE-GETURL.out                           |   1 +
+ .../BP-REMOTE-GETURL2.err                          |   0
+ .../BP-REMOTE-GETURL2.out                          |   1 +
+ .../BP-REMOTE-LIST.err                             |   0
+ .../BP-REMOTE-LIST.out                             |   1 +
+ .../BP-REMOTE-SETURL.err                           |   0
+ .../BP-REMOTE-SETURL.out                           |   0
+ .../BP-REMOTE-SHOW.err                             |   0
+ .../BP-REMOTE-SHOW.out                             |   4 +
+ .../20261113105407-dod-behavioral-cli/BP-RESET.err |   0
+ .../20261113105407-dod-behavioral-cli/BP-RESET.out |   0
+ .../BP-RESTORE.err                                 |   0
+ .../BP-RESTORE.out                                 |   0
+ .../20261113105407-dod-behavioral-cli/BP-RM.err    |   0
+ .../20261113105407-dod-behavioral-cli/BP-RM.out    |   0
+ .../BP-SHOW.arks.err                               |   0
+ .../BP-SHOW.arks.out                               |   6 +
+ .../BP-SHOW.git.err                                |   0
+ .../BP-SHOW.git.out                                |  13 +
+ .../BP-STASH-LIST.err                              |   0
+ .../BP-STASH-LIST.out                              |   0
+ .../BP-STATUS.arks.err                             |   0
+ .../BP-STATUS.arks.out                             |   0
+ .../BP-STATUS.git.err                              |   0
+ .../BP-STATUS.git.out                              |   0
+ .../BP-SWITCH-FEAT.err                             |   0
+ .../BP-SWITCH-FEAT.out                             |   1 +
+ .../BP-SWITCH-FEAT2.err                            |   0
+ .../BP-SWITCH-FEAT2.out                            |   1 +
+ .../BP-SWITCH-FEAT3.err                            |   0
+ .../BP-SWITCH-FEAT3.out                            |   1 +
+ .../BP-SWITCH-MAIN.err                             |   0
+ .../BP-SWITCH-MAIN.out                             |   1 +
+ .../BP-SWITCH-MAIN2.err                            |   0
+ .../BP-SWITCH-MAIN2.out                            |   1 +
+ .../BP-TAG-LIST.arks.err                           |   0
+ .../BP-TAG-LIST.arks.out                           |   1 +
+ .../BP-TAG-LIST.git.err                            |   0
+ .../BP-TAG-LIST.git.out                            |   1 +
+ .../20261113105407-dod-behavioral-cli/BP-TAG.err   |   0
+ .../20261113105407-dod-behavioral-cli/BP-TAG.out   |   0
+ .../20261113105407-dod-behavioral-cli/daemon.err   |   8 +
+ .../20261113105407-dod-behavioral-cli/daemon.out   |   0
+ .../dropin-branch.err                              |   0
+ .../dropin-branch.out                              |   2 +
+ .../dropin-diff_--stat.err                         |   0
+ .../dropin-diff_--stat.out                         |   1 +
+ .../dropin-gh-pr-help.out                          |   1 +
+ .../dropin-log_-1_--oneline.err                    |   0
+ .../dropin-log_-1_--oneline.out                    |   1 +
+ .../dropin-remote.err                              |   0
+ .../dropin-remote.out                              |   1 +
+ .../dropin-show_HEAD.err                           |   0
+ .../dropin-show_HEAD.out                           |   7 +
+ .../dropin-status.err                              |   0
+ .../dropin-status.out                              |   2 +
+ .../dropin-tag.err                                 |   0
+ .../dropin-tag.out                                 |   1 +
+ .../20261113105407-dod-behavioral-cli/receipt.json |  27 ++
+ ...105000-behavioral-dod-gap-inventory.research.md |  34 ++
+ ...13194123-arks-dod-behavioral-parity.research.md |  93 +++++
+ .spec/sot/arks-dod-behavioral.sot.md               | 140 +++++++
+ .spec/sot/arks-dod-optimized.sot.md                |  11 +-
+ .spec/sot/arks-hub-product-intent.sot.md           |   4 +-
+ .spec/sot/arks-native-e2e-checklist.sot.md         |  17 +-
+ .spec/sot/arks-self-host-server.sot.md             |   6 +-
+ .spec/sot/production-residual-register.sot.md      |  11 +-
+ .spec/sot/release-symmetry-precheck.sot.md         |   4 +-
+ .spec/sot/verify-cleanroom-symmetry-matrix.sot.md  |  22 +-
+ crates/arks-remote/src/config.rs                   |  77 ++++
+ crates/arks-remote/src/lib.rs                      |   4 +-
+ crates/arks/src/cmd/remote.rs                      |  35 ++
+ docs/completion.md                                 |   6 +-
+ docs/release.md                                    |  24 ++
+ verify/docker-compose.yml                          |   2 +
+ .../g005-protocol-offline-fixtures/Cargo.lock      |   2 +-
+ verify/gates/g007-smart-http-client/Cargo.lock     |   2 +-
+ verify/gates/g011-lease-product/Cargo.lock         |   2 +-
+ verify/gates/g014-cli-parity-production/Cargo.lock |   2 +-
+ verify/gates/g015-smart-http/Cargo.lock            |   2 +-
+ verify/gates/g036-http-basic-auth/Cargo.lock       |   2 +-
+ verify/matrices/hub-gh-arks-e2e-matrix.csv         |  14 +-
+ verify/scripts/run-cli-git-arks-matrix-e2e.sh      | 420 +++++++++++++++++++++
+ 203 files changed, 1095 insertions(+), 51 deletions(-)

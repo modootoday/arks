@@ -75,10 +75,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Stub discrete-circuit path-deps (parse-time)
-        shell: bash
-        run: bash scripts/ci-stub-discrete-circuit.sh
-
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -223,9 +219,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
-
-      - name: Stub discrete-circuit path-deps (parse-time)
-        run: bash scripts/ci-stub-discrete-circuit.sh
 
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable

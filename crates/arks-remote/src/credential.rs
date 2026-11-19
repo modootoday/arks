@@ -1199,7 +1199,9 @@ mod tests {
                 "@echo off\r\nif not \"%1\"==\"get\" exit /b 0\r\necho username=huser\r\necho password=hpass\r\necho.\r\n",
             )
             .unwrap();
-            format!("!{}", p.display())
+            // Helper strings are shell-split (backslash escapes), as with Git for
+            // Windows' sh; use forward slashes for the Windows path.
+            format!("!{}", p.display().to_string().replace('\\', "/"))
         };
         #[cfg(not(windows))]
         let helper = {

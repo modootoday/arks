@@ -2,15 +2,12 @@
 //!
 //! - `http://` loopback: raw `TcpStream` (local forge).
 //! - `https://` remote: `ureq` TLS path; operator CA via `ARKS_HUB_CA_FILE` (B3 harness).
+//!
 //! Never spawns `gh` / `git`.
 
-use rustls::pki_types::CertificateDer;
 use std::env;
-use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::Path;
-use std::sync::Arc;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -240,36 +237,17 @@ fn is_https_transport_retryable(err: &str) -> bool {
         || e.contains("broken pipe")
 }
 
-/// Operator trust anchor for `https://` hub client (B3 clean-room; PEM file path).
-fn hub_https_client_tls_config() -> Result<Option<Arc<rustls::ClientConfig>>, String> {
-    let ca_path = match env::var("ARKS_HUB_CA_FILE") {
-        Ok(p) if !p.trim().is_empty() => p,
-        _ => return Ok(None),
-    };
-    Ok(Some(load_operator_ca_tls_config(Path::new(&ca_path))?))
-}
-
-fn load_operator_ca_tls_config(ca_path: &Path) -> Result<Arc<rustls::ClientConfig>, String> {
-    let _ = rustls::crypto::ring::default_provider().install_default();
-    let f = File::open(ca_path)
-        .map_err(|e| format!("ARKS_HUB_CA_FILE open {}: {e}", ca_path.display()))?;
-    let mut reader = BufReader::new(f);
-    let certs: Vec<CertificateDer<'static>> = rustls_pemfile::certs(&mut reader)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("ARKS_HUB_CA_FILE parse {}: {e}", ca_path.display()))?;
-    if certs.is_empty() {
-        return Err(format!("ARKS_HUB_CA_FILE PEM empty: {}", ca_path.display()));
+/// HTTPS policy for the hub client: shared CA + proxy resolution
+/// ([[sot:root/cloud-agent-dropin]] §T) plus the operator anchor
+/// `ARKS_HUB_CA_FILE` (B3 clean-room; PEM file path).
+fn hub_https_policy() -> arks_net::HttpsPolicy {
+    let mut policy = arks_net::HttpsPolicy::from_environment();
+    if let Ok(p) = env::var("ARKS_HUB_CA_FILE") {
+        if !p.trim().is_empty() {
+            policy.add_ca_file(p.into());
+        }
     }
-    let mut root_store = rustls::RootCertStore::empty();
-    for cert in certs {
-        root_store
-            .add(cert)
-            .map_err(|e| format!("ARKS_HUB_CA_FILE root add: {e}"))?;
-    }
-    let config = rustls::ClientConfig::builder()
-        .with_root_certificates(root_store)
-        .with_no_client_auth();
-    Ok(Arc::new(config))
+    policy
 }
 
 fn http_exchange_https_once(
@@ -285,9 +263,7 @@ fn http_exchange_https_once(
         .timeout_write(Duration::from_secs(30))
         .redirects(4)
         .user_agent("arks-hub/0.0.0 (+Partial HTTPS client; design≠Claimed)");
-    if let Some(tls_cfg) = hub_https_client_tls_config()? {
-        agent_builder = agent_builder.tls_config(tls_cfg);
-    }
+    agent_builder = hub_https_policy().apply(agent_builder, arks_net::url_host(url))?;
     let agent = agent_builder.build();
     let mut req = agent
         .request(method, url)

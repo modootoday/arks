@@ -12,8 +12,8 @@
 //! `.spec/sot/multi-agent-git-concurrency-scenarios.sot.md`.
 
 use crate::cmd::shared::{
-    commit_signature, current_branch_name, flatten_tree, head_blob_map, index_stat_matches,
-    resolve_rev,
+    commit_signature, committer_signature, current_branch_name, flatten_tree, head_blob_map,
+    index_stat_matches, resolve_rev,
 };
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
@@ -367,7 +367,7 @@ pub(crate) fn cherry_pick_oid(oid: &Oid, no_commit: bool) -> CliResult<()> {
     let deltas = deltas_for_commit(&repo, &commit)?;
     let message = ensure_nl(commit.message.clone());
     let author = commit.author.clone();
-    let committer = commit_signature()?;
+    let committer = committer_signature()?;
     drop(repo);
     apply_checked_opts(
         &head_map,
@@ -730,7 +730,7 @@ fn cherry_pick_continue() -> CliResult<()> {
     } else {
         commit_signature()?
     };
-    let committer = commit_signature()?;
+    let committer = committer_signature()?;
     let files = {
         let mut map = HashMap::new();
         for e in index.entries.iter().filter(|e| e.stage() == 0) {

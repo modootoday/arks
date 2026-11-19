@@ -31,3 +31,5 @@ rustls-pemfile = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+# Test-only certificate generation (no PEM fixtures in tracked paths).
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }

@@ -1,7 +1,7 @@
 ---
 id: sot:root/l3-celir-index-joint-clean-room
 title: L3 HighConcurrency plus CELIR index joint clean-room
-status: active
+status: superseded
 created: 2026-11-09T20:49:15Z
 updated: 2026-11-10T05:49:00Z
 tags: [celir, indexing-service, l3, highconcurrency, g024-l3-celir-joint, m24, m23, clean-room, joint, lease]
@@ -21,6 +21,9 @@ rel:
 ---
 
 # L3 HighConcurrency plus CELIR index joint clean-room
+
+> [!IMPORTANT]
+> **Superseded / Withdrawn** by [[adr:root/20261119200000]] — CELIR is not adopted; this document is historical record only.
 
 Version **0.1.0**. Normative Docker clean-room gate **G24** proving **WriterMode::HighConcurrency** claimed-shape path and CELIR index sidecar **together**. L3 ADR: [[adr:root/20261109194200]]. Index companion: [[sot:root/celir-index-dual-path]]. G22 parent: [[sot:root/celir-index-contention-clean-room]].
 

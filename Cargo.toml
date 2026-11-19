@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/arks-config",
+    "crates/arks-net",
     "crates/arks-hash",
     "crates/arks-oid",
     "crates/arks-object",
@@ -20,6 +22,8 @@ members = [
     "crates/arks-hostfs",
 ]
 default-members = [
+    "crates/arks-config",
+    "crates/arks-net",
     "crates/arks-hash",
     "crates/arks-oid",
     "crates/arks-object",
@@ -45,6 +49,8 @@ version = "0.0.0"
 repository = "https://github.com/humanymous/gir"
 
 [workspace.dependencies]
+arks-config = { path = "crates/arks-config" }
+arks-net = { path = "crates/arks-net" }
 arks-hash = { path = "crates/arks-hash" }
 arks-oid = { path = "crates/arks-oid" }
 arks-object = { path = "crates/arks-object" }
@@ -90,6 +96,8 @@ ureq = { version = "2.12", default-features = false, features = ["tls"] }
 # Hub local HTTPS smoke Partial (self-signed); not Claimed in-process TLS product.
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 rustls-pemfile = "2"
+# Same root set ureq 2 ships; extended with operator CA (cloud-agent-dropin §T).
+webpki-roots = "0.26"
 
 [profile.dev]
 # Keep host advisory builds light when many agents share the machine.

@@ -1,0 +1,149 @@
+# Agent tier A corpus (cloud-agent-dropin §O / plan 20261119210000 C7a).
+# One command per line (git argv without the leading `git`), shell-quoted.
+status
+status -s
+status -sb
+status --porcelain
+status --porcelain=v1 -uall
+status --short --untracked-files=no
+diff
+diff --stat
+diff --name-only
+diff --name-status
+diff --cached
+diff --cached --stat
+diff --staged --name-only
+diff HEAD
+diff HEAD --stat
+diff HEAD~2 HEAD
+diff HEAD~2..HEAD --stat
+diff main...feature --name-only
+diff t0 v1 -- src
+diff --numstat HEAD~1 HEAD
+diff --shortstat HEAD~3 HEAD
+diff -U1 HEAD~4 HEAD~3
+diff --quiet HEAD~1 HEAD
+diff --exit-code
+log --oneline
+log --oneline -3
+log -2
+log --format=%H%n%T -2
+log --pretty=format:'%h %an %s' -3
+log --format='%h %ad' --date=short -3
+log --format='%h %ad' --date=iso -2
+log --oneline --graph
+log --oneline --all
+log --oneline main..feature
+log --oneline feature..main
+log --oneline --first-parent
+log --oneline --no-merges
+log --oneline --merges
+log --oneline -- src/b.txt
+log --oneline --reverse
+log --oneline --author=Thor -2
+log --oneline --grep=feature
+log --stat -1
+log --name-only --format=%s -2
+log --name-status --format=%s -2
+log -p -1 --format=%s
+log --oneline --decorate
+log -1 --format=%B
+show
+show --stat
+show --name-only
+show --format=%s -s HEAD~1
+show HEAD~1
+show HEAD~1 --stat --format=%h
+show v1
+show HEAD:src/b.txt
+show --oneline -s
+rev-parse HEAD
+rev-parse --short HEAD
+rev-parse HEAD~1 HEAD^2
+rev-parse --abbrev-ref HEAD
+rev-parse --show-toplevel
+rev-parse --git-dir
+rev-parse --is-inside-work-tree
+rev-parse --verify main
+rev-parse v1^{commit}
+rev-parse HEAD^{tree}
+rev-list --count HEAD
+rev-list HEAD~2..HEAD
+rev-list --max-count=2 HEAD
+merge-base main feature
+merge-base --is-ancestor HEAD~1 HEAD
+branch
+branch -a
+branch -v
+branch --show-current
+branch --list 'f*'
+branch --merged
+branch --contains HEAD~3
+branch topic
+branch -d feature
+tag
+tag -l 'v*'
+tag -n
+describe
+describe --tags
+describe --always HEAD~1
+ls-files
+ls-files -s
+ls-files --others --exclude-standard
+ls-files -m
+ls-files src
+cat-file -t HEAD
+cat-file -p HEAD
+cat-file -p HEAD:src
+cat-file -s HEAD:README.md
+cat-file -e HEAD
+for-each-ref
+for-each-ref --format='%(refname:short) %(objectname:short)' refs/heads
+show-ref
+show-ref --tags
+grep -n beta
+grep -c a
+grep -l readme
+grep beta -- src
+blame README.md
+blame -L 1,2 README.md
+config --get user.name
+config --list --local
+config core.bare
+remote
+remote -v
+stash list
+stash
+stash push -m wip
+add -A
+add src/a.txt
+add .
+add -u
+commit -m msg
+commit -am msg
+commit --allow-empty -m empty
+commit --amend -m amended
+reset
+reset --soft HEAD~1
+reset --hard
+reset --hard HEAD~1
+reset HEAD src/new.txt
+restore src/a.txt
+restore --staged src/new.txt
+checkout -- src/a.txt
+checkout feature
+checkout -b topic
+checkout -B topic HEAD~2
+switch feature
+switch -c topic2
+switch --detach HEAD~1
+clean -n
+clean -fd
+rm --cached src/new.txt
+mv README.md README2.md
+merge feature
+merge --ff-only feature
+cherry-pick 7d4185b
+revert --no-edit HEAD
+rebase main feature
+worktree list

@@ -68,3 +68,6 @@ Thumbs.db
 # Gate-local cargo spill (clean-room uses compose volume)
 verify/gates/*/target/
 
+
+# Agent harness worktrees (local only)
+.claude/worktrees/

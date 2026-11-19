@@ -1,5 +1,7 @@
 # G25 CELIR index scale matrix (M24 successor)
 
+> **Withdrawn** — CELIR not adopted (`.spec/adr/20261119200000-celir-not-adopted-withdraw-m24.adr.md`). Historical record only; the gate entrypoint, compose service and gate tree are removed.
+
 **Authoritative runs:** `verify/docker-compose.yml` service `g025-celir-index-scale` (`verify/scripts/run-g025-celir-index-scale.sh`).
 Host runs are advisory only.
 

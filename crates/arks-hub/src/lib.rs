@@ -853,7 +853,13 @@ fn cmd_pr_ready(args: &[String]) -> ExitCode {
     };
     let num = positional_num(args).unwrap_or_else(|| "1".into());
     let path = format!("/repos/{owner}/{repo}/pulls/{num}");
-    match http_exchange(&base, "PATCH", &path, Some(&tok), Some(r#"{"draft":false}"#)) {
+    match http_exchange(
+        &base,
+        "PATCH",
+        &path,
+        Some(&tok),
+        Some(r#"{"draft":false}"#),
+    ) {
         Ok((code, body)) if code < 400 => {
             let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
             let draft = v.get("draft").and_then(|x| x.as_bool()).unwrap_or(true);
@@ -1391,7 +1397,10 @@ fn cmd_repo(args: &[String]) -> ExitCode {
             let (owner, repo) = match repo_slug(args) {
                 Ok(v) => v,
                 Err(e) => {
-                    let pos = args.iter().skip(1).find(|a| !a.starts_with('-') && a.contains('/'));
+                    let pos = args
+                        .iter()
+                        .skip(1)
+                        .find(|a| !a.starts_with('-') && a.contains('/'));
                     match pos.and_then(|s| s.split_once('/')) {
                         Some((o, n)) => (o.to_string(), n.to_string()),
                         None => {
@@ -1482,7 +1491,9 @@ fn cmd_repo(args: &[String]) -> ExitCode {
                     );
                     println!(
                         "archived={}",
-                        v.get("archived").and_then(|x| x.as_bool()).unwrap_or(archived)
+                        v.get("archived")
+                            .and_then(|x| x.as_bool())
+                            .unwrap_or(archived)
                     );
                     ExitCode::SUCCESS
                 }
@@ -1516,10 +1527,7 @@ fn cmd_repo(args: &[String]) -> ExitCode {
                 eprintln!("arks hub repo rename: NEW_NAME required");
                 return ExitCode::from(2);
             }
-            let payload = format!(
-                r#"{{"name":{}}}"#,
-                serde_json::to_string(new_name).unwrap()
-            );
+            let payload = format!(r#"{{"name":{}}}"#, serde_json::to_string(new_name).unwrap());
             let path = format!("/repos/{owner}/{repo}");
             match http_exchange(&base, "PATCH", &path, Some(&tok), Some(&payload)) {
                 Ok((code, body)) if code < 400 => {
@@ -1632,8 +1640,14 @@ fn cmd_label(args: &[String]) -> ExitCode {
                     if name.is_empty() {
                         continue;
                     }
-                    let color = item.get("color").and_then(|x| x.as_str()).unwrap_or("ededed");
-                    let desc = item.get("description").and_then(|x| x.as_str()).unwrap_or("");
+                    let color = item
+                        .get("color")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("ededed");
+                    let desc = item
+                        .get("description")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("");
                     let payload = format!(
                         r#"{{"name":{},"color":{},"description":{}}}"#,
                         serde_json::to_string(name).unwrap(),
@@ -1752,7 +1766,10 @@ fn cmd_label(args: &[String]) -> ExitCode {
             let desc = flag_value(args, &["--description", "-d"]);
             let mut parts = Vec::new();
             if let Some(n) = new_name {
-                parts.push(format!("\"new_name\":{}", serde_json::to_string(n).unwrap()));
+                parts.push(format!(
+                    "\"new_name\":{}",
+                    serde_json::to_string(n).unwrap()
+                ));
             }
             if let Some(c) = color {
                 parts.push(format!("\"color\":{}", serde_json::to_string(c).unwrap()));
@@ -2391,7 +2408,7 @@ fn cmd_release(args: &[String]) -> ExitCode {
             };
             let pos = positional_num(args);
             let asset_id = flag_value(args, &["--asset-id", "-a"])
-                .or_else(|| pos.as_deref())
+                .or(pos.as_deref())
                 .unwrap_or("1");
             let out = flag_value(args, &["--output", "-o"]).unwrap_or("asset.bin");
             let path = format!("/repos/{owner}/{repo}/releases/assets/{asset_id}");
@@ -2436,7 +2453,7 @@ fn cmd_release(args: &[String]) -> ExitCode {
             };
             let pos = positional_num(args);
             let asset_id = flag_value(args, &["--asset-id", "-a"])
-                .or_else(|| pos.as_deref())
+                .or(pos.as_deref())
                 .unwrap_or("1");
             let path = format!("/repos/{owner}/{repo}/releases/assets/{asset_id}");
             match http_exchange(&base, "DELETE", &path, Some(&tok), None) {
@@ -2626,10 +2643,7 @@ fn cmd_run(args: &[String]) -> ExitCode {
                             .get("status")
                             .and_then(|x| x.as_str())
                             .unwrap_or("unknown");
-                        let conclusion = v
-                            .get("conclusion")
-                            .and_then(|x| x.as_str())
-                            .unwrap_or("");
+                        let conclusion = v.get("conclusion").and_then(|x| x.as_str()).unwrap_or("");
                         println!("status={status} conclusion={conclusion}");
                         if status == "completed" || status == "failed" {
                             return ExitCode::SUCCESS;
@@ -2828,7 +2842,10 @@ fn cmd_workflow(args: &[String]) -> ExitCode {
             match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
                 Ok((code, body)) => {
                     if code == 204 || code < 400 {
-                        println!("{{\"ok\":true,\"ref\":{}}}", serde_json::to_string(rref).unwrap());
+                        println!(
+                            "{{\"ok\":true,\"ref\":{}}}",
+                            serde_json::to_string(rref).unwrap()
+                        );
                         ExitCode::SUCCESS
                     } else {
                         hub_http_print(code, &body)
@@ -2889,7 +2906,9 @@ fn cmd_status(args: &[String]) -> ExitCode {
             _ => println!("note: status aggregation Partial — forge serve may be down"),
         }
     } else {
-        println!("note: set ARKS_HUB_REPO / repo set-default and start forge serve for aggregation");
+        println!(
+            "note: set ARKS_HUB_REPO / repo set-default and start forge serve for aggregation"
+        );
     }
     ExitCode::SUCCESS
 }
@@ -3553,7 +3572,9 @@ fn cmd_config(args: &[String]) -> ExitCode {
 fn cmd_alias(args: &[String]) -> ExitCode {
     let sub = args.first().map(String::as_str).unwrap_or("");
     if matches!(sub, "-h" | "--help") || args.iter().any(|a| a == "-h" || a == "--help") {
-        eprintln!("arks hub alias — list|set|delete|import (client state; no shell profile mutation)");
+        eprintln!(
+            "arks hub alias — list|set|delete|import (client state; no shell profile mutation)"
+        );
         return ExitCode::SUCCESS;
     }
     match sub {
@@ -3644,9 +3665,7 @@ fn cmd_alias(args: &[String]) -> ExitCode {
             ExitCode::SUCCESS
         }
         _ => {
-            eprintln!(
-                "arks hub alias: unknown leaf — [[sot:root/arks-in-scope-leftovers-wave]]"
-            );
+            eprintln!("arks hub alias: unknown leaf — [[sot:root/arks-in-scope-leftovers-wave]]");
             ExitCode::from(2)
         }
     }

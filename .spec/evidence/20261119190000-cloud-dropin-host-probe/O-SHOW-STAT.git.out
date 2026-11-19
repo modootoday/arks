@@ -1,0 +1,11 @@
+Spec-first: tip currency honesty for behavioral DoD + release remote.
+
+ .gitignore                                        | 31 +++++++++++++++++++++++
+ .spec/sot/arks-hub-product-intent.sot.md          |  4 +--
+ .spec/sot/arks-self-host-server.sot.md            |  6 ++---
+ .spec/sot/production-residual-register.sot.md     | 10 ++++----
+ .spec/sot/release-symmetry-precheck.sot.md        |  4 +--
+ .spec/sot/verify-cleanroom-symmetry-matrix.sot.md |  4 +--
+ docs/completion.md                                |  6 ++---
+ docs/release.md                                   | 24 ++++++++++++++++++
+ 8 files changed, 72 insertions(+), 17 deletions(-)

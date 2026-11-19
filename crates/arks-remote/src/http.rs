@@ -59,16 +59,22 @@ impl UreqTransport {
         self.discovered = true;
     }
 
-    fn https_agent(&mut self) -> &ureq::Agent {
-        self.agent.get_or_insert_with(|| {
-            ureq::AgentBuilder::new()
+    /// Built on first `https://` exchange with the shared CA + proxy policy
+    /// ([[sot:root/cloud-agent-dropin]] §T).
+    fn https_agent(&mut self, url: &str) -> Result<&ureq::Agent, RemoteError> {
+        if self.agent.is_none() {
+            let base = ureq::AgentBuilder::new()
                 .redirects(0)
                 .timeout_connect(Duration::from_secs(15))
                 .timeout_read(Duration::from_secs(120))
                 .timeout_write(Duration::from_secs(120))
-                .user_agent("arks/0.0.0")
-                .build()
-        })
+                .user_agent("arks/0.0.0");
+            let builder = arks_net::HttpsPolicy::from_environment()
+                .apply(base, arks_net::url_host(url))
+                .map_err(RemoteError::Http)?;
+            self.agent = Some(builder.build());
+        }
+        Ok(self.agent.as_ref().expect("agent built above"))
     }
 }
 
@@ -136,7 +142,7 @@ impl UreqTransport {
         if url.starts_with("http://") {
             return exchange_cleartext(request, url, authorization);
         }
-        let agent = self.https_agent();
+        let agent = self.https_agent(url)?;
         let mut call = match request.method.as_str() {
             "GET" => agent.get(url),
             "POST" => agent.post(url),

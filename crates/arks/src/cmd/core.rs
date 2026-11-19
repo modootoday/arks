@@ -1,8 +1,8 @@
 //! Core porcelain: init / objects / index / commit / log / show.
 
 use crate::cmd::shared::{
-    collect_untracked, commit_signature, current_branch_name, file_mode, file_times, head_blob_map,
-    index_stat_matches, resolve_rev,
+    collect_untracked, commit_signature, committer_signature, current_branch_name, file_mode,
+    file_times, head_blob_map, index_stat_matches, resolve_rev,
 };
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
@@ -654,7 +654,34 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     // vs writers; AGENT-006 / IDX-008 agent readers). arks status is read-only
     // on the index (product default = no optional locks). Cite: git-status.
     // M16 Sy-1: `-b` branch header claimed.
-    refuse_unknown_flags(args, &["--no-optional-locks", "--porcelain", "-s", "-b"])?;
+    // Cloud drop-in §O: `-sb`, `--short`, `--branch`, `--porcelain=v1`, `-u[all|no|normal]`.
+    let args = &crate::util::alias_flags(
+        crate::util::split_short_bundles(args, "sbz", ""),
+        &[
+            ("--short", "-s"),
+            ("--branch", "-b"),
+            ("--porcelain=v1", "--porcelain"),
+            ("--untracked-files", "-u"),
+            ("--untracked-files=all", "-u"),
+            ("-uall", "-u"),
+            ("--untracked-files=normal", "-unormal"),
+            ("--untracked-files=no", "-uno"),
+        ],
+    );
+    refuse_unknown_flags(
+        args,
+        &[
+            "--no-optional-locks",
+            "--porcelain",
+            "-s",
+            "-b",
+            "-u",
+            "-unormal",
+            "-uno",
+        ],
+    )?;
+    let untracked_all = args.iter().any(|a| a == "-u");
+    let untracked_no = args.iter().any(|a| a == "-uno");
     let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s");
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
@@ -712,28 +739,42 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let indexed: std::collections::HashSet<_> =
         index.entries.iter().map(|e| e.path.clone()).collect();
     let mut untracked = Vec::new();
-    collect_untracked(&work, &work, &indexed, &mut untracked)?;
+    if !untracked_no {
+        collect_untracked(&work, &work, &indexed, &mut untracked)?;
+    }
+    if !untracked_all {
+        untracked = collapse_untracked_dirs(&untracked, &indexed);
+    }
 
     if porcelain {
-        // v1 porcelain: optional `## branch` then XY PATH (claimed subset: M/A/D/?).
+        // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
+        // X = index vs HEAD (A/M/D), Y = worktree vs index (M/D), sorted by path,
+        // untracked (`??`) last.
         if show_branch {
             println!("## {branch}");
         }
+        let staged_deleted: Vec<String> = head_paths
+            .keys()
+            .filter(|p| !indexed.contains(*p))
+            .cloned()
+            .collect();
+        let mut tracked: std::collections::BTreeMap<String, (char, char)> =
+            std::collections::BTreeMap::new();
         for p in &staged {
-            let xy = if head_paths.contains_key(p) {
-                "M "
-            } else {
-                "A "
-            };
-            println!("{xy}{p}");
+            let x = if head_paths.contains_key(p) { 'M' } else { 'A' };
+            tracked.entry(p.clone()).or_insert((' ', ' ')).0 = x;
+        }
+        for p in &staged_deleted {
+            tracked.entry(p.clone()).or_insert((' ', ' ')).0 = 'D';
         }
         for p in &modified {
-            if !staged.contains(p) {
-                println!(" M{p}");
-            }
+            tracked.entry(p.clone()).or_insert((' ', ' ')).1 = 'M';
         }
         for p in &deleted {
-            println!(" D{p}");
+            tracked.entry(p.clone()).or_insert((' ', ' ')).1 = 'D';
+        }
+        for (p, (x, y)) in &tracked {
+            println!("{x}{y} {p}");
         }
         for p in &untracked {
             println!("?? {p}");
@@ -776,6 +817,43 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
+/// `-unormal` (default): show a wholly untracked directory once as `dir/`
+/// (git-status `--untracked-files`).
+fn collapse_untracked_dirs(
+    untracked: &[String],
+    indexed: &std::collections::HashSet<String>,
+) -> Vec<String> {
+    let mut tracked_dirs: HashSet<&str> = HashSet::new();
+    for p in indexed {
+        let mut cut = p.len();
+        while let Some(i) = p[..cut].rfind('/') {
+            if !tracked_dirs.insert(&p[..i]) {
+                break;
+            }
+            cut = i;
+        }
+    }
+    let mut out: Vec<String> = Vec::new();
+    for p in untracked {
+        let mut shown = p.clone();
+        let mut search = 0;
+        while let Some(off) = p[search..].find('/') {
+            let dir = &p[..search + off];
+            if !tracked_dirs.contains(dir) {
+                shown = format!("{dir}/");
+                break;
+            }
+            search += off + 1;
+        }
+        if out.last() != Some(&shown) {
+            out.push(shown);
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
 /// True when agent/profile path or Git-compatible no-optional-locks is requested.
 ///
 /// Defaults **on** for `ARKS_PROFILE=agent` (arks agent overlay). Also honors
@@ -805,6 +883,22 @@ pub fn wants_no_optional_locks(args: &[String]) -> bool {
 }
 
 pub fn cmd_commit(args: &[String]) -> CliResult<()> {
+    // Cloud drop-in §O: bundled short options (`-am <msg>`), `-q`, `-n`.
+    let args = &crate::util::alias_flags(
+        crate::util::split_short_bundles(args, "aqvn", "mFt"),
+        &[
+            ("-n", "--no-verify"),
+            ("--quiet", "-q"),
+            ("--message", "-m"),
+        ],
+    );
+    let args = &args
+        .iter()
+        .flat_map(|a| match a.strip_prefix("--message=") {
+            Some(v) => vec!["-m".to_string(), v.to_string()],
+            None => vec![a.clone()],
+        })
+        .collect::<Vec<_>>();
     // Filter sign flags (incl. `-S<keyid>`) before refuse_unknown_flags.
     let flag_args: Vec<String> = args.iter().filter(|a| !is_sign_flag(a)).cloned().collect();
     refuse_unknown_flags(
@@ -820,6 +914,8 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             "--amend",
             "-a",
             "--all",
+            "-q",
+            "-v",
         ],
     )?;
     let allow_empty = args.iter().any(|a| a == "--allow-empty");
@@ -928,7 +1024,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         if prev.tree == tree && message == prev.message && !allow_empty {
             return Err(CliError::Msg("nothing to commit (amend unchanged)".into()));
         }
-        let sig = commit_signature()?;
+        let sig = committer_signature()?;
         let subject = message.lines().next().unwrap_or("").to_owned();
         let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
         let mut commit = Commit {
@@ -968,7 +1064,9 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
                 );
             }
         }
-        println!("[{}] {}", current_branch_name(&repo)?, coid.to_hex());
+        if !args.iter().any(|a| a == "-q") {
+            print_commit_summary(&repo, &coid, true)?;
+        }
         return Ok(());
     }
 
@@ -992,14 +1090,15 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             }
         }
     }
-    let sig = commit_signature()?;
+    let author = commit_signature()?;
+    let committer = committer_signature()?;
     let subject = message.lines().next().unwrap_or("").to_owned();
     let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
     let mut commit = Commit {
         tree,
         parents: parents.clone(),
-        author: sig.clone(),
-        committer: sig,
+        author,
+        committer,
         gpgsig: None,
         message,
     };
@@ -1034,28 +1133,131 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             );
         }
     }
-    println!("[{}] {}", current_branch_name(&repo)?, coid.to_hex());
+    if !args.iter().any(|a| a == "-q") {
+        print_commit_summary(&repo, &coid, false)?;
+    }
+    Ok(())
+}
+
+/// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,
+/// ` Author:` when it differs from the committer, ` Date:` for amend, then the
+/// shortstat line and `create mode` / `delete mode` lines.
+fn print_commit_summary(repo: &Repository, coid: &Oid, amend: bool) -> CliResult<()> {
+    use crate::cmd::switch_tree::commit_files;
+    use crate::cmd::unified_diff::{StatRow, shortstat_line, stat_change};
+    let c = crate::cmd::log_format::read_commit(repo, coid)?;
+    let label = match repo.head_target()? {
+        RefTarget::Symbolic(s) => s.strip_prefix("refs/heads/").unwrap_or(&s).to_string(),
+        RefTarget::Direct(_) => "detached HEAD".to_string(),
+    };
+    let root = if c.parents.is_empty() {
+        " (root-commit)"
+    } else {
+        ""
+    };
+    let mut out = format!(
+        "[{label}{root} {}] {}\n",
+        &coid.to_hex()[..7],
+        crate::cmd::log_format::subject_line(&c.message)
+    );
+    if (c.author.name.as_str(), c.author.email.as_str())
+        != (c.committer.name.as_str(), c.committer.email.as_str())
+    {
+        out.push_str(&format!(
+            " Author: {} <{}>\n",
+            c.author.name, c.author.email
+        ));
+    }
+    if amend {
+        out.push_str(&format!(
+            " Date: {}\n",
+            crate::cmd::log_format::default_date(&c.author)
+        ));
+    }
+    let mine = commit_files(repo, coid)?;
+    let parent = match c.parents.first() {
+        Some(p) => commit_files(repo, p)?,
+        None => HashMap::new(),
+    };
+    let mut keys: Vec<&String> = mine.keys().chain(parent.keys()).collect();
+    keys.sort();
+    keys.dedup();
+    let mut rows = Vec::new();
+    let mut modes = Vec::new();
+    for k in keys {
+        let (a, b) = (parent.get(k), mine.get(k));
+        if a == b {
+            continue;
+        }
+        let ap = match a {
+            Some(f) => Some(repo.get_object(&f.oid)?.payload),
+            None => None,
+        };
+        let bp = match b {
+            Some(f) => Some(repo.get_object(&f.oid)?.payload),
+            None => None,
+        };
+        rows.push(StatRow {
+            path: k.clone(),
+            change: stat_change(ap.as_deref(), bp.as_deref()),
+        });
+        match (a, b) {
+            (None, Some(f)) => modes.push(format!(" create mode {:o} {k}", f.mode)),
+            (Some(f), None) => modes.push(format!(" delete mode {:o} {k}", f.mode)),
+            (Some(x), Some(y)) if x.mode != y.mode => {
+                modes.push(format!(" mode change {:o} => {:o} {k}", x.mode, y.mode))
+            }
+            _ => {}
+        }
+    }
+    if let Some(line) = shortstat_line(&rows) {
+        out.push_str(&line);
+        out.push('\n');
+    }
+    for m in modes {
+        out.push_str(&m);
+        out.push('\n');
+    }
+    print!("{out}");
     Ok(())
 }
 
 pub fn cmd_log(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `--oneline`, `--graph`, `-n`/`-<n>` claimed (git-log).
+    // Cloud drop-in §O: revision ranges, `--format`/`--pretty`, `--first-parent`,
+    // `--no-merges`/`--merges`, `--reverse`, `-- <path>`.
     // Cite: https://git-scm.com/docs/git-log
-    let oneline = args.iter().any(|a| a == "--oneline");
-    let graph = args.iter().any(|a| a == "--graph");
+    use crate::cmd::log_format::{Pretty, expand, resolve_range, take_pretty, touches_paths, walk};
+    use std::io::Write;
+    let (head_args, paths): (Vec<String>, Vec<String>) = match args.iter().position(|a| a == "--") {
+        Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
+        None => (args.to_vec(), Vec::new()),
+    };
+    let mut head_args = head_args;
+    let pretty = take_pretty(&mut head_args)?;
+    let graph = head_args.iter().any(|a| a == "--graph");
+    let first_parent = head_args.iter().any(|a| a == "--first-parent");
+    let no_merges = head_args.iter().any(|a| a == "--no-merges");
+    let merges_only = head_args.iter().any(|a| a == "--merges");
+    let reverse = head_args.iter().any(|a| a == "--reverse");
     let mut max_count: Option<usize> = None;
     let mut filtered: Vec<String> = Vec::new();
     let mut i = 0;
-    while i < args.len() {
-        let a = &args[i];
-        if a == "-n" {
+    while i < head_args.len() {
+        let a = &head_args[i];
+        if a == "-n" || a == "--max-count" {
             i += 1;
-            let n = args
+            let n = head_args
                 .get(i)
                 .ok_or_else(|| CliError::Usage("log -n <count>".into()))?;
             max_count = Some(
                 n.parse()
                     .map_err(|_| CliError::Usage("log -n: count must be integer".into()))?,
+            );
+        } else if let Some(rest) = a.strip_prefix("--max-count=") {
+            max_count = Some(
+                rest.parse()
+                    .map_err(|_| CliError::Usage("log --max-count: integer".into()))?,
             );
         } else if let Some(rest) = a.strip_prefix("-n") {
             if !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit()) {
@@ -1081,61 +1283,161 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
         }
         i += 1;
     }
-    refuse_unknown_flags(&filtered, &["--oneline", "--graph"])?;
+    refuse_unknown_flags(
+        &filtered,
+        &[
+            "--graph",
+            "--first-parent",
+            "--no-merges",
+            "--merges",
+            "--reverse",
+            "--no-color",
+            "--no-decorate",
+        ],
+    )?;
+    let revs: Vec<String> = filtered
+        .into_iter()
+        .filter(|a| !a.starts_with('-'))
+        .collect();
     let repo = open_repo()?;
-    let mut oid = match repo.head_oid() {
-        Ok(o) => o,
-        Err(_) => return Ok(()),
-    };
-    let mut shown = 0usize;
-    loop {
-        if let Some(max) = max_count {
-            if shown >= max {
-                break;
-            }
+    let (inc, exc) = resolve_range(&repo, &revs)?;
+    if inc.is_empty() {
+        return Ok(());
+    }
+    let work = work_tree(&repo).ok();
+    let specs: Vec<String> = paths
+        .iter()
+        .map(|p| {
+            let abs = std::env::current_dir()
+                .map(|c| c.join(p))
+                .unwrap_or_else(|_| PathBuf::from(p));
+            work.as_ref()
+                .and_then(|w| {
+                    abs.strip_prefix(w)
+                        .ok()
+                        .map(|r| r.to_string_lossy().replace('\\', "/"))
+                })
+                .unwrap_or_else(|| p.clone())
+                .trim_end_matches('/')
+                .to_string()
+        })
+        .collect();
+    let mut selected = Vec::new();
+    for (oid, c) in walk(&repo, &inc, &exc, first_parent)? {
+        if (no_merges && c.parents.len() > 1) || (merges_only && c.parents.len() < 2) {
+            continue;
         }
-        let obj = repo.get_object(&oid)?;
-        if obj.kind != ObjectKind::Commit {
-            return Err(CliError::Msg(format!(
-                "rev {} is not a commit",
-                oid.to_hex()
-            )));
+        if !touches_paths(&repo, &c, &specs)? {
+            continue;
         }
-        let c = Commit::decode(&obj.payload)?;
-        let short = &oid.to_hex()[..7];
-        if oneline || graph {
-            let prefix = if graph { "* " } else { "" };
-            println!("{prefix}{short} {}", c.subject());
-        } else {
-            println!("{} {}", oid.to_hex(), c.subject());
-        }
-        shown += 1;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
+        selected.push((oid, c));
+        if !reverse && max_count.is_some_and(|m| selected.len() >= m) {
+            break;
         }
     }
+    if let Some(m) = max_count {
+        selected.truncate(m);
+    }
+    if reverse {
+        selected.reverse();
+    }
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    let n = selected.len();
+    for (idx, (oid, c)) in selected.iter().enumerate() {
+        let prefix = if graph { "* " } else { "" };
+        match &pretty {
+            Pretty::Oneline => writeln!(out, "{prefix}{} {}", &oid.to_hex()[..7], c.subject())?,
+            Pretty::TFormat(f) => writeln!(out, "{prefix}{}", expand(f, oid, c))?,
+            Pretty::Format(f) => {
+                write!(out, "{prefix}{}", expand(f, oid, c))?;
+                if idx + 1 < n {
+                    writeln!(out)?;
+                }
+            }
+            Pretty::Default if graph => writeln!(out, "* {} {}", &oid.to_hex()[..7], c.subject())?,
+            Pretty::Default => writeln!(out, "{} {}", oid.to_hex(), c.subject())?,
+        }
+    }
+    out.flush()?;
     Ok(())
 }
 
 pub fn cmd_show(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let rev = args.first().map(String::as_str).unwrap_or("HEAD");
+    // Cloud drop-in §O: `--stat`, `--name-only`, `--name-status`, `--format`,
+    // `-s`/`--no-patch`; commits print their patch vs first parent by default.
+    use crate::cmd::log_format::{Pretty, expand, take_pretty};
+    use crate::cmd::shared::tree_blob_map;
+    let mut args = args.to_vec();
+    let pretty = take_pretty(&mut args)?;
+    refuse_unknown_flags(
+        &args,
+        &[
+            "--stat",
+            "--name-only",
+            "--name-status",
+            "-s",
+            "--no-patch",
+            "--quiet",
+            "--no-color",
+        ],
+    )?;
+    let stat = args.iter().any(|a| a == "--stat");
+    let name_only = args.iter().any(|a| a == "--name-only");
+    let name_status = args.iter().any(|a| a == "--name-status");
+    let no_patch = args
+        .iter()
+        .any(|a| a == "-s" || a == "--no-patch" || a == "--quiet");
+    let rev = args
+        .iter()
+        .find(|a| !a.starts_with('-'))
+        .map(String::as_str)
+        .unwrap_or("HEAD");
     let repo = open_repo()?;
     let oid = resolve_rev(&repo, rev)?;
     let obj = repo.get_object(&oid)?;
     match obj.kind {
         ObjectKind::Commit => {
             let c = Commit::decode(&obj.payload)?;
-            println!("commit {}", oid.to_hex());
-            println!("tree {}", c.tree.to_hex());
-            for p in &c.parents {
-                println!("parent {}", p.to_hex());
+            match &pretty {
+                Pretty::Default => {
+                    println!("commit {}", oid.to_hex());
+                    println!("tree {}", c.tree.to_hex());
+                    for p in &c.parents {
+                        println!("parent {}", p.to_hex());
+                    }
+                    println!("author {}", c.author.format_line());
+                    println!("committer {}", c.committer.format_line());
+                    println!();
+                    print!("{}", c.message);
+                }
+                Pretty::Oneline => println!("{} {}", oid.to_hex(), c.subject()),
+                Pretty::TFormat(f) | Pretty::Format(f) => println!("{}", expand(f, &oid, &c)),
             }
-            println!("author {}", c.author.format_line());
-            println!("committer {}", c.committer.format_line());
-            println!();
-            print!("{}", c.message);
+            if no_patch && !(stat || name_only || name_status) {
+                return Ok(());
+            }
+            let parent = match c.parents.first() {
+                Some(p) => tree_blob_map(&repo, p)?,
+                None => HashMap::new(),
+            };
+            let mine = tree_blob_map(&repo, &oid)?;
+            if stat || name_only || name_status {
+                println!();
+                if stat && !(name_only || name_status) {
+                    crate::cmd::working_tree::print_maps_stat(&repo, None, &parent, &mine)?;
+                } else {
+                    crate::cmd::working_tree::print_maps_summary(
+                        &parent,
+                        &mine,
+                        name_only,
+                        name_status,
+                        stat,
+                    )?;
+                }
+            } else {
+                println!();
+                crate::cmd::working_tree::print_maps_diff(&repo, &parent, &mine)?;
+            }
         }
         ObjectKind::Blob => {
             io::Write::write_all(&mut io::stdout(), &obj.payload)?;

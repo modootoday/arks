@@ -1,7 +1,7 @@
 ---
 id: sot:root/celir-index-contention-clean-room
 title: CELIR index contention clean-room
-status: active
+status: superseded
 created: 2026-11-09T20:39:49Z
 updated: 2026-11-09T20:45:00Z
 tags: [celir, indexing-service, clean-room, contention, g022-celir-index-contention, m24, lease, dual-path]
@@ -22,6 +22,9 @@ rel:
 ---
 
 # CELIR index contention clean-room
+
+> [!IMPORTANT]
+> **Superseded / Withdrawn** by [[adr:root/20261119200000]] — CELIR is not adopted; this document is historical record only.
 
 Version **0.1.0**. Normative **Docker clean-room** gate **G22** for optional feature `celir-index` under ultra-high agent contention. Companion unit SoT: [[sot:root/celir-index-dual-path]]. Boundary: [[sot:root/storage-celir-boundary]]. Lease: [[sot:root/lease-concurrency-intent]]. Authority: [[sot:root/product-verification-clean-room]]. Milestone: **M24** ([[plan:root/20261109203430]]); staged plan: [[plan:root/20261109203949]].
 

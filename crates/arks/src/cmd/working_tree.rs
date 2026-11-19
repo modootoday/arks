@@ -1,15 +1,13 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
 use crate::cmd::branch::restore_paths;
-use crate::cmd::shared::{
-    collect_untracked, flatten_tree, head_blob_map, resolve_rev, tree_blob_map,
-};
+use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev, tree_blob_map};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
 };
 use arks_index::{Index, IndexEntry, sort_entries};
-use arks_object::{Commit, ObjectKind, RawObject};
+use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
@@ -44,20 +42,28 @@ pub fn cmd_restore(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_reset(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--soft", "--mixed", "--hard"])?;
-    let mode = if args.iter().any(|a| a == "--soft") {
+    // git-reset: `[--soft|--mixed|--hard] [<commit>]` and `[<tree-ish>] [--] <pathspec>...`.
+    // Cloud drop-in §O: pathspec form, detached HEAD, tree modes, git output lines.
+    let (opts, mut paths) = split_dashdash(args);
+    refuse_unknown_flags(&opts, &["--soft", "--mixed", "--hard", "-q", "--quiet"])?;
+    let quiet = opts.iter().any(|a| a == "-q" || a == "--quiet");
+    let mode = if opts.iter().any(|a| a == "--soft") {
         "soft"
-    } else if args.iter().any(|a| a == "--hard") {
+    } else if opts.iter().any(|a| a == "--hard") {
         "hard"
     } else {
         "mixed"
     };
-    let rev = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("HEAD");
     let mut repo = open_repo()?;
+    let positional: Vec<&String> = opts.iter().filter(|a| !a.starts_with('-')).collect();
+    let mut rev = "HEAD".to_string();
+    for (i, p) in positional.iter().enumerate() {
+        if i == 0 && resolve_rev(&repo, p).is_ok() {
+            rev = (*p).clone();
+        } else {
+            paths.push((*p).clone());
+        }
+    }
     // MISC-005 (M19 Cx-2): parallel reset --hard contends on index.lock.
     if mode != "soft" {
         let mut lock = repo.index_path().into_os_string();
@@ -69,46 +75,68 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
             ));
         }
     }
-    let target = resolve_rev(&repo, rev)?;
+    let target = resolve_rev(&repo, &rev)?;
+    let target_files = crate::cmd::switch_tree::commit_files(&repo, &target)?;
+    let work = work_tree(&repo)?;
+    if !paths.is_empty() {
+        if mode != "mixed" {
+            return Err(CliError::Msg(format!("Cannot do {mode} reset with paths.")));
+        }
+        let specs: Vec<String> = paths.iter().map(|p| pathspec(&work, p)).collect();
+        let mut index = read_index(&repo)?;
+        let mut kept: Vec<IndexEntry> = index
+            .entries
+            .drain(..)
+            .filter(|e| !path_matches(&e.path, &specs))
+            .collect();
+        for (path, f) in &target_files {
+            if path_matches(path, &specs) {
+                kept.push(index_entry_for(&repo, path, f.oid, f.mode)?);
+            }
+        }
+        sort_entries(&mut kept);
+        index.entries = kept;
+        index.extensions.clear();
+        write_index(&repo, &index)?;
+        if !quiet {
+            print_unstaged(&repo, &work)?;
+        }
+        return Ok(());
+    }
+    let prior_paths: Vec<String> = read_index(&repo)
+        .map(|i| i.entries.into_iter().map(|e| e.path).collect())
+        .unwrap_or_default();
+    let old = repo.head_oid().ok();
     match repo.head_target()? {
         RefTarget::Symbolic(name) => {
-            let old = repo.head_oid().ok();
             repo.refs_mut().update(&name, &target, old.as_ref())?;
         }
         RefTarget::Direct(_) => {
-            return Err(CliError::NotImplemented(
-                "reset: detached HEAD not claimed in Wave Pa".into(),
-            ));
+            repo.refs_mut().update("HEAD", &target, old.as_ref())?;
         }
+    }
+    if let Some(o) = old {
+        let _ = repo.refs_mut().update("ORIG_HEAD", &o, None);
     }
     if mode == "soft" {
         return Ok(());
     }
-    let obj = repo.get_object(&target)?;
-    let c = Commit::decode(&obj.payload)?;
-    if mode == "mixed" || mode == "hard" {
-        // Rebuild index from tree without necessarily rewriting worktree for mixed.
-        let mut map = HashMap::new();
-        flatten_tree(&repo, &c.tree, "", &mut map)?;
+    if mode == "hard" {
+        // Prior tracked paths absent from the target are removed (incl. staged new files).
+        for p in &prior_paths {
+            if !target_files.contains_key(p) {
+                let abs = work.join(p);
+                if abs.is_file() || abs.is_symlink() {
+                    let _ = fs::remove_file(&abs);
+                }
+            }
+        }
+        // Zero-stat index forces a rewrite of every tracked file below.
         let mut entries = Vec::new();
-        for (path, oid) in &map {
-            let blob = repo.get_object(oid)?;
-            entries.push(IndexEntry {
-                ctime_sec: 0,
-                ctime_nsec: 0,
-                mtime_sec: 0,
-                mtime_nsec: 0,
-                dev: 0,
-                ino: 0,
-                mode: 0o100644,
-                uid: 0,
-                gid: 0,
-                size: blob.payload.len().min(u32::MAX as usize) as u32,
-                oid: *oid,
-                flags: (path.len().min(0x0fff)) as u16,
-                flags_extended: None,
-                path: path.clone(),
-            });
+        for (path, f) in &target_files {
+            let mut e = index_entry_for(&repo, path, f.oid, f.mode)?;
+            e.size = u32::MAX;
+            entries.push(e);
         }
         sort_entries(&mut entries);
         write_index(
@@ -119,45 +147,173 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
                 extensions: Vec::new(),
             },
         )?;
-    }
-    if mode == "hard" {
-        let work = work_tree(&repo)?;
         arks_remote::checkout_commit(&repo, &work, &target)?;
+        if !quiet {
+            let subject = crate::cmd::log_format::read_commit(&repo, &target)
+                .map(|c| c.subject().to_string())
+                .unwrap_or_default();
+            println!("HEAD is now at {} {subject}", &target.to_hex()[..7]);
+        }
+        return Ok(());
+    }
+    // mixed: index from target tree (modes kept); worktree untouched.
+    let mut entries = Vec::new();
+    for (path, f) in &target_files {
+        entries.push(index_entry_for(&repo, path, f.oid, f.mode)?);
+    }
+    sort_entries(&mut entries);
+    write_index(
+        &repo,
+        &Index {
+            version: 2,
+            entries,
+            extensions: Vec::new(),
+        },
+    )?;
+    if !quiet {
+        print_unstaged(&repo, &work)?;
+    }
+    Ok(())
+}
+
+/// Zero-stat index entry for a tree blob (stat refresh happens on later reads).
+fn index_entry_for(repo: &Repository, path: &str, oid: Oid, mode: u32) -> CliResult<IndexEntry> {
+    let size = repo.get_object(&oid)?.payload.len().min(u32::MAX as usize) as u32;
+    Ok(IndexEntry {
+        ctime_sec: 0,
+        ctime_nsec: 0,
+        mtime_sec: 0,
+        mtime_nsec: 0,
+        dev: 0,
+        ino: 0,
+        mode,
+        uid: 0,
+        gid: 0,
+        size,
+        oid,
+        flags: (path.len().min(0x0fff)) as u16,
+        flags_extended: None,
+        path: path.to_owned(),
+    })
+}
+
+/// git-reset (mixed) report: `Unstaged changes after reset:` + `M`/`D` lines.
+fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
+    let index = read_index(repo)?;
+    let mut lines = Vec::new();
+    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        match fs::metadata(&abs) {
+            Err(_) => lines.push(format!("D\t{}", e.path)),
+            Ok(m) => {
+                if crate::cmd::shared::index_stat_matches(e, &m) {
+                    continue;
+                }
+                let oid =
+                    RawObject::new(ObjectKind::Blob, fs::read(&abs)?).oid(repo.object_format())?;
+                if oid != e.oid {
+                    lines.push(format!("M\t{}", e.path));
+                }
+            }
+        }
+    }
+    if !lines.is_empty() {
+        println!("Unstaged changes after reset:");
+        for l in lines {
+            println!("{l}");
+        }
     }
     Ok(())
 }
 
 pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `--stat`, `--name-only`, `--name-status` claimed (git-diff).
+    // Cloud drop-in §O: `<rev>`, `A..B`, `A...B`, `--cached <rev>`, `-- <path>`.
+    let (opts, rest) = split_dashdash(args);
     refuse_unknown_flags(
-        args,
+        &opts,
         &[
             "--cached",
             "--staged",
             "--stat",
             "--name-only",
             "--name-status",
+            "--no-color",
+            "--no-ext-diff",
         ],
     )?;
-    let cached = args.iter().any(|a| a == "--cached" || a == "--staged");
-    let name_only = args.iter().any(|a| a == "--name-only");
-    let name_status = args.iter().any(|a| a == "--name-status");
-    let stat = args.iter().any(|a| a == "--stat");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    let cached = opts.iter().any(|a| a == "--cached" || a == "--staged");
+    let name_only = opts.iter().any(|a| a == "--name-only");
+    let name_status = opts.iter().any(|a| a == "--name-status");
+    let stat = opts.iter().any(|a| a == "--stat");
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    if positional.len() == 2 {
-        let a = tree_blob_map(&repo, &resolve_rev(&repo, positional[0])?)?;
-        let b = tree_blob_map(&repo, &resolve_rev(&repo, positional[1])?)?;
-        if name_only || name_status || stat {
+    let mut revs: Vec<Oid> = Vec::new();
+    let mut paths: Vec<String> = rest.iter().map(|p| pathspec(&work, p)).collect();
+    for p in opts.iter().filter(|a| !a.starts_with('-')) {
+        if let Some((l, r)) = p.split_once("...") {
+            let lo = resolve_rev(&repo, if l.is_empty() { "HEAD" } else { l })?;
+            let ro = resolve_rev(&repo, if r.is_empty() { "HEAD" } else { r })?;
+            let base = arks_repo::merge_base_oid(&repo, &lo, &ro)?
+                .ok_or_else(|| CliError::Msg(format!("{p}: no merge base")))?;
+            revs.push(base);
+            revs.push(ro);
+        } else if let Some((l, r)) = p.split_once("..") {
+            revs.push(resolve_rev(&repo, if l.is_empty() { "HEAD" } else { l })?);
+            revs.push(resolve_rev(&repo, if r.is_empty() { "HEAD" } else { r })?);
+        } else if let Ok(o) = resolve_rev(&repo, p) {
+            revs.push(o);
+        } else if work.join(p).exists() || std::path::Path::new(p).exists() {
+            paths.push(pathspec(&work, p));
+        } else {
+            return Err(CliError::Msg(format!(
+                "ambiguous argument '{p}': unknown revision or path not in the working tree."
+            )));
+        }
+    }
+    let summary = name_only || name_status || stat;
+    let index_map = || -> CliResult<HashMap<String, Oid>> {
+        let index = read_index(&repo)?;
+        Ok(index
+            .entries
+            .iter()
+            .filter(|e| e.stage() == 0)
+            .map(|e| (e.path.clone(), e.oid))
+            .collect())
+    };
+    let (a, b, wt) = match (revs.len(), cached) {
+        (0, _) => (None, None, false),
+        (1, true) => (
+            Some(tree_blob_map(&repo, &revs[0])?),
+            Some(index_map()?),
+            false,
+        ),
+        (1, false) => (
+            Some(tree_blob_map(&repo, &revs[0])?),
+            Some(worktree_map(&repo, &work)?),
+            true,
+        ),
+        (2, _) => (
+            Some(tree_blob_map(&repo, &revs[0])?),
+            Some(tree_blob_map(&repo, &revs[1])?),
+            false,
+        ),
+        _ => {
+            return Err(CliError::Usage(
+                "diff [--cached] [<commit> [<commit>]] [-- <path>...]".into(),
+            ));
+        }
+    };
+    if let (Some(a), Some(b)) = (a, b) {
+        let a = filter_paths(a, &paths);
+        let b = filter_paths(b, &paths);
+        if stat && !(name_only || name_status) {
+            return print_maps_stat(&repo, wt.then_some(work.as_path()), &a, &b);
+        }
+        if summary {
             return print_maps_summary(&a, &b, name_only, name_status, stat);
         }
-        return print_maps_diff(&repo, &a, &b);
-    }
-    if !positional.is_empty() {
-        return Err(CliError::Usage(
-            "diff [<commit> <commit>] | diff [--cached] [--stat|--name-only|--name-status]".into(),
-        ));
+        return print_maps_diff_work(&repo, wt.then_some(work.as_path()), &a, &b);
     }
     let index = read_index(&repo)?;
     if cached {
@@ -166,22 +322,47 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
         for e in index.entries.iter().filter(|e| e.stage() == 0) {
             idx_map.insert(e.path.clone(), e.oid);
         }
+        let head = filter_paths(head, &paths);
+        let idx_map = filter_paths(idx_map, &paths);
+        if stat && !(name_only || name_status) {
+            return print_maps_stat(&repo, None, &head, &idx_map);
+        }
         if name_only || name_status || stat {
             return print_maps_summary(&head, &idx_map, name_only, name_status, stat);
         }
         return print_maps_diff(&repo, &head, &idx_map);
     }
+    if stat && !(name_only || name_status) {
+        let idx_map: HashMap<String, Oid> = index
+            .entries
+            .iter()
+            .filter(|e| e.stage() == 0 && path_matches(&e.path, &paths))
+            .map(|e| (e.path.clone(), e.oid))
+            .collect();
+        let wt_map = filter_paths(worktree_map(&repo, &work)?, &paths);
+        return print_maps_stat(&repo, Some(&work), &idx_map, &wt_map);
+    }
     // WT vs index — Pf4-1: buffer unified emit (PERF stdout/syscall class).
     let mut out = io::BufWriter::with_capacity(256 * 1024, io::stdout().lock());
     let mut changed: Vec<(String, &'static str)> = Vec::new();
-    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+    for e in index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0 && path_matches(&e.path, &paths))
+    {
         let abs = work.join(&e.path);
         if !abs.is_file() {
             if name_only || name_status || stat {
                 changed.push((e.path.clone(), "D"));
             } else {
                 let old = repo.get_object(&e.oid)?;
-                print_unified_to(&mut out, &e.path, &old.payload, b"")?;
+                print_unified_to(
+                    &mut out,
+                    repo.object_format(),
+                    &e.path,
+                    Some(&old.payload),
+                    None,
+                )?;
             }
             continue;
         }
@@ -203,7 +384,13 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
             changed.push((e.path.clone(), "M"));
         } else {
             let old = repo.get_object(&e.oid)?;
-            print_unified_to(&mut out, &e.path, &old.payload, &new_obj.payload)?;
+            print_unified_to(
+                &mut out,
+                repo.object_format(),
+                &e.path,
+                Some(&old.payload),
+                Some(&new_obj.payload),
+            )?;
         }
     }
     if name_only || name_status || stat {
@@ -435,6 +622,148 @@ fn remove_untracked_dirs(
     Ok(())
 }
 
+/// Split argv at the first `--` (options+revs, pathspecs).
+fn split_dashdash(args: &[String]) -> (Vec<String>, Vec<String>) {
+    match args.iter().position(|a| a == "--") {
+        Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
+        None => (args.to_vec(), Vec::new()),
+    }
+}
+
+/// Worktree-relative pathspec (cwd-relative input), `/`-separated, no trailing slash.
+fn pathspec(work: &Path, p: &str) -> String {
+    let abs = std::env::current_dir()
+        .map(|c| c.join(p))
+        .unwrap_or_else(|_| std::path::PathBuf::from(p));
+    let rel = abs
+        .strip_prefix(work)
+        .map(|r| r.to_string_lossy().replace('\\', "/"))
+        .unwrap_or_else(|_| p.replace('\\', "/"));
+    let rel = rel
+        .trim_start_matches("./")
+        .trim_end_matches('/')
+        .to_string();
+    if rel == "." { String::new() } else { rel }
+}
+
+fn path_matches(path: &str, specs: &[String]) -> bool {
+    specs.is_empty()
+        || specs
+            .iter()
+            .any(|s| s.is_empty() || path == s || path.starts_with(&format!("{s}/")))
+}
+
+fn filter_paths(map: HashMap<String, Oid>, specs: &[String]) -> HashMap<String, Oid> {
+    if specs.is_empty() {
+        return map;
+    }
+    map.into_iter()
+        .filter(|(k, _)| path_matches(k, specs))
+        .collect()
+}
+
+/// Tracked paths as they are in the working tree (missing files omitted).
+/// Hashes without writing objects; stat-clean entries reuse the index OID.
+fn worktree_map(repo: &Repository, work: &Path) -> CliResult<HashMap<String, Oid>> {
+    let index = read_index(repo)?;
+    let mut out = HashMap::new();
+    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        let Ok(meta) = fs::metadata(&abs) else {
+            continue;
+        };
+        if !meta.is_file() {
+            continue;
+        }
+        if crate::cmd::shared::index_stat_matches(e, &meta) {
+            out.insert(e.path.clone(), e.oid);
+            continue;
+        }
+        let obj = RawObject::new(ObjectKind::Blob, fs::read(&abs)?);
+        out.insert(e.path.clone(), obj.oid(repo.object_format())?);
+    }
+    Ok(out)
+}
+
+/// `--stat` over two path→OID maps; `work` reads right-side blobs from the
+/// working tree (`diff` / `diff <rev>`).
+pub(crate) fn print_maps_stat(
+    repo: &Repository,
+    work: Option<&Path>,
+    a: &HashMap<String, Oid>,
+    b: &HashMap<String, Oid>,
+) -> CliResult<()> {
+    use crate::cmd::unified_diff::{StatRow, stat_change, write_stat};
+    let mut keys: Vec<&String> = a.keys().chain(b.keys()).collect();
+    keys.sort();
+    keys.dedup();
+    let mut rows = Vec::new();
+    for k in keys {
+        let (ao, bo) = (a.get(k), b.get(k));
+        if ao == bo {
+            continue;
+        }
+        let ap = match ao {
+            Some(o) => Some(repo.get_object(o)?.payload),
+            None => None,
+        };
+        let bp = match (bo, work) {
+            (Some(_), Some(w)) => Some(fs::read(w.join(k))?),
+            (Some(o), None) => Some(repo.get_object(o)?.payload),
+            (None, _) => None,
+        };
+        rows.push(StatRow {
+            path: k.clone(),
+            change: stat_change(ap.as_deref(), bp.as_deref()),
+        });
+    }
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    write_stat(&mut out, &rows)?;
+    out.flush()?;
+    Ok(())
+}
+
+/// Like [`print_maps_diff`], reading right-side blobs missing from the object
+/// store from the working tree (`diff <rev>`).
+fn print_maps_diff_work(
+    repo: &Repository,
+    work: Option<&Path>,
+    a: &HashMap<String, Oid>,
+    b: &HashMap<String, Oid>,
+) -> CliResult<()> {
+    let Some(work) = work else {
+        return print_maps_diff(repo, a, b);
+    };
+    let mut out = io::BufWriter::with_capacity(256 * 1024, io::stdout().lock());
+    let mut keys: Vec<&String> = a.keys().chain(b.keys()).collect();
+    keys.sort();
+    keys.dedup();
+    for k in keys {
+        let ao = a.get(k);
+        let bo = b.get(k);
+        if ao == bo {
+            continue;
+        }
+        let ap = match ao {
+            Some(o) => Some(repo.get_object(o)?.payload),
+            None => None,
+        };
+        let bp = match bo {
+            Some(_) => Some(fs::read(work.join(k))?),
+            None => None,
+        };
+        print_unified_to(
+            &mut out,
+            repo.object_format(),
+            k,
+            ap.as_deref(),
+            bp.as_deref(),
+        )?;
+    }
+    out.flush()?;
+    Ok(())
+}
+
 pub(crate) fn print_maps_diff(
     repo: &Repository,
     a: &HashMap<String, Oid>,
@@ -453,30 +782,31 @@ pub(crate) fn print_maps_diff(
             continue;
         }
         let ap = match ao {
-            Some(o) => repo.get_object(o)?.payload,
-            None => Vec::new(),
+            Some(o) => Some(repo.get_object(o)?.payload),
+            None => None,
         };
         let bp = match bo {
-            Some(o) => repo.get_object(o)?.payload,
-            None => Vec::new(),
+            Some(o) => Some(repo.get_object(o)?.payload),
+            None => None,
         };
-        print_unified_to(&mut out, k, &ap, &bp)?;
+        print_unified_to(
+            &mut out,
+            repo.object_format(),
+            k,
+            ap.as_deref(),
+            bp.as_deref(),
+        )?;
     }
     out.flush()?;
     Ok(())
 }
 
-fn print_unified_to(out: &mut impl Write, path: &str, old: &[u8], new: &[u8]) -> CliResult<()> {
-    writeln!(out, "diff --git a/{path} b/{path}")?;
-    writeln!(out, "--- a/{path}")?;
-    writeln!(out, "+++ b/{path}")?;
-    let old_s = String::from_utf8_lossy(old);
-    let new_s = String::from_utf8_lossy(new);
-    for line in old_s.lines() {
-        writeln!(out, "-{line}")?;
-    }
-    for line in new_s.lines() {
-        writeln!(out, "+{line}")?;
-    }
-    Ok(())
+fn print_unified_to(
+    out: &mut impl Write,
+    format: arks_store::ObjectFormat,
+    path: &str,
+    old: Option<&[u8]>,
+    new: Option<&[u8]>,
+) -> CliResult<()> {
+    crate::cmd::unified_diff::write_file_patch(out, format, path, old, new)
 }

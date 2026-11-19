@@ -13,7 +13,10 @@ rel:
 
 # Storage CELIR boundary
 
-Version **0.8.1**. Normative **boundary** between arks’s Git-compatible object store and the external CELIR project at the **local** workspace `C:\workspaces\discrete-circuit`. Product intent: [[sot:root/product-intent]]. Crate placement: [[sot:root/crate-architecture]]. Compatibility: [[sot:root/git-compat-surface]]. Lease boundary: [[sot:root/lease-concurrency-intent]]. Enablement ADR: [[adr:root/20261110052030]]. Dual-path companion slice: [[sot:root/celir-index-dual-path]], [[plan:root/20261109202815]]. Rationale research (historical): [[research:root/20261108083640]]. Inbound CELIR response receipt (historical): [[evidence:root/20261108192100]].
+> [!IMPORTANT]
+> **CELIR not adopted** ([[adr:root/20261119200000]], supersedes [[adr:root/20261110052030]]). Current normative rule: filesystem `.git` is the sole object store; CELIR MUST NOT appear in the arks Cargo graph in any form (no feature, no path dependency, no companion crate); **M24** and **G22–G25** are **Withdrawn**. Sections below that describe the optional `celir-index` feature are historical.
+
+Version **0.9.0**. Normative **boundary** between arks’s Git-compatible object store and the external CELIR project at the **local** workspace `C:\workspaces\discrete-circuit`. Product intent: [[sot:root/product-intent]]. Crate placement: [[sot:root/crate-architecture]]. Compatibility: [[sot:root/git-compat-surface]]. Lease boundary: [[sot:root/lease-concurrency-intent]]. Enablement ADR: [[adr:root/20261110052030]]. Dual-path companion slice: [[sot:root/celir-index-dual-path]], [[plan:root/20261109202815]]. Rationale research (historical): [[research:root/20261108083640]]. Inbound CELIR response receipt (historical): [[evidence:root/20261108192100]].
 
 ## Product decision (normative — v0.8.0)
 

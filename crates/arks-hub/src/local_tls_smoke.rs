@@ -226,9 +226,8 @@ pub fn run_local_https_smoke(path: &str) -> Result<(SocketAddr, u16, String), St
     // One-shot accept for smoke: avoid racing stop against the client handshake.
     let handle = thread::spawn(move || {
         ready2.store(true, Ordering::SeqCst);
-        match listener.accept() {
-            Ok((stream, _)) => handle_tls_client(stream, cfg),
-            Err(_) => {}
+        if let Ok((stream, _)) = listener.accept() {
+            handle_tls_client(stream, cfg)
         }
     });
 

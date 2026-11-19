@@ -22,7 +22,7 @@ Prefer this direction unless an owning SoT says otherwise:
 7. **H — Remote GitHub-class client** — after local foundation; not production.
 8. **Pa / Pb / Pc — Porcelain parity waves** — toward Git CLI symmetric inventory; **Pc (M9) = CLI-parity production**.
 9. **E — Lease features** — after CLI-parity production unless a lease SoT explicitly scopes local-only earlier; L3 claimed shape ships **M23**.
-10. **Post-E program ladder** — M11 server, M12–M22 residual/catalog closes, M24 CELIR index dual-path — per roadmap; do not redefine frozen M9–M16 exits.
+10. **Post-E program ladder** — M11 server, M12–M22 residual/catalog closes, M24 CELIR index dual-path (**Withdrawn**, ADR `20261119200000`) — per roadmap; do not redefine frozen M9–M16 exits.
 11. **Clean-room product gates** — last mile for “verified” (rule `60-clean-room-verify`); host greens stay advisory. Gates **G0–G27** (+G28 when present) sequencing: `.spec/sot/interop-test-matrix.sot.md`.
 
 ## Promotion rules

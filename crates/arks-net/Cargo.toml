@@ -1,0 +1,16 @@
+[package]
+name = "arks-net"
+description = "HTTPS client policy: operator CA trust anchors + proxy (shared by remote and hub)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+arks-config = { workspace = true }
+ureq = { workspace = true }
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+webpki-roots = { workspace = true }

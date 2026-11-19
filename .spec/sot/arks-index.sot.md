@@ -23,7 +23,7 @@ rel:
 
 # arks-index unit
 
-Version 0.1.1. Unit SoT for Ring 2 Git index file read/write ([[plan:root/20261108090648]], M3 Phase R under [[sot:root/program-roadmap]] **v0.3.1**). Formats from [gitformat-index](https://git-scm.com/docs/gitformat-index) via [[research:root/20261108071915]]. Path: `$GIT_DIR/index` per [gitrepository-layout](https://git-scm.com/docs/gitrepository-layout).
+Version 0.1.2. Unit SoT for Ring 2 Git index file read/write ([[plan:root/20261108090648]], M3 Phase R under [[sot:root/program-roadmap]] **v0.3.1**). Formats from [gitformat-index](https://git-scm.com/docs/gitformat-index) via [[research:root/20261108071915]]. Path: `$GIT_DIR/index` per [gitrepository-layout](https://git-scm.com/docs/gitrepository-layout).
 
 **Pre-restart caution:** host-only or pre-restart M3 index trees are **not** product-verified. M3 claims **index r/w** only — **not** full **G3** index-commit round-trip ([[sot:root/interop-test-matrix]]; full G3 waits for M5).
 
@@ -34,7 +34,7 @@ Version 0.1.1. Unit SoT for Ring 2 Git index file read/write ([[plan:root/202611
    - **Read:** index versions **2, 3, and 4** (header `DIRC` + version + entry count; trailing hash checksum over content before the checksum; OID width follows repository object format via [[sot:root/arks-oid]] / [[sot:root/arks-hash]]).
    - **Write:** produce **version 2** by default; emit **version 3** when extended entry flags / long-name needs documented by gitformat-index require it. **Do not claim v4 write** in M3 (v4 path compression is read-only).
 3. **Entries** MUST be ordered by path as unsigned bytes (`memcmp`) then stage, per gitformat-index. Writes MUST refuse unsorted entry lists.
-4. **Extensions:** optional extensions whose signature starts with `A`–`Z` MAY be ignored when unknown on read (gitformat-index). M3 MUST **refuse** split-index (`LINK`) and sparse-directory (`SDIR`) rather than silently expand or corrupt. Safe optional extensions MAY pass through on rewrite when the crate marks them passthrough-safe; do not invent new extension signatures.
+4. **Extensions:** optional extensions whose signature starts with `A`–`Z` MAY be ignored when unknown on read (gitformat-index). M3 MUST **refuse** split-index (`LINK`) and sparse-directory (`SDIR`) rather than silently expand or corrupt. Safe optional extensions MAY pass through on rewrite when the crate marks them passthrough-safe; do not invent new extension signatures. Extensions whose payload describes entries, directories, or byte offsets — cache tree `TREE`, untracked cache `UNTR`, fsmonitor `FSMN`, end-of-index `EOIE`, index-entry offset table `IEOT` — are **not** passthrough-safe: a rewrite MUST drop them (stock Git rebuilds them; a stale `TREE` makes Git read wrong trees and commit wrong content when arks and Git share one `.git`). Resolve-undo `REUC` and unknown optional extensions MAY pass through.
 5. **L0 locks:** `write_path` MUST use exclusive `index.lock` (`create_new`), write payload, `sync_all`, rename over `index` — same short-lived exclusive pattern documented for Git index updates; cite layout + update-ref/index lock practice via [[research:root/20261108071915]] / [[sot:root/lease-concurrency-intent]] **L0**. **No L1+ lease API.**
 6. **Out of scope (M3):** full **G3** (index + commit/tree porcelain round-trip — **M5**); sparse-index write semantics; split-index; cache-tree correctness product claims; racy-git policy invention beyond documented fields; pack/protocol/CLI; remotes; CELIR; `gix`.
 

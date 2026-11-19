@@ -16,6 +16,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
+/// Stop flag + join handle of a background listener thread.
+type ListenerThread = thread::JoinHandle<Result<(), String>>;
+
 /// Shared slot for Partial live listen rebind (polled in forge accept loop).
 pub type ForgeListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
 
@@ -223,7 +226,7 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
 /// Spawn forge API on a background thread; returns stop flag + join handle.
 pub fn spawn_forge_api(
     opts: ForgeServeOptions,
-) -> Result<(Arc<AtomicBool>, thread::JoinHandle<Result<(), String>>), String> {
+) -> Result<(Arc<AtomicBool>, ListenerThread), String> {
     let stop = Arc::new(AtomicBool::new(false));
     let stop2 = stop.clone();
     let handle = thread::spawn(move || serve_forge_api(opts, stop2));
@@ -414,17 +417,16 @@ fn handle_client<S: Read + Write>(
                 let archived = v.get("archived").and_then(|x| x.as_bool());
                 let new_name = v.get("name").and_then(|x| x.as_str());
                 let r = if let Some(nn) = new_name.filter(|n| *n != repo) {
-                    st.rename_repo(owner, repo, nn)
-                        .and_then(|renamed| {
-                            st.patch_repo(
-                                &renamed.owner,
-                                &renamed.name,
-                                description,
-                                private,
-                                archived,
-                            )
-                            .or(Some(renamed))
-                        })
+                    st.rename_repo(owner, repo, nn).and_then(|renamed| {
+                        st.patch_repo(
+                            &renamed.owner,
+                            &renamed.name,
+                            description,
+                            private,
+                            archived,
+                        )
+                        .or(Some(renamed))
+                    })
                 } else {
                     st.patch_repo(owner, repo, description, private, archived)
                 };
@@ -651,8 +653,7 @@ fn handle_client<S: Read + Write>(
                     let head = v.get("head").and_then(|x| x.as_str()).unwrap_or("head");
                     let base = v.get("base").and_then(|x| x.as_str()).unwrap_or("main");
                     let draft = v.get("draft").and_then(|x| x.as_bool()).unwrap_or(false);
-                    let pull =
-                        st.create_pull_draft(owner, repo, title, body, head, base, draft);
+                    let pull = st.create_pull_draft(owner, repo, title, body, head, base, draft);
                     st.save()?;
                     return respond(
                         stream,
@@ -843,8 +844,7 @@ fn handle_client<S: Read + Write>(
                     let new_name = v.get("new_name").and_then(|x| x.as_str());
                     let color = v.get("color").and_then(|x| x.as_str());
                     let desc = v.get("description").and_then(|x| x.as_str());
-                    if let Some(label) = st.patch_label(owner, repo, name, new_name, color, desc)
-                    {
+                    if let Some(label) = st.patch_label(owner, repo, name, new_name, color, desc) {
                         st.save()?;
                         return respond(
                             stream,
@@ -965,10 +965,7 @@ fn handle_client<S: Read + Write>(
                 return respond(stream, 404, &json!({"message":"Not Found"}));
             }
             // GET/DELETE /repos/{o}/{r}/releases/assets/{id}
-            if parts.len() == 5
-                && parts[2] == "releases"
-                && parts[3] == "assets"
-            {
+            if parts.len() == 5 && parts[2] == "releases" && parts[3] == "assets" {
                 let asset_id: u64 = parts[4].parse().unwrap_or(0);
                 if req.method == "GET" {
                     if let Some(a) = st.find_asset(owner, repo, asset_id) {
@@ -1007,30 +1004,32 @@ fn handle_client<S: Read + Write>(
                 }
             }
             // Actions workflows / runs (local-forge metadata — not CI compute Claimed).
-            if parts.len() == 4 && parts[2] == "actions" && parts[3] == "workflows" {
-                if req.method == "GET" {
-                    st.ensure_default_workflow(owner, repo);
-                    st.save()?;
-                    let items: Vec<Value> = st
-                        .db
-                        .workflows
-                        .iter()
-                        .filter(|w| w.owner == owner && w.repo == repo)
-                        .map(|w| {
-                            json!({
-                                "id": w.id,
-                                "name": w.name,
-                                "path": w.path,
-                                "state": w.state,
-                            })
+            if parts.len() == 4
+                && parts[2] == "actions"
+                && parts[3] == "workflows"
+                && req.method == "GET"
+            {
+                st.ensure_default_workflow(owner, repo);
+                st.save()?;
+                let items: Vec<Value> = st
+                    .db
+                    .workflows
+                    .iter()
+                    .filter(|w| w.owner == owner && w.repo == repo)
+                    .map(|w| {
+                        json!({
+                            "id": w.id,
+                            "name": w.name,
+                            "path": w.path,
+                            "state": w.state,
                         })
-                        .collect();
-                    return respond(
-                        stream,
-                        200,
-                        &json!({"total_count": items.len(), "workflows": items}),
-                    );
-                }
+                    })
+                    .collect();
+                return respond(
+                    stream,
+                    200,
+                    &json!({"total_count": items.len(), "workflows": items}),
+                );
             }
             // GET/PUT workflow by id|path; POST dispatches
             if parts.len() == 5 && parts[2] == "actions" && parts[3] == "workflows" {
@@ -1076,7 +1075,8 @@ fn handle_client<S: Read + Write>(
                 && req.method == "PUT"
             {
                 st.ensure_default_workflow(owner, repo);
-                if let Some(_w) = st.set_workflow_state(owner, repo, parts[4], "disabled_manually") {
+                if let Some(_w) = st.set_workflow_state(owner, repo, parts[4], "disabled_manually")
+                {
                     st.save()?;
                     return respond(stream, 204, &json!({}));
                 }
@@ -1112,7 +1112,7 @@ fn handle_client<S: Read + Write>(
                         .runs
                         .iter()
                         .filter(|r| r.owner == owner && r.repo == repo)
-                        .map(|r| run_json(r))
+                        .map(run_json)
                         .collect();
                     return respond(
                         stream,

@@ -16,6 +16,7 @@ pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
 pub mod lock;
+pub mod log_format;
 pub mod maint;
 pub mod matrix_cmds;
 pub mod matrix_rest;
@@ -34,7 +35,9 @@ pub mod sign;
 pub mod sparse_checkout;
 pub mod stash;
 pub mod submodule;
+pub mod switch_tree;
 pub mod tag;
+pub mod unified_diff;
 pub mod working_tree;
 pub mod worktree;
 

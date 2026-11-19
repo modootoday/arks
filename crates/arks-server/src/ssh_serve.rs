@@ -32,6 +32,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 use x25519_dalek::{PublicKey, StaticSecret};
 
+/// Stop flag + join handle of a background listener thread.
+type ListenerThread = thread::JoinHandle<Result<(), ServerError>>;
+
 /// Named fail-closed stages for in-process SSH Partial (not Claimed).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(dead_code)] // IdExchange retained for stage vocabulary / future accept-path notes.
@@ -592,20 +595,22 @@ fn dispatch_git_exec_to_pack(repo_path: &Path, exec_cmd: &str) -> Result<String,
     let mut buf = Cursor::new(Vec::<u8>::new());
     match svc {
         "git-upload-pack" => match upload_pack_stream(&repo, &mut buf) {
-            Ok(()) => Ok(format!(
+            Ok(()) => Ok(
                 "channel_exec=git-upload-pack dispatched upload_pack_stream ok \
                  (Partial empty-peer; Claimed SSH channel e2e Missing)"
-            )),
+                    .to_string(),
+            ),
             Err(e) => Ok(format!(
                 "channel_exec=git-upload-pack dispatch reached upload_pack_stream err={e} \
                  (Partial; empty peer expected; not Claimed)"
             )),
         },
         "git-receive-pack" => match receive_pack_stream(&mut repo, &mut buf) {
-            Ok(()) => Ok(format!(
+            Ok(()) => Ok(
                 "channel_exec=git-receive-pack dispatched receive_pack_stream ok \
                  (Partial empty-peer; Claimed SSH channel e2e Missing)"
-            )),
+                    .to_string(),
+            ),
             Err(e) => Ok(format!(
                 "channel_exec=git-receive-pack dispatch reached receive_pack_stream err={e} \
                  (Partial; empty peer expected; not Claimed)"
@@ -823,9 +828,8 @@ fn run_session_channel_pack(
     let mut exec_cmd: Option<String> = None;
 
     for _ in 0..32 {
-        let msg = read_encrypted_packet(stream, c2s, 65_536).map_err(|e| {
-            format!("wire_channel=timeout_or_err ({e})")
-        })?;
+        let msg = read_encrypted_packet(stream, c2s, 65_536)
+            .map_err(|e| format!("wire_channel=timeout_or_err ({e})"))?;
         match msg.first().copied() {
             Some(90) => {
                 // SSH_MSG_CHANNEL_OPEN
@@ -917,10 +921,7 @@ fn run_session_channel_pack(
                 // ignore / debug
             }
             other => {
-                notes.push(format!(
-                    "wire_channel_msg={}",
-                    other.unwrap_or(0)
-                ));
+                notes.push(format!("wire_channel_msg={}", other.unwrap_or(0)));
             }
         }
     }
@@ -1022,7 +1023,7 @@ impl Read for SshChannelPipe<'_> {
             let msg = match read_encrypted_packet(self.stream, self.c2s, 65_536) {
                 Ok(m) => m,
                 Err(e) => {
-                    return Err(std::io::Error::new(std::io::ErrorKind::Other, e));
+                    return Err(std::io::Error::other(e));
                 }
             };
             match msg.first().copied() {
@@ -1073,8 +1074,7 @@ impl Write for SshChannelPipe<'_> {
         let mut pkt = vec![94]; // CHANNEL_DATA
         pkt.extend_from_slice(&self.peer_channel.to_be_bytes());
         pkt.extend(ssh_string(&buf[..chunk]));
-        write_encrypted_packet(self.stream, self.s2c, &pkt)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        write_encrypted_packet(self.stream, self.s2c, &pkt).map_err(std::io::Error::other)?;
         Ok(chunk)
     }
 
@@ -1097,8 +1097,7 @@ fn dispatch_git_exec_live(
     match svc {
         "git-upload-pack" => match upload_pack_stream(&repo, pipe) {
             Ok(()) => Ok(
-                "channel_exec=git-upload-pack live upload_pack_stream ok (OpenSSH channel)"
-                    .into(),
+                "channel_exec=git-upload-pack live upload_pack_stream ok (OpenSSH channel)".into(),
             ),
             Err(e) => Err(format!("channel_exec=git-upload-pack live err={e}")),
         },
@@ -1215,6 +1214,7 @@ fn handle_userauth_request_partial(
 }
 
 /// Attempt peer ECDH + optional host-key sign + NEWKEYS (Partial).
+#[allow(clippy::too_many_arguments)]
 fn try_peer_ecdh_and_sign(
     stream: &mut TcpStream,
     peer_kex: &[String],
@@ -1738,7 +1738,7 @@ type LoopbackSsh = (
 /// Spawn durable SSH listener on a background thread (cohost with HTTP/forge).
 pub fn spawn_ssh_listener(
     opts: ServeSshOptions,
-) -> Result<(Arc<AtomicBool>, thread::JoinHandle<Result<(), ServerError>>), ServerError> {
+) -> Result<(Arc<AtomicBool>, ListenerThread), ServerError> {
     let stop = Arc::new(AtomicBool::new(false));
     let stop2 = stop.clone();
     let handle = thread::spawn(move || serve_ssh_listener(opts, stop2));
