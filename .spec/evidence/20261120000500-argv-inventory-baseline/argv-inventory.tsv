@@ -1,0 +1,1814 @@
+command	option	meta	verdict	note
+add	-n		REFUSED	error: unsupported option: -n
+add	--dry-run		REFUSED	error: unsupported option: --dry-run
+add	-v		REFUSED	error: unsupported option: -v
+add	--verbose		REFUSED	error: unsupported option: --verbose
+add	-i		ACCEPTED	
+add	--interactive		ACCEPTED	
+add	-p		ACCEPTED	
+add	--patch		ACCEPTED	
+add	-e		ACCEPTED	
+add	--edit		ACCEPTED	
+add	-f		REFUSED	error: unsupported option: -f
+add	--force		REFUSED	error: unsupported option: --force
+add	-u		ACCEPTED	
+add	--update		ACCEPTED	
+add	--renormalize		REFUSED	error: unsupported option: --renormalize
+add	-N		REFUSED	error: unsupported option: -N
+add	--intent-to-add		REFUSED	error: unsupported option: --intent-to-add
+add	-A		ACCEPTED	
+add	--all		ACCEPTED	
+add	--ignore-removal		REFUSED	error: unsupported option: --ignore-removal
+add	--refresh		REFUSED	error: unsupported option: --refresh
+add	--ignore-errors		REFUSED	error: unsupported option: --ignore-errors
+add	--ignore-missing		REFUSED	error: unsupported option: --ignore-missing
+add	--sparse		REFUSED	error: unsupported option: --sparse
+add	--chmod	(+|-)	ACCEPTED	
+add	--pathspec-from-file	<file>	REFUSED	error: unsupported option: --pathspec-from-file
+add	--pathspec-file-nul		REFUSED	error: unsupported option: --pathspec-file-nul
+am	-i		REFUSED	error: unsupported option: -i
+am	--interactive		REFUSED	error: unsupported option: --interactive
+am	-3		ACCEPTED	
+am	--3way		ACCEPTED	
+am	-q		ACCEPTED	
+am	--quiet		ACCEPTED	
+am	-s		REFUSED	error: unsupported option: -s
+am	--signoff		REFUSED	error: unsupported option: --signoff
+am	-u		REFUSED	error: unsupported option: -u
+am	--utf8		REFUSED	error: unsupported option: --utf8
+am	-k		REFUSED	error: unsupported option: -k
+am	--keep		REFUSED	error: unsupported option: --keep
+am	--keep-non-patch		REFUSED	error: unsupported option: --keep-non-patch
+am	-m		REFUSED	error: unsupported option: -m
+am	--message-id		REFUSED	error: unsupported option: --message-id
+am	--keep-cr		REFUSED	error: unsupported option: --keep-cr
+am	--no-keep-cr		REFUSED	error: unsupported option: --no-keep-cr
+am	-c		REFUSED	error: unsupported option: -c
+am	--scissors		REFUSED	error: unsupported option: --scissors
+am	--quoted-cr	<action>	REFUSED	error: unsupported option: --quoted-cr
+am	--whitespace	<action>	REFUSED	error: unsupported option: --whitespace
+am	--ignore-space-change		REFUSED	error: unsupported option: --ignore-space-change
+am	--ignore-whitespace		REFUSED	error: unsupported option: --ignore-whitespace
+am	--directory	<root>	REFUSED	error: unsupported option: --directory
+am	--exclude	<path>	REFUSED	error: unsupported option: --exclude
+am	--include	<path>	REFUSED	error: unsupported option: --include
+am	-C		REFUSED	error: unsupported option: -C
+am	-p		REFUSED	error: unsupported option: -p
+am	--patch-format	<format>	REFUSED	error: unsupported option: --patch-format
+am	--reject		REFUSED	error: unsupported option: --reject
+am	--resolvemsg		REFUSED	error: unsupported option: --resolvemsg
+am	--continue		REFUSED	error: unsupported option: --continue
+am	-r		REFUSED	error: unsupported option: -r
+am	--resolved		REFUSED	error: unsupported option: --resolved
+am	--skip		REFUSED	error: unsupported option: --skip
+am	--abort		REFUSED	error: unsupported option: --abort
+am	--quit		REFUSED	error: unsupported option: --quit
+am	--show-current-patch	[=(diff|raw)]	REFUSED	error: unsupported option: --show-current-patch
+am	--allow-empty		REFUSED	error: unsupported option: --allow-empty
+am	--committer-date-is-author-date		REFUSED	error: unsupported option: --committer-date-is-author-date
+am	--ignore-date		REFUSED	error: unsupported option: --ignore-date
+am	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+am	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+am	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+am	--empty	<{stop,drop,keep}>	REFUSED	error: unsupported option: --empty
+annotate	--incremental		REFUSED	error: unsupported option: --incremental
+annotate	-b		REFUSED	error: unsupported option: -b
+annotate	--root		ACCEPTED	
+annotate	--show-stats		REFUSED	error: unsupported option: --show-stats
+annotate	--progress		REFUSED	error: unsupported option: --progress
+annotate	--score-debug		REFUSED	error: unsupported option: --score-debug
+annotate	-f		ACCEPTED	
+annotate	--show-name		ACCEPTED	
+annotate	-n		ACCEPTED	
+annotate	--show-number		ACCEPTED	
+annotate	-p		ACCEPTED	
+annotate	--porcelain		ACCEPTED	
+annotate	--line-porcelain		ACCEPTED	
+annotate	-c		REFUSED	error: unsupported option: -c
+annotate	-t		REFUSED	error: unsupported option: -t
+annotate	-l		ACCEPTED	
+annotate	-s		ACCEPTED	
+annotate	-e		ACCEPTED	
+annotate	--show-email		ACCEPTED	
+annotate	-w		REFUSED	error: unsupported option: -w
+annotate	--ignore-rev	<rev>	REFUSED	error: unsupported option: --ignore-rev
+annotate	--ignore-revs-file	<file>	REFUSED	error: unsupported option: --ignore-revs-file
+annotate	--color-lines		REFUSED	error: unsupported option: --color-lines
+annotate	--color-by-age		REFUSED	error: unsupported option: --color-by-age
+annotate	--minimal		REFUSED	error: unsupported option: --minimal
+annotate	-S		REFUSED	error: unsupported option: -S
+annotate	--contents	<file>	REFUSED	error: unsupported option: --contents
+annotate	-C		REFUSED	error: unsupported option: -C
+annotate	-M		REFUSED	error: unsupported option: -M
+annotate	-L		ACCEPTED	
+annotate	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+apply	--exclude	<path>	REFUSED	error: unsupported option: --exclude
+apply	--include	<path>	REFUSED	error: unsupported option: --include
+apply	-p		REFUSED	error: unsupported option: -p
+apply	--no-add		REFUSED	error: unsupported option: --no-add
+apply	--stat		ACCEPTED	
+apply	--numstat		ACCEPTED	
+apply	--summary		REFUSED	error: unsupported option: --summary
+apply	--check		ACCEPTED	
+apply	--index		ACCEPTED	
+apply	-N		REFUSED	error: unsupported option: -N
+apply	--intent-to-add		REFUSED	error: unsupported option: --intent-to-add
+apply	--cached		ACCEPTED	
+apply	--unsafe-paths		REFUSED	error: unsupported option: --unsafe-paths
+apply	--apply		ACCEPTED	
+apply	-3		REFUSED	error: unsupported option: -3
+apply	--3way		REFUSED	error: unsupported option: --3way
+apply	--build-fake-ancestor	<file>	REFUSED	error: unsupported option: --build-fake-ancestor
+apply	-z		REFUSED	error: unsupported option: -z
+apply	-C		REFUSED	error: unsupported option: -C
+apply	--whitespace	<action>	REFUSED	error: unsupported option: --whitespace
+apply	--ignore-space-change		REFUSED	error: unsupported option: --ignore-space-change
+apply	--ignore-whitespace		REFUSED	error: unsupported option: --ignore-whitespace
+apply	-R		ACCEPTED	
+apply	--reverse		ACCEPTED	
+apply	--unidiff-zero		REFUSED	error: unsupported option: --unidiff-zero
+apply	--reject		REFUSED	error: unsupported option: --reject
+apply	--allow-overlap		REFUSED	error: unsupported option: --allow-overlap
+apply	-v		ACCEPTED	
+apply	--verbose		ACCEPTED	
+apply	-q		ACCEPTED	
+apply	--quiet		ACCEPTED	
+apply	--inaccurate-eof		REFUSED	error: unsupported option: --inaccurate-eof
+apply	--recount		REFUSED	error: unsupported option: --recount
+apply	--directory	<root>	REFUSED	error: unsupported option: --directory
+apply	--allow-empty		REFUSED	error: unsupported option: --allow-empty
+archive	--format	<fmt>	ACCEPTED	
+archive	--prefix	<prefix>	REFUSED	error: unsupported option: --prefix
+archive	--add-file	<file>	REFUSED	error: unsupported option: --add-file
+archive	--add-virtual-file	<path:content>	REFUSED	error: unsupported option: --add-virtual-file
+archive	-o	<file>	ACCEPTED	
+archive	--output	<file>	REFUSED	error: unsupported option: --output
+archive	--worktree-attributes		REFUSED	error: unsupported option: --worktree-attributes
+archive	-v		REFUSED	error: unsupported option: -v
+archive	--verbose		REFUSED	error: unsupported option: --verbose
+archive	-N		REFUSED	error: unsupported option: -N
+archive	-l		REFUSED	error: unsupported option: -l
+archive	--list		REFUSED	error: unsupported option: --list
+archive	--remote	<repo>	REFUSED	error: unsupported option: --remote
+archive	--exec	<command>	REFUSED	error: unsupported option: --exec
+bisect	-		NO_INVENTORY	
+blame	--incremental		REFUSED	error: unsupported option: --incremental
+blame	-b		REFUSED	error: unsupported option: -b
+blame	--root		ACCEPTED	
+blame	--show-stats		REFUSED	error: unsupported option: --show-stats
+blame	--progress		REFUSED	error: unsupported option: --progress
+blame	--score-debug		REFUSED	error: unsupported option: --score-debug
+blame	-f		ACCEPTED	
+blame	--show-name		ACCEPTED	
+blame	-n		ACCEPTED	
+blame	--show-number		ACCEPTED	
+blame	-p		ACCEPTED	
+blame	--porcelain		ACCEPTED	
+blame	--line-porcelain		ACCEPTED	
+blame	-c		REFUSED	error: unsupported option: -c
+blame	-t		REFUSED	error: unsupported option: -t
+blame	-l		ACCEPTED	
+blame	-s		ACCEPTED	
+blame	-e		ACCEPTED	
+blame	--show-email		ACCEPTED	
+blame	-w		REFUSED	error: unsupported option: -w
+blame	--ignore-rev	<rev>	REFUSED	error: unsupported option: --ignore-rev
+blame	--ignore-revs-file	<file>	REFUSED	error: unsupported option: --ignore-revs-file
+blame	--color-lines		REFUSED	error: unsupported option: --color-lines
+blame	--color-by-age		REFUSED	error: unsupported option: --color-by-age
+blame	--minimal		REFUSED	error: unsupported option: --minimal
+blame	-S		REFUSED	error: unsupported option: -S
+blame	--contents	<file>	REFUSED	error: unsupported option: --contents
+blame	-C		REFUSED	error: unsupported option: -C
+blame	-M		REFUSED	error: unsupported option: -M
+blame	-L		ACCEPTED	
+blame	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+branch	-v		ACCEPTED	
+branch	--verbose		ACCEPTED	
+branch	-q		ACCEPTED	
+branch	--quiet		ACCEPTED	
+branch	-t	[=(direct|inherit)]	REFUSED	error: unsupported option: -t
+branch	--track	[=(direct|inherit)]	REFUSED	error: unsupported option: --track
+branch	-u	<upstream>	REFUSED	error: unsupported option: -u
+branch	--set-upstream-to	<upstream>	REFUSED	error: unsupported option: --set-upstream-to
+branch	--unset-upstream		REFUSED	error: unsupported option: --unset-upstream
+branch	--color	[=<when>]	REFUSED	error: unsupported option: --color
+branch	-r		ACCEPTED	
+branch	--remotes		ACCEPTED	
+branch	--contains	<commit>	ACCEPTED	
+branch	--no-contains	<commit>	ACCEPTED	
+branch	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+branch	-a		ACCEPTED	
+branch	--all		ACCEPTED	
+branch	-d		ACCEPTED	
+branch	--delete		ACCEPTED	
+branch	-D		ACCEPTED	
+branch	-m		ACCEPTED	
+branch	--move		ACCEPTED	
+branch	-M		ACCEPTED	
+branch	-c		ACCEPTED	
+branch	--copy		ACCEPTED	
+branch	-C		ACCEPTED	
+branch	-l		ACCEPTED	
+branch	--list		ACCEPTED	
+branch	--show-current		ACCEPTED	
+branch	--create-reflog		REFUSED	error: unsupported option: --create-reflog
+branch	--edit-description		REFUSED	error: unsupported option: --edit-description
+branch	-f		ACCEPTED	
+branch	--force		ACCEPTED	
+branch	--merged	<commit>	ACCEPTED	
+branch	--no-merged	<commit>	ACCEPTED	
+branch	--column	[=<style>]	REFUSED	error: unsupported option: --column
+branch	--sort	<key>	REFUSED	error: unsupported option: --sort
+branch	--points-at	<object>	REFUSED	error: unsupported option: --points-at
+branch	-i		REFUSED	error: unsupported option: -i
+branch	--ignore-case		REFUSED	error: unsupported option: --ignore-case
+branch	--recurse-submodules		REFUSED	error: unsupported option: --recurse-submodules
+branch	--format	<format>	REFUSED	error: unsupported option: --format
+bugreport	--diagnose	[=<mode>]	REFUSED	error: unsupported option: --diagnose
+bugreport	-o	<path>	REFUSED	error: unsupported option: -o
+bugreport	--output-directory	<path>	ACCEPTED	
+bugreport	-s	<format>	ACCEPTED	
+bugreport	--suffix	<format>	ACCEPTED	
+bundle	-		NO_INVENTORY	
+cat-file	-e		ACCEPTED	
+cat-file	-p		ACCEPTED	
+cat-file	-t		ACCEPTED	
+cat-file	-s		ACCEPTED	
+cat-file	--allow-unknown-type		REFUSED	error: unsupported option: --allow-unknown-type
+cat-file	--use-mailmap		REFUSED	error: unsupported option: --use-mailmap
+cat-file	--mailmap		REFUSED	error: unsupported option: --mailmap
+cat-file	--batch	[=<format>]	REFUSED	error: unsupported option: --batch
+cat-file	--batch-check	[=<format>]	REFUSED	error: unsupported option: --batch-check
+cat-file	-z		REFUSED	error: unsupported option: -z
+cat-file	--batch-command	[=<format>]	REFUSED	error: unsupported option: --batch-command
+cat-file	--batch-all-objects		REFUSED	error: unsupported option: --batch-all-objects
+cat-file	--buffer		REFUSED	error: unsupported option: --buffer
+cat-file	--follow-symlinks		REFUSED	error: unsupported option: --follow-symlinks
+cat-file	--unordered		REFUSED	error: unsupported option: --unordered
+cat-file	--textconv		REFUSED	error: unsupported option: --textconv
+cat-file	--filters		REFUSED	error: unsupported option: --filters
+cat-file	--path		REFUSED	error: unsupported option: --path
+check-attr	-a		ACCEPTED	
+check-attr	--all		ACCEPTED	
+check-attr	--cached		ACCEPTED	
+check-attr	--stdin		REFUSED	error: unsupported option: --stdin
+check-attr	-z		REFUSED	error: unsupported option: -z
+check-ignore	-q		ACCEPTED	
+check-ignore	--quiet		ACCEPTED	
+check-ignore	-v		ACCEPTED	
+check-ignore	--verbose		ACCEPTED	
+check-ignore	--stdin		REFUSED	error: unsupported option: --stdin
+check-ignore	-z		REFUSED	error: unsupported option: -z
+check-ignore	-n		ACCEPTED	
+check-ignore	--non-matching		ACCEPTED	
+check-ignore	--no-index		ACCEPTED	
+check-mailmap	--stdin		REFUSED	error: unsupported option: --stdin
+check-ref-format	-		NO_INVENTORY	
+checkout	-b		ACCEPTED	
+checkout	-B		ACCEPTED	
+checkout	-l		REFUSED	error: unsupported option: -l
+checkout	--guess		REFUSED	error: unsupported option: --guess
+checkout	--overlay		REFUSED	error: unsupported option: --overlay
+checkout	-q		ACCEPTED	
+checkout	--quiet		ACCEPTED	
+checkout	--recurse-submodules	[=<checkout>]	REFUSED	error: unsupported option: --recurse-submodules
+checkout	--progress		REFUSED	error: unsupported option: --progress
+checkout	-m		REFUSED	error: unsupported option: -m
+checkout	--merge		REFUSED	error: unsupported option: --merge
+checkout	--conflict	<style>	REFUSED	error: unsupported option: --conflict
+checkout	-d		REFUSED	error: unsupported option: -d
+checkout	--detach		ACCEPTED	
+checkout	-t	[=(direct|inherit)]	REFUSED	error: unsupported option: -t
+checkout	--track	[=(direct|inherit)]	REFUSED	error: unsupported option: --track
+checkout	-f		REFUSED	error: unsupported option: -f
+checkout	--force		REFUSED	error: unsupported option: --force
+checkout	--orphan	<new-branch>	ACCEPTED	
+checkout	--overwrite-ignore		REFUSED	error: unsupported option: --overwrite-ignore
+checkout	--ignore-other-worktrees		REFUSED	error: unsupported option: --ignore-other-worktrees
+checkout	-2		REFUSED	error: unsupported option: -2
+checkout	--ours		REFUSED	error: unsupported option: --ours
+checkout	-3		REFUSED	error: unsupported option: -3
+checkout	--theirs		REFUSED	error: unsupported option: --theirs
+checkout	-p		REFUSED	error: unsupported option: -p
+checkout	--patch		REFUSED	error: unsupported option: --patch
+checkout	--ignore-skip-worktree-bits		REFUSED	error: unsupported option: --ignore-skip-worktree-bits
+checkout	--pathspec-from-file	<file>	REFUSED	error: unsupported option: --pathspec-from-file
+checkout	--pathspec-file-nul		REFUSED	error: unsupported option: --pathspec-file-nul
+checkout-index	-a		ACCEPTED	
+checkout-index	--all		ACCEPTED	
+checkout-index	--ignore-skip-worktree-bits		REFUSED	error: unsupported option: --ignore-skip-worktree-bits
+checkout-index	-f		REFUSED	error: unsupported option: -f
+checkout-index	--force		REFUSED	error: unsupported option: --force
+checkout-index	-q		REFUSED	error: unsupported option: -q
+checkout-index	--quiet		REFUSED	error: unsupported option: --quiet
+checkout-index	-n		REFUSED	error: unsupported option: -n
+checkout-index	--no-create		REFUSED	error: unsupported option: --no-create
+checkout-index	-u		REFUSED	error: unsupported option: -u
+checkout-index	--index		REFUSED	error: unsupported option: --index
+checkout-index	-z		REFUSED	error: unsupported option: -z
+checkout-index	--stdin		REFUSED	error: unsupported option: --stdin
+checkout-index	--temp		REFUSED	error: unsupported option: --temp
+checkout-index	--prefix	<string>	ACCEPTED	
+checkout-index	--stage	(1|2|3|all)	REFUSED	error: unsupported option: --stage
+cherry	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+cherry	-v		ACCEPTED	
+cherry	--verbose		REFUSED	error: unsupported option: --verbose
+cherry-pick	--quit		REFUSED	error: unsupported option: --quit
+cherry-pick	--continue		ACCEPTED	
+cherry-pick	--abort		ACCEPTED	
+cherry-pick	--skip		REFUSED	error: unsupported option: --skip
+cherry-pick	--cleanup	<mode>	REFUSED	error: unsupported option: --cleanup
+cherry-pick	-n		ACCEPTED	
+cherry-pick	--no-commit		ACCEPTED	
+cherry-pick	-e		REFUSED	error: unsupported option: -e
+cherry-pick	--edit		REFUSED	error: unsupported option: --edit
+cherry-pick	-s		REFUSED	error: unsupported option: -s
+cherry-pick	--signoff		REFUSED	error: unsupported option: --signoff
+cherry-pick	-m	<parent-number>	REFUSED	error: unsupported option: -m
+cherry-pick	--mainline	<parent-number>	REFUSED	error: unsupported option: --mainline
+cherry-pick	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+cherry-pick	--strategy	<strategy>	REFUSED	error: unsupported option: --strategy
+cherry-pick	-X	<option>	REFUSED	error: unsupported option: -X
+cherry-pick	--strategy-option	<option>	REFUSED	error: unsupported option: --strategy-option
+cherry-pick	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+cherry-pick	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+cherry-pick	-x		REFUSED	error: unsupported option: -x
+cherry-pick	--ff		ACCEPTED	
+cherry-pick	--allow-empty		REFUSED	error: unsupported option: --allow-empty
+cherry-pick	--allow-empty-message		REFUSED	error: unsupported option: --allow-empty-message
+cherry-pick	--keep-redundant-commits		REFUSED	error: unsupported option: --keep-redundant-commits
+clean	-q		ACCEPTED	
+clean	--quiet		ACCEPTED	
+clean	-n		ACCEPTED	
+clean	--dry-run		ACCEPTED	
+clean	-f		ACCEPTED	
+clean	--force		ACCEPTED	
+clean	-i		REFUSED	error: unsupported option: -i
+clean	--interactive		REFUSED	error: unsupported option: --interactive
+clean	-d		ACCEPTED	
+clean	-e	<pattern>	REFUSED	error: unsupported option: -e
+clean	--exclude	<pattern>	REFUSED	error: unsupported option: --exclude
+clean	-x		ACCEPTED	
+clean	-X		ACCEPTED	
+clone	-v		REFUSED	error: unsupported option: -v
+clone	--verbose		REFUSED	error: unsupported option: --verbose
+clone	-q		REFUSED	error: unsupported option: -q
+clone	--quiet		REFUSED	error: unsupported option: --quiet
+clone	--progress		REFUSED	error: unsupported option: --progress
+clone	--reject-shallow		REFUSED	error: unsupported option: --reject-shallow
+clone	-n		REFUSED	error: unsupported option: -n
+clone	--no-checkout		REFUSED	error: unsupported option: --no-checkout
+clone	--bare		REFUSED	error: unsupported option: --bare
+clone	--mirror		REFUSED	error: unsupported option: --mirror
+clone	-l		REFUSED	error: unsupported option: -l
+clone	--local		REFUSED	error: unsupported option: --local
+clone	--no-hardlinks		REFUSED	error: unsupported option: --no-hardlinks
+clone	-s		REFUSED	error: unsupported option: -s
+clone	--shared		REFUSED	error: unsupported option: --shared
+clone	--recurse-submodules	[=<pathspec>]	REFUSED	error: unsupported option: --recurse-submodules
+clone	--recursive	[=<pathspec>]	REFUSED	error: unsupported option: --recursive
+clone	-j	<n>	REFUSED	error: unsupported option: -j
+clone	--jobs	<n>	REFUSED	error: unsupported option: --jobs
+clone	--template	<template-directory>	REFUSED	error: unsupported option: --template
+clone	--reference	<repo>	ACCEPTED	
+clone	--reference-if-able	<repo>	REFUSED	error: unsupported option: --reference-if-able
+clone	--dissociate		REFUSED	error: unsupported option: --dissociate
+clone	-o	<name>	REFUSED	error: unsupported option: -o
+clone	--origin	<name>	REFUSED	error: unsupported option: --origin
+clone	-b	<branch>	REFUSED	error: unsupported option: -b
+clone	--branch	<branch>	REFUSED	error: unsupported option: --branch
+clone	-u	<path>	REFUSED	error: unsupported option: -u
+clone	--upload-pack	<path>	REFUSED	error: unsupported option: --upload-pack
+clone	--depth	<depth>	ACCEPTED	
+clone	--shallow-since	<time>	REFUSED	error: unsupported option: --shallow-since
+clone	--shallow-exclude	<revision>	REFUSED	error: unsupported option: --shallow-exclude
+clone	--single-branch		REFUSED	error: unsupported option: --single-branch
+clone	--no-tags		REFUSED	error: unsupported option: --no-tags
+clone	--shallow-submodules		REFUSED	error: unsupported option: --shallow-submodules
+clone	--separate-git-dir	<gitdir>	REFUSED	error: unsupported option: --separate-git-dir
+clone	-c	<key=value>	REFUSED	error: unsupported option: -c
+clone	--config	<key=value>	REFUSED	error: unsupported option: --config
+clone	--server-option	<server-specific>	REFUSED	error: unsupported option: --server-option
+clone	-4		REFUSED	error: unsupported option: -4
+clone	--ipv4		REFUSED	error: unsupported option: --ipv4
+clone	-6		REFUSED	error: unsupported option: -6
+clone	--ipv6		REFUSED	error: unsupported option: --ipv6
+clone	--filter	<args>	ACCEPTED	
+clone	--also-filter-submodules		REFUSED	error: unsupported option: --also-filter-submodules
+clone	--remote-submodules		REFUSED	error: unsupported option: --remote-submodules
+clone	--sparse		REFUSED	error: unsupported option: --sparse
+clone	--bundle-uri	<uri>	ACCEPTED	
+column	--command	<name>	REFUSED	error: unsupported option: --command
+column	--mode	[=<style>]	ACCEPTED	
+column	--raw-mode	<n>	REFUSED	error: unsupported option: --raw-mode
+column	--width	<n>	ACCEPTED	
+column	--indent	<string>	REFUSED	error: unsupported option: --indent
+column	--nl	<string>	REFUSED	error: unsupported option: --nl
+column	--padding	<n>	ACCEPTED	
+commit	-q		ACCEPTED	
+commit	--quiet		ACCEPTED	
+commit	-v		ACCEPTED	
+commit	--verbose		REFUSED	error: unsupported option: --verbose
+commit	-F	<file>	ACCEPTED	
+commit	--file	<file>	ACCEPTED	
+commit	--author	<author>	ACCEPTED	
+commit	--date	<date>	ACCEPTED	
+commit	-m	<message>	ACCEPTED	
+commit	--message	<message>	ACCEPTED	
+commit	-c	<commit>	REFUSED	error: unsupported option: -c
+commit	--reedit-message	<commit>	REFUSED	error: unsupported option: --reedit-message
+commit	-C	<commit>	REFUSED	error: unsupported option: -C
+commit	--reuse-message	<commit>	REFUSED	error: unsupported option: --reuse-message
+commit	--fixup		REFUSED	error: unsupported option: --fixup
+commit	--squash	<commit>	REFUSED	error: unsupported option: --squash
+commit	--reset-author		REFUSED	error: unsupported option: --reset-author
+commit	--trailer	<trailer>	REFUSED	error: unsupported option: --trailer
+commit	-s		ACCEPTED	
+commit	--signoff		ACCEPTED	
+commit	-t	<file>	ACCEPTED	
+commit	--template	<file>	ACCEPTED	
+commit	-e		REFUSED	error: unsupported option: -e
+commit	--edit		REFUSED	error: unsupported option: --edit
+commit	--cleanup	<mode>	REFUSED	error: unsupported option: --cleanup
+commit	--status		REFUSED	error: unsupported option: --status
+commit	-S	[=<key-id>]	ACCEPTED	
+commit	--gpg-sign	[=<key-id>]	ACCEPTED	
+commit	-a		ACCEPTED	
+commit	--all		ACCEPTED	
+commit	-i		REFUSED	error: unsupported option: -i
+commit	--include		REFUSED	error: unsupported option: --include
+commit	--interactive		REFUSED	error: unsupported option: --interactive
+commit	-p		REFUSED	error: unsupported option: -p
+commit	--patch		REFUSED	error: unsupported option: --patch
+commit	-o		ACCEPTED	
+commit	--only		ACCEPTED	
+commit	-n		ACCEPTED	
+commit	--no-verify		ACCEPTED	
+commit	--dry-run		REFUSED	error: unsupported option: --dry-run
+commit	--short		REFUSED	error: unsupported option: --short
+commit	--branch		REFUSED	error: unsupported option: --branch
+commit	--ahead-behind		REFUSED	error: unsupported option: --ahead-behind
+commit	--porcelain		REFUSED	error: unsupported option: --porcelain
+commit	--long		REFUSED	error: unsupported option: --long
+commit	-z		REFUSED	error: unsupported option: -z
+commit	--null		REFUSED	error: unsupported option: --null
+commit	--amend		ACCEPTED	
+commit	--no-post-rewrite		REFUSED	error: unsupported option: --no-post-rewrite
+commit	-u	[=<mode>]	REFUSED	error: unsupported option: -u
+commit	--untracked-files	[=<mode>]	REFUSED	error: unsupported option: --untracked-files
+commit	--pathspec-from-file	<file>	REFUSED	error: unsupported option: --pathspec-from-file
+commit	--pathspec-file-nul		REFUSED	error: unsupported option: --pathspec-file-nul
+commit-graph	--object-dir	<dir>	REFUSED	error: unsupported option: --object-dir
+commit-tree	-p		ACCEPTED	
+commit-tree	-m		ACCEPTED	
+commit-tree	-F		REFUSED	error: unsupported option: -F
+commit-tree	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+commit-tree	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+config	--global		ACCEPTED	
+config	--system		ACCEPTED	
+config	--local		ACCEPTED	
+config	--worktree		ACCEPTED	
+config	-f	<file>	REFUSED	error: unsupported option: -f
+config	--file	<file>	REFUSED	error: unsupported option: --file
+config	--blob	<blob-id>	REFUSED	error: unsupported option: --blob
+config	--get		ACCEPTED	
+config	--get-all		ACCEPTED	
+config	--get-regexp		ACCEPTED	
+config	--get-urlmatch		REFUSED	error: unsupported option: --get-urlmatch
+config	--replace-all		REFUSED	error: unsupported option: --replace-all
+config	--add		REFUSED	error: unsupported option: --add
+config	--unset		ACCEPTED	
+config	--unset-all		REFUSED	error: unsupported option: --unset-all
+config	--rename-section		REFUSED	error: unsupported option: --rename-section
+config	--remove-section		REFUSED	error: unsupported option: --remove-section
+config	-l		ACCEPTED	
+config	--list		ACCEPTED	
+config	--fixed-value		REFUSED	error: unsupported option: --fixed-value
+config	-e		REFUSED	error: unsupported option: -e
+config	--edit		REFUSED	error: unsupported option: --edit
+config	--get-color		REFUSED	error: unsupported option: --get-color
+config	--get-colorbool		REFUSED	error: unsupported option: --get-colorbool
+config	-t	<type>	REFUSED	error: unsupported option: -t
+config	--type	<type>	REFUSED	error: unsupported option: --type
+config	--bool		ACCEPTED	
+config	--int		ACCEPTED	
+config	--bool-or-int		REFUSED	error: unsupported option: --bool-or-int
+config	--bool-or-str		REFUSED	error: unsupported option: --bool-or-str
+config	--path		REFUSED	error: unsupported option: --path
+config	--expiry-date		REFUSED	error: unsupported option: --expiry-date
+config	-z		REFUSED	error: unsupported option: -z
+config	--null		REFUSED	error: unsupported option: --null
+config	--name-only		ACCEPTED	
+config	--includes		REFUSED	error: unsupported option: --includes
+config	--show-origin		ACCEPTED	
+config	--show-scope		ACCEPTED	
+config	--default	<value>	ACCEPTED	
+count-objects	-v		ACCEPTED	
+count-objects	--verbose		ACCEPTED	
+count-objects	-H		REFUSED	error: unsupported option: -H
+count-objects	--human-readable		REFUSED	error: unsupported option: --human-readable
+credential	-		NO_INVENTORY	
+credential-store	--file	<path>	ACCEPTED	
+credential-wincred	-		NO_INVENTORY	
+daemon	-		NO_INVENTORY	
+describe	--contains		ACCEPTED	
+describe	--debug		REFUSED	error: unsupported option: --debug
+describe	--all		ACCEPTED	
+describe	--tags		ACCEPTED	
+describe	--long		ACCEPTED	
+describe	--first-parent		ACCEPTED	
+describe	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+describe	--exact-match		ACCEPTED	
+describe	--candidates	<n>	REFUSED	error: unsupported option: --candidates
+describe	--match	<pattern>	ACCEPTED	
+describe	--exclude	<pattern>	ACCEPTED	
+describe	--always		ACCEPTED	
+describe	--dirty	[=<mark>]	ACCEPTED	
+describe	--broken	[=<mark>]	REFUSED	error: unsupported option: --broken
+diagnose	-o	<path>	REFUSED	error: unsupported option: -o
+diagnose	--output-directory	<path>	ACCEPTED	
+diagnose	-s	<format>	REFUSED	error: unsupported option: -s
+diagnose	--suffix	<format>	ACCEPTED	
+diagnose	--mode	(stats|all)	ACCEPTED	
+diff	-z		REFUSED	error: unsupported option: -z
+diff	-p		ACCEPTED	
+diff	-u		ACCEPTED	
+diff	--patch-with-raw		REFUSED	error: unsupported option: --patch-with-raw
+diff	--stat		ACCEPTED	
+diff	--numstat		ACCEPTED	
+diff	--patch-with-stat		ACCEPTED	
+diff	--name-only		ACCEPTED	
+diff	--name-status		ACCEPTED	
+diff	--full-index		REFUSED	error: unsupported option: --full-index
+diff	--abbrev	=<n>	REFUSED	error: unsupported option: --abbrev
+diff	-R		REFUSED	error: unsupported option: -R
+diff	-B		REFUSED	error: unsupported option: -B
+diff	-M		REFUSED	error: unsupported option: -M
+diff	-C		REFUSED	error: unsupported option: -C
+diff	--find-copies-harder		REFUSED	error: unsupported option: --find-copies-harder
+diff	-l		REFUSED	error: unsupported option: -l
+diff	-O		REFUSED	error: unsupported option: -O
+diff	-S		REFUSED	error: unsupported option: -S
+diff	--pickaxe-all		REFUSED	error: unsupported option: --pickaxe-all
+diff	-a		REFUSED	error: unsupported option: -a
+diff	--text		REFUSED	error: unsupported option: --text
+diff-files	-z		REFUSED	error: unsupported option: -z
+diff-files	-p		ACCEPTED	
+diff-files	-u		ACCEPTED	
+diff-files	--patch-with-raw		REFUSED	error: unsupported option: --patch-with-raw
+diff-files	--stat		ACCEPTED	
+diff-files	--numstat		ACCEPTED	
+diff-files	--patch-with-stat		ACCEPTED	
+diff-files	--name-only		ACCEPTED	
+diff-files	--name-status		ACCEPTED	
+diff-files	--full-index		ACCEPTED	
+diff-files	--abbrev	=<n>	REFUSED	error: unsupported option: --abbrev
+diff-files	-R		REFUSED	error: unsupported option: -R
+diff-files	-B		REFUSED	error: unsupported option: -B
+diff-files	-M		REFUSED	error: unsupported option: -M
+diff-files	-C		REFUSED	error: unsupported option: -C
+diff-files	--find-copies-harder		REFUSED	error: unsupported option: --find-copies-harder
+diff-files	-l		REFUSED	error: unsupported option: -l
+diff-files	-O		REFUSED	error: unsupported option: -O
+diff-files	-S		REFUSED	error: unsupported option: -S
+diff-files	--pickaxe-all		REFUSED	error: unsupported option: --pickaxe-all
+diff-files	-a		REFUSED	error: unsupported option: -a
+diff-files	--text		REFUSED	error: unsupported option: --text
+diff-index	-z		REFUSED	error: unsupported option: -z
+diff-index	-p		ACCEPTED	
+diff-index	-u		ACCEPTED	
+diff-index	--patch-with-raw		REFUSED	error: unsupported option: --patch-with-raw
+diff-index	--stat		ACCEPTED	
+diff-index	--numstat		ACCEPTED	
+diff-index	--patch-with-stat		ACCEPTED	
+diff-index	--name-only		ACCEPTED	
+diff-index	--name-status		ACCEPTED	
+diff-index	--full-index		ACCEPTED	
+diff-index	--abbrev	=<n>	REFUSED	error: unsupported option: --abbrev
+diff-index	-R		REFUSED	error: unsupported option: -R
+diff-index	-B		REFUSED	error: unsupported option: -B
+diff-index	-M		REFUSED	error: unsupported option: -M
+diff-index	-C		REFUSED	error: unsupported option: -C
+diff-index	--find-copies-harder		REFUSED	error: unsupported option: --find-copies-harder
+diff-index	-l		REFUSED	error: unsupported option: -l
+diff-index	-O		REFUSED	error: unsupported option: -O
+diff-index	-S		REFUSED	error: unsupported option: -S
+diff-index	--pickaxe-all		REFUSED	error: unsupported option: --pickaxe-all
+diff-index	-a		REFUSED	error: unsupported option: -a
+diff-index	--text		REFUSED	error: unsupported option: --text
+diff-pairs	-		NO_INVENTORY	
+diff-tree	-r		ACCEPTED	
+diff-tree	-c		REFUSED	error: unsupported option: -c
+diff-tree	--cc		REFUSED	error: unsupported option: --cc
+diff-tree	--combined-all-paths		REFUSED	error: unsupported option: --combined-all-paths
+diff-tree	--root		ACCEPTED	
+diff-tree	-z		REFUSED	error: unsupported option: -z
+diff-tree	-p		ACCEPTED	
+diff-tree	-u		ACCEPTED	
+diff-tree	--patch-with-raw		REFUSED	error: unsupported option: --patch-with-raw
+diff-tree	--stat		ACCEPTED	
+diff-tree	--numstat		ACCEPTED	
+diff-tree	--patch-with-stat		ACCEPTED	
+diff-tree	--name-only		ACCEPTED	
+diff-tree	--name-status		ACCEPTED	
+diff-tree	--full-index		ACCEPTED	
+diff-tree	--abbrev	=<n>	REFUSED	error: unsupported option: --abbrev
+diff-tree	-R		REFUSED	error: unsupported option: -R
+diff-tree	-B		REFUSED	error: unsupported option: -B
+diff-tree	-M		REFUSED	error: unsupported option: -M
+diff-tree	-C		REFUSED	error: unsupported option: -C
+diff-tree	--find-copies-harder		REFUSED	error: unsupported option: --find-copies-harder
+diff-tree	-l		REFUSED	error: unsupported option: -l
+diff-tree	-O		REFUSED	error: unsupported option: -O
+diff-tree	-S		REFUSED	error: unsupported option: -S
+diff-tree	--pickaxe-all		REFUSED	error: unsupported option: --pickaxe-all
+diff-tree	-a		REFUSED	error: unsupported option: -a
+diff-tree	--text		REFUSED	error: unsupported option: --text
+fast-export	--progress	<n>	ACCEPTED	
+fast-export	--signed-tags	<mode>	REFUSED	error: unsupported option: --signed-tags
+fast-export	--tag-of-filtered-object	<mode>	REFUSED	error: unsupported option: --tag-of-filtered-object
+fast-export	--reencode	<mode>	REFUSED	error: unsupported option: --reencode
+fast-export	--export-marks	<file>	REFUSED	error: unsupported option: --export-marks
+fast-export	--import-marks	<file>	REFUSED	error: unsupported option: --import-marks
+fast-export	--import-marks-if-exists	<file>	REFUSED	error: unsupported option: --import-marks-if-exists
+fast-export	--fake-missing-tagger		REFUSED	error: unsupported option: --fake-missing-tagger
+fast-export	--full-tree		REFUSED	error: unsupported option: --full-tree
+fast-export	--use-done-feature		REFUSED	error: unsupported option: --use-done-feature
+fast-export	--no-data		REFUSED	error: unsupported option: --no-data
+fast-export	--refspec	<refspec>	REFUSED	error: unsupported option: --refspec
+fast-export	--anonymize		REFUSED	error: unsupported option: --anonymize
+fast-export	--anonymize-map	<from:to>	REFUSED	error: unsupported option: --anonymize-map
+fast-export	--reference-excluded-parents		REFUSED	error: unsupported option: --reference-excluded-parents
+fast-export	--show-original-ids		REFUSED	error: unsupported option: --show-original-ids
+fast-export	--mark-tags		REFUSED	error: unsupported option: --mark-tags
+fast-import	-		NO_INVENTORY	
+fetch	-v		REFUSED	error: unsupported option: -v
+fetch	--verbose		REFUSED	error: unsupported option: --verbose
+fetch	-q		ACCEPTED	
+fetch	--quiet		ACCEPTED	
+fetch	--all		REFUSED	error: unsupported option: --all
+fetch	--set-upstream		REFUSED	error: unsupported option: --set-upstream
+fetch	-a		REFUSED	error: unsupported option: -a
+fetch	--append		REFUSED	error: unsupported option: --append
+fetch	--atomic		REFUSED	error: unsupported option: --atomic
+fetch	--upload-pack	<path>	REFUSED	error: unsupported option: --upload-pack
+fetch	-f		REFUSED	error: unsupported option: -f
+fetch	--force		REFUSED	error: unsupported option: --force
+fetch	-m		REFUSED	error: unsupported option: -m
+fetch	--multiple		REFUSED	error: unsupported option: --multiple
+fetch	-t		REFUSED	error: unsupported option: -t
+fetch	--tags		REFUSED	error: unsupported option: --tags
+fetch	-n		REFUSED	error: unsupported option: -n
+fetch	-j	<n>	REFUSED	error: unsupported option: -j
+fetch	--jobs	<n>	REFUSED	error: unsupported option: --jobs
+fetch	--prefetch		REFUSED	error: unsupported option: --prefetch
+fetch	-p		REFUSED	error: unsupported option: -p
+fetch	--prune		REFUSED	error: unsupported option: --prune
+fetch	-P		REFUSED	error: unsupported option: -P
+fetch	--prune-tags		REFUSED	error: unsupported option: --prune-tags
+fetch	--recurse-submodules	[=<on-demand>]	REFUSED	error: unsupported option: --recurse-submodules
+fetch	--dry-run		REFUSED	error: unsupported option: --dry-run
+fetch	--write-fetch-head		REFUSED	error: unsupported option: --write-fetch-head
+fetch	-k		REFUSED	error: unsupported option: -k
+fetch	--keep		REFUSED	error: unsupported option: --keep
+fetch	-u		REFUSED	error: unsupported option: -u
+fetch	--update-head-ok		REFUSED	error: unsupported option: --update-head-ok
+fetch	--progress		REFUSED	error: unsupported option: --progress
+fetch	--depth	<depth>	ACCEPTED	
+fetch	--shallow-since	<time>	REFUSED	error: unsupported option: --shallow-since
+fetch	--shallow-exclude	<revision>	REFUSED	error: unsupported option: --shallow-exclude
+fetch	--deepen	<n>	REFUSED	error: unsupported option: --deepen
+fetch	--unshallow		REFUSED	error: unsupported option: --unshallow
+fetch	--refetch		REFUSED	error: unsupported option: --refetch
+fetch	--update-shallow		REFUSED	error: unsupported option: --update-shallow
+fetch	--refmap	<refmap>	REFUSED	error: unsupported option: --refmap
+fetch	-o	<server-specific>	REFUSED	error: unsupported option: -o
+fetch	--server-option	<server-specific>	REFUSED	error: unsupported option: --server-option
+fetch	-4		REFUSED	error: unsupported option: -4
+fetch	--ipv4		REFUSED	error: unsupported option: --ipv4
+fetch	-6		REFUSED	error: unsupported option: -6
+fetch	--ipv6		REFUSED	error: unsupported option: --ipv6
+fetch	--negotiation-tip	<revision>	REFUSED	error: unsupported option: --negotiation-tip
+fetch	--negotiate-only		REFUSED	error: unsupported option: --negotiate-only
+fetch	--filter	<args>	ACCEPTED	
+fetch	--auto-maintenance		REFUSED	error: unsupported option: --auto-maintenance
+fetch	--auto-gc		REFUSED	error: unsupported option: --auto-gc
+fetch	--show-forced-updates		REFUSED	error: unsupported option: --show-forced-updates
+fetch	--write-commit-graph		REFUSED	error: unsupported option: --write-commit-graph
+fetch	--stdin		REFUSED	error: unsupported option: --stdin
+fetch-pack	-		NO_INVENTORY	
+fmt-merge-msg	--log	[=<n>]	ACCEPTED	
+fmt-merge-msg	-m	<text>	ACCEPTED	
+fmt-merge-msg	--message	<text>	ACCEPTED	
+fmt-merge-msg	--into-name	<name>	REFUSED	error: unsupported option: --into-name
+fmt-merge-msg	-F	<file>	REFUSED	error: unsupported option: -F
+fmt-merge-msg	--file	<file>	REFUSED	error: unsupported option: --file
+for-each-ref	-s		REFUSED	error: unsupported option: -s
+for-each-ref	--shell		REFUSED	error: unsupported option: --shell
+for-each-ref	-p		REFUSED	error: unsupported option: -p
+for-each-ref	--perl		REFUSED	error: unsupported option: --perl
+for-each-ref	--python		REFUSED	error: unsupported option: --python
+for-each-ref	--tcl		REFUSED	error: unsupported option: --tcl
+for-each-ref	--count	<n>	ACCEPTED	
+for-each-ref	--format	<format>	ACCEPTED	
+for-each-ref	--color	[=<when>]	REFUSED	error: unsupported option: --color
+for-each-ref	--sort	<key>	ACCEPTED	
+for-each-ref	--points-at	<object>	ACCEPTED	
+for-each-ref	--merged	<commit>	ACCEPTED	
+for-each-ref	--no-merged	<commit>	ACCEPTED	
+for-each-ref	--contains	<commit>	ACCEPTED	
+for-each-ref	--no-contains	<commit>	ACCEPTED	
+for-each-ref	--ignore-case		REFUSED	error: unsupported option: --ignore-case
+for-each-repo	--config	<config>	ACCEPTED	
+format-patch	-n		ACCEPTED	
+format-patch	--numbered		ACCEPTED	
+format-patch	-N		ACCEPTED	
+format-patch	--no-numbered		ACCEPTED	
+format-patch	-s		REFUSED	error: unsupported option: -s
+format-patch	--signoff		REFUSED	error: unsupported option: --signoff
+format-patch	--stdout		ACCEPTED	
+format-patch	--cover-letter		ACCEPTED	
+format-patch	--numbered-files		REFUSED	error: unsupported option: --numbered-files
+format-patch	--suffix	<sfx>	REFUSED	error: unsupported option: --suffix
+format-patch	--start-number	<n>	REFUSED	error: unsupported option: --start-number
+format-patch	-v	<reroll-count>	REFUSED	error: unsupported option: -v
+format-patch	--reroll-count	<reroll-count>	REFUSED	error: unsupported option: --reroll-count
+format-patch	--filename-max-length	<n>	REFUSED	error: unsupported option: --filename-max-length
+format-patch	--rfc		REFUSED	error: unsupported option: --rfc
+format-patch	--cover-from-description	<cover-from-description-mode>	REFUSED	error: unsupported option: --cover-from-description
+format-patch	--subject-prefix	<prefix>	REFUSED	error: unsupported option: --subject-prefix
+format-patch	-o	<dir>	ACCEPTED	
+format-patch	--output-directory	<dir>	ACCEPTED	
+format-patch	-k		REFUSED	error: unsupported option: -k
+format-patch	--keep-subject		REFUSED	error: unsupported option: --keep-subject
+format-patch	--no-binary		REFUSED	error: unsupported option: --no-binary
+format-patch	--zero-commit		REFUSED	error: unsupported option: --zero-commit
+format-patch	--ignore-if-in-upstream		REFUSED	error: unsupported option: --ignore-if-in-upstream
+format-patch	-p		REFUSED	error: unsupported option: -p
+format-patch	--no-stat		REFUSED	error: unsupported option: --no-stat
+format-patch	--add-header	<header>	REFUSED	error: unsupported option: --add-header
+format-patch	--to	<email>	REFUSED	error: unsupported option: --to
+format-patch	--cc	<email>	REFUSED	error: unsupported option: --cc
+format-patch	--from	[=<ident>]	REFUSED	error: unsupported option: --from
+format-patch	--in-reply-to	<message-id>	REFUSED	error: unsupported option: --in-reply-to
+format-patch	--attach	[=<boundary>]	REFUSED	error: unsupported option: --attach
+format-patch	--inline	[=<boundary>]	REFUSED	error: unsupported option: --inline
+format-patch	--thread	[=<style>]	REFUSED	error: unsupported option: --thread
+format-patch	--signature	<signature>	REFUSED	error: unsupported option: --signature
+format-patch	--base	<base-commit>	REFUSED	error: unsupported option: --base
+format-patch	--signature-file	<file>	REFUSED	error: unsupported option: --signature-file
+format-patch	-q		ACCEPTED	
+format-patch	--quiet		ACCEPTED	
+format-patch	--progress		REFUSED	error: unsupported option: --progress
+format-patch	--interdiff	<rev>	REFUSED	error: unsupported option: --interdiff
+format-patch	--range-diff	<refspec>	REFUSED	error: unsupported option: --range-diff
+format-patch	--creation-factor	<n>	REFUSED	error: unsupported option: --creation-factor
+format-patch	--force-in-body-from		REFUSED	error: unsupported option: --force-in-body-from
+format-rev	-		NO_INVENTORY	
+fsck	-v		REFUSED	error: unsupported option: -v
+fsck	--verbose		REFUSED	error: unsupported option: --verbose
+fsck	--unreachable		REFUSED	error: unsupported option: --unreachable
+fsck	--dangling		REFUSED	error: unsupported option: --dangling
+fsck	--tags		REFUSED	error: unsupported option: --tags
+fsck	--root		REFUSED	error: unsupported option: --root
+fsck	--cache		REFUSED	error: unsupported option: --cache
+fsck	--reflogs		REFUSED	error: unsupported option: --reflogs
+fsck	--full		REFUSED	error: unsupported option: --full
+fsck	--connectivity-only		REFUSED	error: unsupported option: --connectivity-only
+fsck	--strict		REFUSED	error: unsupported option: --strict
+fsck	--lost-found		REFUSED	error: unsupported option: --lost-found
+fsck	--progress		REFUSED	error: unsupported option: --progress
+fsck	--name-objects		REFUSED	error: unsupported option: --name-objects
+gc	-q		REFUSED	error: unsupported option: -q
+gc	--quiet		REFUSED	error: unsupported option: --quiet
+gc	--prune	[=<date>]	ACCEPTED	
+gc	--cruft		REFUSED	error: unsupported option: --cruft
+gc	--aggressive		REFUSED	error: unsupported option: --aggressive
+gc	--auto		ACCEPTED	
+gc	--force		ACCEPTED	
+gc	--keep-largest-pack		REFUSED	error: unsupported option: --keep-largest-pack
+get-tar-commit-id	-		NO_INVENTORY	
+grep	--cached		ACCEPTED	
+grep	--no-index		REFUSED	error: unsupported option: --no-index
+grep	--untracked		REFUSED	error: unsupported option: --untracked
+grep	--exclude-standard		REFUSED	error: unsupported option: --exclude-standard
+grep	--recurse-submodules		REFUSED	error: unsupported option: --recurse-submodules
+grep	-v		ACCEPTED	
+grep	--invert-match		ACCEPTED	
+grep	-i		ACCEPTED	
+grep	--ignore-case		ACCEPTED	
+grep	-w		ACCEPTED	
+grep	--word-regexp		ACCEPTED	
+grep	-a		ACCEPTED	
+grep	--text		ACCEPTED	
+grep	-I		ACCEPTED	
+grep	--textconv		REFUSED	error: unsupported option: --textconv
+grep	-r		REFUSED	error: unsupported option: -r
+grep	--recursive		REFUSED	error: unsupported option: --recursive
+grep	--max-depth	<depth>	REFUSED	error: unsupported option: --max-depth
+grep	-E		ACCEPTED	
+grep	--extended-regexp		ACCEPTED	
+grep	-G		ACCEPTED	
+grep	--basic-regexp		ACCEPTED	
+grep	-F		ACCEPTED	
+grep	--fixed-strings		ACCEPTED	
+grep	-P		ACCEPTED	
+grep	--perl-regexp		ACCEPTED	
+grep	-n		ACCEPTED	
+grep	--line-number		ACCEPTED	
+grep	--column		REFUSED	error: unsupported option: --column
+grep	-H		ACCEPTED	
+grep	--full-name		REFUSED	error: unsupported option: --full-name
+grep	-l		ACCEPTED	
+grep	--files-with-matches		ACCEPTED	
+grep	--name-only		ACCEPTED	
+grep	-L		ACCEPTED	
+grep	--files-without-match		ACCEPTED	
+grep	-z		REFUSED	error: unsupported option: -z
+grep	--null		REFUSED	error: unsupported option: --null
+grep	-o		ACCEPTED	
+grep	--only-matching		ACCEPTED	
+grep	-c		ACCEPTED	
+grep	--count		ACCEPTED	
+grep	--color	[=<when>]	REFUSED	error: unsupported option: --color
+grep	--break		REFUSED	error: unsupported option: --break
+grep	--heading		REFUSED	error: unsupported option: --heading
+grep	-C	<n>	REFUSED	error: unsupported option: -C
+grep	--context	<n>	REFUSED	error: unsupported option: --context
+grep	-B	<n>	REFUSED	error: unsupported option: -B
+grep	--before-context	<n>	REFUSED	error: unsupported option: --before-context
+grep	-A	<n>	REFUSED	error: unsupported option: -A
+grep	--after-context	<n>	REFUSED	error: unsupported option: --after-context
+grep	--threads	<n>	REFUSED	error: unsupported option: --threads
+grep	-N		REFUSED	error: unsupported option: -N
+grep	-p		REFUSED	error: unsupported option: -p
+grep	--show-function		REFUSED	error: unsupported option: --show-function
+grep	-W		REFUSED	error: unsupported option: -W
+grep	--function-context		REFUSED	error: unsupported option: --function-context
+grep	-f		REFUSED	error: unsupported option: -f
+grep	-e		ACCEPTED	
+grep	--and		REFUSED	error: unsupported option: --and
+grep	--or		REFUSED	error: unsupported option: --or
+grep	--not		REFUSED	error: unsupported option: --not
+grep	-q		ACCEPTED	
+grep	--quiet		ACCEPTED	
+grep	--all-match		REFUSED	error: unsupported option: --all-match
+grep	-O	[=<pager>]	REFUSED	error: unsupported option: -O
+grep	--open-files-in-pager	[=<pager>]	REFUSED	error: unsupported option: --open-files-in-pager
+grep	--ext-grep		REFUSED	error: unsupported option: --ext-grep
+grep	-m	<n>	REFUSED	error: unsupported option: -m
+grep	--max-count	<n>	REFUSED	error: unsupported option: --max-count
+hash-object	-t		REFUSED	error: unsupported option: -t
+hash-object	-w		ACCEPTED	
+hash-object	--stdin		REFUSED	error: unsupported option: --stdin
+hash-object	--stdin-paths		REFUSED	error: unsupported option: --stdin-paths
+hash-object	--no-filters		REFUSED	error: unsupported option: --no-filters
+hash-object	--literally		REFUSED	error: unsupported option: --literally
+hash-object	--path	<file>	REFUSED	error: unsupported option: --path
+help	-a		ACCEPTED	
+help	--all		ACCEPTED	
+help	--external-commands		ACCEPTED	
+help	--aliases		ACCEPTED	
+help	-m		ACCEPTED	
+help	--man		ACCEPTED	
+help	-w		ACCEPTED	
+help	--web		ACCEPTED	
+help	-i		ACCEPTED	
+help	--info		ACCEPTED	
+help	-v		ACCEPTED	
+help	--verbose		ACCEPTED	
+help	-g		ACCEPTED	
+help	--guides		ACCEPTED	
+help	--user-interfaces		ACCEPTED	
+help	--developer-interfaces		ACCEPTED	
+help	-c		ACCEPTED	
+help	--config		ACCEPTED	
+history	-		NO_INVENTORY	
+hook	-		NO_INVENTORY	
+http-backend	-		NO_INVENTORY	
+http-fetch	-		NO_INVENTORY	
+http-push	-		NO_INVENTORY	
+index-pack	-		NO_INVENTORY	
+init	--template	<template-directory>	REFUSED	error: unsupported option: --template
+init	--bare		ACCEPTED	
+init	--shared	[=<permissions>]	REFUSED	error: unsupported option: --shared
+init	-q		ACCEPTED	
+init	--quiet		ACCEPTED	
+init	--separate-git-dir	<gitdir>	REFUSED	error: unsupported option: --separate-git-dir
+init	-b	<name>	ACCEPTED	
+init	--initial-branch	<name>	ACCEPTED	
+init	--object-format	<hash>	ACCEPTED	
+interpret-trailers	--in-place		REFUSED	error: unsupported option: --in-place
+interpret-trailers	--trim-empty		ACCEPTED	
+interpret-trailers	--where	<action>	REFUSED	error: unsupported option: --where
+interpret-trailers	--if-exists	<action>	ACCEPTED	
+interpret-trailers	--if-missing	<action>	ACCEPTED	
+interpret-trailers	--only-trailers		REFUSED	error: unsupported option: --only-trailers
+interpret-trailers	--only-input		REFUSED	error: unsupported option: --only-input
+interpret-trailers	--unfold		REFUSED	error: unsupported option: --unfold
+interpret-trailers	--parse		REFUSED	error: unsupported option: --parse
+interpret-trailers	--no-divider		REFUSED	error: unsupported option: --no-divider
+interpret-trailers	--trailer	<trailer>	ACCEPTED	
+last-modified	-		NO_INVENTORY	
+log	-q		REFUSED	error: log: unsupported option: -q
+log	--quiet		REFUSED	error: log: unsupported option: --quiet
+log	--source		REFUSED	error: log: unsupported option: --source
+log	--use-mailmap		REFUSED	error: log: unsupported option: --use-mailmap
+log	--mailmap		REFUSED	error: log: unsupported option: --mailmap
+log	--clear-decorations		REFUSED	error: log: unsupported option: --clear-decorations
+log	--decorate-refs	<pattern>	REFUSED	error: log: unsupported option: --decorate-refs
+log	--decorate-refs-exclude	<pattern>	REFUSED	error: log: unsupported option: --decorate-refs-exclude
+log	--decorate	[=...]	ACCEPTED	
+log	-L		REFUSED	error: log: unsupported option: -L
+ls-files	-z		ACCEPTED	
+ls-files	-t		REFUSED	error: unsupported option: -t
+ls-files	-v		REFUSED	error: unsupported option: -v
+ls-files	-f		REFUSED	error: unsupported option: -f
+ls-files	-c		ACCEPTED	
+ls-files	--cached		ACCEPTED	
+ls-files	-d		ACCEPTED	
+ls-files	--deleted		ACCEPTED	
+ls-files	-m		ACCEPTED	
+ls-files	--modified		ACCEPTED	
+ls-files	-o		ACCEPTED	
+ls-files	--others		ACCEPTED	
+ls-files	-i		ACCEPTED	
+ls-files	--ignored		ACCEPTED	
+ls-files	-s		ACCEPTED	
+ls-files	--stage		ACCEPTED	
+ls-files	-k		REFUSED	error: unsupported option: -k
+ls-files	--killed		REFUSED	error: unsupported option: --killed
+ls-files	--directory		REFUSED	error: unsupported option: --directory
+ls-files	--eol		REFUSED	error: unsupported option: --eol
+ls-files	--empty-directory		REFUSED	error: unsupported option: --empty-directory
+ls-files	-u		ACCEPTED	
+ls-files	--unmerged		ACCEPTED	
+ls-files	--resolve-undo		REFUSED	error: unsupported option: --resolve-undo
+ls-files	-x	<pattern>	REFUSED	error: unsupported option: -x
+ls-files	--exclude	<pattern>	REFUSED	error: unsupported option: --exclude
+ls-files	-X	<file>	REFUSED	error: unsupported option: -X
+ls-files	--exclude-from	<file>	REFUSED	error: unsupported option: --exclude-from
+ls-files	--exclude-per-directory	<file>	REFUSED	error: unsupported option: --exclude-per-directory
+ls-files	--exclude-standard		ACCEPTED	
+ls-files	--full-name		ACCEPTED	
+ls-files	--recurse-submodules		REFUSED	error: unsupported option: --recurse-submodules
+ls-files	--error-unmatch		ACCEPTED	
+ls-files	--with-tree	<tree-ish>	REFUSED	error: unsupported option: --with-tree
+ls-files	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+ls-files	--debug		REFUSED	error: unsupported option: --debug
+ls-files	--deduplicate		REFUSED	error: unsupported option: --deduplicate
+ls-files	--sparse		REFUSED	error: unsupported option: --sparse
+ls-files	--format	<format>	REFUSED	error: unsupported option: --format
+ls-remote	-q		REFUSED	error: unsupported option: -q
+ls-remote	--quiet		REFUSED	error: unsupported option: --quiet
+ls-remote	--upload-pack	<exec>	REFUSED	error: unsupported option: --upload-pack
+ls-remote	-t		ACCEPTED	
+ls-remote	--tags		ACCEPTED	
+ls-remote	--heads		ACCEPTED	
+ls-remote	--refs		REFUSED	error: unsupported option: --refs
+ls-remote	--get-url		REFUSED	error: unsupported option: --get-url
+ls-remote	--sort	<key>	REFUSED	error: unsupported option: --sort
+ls-remote	--exit-code		REFUSED	error: unsupported option: --exit-code
+ls-remote	--symref		REFUSED	error: unsupported option: --symref
+ls-remote	-o	<server-specific>	REFUSED	error: unsupported option: -o
+ls-remote	--server-option	<server-specific>	REFUSED	error: unsupported option: --server-option
+ls-tree	-d		ACCEPTED	
+ls-tree	-r		ACCEPTED	
+ls-tree	-t		ACCEPTED	
+ls-tree	-z		REFUSED	error: unsupported option: -z
+ls-tree	-l		ACCEPTED	
+ls-tree	--long		ACCEPTED	
+ls-tree	--name-only		ACCEPTED	
+ls-tree	--name-status		ACCEPTED	
+ls-tree	--object-only		REFUSED	error: unsupported option: --object-only
+ls-tree	--full-name		ACCEPTED	
+ls-tree	--full-tree		ACCEPTED	
+ls-tree	--format	<format>	REFUSED	error: unsupported option: --format
+ls-tree	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+mailinfo	-k		ACCEPTED	
+mailinfo	-b		ACCEPTED	
+mailinfo	-m		REFUSED	error: unsupported option: -m
+mailinfo	--message-id		REFUSED	error: unsupported option: --message-id
+mailinfo	-u		ACCEPTED	
+mailinfo	-n		ACCEPTED	
+mailinfo	--encoding	<encoding>	ACCEPTED	
+mailinfo	--scissors		ACCEPTED	
+mailinfo	--quoted-cr	<action>	REFUSED	error: unsupported option: --quoted-cr
+mailsplit	-		NO_INVENTORY	
+maintenance	-		NO_INVENTORY	
+merge	-n		REFUSED	error: unsupported option: -n
+merge	--stat		REFUSED	error: unsupported option: --stat
+merge	--summary		REFUSED	error: unsupported option: --summary
+merge	--log	[=<n>]	REFUSED	error: unsupported option: --log
+merge	--squash		REFUSED	error: unsupported option: --squash
+merge	--commit		REFUSED	error: unsupported option: --commit
+merge	-e		REFUSED	error: unsupported option: -e
+merge	--edit		REFUSED	error: unsupported option: --edit
+merge	--cleanup	<mode>	REFUSED	error: unsupported option: --cleanup
+merge	--ff		ACCEPTED	
+merge	--ff-only		ACCEPTED	
+merge	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+merge	--verify-signatures		REFUSED	error: unsupported option: --verify-signatures
+merge	-s	<strategy>	REFUSED	error: unsupported option: -s
+merge	--strategy	<strategy>	REFUSED	error: unsupported option: --strategy
+merge	-X	<option=value>	REFUSED	error: unsupported option: -X
+merge	--strategy-option	<option=value>	REFUSED	error: unsupported option: --strategy-option
+merge	-m	<message>	ACCEPTED	
+merge	--message	<message>	ACCEPTED	
+merge	-F	<path>	REFUSED	error: unsupported option: -F
+merge	--file	<path>	REFUSED	error: unsupported option: --file
+merge	--into-name	<name>	REFUSED	error: unsupported option: --into-name
+merge	-v		REFUSED	error: unsupported option: -v
+merge	--verbose		REFUSED	error: unsupported option: --verbose
+merge	-q		ACCEPTED	
+merge	--quiet		ACCEPTED	
+merge	--abort		ACCEPTED	
+merge	--quit		ACCEPTED	
+merge	--continue		ACCEPTED	
+merge	--allow-unrelated-histories		REFUSED	error: unsupported option: --allow-unrelated-histories
+merge	--progress		REFUSED	error: unsupported option: --progress
+merge	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+merge	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+merge	--autostash		REFUSED	error: unsupported option: --autostash
+merge	--overwrite-ignore		REFUSED	error: unsupported option: --overwrite-ignore
+merge	--signoff		REFUSED	error: unsupported option: --signoff
+merge	--no-verify		REFUSED	error: unsupported option: --no-verify
+merge-base	-a		REFUSED	error: unsupported option: -a
+merge-base	--all		ACCEPTED	
+merge-base	--octopus		REFUSED	error: unsupported option: --octopus
+merge-base	--independent		REFUSED	error: unsupported option: --independent
+merge-base	--is-ancestor		ACCEPTED	
+merge-base	--fork-point		REFUSED	error: unsupported option: --fork-point
+merge-file	-p		ACCEPTED	
+merge-file	--stdout		ACCEPTED	
+merge-file	--diff3		REFUSED	error: unsupported option: --diff3
+merge-file	--zdiff3		REFUSED	error: unsupported option: --zdiff3
+merge-file	--ours		REFUSED	error: unsupported option: --ours
+merge-file	--theirs		REFUSED	error: unsupported option: --theirs
+merge-file	--union		REFUSED	error: unsupported option: --union
+merge-file	--marker-size	<n>	REFUSED	error: unsupported option: --marker-size
+merge-file	-q		ACCEPTED	
+merge-file	--quiet		ACCEPTED	
+merge-file	-L		REFUSED	error: unsupported option: -L
+merge-tree	--write-tree		ACCEPTED	
+merge-tree	--trivial-merge		REFUSED	error: unsupported option: --trivial-merge
+merge-tree	--messages		ACCEPTED	
+merge-tree	-z		REFUSED	error: unsupported option: -z
+merge-tree	--name-only		ACCEPTED	
+merge-tree	--allow-unrelated-histories		ACCEPTED	
+merge-tree	--stdin		REFUSED	error: unsupported option: --stdin
+mktag	--strict		REFUSED	error: unsupported option: --strict
+mktree	-z		ACCEPTED	
+mktree	--missing		ACCEPTED	
+mktree	--batch		REFUSED	error: unsupported option: --batch
+multi-pack-index	--object-dir	<directory>	REFUSED	error: unsupported option: --object-dir
+mv	-v		REFUSED	error: unsupported option: -v
+mv	--verbose		REFUSED	error: unsupported option: --verbose
+mv	-n		REFUSED	error: unsupported option: -n
+mv	--dry-run		REFUSED	error: unsupported option: --dry-run
+mv	-f		REFUSED	error: unsupported option: -f
+mv	--force		REFUSED	error: unsupported option: --force
+mv	-k		REFUSED	error: unsupported option: -k
+mv	--sparse		REFUSED	error: unsupported option: --sparse
+name-rev	--name-only		ACCEPTED	
+name-rev	--tags		ACCEPTED	
+name-rev	--refs	<pattern>	REFUSED	error: unsupported option: --refs
+name-rev	--exclude	<pattern>	REFUSED	error: unsupported option: --exclude
+name-rev	--all		ACCEPTED	
+name-rev	--stdin		REFUSED	error: unsupported option: --stdin
+name-rev	--annotate-stdin		REFUSED	error: unsupported option: --annotate-stdin
+name-rev	--undefined		REFUSED	error: unsupported option: --undefined
+name-rev	--always		ACCEPTED	
+notes	--ref	<notes-ref>	ACCEPTED	
+pack-objects	-q		ACCEPTED	
+pack-objects	--quiet		REFUSED	error: unsupported option: --quiet
+pack-objects	--progress		REFUSED	error: unsupported option: --progress
+pack-objects	--all-progress		REFUSED	error: unsupported option: --all-progress
+pack-objects	--all-progress-implied		REFUSED	error: unsupported option: --all-progress-implied
+pack-objects	--index-version	<version>	REFUSED	error: unsupported option: --index-version
+pack-objects	--max-pack-size	<n>	REFUSED	error: unsupported option: --max-pack-size
+pack-objects	--local		REFUSED	error: unsupported option: --local
+pack-objects	--incremental		REFUSED	error: unsupported option: --incremental
+pack-objects	--window	<n>	REFUSED	error: unsupported option: --window
+pack-objects	--window-memory	<n>	REFUSED	error: unsupported option: --window-memory
+pack-objects	--depth	<n>	REFUSED	error: unsupported option: --depth
+pack-objects	--reuse-delta		REFUSED	error: unsupported option: --reuse-delta
+pack-objects	--reuse-object		REFUSED	error: unsupported option: --reuse-object
+pack-objects	--delta-base-offset		REFUSED	error: unsupported option: --delta-base-offset
+pack-objects	--threads	<n>	REFUSED	error: unsupported option: --threads
+pack-objects	--non-empty		REFUSED	error: unsupported option: --non-empty
+pack-objects	--revs		REFUSED	error: unsupported option: --revs
+pack-objects	--unpacked		REFUSED	error: unsupported option: --unpacked
+pack-objects	--all		REFUSED	error: unsupported option: --all
+pack-objects	--reflog		REFUSED	error: unsupported option: --reflog
+pack-objects	--indexed-objects		REFUSED	error: unsupported option: --indexed-objects
+pack-objects	--stdin-packs		REFUSED	error: unsupported option: --stdin-packs
+pack-objects	--stdout		ACCEPTED	
+pack-objects	--include-tag		REFUSED	error: unsupported option: --include-tag
+pack-objects	--keep-unreachable		REFUSED	error: unsupported option: --keep-unreachable
+pack-objects	--pack-loose-unreachable		REFUSED	error: unsupported option: --pack-loose-unreachable
+pack-objects	--unpack-unreachable	[=<time>]	REFUSED	error: unsupported option: --unpack-unreachable
+pack-objects	--cruft		REFUSED	error: unsupported option: --cruft
+pack-objects	--cruft-expiration	[=<time>]	REFUSED	error: unsupported option: --cruft-expiration
+pack-objects	--sparse		REFUSED	error: unsupported option: --sparse
+pack-objects	--thin		REFUSED	error: unsupported option: --thin
+pack-objects	--shallow		REFUSED	error: unsupported option: --shallow
+pack-objects	--honor-pack-keep		REFUSED	error: unsupported option: --honor-pack-keep
+pack-objects	--keep-pack	<name>	REFUSED	error: unsupported option: --keep-pack
+pack-objects	--compression	<n>	REFUSED	error: unsupported option: --compression
+pack-objects	--keep-true-parents		REFUSED	error: unsupported option: --keep-true-parents
+pack-objects	--use-bitmap-index		REFUSED	error: unsupported option: --use-bitmap-index
+pack-objects	--write-bitmap-index		REFUSED	error: unsupported option: --write-bitmap-index
+pack-objects	--filter	<args>	REFUSED	error: unsupported option: --filter
+pack-objects	--missing	<action>	REFUSED	error: unsupported option: --missing
+pack-objects	--exclude-promisor-objects		REFUSED	error: unsupported option: --exclude-promisor-objects
+pack-objects	--delta-islands		REFUSED	error: unsupported option: --delta-islands
+pack-objects	--uri-protocol	<protocol>	REFUSED	error: unsupported option: --uri-protocol
+pack-redundant	-		NO_INVENTORY	
+pack-refs	--all		ACCEPTED	
+pack-refs	--prune		REFUSED	error: unsupported option: --prune
+patch-id	--unstable		ACCEPTED	
+patch-id	--stable		ACCEPTED	
+patch-id	--verbatim		REFUSED	error: unsupported option: --verbatim
+prune	-n		ACCEPTED	
+prune	--dry-run		ACCEPTED	
+prune	-v		ACCEPTED	
+prune	--verbose		ACCEPTED	
+prune	--progress		REFUSED	error: unsupported option: --progress
+prune	--expire	<expiry-date>	REFUSED	error: unsupported option: --expire
+prune	--exclude-promisor-objects		REFUSED	error: unsupported option: --exclude-promisor-objects
+prune-packed	-n		ACCEPTED	
+prune-packed	--dry-run		ACCEPTED	
+prune-packed	-q		ACCEPTED	
+prune-packed	--quiet		ACCEPTED	
+pull	-v		REFUSED	error: unsupported option: -v
+pull	--verbose		REFUSED	error: unsupported option: --verbose
+pull	-q		ACCEPTED	
+pull	--quiet		ACCEPTED	
+pull	--progress		REFUSED	error: unsupported option: --progress
+pull	--recurse-submodules	[=<on-demand>]	REFUSED	error: unsupported option: --recurse-submodules
+pull	-r	[=(false|true|merges|interactive)]	ACCEPTED	
+pull	--rebase	[=(false|true|merges|interactive)]	ACCEPTED	
+pull	-n		REFUSED	error: unsupported option: -n
+pull	--stat		REFUSED	error: unsupported option: --stat
+pull	--log	[=<n>]	REFUSED	error: unsupported option: --log
+pull	--signoff	[=...]	REFUSED	error: unsupported option: --signoff
+pull	--squash		REFUSED	error: unsupported option: --squash
+pull	--commit		REFUSED	error: unsupported option: --commit
+pull	--edit		REFUSED	error: unsupported option: --edit
+pull	--cleanup	<mode>	REFUSED	error: unsupported option: --cleanup
+pull	--ff		ACCEPTED	
+pull	--ff-only		ACCEPTED	
+pull	--verify		REFUSED	error: unsupported option: --verify
+pull	--verify-signatures		REFUSED	error: unsupported option: --verify-signatures
+pull	--autostash		REFUSED	error: unsupported option: --autostash
+pull	-s	<strategy>	REFUSED	error: unsupported option: -s
+pull	--strategy	<strategy>	REFUSED	error: unsupported option: --strategy
+pull	-X	<option=value>	REFUSED	error: unsupported option: -X
+pull	--strategy-option	<option=value>	REFUSED	error: unsupported option: --strategy-option
+pull	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+pull	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+pull	--allow-unrelated-histories		REFUSED	error: unsupported option: --allow-unrelated-histories
+pull	--all		REFUSED	error: unsupported option: --all
+pull	-a		REFUSED	error: unsupported option: -a
+pull	--append		REFUSED	error: unsupported option: --append
+pull	--upload-pack	<path>	REFUSED	error: unsupported option: --upload-pack
+pull	-f		REFUSED	error: unsupported option: -f
+pull	--force		REFUSED	error: unsupported option: --force
+pull	-t		REFUSED	error: unsupported option: -t
+pull	--tags		REFUSED	error: unsupported option: --tags
+pull	-p		REFUSED	error: unsupported option: -p
+pull	--prune		REFUSED	error: unsupported option: --prune
+pull	-j	[=<n>]	REFUSED	error: unsupported option: -j
+pull	--jobs	[=<n>]	REFUSED	error: unsupported option: --jobs
+pull	--dry-run		REFUSED	error: unsupported option: --dry-run
+pull	-k		REFUSED	error: unsupported option: -k
+pull	--keep		REFUSED	error: unsupported option: --keep
+pull	--depth	<depth>	REFUSED	error: unsupported option: --depth
+pull	--shallow-since	<time>	REFUSED	error: unsupported option: --shallow-since
+pull	--shallow-exclude	<revision>	REFUSED	error: unsupported option: --shallow-exclude
+pull	--deepen	<n>	REFUSED	error: unsupported option: --deepen
+pull	--unshallow		REFUSED	error: unsupported option: --unshallow
+pull	--update-shallow		REFUSED	error: unsupported option: --update-shallow
+pull	--refmap	<refmap>	REFUSED	error: unsupported option: --refmap
+pull	-o	<server-specific>	REFUSED	error: unsupported option: -o
+pull	--server-option	<server-specific>	REFUSED	error: unsupported option: --server-option
+pull	-4		REFUSED	error: unsupported option: -4
+pull	--ipv4		REFUSED	error: unsupported option: --ipv4
+pull	-6		REFUSED	error: unsupported option: -6
+pull	--ipv6		REFUSED	error: unsupported option: --ipv6
+pull	--negotiation-tip	<revision>	REFUSED	error: unsupported option: --negotiation-tip
+pull	--show-forced-updates		REFUSED	error: unsupported option: --show-forced-updates
+pull	--set-upstream		REFUSED	error: unsupported option: --set-upstream
+push	-v		REFUSED	error: unsupported option: -v
+push	--verbose		REFUSED	error: unsupported option: --verbose
+push	-q		ACCEPTED	
+push	--quiet		ACCEPTED	
+push	--repo	<repository>	REFUSED	error: unsupported option: --repo
+push	--all		REFUSED	error: unsupported option: --all
+push	--mirror		REFUSED	error: unsupported option: --mirror
+push	-d		REFUSED	error: unsupported option: -d
+push	--delete		REFUSED	error: unsupported option: --delete
+push	--tags		REFUSED	error: unsupported option: --tags
+push	-n		ACCEPTED	
+push	--dry-run		ACCEPTED	
+push	--porcelain		REFUSED	error: unsupported option: --porcelain
+push	-f		REFUSED	error: unsupported option: -f
+push	--force		REFUSED	error: unsupported option: --force
+push	--force-with-lease	[=<refname>:<expect>]	ACCEPTED	
+push	--force-if-includes		REFUSED	error: unsupported option: --force-if-includes
+push	--recurse-submodules	(check|on-demand|no)	REFUSED	error: unsupported option: --recurse-submodules
+push	--thin		REFUSED	error: unsupported option: --thin
+push	--receive-pack	<receive-pack>	REFUSED	error: unsupported option: --receive-pack
+push	--exec	<receive-pack>	REFUSED	error: unsupported option: --exec
+push	-u		ACCEPTED	
+push	--set-upstream		ACCEPTED	
+push	--progress		REFUSED	error: unsupported option: --progress
+push	--prune		REFUSED	error: unsupported option: --prune
+push	--no-verify		REFUSED	error: unsupported option: --no-verify
+push	--follow-tags		REFUSED	error: unsupported option: --follow-tags
+push	--signed	[=(yes|no|if-asked)]	REFUSED	error: unsupported option: --signed
+push	--atomic		REFUSED	error: unsupported option: --atomic
+push	-o	<server-specific>	ACCEPTED	
+push	--push-option	<server-specific>	ACCEPTED	
+push	-4		REFUSED	error: unsupported option: -4
+push	--ipv4		REFUSED	error: unsupported option: --ipv4
+push	-6		REFUSED	error: unsupported option: -6
+push	--ipv6		REFUSED	error: unsupported option: --ipv6
+range-diff	--creation-factor	<n>	REFUSED	error: unsupported option: --creation-factor
+range-diff	--no-dual-color		REFUSED	error: unsupported option: --no-dual-color
+range-diff	--notes	[=<notes>]	REFUSED	error: unsupported option: --notes
+range-diff	--left-only		REFUSED	error: unsupported option: --left-only
+range-diff	--right-only		REFUSED	error: unsupported option: --right-only
+range-diff	-p		REFUSED	error: unsupported option: -p
+range-diff	--patch		REFUSED	error: unsupported option: --patch
+range-diff	-s		ACCEPTED	
+range-diff	--no-patch		ACCEPTED	
+range-diff	-u		REFUSED	error: unsupported option: -u
+range-diff	-U	[=<n>]	REFUSED	error: unsupported option: -U
+range-diff	--unified	[=<n>]	REFUSED	error: unsupported option: --unified
+range-diff	-W		REFUSED	error: unsupported option: -W
+range-diff	--function-context		REFUSED	error: unsupported option: --function-context
+range-diff	--raw		REFUSED	error: unsupported option: --raw
+range-diff	--patch-with-raw		REFUSED	error: unsupported option: --patch-with-raw
+range-diff	--patch-with-stat		REFUSED	error: unsupported option: --patch-with-stat
+range-diff	--numstat		REFUSED	error: unsupported option: --numstat
+range-diff	--shortstat		REFUSED	error: unsupported option: --shortstat
+range-diff	-X	[=<param1,param2>...]	REFUSED	error: unsupported option: -X
+range-diff	--dirstat	[=<param1,param2>...]	REFUSED	error: unsupported option: --dirstat
+range-diff	--cumulative		REFUSED	error: unsupported option: --cumulative
+range-diff	--dirstat-by-file	[=<param1,param2>...]	REFUSED	error: unsupported option: --dirstat-by-file
+range-diff	--check		REFUSED	error: unsupported option: --check
+range-diff	--summary		REFUSED	error: unsupported option: --summary
+range-diff	--name-only		REFUSED	error: unsupported option: --name-only
+range-diff	--name-status		REFUSED	error: unsupported option: --name-status
+range-diff	--stat	[=<width>[,<name-width>[,<count>]	REFUSED	error: unsupported option: --stat
+range-diff	--stat-width	<width>	REFUSED	error: unsupported option: --stat-width
+range-diff	--stat-name-width	<width>	REFUSED	error: unsupported option: --stat-name-width
+range-diff	--stat-graph-width	<width>	REFUSED	error: unsupported option: --stat-graph-width
+range-diff	--stat-count	<count>	REFUSED	error: unsupported option: --stat-count
+range-diff	--compact-summary		REFUSED	error: unsupported option: --compact-summary
+range-diff	--binary		REFUSED	error: unsupported option: --binary
+range-diff	--full-index		REFUSED	error: unsupported option: --full-index
+range-diff	--color	[=<when>]	REFUSED	error: unsupported option: --color
+range-diff	--ws-error-highlight	<kind>	REFUSED	error: unsupported option: --ws-error-highlight
+range-diff	-z		REFUSED	error: unsupported option: -z
+range-diff	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+range-diff	--src-prefix	<prefix>	REFUSED	error: unsupported option: --src-prefix
+range-diff	--dst-prefix	<prefix>	REFUSED	error: unsupported option: --dst-prefix
+range-diff	--line-prefix	<prefix>	REFUSED	error: unsupported option: --line-prefix
+range-diff	--no-prefix		REFUSED	error: unsupported option: --no-prefix
+range-diff	--inter-hunk-context	<n>	REFUSED	error: unsupported option: --inter-hunk-context
+range-diff	--output-indicator-new	<char>	REFUSED	error: unsupported option: --output-indicator-new
+range-diff	--output-indicator-old	<char>	REFUSED	error: unsupported option: --output-indicator-old
+range-diff	--output-indicator-context	<char>	REFUSED	error: unsupported option: --output-indicator-context
+range-diff	-B	[=<n>[/<m>]	REFUSED	error: unsupported option: -B
+range-diff	--break-rewrites	[=<n>[/<m>]	REFUSED	error: unsupported option: --break-rewrites
+range-diff	-M	[=<n>]	REFUSED	error: unsupported option: -M
+range-diff	--find-renames	[=<n>]	REFUSED	error: unsupported option: --find-renames
+range-diff	-D		REFUSED	error: unsupported option: -D
+range-diff	--irreversible-delete		REFUSED	error: unsupported option: --irreversible-delete
+range-diff	-C	[=<n>]	REFUSED	error: unsupported option: -C
+range-diff	--find-copies	[=<n>]	REFUSED	error: unsupported option: --find-copies
+range-diff	--find-copies-harder		REFUSED	error: unsupported option: --find-copies-harder
+range-diff	--no-renames		REFUSED	error: unsupported option: --no-renames
+range-diff	--rename-empty		REFUSED	error: unsupported option: --rename-empty
+range-diff	--follow		REFUSED	error: unsupported option: --follow
+range-diff	-l		REFUSED	error: unsupported option: -l
+range-diff	--minimal		REFUSED	error: unsupported option: --minimal
+range-diff	-w		REFUSED	error: unsupported option: -w
+range-diff	--ignore-all-space		REFUSED	error: unsupported option: --ignore-all-space
+range-diff	-b		REFUSED	error: unsupported option: -b
+range-diff	--ignore-space-change		REFUSED	error: unsupported option: --ignore-space-change
+range-diff	--ignore-space-at-eol		REFUSED	error: unsupported option: --ignore-space-at-eol
+range-diff	--ignore-cr-at-eol		REFUSED	error: unsupported option: --ignore-cr-at-eol
+range-diff	--ignore-blank-lines		REFUSED	error: unsupported option: --ignore-blank-lines
+range-diff	-I	<regex>	REFUSED	error: unsupported option: -I
+range-diff	--ignore-matching-lines	<regex>	REFUSED	error: unsupported option: --ignore-matching-lines
+range-diff	--indent-heuristic		REFUSED	error: unsupported option: --indent-heuristic
+range-diff	--patience		REFUSED	error: unsupported option: --patience
+range-diff	--histogram		REFUSED	error: unsupported option: --histogram
+range-diff	--diff-algorithm	<algorithm>	REFUSED	error: unsupported option: --diff-algorithm
+range-diff	--anchored	<text>	REFUSED	error: unsupported option: --anchored
+range-diff	--word-diff	[=<mode>]	REFUSED	error: unsupported option: --word-diff
+range-diff	--word-diff-regex	<regex>	REFUSED	error: unsupported option: --word-diff-regex
+range-diff	--color-words	[=<regex>]	REFUSED	error: unsupported option: --color-words
+range-diff	--color-moved	[=<mode>]	REFUSED	error: unsupported option: --color-moved
+range-diff	--color-moved-ws	<mode>	REFUSED	error: unsupported option: --color-moved-ws
+range-diff	--relative	[=<prefix>]	REFUSED	error: unsupported option: --relative
+range-diff	-a		REFUSED	error: unsupported option: -a
+range-diff	--text		REFUSED	error: unsupported option: --text
+range-diff	-R		REFUSED	error: unsupported option: -R
+range-diff	--exit-code		REFUSED	error: unsupported option: --exit-code
+range-diff	--quiet		REFUSED	error: unsupported option: --quiet
+range-diff	--ext-diff		REFUSED	error: unsupported option: --ext-diff
+range-diff	--textconv		REFUSED	error: unsupported option: --textconv
+range-diff	--ignore-submodules	[=<when>]	REFUSED	error: unsupported option: --ignore-submodules
+range-diff	--submodule	[=<format>]	REFUSED	error: unsupported option: --submodule
+range-diff	--ita-invisible-in-index		REFUSED	error: unsupported option: --ita-invisible-in-index
+range-diff	--ita-visible-in-index		REFUSED	error: unsupported option: --ita-visible-in-index
+range-diff	-S		REFUSED	error: unsupported option: -S
+range-diff	-G		REFUSED	error: unsupported option: -G
+range-diff	--pickaxe-all		REFUSED	error: unsupported option: --pickaxe-all
+range-diff	--pickaxe-regex		REFUSED	error: unsupported option: --pickaxe-regex
+range-diff	-O		REFUSED	error: unsupported option: -O
+range-diff	--rotate-to	<path>	REFUSED	error: unsupported option: --rotate-to
+range-diff	--skip-to	<path>	REFUSED	error: unsupported option: --skip-to
+range-diff	--find-object	<object-id>	REFUSED	error: unsupported option: --find-object
+range-diff	--diff-filter		REFUSED	error: unsupported option: --diff-filter
+range-diff	--output	<file>	REFUSED	error: unsupported option: --output
+read-tree	--index-output	<file>	REFUSED	error: unsupported option: --index-output
+read-tree	--empty		REFUSED	error: unsupported option: --empty
+read-tree	-v		REFUSED	error: unsupported option: -v
+read-tree	--verbose		REFUSED	error: unsupported option: --verbose
+read-tree	-m		ACCEPTED	
+read-tree	--trivial		REFUSED	error: unsupported option: --trivial
+read-tree	--aggressive		REFUSED	error: unsupported option: --aggressive
+read-tree	--reset		ACCEPTED	
+read-tree	--prefix	<subdirectory>	REFUSED	error: unsupported option: --prefix
+read-tree	-u		REFUSED	error: unsupported option: -u
+read-tree	--exclude-per-directory	<gitignore>	REFUSED	error: unsupported option: --exclude-per-directory
+read-tree	-i		REFUSED	error: unsupported option: -i
+read-tree	-n		REFUSED	error: unsupported option: -n
+read-tree	--dry-run		REFUSED	error: unsupported option: --dry-run
+read-tree	--no-sparse-checkout		REFUSED	error: unsupported option: --no-sparse-checkout
+read-tree	--debug-unpack		REFUSED	error: unsupported option: --debug-unpack
+read-tree	--recurse-submodules	[=<checkout>]	REFUSED	error: unsupported option: --recurse-submodules
+read-tree	-q		REFUSED	error: unsupported option: -q
+read-tree	--quiet		REFUSED	error: unsupported option: --quiet
+rebase	--onto	<revision>	REFUSED	error: unsupported option: --onto
+rebase	--keep-base		REFUSED	error: unsupported option: --keep-base
+rebase	--no-verify		REFUSED	error: unsupported option: --no-verify
+rebase	-q		REFUSED	error: unsupported option: -q
+rebase	--quiet		REFUSED	error: unsupported option: --quiet
+rebase	-v		REFUSED	error: unsupported option: -v
+rebase	--verbose		REFUSED	error: unsupported option: --verbose
+rebase	-n		REFUSED	error: unsupported option: -n
+rebase	--no-stat		REFUSED	error: unsupported option: --no-stat
+rebase	--signoff		REFUSED	error: unsupported option: --signoff
+rebase	--committer-date-is-author-date		REFUSED	error: unsupported option: --committer-date-is-author-date
+rebase	--reset-author-date		REFUSED	error: unsupported option: --reset-author-date
+rebase	-C		REFUSED	error: unsupported option: -C
+rebase	--ignore-whitespace		REFUSED	error: unsupported option: --ignore-whitespace
+rebase	--whitespace	<action>	REFUSED	error: unsupported option: --whitespace
+rebase	-f		REFUSED	error: unsupported option: -f
+rebase	--force-rebase		REFUSED	error: unsupported option: --force-rebase
+rebase	--no-ff		REFUSED	error: unsupported option: --no-ff
+rebase	--continue		REFUSED	error: unsupported option: --continue
+rebase	--skip		REFUSED	error: unsupported option: --skip
+rebase	--abort		REFUSED	error: unsupported option: --abort
+rebase	--quit		REFUSED	error: unsupported option: --quit
+rebase	--edit-todo		REFUSED	error: unsupported option: --edit-todo
+rebase	--show-current-patch		REFUSED	error: unsupported option: --show-current-patch
+rebase	--apply		REFUSED	error: unsupported option: --apply
+rebase	-m		REFUSED	error: unsupported option: -m
+rebase	--merge		REFUSED	error: unsupported option: --merge
+rebase	-i		ACCEPTED	
+rebase	--interactive		ACCEPTED	
+rebase	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+rebase	--empty	<{drop,keep,ask}>	REFUSED	error: unsupported option: --empty
+rebase	--autosquash		REFUSED	error: unsupported option: --autosquash
+rebase	--update-refs		REFUSED	error: unsupported option: --update-refs
+rebase	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+rebase	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+rebase	--autostash		REFUSED	error: unsupported option: --autostash
+rebase	-x	<exec>	REFUSED	error: unsupported option: -x
+rebase	--exec	<exec>	REFUSED	error: unsupported option: --exec
+rebase	-r	[=<mode>]	REFUSED	error: unsupported option: -r
+rebase	--rebase-merges	[=<mode>]	REFUSED	error: unsupported option: --rebase-merges
+rebase	--fork-point		REFUSED	error: unsupported option: --fork-point
+rebase	-s	<strategy>	REFUSED	error: unsupported option: -s
+rebase	--strategy	<strategy>	REFUSED	error: unsupported option: --strategy
+rebase	-X	<option>	REFUSED	error: unsupported option: -X
+rebase	--strategy-option	<option>	REFUSED	error: unsupported option: --strategy-option
+rebase	--root		REFUSED	error: unsupported option: --root
+rebase	--reschedule-failed-exec		REFUSED	error: unsupported option: --reschedule-failed-exec
+rebase	--reapply-cherry-picks		REFUSED	error: unsupported option: --reapply-cherry-picks
+receive-pack	-q		ACCEPTED	
+receive-pack	--quiet		ACCEPTED	
+reflog	-		NO_INVENTORY	
+refs	-		NO_INVENTORY	
+remote	-v		ACCEPTED	
+remote	--verbose		ACCEPTED	
+repack	-a		ACCEPTED	
+repack	-A		ACCEPTED	
+repack	--cruft		REFUSED	error: unsupported option: --cruft
+repack	--cruft-expiration	<approxidate>	REFUSED	error: unsupported option: --cruft-expiration
+repack	-d		ACCEPTED	
+repack	-f		REFUSED	error: unsupported option: -f
+repack	-F		REFUSED	error: unsupported option: -F
+repack	-n		REFUSED	error: unsupported option: -n
+repack	-q		REFUSED	error: unsupported option: -q
+repack	--quiet		REFUSED	error: unsupported option: --quiet
+repack	-l		REFUSED	error: unsupported option: -l
+repack	--local		REFUSED	error: unsupported option: --local
+repack	-b		REFUSED	error: unsupported option: -b
+repack	--write-bitmap-index		REFUSED	error: unsupported option: --write-bitmap-index
+repack	-i		REFUSED	error: unsupported option: -i
+repack	--delta-islands		REFUSED	error: unsupported option: --delta-islands
+repack	--unpack-unreachable	<approxidate>	REFUSED	error: unsupported option: --unpack-unreachable
+repack	-k		REFUSED	error: unsupported option: -k
+repack	--keep-unreachable		REFUSED	error: unsupported option: --keep-unreachable
+repack	--window	<n>	REFUSED	error: unsupported option: --window
+repack	--window-memory	<bytes>	REFUSED	error: unsupported option: --window-memory
+repack	--depth	<n>	REFUSED	error: unsupported option: --depth
+repack	--threads	<n>	REFUSED	error: unsupported option: --threads
+repack	--max-pack-size	<bytes>	REFUSED	error: unsupported option: --max-pack-size
+repack	--pack-kept-objects		REFUSED	error: unsupported option: --pack-kept-objects
+repack	--keep-pack	<name>	REFUSED	error: unsupported option: --keep-pack
+repack	-g	<n>	REFUSED	error: unsupported option: -g
+repack	--geometric	<n>	REFUSED	error: unsupported option: --geometric
+repack	-m		REFUSED	error: unsupported option: -m
+repack	--write-midx		REFUSED	error: unsupported option: --write-midx
+repack	--expire-to	<dir>	REFUSED	error: unsupported option: --expire-to
+replace	-l		ACCEPTED	
+replace	--list		ACCEPTED	
+replace	-d		ACCEPTED	
+replace	--delete		ACCEPTED	
+replace	-e		REFUSED	error: unsupported option: -e
+replace	--edit		REFUSED	error: unsupported option: --edit
+replace	-g		REFUSED	error: unsupported option: -g
+replace	--graft		REFUSED	error: unsupported option: --graft
+replace	--convert-graft-file		REFUSED	error: unsupported option: --convert-graft-file
+replace	-f		REFUSED	error: unsupported option: -f
+replace	--force		REFUSED	error: unsupported option: --force
+replace	--raw		REFUSED	error: unsupported option: --raw
+replace	--format	<format>	REFUSED	error: unsupported option: --format
+replay	-		NO_INVENTORY	
+repo	-		NO_INVENTORY	
+request-pull	-p		REFUSED	error: unsupported option: -p
+rerere	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+reset	-q		ACCEPTED	
+reset	--quiet		ACCEPTED	
+reset	--no-refresh		REFUSED	error: unsupported option: --no-refresh
+reset	--mixed		ACCEPTED	
+reset	--soft		ACCEPTED	
+reset	--hard		ACCEPTED	
+reset	--merge		REFUSED	error: unsupported option: --merge
+reset	--keep		REFUSED	error: unsupported option: --keep
+reset	--recurse-submodules	[=<reset>]	REFUSED	error: unsupported option: --recurse-submodules
+reset	-p		REFUSED	error: unsupported option: -p
+reset	--patch		REFUSED	error: unsupported option: --patch
+reset	-N		REFUSED	error: unsupported option: -N
+reset	--intent-to-add		REFUSED	error: unsupported option: --intent-to-add
+reset	--pathspec-from-file	<file>	REFUSED	error: unsupported option: --pathspec-from-file
+reset	--pathspec-file-nul		REFUSED	error: unsupported option: --pathspec-file-nul
+restore	-s	<tree-ish>	ACCEPTED	
+restore	--source	<tree-ish>	ACCEPTED	
+restore	-S		ACCEPTED	
+restore	--staged		ACCEPTED	
+restore	-W		ACCEPTED	
+restore	--worktree		ACCEPTED	
+restore	--ignore-unmerged		REFUSED	error: unsupported option: --ignore-unmerged
+restore	--overlay		REFUSED	error: unsupported option: --overlay
+restore	-q		ACCEPTED	
+restore	--quiet		ACCEPTED	
+restore	--recurse-submodules	[=<checkout>]	REFUSED	error: unsupported option: --recurse-submodules
+restore	--progress		REFUSED	error: unsupported option: --progress
+restore	-m		REFUSED	error: unsupported option: -m
+restore	--merge		REFUSED	error: unsupported option: --merge
+restore	--conflict	<style>	REFUSED	error: unsupported option: --conflict
+restore	-2		REFUSED	error: unsupported option: -2
+restore	--ours		REFUSED	error: unsupported option: --ours
+restore	-3		REFUSED	error: unsupported option: -3
+restore	--theirs		REFUSED	error: unsupported option: --theirs
+restore	-p		REFUSED	error: unsupported option: -p
+restore	--patch		REFUSED	error: unsupported option: --patch
+restore	--ignore-skip-worktree-bits		REFUSED	error: unsupported option: --ignore-skip-worktree-bits
+restore	--pathspec-from-file	<file>	REFUSED	error: unsupported option: --pathspec-from-file
+restore	--pathspec-file-nul		REFUSED	error: unsupported option: --pathspec-file-nul
+rev-list	--max-count	=<n>	ACCEPTED	
+rev-list	--max-age	=<epoch>	REFUSED	error: unsupported option: --max-age
+rev-list	--min-age	=<epoch>	REFUSED	error: unsupported option: --min-age
+rev-list	--sparse		REFUSED	error: unsupported option: --sparse
+rev-list	--no-merges		ACCEPTED	
+rev-list	--min-parents	=<n>	REFUSED	error: unsupported option: --min-parents
+rev-list	--no-min-parents		REFUSED	error: unsupported option: --no-min-parents
+rev-list	--max-parents	=<n>	REFUSED	error: unsupported option: --max-parents
+rev-list	--no-max-parents		REFUSED	error: unsupported option: --no-max-parents
+rev-list	--remove-empty		REFUSED	error: unsupported option: --remove-empty
+rev-list	--all		ACCEPTED	
+rev-list	--branches		REFUSED	error: unsupported option: --branches
+rev-list	--tags		REFUSED	error: unsupported option: --tags
+rev-list	--remotes		REFUSED	error: unsupported option: --remotes
+rev-list	--stdin		REFUSED	error: unsupported option: --stdin
+rev-list	--exclude-hidden		REFUSED	error: unsupported option: --exclude-hidden
+rev-list	--quiet		REFUSED	error: unsupported option: --quiet
+rev-list	--topo-order		REFUSED	error: unsupported option: --topo-order
+rev-list	--date-order		REFUSED	error: unsupported option: --date-order
+rev-list	--reverse		ACCEPTED	
+rev-list	--parents		ACCEPTED	
+rev-list	--children		REFUSED	error: unsupported option: --children
+rev-list	--objects		REFUSED	error: unsupported option: --objects
+rev-list	--disk-usage	[=human]	REFUSED	error: unsupported option: --disk-usage
+rev-list	--unpacked		REFUSED	error: unsupported option: --unpacked
+rev-list	--header		REFUSED	error: unsupported option: --header
+rev-list	--object-names		REFUSED	error: unsupported option: --object-names
+rev-list	--no-object-names		REFUSED	error: unsupported option: --no-object-names
+rev-list	--abbrev	=<n>	REFUSED	error: unsupported option: --abbrev
+rev-list	--abbrev-commit		REFUSED	error: unsupported option: --abbrev-commit
+rev-list	--left-right		ACCEPTED	
+rev-list	--count		ACCEPTED	
+rev-list	--bisect		REFUSED	error: unsupported option: --bisect
+rev-list	--bisect-vars		REFUSED	error: unsupported option: --bisect-vars
+rev-list	--bisect-all		REFUSED	error: unsupported option: --bisect-all
+rev-parse	-		NO_INVENTORY	
+revert	--quit		REFUSED	error: unsupported option: --quit
+revert	--continue		REFUSED	error: unsupported option: --continue
+revert	--abort		REFUSED	error: unsupported option: --abort
+revert	--skip		REFUSED	error: unsupported option: --skip
+revert	--cleanup	<mode>	REFUSED	error: unsupported option: --cleanup
+revert	-n		ACCEPTED	
+revert	--no-commit		ACCEPTED	
+revert	-e		REFUSED	error: unsupported option: -e
+revert	--edit		REFUSED	error: unsupported option: --edit
+revert	-s		REFUSED	error: unsupported option: -s
+revert	--signoff		REFUSED	error: unsupported option: --signoff
+revert	-m	<parent-number>	REFUSED	error: unsupported option: -m
+revert	--mainline	<parent-number>	REFUSED	error: unsupported option: --mainline
+revert	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+revert	--strategy	<strategy>	REFUSED	error: unsupported option: --strategy
+revert	-X	<option>	REFUSED	error: unsupported option: -X
+revert	--strategy-option	<option>	REFUSED	error: unsupported option: --strategy-option
+revert	-S	[=<key-id>]	REFUSED	error: unsupported option: -S
+revert	--gpg-sign	[=<key-id>]	REFUSED	error: unsupported option: --gpg-sign
+revert	--reference		REFUSED	error: unsupported option: --reference
+rm	-n		ACCEPTED	
+rm	--dry-run		ACCEPTED	
+rm	-q		ACCEPTED	
+rm	--quiet		ACCEPTED	
+rm	--cached		ACCEPTED	
+rm	-f		ACCEPTED	
+rm	--force		ACCEPTED	
+rm	-r		ACCEPTED	
+rm	--ignore-unmatch		REFUSED	error: unsupported option: --ignore-unmatch
+rm	--sparse		REFUSED	error: unsupported option: --sparse
+rm	--pathspec-from-file	<file>	REFUSED	error: unsupported option: --pathspec-from-file
+rm	--pathspec-file-nul		REFUSED	error: unsupported option: --pathspec-file-nul
+send-pack	-v		ACCEPTED	
+send-pack	--verbose		ACCEPTED	
+send-pack	-q		REFUSED	error: unsupported option: -q
+send-pack	--quiet		REFUSED	error: unsupported option: --quiet
+send-pack	--receive-pack	<receive-pack>	REFUSED	error: unsupported option: --receive-pack
+send-pack	--exec	<receive-pack>	REFUSED	error: unsupported option: --exec
+send-pack	--remote	<remote>	REFUSED	error: unsupported option: --remote
+send-pack	--all		ACCEPTED	
+send-pack	-n		REFUSED	error: unsupported option: -n
+send-pack	--dry-run		REFUSED	error: unsupported option: --dry-run
+send-pack	--mirror		REFUSED	error: unsupported option: --mirror
+send-pack	-f		REFUSED	error: unsupported option: -f
+send-pack	--force		ACCEPTED	
+send-pack	--signed	[=(yes|no|if-asked)]	REFUSED	error: unsupported option: --signed
+send-pack	--push-option	<server-specific>	REFUSED	error: unsupported option: --push-option
+send-pack	--progress		REFUSED	error: unsupported option: --progress
+send-pack	--thin		REFUSED	error: unsupported option: --thin
+send-pack	--atomic		REFUSED	error: unsupported option: --atomic
+send-pack	--stateless-rpc		REFUSED	error: unsupported option: --stateless-rpc
+send-pack	--stdin		REFUSED	error: unsupported option: --stdin
+send-pack	--helper-status		REFUSED	error: unsupported option: --helper-status
+send-pack	--force-with-lease	[=<refname>:<expect>]	REFUSED	error: unsupported option: --force-with-lease
+send-pack	--force-if-includes		REFUSED	error: unsupported option: --force-if-includes
+shell	-		NO_INVENTORY	
+shortlog	-c		ACCEPTED	
+shortlog	--committer		ACCEPTED	
+shortlog	-n		ACCEPTED	
+shortlog	--numbered		ACCEPTED	
+shortlog	-s		ACCEPTED	
+shortlog	--summary		ACCEPTED	
+shortlog	-e		ACCEPTED	
+shortlog	--email		ACCEPTED	
+shortlog	-w		REFUSED	error: unsupported option: -w
+shortlog	--group	<field>	REFUSED	error: unsupported option: --group
+show	-q		REFUSED	error: show: unsupported option: -q
+show	--quiet		REFUSED	error: show: unsupported option: --quiet
+show	--source		REFUSED	error: show: unsupported option: --source
+show	--use-mailmap		REFUSED	error: show: unsupported option: --use-mailmap
+show	--mailmap		REFUSED	error: show: unsupported option: --mailmap
+show	--clear-decorations		REFUSED	error: show: unsupported option: --clear-decorations
+show	--decorate-refs	<pattern>	REFUSED	error: show: unsupported option: --decorate-refs
+show	--decorate-refs-exclude	<pattern>	REFUSED	error: show: unsupported option: --decorate-refs-exclude
+show	--decorate	[=...]	ACCEPTED	
+show	-L		REFUSED	error: show: unsupported option: -L
+show-branch	-a		ACCEPTED	
+show-branch	--all		ACCEPTED	
+show-branch	-r		REFUSED	error: unsupported option: -r
+show-branch	--remotes		REFUSED	error: unsupported option: --remotes
+show-branch	--color	[=<when>]	REFUSED	error: unsupported option: --color
+show-branch	--more	[=<n>]	REFUSED	error: unsupported option: --more
+show-branch	--list		ACCEPTED	
+show-branch	--no-name		REFUSED	error: unsupported option: --no-name
+show-branch	--current		REFUSED	error: unsupported option: --current
+show-branch	--sha1-name		REFUSED	error: unsupported option: --sha1-name
+show-branch	--merge-base		REFUSED	error: unsupported option: --merge-base
+show-branch	--independent		REFUSED	error: unsupported option: --independent
+show-branch	--topo-order		REFUSED	error: unsupported option: --topo-order
+show-branch	--topics		REFUSED	error: unsupported option: --topics
+show-branch	--sparse		REFUSED	error: unsupported option: --sparse
+show-branch	--date-order		REFUSED	error: unsupported option: --date-order
+show-branch	-g	[=<n>[,<base>]	REFUSED	error: unsupported option: -g
+show-branch	--reflog	[=<n>[,<base>]	REFUSED	error: unsupported option: --reflog
+show-index	--object-format	<hash-algorithm>	REFUSED	error: unsupported option: --object-format
+show-ref	--tags		ACCEPTED	
+show-ref	--heads		ACCEPTED	
+show-ref	--verify		ACCEPTED	
+show-ref	--head		REFUSED	error: unsupported option: --head
+show-ref	-d		ACCEPTED	
+show-ref	--dereference		ACCEPTED	
+show-ref	-s	[=<n>]	ACCEPTED	
+show-ref	--hash	[=<n>]	ACCEPTED	
+show-ref	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+show-ref	-q		ACCEPTED	
+show-ref	--quiet		ACCEPTED	
+show-ref	--exclude-existing	[=<pattern>]	REFUSED	error: unsupported option: --exclude-existing
+sparse-checkout	-		NO_INVENTORY	
+stash	-		NO_INVENTORY	
+status	-v		REFUSED	error: unsupported option: -v
+status	--verbose		REFUSED	error: unsupported option: --verbose
+status	-s		ACCEPTED	
+status	--short		ACCEPTED	
+status	-b		ACCEPTED	
+status	--branch		ACCEPTED	
+status	--show-stash		REFUSED	error: unsupported option: --show-stash
+status	--ahead-behind		REFUSED	error: unsupported option: --ahead-behind
+status	--porcelain	[=<version>]	ACCEPTED	
+status	--long		REFUSED	error: unsupported option: --long
+status	-z		REFUSED	error: unsupported option: -z
+status	--null		REFUSED	error: unsupported option: --null
+status	-u	[=<mode>]	ACCEPTED	
+status	--untracked-files	[=<mode>]	ACCEPTED	
+status	--ignored	[=<mode>]	ACCEPTED	
+status	--ignore-submodules	[=<when>]	REFUSED	error: unsupported option: --ignore-submodules
+status	--column	[=<style>]	REFUSED	error: unsupported option: --column
+status	--no-renames		REFUSED	error: unsupported option: --no-renames
+status	-M	[=<n>]	REFUSED	error: unsupported option: -M
+status	--find-renames	[=<n>]	REFUSED	error: unsupported option: --find-renames
+stripspace	-s		ACCEPTED	
+stripspace	--strip-comments		ACCEPTED	
+stripspace	-c		ACCEPTED	
+stripspace	--comment-lines		ACCEPTED	
+submodule	-		NO_INVENTORY	
+subtree	-q		ACCEPTED	
+subtree	-d		ACCEPTED	
+subtree	-P		ACCEPTED	
+subtree	--prefix		ACCEPTED	
+subtree	--annotate		ACCEPTED	
+subtree	-b		ACCEPTED	
+subtree	--branch		ACCEPTED	
+subtree	--ignore-joins		ACCEPTED	
+subtree	--onto		ACCEPTED	
+subtree	--rejoin		ACCEPTED	
+subtree	--squash		ACCEPTED	
+subtree	-m		ACCEPTED	
+subtree	--message		ACCEPTED	
+survey	-		NO_INVENTORY	
+switch	-c	<branch>	ACCEPTED	
+switch	--create	<branch>	ACCEPTED	
+switch	-C	<branch>	ACCEPTED	
+switch	--force-create	<branch>	ACCEPTED	
+switch	--guess		REFUSED	error: unsupported option: --guess
+switch	--discard-changes		REFUSED	error: unsupported option: --discard-changes
+switch	-q		ACCEPTED	
+switch	--quiet		ACCEPTED	
+switch	--recurse-submodules	[=<checkout>]	REFUSED	error: unsupported option: --recurse-submodules
+switch	--progress		REFUSED	error: unsupported option: --progress
+switch	-m		REFUSED	error: unsupported option: -m
+switch	--merge		REFUSED	error: unsupported option: --merge
+switch	--conflict	<style>	REFUSED	error: unsupported option: --conflict
+switch	-d		ACCEPTED	
+switch	--detach		ACCEPTED	
+switch	-t	[=(direct|inherit)]	REFUSED	error: unsupported option: -t
+switch	--track	[=(direct|inherit)]	REFUSED	error: unsupported option: --track
+switch	-f		REFUSED	error: unsupported option: -f
+switch	--force		REFUSED	error: unsupported option: --force
+switch	--orphan	<new-branch>	ACCEPTED	
+switch	--overwrite-ignore		REFUSED	error: unsupported option: --overwrite-ignore
+switch	--ignore-other-worktrees		REFUSED	error: unsupported option: --ignore-other-worktrees
+symbolic-ref	-q		ACCEPTED	
+symbolic-ref	--quiet		ACCEPTED	
+symbolic-ref	-d		REFUSED	error: unsupported option: -d
+symbolic-ref	--delete		REFUSED	error: unsupported option: --delete
+symbolic-ref	--short		ACCEPTED	
+symbolic-ref	--recurse		REFUSED	error: unsupported option: --recurse
+symbolic-ref	-m		REFUSED	error: unsupported option: -m
+tag	-l		ACCEPTED	
+tag	--list		ACCEPTED	
+tag	-n		ACCEPTED	
+tag	-d		ACCEPTED	
+tag	--delete		ACCEPTED	
+tag	-v		REFUSED	error: unsupported option: -v
+tag	--verify		REFUSED	error: unsupported option: --verify
+tag	-a		ACCEPTED	
+tag	--annotate		ACCEPTED	
+tag	-m	<message>	ACCEPTED	
+tag	--message	<message>	ACCEPTED	
+tag	-F	<file>	ACCEPTED	
+tag	--file	<file>	ACCEPTED	
+tag	-e		REFUSED	error: unsupported option: -e
+tag	--edit		REFUSED	error: unsupported option: --edit
+tag	-s		ACCEPTED	
+tag	--sign		ACCEPTED	
+tag	--cleanup	<mode>	REFUSED	error: unsupported option: --cleanup
+tag	-u	<key-id>	ACCEPTED	
+tag	--local-user	<key-id>	ACCEPTED	
+tag	-f		ACCEPTED	
+tag	--force		ACCEPTED	
+tag	--create-reflog		REFUSED	error: unsupported option: --create-reflog
+tag	--column	[=<style>]	REFUSED	error: unsupported option: --column
+tag	--contains	<commit>	ACCEPTED	
+tag	--no-contains	<commit>	ACCEPTED	
+tag	--merged	<commit>	ACCEPTED	
+tag	--no-merged	<commit>	ACCEPTED	
+tag	--sort	<key>	REFUSED	error: unsupported option: --sort
+tag	--points-at	<object>	ACCEPTED	
+tag	--format	<format>	REFUSED	error: unsupported option: --format
+tag	--color	[=<when>]	REFUSED	error: unsupported option: --color
+tag	-i		REFUSED	error: unsupported option: -i
+tag	--ignore-case		REFUSED	error: unsupported option: --ignore-case
+unpack-file	-		NO_INVENTORY	
+unpack-objects	-		NO_INVENTORY	
+update-index	-q		REFUSED	error: unsupported option: -q
+update-index	--ignore-submodules		REFUSED	error: unsupported option: --ignore-submodules
+update-index	--add		ACCEPTED	
+update-index	--replace		REFUSED	error: unsupported option: --replace
+update-index	--remove		ACCEPTED	
+update-index	--unmerged		REFUSED	error: unsupported option: --unmerged
+update-index	--refresh		ACCEPTED	
+update-index	--really-refresh		REFUSED	error: unsupported option: --really-refresh
+update-index	--cacheinfo	<mode>	ACCEPTED	
+update-index	--chmod	(+|-)	ACCEPTED	
+update-index	--assume-unchanged		REFUSED	error: unsupported option: --assume-unchanged
+update-index	--no-assume-unchanged		REFUSED	error: unsupported option: --no-assume-unchanged
+update-index	--skip-worktree		ACCEPTED	
+update-index	--no-skip-worktree		ACCEPTED	
+update-index	--ignore-skip-worktree-entries		REFUSED	error: unsupported option: --ignore-skip-worktree-entries
+update-index	--info-only		REFUSED	error: unsupported option: --info-only
+update-index	--force-remove		REFUSED	error: unsupported option: --force-remove
+update-index	-z		REFUSED	error: unsupported option: -z
+update-index	--stdin		REFUSED	error: unsupported option: --stdin
+update-index	--index-info		REFUSED	error: unsupported option: --index-info
+update-index	--unresolve		REFUSED	error: unsupported option: --unresolve
+update-index	-g		REFUSED	error: unsupported option: -g
+update-index	--again		REFUSED	error: unsupported option: --again
+update-index	--ignore-missing		REFUSED	error: unsupported option: --ignore-missing
+update-index	--verbose		REFUSED	error: unsupported option: --verbose
+update-index	--clear-resolve-undo		REFUSED	error: unsupported option: --clear-resolve-undo
+update-index	--index-version	<n>	REFUSED	error: unsupported option: --index-version
+update-index	--split-index		REFUSED	error: unsupported option: --split-index
+update-index	--untracked-cache		REFUSED	error: unsupported option: --untracked-cache
+update-index	--test-untracked-cache		REFUSED	error: unsupported option: --test-untracked-cache
+update-index	--force-untracked-cache		REFUSED	error: unsupported option: --force-untracked-cache
+update-index	--force-write-index		REFUSED	error: unsupported option: --force-write-index
+update-index	--fsmonitor		REFUSED	error: unsupported option: --fsmonitor
+update-index	--fsmonitor-valid		REFUSED	error: unsupported option: --fsmonitor-valid
+update-index	--no-fsmonitor-valid		REFUSED	error: unsupported option: --no-fsmonitor-valid
+update-ref	-m		ACCEPTED	
+update-ref	-d		ACCEPTED	
+update-ref	--no-deref		ACCEPTED	
+update-ref	-z		REFUSED	error: unsupported option: -z
+update-ref	--stdin		REFUSED	error: unsupported option: --stdin
+update-ref	--create-reflog		ACCEPTED	
+update-server-info	-f		ACCEPTED	
+update-server-info	--force		ACCEPTED	
+upload-archive	-		NO_INVENTORY	
+upload-pack	--stateless-rpc		ACCEPTED	
+upload-pack	--strict		ACCEPTED	
+upload-pack	--timeout	<n>	ACCEPTED	
+url-parse	-		NO_INVENTORY	
+var	-		NO_INVENTORY	
+verify-commit	-v		ACCEPTED	
+verify-commit	--verbose		ACCEPTED	
+verify-commit	--raw		REFUSED	error: unsupported option: --raw
+verify-pack	-v		ACCEPTED	
+verify-pack	--verbose		ACCEPTED	
+verify-pack	-s		ACCEPTED	
+verify-pack	--stat-only		ACCEPTED	
+verify-pack	--object-format	<hash>	REFUSED	error: unsupported option: --object-format
+verify-tag	-v		ACCEPTED	
+verify-tag	--verbose		ACCEPTED	
+verify-tag	--raw		REFUSED	error: unsupported option: --raw
+verify-tag	--format	<format>	REFUSED	error: unsupported option: --format
+version	--build-options		ACCEPTED	
+worktree	-		NO_INVENTORY	
+write-tree	--missing-ok		REFUSED	error: unsupported option: --missing-ok
+write-tree	--prefix	<prefix>	REFUSED	error: unsupported option: --prefix
