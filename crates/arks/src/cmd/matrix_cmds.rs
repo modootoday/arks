@@ -99,13 +99,11 @@ pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
         if tags && !r.name.starts_with("refs/tags/") {
             continue;
         }
+        // git-ls-remote: patterns match the tail of a ref name (path components).
         if !patterns.is_empty()
-            && !patterns.iter().any(|p| {
-                r.name == *p
-                    || r.name.strip_prefix("refs/heads/") == Some(*p)
-                    || r.name.strip_prefix("refs/tags/") == Some(*p)
-                    || r.name.contains(p)
-            })
+            && !patterns
+                .iter()
+                .any(|p| r.name == *p || r.name.ends_with(&format!("/{p}")))
         {
             continue;
         }
