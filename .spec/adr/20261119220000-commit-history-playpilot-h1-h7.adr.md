@@ -55,6 +55,11 @@ evidence honesty, push only to the session `claude/*` branch).
 10. **Tool pin:** the `History` job and the guard hook pin playpilot at `4ed7dae` (playpilot #12:
     no false refusals for `2>&1` redirects, `$VAR` lease values and quotes inside heredocs). The
     H1–H7 canon text above stays cited at `0ddc0e1`.
+11. **Ruleset canon:** `.github/rulesets/main-protected.json` mirrors the applied ruleset `main-protected`
+    (id 27672739): default branch, no deletion, no force push, pull request required with merge commit
+    only, required checks `lint (fmt + clippy)`, `test (ubuntu-24.04)`, `test (windows-2025)`,
+    `test (macos-15)`, `msrv (1.85)` and `History` (so `History` is now required, superseding the
+    stage-1 non-required note in §8). Repository admins may bypass. This makes H7 auto-merge available.
 
 ## Consequences
 
