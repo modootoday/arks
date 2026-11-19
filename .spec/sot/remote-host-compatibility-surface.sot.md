@@ -3,7 +3,7 @@ id: sot:root/remote-host-compatibility-surface
 title: Remote host compatibility surface
 status: active
 created: 2026-11-08T07:32:28Z
-updated: 2026-11-08T10:54:46Z
+updated: 2026-11-19T23:00:00Z
 tags: [git, github, remote, compatibility, hosting, server, smart-http, ssh]
 verify: [manual]
 rel:
@@ -13,7 +13,7 @@ rel:
 
 # Remote host compatibility surface
 
-Version **0.2.0**. Normative intent for arks interoperability as a Git **remote client** and as a Git **server**, plus the (A)/(B) host-product split. Wire bytes remain owned by [[sot:root/git-compat-surface]] and [[research:root/20261108071916]]; this SoT owns **remote/host roles**, verify-peer policy, and server-role lock. Host citation catalog: [[research:root/20261108073228]]. Program bars: [[sot:root/program-roadmap]] (**M9** CLI-parity client production; **M11** production-server).
+Version **0.2.1**. Normative intent for arks interoperability as a Git **remote client** and as a Git **server**, plus the (A)/(B) host-product split. Wire bytes remain owned by [[sot:root/git-compat-surface]] and [[research:root/20261108071916]]; this SoT owns **remote/host roles**, verify-peer policy, and server-role lock. Host citation catalog: [[research:root/20261108073228]]. Program bars: [[sot:root/program-roadmap]] (**M9** CLI-parity client production; **M11** production-server).
 
 ## Rule
 
@@ -65,7 +65,7 @@ When arks implements remote client operations, it MUST:
 | Out | Rationale |
 |-----|-----------|
 | Forge UX / web UI | Product non-goal; scope (B) |
-| GitHub App / Checks / PR merge **as server** | Scope (B); arks is not a GitHub-compatible forge |
+| GitHub App / Checks / PR merge **as server** | Scope (B); arks is not a GitHub-compatible forge. The separate `arks serve` forge is independent and shares GitHub-shaped REST paths only for arks-owned primitives ([[adr:root/20261119230000]]) |
 | Emulating GitHub permissions / billing | Scope (B) |
 | Requiring CELIR | [[sot:root/storage-celir-boundary]] |
 | Lease wire exposure | Until [[sot:root/lease-concurrency-intent]] explicitly claims it |

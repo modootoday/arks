@@ -3,7 +3,7 @@ id: sot:root/arks-hub-cli-surface
 title: arks hub CLI surface
 status: active
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-11T00:40:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [arks-hub, arks-forge-client, cli, gh-symmetry, flat-cli, pr, issue, auth, repo, release, run, workflow, label, native-api, single-release, client-only, overlap]
 verify: manual
 rel:
@@ -23,7 +23,7 @@ rel:
 
 # arks hub CLI surface
 
-Version **0.4.1**. Normative **CLI surface** (document revision — **not** a product release) for **flat forge client** leaves on the **single** published binary **`arks`**. Intent: [[sot:root/arks-hub-product-intent]] (**client only**, flat-first). **Authoritative inventory / phases:** [[sot:root/arks-hub-gh-command-matrix]] (+ CSV; logical `gh`↔`arks` pillar — argv need not nest under `hub`). Core git names stay as ordinary `arks <git-cmd>` ([[sot:root/cli-surface]]). Self-host **server**: [[sot:root/arks-self-host-server]] (`arks serve`). Design / Partial until Claimed.
+Version **0.5.0**. Normative **CLI surface** (document revision — **not** a product release) for **flat forge client** leaves on the **single** published binary **`arks`**. Intent: [[sot:root/arks-hub-product-intent]] (**client only**, flat-first). **Authoritative inventory / phases:** [[sot:root/arks-hub-gh-command-matrix]] (+ CSV; logical `gh`↔`arks` pillar — argv need not nest under `hub`). Core git names stay as ordinary `arks <git-cmd>` ([[sot:root/cli-surface]]). Self-host **server**: [[sot:root/arks-self-host-server]] (`arks serve`). Design / Partial until Claimed.
 
 **IW-HUB-FLAT** ([[sot:root/arks-partial-residual-wave]] + [[sot:root/arks-verify-docker-e2e-claim-wave]]): Claimed **subset** create/list/view leaves evidenced ([[evidence:root/20261111011539-hub-flat-subset]]). **IW-HUB-FULL** ([[sot:root/arks-remaining-incompletes-wave]]): v1 Missing=0 + expand Claimed ([[evidence:root/20261111020350-hub-full-expand]]). **IW-HUB-MUTATE** ([[sot:root/arks-honesty-leftovers-wave]]): mutate/view subset Claimed ([[evidence:root/20261111025142-hub-mutate-subset]]). **IW-HUB-ACTIONS/ASSETS/CHECKOUT/UX** ([[sot:root/arks-in-scope-leftovers-wave]]): Actions metadata / release assets / `pr checkout` resolve-print / config·alias·completion Claimed with Docker receipts. **IW-HUB-STUBS** Claimed subset + exhaust metadata (`pr`/`issue` lock·review·pin·transfer, `repo` archive·rename·delete, `label clone`, group-help) ([[evidence:root/20261111050502-hub-stubs-exhaust]]); **Terminal Partial** for `auth refresh` / `pr diff|checks|update-branch|revert` / `repo fork`. **B3** Claimed remote happy path **MUST NOT** invent stub-leaf Claimed. Flat client argv ≠ `arks serve` forge host (IW-FORGE-SERVE Claimed separately).
 
@@ -45,13 +45,11 @@ Authoritative leaves + flags depth: matrix CSV. Invoked as `arks <group> …` (n
 | Group | Role | Notes |
 |-------|------|-------|
 | `auth` | login/logout/status/token/refresh (+ later switch) | No `setup-git`; ≠ credential helpers |
-| `pr` | create/list/view/diff/edit/close/reopen/comment/merge/ready/review/checks/… + `checkout` | `co` alias |
+| `pr` | create/list/view/diff/edit/close/reopen/comment/merge/ready/review/… + `checkout` | `co` alias; `checks` = later (needs an arks-owned status primitive) |
 | `issue` | create/list/view/edit/close/reopen/comment/… | artifact/develop = later |
 | `release` | create/list/view/upload/download/edit/delete/… | verify* = later |
 | `repo` | forge create/list/view/fork/… **and** git skew forms | **Overlap** under `arks`: git0→gh1 parse; unified output ([[sot:root/arks-cli-personality-factory]]) |
 | `label` | list/create/edit/delete/clone | |
-| `run` | list/view/watch/cancel/rerun/download/delete | Actions runs |
-| `workflow` | list/view/run/enable/disable | |
 | `search` | issues/prs/repos (+ later code/commits) | |
 | `status` | git status **and** gh-status/inbox semantics | **Overlap** primary noun; optional demoted `inbox` alias only |
 | `config` | git-config **and** forge-client settings | **Overlap** primary noun; optional demoted `forge-config` alias only |
@@ -63,8 +61,8 @@ Authoritative leaves + flags depth: matrix CSV. Invoked as `arks <group> …` (n
 
 ### Later / out-of-scope / transitional
 
-7. **Later:** `project`, `discussion`, `gist`, `browse`, `secret`, `variable`, `cache`, `ruleset`, `attestation`, `ssh-key`, `gpg-key`, `codespace`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
-8. **Out-of-scope:** `extension`, `copilot`, `skill`, `agent-task`, `licenses`, `preview`, `auth setup-git` — see matrix.
+7. **Later:** `project`, `discussion`, `gist`, `browse`, `ssh-key`, `gpg-key`, `pr checks`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
+8. **Out-of-scope:** `extension`, `copilot`, `skill`, `agent-task`, `licenses`, `preview`, `auth setup-git`, and GitHub-platform-only groups `run`, `workflow`, `cache`, `secret`, `variable`, `ruleset`, `attestation`, `codespace` — see matrix and [[adr:root/20261119230000]].
 9. **Transitional:** `arks hub …` forwards to flat leaves; `arks hub serve` / `hub listen` → `arks serve` forge module ([[sot:root/arks-self-host-server]]). Optional top-level `milestone`; `pr review` remains v1.
 
 ### Name hygiene vs core Git commands
