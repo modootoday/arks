@@ -434,33 +434,174 @@ pub(crate) fn print_maps_summary(
 }
 
 pub fn cmd_rm(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--cached"])?;
-    let cached = args.iter().any(|a| a == "--cached");
-    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    // git-rm: `--cached`, `-r`, `-f`, `-q`, `-n`, directory pathspecs, the
+    // up-to-date safety checks, and `rm '<path>'` output per removed entry.
+    // Cite: https://git-scm.com/docs/git-rm
+    let args = crate::util::split_short_bundles(args, "rfqn", "");
+    let (opts, mut paths) = split_dashdash(&args);
+    let mut cached = false;
+    let mut recursive = false;
+    let mut force = false;
+    let mut quiet = false;
+    let mut dry_run = false;
+    for a in &opts {
+        match a.as_str() {
+            "--cached" => cached = true,
+            "-r" => recursive = true,
+            "-f" | "--force" => force = true,
+            "-q" | "--quiet" => quiet = true,
+            "-n" | "--dry-run" => dry_run = true,
+            x if x.starts_with('-') && x.len() > 1 => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+            }
+            _ => paths.push(a.clone()),
+        }
+    }
     if paths.is_empty() {
-        return Err(CliError::Usage("rm [--cached] <path>...".into()));
+        return Err(CliError::fatal(
+            "No pathspec was given. Which files should I remove?",
+        ));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let mut index = read_index(&repo)?;
-    for p in paths {
-        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| p.clone());
-        if !index
+    let mut targets: Vec<String> = Vec::new();
+    for p in &paths {
+        let rel = crate::cmd::core::pathspec_rel(&work, p)?;
+        let prefix = if rel.is_empty() {
+            String::new()
+        } else {
+            format!("{rel}/")
+        };
+        let mut hits: Vec<String> = index
             .entries
             .iter()
-            .any(|e| e.path == rel && e.stage() == 0)
-        {
-            return Err(CliError::Msg(format!("pathspec '{rel}' did not match")));
+            .filter(|e| e.path == rel || rel.is_empty() || e.path.starts_with(&prefix))
+            .map(|e| e.path.clone())
+            .collect();
+        hits.dedup();
+        if hits.is_empty() {
+            return Err(CliError::fatal(format!(
+                "pathspec '{p}' did not match any files"
+            )));
         }
-        index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
-        if !cached {
-            let abs = work.join(&rel);
-            if abs.is_file() {
+        if !recursive && !hits.iter().any(|h| *h == rel) {
+            return Err(CliError::fatal(format!(
+                "not removing '{p}' recursively without -r"
+            )));
+        }
+        targets.extend(hits);
+    }
+    targets.sort();
+    targets.dedup();
+    if !force {
+        let head = head_blob_map(&repo)?;
+        let mut staged_diff = Vec::new();
+        let mut local_mod = Vec::new();
+        let mut both = Vec::new();
+        for t in &targets {
+            let Some(e) = index
+                .entries
+                .iter()
+                .find(|e| &e.path == t && e.stage() == 0)
+            else {
+                continue;
+            };
+            let abs = work.join(t);
+            let wt_differs = abs.is_file() && {
+                let meta = fs::metadata(&abs)?;
+                !crate::cmd::shared::index_stat_matches(e, &meta)
+                    && RawObject::new(ObjectKind::Blob, fs::read(&abs)?)
+                        .oid(repo.object_format())?
+                        != e.oid
+            };
+            let idx_differs = head.get(t) != Some(&e.oid);
+            if idx_differs && wt_differs {
+                both.push(t.clone());
+            } else if !cached && idx_differs {
+                staged_diff.push(t.clone());
+            } else if !cached && wt_differs {
+                local_mod.push(t.clone());
+            }
+        }
+        let report = |list: &[String], what: &str, hint: &str| -> Option<String> {
+            if list.is_empty() {
+                return None;
+            }
+            let (one, many) = (
+                format!("the following file {what}"),
+                format!("the following files {what}"),
+            );
+            let mut m = format!("error: {}:\n", if list.len() == 1 { one } else { many });
+            for p in list {
+                m.push_str(&format!("    {p}\n"));
+            }
+            m.push_str(hint);
+            Some(m)
+        };
+        let msgs: Vec<String> = [
+            report(
+                &both,
+                &format!(
+                    "{} staged content different from both the\nfile and the HEAD",
+                    if both.len() == 1 { "has" } else { "have" }
+                ),
+                "(use -f to force removal)",
+            ),
+            report(
+                &staged_diff,
+                &format!(
+                    "{} changes staged in the index",
+                    if staged_diff.len() == 1 {
+                        "has"
+                    } else {
+                        "have"
+                    }
+                ),
+                "(use --cached to keep the file, or -f to force removal)",
+            ),
+            report(
+                &local_mod,
+                &format!(
+                    "{} local modifications",
+                    if local_mod.len() == 1 { "has" } else { "have" }
+                ),
+                "(use --cached to keep the file, or -f to force removal)",
+            ),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
+        if !msgs.is_empty() {
+            return Err(CliError::Exit(1, msgs.join("\n")));
+        }
+    }
+    for t in &targets {
+        if !quiet {
+            println!("rm '{t}'");
+        }
+    }
+    if dry_run {
+        return Ok(());
+    }
+    index.entries.retain(|e| !targets.contains(&e.path));
+    write_index(&repo, &index)?;
+    if !cached {
+        for t in &targets {
+            let abs = work.join(t);
+            if abs.is_file() || abs.is_symlink() {
                 fs::remove_file(&abs)?;
+            }
+            // Remove now-empty leading directories (git `remove_dir_recursively` class).
+            let mut dir = abs.parent().map(Path::to_path_buf);
+            while let Some(d) = dir {
+                if d == work || fs::remove_dir(&d).is_err() {
+                    break;
+                }
+                dir = d.parent().map(Path::to_path_buf);
             }
         }
     }
-    write_index(&repo, &index)?;
     Ok(())
 }
 
@@ -544,66 +685,112 @@ pub fn cmd_mv(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_clean(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1: `-x` claimed (ignore exclude rules). Without a gitignore engine yet,
-    // untracked collection already includes all non-index paths — `-x` is accepted
-    // and uses the same removal path (git-clean). Cite: https://git-scm.com/docs/git-clean
-    refuse_unknown_flags(args, &["-f", "-d", "-x"])?;
-    let _ignore_excludes = args.iter().any(|a| a == "-x");
-    let remove_dirs = args.iter().any(|a| a == "-d");
-    if !args.iter().any(|a| a == "-f") {
-        return Err(CliError::Usage("clean: -f required".into()));
+    // git-clean: `-n`/`--dry-run`, `-f`, `-d`, `-x`, `-q`, pathspecs; cleans
+    // below the current directory; without `-d`, wholly untracked directories
+    // are left alone. clean.requireForce defaults to true.
+    // Cite: https://git-scm.com/docs/git-clean
+    // Partial: ignore rules are not consulted, so `-x` / `-X` behave like the
+    // default and ignored files are treated as untracked.
+    let args = crate::util::split_short_bundles(args, "fndxqX", "");
+    let (opts, mut paths) = split_dashdash(&args);
+    let mut force = 0;
+    let mut dry_run = false;
+    let mut dirs = false;
+    let mut quiet = false;
+    for a in &opts {
+        match a.as_str() {
+            "-f" | "--force" => force += 1,
+            "-n" | "--dry-run" => dry_run = true,
+            "-d" => dirs = true,
+            "-x" | "-X" => {}
+            "-q" | "--quiet" => quiet = true,
+            x if x.starts_with('-') && x.len() > 1 => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+            }
+            _ => paths.push(a.clone()),
+        }
     }
     let repo = open_repo()?;
+    let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+    let require_force = cfg
+        .get("clean.requireForce")
+        .map(|v| {
+            !matches!(
+                v.to_ascii_lowercase().as_str(),
+                "false" | "no" | "off" | "0"
+            )
+        })
+        .unwrap_or(true);
+    if force == 0 && !dry_run && require_force {
+        return Err(CliError::fatal(
+            "clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean",
+        ));
+    }
     let work = work_tree(&repo)?;
     let index = read_index(&repo)?;
-    let indexed: HashSet<_> = index.entries.iter().map(|e| e.path.clone()).collect();
+    let indexed: HashSet<String> = index.entries.iter().map(|e| e.path.clone()).collect();
     let mut untracked = Vec::new();
     collect_untracked(&work, &work, &indexed, &mut untracked)?;
-    for p in &untracked {
-        let abs = work.join(p);
-        if abs.is_file() {
-            fs::remove_file(&abs)?;
-            println!("Removing {p}");
-        }
+    let shown = crate::cmd::core::collapse_untracked_dirs(&untracked, &indexed);
+    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let cwd_rel = crate::util::cwd()
+        .ok()
+        .and_then(|c| {
+            canon(&c)
+                .strip_prefix(canon(&work))
+                .ok()
+                .map(|r| r.to_string_lossy().replace('\\', "/"))
+        })
+        .unwrap_or_default();
+    let mut specs: Vec<String> = paths
+        .iter()
+        .map(|p| crate::cmd::core::pathspec_rel(&work, p))
+        .collect::<CliResult<_>>()?;
+    if specs.is_empty() {
+        specs.push(cwd_rel.clone());
     }
-    if remove_dirs {
-        remove_untracked_dirs(&work, &work, &indexed)?;
-    }
-    Ok(())
-}
-
-fn remove_untracked_dirs(
-    work: &std::path::Path,
-    dir: &std::path::Path,
-    indexed: &HashSet<String>,
-) -> CliResult<()> {
-    let entries: Vec<_> = fs::read_dir(dir)?.collect();
-    for ent in entries {
-        let ent = ent?;
-        let name = ent.file_name();
-        if name == ".git" {
-            continue;
-        }
-        let path = ent.path();
-        if !path.is_dir() {
-            continue;
-        }
-        let rel = path
-            .strip_prefix(work)
-            .unwrap()
-            .to_string_lossy()
-            .replace('\\', "/");
-        // If any indexed path is under this directory, recurse instead of deleting.
-        let has_tracked = indexed
+    let in_spec = |p: &str| {
+        let p = p.trim_end_matches('/');
+        specs
             .iter()
-            .any(|p| p == &rel || p.starts_with(&format!("{rel}/")));
-        if has_tracked {
-            remove_untracked_dirs(work, &path, indexed)?;
+            .any(|s| s.is_empty() || p == s || p.starts_with(&format!("{s}/")))
+    };
+    let display = |p: &str| -> String {
+        if cwd_rel.is_empty() {
+            return p.to_string();
+        }
+        let pre: Vec<&str> = cwd_rel.split('/').collect();
+        let comps: Vec<&str> = p.split('/').collect();
+        let mut common = 0;
+        while common < pre.len() && common + 1 < comps.len() && pre[common] == comps[common] {
+            common += 1;
+        }
+        format!(
+            "{}{}",
+            "../".repeat(pre.len() - common),
+            comps[common..].join("/")
+        )
+    };
+    for p in shown {
+        let is_dir = p.ends_with('/');
+        if (is_dir && !dirs) || !in_spec(&p) {
             continue;
         }
-        // Empty of tracked content: remove directory tree if it has no tracked files.
-        fs::remove_dir_all(&path)?;
-        println!("Removing {rel}/");
+        if dry_run {
+            if !quiet {
+                println!("Would remove {}", display(&p));
+            }
+            continue;
+        }
+        let abs = work.join(p.trim_end_matches('/'));
+        if is_dir {
+            fs::remove_dir_all(&abs)?;
+        } else {
+            fs::remove_file(&abs)?;
+        }
+        if !quiet {
+            println!("Removing {}", display(&p));
+        }
     }
     Ok(())
 }
