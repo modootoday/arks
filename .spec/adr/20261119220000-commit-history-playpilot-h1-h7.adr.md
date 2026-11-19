@@ -52,6 +52,9 @@ evidence honesty, push only to the session `claude/*` branch).
    **Known gap:** the guard inspects only the `git` program, so `arks push origin main` (with or
    without `ARKS_PERSONALITY=git`) is not seen. Until playpilot covers `arks`, rule `92` forbids
    pushing protected branches with arks, and the base-branch ruleset stays the server-side backstop.
+10. **Tool pin:** the `History` job and the guard hook pin playpilot at `4ed7dae` (playpilot #12:
+    no false refusals for `2>&1` redirects, `$VAR` lease values and quotes inside heredocs). The
+    H1–H7 canon text above stays cited at `0ddc0e1`.
 
 ## Consequences
 
