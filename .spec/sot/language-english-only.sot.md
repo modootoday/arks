@@ -3,7 +3,7 @@ id: sot:root/language-english-only
 title: Language — English only
 status: active
 created: 2026-11-08T08:25:00Z
-updated: 2026-11-11T06:15:00Z
+updated: 2026-11-19T23:45:00Z
 tags: [language, english, hangul-ban, conventions, agents, public, hooks]
 verify: manual
 rel:
@@ -12,9 +12,11 @@ rel:
 
 # Language — English only
 
-Version 0.1.1. Top-level principle for **arks**: all authored project documents and text are written in **English only**. The same policy is used by humanymous; this SoT records the arks lock and cites the live humanymous paths.
+Version 0.2.0. Top-level principle for **arks**: all authored project documents and text are written in **English only**. The same policy is used by humanymous; this SoT records the arks lock and cites the live humanymous paths.
 
 **Hangul ban (clarification):** Korean/Hangul operator briefings are chat-only. Tracked Specfold, `docs/`, `AGENTS.md`, `.agents/**`, and commit/PR prose MUST stay English. Always-on rule: `.agents/rules/05-english-only.md`.
+
+**Chat language (owner preference):** agents MUST talk to the owner in **Korean** in chat (replies, briefings, questions). Everything tracked stays English as above.
 
 ## Rule
 

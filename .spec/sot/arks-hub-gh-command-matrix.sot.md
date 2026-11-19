@@ -45,7 +45,7 @@ Version **0.3.0**. Canonical **`gh` → `arks` (flat forge client) command matri
 |-------|-------------------|
 | **v1** | Required for a useful **gh-symmetric** collaboration slice (auth + PR/issue/release/repo/label + search/status/api/config/alias/completion). Still **not Claimed** until implemented + evidence |
 | **later** | Keep gh-shaped names; defer after v1 |
-| **out-of-scope** | gh / GitHub platform surface we will not mirror (extensions, Copilot, agent-task/skills, gh self-licenses, internal preview, **`auth setup-git`**, Actions `run`/`workflow`/`cache`/`secret`/`variable`, rulesets, attestations, template catalogs) per [[adr:root/20261119230000]] |
+| **out-of-scope** | gh / GitHub platform surface we will not mirror (extensions, Copilot, agent-task/skills, gh self-licenses, internal preview, **`auth setup-git`**, Actions `run`/`workflow`/`cache`/`secret`/`variable`, Codespaces, attestations) per [[adr:root/20261119230000]] |
 
 ### Alias law (normative)
 
@@ -59,7 +59,7 @@ Version **0.3.0**. Canonical **`gh` → `arks` (flat forge client) command matri
 
 6. CLI **shape** tracks `gh` for muscle memory.
 7. Wire protocol is the **arks forge API** served by `arks serve` (first verify peer). For arks-owned primitives it uses GitHub-shaped REST paths and field names, so the same argv MAY target a GitHub-class host via `--host` for that compatible subset only. GraphQL is not required ([[adr:root/20261119230000]]).
-8. Commands that are GitHub-platform-only (Actions, Codespaces, Copilot, attestations, rulesets, gh extensions, agent-task) are `out-of-scope`. Rows whose arks-owned primitive is undecided stay `later`. Do not bring either back without a SoT amendment that defines an arks-owned primitive.
+8. Scope test: a row is in scope when its function can run on an independent host (not a GitHub-exclusive service). GitHub-platform-only rows (Actions, Codespaces, Copilot, attestations, gh extensions, agent-task) are `out-of-scope`; in-scope rows not yet implemented are `later`. Do not bring either back without a SoT amendment that defines an arks-owned primitive.
 
 ### Dangerous gh overlaps with core git
 
