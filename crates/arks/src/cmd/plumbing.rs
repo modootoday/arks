@@ -1399,50 +1399,167 @@ pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: OID → nearest ref name (git-name-rev minimal).
-    refuse_unknown_flags(args, &[])?;
-    let rev = args
-        .first()
-        .ok_or_else(|| CliError::Usage("name-rev <commit>".into()))?;
+    // git-name-rev: `[--tags] [--name-only] [--refs=<pattern>] [--all] <commit-ish>...`.
+    // Cite: https://git-scm.com/docs/git-name-rev
+    let mut tags_only = false;
+    let mut name_only = false;
+    let mut all = false;
+    let mut refs_pat: Vec<String> = Vec::new();
+    let mut revs = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--tags" => tags_only = true,
+            "--name-only" => name_only = true,
+            "--all" => all = true,
+            "--no-undefined" | "--always" => {}
+            _ if a.starts_with("--refs=") => refs_pat.push(a["--refs=".len()..].to_string()),
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => revs.push(a.clone()),
+        }
+    }
     let repo = open_repo()?;
-    let target = resolve_rev(&repo, rev)?;
+    let names = name_rev_names(&repo, tags_only, &refs_pat)?;
+    let mut targets: Vec<(String, Oid)> = Vec::new();
+    if all {
+        let mut v: Vec<(&Oid, &String)> = names.iter().map(|(o, n)| (o, &n.0)).collect();
+        v.sort_by_key(|x| x.0.to_hex());
+        for (o, _) in v {
+            targets.push((o.to_hex(), *o));
+        }
+    }
+    for r in &revs {
+        let o = resolve_rev(&repo, r)
+            .map_err(|_| CliError::Exit(1, format!("Could not get sha1 for {r}. Skipping.")))?;
+        targets.push((r.clone(), crate::cmd::shared::peel_tags(&repo, &o)?));
+    }
+    if targets.is_empty() {
+        return Err(CliError::Usage("name-rev [<options>] <commit>...".into()));
+    }
+    for (label, oid) in targets {
+        let name = names
+            .get(&oid)
+            .map(|n| n.0.clone())
+            .unwrap_or_else(|| "undefined".to_string());
+        if name_only {
+            println!("{name}");
+        } else {
+            println!("{label} {name}");
+        }
+    }
+    Ok(())
+}
+
+/// One candidate name: (display name, tagger date, generation, distance, from_tag).
+type RevName = (String, i64, u64, u64, bool);
+
+/// git name-rev.c naming: walk from every ref tip; a commit `n` first-parent
+/// hops below a named tip is `<tip>~n`, a merge's k-th parent `<name>^k`
+/// (costing MERGE_TRAVERSAL_WEIGHT). Names from tags win over others (the
+/// older tag first), then shorter distance, then smaller generation.
+/// Annotated tag tips are named `tags/<t>^0`.
+pub(crate) fn name_rev_names(
+    repo: &arks_repo::Repository,
+    tags_only: bool,
+    refs_pat: &[String],
+) -> CliResult<std::collections::HashMap<Oid, RevName>> {
+    const MERGE_WEIGHT: u64 = 65535;
     let mut refs = repo.refs().list_refs("refs/")?;
     refs.sort_by(|a, b| a.0.cmp(&b.0));
-    for (name, oid) in &refs {
-        if *oid == target {
-            println!("{} {name}", target.to_hex());
-            return Ok(());
+    let better = |old: &RevName, date: i64, generation: u64, distance: u64, from_tag: bool| {
+        if from_tag && old.4 {
+            return old.1 > date || (old.1 == date && old.3 > distance);
         }
-    }
-    // Walk first-parent distance from each ref tip.
-    for (name, tip) in &refs {
-        let mut oid = *tip;
-        let mut dist = 0u32;
-        loop {
-            if oid == target {
-                println!("{} {name}~{dist}", target.to_hex());
-                return Ok(());
-            }
-            let obj = match repo.get_object(&oid) {
-                Ok(o) => o,
-                Err(_) => break,
-            };
-            if obj.kind != ObjectKind::Commit {
-                break;
-            }
-            let c = Commit::decode(&obj.payload)?;
-            match c.parents.first() {
-                Some(p) => {
-                    oid = *p;
-                    dist += 1;
-                    if dist > 64 {
-                        break;
-                    }
+        if old.4 != from_tag {
+            return from_tag;
+        }
+        if old.3 != distance {
+            return old.3 > distance;
+        }
+        old.2 > generation
+    };
+    let mut names: std::collections::HashMap<Oid, RevName> = Default::default();
+    for (refname, tip) in refs {
+        let from_tag = refname.starts_with("refs/tags/");
+        if tags_only && !from_tag {
+            continue;
+        }
+        if refname == "refs/stash" {
+            continue;
+        }
+        if !refs_pat.is_empty()
+            && !refs_pat.iter().any(|p| {
+                crate::cmd::branch_cmd::fnmatch(p.as_bytes(), refname.as_bytes())
+                    || refname.ends_with(&format!("/{p}"))
+            })
+        {
+            continue;
+        }
+        let short = if let Some(h) = refname.strip_prefix("refs/heads/") {
+            h.to_string()
+        } else {
+            refname
+                .strip_prefix("refs/")
+                .unwrap_or(&refname)
+                .to_string()
+        };
+        let obj = repo.get_object(&tip)?;
+        let (commit, base, date) = if obj.kind == ObjectKind::Tag {
+            let target = crate::cmd::shared::peel_tags(repo, &tip)?;
+            let tagger = String::from_utf8_lossy(&obj.payload)
+                .lines()
+                .take_while(|l| !l.is_empty())
+                .find_map(|l| l.strip_prefix("tagger ").map(str::to_string))
+                .and_then(|t| {
+                    let mut it = t.rsplit(' ');
+                    it.next();
+                    it.next().and_then(|ts| ts.parse::<i64>().ok())
+                })
+                .unwrap_or(0);
+            (target, format!("{short}^0"), tagger)
+        } else {
+            let date = crate::cmd::log_format::read_commit(repo, &tip)
+                .map(|c| c.committer.timestamp)
+                .unwrap_or(0);
+            (tip, short, date)
+        };
+        if repo
+            .get_object(&commit)
+            .map(|o| o.kind != ObjectKind::Commit)
+            .unwrap_or(true)
+        {
+            continue;
+        }
+        // (commit, tip name, generation, distance)
+        let mut stack = vec![(commit, base, 0u64, 0u64)];
+        while let Some((oid, tip_name, generation, distance)) = stack.pop() {
+            if let Some(old) = names.get(&oid) {
+                if !better(old, date, generation, distance, from_tag) {
+                    continue;
                 }
-                None => break,
+            }
+            let display = if generation > 0 {
+                format!("{}~{generation}", tip_name.trim_end_matches("^0"))
+            } else {
+                tip_name.clone()
+            };
+            names.insert(oid, (display, date, generation, distance, from_tag));
+            let c = crate::cmd::log_format::read_commit(repo, &oid)?;
+            for (k, p) in c.parents.iter().enumerate().rev() {
+                if k == 0 {
+                    stack.push((*p, tip_name.clone(), generation + 1, distance + 1));
+                } else {
+                    let base = tip_name.trim_end_matches("^0");
+                    let merged = if generation > 0 {
+                        format!("{base}~{generation}^{}", k + 1)
+                    } else {
+                        format!("{base}^{}", k + 1)
+                    };
+                    stack.push((*p, merged, 0, distance + MERGE_WEIGHT));
+                }
             }
         }
     }
-    println!("{} undefined", target.to_hex());
-    Ok(())
+    Ok(names)
 }

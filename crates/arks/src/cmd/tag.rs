@@ -285,6 +285,9 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
     let (mut tags_ok, mut all_refs, mut always, mut long, mut exact) =
         (false, false, false, false, false);
     let mut first_parent = false;
+    // `--contains`: name the commit after a tag that contains it
+    // (name-rev --tags --name-only, without the `tags/` prefix).
+    let mut contains = false;
     let mut abbrev = 7usize;
     let mut matches: Vec<String> = Vec::new();
     let mut excludes: Vec<String> = Vec::new();
@@ -300,6 +303,7 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
             "--long" => long = true,
             "--exact-match" => exact = true,
             "--first-parent" => first_parent = true,
+            "--contains" => contains = true,
             "--dirty" => dirty_mark = Some("-dirty".into()),
             "--match" | "--exclude" => {
                 let v = args.get(i).cloned().ok_or_else(|| {
@@ -345,6 +349,22 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
     }
     if revs.is_empty() {
         revs.push("HEAD".into());
+    }
+    if contains {
+        // git describe --contains = name-rev --name-only --tags (all refs with --all).
+        let names = crate::cmd::plumbing::name_rev_names(&repo, !all_refs, &[])?;
+        for r in &revs {
+            let o = crate::cmd::shared::peel_tags(&repo, &resolve_rev(&repo, r)?)?;
+            match names.get(&o) {
+                Some(n) => {
+                    println!("{}", n.0.strip_prefix("tags/").unwrap_or(&n.0));
+                }
+                None => {
+                    return Err(CliError::fatal(format!("cannot describe '{}'", o.to_hex())));
+                }
+            }
+        }
+        return Ok(());
     }
     // Candidate names: (display name, peeled commit, annotated).
     let mut cands: Vec<(String, arks_oid::Oid, bool)> = Vec::new();
