@@ -7,8 +7,7 @@ use crate::cmd::shared::{
 use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
-    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
-    write_index,
+    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, work_tree, write_index,
 };
 use crate::write_tree::write_tree_from_index;
 use arks_index::{IndexEntry, sort_entries};
@@ -641,23 +640,42 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         paths.sort();
         paths.dedup();
     }
+    // Pathspecs (git-add §DESCRIPTION): a directory (including `.` = the whole
+    // tree) adds untracked files below it and stages modifications and
+    // removals of tracked files below it.
+    let mut removable: HashSet<String> = HashSet::new();
     for p in &positional {
-        let rel = rel_path_from_worktree(&work, Path::new(p))?;
-        let abs = work.join(&rel);
+        let rel = pathspec_rel(&work, p)?;
+        let abs = if rel.is_empty() {
+            work.clone()
+        } else {
+            work.join(&rel)
+        };
+        let prefix = if rel.is_empty() {
+            String::new()
+        } else {
+            format!("{rel}/")
+        };
+        let tracked: Vec<String> = index
+            .entries
+            .iter()
+            .filter(|e| e.stage() == 0 && (e.path == rel || e.path.starts_with(&prefix)))
+            .map(|e| e.path.clone())
+            .collect();
         if abs.is_dir() {
             let mut nested = Vec::new();
             let indexed: std::collections::HashSet<_> = std::collections::HashSet::new();
             collect_untracked(&work, &abs, &indexed, &mut nested)?;
-            let prefix = format!("{rel}/");
-            for e in index.entries.iter().filter(|e| e.stage() == 0) {
-                if e.path == rel || e.path.starts_with(&prefix) {
-                    paths.push(e.path.clone());
-                }
-            }
             paths.extend(nested);
-        } else {
-            paths.push(rel);
+        } else if !abs.exists() && tracked.is_empty() {
+            return Err(CliError::fatal(format!(
+                "pathspec '{p}' did not match any files"
+            )));
+        } else if !tracked.contains(&rel) {
+            paths.push(rel.clone());
         }
+        removable.extend(tracked.iter().cloned());
+        paths.extend(tracked);
     }
     paths.sort();
     paths.dedup();
@@ -676,7 +694,7 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         for rel in paths {
             let abs = work.join(&rel);
             if !abs.is_file() {
-                if all || update {
+                if all || update || removable.contains(&rel) {
                     removals.insert(rel);
                 }
                 continue;
@@ -768,6 +786,37 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
+/// Worktree-relative form of a cwd-relative pathspec (`""` = whole tree).
+fn pathspec_rel(work: &Path, p: &str) -> CliResult<String> {
+    let cwd = cwd()?;
+    let abs = cwd.join(p);
+    let canon = |x: &Path| x.canonicalize().unwrap_or_else(|_| x.to_path_buf());
+    let work_c = canon(work);
+    // Normalize lexically when the path does not exist (deleted tracked file).
+    let abs_c = if abs.exists() {
+        canon(&abs)
+    } else {
+        let mut out = canon(&cwd);
+        for comp in Path::new(p).components() {
+            match comp {
+                std::path::Component::ParentDir => {
+                    out.pop();
+                }
+                std::path::Component::CurDir => {}
+                other => out.push(other),
+            }
+        }
+        out
+    };
+    let rel = abs_c.strip_prefix(&work_c).map_err(|_| {
+        CliError::fatal(format!(
+            "{p}: '{p}' is outside repository at '{}'",
+            work_c.display()
+        ))
+    })?;
+    Ok(rel.to_string_lossy().replace('\\', "/"))
+}
+
 fn parallel_workers(n: usize) -> usize {
     if n < 32 {
         return 1;
@@ -850,6 +899,7 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     let untracked_all = args.iter().any(|a| a == "-u");
     let untracked_no = args.iter().any(|a| a == "-uno");
     let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s");
+    let porcelain_v1 = args.iter().any(|a| a == "--porcelain");
     let show_branch = args.iter().any(|a| a == "-b");
     let _no_optional = wants_no_optional_locks(args);
     let repo = open_repo()?;
@@ -900,11 +950,19 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         for (p, c) in &d.unstaged {
             tracked.entry(p).or_insert((' ', ' ')).1 = *c;
         }
+        // `--porcelain` paths are always root-relative; `-s` follows cwd.
+        let show = |p: &str| {
+            if porcelain_v1 {
+                p.to_string()
+            } else {
+                d.show(p)
+            }
+        };
         for (p, (x, y)) in &tracked {
-            writeln!(out, "{x}{y} {p}")?;
+            writeln!(out, "{x}{y} {}", show(p))?;
         }
         for p in &d.untracked {
-            writeln!(out, "?? {p}")?;
+            writeln!(out, "?? {}", show(p))?;
         }
     } else {
         write_long(&mut out, &d, mode)?;
