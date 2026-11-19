@@ -19,7 +19,7 @@ description: >
 1. `git status` / `git diff` — identify owned paths vs sibling dirt.
 2. If tracked `.spec/sot/**` meaning changed and code also changed → **two commits** (Spec first).
 3. Stage **only** owned paths (`git add <paths>` — never blind `git add -A` with foreign dirt; never stage `.spec.local/` / `.env`).
-4. English subject; no Claimed/PASS/Verified invention (rules `28`/`29`); no Hangul (hooks scan `git commit`).
+4. English Conventional Commits subject (`docs(spec):` for spec-first; rule `92`); owner noreply identity, no session trailers; no Claimed/PASS/Verified invention (rules `28`/`29`); no Hangul (hooks scan `git commit`).
 5. Do **not** push / force-push unless the user explicitly authorizes (hooks deny force to main/master).
 6. After commit: report tip SHA(s); confirm sibling dirty paths remain unstaged.
 

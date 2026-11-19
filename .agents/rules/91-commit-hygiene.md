@@ -7,14 +7,14 @@ Keep history stepwise and avoid clobbering sibling agents.
 1. **One concern per commit** — Spec meaning, one stub surface, one harness, or one docs slice — not a mega-mix.
 2. **Stage only owned paths** — leave unrelated dirty trees unstaged (especially sibling CLI/crate WIP).
 3. **Spec-first** when public SoT meaning changes (rule `27`).
-4. **English commit subjects/bodies** (rule `05`).
+4. **English commit subjects/bodies** (rule `05`) in Conventional Commits form (rule `92`).
 5. **No push** unless the owner explicitly authorizes (push-deferred / empty remote policy).
 6. Before multi-file edits, check sibling ownership (rule `90-session-overlap`).
 
 ## Must not
 
 - `git add -A` / `git add .` when the working tree has sibling-owned dirty crates.
-- Force-push to `main`/`master` (hooks **deny**); any other force-push / mass-rebase / amend of foreign commits unless the user explicitly orders it.
+- Force-push to `main`/`master` (hooks **deny**); any other force-push / mass-rebase / amend of foreign commits unless the user explicitly orders it — sole exception: `--force-with-lease=<branch>:<sha>` on your own unmerged `claude/*` branch to meet rule `92` (H4).
 - Invent Claimed/PASS/Verified in commit messages (rules `28`, `29`) — hooks **ask**/warn on obvious patterns.
 - Commit Hangul in subjects/bodies or staged Spec/docs (rule `05`) — hooks scan `git commit`.
 - Stage or commit `.spec.local/**`, `.env*`, or secrets (hooks **deny** staging those paths).
