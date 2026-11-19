@@ -1,0 +1,25 @@
+{
+  "gate": "cli-flag-corpus-cleanroom",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "22bfebc",
+  "tier_a": {
+    "corpus": "agent-tier-a.txt",
+    "git": "git version 2.39.5",
+    "lines": 147,
+    "same": 147,
+    "diff": 0
+  },
+  "tier_b": {
+    "corpus": "agent-tier-b.txt",
+    "git": "git version 2.39.5",
+    "lines": 168,
+    "same": 166,
+    "diff": 2
+  },
+  "remaining_diff": {
+    "format-patch --stdout -1": "signature line carries the arks version, not a git version string",
+    "init --bare new-bare.git": "git copies its install-time template dir; arks ships none"
+  },
+  "timestamp": "2026-11-19T22:56:00Z"
+}
