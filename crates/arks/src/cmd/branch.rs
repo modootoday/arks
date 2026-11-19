@@ -12,6 +12,7 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     // Cite: https://git-scm.com/docs/git-checkout/2.39.0
     // Cloud drop-in §O: `-B <branch> [<start>]`, `-b <branch> <start>`, `-q`.
     let args = &crate::util::split_short_bundles(args, "qf", "bB");
+    crate::util::set_quiet_from(args);
     refuse_unknown_flags(
         args,
         &["-b", "-B", "--", "--detach", "--orphan", "-q", "--quiet"],
@@ -83,9 +84,13 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
             println!("{l}");
         }
         if existed {
-            eprintln!("Switched to and reset branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to and reset branch '{name}'");
+            }
         } else {
-            eprintln!("Switched to a new branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to a new branch '{name}'");
+            }
         }
         return Ok(());
     }
@@ -164,6 +169,7 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
         ],
     );
     refuse_unknown_flags(args, &["-c", "-C", "--detach", "--orphan", "-q"])?;
+    crate::util::set_quiet_from(args);
     let create = args.iter().any(|a| a == "-c" || a == "-C");
     let force_create = args.iter().any(|a| a == "-C");
     let detach = args.iter().any(|a| a == "--detach");
@@ -213,9 +219,13 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
             println!("{l}");
         }
         if existed {
-            eprintln!("Switched to and reset branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to and reset branch '{name}'");
+            }
         } else {
-            eprintln!("Switched to a new branch '{name}'");
+            if !crate::util::quiet() {
+                eprintln!("Switched to a new branch '{name}'");
+            }
         }
         Ok(())
     } else {
@@ -295,9 +305,13 @@ fn switch_branch(name: &str, _detach: bool) -> CliResult<()> {
         println!("{l}");
     }
     if was_current {
-        eprintln!("Already on '{name}'");
+        if !crate::util::quiet() {
+            eprintln!("Already on '{name}'");
+        }
     } else {
-        eprintln!("Switched to branch '{name}'");
+        if !crate::util::quiet() {
+            eprintln!("Switched to branch '{name}'");
+        }
     }
     Ok(())
 }
@@ -317,7 +331,9 @@ fn detach_to(rev: &str) -> CliResult<()> {
     let subject = crate::cmd::log_format::read_commit(&repo, &oid)
         .map(|c| c.subject().to_string())
         .unwrap_or_default();
-    eprintln!("HEAD is now at {} {subject}", &oid.to_hex()[..7]);
+    if !crate::util::quiet() {
+        eprintln!("HEAD is now at {} {subject}", &oid.to_hex()[..7]);
+    }
     Ok(())
 }
 
