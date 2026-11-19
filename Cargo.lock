@@ -212,9 +212,6 @@ dependencies = [
  "arks-object",
  "arks-oid",
  "arks-pack",
- "celir-data",
- "celir-index",
- "celir-index-runtime",
  "tempfile",
  "thiserror",
 ]
@@ -255,18 +252,6 @@ dependencies = [
  "find-msvc-tools",
  "shlex",
 ]
-
-[[package]]
-name = "celir-data"
-version = "0.0.0"
-
-[[package]]
-name = "celir-index"
-version = "0.0.0"
-
-[[package]]
-name = "celir-index-runtime"
-version = "0.0.0"
 
 [[package]]
 name = "cfg-if"

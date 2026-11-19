@@ -13,9 +13,6 @@ default = []
 # Opt-in L3 valve — enabling the feature alone does not force HighConcurrency as sole path.
 # WriterMode::HighConcurrency remains refused until M23 unlock receipts.
 high-concurrency = []
-# G22 clean-room stress: enable arks-store celir-index companion (default OFF).
-# Does NOT enable CELIR as ObjectStore. Cite sot:root/celir-index-contention-clean-room.
-celir-index-stress = ["arks-store/celir-index"]
 
 [dependencies]
 thiserror = { workspace = true }

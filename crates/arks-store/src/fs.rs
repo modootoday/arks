@@ -124,9 +124,6 @@ impl FilesystemGitStore {
     }
 
     /// Enumerate OIDs present as loose objects and/or loaded pack objects.
-    ///
-    /// Used by optional CELIR rebuild-from-`.git` (feature `celir-index`).
-    /// This is arks-owned Git content discovery — **not** a CELIR API.
     pub fn collect_oids(&self) -> Result<Vec<Oid>, StoreError> {
         let mut oids = Vec::new();
         let mut seen = std::collections::HashSet::new();

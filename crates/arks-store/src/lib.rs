@@ -4,9 +4,6 @@
 //! - `ObjectStore`: `put`, `get`, `exists` on `arks-object` types
 //! - Default backend for tests: [`MemoryObjectStore`]
 //! - Filesystem Git backend: [`FilesystemGitStore`] (loose + pack/idx read; pack ingest)
-//! - Optional feature `celir-index` (default OFF): indexing-service companion only —
-//!   **not** an ObjectStore backend (`.spec/sot/storage-celir-boundary.sot.md`,
-//!   `.spec/adr/20261110052030-celir-index-optional-product-path-dep.adr.md`)
 //! - No `gix`. No product-path `git`.
 //!
 //! Primary: <https://git-scm.com/docs/gitrepository-layout>
@@ -16,9 +13,6 @@
 
 mod fs;
 mod memory;
-
-#[cfg(feature = "celir-index")]
-pub mod celir_index;
 
 pub use arks_hash::ObjectFormat;
 pub use arks_object::RawObject;
