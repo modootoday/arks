@@ -4,7 +4,7 @@
 //! Fs-1: FF + `--no-ff` when FF-capable.
 //! Fs-2: diverged three-way merge (clean or conflicted index).
 
-use crate::cmd::merge_engine::merge_commits_three_way;
+use crate::cmd::merge_engine::merge_three_way_opts;
 use crate::cmd::shared::{commit_signature, current_branch_name, is_ancestor, resolve_rev};
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags, work_tree};
@@ -53,7 +53,15 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
 }
 
 /// Refuse when the index differs from HEAD or a tracked file differs from the index.
-fn refuse_dirty_tracked(repo: &arks_repo::Repository) -> CliResult<()> {
+/// Refuse a merge over local changes: any staged change (git-merge: "abort
+/// if there are any changes registered in the index relative to HEAD"), or
+/// a work-tree change on a path the merge touches (`touched` = paths that
+/// differ between HEAD and the merged-in commit).
+/// Cite: https://git-scm.com/docs/git-merge#_pre_merge_checks
+fn refuse_dirty_tracked(
+    repo: &arks_repo::Repository,
+    touched: &std::collections::HashSet<String>,
+) -> CliResult<()> {
     let head = crate::cmd::shared::head_blob_map(repo)?;
     let index = crate::util::read_index(repo)?;
     let work = work_tree(repo)?;
@@ -73,7 +81,7 @@ fn refuse_dirty_tracked(repo: &arks_repo::Repository) -> CliResult<()> {
             }
             Err(_) => false,
         };
-        if head.get(&e.path) != Some(&e.oid) || !wt_same {
+        if head.get(&e.path) != Some(&e.oid) || (!wt_same && touched.contains(&e.path)) {
             dirty.push(e.path.clone());
         }
     }
@@ -83,9 +91,27 @@ fn refuse_dirty_tracked(repo: &arks_repo::Repository) -> CliResult<()> {
     }
     dirty.sort();
     let list: String = dirty.iter().map(|p| format!("\t{p}\n")).collect();
-    Err(CliError::Msg(format!(
-        "Your local changes to the following files would be overwritten by merge:\n{list}Please commit your changes or stash them before you merge.\nAborting"
-    )))
+    Err(CliError::Exit(
+        2,
+        format!(
+            "error: Your local changes to the following files would be overwritten by merge:\n{list}Please commit your changes or stash them before you merge.\nAborting\nMerge with strategy ort failed."
+        ),
+    ))
+}
+
+/// Paths whose blobs differ between the trees of `a` and `b`.
+fn touched_paths(
+    repo: &arks_repo::Repository,
+    a: &arks_oid::Oid,
+    b: &arks_oid::Oid,
+) -> CliResult<std::collections::HashSet<String>> {
+    let x = crate::cmd::shared::tree_blob_map(repo, a)?;
+    let y = crate::cmd::shared::tree_blob_map(repo, b)?;
+    Ok(x.keys()
+        .chain(y.keys())
+        .filter(|k| x.get(*k) != y.get(*k))
+        .cloned()
+        .collect())
 }
 
 /// Split `-m <msg>` / `--message=<msg>` out of merge args.
@@ -203,13 +229,23 @@ fn merge_onto_msg(
             }
             println!(
                 "Updating {}..{}",
-                &head.to_hex()[..7],
-                &theirs.to_hex()[..7]
+                crate::cmd::shared::abbrev_hex(&repo, &head, 7),
+                crate::cmd::shared::abbrev_hex(&repo, &theirs, 7)
             );
             println!("Fast-forward");
+            print_merge_diffstat(&repo, &head, &theirs)?;
+            if let RefTarget::Symbolic(branch) = repo.head_target()? {
+                let _ = crate::reflog::append_head_and_branch(
+                    &repo,
+                    &branch,
+                    Some(&head),
+                    &theirs,
+                    &format!("merge {name}: Fast-forward"),
+                );
+            }
             return Ok(());
         }
-        refuse_dirty_tracked(&repo)?;
+        refuse_dirty_tracked(&repo, &touched_paths(&repo, &head, &theirs)?)?;
         return create_merge_commit(&mut repo, &head, &theirs, name, None, message);
     }
     if ff_only {
@@ -218,9 +254,9 @@ fn merge_onto_msg(
 
     // Fs-2: diverged three-way merge. Refuse when tracked files carry local changes
     // (conservative superset of git's per-path check; never overwrites local edits).
-    refuse_dirty_tracked(&repo)?;
+    refuse_dirty_tracked(&repo, &touched_paths(&repo, &head, &theirs)?)?;
     let work = work_tree(&repo)?;
-    let result = merge_commits_three_way(&mut repo, &work, &head, &theirs)?;
+    let result = merge_three_way_opts(&mut repo, &work, &head, &theirs, true)?;
     if !result.conflicts.is_empty() {
         eprintln!(
             "Automatic merge failed; fix conflicts and then commit the result.\nConflicted: {}",
@@ -279,8 +315,74 @@ fn create_merge_commit(
             ));
         }
     }
-    let work = work_tree(repo)?;
-    arks_remote::checkout_commit(repo, &work, &coid)?;
-    println!("Merge made by three-way merge.");
+    if tree_override.is_none() {
+        // `--no-ff` of a fast-forwardable branch: move index + work tree like
+        // a two-way checkout so unrelated local edits are carried over.
+        let work = work_tree(repo)?;
+        crate::cmd::switch_tree::two_way_switch(repo, &work, Some(head), &coid)?;
+    }
+    // (Three-way results were already written to the index and work tree.)
+    println!("Merge made by the 'ort' strategy.");
+    print_merge_diffstat(repo, head, &coid)?;
+    if let RefTarget::Symbolic(branch) = repo.head_target()? {
+        let _ = crate::reflog::append_head_and_branch(
+            repo,
+            &branch,
+            Some(head),
+            &coid,
+            &format!("merge {name}: Merge made by the 'ort' strategy."),
+        );
+    }
+    Ok(())
+}
+
+/// git merge's closing diffstat (`--stat` block plus `create mode` /
+/// `delete mode` / `mode change` summary lines) from `from` to `to`.
+/// Cite: https://git-scm.com/docs/git-merge (merge.stat, default true).
+fn print_merge_diffstat(
+    repo: &arks_repo::Repository,
+    from: &arks_oid::Oid,
+    to: &arks_oid::Oid,
+) -> CliResult<()> {
+    use crate::cmd::switch_tree::commit_files;
+    use crate::cmd::unified_diff::{StatRow, stat_change, write_stat};
+    let a = commit_files(repo, from)?;
+    let b = commit_files(repo, to)?;
+    let mut keys: Vec<&String> = a.keys().chain(b.keys()).collect();
+    keys.sort();
+    keys.dedup();
+    let mut rows = Vec::new();
+    let mut modes = Vec::new();
+    for k in keys {
+        let (x, y) = (a.get(k), b.get(k));
+        if x == y {
+            continue;
+        }
+        let xp = match x {
+            Some(f) => Some(repo.get_object(&f.oid)?.payload),
+            None => None,
+        };
+        let yp = match y {
+            Some(f) => Some(repo.get_object(&f.oid)?.payload),
+            None => None,
+        };
+        rows.push(StatRow {
+            path: k.clone(),
+            change: stat_change(xp.as_deref(), yp.as_deref()),
+        });
+        match (x, y) {
+            (None, Some(f)) => modes.push(format!(" create mode {:o} {k}", f.mode)),
+            (Some(f), None) => modes.push(format!(" delete mode {:o} {k}", f.mode)),
+            (Some(p), Some(q)) if p.mode != q.mode => {
+                modes.push(format!(" mode change {:o} => {:o} {k}", p.mode, q.mode))
+            }
+            _ => {}
+        }
+    }
+    let mut out = std::io::stdout().lock();
+    write_stat(&mut out, &rows)?;
+    for m in modes {
+        std::io::Write::write_all(&mut out, format!("{m}\n").as_bytes())?;
+    }
     Ok(())
 }
