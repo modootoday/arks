@@ -1,0 +1,16 @@
+refs/heads/feature 9bd48266528dcf3467eb619af6abc3fe62811f42
+refs/heads/main 048bec8d2735412c22cd559de469a1d1ae08dde7
+refs/stash 504170bf2a255d1e458665cddd853b87e5d46752
+refs/tags/t0 997c7f44b4788e09ee1805cf2d294d9cee84ac60
+refs/tags/v1 600586cfc61b5bcc63fb673b95613ec1100ca7f3
+HEAD refs/heads/main
+100644 791371cc2003e7a31cadd9d2e4d6e34cc54cd396 0	README.md
+100644 74439a5ca6aab108b37529f170cf39513555df08 0	docs/x.md
+100644 34ada89ff4ec614c2cbc4e7c65576205a305ba3e 0	src/a.txt
+100644 6addb9b7c753aa12cdc6c0f22d7c7fe4b43ec8eb 0	src/b.txt
+100644 7989678ab4a6aa63e80faf3ec63f094f48d780f7 0	src/data.bin
+100644 19d9cc8584ac2c7dcf57d2680375e80f099dc481 0	src/new.txt
+ M src/a.txt
+A  src/new.txt
+?? untracked.txt
+On main: fixture-stash

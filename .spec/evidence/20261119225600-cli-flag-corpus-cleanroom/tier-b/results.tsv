@@ -1,0 +1,168 @@
+L001	SAME	log --oneline -S beta	
+L002	SAME	log --oneline -G GAMMA	
+L003	SAME	log --oneline --since='2023-11-15 01:00:00 +0000'	
+L004	SAME	log --oneline --until='2023-11-15 02:00:00 +0000'	
+L005	SAME	log --oneline --follow -- src/b.txt	
+L006	SAME	log --pretty=fuller -1	
+L007	SAME	log --format='%an <%ae>' -2	
+L008	SAME	log --format='%H %P' -3	
+L009	SAME	log --format=%ad --date=unix -2	
+L010	SAME	log --oneline --graph --all	
+L011	SAME	log --graph --format='%h %s' -5	
+L012	SAME	log --graph --oneline -10	
+L013	SAME	log --graph --all --decorate --oneline	
+L014	SAME	log --graph --all	
+L015	SAME	log --graph --format='%h%d %s' --all	
+L016	SAME	log --graph --first-parent --oneline	
+L017	SAME	log --graph --oneline --stat -3	
+L018	SAME	log --graph --date-order --oneline --all	
+L019	SAME	log --topo-order --oneline --all	
+L020	SAME	log --oneline --left-right main...feature	
+L021	SAME	log --oneline --diff-filter=A	
+L022	SAME	log --shortstat --oneline -3	
+L023	SAME	log --numstat --format=%h -2	
+L024	SAME	log --oneline -- '*.txt'	
+L025	SAME	shortlog -sn HEAD	
+L026	SAME	reflog -3	
+L027	SAME	reflog show main	
+L028	SAME	cherry main feature	
+L029	SAME	cherry -v main feature	
+L030	SAME	range-diff t0..feature t0..main~1	
+L031	SAME	name-rev HEAD~2	
+L032	SAME	show --pretty=fuller -s	
+L033	SAME	show -s --format=%P HEAD~1	
+L034	SAME	show HEAD~1 --name-status	
+L035	SAME	cat-file -p v1	
+L036	SAME	cat-file commit HEAD	
+L037	SAME	blame --porcelain -L 1,1 README.md	
+L038	SAME	blame HEAD~3 -- src/b.txt	
+L039	DIFF	format-patch --stdout -1	stdout
+L040	SAME	format-patch -2	
+L041	SAME	apply --stat .git/fixture.patch	
+L042	SAME	apply --check .git/fixture.patch	
+L043	SAME	apply --check -R .git/fixture.patch	
+L044	SAME	apply -R .git/fixture.patch	
+L045	SAME	am .git/fixture.mbox	
+L046	SAME	ls-tree HEAD	
+L047	SAME	ls-tree -r HEAD	
+L048	SAME	ls-tree -r --name-only HEAD	
+L049	SAME	ls-tree --name-only HEAD src	
+L050	SAME	ls-tree HEAD:src	
+L051	SAME	hash-object README.md	
+L052	SAME	hash-object -w untracked.txt	
+L053	SAME	rev-parse --git-common-dir	
+L054	SAME	rev-parse --absolute-git-dir	
+L055	SAME	rev-parse --symbolic-full-name HEAD	
+L056	SAME	rev-parse --symbolic-full-name main	
+L057	SAME	rev-parse --show-prefix	
+L058	SAME	rev-parse --verify --quiet nosuch	
+L059	SAME	rev-parse :src/new.txt	
+L060	SAME	rev-parse --all	
+L061	SAME	var GIT_AUTHOR_IDENT	
+L062	SAME	check-ignore debug.log	
+L063	SAME	check-ignore -v debug.log	
+L064	SAME	check-ignore README.md	
+L065	SAME	check-attr -a src/data.bin	
+L066	SAME	check-attr --all -- src/a.txt	
+L067	SAME	check-ref-format refs/heads/ok	
+L068	SAME	check-ref-format refs/heads/a..b	
+L069	SAME	count-objects -v	
+L070	SAME	fsck	
+L071	SAME	show-ref --heads	
+L072	SAME	show-ref --verify refs/heads/main	
+L073	SAME	show-ref --verify refs/heads/nope	
+L074	SAME	show-ref --dereference --tags	
+L075	SAME	symbolic-ref HEAD	
+L076	SAME	symbolic-ref --short HEAD	
+L077	SAME	symbolic-ref HEAD refs/heads/feature	
+L078	SAME	update-ref refs/heads/new HEAD~1	
+L079	SAME	update-ref -d refs/heads/feature	
+L080	SAME	update-ref refs/heads/main HEAD~1 HEAD	
+L081	SAME	update-ref refs/heads/main HEAD~1 HEAD~2	
+L082	SAME	update-ref -m msg refs/tags/x HEAD	
+L083	SAME	diff-tree -r HEAD~1 HEAD	
+L084	SAME	diff-tree --stat HEAD~1 HEAD	
+L085	SAME	diff-tree --name-status -r HEAD~1 HEAD	
+L086	SAME	diff-tree --no-commit-id --name-only -r HEAD	
+L087	SAME	diff-index HEAD	
+L088	SAME	diff-index --cached HEAD	
+L089	SAME	diff-index --quiet HEAD	
+L090	SAME	diff-files	
+L091	SAME	diff-files --name-only	
+L092	SAME	merge-tree main feature	
+L093	SAME	merge-tree --write-tree main~2 feature	
+L094	SAME	commit-tree HEAD^{tree} -p HEAD -m plumbing	
+L095	SAME	write-tree	
+L096	SAME	update-index --add untracked.txt	
+L097	SAME	ls-files --error-unmatch nosuch	
+L098	SAME	ls-files -i -o --exclude-standard	
+L099	SAME	ls-remote .	
+L100	SAME	ls-remote --heads .	
+L101	SAME	config --get-regexp user	
+L102	SAME	config --get-regexp '^core\.'	
+L103	SAME	config --show-origin --get user.name	
+L104	SAME	config --get nosuch.key	
+L105	SAME	config user.name 'New Name'	
+L106	SAME	config --unset core.autocrlf	
+L107	SAME	branch -m feature renamed	
+L108	SAME	branch -c feature copy	
+L109	SAME	branch -D feature	
+L110	SAME	branch -f feature HEAD	
+L111	SAME	branch --sort=-committerdate	
+L112	SAME	branch -vv	
+L113	SAME	branch --no-merged	
+L114	SAME	tag -d v1	
+L115	SAME	tag lw HEAD~1	
+L116	SAME	tag -a v2 -m 'release v2'	
+L117	SAME	tag -f v1 HEAD	
+L118	SAME	tag --contains HEAD~3	
+L119	SAME	describe --dirty	
+L120	SAME	describe --tags --dirty	
+L121	SAME	describe --long	
+L122	SAME	describe --contains HEAD~3	
+L123	SAME	stash show	
+L124	SAME	stash show -p	
+L125	SAME	stash apply	
+L126	SAME	stash pop	
+L127	SAME	stash branch sb	
+L128	SAME	worktree add wt feature	
+L129	SAME	worktree add -b nb wt2	
+L130	SAME	worktree list --porcelain	
+L131	SAME	submodule status	
+L132	SAME	sparse-checkout list	
+L133	SAME	status --ignored -s	
+L134	SAME	status --porcelain=v2 --branch	
+L135	SAME	grep -i BETA	
+L136	SAME	grep --cached staged	
+L137	SAME	grep -e alpha -e beta	
+L138	SAME	grep beta HEAD~3	
+L139	SAME	rev-list --all --count	
+L140	SAME	rev-list --left-right --count main...feature	
+L141	SAME	rev-list --parents -2 HEAD	
+L142	SAME	for-each-ref --sort=-committerdate --format='%(refname)' refs/heads	
+L143	SAME	for-each-ref --points-at HEAD	
+L144	SAME	diff --diff-filter=M HEAD --name-only	
+L145	SAME	diff --no-index src/a.txt src/b.txt	
+L146	SAME	commit --author='X Y <x@example.com>' -m authored	
+L147	SAME	commit -s -m signed	
+L148	SAME	commit -m partial -- src/a.txt	
+L149	SAME	rm -r --cached src	
+L150	SAME	rm -f src/new.txt	
+L151	SAME	mv src/b.txt docs/	
+L152	SAME	checkout HEAD~1 -- README.md	
+L153	SAME	checkout v1	
+L154	SAME	reset --mixed HEAD~1	
+L155	SAME	clean -fdx	
+L156	SAME	merge --no-edit feature	
+L157	SAME	merge --abort	
+L158	SAME	merge-base --all main feature	
+L159	SAME	revert -n HEAD	
+L160	SAME	fetch -q . feature:f2	
+L161	SAME	push -q . HEAD:refs/heads/pushed	
+L162	SAME	remote add up .	
+L163	SAME	init new-default	
+L164	SAME	init -q new-quiet	
+L165	SAME	init -b main new-main	
+L166	SAME	init --initial-branch=dev new-dev	
+L167	DIFF	init --bare new-bare.git	state
+L168	SAME	init .	

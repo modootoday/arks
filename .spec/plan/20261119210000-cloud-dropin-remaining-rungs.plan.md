@@ -34,6 +34,16 @@ into measured tiers driven by a peer-compare corpus.
 | **C9** | Cloud rollout | Setup-script snippet verified in a session | Needs a binary source other sessions can fetch: public repo (`cargo install --git`) or a release asset — **owner decision** (D3 forbids tags in this ladder) |
 | **C_final** | Register, `docs/completion.md`, roadmap tip, `cli-git-help-matrix` counts | Docs match receipts | — |
 
+## Status (2026-11-19, C_final)
+
+| Rung | State |
+|------|-------|
+| V | Claimed — G42 Docker 15/15 [[evidence:root/20261119222000-g042-cloud-dropin]] |
+| C7a / C7b | Claimed — Docker corpora vs pin git 2.39.5: tier A 147/147, tier B 166/168 [[evidence:root/20261119225600-cli-flag-corpus-cleanroom]] |
+| C8 | Claimed — arks-owned forge groups, `pr checkout`, release assets, hub UX, daemon flags (Docker receipts listed in [[sot:root/production-residual-register]]) |
+| C9 | Applied — install from `main` in hosted sessions |
+| C_final | Done — register, roadmap tip, `docs/completion.md` and [[sot:root/cloud-agent-dropin]] tip state match receipts. `cli-git-help-matrix` `status_now` is unchanged: corpus lines cover option spellings, not whole commands |
+
 ## Order
 
 V → C7a (waves until the agent tier is SAME or reasoned) → C9 snippet → C8 → C7b → C_final.

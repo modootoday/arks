@@ -1,0 +1,147 @@
+L001	SAME	status	
+L002	SAME	status -s	
+L003	SAME	status -sb	
+L004	SAME	status --porcelain	
+L005	SAME	status --porcelain=v1 -uall	
+L006	SAME	status --short --untracked-files=no	
+L007	SAME	diff	
+L008	SAME	diff --stat	
+L009	SAME	diff --name-only	
+L010	SAME	diff --name-status	
+L011	SAME	diff --cached	
+L012	SAME	diff --cached --stat	
+L013	SAME	diff --staged --name-only	
+L014	SAME	diff HEAD	
+L015	SAME	diff HEAD --stat	
+L016	SAME	diff HEAD~2 HEAD	
+L017	SAME	diff HEAD~2..HEAD --stat	
+L018	SAME	diff main...feature --name-only	
+L019	SAME	diff t0 v1 -- src	
+L020	SAME	diff --numstat HEAD~1 HEAD	
+L021	SAME	diff --shortstat HEAD~3 HEAD	
+L022	SAME	diff -U1 HEAD~4 HEAD~3	
+L023	SAME	diff --quiet HEAD~1 HEAD	
+L024	SAME	diff --exit-code	
+L025	SAME	log --oneline	
+L026	SAME	log --oneline -3	
+L027	SAME	log -2	
+L028	SAME	log --format=%H%n%T -2	
+L029	SAME	log --pretty=format:'%h %an %s' -3	
+L030	SAME	log --format='%h %ad' --date=short -3	
+L031	SAME	log --format='%h %ad' --date=iso -2	
+L032	SAME	log --oneline --graph	
+L033	SAME	log --oneline --all	
+L034	SAME	log --oneline main..feature	
+L035	SAME	log --oneline feature..main	
+L036	SAME	log --oneline --first-parent	
+L037	SAME	log --oneline --no-merges	
+L038	SAME	log --oneline --merges	
+L039	SAME	log --oneline -- src/b.txt	
+L040	SAME	log --oneline --reverse	
+L041	SAME	log --oneline --author=Thor -2	
+L042	SAME	log --oneline --grep=feature	
+L043	SAME	log --stat -1	
+L044	SAME	log --name-only --format=%s -2	
+L045	SAME	log --name-status --format=%s -2	
+L046	SAME	log -p -1 --format=%s	
+L047	SAME	log --oneline --decorate	
+L048	SAME	log -1 --format=%B	
+L049	SAME	show	
+L050	SAME	show --stat	
+L051	SAME	show --name-only	
+L052	SAME	show --format=%s -s HEAD~1	
+L053	SAME	show HEAD~1	
+L054	SAME	show HEAD~1 --stat --format=%h	
+L055	SAME	show v1	
+L056	SAME	show HEAD:src/b.txt	
+L057	SAME	show --oneline -s	
+L058	SAME	rev-parse HEAD	
+L059	SAME	rev-parse --short HEAD	
+L060	SAME	rev-parse HEAD~1 HEAD^2	
+L061	SAME	rev-parse --abbrev-ref HEAD	
+L062	SAME	rev-parse --show-toplevel	
+L063	SAME	rev-parse --git-dir	
+L064	SAME	rev-parse --is-inside-work-tree	
+L065	SAME	rev-parse --verify main	
+L066	SAME	rev-parse v1^{commit}	
+L067	SAME	rev-parse HEAD^{tree}	
+L068	SAME	rev-list --count HEAD	
+L069	SAME	rev-list HEAD~2..HEAD	
+L070	SAME	rev-list --max-count=2 HEAD	
+L071	SAME	merge-base main feature	
+L072	SAME	merge-base --is-ancestor HEAD~1 HEAD	
+L073	SAME	branch	
+L074	SAME	branch -a	
+L075	SAME	branch -v	
+L076	SAME	branch --show-current	
+L077	SAME	branch --list 'f*'	
+L078	SAME	branch --merged	
+L079	SAME	branch --contains HEAD~3	
+L080	SAME	branch topic	
+L081	SAME	branch -d feature	
+L082	SAME	tag	
+L083	SAME	tag -l 'v*'	
+L084	SAME	tag -n	
+L085	SAME	describe	
+L086	SAME	describe --tags	
+L087	SAME	describe --always HEAD~1	
+L088	SAME	ls-files	
+L089	SAME	ls-files -s	
+L090	SAME	ls-files --others --exclude-standard	
+L091	SAME	ls-files -m	
+L092	SAME	ls-files src	
+L093	SAME	cat-file -t HEAD	
+L094	SAME	cat-file -p HEAD	
+L095	SAME	cat-file -p HEAD:src	
+L096	SAME	cat-file -s HEAD:README.md	
+L097	SAME	cat-file -e HEAD	
+L098	SAME	for-each-ref	
+L099	SAME	for-each-ref --format='%(refname:short) %(objectname:short)' refs/heads	
+L100	SAME	show-ref	
+L101	SAME	show-ref --tags	
+L102	SAME	grep -n beta	
+L103	SAME	grep -c a	
+L104	SAME	grep -l readme	
+L105	SAME	grep beta -- src	
+L106	SAME	blame README.md	
+L107	SAME	blame -L 1,2 README.md	
+L108	SAME	config --get user.name	
+L109	SAME	config --list --local	
+L110	SAME	config core.bare	
+L111	SAME	remote	
+L112	SAME	remote -v	
+L113	SAME	stash list	
+L114	SAME	stash	
+L115	SAME	stash push -m wip	
+L116	SAME	add -A	
+L117	SAME	add src/a.txt	
+L118	SAME	add .	
+L119	SAME	add -u	
+L120	SAME	commit -m msg	
+L121	SAME	commit -am msg	
+L122	SAME	commit --allow-empty -m empty	
+L123	SAME	commit --amend -m amended	
+L124	SAME	reset	
+L125	SAME	reset --soft HEAD~1	
+L126	SAME	reset --hard	
+L127	SAME	reset --hard HEAD~1	
+L128	SAME	reset HEAD src/new.txt	
+L129	SAME	restore src/a.txt	
+L130	SAME	restore --staged src/new.txt	
+L131	SAME	checkout -- src/a.txt	
+L132	SAME	checkout feature	
+L133	SAME	checkout -b topic	
+L134	SAME	checkout -B topic HEAD~2	
+L135	SAME	switch feature	
+L136	SAME	switch -c topic2	
+L137	SAME	switch --detach HEAD~1	
+L138	SAME	clean -n	
+L139	SAME	clean -fd	
+L140	SAME	rm --cached src/new.txt	
+L141	SAME	mv README.md README2.md	
+L142	SAME	merge feature	
+L143	SAME	merge --ff-only feature	
+L144	SAME	cherry-pick 7d4185b	
+L145	SAME	revert --no-edit HEAD	
+L146	SAME	rebase main feature	
+L147	SAME	worktree list	

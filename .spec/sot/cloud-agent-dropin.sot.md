@@ -3,7 +3,7 @@ id: sot:root/cloud-agent-dropin
 title: Cloud agent drop-in (arks as git for cloud agent sessions)
 status: active
 created: 2026-11-19T18:00:00Z
-updated: 2026-11-19T19:40:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [cloud, agent, dropin, proxy, tls, ca, config, signing, ssh-signing, personality, corpus, no-invent-claimed]
 verify: manual
 rel:
@@ -43,18 +43,18 @@ Decisions D1–D6: [[adr:root/20261119180100]].
 | Options | Corpus rows in §Corpus fail with `unsupported option` | Missing |
 | Build | Fresh clone needs sibling `discrete-circuit` path deps | Build hygiene |
 
-## Tip state (host advisory, [[evidence:root/20261119190000-cloud-dropin-host-probe]])
+## Tip state (Docker clean-room [[evidence:root/20261119222000-g042-cloud-dropin]] + [[evidence:root/20261119225600-cli-flag-corpus-cleanroom]]; host probe [[evidence:root/20261119190000-cloud-dropin-host-probe]])
 
 | Area | State | Notes |
 |------|-------|-------|
-| T transport | **Partial (host advisory)** | CA + proxy via `arks-net`; clone / ls-remote / fetch / push through a TLS-intercepting proxy succeed; push honors `$GIT_DIR/shallow` ([[sot:root/arks-remote]] 14a). `url.*.insteadOf` not yet applied |
-| C config | **Partial (host advisory)** | `arks-config` precedence + identity; `-c` global option; unscoped `config` reads merged |
-| S signing | **Partial (host advisory)** | `commit.gpgsign` + `gpg.format=ssh` + `gpg.ssh.program` produce `gpgsig`; forge-side verification not observed |
-| O corpus | **Partial (host advisory)** | Agent-tier flag corpus (`verify/fixtures/cli-flag-corpus/agent-tier-a.txt`, 147 lines: stdout + exit code + resulting repo state vs stock git 2.43) **146/147 SAME**; remaining `log --graph` layout. Also Partial: rename detection / xdiff hunk heuristics, `--cc` on merges, `--git-dir` / `--work-tree`, cherry-pick/revert refuse on any dirty tracked file |
+| T transport | **Claimed (G42 Docker)** | CA + proxy via `arks-net`; clone / ls-remote / fetch / push through a TLS-intercepting proxy succeed; push honors `$GIT_DIR/shallow` ([[sot:root/arks-remote]] 14a). `url.*.insteadOf` not yet applied |
+| C config | **Claimed (G42 Docker)** | `arks-config` precedence + identity; `-c` global option; unscoped `config` reads merged |
+| S signing | **Claimed (G42 Docker)** | `commit.gpgsign` + `gpg.format=ssh` + `gpg.ssh.program` produce `gpgsig`; stock git `verify-commit` accepts it in G42; forge-side verification not observed |
+| O corpus | **Claimed (Docker corpus receipt)** | Flag corpora vs pin stock git 2.39.5 in the clean-room image ([[evidence:root/20261119225600-cli-flag-corpus-cleanroom]]): tier A (`agent-tier-a.txt`) **147/147 SAME**, tier B (`agent-tier-b.txt`) **166/168 SAME** (stdout + exit code + resulting repo state). Reasoned DIFF: `format-patch` signature carries the arks version; `init --bare` has no template dir. Still Partial outside the corpora: rename detection / xdiff hunk heuristics, `--cc` on merges, `--graph` with parent-rewriting filters, `show --graph` |
 | B build | **Closing** | CELIR not adopted; sibling `discrete-circuit` path deps removed ([[adr:root/20261119200000]]) |
 | C9 rollout | **Applied (opt-in install)** | Hosted sessions install `arks` from `main` at container build (`cargo install --locked --git`, about one minute); `git` untouched (D5). Canon: `modootoday/x.ws.fleet` `infra/claude-env/default/setup.d/20-arks.sh` → `compose.sh` → `setup.sh`; applied only by the fleet design session — arks sessions open PRs there and never call the environment API. Fresh-session install not yet observed |
 | Index interop | **Fixed** | entry-dependent extensions dropped on rewrite ([[sot:root/arks-index]] v0.1.2) |
-| V clean-room | **Gate written; Docker run pending** | G42 `verify/scripts/run-g042-cloud-dropin.sh` (15 must rows) — host-advisory run all PASS; Docker receipt needs a host with a Docker daemon |
+| V clean-room | **Claimed** | G42 Docker clean-room run: 15/15 must rows PASS ([[evidence:root/20261119222000-g042-cloud-dropin]]); Cargo offline from a `Cargo.lock`-pinned cache (venue note in each receipt) |
 
 ## Rule
 
