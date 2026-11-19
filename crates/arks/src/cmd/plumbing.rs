@@ -491,40 +491,6 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-pub fn cmd_for_each_ref(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: pattern + `--format=%(refname)` minimal.
-    refuse_unknown_flags(args, &["--format"])?;
-    let mut format = "%(refname)".to_string();
-    let mut pattern = "refs/".to_string();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--format" {
-            i += 1;
-            format = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("for-each-ref --format <fmt>".into()))?
-                .clone();
-        } else if let Some(rest) = args[i].strip_prefix("--format=") {
-            format = rest.to_string();
-        } else if !args[i].starts_with('-') {
-            pattern = args[i].clone();
-        }
-        i += 1;
-    }
-    let repo = open_repo()?;
-    // REF-022 (M20 Cx-4): readers remain safe under packed-refs.lock (no writer dialect).
-    // Cite: https://git-scm.com/docs/git-for-each-ref + pack-refs lore — readers do not take the lock.
-    let mut refs = repo.refs().list_refs(&pattern)?;
-    refs.sort_by(|a, b| a.0.cmp(&b.0));
-    for (name, oid) in refs {
-        let line = format
-            .replace("%(refname)", &name)
-            .replace("%(objectname)", &oid.to_hex());
-        println!("{line}");
-    }
-    Ok(())
-}
-
 pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
     // M16 Sy-3 + cloud drop-in §O: revision ranges (`A..B`, `A...B`, `^A`),
     // `--count`, `--max-count`/`-n`/`-<n>`, `--all`, `--first-parent`,

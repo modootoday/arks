@@ -11,6 +11,7 @@ pub mod config;
 pub mod core;
 pub mod credential;
 pub mod diff_render;
+pub mod for_each_ref;
 pub mod grep;
 pub mod history;
 pub mod hooks;
@@ -60,6 +61,7 @@ pub use core::{
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
+pub use for_each_ref::cmd_for_each_ref;
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use host_skew::{
@@ -88,7 +90,7 @@ pub use merge::{cmd_merge, cmd_pull};
 pub use notes::cmd_notes;
 pub use patch::{cmd_am, cmd_format_patch};
 pub use plumbing::{
-    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree, cmd_for_each_ref,
+    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree,
     cmd_index_pack, cmd_ls_files, cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects,
     cmd_read_tree, cmd_rev_list, cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
