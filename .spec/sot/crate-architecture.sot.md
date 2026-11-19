@@ -9,12 +9,12 @@ verify: manual
 rel:
   depends_on: [sot:root/product-intent, sot:root/product-naming, sot:root/git-compat-surface, adr:root/20261108083507, adr:root/20261109122126, adr:root/20261110052030, sot:root/storage-celir-boundary, sot:root/lease-concurrency-intent, sot:root/remote-host-compatibility-surface]
   evidence: [research:root/20261108083502]
-  governs: [crates, crates/arks-hash, crates/arks-oid, crates/arks-object, crates/arks-store, crates/arks-refs, crates/arks-index, crates/arks-repo, crates/arks-pack, crates/arks-protocol, crates/arks-remote, crates/arks-lease, crates/arks-server, crates/arks-daemon, crates/arks-hub, crates/arks-agent, crates/arks]
+  governs: [crates, crates/arks-config, crates/arks-net, crates/arks-hash, crates/arks-oid, crates/arks-object, crates/arks-store, crates/arks-refs, crates/arks-index, crates/arks-repo, crates/arks-pack, crates/arks-protocol, crates/arks-remote, crates/arks-lease, crates/arks-server, crates/arks-daemon, crates/arks-hub, crates/arks-agent, crates/arks]
 ---
 
 # Crate architecture
 
-Version 0.2.10. Normative **workspace crate graph** and **inner → outer dependency rule** for arks. Product name / primary crate / bin: [[sot:root/product-naming]]. Build principle: [[sot:root/product-intent]]. Compatibility envelope: [[sot:root/git-compat-surface]]. Native engine + zero-`gix` end state: [[adr:root/20261108083507]]. CELIR dual-path (index-only opt-in): [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]].
+Version 0.2.11. Normative **workspace crate graph** and **inner → outer dependency rule** for arks. Product name / primary crate / bin: [[sot:root/product-naming]]. Build principle: [[sot:root/product-intent]]. Compatibility envelope: [[sot:root/git-compat-surface]]. Native engine + zero-`gix` end state: [[adr:root/20261108083507]]. CELIR dual-path (index-only opt-in): [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]].
 
 Convention affinity (cite, do not fork): humanymous crate-architecture patterns at `C:\workspaces\humanymous\.spec\sot\crate-architecture.sot.md` — kebab-case packages, acyclic responsibility graph, no artificial fragmentation. Cross-cutting SRP / flat-list / context-dir / language-standard layout rules: [[sot:root/structural-conventions]].
 
@@ -56,6 +56,8 @@ Workspace members present: `crates/arks-hash`, `crates/arks-oid`, `crates/arks-o
 
 | Crate | Ring | Responsibility |
 |-------|------|----------------|
+| `arks-config` | 0 | Git config files read-side: parse + merged precedence (system → global → repo → `GIT_CONFIG_COUNT` → `GIT_CONFIG_PARAMETERS`) + identity resolution ([[sot:root/cloud-agent-dropin]] §C); no writes |
+| `arks-net` | 1 | HTTPS client policy shared by `arks-remote` and `arks-hub`: trust anchors (`http.sslCAInfo`, `GIT_SSL_CAINFO`, `SSL_CERT_FILE`) + proxy (`http.proxy`, `HTTPS_PROXY`, `NO_PROXY`) ([[sot:root/cloud-agent-dropin]] §T); depends on `arks-config` only |
 | `arks-hash` | 0 | Object-format hashing (SHA-1 / SHA-256 per repo object format); no I/O |
 | `arks-oid` | 0 | OID newtype, hex parse/format, compare |
 | `arks-object` | 1 | Loose object header + payload types (`blob`/`tree`/`commit`/`tag`); zlib stream codec |
@@ -79,6 +81,7 @@ Workspace members present: `crates/arks-hash`, `crates/arks-oid`, `crates/arks-o
 
 ```text
 arks (sole published CLI) → arks-repo, arks-protocol, arks-remote?, arks-server?, arks-daemon?, arks-hub?, arks-agent?, arks-lease?, …
+arks-remote, arks-hub → arks-net → arks-config (HTTPS policy; no other arks deps)
 arks-hub (internal lib) → native HTTP forge client; used by `arks hub`; MUST NOT spawn gh/git
 arks-agent (internal lib) → LLM providers + optional arks-hub for PR comments; used by `arks agent`; MUST NOT spawn gh/git/vendor CLIs
 arks-daemon (internal lib) → git-daemon symmetry; used by `arks daemon`; MUST NOT spawn git/gh
