@@ -484,12 +484,21 @@ fn collect_untracked_rec(
     Ok(())
 }
 
+/// `(ctime_sec, ctime_nsec, mtime_sec, mtime_nsec)` for an index entry.
+/// ctime is the inode change time (`st_ctime`) git records, not the birth
+/// time. Cite: https://git-scm.com/docs/gitformat-index
 pub(crate) fn file_times(meta: &fs::Metadata) -> (u32, u32, u32, u32) {
     let to_parts = |t: SystemTime| {
         let dur = t.duration_since(UNIX_EPOCH).unwrap_or_default();
         (dur.as_secs() as u32, dur.subsec_nanos())
     };
     let (mtime_sec, mtime_nsec) = meta.modified().ok().map(to_parts).unwrap_or((0, 0));
+    #[cfg(unix)]
+    let (ctime_sec, ctime_nsec) = {
+        use std::os::unix::fs::MetadataExt;
+        (meta.ctime() as u32, meta.ctime_nsec() as u32)
+    };
+    #[cfg(not(unix))]
     let (ctime_sec, ctime_nsec) = meta
         .created()
         .ok()

@@ -785,20 +785,11 @@ fn materialize_tree_only(files: &HashMap<String, Oid>) -> CliResult<()> {
 }
 
 fn stamp_path(path: &Path, len: usize) -> (u32, u32, u32, u32, u32) {
-    use std::time::{SystemTime, UNIX_EPOCH};
     let size = u32::try_from(len).unwrap_or(u32::MAX);
-    let to_parts = |t: SystemTime| {
-        let dur = t.duration_since(UNIX_EPOCH).unwrap_or_default();
-        (dur.as_secs() as u32, dur.subsec_nanos())
-    };
     match fs::metadata(path) {
         Ok(meta) => {
-            let (mtime_sec, mtime_nsec) = meta.modified().ok().map(to_parts).unwrap_or((0, 0));
-            let (ctime_sec, ctime_nsec) = meta
-                .created()
-                .ok()
-                .map(to_parts)
-                .unwrap_or((mtime_sec, mtime_nsec));
+            let (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec) =
+                crate::cmd::shared::file_times(&meta);
             let size = meta.len().min(u32::MAX as u64) as u32;
             (ctime_sec, ctime_nsec, mtime_sec, mtime_nsec, size)
         }

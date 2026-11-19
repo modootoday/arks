@@ -700,14 +700,13 @@ pub fn cmd_update_index(args: &[String]) -> CliResult<()> {
     if refresh {
         // M19 Cx-1 MISC-012: honor exclusive index.lock (lease ≠ skip). Stock
         // `git update-index --refresh` takes the lock; under a held lock it fails.
-        // Unlocked: claimed no-op success when index readable (stat refresh deferred).
         if lock.is_file() {
             return Err(CliError::Msg(format!(
                 "{} (index locked; MISC-012 — update-index --refresh honors exclusive lock; no poll-skip)",
                 lock.display()
             )));
         }
-        return Ok(());
+        return refresh_index(&repo, &work, &mut index, args);
     }
     // Parse --chmod=+x|-x (IDX-013).
     let mut chmod_mode: Option<u32> = None;
@@ -987,6 +986,65 @@ pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
         }
     }
     Ok(())
+}
+
+/// `update-index --refresh`: re-read stat data for entries whose content
+/// still matches; print `<path>: needs update` (exit 1) for the others.
+/// Cite: https://git-scm.com/docs/git-update-index#Documentation/git-update-index.txt---refresh
+fn refresh_index(
+    repo: &arks_repo::Repository,
+    work: &std::path::Path,
+    index: &mut arks_index::Index,
+    args: &[String],
+) -> CliResult<()> {
+    let quiet = args.iter().any(|a| a == "-q");
+    let mut stale = Vec::new();
+    for e in index.entries.iter_mut().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        let Ok(meta) = std::fs::symlink_metadata(&abs) else {
+            stale.push(e.path.clone());
+            continue;
+        };
+        if e.mode == 0o160000 || meta.is_dir() {
+            continue;
+        }
+        let bytes = if meta.file_type().is_symlink() {
+            std::fs::read_link(&abs)?
+                .to_string_lossy()
+                .into_owned()
+                .into_bytes()
+        } else {
+            std::fs::read(&abs)?
+        };
+        let oid = RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?;
+        let mode = if meta.file_type().is_symlink() {
+            0o120000
+        } else {
+            crate::cmd::shared::file_mode(&meta)
+        };
+        if oid != e.oid || mode != e.mode {
+            stale.push(e.path.clone());
+            continue;
+        }
+        let fresh = crate::cmd::working_tree::stat_entry(&e.path, oid, &meta);
+        e.ctime_sec = fresh.ctime_sec;
+        e.ctime_nsec = fresh.ctime_nsec;
+        e.mtime_sec = fresh.mtime_sec;
+        e.mtime_nsec = fresh.mtime_nsec;
+        e.dev = fresh.dev;
+        e.ino = fresh.ino;
+        e.uid = fresh.uid;
+        e.gid = fresh.gid;
+        e.size = fresh.size;
+    }
+    write_index(repo, index)?;
+    if stale.is_empty() || quiet {
+        return Ok(());
+    }
+    for p in &stale {
+        println!("{p}: needs update");
+    }
+    Err(CliError::silent(1))
 }
 
 pub(crate) fn flatten_tree_to_index(
