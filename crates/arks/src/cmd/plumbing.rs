@@ -286,9 +286,32 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
 
 pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
     // M16 Sy-3: `--all` claimed (emit all common ancestors found by pairwise walk).
-    refuse_unknown_flags(args, &["--all"])?;
+    // `--is-ancestor A B`: exit 0 when A is an ancestor of B, else 1 (no output).
+    // Cite: https://git-scm.com/docs/git-merge-base
+    refuse_unknown_flags(args, &["--all", "--is-ancestor"])?;
     let all = args.iter().any(|a| a == "--all");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    if args.iter().any(|a| a == "--is-ancestor") {
+        if positional.len() != 2 {
+            return Err(CliError::fatal("--is-ancestor takes exactly two commits"));
+        }
+        let repo = open_repo()?;
+        let peel = |r: &str| -> CliResult<Oid> {
+            crate::cmd::shared::peel_to_kind(
+                &repo,
+                &resolve_rev(&repo, r)
+                    .map_err(|_| CliError::fatal(format!("Not a valid commit name {r}")))?,
+                crate::cmd::shared::ObjKind::Commit,
+                r,
+            )
+        };
+        let (a, b) = (peel(positional[0])?, peel(positional[1])?);
+        return if crate::cmd::shared::is_ancestor(&repo, &a, &b)? {
+            Ok(())
+        } else {
+            Err(CliError::silent(1))
+        };
+    }
     if positional.len() != 2 {
         return Err(CliError::Usage(
             "merge-base [--all] <commit> <commit>".into(),
