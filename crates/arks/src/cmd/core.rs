@@ -941,8 +941,9 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
                 .get(i)
                 .ok_or_else(|| CliError::Usage("commit: -m requires a message".into()))?;
             message = Some(match message {
+                // git-commit: repeated -m values become separate paragraphs.
                 Some(mut m) => {
-                    m.push('\n');
+                    m.push_str("\n\n");
                     m.push_str(part);
                     m
                 }
