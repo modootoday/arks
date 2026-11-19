@@ -322,7 +322,7 @@ fn run(args: &[String], annotate: bool) -> CliResult<()> {
         ranges.push((1, lines.len()));
     }
     let shown: Vec<usize> = (0..lines.len())
-        .filter(|i| ranges.iter().any(|(s, e)| i + 1 >= *s && i + 1 <= *e))
+        .filter(|i| ranges.iter().any(|(s, e)| (*s..=*e).contains(&(i + 1))))
         .collect();
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

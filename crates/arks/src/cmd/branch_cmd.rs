@@ -16,6 +16,9 @@ use arks_refs::RefTarget;
 use arks_repo::Repository;
 use std::collections::HashSet;
 
+/// (display name, ref oid, is_current, upstream-capable short branch name, symref target)
+type BranchRow = (String, Oid, bool, Option<String>, Option<String>);
+
 /// Glob match where `*` also matches `/` (git `wildmatch` without
 /// `WM_PATHNAME`, as used by `branch --list` / `tag -l`).
 pub(crate) fn fnmatch(p: &[u8], t: &[u8]) -> bool {
@@ -213,7 +216,7 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
 fn list_branches(repo: &Repository, o: &ListOpts) -> CliResult<()> {
     let head = repo.head_target()?;
     // (display name, ref oid, is_current, upstream-capable short branch name, symref target)
-    let mut rows: Vec<(String, Oid, bool, Option<String>, Option<String>)> = Vec::new();
+    let mut rows: Vec<BranchRow> = Vec::new();
     if let (RefTarget::Direct(h), false) = (&head, o.remotes) {
         rows.push((
             format!("(HEAD detached at {})", abbrev_hex(repo, h, 7)),
@@ -491,9 +494,9 @@ fn create_branch(pos: &[String], force: bool) -> CliResult<()> {
         }
         if let Ok(RefTarget::Symbolic(s)) = repo.head_target() {
             if s == full {
-                return Err(CliError::fatal(format!(
-                    "cannot force update the current branch."
-                )));
+                return Err(CliError::fatal(
+                    "cannot force update the current branch.".to_string(),
+                ));
             }
         }
     }

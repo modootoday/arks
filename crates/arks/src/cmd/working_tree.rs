@@ -496,7 +496,7 @@ pub fn cmd_rm(args: &[String]) -> CliResult<()> {
                 "pathspec '{p}' did not match any files"
             )));
         }
-        if !recursive && !hits.iter().any(|h| *h == rel) {
+        if !recursive && !hits.contains(&rel) {
             return Err(CliError::fatal(format!(
                 "not removing '{p}' recursively without -r"
             )));

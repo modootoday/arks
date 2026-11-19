@@ -121,7 +121,7 @@ fn tree_of(repo: &mut Repository, entries: &[IndexEntry]) -> CliResult<Oid> {
         return put(repo, ObjectKind::Tree, Vec::new());
     }
     let format = repo.object_format();
-    Ok(write_tree_from_index(repo.store_mut(), entries, format)?)
+    write_tree_from_index(repo.store_mut(), entries, format)
 }
 
 fn stash_push(message: Option<&str>, quiet: bool) -> CliResult<()> {

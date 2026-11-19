@@ -16,8 +16,8 @@ pub mod for_each_ref;
 pub mod grep;
 pub mod history;
 pub mod hooks;
-pub mod ignore;
 pub mod host_skew;
+pub mod ignore;
 pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
@@ -51,6 +51,7 @@ pub mod worktree;
 
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
 pub use bisect::cmd_bisect;
+pub use blame::{cmd_annotate, cmd_blame};
 pub use branch::{cmd_checkout, cmd_switch};
 pub use branch_cmd::cmd_branch;
 pub use bundle::cmd_bundle;
@@ -69,7 +70,6 @@ pub use host_skew::{
     cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_replay_exp,
     cmd_survey, cmd_url_parse,
 };
-pub use blame::{cmd_annotate, cmd_blame};
 pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
@@ -92,9 +92,9 @@ pub use merge::{cmd_merge, cmd_pull};
 pub use notes::cmd_notes;
 pub use patch::{cmd_am, cmd_format_patch};
 pub use plumbing::{
-    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree,
-    cmd_index_pack, cmd_ls_files, cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects,
-    cmd_read_tree, cmd_rev_list, cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
+    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_diff_tree, cmd_index_pack,
+    cmd_ls_files, cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree,
+    cmd_rev_list, cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
 pub use range_diff::cmd_range_diff;
 pub use remote::{cmd_clone, cmd_fetch, cmd_push, cmd_remote};
