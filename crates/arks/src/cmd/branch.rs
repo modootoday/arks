@@ -78,8 +78,25 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
         } else {
             Vec::new()
         };
+        let from = crate::reflog::head_label(&repo);
+        let old_tip = repo.refs().resolve(&full).ok();
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
+        let start = positional.get(1).map(|s| s.as_str()).unwrap_or("HEAD");
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            &full,
+            old_tip.as_ref(),
+            &oid,
+            &format!("branch: Created from {start}"),
+        );
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            "HEAD",
+            head.as_ref(),
+            &oid,
+            &format!("checkout: moving from {from} to {name}"),
+        );
         for l in carried.iter().filter(|_| !crate::util::quiet()) {
             println!("{l}");
         }
@@ -213,8 +230,25 @@ pub fn cmd_switch(args: &[String]) -> CliResult<()> {
         } else {
             Vec::new()
         };
+        let from = crate::reflog::head_label(&repo);
+        let old_tip = repo.refs().resolve(&full).ok();
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
+        let start = positional.get(1).map(|s| s.as_str()).unwrap_or("HEAD");
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            &full,
+            old_tip.as_ref(),
+            &oid,
+            &format!("branch: Created from {start}"),
+        );
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            "HEAD",
+            head.as_ref(),
+            &oid,
+            &format!("checkout: moving from {from} to {name}"),
+        );
         for l in carried.iter().filter(|_| !crate::util::quiet()) {
             println!("{l}");
         }
@@ -300,7 +334,16 @@ fn switch_branch(name: &str, _detach: bool) -> CliResult<()> {
         }
     }
     let was_current = matches!(repo.head_target(), Ok(RefTarget::Symbolic(ref s)) if *s == full);
+    let from = crate::reflog::head_label(&repo);
+    let old_head = repo.head_oid().ok();
     repo.refs_mut().set_symbolic("HEAD", &full)?;
+    let _ = crate::reflog::append_reflog(
+        &repo,
+        "HEAD",
+        old_head.as_ref(),
+        &oid,
+        &format!("checkout: moving from {from} to {name}"),
+    );
     for l in carried.iter().filter(|_| !crate::util::quiet()) {
         println!("{l}");
     }
@@ -324,7 +367,15 @@ fn detach_to(rev: &str) -> CliResult<()> {
     // The two-way switch also reports carried local changes for a same-commit detach.
     let work = work_tree(&repo)?;
     let carried = crate::cmd::switch_tree::two_way_switch(&repo, &work, head.as_ref(), &oid)?;
+    let from = crate::reflog::head_label(&repo);
     repo.refs_mut().update("HEAD", &oid, None)?;
+    let _ = crate::reflog::append_reflog(
+        &repo,
+        "HEAD",
+        head.as_ref(),
+        &oid,
+        &format!("checkout: moving from {from} to {rev}"),
+    );
     for l in carried.iter().filter(|_| !crate::util::quiet()) {
         println!("{l}");
     }

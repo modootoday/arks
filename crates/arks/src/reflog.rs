@@ -76,6 +76,37 @@ pub fn append_reflog(
     Ok(())
 }
 
+/// `HEAD`'s name for `checkout: moving from <x> to <y>` reflog messages:
+/// the branch short name, else the full commit hex.
+pub fn head_label(repo: &Repository) -> String {
+    match repo.head_target() {
+        Ok(arks_refs::RefTarget::Symbolic(s)) => s
+            .strip_prefix("refs/heads/")
+            .unwrap_or(s.as_str())
+            .to_string(),
+        Ok(arks_refs::RefTarget::Direct(o)) => o.to_hex(),
+        Err(_) => "HEAD".to_string(),
+    }
+}
+
+/// Entries of `refname`'s reflog, oldest first: (old, new) OIDs.
+pub fn read_entries(repo: &Repository, refname: &str) -> Vec<(Option<Oid>, Oid, String)> {
+    let Ok(text) = fs::read_to_string(log_path_for_ref(repo, refname)) else {
+        return Vec::new();
+    };
+    text.lines()
+        .filter_map(|l| {
+            let (head, msg) = l.split_once('\t').unwrap_or((l, ""));
+            let mut it = head.split(' ');
+            let old = Oid::from_hex(it.next()?)
+                .ok()
+                .filter(|o| o.to_hex() != zero_oid_hex());
+            let new = Oid::from_hex(it.next()?).ok()?;
+            Some((old, new, msg.to_string()))
+        })
+        .collect()
+}
+
 /// After a branch tip update that also moves HEAD, append both logs.
 pub fn append_head_and_branch(
     repo: &Repository,

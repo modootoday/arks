@@ -138,6 +138,17 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
     if let Some(o) = old {
         let _ = repo.refs_mut().update("ORIG_HEAD", &o, None);
     }
+    {
+        let msg = format!("reset: moving to {rev}");
+        let _ = match repo.head_target()? {
+            RefTarget::Symbolic(name) => {
+                crate::reflog::append_head_and_branch(&repo, &name, old.as_ref(), &target, &msg)
+            }
+            RefTarget::Direct(_) => {
+                crate::reflog::append_reflog(&repo, "HEAD", old.as_ref(), &target, &msg)
+            }
+        };
+    }
     if mode == "soft" {
         return Ok(());
     }
