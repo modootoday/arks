@@ -2,30 +2,64 @@
 
 use crate::error::{CliError, CliResult};
 use crate::reflog::{resolve_reflog_name, show_reflog};
-use crate::util::{open_repo, refuse_unknown_flags};
-use arks_object::{Commit, ObjectKind};
+use crate::util::open_repo;
 use std::collections::BTreeMap;
 pub fn cmd_shortlog(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let repo = open_repo()?;
-    let mut counts: BTreeMap<String, u32> = BTreeMap::new();
-    let Ok(mut oid) = repo.head_oid() else {
-        return Ok(());
-    };
-    loop {
-        let obj = repo.get_object(&oid)?;
-        if obj.kind != ObjectKind::Commit {
-            break;
-        }
-        let c = Commit::decode(&obj.payload)?;
-        *counts.entry(c.author.name.clone()).or_default() += 1;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
+    // `-s`/`--summary`, `-n`/`--numbered`, `-e`/`--email`, `-c`/`--committer`,
+    // revision arguments (default HEAD; stdin input is not claimed). Authors
+    // sort by name (by count with -n); each author's subjects oldest first.
+    // Cite: https://git-scm.com/docs/git-shortlog
+    let args = crate::util::split_short_bundles(args, "snec", "");
+    let (mut summary, mut numbered, mut email, mut committer) = (false, false, false, false);
+    let mut revs = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "-s" | "--summary" => summary = true,
+            "-n" | "--numbered" => numbered = true,
+            "-e" | "--email" => email = true,
+            "-c" | "--committer" => committer = true,
+            "--" => break,
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => revs.push(a.clone()),
         }
     }
-    for (name, n) in counts {
-        println!("{n:6}\t{name}");
+    let repo = open_repo()?;
+    if revs.is_empty() {
+        if repo.head_oid().is_err() {
+            return Ok(());
+        }
+        revs.push("HEAD".into());
+    }
+    let (inc, exc) = crate::cmd::log_format::resolve_range(&repo, &revs)?;
+    let mut groups: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (_, c) in crate::cmd::log_format::walk(&repo, &inc, &exc, false)? {
+        let who = if committer { &c.committer } else { &c.author };
+        let key = if email {
+            format!("{} <{}>", who.name, who.email)
+        } else {
+            who.name.clone()
+        };
+        groups
+            .entry(key)
+            .or_default()
+            .push(crate::cmd::log_format::subject_line(&c.message));
+    }
+    let mut rows: Vec<(String, Vec<String>)> = groups.into_iter().collect();
+    if numbered {
+        rows.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0)));
+    }
+    for (name, subjects) in rows {
+        if summary {
+            println!("{:6}\t{name}", subjects.len());
+        } else {
+            println!("{name} ({}):", subjects.len());
+            for s in subjects.iter().rev() {
+                println!("      {s}");
+            }
+            println!();
+        }
     }
     Ok(())
 }
