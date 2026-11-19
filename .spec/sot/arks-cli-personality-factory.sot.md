@@ -3,7 +3,7 @@ id: sot:root/arks-cli-personality-factory
 title: arks CLI personality dispatch and CommandLayer factory
 status: active
 created: 2026-11-10T20:15:00Z
-updated: 2026-11-19T23:00:00Z
+updated: 2026-11-20T00:10:00Z
 tags: [cli, personality, factory, command-layer, registry, overlap, exit-code, arks, git, gh, serve, daemon, design, partial]
 verify: manual
 rel:
@@ -28,7 +28,7 @@ rel:
 
 # arks CLI personality dispatch and CommandLayer factory
 
-Document revision **0.1.3** (SoT edit counter only — **not** a product/crate release). Normative **design** for (1) **personality dispatch** on the single published binary `arks`, (2) lean **CommandLayer + Registry** factory in `crates/arks`, and (3) **overlap** input/output/**exit-code** rules for the native `arks` personality.
+Document revision **0.1.4** (SoT edit counter only — **not** a product/crate release). Normative **design** for (1) **personality dispatch** on the single published binary `arks`, (2) lean **CommandLayer + Registry** factory in `crates/arks`, and (3) **overlap** input/output/**exit-code** rules for the native `arks` personality.
 
 **Honesty:** This SoT is **design intent**. Deep forge/SSH bodies remain **Partial / not Claimed**. CLI **skeleton** (PersonalityResolver + Registry + OverlapFacade + ExitCodePolicy + stubs) MAY land without inventing Claimed feature depth. **IW-PERSONALITY** drop-in **sample Claimed** via [[evidence:root/20261111014608-personality-dropin]]; **IW-PERSONALITY-FULL expand Claimed** via [[evidence:root/20261111020515-personality-expand]] ([[sot:root/arks-remaining-incompletes-wave]]); **IW-PERSONALITY-EXIT** named peer exit-table rows Claimed via [[evidence:root/20261111025151-personality-exit-tables]] ([[sot:root/arks-honesty-leftovers-wave]]); **IW-PERSONALITY-SURVEY** expand + survey2/3/4 Claimed via [[evidence:root/20261111050617-personality-survey]] ([[sot:root/arks-in-scope-leftovers-wave]]); ExitCodePolicy OR-of-failure unit greens **MUST NOT** invent full per-cmd table Claimed; cli survey Missing=0; CLI survey Partial remainder stay Partial beyond named+survey+survey2/3/4 expand (`gh` exit-codes 0/1/2/4). Normative stdout/stderr/exit **classes**: [[sot:root/arks-cli-output-exit-contract]]. Document revision ≠ crates.io/`arks` version bump.
 
@@ -74,6 +74,7 @@ Applies to nouns that exist in **both** Git and `gh` inventories under the nativ
     1. **Rank 0 — Git grammar:** try Git parse/applicability for this invocation first.
     2. **Rank 1 — gh grammar:** if not a valid/applicable Git parse for this invocation, fall through to gh/forge-client grammar.
     3. Exclusive Git-only or exclusive forge-only leaves skip the unused rank.
+    4. **`repo` rank split:** Git grammar owns `repo info` / `repo structure` ([git-repo](https://git-scm.com/docs/git-repo)); every other `repo` subcommand (`autolink`, `deploy-key`, `list`, `view`, …) is gh grammar and runs the forge peer only. Bare `arks repo` keeps the unified view.
 15. **Output (arks personality, default):** emit a **unified combined view** — Git section + Forge section (or one merged management layout) — **not** “pick one peer’s stdout only.”
 16. **Single-peer opt-out flags (design names; Partial until Claimed):** automation MAY request single-peer output/exit via flags such as `--porcelain` (Git script form), `--git-only`, `--forge-only` (exact flag set Partial until clap surface Claimed). When set, output and exit follow that peer only.
 17. **`git` / `gh` personalities** stay **peer-pure**: no unified multi-section output requirement; no cross-peer fallthrough unless that peer’s own CLI already behaves that way.
