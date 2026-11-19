@@ -13,6 +13,7 @@ pub mod diff_render;
 pub mod grep;
 pub mod history;
 pub mod hooks;
+pub mod ignore;
 pub mod host_skew;
 pub mod inspect;
 pub mod interactive_patch;

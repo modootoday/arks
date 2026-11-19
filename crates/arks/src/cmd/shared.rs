@@ -354,15 +354,30 @@ pub(crate) fn current_branch_name(repo: &Repository) -> CliResult<String> {
     }
 }
 
+/// Untracked files below `dir` (work-tree relative, sorted), skipping paths
+/// excluded by gitignore(5) rules; excluded directories are not descended.
 pub(crate) fn collect_untracked(
     work: &Path,
     dir: &Path,
     indexed: &std::collections::HashSet<String>,
     out: &mut Vec<String>,
 ) -> CliResult<()> {
+    let mut ignore = crate::cmd::ignore::Ignore::new(work);
+    collect_untracked_with(work, dir, indexed, out, Some(&mut ignore))
+}
+
+/// [`collect_untracked`] with explicit exclude handling (`None` lists
+/// ignored files too, e.g. `ls-files --others` without `--exclude-standard`).
+pub(crate) fn collect_untracked_with(
+    work: &Path,
+    dir: &Path,
+    indexed: &std::collections::HashSet<String>,
+    out: &mut Vec<String>,
+    mut ignore: Option<&mut crate::cmd::ignore::Ignore>,
+) -> CliResult<()> {
     // Pf4-1: recurse without per-directory sort; sort once at the top call.
     let before = out.len();
-    collect_untracked_rec(work, dir, indexed, out)?;
+    collect_untracked_rec(work, dir, indexed, out, &mut ignore)?;
     out[before..].sort();
     Ok(())
 }
@@ -372,6 +387,7 @@ fn collect_untracked_rec(
     dir: &Path,
     indexed: &std::collections::HashSet<String>,
     out: &mut Vec<String>,
+    ignore: &mut Option<&mut crate::cmd::ignore::Ignore>,
 ) -> CliResult<()> {
     let rd = fs::read_dir(dir)?;
     for ent in rd {
@@ -386,8 +402,16 @@ fn collect_untracked_rec(
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");
-        if path.is_dir() {
-            collect_untracked_rec(work, &path, indexed, out)?;
+        let is_dir = path.is_dir();
+        if !indexed.contains(&rel) {
+            if let Some(ig) = ignore.as_deref_mut() {
+                if ig.is_ignored(&rel, is_dir) {
+                    continue;
+                }
+            }
+        }
+        if is_dir {
+            collect_untracked_rec(work, &path, indexed, out, ignore)?;
         } else if !indexed.contains(&rel) {
             out.push(rel);
         }
