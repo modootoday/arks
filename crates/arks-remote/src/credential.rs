@@ -596,12 +596,24 @@ fn run_helper(
     }
     refuse_forbidden_helper_program(helper)?;
     let mut cmd = spawn_helper_command(helper, operation)?;
-    let mut child = cmd
-        .stdin(Stdio::piped())
+    cmd.stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| RemoteError::Msg(format!("credential helper spawn: {e}")))?;
+        .stderr(Stdio::piped());
+    // ETXTBSY: a freshly written helper can still be open for writing in a child that
+    // another thread forked before exec closed the inherited descriptor; retry briefly.
+    let mut attempt = 0;
+    let mut child = loop {
+        match cmd.spawn() {
+            Ok(c) => break c,
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && attempt < 20 => {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Err(e) => {
+                return Err(RemoteError::Msg(format!("credential helper spawn: {e}")));
+            }
+        }
+    };
     {
         let mut stdin = child
             .stdin
