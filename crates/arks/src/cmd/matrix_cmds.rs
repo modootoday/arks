@@ -269,6 +269,8 @@ fn parse_pack_idx_oids(bytes: &[u8]) -> CliResult<Vec<Oid>> {
 
 /// `arks cherry [<upstream> [<head>]]`
 pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
+    // git-cherry: `[-v] [<upstream> [<head> [<limit>]]]`.
+    // Cite: https://git-scm.com/docs/git-cherry
     refuse_unknown_flags(args, &["-v"])?;
     let verbose = args.iter().any(|a| a == "-v");
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
@@ -281,31 +283,69 @@ pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
         Some(u) => resolve_rev(&repo, u)?,
         None => default_upstream(&repo)?,
     };
-    let up_set = first_parent_set(&repo, upstream)?;
-    let mut oid = head;
-    let mut listed = Vec::new();
-    loop {
-        if up_set.contains(&oid) {
-            break;
-        }
-        listed.push(oid);
-        let obj = repo.get_object(&oid)?;
-        let c = arks_object::Commit::decode(&obj.payload)?;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
-    }
+    // Commits in <upstream>..<head> (no merges, oldest first); `-` when an
+    // equivalent change is already in <head>..<upstream>.
+    let walk = |inc: Oid, exc: Oid| -> CliResult<Vec<Oid>> {
+        Ok(crate::cmd::log_format::walk(&repo, &[inc], &[exc], false)?
+            .into_iter()
+            .filter(|(_, c)| c.parents.len() < 2)
+            .map(|(o, _)| o)
+            .collect())
+    };
+    let mut listed = walk(head, upstream)?;
     listed.reverse();
+    let mut upstream_ids = HashSet::new();
+    for o in walk(upstream, head)? {
+        upstream_ids.insert(patch_identity(&repo, &o)?);
+    }
+    let limit = positional
+        .get(2)
+        .map(|l| resolve_rev(&repo, l))
+        .transpose()?
+        .map(|l| crate::cmd::shared::is_ancestor_set(&repo, l))
+        .transpose()?;
     for oid in listed {
+        if limit.as_ref().is_some_and(|set| set.contains(&oid)) {
+            continue;
+        }
+        let mark = if upstream_ids.contains(&patch_identity(&repo, &oid)?) {
+            '-'
+        } else {
+            '+'
+        };
         if verbose {
             let c = arks_object::Commit::decode(&repo.get_object(&oid)?.payload)?;
-            println!("+ {} {}", oid.to_hex(), c.subject());
+            println!("{mark} {} {}", oid.to_hex(), c.subject());
         } else {
-            println!("+ {}", oid.to_hex());
+            println!("{mark} {}", oid.to_hex());
         }
     }
     Ok(())
+}
+
+/// Change identity of a non-merge commit for `cherry`: its patch text with
+/// `index` lines and hunk positions dropped (the `git patch-id --stable`
+/// idea: equal changes on different bases compare equal).
+fn patch_identity(repo: &Repository, oid: &Oid) -> CliResult<String> {
+    let c = crate::cmd::log_format::read_commit(repo, oid)?;
+    let old = match c.parents.first() {
+        Some(p) => crate::cmd::shared::tree_blob_map(repo, p)?,
+        None => Default::default(),
+    };
+    let new = crate::cmd::shared::tree_blob_map(repo, oid)?;
+    let changes = crate::cmd::diff_render::changes_between(&old, &new, None);
+    let fmt = crate::cmd::diff_render::DiffFormat {
+        patch: true,
+        ..Default::default()
+    };
+    let mut buf = Vec::new();
+    crate::cmd::diff_render::render(&mut buf, repo, &fmt, &changes)?;
+    Ok(String::from_utf8_lossy(&buf)
+        .lines()
+        .filter(|l| !l.starts_with("index "))
+        .map(|l| if l.starts_with("@@") { "@@" } else { l })
+        .collect::<Vec<_>>()
+        .join("\n"))
 }
 
 fn default_upstream(repo: &Repository) -> CliResult<Oid> {
@@ -368,23 +408,6 @@ fn config_val(cfg: &str, key: &str) -> Option<String> {
         }
     }
     None
-}
-
-fn first_parent_set(repo: &Repository, tip: Oid) -> CliResult<HashSet<Oid>> {
-    let mut set = HashSet::new();
-    let mut oid = tip;
-    loop {
-        if !set.insert(oid) {
-            break;
-        }
-        let obj = repo.get_object(&oid)?;
-        let c = arks_object::Commit::decode(&obj.payload)?;
-        match c.parents.first() {
-            Some(p) => oid = *p,
-            None => break,
-        }
-    }
-    Ok(set)
 }
 
 /// `arks check-ref-format <refname>`

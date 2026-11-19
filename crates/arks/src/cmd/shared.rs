@@ -33,6 +33,16 @@ pub(crate) fn is_ancestor(repo: &Repository, ancestor: &Oid, tip: &Oid) -> CliRe
     Ok(ancestor == tip || arks_repo::ancestor_set(repo, *tip)?.contains(ancestor))
 }
 
+/// Every commit reachable from `tip` (including it).
+pub(crate) fn is_ancestor_set(
+    repo: &Repository,
+    tip: Oid,
+) -> CliResult<std::collections::HashSet<Oid>> {
+    let mut set = arks_repo::ancestor_set(repo, tip)?;
+    set.insert(tip);
+    Ok(set)
+}
+
 /// Resolve a revision per gitrevisions(7) (claimed subset): full or abbreviated
 /// hex, `HEAD`/`@`, `FETCH_HEAD`, ref DWIM (`refs/`, heads, remotes, tags),
 /// `<rev>@{u}` / `@{upstream}`, any chain of `~N`, `^N`, `^`, `^{<type>}`,
