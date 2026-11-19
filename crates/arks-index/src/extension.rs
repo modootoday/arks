@@ -61,7 +61,26 @@ pub(crate) fn write_extensions(buf: &mut Vec<u8>, extensions: &[IndexExtension])
     }
 }
 
-/// Extensions safe to preserve on rewrite (optional, non-split).
+/// Extensions whose payload describes entries, directories or byte offsets
+/// (gitformat-index): cache tree, untracked cache, fsmonitor, end-of-index,
+/// index-entry offset table. Stale copies make stock Git misread the index.
+const ENTRY_DEPENDENT: [&[u8; 4]; 5] = [b"TREE", b"UNTR", b"FSMN", b"EOIE", b"IEOT"];
+
+/// Extensions safe to preserve on rewrite (optional, non-split, entry-independent).
+/// Cite: `.spec/sot/arks-index.sot.md` rule 4.
 pub fn is_passthrough_safe(signature: &[u8; 4]) -> bool {
-    signature != LINK && signature != SDIR
+    signature != LINK && signature != SDIR && !ENTRY_DEPENDENT.contains(&signature)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn entry_dependent_extensions_are_dropped() {
+        for sig in [b"TREE", b"UNTR", b"FSMN", b"EOIE", b"IEOT"] {
+            assert!(!is_passthrough_safe(sig));
+        }
+        assert!(is_passthrough_safe(b"REUC"));
+    }
 }

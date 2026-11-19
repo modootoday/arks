@@ -44,6 +44,28 @@ mod tests {
     }
 
     #[test]
+    fn rewrite_drops_stale_cache_tree_keeps_reuc() {
+        let idx = Index {
+            version: 2,
+            entries: vec![sample_entry("a.txt", 0)],
+            extensions: vec![
+                crate::IndexExtension {
+                    signature: *b"TREE",
+                    data: b"\x001 0\n".to_vec(),
+                },
+                crate::IndexExtension {
+                    signature: *b"REUC",
+                    data: vec![],
+                },
+            ],
+        };
+        let bytes = idx.write(OidKind::Sha1).unwrap();
+        let back = Index::read(&bytes, OidKind::Sha1).unwrap();
+        let sigs: Vec<[u8; 4]> = back.extensions.iter().map(|e| e.signature).collect();
+        assert_eq!(sigs, vec![*b"REUC"]);
+    }
+
+    #[test]
     fn roundtrip_single_and_multi_sorted() {
         let mut e = vec![
             sample_entry("a.txt", 0),
