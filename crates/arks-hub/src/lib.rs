@@ -14,6 +14,7 @@
 mod forge;
 mod http_min;
 mod key_formats;
+mod leaves;
 mod local_tls_smoke;
 pub mod serve;
 mod store;
@@ -110,11 +111,12 @@ COMMANDS:
     label         Labels (local hub REST Partial)
     release       Releases list|create (local Partial)
     milestone     Milestones list|create (local Partial)
-    gist          Gists list|create (local Partial)
-    project       Projects list|create (local Partial)
-    discussion    Discussions list|create (local Partial)
-    ssh-key       User SSH keys list|create (local Partial)
-    gpg-key       User GPG keys list|create (local Partial)
+    gist          Gists create|list|view|edit|delete|rename|clone (arks-owned; host-tested Partial)
+    project       Projects + fields + items (arks-owned; host-tested Partial)
+    discussion    Discussions create|list|view|edit|comment (arks-owned; host-tested Partial)
+    ssh-key       Account SSH keys list|add|delete (arks-owned; host-tested Partial)
+    gpg-key       Account OpenPGP keys list|add|delete (arks-owned; host-tested Partial)
+                  (repo autolink / repo deploy-key: arks-owned; host-tested Partial)
     licenses      Common SPDX license ids list (local Partial; no gh)
     skill         Skills list (local empty Partial)
     preview       Deploy previews list (local empty Partial)
@@ -178,11 +180,31 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "label" => cmd_label(&args[1..]),
         "release" => cmd_release(&args[1..]),
         "milestone" => cmd_milestone(&args[1..]),
-        "gist" => cmd_gist(&args[1..]),
-        "project" => cmd_project(&args[1..]),
-        "discussion" => cmd_discussion(&args[1..]),
-        "ssh-key" => cmd_ssh_key(&args[1..]),
-        "gpg-key" => cmd_gpg_key(&args[1..]),
+        "gist" => leaves::dispatch("gist", leaves::gist::HELP, &args[1..], leaves::gist::run),
+        "project" => leaves::dispatch(
+            "project",
+            leaves::project::HELP,
+            &args[1..],
+            leaves::project::run,
+        ),
+        "discussion" => leaves::dispatch(
+            "discussion",
+            leaves::discussion::HELP,
+            &args[1..],
+            leaves::discussion::run,
+        ),
+        "ssh-key" => leaves::dispatch(
+            "ssh-key",
+            leaves::keys::SSH_HELP,
+            &args[1..],
+            leaves::keys::run_ssh,
+        ),
+        "gpg-key" => leaves::dispatch(
+            "gpg-key",
+            leaves::keys::GPG_HELP,
+            &args[1..],
+            leaves::keys::run_gpg,
+        ),
         "ruleset" | "rs" => later_refuse(first),
         "licenses" => cmd_licenses(&args[1..]),
         "skill" => cmd_out_local_list("skill", &args[1..], "/user/skills", false),
@@ -1277,8 +1299,8 @@ fn cmd_repo(args: &[String]) -> ExitCode {
     match sub {
         "" | "-h" | "--help" => {
             eprintln!(
-                "arks hub repo — list|view|create|edit|set-default|archive|unarchive|rename|delete \
-                 (local hub REST metadata; never spawn git/gh)"
+                "arks hub repo — list|view|create|edit|set-default|archive|unarchive|rename|delete|\
+                 autolink|deploy-key (local hub REST metadata; never spawn git/gh)"
             );
             ExitCode::SUCCESS
         }
@@ -1577,6 +1599,18 @@ fn cmd_repo(args: &[String]) -> ExitCode {
             ExitCode::from(2)
         }
         "gitignore" | "license" => later_refuse(&format!("repo {sub}")),
+        "autolink" => leaves::dispatch(
+            "repo autolink",
+            leaves::autolink::HELP,
+            &args[1..],
+            leaves::autolink::run,
+        ),
+        "deploy-key" => leaves::dispatch(
+            "repo deploy-key",
+            leaves::keys::DEPLOY_HELP,
+            &args[1..],
+            leaves::keys::run_deploy,
+        ),
         other => {
             eprintln!(
                 "arks hub repo {other}: Partial stub (not Claimed); refuse exit 2 — \
@@ -2625,113 +2659,6 @@ fn cmd_milestone(args: &[String]) -> ExitCode {
         None
     };
     local_list_create("milestone", args, &path, &path, payload)
-}
-
-fn cmd_gist(args: &[String]) -> ExitCode {
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let desc = flag_value(args, &["--desc", "--description"]).unwrap_or("");
-        let file = flag_value(args, &["--filename", "-f"]).unwrap_or("gist.txt");
-        Some(format!(
-            r#"{{"description":{},"public":true,"files":[{}]}}"#,
-            serde_json::to_string(desc).unwrap(),
-            serde_json::to_string(file).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("gist", args, "/gists", "/gists", payload)
-}
-
-fn cmd_project(args: &[String]) -> ExitCode {
-    let (owner, repo) = match repo_slug(args) {
-        Ok(v) => v,
-        Err(e) => {
-            if matches!(
-                args.first().map(String::as_str),
-                Some("" | "-h" | "--help") | None
-            ) {
-                eprintln!("arks hub project — list|create (local Partial); needs --repo");
-                return ExitCode::SUCCESS;
-            }
-            eprintln!("arks hub project: {e}");
-            return ExitCode::from(2);
-        }
-    };
-    let path = format!("/repos/{owner}/{repo}/projects");
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let title = flag_value(args, &["--title", "-t"]).unwrap_or("project");
-        let body = flag_value(args, &["--body", "-b"]).unwrap_or("");
-        Some(format!(
-            r#"{{"title":{},"body":{}}}"#,
-            serde_json::to_string(title).unwrap(),
-            serde_json::to_string(body).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("project", args, &path, &path, payload)
-}
-
-fn cmd_discussion(args: &[String]) -> ExitCode {
-    let (owner, repo) = match repo_slug(args) {
-        Ok(v) => v,
-        Err(e) => {
-            if matches!(
-                args.first().map(String::as_str),
-                Some("" | "-h" | "--help") | None
-            ) {
-                eprintln!("arks hub discussion — list|create (local Partial); needs --repo");
-                return ExitCode::SUCCESS;
-            }
-            eprintln!("arks hub discussion: {e}");
-            return ExitCode::from(2);
-        }
-    };
-    let path = format!("/repos/{owner}/{repo}/discussions");
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let title = flag_value(args, &["--title", "-t"]).unwrap_or("discussion");
-        let body = flag_value(args, &["--body", "-b"]).unwrap_or("");
-        let cat = flag_value(args, &["--category", "-c"]).unwrap_or("General");
-        Some(format!(
-            r#"{{"title":{},"body":{},"category":{}}}"#,
-            serde_json::to_string(title).unwrap(),
-            serde_json::to_string(body).unwrap(),
-            serde_json::to_string(cat).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("discussion", args, &path, &path, payload)
-}
-
-fn cmd_ssh_key(args: &[String]) -> ExitCode {
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let title = flag_value(args, &["--title", "-t"]).unwrap_or("key");
-        let key = flag_value(args, &["--key", "-k"]).unwrap_or("ssh-ed25519 AAAA Partial");
-        Some(format!(
-            r#"{{"title":{},"key":{}}}"#,
-            serde_json::to_string(title).unwrap(),
-            serde_json::to_string(key).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("ssh-key", args, "/user/keys", "/user/keys", payload)
-}
-
-fn cmd_gpg_key(args: &[String]) -> ExitCode {
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let name = flag_value(args, &["--name", "-n"]).unwrap_or("gpg");
-        let key_id = flag_value(args, &["--key-id"]).unwrap_or("00000000");
-        Some(format!(
-            r#"{{"name":{},"key_id":{}}}"#,
-            serde_json::to_string(name).unwrap(),
-            serde_json::to_string(key_id).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("gpg-key", args, "/user/gpg_keys", "/user/gpg_keys", payload)
 }
 
 /// Local self-signed HTTPS + remote-client path smoke Partial (not Claimed TLS / forge e2e).
