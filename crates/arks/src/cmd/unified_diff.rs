@@ -274,6 +274,29 @@ fn summary_line(files: usize, tot_ins: usize, tot_del: usize) -> String {
     summary
 }
 
+/// For each line of `b`, the index of the equal line in `a` it is matched
+/// with by the same Myers edit script the patch output uses (`None` for
+/// inserted lines). Used by `blame` to pass lines to a parent.
+pub fn matched_lines(a: &[&[u8]], b: &[&[u8]]) -> Vec<Option<usize>> {
+    let mut out = vec![None; b.len()];
+    if a.len() + b.len() > MAX_LINES {
+        return out;
+    }
+    let (mut ai, mut bi) = (0usize, 0usize);
+    for op in myers(a, b) {
+        match op {
+            Op::Eq => {
+                out[bi] = Some(ai);
+                ai += 1;
+                bi += 1;
+            }
+            Op::Del => ai += 1,
+            Op::Ins => bi += 1,
+        }
+    }
+    out
+}
+
 fn is_binary(b: &[u8]) -> bool {
     b[..b.len().min(8000)].contains(&0)
 }

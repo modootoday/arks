@@ -3,6 +3,7 @@
 
 pub mod archive;
 pub mod bisect;
+pub mod blame;
 pub mod branch;
 pub mod branch_cmd;
 pub mod bre;
@@ -68,7 +69,8 @@ pub use host_skew::{
     cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_replay_exp,
     cmd_survey, cmd_url_parse,
 };
-pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
+pub use blame::{cmd_annotate, cmd_blame};
+pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show};
