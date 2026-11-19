@@ -56,6 +56,8 @@ pub const GROUPS: &[&str] = &[
     "licenses",
     "ssh-key",
     "gpg-key",
+    "ruleset",
+    "rs",
     "extension",
     "copilot",
     "inbox",
@@ -67,9 +69,8 @@ pub const GROUPS: &[&str] = &[
 /// Matrix groups kept as explicit OUT refuse (exit 2, no network call).
 ///
 /// `extension` / `copilot` are marketplace / vendor depth. The rest are
-/// GitHub-platform-only services (Actions, rulesets, attestations,
-/// Codespaces) that are out of scope for the independent arks forge
-/// ([[adr:root/20261119230000]]).
+/// GitHub-platform-only services (Actions, attestations, Codespaces) that are
+/// out of scope for the independent arks forge ([[adr:root/20261119230000]]).
 pub const HUB_OUT_GROUPS: &[&str] = &[
     "extension",
     "copilot",
@@ -78,15 +79,16 @@ pub const HUB_OUT_GROUPS: &[&str] = &[
     "cache",
     "secret",
     "variable",
-    "ruleset",
-    "rs",
     "attestation",
     "codespace",
 ];
 
 /// Refuse reason for GitHub-platform-only groups and leaves.
-const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (Actions/rulesets/attestations/Codespaces) — \
+const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (Actions/attestations/Codespaces) — \
      out of scope for the arks forge ([[adr:root/20261119230000]])";
+
+/// Refuse reason for in-scope rows that keep phase `later`.
+const LATER_WHY: &str = "later — in scope, not yet implemented ([[adr:root/20261119230000]])";
 
 pub fn print_help() {
     eprintln!(
@@ -128,8 +130,9 @@ COMMANDS:
     co            Alias for pr checkout
     extension     OUT refuse (marketplace; not local forge)
     copilot       OUT refuse (vendor Copilot; not local forge)
-    (GitHub-platform-only groups such as Actions, rulesets, attestations and
-     Codespaces are out of scope and refuse with exit 2)
+    ruleset, rs   later — in scope, not yet implemented (refuse exit 2)
+    (GitHub-platform-only groups such as Actions, attestations and Codespaces
+     are out of scope and refuse with exit 2)
     …             other leaves: see GROUPS / local Partial list helpers
 
 ENV:
@@ -178,6 +181,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "discussion" => cmd_discussion(&args[1..]),
         "ssh-key" => cmd_ssh_key(&args[1..]),
         "gpg-key" => cmd_gpg_key(&args[1..]),
+        "ruleset" | "rs" => later_refuse(first),
         "licenses" => cmd_licenses(&args[1..]),
         "skill" => cmd_out_local_list("skill", &args[1..], "/user/skills", false),
         "preview" => cmd_out_local_list(
@@ -493,13 +497,7 @@ fn cmd_pr(args: &[String]) -> ExitCode {
         "ready" => cmd_pr_ready(args),
         "lock" | "unlock" => cmd_pr_lock(args, sub == "lock"),
         "review" => cmd_pr_review(args),
-        "checks" => {
-            eprintln!(
-                "arks hub pr checks: later — needs an arks-owned status primitive first; \
-                 no Actions/Checks API call ([[adr:root/20261119230000]]); refuse exit 2"
-            );
-            ExitCode::from(2)
-        }
+        "checks" => later_refuse("pr checks"),
         "diff" | "update-branch" | "revert" => {
             eprintln!(
                 "arks hub pr {sub}: terminal Partial — requires git/CI semantics not Claimed \
@@ -1576,7 +1574,7 @@ fn cmd_repo(args: &[String]) -> ExitCode {
             eprintln!("arks hub repo {sub}: Deferred — MUST NOT spawn git/gh");
             ExitCode::from(2)
         }
-        "gitignore" | "license" => platform_only_refuse(&format!("repo {sub}")),
+        "gitignore" | "license" => later_refuse(&format!("repo {sub}")),
         other => {
             eprintln!(
                 "arks hub repo {other}: Partial stub (not Claimed); refuse exit 2 — \
@@ -2813,8 +2811,15 @@ fn cmd_hub_out_refuse_smoke() -> ExitCode {
     }
 }
 
+/// Explicit refuse for an in-scope row that keeps phase `later` (`ruleset` / `rs`,
+/// `repo gitignore|license`, `pr checks`). Exit 2; never calls the network.
+fn later_refuse(leaf: &str) -> ExitCode {
+    eprintln!("arks hub {leaf}: {LATER_WHY}; refuse exit 2; never spawns gh");
+    ExitCode::from(2)
+}
+
 /// Explicit OUT refuse for a GitHub-platform-only leaf inside an in-scope group
-/// (`release verify*`, `repo gitignore|license`). Exit 2; never calls the network.
+/// (`release verify*`). Exit 2; never calls the network.
 fn platform_only_refuse(leaf: &str) -> ExitCode {
     eprintln!("arks hub {leaf}: OUT explicit refuse exit 2 — {PLATFORM_ONLY_WHY}; never spawns gh");
     ExitCode::from(2)
@@ -3269,8 +3274,6 @@ mod tests {
             "cache",
             "secret",
             "variable",
-            "ruleset",
-            "rs",
             "attestation",
             "codespace",
         ] {
@@ -3289,14 +3292,31 @@ mod tests {
 
     #[test]
     fn platform_only_leaves_refuse_exit_2() {
+        for leaf in ["release verify v1", "release verify-asset v1 a.bin"] {
+            assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
+        }
+    }
+
+    /// In-scope rows that keep phase `later` refuse with exit 2 and are not OUT.
+    #[test]
+    fn later_rows_refuse_exit_2_and_are_not_out() {
+        for g in ["ruleset", "rs"] {
+            assert!(!HUB_OUT_GROUPS.contains(&g), "{g} still OUT");
+            assert!(GROUPS.contains(&g), "{g} missing from GROUPS");
+        }
         for leaf in [
-            "release verify v1",
-            "release verify-asset v1 a.bin",
+            "ruleset list",
+            "rs list",
+            "ruleset view 1",
+            "ruleset check main",
             "repo gitignore list",
+            "repo gitignore view Rust",
+            "repo license list",
             "repo license view MIT",
             "pr checks 1",
         ] {
             assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
         }
+        assert!(LATER_WHY.starts_with("later — in scope, not yet implemented"));
     }
 }

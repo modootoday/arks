@@ -205,6 +205,7 @@ pub fn is_exclusive_forge_leaf(cmd: &str) -> bool {
             | "variable"
             | "cache"
             | "ruleset"
+            | "rs"
             | "skill"
             | "agent-task"
             | "preview"

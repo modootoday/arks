@@ -6,7 +6,7 @@
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
 # IW-HUB-ASSETS / CHECKOUT / UX / STUBS: sot:root/arks-in-scope-leftovers-wave.
-# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse check (adr:root/20261119230000).
+# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse + in-scope `later` refuse check (adr:root/20261119230000).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -176,13 +176,14 @@ hub_scope_run() {
   echo "hub-gh-arks-matrix-e2e: HF-SCOPE $name ok"
 }
 
-# --- Platform-only OUT refuse (ARKS_HUB_IW_ACTIONS=1) ---
+# --- Platform-only OUT refuse + in-scope later refuse (ARKS_HUB_IW_ACTIONS=1) ---
 # GitHub-platform-only groups (Actions run/workflow/cache/secret/variable,
-# rulesets, attestations, Codespaces) and leaves (release verify*,
-# repo gitignore|license) are out of scope for the arks forge, and `pr checks`
-# is `later` ([[adr:root/20261119230000]]). Each must refuse with exit 2 and
-# make no forge call: ARKS_HUB_API points at a closed port so a stray network
-# call fails instead of greening. This is refuse honesty, not a Claimed feature.
+# attestations, Codespaces) and leaves (release verify*) are out of scope for
+# the arks forge. Rulesets (`ruleset` / `rs`), `repo gitignore|license` and
+# `pr checks` are in scope but `later` ([[adr:root/20261119230000]]). Each must
+# refuse with exit 2 and make no forge call: ARKS_HUB_API points at a closed
+# port so a stray network call fails instead of greening. Later rows must say
+# "later — in scope". This is refuse honesty, not a Claimed feature.
 if [[ "${ARKS_HUB_IW_ACTIONS:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse path (adr:root/20261119230000)"
   OUT_WORK="$(mktemp -d /tmp/arks-hub-out.XXXXXX)"
@@ -215,14 +216,34 @@ workflow run 1
 cache list
 secret list
 variable list
-ruleset list
-rs list
 attestation verify
 codespace list
 release verify v1.0.0
 release verify-asset v1.0.0 a.bin
+LEAVES
+  while IFS= read -r leaf; do
+    [[ -z "$leaf" ]] && continue
+    set +e
+    # shellcheck disable=SC2086
+    "$ARKS_BIN" hub $leaf >"$OUT_WORK/out.txt" 2>&1
+    oec=$?
+    set -e
+    if [[ "$oec" -ne 2 ]] || ! grep -Fq 'later — in scope, not yet implemented' "$OUT_WORK/out.txt"; then
+      echo "FAIL in-scope later refuse: hub $leaf exit=$oec (want 2 + later text)" >&2
+      cat "$OUT_WORK/out.txt" >&2 || true
+      OUT_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: later refuse ok (hub $leaf exit=2)"
+    fi
+  done <<'LEAVES'
+ruleset list
+rs list
+ruleset view 1
+ruleset check main
 repo gitignore list
+repo gitignore view Rust
 repo license list
+repo license view MIT
 pr checks 1
 LEAVES
   if [[ "$OUT_OK" -ne 1 ]]; then
