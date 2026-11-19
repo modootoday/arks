@@ -4,7 +4,7 @@
 //! `oldhex newhex Name <email> timestamp tz\tmessage\n`
 //! Cite: git-update-ref(1) / gitrepository-layout `logs/`.
 
-use crate::cmd::shared::commit_signature;
+use crate::cmd::shared::committer_signature;
 use crate::error::{CliError, CliResult};
 use arks_oid::Oid;
 use arks_repo::Repository;
@@ -16,15 +16,14 @@ fn zero_oid_hex() -> String {
     "0".repeat(40)
 }
 
+/// `$GIT_DIR/logs/<refname>` per gitrepository-layout: `logs/HEAD` is
+/// per-worktree, `logs/refs/...` lives in the common directory.
 fn log_path_for_ref(repo: &Repository, refname: &str) -> PathBuf {
-    let rel = if refname == "HEAD" {
-        "HEAD".to_owned()
-    } else if let Some(rest) = refname.strip_prefix("refs/") {
-        rest.to_owned()
+    if refname.starts_with("refs/") {
+        repo.common_dir().join("logs").join(refname)
     } else {
-        refname.to_owned()
-    };
-    repo.git_dir().join("logs").join(rel)
+        repo.git_dir().join("logs").join(refname)
+    }
 }
 
 /// Lock sibling for a reflog path (`logs/HEAD` → `logs/HEAD.lock`).
@@ -56,7 +55,7 @@ pub fn append_reflog(
 ) -> CliResult<()> {
     // REF-009: honor exclusive logs/*.lock (api-lockfile / update-ref LOGGING).
     refuse_if_reflog_locked(repo, refname)?;
-    let sig = commit_signature()?;
+    let sig = committer_signature()?;
     let old_hex = old.map(Oid::to_hex).unwrap_or_else(zero_oid_hex);
     let line = format!(
         "{} {} {} <{}> {} {}\t{}\n",
