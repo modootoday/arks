@@ -1,0 +1,2 @@
+# arks hub completion (IW-HUB-UX); emit only — no installer mutation
+complete -W "auth pr issue release repo label search status api org config alias completion co browse gist discussion project milestone skill agent-task preview licenses ssh-key gpg-key ruleset rs extension copilot inbox forge-config serve smoke" arks

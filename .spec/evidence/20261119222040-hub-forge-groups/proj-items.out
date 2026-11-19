@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "archived": false,
+      "content": {
+        "body": "b",
+        "title": "tracked",
+        "type": "Issue",
+        "url": "local/hubscope#1"
+      },
+      "id": "1",
+      "title": "tracked"
+    },
+    {
+      "archived": false,
+      "content": {
+        "body": "",
+        "title": "draft",
+        "type": "DraftIssue",
+        "url": ""
+      },
+      "id": "2",
+      "note": "hi",
+      "title": "draft"
+    }
+  ],
+  "totalCount": 2
+}

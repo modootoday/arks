@@ -1,0 +1,4 @@
+pr=1
+head_ref=feature
+recipe=arks fetch origin pull/1/head:feature && arks checkout feature
+note: pr checkout Claimed resolve/print only — never spawn git/gh ([[sot:root/arks-in-scope-leftovers-wave]])

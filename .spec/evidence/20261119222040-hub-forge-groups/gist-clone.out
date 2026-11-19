@@ -1,0 +1,3 @@
+Cloned gist gist1 into /tmp/arks-hub-scope.RKSXm0/gist-dir (2 files)
+recipe=cd /tmp/arks-hub-scope.RKSXm0/gist-dir && arks init && arks add . && arks commit -m "gist gist1"
+note: forge gists carry no git history; arks never spawns git

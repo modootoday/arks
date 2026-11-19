@@ -1,0 +1,19 @@
+{
+  "schema": "arks-hub-forge-groups/v1",
+  "gate": "IW-HUB-FORGE-GROUPS",
+  "disposition": "product-path-run",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "34367a5",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "groups": [
+    "gist",
+    "discussion",
+    "project",
+    "ssh-key",
+    "gpg-key",
+    "repo autolink",
+    "repo deploy-key"
+  ],
+  "note": "Receipt only; row promotion needs an owning SoT update.",
+  "timestamp": "2026-11-19T22:20:40Z"
+}

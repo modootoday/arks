@@ -26,3 +26,4 @@ Claimed only from a Docker clean-room receipt (`verify/gates/g042-cloud-dropin/o
 |------|-------|--------|
 | 2026-11-19 | host advisory (git 2.43.0, no Docker daemon) | 15/15 must PASS; corpus 78/147 SAME — **not** a clean-room receipt |
 | 2026-11-19 | host advisory (git 2.43.0, no Docker daemon), after C7a | 15/15 must PASS; corpus 146/147 SAME — **not** a clean-room receipt |
+| 2026-11-19 | **Docker clean-room** (git 2.39.5, tip `34367a5`; offline Cargo from a read-only, `Cargo.lock`-pinned registry cache — see `venue-note.txt`) | **15/15 must PASS; corpus 146/147 SAME** — [[evidence:root/20261119222000-g042-cloud-dropin]] |
