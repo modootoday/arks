@@ -248,6 +248,8 @@ struct Printer<'a> {
     opts: &'a LogOpts,
     ctx: FmtCtx<'a>,
     shown_one: bool,
+    /// `show` (not `log`): merges get a separator before their empty --cc diff.
+    show_merge: bool,
 }
 
 impl Printer<'_> {
@@ -302,7 +304,10 @@ impl Printer<'_> {
         }
         self.shown_one = true;
         let mut text = self.header(oid, c);
-        if self.opts.diff.any() && !changes.is_empty() {
+        // `show` on a merge prints the separator even when the combined diff
+        // is empty (log-tree.c always_show_header + --cc).
+        let force_sep = self.show_merge && c.parents.len() > 1;
+        if self.opts.diff.any() && (!changes.is_empty() || force_sep) {
             if !matches!(self.opts.pretty, Pretty::Oneline) && !self.format_is_empty() {
                 if self.opts.diff.stat && self.opts.diff.patch {
                     text.push_str("---");
@@ -418,6 +423,7 @@ pub fn cmd_log(args: &[String]) -> CliResult<()> {
             decorations: decos.as_ref(),
         },
         shown_one: false,
+        show_merge: false,
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
     for (oid, c) in &selected {
@@ -464,6 +470,7 @@ pub fn cmd_show(args: &[String]) -> CliResult<()> {
             decorations: decos.as_ref(),
         },
         shown_one: false,
+        show_merge: true,
     };
     for rev in &revs {
         let mut oid = resolve_rev(&repo, rev)?;
