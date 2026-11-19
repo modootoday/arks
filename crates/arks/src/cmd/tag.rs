@@ -165,20 +165,27 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
             .collect::<Vec<_>>()
             .join("\n\n")
     });
+    let old = repo.refs().resolve(&full).ok();
     if signed || local_user.is_some() {
         let msg = message.ok_or_else(|| {
             CliError::Usage("tag -s requires -m <message> (claimed non-interactive subset)".into())
         })?;
         write_signed_tag(&mut repo, name, &target, &msg, local_user.as_deref())?;
-        return Ok(());
-    }
-    if annotated || message.is_some() {
+    } else if annotated || message.is_some() {
         let msg = message.ok_or_else(|| CliError::Usage("tag -a requires -m <message>".into()))?;
         crate::cmd::write_annotated_tag(&mut repo, name, &target, &msg)?;
-        return Ok(());
+    } else {
+        repo.refs_mut().update(&full, &target, old.as_ref())?;
     }
-    let old = repo.refs().resolve(&full).ok();
-    repo.refs_mut().update(&full, &target, old.as_ref())?;
+    // git-tag -f reports a replaced tag on stdout.
+    if let Some(prev) = old
+        && repo.refs().resolve(&full).ok() != Some(prev)
+    {
+        println!(
+            "Updated tag '{name}' (was {})",
+            crate::cmd::shared::abbrev_hex(&repo, &prev, 7)
+        );
+    }
     Ok(())
 }
 
