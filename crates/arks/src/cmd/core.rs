@@ -211,10 +211,37 @@ pub(crate) fn run_claimed_hooks(
 }
 
 pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-d", "--no-verify"])?;
-    let delete = args.iter().any(|a| a == "-d");
-    let no_verify = args.iter().any(|a| a == "--no-verify");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    // `-m <reason>`, `--no-deref`, `--create-reflog`; `<new>`/`<old>` are any
+    // revision (get_oid), not only full hex.
+    // Cite: https://git-scm.com/docs/git-update-ref
+    let mut delete = false;
+    let mut no_verify = false;
+    let mut no_deref = false;
+    let mut message: Option<String> = None;
+    let mut positional: Vec<&String> = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        match a.as_str() {
+            "-d" => delete = true,
+            "--no-verify" => no_verify = true,
+            "--no-deref" => no_deref = true,
+            "--create-reflog" => {}
+            "-m" => {
+                let v = args
+                    .get(i)
+                    .ok_or_else(|| CliError::fatal("switch `m' requires a value"))?;
+                i += 1;
+                message = Some(v.clone());
+            }
+            _ if a.starts_with("-m") && a.len() > 2 => message = Some(a[2..].to_string()),
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => positional.push(a),
+        }
+    }
     let mut repo = open_repo()?;
     // CORR-003 (M20 Cx-7): replace-refs concurrent honesty — refuse under replace.lock.
     // Cite: https://git-scm.com/docs/git-replace + lockfile (never delete live locks).
@@ -245,20 +272,72 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
         )));
     }
     run_claimed_hooks(&repo, no_verify, &["reference-transaction", "update"], None)?;
-    if delete {
+    let rev = |r: &str| -> CliResult<Oid> {
+        resolve_rev(&repo, r).map_err(|_| CliError::fatal(format!("{r}: not a valid SHA1")))
+    };
+    let (name, new, old) = if delete {
         let name = positional
             .first()
             .ok_or_else(|| CliError::Usage("update-ref -d <ref> [<old>]".into()))?;
-        let old = positional.get(1).map(|s| Oid::from_hex(s)).transpose()?;
-        repo.refs_mut().delete(name, old.as_ref())?;
+        (
+            name.as_str(),
+            None,
+            positional.get(1).map(|s| rev(s)).transpose()?,
+        )
     } else {
         if positional.len() < 2 {
             return Err(CliError::Usage("update-ref <ref> <new> [<old>]".into()));
         }
-        let name = positional[0];
-        let new = Oid::from_hex(positional[1])?;
-        let old = positional.get(2).map(|s| Oid::from_hex(s)).transpose()?;
-        repo.refs_mut().update(name, &new, old.as_ref())?;
+        let old = positional.get(2).map(|s| rev(s)).transpose()?;
+        (positional[0].as_str(), Some(rev(positional[1])?), old)
+    };
+    // Follow a symbolic ref (HEAD -> refs/heads/main) unless --no-deref.
+    let mut target = name.to_string();
+    if !no_deref {
+        for _ in 0..5 {
+            match repo.refs().read(&target) {
+                Ok(RefTarget::Symbolic(next)) => target = next,
+                _ => break,
+            }
+        }
+    }
+    let current = repo.refs().resolve(&target).ok();
+    if let (Some(want), Some(have)) = (old.as_ref(), current.as_ref())
+        && want != have
+    {
+        return Err(CliError::fatal(format!(
+            "update_ref failed for ref '{target}': cannot lock ref '{target}': is at {} but expected {}",
+            have.to_hex(),
+            want.to_hex()
+        )));
+    }
+    if current.is_none() && (old.is_some() || delete) {
+        let msg = format!("cannot lock ref '{target}': unable to resolve reference '{target}'");
+        return Err(if delete {
+            CliError::Exit(1, format!("error: {msg}"))
+        } else {
+            CliError::fatal(format!("update_ref failed for ref '{target}': {msg}"))
+        });
+    }
+    match new {
+        None => repo.refs_mut().delete(&target, old.as_ref())?,
+        Some(new) => {
+            repo.refs_mut().update(&target, &new, old.as_ref())?;
+            // core.logAllRefUpdates default (non-bare): heads, remotes, notes, HEAD.
+            let logged = |r: &str| {
+                r == "HEAD"
+                    || ["refs/heads/", "refs/remotes/", "refs/notes/"]
+                        .iter()
+                        .any(|p| r.starts_with(p))
+            };
+            let msg = message.as_deref().unwrap_or("");
+            if logged(&target) {
+                crate::reflog::append_reflog(&repo, &target, current.as_ref(), &new, msg)?;
+            }
+            if target != name && name == "HEAD" {
+                crate::reflog::append_reflog(&repo, "HEAD", current.as_ref(), &new, msg)?;
+            }
+        }
     }
     Ok(())
 }

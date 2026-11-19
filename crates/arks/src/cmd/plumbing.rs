@@ -370,7 +370,16 @@ fn print_tree(
 }
 
 pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    // `--short` / `-q` on read. Cite: https://git-scm.com/docs/git-symbolic-ref
+    refuse_unknown_flags(args, &["--short", "-q", "--quiet"])?;
+    let short = args.iter().any(|a| a == "--short");
+    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
+    let args: Vec<String> = args
+        .iter()
+        .filter(|a| !a.starts_with('-'))
+        .cloned()
+        .collect();
+    let args = args.as_slice();
     if args.is_empty() {
         return Err(CliError::Usage(
             "symbolic-ref <name> [<target>]  (read or set)".into(),
@@ -381,10 +390,21 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
         let name = &args[0];
         match repo.refs().read(name)? {
             RefTarget::Symbolic(target) => {
-                println!("{target}");
+                if short {
+                    let s = ["refs/heads/", "refs/tags/", "refs/remotes/", "refs/"]
+                        .iter()
+                        .find_map(|p| target.strip_prefix(p))
+                        .unwrap_or(&target);
+                    println!("{s}");
+                } else {
+                    println!("{target}");
+                }
                 Ok(())
             }
-            RefTarget::Direct(_) => Err(CliError::Msg(format!("not a symbolic ref: {name}"))),
+            RefTarget::Direct(_) if quiet => Err(CliError::silent(1)),
+            RefTarget::Direct(_) => {
+                Err(CliError::fatal(format!("ref {name} is not a symbolic ref")))
+            }
         }
     } else if args.len() == 2 {
         let name = &args[0];
@@ -459,34 +479,103 @@ pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: show-ref --heads/--tags/--verify (git-show-ref).
-    refuse_unknown_flags(args, &["--heads", "--tags", "--verify"])?;
-    let heads = args.iter().any(|a| a == "--heads");
-    let tags = args.iter().any(|a| a == "--tags");
-    let verify = args.iter().any(|a| a == "--verify");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    // M16 Sy-3 + C7b: --heads/--tags/--verify/--hash/--dereference/-q/--exists
+    // and tail-matching patterns; all refs under refs/ (incl. refs/stash).
+    // Cite: https://git-scm.com/docs/git-show-ref
+    let args = crate::util::split_short_bundles(args, "dsq", "");
+    let mut heads = false;
+    let mut tags = false;
+    let mut verify = false;
+    let mut hash_only = false;
+    let mut deref = false;
+    let mut quiet = false;
+    let mut exists = false;
+    let mut patterns: Vec<&String> = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "--heads" | "--branches" => heads = true,
+            "--tags" => tags = true,
+            "--verify" => verify = true,
+            "--hash" | "-s" => hash_only = true,
+            "--dereference" | "-d" => deref = true,
+            "--quiet" | "-q" => quiet = true,
+            "--exists" => exists = true,
+            "--" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => patterns.push(a),
+        }
+    }
     let repo = open_repo()?;
-    if verify {
-        let name = positional
+    let print = |name: &str, oid: &Oid| -> CliResult<()> {
+        if !quiet {
+            if hash_only {
+                println!("{}", oid.to_hex());
+            } else {
+                println!("{} {name}", oid.to_hex());
+            }
+        }
+        if deref {
+            let peeled = crate::cmd::shared::peel_tags(&repo, oid)?;
+            if peeled != *oid && !quiet {
+                if hash_only {
+                    println!("{}", peeled.to_hex());
+                } else {
+                    println!("{} {name}^{{}}", peeled.to_hex());
+                }
+            }
+        }
+        Ok(())
+    };
+    if exists {
+        let name = patterns
             .first()
-            .ok_or_else(|| CliError::Usage("show-ref --verify <ref>".into()))?;
-        let oid = repo.refs().resolve(name)?;
-        println!("{} {name}", oid.to_hex());
+            .ok_or_else(|| CliError::Usage("show-ref --exists <ref>".into()))?;
+        return match repo.refs().read(name) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(CliError::Exit(
+                2,
+                "error: reference does not exist".to_string(),
+            )),
+        };
+    }
+    if verify {
+        if patterns.is_empty() {
+            return Err(CliError::fatal("--verify requires a reference"));
+        }
+        for name in &patterns {
+            let ok = (name.starts_with("refs/") || name.as_str() == "HEAD")
+                .then(|| repo.refs().resolve(name).ok())
+                .flatten();
+            match ok {
+                Some(oid) => print(name, &oid)?,
+                None if quiet => return Err(CliError::silent(1)),
+                None => {
+                    return Err(CliError::fatal(format!("'{name}' - not a valid ref")));
+                }
+            }
+        }
         return Ok(());
     }
-    let mut refs = Vec::new();
-    if (!heads && !tags) || heads {
-        refs.extend(repo.refs().list_refs("refs/heads/")?);
-    }
-    if (!heads && !tags) || tags {
-        refs.extend(repo.refs().list_refs("refs/tags/")?);
-    }
-    if !heads && !tags {
-        refs.extend(repo.refs().list_refs("refs/remotes/")?);
-    }
+    let mut refs = repo.refs().list_refs("refs/")?;
+    refs.retain(|(n, _)| {
+        (!heads && !tags)
+            || (heads && n.starts_with("refs/heads/"))
+            || (tags && n.starts_with("refs/tags/"))
+    });
+    refs.retain(|(n, _)| {
+        patterns.is_empty()
+            || patterns
+                .iter()
+                .any(|p| n == *p || n.ends_with(&format!("/{p}")))
+    });
     refs.sort_by(|a, b| a.0.cmp(&b.0));
+    if refs.is_empty() {
+        return Err(CliError::silent(1));
+    }
     for (name, oid) in refs {
-        println!("{} {name}", oid.to_hex());
+        print(&name, &oid)?;
     }
     Ok(())
 }
