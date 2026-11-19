@@ -1596,14 +1596,15 @@ pub(crate) fn print_commit_summary(
         if a == b {
             continue;
         }
-        let ap = match a {
-            Some(f) => Some(repo.get_object(&f.oid)?.payload),
-            None => None,
+        // A gitlink has no object here; git diffs it as `Subproject commit <oid>`.
+        let content = |f: &crate::cmd::switch_tree::TreeFile| -> CliResult<Vec<u8>> {
+            if f.mode == 0o160000 {
+                return Ok(format!("Subproject commit {}\n", f.oid.to_hex()).into_bytes());
+            }
+            Ok(repo.get_object(&f.oid)?.payload)
         };
-        let bp = match b {
-            Some(f) => Some(repo.get_object(&f.oid)?.payload),
-            None => None,
-        };
+        let ap = a.map(content).transpose()?;
+        let bp = b.map(content).transpose()?;
         rows.push(StatRow {
             path: k.clone(),
             change: stat_change(ap.as_deref(), bp.as_deref()),
