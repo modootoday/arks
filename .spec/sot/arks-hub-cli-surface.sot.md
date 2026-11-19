@@ -61,7 +61,7 @@ Authoritative leaves + flags depth: matrix CSV. Invoked as `arks <group> …` (n
 
 ### Later / out-of-scope / transitional
 
-7. **v1 arks-owned groups (host-tested Partial):** `discussion`, `gist`, `project`, `repo autolink`, `repo deploy-key`, `ssh-key`, `gpg-key` — arks forge storage and semantics, gh-symmetric argv ([[adr:root/20261119230000]]). Flat `arks repo autolink|deploy-key` needs `arks hub repo …` or the gh personality because `repo` is a shared git/forge noun.
+7. **v1 arks-owned groups (host-tested Partial):** `discussion`, `gist`, `project`, `repo autolink`, `repo deploy-key`, `ssh-key`, `gpg-key` — arks forge storage and semantics, gh-symmetric argv ([[adr:root/20261119230000]]). Flat `arks repo autolink|deploy-key` reaches the forge: the `repo` overlap gives git only `info` / `structure` ([[sot:root/arks-cli-personality-factory]] rule 14.4).
 7a. **Later (in scope):** `browse`, `ruleset`/`rs`, `repo gitignore|license`, `pr checks`, richer `repo`/`issue` previews — keep **gh names** when mapped and collision-safe.
 8. **Out-of-scope:** `extension`, `copilot`, `skill`, `agent-task`, `licenses`, `preview`, `auth setup-git`, and GitHub-platform-only groups `run`, `workflow`, `cache`, `secret`, `variable`, `attestation`, `codespace` — see matrix and [[adr:root/20261119230000]].
 9. **Transitional:** `arks hub …` forwards to flat leaves; `arks hub serve` / `hub listen` → `arks serve` forge module ([[sot:root/arks-self-host-server]]). Optional top-level `milestone`; `pr review` remains v1.
