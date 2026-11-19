@@ -103,8 +103,17 @@ pub struct Change {
     pub work: Option<PathBuf>,
 }
 
+/// git `--diff-filter`: upper-case letters select, lower-case exclude.
+/// Cite: https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---diff-filterACDMRTUXB82308203
+pub fn status_passes(st: char, filter: &str) -> bool {
+    let includes: Vec<char> = filter.chars().filter(|c| c.is_ascii_uppercase()).collect();
+    let excluded = filter.contains(st.to_ascii_lowercase());
+    (includes.is_empty() || includes.contains(&st)) && !excluded
+}
+
 impl Change {
-    fn status(&self) -> char {
+    /// `A` added, `D` deleted, `M` modified.
+    pub fn status(&self) -> char {
         match (self.old.is_some(), self.new.is_some()) {
             (false, _) => 'A',
             (_, false) => 'D',

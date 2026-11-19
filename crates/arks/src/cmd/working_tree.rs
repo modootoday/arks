@@ -318,6 +318,8 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     let mut cached = false;
     let mut exit_code = false;
     let mut quiet = false;
+    let mut no_index = false;
+    let mut diff_filter: Option<String> = None;
     let mut positional = Vec::new();
     for a in &opts {
         if fmt.take_flag(a)? {
@@ -327,6 +329,10 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
             "--cached" | "--staged" => cached = true,
             "--exit-code" => exit_code = true,
             "--quiet" => quiet = true,
+            "--no-index" => no_index = true,
+            x if x.starts_with("--diff-filter=") => {
+                diff_filter = Some(x["--diff-filter=".len()..].to_string());
+            }
             "--no-color" | "--no-ext-diff" => {}
             x if x.starts_with('-') && x.len() > 1 => {
                 return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
@@ -336,6 +342,11 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     }
     if !(fmt.stat || fmt.numstat || fmt.shortstat || fmt.name_only || fmt.name_status) {
         fmt.patch = true;
+    }
+    if no_index {
+        let mut files = positional.clone();
+        files.extend(rest.iter().cloned());
+        return diff_no_index(&files, &fmt, quiet);
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
@@ -395,7 +406,10 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     };
     let a = filter_paths(a, &paths);
     let b = filter_paths(b, &paths);
-    let changes = changes_between(&a, &b, wt.then_some(work.as_path()));
+    let mut changes = changes_between(&a, &b, wt.then_some(work.as_path()));
+    if let Some(f) = &diff_filter {
+        changes.retain(|c| crate::cmd::diff_render::status_passes(c.status(), f));
+    }
     if !quiet {
         // Pf4-1: buffer unified emit (PERF stdout/syscall class).
         let mut out = io::BufWriter::with_capacity(256 * 1024, io::stdout().lock());
@@ -406,6 +420,51 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
         return Err(CliError::silent(1));
     }
     Ok(())
+}
+
+/// `diff --no-index <path> <path>`: compare two files on disk (outside or
+/// inside a repository); exits 1 when they differ, as `--exit-code` does.
+/// Partial: directories and output formats other than the patch.
+/// Cite: https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgt--no-index--ltpathgtltpathgt
+fn diff_no_index(
+    files: &[String],
+    fmt: &crate::cmd::diff_render::DiffFormat,
+    quiet: bool,
+) -> CliResult<()> {
+    let [a, b] = files else {
+        return Err(CliError::Usage("diff --no-index <path> <path>".into()));
+    };
+    if fmt.stat || fmt.numstat || fmt.shortstat || fmt.name_only || fmt.name_status {
+        return Err(CliError::NotImplemented(
+            "diff --no-index supports the patch format only".into(),
+        ));
+    }
+    let read = |p: &str| -> CliResult<Vec<u8>> {
+        if Path::new(p).is_dir() {
+            return Err(CliError::NotImplemented(
+                "diff --no-index of directories is not claimed".into(),
+            ));
+        }
+        fs::read(p).map_err(|e| CliError::fatal(format!("{p}: {e}")))
+    };
+    let (x, y) = (read(a)?, read(b)?);
+    if x == y {
+        return Ok(());
+    }
+    if !quiet {
+        let name = |p: &str| p.trim_start_matches("./").to_string();
+        let mut out = io::BufWriter::new(io::stdout().lock());
+        crate::cmd::unified_diff::write_file_patch_paths(
+            &mut out,
+            arks_store::ObjectFormat::Sha1,
+            (&name(a), &name(b)),
+            Some(&x),
+            Some(&y),
+            fmt.context,
+        )?;
+        out.flush()?;
+    }
+    Err(CliError::silent(1))
 }
 
 pub fn cmd_rm(args: &[String]) -> CliResult<()> {

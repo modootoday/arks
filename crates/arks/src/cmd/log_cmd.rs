@@ -435,19 +435,10 @@ impl Printer<'_> {
     }
 }
 
-fn change_status(c: &crate::cmd::diff_render::Change) -> char {
-    match (c.old.is_some(), c.new.is_some()) {
-        (false, _) => 'A',
-        (_, false) => 'D',
-        _ => 'M',
-    }
-}
+use crate::cmd::diff_render::status_passes;
 
-/// git `--diff-filter`: upper-case letters select, lower-case exclude.
-fn status_passes(st: char, filter: &str) -> bool {
-    let includes: Vec<char> = filter.chars().filter(|c| c.is_ascii_uppercase()).collect();
-    let excluded = filter.contains(st.to_ascii_lowercase());
-    (includes.is_empty() || includes.contains(&st)) && !excluded
+fn change_status(c: &crate::cmd::diff_render::Change) -> char {
+    c.status()
 }
 
 /// Commit limiting by its diff (first parent; merges have none):

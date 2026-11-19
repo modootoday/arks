@@ -35,6 +35,18 @@ pub fn write_file_patch_ctx(
     new: Option<&[u8]>,
     context: usize,
 ) -> CliResult<()> {
+    write_file_patch_paths(out, format, (path, path), old, new, context)
+}
+
+/// [`write_file_patch_ctx`] with distinct old/new names (`diff --no-index`).
+pub fn write_file_patch_paths(
+    out: &mut impl Write,
+    format: ObjectFormat,
+    (old_path, path): (&str, &str),
+    old: Option<&[u8]>,
+    new: Option<&[u8]>,
+    context: usize,
+) -> CliResult<()> {
     let abbrev = |b: Option<&[u8]>| -> CliResult<String> {
         Ok(match b {
             Some(bytes) => RawObject::new(ObjectKind::Blob, bytes.to_vec())
@@ -45,7 +57,7 @@ pub fn write_file_patch_ctx(
         })
     };
     let (ao, bo) = (abbrev(old)?, abbrev(new)?);
-    writeln!(out, "diff --git a/{path} b/{path}")?;
+    writeln!(out, "diff --git a/{old_path} b/{path}")?;
     match (old, new) {
         (None, Some(_)) => {
             writeln!(out, "new file mode 100644")?;
@@ -58,7 +70,7 @@ pub fn write_file_patch_ctx(
         _ => writeln!(out, "index {ao}..{bo} 100644")?,
     }
     let a_name = if old.is_some() {
-        format!("a/{path}")
+        format!("a/{old_path}")
     } else {
         "/dev/null".into()
     };
