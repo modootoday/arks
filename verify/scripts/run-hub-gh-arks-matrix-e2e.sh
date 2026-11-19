@@ -587,7 +587,7 @@ if [[ "${ARKS_HUB_IW_UX:-0}" == "1" ]]; then
   SCOPE_OK=1
   printf 'demo=arks hub status\n' >"$WORK/aliases.txt"
   hub_scope_run config-set "$ARKS_BIN" hub config set editor nano
-  hub_scope_run config-get "$ARKS_BIN" hub config get edito
+  hub_scope_run config-get "$ARKS_BIN" hub config get editor
   hub_scope_run config-list "$ARKS_BIN" hub config list
   hub_scope_run alias-set "$ARKS_BIN" hub alias set demo 'arks hub status'
   hub_scope_run alias-list "$ARKS_BIN" hub alias list
