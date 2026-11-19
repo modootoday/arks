@@ -6,6 +6,7 @@
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
 # IW-HUB-ACTIONS / ASSETS / CHECKOUT / UX / STUBS: sot:root/arks-in-scope-leftovers-wave.
+# C8 repo/issue rows: sot:root/arks-hub-repo-issue-depth (ARKS_HUB_IW_REPO_ISSUE=1).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -473,6 +474,13 @@ PY
     echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
   fi
   exit 0
+fi
+
+# --- C8 repo + issue rows (ARKS_HUB_IW_REPO_ISSUE=1) ---
+# sot:root/arks-hub-repo-issue-depth — host runs advisory; Docker run required for Claimed.
+if [[ "${ARKS_HUB_IW_REPO_ISSUE:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: C8 repo/issue path (sot:root/arks-hub-repo-issue-depth)"
+  exec bash verify/scripts/run-hub-repo-issue-e2e.sh "$ARKS_BIN" "$TIP"
 fi
 
 # --- IW-HUB-STUBS expand + exhaust (ARKS_HUB_IW_STUBS=1 or ARKS_HUB_IW_STUBS2=1) ---
