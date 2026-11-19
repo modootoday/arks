@@ -223,6 +223,9 @@ fn resolve_rev_base(repo: &Repository, rev: &str) -> CliResult<Oid> {
     if rev == "HEAD" || rev == "@" {
         return Ok(repo.head_oid()?);
     }
+    if let Some(o) = resolve_reflog_spec(repo, rev)? {
+        return Ok(o);
+    }
     for suffix in ["@{upstream}", "@{u}", "@{UPSTREAM}", "@{U}"] {
         if let Some(branch) = rev.strip_suffix(suffix) {
             return resolve_upstream(repo, branch);
@@ -254,6 +257,68 @@ fn resolve_rev_base(repo: &Repository, rev: &str) -> CliResult<Oid> {
         return Ok(oid);
     }
     Err(CliError::Msg(format!("unknown revision: {rev}")))
+}
+
+/// `<ref>@{<n>}` (n-th prior value from the ref's reflog; `@{n}` = current
+/// branch) and `@{-<n>}` (n-th previously checked-out branch from the HEAD
+/// reflog `checkout: moving from X to Y` entries).
+/// Cite: <https://git-scm.com/docs/gitrevisions> (`@{<n>}`, `@{-<n>}`).
+fn resolve_reflog_spec(repo: &Repository, rev: &str) -> CliResult<Option<Oid>> {
+    let Some(open) = rev.find("@{") else {
+        return Ok(None);
+    };
+    let Some(inner) = rev[open + 2..].strip_suffix('}') else {
+        return Ok(None);
+    };
+    let base = &rev[..open];
+    if let Some(n) = inner.strip_prefix('-') {
+        let Ok(n) = n.parse::<usize>() else {
+            return Ok(None);
+        };
+        if !base.is_empty() || n == 0 {
+            return Ok(None);
+        }
+        let mut seen = 0;
+        for (_, _, msg) in crate::reflog::read_entries(repo, "HEAD").iter().rev() {
+            if let Some(rest) = msg.strip_prefix("checkout: moving from ") {
+                if let Some((from, _)) = rest.split_once(" to ") {
+                    seen += 1;
+                    if seen == n {
+                        return resolve_rev(repo, from).map(Some);
+                    }
+                }
+            }
+        }
+        return Err(CliError::fatal(format!(
+            "{rev}: not enough branch switches"
+        )));
+    }
+    let Ok(n) = inner.parse::<usize>() else {
+        return Ok(None);
+    };
+    let refname = match base {
+        "" => match repo.head_target()? {
+            RefTarget::Symbolic(s) => s,
+            RefTarget::Direct(_) => "HEAD".to_string(),
+        },
+        "HEAD" => "HEAD".to_string(),
+        b if b.starts_with("refs/") => b.to_string(),
+        b => format!("refs/heads/{b}"),
+    };
+    let entries = crate::reflog::read_entries(repo, &refname);
+    if n < entries.len() {
+        return Ok(Some(entries[entries.len() - 1 - n].1));
+    }
+    if n == entries.len() {
+        if let Some((Some(old), _, _)) = entries.first() {
+            return Ok(Some(*old));
+        }
+    }
+    Err(CliError::fatal(format!(
+        "log for '{}' only has {} entries",
+        base.trim_start_matches("refs/heads/"),
+        entries.len()
+    )))
 }
 
 /// `<branch>@{upstream}` → `refs/remotes/<remote>/<merge-branch>` from
