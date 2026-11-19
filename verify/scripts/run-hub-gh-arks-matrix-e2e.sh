@@ -5,7 +5,8 @@
 # IW-HUB-FLAT Claimed subset: sot:root/arks-verify-docker-e2e-claim-wave (ARKS_HUB_IW_FLAT=1).
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
-# IW-HUB-ACTIONS / ASSETS / CHECKOUT / UX / STUBS: sot:root/arks-in-scope-leftovers-wave.
+# IW-HUB-ASSETS / CHECKOUT / UX / STUBS: sot:root/arks-in-scope-leftovers-wave.
+# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse check (adr:root/20261119230000).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -175,90 +176,64 @@ hub_scope_run() {
   echo "hub-gh-arks-matrix-e2e: HF-SCOPE $name ok"
 }
 
-# --- IW-HUB-ACTIONS (ARKS_HUB_IW_ACTIONS=1) ---
+# --- Platform-only OUT refuse (ARKS_HUB_IW_ACTIONS=1) ---
+# GitHub-platform-only groups (Actions run/workflow/cache/secret/variable,
+# rulesets, attestations, Codespaces) and leaves (release verify*,
+# repo gitignore|license) are out of scope for the arks forge, and `pr checks`
+# is `later` ([[adr:root/20261119230000]]). Each must refuse with exit 2 and
+# make no forge call: ARKS_HUB_API points at a closed port so a stray network
+# call fails instead of greening. This is refuse honesty, not a Claimed feature.
 if [[ "${ARKS_HUB_IW_ACTIONS:-0}" == "1" ]]; then
-  echo "hub-gh-arks-matrix-e2e: IW-HUB-ACTIONS path (sot:root/arks-in-scope-leftovers-wave)"
-  [[ -f "$SCOPE_SOT" ]] || { echo "FAIL: missing $SCOPE_SOT" >&2; exit 1; }
-  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
-  SERVER_PID=""
-  cleanup_scope() {
-    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
-      kill "$SERVER_PID" 2>/dev/null || true
-      wait "$SERVER_PID" 2>/dev/null || true
+  echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse path (adr:root/20261119230000)"
+  OUT_WORK="$(mktemp -d /tmp/arks-hub-out.XXXXXX)"
+  trap 'rm -rf "${OUT_WORK:-}"' EXIT
+  export HOME="$OUT_WORK/home"
+  mkdir -p "$HOME/.config/arks"
+  export ARKS_HUB_TOKEN_FILE="$HOME/.config/arks/hub-token"
+  export ARKS_HUB_API="http://127.0.0.1:9"
+  export ARKS_HUB_REPO="local/hubscope"
+  OUT_OK=1
+  while IFS= read -r leaf; do
+    [[ -z "$leaf" ]] && continue
+    set +e
+    # shellcheck disable=SC2086
+    "$ARKS_BIN" hub $leaf >"$OUT_WORK/out.txt" 2>&1
+    oec=$?
+    set -e
+    if [[ "$oec" -ne 2 ]]; then
+      echo "FAIL platform-only OUT: hub $leaf exit=$oec (want 2)" >&2
+      cat "$OUT_WORK/out.txt" >&2 || true
+      OUT_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: OUT refuse ok (hub $leaf exit=2)"
     fi
-    rm -rf "${WORK:-}"
-  }
-  trap cleanup_scope EXIT
-  hub_scope_boot WORK
-  SCOPE_OK=1
-  hub_scope_run auth-login "$ARKS_BIN" hub auth login
-  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-ACTIONS"
-  hub_scope_run run-create "$ARKS_BIN" hub run create --repo local/hubscope --name act1 --branch main
-  hub_scope_run run-view "$ARKS_BIN" hub run view 1 --repo local/hubscope
-  hub_scope_run run-cancel "$ARKS_BIN" hub run cancel 1 --repo local/hubscope
-  hub_scope_run run-view-cancelled "$ARKS_BIN" hub run view 1 --repo local/hubscope
-  hub_scope_run run-watch "$ARKS_BIN" hub run watch 1 --repo local/hubscope
-  hub_scope_run run-rerun "$ARKS_BIN" hub run rerun 1 --repo local/hubscope
-  hub_scope_run run-download "$ARKS_BIN" hub run download 2 --repo local/hubscope --output "$WORK/run2.bin"
-  hub_scope_run workflow-list "$ARKS_BIN" hub workflow list --repo local/hubscope
-  hub_scope_run workflow-view "$ARKS_BIN" hub workflow view 1 --repo local/hubscope
-  hub_scope_run workflow-disable "$ARKS_BIN" hub workflow disable 1 --repo local/hubscope
-  hub_scope_run workflow-enable "$ARKS_BIN" hub workflow enable 1 --repo local/hubscope
-  hub_scope_run workflow-run "$ARKS_BIN" hub workflow run 1 --repo local/hubscope --ref main
-  hub_scope_run run-delete "$ARKS_BIN" hub run delete 2 --repo local/hubscope
-  if [[ "$SCOPE_OK" -eq 1 ]]; then
-    if ! grep -Fq '"status":"in_progress"' "$WORK/run-view.out"; then
-      echo "FAIL HF-SCOPE run view in_progress shape" >&2
-      SCOPE_OK=0
-    fi
-    if ! grep -Fq 'cancelled' "$WORK/run-view-cancelled.out"; then
-      echo "FAIL HF-SCOPE cancel conclusion" >&2
-      SCOPE_OK=0
-    fi
-    if [[ ! -s "$WORK/run2.bin" ]]; then
-      echo "FAIL HF-SCOPE run download empty" >&2
-      SCOPE_OK=0
-    fi
-  fi
-  if [[ "$SCOPE_OK" -ne 1 ]]; then
-    cat "$WORK/server.err" >&2 || true
+  done <<'LEAVES'
+run list
+run view 1
+workflow list
+workflow run 1
+cache list
+secret list
+variable list
+ruleset list
+rs list
+attestation verify
+codespace list
+release verify v1.0.0
+release verify-asset v1.0.0 a.bin
+repo gitignore list
+repo license list
+pr checks 1
+LEAVES
+  if [[ "$OUT_OK" -ne 1 ]]; then
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
-      echo "hub-gh-arks-matrix-e2e: FAIL STRICT IW-HUB-ACTIONS" >&2
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT platform-only OUT refuse" >&2
       exit 1
     fi
-    echo "hub-gh-arks-matrix-e2e: IW-HUB-ACTIONS Partial/failed"
+    echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse Partial/failed"
     exit 0
   fi
-  echo "hub-gh-arks-matrix-e2e: IW-HUB-ACTIONS greens"
-  if [[ -f /.dockerenv ]]; then
-    TS="$(date -u +%Y%m%d%H%M%S)"
-    OUT=".spec/evidence/${TS}-hub-actions-metadata"
-    mkdir -p "$OUT"
-    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
-    cp "$WORK/run2.bin" "$OUT/" 2>/dev/null || true
-    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
-import json, sys, time
-out, tip, image = sys.argv[1:]
-receipt = {
-    "schema": "arks-hub-actions-metadata/v1",
-    "gate": "IW-HUB-ACTIONS",
-    "disposition": "verified-product-path",
-    "venue": "docker-dod-hub-matrix",
-    "tip": tip,
-    "image_tag": image,
-    "claimed": [
-        "run view", "run watch", "run cancel", "run rerun", "run download", "run delete",
-        "workflow view", "workflow enable", "workflow disable", "workflow run",
-    ],
-    "note": "Local-forge Actions metadata only — not CI compute Claimed.",
-    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-}
-with open(out, "w", encoding="utf-8") as f:
-    json.dump(receipt, f, indent=2)
-    f.write("\n")
-PY
-    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
-  fi
+  echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse greens"
   exit 0
 fi
 
