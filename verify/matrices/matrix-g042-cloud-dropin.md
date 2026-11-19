@@ -25,3 +25,4 @@ Claimed only from a Docker clean-room receipt (`verify/gates/g042-cloud-dropin/o
 | Date | Venue | Result |
 |------|-------|--------|
 | 2026-11-19 | host advisory (git 2.43.0, no Docker daemon) | 15/15 must PASS; corpus 78/147 SAME — **not** a clean-room receipt |
+| 2026-11-19 | host advisory (git 2.43.0, no Docker daemon), after C7a | 15/15 must PASS; corpus 146/147 SAME — **not** a clean-room receipt |
