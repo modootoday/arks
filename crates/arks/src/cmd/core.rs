@@ -1171,12 +1171,16 @@ pub fn wants_no_optional_locks(args: &[String]) -> bool {
 
 pub fn cmd_commit(args: &[String]) -> CliResult<()> {
     // Cloud drop-in §O: bundled short options (`-am <msg>`), `-q`, `-n`.
+    // C7b: `--author`, `--date`, `-s`/`--signoff`, `--no-edit` and
+    // `[--] <pathspec>...` (commit only those paths, git `--only`).
+    // Cite: https://git-scm.com/docs/git-commit
     let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "aqvn", "mFt"),
+        crate::util::split_short_bundles(args, "aqvns", "mFt"),
         &[
             ("-n", "--no-verify"),
             ("--quiet", "-q"),
             ("--message", "-m"),
+            ("-s", "--signoff"),
         ],
     );
     let args = &args
@@ -1203,8 +1207,16 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             "--all",
             "-q",
             "-v",
+            "--author",
+            "--date",
+            "--signoff",
+            "--no-edit",
+            "--only",
+            "-o",
+            "--",
         ],
     )?;
+    let signoff = args.iter().any(|a| a == "--signoff");
     let allow_empty = args.iter().any(|a| a == "--allow-empty");
     let no_verify = args.iter().any(|a| a == "--no-verify");
     let amend = args.iter().any(|a| a == "--amend");
@@ -1220,9 +1232,31 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
     let mut message: Option<String> = None;
     let mut file_msg: Option<PathBuf> = None;
     let mut template: Option<PathBuf> = None;
+    let mut author_ident: Option<String> = None;
+    let mut author_date: Option<String> = None;
+    let mut pathspecs: Vec<String> = Vec::new();
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "-m" {
+        if args[i] == "--" {
+            pathspecs.extend(args[i + 1..].iter().cloned());
+            break;
+        } else if args[i] == "--author" || args[i] == "--date" {
+            let v = args.get(i + 1).cloned().ok_or_else(|| {
+                CliError::fatal(format!("option `{}' requires a value", &args[i][2..]))
+            })?;
+            if args[i] == "--author" {
+                author_ident = Some(v);
+            } else {
+                author_date = Some(v);
+            }
+            i += 1;
+        } else if let Some(v) = args[i].strip_prefix("--author=") {
+            author_ident = Some(v.to_string());
+        } else if let Some(v) = args[i].strip_prefix("--date=") {
+            author_date = Some(v.to_string());
+        } else if !args[i].starts_with('-') {
+            pathspecs.push(args[i].clone());
+        } else if args[i] == "-m" {
             i += 1;
             let part = args
                 .get(i)
@@ -1267,15 +1301,66 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         message = Some(commit_message_via_editor(template.as_deref())?);
     }
 
+    if all && !pathspecs.is_empty() {
+        return Err(CliError::fatal(format!(
+            "paths '{} ...' with -a does not make sense",
+            pathspecs[0]
+        )));
+    }
     // Fs-5: `-a` / `--all` stages tracked updates then commits (git-commit).
     if all {
         cmd_add(&["-u".into()])?;
+    }
+    // `commit <pathspec>`: stage those paths, then commit HEAD + only them.
+    if !pathspecs.is_empty() {
+        cmd_add(&pathspecs)?;
     }
 
     let mut repo = open_repo()?;
     run_claimed_hooks(&repo, no_verify, &["pre-commit"], None)?;
 
-    let index = read_index(&repo)?;
+    let mut index = read_index(&repo)?;
+    if !pathspecs.is_empty() {
+        let work = work_tree(&repo)?;
+        let specs = pathspecs
+            .iter()
+            .map(|p| pathspec_rel(&work, p))
+            .collect::<CliResult<Vec<_>>>()?;
+        let mut entries = Vec::new();
+        if let Ok(head) = repo.head_oid() {
+            let tree = crate::cmd::log_format::read_commit(&repo, &head)?.tree;
+            crate::cmd::plumbing::flatten_tree_to_index(&repo, &tree, "", &mut entries)?;
+        }
+        entries.retain(|e| !crate::cmd::log_format::path_in_specs(&e.path, &specs));
+        entries.extend(
+            index
+                .entries
+                .iter()
+                .filter(|e| crate::cmd::log_format::path_in_specs(&e.path, &specs))
+                .cloned(),
+        );
+        sort_entries(&mut entries);
+        index.entries = entries;
+    }
+    let index = index;
+    let message = message.map(|m| if signoff { add_signoff(&m) } else { m });
+    let override_author = |mut sig: arks_object::Signature| -> CliResult<arks_object::Signature> {
+        if let Some(id) = &author_ident {
+            let (name, email) = id
+                .split_once('<')
+                .and_then(|(n, rest)| Some((n.trim(), rest.strip_suffix('>')?)))
+                .ok_or_else(|| CliError::fatal(format!("--author '{id}' is not 'Name <email>'")))?;
+            sig.name = name.to_string();
+            sig.email = email.to_string();
+        }
+        if let Some(d) = &author_date {
+            let (ts, tz) = crate::cmd::shared::parse_git_date(d)
+                .ok_or_else(|| CliError::fatal(format!("invalid date format: {d}")))?;
+            sig.timestamp = ts;
+            sig.timezone = tz;
+        }
+        Ok(sig)
+    };
     if index.entries.is_empty() && !allow_empty && !amend {
         return Err(CliError::Msg("nothing to commit (empty index)".into()));
     }
@@ -1306,6 +1391,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
                     format!("{m}\n")
                 }
             }
+            None if signoff => add_signoff(&prev.message),
             None => prev.message.clone(),
         };
         run_claimed_hooks(&repo, no_verify, &["commit-msg"], Some(message.as_bytes()))?;
@@ -1318,7 +1404,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         let mut commit = Commit {
             tree,
             parents: prev.parents.clone(),
-            author: prev.author.clone(),
+            author: override_author(prev.author.clone())?,
             committer: sig,
             gpgsig: None,
             message,
@@ -1378,7 +1464,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             }
         }
     }
-    let author = commit_signature()?;
+    let author = override_author(commit_signature()?)?;
     let committer = committer_signature()?;
     let subject = message.lines().next().unwrap_or("").to_owned();
     let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
@@ -1425,6 +1511,32 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
         print_commit_summary(&repo, &coid, false)?;
     }
     Ok(())
+}
+
+/// `-s`: append `Signed-off-by: <committer>` unless it is already the last
+/// trailer; a message ending in a trailer block gets no blank separator.
+/// Cite: https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff
+fn add_signoff(message: &str) -> String {
+    let Ok(c) = committer_signature() else {
+        return message.to_string();
+    };
+    let line = format!("Signed-off-by: {} <{}>", c.name, c.email);
+    let body = message.trim_end_matches('\n');
+    if body.lines().last() == Some(line.as_str()) {
+        return format!("{body}\n");
+    }
+    let last_para = body.rsplit("\n\n").next().unwrap_or("");
+    let is_trailer = |l: &str| {
+        l.split_once(": ").is_some_and(|(k, _)| {
+            !k.is_empty() && k.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
+        })
+    };
+    let has_paragraphs = body.contains("\n\n");
+    if has_paragraphs && !last_para.is_empty() && last_para.lines().all(is_trailer) {
+        format!("{body}\n{line}\n")
+    } else {
+        format!("{body}\n\n{line}\n")
+    }
 }
 
 /// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,

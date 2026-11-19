@@ -989,7 +989,7 @@ pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-fn flatten_tree_to_index(
+pub(crate) fn flatten_tree_to_index(
     repo: &arks_repo::Repository,
     tree_oid: &Oid,
     prefix: &str,
