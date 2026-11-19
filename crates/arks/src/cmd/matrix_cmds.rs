@@ -715,107 +715,64 @@ pub fn cmd_show_index(args: &[String]) -> CliResult<()> {
 
 /// `arks check-attr` — report attributes for paths from `.gitattributes` (subset).
 pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-a", "--all", "-z"])?;
-    let all = args.iter().any(|a| a == "-a" || a == "--all");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.is_empty() {
-        return Err(CliError::Usage(
-            "check-attr [-a] <attr>… [--] <pathname>…".into(),
-        ));
+    // `[-a | --all | <attr>...] [--] <pathname>...` over the gitattributes(5)
+    // sources (see `cmd::attr`). Cite: https://git-scm.com/docs/git-check-attr
+    let mut all = false;
+    let mut before: Vec<&String> = Vec::new();
+    let mut after: Option<Vec<&String>> = None;
+    for a in args {
+        if let Some(v) = after.as_mut() {
+            v.push(a);
+            continue;
+        }
+        match a.as_str() {
+            "-a" | "--all" => all = true,
+            "--" => after = Some(Vec::new()),
+            "--cached" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => before.push(a),
+        }
     }
-    // Split attrs vs paths at `--` when present.
-    let (attrs, paths) = if let Some(i) = positional.iter().position(|a| *a == "--") {
-        (positional[..i].to_vec(), positional[i + 1..].to_vec())
-    } else if all {
-        (Vec::new(), positional)
-    } else if positional.len() >= 2 {
-        (vec![positional[0]], positional[1..].to_vec())
-    } else {
-        return Err(CliError::Usage(
-            "check-attr: need attribute name(s) and path(s)".into(),
-        ));
+    let (attrs, paths): (Vec<&String>, Vec<&String>) = match after {
+        Some(p) => (before, p),
+        None if all => (Vec::new(), before),
+        None if before.len() >= 2 => (vec![before[0]], before[1..].to_vec()),
+        None => {
+            return Err(CliError::Exit(129, "error: No attribute specified".into()));
+        }
     };
+    if paths.is_empty() {
+        return Err(CliError::fatal("No file specified"));
+    }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let rules = load_gitattributes(&work)?;
     for path in paths {
-        let matched = match_attrs(&rules, path);
-        if all || attrs.is_empty() {
-            for (k, v) in &matched {
-                println!("{path}: {k}: {v}");
+        let rel = crate::util::rel_path_from_worktree(&work, Path::new(path))
+            .unwrap_or_else(|_| path.to_string());
+        let rules = crate::cmd::attr::Attributes::load(&work, repo.git_dir(), &rel);
+        let found = rules.for_path(&rel);
+        if all {
+            for k in rules.order() {
+                match found.get(k) {
+                    Some(v) if *v != crate::cmd::attr::AttrValue::Unspecified => {
+                        println!("{path}: {k}: {}", v.display());
+                    }
+                    _ => {}
+                }
             }
         } else {
             for a in &attrs {
-                let v = matched
+                let v = found
                     .get(a.as_str())
-                    .map(String::as_str)
+                    .map(|v| v.display())
                     .unwrap_or("unspecified");
                 println!("{path}: {a}: {v}");
             }
         }
     }
     Ok(())
-}
-
-/// `.gitattributes` lines as (pattern, [(attr, value)]).
-type AttrRules = Vec<(String, Vec<(String, String)>)>;
-
-fn load_gitattributes(work: &Path) -> CliResult<AttrRules> {
-    let path = work.join(".gitattributes");
-    let text = match fs::read_to_string(&path) {
-        Ok(t) => t,
-        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(e) => return Err(CliError::Msg(e.to_string())),
-    };
-    let mut out = Vec::new();
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let mut parts = line.split_whitespace();
-        let Some(pat) = parts.next() else {
-            continue;
-        };
-        let mut attrs = Vec::new();
-        for a in parts {
-            if let Some((k, v)) = a.split_once('=') {
-                attrs.push((k.to_string(), v.to_string()));
-            } else if let Some(k) = a.strip_prefix('-') {
-                attrs.push((k.to_string(), "unset".into()));
-            } else {
-                attrs.push((a.to_string(), "set".into()));
-            }
-        }
-        out.push((pat.to_string(), attrs));
-    }
-    Ok(out)
-}
-
-fn match_attrs(
-    rules: &[(String, Vec<(String, String)>)],
-    path: &str,
-) -> std::collections::BTreeMap<String, String> {
-    let mut map = std::collections::BTreeMap::new();
-    let base = Path::new(path)
-        .file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or(path);
-    for (pat, attrs) in rules {
-        let ok = if pat == "*" || pat == "**" {
-            true
-        } else if let Some(suf) = pat.strip_prefix('*') {
-            path.ends_with(suf) || base.ends_with(suf)
-        } else {
-            path == pat || base == pat
-        };
-        if ok {
-            for (k, v) in attrs {
-                map.insert(k.clone(), v.clone());
-            }
-        }
-    }
-    map
 }
 
 /// `arks merge-file` — three-way line merge of `<base> <ours> <theirs>` files.

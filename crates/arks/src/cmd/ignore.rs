@@ -81,7 +81,7 @@ fn parse(text: &str) -> Vec<Pat> {
 }
 
 /// wildmatch with `WM_PATHNAME` semantics.
-fn wildmatch(p: &[u8], t: &[u8]) -> bool {
+pub(crate) fn wildmatch(p: &[u8], t: &[u8]) -> bool {
     let (mut pi, mut ti) = (0usize, 0usize);
     while pi < p.len() {
         match p[pi] {
