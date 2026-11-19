@@ -56,6 +56,7 @@ dependencies = [
 name = "arks-hub"
 version = "0.0.0"
 dependencies = [
+ "arks-net",
  "rustls",
  "rustls-pemfile",
  "serde",
@@ -150,6 +151,7 @@ name = "arks-remote"
 version = "0.0.0"
 dependencies = [
  "arks-index",
+ "arks-net",
  "arks-object",
  "arks-oid",
  "arks-pack",
