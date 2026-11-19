@@ -1,7 +1,7 @@
 ---
 id: sot:root/celir-dual-path-git-verified
 title: CELIR dual-path Git verified clean-room
-status: active
+status: superseded
 created: 2026-11-09T20:49:15Z
 updated: 2026-11-10T05:49:00Z
 tags: [celir, indexing-service, dual-path, g023-celir-dual-path, m24, clean-room, porcelain, verified]
@@ -22,6 +22,9 @@ rel:
 ---
 
 # CELIR dual-path Git verified clean-room
+
+> [!IMPORTANT]
+> **Superseded / Withdrawn** by [[adr:root/20261119200000]] — CELIR is not adopted; this document is historical record only.
 
 Version **0.1.0**. Normative Docker clean-room gate **G23** for the honest Done name **CELIR dual-path Git verified** ([[adr:root/20261109204916]]). Companion: [[sot:root/celir-index-dual-path]]. Boundary: [[sot:root/storage-celir-boundary]]. Authority: [[sot:root/product-verification-clean-room]].
 

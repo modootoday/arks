@@ -1,7 +1,7 @@
 ---
 id: sot:root/celir-index-scale-clean-room
 title: CELIR index scale clean-room
-status: active
+status: superseded
 created: 2026-11-09T20:49:15Z
 updated: 2026-11-10T05:49:00Z
 tags: [celir, indexing-service, scale, g025-celir-index-scale, m24, clean-room, contention, oom]
@@ -19,6 +19,9 @@ rel:
 ---
 
 # CELIR index scale clean-room
+
+> [!IMPORTANT]
+> **Superseded / Withdrawn** by [[adr:root/20261119200000]] — CELIR is not adopted; this document is historical record only.
 
 Version **0.1.0**. Normative Docker clean-room gate **G25** extending G22 N-scale beyond 32/128 toward higher hundreds under sole-runner OOM policy. Parent: [[sot:root/celir-index-contention-clean-room]]. Authority: [[sot:root/product-verification-clean-room]].
 

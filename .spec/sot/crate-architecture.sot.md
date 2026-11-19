@@ -14,7 +14,7 @@ rel:
 
 # Crate architecture
 
-Version 0.2.11. Normative **workspace crate graph** and **inner → outer dependency rule** for arks. Product name / primary crate / bin: [[sot:root/product-naming]]. Build principle: [[sot:root/product-intent]]. Compatibility envelope: [[sot:root/git-compat-surface]]. Native engine + zero-`gix` end state: [[adr:root/20261108083507]]. CELIR dual-path (index-only opt-in): [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]].
+Version 0.2.12. Normative **workspace crate graph** and **inner → outer dependency rule** for arks. Product name / primary crate / bin: [[sot:root/product-naming]]. Build principle: [[sot:root/product-intent]]. Compatibility envelope: [[sot:root/git-compat-surface]]. Native engine + zero-`gix` end state: [[adr:root/20261108083507]]. CELIR dual-path (index-only opt-in): [[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]].
 
 Convention affinity (cite, do not fork): humanymous crate-architecture patterns at `C:\workspaces\humanymous\.spec\sot\crate-architecture.sot.md` — kebab-case packages, acyclic responsibility graph, no artificial fragmentation. Cross-cutting SRP / flat-list / context-dir / language-standard layout rules: [[sot:root/structural-conventions]].
 
@@ -64,7 +64,7 @@ Workspace members present: `crates/arks-hash`, `crates/arks-oid`, `crates/arks-o
 | `arks-pack` | 2 | Pack + idx (+ phased `.rev`/MIDX) decode; encode later |
 | `arks-index` | 2 | Index file (gitformat-index) read/write for claimed versions |
 | `arks-refs` | 3 | Refname rules, loose refs, `packed-refs`, HEAD/symref; reftable later if claimed |
-| `arks-store` | 4 | Object-store **facade** trait; filesystem Git backend only; optional non-default feature `celir-index` (indexing companion, not ObjectStore) |
+| `arks-store` | 4 | Object-store **facade** trait; filesystem Git backend only; no CELIR in any form ([[adr:root/20261119200000]]) |
 | `arks-repo` | 4 | Repository discovery/layout (`GIT_DIR`, common dir); composes store + refs |
 | `arks-protocol` | 5 | pkt-line framing; capability advertise/parse helpers |
 | `arks-remote` | 6 | Git remote **client** for claimed protocols; GitHub-class = verify peer ([[sot:root/remote-host-compatibility-surface]]); not forge REST |
@@ -75,7 +75,7 @@ Workspace members present: `crates/arks-hash`, `crates/arks-oid`, `crates/arks-o
 | `arks-hub` | 7 (internal lib) | Forge/host APIs behind **`arks hub …`** ([[sot:root/arks-hub-product-intent]], [[sot:root/arks-hub-gh-command-matrix]]); `arks` depends on it; native API only — no `gh`/`git` spawn; **not** a separate release bin ([[plan:root/20261111040155]]) |
 | `arks-agent` | 7 (internal lib) | LLM review / CEV bots behind **`arks agent …`** ([[sot:root/arks-agent-product-intent]]); OpenAI-compat + vendor providers ([[sot:root/arks-agent-llm-providers]]); may use `arks-hub` for PR comments; native HTTP only — no `gh`/`git`/vendor-CLI spawn; **not** a separate release bin ([[plan:root/20261111042300]]) |
 
-**Object-store exclusion:** `arks-celir` ObjectStore adapter — do **not** add. **Allowed opt-in:** `arks-store` feature `celir-index` → path-deps `celir-index`, `celir-index-runtime` (default OFF) ([[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]]).
+**Object-store exclusion:** `arks-celir` ObjectStore adapter — do **not** add. **CELIR not adopted:** no feature, path dependency or companion crate ([[adr:root/20261119200000]]); historical opt-in was ([[sot:root/storage-celir-boundary]], [[adr:root/20261110052030]]).
 
 ### Graph summary (consumer → dependency)
 
@@ -118,7 +118,7 @@ An explicit inner→outer graph lets AI implementers start at `arks-hash` / `ark
 ## Verification
 
 1. `spec check` clean for this SoT.
-2. When workspace exists: `cargo metadata` shows no path from Rings 0–5 into Ring 7 packages; no path from Rings 0–4 into `arks-remote` except via documented Ring 6 adapters; **default** (no `celir-index` feature) graph has **zero** required `celir-*` / discrete-circuit edges; with `--features celir-index`, edges are limited to index crates cited by [[sot:root/storage-celir-boundary]].
+2. When workspace exists: `cargo metadata` shows no path from Rings 0–5 into Ring 7 packages; no path from Rings 0–4 into `arks-remote` except via documented Ring 6 adapters; the graph (any feature set) has **zero** `celir-*` / discrete-circuit edges ([[adr:root/20261119200000]]).
 3. Product paths in Rings 0–5 MUST NOT spawn `git` for claimed ops; clean-room/oracle use of `git` is allowed only in test/acceptance harnesses.
 4. Default / product builds of Rings 0–4 and `arks-lease` MUST NOT take a `gix`/gitoxide dependency; any transitional cold use must follow [[adr:root/20261108083507]] and be absent by M4 exit (gix-exit). Workspace Cargo graph at/after M4 MUST show zero `gix`/gitoxide edges.
 5. New crate proposals update this SoT before merge.

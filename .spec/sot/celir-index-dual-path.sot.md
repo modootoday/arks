@@ -1,7 +1,7 @@
 ---
 id: sot:root/celir-index-dual-path
 title: CELIR index dual-path companion
-status: active
+status: superseded
 created: 2026-11-09T20:28:15Z
 updated: 2026-11-09T20:45:00Z
 tags: [celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, m24, g022-celir-index-contention]
@@ -21,6 +21,9 @@ rel:
 ---
 
 # CELIR index dual-path companion
+
+> [!IMPORTANT]
+> **Superseded / Withdrawn** by [[adr:root/20261119200000]] — CELIR is not adopted; this document is historical record only.
 
 Version **0.2.0**. Normative product slice for program milestone **M24** and the optional `arks-store` feature **`celir-index`** (default **OFF**): product-private sidecar **beside `.git`**, arks-owned **rebuild-from-`.git`**, and build → publish → open → query wiring that cites real discrete-circuit APIs only. Boundary: [[sot:root/storage-celir-boundary]]. Enablement: [[adr:root/20261110052030]]. Milestone plan: [[plan:root/20261109203430]]. Prior companion waves folded: [[plan:root/20261109202815]].
 

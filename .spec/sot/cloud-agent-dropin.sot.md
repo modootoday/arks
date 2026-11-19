@@ -51,7 +51,7 @@ Decisions D1–D6: [[adr:root/20261119180100]].
 | C config | **Partial (host advisory)** | `arks-config` precedence + identity; `-c` global option; unscoped `config` reads merged |
 | S signing | **Partial (host advisory)** | `commit.gpgsign` + `gpg.format=ssh` + `gpg.ssh.program` produce `gpgsig`; forge-side verification not observed |
 | O corpus | **Partial (host advisory)** | 19/19 corpus compare rows byte-identical vs git 2.43; patches 28/40 identical (xdiff heuristics + renames Missing); `--git-dir` / `--work-tree` Missing |
-| B build | **Missing** | sibling `discrete-circuit` path deps still required (owner layout decision pending) |
+| B build | **Closing** | CELIR not adopted; sibling `discrete-circuit` path deps removed ([[adr:root/20261119200000]]) |
 | Index interop | **Fixed** | entry-dependent extensions dropped on rewrite ([[sot:root/arks-index]] v0.1.2) |
 | V clean-room | **Missing** | Docker gate simulating the sandbox not written; sandbox had no Docker daemon |
 
@@ -96,7 +96,7 @@ Bundled single-letter short options MUST be split parser-wide per [gitcli](https
 
 ### B — Build hygiene
 
-Default workspace resolution MUST NOT require sibling trees. CELIR index stays opt-in, default OFF ([[sot:root/storage-celir-boundary]]).
+Workspace resolution (any feature set) MUST NOT require sibling trees. CELIR is not adopted ([[adr:root/20261119200000]]).
 
 ### V — Verification
 

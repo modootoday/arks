@@ -14,13 +14,13 @@ rel:
 
 # arks-store unit
 
-Version **0.5.1**. Unit SoT for Ring 4 Git-first object-store facade ([[plan:root/20261108090647]], M2 Phase S). Under [[sot:root/program-roadmap]] **v0.3.1**, M2 restart / re-verify after M1 re-prove ([[evidence:root/20261108185319]]) is carried by [[evidence:root/20261108190033]]; prior [[evidence:root/20261108093059]] remains **historical / non-carrying alone**. CELIR dual-path: [[sot:root/storage-celir-boundary]] v0.8.1 + [[adr:root/20261110052030]] + companion [[sot:root/celir-index-dual-path]]. Additive **pack-aware read + pack ingest** supports M15/M14 clone paths without exploding every received pack to loose.
+Version **0.6.0**. Unit SoT for Ring 4 Git-first object-store facade ([[plan:root/20261108090647]], M2 Phase S). Under [[sot:root/program-roadmap]] **v0.3.1**, M2 restart / re-verify after M1 re-prove ([[evidence:root/20261108185319]]) is carried by [[evidence:root/20261108190033]]; prior [[evidence:root/20261108093059]] remains **historical / non-carrying alone**. CELIR dual-path: [[sot:root/storage-celir-boundary]] v0.8.1 + [[adr:root/20261110052030]] + companion [[sot:root/celir-index-dual-path]]. Additive **pack-aware read + pack ingest** supports M15/M14 clone paths without exploding every received pack to loose.
 
 ## Rule
 
 1. **Facade trait:** `ObjectStore` with associated `Error` and `put` / `get` / `exists` using [[sot:root/arks-object]] `RawObject`, [[sot:root/arks-hash]] `ObjectFormat`, and [[sot:root/arks-oid]] `Oid`. ObjectStore surface MUST stay Git-first — **MUST NOT** implement put/get/exists via CELIR ([[sot:root/storage-celir-boundary]]).
 2. **M2 backends:** `MemoryObjectStore` for host-advisory unit tests. **`FilesystemGitStore`** implements the same trait for Git objects under an `objects/` root: loose via [[sot:root/arks-object]] `write_loose` / `read_loose`, plus **additive** `objects/pack/pack-*.{pack,idx}` read (lazy decode) and `ingest_pack_bytes` write ([gitformat-pack](https://git-scm.com/docs/gitformat-pack) / gitrepository-layout). Missing objects MUST surface as `StoreError::NotFound` for `get`.
-3. **Optional feature `celir-index` (default OFF):** MAY path-dep `celir-index` / `celir-index-runtime` / `celir-data` and expose a compile-gated indexing companion for product-private indexes only (sidecar layout, rebuild-from-`.git`, query) per [[sot:root/celir-index-dual-path]]. MUST NOT be an ObjectStore backend. Default features MUST leave CELIR edges absent ([[adr:root/20261110052030]]).
+3. **No CELIR.** The crate has no CELIR feature, module or dependency ([[adr:root/20261119200000]]; the former optional `celir-index` feature is withdrawn).
 4. **No `gix`** and no product-path `git` subprocess ([[adr:root/20261108083507]]).
 5. **Out of scope (this unit):** refs/index/repo layout; MIDX/`.rev` product claims; CELIR ObjectStore; porcelain CLI for CELIR indexes; M3+ porcelain orchestration.
 
@@ -33,6 +33,6 @@ Routing object I/O through a small facade keeps Ring 1 types free of layout deta
 1. Host `cargo test -p arks-store` — **advisory** (facade + FS unit tests).
 2. Clean-room **G10** objects-subset (`verify/gates/g010-store-facade` + `run-g010-store-facade.sh`) with **G1** regression green — **authoritative**; carrying receipt under v0.3.1: [[evidence:root/20261108190033]] ([[plan:root/20261108090647]], [[sot:root/interop-test-matrix]], `verify/matrices/matrix-m002-clean-room-g0-g1-g10.md`).
 3. `spec check` clean for this SoT.
-4. Default `cargo check -p arks-store` shows no required `celir-*` edge; `cargo check -p arks-store --features celir-index` succeeds when discrete-circuit packages exist; no `gix` / gitoxide.
+4. `cargo check -p arks-store --all-features` shows no `celir-*` edge and needs no sibling tree; no `gix` / gitoxide.
 
 **Prior (non-carrying alone):** [[evidence:root/20261108093059]] — historical gap-fill input under v0.3.1.
