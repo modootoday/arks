@@ -99,12 +99,12 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
     };
     let mut repo = open_repo()?;
     let tree = resolve_rev(&repo, &tree_s)?;
-    let sig = commit_signature()?;
+    // Author and committer come from their own identities (git-commit-tree).
     let commit = Commit {
         tree,
         parents,
-        author: sig.clone(),
-        committer: sig,
+        author: commit_signature()?,
+        committer: crate::cmd::shared::committer_signature()?,
         gpgsig: None,
         message,
     };
