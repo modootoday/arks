@@ -1165,7 +1165,9 @@ pub(crate) fn commit_tree(
     materialize_tree_only(files)?;
     let repo = open_repo()?;
     // git sequencer commit summary (`[branch abbrev] subject`, Author/Date, stat).
-    crate::cmd::core::print_commit_summary(&repo, &oid, true)?;
+    if !crate::util::quiet() {
+        crate::cmd::core::print_commit_summary(&repo, &oid, true)?;
+    }
     Ok(oid)
 }
 

@@ -1,66 +1,105 @@
-//! format-patch / am — CLI wires `arks_object::parse_patch`.
+//! format-patch / am — CLI wires `arks_object` mailbox and unified-diff parsing.
 
 use crate::cmd::replay::{
-    PathDelta, apply_checked, deltas_for_commit, ensure_clean, ensure_nl, first_parent_set,
-    put_blob, read_commit, resolve_commit,
+    PathDelta, apply_checked, ensure_clean, first_parent_set, put_blob, read_commit, resolve_commit,
 };
 use crate::cmd::shared::{commit_signature, committer_signature};
 use crate::error::{CliError, CliResult};
 use crate::util::{cwd, open_repo, refuse_unknown_flags};
-use arks_object::{ObjectKind, parse_patch};
+use arks_object::{
+    FilePatch, MailMessage, ObjectKind, apply_hunks, parse_mailbox, parse_unified_diff,
+};
 use arks_oid::Oid;
 use arks_repo::Repository;
 use std::fs;
 use std::path::PathBuf;
 pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
     // M16 Sy-5: `--cover-letter`, `-1`, `-o` claimed (git-format-patch).
+    // C7b: `-<n>`, `--stdout`, `<since>` (= `<since>..HEAD`), `-n`/`-N`.
     // Cite: https://git-scm.com/docs/git-format-patch
-    refuse_unknown_flags(args, &["-1", "-o", "--cover-letter"])?;
-    let mut one = false;
+    let mut count: Option<usize> = None;
     let mut cover_letter = false;
+    let mut stdout = false;
+    let mut quiet = false;
+    let mut numbered: Option<bool> = None;
     let mut out_dir: Option<PathBuf> = None;
     let mut positional = Vec::new();
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "-1" {
-            one = true;
-        } else if args[i] == "--cover-letter" {
+        let a = args[i].as_str();
+        if let Some(n) = a
+            .strip_prefix('-')
+            .filter(|d| !d.is_empty() && d.bytes().all(|b| b.is_ascii_digit()))
+        {
+            count = Some(
+                n.parse()
+                    .map_err(|_| CliError::fatal(format!("bad count {a}")))?,
+            );
+        } else if a == "--cover-letter" {
             cover_letter = true;
-        } else if args[i] == "-o" {
+        } else if a == "--stdout" {
+            stdout = true;
+        } else if a == "-n" || a == "--numbered" {
+            numbered = Some(true);
+        } else if a == "-N" || a == "--no-numbered" {
+            numbered = Some(false);
+        } else if a == "-q" || a == "--quiet" {
+            quiet = true;
+        } else if a == "-o" || a == "--output-directory" {
             i += 1;
             let dir = args
                 .get(i)
                 .ok_or_else(|| CliError::Usage("format-patch: -o requires a directory".into()))?;
             out_dir = Some(PathBuf::from(dir));
-        } else if !args[i].starts_with('-') {
-            positional.push(args[i].as_str());
+        } else if let Some(dir) = a.strip_prefix("--output-directory=") {
+            out_dir = Some(PathBuf::from(dir));
+        } else if a.starts_with('-') {
+            return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+        } else {
+            positional.push(a);
         }
         i += 1;
     }
     let repo = open_repo()?;
-    let commits = if one {
+    let commits = if let Some(n) = count {
         if positional.len() > 1 {
             return Err(CliError::Usage(
-                "format-patch: -1 accepts at most one commit".into(),
+                "format-patch: -<n> accepts at most one commit".into(),
             ));
         }
         let rev = positional.first().copied().unwrap_or("HEAD");
         if rev.contains("..") {
             return Err(CliError::Usage(
-                "format-patch: -1 does not take a range".into(),
+                "format-patch: -<n> does not take a range".into(),
             ));
         }
-        vec![resolve_commit(&repo, rev)?]
+        // The last <n> non-merge commits reachable from <rev> (rev-list order).
+        let tip = resolve_commit(&repo, rev)?;
+        let mut picked: Vec<Oid> = crate::cmd::log_format::walk(&repo, &[tip], &[], false)?
+            .into_iter()
+            .filter(|(_, c)| c.parents.len() <= 1)
+            .take(n)
+            .map(|(o, _)| o)
+            .collect();
+        picked.reverse();
+        picked
     } else if positional.len() == 1 {
-        series_commits(&repo, positional[0])?
+        let spec = if positional[0].contains("..") {
+            positional[0].to_string()
+        } else {
+            format!("{}..HEAD", positional[0])
+        };
+        series_commits(&repo, &spec)?
     } else {
         return Err(CliError::Usage(
-            "format-patch: -1 [<commit>] or <A>..<B>".into(),
+            "format-patch: -<n> [<commit>] or <since> or <A>..<B>".into(),
         ));
     };
     if commits.is_empty() {
-        return Err(CliError::Msg("format-patch: empty range".into()));
+        return Ok(());
     }
+    let total = commits.len();
+    let numbered = numbered.unwrap_or(total > 1 || cover_letter);
     let mut rendered = Vec::new();
     if cover_letter {
         rendered.push((
@@ -69,26 +108,48 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         ));
     }
     for (n, oid) in commits.iter().enumerate() {
-        let body = render_patch(&repo, oid)?;
+        let prefix = if numbered {
+            format!("[PATCH {}/{total}]", n + 1)
+        } else {
+            "[PATCH]".to_string()
+        };
+        let body = render_patch(&repo, oid, &prefix)?;
         let commit = read_commit(&repo, oid)?;
         let name = format!("{:04}-{}.patch", n + 1, patch_slug(commit.subject()));
         rendered.push((name, body));
     }
     drop(repo);
-    let dir = out_dir.unwrap_or(cwd()?);
-    fs::create_dir_all(&dir)?;
+    if stdout {
+        for (_, body) in rendered {
+            print!("{body}");
+        }
+        return Ok(());
+    }
+    if let Some(dir) = &out_dir {
+        fs::create_dir_all(dir)?;
+    }
+    let base = match &out_dir {
+        Some(d) => d.clone(),
+        None => cwd()?,
+    };
     for (name, body) in rendered {
-        let path = dir.join(&name);
-        fs::write(&path, body)?;
-        println!("{}", path.display());
+        fs::write(base.join(&name), body)?;
+        // git prints the file name relative to where it was asked for.
+        match &out_dir {
+            _ if quiet => {}
+            Some(d) => println!("{}", d.join(&name).display()),
+            None => println!("{name}"),
+        }
     }
     Ok(())
 }
 
 pub fn cmd_am(args: &[String]) -> CliResult<()> {
     // M16 Sy-5: `--3way` when index blobs resolvable (git-am).
+    // C7b: unified-diff hunks (any count, with offsets) applied to the HEAD
+    // blobs; mailboxes with several messages commit one by one.
     // Cite: https://git-scm.com/docs/git-am
-    refuse_unknown_flags(args, &["--3way", "-3"])?;
+    refuse_unknown_flags(args, &["--3way", "-3", "-q", "--quiet"])?;
     let three_way = args.iter().any(|a| a == "--3way" || a == "-3");
     let path = args
         .iter()
@@ -100,97 +161,163 @@ pub fn cmd_am(args: &[String]) -> CliResult<()> {
             "am of a patch directory is not claimed".into(),
         ));
     }
-    let mut repo = open_repo()?;
-    // SEQ-007 / MISC-007 (M19 Cx-2): shared rebase-apply / am state — refuse concurrent am
-    // before parsing the patch (fail-closed on state, not on parse order).
-    let git = repo.git_dir();
-    if git.join("rebase-apply").is_dir() || git.join("rebase-merge").is_dir() {
-        return Err(CliError::Msg(
-            "am refused: sequencer/apply state present (SEQ-007 / MISC-007); no dual-am dialect"
-                .into(),
-        ));
+    {
+        let repo = open_repo()?;
+        // SEQ-007 / MISC-007 (M19 Cx-2): shared rebase-apply / am state — refuse
+        // concurrent am before parsing the patch (fail-closed on state, not on parse order).
+        let git = repo.git_dir();
+        if git.join("rebase-apply").is_dir() || git.join("rebase-merge").is_dir() {
+            return Err(CliError::Msg(
+                "am refused: sequencer/apply state present (SEQ-007 / MISC-007); no dual-am dialect"
+                    .into(),
+            ));
+        }
     }
     let bytes = fs::read(&file)?;
     let text = std::str::from_utf8(&bytes)
         .map_err(|_| CliError::NotImplemented("am: non-utf8 patch is not claimed".into()))?;
-    let patch = parse_patch(text)?;
+    let messages = parse_mailbox(text)?;
+    for (n, msg) in messages.iter().enumerate() {
+        am_one(msg, n + 1, three_way)?;
+    }
+    Ok(())
+}
+
+/// Apply and commit one mailbox message on top of HEAD.
+fn am_one(msg: &MailMessage, n: usize, three_way: bool) -> CliResult<()> {
+    let mut repo = open_repo()?;
+    let head_map = crate::cmd::shared::head_blob_map(&repo)?;
+    let index = crate::util::read_index(&repo)?;
+    let mut dirty: Vec<String> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() != 0 || head_map.get(&e.path) != Some(&e.oid))
+        .map(|e| e.path.clone())
+        .collect();
+    dirty.extend(
+        head_map
+            .keys()
+            .filter(|p| !index.entries.iter().any(|e| &e.path == *p))
+            .cloned(),
+    );
+    dirty.sort();
+    dirty.dedup();
+    if !dirty.is_empty() {
+        return Err(CliError::fatal(format!(
+            "Dirty index: cannot apply patches (dirty: {})",
+            dirty.join(" ")
+        )));
+    }
     let head_map = ensure_clean(&repo)?;
+    let subject = crate::cmd::log_format::subject_line(&msg.message);
+    let files = parse_unified_diff(msg.raw.as_bytes())
+        .map_err(|e| CliError::fatal(format!("{e}\nPatch failed at {n:04} {subject}")))?;
     let mut deltas = Vec::new();
-    for file in &patch.files {
-        let base = match &file.base {
-            Some(bytes) => Some(put_blob(&mut repo, bytes)?),
+    for fp in &files {
+        let shown = fp.display_path().to_string();
+        let failed = |line: usize| {
+            CliError::Exit(
+                128,
+                format!(
+                    "error: patch failed: {shown}:{line}\nerror: {shown}: patch does not apply\n\
+                     Patch failed at {n:04} {subject}"
+                ),
+            )
+        };
+        if fp.binary {
+            return Err(failed(0));
+        }
+        let base = fp.old_path.as_ref().and_then(|p| head_map.get(p)).copied();
+        if fp.old_path.is_some() && base.is_none() && !three_way {
+            return Err(failed(0));
+        }
+        let base_bytes = match base {
+            Some(o) => repo.get_object(&o)?.payload,
+            None => Vec::new(),
+        };
+        let new_bytes = match apply_hunks(&base_bytes, fp) {
+            Ok(b) => b,
+            Err(line) if three_way => three_way_tip(&repo, fp).ok_or_else(|| failed(line))?,
+            Err(line) => return Err(failed(line)),
+        };
+        let tip = match &fp.new_path {
+            Some(_) => Some(put_blob(&mut repo, &new_bytes)?),
             None => None,
         };
-        let tip = match &file.tip {
-            Some(bytes) => Some(put_blob(&mut repo, bytes)?),
-            None => None,
-        };
-        if base != tip {
-            deltas.push(PathDelta {
-                path: file.path.clone(),
-                base,
-                tip,
-            });
+        match (&fp.old_path, &fp.new_path) {
+            (Some(op), Some(np)) if op != np => {
+                deltas.push(PathDelta {
+                    path: op.clone(),
+                    base,
+                    tip: None,
+                });
+                deltas.push(PathDelta {
+                    path: np.clone(),
+                    base: head_map.get(np).copied(),
+                    tip,
+                });
+            }
+            _ => {
+                if base != tip {
+                    deltas.push(PathDelta {
+                        path: shown.clone(),
+                        base,
+                        tip,
+                    });
+                }
+            }
         }
     }
     let mut author = commit_signature()?;
-    if let (Some(name), Some(email)) = (patch.author_name, patch.author_email) {
-        author.name = name;
-        author.email = email;
+    if let (Some(name), Some(email)) = (&msg.author_name, &msg.author_email) {
+        author.name = name.clone();
+        author.email = email.clone();
+    }
+    // git am records the mail's Date: header as the author date.
+    if let Some((ts, tz)) = msg.date.as_deref().and_then(parse_rfc2822_date) {
+        author.timestamp = ts;
+        author.timezone = tz;
     }
     let committer = committer_signature()?;
-    // Claimed `--3way` subset: when clean apply would refuse and both sides of each
-    // delta resolve in the object store (we just stored reconstructed blobs), take tip.
-    if three_way {
-        let mut need_force = false;
-        for d in &deltas {
-            let have = head_map.get(&d.path).copied();
-            if have != d.base {
-                if d.tip.is_none() && d.base.is_none() {
-                    drop(repo);
-                    return Err(CliError::Msg(format!(
-                        "am --3way: cannot resolve blobs for '{}'",
-                        d.path
-                    )));
-                }
-                // Tip (and optional base) must be fetchable from the store.
-                if let Some(tip) = d.tip {
-                    let _ = repo.get_object(&tip).map_err(|_| {
-                        CliError::Msg(format!(
-                            "am --3way: tip blob {} not resolvable",
-                            tip.to_hex()
-                        ))
-                    })?;
-                }
-                if let Some(base) = d.base {
-                    let _ = repo.get_object(&base).map_err(|_| {
-                        CliError::Msg(format!(
-                            "am --3way: base blob {} not resolvable",
-                            base.to_hex()
-                        ))
-                    })?;
-                }
-                need_force = true;
-            }
-        }
-        if need_force {
-            let forced: Vec<PathDelta> = deltas
-                .iter()
-                .map(|d| PathDelta {
-                    path: d.path.clone(),
-                    // Treat current HEAD blob as base so apply_checked accepts the tip.
-                    base: head_map.get(&d.path).copied(),
-                    tip: d.tip,
-                })
-                .collect();
-            drop(repo);
-            apply_checked(&head_map, &forced, patch.message, author, committer)?;
-            return Ok(());
-        }
-    }
     drop(repo);
-    apply_checked(&head_map, &deltas, patch.message, author, committer)?;
+    if !crate::util::quiet() {
+        println!("Applying: {subject}");
+    }
+    // git am reports `Applying: <subject>` instead of a commit summary.
+    crate::util::set_quiet_from(&["-q".to_string()]);
+    apply_checked(&head_map, &deltas, msg.message.clone(), author, committer)?;
     Ok(())
+}
+
+/// RFC 2822 `[Wed, ]15 Nov 2023 05:13:20 +0000` → (unix seconds, `+hhmm`).
+fn parse_rfc2822_date(v: &str) -> Option<(i64, String)> {
+    const MONTHS: [&str; 12] = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    let v = v.split_once(", ").map(|(_, r)| r).unwrap_or(v);
+    let mut it = v.split_whitespace();
+    let day: u32 = it.next()?.parse().ok()?;
+    let mon_name = it.next()?;
+    let mon = MONTHS.iter().position(|m| *m == mon_name)? + 1;
+    let year: i64 = it.next()?.parse().ok()?;
+    let time = it.next()?;
+    let tz = it.next()?;
+    crate::cmd::shared::parse_git_date(&format!("{year:04}-{mon:02}-{day:02} {time} {tz}"))
+}
+
+/// Claimed `--3way` subset: when the hunks do not apply to HEAD, take the
+/// post-image blob named on the `index` line, or re-apply the hunks to the
+/// pre-image blob, when that blob is in the object store.
+fn three_way_tip(repo: &Repository, fp: &FilePatch) -> Option<Vec<u8>> {
+    let (pre, post) = fp.index_oids.as_ref()?;
+    let blob = |hex: &str| {
+        crate::cmd::shared::resolve_rev(repo, hex)
+            .ok()
+            .and_then(|o| repo.get_object(&o).ok())
+            .filter(|o| o.kind == ObjectKind::Blob)
+            .map(|o| o.payload)
+    };
+    blob(post).or_else(|| apply_hunks(&blob(pre)?, fp).ok())
 }
 
 fn series_commits(repo: &Repository, spec: &str) -> CliResult<Vec<Oid>> {
@@ -269,20 +396,24 @@ fn render_cover_letter(repo: &Repository, commits: &[Oid]) -> CliResult<String> 
     Ok(out)
 }
 
-fn render_patch(repo: &Repository, oid: &Oid) -> CliResult<String> {
+/// One format-patch mailbox: `From <oid> <magic date>`, `From:`, RFC 2822
+/// `Date:`, `Subject: <prefix> <subject>`, the message body, `---`, the
+/// diffstat, the patch, and the `-- ` signature (the arks version).
+fn render_patch(repo: &Repository, oid: &Oid, prefix: &str) -> CliResult<String> {
+    use crate::cmd::diff_render::{DiffFormat, changes_between, render};
+    use crate::cmd::log_format::DateMode;
     let commit = read_commit(repo, oid)?;
     if commit.parents.len() > 1 {
         return Err(CliError::NotImplemented(
             "format-patch of merge commits is not claimed".into(),
         ));
     }
-    let deltas = deltas_for_commit(repo, &commit)?;
-    let subject = {
-        let s = commit.subject();
-        if s.is_empty() {
-            "untitled".to_owned()
-        } else {
-            s.to_owned()
+    let subject = crate::cmd::log_format::subject_line(&commit.message);
+    let body: String = {
+        let msg = commit.message.trim_end_matches('\n');
+        match msg.split_once("\n\n") {
+            Some((_, rest)) => format!("{}\n", rest.trim_start_matches('\n')),
+            None => String::new(),
         }
     };
     let mut out = String::new();
@@ -292,112 +423,31 @@ fn render_patch(repo: &Repository, oid: &Oid) -> CliResult<String> {
         commit.author.name, commit.author.email
     ));
     out.push_str(&format!(
-        "Date: {} {}\n",
-        commit.author.timestamp, commit.author.timezone
+        "Date: {}\n",
+        DateMode::Rfc2822.format(&commit.author)
     ));
-    out.push_str(&format!("Subject: [PATCH] {subject}\n\n"));
-    out.push_str(&ensure_nl(commit.message.clone()));
-    if !out.ends_with('\n') {
+    out.push_str(&format!("Subject: {prefix} {subject}\n\n"));
+    if !body.is_empty() {
+        out.push_str(&body);
         out.push('\n');
     }
     out.push_str("---\n");
-    for delta in &deltas {
-        let base_bytes = match delta.base {
-            Some(blob) => Some(blob_payload(repo, &blob)?),
-            None => None,
-        };
-        let tip_bytes = match delta.tip {
-            Some(blob) => Some(blob_payload(repo, &blob)?),
-            None => None,
-        };
-        append_file_diff(
-            &mut out,
-            &delta.path,
-            base_bytes.as_deref(),
-            tip_bytes.as_deref(),
-        )?;
-    }
+    let old = match commit.parents.first() {
+        Some(p) => crate::cmd::shared::tree_blob_map(repo, p)?,
+        None => Default::default(),
+    };
+    let new = crate::cmd::shared::tree_blob_map(repo, oid)?;
+    let changes = changes_between(&old, &new, None);
+    let fmt = DiffFormat {
+        stat: true,
+        patch: true,
+        ..Default::default()
+    };
+    let mut buf = Vec::new();
+    render(&mut buf, repo, &fmt, &changes)?;
+    out.push_str(&String::from_utf8_lossy(&buf));
+    out.push_str(&format!("-- \n{}\n\n", env!("CARGO_PKG_VERSION")));
     Ok(out)
-}
-
-fn blob_payload(repo: &Repository, oid: &Oid) -> CliResult<Vec<u8>> {
-    let obj = repo.get_object(oid)?;
-    if obj.kind != ObjectKind::Blob {
-        return Err(CliError::Msg(format!("{} is not a blob", oid.to_hex())));
-    }
-    Ok(obj.payload)
-}
-
-fn append_file_diff(
-    out: &mut String,
-    path: &str,
-    base: Option<&[u8]>,
-    tip: Option<&[u8]>,
-) -> CliResult<()> {
-    out.push_str(&format!("diff --git a/{path} b/{path}\n"));
-    match (base, tip) {
-        (None, Some(_)) => out.push_str("new file mode 100644\n"),
-        (Some(_), None) => out.push_str("deleted file mode 100644\n"),
-        _ => {}
-    }
-    if base.is_none() {
-        out.push_str("--- /dev/null\n");
-    } else {
-        out.push_str(&format!("--- a/{path}\n"));
-    }
-    if tip.is_none() {
-        out.push_str("+++ /dev/null\n");
-    } else {
-        out.push_str(&format!("+++ b/{path}\n"));
-    }
-    let (old_lines, old_nl) = match base {
-        Some(bytes) => split_text(bytes)?,
-        None => (Vec::new(), true),
-    };
-    let (new_lines, new_nl) = match tip {
-        Some(bytes) => split_text(bytes)?,
-        None => (Vec::new(), true),
-    };
-    let old_count = old_lines.len();
-    let new_count = new_lines.len();
-    let old_start = if old_count == 0 { 0 } else { 1 };
-    let new_start = if new_count == 0 { 0 } else { 1 };
-    out.push_str(&format!(
-        "@@ -{old_start},{old_count} +{new_start},{new_count} @@\n"
-    ));
-    if base.is_some() {
-        for line in &old_lines {
-            out.push('-');
-            out.push_str(line);
-            out.push('\n');
-        }
-        if !old_nl && old_count > 0 {
-            out.push_str("\\ No newline at end of file\n");
-        }
-    }
-    if tip.is_some() {
-        for line in &new_lines {
-            out.push('+');
-            out.push_str(line);
-            out.push('\n');
-        }
-        if !new_nl && new_count > 0 {
-            out.push_str("\\ No newline at end of file\n");
-        }
-    }
-    Ok(())
-}
-
-fn split_text(bytes: &[u8]) -> CliResult<(Vec<String>, bool)> {
-    if bytes.contains(&0) {
-        return Err(CliError::NotImplemented(
-            "binary patches are not claimed".into(),
-        ));
-    }
-    let text = std::str::from_utf8(bytes)
-        .map_err(|_| CliError::NotImplemented("non-utf8 patches are not claimed".into()))?;
-    let trailing_nl = text.is_empty() || text.ends_with('\n');
-    Ok((text.lines().map(str::to_owned).collect(), trailing_nl))
 }
 
 fn patch_slug(subject: &str) -> String {
