@@ -1263,33 +1263,74 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: paths → ignored? Minimal `.gitignore` line matcher (prefix / * suffix).
+    // M16 Sy-3 + C7b: full gitignore(5) sources and precedence via the
+    // shared matcher; `-v`, `-n`/`--non-matching`, `-q`, `--no-index`.
+    // Tracked paths are not reported unless --no-index. Exit 0 when some
+    // path is ignored, 1 when none is.
     // Cite: https://git-scm.com/docs/git-check-ignore
-    refuse_unknown_flags(args, &["-v"])?;
-    let verbose = args.iter().any(|a| a == "-v");
-    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    let args = crate::util::split_short_bundles(args, "vnq", "");
+    let mut verbose = false;
+    let mut non_matching = false;
+    let mut quiet = false;
+    let mut no_index = false;
+    let mut paths: Vec<&String> = Vec::new();
+    for a in &args {
+        match a.as_str() {
+            "-v" | "--verbose" => verbose = true,
+            "-n" | "--non-matching" => non_matching = true,
+            "-q" | "--quiet" => quiet = true,
+            "--no-index" => no_index = true,
+            "--" => {}
+            _ if a.starts_with('-') => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            }
+            _ => paths.push(a),
+        }
+    }
     if paths.is_empty() {
-        return Err(CliError::Usage("check-ignore [-v] <path>...".into()));
+        return Err(CliError::fatal("no path specified"));
+    }
+    if non_matching && !verbose {
+        return Err(CliError::fatal(
+            "--non-matching is only valid with --verbose",
+        ));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let patterns = load_gitignore_patterns(&work)?;
+    let tracked: HashSet<String> = if no_index {
+        HashSet::new()
+    } else {
+        read_index(&repo)?
+            .entries
+            .into_iter()
+            .map(|e| e.path)
+            .collect()
+    };
+    let mut ignore = crate::cmd::ignore::Ignore::new(&work);
     let mut any = false;
     for p in paths {
         let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| (*p).clone());
-        if let Some(pat) = match_ignore(&patterns, &rel) {
-            any = true;
-            if verbose {
-                println!(".gitignore:1:{pat}\t{rel}");
-            } else {
-                println!("{rel}");
-            }
+        let is_dir = work.join(&rel).is_dir();
+        let m = if tracked.contains(&rel) {
+            None
+        } else {
+            ignore.matching_with_parents(&rel, is_dir)
+        };
+        any |= m.as_ref().is_some_and(|m| m.excluded);
+        if quiet {
+            continue;
+        }
+        match (&m, verbose) {
+            (Some(m), true) => println!("{}:{}:{}\t{p}", m.source, m.line, m.pattern),
+            (Some(m), false) if m.excluded => println!("{p}"),
+            (None, true) if non_matching => println!("::\t{p}"),
+            _ => {}
         }
     }
     if any {
         Ok(())
     } else {
-        Err(CliError::Msg("no ignored paths".into()))
+        Err(CliError::silent(1))
     }
 }
 
@@ -1340,38 +1381,4 @@ pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
     }
     println!("{} undefined", target.to_hex());
     Ok(())
-}
-
-fn load_gitignore_patterns(work: &Path) -> CliResult<Vec<String>> {
-    let path = work.join(".gitignore");
-    if !path.is_file() {
-        return Ok(Vec::new());
-    }
-    let text = fs::read_to_string(path)?;
-    Ok(text
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty() && !l.starts_with('#'))
-        .map(str::to_string)
-        .collect())
-}
-
-fn match_ignore(patterns: &[String], path: &str) -> Option<String> {
-    for pat in patterns {
-        if pat.ends_with('/') {
-            let prefix = &pat[..pat.len() - 1];
-            if path == prefix || path.starts_with(&format!("{prefix}/")) {
-                return Some(pat.clone());
-            }
-        } else if let Some(suf) = pat.strip_prefix("*.") {
-            if path.ends_with(&format!(".{suf}"))
-                || Path::new(path).extension().and_then(|e| e.to_str()) == Some(suf)
-            {
-                return Some(pat.clone());
-            }
-        } else if path == pat || path.ends_with(&format!("/{pat}")) {
-            return Some(pat.clone());
-        }
-    }
-    None
 }
