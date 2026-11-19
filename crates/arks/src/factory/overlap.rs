@@ -91,6 +91,12 @@ fn run_git(leaf: &str, args: &[String]) -> LayerOutcome {
             eprintln!("error: {m}");
             LayerOutcome::Failed
         }
+        Err(CliError::Exit(_, m)) => {
+            if !m.is_empty() {
+                eprintln!("{m}");
+            }
+            LayerOutcome::Failed
+        }
     }
 }
 

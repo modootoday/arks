@@ -7,12 +7,31 @@ pub enum CliError {
     Usage(String),
     NotImplemented(String),
     Msg(String),
+    /// Peer-faithful exit: print the message verbatim to stderr (when non-empty)
+    /// and exit with the given status (git uses 128 for `fatal:` and 1 for
+    /// quiet boolean checks such as `merge-base --is-ancestor`).
+    Exit(u8, String),
+}
+
+impl CliError {
+    /// git `die()` shape: `fatal: <msg>` on stderr, exit status 128.
+    /// Cite: https://git-scm.com/docs/api-error-handling (die → 128).
+    pub fn fatal(msg: impl Into<String>) -> Self {
+        Self::Exit(128, format!("fatal: {}", msg.into()))
+    }
+
+    /// Silent non-zero exit (boolean query answered "no").
+    pub fn silent(code: u8) -> Self {
+        Self::Exit(code, String::new())
+    }
 }
 
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Usage(m) | Self::NotImplemented(m) | Self::Msg(m) => f.write_str(m),
+            Self::Usage(m) | Self::NotImplemented(m) | Self::Msg(m) | Self::Exit(_, m) => {
+                f.write_str(m)
+            }
         }
     }
 }

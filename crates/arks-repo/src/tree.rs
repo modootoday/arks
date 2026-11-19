@@ -67,9 +67,23 @@ pub fn head_blob_map(repo: &Repository) -> Result<HashMap<String, Oid>, RepoErro
     Ok(map)
 }
 
-/// Blob map for a commit or tree OID.
+/// Blob map for a commit or tree OID (annotated tags are peeled first, as a
+/// tree-ish per gitrevisions(7)).
 pub fn tree_blob_map(repo: &Repository, rev_oid: &Oid) -> Result<HashMap<String, Oid>, RepoError> {
-    let obj = repo.get_object(rev_oid)?;
+    let mut rev_oid = *rev_oid;
+    let mut obj = repo.get_object(&rev_oid)?;
+    while obj.kind == ObjectKind::Tag {
+        let text = String::from_utf8_lossy(&obj.payload).into_owned();
+        let target = text
+            .lines()
+            .take_while(|l| !l.is_empty())
+            .find_map(|l| l.strip_prefix("object "))
+            .and_then(|h| Oid::from_hex(h.trim()).ok())
+            .ok_or_else(|| RepoError::Io(format!("bad tag object {}", rev_oid.to_hex())))?;
+        rev_oid = target;
+        obj = repo.get_object(&rev_oid)?;
+    }
+    let rev_oid = &rev_oid;
     let tree_oid = match obj.kind {
         ObjectKind::Commit => {
             Commit::decode(&obj.payload)
