@@ -165,3 +165,12 @@ revert -n HEAD
 fetch -q . feature:f2
 push -q . HEAD:refs/heads/pushed
 remote add up .
+# init: -q / -b / --initial-branch / re-init / default-branch hint.
+# init --bare stays DIFF: git copies its install-time template dir (sample hooks,
+# description, info/exclude); arks ships no template dir.
+init new-default
+init -q new-quiet
+init -b main new-main
+init --initial-branch=dev new-dev
+init --bare new-bare.git
+init .
