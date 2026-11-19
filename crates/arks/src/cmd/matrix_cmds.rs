@@ -2,13 +2,11 @@
 //!
 //! Cite: pin git 2.39.5 man pages; survey [[research:root/20261111034805]].
 
-use crate::cmd::replay::put_blob;
 use crate::cmd::shared::{resolve_rev, tree_blob_map};
 use crate::cmd::working_tree::{cmd_diff, print_maps_diff, print_maps_summary};
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
-use arks_index::{IndexEntry, sort_entries};
-use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode, parse_patch};
+use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree};
+use arks_object::{ObjectKind, RawObject, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
 use arks_repo::Repository;
 use arks_store::ObjectStore;
@@ -16,71 +14,6 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-
-/// `arks apply [<patch>]` — apply a format-patch mailbox to the worktree (+ optional index).
-pub fn cmd_apply(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--index", "--cached"])?;
-    let to_index = args.iter().any(|a| a == "--index" || a == "--cached");
-    let file = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("apply [--index] <patch>".into()))?;
-    let bytes = fs::read(file)?;
-    let text = std::str::from_utf8(&bytes)
-        .map_err(|_| CliError::NotImplemented("apply: non-utf8 patch not claimed".into()))?;
-    let patch = parse_patch(text).map_err(|e| CliError::Msg(e.to_string()))?;
-    let mut repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let mut index = read_index(&repo)?;
-    for file in &patch.files {
-        let abs = work.join(&file.path);
-        match &file.tip {
-            Some(payload) => {
-                if let Some(parent) = abs.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                fs::write(&abs, payload)?;
-                if to_index {
-                    let oid = put_blob(&mut repo, payload)?;
-                    upsert_index(&mut index, &file.path, oid, payload.len() as u32);
-                }
-            }
-            None => {
-                if abs.is_file() {
-                    fs::remove_file(&abs)?;
-                }
-                if to_index {
-                    index.entries.retain(|e| e.path != file.path);
-                }
-            }
-        }
-    }
-    if to_index {
-        sort_entries(&mut index.entries);
-        write_index(&repo, &index)?;
-    }
-    Ok(())
-}
-
-fn upsert_index(index: &mut arks_index::Index, path: &str, oid: Oid, size: u32) {
-    index.entries.retain(|e| e.path != path);
-    index.entries.push(IndexEntry {
-        ctime_sec: 0,
-        ctime_nsec: 0,
-        mtime_sec: 0,
-        mtime_nsec: 0,
-        dev: 0,
-        ino: 0,
-        mode: 0o100644,
-        uid: 0,
-        gid: 0,
-        size,
-        oid,
-        flags: (path.len().min(0x0fff)) as u16,
-        flags_extended: None,
-        path: path.to_owned(),
-    });
-}
 
 /// `arks ls-remote [<options>] [<remote> [<patterns>…]]`
 pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {

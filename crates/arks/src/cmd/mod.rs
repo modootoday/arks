@@ -1,6 +1,7 @@
 //! CLI command modules grouped by domain context (not wave letters).
 //! Composition root: `main.rs` dispatches here; pure format/graph helpers live in library crates.
 
+pub mod apply;
 pub mod archive;
 pub mod bisect;
 pub mod blame;
@@ -50,6 +51,7 @@ pub mod unified_diff;
 pub mod working_tree;
 pub mod worktree;
 
+pub use apply::cmd_apply;
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
 pub use bisect::cmd_bisect;
 pub use blame::{cmd_annotate, cmd_blame};
@@ -77,13 +79,13 @@ pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show};
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
-    cmd_apply, cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry,
-    cmd_column, cmd_credential_store, cmd_diagnose, cmd_diff_files, cmd_diff_index,
-    cmd_fmt_merge_msg, cmd_for_each_repo, cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers,
-    cmd_ls_remote, cmd_mailinfo, cmd_mailsplit, cmd_merge_file, cmd_merge_tree, cmd_mktag,
-    cmd_mktree, cmd_pack_redundant, cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_request_pull,
-    cmd_shell, cmd_show_branch, cmd_show_index, cmd_stripspace, cmd_unpack_file,
-    cmd_unpack_objects, cmd_upload_archive, cmd_var, cmd_verify_pack,
+    cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
+    cmd_credential_store, cmd_diagnose, cmd_diff_files, cmd_diff_index, cmd_fmt_merge_msg,
+    cmd_for_each_repo, cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_ls_remote,
+    cmd_mailinfo, cmd_mailsplit, cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree,
+    cmd_pack_redundant, cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_request_pull, cmd_shell,
+    cmd_show_branch, cmd_show_index, cmd_stripspace, cmd_unpack_file, cmd_unpack_objects,
+    cmd_upload_archive, cmd_var, cmd_verify_pack,
 };
 pub use matrix_rest::{
     cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_fetch_pack, cmd_http_fetch,
