@@ -46,10 +46,9 @@ Usage:
     }
 }
 
-/// Host-skew `git repo` helper body (2.54+). Not dispatched today: top-level
-/// `repo` is owned by OverlapFacade (`status`/`config`/`repo`). Kept for a later
-/// git-rank handoff without inventing a second leaf name.
-#[allow(dead_code)]
+/// Host-skew `git repo` body (2.54+): the git rank-0 grammar of the `repo`
+/// overlap leaf (`info`, `structure`). Other subcommands fall through to the
+/// forge grammar in OverlapFacade.
 pub fn cmd_repo(args: &[String]) -> CliResult<()> {
     if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
         print!(

@@ -44,11 +44,14 @@ pub struct FacadeOutcome {
 
 /// Dispatch overlap leaf under the given personality.
 pub fn dispatch_overlap(personality: Personality, leaf: &str, args: &[String]) -> FacadeOutcome {
-    let (mode, rest) = match personality {
+    let (mut mode, rest) = match personality {
         Personality::Git => (PeerMode::GitOnly, args.to_vec()),
         Personality::Gh => (PeerMode::ForgeOnly, args.to_vec()),
         Personality::Arks => PeerMode::from_args(args),
     };
+    if mode == PeerMode::Unified {
+        mode = rank_parse(leaf, &rest);
+    }
 
     let mut outcomes = Vec::new();
 
@@ -77,6 +80,25 @@ pub fn dispatch_overlap(personality: Personality, leaf: &str, args: &[String]) -
 
     let exit = super::exit_code::ExitCodePolicy::map(personality, &outcomes);
     FacadeOutcome { exit }
+}
+
+/// Rank 0 (git grammar) then rank 1 (gh grammar) for one invocation
+/// ([[sot:root/arks-cli-personality-factory]] rule 14). Only `repo` has disjoint
+/// subcommand sets today: git owns `info` / `structure`; every other `repo`
+/// subcommand is forge-client grammar. `status` / `config` keep the unified view.
+fn rank_parse(leaf: &str, args: &[String]) -> PeerMode {
+    if leaf != "repo" {
+        return PeerMode::Unified;
+    }
+    match args
+        .iter()
+        .find(|a| !a.starts_with('-'))
+        .map(String::as_str)
+    {
+        None => PeerMode::Unified,
+        Some("info" | "structure") => PeerMode::GitOnly,
+        Some(_) => PeerMode::ForgeOnly,
+    }
 }
 
 fn run_git(leaf: &str, args: &[String]) -> LayerOutcome {
@@ -128,5 +150,22 @@ mod tests {
         let (m, rest) = PeerMode::from_args(&args);
         assert_eq!(m, PeerMode::GitOnly);
         assert_eq!(rest, vec!["--porcelain".to_string()]);
+    }
+
+    #[test]
+    fn repo_rank_parse() {
+        let v = |s: &[&str]| s.iter().map(|x| x.to_string()).collect::<Vec<_>>();
+        assert_eq!(rank_parse("repo", &v(&["info"])), PeerMode::GitOnly);
+        assert_eq!(
+            rank_parse("repo", &v(&["autolink", "list"])),
+            PeerMode::ForgeOnly
+        );
+        assert_eq!(
+            rank_parse("repo", &v(&["deploy-key", "list"])),
+            PeerMode::ForgeOnly
+        );
+        assert_eq!(rank_parse("repo", &v(&["list"])), PeerMode::ForgeOnly);
+        assert_eq!(rank_parse("repo", &v(&[])), PeerMode::Unified);
+        assert_eq!(rank_parse("status", &v(&["-s"])), PeerMode::Unified);
     }
 }

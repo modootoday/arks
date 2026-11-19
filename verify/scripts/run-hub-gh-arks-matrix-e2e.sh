@@ -345,14 +345,15 @@ KEY
   hub_scope_run gpg-add "$ARKS_BIN" gpg-key add "$WORK/pub.asc"
   hub_scope_run gpg-list "$ARKS_BIN" gpg-key list
   hub_scope_run gpg-delete "$ARKS_BIN" gpg-key delete 2F30B7A43078B1A8 --yes
-  hub_scope_run dk-add "$ARKS_BIN" hub repo deploy-key add "$WORK/id.pub" -t ci -w
-  hub_scope_run dk-list "$ARKS_BIN" hub repo deploy-key list --json id,title,readOnly
-  hub_scope_run dk-delete "$ARKS_BIN" hub repo deploy-key delete 1
+  # Flat `arks repo autolink|deploy-key`: OverlapFacade rank-0 git owns only repo info|structure.
+  hub_scope_run dk-add "$ARKS_BIN" repo deploy-key add "$WORK/id.pub" -t ci -w
+  hub_scope_run dk-list "$ARKS_BIN" repo deploy-key list --json id,title,readOnly
+  hub_scope_run dk-delete "$ARKS_BIN" repo deploy-key delete 1
   # autolink
-  hub_scope_run al-create "$ARKS_BIN" hub repo autolink create TICKET- 'https://tracker.example/t/<num>'
-  hub_scope_run al-list "$ARKS_BIN" hub repo autolink list
-  hub_scope_run al-view "$ARKS_BIN" hub repo autolink view 1 --json keyPrefix,urlTemplate
-  hub_scope_run al-delete "$ARKS_BIN" hub repo autolink delete 1 --yes
+  hub_scope_run al-create "$ARKS_BIN" repo autolink create TICKET- 'https://tracker.example/t/<num>'
+  hub_scope_run al-list "$ARKS_BIN" repo autolink list
+  hub_scope_run al-view "$ARKS_BIN" repo autolink view 1 --json keyPrefix,urlTemplate
+  hub_scope_run al-delete "$ARKS_BIN" repo autolink delete 1 --yes
   # Invalid input must fail closed (non-zero), never invent success.
   for bad in "ssh-key add $WORK/a.txt" "gpg-key add $WORK/a.txt" \
              "hub repo autolink create X- https://no-placeholder" "gist edit $GIST_ID"; do

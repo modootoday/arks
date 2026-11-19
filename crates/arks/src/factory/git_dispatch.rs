@@ -151,7 +151,8 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "http-fetch" => cmd::cmd_http_fetch(args),
         "http-push" => cmd::cmd_http_push(args),
         // Host-skew Partial (newer Git-for-Windows; pin 2.39.5 lacked these).
-        // Note: `repo` stays OverlapFacade (not host-skew git-repo info).
+        // `repo` is an OverlapFacade leaf; its git rank-0 body is `git repo info|structure`.
+        "repo" => cmd::cmd_repo(args),
         "refs" => cmd::cmd_refs(args),
         "survey" => cmd::cmd_survey(args),
         "last-modified" => cmd::cmd_last_modified(args),
