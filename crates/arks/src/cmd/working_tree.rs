@@ -601,44 +601,6 @@ fn worktree_map(repo: &Repository, work: &Path) -> CliResult<HashMap<String, Oid
     Ok(out)
 }
 
-/// `--stat` over two path→OID maps; `work` reads right-side blobs from the
-/// working tree (`diff` / `diff <rev>`).
-pub(crate) fn print_maps_stat(
-    repo: &Repository,
-    work: Option<&Path>,
-    a: &HashMap<String, Oid>,
-    b: &HashMap<String, Oid>,
-) -> CliResult<()> {
-    use crate::cmd::unified_diff::{StatRow, stat_change, write_stat};
-    let mut keys: Vec<&String> = a.keys().chain(b.keys()).collect();
-    keys.sort();
-    keys.dedup();
-    let mut rows = Vec::new();
-    for k in keys {
-        let (ao, bo) = (a.get(k), b.get(k));
-        if ao == bo {
-            continue;
-        }
-        let ap = match ao {
-            Some(o) => Some(repo.get_object(o)?.payload),
-            None => None,
-        };
-        let bp = match (bo, work) {
-            (Some(_), Some(w)) => Some(fs::read(w.join(k))?),
-            (Some(o), None) => Some(repo.get_object(o)?.payload),
-            (None, _) => None,
-        };
-        rows.push(StatRow {
-            path: k.clone(),
-            change: stat_change(ap.as_deref(), bp.as_deref()),
-        });
-    }
-    let mut out = io::BufWriter::new(io::stdout().lock());
-    write_stat(&mut out, &rows)?;
-    out.flush()?;
-    Ok(())
-}
-
 pub(crate) fn print_maps_diff(
     repo: &Repository,
     a: &HashMap<String, Oid>,

@@ -4,6 +4,7 @@
 pub mod archive;
 pub mod bisect;
 pub mod branch;
+pub mod bre;
 pub mod bundle;
 pub mod config;
 pub mod core;
@@ -17,6 +18,7 @@ pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
 pub mod lock;
+pub mod log_cmd;
 pub mod log_format;
 pub mod maint;
 pub mod matrix_cmds;
@@ -48,8 +50,8 @@ pub use branch::{cmd_branch, cmd_checkout, cmd_switch};
 pub use bundle::cmd_bundle;
 pub use config::cmd_config;
 pub use core::{
-    cmd_add, cmd_cat_file, cmd_commit, cmd_hash_object, cmd_init, cmd_log, cmd_rev_parse, cmd_show,
-    cmd_status, cmd_update_ref,
+    cmd_add, cmd_cat_file, cmd_commit, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status,
+    cmd_update_ref,
 };
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
@@ -63,6 +65,7 @@ pub use host_skew::{
 pub use inspect::{cmd_annotate, cmd_blame, cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
+pub use log_cmd::{cmd_log, cmd_show};
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_apply, cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry,
