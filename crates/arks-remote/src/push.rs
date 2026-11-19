@@ -23,7 +23,7 @@ use crate::http::UreqTransport;
 use crate::ssh::{SshService, SshSession};
 use crate::transport::{HttpRequest, Transport, header, require_success};
 use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
-use crate::walk::collect_closure;
+use crate::walk::collect_closure_shallow;
 use arks_object::RawObject;
 use arks_oid::Oid;
 use arks_pack::EncodedPack;
@@ -397,11 +397,19 @@ pub(crate) fn objects_to_send(
         Err(arks_store::StoreError::NotFound(_)) => Ok(None),
         Err(e) => Err(RemoteError::Msg(e.to_string())),
     };
-    let all = collect_closure(tips, get)?;
+    // [[sot:root/arks-remote]] 14a: shallow boundary commits are parentless.
+    let shallow: HashSet<Oid> = std::fs::read_to_string(repo.common_dir().join("shallow"))
+        .unwrap_or_default()
+        .lines()
+        .filter_map(|l| Oid::from_hex(l.trim()).ok())
+        .collect();
+    let all = collect_closure_shallow(tips, &shallow, false, get)?;
     if bases.is_empty() {
         return Ok(all);
     }
-    let have = collect_closure(bases, get)?;
+    // Bases (remote tips) may be absent locally or beyond the shallow boundary;
+    // only objects we hold can be excluded.
+    let have = collect_closure_shallow(bases, &shallow, true, get)?;
     let have_ids: HashSet<Oid> = have
         .iter()
         .map(|obj| obj.oid(repo.object_format()))
