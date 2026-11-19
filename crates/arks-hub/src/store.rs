@@ -14,19 +14,11 @@ pub struct HubDb {
     #[serde(default)]
     pub next_release: u64,
     #[serde(default)]
-    pub next_run: u64,
-    #[serde(default)]
-    pub next_workflow: u64,
-    #[serde(default)]
     pub next_milestone: u64,
     #[serde(default)]
     pub next_gist: u64,
     #[serde(default)]
     pub next_project: u64,
-    #[serde(default)]
-    pub next_secret: u64,
-    #[serde(default)]
-    pub next_variable: u64,
     #[serde(default)]
     pub next_ssh_key: u64,
     #[serde(default)]
@@ -39,8 +31,6 @@ pub struct HubDb {
     pub next_review: u64,
     #[serde(default)]
     pub next_asset: u64,
-    #[serde(default)]
-    pub next_artifact: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
     pub repos: Vec<Repo>,
@@ -53,21 +43,11 @@ pub struct HubDb {
     #[serde(default)]
     pub assets: Vec<ReleaseAsset>,
     #[serde(default)]
-    pub runs: Vec<WorkflowRun>,
-    #[serde(default)]
-    pub artifacts: Vec<RunArtifact>,
-    #[serde(default)]
-    pub workflows: Vec<Workflow>,
-    #[serde(default)]
     pub milestones: Vec<Milestone>,
     #[serde(default)]
     pub gists: Vec<Gist>,
     #[serde(default)]
     pub projects: Vec<Project>,
-    #[serde(default)]
-    pub secrets: Vec<SecretMeta>,
-    #[serde(default)]
-    pub variables: Vec<Variable>,
     #[serde(default)]
     pub ssh_keys: Vec<SshKey>,
     #[serde(default)]
@@ -187,39 +167,6 @@ pub struct ReleaseAsset {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Workflow {
-    pub id: u64,
-    pub owner: String,
-    pub repo: String,
-    pub name: String,
-    pub path: String,
-    pub state: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkflowRun {
-    pub id: u64,
-    pub owner: String,
-    pub repo: String,
-    pub name: String,
-    pub status: String,
-    pub conclusion: String,
-    pub workflow_id: u64,
-    pub head_branch: String,
-}
-
-/// Run artifact metadata; bytes under `data_dir/artifacts/{id}.bin` (local-forge, not CI).
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RunArtifact {
-    pub id: u64,
-    pub run_id: u64,
-    pub owner: String,
-    pub repo: String,
-    pub name: String,
-    pub size: u64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Milestone {
     pub number: u64,
     pub owner: String,
@@ -245,24 +192,6 @@ pub struct Project {
     pub title: String,
     pub body: String,
     pub state: String,
-}
-
-/// Secret metadata only — never persist plaintext values (Partial).
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SecretMeta {
-    pub id: u64,
-    pub owner: String,
-    pub repo: String,
-    pub name: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Variable {
-    pub id: u64,
-    pub owner: String,
-    pub repo: String,
-    pub name: String,
-    pub value: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -319,13 +248,9 @@ impl HubStore {
                 next_repo: 1,
                 next_label: 1,
                 next_release: 1,
-                next_run: 1,
-                next_workflow: 1,
                 next_milestone: 1,
                 next_gist: 1,
                 next_project: 1,
-                next_secret: 1,
-                next_variable: 1,
                 next_ssh_key: 1,
                 next_gpg_key: 1,
                 next_discussion: 1,
@@ -839,144 +764,6 @@ impl HubStore {
         release
     }
 
-    pub fn ensure_default_workflow(&mut self, owner: &str, repo: &str) -> Workflow {
-        if let Some(w) = self
-            .db
-            .workflows
-            .iter()
-            .find(|w| w.owner == owner && w.repo == repo)
-        {
-            return w.clone();
-        }
-        if self.db.next_workflow == 0 {
-            self.db.next_workflow = 1;
-        }
-        let id = self.db.next_workflow;
-        self.db.next_workflow += 1;
-        let wf = Workflow {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: "ci".into(),
-            path: ".arks/workflows/ci.yml".into(),
-            state: "active".into(),
-        };
-        self.db.workflows.push(wf.clone());
-        wf
-    }
-
-    pub fn create_run(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        name: &str,
-        head_branch: &str,
-    ) -> WorkflowRun {
-        let wf = self.ensure_default_workflow(owner, repo);
-        if self.db.next_run == 0 {
-            self.db.next_run = 1;
-        }
-        let id = self.db.next_run;
-        self.db.next_run += 1;
-        let run = WorkflowRun {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: name.into(),
-            // Local-forge metadata: start in_progress so cancel/watch have peer-shaped lifecycle.
-            status: "in_progress".into(),
-            conclusion: String::new(),
-            workflow_id: wf.id,
-            head_branch: head_branch.into(),
-        };
-        self.db.runs.push(run.clone());
-        // Seed a tiny artifact so `run download` has local-forge bytes (≠ CI compute).
-        let _ =
-            self.attach_run_artifact(owner, repo, id, "logs.txt", b"arks-local-forge-run-log\n");
-        run
-    }
-
-    pub fn find_run(&self, owner: &str, repo: &str, id: u64) -> Option<&WorkflowRun> {
-        self.db
-            .runs
-            .iter()
-            .find(|r| r.owner == owner && r.repo == repo && r.id == id)
-    }
-
-    pub fn cancel_run(&mut self, owner: &str, repo: &str, id: u64) -> Option<WorkflowRun> {
-        let run = self
-            .db
-            .runs
-            .iter_mut()
-            .find(|r| r.owner == owner && r.repo == repo && r.id == id)?;
-        run.status = "completed".into();
-        run.conclusion = "cancelled".into();
-        Some(run.clone())
-    }
-
-    pub fn rerun_run(&mut self, owner: &str, repo: &str, id: u64) -> Option<WorkflowRun> {
-        let prev = self.find_run(owner, repo, id)?.clone();
-        Some(self.create_run(owner, repo, &prev.name, &prev.head_branch))
-    }
-
-    pub fn delete_run(&mut self, owner: &str, repo: &str, id: u64) -> bool {
-        let before = self.db.runs.len();
-        self.db
-            .runs
-            .retain(|r| !(r.owner == owner && r.repo == repo && r.id == id));
-        self.db
-            .artifacts
-            .retain(|a| !(a.owner == owner && a.repo == repo && a.run_id == id));
-        self.db.runs.len() != before
-    }
-
-    pub fn find_workflow(&self, owner: &str, repo: &str, id_or_path: &str) -> Option<&Workflow> {
-        if let Ok(id) = id_or_path.parse::<u64>() {
-            if let Some(w) = self
-                .db
-                .workflows
-                .iter()
-                .find(|w| w.owner == owner && w.repo == repo && w.id == id)
-            {
-                return Some(w);
-            }
-        }
-        self.db.workflows.iter().find(|w| {
-            w.owner == owner && w.repo == repo && (w.path == id_or_path || w.name == id_or_path)
-        })
-    }
-
-    pub fn set_workflow_state(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        id_or_path: &str,
-        state: &str,
-    ) -> Option<Workflow> {
-        let id = self.find_workflow(owner, repo, id_or_path)?.id;
-        let wf = self
-            .db
-            .workflows
-            .iter_mut()
-            .find(|w| w.owner == owner && w.repo == repo && w.id == id)?;
-        wf.state = state.into();
-        Some(wf.clone())
-    }
-
-    pub fn dispatch_workflow(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        id_or_path: &str,
-        r#ref: &str,
-    ) -> Option<WorkflowRun> {
-        let wf = self.find_workflow(owner, repo, id_or_path)?.clone();
-        if wf.state != "active" {
-            return None;
-        }
-        Some(self.create_run(owner, repo, &wf.name, r#ref))
-    }
-
     fn data_root(&self) -> PathBuf {
         self.path
             .parent()
@@ -986,45 +773,6 @@ impl HubStore {
 
     fn assets_dir(&self) -> PathBuf {
         self.data_root().join("assets")
-    }
-
-    fn artifacts_dir(&self) -> PathBuf {
-        self.data_root().join("artifacts")
-    }
-
-    pub fn attach_run_artifact(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        run_id: u64,
-        name: &str,
-        bytes: &[u8],
-    ) -> Option<RunArtifact> {
-        self.find_run(owner, repo, run_id)?;
-        if self.db.next_artifact == 0 {
-            self.db.next_artifact = 1;
-        }
-        let id = self.db.next_artifact;
-        self.db.next_artifact += 1;
-        let dir = self.artifacts_dir();
-        let _ = fs::create_dir_all(&dir);
-        let path = dir.join(format!("{id}.bin"));
-        fs::write(&path, bytes).ok()?;
-        let art = RunArtifact {
-            id,
-            run_id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: name.into(),
-            size: bytes.len() as u64,
-        };
-        self.db.artifacts.push(art.clone());
-        Some(art)
-    }
-
-    pub fn read_run_artifact_bytes(&self, id: u64) -> Option<Vec<u8>> {
-        let path = self.artifacts_dir().join(format!("{id}.bin"));
-        fs::read(path).ok()
     }
 
     pub fn upload_release_asset(
@@ -1197,45 +945,6 @@ impl HubStore {
         p
     }
 
-    pub fn create_secret_meta(&mut self, owner: &str, repo: &str, name: &str) -> SecretMeta {
-        if self.db.next_secret == 0 {
-            self.db.next_secret = 1;
-        }
-        let id = self.db.next_secret;
-        self.db.next_secret += 1;
-        let s = SecretMeta {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: name.into(),
-        };
-        self.db.secrets.push(s.clone());
-        s
-    }
-
-    pub fn create_variable(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        name: &str,
-        value: &str,
-    ) -> Variable {
-        if self.db.next_variable == 0 {
-            self.db.next_variable = 1;
-        }
-        let id = self.db.next_variable;
-        self.db.next_variable += 1;
-        let v = Variable {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: name.into(),
-            value: value.into(),
-        };
-        self.db.variables.push(v.clone());
-        v
-    }
-
     pub fn create_ssh_key(&mut self, title: &str, key: &str) -> SshKey {
         if self.db.next_ssh_key == 0 {
             self.db.next_ssh_key = 1;
@@ -1298,4 +1007,34 @@ pub fn now_secs() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// DB files written before ADR 20261119230000 carry Actions keys; they must still load.
+    #[test]
+    fn legacy_db_with_actions_keys_loads() {
+        let raw = r#"{
+            "next_issue": 3, "next_pr": 1, "next_repo": 2, "next_label": 1,
+            "next_run": 4, "next_workflow": 2, "next_secret": 2, "next_variable": 2,
+            "next_artifact": 3,
+            "tokens": ["t"], "user_login": "local",
+            "repos": [], "issues": [], "pulls": [],
+            "runs": [{"id": 1, "owner": "o", "repo": "r", "name": "ci", "status": "completed",
+                      "conclusion": "success", "workflow_id": 1, "head_branch": "main"}],
+            "artifacts": [{"id": 1, "run_id": 1, "owner": "o", "repo": "r", "name": "l", "size": 1}],
+            "workflows": [{"id": 1, "owner": "o", "repo": "r", "name": "ci",
+                           "path": ".arks/workflows/ci.yml", "state": "active"}],
+            "secrets": [{"id": 1, "owner": "o", "repo": "r", "name": "S"}],
+            "variables": [{"id": 1, "owner": "o", "repo": "r", "name": "V", "value": "x"}]
+        }"#;
+        let db: HubDb = serde_json::from_str(raw).expect("legacy db loads");
+        assert_eq!(db.next_issue, 3);
+        assert_eq!(db.user_login, "local");
+        let out = serde_json::to_string(&db).unwrap();
+        assert!(!out.contains("workflows"));
+        assert!(!out.contains("next_run"));
+    }
 }

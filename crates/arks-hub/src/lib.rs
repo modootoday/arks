@@ -37,8 +37,6 @@ pub const GROUPS: &[&str] = &[
     "release",
     "repo",
     "label",
-    "run",
-    "workflow",
     "search",
     "status",
     "api",
@@ -52,16 +50,10 @@ pub const GROUPS: &[&str] = &[
     "discussion",
     "project",
     "milestone",
-    "secret",
-    "variable",
-    "cache",
-    "ruleset",
     "skill",
     "agent-task",
     "preview",
     "licenses",
-    "attestation",
-    "codespace",
     "ssh-key",
     "gpg-key",
     "extension",
@@ -72,10 +64,29 @@ pub const GROUPS: &[&str] = &[
     "smoke",
 ];
 
-/// Matrix groups kept as explicit OUT refuse (marketplace / vendor depth).
-/// Prefer `cmd_out_refuse` over silent ignore. Graduated local Partials live
-/// elsewhere (`licenses`, `cache`, …); extension/copilot stay OUT refuse.
-pub const HUB_OUT_GROUPS: &[&str] = &["extension", "copilot"];
+/// Matrix groups kept as explicit OUT refuse (exit 2, no network call).
+///
+/// `extension` / `copilot` are marketplace / vendor depth. The rest are
+/// GitHub-platform-only services (Actions, rulesets, attestations,
+/// Codespaces) that are out of scope for the independent arks forge
+/// ([[adr:root/20261119230000]]).
+pub const HUB_OUT_GROUPS: &[&str] = &[
+    "extension",
+    "copilot",
+    "run",
+    "workflow",
+    "cache",
+    "secret",
+    "variable",
+    "ruleset",
+    "rs",
+    "attestation",
+    "codespace",
+];
+
+/// Refuse reason for GitHub-platform-only groups and leaves.
+const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (Actions/rulesets/attestations/Codespaces) — \
+     out of scope for the arks forge ([[adr:root/20261119230000]])";
 
 pub fn print_help() {
     eprintln!(
@@ -94,23 +105,15 @@ COMMANDS:
     repo          Repositories (local hub REST Partial)
     label         Labels (local hub REST Partial)
     release       Releases list|create (local Partial)
-    run           Actions runs list|create (local Partial; not CI Claimed)
-    workflow      Actions workflows list (local Partial)
     milestone     Milestones list|create (local Partial)
     gist          Gists list|create (local Partial)
     project       Projects list|create (local Partial)
     discussion    Discussions list|create (local Partial)
-    secret        Actions secrets list|create meta (local Partial; no value store)
-    variable      Actions variables list|create (local Partial)
     ssh-key       User SSH keys list|create (local Partial)
     gpg-key       User GPG keys list|create (local Partial)
     licenses      Common SPDX license ids list (local Partial; no gh)
-    cache         Actions cache list (local empty Partial; no gh)
-    ruleset       Repo rulesets list (local empty Partial)
     skill         Skills list (local empty Partial)
     preview       Deploy previews list (local empty Partial)
-    attestation   Attestations list (local empty Partial)
-    codespace     Codespaces list (local empty Partial)
     agent-task    Agent tasks list (local empty Partial)
     browse        Print forge URL (Partial; no browser spawn)
     inbox         Alias → status forge facet (Partial)
@@ -125,6 +128,8 @@ COMMANDS:
     co            Alias for pr checkout
     extension     OUT refuse (marketplace; not local forge)
     copilot       OUT refuse (vendor Copilot; not local forge)
+    (GitHub-platform-only groups such as Actions, rulesets, attestations and
+     Codespaces are out of scope and refuse with exit 2)
     …             other leaves: see GROUPS / local Partial list helpers
 
 ENV:
@@ -167,29 +172,13 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
         "repo" => cmd_repo(&args[1..]),
         "label" => cmd_label(&args[1..]),
         "release" => cmd_release(&args[1..]),
-        "run" => cmd_run(&args[1..]),
-        "workflow" => cmd_workflow(&args[1..]),
         "milestone" => cmd_milestone(&args[1..]),
         "gist" => cmd_gist(&args[1..]),
         "project" => cmd_project(&args[1..]),
         "discussion" => cmd_discussion(&args[1..]),
-        "secret" => cmd_secret(&args[1..]),
-        "variable" => cmd_variable(&args[1..]),
         "ssh-key" => cmd_ssh_key(&args[1..]),
         "gpg-key" => cmd_gpg_key(&args[1..]),
         "licenses" => cmd_licenses(&args[1..]),
-        "cache" => cmd_out_local_list(
-            "cache",
-            &args[1..],
-            "/repos/{owner}/{repo}/actions/caches",
-            true,
-        ),
-        "ruleset" => cmd_out_local_list(
-            "ruleset",
-            &args[1..],
-            "/repos/{owner}/{repo}/rulesets",
-            true,
-        ),
         "skill" => cmd_out_local_list("skill", &args[1..], "/user/skills", false),
         "preview" => cmd_out_local_list(
             "preview",
@@ -197,13 +186,6 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             "/repos/{owner}/{repo}/previews",
             true,
         ),
-        "attestation" => cmd_out_local_list(
-            "attestation",
-            &args[1..],
-            "/repos/{owner}/{repo}/attestations",
-            true,
-        ),
-        "codespace" => cmd_out_local_list("codespace", &args[1..], "/user/codespaces", false),
         "agent-task" => cmd_out_local_list("agent-task", &args[1..], "/user/agent-tasks", false),
         "browse" => cmd_browse(&args[1..]),
         "inbox" => {
@@ -224,7 +206,6 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             forwarded.extend(args.iter().cloned());
             cmd_pr(&forwarded)
         }
-        "extension" | "copilot" => cmd_out_explicit_refuse(first.as_str(), &args[1..]),
         cmd if HUB_OUT_GROUPS.contains(&cmd) => cmd_out_explicit_refuse(cmd, &args[1..]),
         cmd if GROUPS.contains(&cmd) => {
             if args.get(1).map(String::as_str) == Some("--help")
@@ -512,7 +493,14 @@ fn cmd_pr(args: &[String]) -> ExitCode {
         "ready" => cmd_pr_ready(args),
         "lock" | "unlock" => cmd_pr_lock(args, sub == "lock"),
         "review" => cmd_pr_review(args),
-        "diff" | "checks" | "update-branch" | "revert" => {
+        "checks" => {
+            eprintln!(
+                "arks hub pr checks: later — needs an arks-owned status primitive first; \
+                 no Actions/Checks API call ([[adr:root/20261119230000]]); refuse exit 2"
+            );
+            ExitCode::from(2)
+        }
+        "diff" | "update-branch" | "revert" => {
             eprintln!(
                 "arks hub pr {sub}: terminal Partial — requires git/CI semantics not Claimed \
                  ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])"
@@ -1588,6 +1576,7 @@ fn cmd_repo(args: &[String]) -> ExitCode {
             eprintln!("arks hub repo {sub}: Deferred — MUST NOT spawn git/gh");
             ExitCode::from(2)
         }
+        "gitignore" | "license" => platform_only_refuse(&format!("repo {sub}")),
         other => {
             eprintln!(
                 "arks hub repo {other}: Partial stub (not Claimed); refuse exit 2 — \
@@ -1940,7 +1929,7 @@ fn cmd_https_smoke(args: &[String]) -> ExitCode {
              HTTPS forge e2e harness Partial (ureq TLS). Prefer https:// ARKS_HUB_API.\n  \
              Without a reachable https endpoint: documents Missing (not Claimed).\n  \
              --local-tls: ephemeral self-signed HTTPS stub + insecure ureq client path Partial.\n  \
-             --out-refuse: residual OUT harness Partial (extension/copilot exit 2; never gh).\n  \
+             --out-refuse: residual OUT harness Partial (OUT groups exit 2; never gh).\n  \
              Optional local http:// fallback probe — never spawns gh. Claimed forge e2e Missing."
         );
         return ExitCode::SUCCESS;
@@ -2133,6 +2122,7 @@ fn cmd_release(args: &[String]) -> ExitCode {
             );
             ExitCode::SUCCESS
         }
+        "verify" | "verify-asset" => platform_only_refuse(&format!("release {sub}")),
         "list" => {
             let (base, tok) = match require_local_api() {
                 Ok(v) => v,
@@ -2474,398 +2464,6 @@ fn cmd_release(args: &[String]) -> ExitCode {
     }
 }
 
-fn cmd_run(args: &[String]) -> ExitCode {
-    let sub = args.first().map(String::as_str).unwrap_or("");
-    match sub {
-        "" | "-h" | "--help" => {
-            eprintln!(
-                "arks hub run — list|create|view|watch|cancel|rerun|download|delete \
-                 (local-forge Actions metadata; not CI compute)"
-            );
-            ExitCode::SUCCESS
-        }
-        "list" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run list", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run list: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let path = format!("/repos/{owner}/{repo}/actions/runs");
-            match http_exchange(&base, "GET", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub run list: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "create" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run create", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run create: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let name = flag_value(args, &["--name", "-n"]).unwrap_or("manual");
-            let branch = flag_value(args, &["--branch", "-b"]).unwrap_or("main");
-            let payload = format!(
-                r#"{{"name":{},"head_branch":{}}}"#,
-                serde_json::to_string(name).unwrap(),
-                serde_json::to_string(branch).unwrap()
-            );
-            let path = format!("/repos/{owner}/{repo}/actions/runs");
-            match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub run create: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "view" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run view", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run view: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let id = positional_num(args).unwrap_or_else(|| "1".into());
-            let path = format!("/repos/{owner}/{repo}/actions/runs/{id}");
-            match http_exchange(&base, "GET", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub run view: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "cancel" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run cancel", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run cancel: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let id = positional_num(args).unwrap_or_else(|| "1".into());
-            let path = format!("/repos/{owner}/{repo}/actions/runs/{id}/cancel");
-            match http_exchange(&base, "POST", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub run cancel: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "rerun" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run rerun", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run rerun: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let id = positional_num(args).unwrap_or_else(|| "1".into());
-            let path = format!("/repos/{owner}/{repo}/actions/runs/{id}/rerun");
-            match http_exchange(&base, "POST", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub run rerun: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "delete" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run delete", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run delete: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let id = positional_num(args).unwrap_or_else(|| "1".into());
-            let path = format!("/repos/{owner}/{repo}/actions/runs/{id}");
-            match http_exchange(&base, "DELETE", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub run delete: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "watch" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run watch", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run watch: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let id = positional_num(args).unwrap_or_else(|| "1".into());
-            let path = format!("/repos/{owner}/{repo}/actions/runs/{id}");
-            for _ in 0..40 {
-                match http_exchange(&base, "GET", &path, Some(&tok), None) {
-                    Ok((code, body)) if code < 400 => {
-                        let v: Value = serde_json::from_str(&body).unwrap_or(json!({}));
-                        let status = v
-                            .get("status")
-                            .and_then(|x| x.as_str())
-                            .unwrap_or("unknown");
-                        let conclusion = v.get("conclusion").and_then(|x| x.as_str()).unwrap_or("");
-                        println!("status={status} conclusion={conclusion}");
-                        if status == "completed" || status == "failed" {
-                            return ExitCode::SUCCESS;
-                        }
-                    }
-                    Ok((code, body)) => return hub_http_print(code, &body),
-                    Err(e) => {
-                        eprintln!("arks hub run watch: {e}");
-                        return ExitCode::from(1);
-                    }
-                }
-                std::thread::sleep(std::time::Duration::from_millis(50));
-            }
-            eprintln!("arks hub run watch: timeout waiting for terminal status");
-            ExitCode::from(1)
-        }
-        "download" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("run download", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub run download: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let id = positional_num(args).unwrap_or_else(|| "1".into());
-            let out = flag_value(args, &["--output", "-o"]).unwrap_or("run-artifact.bin");
-            let list_path = format!("/repos/{owner}/{repo}/actions/runs/{id}/artifacts");
-            let art_id = match http_exchange(&base, "GET", &list_path, Some(&tok), None) {
-                Ok((c, b)) if c < 400 => serde_json::from_str::<Value>(&b)
-                    .ok()
-                    .and_then(|v| {
-                        v.get("artifacts")
-                            .and_then(|a| a.as_array())
-                            .and_then(|arr| arr.first())
-                            .and_then(|x| x.get("id"))
-                            .and_then(|x| x.as_u64())
-                    })
-                    .unwrap_or(0),
-                Ok((c, b)) => return hub_http_print(c, &b),
-                Err(e) => {
-                    eprintln!("arks hub run download: {e}");
-                    return ExitCode::from(1);
-                }
-            };
-            if art_id == 0 {
-                eprintln!("arks hub run download: no local-forge artifact for run {id}");
-                return ExitCode::from(1);
-            }
-            let path = format!("/repos/{owner}/{repo}/actions/artifacts/{art_id}/zip");
-            match http_exchange_bytes(
-                &base,
-                "GET",
-                &path,
-                Some(&tok),
-                None,
-                "application/octet-stream",
-                "application/zip",
-            ) {
-                Ok((code, body)) if code < 400 => {
-                    if let Err(e) = fs::write(out, &body) {
-                        eprintln!("arks hub run download: write {out}: {e}");
-                        return ExitCode::from(1);
-                    }
-                    println!("wrote={out} bytes={}", body.len());
-                    ExitCode::SUCCESS
-                }
-                Ok((code, body)) => {
-                    let text = String::from_utf8_lossy(&body);
-                    hub_http_print(code, &text)
-                }
-                Err(e) => {
-                    eprintln!("arks hub run download: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        other => {
-            eprintln!(
-                "arks hub run {other}: Partial stub — [[sot:root/arks-in-scope-leftovers-wave]]"
-            );
-            ExitCode::from(2)
-        }
-    }
-}
-
-fn cmd_workflow(args: &[String]) -> ExitCode {
-    let sub = args.first().map(String::as_str).unwrap_or("list");
-    match sub {
-        "-h" | "--help" => {
-            eprintln!(
-                "arks hub workflow — list|view|enable|disable|run \
-                 (local-forge metadata; not CI compute)"
-            );
-            ExitCode::SUCCESS
-        }
-        "" | "list" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("workflow list", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub workflow list: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let path = format!("/repos/{owner}/{repo}/actions/workflows");
-            match http_exchange(&base, "GET", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub workflow list: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "view" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("workflow view", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub workflow view: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let key = args
-                .iter()
-                .skip(1)
-                .find(|a| !a.starts_with('-') && !a.contains('/'))
-                .map(String::as_str)
-                .unwrap_or("1");
-            let path = format!("/repos/{owner}/{repo}/actions/workflows/{key}");
-            match http_exchange(&base, "GET", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub workflow view: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "enable" | "disable" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err(&format!("workflow {sub}"), &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub workflow {sub}: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let key = args
-                .iter()
-                .skip(1)
-                .find(|a| !a.starts_with('-') && !a.contains('/'))
-                .map(String::as_str)
-                .unwrap_or("1");
-            let path = format!("/repos/{owner}/{repo}/actions/workflows/{key}/{sub}");
-            match http_exchange(&base, "PUT", &path, Some(&tok), None) {
-                Ok((code, body)) => hub_http_print(code, &body),
-                Err(e) => {
-                    eprintln!("arks hub workflow {sub}: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "run" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => return exit_from_api_err("workflow run", &e),
-            };
-            let (owner, repo) = match repo_slug(args) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub workflow run: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let key = args
-                .iter()
-                .skip(1)
-                .find(|a| !a.starts_with('-') && !a.contains('/'))
-                .map(String::as_str)
-                .unwrap_or("1");
-            let rref = flag_value(args, &["--ref", "-r"]).unwrap_or("main");
-            let payload = format!(r#"{{"ref":{}}}"#, serde_json::to_string(rref).unwrap());
-            let path = format!("/repos/{owner}/{repo}/actions/workflows/{key}/dispatches");
-            match http_exchange(&base, "POST", &path, Some(&tok), Some(&payload)) {
-                Ok((code, body)) => {
-                    if code == 204 || code < 400 {
-                        println!(
-                            "{{\"ok\":true,\"ref\":{}}}",
-                            serde_json::to_string(rref).unwrap()
-                        );
-                        ExitCode::SUCCESS
-                    } else {
-                        hub_http_print(code, &body)
-                    }
-                }
-                Err(e) => {
-                    eprintln!("arks hub workflow run: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        other => {
-            eprintln!(
-                "arks hub workflow {other}: Partial stub — [[sot:root/arks-in-scope-leftovers-wave]]"
-            );
-            ExitCode::from(2)
-        }
-    }
-}
-
 fn cmd_status(args: &[String]) -> ExitCode {
     let base = api_base();
     println!("api={base}");
@@ -3106,66 +2704,6 @@ fn cmd_discussion(args: &[String]) -> ExitCode {
     local_list_create("discussion", args, &path, &path, payload)
 }
 
-fn cmd_secret(args: &[String]) -> ExitCode {
-    let (owner, repo) = match repo_slug(args) {
-        Ok(v) => v,
-        Err(e) => {
-            if matches!(
-                args.first().map(String::as_str),
-                Some("" | "-h" | "--help") | None
-            ) {
-                eprintln!(
-                    "arks hub secret — list|create (local meta Partial; values never stored)"
-                );
-                return ExitCode::SUCCESS;
-            }
-            eprintln!("arks hub secret: {e}");
-            return ExitCode::from(2);
-        }
-    };
-    let path = format!("/repos/{owner}/{repo}/actions/secrets");
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let name = flag_value(args, &["--name", "-n"]).unwrap_or("SECRET");
-        Some(format!(
-            r#"{{"name":{}}}"#,
-            serde_json::to_string(name).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("secret", args, &path, &path, payload)
-}
-
-fn cmd_variable(args: &[String]) -> ExitCode {
-    let (owner, repo) = match repo_slug(args) {
-        Ok(v) => v,
-        Err(e) => {
-            if matches!(
-                args.first().map(String::as_str),
-                Some("" | "-h" | "--help") | None
-            ) {
-                eprintln!("arks hub variable — list|create (local Partial); needs --repo");
-                return ExitCode::SUCCESS;
-            }
-            eprintln!("arks hub variable: {e}");
-            return ExitCode::from(2);
-        }
-    };
-    let path = format!("/repos/{owner}/{repo}/actions/variables");
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let name = flag_value(args, &["--name", "-n"]).unwrap_or("VAR");
-        let value = flag_value(args, &["--value", "-v"]).unwrap_or("");
-        Some(format!(
-            r#"{{"name":{},"value":{}}}"#,
-            serde_json::to_string(name).unwrap(),
-            serde_json::to_string(value).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("variable", args, &path, &path, payload)
-}
-
 fn cmd_ssh_key(args: &[String]) -> ExitCode {
     let payload = if args.first().map(String::as_str) == Some("create") {
         let title = flag_value(args, &["--title", "-t"]).unwrap_or("key");
@@ -3239,7 +2777,7 @@ fn cmd_hub_local_tls_smoke(args: &[String]) -> ExitCode {
     }
 }
 
-/// Residual OUT refuse smoke Partial: prove `extension`/`copilot` stay OUT exit 2.
+/// Residual OUT refuse smoke Partial: prove every `HUB_OUT_GROUPS` leaf stays OUT exit 2.
 /// Never spawns `gh`. Does **not** invent Claimed forge remote e2e.
 fn cmd_hub_out_refuse_smoke() -> ExitCode {
     println!("hub_smoke=partial");
@@ -3248,7 +2786,7 @@ fn cmd_hub_out_refuse_smoke() -> ExitCode {
     println!("claimed_forge_remote_e2e=Missing");
     let mut failed = false;
     for name in HUB_OUT_GROUPS {
-        // Invoke the same OUT refuse path operators hit (`arks hub extension|copilot`).
+        // Invoke the same OUT refuse path operators hit (`arks hub extension|run|…`).
         let code = cmd_out_explicit_refuse(name, &[]);
         let ok = code == ExitCode::from(2);
         println!("out_group={name}");
@@ -3268,11 +2806,18 @@ fn cmd_hub_out_refuse_smoke() -> ExitCode {
         ExitCode::from(1)
     } else {
         eprintln!(
-            "note: residual OUT refuse smoke Partial ok (extension/copilot stay OUT); \
+            "note: residual OUT refuse smoke Partial ok (all OUT groups refuse); \
              Claimed forge remote HTTPS e2e still Missing; never spawns gh"
         );
         ExitCode::SUCCESS
     }
+}
+
+/// Explicit OUT refuse for a GitHub-platform-only leaf inside an in-scope group
+/// (`release verify*`, `repo gitignore|license`). Exit 2; never calls the network.
+fn platform_only_refuse(leaf: &str) -> ExitCode {
+    eprintln!("arks hub {leaf}: OUT explicit refuse exit 2 — {PLATFORM_ONLY_WHY}; never spawns gh");
+    ExitCode::from(2)
 }
 
 /// Explicit OUT refuse for marketplace/vendor leaves (`extension` / `copilot`).
@@ -3284,8 +2829,9 @@ fn cmd_out_explicit_refuse(name: &str, args: &[String]) -> ExitCode {
     {
         eprintln!(
             "arks hub {name}: OUT matrix leaf — explicit refuse (not local-forge Partial list). \
-             Marketplace/vendor depth is out of self-host forge scope \
-             ([[sot:root/arks-hub-cli-surface]]). Design ≠ Claimed."
+             Marketplace/vendor depth and GitHub-platform-only services are out of \
+             self-host forge scope ([[sot:root/arks-hub-cli-surface]], \
+             [[adr:root/20261119230000]]). Design ≠ Claimed."
         );
         return ExitCode::SUCCESS;
     }
@@ -3294,7 +2840,7 @@ fn cmd_out_explicit_refuse(name: &str, args: &[String]) -> ExitCode {
             "GitHub Marketplace / IDE extensions are OUT — no local forge inventory invent"
         }
         "copilot" => "GitHub Copilot / vendor assistant APIs are OUT — not a local forge leaf",
-        _ => "OUT/later matrix group — refuse depth",
+        _ => PLATFORM_ONLY_WHY,
     };
     eprintln!(
         "arks hub: `{name}` OUT explicit refuse exit 2 — {why} \
@@ -3705,4 +3251,52 @@ fn cmd_completion(args: &[String]) -> ExitCode {
         }
     }
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn argv(s: &str) -> Vec<String> {
+        s.split_whitespace().map(String::from).collect()
+    }
+
+    #[test]
+    fn platform_only_groups_refuse_exit_2() {
+        for g in [
+            "run",
+            "workflow",
+            "cache",
+            "secret",
+            "variable",
+            "ruleset",
+            "rs",
+            "attestation",
+            "codespace",
+        ] {
+            assert!(
+                HUB_OUT_GROUPS.contains(&g),
+                "{g} missing from HUB_OUT_GROUPS"
+            );
+            assert!(!GROUPS.contains(&g), "{g} still listed as a hub group");
+            assert_eq!(
+                run_from_args(&argv(&format!("{g} list --repo local/x"))),
+                ExitCode::from(2),
+                "{g} list"
+            );
+        }
+    }
+
+    #[test]
+    fn platform_only_leaves_refuse_exit_2() {
+        for leaf in [
+            "release verify v1",
+            "release verify-asset v1 a.bin",
+            "repo gitignore list",
+            "repo license view MIT",
+            "pr checks 1",
+        ] {
+            assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
+        }
+    }
 }
