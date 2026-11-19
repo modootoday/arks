@@ -72,7 +72,7 @@ Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES
 - Embedded forge OAuth browser UX (external credential.helper honored)
 - Cloud-sync / hostfs product CLI (`arks host-env` trimmed)
 - In-process LFS client/server (use external `git-lfs`)
-- CELIR index as product Claimed path (ops/CI opt-in only; default OFF)
+- CELIR (experimental indexing package) — not adopted; former index-only option withdrawn
 - Live G8 / scale latency PASS without secrets (honest SKIP)
 - crates.io / docs.rs publish timing (**L9** — owner policy)
 - Treating `arks hub serve` as the **primary** host story (superseded by `arks serve`)

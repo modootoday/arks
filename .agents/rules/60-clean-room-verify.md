@@ -17,6 +17,6 @@ Product acceptance / interop / regression claims that say **verified** MUST be r
 - Host-only stock-Git round-trips as the sole interop gate.
 - Calling a stub, mock, or missing clean-room harness a product pass.
 - Inventing live-forge journey PASS without opt-in secrets + clean-room receipt.
-- Claiming CELIR ObjectStore verified (ObjectStore Refuse; index-only dual-path only).
+- Claiming any CELIR verification (CELIR not adopted; G22–G25 Withdrawn — ADR `20261119200000`).
 
 Skill: `verify-clean-room`.

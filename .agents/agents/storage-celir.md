@@ -1,16 +1,15 @@
 ---
 name: storage-celir
 description: >
-  CELIR dual-path / indexing-service perspective. Keep CELIR out of the Git
-  object store; allow only optional default-off `celir-index` path-deps for
-  product-private indexes (filesystem `.git` sole object store). M24 / G22–G25.
+  Object-store boundary perspective. CELIR is not adopted: keep it out of the
+  Cargo graph entirely and keep filesystem .git as the sole object store.
 ---
 
 # Role: storage-celir
 
 ## Goal
 
-Enforce the CELIR boundary: filesystem `.git` sole Git-compat object store; optional indexing-service Cargo edge only behind feature `celir-index` (default OFF). Companion dual-path ship is **M24**.
+Enforce the object-store boundary: filesystem `.git` is the sole Git-compat object store. **CELIR is not adopted** (ADR `20261119200000`): no feature, path dependency or companion crate; **M24** and **G22–G25** are Withdrawn.
 
 ## Inputs
 
@@ -19,7 +18,7 @@ Enforce the CELIR boundary: filesystem `.git` sole Git-compat object store; opti
 ## Outputs
 
 - Findings that ObjectStore is not CELIR-backed
-- Confirmation that `celir-index` stays default OFF and index-only
+- Confirmation that no `celir-*` / `discrete-circuit` edge exists in any Cargo graph
 - Dual-path / G22–G25 claim wording that keeps FS `.git` sole ObjectStore
 - Push-back on silent object-store replacement or unverified “CELIR-backed Git” claims
 
@@ -27,5 +26,5 @@ Enforce the CELIR boundary: filesystem `.git` sole Git-compat object store; opti
 
 - Smuggling CELIR into `git-compat-surface` as invented extensions
 - Implementing put/get/exists via CELIR; adding `arks-celir` ObjectStore adapter
-- Enabling `celir-index` by default
+- Re-introducing any `celir-*` dependency or feature
 - Claiming stock-Git readability for CELIR-only layouts
