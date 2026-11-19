@@ -3,7 +3,7 @@ id: sot:root/cli-git-help-matrix
 title: CLI git-help matrix (canonical)
 status: active
 created: 2026-11-10T19:05:00Z
-updated: 2026-11-10T19:20:00Z
+updated: 2026-11-20T00:00:00Z
 tags: [cli, matrix, git-help, parity, m16, pin-2.39.5, sot]
 verify: manual
 rel:
@@ -22,7 +22,7 @@ rel:
 
 # CLI git-help matrix (canonical)
 
-Version **0.1.0**. **Canon (source of truth)** for pin Git **2.39.5** command inventory vs `arks` product CLI. Machine table: `verify/matrices/cli-git-help-matrix.csv`. Survey method/evidence: [[research:root/20261111034805]], [[evidence:root/20261111034600]]. Daemon flag depth: [[research:root/20261111035226]]. Over-design trim: [[research:root/20261111035700]].
+Version **0.2.0**. **Canon (source of truth)** for pin Git **2.39.5** command inventory vs `arks` product CLI. Machine table: `verify/matrices/cli-git-help-matrix.csv`. Survey method/evidence: [[research:root/20261111034805]], [[evidence:root/20261111034600]]. Daemon flag depth: [[research:root/20261111035226]]. Over-design trim: [[research:root/20261111035700]].
 
 **Pin oracle:** Docker `arks-verify-m1:0.1.0` stock `git version 2.39.5` — `git --list-cmds=main,others,alias` (n=**166**). Host Git is skew-only, not the judge (observed host **`git version 2.56.0.windows.4`** — inventory signal only; pin DoD stays 2.39.5).
 
@@ -31,11 +31,11 @@ Version **0.1.0**. **Canon (source of truth)** for pin Git **2.39.5** command in
 1. Every pin `list-cmds` name MUST appear in the machine CSV with:
    - `category` — porcelain | plumbing | server | ancillary | synonym | merge-backend | remote-helper | gui-or-internal
    - `status_now` — live HELP/dispatch honesty at last survey tip (Parity-candidate | Partial | Missing | Refuse/N/A)
-   - `arks_target` — **must-implement** | **refuse-with-reason** | **synonym→\<cmd\>**
+   - `arks_target` — **must-implement** | **synonym→\<cmd\>** (`refuse-with-reason` retired 2026-11-20)
    - `priority` — implementation backlog order (1=synonym/wire, 2=high-traffic Missing, …)
    - `notes` — short honesty
 2. **M16 honesty:** public “full CLI” claims MUST match this matrix + live binary. A Missing row is **not** an N/A exclusion.
-3. **Refuse** only for true GUI / git-internal `--*` helpers / explicit product exclusions already on the pin refuse set (e.g. `filter-branch`, `difftool`, `mergetool`, `instaweb`).
+3. **No refuse target (owner decision, 2026-11-20).** Every pin row is `must-implement`, including the former refuse set (git-internal `--*` helpers, merge-strategy programs, GUI, Windows-only, mail and external-tool bridges such as `filter-branch`, `difftool`, `mergetool`, `instaweb`). `status_now` may stay `Refuse/N/A` only until the row is implemented. Execution: [[plan:root/20261120000000]].
 4. **Server KEEP:** `daemon`, `upload-pack`, `receive-pack`, `http-backend`, `update-server-info`, and plain-git `serve-http` remain in-scope (git paths only).
 5. **Out-of-matrix (trimmed):** `forge`, `host-env`, in-process `lfs`, CELIR product Claimed path, `arks-hostfs` product surface — not pin git builtins; see [[research:root/20261111035700]].
 6. Promoting `status_now` requires evidence on the carrying tip — **no invent Claimed** from HELP alone.
@@ -61,11 +61,11 @@ Living CSV includes pin rows + host **2.54/2.56** skew inventory (`format-rev`, 
 |-------------|------:|
 | must-implement | (Partial + Parity-candidate + remaining Missing must-implement) |
 | synonym→ | 4 (`stage`→`add`, `init-db`→`init`, `fsck-objects`→`fsck`, `whatchanged`→`log`) — **wired** |
-| refuse-with-reason | **34** (GUI/internal + merge backends + remote helpers + `credential-cache` + `imap-send`/`quiltimport`/`pickaxe`) |
+| refuse-with-reason | **0** — the 47 former rows moved to must-implement (rule 3, [[plan:root/20261120000000]]) |
 
 **Landed Missing→Partial (cumulative):** prior batch + `bugreport`, `diagnose`, `pack-redundant`, `shell`, `upload-archive` (+ 4 synonyms).
 
-**Refuse honesty:** merge-strategy backends, `remote-*` helpers, `credential-cache`, `imap-send`, `quiltimport`, `pickaxe` (option not cmd).
+**Refuse honesty:** former refuse rows keep `status_now` `Refuse/N/A` until implemented under [[plan:root/20261120000000]] rung A3.
 
 ## Implementation backlog (remainder Missing → Partial → flag gaps)
 
@@ -85,6 +85,6 @@ Living CSV includes pin rows + host **2.54/2.56** skew inventory (`format-rev`, 
 ## Verification
 
 1. Pin `git --list-cmds=main,others,alias` count matches matrix rows (166).
-2. Every Missing row either gains dispatch or moves to refuse-with-reason / synonym with rationale.
-3. `arks --help` lists implemented inventory; trimmed non-git commands are absent or refuse-with-reason.
+2. Every Missing row gains dispatch or becomes a synonym with rationale.
+3. `arks --help` lists implemented inventory; trimmed non-git commands are absent.
 4. No G19 thrash; no invent PASS.
