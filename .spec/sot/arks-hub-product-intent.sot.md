@@ -3,7 +3,7 @@ id: sot:root/arks-hub-product-intent
 title: arks hub product intent
 status: active
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-14T10:30:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [arks-hub, arks-forge-client, forge, collaboration, gh-symmetry, flat-cli, pr, issue, review, release, auth, internal-crate, single-release, native-api, client-only, overlap]
 verify: manual
 rel:
@@ -20,14 +20,15 @@ rel:
     - sot:root/arks-hub-gh-command-matrix
     - sot:root/arks-self-host-server
     - plan:root/20261111040155
+    - adr:root/20261119230000
   evidence: []
 ---
 
 # arks forge client product intent (flat CLI)
 
-Version **0.4.0**. Normative **product intent** (document revision — **not** a product release; workspace crate remains `0.0.0`) for forge / host collaboration as **top-level** commands on the **single** published CLI **`arks`** — **merged git + gh client surface**.
+Version **0.5.0**. Normative **product intent** (document revision — **not** a product release; workspace crate remains `0.0.0`) for forge / host collaboration as **top-level** commands on the **single** published CLI **`arks`** — **merged git + gh client surface**.
 
-**Role:** forge **client** leaves (`arks pr`, `arks issue`, `arks auth`, …) talk to a host API base URL (GitHub.com, another forge, or a local **`arks serve`** forge module). This is **not** the way to start the host — that is `arks serve`.
+**Role:** forge **client** leaves (`arks pr`, `arks issue`, `arks auth`, …) talk to the **arks forge** hosted by **`arks serve`** (first verify peer). arks is an independent service modelled on `git`, `gh` and `git daemon` — not a port of GitHub. For arks-owned primitives the forge API uses GitHub-shaped REST paths, so `--host` MAY also point at a GitHub-class host for that compatible subset ([[adr:root/20261119230000]]). This is **not** the way to start the host — that is `arks serve`.
 
 **Honesty:** Design / Partial for most forge leaves — do not invent Claimed from this SoT alone. **B3** forge HTTPS remote happy path is Claimed under [[sot:root/arks-claimed-residual-gates]] ([[evidence:root/20261110233655-claimed-hub-https]]); hub `--local-tls` smoke alone ≠ B3.
 
@@ -80,7 +81,7 @@ Matrix rows are **surface** targets for humans. Implementing a row by shelling t
 | Merged client surface | git porcelain + flat gh-shaped leaves in one argv space |
 | Internal crate | `arks-hub` (or later `arks-forge`) library behind flat leaves; not a second published bin |
 | gh symmetry | Same leaf names as surveyed `gh` where matrix + collision policy allow: `arks pr merge` |
-| Native forge **client** | First verify peer = GitHub-compatible API; `--host` for other hubs / local `arks serve` forge base |
+| Native forge **client** | First verify peer = local `arks serve` forge; `--host` MAY target a GitHub-class host for the compatible subset only (secrets-gated) |
 | Host under `serve` | Forge **server** modules land in `arks serve`; client stays flat top-level |
 | Honest claims | Design/matrix ≠ Claimed |
 
@@ -121,7 +122,7 @@ Published binary:  arks
 
 ## Why
 
-One binary should feel like **git + gh merged**, not a third nested noun (`hub`) on top of an already large CLI. Flat leaves match GitHub-like product unity with `arks serve` as the host. Collision policy keeps git alias DoD honest. Prior “keep `arks hub` as the CLI noun” advice is amended for this intent.
+One binary should feel like **git + gh merged**, not a third nested noun (`hub`) on top of an already large CLI. Flat leaves give one product with `arks serve` as the host; gh supplies names, not scope ([[adr:root/20261119230000]]). Collision policy keeps git alias DoD honest. Prior “keep `arks hub` as the CLI noun” advice is amended for this intent.
 
 ## Verification
 

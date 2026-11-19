@@ -3,7 +3,7 @@ id: sot:root/arks-cli-personality-factory
 title: arks CLI personality dispatch and CommandLayer factory
 status: active
 created: 2026-11-10T20:15:00Z
-updated: 2026-11-11T01:46:08Z
+updated: 2026-11-19T23:00:00Z
 tags: [cli, personality, factory, command-layer, registry, overlap, exit-code, arks, git, gh, serve, daemon, design, partial]
 verify: manual
 rel:
@@ -59,9 +59,9 @@ Cross-owners: porcelain inventory [[sot:root/cli-surface]]; output/exit contract
 ### Default `arks` personality = git-first merged surface
 
 7. Bare `arks` is **git-first**, not gh-first: everyday bare status/config/porcelain parse as Git when the invocation is a valid/applicable Git form.
-8. Forge client leaves that do **not** collide with Git top-level nouns sit **flat beside** Git (`pr`, `issue`, `auth`, `release`, `label`, `run`, `workflow`, `search`, `api`, `org`, …) per [[sot:root/arks-hub-cli-surface]].
+8. Forge client leaves that do **not** collide with Git top-level nouns sit **flat beside** Git (`pr`, `issue`, `auth`, `release`, `label`, `search`, `api`, `org`, …) per [[sot:root/arks-hub-cli-surface]].
 9. Nested **`arks hub …`** is **transitional only** (HubAliasLayer forward) — not the taught primary forge noun.
-10. **`arks serve`** = GitHub-class host umbrella (HTTP+SSH+forge API); flags `--no-http` / `--no-ssh` / `--no-forge`; nested `serve config`; SSH / forge-in-serve may be Missing / fail-closed ([[sot:root/arks-self-host-server]]).
+10. **`arks serve`** = independent forge host umbrella (HTTP+SSH+forge API); flags `--no-http` / `--no-ssh` / `--no-forge`; nested `serve config`; SSH / forge-in-serve may be Missing / fail-closed ([[sot:root/arks-self-host-server]]).
 11. **`arks daemon`** = `git-daemon` symmetry peer — **not** the product forge host.
 12. **`arks agent …`** remains optional AgentLayer; not git-alias DoD.
 

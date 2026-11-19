@@ -3,7 +3,7 @@ id: sot:root/arks-hub-gh-command-matrix
 title: arks hub gh command matrix
 status: active
 created: 2026-11-10T19:06:00Z
-updated: 2026-11-10T19:30:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [arks-hub, gh, matrix, arks-hub-cmd, cli-parity, native-api, survey, single-release]
 verify: manual
 rel:
@@ -11,6 +11,7 @@ rel:
     - sot:root/arks-hub-product-intent
     - sot:root/arks-hub-cli-surface
     - plan:root/20261111040155
+    - adr:root/20261119230000
   evidence: []
   governs:
     - .spec/sot/arks-hub-gh-command-matrix.csv
@@ -18,7 +19,7 @@ rel:
 
 # arks hub gh command matrix
 
-Version **0.2.2**. Canonical **`gh` → `arks` (flat forge client) command matrix** so humans who already use GitHub CLI can keep muscle memory under the **single** published binary **`arks`**. Logical pillar name may still say “hub”; **taught argv is flat** (`arks pr …`) per [[sot:root/arks-hub-product-intent]] v0.4. CSV column `arks_hub_target` means **leaf path under `arks`** (historical name; `hub` prefix not required). **Surface parity ≠ subprocess.** Implementation MUST use a **native host API client** (host via `arks serve`); MUST **never** spawn `gh` or `git`.
+Version **0.3.0**. Canonical **`gh` → `arks` (flat forge client) command matrix** so humans who already use GitHub CLI can keep muscle memory under the **single** published binary **`arks`**. Logical pillar name may still say “hub”; **taught argv is flat** (`arks pr …`) per [[sot:root/arks-hub-product-intent]] v0.4. CSV column `arks_hub_target` means **leaf path under `arks`** (historical name; `hub` prefix not required). **Surface parity ≠ subprocess.** Implementation MUST use a **native host API client** (host via `arks serve`); MUST **never** spawn `gh` or `git`.
 
 **Survey pin:** host `gh` **2.103.3** (2026-10-26). Captured via `gh help` + `gh help reference` on Windows. Cross-OS: help text is the same CLI contract; re-run survey when advancing the pin. Prior pin **2.103.0** superseded for inventory currency — CSV `gh_pin` column MUST match this survey pin (sibling refresh).
 
@@ -42,13 +43,13 @@ Version **0.2.2**. Canonical **`gh` → `arks` (flat forge client) command matri
 
 | Phase | Normative meaning |
 |-------|-------------------|
-| **v1** | Required for a useful **gh-symmetric** collaboration slice (auth + PR/issue/release/repo/label + Actions run/workflow + search/status/api/config/alias/completion). Still **not Claimed** until implemented + evidence |
+| **v1** | Required for a useful **gh-symmetric** collaboration slice (auth + PR/issue/release/repo/label + search/status/api/config/alias/completion). Still **not Claimed** until implemented + evidence |
 | **later** | Keep gh-shaped names; defer after v1 |
-| **out-of-scope** | gh product surface we will not mirror (extensions, Copilot, agent-task/skills, gh self-licenses, internal preview, **`auth setup-git`**) |
+| **out-of-scope** | gh / GitHub platform surface we will not mirror (extensions, Copilot, agent-task/skills, gh self-licenses, internal preview, **`auth setup-git`**, Actions `run`/`workflow`/`cache`/`secret`/`variable`, rulesets, attestations, template catalogs) per [[adr:root/20261119230000]] |
 
 ### Alias law (normative)
 
-1. Prefer **identical** top-level and subcommand names to `gh` where the row is not `OUT` (`pr`, `issue`, `auth`, `repo`, `release`, `run`, `workflow`, `label`, `api`, …), invoked as **`arks hub <path>`**.
+1. Prefer **identical** top-level and subcommand names to `gh` where the row is not `OUT` (`pr`, `issue`, `auth`, `repo`, `release`, `label`, `api`, …), invoked as **`arks hub <path>`**.
 2. `co` → `pr checkout` alias MUST exist when `pr checkout` is claimed (match gh).
 3. Muscle-memory mapping is for **forge UX**, not for `git` porcelain. Core [[sot:root/cli-surface]] remains `git`→`arks`. Optional user shell functions MAY forward `gh`→`arks hub`; that is **not** a second product binary.
 4. **Never** implement a row by wrapping `gh` or `git`.
@@ -57,8 +58,8 @@ Version **0.2.2**. Canonical **`gh` → `arks` (flat forge client) command matri
 ### Host divergence (normative)
 
 6. CLI **shape** tracks `gh` for muscle memory.
-7. Wire protocol is **hub host API** (GitHub-compatible REST/GraphQL as the first verify peer). Future non-GitHub hubs MAY share the same argv with different `--host`.
-8. Commands that are GitHub-product-only (Codespaces, Copilot, gh extensions, agent-task) stay `later` (host-specific) or `out-of-scope` as classified in the CSV — do not pretend they are portable hub primitives without a SoT amend.
+7. Wire protocol is the **arks forge API** served by `arks serve` (first verify peer). For arks-owned primitives it uses GitHub-shaped REST paths and field names, so the same argv MAY target a GitHub-class host via `--host` for that compatible subset only. GraphQL is not required ([[adr:root/20261119230000]]).
+8. Commands that are GitHub-platform-only (Actions, Codespaces, Copilot, attestations, rulesets, gh extensions, agent-task) are `out-of-scope`. Rows whose arks-owned primitive is undecided stay `later`. Do not bring either back without a SoT amendment that defines an arks-owned primitive.
 
 ### Dangerous gh overlaps with core git
 

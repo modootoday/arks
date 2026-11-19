@@ -3,7 +3,7 @@ id: sot:root/arks-self-host-server
 title: arks product self-host server
 status: active
 created: 2026-11-10T19:40:00Z
-updated: 2026-11-14T10:30:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [self-host, server, serve, serve-flags, serve-config, daemon, lan, wan, bind, ports, auth, http-basic, tls, ssh, forge-api, product-hosting, single-release, no-invent-claimed, ssh-durable-partial, claimed-residual]
 verify: manual
 rel:
@@ -37,17 +37,17 @@ rel:
 
 # arks product self-host server
 
-Version **0.2.3**. Normative **product hosting story** (document revision — **not** a product release; workspace crate remains `0.0.0`): run a **GitHub-class self-host** using **only the published `arks` binary** — **git remotes (HTTP/SSH)** plus **forge API (PR/issue/…)** in **one** `arks serve` process — reachable from **localhost**, **intranet (LAN)**, and/or **internet (WAN)** when the operator chooses bind + ops fronting.
+Version **0.3.0**. Normative **product hosting story** (document revision — **not** a product release; workspace crate remains `0.0.0`): run an **independent self-hosted forge** (git remotes + arks forge API; not a port of GitHub — [[adr:root/20261119230000]]) using **only the published `arks` binary** — **git remotes (HTTP/SSH)** plus **forge API (PR/issue/…)** in **one** `arks serve` process — reachable from **localhost**, **intranet (LAN)**, and/or **internet (WAN)** when the operator chooses bind + ops fronting.
 
 **Honesty:** This SoT makes the story **EXPLICIT**. **Design intent ≠ Claimed.** Do not invent Claimed from this SoT alone. Wire/unit ownership for Git transports remains [[sot:root/arks-server]]. Daemon **flag** symmetry remains [[sot:root/arks-daemon-product-intent]] / [[sot:root/arks-daemon-git-command-matrix]]. **`arks hub`** is the **forge client** ([[sot:root/arks-hub-product-intent]]) — not the primary way to start the host.
 
-**Advice amend (v0.2.0):** Earlier guidance that optimized noun symmetry (“keep forge under `hub serve` / never put forge under `arks serve`”) is **superseded**. Operators want **product unity**: one host command that feels like a self-hosted GitHub, with `arks hub` as the `gh`-like client against that base URL.
+**Advice amend (v0.2.0):** Earlier guidance that optimized noun symmetry (“keep forge under `hub serve` / never put forge under `arks serve`”) is **superseded**. Operators want **product unity**: one host command for git remotes and the arks forge together, with `arks hub` as the `gh`-like client against that base URL.
 
 ## Rule
 
 ### Mission
 
-1. **arks-only GitHub-class self-host.** Operators MUST be able to host repositories **and** a forge API for stock Git (and arks-as-client) clone/fetch/push **and** `arks hub …` PR/issue workflows using **only** `arks` product paths — no runtime spawn of `git` or `gh`.
+1. **arks-only self-hosted forge.** Operators MUST be able to host repositories **and** a forge API for stock Git (and arks-as-client) clone/fetch/push **and** `arks hub …` PR/issue workflows using **only** `arks` product paths — no runtime spawn of `git` or `gh`.
 2. **Single hosting process under `arks serve`.** Prefer **one process** that can run Git HTTP, Git SSH, and forge API modules together (product default), not separate “git host” vs “hub listen” as the primary operator story.
 3. **Product commands (v1 surface):**
 
@@ -63,7 +63,7 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
    | `arks serve --no-http` / `--no-ssh` | Opt out of a Git transport | Fail-closed if remaining enabled module Missing |
    | `arks serve config …` | Self-host **server** configuration (`show` / `set` / `path` / `validate`) | **Design / Partial** — help stub OK; not Claimed. **≠** `arks config`. **≠** hub *client* settings |
    | `arks serve-http` | Transitional HTTP-git-only spelling | Migration convenience — treat as `arks serve --no-ssh --no-forge` (or documented equivalent); **not** a permanent MUST alias |
-   | `arks daemon` | `git://` TCP daemon (**top-level**) | Flag symmetry peer; **not** the GitHub-like product story |
+   | `arks daemon` | `git://` TCP daemon (**top-level**) | Flag symmetry peer; **not** the forge product story |
    | `arks upload-pack` / `arks receive-pack` (/ `arks shell`) | Stdio pack peers | Current SSH *wire* when **ops SSHD** invokes them — does **not** invent in-process `serve` SSH Claimed |
    | `arks http-backend` / `arks update-server-info` | When deploy path needs them | Per [[sot:root/arks-server]] |
    | `arks pr` / `issue` / `auth` / … | **Flat forge client** (gh peer) against forge base URL | See [[sot:root/arks-hub-product-intent]] v0.4 flat-first |
@@ -77,7 +77,7 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 ### CLI verdict — flags win; serve is the hosting umbrella
 
 7. **Chosen shape (normative):** module/transport selection is **flags on `arks serve`**, not primary subcommands `arks serve http` / `arks serve ssh` / `arks serve forge`.
-8. **Default = GitHub-class set.** With no disable flags, **HTTP + SSH + forge API** are all enabled in one process (product intent).
+8. **Default = full host set.** With no disable flags, **HTTP + SSH + forge API** are all enabled in one process (product intent).
 9. **Disable flags (preferred clap idiom):** **`--no-http`**, **`--no-ssh`**, **`--no-forge`** opt out of the default set. Do **not** require redundant enable flags for the common case (enable flags MAY exist later as aliases, but MUST NOT be the documented primary).
 10. **Illegal:** disabling every module (nothing to serve) → usage error.
 11. **`arks serve config`** remains a **nested subcommand** (first token `config`), not a flag. Detect before flag parse: `arks serve config …`.
@@ -116,7 +116,7 @@ Version **0.2.3**. Normative **product hosting story** (document revision — **
 
 20. **Localhost.** Default bind remains loopback-friendly when the operator does not opt into exposure.
 21. **LAN / WAN.** Operator choice: bind + firewall + (HTTP) HTTPS/TLS front + auth; (SSH) keys + firewall. arks owns Git wire / forge API after packets arrive; no WAN threat-model Claimed completeness.
-22. **Daemon listen shape** stays under [[sot:root/arks-daemon-git-command-matrix]] — do not invent Parity from this hosting SoT. Daemon is **optional/legacy symmetry**, not the GitHub-like narrative.
+22. **Daemon listen shape** stays under [[sot:root/arks-daemon-git-command-matrix]] — do not invent Parity from this hosting SoT. Daemon is **optional/legacy symmetry**, not the forge narrative.
 
 ### Default ports (normative policy)
 
@@ -170,7 +170,7 @@ Self-host **Git-remote authentication** MUST align with how stock Git clients al
 ### Relationship map
 
 ```text
-arks product self-host (THIS SoT) — GitHub-class host
+arks product self-host (THIS SoT) — independent forge host
   ├── arks serve                         # default: HTTP + SSH + forge API
   │     ├── --no-http / --no-ssh / --no-forge
   │     └── config show|set|path|validate
@@ -211,7 +211,7 @@ arks product self-host (THIS SoT) — GitHub-class host
 
 ## Why
 
-Operators want **one** hosting command (`arks serve`) that feels like a self-hosted GitHub: Git remotes **and** PR/issue forge API together — not a fragmented “git serve here, hub listen there.” **`arks hub`** stays the **`gh`-like client**. **`arks daemon`** stays git-daemon symmetry. **Default-all modules + `--no-*` opt-outs** keep clap lean; **fail-closed** keeps Partial SSH/forge honest. Prior “never put forge under serve” advice optimized noun symmetry; this version prioritizes **product unity**. Port numbers follow IANA/Git (**22 / 80 / 443 / 9418**) for the product story; unprivileged demos keep **8080 / 2222** labeled as alternates ([[research:root/20261111055609]]).
+Operators want **one** hosting command (`arks serve`) that serves Git remotes **and** the arks PR/issue forge API together — not a fragmented “git serve here, hub listen there.” **`arks hub`** stays the **`gh`-like client**. **`arks daemon`** stays git-daemon symmetry. **Default-all modules + `--no-*` opt-outs** keep clap lean; **fail-closed** keeps Partial SSH/forge honest. Prior “never put forge under serve” advice optimized noun symmetry; this version prioritizes **product unity**. Port numbers follow IANA/Git (**22 / 80 / 443 / 9418**) for the product story; unprivileged demos keep **8080 / 2222** labeled as alternates ([[research:root/20261111055609]]).
 
 ## Verification
 

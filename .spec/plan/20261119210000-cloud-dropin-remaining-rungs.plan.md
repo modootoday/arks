@@ -3,11 +3,12 @@ id: plan:root/20261119210000
 title: Cloud drop-in remaining rungs (C7–C_final + V) execution plan
 status: active
 created: 2026-11-19T21:00:00Z
-updated: 2026-11-19T21:00:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [cloud, dropin, plan, c7, c8, c9, verify, flag-corpus, no-invent-pass]
 verify: manual
 rel:
   depends_on:
+    - adr:root/20261119230000
     - plan:root/20261119180000
     - sot:root/cloud-agent-dropin
     - sot:root/cli-git-help-matrix
@@ -29,7 +30,7 @@ into measured tiers driven by a peer-compare corpus.
 | **V** | Docker gate `g042-cloud-dropin`: `arks serve` TLS with a private CA + plain CONNECT proxy + `ssh-keygen` signing + `GIT_CONFIG_COUNT`; runs the cloud probe corpus against it | Script + compose service written; shell syntax checked | Docker receipt (needs a host with a Docker daemon) |
 | **C7a** | Agent tier: flag corpus `verify/fixtures/cli-flag-corpus/agent-tier-a.txt` over a deterministic fixture repo (add, commit, status, diff, log, show, branch, checkout, switch, restore, reset, rev-parse, rev-list, merge, merge-base, rebase, cherry-pick, revert, stash, tag, describe, ls-files, grep, blame, config, for-each-ref, cat-file, clean, worktree, remote) | Corpus SAME rate measured each wave; every DIFF either fixed or listed with reason | Same corpus inside the clean-room image vs pin git 2.39.5 |
 | **C7b** | Remaining Partial rows by usage tier (plumbing, maintenance, mail/patch, server) | Per-command corpus lines added and measured | Clean-room corpus receipt; CSV `status_now` promoted only with evidence |
-| **C8** | Daemon flag surface; hub Actions / release assets / `pr checkout` against the local forge (`arks serve` forge API) | Local-forge e2e green | Docker receipts; live GitHub stays secrets-gated (D2) |
+| **C8** | Daemon flag surface; arks-owned forge primitives (`pr checkout`, release assets) end to end against the local `arks serve` forge. GitHub-platform-only features (Actions, rulesets, attestations, …) are out of scope ([[adr:root/20261119230000]]) | Local-forge e2e green | Docker receipts; GitHub.com interop for the compatible subset stays optional and secrets-gated (D2) |
 | **C9** | Cloud rollout | Setup-script snippet verified in a session | Needs a binary source other sessions can fetch: public repo (`cargo install --git`) or a release asset — **owner decision** (D3 forbids tags in this ladder) |
 | **C_final** | Register, `docs/completion.md`, roadmap tip, `cli-git-help-matrix` counts | Docs match receipts | — |
 

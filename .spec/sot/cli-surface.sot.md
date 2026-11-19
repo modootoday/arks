@@ -3,7 +3,7 @@ id: sot:root/cli-surface
 title: CLI surface
 status: active
 created: 2026-11-08T08:21:48Z
-updated: 2026-11-10T20:15:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [cli, porcelain, ux, arks, parity, git-cli, alias, drop-in, server, worktree, submodule, m15, m16, full-symmetric, complete-symmetry, credential, personality]
 verify: manual
 rel:
@@ -38,7 +38,7 @@ rel:
 
 # CLI surface
 
-Version **0.5.0**. Normative **porcelain / plumbing CLI intent** for the `arks` binary ([[sot:root/product-naming]]). On-disk and wire semantics remain owned by [[sot:root/git-compat-surface]] and domain research — this SoT defines **Git CLI symmetric compatibility**, **`git`→`arks` alias drop-in**, how command/flag parity is judged, refuse-vs-implement rules, version pinning, phased delivery waves (including **Wave Sv** server plumbing, **Wave Fs** M15 inventory residual, and **Wave Sy** M16 complete flag symmetry), and honesty constraints.
+Version **0.5.1**. Normative **porcelain / plumbing CLI intent** for the `arks` binary ([[sot:root/product-naming]]). On-disk and wire semantics remain owned by [[sot:root/git-compat-surface]] and domain research — this SoT defines **Git CLI symmetric compatibility**, **`git`→`arks` alias drop-in**, how command/flag parity is judged, refuse-vs-implement rules, version pinning, phased delivery waves (including **Wave Sv** server plumbing, **Wave Fs** M15 inventory residual, and **Wave Sy** M16 complete flag symmetry), and honesty constraints.
 
 **End-state (normative):** `arks` is a **symmetric replacement** for the stock `git` CLI for the **full** git(1) inventory minus explicit **N/A exclusions** — same subcommand names, documented options/flags for the **clean-room-pinned Git version**, interchangeable repository/worktree results on the **same `.git` layout**, and **argv suitability for shell alias substitution** (e.g. `alias git=arks`) — implemented **in-engine** (**never** spawn `git` or `gh`). **M9** closed an implement/refuse ledger (historical). **M15** closed inventory-level full symmetric residual (historical; still allowed per-flag refuse). **Active alias honesty** is **M16 / Wave Sy** — every pin command/flag is **implement** or **N/A exclusion**; **no production partial/refuse leftovers** ([[sot:root/program-roadmap]], [[plan:root/20261109043910]], [[sot:root/cli-flag-parity-complete]]). Everyday/partial/refuse subset MUST NOT be treated as the lasting production bar.
 
@@ -188,7 +188,7 @@ Server plumbing is an **in-scope product goal** under [[sot:root/remote-host-com
 | `arks upload-pack` | Serve fetch/clone (upload-pack) | gitprotocol-pack duplex stdio (SSH command-mode / local); HTTP ads via serve-http; v2 when G31 Claimed |
 | `arks receive-pack` | Serve push (receive-pack) | report-status (v1); githooks honor list `pre-receive` / `update` / `post-receive` — [[sot:root/arks-server]] |
 | `arks http-backend` | Smart (+ dumb) HTTP CGI/service adapter | gitprotocol-http; git-http-backend |
-| `arks serve` | GitHub-class self-host umbrella (default HTTP+SSH+forge API) | Prefer `--no-http`/`--no-ssh`/`--no-forge` opt-outs; `serve config` nested; SSH + forge-in-serve Partial/fail-closed until Claimed ([[sot:root/arks-self-host-server]]); HTTP smart+dumb + Basic (G36) |
+| `arks serve` | Independent self-hosted forge umbrella (default HTTP+SSH+forge API) | Prefer `--no-http`/`--no-ssh`/`--no-forge` opt-outs; `serve config` nested; SSH + forge-in-serve Partial/fail-closed until Claimed ([[sot:root/arks-self-host-server]]); HTTP smart+dumb + Basic (G36) |
 | `arks serve-http` | Transitional HTTP-git spelling | Prefer ≡ `arks serve --no-ssh --no-forge`; not a permanent MUST alias |
 | `arks update-server-info` | Refresh dumb HTTP advertisements | [git-update-server-info](https://git-scm.com/docs/git-update-server-info); G29 |
 | `arks daemon` | `git://` TCP daemon | [git-daemon](https://git-scm.com/docs/git-daemon); internal crate `arks-daemon` ([[sot:root/arks-daemon-product-intent]]); Claimed on G32; **not** a separate release bin |
