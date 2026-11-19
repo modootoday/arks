@@ -32,40 +32,70 @@ pub(crate) fn is_ancestor(repo: &Repository, ancestor: &Oid, tip: &Oid) -> CliRe
     Ok(arks_repo::is_ancestor_first_parent(repo, ancestor, tip)?)
 }
 
+/// Resolve a revision per gitrevisions(7) (claimed subset): full or abbreviated
+/// hex, `HEAD`/`@`, `FETCH_HEAD`, ref DWIM (`refs/`, heads, remotes, tags),
+/// `<rev>@{u}` / `@{upstream}`, and any chain of `~N`, `^N`, `^` suffixes.
 pub(crate) fn resolve_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
-    // Minimal first-parent peel: `<rev>~N` / `<rev>~` (N=1). Cite: gitrevisions(7) 2.39.
-    if let Some((base, rest)) = rev.rsplit_once('~') {
-        if !base.is_empty() {
-            let n: usize = if rest.is_empty() {
-                1
-            } else {
-                rest.parse()
-                    .map_err(|_| CliError::Msg(format!("unknown revision: {rev}")))?
-            };
-            let mut oid = resolve_rev_base(repo, base)?;
+    let cut = rev
+        .char_indices()
+        .find(|(i, c)| (*c == '~' || *c == '^') && *i > 0)
+        .map(|(i, _)| i)
+        .unwrap_or(rev.len());
+    let (base, mut ops) = rev.split_at(cut);
+    let mut oid = resolve_rev_base(repo, base)?;
+    while !ops.is_empty() {
+        let op = ops.as_bytes()[0];
+        let digits: String = ops[1..]
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect();
+        ops = &ops[1 + digits.len()..];
+        let n: usize = if digits.is_empty() {
+            1
+        } else {
+            digits
+                .parse()
+                .map_err(|_| CliError::Msg(format!("unknown revision: {rev}")))?
+        };
+        let parents = |o: &Oid| -> CliResult<Vec<Oid>> {
+            let obj = repo.get_object(o)?;
+            if obj.kind != arks_object::ObjectKind::Commit {
+                return Err(CliError::Msg(format!("{rev}: not a commit")));
+            }
+            Ok(arks_object::Commit::decode(&obj.payload)?.parents)
+        };
+        if op == b'~' {
             for _ in 0..n {
-                let obj = repo.get_object(&oid)?;
-                if obj.kind != arks_object::ObjectKind::Commit {
-                    return Err(CliError::Msg(format!("{rev}: not a commit")));
-                }
-                let c = arks_object::Commit::decode(&obj.payload)?;
-                oid = *c
-                    .parents
+                oid = *parents(&oid)?
                     .first()
                     .ok_or_else(|| CliError::Msg(format!("{rev}: no first parent")))?;
             }
-            return Ok(oid);
+        } else if n > 0 {
+            oid = *parents(&oid)?
+                .get(n - 1)
+                .ok_or_else(|| CliError::Msg(format!("{rev}: no parent {n}")))?;
         }
     }
-    resolve_rev_base(repo, rev)
+    Ok(oid)
 }
 
 fn resolve_rev_base(repo: &Repository, rev: &str) -> CliResult<Oid> {
     if let Ok(oid) = Oid::from_hex(rev) {
         return Ok(oid);
     }
-    if rev == "HEAD" {
+    if rev == "HEAD" || rev == "@" {
         return Ok(repo.head_oid()?);
+    }
+    for suffix in ["@{upstream}", "@{u}", "@{UPSTREAM}", "@{U}"] {
+        if let Some(branch) = rev.strip_suffix(suffix) {
+            return resolve_upstream(repo, branch);
+        }
+    }
+    if rev == "FETCH_HEAD" {
+        let text = fs::read_to_string(repo.git_dir().join("FETCH_HEAD"))
+            .map_err(|_| CliError::Msg("unknown revision: FETCH_HEAD".into()))?;
+        let hex = text.split_whitespace().next().unwrap_or("");
+        return Oid::from_hex(hex).map_err(|_| CliError::Msg("bad FETCH_HEAD".into()));
     }
     // Try as ref name; also refs/heads/<name> and refs/remotes/<name>.
     if let Ok(oid) = repo.refs().resolve(rev) {
@@ -83,7 +113,84 @@ fn resolve_rev_base(repo: &Repository, rev: &str) -> CliResult<Oid> {
     if let Ok(oid) = repo.refs().resolve(&as_tags) {
         return Ok(oid);
     }
+    if let Some(oid) = resolve_abbrev(repo, rev)? {
+        return Ok(oid);
+    }
     Err(CliError::Msg(format!("unknown revision: {rev}")))
+}
+
+/// `<branch>@{upstream}` → `refs/remotes/<remote>/<merge-branch>` from
+/// `branch.<name>.remote` / `branch.<name>.merge`.
+fn resolve_upstream(repo: &Repository, branch: &str) -> CliResult<Oid> {
+    let name = if branch.is_empty() || branch == "HEAD" {
+        match repo.head_target()? {
+            RefTarget::Symbolic(s) => s.trim_start_matches("refs/heads/").to_string(),
+            RefTarget::Direct(_) => {
+                return Err(CliError::Msg("HEAD does not point to a branch".into()));
+            }
+        }
+    } else {
+        branch.to_string()
+    };
+    let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+    let remote = cfg.get(&format!("branch.{name}.remote"));
+    let merge = cfg.get(&format!("branch.{name}.merge"));
+    let (Some(remote), Some(merge)) = (remote, merge) else {
+        return Err(CliError::Msg(format!(
+            "no upstream configured for branch '{name}'"
+        )));
+    };
+    let short = merge.trim_start_matches("refs/heads/");
+    let full = if remote == "." {
+        format!("refs/heads/{short}")
+    } else {
+        format!("refs/remotes/{remote}/{short}")
+    };
+    Ok(repo.refs().resolve(&full)?)
+}
+
+/// Unique object whose hex starts with `prefix` (4+ hex digits), loose or packed.
+fn resolve_abbrev(repo: &Repository, prefix: &str) -> CliResult<Option<Oid>> {
+    let p = prefix.to_ascii_lowercase();
+    if p.len() < 4 || p.len() > 64 || !p.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Ok(None);
+    }
+    let objects = repo.common_dir().join("objects");
+    let mut hits: Vec<Oid> = Vec::new();
+    if let Ok(rd) = fs::read_dir(objects.join(&p[..2])) {
+        for e in rd.flatten() {
+            let name = e.file_name().to_string_lossy().to_string();
+            if name.starts_with(&p[2..]) {
+                if let Ok(o) = Oid::from_hex(&format!("{}{name}", &p[..2])) {
+                    hits.push(o);
+                }
+            }
+        }
+    }
+    if let Ok(rd) = fs::read_dir(objects.join("pack")) {
+        for e in rd.flatten() {
+            let path = e.path();
+            if path.extension().and_then(|x| x.to_str()) != Some("idx") {
+                continue;
+            }
+            let Ok(bytes) = fs::read(&path) else { continue };
+            let Ok(idx) = arks_pack::PackIndex::decode(&bytes, repo.object_format()) else {
+                continue;
+            };
+            for ent in &idx.entries {
+                if ent.oid.to_hex().starts_with(&p) && !hits.contains(&ent.oid) {
+                    hits.push(ent.oid);
+                }
+            }
+        }
+    }
+    match hits.len() {
+        0 => Ok(None),
+        1 => Ok(Some(hits[0])),
+        _ => Err(CliError::Msg(format!(
+            "short object ID {prefix} is ambiguous"
+        ))),
+    }
 }
 
 pub(crate) fn current_branch_name(repo: &Repository) -> CliResult<String> {

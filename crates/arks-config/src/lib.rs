@@ -18,4 +18,6 @@ mod set;
 
 pub use ident::{Ident, IdentError, IdentRole, resolve_ident};
 pub use parse::{ParseError, parse_config_text};
-pub use set::{ConfigEntry, ConfigScope, ConfigSet, parse_bool, parse_config_parameters};
+pub use set::{
+    ConfigEntry, ConfigScope, ConfigSet, parse_bool, parse_config_parameters, push_cli_override,
+};

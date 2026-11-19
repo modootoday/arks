@@ -13,7 +13,22 @@ use arks_refs::RefTarget;
 use arks_store::ObjectStore;
 
 pub fn cmd_merge(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--ff-only", "--no-ff"])?;
+    // Cloud drop-in §O: `--no-edit` (arks never opens an editor for merges),
+    // `-m <msg>`, `-q`. Cite: https://git-scm.com/docs/git-merge
+    let (args, message) = take_merge_message(args)?;
+    let args = &args;
+    refuse_unknown_flags(
+        args,
+        &[
+            "--ff-only",
+            "--no-ff",
+            "--ff",
+            "--no-edit",
+            "-q",
+            "--quiet",
+            "--no-stat",
+        ],
+    )?;
     let ff_only = args.iter().any(|a| a == "--ff-only");
     let no_ff = args.iter().any(|a| a == "--no-ff");
     if ff_only && no_ff {
@@ -34,20 +49,68 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
     if positional.len() != 1 {
         return Err(CliError::Usage("merge [--ff-only|--no-ff] <branch>".into()));
     }
-    merge_onto(positional[0], ff_only, no_ff)
+    merge_onto_msg(positional[0], ff_only, no_ff, message)
+}
+
+/// Split `-m <msg>` / `--message=<msg>` out of merge args.
+fn take_merge_message(args: &[String]) -> CliResult<(Vec<String>, Option<String>)> {
+    let mut out = Vec::new();
+    let mut msg: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        if a == "-m" || a == "--message" {
+            i += 1;
+            let v = args
+                .get(i)
+                .ok_or_else(|| CliError::Usage("merge -m <message>".into()))?;
+            msg = Some(match msg {
+                Some(m) => format!("{m}\n\n{v}"),
+                None => v.clone(),
+            });
+        } else if let Some(v) = a.strip_prefix("--message=") {
+            msg = Some(v.to_string());
+        } else {
+            out.push(a.clone());
+        }
+        i += 1;
+    }
+    Ok((out, msg))
 }
 
 pub fn cmd_pull(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--rebase"])?;
-    let rebase = args.iter().any(|a| a == "--rebase");
-    let remote_name = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("origin");
-    crate::cmd::cmd_fetch(&[remote_name.to_string()])?;
+    // Cloud drop-in §O: `--ff-only`, `--no-rebase`, `--no-edit`, `pull <remote> <branch>`.
+    let args = &crate::util::split_short_bundles(args, "rq", "");
+    refuse_unknown_flags(
+        args,
+        &[
+            "--rebase",
+            "-r",
+            "--no-rebase",
+            "--ff-only",
+            "--ff",
+            "--no-ff",
+            "--no-edit",
+            "-q",
+            "--quiet",
+        ],
+    )?;
+    let rebase = args.iter().any(|a| a == "--rebase" || a == "-r")
+        && !args.iter().any(|a| a == "--no-rebase");
+    let ff_only = args.iter().any(|a| a == "--ff-only");
+    let no_ff = args.iter().any(|a| a == "--no-ff");
+    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    let remote_name = positional.first().map(|s| s.as_str()).unwrap_or("origin");
+    let mut fetch_args = vec![remote_name.to_string()];
+    if let Some(b) = positional.get(1) {
+        fetch_args.push((*b).clone());
+    }
+    crate::cmd::cmd_fetch(&fetch_args)?;
     let repo = open_repo()?;
-    let branch = current_branch_name(&repo)?;
+    let branch = match positional.get(1) {
+        Some(b) => b.trim_start_matches("refs/heads/").to_string(),
+        None => current_branch_name(&repo)?,
+    };
     let upstream = format!("refs/remotes/{remote_name}/{branch}");
     if repo.refs().resolve(&upstream).is_err() {
         return Err(CliError::Msg(format!(
@@ -59,11 +122,20 @@ pub fn cmd_pull(args: &[String]) -> CliResult<()> {
         crate::cmd::replay::rebase_onto(&upstream_rev)
     } else {
         // Fs-2: allow three-way merge pull (not forced --ff-only).
-        merge_onto(&upstream_rev, false, false)
+        merge_onto(&upstream_rev, ff_only, no_ff)
     }
 }
 
 fn merge_onto(name: &str, ff_only: bool, no_ff: bool) -> CliResult<()> {
+    merge_onto_msg(name, ff_only, no_ff, None)
+}
+
+fn merge_onto_msg(
+    name: &str,
+    ff_only: bool,
+    no_ff: bool,
+    message: Option<String>,
+) -> CliResult<()> {
     let mut repo = open_repo()?;
     let theirs = resolve_rev(&repo, name)?;
     let head = repo.head_oid()?;
@@ -94,7 +166,7 @@ fn merge_onto(name: &str, ff_only: bool, no_ff: bool) -> CliResult<()> {
             println!("Fast-forward");
             return Ok(());
         }
-        return create_merge_commit(&mut repo, &head, &theirs, name, None);
+        return create_merge_commit(&mut repo, &head, &theirs, name, None, message);
     }
     if is_ancestor(&repo, &theirs, &head)? {
         println!("Already up to date.");
@@ -117,7 +189,7 @@ fn merge_onto(name: &str, ff_only: bool, no_ff: bool) -> CliResult<()> {
     let tree = result
         .tree
         .ok_or_else(|| CliError::Msg("merge: missing result tree".into()))?;
-    create_merge_commit(&mut repo, &head, &theirs, name, Some(tree))
+    create_merge_commit(&mut repo, &head, &theirs, name, Some(tree), message)
 }
 
 fn create_merge_commit(
@@ -126,6 +198,7 @@ fn create_merge_commit(
     theirs: &arks_oid::Oid,
     name: &str,
     tree_override: Option<arks_oid::Oid>,
+    message: Option<String>,
 ) -> CliResult<()> {
     let tree = if let Some(t) = tree_override {
         t
@@ -136,13 +209,18 @@ fn create_merge_commit(
         }
         Commit::decode(&tobj.payload)?.tree
     };
-    let msg = format!("Merge branch '{name}'\n");
-    let sig = commit_signature()?;
+    let msg = match message {
+        Some(m) if m.ends_with('\n') => m,
+        Some(m) => format!("{m}\n"),
+        None => format!("Merge branch '{name}'\n"),
+    };
+    let author = commit_signature()?;
+    let committer = crate::cmd::shared::committer_signature()?;
     let commit = Commit {
         tree,
         parents: vec![*head, *theirs],
-        author: sig.clone(),
-        committer: sig,
+        author,
+        committer,
         gpgsig: None,
         message: msg,
     };

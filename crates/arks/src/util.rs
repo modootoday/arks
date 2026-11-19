@@ -173,3 +173,126 @@ pub fn refuse_unknown_flags(args: &[String], allowed: &[&str]) -> CliResult<()> 
     }
     Ok(())
 }
+
+/// Split bundled single-dash short options per gitcli (`-sb` → `-s -b`,
+/// `-am msg` → `-a -m msg`, `-mmsg` → `-m msg`). `flags` are boolean letters;
+/// `valued` take a value (rest of the token, else the next argument). Tokens
+/// with any unknown letter, numeric tokens (`-5`), and everything after `--`
+/// are left unchanged. Cite: <https://git-scm.com/docs/gitcli>.
+pub fn split_short_bundles(args: &[String], flags: &str, valued: &str) -> Vec<String> {
+    let mut out = Vec::with_capacity(args.len());
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        if a == "--" {
+            out.extend(args[i - 1..].iter().cloned());
+            break;
+        }
+        let is_bundle = a.len() > 2
+            && a.starts_with('-')
+            && !a.starts_with("--")
+            && !a[1..].chars().all(|c| c.is_ascii_digit());
+        if !is_bundle {
+            // A lone valued short flag consumes the next argument verbatim.
+            let single_valued = a.len() == 2 && a.starts_with('-') && valued.contains(&a[1..]);
+            out.push(a.clone());
+            if single_valued && i < args.len() {
+                out.push(args[i].clone());
+                i += 1;
+            }
+            continue;
+        }
+        let body: Vec<char> = a[1..].chars().collect();
+        let mut expanded = Vec::new();
+        let mut ok = true;
+        let mut j = 0;
+        let mut takes_next = false;
+        while j < body.len() {
+            let c = body[j];
+            if valued.contains(c) {
+                expanded.push(format!("-{c}"));
+                let rest: String = body[j + 1..].iter().collect();
+                if rest.is_empty() {
+                    takes_next = true;
+                } else {
+                    expanded.push(rest);
+                }
+                break;
+            } else if flags.contains(c) {
+                expanded.push(format!("-{c}"));
+            } else {
+                ok = false;
+                break;
+            }
+            j += 1;
+        }
+        if !ok {
+            out.push(a.clone());
+            continue;
+        }
+        out.extend(expanded);
+        if takes_next && i < args.len() {
+            out.push(args[i].clone());
+            i += 1;
+        }
+    }
+    out
+}
+
+/// Rewrite long spellings to the short spelling a command already handles.
+pub fn alias_flags(args: Vec<String>, aliases: &[(&str, &str)]) -> Vec<String> {
+    let mut past_dashdash = false;
+    args.into_iter()
+        .map(|a| {
+            if a == "--" {
+                past_dashdash = true;
+            }
+            if past_dashdash {
+                return a;
+            }
+            aliases
+                .iter()
+                .find(|(long, _)| *long == a)
+                .map(|(_, short)| (*short).to_string())
+                .unwrap_or(a)
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod bundle_tests {
+    use super::*;
+
+    fn v(xs: &[&str]) -> Vec<String> {
+        xs.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn splits_flags_and_values() {
+        assert_eq!(
+            split_short_bundles(&v(&["-sb"]), "sb", ""),
+            v(&["-s", "-b"])
+        );
+        assert_eq!(
+            split_short_bundles(&v(&["-am", "-sb msg"]), "a", "m"),
+            v(&["-a", "-m", "-sb msg"])
+        );
+        assert_eq!(
+            split_short_bundles(&v(&["-mhello"]), "a", "m"),
+            v(&["-m", "hello"])
+        );
+        assert_eq!(
+            split_short_bundles(&v(&["-m", "-xy"]), "xy", "m"),
+            v(&["-m", "-xy"])
+        );
+        assert_eq!(
+            split_short_bundles(&v(&["-5", "-zq"]), "s", ""),
+            v(&["-5", "-zq"])
+        );
+        assert_eq!(
+            split_short_bundles(&v(&["--", "-sb"]), "sb", ""),
+            v(&["--", "-sb"])
+        );
+    }
+}

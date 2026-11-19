@@ -63,6 +63,38 @@ pub fn dispatch_argv() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    // Cloud drop-in §O global options (git(1) §OPTIONS): `-C <path>` (cumulative),
+    // `-c <name>=<value>`, `--no-pager` / `-P` / `-p` / `--paginate` (arks never pages).
+    while let Some(first) = args.first().cloned() {
+        match first.as_str() {
+            "-C" | "-c" => {
+                if args.len() < 2 {
+                    eprintln!("error: option requires a value: {first}");
+                    return ExitCodePolicy::map(personality, &[LayerOutcome::StubOrUsage]);
+                }
+                let val = args.remove(1);
+                args.remove(0);
+                if first == "-C" {
+                    if !val.is_empty() {
+                        if let Err(e) = env::set_current_dir(&val) {
+                            eprintln!("fatal: cannot change to '{val}': {e}");
+                            return ExitCodePolicy::map(personality, &[LayerOutcome::StubOrUsage]);
+                        }
+                    }
+                } else {
+                    arks_config::push_cli_override(&val);
+                }
+            }
+            "--no-pager" | "-P" | "-p" | "--paginate" | "--no-optional-locks" => {
+                args.remove(0);
+            }
+            _ => break,
+        }
+    }
+    if args.is_empty() {
+        print_help(personality);
+        return ExitCode::SUCCESS;
+    }
     let cmd = args.remove(0);
     if cmd.starts_with('-') {
         eprintln!("error: unsupported global option: {cmd}");

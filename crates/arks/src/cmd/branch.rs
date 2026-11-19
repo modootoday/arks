@@ -12,11 +12,40 @@ use std::fs;
 use std::path::Path;
 pub fn cmd_branch(args: &[String]) -> CliResult<()> {
     // M16 Sy-1: `-a`/`--all`, `-r`/`--remotes`, `-v` claimed (git-branch).
+    // Cloud drop-in §O: `--show-current`, `--list`, `-vv`, `--delete`, `-f`.
+    let args = &crate::util::alias_flags(
+        crate::util::split_short_bundles(args, "dDmarvf", ""),
+        &[
+            ("--delete", "-d"),
+            ("--move", "-m"),
+            ("--verbose", "-v"),
+            ("--list", "-l"),
+            ("--force", "-f"),
+        ],
+    );
     refuse_unknown_flags(
         args,
-        &["-d", "-D", "-m", "-a", "--all", "-r", "--remotes", "-v"],
+        &[
+            "-d",
+            "-D",
+            "-m",
+            "-a",
+            "--all",
+            "-r",
+            "--remotes",
+            "-v",
+            "-l",
+            "-f",
+            "--show-current",
+        ],
     )?;
     let mut repo = open_repo()?;
+    if args.iter().any(|a| a == "--show-current") {
+        if let Ok(RefTarget::Symbolic(s)) = repo.head_target() {
+            println!("{}", s.strip_prefix("refs/heads/").unwrap_or(&s));
+        }
+        return Ok(());
+    }
     if args.iter().any(|a| a == "-d" || a == "-D") {
         let force = args.iter().any(|a| a == "-D");
         let name = args
@@ -87,12 +116,21 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
         }
         return Ok(());
     }
-    if positional.len() != 1 {
-        return Err(CliError::Usage("branch [<name>]".into()));
+    if positional.len() > 2 {
+        return Err(CliError::Usage("branch [-f] <name> [<start-point>]".into()));
     }
     let name = positional[0];
     let full = branch_ref(name);
-    let oid = repo.head_oid()?;
+    let force = args.iter().any(|a| a == "-f");
+    if !force && repo.refs().resolve(&full).is_ok() {
+        return Err(CliError::Msg(format!(
+            "a branch named '{name}' already exists"
+        )));
+    }
+    let oid = match positional.get(1) {
+        Some(start) => resolve_rev(&repo, start)?,
+        None => repo.head_oid()?,
+    };
     repo.refs_mut().update(&full, &oid, None)?;
     Ok(())
 }
@@ -100,8 +138,14 @@ pub fn cmd_branch(args: &[String]) -> CliResult<()> {
 pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     // M16 Sy-1/Sy-2: `--detach` + `--orphan` claimed (git-checkout 2.39.0).
     // Cite: https://git-scm.com/docs/git-checkout/2.39.0
-    refuse_unknown_flags(args, &["-b", "--", "--detach", "--orphan"])?;
-    let create = args.iter().any(|a| a == "-b");
+    // Cloud drop-in §O: `-B <branch> [<start>]`, `-b <branch> <start>`, `-q`.
+    let args = &crate::util::split_short_bundles(args, "qf", "bB");
+    refuse_unknown_flags(
+        args,
+        &["-b", "-B", "--", "--detach", "--orphan", "-q", "--quiet"],
+    )?;
+    let create = args.iter().any(|a| a == "-b" || a == "-B");
+    let force_create = args.iter().any(|a| a == "-B");
     let detach = args.iter().any(|a| a == "--detach");
     let orphan_idx = args.iter().position(|a| a == "--orphan");
     let dashdash = args.iter().position(|a| a == "--");
@@ -130,18 +174,37 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     }
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
     if create {
-        if positional.len() != 1 {
-            return Err(CliError::Usage("checkout -b <branch>".into()));
+        if positional.is_empty() || positional.len() > 2 {
+            return Err(CliError::Usage(
+                "checkout -b|-B <branch> [<start-point>]".into(),
+            ));
         }
         let name = positional[0];
         let mut repo = open_repo()?;
-        let oid = repo.head_oid()?;
+        let head = repo.head_oid().ok();
+        let oid = match positional.get(1) {
+            Some(start) => resolve_rev(&repo, start)?,
+            None => head.ok_or_else(|| CliError::Msg("HEAD has no commit".into()))?,
+        };
         let full = branch_ref(name);
+        let existed = repo.refs().resolve(&full).is_ok();
+        if existed && !force_create {
+            return Err(CliError::Msg(format!(
+                "a branch named '{name}' already exists"
+            )));
+        }
         repo.refs_mut().update(&full, &oid, None)?;
         repo.refs_mut().set_symbolic("HEAD", &full)?;
-        let work = work_tree(&repo)?;
-        arks_remote::checkout_commit(&repo, &work, &oid)?;
-        println!("Switched to a new branch '{name}'");
+        // Same commit: keep index + worktree (local changes carry over, as in git).
+        if head != Some(oid) {
+            let work = work_tree(&repo)?;
+            arks_remote::checkout_commit(&repo, &work, &oid)?;
+        }
+        if existed {
+            println!("Switched to and reset branch '{name}'");
+        } else {
+            println!("Switched to a new branch '{name}'");
+        }
         return Ok(());
     }
     if detach {

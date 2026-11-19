@@ -30,6 +30,21 @@ pub struct ConfigSet {
 
 const MAX_INCLUDE_DEPTH: usize = 10;
 
+/// Process-wide `git -c <k>=<v>` overrides (highest precedence).
+static CLI_OVERRIDES: std::sync::Mutex<Vec<(String, Option<String>)>> =
+    std::sync::Mutex::new(Vec::new());
+
+/// Record a `-c name[=value]` global option; applies to every later load.
+pub fn push_cli_override(spec: &str) {
+    let (k, v) = match spec.split_once('=') {
+        Some((k, v)) => (k.to_string(), Some(v.to_string())),
+        None => (spec.to_string(), None),
+    };
+    if let Ok(mut g) = CLI_OVERRIDES.lock() {
+        g.push((k, v));
+    }
+}
+
 impl ConfigSet {
     pub fn new() -> Self {
         Self::default()
@@ -55,6 +70,11 @@ impl ConfigSet {
         if let Ok(params) = env::var("GIT_CONFIG_PARAMETERS") {
             for (k, v) in parse_config_parameters(&params) {
                 set.push(k, v, ConfigScope::Command);
+            }
+        }
+        if let Ok(g) = CLI_OVERRIDES.lock() {
+            for (k, v) in g.iter() {
+                set.push(k.clone(), v.clone(), ConfigScope::Command);
             }
         }
         set
