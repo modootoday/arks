@@ -41,11 +41,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Stub discrete-circuit path-deps
-        run: |
-          bash scripts/ci-stub-discrete-circuit.sh
-          mkdir -p "$GITHUB_WORKSPACE/../../discrete-circuit"
-
       - name: Build clean-room image
         run: docker compose -f verify/docker-compose.yml build toolchain
 

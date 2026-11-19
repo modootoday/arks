@@ -15,7 +15,7 @@ mkdir -p verify/gates/g027-smart-http-pr-contention/out
 G27_LOCK="verify/gates/g027-smart-http-pr-contention/.run.lock.dir"
 
 # Refuse overlap with other heavy clean-room runners (OOM lesson).
-for other in g017-concurrency-issue-compare g019-comparative-performance g022-celir-index-contention g023-celir-dual-path g024-l3-celir-joint g025-celir-index-scale g026-local-branch-pr-sim; do
+for other in g017-concurrency-issue-compare g019-comparative-performance g026-local-branch-pr-sim; do
   if [[ -d "verify/${other}/.run.lock.dir" ]]; then
     echo "G27: heavy gate ${other} holds verify/${other}/.run.lock.dir — refuse overlap" >&2
     exit 75

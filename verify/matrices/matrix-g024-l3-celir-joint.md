@@ -1,5 +1,7 @@
 # G24 L3 HighConcurrency + CELIR index joint matrix
 
+> **Withdrawn** — CELIR not adopted (`.spec/adr/20261119200000-celir-not-adopted-withdraw-m24.adr.md`). Historical record only; the gate entrypoint, compose service and gate tree are removed.
+
 **Authoritative runs:** `verify/docker-compose.yml` service `g024-l3-celir-joint` (`verify/scripts/run-g024-l3-celir-joint.sh`).
 Host runs are advisory only.
 

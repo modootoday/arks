@@ -1,5 +1,7 @@
 # G23 CELIR dual-path Git verified matrix
 
+> **Withdrawn** — CELIR not adopted (`.spec/adr/20261119200000-celir-not-adopted-withdraw-m24.adr.md`). Historical record only; the gate entrypoint, compose service and gate tree are removed.
+
 **Authoritative runs:** `verify/docker-compose.yml` service `g023-celir-dual-path` (`verify/scripts/run-g023-celir-dual-path.sh`).
 Host runs are advisory only.
 

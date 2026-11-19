@@ -1,4 +1,5 @@
-# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/CELIR/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV).
+# G22–G25 (CELIR) withdrawn — ADR 20261119200000.
+# arks authoritative clean-room gates (G0–G7, G10–G15) + additive G16–G41 (journey/issue/PR-sim/live-private + M25 transports + G33 cred + G34 shared-index + G35 shallow + G36 Basic + G37 gpgsig SSH + G38 OpenPGP/X.509/tag-s + G39 blob:none + G40 dumb deletes + G41 Apache DAV).
 # Engine: Linux (Docker Desktop desktop-linux on Windows). Fresh `compose run` per gate.
 name: arks-verify-m1
 
@@ -7,9 +8,6 @@ x-cleanroom: &cleanroom
   working_dir: /workspace
   volumes:
     - ..:/workspace:rw
-    # Optional celir-* path-deps in arks-store resolve ../../../discrete-circuit → /discrete-circuit
-    # (feature stays OFF for G0–G21; parse-time only). G22+ use /workspaces/* layout separately.
-    - ../../discrete-circuit:/discrete-circuit:ro
     # Linux-local target dir: fat LTO on a Windows bind mount OOMs/SIGKILLs (137).
     - arks-cargo-target:/cargo-target
   environment:
@@ -233,78 +231,6 @@ services:
       - toolchain
     command: ["/bin/bash", "verify/scripts/run-g021-cli-flag-symmetry.sh"]
 
-  # M24 G22 CELIR index contention (requires discrete-circuit sibling mount).
-  g022-celir-index-contention:
-    image: arks-verify-m1:0.1.0
-    working_dir: /workspaces/gir
-    depends_on:
-      - toolchain
-    volumes:
-      - ..:/workspaces/gir:rw
-      # Path-deps from crates/arks-store resolve ../../../discrete-circuit → /workspaces/discrete-circuit
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
-      - arks-cargo-target:/cargo-target
-    environment:
-      CARGO_BUILD_JOBS: "1"
-      CARGO_TARGET_DIR: /cargo-target
-      RUSTUP_TOOLCHAIN: "1.99.1"
-      ARKS_G22_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g022-celir-index-contention.sh"]
-
-  # M24 successor G23 — CELIR dual-path Git verified (FS sole ObjectStore + index sidecar).
-  g023-celir-dual-path:
-    image: arks-verify-m1:0.1.0
-    working_dir: /workspaces/gir
-    depends_on:
-      - toolchain
-    volumes:
-      - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
-      - arks-cargo-target:/cargo-target
-    environment:
-      CARGO_BUILD_JOBS: "1"
-      CARGO_TARGET_DIR: /cargo-target
-      RUSTUP_TOOLCHAIN: "1.99.1"
-      ARKS_G23_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g023-celir-dual-path.sh"]
-
-  # M24 successor G24 — L3 HighConcurrency + CELIR index joint.
-  g024-l3-celir-joint:
-    image: arks-verify-m1:0.1.0
-    working_dir: /workspaces/gir
-    depends_on:
-      - toolchain
-    volumes:
-      - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
-      - arks-cargo-target:/cargo-target
-    environment:
-      CARGO_BUILD_JOBS: "1"
-      CARGO_TARGET_DIR: /cargo-target
-      RUSTUP_TOOLCHAIN: "1.99.1"
-      ARKS_G24_ROOT: /workspaces/gir
-    command: ["/bin/bash", "verify/scripts/run-g024-l3-celir-joint.sh"]
-
-  # M24 successor G25 — CELIR index scale (N=256 required; 384/512 stretch).
-  g025-celir-index-scale:
-    image: arks-verify-m1:0.1.0
-    working_dir: /workspaces/gir
-    depends_on:
-      - toolchain
-    volumes:
-      - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
-      - arks-cargo-target:/cargo-target
-    environment:
-      CARGO_BUILD_JOBS: "1"
-      CARGO_TARGET_DIR: /cargo-target
-      RUSTUP_TOOLCHAIN: "1.99.1"
-      ARKS_G25_ROOT: /workspaces/gir
-      ARKS_G25_STRETCH: "1"
-    command: ["/bin/bash", "verify/scripts/run-g025-celir-index-scale.sh"]
-
-  # G26 — local branch + synthetic PR-env scale (stream B; no CELIR feature; sole-runner).
-  # Mount discrete-circuit so Cargo can parse arks-store optional path-deps (feature stays OFF).
   g026-local-branch-pr-sim:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
@@ -312,7 +238,6 @@ services:
       - toolchain
     volumes:
       - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
       - arks-cargo-target:/cargo-target
     environment:
       CARGO_BUILD_JOBS: "1"
@@ -330,7 +255,6 @@ services:
       - toolchain
     volumes:
       - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
       - arks-cargo-target:/cargo-target
     environment:
       CARGO_BUILD_JOBS: "1"
@@ -344,7 +268,7 @@ services:
 
   # G28 — live private GitHub normal-user journeys with arks (G16 checklist).
   # Opt-in network + secrets; default Refuse-closed. ≠ scale/contention; ≠ G16 timing.
-  # Mount discrete-circuit for celir-data path-dep (same as G22–G27); network left default (live forge).
+  # Network left default (live forge).
   g028-live-private-arks:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
@@ -352,7 +276,6 @@ services:
       - toolchain
     volumes:
       - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
       - arks-cargo-target:/cargo-target
     environment:
       CARGO_BUILD_JOBS: "1"
@@ -367,7 +290,7 @@ services:
     command: ["/bin/bash", "verify/scripts/run-g028-live-private-arks.sh"]
 
   # G28 offline clone closure — J-CLONE-LOCAL-01 + J-CLONE-PATH-01 (G16-aligned; no live forge).
-  # Same mount layout as g028-live-private-arks so optional celir-data path-deps resolve under /workspaces.
+  # Same mount layout as g028-live-private-arks.
   g028-offline-clones:
     image: arks-verify-m1:0.1.0
     working_dir: /workspaces/gir
@@ -375,7 +298,6 @@ services:
       - toolchain
     volumes:
       - ..:/workspaces/gir:rw
-      - ../../discrete-circuit:/workspaces/discrete-circuit:ro
       - arks-cargo-target:/cargo-target
     environment:
       CARGO_BUILD_JOBS: "1"
@@ -434,7 +356,6 @@ services:
       RUSTUP_TOOLCHAIN: "1.99.1"
     volumes:
       - ..:/workspace:rw
-      - ../../discrete-circuit:/discrete-circuit:ro
       - arks-cargo-target-g033:/cargo-target-g033-cred-askpass
     command: ["/bin/bash", "verify/scripts/run-g033-cred-askpass.sh"]
 
@@ -479,7 +400,6 @@ services:
       - toolchain
     volumes:
       - ..:/workspace:rw
-      - ../../discrete-circuit:/discrete-circuit:ro
       - arks-cargo-target:/cargo-target
       - g041-git-data:/git-data
     environment:

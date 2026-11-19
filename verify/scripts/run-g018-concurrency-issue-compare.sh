@@ -21,8 +21,7 @@ if cargo metadata --format-version 1 --no-deps 2>/dev/null | grep -E '"name":\s*
   echo "G18: forbidden gix/gitoxide package name in workspace members" >&2
   exit 1
 fi
-# Optional path-deps appear in full metadata when discrete-circuit is mounted.
-# Product honesty = default feature graph (celir-index OFF). Same as G11/G20.
+# CELIR is not adopted (ADR 20261119200000): no celir edge is allowed in any graph.
 if cargo tree -p arks-store --edges normal 2>/dev/null | grep -Ei 'celir' >/dev/null; then
   echo "G18: FAIL — default arks-store tree has celir edge" >&2
   cargo tree -p arks-store --edges normal >&2 || true

@@ -1,5 +1,7 @@
 # G22 CELIR index contention matrix (M24)
 
+> **Withdrawn** — CELIR not adopted (`.spec/adr/20261119200000-celir-not-adopted-withdraw-m24.adr.md`). Historical record only; the gate entrypoint, compose service and gate tree are removed.
+
 **Authoritative runs:** `verify/docker-compose.yml` service `g022-celir-index-contention` (`verify/scripts/run-g022-celir-index-contention.sh`).
 Host `cargo test` with `--features celir-index` / `celir-index-stress` is advisory only.
 

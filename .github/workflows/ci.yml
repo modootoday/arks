@@ -35,9 +35,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Stub discrete-circuit path-deps (parse-time)
-        run: bash scripts/ci-stub-discrete-circuit.sh
-
       - name: Install stable Rust (rustfmt + clippy)
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -65,10 +62,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Stub discrete-circuit path-deps (parse-time)
-        shell: bash
-        run: bash scripts/ci-stub-discrete-circuit.sh
-
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -87,9 +80,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-
-      - name: Stub discrete-circuit path-deps (parse-time)
-        run: bash scripts/ci-stub-discrete-circuit.sh
 
       # Workspace rust-version = "1.85" (Cargo.toml). Keep in sync.
       - name: Install MSRV toolchain
@@ -112,15 +102,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-
-      - name: Stub discrete-circuit path-deps (parse-time + compose mount)
-        # verify/docker-compose.yml mounts ../../discrete-circuit (sibling of
-        # the parent of the repo from some layouts; from GITHUB_WORKSPACE the
-        # Cargo path-dep sibling is ../discrete-circuit). Stub covers both
-        # parse-time Cargo and empty compose mount for image build smoke.
-        run: |
-          bash scripts/ci-stub-discrete-circuit.sh
-          mkdir -p "$GITHUB_WORKSPACE/../../discrete-circuit"
 
       - name: Build clean-room image (compose toolchain)
         run: docker compose -f verify/docker-compose.yml build toolchain
