@@ -3,7 +3,7 @@ id: adr:root/20261119220000
 title: Commit history canon — adopt playpilot H1–H7 (merge commit)
 status: active
 created: 2026-11-19T22:00:00Z
-updated: 2026-11-19T22:00:00Z
+updated: 2026-11-19T23:00:00Z
 tags: [governance, commit-history, playpilot, merge-commit, conventional-commits, ci, auto-merge]
 rel:
   depends_on:
@@ -44,7 +44,14 @@ evidence honesty, push only to the session `claude/*` branch).
    loosening rulesets, releases and tags stay with the owner.
 8. **Enforcement stage 1:** CI job `History` runs
    `playpilot history-check --method merge --range "$BASE..$HEAD"` (playpilot pinned by rev) as a
-   **non-required** check; the `playpilot guard` hook is stage 2 and not installed yet.
+   **non-required** check.
+9. **Enforcement stage 2:** `.claude/settings.json` registers `playpilot guard` (pinned rev, installed
+   on demand) as a `PreToolUse` hook for `Bash|PowerShell` with `PLAYPILOT_PROTECTED_BRANCHES=main`.
+   Measured: push to `main` (incl. `HEAD:main`, `git -C`, `cd … &&`), `--force`, `--tags` refused
+   (exit 2); topic-branch push and `--force-with-lease=<branch>:<full-sha>` allowed (exit 0).
+   **Known gap:** the guard inspects only the `git` program, so `arks push origin main` (with or
+   without `ARKS_PERSONALITY=git`) is not seen. Until playpilot covers `arks`, rule `92` forbids
+   pushing protected branches with arks, and the base-branch ruleset stays the server-side backstop.
 
 ## Consequences
 
