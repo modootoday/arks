@@ -1,0 +1,9 @@
+diff --git a/.agents/agents/architect.md b/.agents/agents/architect.md
+index a731d90..c45d146 100644
+--- a/.agents/agents/architect.md
++++ b/.agents/agents/architect.md
+@@ -27,3 +27,4 @@ Keep standards-first product architecture coherent: Git-compat envelope first, p
+ - Inventing Git wire/on-disk semantics
+ - Turning AGENTS.md into a second product SoT
+ - ObjectStore-via-CELIR or “faster than Git” marketing without receipts
++probe change

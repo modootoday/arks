@@ -1,0 +1,3 @@
+9833d49 Claim BP-PORCELAIN subset: remote show/get-url/set-url + Docker STRICT.
+00c530f Fix native e2e harness breakages from kebab rename + condensed help.
+6d72b72 Exhaust in-scope stubs: hub metadata Claimed + survey3/4 + daemon pointer.

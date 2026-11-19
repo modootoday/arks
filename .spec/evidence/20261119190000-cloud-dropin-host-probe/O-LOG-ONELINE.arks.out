@@ -1,0 +1,5 @@
+b072a81 Align gate Cargo.lock package names with Cargo.toml.
+cd2aebc Spec-first: tip currency honesty for behavioral DoD + release remote.
+95350c5 Claim full BP-PORCELAIN §C + BP-DROPIN; behavioral DoD met.
+9833d49 Claim BP-PORCELAIN subset: remote show/get-url/set-url + Docker STRICT.
+6d60486 Spec-first: re-canonize behavioral DoD (peer actions, not Missing=0).
