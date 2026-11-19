@@ -12,7 +12,7 @@ Build **arks** (`arks for Git`; working expansion **Agent Revision Kinetic Syste
 
 ## Hard constraints
 
-1. **English only / Hangul ban** — all authored project text (Specfold docs, AGENTS, `.agents/**`, `docs/`, comments, commit/PR prose) is English. Proper nouns (`arks`, `CELIR`, `humanymous`) stay. Korean/Hangul (and other languages) may appear in chat/coordinator briefings only — never in committed Specfold or `docs/`. SoT: `.spec/sot/language-english-only.sot.md`; rule `05-english-only`.
+1. **English only / Hangul ban** — all authored project text (Specfold docs, AGENTS, `.agents/**`, `docs/`, comments, commit/PR prose) is English. Proper nouns (`arks`, `CELIR`, `humanymous`) stay. **Chat with the owner MUST be in Korean**; Korean/Hangul may appear in chat/coordinator briefings only — never in committed Specfold or `docs/`. SoT: `.spec/sot/language-english-only.sot.md`; rule `05-english-only`.
 2. **Standards-first** — object/pack/ref/index/protocol behavior from primary docs only (`git-compat-surface` + research catalog).
 3. **Clean-room authoritative** — product “verified” claims require Docker clean-room; host runs are advisory (`.spec/sot/product-verification-clean-room.sot.md`). **No invent Claimed/PASS** — rule `28-evidence-honesty`.
 4. **No literal competing SoT** — do not restate or fork humanymous convention ledgers in this repo; cite live paths under `C:\workspaces\humanymous`.

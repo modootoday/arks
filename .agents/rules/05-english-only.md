@@ -2,6 +2,11 @@
 
 All authored project text is **English only**. Chat/coordinator briefings in other languages do not waive this for Specfold or `docs/`. Owning SoT: `.spec/sot/language-english-only.sot.md`.
 
+## Chat with the owner (MUST)
+
+- Talk to the owner in **Korean** in chat: replies, briefings, questions and summaries. This is the owner's standing preference.
+- Tracked text stays English; translate before any commit or PR.
+
 ## Applies to
 
 - `.spec/**` authored prose (SoTs, plans, research narrative, evidence summaries)
