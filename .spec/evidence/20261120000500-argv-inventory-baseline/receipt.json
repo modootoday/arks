@@ -1,0 +1,13 @@
+{
+  "gate": "argv-inventory",
+  "rung": "A0",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "5e55cac",
+  "commands": 138,
+  "commands_full": 12,
+  "commands_no_inventory": 37,
+  "options": 1776,
+  "accepted": 557,
+  "timestamp": "2026-11-20T00:05:00Z"
+}
