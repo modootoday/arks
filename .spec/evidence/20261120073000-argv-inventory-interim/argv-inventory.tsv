@@ -1,0 +1,1928 @@
+command	option	meta	verdict	note
+add	-n		ACCEPTED	
+add	--dry-run		ACCEPTED	
+add	-v		ACCEPTED	
+add	--verbose		ACCEPTED	
+add	-i		ACCEPTED	
+add	--interactive		ACCEPTED	
+add	-p		ACCEPTED	
+add	--patch		ACCEPTED	
+add	-e		ACCEPTED	
+add	--edit		ACCEPTED	
+add	-f		ACCEPTED	
+add	--force		ACCEPTED	
+add	-u		ACCEPTED	
+add	--update		ACCEPTED	
+add	--renormalize		ACCEPTED	
+add	-N		ACCEPTED	
+add	--intent-to-add		ACCEPTED	
+add	-A		ACCEPTED	
+add	--all		ACCEPTED	
+add	--ignore-removal		ACCEPTED	
+add	--refresh		ACCEPTED	
+add	--ignore-errors		ACCEPTED	
+add	--ignore-missing		ACCEPTED	
+add	--sparse		ACCEPTED	
+add	--chmod	(+|-)	ACCEPTED	
+add	--pathspec-from-file	<file>	ACCEPTED	
+add	--pathspec-file-nul		ACCEPTED	
+add--interactive	-		NO_INVENTORY	
+am	-i		ACCEPTED	
+am	--interactive		ACCEPTED	
+am	-3		ACCEPTED	
+am	--3way		ACCEPTED	
+am	-q		ACCEPTED	
+am	--quiet		ACCEPTED	
+am	-s		ACCEPTED	
+am	--signoff		ACCEPTED	
+am	-u		ACCEPTED	
+am	--utf8		ACCEPTED	
+am	-k		ACCEPTED	
+am	--keep		ACCEPTED	
+am	--keep-non-patch		ACCEPTED	
+am	-m		ACCEPTED	
+am	--message-id		ACCEPTED	
+am	--keep-cr		ACCEPTED	
+am	--no-keep-cr		ACCEPTED	
+am	-c		ACCEPTED	
+am	--scissors		ACCEPTED	
+am	--quoted-cr	<action>	ACCEPTED	
+am	--whitespace	<action>	ACCEPTED	
+am	--ignore-space-change		ACCEPTED	
+am	--ignore-whitespace		ACCEPTED	
+am	--directory	<root>	ACCEPTED	
+am	--exclude	<path>	ACCEPTED	
+am	--include	<path>	ACCEPTED	
+am	-C		ACCEPTED	
+am	-p		ACCEPTED	
+am	--patch-format	<format>	ACCEPTED	
+am	--reject		ACCEPTED	
+am	--resolvemsg		ACCEPTED	
+am	--continue		ACCEPTED	
+am	-r		ACCEPTED	
+am	--resolved		ACCEPTED	
+am	--skip		ACCEPTED	
+am	--abort		ACCEPTED	
+am	--quit		ACCEPTED	
+am	--show-current-patch	[=(diff|raw)]	ACCEPTED	
+am	--allow-empty		ACCEPTED	
+am	--committer-date-is-author-date		ACCEPTED	
+am	--ignore-date		ACCEPTED	
+am	--rerere-autoupdate		ACCEPTED	
+am	-S	[=<key-id>]	ACCEPTED	
+am	--gpg-sign	[=<key-id>]	ACCEPTED	
+am	--empty	<{stop,drop,keep}>	ACCEPTED	
+annotate	--incremental		REFUSED	error: unsupported option: --incremental
+annotate	-b		REFUSED	error: unsupported option: -b
+annotate	--root		ACCEPTED	
+annotate	--show-stats		REFUSED	error: unsupported option: --show-stats
+annotate	--progress		REFUSED	error: unsupported option: --progress
+annotate	--score-debug		REFUSED	error: unsupported option: --score-debug
+annotate	-f		ACCEPTED	
+annotate	--show-name		ACCEPTED	
+annotate	-n		ACCEPTED	
+annotate	--show-number		ACCEPTED	
+annotate	-p		ACCEPTED	
+annotate	--porcelain		ACCEPTED	
+annotate	--line-porcelain		ACCEPTED	
+annotate	-c		REFUSED	error: unsupported option: -c
+annotate	-t		REFUSED	error: unsupported option: -t
+annotate	-l		ACCEPTED	
+annotate	-s		ACCEPTED	
+annotate	-e		ACCEPTED	
+annotate	--show-email		ACCEPTED	
+annotate	-w		REFUSED	error: unsupported option: -w
+annotate	--ignore-rev	<rev>	REFUSED	error: unsupported option: --ignore-rev
+annotate	--ignore-revs-file	<file>	REFUSED	error: unsupported option: --ignore-revs-file
+annotate	--color-lines		REFUSED	error: unsupported option: --color-lines
+annotate	--color-by-age		REFUSED	error: unsupported option: --color-by-age
+annotate	--minimal		REFUSED	error: unsupported option: --minimal
+annotate	-S		REFUSED	error: unsupported option: -S
+annotate	--contents	<file>	REFUSED	error: unsupported option: --contents
+annotate	-C		REFUSED	error: unsupported option: -C
+annotate	-M		REFUSED	error: unsupported option: -M
+annotate	-L		ACCEPTED	
+annotate	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+apply	--exclude	<path>	ACCEPTED	
+apply	--include	<path>	ACCEPTED	
+apply	-p		ACCEPTED	
+apply	--no-add		ACCEPTED	
+apply	--stat		ACCEPTED	
+apply	--numstat		ACCEPTED	
+apply	--summary		ACCEPTED	
+apply	--check		ACCEPTED	
+apply	--index		ACCEPTED	
+apply	-N		ACCEPTED	
+apply	--intent-to-add		ACCEPTED	
+apply	--cached		ACCEPTED	
+apply	--unsafe-paths		ACCEPTED	
+apply	--apply		ACCEPTED	
+apply	-3		ACCEPTED	
+apply	--3way		ACCEPTED	
+apply	--build-fake-ancestor	<file>	ACCEPTED	
+apply	-z		ACCEPTED	
+apply	-C		ACCEPTED	
+apply	--whitespace	<action>	ACCEPTED	
+apply	--ignore-space-change		ACCEPTED	
+apply	--ignore-whitespace		ACCEPTED	
+apply	-R		ACCEPTED	
+apply	--reverse		ACCEPTED	
+apply	--unidiff-zero		ACCEPTED	
+apply	--reject		ACCEPTED	
+apply	--allow-overlap		ACCEPTED	
+apply	-v		ACCEPTED	
+apply	--verbose		ACCEPTED	
+apply	-q		ACCEPTED	
+apply	--quiet		ACCEPTED	
+apply	--inaccurate-eof		ACCEPTED	
+apply	--recount		ACCEPTED	
+apply	--directory	<root>	ACCEPTED	
+apply	--allow-empty		ACCEPTED	
+archive	--format	<fmt>	ACCEPTED	
+archive	--prefix	<prefix>	ACCEPTED	
+archive	--add-file	<file>	ACCEPTED	
+archive	--add-virtual-file	<path:content>	ACCEPTED	
+archive	-o	<file>	ACCEPTED	
+archive	--output	<file>	ACCEPTED	
+archive	--worktree-attributes		ACCEPTED	
+archive	-v		ACCEPTED	
+archive	--verbose		ACCEPTED	
+archive	-N		REFUSED	error: unknown switch `N'
+archive	-l		ACCEPTED	
+archive	--list		ACCEPTED	
+archive	--remote	<repo>	ACCEPTED	
+archive	--exec	<command>	ACCEPTED	
+askpass	-		NO_INVENTORY	
+askyesno	-		NO_INVENTORY	
+backfill	-		NO_INVENTORY	
+bisect	-		NO_INVENTORY	
+bisect--helper	-		NO_INVENTORY	
+blame	--incremental		REFUSED	error: unsupported option: --incremental
+blame	-b		REFUSED	error: unsupported option: -b
+blame	--root		ACCEPTED	
+blame	--show-stats		REFUSED	error: unsupported option: --show-stats
+blame	--progress		REFUSED	error: unsupported option: --progress
+blame	--score-debug		REFUSED	error: unsupported option: --score-debug
+blame	-f		ACCEPTED	
+blame	--show-name		ACCEPTED	
+blame	-n		ACCEPTED	
+blame	--show-number		ACCEPTED	
+blame	-p		ACCEPTED	
+blame	--porcelain		ACCEPTED	
+blame	--line-porcelain		ACCEPTED	
+blame	-c		REFUSED	error: unsupported option: -c
+blame	-t		REFUSED	error: unsupported option: -t
+blame	-l		ACCEPTED	
+blame	-s		ACCEPTED	
+blame	-e		ACCEPTED	
+blame	--show-email		ACCEPTED	
+blame	-w		REFUSED	error: unsupported option: -w
+blame	--ignore-rev	<rev>	REFUSED	error: unsupported option: --ignore-rev
+blame	--ignore-revs-file	<file>	REFUSED	error: unsupported option: --ignore-revs-file
+blame	--color-lines		REFUSED	error: unsupported option: --color-lines
+blame	--color-by-age		REFUSED	error: unsupported option: --color-by-age
+blame	--minimal		REFUSED	error: unsupported option: --minimal
+blame	-S		REFUSED	error: unsupported option: -S
+blame	--contents	<file>	REFUSED	error: unsupported option: --contents
+blame	-C		REFUSED	error: unsupported option: -C
+blame	-M		REFUSED	error: unsupported option: -M
+blame	-L		ACCEPTED	
+blame	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+branch	-v		ACCEPTED	
+branch	--verbose		ACCEPTED	
+branch	-q		ACCEPTED	
+branch	--quiet		ACCEPTED	
+branch	-t	[=(direct|inherit)]	ACCEPTED	
+branch	--track	[=(direct|inherit)]	ACCEPTED	
+branch	-u	<upstream>	ACCEPTED	
+branch	--set-upstream-to	<upstream>	ACCEPTED	
+branch	--unset-upstream		ACCEPTED	
+branch	--color	[=<when>]	ACCEPTED	
+branch	-r		ACCEPTED	
+branch	--remotes		ACCEPTED	
+branch	--contains	<commit>	ACCEPTED	
+branch	--no-contains	<commit>	ACCEPTED	
+branch	--abbrev	[=<n>]	ACCEPTED	
+branch	-a		ACCEPTED	
+branch	--all		ACCEPTED	
+branch	-d		ACCEPTED	
+branch	--delete		ACCEPTED	
+branch	-D		ACCEPTED	
+branch	-m		ACCEPTED	
+branch	--move		ACCEPTED	
+branch	-M		ACCEPTED	
+branch	-c		ACCEPTED	
+branch	--copy		ACCEPTED	
+branch	-C		ACCEPTED	
+branch	-l		ACCEPTED	
+branch	--list		ACCEPTED	
+branch	--show-current		ACCEPTED	
+branch	--create-reflog		ACCEPTED	
+branch	--edit-description		ACCEPTED	
+branch	-f		ACCEPTED	
+branch	--force		ACCEPTED	
+branch	--merged	<commit>	ACCEPTED	
+branch	--no-merged	<commit>	ACCEPTED	
+branch	--column	[=<style>]	ACCEPTED	
+branch	--sort	<key>	ACCEPTED	
+branch	--points-at	<object>	ACCEPTED	
+branch	-i		ACCEPTED	
+branch	--ignore-case		ACCEPTED	
+branch	--recurse-submodules		ACCEPTED	
+branch	--format	<format>	ACCEPTED	
+bugreport	--diagnose	[=<mode>]	ACCEPTED	
+bugreport	-o	<path>	ACCEPTED	
+bugreport	--output-directory	<path>	ACCEPTED	
+bugreport	-s	<format>	ACCEPTED	
+bugreport	--suffix	<format>	ACCEPTED	
+bundle	-		NO_INVENTORY	
+cat-file	-e		ACCEPTED	
+cat-file	-p		ACCEPTED	
+cat-file	-t		ACCEPTED	
+cat-file	-s		ACCEPTED	
+cat-file	--allow-unknown-type		ACCEPTED	
+cat-file	--use-mailmap		ACCEPTED	
+cat-file	--mailmap		ACCEPTED	
+cat-file	--batch	[=<format>]	ACCEPTED	
+cat-file	--batch-check	[=<format>]	ACCEPTED	
+cat-file	-z		ACCEPTED	
+cat-file	--batch-command	[=<format>]	ACCEPTED	
+cat-file	--batch-all-objects		ACCEPTED	
+cat-file	--buffer		ACCEPTED	
+cat-file	--follow-symlinks		ACCEPTED	
+cat-file	--unordered		ACCEPTED	
+cat-file	--textconv		ACCEPTED	
+cat-file	--filters		ACCEPTED	
+cat-file	--path		ACCEPTED	
+check-attr	-a		ACCEPTED	
+check-attr	--all		ACCEPTED	
+check-attr	--cached		ACCEPTED	
+check-attr	--stdin		ACCEPTED	
+check-attr	-z		ACCEPTED	
+check-ignore	-q		ACCEPTED	
+check-ignore	--quiet		ACCEPTED	
+check-ignore	-v		ACCEPTED	
+check-ignore	--verbose		ACCEPTED	
+check-ignore	--stdin		ACCEPTED	
+check-ignore	-z		ACCEPTED	
+check-ignore	-n		ACCEPTED	
+check-ignore	--non-matching		ACCEPTED	
+check-ignore	--no-index		ACCEPTED	
+check-mailmap	--stdin		ACCEPTED	
+check-ref-format	-		NO_INVENTORY	
+checkout	-b		ACCEPTED	
+checkout	-B		ACCEPTED	
+checkout	-l		ACCEPTED	
+checkout	--guess		ACCEPTED	
+checkout	--overlay		ACCEPTED	
+checkout	-q		ACCEPTED	
+checkout	--quiet		ACCEPTED	
+checkout	--recurse-submodules	[=<checkout>]	ACCEPTED	
+checkout	--progress		ACCEPTED	
+checkout	-m		ACCEPTED	
+checkout	--merge		ACCEPTED	
+checkout	--conflict	<style>	ACCEPTED	
+checkout	-d		ACCEPTED	
+checkout	--detach		ACCEPTED	
+checkout	-t	[=(direct|inherit)]	ACCEPTED	
+checkout	--track	[=(direct|inherit)]	ACCEPTED	
+checkout	-f		ACCEPTED	
+checkout	--force		ACCEPTED	
+checkout	--orphan	<new-branch>	ACCEPTED	
+checkout	--overwrite-ignore		ACCEPTED	
+checkout	--ignore-other-worktrees		ACCEPTED	
+checkout	-2		ACCEPTED	
+checkout	--ours		ACCEPTED	
+checkout	-3		ACCEPTED	
+checkout	--theirs		ACCEPTED	
+checkout	-p		REFUSED	error: checkout --patch: interactive restore not implemented
+checkout	--patch		REFUSED	error: checkout --patch: interactive restore not implemented
+checkout	--ignore-skip-worktree-bits		ACCEPTED	
+checkout	--pathspec-from-file	<file>	ACCEPTED	
+checkout	--pathspec-file-nul		ACCEPTED	
+checkout--worker	--prefix	<string>	ACCEPTED	
+checkout-index	-a		ACCEPTED	
+checkout-index	--all		ACCEPTED	
+checkout-index	--ignore-skip-worktree-bits		ACCEPTED	
+checkout-index	-f		ACCEPTED	
+checkout-index	--force		ACCEPTED	
+checkout-index	-q		ACCEPTED	
+checkout-index	--quiet		ACCEPTED	
+checkout-index	-n		ACCEPTED	
+checkout-index	--no-create		ACCEPTED	
+checkout-index	-u		ACCEPTED	
+checkout-index	--index		ACCEPTED	
+checkout-index	-z		ACCEPTED	
+checkout-index	--stdin		ACCEPTED	
+checkout-index	--temp		ACCEPTED	
+checkout-index	--prefix	<string>	ACCEPTED	
+checkout-index	--stage	(1|2|3|all)	ACCEPTED	
+cherry	--abbrev	[=<n>]	ACCEPTED	
+cherry	-v		ACCEPTED	
+cherry	--verbose		ACCEPTED	
+cherry-pick	--quit		ACCEPTED	
+cherry-pick	--continue		ACCEPTED	
+cherry-pick	--abort		ACCEPTED	
+cherry-pick	--skip		ACCEPTED	
+cherry-pick	--cleanup	<mode>	ACCEPTED	
+cherry-pick	-n		ACCEPTED	
+cherry-pick	--no-commit		ACCEPTED	
+cherry-pick	-e		ACCEPTED	
+cherry-pick	--edit		ACCEPTED	
+cherry-pick	-s		ACCEPTED	
+cherry-pick	--signoff		ACCEPTED	
+cherry-pick	-m	<parent-number>	ACCEPTED	
+cherry-pick	--mainline	<parent-number>	ACCEPTED	
+cherry-pick	--rerere-autoupdate		ACCEPTED	
+cherry-pick	--strategy	<strategy>	ACCEPTED	
+cherry-pick	-X	<option>	ACCEPTED	
+cherry-pick	--strategy-option	<option>	ACCEPTED	
+cherry-pick	-S	[=<key-id>]	ACCEPTED	
+cherry-pick	--gpg-sign	[=<key-id>]	ACCEPTED	
+cherry-pick	-x		ACCEPTED	
+cherry-pick	--ff		ACCEPTED	
+cherry-pick	--allow-empty		ACCEPTED	
+cherry-pick	--allow-empty-message		ACCEPTED	
+cherry-pick	--keep-redundant-commits		ACCEPTED	
+citool	-		NO_INVENTORY	
+clean	-q		ACCEPTED	
+clean	--quiet		ACCEPTED	
+clean	-n		ACCEPTED	
+clean	--dry-run		ACCEPTED	
+clean	-f		ACCEPTED	
+clean	--force		ACCEPTED	
+clean	-i		ACCEPTED	
+clean	--interactive		ACCEPTED	
+clean	-d		ACCEPTED	
+clean	-e	<pattern>	ACCEPTED	
+clean	--exclude	<pattern>	ACCEPTED	
+clean	-x		ACCEPTED	
+clean	-X		ACCEPTED	
+clone	-v		ACCEPTED	
+clone	--verbose		ACCEPTED	
+clone	-q		ACCEPTED	
+clone	--quiet		ACCEPTED	
+clone	--progress		ACCEPTED	
+clone	--reject-shallow		ACCEPTED	
+clone	-n		ACCEPTED	
+clone	--no-checkout		ACCEPTED	
+clone	--bare		ACCEPTED	
+clone	--mirror		ACCEPTED	
+clone	-l		ACCEPTED	
+clone	--local		ACCEPTED	
+clone	--no-hardlinks		ACCEPTED	
+clone	-s		ACCEPTED	
+clone	--shared		ACCEPTED	
+clone	--recurse-submodules	[=<pathspec>]	ACCEPTED	
+clone	--recursive	[=<pathspec>]	ACCEPTED	
+clone	-j	<n>	ACCEPTED	
+clone	--jobs	<n>	ACCEPTED	
+clone	--template	<template-directory>	ACCEPTED	
+clone	--reference	<repo>	ACCEPTED	
+clone	--reference-if-able	<repo>	ACCEPTED	
+clone	--dissociate		ACCEPTED	
+clone	-o	<name>	ACCEPTED	
+clone	--origin	<name>	ACCEPTED	
+clone	-b	<branch>	ACCEPTED	
+clone	--branch	<branch>	ACCEPTED	
+clone	-u	<path>	ACCEPTED	
+clone	--upload-pack	<path>	ACCEPTED	
+clone	--depth	<depth>	ACCEPTED	
+clone	--shallow-since	<time>	ACCEPTED	
+clone	--shallow-exclude	<revision>	ACCEPTED	
+clone	--single-branch		ACCEPTED	
+clone	--no-tags		ACCEPTED	
+clone	--shallow-submodules		ACCEPTED	
+clone	--separate-git-dir	<gitdir>	ACCEPTED	
+clone	-c	<key=value>	ACCEPTED	
+clone	--config	<key=value>	ACCEPTED	
+clone	--server-option	<server-specific>	ACCEPTED	
+clone	-4		ACCEPTED	
+clone	--ipv4		ACCEPTED	
+clone	-6		ACCEPTED	
+clone	--ipv6		ACCEPTED	
+clone	--filter	<args>	ACCEPTED	
+clone	--also-filter-submodules		ACCEPTED	
+clone	--remote-submodules		ACCEPTED	
+clone	--sparse		ACCEPTED	
+clone	--bundle-uri	<uri>	ACCEPTED	
+column	--command	<name>	ACCEPTED	
+column	--mode	[=<style>]	ACCEPTED	
+column	--raw-mode	<n>	ACCEPTED	
+column	--width	<n>	ACCEPTED	
+column	--indent	<string>	ACCEPTED	
+column	--nl	<string>	ACCEPTED	
+column	--padding	<n>	ACCEPTED	
+commit	-q		ACCEPTED	
+commit	--quiet		ACCEPTED	
+commit	-v		ACCEPTED	
+commit	--verbose		ACCEPTED	
+commit	-F	<file>	ACCEPTED	
+commit	--file	<file>	ACCEPTED	
+commit	--author	<author>	ACCEPTED	
+commit	--date	<date>	ACCEPTED	
+commit	-m	<message>	ACCEPTED	
+commit	--message	<message>	ACCEPTED	
+commit	-c	<commit>	ACCEPTED	
+commit	--reedit-message	<commit>	ACCEPTED	
+commit	-C	<commit>	ACCEPTED	
+commit	--reuse-message	<commit>	ACCEPTED	
+commit	--fixup		ACCEPTED	
+commit	--squash	<commit>	ACCEPTED	
+commit	--reset-author		ACCEPTED	
+commit	--trailer	<trailer>	ACCEPTED	
+commit	-s		ACCEPTED	
+commit	--signoff		ACCEPTED	
+commit	-t	<file>	ACCEPTED	
+commit	--template	<file>	ACCEPTED	
+commit	-e		ACCEPTED	
+commit	--edit		ACCEPTED	
+commit	--cleanup	<mode>	ACCEPTED	
+commit	--status		ACCEPTED	
+commit	-S	[=<key-id>]	ACCEPTED	
+commit	--gpg-sign	[=<key-id>]	ACCEPTED	
+commit	-a		ACCEPTED	
+commit	--all		ACCEPTED	
+commit	-i		ACCEPTED	
+commit	--include		ACCEPTED	
+commit	--interactive		ACCEPTED	
+commit	-p		ACCEPTED	
+commit	--patch		ACCEPTED	
+commit	-o		ACCEPTED	
+commit	--only		ACCEPTED	
+commit	-n		ACCEPTED	
+commit	--no-verify		ACCEPTED	
+commit	--dry-run		ACCEPTED	
+commit	--short		ACCEPTED	
+commit	--branch		ACCEPTED	
+commit	--ahead-behind		ACCEPTED	
+commit	--porcelain		ACCEPTED	
+commit	--long		ACCEPTED	
+commit	-z		ACCEPTED	
+commit	--null		ACCEPTED	
+commit	--amend		ACCEPTED	
+commit	--no-post-rewrite		ACCEPTED	
+commit	-u	[=<mode>]	ACCEPTED	
+commit	--untracked-files	[=<mode>]	ACCEPTED	
+commit	--pathspec-from-file	<file>	ACCEPTED	
+commit	--pathspec-file-nul		ACCEPTED	
+commit-graph	--object-dir	<dir>	REFUSED	error: unsupported option: --object-dir
+commit-tree	-p		ACCEPTED	
+commit-tree	-m		ACCEPTED	
+commit-tree	-F		ACCEPTED	
+commit-tree	-S	[=<key-id>]	ACCEPTED	
+commit-tree	--gpg-sign	[=<key-id>]	ACCEPTED	
+config	--global		ACCEPTED	
+config	--system		ACCEPTED	
+config	--local		ACCEPTED	
+config	--worktree		ACCEPTED	
+config	-f	<file>	ACCEPTED	
+config	--file	<file>	ACCEPTED	
+config	--blob	<blob-id>	ACCEPTED	
+config	--get		ACCEPTED	
+config	--get-all		ACCEPTED	
+config	--get-regexp		ACCEPTED	
+config	--get-urlmatch		ACCEPTED	
+config	--replace-all		ACCEPTED	
+config	--add		ACCEPTED	
+config	--unset		ACCEPTED	
+config	--unset-all		ACCEPTED	
+config	--rename-section		ACCEPTED	
+config	--remove-section		ACCEPTED	
+config	-l		ACCEPTED	
+config	--list		ACCEPTED	
+config	--fixed-value		ACCEPTED	
+config	-e		ACCEPTED	
+config	--edit		ACCEPTED	
+config	--get-color		ACCEPTED	
+config	--get-colorbool		ACCEPTED	
+config	-t	<type>	ACCEPTED	
+config	--type	<type>	ACCEPTED	
+config	--bool		ACCEPTED	
+config	--int		ACCEPTED	
+config	--bool-or-int		ACCEPTED	
+config	--bool-or-str		ACCEPTED	
+config	--path		ACCEPTED	
+config	--expiry-date		ACCEPTED	
+config	-z		ACCEPTED	
+config	--null		ACCEPTED	
+config	--name-only		ACCEPTED	
+config	--includes		ACCEPTED	
+config	--show-origin		ACCEPTED	
+config	--show-scope		ACCEPTED	
+config	--default	<value>	ACCEPTED	
+count-objects	-v		ACCEPTED	
+count-objects	--verbose		ACCEPTED	
+count-objects	-H		ACCEPTED	
+count-objects	--human-readable		ACCEPTED	
+credential	-		NO_INVENTORY	
+credential-cache	--timeout	<n>	ACCEPTED	
+credential-cache	--socket	<path>	ACCEPTED	
+credential-cache--daemon	--debug		ACCEPTED	
+credential-helper-selector	-		NO_INVENTORY	
+credential-manager	-		NO_INVENTORY	
+credential-store	--file	<path>	ACCEPTED	
+credential-wincred	-		NO_INVENTORY	
+daemon	-		NO_INVENTORY	
+describe	--contains		ACCEPTED	
+describe	--debug		ACCEPTED	
+describe	--all		ACCEPTED	
+describe	--tags		ACCEPTED	
+describe	--long		ACCEPTED	
+describe	--first-parent		ACCEPTED	
+describe	--abbrev	[=<n>]	ACCEPTED	
+describe	--exact-match		ACCEPTED	
+describe	--candidates	<n>	ACCEPTED	
+describe	--match	<pattern>	ACCEPTED	
+describe	--exclude	<pattern>	ACCEPTED	
+describe	--always		ACCEPTED	
+describe	--dirty	[=<mark>]	ACCEPTED	
+describe	--broken	[=<mark>]	ACCEPTED	
+diagnose	-o	<path>	ACCEPTED	
+diagnose	--output-directory	<path>	ACCEPTED	
+diagnose	-s	<format>	ACCEPTED	
+diagnose	--suffix	<format>	ACCEPTED	
+diagnose	--mode	(stats|all)	ACCEPTED	
+diff	-z		ACCEPTED	
+diff	-p		ACCEPTED	
+diff	-u		ACCEPTED	
+diff	--patch-with-raw		ACCEPTED	
+diff	--stat		ACCEPTED	
+diff	--numstat		ACCEPTED	
+diff	--patch-with-stat		ACCEPTED	
+diff	--name-only		ACCEPTED	
+diff	--name-status		ACCEPTED	
+diff	--full-index		ACCEPTED	
+diff	--abbrev	=<n>	ACCEPTED	
+diff	-R		ACCEPTED	
+diff	-B		ACCEPTED	
+diff	-M		ACCEPTED	
+diff	-C		ACCEPTED	
+diff	--find-copies-harder		ACCEPTED	
+diff	-l		ACCEPTED	
+diff	-O		ACCEPTED	
+diff	-S		ACCEPTED	
+diff	--pickaxe-all		ACCEPTED	
+diff	-a		ACCEPTED	
+diff	--text		ACCEPTED	
+diff-files	-z		ACCEPTED	
+diff-files	-p		ACCEPTED	
+diff-files	-u		ACCEPTED	
+diff-files	--patch-with-raw		ACCEPTED	
+diff-files	--stat		ACCEPTED	
+diff-files	--numstat		ACCEPTED	
+diff-files	--patch-with-stat		ACCEPTED	
+diff-files	--name-only		ACCEPTED	
+diff-files	--name-status		ACCEPTED	
+diff-files	--full-index		ACCEPTED	
+diff-files	--abbrev	=<n>	ACCEPTED	
+diff-files	-R		ACCEPTED	
+diff-files	-B		ACCEPTED	
+diff-files	-M		ACCEPTED	
+diff-files	-C		ACCEPTED	
+diff-files	--find-copies-harder		ACCEPTED	
+diff-files	-l		ACCEPTED	
+diff-files	-O		ACCEPTED	
+diff-files	-S		ACCEPTED	
+diff-files	--pickaxe-all		ACCEPTED	
+diff-files	-a		ACCEPTED	
+diff-files	--text		ACCEPTED	
+diff-index	-z		ACCEPTED	
+diff-index	-p		ACCEPTED	
+diff-index	-u		ACCEPTED	
+diff-index	--patch-with-raw		ACCEPTED	
+diff-index	--stat		ACCEPTED	
+diff-index	--numstat		ACCEPTED	
+diff-index	--patch-with-stat		ACCEPTED	
+diff-index	--name-only		ACCEPTED	
+diff-index	--name-status		ACCEPTED	
+diff-index	--full-index		ACCEPTED	
+diff-index	--abbrev	=<n>	ACCEPTED	
+diff-index	-R		ACCEPTED	
+diff-index	-B		ACCEPTED	
+diff-index	-M		ACCEPTED	
+diff-index	-C		ACCEPTED	
+diff-index	--find-copies-harder		ACCEPTED	
+diff-index	-l		ACCEPTED	
+diff-index	-O		ACCEPTED	
+diff-index	-S		ACCEPTED	
+diff-index	--pickaxe-all		ACCEPTED	
+diff-index	-a		ACCEPTED	
+diff-index	--text		ACCEPTED	
+diff-pairs	-		NO_INVENTORY	
+diff-tree	-r		ACCEPTED	
+diff-tree	-c		ACCEPTED	
+diff-tree	--cc		ACCEPTED	
+diff-tree	--combined-all-paths		ACCEPTED	
+diff-tree	--root		ACCEPTED	
+diff-tree	-z		ACCEPTED	
+diff-tree	-p		ACCEPTED	
+diff-tree	-u		ACCEPTED	
+diff-tree	--patch-with-raw		ACCEPTED	
+diff-tree	--stat		ACCEPTED	
+diff-tree	--numstat		ACCEPTED	
+diff-tree	--patch-with-stat		ACCEPTED	
+diff-tree	--name-only		ACCEPTED	
+diff-tree	--name-status		ACCEPTED	
+diff-tree	--full-index		ACCEPTED	
+diff-tree	--abbrev	=<n>	ACCEPTED	
+diff-tree	-R		ACCEPTED	
+diff-tree	-B		ACCEPTED	
+diff-tree	-M		ACCEPTED	
+diff-tree	-C		ACCEPTED	
+diff-tree	--find-copies-harder		ACCEPTED	
+diff-tree	-l		ACCEPTED	
+diff-tree	-O		ACCEPTED	
+diff-tree	-S		ACCEPTED	
+diff-tree	--pickaxe-all		ACCEPTED	
+diff-tree	-a		ACCEPTED	
+diff-tree	--text		ACCEPTED	
+difftool	-g		ACCEPTED	
+difftool	--gui		ACCEPTED	
+difftool	-d		ACCEPTED	
+difftool	--dir-diff		ACCEPTED	
+difftool	-y		ACCEPTED	
+difftool	--no-prompt		ACCEPTED	
+difftool	--symlinks		ACCEPTED	
+difftool	-t	<tool>	ACCEPTED	
+difftool	--tool	<tool>	ACCEPTED	
+difftool	--tool-help		ACCEPTED	
+difftool	--trust-exit-code		ACCEPTED	
+difftool	-x	<command>	ACCEPTED	
+difftool	--extcmd	<command>	ACCEPTED	
+difftool	--no-index		ACCEPTED	
+difftool--helper	-		NO_INVENTORY	
+env--helper	--type	<type>	ACCEPTED	
+env--helper	--default	<value>	ACCEPTED	
+env--helper	--exit-code		ACCEPTED	
+fast-export	--progress	<n>	ACCEPTED	
+fast-export	--signed-tags	<mode>	REFUSED	error: unsupported option: --signed-tags
+fast-export	--tag-of-filtered-object	<mode>	REFUSED	error: unsupported option: --tag-of-filtered-object
+fast-export	--reencode	<mode>	REFUSED	error: unsupported option: --reencode
+fast-export	--export-marks	<file>	REFUSED	error: unsupported option: --export-marks
+fast-export	--import-marks	<file>	REFUSED	error: unsupported option: --import-marks
+fast-export	--import-marks-if-exists	<file>	REFUSED	error: unsupported option: --import-marks-if-exists
+fast-export	--fake-missing-tagger		REFUSED	error: unsupported option: --fake-missing-tagger
+fast-export	--full-tree		REFUSED	error: unsupported option: --full-tree
+fast-export	--use-done-feature		REFUSED	error: unsupported option: --use-done-feature
+fast-export	--no-data		REFUSED	error: unsupported option: --no-data
+fast-export	--refspec	<refspec>	REFUSED	error: unsupported option: --refspec
+fast-export	--anonymize		REFUSED	error: unsupported option: --anonymize
+fast-export	--anonymize-map	<from:to>	REFUSED	error: unsupported option: --anonymize-map
+fast-export	--reference-excluded-parents		REFUSED	error: unsupported option: --reference-excluded-parents
+fast-export	--show-original-ids		REFUSED	error: unsupported option: --show-original-ids
+fast-export	--mark-tags		REFUSED	error: unsupported option: --mark-tags
+fast-import	-		NO_INVENTORY	
+fetch	-v		ACCEPTED	
+fetch	--verbose		ACCEPTED	
+fetch	-q		ACCEPTED	
+fetch	--quiet		ACCEPTED	
+fetch	--all		ACCEPTED	
+fetch	--set-upstream		ACCEPTED	
+fetch	-a		ACCEPTED	
+fetch	--append		ACCEPTED	
+fetch	--atomic		ACCEPTED	
+fetch	--upload-pack	<path>	ACCEPTED	
+fetch	-f		ACCEPTED	
+fetch	--force		ACCEPTED	
+fetch	-m		ACCEPTED	
+fetch	--multiple		ACCEPTED	
+fetch	-t		ACCEPTED	
+fetch	--tags		ACCEPTED	
+fetch	-n		ACCEPTED	
+fetch	-j	<n>	ACCEPTED	
+fetch	--jobs	<n>	ACCEPTED	
+fetch	--prefetch		ACCEPTED	
+fetch	-p		ACCEPTED	
+fetch	--prune		ACCEPTED	
+fetch	-P		ACCEPTED	
+fetch	--prune-tags		ACCEPTED	
+fetch	--recurse-submodules	[=<on-demand>]	ACCEPTED	
+fetch	--dry-run		ACCEPTED	
+fetch	--write-fetch-head		ACCEPTED	
+fetch	-k		ACCEPTED	
+fetch	--keep		ACCEPTED	
+fetch	-u		ACCEPTED	
+fetch	--update-head-ok		ACCEPTED	
+fetch	--progress		ACCEPTED	
+fetch	--depth	<depth>	ACCEPTED	
+fetch	--shallow-since	<time>	ACCEPTED	
+fetch	--shallow-exclude	<revision>	ACCEPTED	
+fetch	--deepen	<n>	ACCEPTED	
+fetch	--unshallow		ACCEPTED	
+fetch	--refetch		ACCEPTED	
+fetch	--update-shallow		ACCEPTED	
+fetch	--refmap	<refmap>	ACCEPTED	
+fetch	-o	<server-specific>	ACCEPTED	
+fetch	--server-option	<server-specific>	ACCEPTED	
+fetch	-4		ACCEPTED	
+fetch	--ipv4		ACCEPTED	
+fetch	-6		ACCEPTED	
+fetch	--ipv6		ACCEPTED	
+fetch	--negotiation-tip	<revision>	ACCEPTED	
+fetch	--negotiate-only		ACCEPTED	
+fetch	--filter	<args>	ACCEPTED	
+fetch	--auto-maintenance		ACCEPTED	
+fetch	--auto-gc		ACCEPTED	
+fetch	--show-forced-updates		ACCEPTED	
+fetch	--write-commit-graph		ACCEPTED	
+fetch	--stdin		ACCEPTED	
+fetch-pack	-		NO_INVENTORY	
+filter-branch	-		NO_INVENTORY	
+fmt-merge-msg	--log	[=<n>]	ACCEPTED	
+fmt-merge-msg	-m	<text>	ACCEPTED	
+fmt-merge-msg	--message	<text>	ACCEPTED	
+fmt-merge-msg	--into-name	<name>	ACCEPTED	
+fmt-merge-msg	-F	<file>	ACCEPTED	
+fmt-merge-msg	--file	<file>	ACCEPTED	
+for-each-ref	-s		REFUSED	error: unsupported option: -s
+for-each-ref	--shell		REFUSED	error: unsupported option: --shell
+for-each-ref	-p		REFUSED	error: unsupported option: -p
+for-each-ref	--perl		REFUSED	error: unsupported option: --perl
+for-each-ref	--python		REFUSED	error: unsupported option: --python
+for-each-ref	--tcl		REFUSED	error: unsupported option: --tcl
+for-each-ref	--count	<n>	ACCEPTED	
+for-each-ref	--format	<format>	ACCEPTED	
+for-each-ref	--color	[=<when>]	REFUSED	error: unsupported option: --color
+for-each-ref	--sort	<key>	ACCEPTED	
+for-each-ref	--points-at	<object>	ACCEPTED	
+for-each-ref	--merged	<commit>	ACCEPTED	
+for-each-ref	--no-merged	<commit>	ACCEPTED	
+for-each-ref	--contains	<commit>	ACCEPTED	
+for-each-ref	--no-contains	<commit>	ACCEPTED	
+for-each-ref	--ignore-case		REFUSED	error: unsupported option: --ignore-case
+for-each-repo	--config	<config>	ACCEPTED	
+format-patch	-n		ACCEPTED	
+format-patch	--numbered		ACCEPTED	
+format-patch	-N		ACCEPTED	
+format-patch	--no-numbered		ACCEPTED	
+format-patch	-s		ACCEPTED	
+format-patch	--signoff		ACCEPTED	
+format-patch	--stdout		ACCEPTED	
+format-patch	--cover-letter		ACCEPTED	
+format-patch	--numbered-files		ACCEPTED	
+format-patch	--suffix	<sfx>	ACCEPTED	
+format-patch	--start-number	<n>	ACCEPTED	
+format-patch	-v	<reroll-count>	ACCEPTED	
+format-patch	--reroll-count	<reroll-count>	ACCEPTED	
+format-patch	--filename-max-length	<n>	ACCEPTED	
+format-patch	--rfc		ACCEPTED	
+format-patch	--cover-from-description	<cover-from-description-mode>	ACCEPTED	
+format-patch	--subject-prefix	<prefix>	ACCEPTED	
+format-patch	-o	<dir>	ACCEPTED	
+format-patch	--output-directory	<dir>	ACCEPTED	
+format-patch	-k		ACCEPTED	
+format-patch	--keep-subject		ACCEPTED	
+format-patch	--no-binary		ACCEPTED	
+format-patch	--zero-commit		ACCEPTED	
+format-patch	--ignore-if-in-upstream		ACCEPTED	
+format-patch	-p		ACCEPTED	
+format-patch	--no-stat		ACCEPTED	
+format-patch	--add-header	<header>	ACCEPTED	
+format-patch	--to	<email>	ACCEPTED	
+format-patch	--cc	<email>	ACCEPTED	
+format-patch	--from	[=<ident>]	ACCEPTED	
+format-patch	--in-reply-to	<message-id>	ACCEPTED	
+format-patch	--attach	[=<boundary>]	ACCEPTED	
+format-patch	--inline	[=<boundary>]	ACCEPTED	
+format-patch	--thread	[=<style>]	ACCEPTED	
+format-patch	--signature	<signature>	ACCEPTED	
+format-patch	--base	<base-commit>	ACCEPTED	
+format-patch	--signature-file	<file>	ACCEPTED	
+format-patch	-q		ACCEPTED	
+format-patch	--quiet		ACCEPTED	
+format-patch	--progress		ACCEPTED	
+format-patch	--interdiff	<rev>	REFUSED	error: format-patch --interdiff is not implemented
+format-patch	--range-diff	<refspec>	REFUSED	error: format-patch --range-diff is not implemented
+format-patch	--creation-factor	<n>	ACCEPTED	
+format-patch	--force-in-body-from		ACCEPTED	
+format-rev	-		NO_INVENTORY	
+fsck	-v		ACCEPTED	
+fsck	--verbose		ACCEPTED	
+fsck	--unreachable		ACCEPTED	
+fsck	--dangling		ACCEPTED	
+fsck	--tags		ACCEPTED	
+fsck	--root		ACCEPTED	
+fsck	--cache		ACCEPTED	
+fsck	--reflogs		ACCEPTED	
+fsck	--full		ACCEPTED	
+fsck	--connectivity-only		ACCEPTED	
+fsck	--strict		ACCEPTED	
+fsck	--lost-found		ACCEPTED	
+fsck	--progress		ACCEPTED	
+fsck	--name-objects		ACCEPTED	
+fsmonitor--daemon	-		NO_INVENTORY	
+gc	-q		ACCEPTED	
+gc	--quiet		ACCEPTED	
+gc	--prune	[=<date>]	ACCEPTED	
+gc	--cruft		ACCEPTED	
+gc	--aggressive		ACCEPTED	
+gc	--auto		ACCEPTED	
+gc	--force		ACCEPTED	
+gc	--keep-largest-pack		ACCEPTED	
+get-tar-commit-id	-		NO_INVENTORY	
+grep	--cached		ACCEPTED	
+grep	--no-index		ACCEPTED	
+grep	--untracked		ACCEPTED	
+grep	--exclude-standard		ACCEPTED	
+grep	--recurse-submodules		ACCEPTED	
+grep	-v		ACCEPTED	
+grep	--invert-match		ACCEPTED	
+grep	-i		ACCEPTED	
+grep	--ignore-case		ACCEPTED	
+grep	-w		ACCEPTED	
+grep	--word-regexp		ACCEPTED	
+grep	-a		ACCEPTED	
+grep	--text		ACCEPTED	
+grep	-I		ACCEPTED	
+grep	--textconv		ACCEPTED	
+grep	-r		ACCEPTED	
+grep	--recursive		ACCEPTED	
+grep	--max-depth	<depth>	ACCEPTED	
+grep	-E		ACCEPTED	
+grep	--extended-regexp		ACCEPTED	
+grep	-G		ACCEPTED	
+grep	--basic-regexp		ACCEPTED	
+grep	-F		ACCEPTED	
+grep	--fixed-strings		ACCEPTED	
+grep	-P		ACCEPTED	
+grep	--perl-regexp		ACCEPTED	
+grep	-n		ACCEPTED	
+grep	--line-number		ACCEPTED	
+grep	--column		ACCEPTED	
+grep	-H		ACCEPTED	
+grep	--full-name		ACCEPTED	
+grep	-l		ACCEPTED	
+grep	--files-with-matches		ACCEPTED	
+grep	--name-only		ACCEPTED	
+grep	-L		ACCEPTED	
+grep	--files-without-match		ACCEPTED	
+grep	-z		ACCEPTED	
+grep	--null		ACCEPTED	
+grep	-o		ACCEPTED	
+grep	--only-matching		ACCEPTED	
+grep	-c		ACCEPTED	
+grep	--count		ACCEPTED	
+grep	--color	[=<when>]	ACCEPTED	
+grep	--break		ACCEPTED	
+grep	--heading		ACCEPTED	
+grep	-C	<n>	ACCEPTED	
+grep	--context	<n>	ACCEPTED	
+grep	-B	<n>	ACCEPTED	
+grep	--before-context	<n>	ACCEPTED	
+grep	-A	<n>	ACCEPTED	
+grep	--after-context	<n>	ACCEPTED	
+grep	--threads	<n>	ACCEPTED	
+grep	-N		REFUSED	error: unsupported option: -N
+grep	-p		ACCEPTED	
+grep	--show-function		ACCEPTED	
+grep	-W		ACCEPTED	
+grep	--function-context		ACCEPTED	
+grep	-f		ACCEPTED	
+grep	-e		ACCEPTED	
+grep	--and		ACCEPTED	
+grep	--or		ACCEPTED	
+grep	--not		ACCEPTED	
+grep	-q		ACCEPTED	
+grep	--quiet		ACCEPTED	
+grep	--all-match		ACCEPTED	
+grep	-O	[=<pager>]	ACCEPTED	
+grep	--open-files-in-pager	[=<pager>]	ACCEPTED	
+grep	--ext-grep		ACCEPTED	
+grep	-m	<n>	ACCEPTED	
+grep	--max-count	<n>	ACCEPTED	
+gui	-		NO_INVENTORY	
+gui--askpass	-		NO_INVENTORY	
+gui--askyesno	-		NO_INVENTORY	
+gui.tcl	-		NO_INVENTORY	
+hash-object	-t		ACCEPTED	
+hash-object	-w		ACCEPTED	
+hash-object	--stdin		ACCEPTED	
+hash-object	--stdin-paths		ACCEPTED	
+hash-object	--no-filters		ACCEPTED	
+hash-object	--literally		ACCEPTED	
+hash-object	--path	<file>	ACCEPTED	
+help	-a		ACCEPTED	
+help	--all		ACCEPTED	
+help	--external-commands		ACCEPTED	
+help	--aliases		ACCEPTED	
+help	-m		ACCEPTED	
+help	--man		ACCEPTED	
+help	-w		ACCEPTED	
+help	--web		ACCEPTED	
+help	-i		ACCEPTED	
+help	--info		ACCEPTED	
+help	-v		ACCEPTED	
+help	--verbose		ACCEPTED	
+help	-g		ACCEPTED	
+help	--guides		ACCEPTED	
+help	--user-interfaces		ACCEPTED	
+help	--developer-interfaces		ACCEPTED	
+help	-c		ACCEPTED	
+help	--config		ACCEPTED	
+history	-		NO_INVENTORY	
+hook	-		NO_INVENTORY	
+http-backend	-		NO_INVENTORY	
+http-fetch	-		NO_INVENTORY	
+http-push	-		NO_INVENTORY	
+imap-send	-v		ACCEPTED	
+imap-send	--verbose		ACCEPTED	
+imap-send	-q		ACCEPTED	
+imap-send	--quiet		ACCEPTED	
+imap-send	--curl		ACCEPTED	
+index-pack	-		NO_INVENTORY	
+init	--template	<template-directory>	ACCEPTED	
+init	--bare		ACCEPTED	
+init	--shared	[=<permissions>]	ACCEPTED	
+init	-q		ACCEPTED	
+init	--quiet		ACCEPTED	
+init	--separate-git-dir	<gitdir>	ACCEPTED	
+init	-b	<name>	ACCEPTED	
+init	--initial-branch	<name>	ACCEPTED	
+init	--object-format	<hash>	ACCEPTED	
+instaweb	-l		ACCEPTED	
+instaweb	--local		ACCEPTED	
+instaweb	-p		ACCEPTED	
+instaweb	--port		ACCEPTED	
+instaweb	-d		ACCEPTED	
+instaweb	--httpd		ACCEPTED	
+instaweb	-b		ACCEPTED	
+instaweb	--browser		ACCEPTED	
+instaweb	-m		ACCEPTED	
+instaweb	--module-path		ACCEPTED	
+instaweb	--stop		ACCEPTED	
+instaweb	--start		ACCEPTED	
+instaweb	--restart		ACCEPTED	
+interpret-trailers	--in-place		ACCEPTED	
+interpret-trailers	--trim-empty		ACCEPTED	
+interpret-trailers	--where	<action>	ACCEPTED	
+interpret-trailers	--if-exists	<action>	ACCEPTED	
+interpret-trailers	--if-missing	<action>	ACCEPTED	
+interpret-trailers	--only-trailers		ACCEPTED	
+interpret-trailers	--only-input		ACCEPTED	
+interpret-trailers	--unfold		ACCEPTED	
+interpret-trailers	--parse		ACCEPTED	
+interpret-trailers	--no-divider		ACCEPTED	
+interpret-trailers	--trailer	<trailer>	ACCEPTED	
+last-modified	-		NO_INVENTORY	
+log	-q		ACCEPTED	
+log	--quiet		ACCEPTED	
+log	--source		ACCEPTED	
+log	--use-mailmap		ACCEPTED	
+log	--mailmap		ACCEPTED	
+log	--clear-decorations		ACCEPTED	
+log	--decorate-refs	<pattern>	ACCEPTED	
+log	--decorate-refs-exclude	<pattern>	ACCEPTED	
+log	--decorate	[=...]	ACCEPTED	
+log	-L		REFUSED	error: unsupported option: -L (line-range history is not implemented)
+ls-files	-z		ACCEPTED	
+ls-files	-t		ACCEPTED	
+ls-files	-v		ACCEPTED	
+ls-files	-f		ACCEPTED	
+ls-files	-c		ACCEPTED	
+ls-files	--cached		ACCEPTED	
+ls-files	-d		ACCEPTED	
+ls-files	--deleted		ACCEPTED	
+ls-files	-m		ACCEPTED	
+ls-files	--modified		ACCEPTED	
+ls-files	-o		ACCEPTED	
+ls-files	--others		ACCEPTED	
+ls-files	-i		ACCEPTED	
+ls-files	--ignored		ACCEPTED	
+ls-files	-s		ACCEPTED	
+ls-files	--stage		ACCEPTED	
+ls-files	-k		ACCEPTED	
+ls-files	--killed		ACCEPTED	
+ls-files	--directory		ACCEPTED	
+ls-files	--eol		ACCEPTED	
+ls-files	--empty-directory		ACCEPTED	
+ls-files	-u		ACCEPTED	
+ls-files	--unmerged		ACCEPTED	
+ls-files	--resolve-undo		ACCEPTED	
+ls-files	-x	<pattern>	ACCEPTED	
+ls-files	--exclude	<pattern>	ACCEPTED	
+ls-files	-X	<file>	ACCEPTED	
+ls-files	--exclude-from	<file>	ACCEPTED	
+ls-files	--exclude-per-directory	<file>	ACCEPTED	
+ls-files	--exclude-standard		ACCEPTED	
+ls-files	--full-name		ACCEPTED	
+ls-files	--recurse-submodules		ACCEPTED	
+ls-files	--error-unmatch		ACCEPTED	
+ls-files	--with-tree	<tree-ish>	ACCEPTED	
+ls-files	--abbrev	[=<n>]	ACCEPTED	
+ls-files	--debug		ACCEPTED	
+ls-files	--deduplicate		ACCEPTED	
+ls-files	--sparse		ACCEPTED	
+ls-files	--format	<format>	ACCEPTED	
+ls-remote	-q		ACCEPTED	
+ls-remote	--quiet		ACCEPTED	
+ls-remote	--upload-pack	<exec>	ACCEPTED	
+ls-remote	-t		ACCEPTED	
+ls-remote	--tags		ACCEPTED	
+ls-remote	--heads		ACCEPTED	
+ls-remote	--refs		ACCEPTED	
+ls-remote	--get-url		ACCEPTED	
+ls-remote	--sort	<key>	ACCEPTED	
+ls-remote	--exit-code		ACCEPTED	
+ls-remote	--symref		ACCEPTED	
+ls-remote	-o	<server-specific>	ACCEPTED	
+ls-remote	--server-option	<server-specific>	ACCEPTED	
+ls-tree	-d		ACCEPTED	
+ls-tree	-r		ACCEPTED	
+ls-tree	-t		ACCEPTED	
+ls-tree	-z		ACCEPTED	
+ls-tree	-l		ACCEPTED	
+ls-tree	--long		ACCEPTED	
+ls-tree	--name-only		ACCEPTED	
+ls-tree	--name-status		ACCEPTED	
+ls-tree	--object-only		ACCEPTED	
+ls-tree	--full-name		ACCEPTED	
+ls-tree	--full-tree		ACCEPTED	
+ls-tree	--format	<format>	ACCEPTED	
+ls-tree	--abbrev	[=<n>]	ACCEPTED	
+mailinfo	-k		ACCEPTED	
+mailinfo	-b		ACCEPTED	
+mailinfo	-m		ACCEPTED	
+mailinfo	--message-id		ACCEPTED	
+mailinfo	-u		ACCEPTED	
+mailinfo	-n		ACCEPTED	
+mailinfo	--encoding	<encoding>	ACCEPTED	
+mailinfo	--scissors		ACCEPTED	
+mailinfo	--quoted-cr	<action>	ACCEPTED	
+mailsplit	-		NO_INVENTORY	
+maintenance	-		NO_INVENTORY	
+merge	-n		ACCEPTED	
+merge	--stat		ACCEPTED	
+merge	--summary		ACCEPTED	
+merge	--log	[=<n>]	ACCEPTED	
+merge	--squash		ACCEPTED	
+merge	--commit		ACCEPTED	
+merge	-e		ACCEPTED	
+merge	--edit		ACCEPTED	
+merge	--cleanup	<mode>	ACCEPTED	
+merge	--ff		ACCEPTED	
+merge	--ff-only		ACCEPTED	
+merge	--rerere-autoupdate		ACCEPTED	
+merge	--verify-signatures		ACCEPTED	
+merge	-s	<strategy>	ACCEPTED	
+merge	--strategy	<strategy>	ACCEPTED	
+merge	-X	<option=value>	ACCEPTED	
+merge	--strategy-option	<option=value>	ACCEPTED	
+merge	-m	<message>	ACCEPTED	
+merge	--message	<message>	ACCEPTED	
+merge	-F	<path>	ACCEPTED	
+merge	--file	<path>	ACCEPTED	
+merge	--into-name	<name>	ACCEPTED	
+merge	-v		ACCEPTED	
+merge	--verbose		ACCEPTED	
+merge	-q		ACCEPTED	
+merge	--quiet		ACCEPTED	
+merge	--abort		ACCEPTED	
+merge	--quit		ACCEPTED	
+merge	--continue		ACCEPTED	
+merge	--allow-unrelated-histories		ACCEPTED	
+merge	--progress		ACCEPTED	
+merge	-S	[=<key-id>]	ACCEPTED	
+merge	--gpg-sign	[=<key-id>]	ACCEPTED	
+merge	--autostash		ACCEPTED	
+merge	--overwrite-ignore		ACCEPTED	
+merge	--signoff		ACCEPTED	
+merge	--no-verify		ACCEPTED	
+merge-base	-a		ACCEPTED	
+merge-base	--all		ACCEPTED	
+merge-base	--octopus		ACCEPTED	
+merge-base	--independent		ACCEPTED	
+merge-base	--is-ancestor		ACCEPTED	
+merge-base	--fork-point		ACCEPTED	
+merge-file	-p		ACCEPTED	
+merge-file	--stdout		ACCEPTED	
+merge-file	--diff3		ACCEPTED	
+merge-file	--zdiff3		ACCEPTED	
+merge-file	--ours		ACCEPTED	
+merge-file	--theirs		ACCEPTED	
+merge-file	--union		ACCEPTED	
+merge-file	--marker-size	<n>	ACCEPTED	
+merge-file	-q		ACCEPTED	
+merge-file	--quiet		ACCEPTED	
+merge-file	-L		ACCEPTED	
+merge-index	-		NO_INVENTORY	
+merge-octopus	-		NO_INVENTORY	
+merge-one-file	-		NO_INVENTORY	
+merge-ours	-		NO_INVENTORY	
+merge-recursive	-		NO_INVENTORY	
+merge-recursive-ours	-		NO_INVENTORY	
+merge-recursive-theirs	-		NO_INVENTORY	
+merge-resolve	-		NO_INVENTORY	
+merge-subtree	-		NO_INVENTORY	
+merge-tree	--write-tree		ACCEPTED	
+merge-tree	--trivial-merge		REFUSED	error: unsupported option: --trivial-merge
+merge-tree	--messages		ACCEPTED	
+merge-tree	-z		REFUSED	error: unsupported option: -z
+merge-tree	--name-only		ACCEPTED	
+merge-tree	--allow-unrelated-histories		ACCEPTED	
+merge-tree	--stdin		REFUSED	error: unsupported option: --stdin
+mergetool	-		NO_INVENTORY	
+mktag	--strict		ACCEPTED	
+mktree	-z		ACCEPTED	
+mktree	--missing		ACCEPTED	
+mktree	--batch		ACCEPTED	
+multi-pack-index	--object-dir	<directory>	REFUSED	error: unsupported option: --object-dir
+mv	-v		ACCEPTED	
+mv	--verbose		ACCEPTED	
+mv	-n		ACCEPTED	
+mv	--dry-run		ACCEPTED	
+mv	-f		ACCEPTED	
+mv	--force		ACCEPTED	
+mv	-k		ACCEPTED	
+mv	--sparse		ACCEPTED	
+name-rev	--name-only		ACCEPTED	
+name-rev	--tags		ACCEPTED	
+name-rev	--refs	<pattern>	ACCEPTED	
+name-rev	--exclude	<pattern>	ACCEPTED	
+name-rev	--all		ACCEPTED	
+name-rev	--stdin		ACCEPTED	
+name-rev	--annotate-stdin		ACCEPTED	
+name-rev	--undefined		ACCEPTED	
+name-rev	--always		ACCEPTED	
+notes	--ref	<notes-ref>	ACCEPTED	
+pack-objects	-q		ACCEPTED	
+pack-objects	--quiet		REFUSED	error: unsupported option: --quiet
+pack-objects	--progress		REFUSED	error: unsupported option: --progress
+pack-objects	--all-progress		REFUSED	error: unsupported option: --all-progress
+pack-objects	--all-progress-implied		REFUSED	error: unsupported option: --all-progress-implied
+pack-objects	--index-version	<version>	REFUSED	error: unsupported option: --index-version
+pack-objects	--max-pack-size	<n>	REFUSED	error: unsupported option: --max-pack-size
+pack-objects	--local		REFUSED	error: unsupported option: --local
+pack-objects	--incremental		REFUSED	error: unsupported option: --incremental
+pack-objects	--window	<n>	REFUSED	error: unsupported option: --window
+pack-objects	--window-memory	<n>	REFUSED	error: unsupported option: --window-memory
+pack-objects	--depth	<n>	REFUSED	error: unsupported option: --depth
+pack-objects	--reuse-delta		REFUSED	error: unsupported option: --reuse-delta
+pack-objects	--reuse-object		REFUSED	error: unsupported option: --reuse-object
+pack-objects	--delta-base-offset		REFUSED	error: unsupported option: --delta-base-offset
+pack-objects	--threads	<n>	REFUSED	error: unsupported option: --threads
+pack-objects	--non-empty		REFUSED	error: unsupported option: --non-empty
+pack-objects	--revs		REFUSED	error: unsupported option: --revs
+pack-objects	--unpacked		REFUSED	error: unsupported option: --unpacked
+pack-objects	--all		REFUSED	error: unsupported option: --all
+pack-objects	--reflog		REFUSED	error: unsupported option: --reflog
+pack-objects	--indexed-objects		REFUSED	error: unsupported option: --indexed-objects
+pack-objects	--stdin-packs		REFUSED	error: unsupported option: --stdin-packs
+pack-objects	--stdout		ACCEPTED	
+pack-objects	--include-tag		REFUSED	error: unsupported option: --include-tag
+pack-objects	--keep-unreachable		REFUSED	error: unsupported option: --keep-unreachable
+pack-objects	--pack-loose-unreachable		REFUSED	error: unsupported option: --pack-loose-unreachable
+pack-objects	--unpack-unreachable	[=<time>]	REFUSED	error: unsupported option: --unpack-unreachable
+pack-objects	--cruft		REFUSED	error: unsupported option: --cruft
+pack-objects	--cruft-expiration	[=<time>]	REFUSED	error: unsupported option: --cruft-expiration
+pack-objects	--sparse		REFUSED	error: unsupported option: --sparse
+pack-objects	--thin		REFUSED	error: unsupported option: --thin
+pack-objects	--shallow		REFUSED	error: unsupported option: --shallow
+pack-objects	--honor-pack-keep		REFUSED	error: unsupported option: --honor-pack-keep
+pack-objects	--keep-pack	<name>	REFUSED	error: unsupported option: --keep-pack
+pack-objects	--compression	<n>	REFUSED	error: unsupported option: --compression
+pack-objects	--keep-true-parents		REFUSED	error: unsupported option: --keep-true-parents
+pack-objects	--use-bitmap-index		REFUSED	error: unsupported option: --use-bitmap-index
+pack-objects	--write-bitmap-index		REFUSED	error: unsupported option: --write-bitmap-index
+pack-objects	--filter	<args>	REFUSED	error: unsupported option: --filter
+pack-objects	--missing	<action>	REFUSED	error: unsupported option: --missing
+pack-objects	--exclude-promisor-objects		REFUSED	error: unsupported option: --exclude-promisor-objects
+pack-objects	--delta-islands		REFUSED	error: unsupported option: --delta-islands
+pack-objects	--uri-protocol	<protocol>	REFUSED	error: unsupported option: --uri-protocol
+pack-redundant	-		NO_INVENTORY	
+pack-refs	--all		ACCEPTED	
+pack-refs	--prune		ACCEPTED	
+patch-id	--unstable		ACCEPTED	
+patch-id	--stable		ACCEPTED	
+patch-id	--verbatim		ACCEPTED	
+pickaxe	--incremental		REFUSED	error: unsupported option: --incremental
+pickaxe	-b		REFUSED	error: unsupported option: -b
+pickaxe	--root		ACCEPTED	
+pickaxe	--show-stats		REFUSED	error: unsupported option: --show-stats
+pickaxe	--progress		REFUSED	error: unsupported option: --progress
+pickaxe	--score-debug		REFUSED	error: unsupported option: --score-debug
+pickaxe	-f		ACCEPTED	
+pickaxe	--show-name		ACCEPTED	
+pickaxe	-n		ACCEPTED	
+pickaxe	--show-number		ACCEPTED	
+pickaxe	-p		ACCEPTED	
+pickaxe	--porcelain		ACCEPTED	
+pickaxe	--line-porcelain		ACCEPTED	
+pickaxe	-c		REFUSED	error: unsupported option: -c
+pickaxe	-t		REFUSED	error: unsupported option: -t
+pickaxe	-l		ACCEPTED	
+pickaxe	-s		ACCEPTED	
+pickaxe	-e		ACCEPTED	
+pickaxe	--show-email		ACCEPTED	
+pickaxe	-w		REFUSED	error: unsupported option: -w
+pickaxe	--ignore-rev	<rev>	REFUSED	error: unsupported option: --ignore-rev
+pickaxe	--ignore-revs-file	<file>	REFUSED	error: unsupported option: --ignore-revs-file
+pickaxe	--color-lines		REFUSED	error: unsupported option: --color-lines
+pickaxe	--color-by-age		REFUSED	error: unsupported option: --color-by-age
+pickaxe	--minimal		REFUSED	error: unsupported option: --minimal
+pickaxe	-S		REFUSED	error: unsupported option: -S
+pickaxe	--contents	<file>	REFUSED	error: unsupported option: --contents
+pickaxe	-C		REFUSED	error: unsupported option: -C
+pickaxe	-M		REFUSED	error: unsupported option: -M
+pickaxe	-L		ACCEPTED	
+pickaxe	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+prune	-n		ACCEPTED	
+prune	--dry-run		ACCEPTED	
+prune	-v		ACCEPTED	
+prune	--verbose		ACCEPTED	
+prune	--progress		ACCEPTED	
+prune	--expire	<expiry-date>	ACCEPTED	
+prune	--exclude-promisor-objects		ACCEPTED	
+prune-packed	-n		ACCEPTED	
+prune-packed	--dry-run		ACCEPTED	
+prune-packed	-q		ACCEPTED	
+prune-packed	--quiet		ACCEPTED	
+pull	-v		ACCEPTED	
+pull	--verbose		ACCEPTED	
+pull	-q		ACCEPTED	
+pull	--quiet		ACCEPTED	
+pull	--progress		ACCEPTED	
+pull	--recurse-submodules	[=<on-demand>]	ACCEPTED	
+pull	-r	[=(false|true|merges|interactive)]	ACCEPTED	
+pull	--rebase	[=(false|true|merges|interactive)]	ACCEPTED	
+pull	-n		ACCEPTED	
+pull	--stat		ACCEPTED	
+pull	--log	[=<n>]	ACCEPTED	
+pull	--signoff	[=...]	ACCEPTED	
+pull	--squash		ACCEPTED	
+pull	--commit		ACCEPTED	
+pull	--edit		ACCEPTED	
+pull	--cleanup	<mode>	ACCEPTED	
+pull	--ff		ACCEPTED	
+pull	--ff-only		ACCEPTED	
+pull	--verify		ACCEPTED	
+pull	--verify-signatures		ACCEPTED	
+pull	--autostash		ACCEPTED	
+pull	-s	<strategy>	ACCEPTED	
+pull	--strategy	<strategy>	ACCEPTED	
+pull	-X	<option=value>	ACCEPTED	
+pull	--strategy-option	<option=value>	ACCEPTED	
+pull	-S	[=<key-id>]	ACCEPTED	
+pull	--gpg-sign	[=<key-id>]	ACCEPTED	
+pull	--allow-unrelated-histories		ACCEPTED	
+pull	--all		ACCEPTED	
+pull	-a		ACCEPTED	
+pull	--append		ACCEPTED	
+pull	--upload-pack	<path>	ACCEPTED	
+pull	-f		ACCEPTED	
+pull	--force		ACCEPTED	
+pull	-t		ACCEPTED	
+pull	--tags		ACCEPTED	
+pull	-p		ACCEPTED	
+pull	--prune		ACCEPTED	
+pull	-j	[=<n>]	ACCEPTED	
+pull	--jobs	[=<n>]	ACCEPTED	
+pull	--dry-run		ACCEPTED	
+pull	-k		ACCEPTED	
+pull	--keep		ACCEPTED	
+pull	--depth	<depth>	ACCEPTED	
+pull	--shallow-since	<time>	ACCEPTED	
+pull	--shallow-exclude	<revision>	ACCEPTED	
+pull	--deepen	<n>	ACCEPTED	
+pull	--unshallow		ACCEPTED	
+pull	--update-shallow		ACCEPTED	
+pull	--refmap	<refmap>	ACCEPTED	
+pull	-o	<server-specific>	ACCEPTED	
+pull	--server-option	<server-specific>	ACCEPTED	
+pull	-4		ACCEPTED	
+pull	--ipv4		ACCEPTED	
+pull	-6		ACCEPTED	
+pull	--ipv6		ACCEPTED	
+pull	--negotiation-tip	<revision>	ACCEPTED	
+pull	--show-forced-updates		ACCEPTED	
+pull	--set-upstream		ACCEPTED	
+push	-v		ACCEPTED	
+push	--verbose		ACCEPTED	
+push	-q		ACCEPTED	
+push	--quiet		ACCEPTED	
+push	--repo	<repository>	ACCEPTED	
+push	--all		ACCEPTED	
+push	--mirror		ACCEPTED	
+push	-d		ACCEPTED	
+push	--delete		ACCEPTED	
+push	--tags		ACCEPTED	
+push	-n		ACCEPTED	
+push	--dry-run		ACCEPTED	
+push	--porcelain		ACCEPTED	
+push	-f		ACCEPTED	
+push	--force		ACCEPTED	
+push	--force-with-lease	[=<refname>:<expect>]	ACCEPTED	
+push	--force-if-includes		ACCEPTED	
+push	--recurse-submodules	(check|on-demand|no)	ACCEPTED	
+push	--thin		ACCEPTED	
+push	--receive-pack	<receive-pack>	ACCEPTED	
+push	--exec	<receive-pack>	ACCEPTED	
+push	-u		ACCEPTED	
+push	--set-upstream		ACCEPTED	
+push	--progress		ACCEPTED	
+push	--prune		ACCEPTED	
+push	--no-verify		ACCEPTED	
+push	--follow-tags		ACCEPTED	
+push	--signed	[=(yes|no|if-asked)]	ACCEPTED	
+push	--atomic		ACCEPTED	
+push	-o	<server-specific>	ACCEPTED	
+push	--push-option	<server-specific>	ACCEPTED	
+push	-4		ACCEPTED	
+push	--ipv4		ACCEPTED	
+push	-6		ACCEPTED	
+push	--ipv6		ACCEPTED	
+quiltimport	-n		ACCEPTED	
+quiltimport	--dry-run		ACCEPTED	
+quiltimport	--author		ACCEPTED	
+quiltimport	--patches		ACCEPTED	
+quiltimport	--series		ACCEPTED	
+quiltimport	--keep-non-patch		ACCEPTED	
+range-diff	--creation-factor	<n>	REFUSED	error: unsupported option: --creation-factor
+range-diff	--no-dual-color		REFUSED	error: unsupported option: --no-dual-color
+range-diff	--notes	[=<notes>]	REFUSED	error: unsupported option: --notes
+range-diff	--left-only		REFUSED	error: unsupported option: --left-only
+range-diff	--right-only		REFUSED	error: unsupported option: --right-only
+range-diff	-p		REFUSED	error: unsupported option: -p
+range-diff	--patch		REFUSED	error: unsupported option: --patch
+range-diff	-s		ACCEPTED	
+range-diff	--no-patch		ACCEPTED	
+range-diff	-u		REFUSED	error: unsupported option: -u
+range-diff	-U	[=<n>]	REFUSED	error: unsupported option: -U
+range-diff	--unified	[=<n>]	REFUSED	error: unsupported option: --unified
+range-diff	-W		REFUSED	error: unsupported option: -W
+range-diff	--function-context		REFUSED	error: unsupported option: --function-context
+range-diff	--raw		REFUSED	error: unsupported option: --raw
+range-diff	--patch-with-raw		REFUSED	error: unsupported option: --patch-with-raw
+range-diff	--patch-with-stat		REFUSED	error: unsupported option: --patch-with-stat
+range-diff	--numstat		REFUSED	error: unsupported option: --numstat
+range-diff	--shortstat		REFUSED	error: unsupported option: --shortstat
+range-diff	-X	[=<param1,param2>...]	REFUSED	error: unsupported option: -X
+range-diff	--dirstat	[=<param1,param2>...]	REFUSED	error: unsupported option: --dirstat
+range-diff	--cumulative		REFUSED	error: unsupported option: --cumulative
+range-diff	--dirstat-by-file	[=<param1,param2>...]	REFUSED	error: unsupported option: --dirstat-by-file
+range-diff	--check		REFUSED	error: unsupported option: --check
+range-diff	--summary		REFUSED	error: unsupported option: --summary
+range-diff	--name-only		REFUSED	error: unsupported option: --name-only
+range-diff	--name-status		REFUSED	error: unsupported option: --name-status
+range-diff	--stat	[=<width>[,<name-width>[,<count>]	REFUSED	error: unsupported option: --stat
+range-diff	--stat-width	<width>	REFUSED	error: unsupported option: --stat-width
+range-diff	--stat-name-width	<width>	REFUSED	error: unsupported option: --stat-name-width
+range-diff	--stat-graph-width	<width>	REFUSED	error: unsupported option: --stat-graph-width
+range-diff	--stat-count	<count>	REFUSED	error: unsupported option: --stat-count
+range-diff	--compact-summary		REFUSED	error: unsupported option: --compact-summary
+range-diff	--binary		REFUSED	error: unsupported option: --binary
+range-diff	--full-index		REFUSED	error: unsupported option: --full-index
+range-diff	--color	[=<when>]	REFUSED	error: unsupported option: --color
+range-diff	--ws-error-highlight	<kind>	REFUSED	error: unsupported option: --ws-error-highlight
+range-diff	-z		REFUSED	error: unsupported option: -z
+range-diff	--abbrev	[=<n>]	REFUSED	error: unsupported option: --abbrev
+range-diff	--src-prefix	<prefix>	REFUSED	error: unsupported option: --src-prefix
+range-diff	--dst-prefix	<prefix>	REFUSED	error: unsupported option: --dst-prefix
+range-diff	--line-prefix	<prefix>	REFUSED	error: unsupported option: --line-prefix
+range-diff	--no-prefix		REFUSED	error: unsupported option: --no-prefix
+range-diff	--inter-hunk-context	<n>	REFUSED	error: unsupported option: --inter-hunk-context
+range-diff	--output-indicator-new	<char>	REFUSED	error: unsupported option: --output-indicator-new
+range-diff	--output-indicator-old	<char>	REFUSED	error: unsupported option: --output-indicator-old
+range-diff	--output-indicator-context	<char>	REFUSED	error: unsupported option: --output-indicator-context
+range-diff	-B	[=<n>[/<m>]	REFUSED	error: unsupported option: -B
+range-diff	--break-rewrites	[=<n>[/<m>]	REFUSED	error: unsupported option: --break-rewrites
+range-diff	-M	[=<n>]	REFUSED	error: unsupported option: -M
+range-diff	--find-renames	[=<n>]	REFUSED	error: unsupported option: --find-renames
+range-diff	-D		REFUSED	error: unsupported option: -D
+range-diff	--irreversible-delete		REFUSED	error: unsupported option: --irreversible-delete
+range-diff	-C	[=<n>]	REFUSED	error: unsupported option: -C
+range-diff	--find-copies	[=<n>]	REFUSED	error: unsupported option: --find-copies
+range-diff	--find-copies-harder		REFUSED	error: unsupported option: --find-copies-harder
+range-diff	--no-renames		REFUSED	error: unsupported option: --no-renames
+range-diff	--rename-empty		REFUSED	error: unsupported option: --rename-empty
+range-diff	--follow		REFUSED	error: unsupported option: --follow
+range-diff	-l		REFUSED	error: unsupported option: -l
+range-diff	--minimal		REFUSED	error: unsupported option: --minimal
+range-diff	-w		REFUSED	error: unsupported option: -w
+range-diff	--ignore-all-space		REFUSED	error: unsupported option: --ignore-all-space
+range-diff	-b		REFUSED	error: unsupported option: -b
+range-diff	--ignore-space-change		REFUSED	error: unsupported option: --ignore-space-change
+range-diff	--ignore-space-at-eol		REFUSED	error: unsupported option: --ignore-space-at-eol
+range-diff	--ignore-cr-at-eol		REFUSED	error: unsupported option: --ignore-cr-at-eol
+range-diff	--ignore-blank-lines		REFUSED	error: unsupported option: --ignore-blank-lines
+range-diff	-I	<regex>	REFUSED	error: unsupported option: -I
+range-diff	--ignore-matching-lines	<regex>	REFUSED	error: unsupported option: --ignore-matching-lines
+range-diff	--indent-heuristic		REFUSED	error: unsupported option: --indent-heuristic
+range-diff	--patience		REFUSED	error: unsupported option: --patience
+range-diff	--histogram		REFUSED	error: unsupported option: --histogram
+range-diff	--diff-algorithm	<algorithm>	REFUSED	error: unsupported option: --diff-algorithm
+range-diff	--anchored	<text>	REFUSED	error: unsupported option: --anchored
+range-diff	--word-diff	[=<mode>]	REFUSED	error: unsupported option: --word-diff
+range-diff	--word-diff-regex	<regex>	REFUSED	error: unsupported option: --word-diff-regex
+range-diff	--color-words	[=<regex>]	REFUSED	error: unsupported option: --color-words
+range-diff	--color-moved	[=<mode>]	REFUSED	error: unsupported option: --color-moved
+range-diff	--color-moved-ws	<mode>	REFUSED	error: unsupported option: --color-moved-ws
+range-diff	--relative	[=<prefix>]	REFUSED	error: unsupported option: --relative
+range-diff	-a		REFUSED	error: unsupported option: -a
+range-diff	--text		REFUSED	error: unsupported option: --text
+range-diff	-R		REFUSED	error: unsupported option: -R
+range-diff	--exit-code		REFUSED	error: unsupported option: --exit-code
+range-diff	--quiet		REFUSED	error: unsupported option: --quiet
+range-diff	--ext-diff		REFUSED	error: unsupported option: --ext-diff
+range-diff	--textconv		REFUSED	error: unsupported option: --textconv
+range-diff	--ignore-submodules	[=<when>]	REFUSED	error: unsupported option: --ignore-submodules
+range-diff	--submodule	[=<format>]	REFUSED	error: unsupported option: --submodule
+range-diff	--ita-invisible-in-index		REFUSED	error: unsupported option: --ita-invisible-in-index
+range-diff	--ita-visible-in-index		REFUSED	error: unsupported option: --ita-visible-in-index
+range-diff	-S		REFUSED	error: unsupported option: -S
+range-diff	-G		REFUSED	error: unsupported option: -G
+range-diff	--pickaxe-all		REFUSED	error: unsupported option: --pickaxe-all
+range-diff	--pickaxe-regex		REFUSED	error: unsupported option: --pickaxe-regex
+range-diff	-O		REFUSED	error: unsupported option: -O
+range-diff	--rotate-to	<path>	REFUSED	error: unsupported option: --rotate-to
+range-diff	--skip-to	<path>	REFUSED	error: unsupported option: --skip-to
+range-diff	--find-object	<object-id>	REFUSED	error: unsupported option: --find-object
+range-diff	--diff-filter		REFUSED	error: unsupported option: --diff-filter
+range-diff	--output	<file>	REFUSED	error: unsupported option: --output
+read-tree	--index-output	<file>	ACCEPTED	
+read-tree	--empty		ACCEPTED	
+read-tree	-v		ACCEPTED	
+read-tree	--verbose		ACCEPTED	
+read-tree	-m		ACCEPTED	
+read-tree	--trivial		ACCEPTED	
+read-tree	--aggressive		ACCEPTED	
+read-tree	--reset		ACCEPTED	
+read-tree	--prefix	<subdirectory>	ACCEPTED	
+read-tree	-u		ACCEPTED	
+read-tree	--exclude-per-directory	<gitignore>	ACCEPTED	
+read-tree	-i		ACCEPTED	
+read-tree	-n		ACCEPTED	
+read-tree	--dry-run		ACCEPTED	
+read-tree	--no-sparse-checkout		ACCEPTED	
+read-tree	--debug-unpack		ACCEPTED	
+read-tree	--recurse-submodules	[=<checkout>]	ACCEPTED	
+read-tree	-q		ACCEPTED	
+read-tree	--quiet		ACCEPTED	
+rebase	--onto	<revision>	ACCEPTED	
+rebase	--keep-base		ACCEPTED	
+rebase	--no-verify		ACCEPTED	
+rebase	-q		ACCEPTED	
+rebase	--quiet		ACCEPTED	
+rebase	-v		ACCEPTED	
+rebase	--verbose		ACCEPTED	
+rebase	-n		ACCEPTED	
+rebase	--no-stat		ACCEPTED	
+rebase	--signoff		ACCEPTED	
+rebase	--committer-date-is-author-date		ACCEPTED	
+rebase	--reset-author-date		ACCEPTED	
+rebase	-C		ACCEPTED	
+rebase	--ignore-whitespace		ACCEPTED	
+rebase	--whitespace	<action>	ACCEPTED	
+rebase	-f		ACCEPTED	
+rebase	--force-rebase		ACCEPTED	
+rebase	--no-ff		ACCEPTED	
+rebase	--continue		ACCEPTED	
+rebase	--skip		ACCEPTED	
+rebase	--abort		ACCEPTED	
+rebase	--quit		ACCEPTED	
+rebase	--edit-todo		ACCEPTED	
+rebase	--show-current-patch		ACCEPTED	
+rebase	--apply		ACCEPTED	
+rebase	-m		ACCEPTED	
+rebase	--merge		ACCEPTED	
+rebase	-i		ACCEPTED	
+rebase	--interactive		ACCEPTED	
+rebase	--rerere-autoupdate		ACCEPTED	
+rebase	--empty	<{drop,keep,ask}>	ACCEPTED	
+rebase	--autosquash		ACCEPTED	
+rebase	--update-refs		ACCEPTED	
+rebase	-S	[=<key-id>]	ACCEPTED	
+rebase	--gpg-sign	[=<key-id>]	ACCEPTED	
+rebase	--autostash		ACCEPTED	
+rebase	-x	<exec>	ACCEPTED	
+rebase	--exec	<exec>	ACCEPTED	
+rebase	-r	[=<mode>]	ACCEPTED	
+rebase	--rebase-merges	[=<mode>]	ACCEPTED	
+rebase	--fork-point		ACCEPTED	
+rebase	-s	<strategy>	ACCEPTED	
+rebase	--strategy	<strategy>	ACCEPTED	
+rebase	-X	<option>	ACCEPTED	
+rebase	--strategy-option	<option>	ACCEPTED	
+rebase	--root		ACCEPTED	
+rebase	--reschedule-failed-exec		ACCEPTED	
+rebase	--reapply-cherry-picks		ACCEPTED	
+receive-pack	-q		ACCEPTED	
+receive-pack	--quiet		ACCEPTED	
+reflog	-		NO_INVENTORY	
+refs	-		NO_INVENTORY	
+remote	-v		ACCEPTED	
+remote	--verbose		ACCEPTED	
+remote-ext	-		NO_INVENTORY	
+remote-fd	-		NO_INVENTORY	
+remote-ftp	-		NO_INVENTORY	
+remote-ftps	-		NO_INVENTORY	
+remote-http	-		NO_INVENTORY	
+remote-https	-		NO_INVENTORY	
+repack	-a		ACCEPTED	
+repack	-A		ACCEPTED	
+repack	--cruft		ACCEPTED	
+repack	--cruft-expiration	<approxidate>	ACCEPTED	
+repack	-d		ACCEPTED	
+repack	-f		ACCEPTED	
+repack	-F		ACCEPTED	
+repack	-n		ACCEPTED	
+repack	-q		ACCEPTED	
+repack	--quiet		ACCEPTED	
+repack	-l		ACCEPTED	
+repack	--local		ACCEPTED	
+repack	-b		ACCEPTED	
+repack	--write-bitmap-index		ACCEPTED	
+repack	-i		ACCEPTED	
+repack	--delta-islands		ACCEPTED	
+repack	--unpack-unreachable	<approxidate>	ACCEPTED	
+repack	-k		ACCEPTED	
+repack	--keep-unreachable		ACCEPTED	
+repack	--window	<n>	ACCEPTED	
+repack	--window-memory	<bytes>	ACCEPTED	
+repack	--depth	<n>	ACCEPTED	
+repack	--threads	<n>	ACCEPTED	
+repack	--max-pack-size	<bytes>	ACCEPTED	
+repack	--pack-kept-objects		ACCEPTED	
+repack	--keep-pack	<name>	ACCEPTED	
+repack	-g	<n>	ACCEPTED	
+repack	--geometric	<n>	ACCEPTED	
+repack	-m		ACCEPTED	
+repack	--write-midx		ACCEPTED	
+repack	--expire-to	<dir>	ACCEPTED	
+replace	-l		ACCEPTED	
+replace	--list		ACCEPTED	
+replace	-d		ACCEPTED	
+replace	--delete		ACCEPTED	
+replace	-e		REFUSED	error: unsupported option: -e
+replace	--edit		REFUSED	error: unsupported option: --edit
+replace	-g		REFUSED	error: unsupported option: -g
+replace	--graft		REFUSED	error: unsupported option: --graft
+replace	--convert-graft-file		REFUSED	error: unsupported option: --convert-graft-file
+replace	-f		REFUSED	error: unsupported option: -f
+replace	--force		REFUSED	error: unsupported option: --force
+replace	--raw		REFUSED	error: unsupported option: --raw
+replace	--format	<format>	REFUSED	error: unsupported option: --format
+replay	-		NO_INVENTORY	
+repo	-		NO_INVENTORY	
+request-pull	-p		ACCEPTED	
+rerere	--rerere-autoupdate		REFUSED	error: unsupported option: --rerere-autoupdate
+reset	-q		ACCEPTED	
+reset	--quiet		ACCEPTED	
+reset	--no-refresh		ACCEPTED	
+reset	--mixed		ACCEPTED	
+reset	--soft		ACCEPTED	
+reset	--hard		ACCEPTED	
+reset	--merge		ACCEPTED	
+reset	--keep		ACCEPTED	
+reset	--recurse-submodules	[=<reset>]	ACCEPTED	
+reset	-p		REFUSED	error: reset --patch: interactive unstaging not implemented
+reset	--patch		REFUSED	error: reset --patch: interactive unstaging not implemented
+reset	-N		ACCEPTED	
+reset	--intent-to-add		ACCEPTED	
+reset	--pathspec-from-file	<file>	ACCEPTED	
+reset	--pathspec-file-nul		ACCEPTED	
+restore	-s	<tree-ish>	ACCEPTED	
+restore	--source	<tree-ish>	ACCEPTED	
+restore	-S		ACCEPTED	
+restore	--staged		ACCEPTED	
+restore	-W		ACCEPTED	
+restore	--worktree		ACCEPTED	
+restore	--ignore-unmerged		ACCEPTED	
+restore	--overlay		ACCEPTED	
+restore	-q		ACCEPTED	
+restore	--quiet		ACCEPTED	
+restore	--recurse-submodules	[=<checkout>]	ACCEPTED	
+restore	--progress		ACCEPTED	
+restore	-m		ACCEPTED	
+restore	--merge		ACCEPTED	
+restore	--conflict	<style>	ACCEPTED	
+restore	-2		ACCEPTED	
+restore	--ours		ACCEPTED	
+restore	-3		ACCEPTED	
+restore	--theirs		ACCEPTED	
+restore	-p		REFUSED	error: checkout --patch: interactive restore not implemented
+restore	--patch		REFUSED	error: checkout --patch: interactive restore not implemented
+restore	--ignore-skip-worktree-bits		ACCEPTED	
+restore	--pathspec-from-file	<file>	ACCEPTED	
+restore	--pathspec-file-nul		ACCEPTED	
+rev-list	--max-count	=<n>	ACCEPTED	
+rev-list	--max-age	=<epoch>	ACCEPTED	
+rev-list	--min-age	=<epoch>	ACCEPTED	
+rev-list	--sparse		ACCEPTED	
+rev-list	--no-merges		ACCEPTED	
+rev-list	--min-parents	=<n>	ACCEPTED	
+rev-list	--no-min-parents		ACCEPTED	
+rev-list	--max-parents	=<n>	ACCEPTED	
+rev-list	--no-max-parents		ACCEPTED	
+rev-list	--remove-empty		ACCEPTED	
+rev-list	--all		ACCEPTED	
+rev-list	--branches		ACCEPTED	
+rev-list	--tags		ACCEPTED	
+rev-list	--remotes		ACCEPTED	
+rev-list	--stdin		ACCEPTED	
+rev-list	--exclude-hidden		ACCEPTED	
+rev-list	--quiet		ACCEPTED	
+rev-list	--topo-order		ACCEPTED	
+rev-list	--date-order		ACCEPTED	
+rev-list	--reverse		ACCEPTED	
+rev-list	--parents		ACCEPTED	
+rev-list	--children		ACCEPTED	
+rev-list	--objects		ACCEPTED	
+rev-list	--disk-usage	[=human]	ACCEPTED	
+rev-list	--unpacked		ACCEPTED	
+rev-list	--header		ACCEPTED	
+rev-list	--object-names		ACCEPTED	
+rev-list	--no-object-names		ACCEPTED	
+rev-list	--abbrev	=<n>	ACCEPTED	
+rev-list	--abbrev-commit		ACCEPTED	
+rev-list	--left-right		ACCEPTED	
+rev-list	--count		ACCEPTED	
+rev-list	--bisect		ACCEPTED	
+rev-list	--bisect-vars		ACCEPTED	
+rev-list	--bisect-all		ACCEPTED	
+rev-parse	-		NO_INVENTORY	
+revert	--quit		ACCEPTED	
+revert	--continue		ACCEPTED	
+revert	--abort		ACCEPTED	
+revert	--skip		ACCEPTED	
+revert	--cleanup	<mode>	ACCEPTED	
+revert	-n		ACCEPTED	
+revert	--no-commit		ACCEPTED	
+revert	-e		ACCEPTED	
+revert	--edit		ACCEPTED	
+revert	-s		ACCEPTED	
+revert	--signoff		ACCEPTED	
+revert	-m	<parent-number>	ACCEPTED	
+revert	--mainline	<parent-number>	ACCEPTED	
+revert	--rerere-autoupdate		ACCEPTED	
+revert	--strategy	<strategy>	ACCEPTED	
+revert	-X	<option>	ACCEPTED	
+revert	--strategy-option	<option>	ACCEPTED	
+revert	-S	[=<key-id>]	ACCEPTED	
+revert	--gpg-sign	[=<key-id>]	ACCEPTED	
+revert	--reference		ACCEPTED	
+rm	-n		ACCEPTED	
+rm	--dry-run		ACCEPTED	
+rm	-q		ACCEPTED	
+rm	--quiet		ACCEPTED	
+rm	--cached		ACCEPTED	
+rm	-f		ACCEPTED	
+rm	--force		ACCEPTED	
+rm	-r		ACCEPTED	
+rm	--ignore-unmatch		ACCEPTED	
+rm	--sparse		ACCEPTED	
+rm	--pathspec-from-file	<file>	ACCEPTED	
+rm	--pathspec-file-nul		ACCEPTED	
+send-email	-		NO_INVENTORY	
+send-pack	-v		ACCEPTED	
+send-pack	--verbose		ACCEPTED	
+send-pack	-q		ACCEPTED	
+send-pack	--quiet		ACCEPTED	
+send-pack	--receive-pack	<receive-pack>	ACCEPTED	
+send-pack	--exec	<receive-pack>	ACCEPTED	
+send-pack	--remote	<remote>	ACCEPTED	
+send-pack	--all		ACCEPTED	
+send-pack	-n		ACCEPTED	
+send-pack	--dry-run		ACCEPTED	
+send-pack	--mirror		ACCEPTED	
+send-pack	-f		ACCEPTED	
+send-pack	--force		ACCEPTED	
+send-pack	--signed	[=(yes|no|if-asked)]	ACCEPTED	
+send-pack	--push-option	<server-specific>	ACCEPTED	
+send-pack	--progress		ACCEPTED	
+send-pack	--thin		ACCEPTED	
+send-pack	--atomic		ACCEPTED	
+send-pack	--stateless-rpc		ACCEPTED	
+send-pack	--stdin		ACCEPTED	
+send-pack	--helper-status		ACCEPTED	
+send-pack	--force-with-lease	[=<refname>:<expect>]	ACCEPTED	
+send-pack	--force-if-includes		ACCEPTED	
+sh-i18n--envsubst	-		NO_INVENTORY	
+shell	-		NO_INVENTORY	
+shortlog	-c		ACCEPTED	
+shortlog	--committer		ACCEPTED	
+shortlog	-n		ACCEPTED	
+shortlog	--numbered		ACCEPTED	
+shortlog	-s		ACCEPTED	
+shortlog	--summary		ACCEPTED	
+shortlog	-e		ACCEPTED	
+shortlog	--email		ACCEPTED	
+shortlog	-w		ACCEPTED	
+shortlog	--group	<field>	ACCEPTED	
+show	-q		ACCEPTED	
+show	--quiet		ACCEPTED	
+show	--source		ACCEPTED	
+show	--use-mailmap		ACCEPTED	
+show	--mailmap		ACCEPTED	
+show	--clear-decorations		ACCEPTED	
+show	--decorate-refs	<pattern>	ACCEPTED	
+show	--decorate-refs-exclude	<pattern>	ACCEPTED	
+show	--decorate	[=...]	ACCEPTED	
+show	-L		REFUSED	error: unsupported option: -L (line-range history is not implemented)
+show-branch	-a		ACCEPTED	
+show-branch	--all		ACCEPTED	
+show-branch	-r		REFUSED	error: unsupported option: -r
+show-branch	--remotes		REFUSED	error: unsupported option: --remotes
+show-branch	--color	[=<when>]	REFUSED	error: unsupported option: --color
+show-branch	--more	[=<n>]	REFUSED	error: unsupported option: --more
+show-branch	--list		ACCEPTED	
+show-branch	--no-name		REFUSED	error: unsupported option: --no-name
+show-branch	--current		REFUSED	error: unsupported option: --current
+show-branch	--sha1-name		REFUSED	error: unsupported option: --sha1-name
+show-branch	--merge-base		REFUSED	error: unsupported option: --merge-base
+show-branch	--independent		REFUSED	error: unsupported option: --independent
+show-branch	--topo-order		REFUSED	error: unsupported option: --topo-order
+show-branch	--topics		REFUSED	error: unsupported option: --topics
+show-branch	--sparse		REFUSED	error: unsupported option: --sparse
+show-branch	--date-order		REFUSED	error: unsupported option: --date-order
+show-branch	-g	[=<n>[,<base>]	REFUSED	error: unsupported option: -g
+show-branch	--reflog	[=<n>[,<base>]	REFUSED	error: unsupported option: --reflog
+show-index	--object-format	<hash-algorithm>	ACCEPTED	
+show-ref	--tags		ACCEPTED	
+show-ref	--heads		ACCEPTED	
+show-ref	--verify		ACCEPTED	
+show-ref	--head		ACCEPTED	
+show-ref	-d		ACCEPTED	
+show-ref	--dereference		ACCEPTED	
+show-ref	-s	[=<n>]	ACCEPTED	
+show-ref	--hash	[=<n>]	ACCEPTED	
+show-ref	--abbrev	[=<n>]	ACCEPTED	
+show-ref	-q		ACCEPTED	
+show-ref	--quiet		ACCEPTED	
+show-ref	--exclude-existing	[=<pattern>]	ACCEPTED	
+sparse-checkout	-		NO_INVENTORY	
+stash	-		NO_INVENTORY	
+status	-v		ACCEPTED	
+status	--verbose		ACCEPTED	
+status	-s		ACCEPTED	
+status	--short		ACCEPTED	
+status	-b		ACCEPTED	
+status	--branch		ACCEPTED	
+status	--show-stash		ACCEPTED	
+status	--ahead-behind		ACCEPTED	
+status	--porcelain	[=<version>]	ACCEPTED	
+status	--long		ACCEPTED	
+status	-z		ACCEPTED	
+status	--null		ACCEPTED	
+status	-u	[=<mode>]	ACCEPTED	
+status	--untracked-files	[=<mode>]	ACCEPTED	
+status	--ignored	[=<mode>]	ACCEPTED	
+status	--ignore-submodules	[=<when>]	ACCEPTED	
+status	--column	[=<style>]	ACCEPTED	
+status	--no-renames		ACCEPTED	
+status	-M	[=<n>]	ACCEPTED	
+status	--find-renames	[=<n>]	ACCEPTED	
+stripspace	-s		ACCEPTED	
+stripspace	--strip-comments		ACCEPTED	
+stripspace	-c		ACCEPTED	
+stripspace	--comment-lines		ACCEPTED	
+submodule	-		NO_INVENTORY	
+submodule--helper	-		NO_INVENTORY	
+subtree	-q		ACCEPTED	
+subtree	-d		ACCEPTED	
+subtree	-P		ACCEPTED	
+subtree	--prefix		ACCEPTED	
+subtree	--annotate		ACCEPTED	
+subtree	-b		ACCEPTED	
+subtree	--branch		ACCEPTED	
+subtree	--ignore-joins		ACCEPTED	
+subtree	--onto		ACCEPTED	
+subtree	--rejoin		ACCEPTED	
+subtree	--squash		ACCEPTED	
+subtree	-m		ACCEPTED	
+subtree	--message		ACCEPTED	
+survey	-		NO_INVENTORY	
+switch	-c	<branch>	ACCEPTED	
+switch	--create	<branch>	ACCEPTED	
+switch	-C	<branch>	ACCEPTED	
+switch	--force-create	<branch>	ACCEPTED	
+switch	--guess		ACCEPTED	
+switch	--discard-changes		ACCEPTED	
+switch	-q		ACCEPTED	
+switch	--quiet		ACCEPTED	
+switch	--recurse-submodules	[=<checkout>]	ACCEPTED	
+switch	--progress		ACCEPTED	
+switch	-m		ACCEPTED	
+switch	--merge		ACCEPTED	
+switch	--conflict	<style>	ACCEPTED	
+switch	-d		ACCEPTED	
+switch	--detach		ACCEPTED	
+switch	-t	[=(direct|inherit)]	ACCEPTED	
+switch	--track	[=(direct|inherit)]	ACCEPTED	
+switch	-f		ACCEPTED	
+switch	--force		ACCEPTED	
+switch	--orphan	<new-branch>	ACCEPTED	
+switch	--overwrite-ignore		ACCEPTED	
+switch	--ignore-other-worktrees		ACCEPTED	
+symbolic-ref	-q		ACCEPTED	
+symbolic-ref	--quiet		ACCEPTED	
+symbolic-ref	-d		ACCEPTED	
+symbolic-ref	--delete		ACCEPTED	
+symbolic-ref	--short		ACCEPTED	
+symbolic-ref	--recurse		ACCEPTED	
+symbolic-ref	-m		ACCEPTED	
+tag	-l		ACCEPTED	
+tag	--list		ACCEPTED	
+tag	-n		ACCEPTED	
+tag	-d		ACCEPTED	
+tag	--delete		ACCEPTED	
+tag	-v		ACCEPTED	
+tag	--verify		ACCEPTED	
+tag	-a		ACCEPTED	
+tag	--annotate		ACCEPTED	
+tag	-m	<message>	ACCEPTED	
+tag	--message	<message>	ACCEPTED	
+tag	-F	<file>	ACCEPTED	
+tag	--file	<file>	ACCEPTED	
+tag	-e		ACCEPTED	
+tag	--edit		ACCEPTED	
+tag	-s		ACCEPTED	
+tag	--sign		ACCEPTED	
+tag	--cleanup	<mode>	ACCEPTED	
+tag	-u	<key-id>	ACCEPTED	
+tag	--local-user	<key-id>	ACCEPTED	
+tag	-f		ACCEPTED	
+tag	--force		ACCEPTED	
+tag	--create-reflog		ACCEPTED	
+tag	--column	[=<style>]	ACCEPTED	
+tag	--contains	<commit>	ACCEPTED	
+tag	--no-contains	<commit>	ACCEPTED	
+tag	--merged	<commit>	ACCEPTED	
+tag	--no-merged	<commit>	ACCEPTED	
+tag	--sort	<key>	ACCEPTED	
+tag	--points-at	<object>	ACCEPTED	
+tag	--format	<format>	ACCEPTED	
+tag	--color	[=<when>]	ACCEPTED	
+tag	-i		ACCEPTED	
+tag	--ignore-case		ACCEPTED	
+unpack-file	-		NO_INVENTORY	
+unpack-objects	-		NO_INVENTORY	
+update	-		NO_INVENTORY	
+update-git-for-windows	-		NO_INVENTORY	
+update-index	-q		ACCEPTED	
+update-index	--ignore-submodules		ACCEPTED	
+update-index	--add		ACCEPTED	
+update-index	--replace		ACCEPTED	
+update-index	--remove		ACCEPTED	
+update-index	--unmerged		ACCEPTED	
+update-index	--refresh		ACCEPTED	
+update-index	--really-refresh		ACCEPTED	
+update-index	--cacheinfo	<mode>	ACCEPTED	
+update-index	--chmod	(+|-)	ACCEPTED	
+update-index	--assume-unchanged		ACCEPTED	
+update-index	--no-assume-unchanged		ACCEPTED	
+update-index	--skip-worktree		ACCEPTED	
+update-index	--no-skip-worktree		ACCEPTED	
+update-index	--ignore-skip-worktree-entries		ACCEPTED	
+update-index	--info-only		ACCEPTED	
+update-index	--force-remove		ACCEPTED	
+update-index	-z		ACCEPTED	
+update-index	--stdin		ACCEPTED	
+update-index	--index-info		ACCEPTED	
+update-index	--unresolve		ACCEPTED	
+update-index	-g		ACCEPTED	
+update-index	--again		ACCEPTED	
+update-index	--ignore-missing		ACCEPTED	
+update-index	--verbose		ACCEPTED	
+update-index	--clear-resolve-undo		ACCEPTED	
+update-index	--index-version	<n>	ACCEPTED	
+update-index	--split-index		ACCEPTED	
+update-index	--untracked-cache		ACCEPTED	
+update-index	--test-untracked-cache		ACCEPTED	
+update-index	--force-untracked-cache		ACCEPTED	
+update-index	--force-write-index		ACCEPTED	
+update-index	--fsmonitor		ACCEPTED	
+update-index	--fsmonitor-valid		ACCEPTED	
+update-index	--no-fsmonitor-valid		ACCEPTED	
+update-ref	-m		ACCEPTED	
+update-ref	-d		ACCEPTED	
+update-ref	--no-deref		ACCEPTED	
+update-ref	-z		ACCEPTED	
+update-ref	--stdin		ACCEPTED	
+update-ref	--create-reflog		ACCEPTED	
+update-server-info	-f		ACCEPTED	
+update-server-info	--force		ACCEPTED	
+upload-archive	-		NO_INVENTORY	
+upload-archive--writer	-		NO_INVENTORY	
+upload-pack	--stateless-rpc		ACCEPTED	
+upload-pack	--strict		ACCEPTED	
+upload-pack	--timeout	<n>	ACCEPTED	
+url-parse	-		NO_INVENTORY	
+var	-		NO_INVENTORY	
+verify-commit	-v		ACCEPTED	
+verify-commit	--verbose		ACCEPTED	
+verify-commit	--raw		ACCEPTED	
+verify-pack	-v		ACCEPTED	
+verify-pack	--verbose		ACCEPTED	
+verify-pack	-s		ACCEPTED	
+verify-pack	--stat-only		ACCEPTED	
+verify-pack	--object-format	<hash>	ACCEPTED	
+verify-tag	-v		ACCEPTED	
+verify-tag	--verbose		ACCEPTED	
+verify-tag	--raw		ACCEPTED	
+verify-tag	--format	<format>	ACCEPTED	
+version	--build-options		ACCEPTED	
+web--browse	-		NO_INVENTORY	
+worktree	-		NO_INVENTORY	
+write-tree	--missing-ok		ACCEPTED	
+write-tree	--prefix	<prefix>	ACCEPTED	
