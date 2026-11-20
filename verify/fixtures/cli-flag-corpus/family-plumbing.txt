@@ -507,3 +507,26 @@ merge-file -L a -L b -L c -L d src/a.txt README.md src/b.txt
 merge-file src/a.txt README.md
 merge-file nosuch README.md src/b.txt
 merge-file --marker-size=x src/a.txt README.md src/b.txt
+# --- repack / gc (state: refs, index and work tree are unchanged) ---
+repack
+repack -q
+repack -a -d
+repack -A -d -q
+repack -ad -k
+repack -adq --window=10 --depth=5 --threads=1 --window-memory=1m -f -F -n -l
+repack -ad -b --no-write-bitmap-index -m --no-write-midx -i --no-delta-islands
+repack -ad --pack-kept-objects --keep-pack=none.pack --no-keep-pack
+repack -d --cruft --cruft-expiration=2.weeks.ago --max-cruft-size=1m
+repack -ad --unpack-unreachable=now --max-pack-size=1g -g 2 --no-geometric
+repack x
+repack --bogus
+gc
+gc -q
+gc --prune=now
+gc --prune=1.day.ago
+gc --no-prune --aggressive
+gc --auto
+gc --force --keep-largest-pack --no-cruft
+gc --cruft --max-cruft-size=1m --no-quiet
+gc --prune=bogusdate
+gc x
