@@ -41,7 +41,23 @@ pub(super) fn run_access_hook(hook: &Path, req: &HookRequest<'_>) -> Result<(), 
         cmd.env("REMOTE_ADDR", peer.ip().to_string())
             .env("REMOTE_PORT", peer.port().to_string());
     }
-    let mut child = cmd.spawn().map_err(|_| None)?;
+    // ETXTBSY can race right after an operator (or a test) writes the hook
+    // script while another thread forks; retry briefly instead of declining.
+    let mut attempt = 0u32;
+    let mut child = loop {
+        match cmd.spawn() {
+            Ok(c) => break c,
+            Err(e)
+                if (e.kind() == std::io::ErrorKind::ExecutableFileBusy
+                    || e.raw_os_error() == Some(26))
+                    && attempt < 16 =>
+            {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(10 * u64::from(attempt)));
+            }
+            Err(_) => return Err(None),
+        }
+    };
     let mut out = Vec::new();
     if let Some(mut stdout) = child.stdout.take() {
         let _ = stdout.read_to_end(&mut out);
