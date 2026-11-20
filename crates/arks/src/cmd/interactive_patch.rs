@@ -3,6 +3,7 @@
 //! Cite: <https://git-scm.com/docs/git-add>, <https://git-scm.com/docs/git-stash>
 //! Line hunks use a simple LCS split (not byte-identical to git's xdiff).
 
+use crate::cmd::add_patch::{self, PatchMode};
 use crate::cmd::core::cmd_add;
 use crate::cmd::shared::{collect_untracked, file_mode, file_times, index_stat_matches};
 use crate::error::{CliError, CliResult};
@@ -12,8 +13,8 @@ use arks_object::{ObjectKind, RawObject, write_loose};
 use arks_repo::Repository;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::io::{self, Read, Write};
-use std::path::{Path, PathBuf};
+use std::io::{self, Write};
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct FileChange {
@@ -44,12 +45,6 @@ pub enum HunkLineKind {
 pub struct HunkLine {
     pub kind: HunkLineKind,
     pub text: String,
-}
-
-#[derive(Debug)]
-enum AnswerMode {
-    Scripted(Vec<char>),
-    Tty,
 }
 
 /// Collect dirty tracked + untracked file changes (WT vs index for tracked).
@@ -374,70 +369,6 @@ pub fn apply_selected_hunks(old: &[u8], hunks: &[Hunk], selected: &[bool]) -> Ve
     bytes
 }
 
-fn answer_mode() -> CliResult<AnswerMode> {
-    if let Ok(raw) = std::env::var("ARKS_ADD_PATCH_ANSWERS") {
-        return Ok(AnswerMode::Scripted(
-            raw.chars().filter(|c| !c.is_whitespace()).collect(),
-        ));
-    }
-    use std::io::IsTerminal;
-    if io::stdin().is_terminal() {
-        return Ok(AnswerMode::Tty);
-    }
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    Ok(AnswerMode::Scripted(
-        buf.chars().filter(|c| !c.is_whitespace()).collect(),
-    ))
-}
-
-fn next_answer(mode: &mut AnswerMode, idx: &mut usize, prompt: &str) -> CliResult<char> {
-    match mode {
-        AnswerMode::Scripted(answers) => {
-            let ch = answers.get(*idx).copied().unwrap_or('n');
-            *idx += 1;
-            Ok(ch)
-        }
-        AnswerMode::Tty => loop {
-            print!("{prompt}");
-            io::stdout()
-                .flush()
-                .map_err(|e| CliError::Msg(format!("flush: {e}")))?;
-            let mut line = String::new();
-            io::stdin()
-                .read_line(&mut line)
-                .map_err(|e| CliError::Msg(format!("read: {e}")))?;
-            let ch = line.chars().find(|c| !c.is_whitespace());
-            match ch {
-                Some(
-                    c @ ('y' | 'Y' | 'n' | 'N' | 'a' | 'A' | 'd' | 'D' | 'q' | 'Q' | 's' | 'S'
-                    | 'e' | 'E'),
-                ) => return Ok(c),
-                Some(_) => eprintln!(
-                    "y - stage this hunk\nn - skip\na - stage all\nd - skip all\ns - skip remaining hunks in file\ne - edit hunk\nq - quit"
-                ),
-                None => return Ok('n'),
-            }
-        },
-    }
-}
-
-fn print_hunk(path: &str, h: &Hunk) {
-    println!("diff --git a/{path} b/{path}");
-    println!(
-        "@@ -{},{} +{},{} @@",
-        h.old_start, h.old_count, h.new_start, h.new_count
-    );
-    for line in &h.lines {
-        let prefix = match line.kind {
-            HunkLineKind::Context => ' ',
-            HunkLineKind::Delete => '-',
-            HunkLineKind::Insert => '+',
-        };
-        println!("{prefix}{}", line.text);
-    }
-}
-
 fn render_hunk_patch(path: &str, h: &Hunk) -> String {
     let mut s = format!("diff --git a/{path} b/{path}\n");
     s.push_str(&format!(
@@ -588,67 +519,35 @@ fn stage_bytes(repo: &Repository, work: &Path, path: &str, bytes: &[u8]) -> CliR
     Ok(())
 }
 
-/// FS3 hunk-level `add -p` / `--patch`.
-pub fn cmd_add_patch_hunks(_args: &[String]) -> CliResult<()> {
-    let mut mode = answer_mode()?;
-    let mut ans_i = 0;
+/// `add -p` / `--patch`: see [`crate::cmd::add_patch`].
+pub fn cmd_add_patch_hunks(args: &[String]) -> CliResult<()> {
+    let specs: Vec<String> = args
+        .iter()
+        .filter(|a| a.as_str() != "-p" && a.as_str() != "--")
+        .cloned()
+        .collect();
+    let specs = rel_specs(&specs)?;
+    add_patch::run(PatchMode::Stage, None, &specs)?;
+    Ok(())
+}
+
+/// Pathspecs relative to the work tree root.
+fn rel_specs(specs: &[String]) -> CliResult<Vec<String>> {
+    if specs.is_empty() {
+        return Ok(Vec::new());
+    }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let changes = collect_file_changes(&repo, &work)?;
-    if changes.is_empty() {
-        println!("No changes.");
-        return Ok(());
-    }
-    let mut accept_rest = false;
-    'files: for ch in &changes {
-        let mut hunks = split_hunks(&ch.old, &ch.new);
-        if hunks.is_empty() {
-            continue;
-        }
-        let mut selected = vec![false; hunks.len()];
-        let mut hi = 0;
-        while hi < hunks.len() {
-            if accept_rest {
-                selected[hi] = true;
-                hi += 1;
-                continue;
-            }
-            print_hunk(&ch.path, &hunks[hi]);
-            let ans = next_answer(&mut mode, &mut ans_i, "Stage this hunk [y,n,q,a,d,s,e]? ")?;
-            match ans {
-                'y' | 'Y' => {
-                    selected[hi] = true;
-                    hi += 1;
-                }
-                'n' | 'N' => {
-                    hi += 1;
-                }
-                'a' | 'A' => {
-                    selected[hi] = true;
-                    accept_rest = true;
-                    hi += 1;
-                }
-                'd' | 'D' | 'q' | 'Q' => break 'files,
-                's' | 'S' => break, // skip rest of file
-                'e' | 'E' => {
-                    let edited = run_editor_on_text(&render_hunk_patch(&ch.path, &hunks[hi]))?;
-                    hunks[hi] = parse_edited_hunk(&edited)?;
-                    selected[hi] = true;
-                    hi += 1;
-                }
-                other => {
-                    return Err(CliError::Usage(format!(
-                        "add -p: unknown answer '{other}' (claimed: y/n/a/d/q/s/e)"
-                    )));
-                }
-            }
-        }
-        if selected.iter().any(|s| *s) {
-            let staged = apply_selected_hunks(&ch.old, &hunks, &selected);
-            stage_bytes(&repo, &work, &ch.path, &staged)?;
+    let cwd = std::env::current_dir()?;
+    let mut out = Vec::new();
+    for s in specs {
+        let abs = cwd.join(s);
+        match crate::util::rel_path_from_worktree(&work, &abs) {
+            Ok(r) => out.push(r),
+            Err(_) => out.push(s.clone()),
         }
     }
-    Ok(())
+    Ok(out)
 }
 
 /// FS3 `add -e`: edit full-file patch then stage result.
@@ -775,136 +674,126 @@ pub fn cmd_add_interactive(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `reset -p`: interactive unstaging is not implemented yet.
-pub fn cmd_reset_patch(_args: &[String]) -> CliResult<()> {
-    Err(CliError::NotImplemented(
-        "reset --patch: interactive unstaging not implemented".into(),
-    ))
+/// Whether `rev` names the commit HEAD points at.
+fn is_head(repo: &arks_repo::Repository, rev: &str) -> bool {
+    let a = crate::cmd::shared::resolve_rev(repo, rev).ok();
+    let b = repo.head_oid().ok();
+    rev == "HEAD" || (a.is_some() && a == b)
 }
 
-/// `checkout -p` / `restore -p`: interactive path restore is not implemented yet.
-pub fn cmd_checkout_patch(_args: &[String]) -> CliResult<()> {
-    Err(CliError::NotImplemented(
-        "checkout --patch: interactive restore not implemented".into(),
-    ))
+/// `reset -p [<tree-ish>] [--] [<pathspec>...]`.
+pub fn cmd_reset_patch(args: &[String]) -> CliResult<()> {
+    let repo = open_repo()?;
+    let rest: Vec<String> = args
+        .iter()
+        .filter(|a| a.as_str() != "-p")
+        .cloned()
+        .collect();
+    let (rev, specs) = add_patch::rev_and_paths(&repo, &rest);
+    let specs = rel_specs(&specs)?;
+    let mode = match &rev {
+        Some(r) if !is_head(&repo, r) => PatchMode::ResetNothead,
+        _ => PatchMode::ResetHead,
+    };
+    drop(repo);
+    add_patch::run(mode, rev.as_deref(), &specs)?;
+    Ok(())
 }
 
-/// FS3 `stash -p`: interactively select hunks/paths, stash those, leave rest in WT.
+/// `checkout -p [<tree-ish>] [--] [<pathspec>...]`.
+pub fn cmd_checkout_patch(args: &[String]) -> CliResult<()> {
+    let repo = open_repo()?;
+    let rest: Vec<String> = args
+        .iter()
+        .filter(|a| a.as_str() != "-p")
+        .cloned()
+        .collect();
+    let (rev, specs) = add_patch::rev_and_paths(&repo, &rest);
+    let specs = rel_specs(&specs)?;
+    let mode = match &rev {
+        None => PatchMode::CheckoutIndex,
+        Some(r) if is_head(&repo, r) => PatchMode::CheckoutHead,
+        Some(_) => PatchMode::CheckoutNothead,
+    };
+    drop(repo);
+    add_patch::run(mode, rev.as_deref(), &specs)?;
+    Ok(())
+}
+
+/// `restore -p [--source=<tree>] [--staged] [--worktree] [--] <pathspec>...`.
+pub fn cmd_restore_patch(
+    source: Option<&str>,
+    staged: bool,
+    worktree: bool,
+    specs: &[String],
+) -> CliResult<()> {
+    let repo = open_repo()?;
+    let worktree = worktree || !staged;
+    let head = source.is_none_or(|s| is_head(&repo, s));
+    let mode = match (staged, worktree) {
+        (true, true) if head => PatchMode::CheckoutHead,
+        (true, true) => PatchMode::CheckoutNothead,
+        (true, false) if head => PatchMode::ResetHead,
+        (true, false) => PatchMode::ResetNothead,
+        _ => match source {
+            None => PatchMode::CheckoutIndex,
+            Some(_) if head => PatchMode::WorktreeHead,
+            Some(_) => PatchMode::WorktreeNothead,
+        },
+    };
+    let rev = source
+        .map(str::to_string)
+        .or_else(|| staged.then(|| "HEAD".to_string()));
+    let specs = rel_specs(specs)?;
+    drop(repo);
+    add_patch::run(mode, rev.as_deref(), &specs)?;
+    Ok(())
+}
+
+/// `stash push -p [-m <message>] [-q] [--] [<pathspec>...]`: stash the
+/// selected hunks (index kept), then roll them back from the work tree.
 pub fn cmd_stash_patch(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-p", "--patch", "push"])?;
-    let mut mode = answer_mode()?;
-    let mut ans_i = 0;
+    let mut message: Option<String> = None;
+    let mut quiet = false;
+    let mut specs = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "-p" | "--patch" | "push" | "--" => {}
+            "-q" | "--quiet" => quiet = true,
+            "-m" | "--message" => {
+                i += 1;
+                message = args.get(i).cloned();
+            }
+            a if a.starts_with("--message=") => message = Some(a["--message=".len()..].to_string()),
+            a => specs.push(a.to_string()),
+        }
+        i += 1;
+    }
+    let specs = rel_specs(&specs)?;
+    let Some(applied) = add_patch::run_files(PatchMode::Stash, None, &specs)? else {
+        if !quiet {
+            println!("No local changes to save");
+        }
+        return Ok(());
+    };
+    if applied.is_empty() {
+        return Err(CliError::Exit(1, "No changes selected".into()));
+    }
+    let selected: Vec<(String, Option<(u32, Vec<u8>)>)> = applied
+        .iter()
+        .map(|(p, st, _)| (p.clone(), st.clone()))
+        .collect();
+    crate::cmd::stash::push_patch_stash(&selected, message.as_deref(), quiet)?;
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let changes = collect_file_changes(&repo, &work)?;
-    if changes.is_empty() {
-        println!("No local changes to save");
-        return Ok(());
-    }
-    // For each file: decide keep-in-stash vs leave. File-or-hunk: if any hunk selected,
-    // stash the selected content (WT becomes old+unselected).
-    let mut stash_payload: Vec<(
-        String,
-        Vec<u8>, /*stash blob*/
-        Vec<u8>, /*remaining WT*/
-    )> = Vec::new();
-    let mut accept_rest = false;
-    'files: for ch in &changes {
-        let mut hunks = split_hunks(&ch.old, &ch.new);
-        if hunks.is_empty() {
-            continue;
-        }
-        let mut selected = vec![false; hunks.len()];
-        let mut hi = 0;
-        while hi < hunks.len() {
-            if accept_rest {
-                selected[hi] = true;
-                hi += 1;
-                continue;
+    for (p, _, remain) in &applied {
+        let abs = work.join(p);
+        match remain {
+            Some((_, bytes)) => fs::write(&abs, bytes)?,
+            None => {
+                let _ = fs::remove_file(&abs);
             }
-            print_hunk(&ch.path, &hunks[hi]);
-            let ans = next_answer(&mut mode, &mut ans_i, "Stash this hunk [y,n,q,a,d,s,e]? ")?;
-            match ans {
-                'y' | 'Y' => {
-                    selected[hi] = true;
-                    hi += 1;
-                }
-                'n' | 'N' => hi += 1,
-                'a' | 'A' => {
-                    selected[hi] = true;
-                    accept_rest = true;
-                    hi += 1;
-                }
-                'd' | 'D' | 'q' | 'Q' => break 'files,
-                's' | 'S' => break,
-                'e' | 'E' => {
-                    let edited = run_editor_on_text(&render_hunk_patch(&ch.path, &hunks[hi]))?;
-                    hunks[hi] = parse_edited_hunk(&edited)?;
-                    selected[hi] = true;
-                    hi += 1;
-                }
-                other => {
-                    return Err(CliError::Usage(format!(
-                        "stash -p: unknown answer '{other}'"
-                    )));
-                }
-            }
-        }
-        if selected.iter().any(|s| *s) {
-            let stashed = apply_selected_hunks(&ch.old, &hunks, &selected);
-            // Invert selection for remaining WT.
-            let inv: Vec<bool> = selected.iter().map(|s| !*s).collect();
-            let remain = if inv.iter().any(|s| *s) {
-                apply_selected_hunks(&ch.old, &hunks, &inv)
-            } else {
-                ch.old.clone()
-            };
-            stash_payload.push((ch.path.clone(), stashed, remain));
-        }
-    }
-    if stash_payload.is_empty() {
-        println!("No changes selected");
-        return Ok(());
-    }
-    // Build stash: write remaining to WT temporarily inverted — stash_push captures WT.
-    // Simpler approach: write stashed content into WT, call stash_push via internal,
-    // then restore remain content to WT.
-    let backups: Vec<(PathBuf, Vec<u8>)> = stash_payload
-        .iter()
-        .map(|(p, _, _)| {
-            let abs = work.join(p);
-            let prev = if abs.is_file() {
-                fs::read(&abs).unwrap_or_default()
-            } else {
-                Vec::new()
-            };
-            (abs, prev)
-        })
-        .collect();
-    for (path, stashed, _) in &stash_payload {
-        let abs = work.join(path);
-        if let Some(parent) = abs.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(&abs, stashed)?;
-    }
-    drop(repo);
-    crate::cmd::stash::stash_push_public()?;
-    for ((abs, _), (_, _, remain)) in backups.iter().zip(stash_payload.iter()) {
-        if remain.is_empty() && !abs.exists() {
-            continue;
-        }
-        if remain.is_empty() {
-            // deleted in stash selection fully — leave as HEAD/old (already in remain)
-            if abs.is_file() {
-                // remain empty means restore to old empty → delete
-                let _ = fs::remove_file(abs);
-            }
-        } else {
-            if let Some(parent) = abs.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            fs::write(abs, remain)?;
         }
     }
     Ok(())

@@ -361,6 +361,7 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
     if p.on("patch") {
         let mut a = vec!["-p".to_string()];
         a.extend(positional);
+        a.push("--".to_string());
         a.extend(p.after_dashdash());
         return crate::cmd::interactive_patch::cmd_checkout_patch(&a);
     }

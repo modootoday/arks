@@ -44,9 +44,12 @@ pub fn cmd_restore(args: &[String]) -> CliResult<()> {
         ));
     }
     if p.on("patch") {
-        let mut a = vec!["-p".to_string()];
-        a.extend(paths);
-        return crate::cmd::interactive_patch::cmd_checkout_patch(&a);
+        return crate::cmd::interactive_patch::cmd_restore_patch(
+            p.value("source").as_deref(),
+            p.on("staged"),
+            p.on("worktree"),
+            &paths,
+        );
     }
     if paths.is_empty() {
         return Err(CliError::fatal("you must specify path(s) to restore"));
@@ -101,6 +104,7 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
     if p.on("patch") {
         let mut a = vec!["-p".to_string()];
         a.extend(p.args());
+        a.push("--".to_string());
         a.extend(p.after_dashdash());
         return crate::cmd::interactive_patch::cmd_reset_patch(&a);
     }
