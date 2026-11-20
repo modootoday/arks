@@ -13,6 +13,7 @@
 
 use super::proc;
 use crate::error::{CliError, CliResult};
+#[cfg(unix)]
 use std::io::{BufRead, Write};
 
 const GUARD: &str = "ARKS_ASKPASS_ACTIVE";
