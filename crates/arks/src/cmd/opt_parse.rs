@@ -396,11 +396,6 @@ impl Parsed {
             .collect()
     }
 
-    /// Whether a `--` separator was present.
-    pub fn had_dashdash(&self, args: &[String]) -> bool {
-        args.iter().any(|a| a == "--")
-    }
-
     /// Unknown options kept verbatim (with `keep_unknown`).
     pub fn unknown(&self) -> Vec<String> {
         self.items

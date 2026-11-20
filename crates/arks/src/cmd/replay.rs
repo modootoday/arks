@@ -419,7 +419,7 @@ fn reword_head_message() -> CliResult<()> {
         return Err(CliError::Msg("aborting reword due to empty message".into()));
     }
     // Amend HEAD message in place via existing commit --amend path.
-    crate::cmd::core::cmd_commit(&[
+    crate::cmd::commit::cmd_commit(&[
         "--amend".into(),
         "-m".into(),
         new_msg.trim_end().to_string(),
@@ -1157,7 +1157,7 @@ pub(crate) fn commit_tree(
     let repo = open_repo()?;
     // git sequencer commit summary (`[branch abbrev] subject`, Author/Date, stat).
     if !crate::util::quiet() {
-        crate::cmd::core::print_commit_summary(&repo, &oid, true)?;
+        crate::cmd::core::print_commit_summary(&repo, &oid)?;
     }
     Ok(oid)
 }

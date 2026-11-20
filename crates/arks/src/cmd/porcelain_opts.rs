@@ -226,6 +226,9 @@ pub const COMMIT: &[OptDef] = &[
     o("untracked-files", 'u', Opt, true),
     o("pathspec-from-file", ' ', Req, true),
     o("pathspec-file-nul", ' ', No, true),
+    // Hidden from `-h` but accepted (git-commit manual).
+    o("allow-empty", ' ', No, true),
+    o("allow-empty-message", ' ', No, true),
 ];
 
 pub const FORMAT_PATCH: &[OptDef] = &[

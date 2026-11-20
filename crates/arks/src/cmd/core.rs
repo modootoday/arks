@@ -1,17 +1,14 @@
 //! Core porcelain: init / objects / index / commit / log / show.
 
 use crate::cmd::shared::{
-    collect_untracked, commit_signature, committer_signature, file_mode, file_times,
-    index_stat_matches, resolve_rev,
+    collect_untracked, committer_signature, file_mode, file_times, index_stat_matches, resolve_rev,
 };
-use crate::cmd::sign::{is_sign_flag, sign_commit, want_sign_commit};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, work_tree, write_index,
 };
-use crate::write_tree::write_tree_from_index;
 use arks_index::{IndexEntry, sort_entries};
-use arks_object::{Commit, ObjectKind, RawObject, write_loose};
+use arks_object::{ObjectKind, RawObject, write_loose};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
@@ -1554,354 +1551,10 @@ pub fn wants_no_optional_locks(args: &[String]) -> bool {
     true
 }
 
-pub fn cmd_commit(args: &[String]) -> CliResult<()> {
-    // Cloud drop-in §O: bundled short options (`-am <msg>`), `-q`, `-n`.
-    // C7b: `--author`, `--date`, `-s`/`--signoff`, `--no-edit` and
-    // `[--] <pathspec>...` (commit only those paths, git `--only`).
-    // Cite: https://git-scm.com/docs/git-commit
-    let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "aqvns", "mFt"),
-        &[
-            ("-n", "--no-verify"),
-            ("--quiet", "-q"),
-            ("--message", "-m"),
-            ("-s", "--signoff"),
-        ],
-    );
-    let args = &args
-        .iter()
-        .flat_map(|a| match a.strip_prefix("--message=") {
-            Some(v) => vec!["-m".to_string(), v.to_string()],
-            None => vec![a.clone()],
-        })
-        .collect::<Vec<_>>();
-    // Filter sign flags (incl. `-S<keyid>`) before refuse_unknown_flags.
-    let flag_args: Vec<String> = args.iter().filter(|a| !is_sign_flag(a)).cloned().collect();
-    refuse_unknown_flags(
-        &flag_args,
-        &[
-            "-m",
-            "-F",
-            "--file",
-            "-t",
-            "--template",
-            "--allow-empty",
-            "--no-verify",
-            "--amend",
-            "-a",
-            "--all",
-            "-q",
-            "-v",
-            "--author",
-            "--date",
-            "--signoff",
-            "--no-edit",
-            "--only",
-            "-o",
-            "--",
-        ],
-    )?;
-    let signoff = args.iter().any(|a| a == "--signoff");
-    let allow_empty = args.iter().any(|a| a == "--allow-empty");
-    let no_verify = args.iter().any(|a| a == "--no-verify");
-    let amend = args.iter().any(|a| a == "--amend");
-    let all = args.iter().any(|a| a == "-a" || a == "--all");
-    // REF-009 (M20 Cx-4): early refuse when reflog lock held (commit appends logs).
-    {
-        let repo = open_repo()?;
-        crate::reflog::refuse_if_reflog_locked(&repo, "HEAD")?;
-        if let Ok(RefTarget::Symbolic(name)) = repo.head_target() {
-            crate::reflog::refuse_if_reflog_locked(&repo, &name)?;
-        }
-    }
-    let mut message: Option<String> = None;
-    let mut file_msg: Option<PathBuf> = None;
-    let mut template: Option<PathBuf> = None;
-    let mut author_ident: Option<String> = None;
-    let mut author_date: Option<String> = None;
-    let mut pathspecs: Vec<String> = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--" {
-            pathspecs.extend(args[i + 1..].iter().cloned());
-            break;
-        } else if args[i] == "--author" || args[i] == "--date" {
-            let v = args.get(i + 1).cloned().ok_or_else(|| {
-                CliError::fatal(format!("option `{}' requires a value", &args[i][2..]))
-            })?;
-            if args[i] == "--author" {
-                author_ident = Some(v);
-            } else {
-                author_date = Some(v);
-            }
-            i += 1;
-        } else if let Some(v) = args[i].strip_prefix("--author=") {
-            author_ident = Some(v.to_string());
-        } else if let Some(v) = args[i].strip_prefix("--date=") {
-            author_date = Some(v.to_string());
-        } else if !args[i].starts_with('-') {
-            pathspecs.push(args[i].clone());
-        } else if args[i] == "-m" {
-            i += 1;
-            let part = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("commit: -m requires a message".into()))?;
-            message = Some(match message {
-                // git-commit: repeated -m values become separate paragraphs.
-                Some(mut m) => {
-                    m.push_str("\n\n");
-                    m.push_str(part);
-                    m
-                }
-                None => part.clone(),
-            });
-        } else if args[i] == "-F" || args[i] == "--file" {
-            i += 1;
-            let p = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("commit -F <file>".into()))?;
-            file_msg = Some(PathBuf::from(p));
-        } else if let Some(rest) = args[i].strip_prefix("--file=") {
-            file_msg = Some(PathBuf::from(rest));
-        } else if args[i] == "-t" || args[i] == "--template" {
-            i += 1;
-            let p = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("commit -t <file>".into()))?;
-            template = Some(PathBuf::from(p));
-        } else if let Some(rest) = args[i].strip_prefix("--template=") {
-            template = Some(PathBuf::from(rest));
-        }
-        i += 1;
-    }
-    if message.is_none() {
-        if let Some(path) = file_msg {
-            let text = fs::read_to_string(&path)
-                .map_err(|e| CliError::Msg(format!("commit -F {}: {e}", path.display())))?;
-            message = Some(text);
-        }
-    }
-    // O3: editor-driven commit when GIT_EDITOR / ARKS_EDITOR / EDITOR is set (scripted OK).
-    if message.is_none() && !amend {
-        message = Some(commit_message_via_editor(template.as_deref())?);
-    }
-
-    if all && !pathspecs.is_empty() {
-        return Err(CliError::fatal(format!(
-            "paths '{} ...' with -a does not make sense",
-            pathspecs[0]
-        )));
-    }
-    // Fs-5: `-a` / `--all` stages tracked updates then commits (git-commit).
-    if all {
-        cmd_add(&["-u".into()])?;
-    }
-    // `commit <pathspec>`: stage those paths, then commit HEAD + only them.
-    if !pathspecs.is_empty() {
-        cmd_add(&pathspecs)?;
-    }
-
-    let mut repo = open_repo()?;
-    run_claimed_hooks(&repo, no_verify, &["pre-commit"], None)?;
-
-    let mut index = read_index(&repo)?;
-    if !pathspecs.is_empty() {
-        let work = work_tree(&repo)?;
-        let specs = pathspecs
-            .iter()
-            .map(|p| pathspec_rel(&work, p))
-            .collect::<CliResult<Vec<_>>>()?;
-        let mut entries = Vec::new();
-        if let Ok(head) = repo.head_oid() {
-            let tree = crate::cmd::log_format::read_commit(&repo, &head)?.tree;
-            crate::cmd::plumbing::flatten_tree_to_index(&repo, &tree, "", &mut entries)?;
-        }
-        entries.retain(|e| !crate::cmd::log_format::path_in_specs(&e.path, &specs));
-        entries.extend(
-            index
-                .entries
-                .iter()
-                .filter(|e| crate::cmd::log_format::path_in_specs(&e.path, &specs))
-                .cloned(),
-        );
-        sort_entries(&mut entries);
-        index.entries = entries;
-    }
-    let index = index;
-    let message = message.map(|m| if signoff { add_signoff(&m) } else { m });
-    let override_author = |mut sig: arks_object::Signature| -> CliResult<arks_object::Signature> {
-        if let Some(id) = &author_ident {
-            let (name, email) = id
-                .split_once('<')
-                .and_then(|(n, rest)| Some((n.trim(), rest.strip_suffix('>')?)))
-                .ok_or_else(|| CliError::fatal(format!("--author '{id}' is not 'Name <email>'")))?;
-            sig.name = name.to_string();
-            sig.email = email.to_string();
-        }
-        if let Some(d) = &author_date {
-            let (ts, tz) = crate::cmd::shared::parse_git_date(d)
-                .ok_or_else(|| CliError::fatal(format!("invalid date format: {d}")))?;
-            sig.timestamp = ts;
-            sig.timezone = tz;
-        }
-        Ok(sig)
-    };
-    if index.entries.is_empty() && !allow_empty && !amend {
-        return Err(CliError::Msg("nothing to commit (empty index)".into()));
-    }
-
-    let tree = if index.entries.is_empty() {
-        let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        let format = repo.object_format();
-        repo.store_mut().put(format, &obj)?
-    } else {
-        let format = repo.object_format();
-        write_tree_from_index(repo.store_mut(), &index.entries, format)?
-    };
-
-    if amend {
-        let head = repo
-            .head_oid()
-            .map_err(|_| CliError::Msg("commit --amend: no HEAD to amend".into()))?;
-        let pobj = repo.get_object(&head)?;
-        if pobj.kind != ObjectKind::Commit {
-            return Err(CliError::Msg("HEAD is not a commit".into()));
-        }
-        let prev = Commit::decode(&pobj.payload)?;
-        let message = match message {
-            Some(m) => {
-                if m.ends_with('\n') {
-                    m
-                } else {
-                    format!("{m}\n")
-                }
-            }
-            None if signoff => add_signoff(&prev.message),
-            None => prev.message.clone(),
-        };
-        run_claimed_hooks(&repo, no_verify, &["commit-msg"], Some(message.as_bytes()))?;
-        if prev.tree == tree && message == prev.message && !allow_empty {
-            return Err(CliError::Msg("nothing to commit (amend unchanged)".into()));
-        }
-        let sig = committer_signature()?;
-        let subject = message.lines().next().unwrap_or("").to_owned();
-        let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
-        let mut commit = Commit {
-            tree,
-            parents: prev.parents.clone(),
-            author: override_author(prev.author.clone())?,
-            committer: sig,
-            gpgsig: None,
-            message,
-        };
-        if do_sign {
-            sign_commit(&repo, &mut commit, sign_key.as_deref())?;
-        }
-        let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-        let format = repo.object_format();
-        let coid = repo.store_mut().put(format, &cobj)?;
-        // M16 Sy-5: detached HEAD amend updates HEAD directly (git-commit).
-        match repo.head_target()? {
-            RefTarget::Symbolic(name) => {
-                repo.refs_mut().update(&name, &coid, Some(&head))?;
-                let _ = crate::reflog::append_head_and_branch(
-                    &repo,
-                    &name,
-                    Some(&head),
-                    &coid,
-                    &format!("commit (amend): {subject}"),
-                );
-            }
-            RefTarget::Direct(_) => {
-                repo.refs_mut().update("HEAD", &coid, Some(&head))?;
-                let _ = crate::reflog::append_reflog(
-                    &repo,
-                    "HEAD",
-                    Some(&head),
-                    &coid,
-                    &format!("commit (amend): {subject}"),
-                );
-            }
-        }
-        if !args.iter().any(|a| a == "-q") {
-            print_commit_summary(&repo, &coid, true)?;
-        }
-        return Ok(());
-    }
-
-    let message = message.ok_or_else(|| CliError::Usage("commit: -m <msg> required".into()))?;
-    let message = if message.ends_with('\n') {
-        message
-    } else {
-        format!("{message}\n")
-    };
-    run_claimed_hooks(&repo, no_verify, &["commit-msg"], Some(message.as_bytes()))?;
-    let parents = match repo.head_oid() {
-        Ok(oid) => vec![oid],
-        Err(_) => Vec::new(),
-    };
-    if let Some(parent) = parents.first() {
-        let pobj = repo.get_object(parent)?;
-        if pobj.kind == ObjectKind::Commit {
-            let pc = Commit::decode(&pobj.payload)?;
-            if pc.tree == tree && !allow_empty {
-                return Err(CliError::Msg("nothing to commit (tree unchanged)".into()));
-            }
-        }
-    }
-    let author = override_author(commit_signature()?)?;
-    let committer = committer_signature()?;
-    let subject = message.lines().next().unwrap_or("").to_owned();
-    let (do_sign, sign_key) = want_sign_commit(args, &repo)?;
-    let mut commit = Commit {
-        tree,
-        parents: parents.clone(),
-        author,
-        committer,
-        gpgsig: None,
-        message,
-    };
-    if do_sign {
-        sign_commit(&repo, &mut commit, sign_key.as_deref())?;
-    }
-    let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let format = repo.object_format();
-    let coid = repo.store_mut().put(format, &cobj)?;
-    // M16 Sy-5: detached HEAD commit updates HEAD directly (git-commit).
-    match repo.head_target()? {
-        RefTarget::Symbolic(name) => {
-            let old = parents.first().copied();
-            repo.refs_mut().update(&name, &coid, old.as_ref())?;
-            let _ = crate::reflog::append_head_and_branch(
-                &repo,
-                &name,
-                old.as_ref(),
-                &coid,
-                &format!("commit: {subject}"),
-            );
-        }
-        RefTarget::Direct(_) => {
-            let old = parents.first().copied();
-            repo.refs_mut().update("HEAD", &coid, old.as_ref())?;
-            let _ = crate::reflog::append_reflog(
-                &repo,
-                "HEAD",
-                old.as_ref(),
-                &coid,
-                &format!("commit: {subject}"),
-            );
-        }
-    }
-    if !args.iter().any(|a| a == "-q") {
-        print_commit_summary(&repo, &coid, false)?;
-    }
-    Ok(())
-}
-
 /// `-s`: append `Signed-off-by: <committer>` unless it is already the last
 /// trailer; a message ending in a trailer block gets no blank separator.
 /// Cite: https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff
-fn add_signoff(message: &str) -> String {
+pub(crate) fn add_signoff(message: &str) -> String {
     let Ok(c) = committer_signature() else {
         return message.to_string();
     };
@@ -1927,14 +1580,23 @@ fn add_signoff(message: &str) -> String {
 /// git-commit summary (builtin/commit.c `print_summary`): `[<branch> <abbrev>] <subject>`,
 /// ` Author:` when it differs from the committer, ` Date:` for amend, then the
 /// shortstat line and `create mode` / `delete mode` lines.
-/// git `print_commit_summary`; `show_date` = SUMMARY_SHOW_AUTHOR_DATE (amend,
+/// Subject as the summary shows it: the first paragraph's lines joined with
+/// a space, trailing whitespace dropped, leading whitespace kept.
+fn summary_subject(msg: &str) -> String {
+    msg.split("\n\n")
+        .next()
+        .unwrap_or("")
+        .lines()
+        .map(str::trim_end)
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// git `print_commit_summary`; the author date shows when it differs from the committer date (amend,
 /// sequencer commits).
-pub(crate) fn print_commit_summary(
-    repo: &Repository,
-    coid: &Oid,
-    show_date: bool,
-) -> CliResult<()> {
-    let amend = show_date;
+pub(crate) fn print_commit_summary(repo: &Repository, coid: &Oid) -> CliResult<()> {
+    // git shows the author date for amends and whenever it differs from the
+    // committer date (`author_date_is_interesting`).
     use crate::cmd::switch_tree::commit_files;
     use crate::cmd::unified_diff::{StatRow, shortstat_line, stat_change};
     let c = crate::cmd::log_format::read_commit(repo, coid)?;
@@ -1950,7 +1612,7 @@ pub(crate) fn print_commit_summary(
     let mut out = format!(
         "[{label}{root} {}] {}\n",
         crate::cmd::shared::abbrev_hex(repo, coid, 7),
-        crate::cmd::log_format::subject_line(&c.message)
+        summary_subject(&c.message)
     );
     if (c.author.name.as_str(), c.author.email.as_str())
         != (c.committer.name.as_str(), c.committer.email.as_str())
@@ -1960,7 +1622,7 @@ pub(crate) fn print_commit_summary(
             c.author.name, c.author.email
         ));
     }
-    if amend {
+    if (c.author.timestamp, &c.author.timezone) != (c.committer.timestamp, &c.committer.timezone) {
         out.push_str(&format!(
             " Date: {}\n",
             crate::cmd::log_format::default_date(&c.author)
@@ -2012,66 +1674,6 @@ pub(crate) fn print_commit_summary(
         out.push('\n');
     }
     print!("{out}");
-    Ok(())
-}
-
-/// O3: editor-required commit message via `-t` template + GIT_EDITOR / ARKS_EDITOR / EDITOR.
-fn commit_message_via_editor(template: Option<&Path>) -> CliResult<String> {
-    let editor = std::env::var("ARKS_EDITOR")
-        .or_else(|_| std::env::var("GIT_EDITOR"))
-        .or_else(|_| std::env::var("EDITOR"))
-        .map_err(|_| {
-            CliError::NotImplemented(
-                "commit without -m/-F requires GIT_EDITOR / ARKS_EDITOR / EDITOR (O3 scripted); pass -m or set editor"
-                    .into(),
-            )
-        })?;
-    let repo = open_repo()?;
-    let msg_path = repo.git_dir().join("COMMIT_EDITMSG");
-    let mut seed = String::new();
-    if let Some(t) = template {
-        seed = fs::read_to_string(t)
-            .map_err(|e| CliError::Msg(format!("commit -t {}: {e}", t.display())))?;
-    }
-    if !seed.ends_with('\n') && !seed.is_empty() {
-        seed.push('\n');
-    }
-    seed.push_str(
-        "\n# Please enter the commit message for your changes.\n# Lines starting with '#' are ignored (O3 scripted editor).\n",
-    );
-    fs::write(&msg_path, &seed)?;
-    drop(repo);
-    run_editor_cmd(&editor, &msg_path)?;
-    let text = fs::read_to_string(&msg_path)?;
-    let cleaned = text
-        .lines()
-        .filter(|l| !l.starts_with('#'))
-        .collect::<Vec<_>>()
-        .join("\n");
-    if cleaned.trim().is_empty() {
-        return Err(CliError::Msg(
-            "aborting commit due to empty commit message".into(),
-        ));
-    }
-    Ok(cleaned)
-}
-
-fn run_editor_cmd(editor: &str, path: &Path) -> CliResult<()> {
-    let mut argv: Vec<String> = editor.split_whitespace().map(|s| s.to_string()).collect();
-    if argv.is_empty() {
-        return Err(CliError::Usage("empty editor command".into()));
-    }
-    argv.push(path.display().to_string());
-    let status = std::process::Command::new(&argv[0])
-        .args(&argv[1..])
-        .status()
-        .map_err(|e| CliError::Msg(format!("spawn editor '{editor}': {e}")))?;
-    if !status.success() {
-        return Err(CliError::Msg(format!(
-            "editor '{editor}' exited {}",
-            status.code().unwrap_or(-1)
-        )));
-    }
     Ok(())
 }
 
