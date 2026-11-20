@@ -392,7 +392,7 @@ pub(crate) fn read_pkt(r: &mut impl Read) -> CliResult<Option<Vec<u8>>> {
 
 /// `arks checkout--worker [--prefix <string>]`.
 pub fn cmd_checkout_worker(args: &[String]) -> CliResult<()> {
-    const USAGE: &str = "usage: git checkout--worker [<options>]\n\n    --[no-]prefix <string>\n                          when creating files, prepend <string>\n";
+    const USAGE: &str = "usage: git checkout--worker [<options>]\n\n    --prefix <string>     when creating files, prepend <string>\n";
     let defs = [o("prefix", ' ', Takes::Req, true)];
     let p = parse("checkout--worker", args, &defs, Mode::default())?;
     if !p.args().is_empty() || !p.after_dashdash().is_empty() {

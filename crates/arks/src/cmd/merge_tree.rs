@@ -29,15 +29,15 @@ const USAGE: &str = "usage: git merge-tree [--write-tree] [<options>] <branch1> 
 
     --write-tree          do a real merge instead of a trivial merge
     --trivial-merge       do a trivial merge only
-    --[no-]messages       also show informational/conflict messages
+    --messages            also show informational/conflict messages
     -z                    separate paths with the NUL character
     --name-only           list filenames without modes/oids/stages
     --allow-unrelated-histories
                           allow merging unrelated histories
     --stdin               perform multiple merges, one per line of input
-    --[no-]merge-base <commit>
+    --merge-base <commit>
                           specify a merge-base for the merge
-    -X, --[no-]strategy-option <option=value>
+    -X, --strategy-option <option=value>
                           option for selected merge strategy
 ";
 

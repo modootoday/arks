@@ -23,13 +23,13 @@ const USAGE: &str = "usage: git multi-pack-index [<options>] write [--preferred-
    or: git multi-pack-index [<options>] expire
    or: git multi-pack-index [<options>] repack [--batch-size=<size>]
 
-    --[no-]object-dir <directory>
+    --object-dir <directory>
                           object directory containing set of packfile and pack-index pairs
 ";
 
 const LARGE: u32 = 0x8000_0000;
 
-const OBJDIR_HELP: &str = "    --[no-]object-dir <directory>
+const OBJDIR_HELP: &str = "    --object-dir <directory>
                           object directory containing set of packfile and pack-index pairs
 ";
 
@@ -38,24 +38,24 @@ fn sub_usage(sub: &str) -> String {
     let (line, extra) = match sub {
         "write" => (
             "write [--preferred-pack=<pack>][--refs-snapshot=<path>]",
-            "    --[no-]preferred-pack <preferred-pack>
+            "    --preferred-pack <preferred-pack>
                           pack for reuse when computing a multi-pack bitmap
-    --[no-]bitmap         write multi-pack bitmap
-    --[no-]progress       force progress reporting
-    --[no-]stdin-packs    write multi-pack index containing only given indexes
-    --[no-]refs-snapshot <file>
+    --bitmap              write multi-pack bitmap
+    --progress            force progress reporting
+    --stdin-packs         write multi-pack index containing only given indexes
+    --refs-snapshot <file>
                           refs snapshot for selecting bitmap commits
 ",
         ),
         "repack" => (
             "repack [--batch-size=<size>]",
             "    --batch-size <n>      during repack, collect pack-files of smaller size into a batch that is larger than this size
-    --[no-]progress       force progress reporting
+    --progress            force progress reporting
 ",
         ),
         other => (
             if other == "verify" { "verify" } else { "expire" },
-            "    --[no-]progress       force progress reporting
+            "    --progress            force progress reporting
 ",
         ),
     };

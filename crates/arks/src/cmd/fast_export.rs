@@ -27,36 +27,31 @@ use std::io::{self, Write};
 
 const USAGE: &str = "usage: git fast-export [<rev-list-opts>]
 
-    --[no-]progress <n>   show progress after <n> objects
-    --[no-]signed-tags <mode>
-                          select handling of signed tags
-    --[no-]tag-of-filtered-object <mode>
+    --progress <n>        show progress after <n> objects
+    --signed-tags <mode>  select handling of signed tags
+    --tag-of-filtered-object <mode>
                           select handling of tags that tag filtered objects
-    --[no-]reencode <mode>
-                          select handling of commit messages in an alternate encoding
-    --[no-]export-marks <file>
+    --reencode <mode>     select handling of commit messages in an alternate encoding
+    --export-marks <file>
                           dump marks to this file
-    --[no-]import-marks <file>
+    --import-marks <file>
                           import marks from this file
-    --[no-]import-marks-if-exists <file>
+    --import-marks-if-exists <file>
                           import marks from this file if it exists
-    --[no-]fake-missing-tagger
+    --fake-missing-tagger
                           fake a tagger when tags lack one
-    --[no-]full-tree      output full tree for each commit
-    --[no-]use-done-feature
-                          use the done feature to terminate the stream
+    --full-tree           output full tree for each commit
+    --use-done-feature    use the done feature to terminate the stream
     --no-data             skip output of blob data
     --data                opposite of --no-data
-    --[no-]refspec <refspec>
-                          apply refspec to exported refs
-    --[no-]anonymize      anonymize output
+    --refspec <refspec>   apply refspec to exported refs
+    --anonymize           anonymize output
     --anonymize-map <from:to>
                           convert <from> to <to> in anonymized output
-    --[no-]reference-excluded-parents
+    --reference-excluded-parents
                           reference parents which are not in fast-export stream by object id
-    --[no-]show-original-ids
-                          show original object ids of blobs/commits
-    --[no-]mark-tags      label tags with mark ids
+    --show-original-ids   show original object ids of blobs/commits
+    --mark-tags           label tags with mark ids
 ";
 
 const DEFS: &[OptDef] = &[

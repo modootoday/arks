@@ -31,18 +31,17 @@ const OPTS: &[OptDef] = &[
 
 const USAGE: &str = "usage: git instaweb [options] (--start | --stop | --restart)
 
-    -l, --[no-]local      only bind on 127.0.0.1
-    -p, --[no-]port ...   the port to bind to
-    -d, --[no-]httpd ...  the command to launch
-    -b, --[no-]browser ...
-                          the browser to launch
-    -m, --[no-]module-path ...
+    -l, --local           only bind on 127.0.0.1
+    -p, --port ...        the port to bind to
+    -d, --httpd ...       the command to launch
+    -b, --browser ...     the browser to launch
+    -m, --module-path ...
                           the module path (only needed for apache2)
 
 Action
-    --[no-]stop           stop the web server
-    --[no-]start          start the web server
-    --[no-]restart        restart the web server
+    --stop                stop the web server
+    --start               start the web server
+    --restart             restart the web server
 ";
 
 const HTTPDS: &[&str] = &[

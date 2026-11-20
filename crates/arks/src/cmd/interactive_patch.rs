@@ -609,67 +609,188 @@ pub fn cmd_add_edit(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// FS3 `add -i` menu subset: status / update / patch / quit.
-pub fn cmd_add_interactive(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-i", "--interactive"])?;
-    use std::io::IsTerminal;
-    if !io::stdin().is_terminal() && std::env::var("ARKS_ADD_INTERACTIVE_ANSWERS").is_err() {
-        return Err(CliError::Usage(
-            "add -i requires a TTY or ARKS_ADD_INTERACTIVE_ANSWERS (status|update|patch|quit)"
-                .into(),
-        ));
+/// `+<added>/-<deleted>` line counts (`binary` for binary content).
+fn numstat_cell(old: &[u8], new: &[u8]) -> String {
+    use crate::cmd::diffcore::xdiff;
+    if xdiff::is_binary(old) || xdiff::is_binary(new) {
+        return "binary".into();
     }
-    let scripted: Option<Vec<String>> =
+    let a = xdiff::split_lines(old);
+    let b = xdiff::split_lines(new);
+    let (ins, del) = xdiff::count(&xdiff::diff_lines(&a, &b, &xdiff::LineOpts::default()));
+    format!("+{ins}/-{del}")
+}
+
+/// `add -i` status rows: `(path, staged, unstaged)` for every tracked path
+/// that differs between HEAD and the index or the index and the work tree.
+fn status_rows(specs: &[String]) -> CliResult<Vec<(String, String, String)>> {
+    let repo = open_repo()?;
+    let work = work_tree(&repo)?;
+    let index = read_index(&repo)?;
+    let mut head: Vec<IndexEntry> = Vec::new();
+    if let Ok(h) = repo.head_oid() {
+        let tree = crate::cmd::log_format::read_commit(&repo, &h)?.tree;
+        crate::cmd::plumbing::flatten_tree_to_index(&repo, &tree, "", &mut head)?;
+    }
+    let head: HashMap<String, arks_oid::Oid> = head.into_iter().map(|e| (e.path, e.oid)).collect();
+    let stage0: HashMap<&str, &IndexEntry> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.as_str(), e))
+        .collect();
+    let blob = |oid: Option<&arks_oid::Oid>| -> CliResult<Vec<u8>> {
+        Ok(match oid {
+            Some(o) => repo.get_object(o)?.payload,
+            None => Vec::new(),
+        })
+    };
+    let mut paths: Vec<&str> = head
+        .keys()
+        .map(String::as_str)
+        .chain(stage0.keys().copied())
+        .collect();
+    paths.sort_unstable();
+    paths.dedup();
+    let mut rows = Vec::new();
+    for path in paths {
+        if !specs.is_empty() && !crate::cmd::log_format::path_in_specs(path, specs) {
+            continue;
+        }
+        let h = head.get(path);
+        let i = stage0.get(path).map(|e| &e.oid);
+        let staged = if h == i {
+            "unchanged".to_string()
+        } else {
+            numstat_cell(&blob(h)?, &blob(i)?)
+        };
+        let unstaged = match stage0.get(path) {
+            None => "nothing".to_string(),
+            Some(e) => {
+                let abs = work.join(path);
+                match fs::metadata(&abs) {
+                    Ok(m) if index_stat_matches(e, &m) => "nothing".to_string(),
+                    Ok(m) if m.is_file() => {
+                        let now = fs::read(&abs)?;
+                        let old = blob(Some(&e.oid))?;
+                        if now == old {
+                            "nothing".to_string()
+                        } else {
+                            numstat_cell(&old, &now)
+                        }
+                    }
+                    _ => numstat_cell(&blob(Some(&e.oid))?, &[]),
+                }
+            }
+        };
+        if staged != "unchanged" || unstaged != "nothing" {
+            rows.push((path.to_string(), staged, unstaged));
+        }
+    }
+    Ok(rows)
+}
+
+fn print_status_rows(rows: &[(String, String, String)]) {
+    if rows.is_empty() {
+        return;
+    }
+    println!("     {:>12} {:>12} path", "staged", "unstaged");
+    for (n, (path, staged, unstaged)) in rows.iter().enumerate() {
+        println!("{:>3}: {staged:>12} {unstaged:>12} {path}", n + 1);
+    }
+}
+
+fn print_main_menu() {
+    println!("*** Commands ***");
+    println!("  1: [s]tatus\t  2: [u]pdate\t  3: [r]evert\t  4: [a]dd untracked");
+    println!("  5: [p]atch\t  6: [d]iff\t  7: [q]uit\t  8: [h]elp");
+}
+
+/// Stage every tracked modification (`update` with all paths selected).
+fn update_all_tracked() -> CliResult<()> {
+    let repo = open_repo()?;
+    let work = work_tree(&repo)?;
+    let changes = collect_file_changes(&repo, &work)?;
+    let paths: Vec<String> = changes
+        .into_iter()
+        .filter(|c| !c.untracked)
+        .map(|c| c.path)
+        .collect();
+    drop(repo);
+    if paths.is_empty() {
+        println!("No tracked changes to update.");
+    } else {
+        cmd_add(&paths)?;
+        println!("updated {} path(s)", paths.len());
+    }
+    Ok(())
+}
+
+/// `add -i`: the status table and the command menu of git-add(1)
+/// INTERACTIVE MODE (layout as observed from pin 2.39.5). `status` and
+/// `quit` (or end of input: `Bye.`) follow the pin; `update` stages every
+/// tracked change and `patch` runs `add -p` (Partial: no path selection
+/// prompts). `ARKS_ADD_INTERACTIVE_ANSWERS` scripts the answers.
+pub fn cmd_add_interactive(args: &[String]) -> CliResult<()> {
+    let flags: Vec<String> = args
+        .iter()
+        .take_while(|a| a.starts_with('-') && a.as_str() != "--")
+        .cloned()
+        .collect();
+    refuse_unknown_flags(&flags, &["-i", "--interactive"])?;
+    let specs = {
+        let repo = open_repo()?;
+        let work = work_tree(&repo)?;
+        args.iter()
+            .skip(flags.len())
+            .filter(|a| a.as_str() != "--")
+            .map(|p| crate::cmd::core::pathspec_rel(&work, p))
+            .collect::<CliResult<Vec<_>>>()?
+    };
+    let mut scripted: Option<std::vec::IntoIter<String>> =
         std::env::var("ARKS_ADD_INTERACTIVE_ANSWERS").ok().map(|s| {
             s.split(|c: char| c.is_whitespace() || c == ',' || c == ';')
                 .filter(|p| !p.is_empty())
                 .map(|s| s.to_string())
-                .collect()
+                .collect::<Vec<_>>()
+                .into_iter()
         });
-    let mut si = 0usize;
+    print_status_rows(&status_rows(&specs)?);
+    println!();
+    print_main_menu();
     loop {
-        println!("*** Commands ***");
-        println!("  1: status        2: update        3: patch         4: quit");
         print!("What now> ");
         io::stdout().flush().ok();
-        let choice = if let Some(ref answers) = scripted {
-            let c = answers.get(si).cloned().unwrap_or_else(|| "quit".into());
-            si += 1;
-            println!("{c}");
-            c
-        } else {
-            let mut line = String::new();
-            io::stdin().read_line(&mut line)?;
-            line.trim().to_string()
-        };
-        match choice.as_str() {
-            "1" | "status" | "s" => {
-                crate::cmd::core::cmd_status(&[])?;
-            }
-            "2" | "update" | "u" => {
-                // Stage all tracked modifications (like update -u path selection: all dirty tracked).
-                let repo = open_repo()?;
-                let work = work_tree(&repo)?;
-                let changes = collect_file_changes(&repo, &work)?;
-                let paths: Vec<String> = changes
-                    .into_iter()
-                    .filter(|c| !c.untracked)
-                    .map(|c| c.path)
-                    .collect();
-                drop(repo);
-                if paths.is_empty() {
-                    println!("No tracked changes to update.");
-                } else {
-                    cmd_add(&paths)?;
-                    println!("updated {} path(s)", paths.len());
+        let answer = match scripted.as_mut() {
+            Some(it) => it.next().inspect(|c| println!("{c}")),
+            None => {
+                let mut line = String::new();
+                match io::stdin().read_line(&mut line)? {
+                    0 => None,
+                    _ => Some(line.trim().to_string()),
                 }
             }
-            "3" | "patch" | "p" => {
-                cmd_add_patch_hunks(&[])?;
+        };
+        let Some(choice) = answer else {
+            println!();
+            println!("Bye.");
+            break;
+        };
+        match choice.as_str() {
+            "1" | "s" | "status" => {
+                print_status_rows(&status_rows(&specs)?);
+                println!();
             }
-            "4" | "quit" | "q" => break,
-            other => eprintln!("unknown command '{other}'"),
+            "2" | "u" | "update" => update_all_tracked()?,
+            "5" | "p" | "patch" => cmd_add_patch_hunks(&[])?,
+            "7" | "q" | "quit" => {
+                println!("Bye.");
+                break;
+            }
+            "" => {}
+            other => eprintln!("Huh ({other})?"),
         }
+        print_main_menu();
     }
     Ok(())
 }

@@ -12,7 +12,7 @@
 //! Cite: <https://git-scm.com/docs/git-rebase> (behaviour, not code).
 
 use crate::cmd::merge_engine::{Favor, MergeLabels, merge_trees_worktree};
-use crate::cmd::opt_parse::{Mode, Parsed, parse};
+use crate::cmd::opt_parse::{Item, Mode, Parsed, parse};
 use crate::cmd::shared::{abbrev_hex, committer_signature, resolve_rev};
 use crate::cmd::trailers::Cleanup;
 use crate::error::{CliError, CliResult};
@@ -185,6 +185,17 @@ fn options(p: &Parsed) -> CliResult<Opts> {
             .get(k)
             .is_some_and(|v| matches!(v.to_ascii_lowercase().as_str(), "true" | "yes" | "on" | "1"))
     };
+    // Backend choice (pin 2.39.5): the last of `--apply`, `--merge` and
+    // `--interactive` wins; `--whitespace` / `-C` are apply-only options.
+    let backend = p.items.iter().rev().find_map(|it| match it {
+        Item::Opt {
+            key: k @ ("apply" | "merge" | "interactive"),
+            neg: false,
+            ..
+        } => Some(*k),
+        _ => None,
+    });
+    let apply_opts = p.value("whitespace").is_some() || p.value("-C").is_some();
     let mut o = Opts {
         quiet: p.on("quiet"),
         verbose: p.on("verbose"),
@@ -194,8 +205,8 @@ fn options(p: &Parsed) -> CliResult<Opts> {
         force: p.on("force-rebase") || p.on("no-ff"),
         committer_date_is_author_date: p.on("committer-date-is-author-date"),
         reset_author_date: p.on("reset-author-date") || p.on("ignore-date"),
-        apply: p.on("apply") || p.value("whitespace").is_some() || p.value("-C").is_some(),
-        interactive: p.on("interactive"),
+        apply: backend == Some("apply") || apply_opts,
+        interactive: p.on("interactive") && backend != Some("apply"),
         empty,
         keep_empty: p.on("keep-empty"),
         allow_empty_message: p.on("allow-empty-message"),
@@ -214,22 +225,26 @@ fn options(p: &Parsed) -> CliResult<Opts> {
     if o.verbose {
         o.stat = true;
     }
-    if o.apply && (o.interactive || !o.exec.is_empty() || o.update_refs) {
-        let other = if o.interactive {
-            "--interactive"
-        } else if !o.exec.is_empty() {
-            "--exec"
-        } else {
-            "--update-refs"
-        };
-        return Err(CliError::fatal(format!(
-            "apply options and merge options cannot be used together\nhint: {other} is a merge option"
-        )));
-    }
-    if o.apply && p.on("merge") {
+    if apply_opts && (backend.is_some_and(|b| b != "apply") || !o.exec.is_empty()) {
         return Err(CliError::fatal(
             "apply options and merge options cannot be used together",
         ));
+    }
+    if o.apply {
+        // Pin 2.39.5: options that need the merge backend fail one by one;
+        // `--update-refs` is ignored by the apply backend.
+        for (on, name) in [
+            (!o.exec.is_empty(), "--exec"),
+            (o.keep_empty, "--keep-empty"),
+            (o.empty.is_some(), "--empty"),
+        ] {
+            if on {
+                return Err(CliError::fatal(format!(
+                    "{name} requires the merge backend"
+                )));
+            }
+        }
+        o.update_refs = false;
     }
     Ok(o)
 }

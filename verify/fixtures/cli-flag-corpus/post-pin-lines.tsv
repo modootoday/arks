@@ -1,0 +1,101 @@
+corpus	line	command	reason
+agent-tier-b	L039	format-patch --stdout -1	host-only DIFF: the default signature is the Git version; arks prints the pin version 2.39.5, host git 2.43 prints 2.43.0
+family-a3-helpers	L142	credential-cache -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-a3-helpers	L145	credential-cache--daemon -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-a3-tools	L044	difftool --bogus	host-only DIFF: pin 2.39.5 exits 255 with a single error line; host git 2.43 exits 129 with the diff usage
+family-a3-tools	L157	instaweb -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-a3-tools	L161	imap-send -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-commit	L1007	-C .git/side sparse-checkout check-rules	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1008	-C .git/side sparse-checkout check-rules --cone	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1009	-C .git/side sparse-checkout check-rules -z --rules-file=a.txt	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1010	-C .git/side sparse-checkout check-rules --rules-file=a.txt	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1011	-C .git/side sparse-checkout check-rules --no-cone --rules-file=a.txt	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L318	branch --omit-empty --format=''	branch --omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L319	branch --no-omit-empty	branch --[no-]omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L364	tag --omit-empty --format=''	tag --omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L511	stash store -m stored HEAD	host-only DIFF: pin 2.39.5 stores any resolvable object; the stash-like commit check arrived in Git 2.43
+family-commit	L512	stash store HEAD	host-only DIFF: pin 2.39.5 stores any resolvable object; the stash-like commit check arrived in Git 2.43
+family-commit	L605	worktree add --orphan -b orph wt1	worktree add --orphan: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L606	worktree add --orphan wt1	worktree add --orphan: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L749	-C .git/side rebase --apply -i topic	host-only DIFF: pin 2.39.5 lets the last backend option win; Git 2.40 rejects --apply with --interactive
+family-commit	L847	-C .git/side format-patch --stdout --signature=S -1 --cover-letter --cover-from-description=subject --description-file=b.txt topic	format-patch --description-file: added in git 2.43.0 (pin 2.39.5: unrecognized argument, exit 128)
+family-commit	L900	-C .git/side am -n .git/topic.mbox	am -n/--no-verify: added in git 2.40.0 (pin 2.39.5: unknown switch, exit 129)
+family-commit	L901	-C .git/side am --no-verify .git/topic.mbox	am --no-verify: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L902	-C .git/side am --verify .git/topic.mbox	am --verify: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L930	notes add --no-separator -m a -m b	notes add --[no-]separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L931	notes add --separator=-- -m a -m b	notes add --separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L932	notes add --no-stripspace -m '  a  '	notes add --[no-]stripspace: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L933	notes add --stripspace -m '  a  '	notes add --stripspace: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L956	notes append --separator=-- -m sep	notes append --separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L957	notes append --no-separator -m sep	notes append --[no-]separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L011	for-each-ref --format='[%(describe)]' refs/heads/main	for-each-ref %(describe[:<options>]) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L012	for-each-ref --format='[%(ahead-behind:main)]' refs/heads	for-each-ref %(ahead-behind:<ref>) atom: added in git 2.41.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L021	for-each-ref --format='[%(authoremail:mailmap)]' refs/heads/main	for-each-ref %(authoremail:mailmap): added in git 2.43.0 (pin 2.39.5: unrecognized email option, exit 128)
+family-gap-blame	L026	for-each-ref --format='[%(signature)]' refs/heads/main	for-each-ref %(signature) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L028	for-each-ref --format='[%(authorname:mailmap)|%(authoremail:trim,localpart)]' refs/heads/main	for-each-ref mailmap option and combined email options (trim,localpart): added in git 2.43.0 (pin 2.39.5: unrecognized email option, exit 128)
+family-gap-blame	L042	for-each-ref --omit-empty --format='%(if)%(upstream)%(then)%(refname)%(end)'	for-each-ref --omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L043	for-each-ref --exclude=refs/heads/f* refs/heads	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L044	for-each-ref --exclude=refs/tags	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L045	for-each-ref --stdin	for-each-ref --stdin: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L125	for-each-ref --format='%(*describe)' refs/tags/v1	for-each-ref %(describe[:<options>]) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L126	for-each-ref --format='%(describe:tags)|%(describe:abbrev=4)|%(describe:match=v*)|%(describe:exclude=v*)' refs/heads	for-each-ref %(describe[:<options>]) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L129	for-each-ref --exclude refs/heads/main --exclude refs/tags/v1	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L130	for-each-ref --exclude='refs/heads/*' --no-exclude refs/heads	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L131	for-each-ref --ignore-case --exclude='REFS/HEADS/*'	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L133	for-each-ref --stdin refs/heads	for-each-ref --stdin: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L134	for-each-ref --format='%(ahead-behind:feature)' refs/heads	for-each-ref %(ahead-behind:<ref>) atom: added in git 2.41.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-pack	L077	-C .git/side merge-tree -X ours main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L078	-C .git/side merge-tree -X theirs main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L079	-C .git/side merge-tree --strategy-option=ours main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L080	-C .git/side merge-tree -Xignore-space-change main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L081	-C .git/side merge-tree --no-strategy-option main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L082	-C .git/side merge-tree -Xbogus main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L083	-C .git/side merge-tree --merge-base=base main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L084	-C .git/side merge-tree --merge-base base main topic	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L085	-C .git/side merge-tree --merge-base=nosuch main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L086	-C .git/side merge-tree '--merge-base=base^{tree}' main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L087	-C .git/side merge-tree --no-merge-base main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L211	rerere -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L268	pack-objects --non-empty --revs --filter=blob:none .git/x	pack-objects --filter without --stdout: allowed since git 2.43.0 (pin 2.39.5: fatal, exit 128)
+family-gap-pack	L270	pack-objects --non-empty --revs --filter=tree:0 .git/x	pack-objects --filter without --stdout: allowed since git 2.43.0 (pin 2.39.5: fatal, exit 128)
+family-gap-pack	L314	commit-graph -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L315	commit-graph write -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L316	commit-graph verify -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L336	multi-pack-index -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L337	multi-pack-index write -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L338	multi-pack-index verify -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L339	multi-pack-index expire -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-pack	L340	multi-pack-index repack -h	host-only DIFF: -h option rows: the --[no-] marker arrived in Git 2.43; arks prints the pin 2.39.5 rows
+family-gap-range-diff	L089	-C .git/rd range-diff -s --stat base old new	host-only DIFF: pin 2.39.5 -s silences --stat as well; Git 2.42 made -s clear only earlier formats
+family-gap-range-diff	L096	-C .git/rd range-diff --abbrev=10 base old new	range-diff --abbrev=<n>: added in git 2.40.0 (pin 2.39.5 accepts it but keeps 7-digit headers)
+family-history	L043	diff --no-prefix --default-prefix t0 HEAD	diff --default-prefix: added in git 2.41.0 (pin 2.39.5: usage, exit 129)
+family-history	L300	log --dd --oneline -1 HEAD~1	log --dd: added in git 2.43.0 (pin 2.39.5: unrecognized argument, exit 128)
+family-history	L360	rev-list --exclude-hidden=fetch --all	rev-list --exclude-hidden=fetch: the fetch section was added in git 2.41.0 (pin 2.39.5: unsupported section, exit 128)
+family-history	L418	cat-file -Z --batch-all-objects --batch-check	cat-file -Z: added in git 2.42.0 (pin 2.39.5: unknown switch, exit 129)
+family-history	L535	ls-files --format='%(objectmode) %(objecttype) %(objectsize) %(objectsize:padded)|%(stage) %(eolinfo:index) %(eolinfo:worktree) %(eolattr) %(path)'	ls-files --format %(objecttype)/%(objectsize): added in git 2.42.0 (pin 2.39.5: bad format, exit 128)
+family-history	L640	describe --no-exact-match	host-only DIFF: pin 2.39.5 treats --no-exact-match as --candidates=0 (exact match); Git 2.42 changed it to restore the default
+family-plumbing	L138	show-ref --exists refs/heads/main	show-ref --exists: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L139	show-ref --exists refs/heads/nope	show-ref --exists: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L204	update-index --show-index-version	update-index --show-index-version: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L350	var -l	host-only DIFF: pin 2.39.5 lists only its own logical variables; host git 2.43 also lists GIT_SEQUENCE_EDITOR (2.40) and GIT_SHELL_PATH, GIT_ATTR_*, GIT_CONFIG_* (2.42)
+family-plumbing	L354	var GIT_SEQUENCE_EDITOR	var GIT_SEQUENCE_EDITOR: added in git 2.40.0 (pin 2.39.5: usage, exit 129)
+family-plumbing	L357	var GIT_SHELL_PATH	var GIT_SHELL_PATH: added in git 2.42.0 (pin 2.39.5: usage, exit 129)
+family-plumbing	L365	check-attr --source HEAD -a src/a.txt	check-attr --source: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L366	check-attr --source=HEAD~1 label src/b.txt	check-attr --source: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L399	hook run --to-stdin=README.md --ignore-missing x -- a b	hook run --to-stdin: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L449	pack-refs --include 'refs/heads/*'	pack-refs --include: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L450	pack-refs --include='refs/heads/*' --exclude 'refs/heads/f*'	pack-refs --include/--exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L451	pack-refs --exclude='refs/tags/t*'	pack-refs --exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L452	pack-refs --all --exclude 'refs/heads/*'	pack-refs --exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L453	pack-refs --include 'refs/heads/*' --no-include	pack-refs --[no-]include: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L455	pack-refs --no-exclude --all	pack-refs --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L470	merge-file -p --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt	merge-file --object-id: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L471	merge-file --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt	merge-file --object-id: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L472	merge-file --object-id --no-object-id -p src/a.txt README.md src/b.txt	merge-file --[no-]object-id: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L485	repack -d --cruft --cruft-expiration=2.weeks.ago --max-cruft-size=1m	repack --max-cruft-size: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L496	gc --cruft --max-cruft-size=1m --no-quiet	gc --max-cruft-size: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L036	fetch --multiple origin origin	host-only DIFF: pin 2.39.5 fetches a remote named twice twice; later Git deduplicates the remote list
+family-remote	L088	fetch --porcelain origin	fetch --porcelain: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L149	push --branches origin	push --branches: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L293	archive --format=tar --mtime=2020-01-01 -o out.tar HEAD	archive --mtime: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L432	-C .git/sm/super submodule set-url nosuch ../other	host-only DIFF: pin 2.39.5 writes an unmapped path's section and exits 0; host git 2.43 refuses with exit 128

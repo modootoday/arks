@@ -25,9 +25,9 @@ const OPTS: &[OptDef] = &[
 
 const USAGE: &str = "usage: git imap-send [-v] [-q] [--[no-]curl] < <mbox>
 
-    -v, --[no-]verbose    be more verbose
-    -q, --[no-]quiet      be more quiet
-    --[no-]curl           use libcurl to communicate with the IMAP server
+    -v, --verbose         be more verbose
+    -q, --quiet           be more quiet
+    --curl                use libcurl to communicate with the IMAP server
 ";
 
 struct Server {

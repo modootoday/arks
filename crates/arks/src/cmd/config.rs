@@ -1104,10 +1104,14 @@ fn colorbool(entries: &[Ent], pos: &[String]) -> CliResult<()> {
     let raw = get(&pos[0])
         .or_else(|| get("color.ui"))
         .unwrap_or_else(|| "auto".into());
-    let tty = match pos.get(1) {
-        Some(v) => bool_value(Some(v)).unwrap_or(false),
-        None => stdout_is_tty(),
-    };
+    // `auto` also needs a capable terminal: an unset or `dumb` TERM means no
+    // color even when the caller says stdout is a tty (observed pin 2.39.5).
+    let capable_term = std::env::var("TERM").is_ok_and(|t| !t.is_empty() && t != "dumb");
+    let tty = capable_term
+        && match pos.get(1) {
+            Some(v) => bool_value(Some(v)).unwrap_or(false),
+            None => stdout_is_tty(),
+        };
     let want = match raw.to_ascii_lowercase().as_str() {
         "always" => true,
         "never" => false,

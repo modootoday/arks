@@ -18,8 +18,8 @@ use arks_remote::Credential;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-const CACHE_USAGE: &str = "usage: git credential-cache [<options>] <action>\n\n    --[no-]timeout <n>    number of seconds to cache credentials\n    --[no-]socket <path>  path of cache-daemon socket\n";
-const DAEMON_USAGE: &str = "usage: git credential-cache--daemon [--debug] <socket-path>\n\n    --[no-]debug          print debugging messages to stderr\n";
+const CACHE_USAGE: &str = "usage: git credential-cache [<options>] <action>\n\n    --timeout <n>         number of seconds to cache credentials\n    --socket <path>       path of cache-daemon socket\n";
+const DAEMON_USAGE: &str = "usage: git credential-cache--daemon [--debug] <socket-path>\n\n    --debug               print debugging messages to stderr\n";
 
 fn help_on_stdout(usage: &str) -> CliError {
     print!("{usage}");

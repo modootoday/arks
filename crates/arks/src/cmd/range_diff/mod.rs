@@ -152,9 +152,10 @@ pub fn cmd_range_diff(args: &[String]) -> CliResult<()> {
             || diff.dirstat.is_some()
             || diff.summary
             || diff.check;
+        // Pin 2.39.5: `-s` / `--no-patch` silences every output format, a
+        // `--stat` (or `--raw`, ...) beside it included (Git 2.42 changed that).
         if diff.no_output {
             diff.patch = false;
-            diff.no_output = !others;
         } else if !others {
             diff.patch = true;
         }

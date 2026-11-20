@@ -21,6 +21,10 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
+/// Default `-- ` signature and MIME boundary suffix: the peer Git version arks is pinned to. git-format-patch(1)
+/// `--signature`: when omitted the signature defaults to the Git version number (pin: `2.39.5`).
+const SIGNATURE_VERSION: &str = "2.39.5";
+
 #[derive(Default)]
 struct Opts {
     numbered: Option<bool>,
@@ -148,7 +152,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
             Some(f) => Some(fs::read_to_string(&f).map_err(|e| {
                 CliError::fatal(format!("unable to read signature file '{f}': {e}"))
             })?),
-            None => Some(env!("CARGO_PKG_VERSION").to_string()),
+            None => Some(SIGNATURE_VERSION.to_string()),
         },
     };
     if let Some(n) = p.value("start-number") {
@@ -693,8 +697,6 @@ fn extra_headers(o: &Opts) -> String {
     s
 }
 
-const BOUNDARY: &str = concat!("------------", env!("CARGO_PKG_VERSION"));
-
 #[allow(clippy::too_many_arguments)]
 fn render_patch(
     repo: &Repository,
@@ -779,7 +781,7 @@ fn render_patch(
             let b = boundary
                 .clone()
                 .map(|x| format!("------------{x}"))
-                .unwrap_or_else(|| BOUNDARY.to_string());
+                .unwrap_or_else(|| format!("------------{SIGNATURE_VERSION}"));
             out.push_str("MIME-Version: 1.0\n");
             out.push_str(&format!(
                 "Content-Type: multipart/mixed; boundary=\"{b}\"\n\n"

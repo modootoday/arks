@@ -31,7 +31,6 @@ use shell::FilterShell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
 
 const USAGE: &str = "usage: git filter-branch [--setup <command>] [--subdirectory-filter <directory>] [--env-filter <command>]
 \t[--tree-filter <command>] [--index-filter <command>]
@@ -424,22 +423,27 @@ impl<'a> Rewrite<'a> {
         }
         println!();
         let mut sh = self.start_shell()?;
-        let start = Instant::now();
-        let n = list.len();
+        // Progress as observed from the pin: whole elapsed seconds; the count
+        // and estimate are re-sampled only after `next_sample` commits (every
+        // commit while no second has passed), so a line can repeat the
+        // previous sample. The seconds are elapsed time (not epoch-second
+        // boundaries) so a sub-second run always reports 0.
+        let start = std::time::Instant::now();
+        let n = list.len() as u64;
+        let (mut next_sample, mut shown, mut secs, mut remaining) = (0u64, 0u64, 0u64, 0u64);
         for (i, w) in list.iter().enumerate() {
-            let secs = start.elapsed().as_secs();
-            let remaining = if i == 0 {
-                0
-            } else {
-                secs * (n - i) as u64 / i as u64
-            };
+            let count = i as u64 + 1;
+            if count > next_sample {
+                shown = count;
+                secs = start.elapsed().as_secs();
+                remaining = (n - count) * secs / count;
+                next_sample = ((secs + 1) * count)
+                    .checked_div(secs)
+                    .unwrap_or(next_sample + 1);
+            }
             print!(
-                "\rRewrite {} ({}/{}) ({} seconds passed, remaining {} predicted)    ",
+                "\rRewrite {} ({shown}/{n}) ({secs} seconds passed, remaining {remaining} predicted)    ",
                 w.oid.to_hex(),
-                i + 1,
-                n,
-                secs,
-                remaining
             );
             let parents = if paths.is_empty() {
                 w.commit.parents.clone()

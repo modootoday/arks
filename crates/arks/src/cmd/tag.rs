@@ -429,7 +429,9 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
             "--no-all" => all_refs = false,
             "--no-always" => always = false,
             "--no-long" => long = false,
-            "--no-exact-match" => exact = false,
+            // Pin 2.39.5: `--exact-match` is `--candidates=0`, and its
+            // negation sets the same 0 (Git 2.42 made it restore the default).
+            "--no-exact-match" => exact = true,
             "--no-first-parent" => first_parent = false,
             "--no-contains" => contains = false,
             "--no-match" => matches.clear(),
@@ -443,15 +445,12 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
                     CliError::Exit(129, "error: option `candidates' requires a value".into())
                 })?;
                 i += 1;
-                if v.parse::<usize>().map_err(|_| {
+                exact = v.parse::<usize>().map_err(|_| {
                     CliError::Exit(
                         129,
                         "error: option `candidates' expects a numerical value".into(),
                     )
-                })? == 0
-                {
-                    exact = true;
-                }
+                })? == 0;
             }
             "--match" | "--exclude" => {
                 let v = args.get(i).cloned().ok_or_else(|| {
@@ -470,15 +469,12 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
                 } else if a.starts_with("--broken=") {
                     dirty_mark = Some("-dirty".into());
                 } else if let Some(n) = a.strip_prefix("--candidates=") {
-                    if n.parse::<usize>().map_err(|_| {
+                    exact = n.parse::<usize>().map_err(|_| {
                         CliError::Exit(
                             129,
                             "error: option `candidates' expects a numerical value".into(),
                         )
-                    })? == 0
-                    {
-                        exact = true;
-                    }
+                    })? == 0;
                 } else if let Some(n) = a.strip_prefix("--abbrev=") {
                     abbrev = n
                         .parse()
