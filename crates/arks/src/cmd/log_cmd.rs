@@ -82,6 +82,13 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         None => (args.to_vec(), Vec::new()),
     };
     let mut head = head;
+    // `--oneline` implies `--abbrev-commit`; the later of it and
+    // `--no-abbrev-commit` wins.
+    let last = |f: &str| head.iter().rposition(|a| a == f);
+    let oneline_abbrevs = match (last("--oneline"), last("--no-abbrev-commit")) {
+        (Some(a), Some(b)) => a > b,
+        _ => false,
+    };
     let pretty = take_pretty(&mut head)?;
     let repo = open_repo().ok();
     let mut diff = DiffOptions::default();
@@ -127,7 +134,6 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         }
     }
     let mut a = Args::new(&head);
-    let mut positional = Vec::new();
     while a.i < head.len() {
         let cur = a.cur().to_string();
         let before = (o.diff.any_format(), o.diff.no_output);
@@ -151,12 +157,29 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
                 "{cmd}: unsupported option: {cur}"
             )));
         }
-        positional.push(cur);
+        // Pushed in order so `--not` negates only what follows it.
+        o.rev.push_rev(&cur);
         a.i += 1;
     }
     o.diff.finish();
-    for p in positional {
-        o.rev.push_rev(&p);
+    if oneline_abbrevs {
+        o.abbrev_commit = Some(true);
+    }
+    // `--abbrev` is a diff option too; it also sets the commit-id length.
+    if o.diff.abbrev_given {
+        o.abbrev = match o.diff.abbrev {
+            Some(0) => 40,
+            Some(n) => n.clamp(4, 40),
+            None => 7,
+        };
+    }
+    // In log, `-c` / `--cc` without a format imply `-p`.
+    if cmd != "show"
+        && matches!(o.merges, Some(DiffMerges::Combined | DiffMerges::Dense))
+        && !o.diff_given
+    {
+        o.diff.patch = true;
+        o.diff_given = true;
     }
     Ok((o, paths))
 }
@@ -188,8 +211,15 @@ fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
         "--log-size" => o.log_size = true,
         "--left-right" => o.rev.left_right = true,
         "-m" => o.merges = Some(DiffMerges::Separate),
-        "-c" => o.merges = Some(DiffMerges::Combined),
-        "--cc" => o.merges = Some(DiffMerges::Dense),
+        // `-c` / `--cc` reset an earlier `--combined-all-paths`.
+        "-c" => {
+            o.merges = Some(DiffMerges::Combined);
+            o.combined_all_paths = false;
+        }
+        "--cc" => {
+            o.merges = Some(DiffMerges::Dense);
+            o.combined_all_paths = false;
+        }
         "--dd" => {
             o.merges = Some(DiffMerges::FirstParent);
             o.diff.patch = true;
@@ -494,12 +524,27 @@ impl HeaderFmt<'_> {
         s
     }
 
+    /// `commit <id>` line, then `log size <n>` (bytes of the rest of the
+    /// record) when `--log-size` is on, then the rest.
+    fn with_commit_line(
+        &self,
+        oid: &Oid,
+        c: &Commit,
+        mark: &str,
+        from: Option<&Oid>,
+        rest: String,
+    ) -> String {
+        let mut s = format!("commit {}\n", self.id_line(oid, c, mark, from, false));
+        if self.log_size {
+            s.push_str(&format!("log size {}\n", rest.len()));
+        }
+        s.push_str(&rest);
+        s
+    }
+
     fn header(&self, oid: &Oid, c: &Commit, mark: &str, from: Option<&Oid>) -> String {
         let commit_line = || {
-            let mut s = format!("commit {}\n", self.id_line(oid, c, mark, from, false));
-            if self.log_size {
-                s.push_str(&format!("log size {}\n", c.message.len()));
-            }
+            let mut s = String::new();
             if c.parents.len() > 1 && !matches!(self.pretty, Pretty::Raw) {
                 let ps: Vec<String> = c
                     .parents
@@ -517,7 +562,7 @@ impl HeaderFmt<'_> {
                 s.push_str(&format!("Date:   {}\n", self.date.format(&c.author)));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Short => {
                 let mut s = commit_line();
@@ -526,7 +571,7 @@ impl HeaderFmt<'_> {
                 s.push_str(&indented_message(&crate::cmd::log_format::subject_line(
                     &c.message,
                 )));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Full => {
                 let mut s = commit_line();
@@ -534,7 +579,7 @@ impl HeaderFmt<'_> {
                 s.push_str(&self.person("Commit: ", &c.committer));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Fuller => {
                 let mut s = commit_line();
@@ -544,7 +589,7 @@ impl HeaderFmt<'_> {
                 s.push_str(&format!("CommitDate: {}\n", self.date.format(&c.committer)));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Raw => {
                 let mut s = format!("commit {}\n", self.id_line(oid, c, mark, from, false));
@@ -653,14 +698,19 @@ impl Printer<'_> {
         let empty = match diff {
             RecordDiff::None => true,
             RecordDiff::Pairs(p) => p.is_empty(),
-            RecordDiff::Combined(e, _) => e.is_empty(),
+            RecordDiff::Combined(e, _, _) => e.is_empty(),
         };
         if !d.any_format() || d.no_output || (empty && !force_sep) {
             return Ok(String::new());
         }
         let mut text = String::new();
-        if !matches!(self.opts.pretty, Pretty::Oneline) && !self.format_is_empty() {
-            if (d.stat || d.numstat || d.shortstat || d.dirstat.is_some() || d.summary)
+        let is_combined = matches!(diff, RecordDiff::Combined(..));
+        // Merges' combined output keeps the blank line even after --oneline.
+        if (is_combined || !matches!(self.opts.pretty, Pretty::Oneline)) && !self.format_is_empty()
+        {
+            text.push_str(&d.line_prefix);
+            if !is_combined
+                && (d.stat || d.numstat || d.shortstat || d.dirstat.is_some() || d.summary)
                 && d.patch
                 && !d.name_only
                 && !d.name_status
@@ -673,12 +723,14 @@ impl Printer<'_> {
         match diff {
             RecordDiff::None => {}
             RecordDiff::Pairs(p) => emit(&mut buf, self.content, d, EmitCtx::default(), p)?,
-            RecordDiff::Combined(e, mode) => combined::emit(
+            RecordDiff::Combined(e, mode, fp) => combined::emit(
                 &mut buf,
                 self.content,
                 d,
                 *mode,
                 self.opts.combined_all_paths,
+                EmitCtx::default(),
+                fp,
                 e,
             )?,
         }
@@ -799,7 +851,9 @@ impl Printer<'_> {
 enum RecordDiff {
     None,
     Pairs(Vec<Pair>),
-    Combined(Vec<combined::Entry>, combined::Mode),
+    /// Combined entries, mode, and the first-parent pairs that stat
+    /// formats describe.
+    Combined(Vec<combined::Entry>, combined::Mode, Vec<Pair>),
 }
 
 /// Diff of `c` against `parent` (root: the empty tree) through diffcore.
@@ -900,7 +954,8 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
     } else {
         DiffMerges::Off
     });
-    let wants_diff = opts.diff.any_format() && !opts.quiet;
+    // `-q` in log does not suppress diffs (only `show -q` does).
+    let wants_diff = opts.diff.any_format();
     let selects = opts.diff.pickaxe.is_some()
         || opts.diff.find_object.is_some()
         || opts.diff.diff_filter.is_some();
@@ -915,6 +970,30 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
             let pairs = diff_against(
                 &content,
                 &diff_filter_opts,
+                w.commit.parents.first(),
+                &w.commit,
+                &opts.rev.specs,
+            )?;
+            if !pairs.is_empty() {
+                keep.push(w);
+            }
+        }
+        list = keep;
+    }
+    // whatchanged hides commits without a diff (merges included) before
+    // `-n` / `--skip` count them.
+    if cmd == "whatchanged" && !opts.rev.walk_reflogs {
+        let mut keep = Vec::new();
+        for w in list.drain(..) {
+            if w.commit.parents.len() > 1 {
+                if merges != DiffMerges::Off {
+                    keep.push(w);
+                }
+                continue;
+            }
+            let pairs = diff_against(
+                &content,
+                &opts.diff,
                 w.commit.parents.first(),
                 &w.commit,
                 &opts.rev.specs,
@@ -1105,13 +1184,24 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
                         &w.oid,
                         &opts.rev.specs,
                     )?;
+                    let fp = if combined::wants_stat(&opts.diff) {
+                        diff_against(
+                            &content,
+                            &opts.diff,
+                            w.commit.parents.first(),
+                            &w.commit,
+                            &opts.rev.specs,
+                        )?
+                    } else {
+                        Vec::new()
+                    };
                     printer.commit(
                         &mut out,
                         &w.oid,
                         &w.commit,
                         &mark,
                         None,
-                        &RecordDiff::Combined(e, mode),
+                        &RecordDiff::Combined(e, mode, fp),
                         false,
                     )?;
                 }
@@ -1364,17 +1454,26 @@ fn show_commit(
         }
         DiffMerges::Combined | DiffMerges::Dense => {
             // Stat formats of a merge show the first-parent diff.
-            if d.stat || d.numstat || d.shortstat || d.dirstat.is_some() || d.summary {
-                let p = diff_against(content, d, c.parents.first(), c, specs)?;
-                return printer.commit(out, oid, c, "", None, &RecordDiff::Pairs(p), true);
-            }
+            let fp = if combined::wants_stat(d) {
+                diff_against(content, d, c.parents.first(), c, specs)?
+            } else {
+                Vec::new()
+            };
             let mode = if merges == DiffMerges::Dense {
                 combined::Mode::Dense
             } else {
                 combined::Mode::Combined
             };
             let e = combined::entries(content, d, &c.parents, oid, specs)?;
-            printer.commit(out, oid, c, "", None, &RecordDiff::Combined(e, mode), true)
+            printer.commit(
+                out,
+                oid,
+                c,
+                "",
+                None,
+                &RecordDiff::Combined(e, mode, fp),
+                true,
+            )
         }
     }
 }

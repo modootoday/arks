@@ -111,7 +111,87 @@ fn date(v: &str) -> CliResult<i64> {
     }
     crate::cmd::shared::parse_git_date(v)
         .map(|(t, _)| t)
+        .or_else(|| approxidate(v, now()))
         .ok_or_else(|| CliError::fatal(format!("unsupported date: {v}")))
+}
+
+fn now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
+}
+
+/// Days since 1970-01-01 of a proleptic Gregorian date.
+fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let mp = (m + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
+}
+
+/// The human date forms the git documentation shows for `--since` /
+/// `--until` beyond strict ISO 8601: a date alone (`2023-11-15`,
+/// `2023.11.15`, `2023/11/15`, `11/15/2023`, `Nov 15 2023`), which keeps
+/// the current time of day, and relative forms (`3 days ago`,
+/// `3.days.ago`, `yesterday`, `now`). Times are UTC.
+fn approxidate(v: &str, now: i64) -> Option<i64> {
+    let v = v.trim().to_ascii_lowercase();
+    let words: Vec<&str> = v
+        .split(|c: char| c == '.' || c == ' ' || c == ',')
+        .filter(|w| !w.is_empty())
+        .collect();
+    let unit = |w: &str| -> Option<i64> {
+        let w = w.strip_suffix('s').unwrap_or(w);
+        Some(match w {
+            "second" | "sec" => 1,
+            "minute" | "min" => 60,
+            "hour" => 3600,
+            "day" => 86_400,
+            "week" => 7 * 86_400,
+            "month" => 30 * 86_400,
+            "year" => 365 * 86_400,
+            _ => return None,
+        })
+    };
+    match words.as_slice() {
+        ["now"] | ["today"] => return Some(now),
+        ["yesterday"] => return Some(now - 86_400),
+        [n, u, "ago"] => return Some(now - n.parse::<i64>().ok()? * unit(u)?),
+        [u, "ago"] => return Some(now - unit(u)?),
+        _ => {}
+    }
+    const MONTHS: [&str; 12] = [
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+    ];
+    let month = |w: &str| {
+        MONTHS
+            .iter()
+            .position(|m| w.starts_with(m))
+            .map(|i| i as i64 + 1)
+    };
+    let num = |w: &str| w.parse::<i64>().ok();
+    let (y, m, d) = match words.as_slice() {
+        [one] => {
+            let parts: Vec<i64> = one.split(['-', '/']).map(num).collect::<Option<Vec<_>>>()?;
+            match parts.as_slice() {
+                [y, m, d] if *y > 31 => (*y, *m, *d),
+                [m, d, y] if *y > 31 => (*y, *m, *d),
+                _ => return None,
+            }
+        }
+        [y, m, d] if num(y).is_some_and(|y| y > 31) => (num(y)?, num(m)?, num(d)?),
+        [mo, d, y] if month(mo).is_some() => (num(y)?, month(mo)?, num(d)?),
+        [d, mo, y] if month(mo).is_some() => (num(y)?, month(mo)?, num(d)?),
+        _ => return None,
+    };
+    if !(1..=12).contains(&m) || !(1..=31).contains(&d) {
+        return None;
+    }
+    Some(days_from_civil(y, m, d) * 86_400 + now.rem_euclid(86_400))
 }
 
 impl RevOpts {
@@ -568,7 +648,7 @@ pub fn resolve_tips(repo: &Repository, o: &RevOpts, default: Option<&str>) -> Cl
         }
         any_positive = true;
     }
-    if !any_positive && !o.has_ref_selection() && !o.stdin {
+    if !any_positive && !o.has_ref_selection() {
         if let Some(d) = default {
             if let Ok(h) = resolve_rev(repo, d) {
                 if let Some(c) = peel_commit(repo, &h)? {
@@ -1070,4 +1150,31 @@ pub fn walk_reflogs(repo: &Repository, o: &RevOpts) -> CliResult<Vec<Walked>> {
         .skip(o.skip)
         .take(o.max_count.unwrap_or(usize::MAX))
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn approxidate_forms() {
+        // 2026-11-20 00:58:04 UTC
+        let now = 1_795_222_684;
+        let tod = now % 86_400;
+        let day = days_from_civil(2023, 11, 15) * 86_400;
+        assert_eq!(day, 1_700_006_400);
+        for v in [
+            "2023-11-15",
+            "2023.11.15",
+            "2023/11/15",
+            "11/15/2023",
+            "Nov 15 2023",
+        ] {
+            assert_eq!(approxidate(v, now), Some(day + tod), "{v}");
+        }
+        assert_eq!(approxidate("3 days ago", now), Some(now - 3 * 86_400));
+        assert_eq!(approxidate("3.days.ago", now), Some(now - 3 * 86_400));
+        assert_eq!(approxidate("yesterday", now), Some(now - 86_400));
+        assert_eq!(approxidate("bogus", now), None);
+    }
 }

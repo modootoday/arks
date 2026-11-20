@@ -278,7 +278,6 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         ..Default::default()
     };
     let mut a = Args::new(&head);
-    let mut positional = Vec::new();
     while a.i < head.len() {
         let cur = a.cur().to_string();
         if take_out(&mut out, &mut a)? || rev.take(&mut a)? {
@@ -290,11 +289,9 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
                 "unsupported option: {cur}"
             )));
         }
-        positional.push(cur);
+        // Pushed in order so `--not` negates only what follows it.
+        rev.push_rev(&cur);
         a.i += 1;
-    }
-    for p in positional {
-        rev.push_rev(&p);
     }
     let repo = open_repo()?;
     rev.specs = paths;
