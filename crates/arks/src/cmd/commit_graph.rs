@@ -153,9 +153,45 @@ const WRITE_DEFS: &[OptDef] = &[
     o("expire-time", ' ', Req, false),
 ];
 
+const OBJDIR_HELP: &str = "    --[no-]object-dir <dir>
+                          the object directory to store the graph
+";
+
+const VERIFY_HELP: &str =
+    "    --[no-]shallow        if the commit-graph is split, only verify the tip file
+    --[no-]progress       force progress reporting
+";
+
+const WRITE_HELP: &str = "    --[no-]reachable      start walk at all refs
+    --[no-]stdin-packs    scan pack-indexes listed by stdin for commits
+    --[no-]stdin-commits  start walk at commits listed by stdin
+    --[no-]append         include all commits already in the commit-graph file
+    --[no-]changed-paths  enable computation for changed paths
+    --split[=...]         allow writing an incremental commit-graph file
+    --[no-]max-commits <n>
+                          maximum number of commits in a non-base split commit-graph
+    --[no-]size-multiple <n>
+                          maximum ratio between two levels of a split commit-graph
+    --[no-]expire-time <expiry-date>
+                          only expire files older than a given date-time
+    --[no-]max-new-filters ...
+                          maximum number of changed-path Bloom filters to compute
+    --[no-]progress       force progress reporting
+";
+
+/// Usage line plus the option list of a subcommand.
+fn sub_usage(usage: &str) -> String {
+    let help = if usage == USAGE_VERIFY {
+        VERIFY_HELP
+    } else {
+        WRITE_HELP
+    };
+    format!("{usage}\n\n{OBJDIR_HELP}{help}")
+}
+
 fn sub_help(args: &[String], usage: &str) -> CliResult<()> {
     if args.len() == 1 && args[0] == "-h" {
-        println!("{usage}");
+        println!("{}", sub_usage(usage));
         return Err(CliError::silent(129));
     }
     Ok(())
@@ -165,7 +201,7 @@ fn verify_cmd(args: &[String], obj_dir: Option<String>) -> CliResult<()> {
     sub_help(args, USAGE_VERIFY)?;
     let p = parse("commit-graph verify", args, VERIFY_DEFS, Mode::default())?;
     if !p.args().is_empty() {
-        return Err(CliError::Exit(129, USAGE_VERIFY.to_string()));
+        return Err(CliError::Exit(129, sub_usage(USAGE_VERIFY)));
     }
     let repo = open_repo()?;
     let dir = object_dir(&repo, p.value("object-dir").or(obj_dir).as_deref())?;
@@ -445,7 +481,7 @@ fn write_cmd(args: &[String], obj_dir: Option<String>) -> CliResult<()> {
     sub_help(args, USAGE_WRITE)?;
     let p = parse("commit-graph write", args, WRITE_DEFS, Mode::default())?;
     if !p.args().is_empty() {
-        return Err(CliError::Exit(129, USAGE_WRITE.to_string()));
+        return Err(CliError::Exit(129, sub_usage(USAGE_WRITE)));
     }
     let sources = ["reachable", "stdin-commits", "stdin-packs"]
         .iter()
