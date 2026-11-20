@@ -87,6 +87,9 @@ pub struct RevOpts {
     pub simplify_merges: bool,
     pub simplify_by_decoration: bool,
     pub show_pulls: bool,
+    /// Parent rewriting is on (`--parents`, `--children`, `--graph`,
+    /// `--simplify-merges`): with `--full-history` merges always stay.
+    pub rewrite: bool,
     pub ancestry_path: Option<Vec<String>>,
     pub remove_empty: bool,
     pub no_walk: Option<bool>,
@@ -231,8 +234,17 @@ impl RevOpts {
             "--simplify-merges" => {
                 self.simplify_merges = true;
                 self.full_history = true;
+                self.rewrite = true;
             }
-            "--simplify-by-decoration" => self.simplify_by_decoration = true,
+            // Decorated commits are the "changed" ones; the rest is
+            // simplified like --simplify-merges in topological order.
+            "--simplify-by-decoration" => {
+                self.simplify_by_decoration = true;
+                self.simplify_merges = true;
+                self.full_history = true;
+                self.rewrite = true;
+                self.order.get_or_insert(Order::Topo);
+            }
             "--show-pulls" => self.show_pulls = true,
             "--ancestry-path" => {
                 self.ancestry_path.get_or_insert_with(Vec::new);
@@ -761,6 +773,7 @@ fn raw_walk(
     include: &[Oid],
     hidden: &HashSet<Oid>,
     stop_at: &HashSet<Oid>,
+    decorated: Option<&HashSet<Oid>>,
 ) -> CliResult<Vec<RawEntry>> {
     let specs = &o.specs;
     let mut tree_cache: HashMap<Oid, HashMap<String, Oid>> = HashMap::new();
@@ -802,23 +815,34 @@ fn raw_walk(
             c.parents.clone()
         };
         let mut show = true;
-        if !specs.is_empty() {
+        if let (true, Some(d)) = (specs.is_empty(), decorated) {
+            // Without paths, an undecorated commit is TREESAME to all
+            // parents and a decorated one differs from all of them.
+            let merge_kept = parents.len() > 1 && o.rewrite;
+            show = d.contains(&oid) || merge_kept || o.sparse;
+        } else if !specs.is_empty() {
             let mine = filtered(c.tree)?;
             if parents.is_empty() {
                 show = !mine.is_empty();
             } else {
                 let mut same = None;
-                let mut differs_all = true;
+                let mut all_same = true;
                 for p in &parents {
                     if filtered(read_commit(repo, p)?.tree)? == mine {
                         same.get_or_insert(*p);
-                        differs_all = false;
+                    } else {
+                        all_same = false;
                     }
                 }
+                let first_same = same.is_some() && same == parents.first().copied();
                 if o.full_history {
-                    show = differs_all || o.sparse;
+                    // A merge is hidden only when TREESAME to every parent;
+                    // with parent rewriting merges always stay.
+                    show = !all_same || o.sparse || (parents.len() > 1 && o.rewrite);
                 } else if let Some(p) = same {
-                    show = o.sparse;
+                    // `--show-pulls`: a merge that differs from its first
+                    // parent but brought the path in from another one.
+                    show = o.sparse || (o.show_pulls && parents.len() > 1 && !first_same);
                     parents = vec![p];
                 } else if o.remove_empty && mine.is_empty() {
                     parents.clear();
@@ -838,6 +862,131 @@ fn raw_walk(
         let _ = is_hidden;
     }
     Ok(out)
+}
+
+/// Parent rewriting for pathspec-limited walks: each parent that the
+/// simplification hid is replaced by its nearest shown ancestors (an
+/// excluded parent stays as it is), duplicates dropped.
+fn rewrite_parents(walked: &mut [RawEntry], hidden: &HashSet<Oid>) {
+    let info: HashMap<Oid, (Vec<Oid>, bool)> = walked
+        .iter()
+        .map(|(oid, _, ps, show)| (*oid, (ps.clone(), *show)))
+        .collect();
+    let mut memo: HashMap<Oid, Vec<Oid>> = HashMap::new();
+    // Resolve one commit to the shown commits that stand in for it.
+    let resolve = |start: Oid, memo: &mut HashMap<Oid, Vec<Oid>>| -> Vec<Oid> {
+        let mut stack = vec![(start, false)];
+        while let Some((x, expanded)) = stack.pop() {
+            if memo.contains_key(&x) {
+                continue;
+            }
+            let Some((ps, show)) = info.get(&x) else {
+                memo.insert(x, vec![x]);
+                continue;
+            };
+            if *show || hidden.contains(&x) {
+                memo.insert(x, vec![x]);
+                continue;
+            }
+            if !expanded {
+                stack.push((x, true));
+                for p in ps {
+                    if !memo.contains_key(p) {
+                        stack.push((*p, false));
+                    }
+                }
+                continue;
+            }
+            let mut v: Vec<Oid> = Vec::new();
+            for p in ps {
+                for r in memo.get(p).cloned().unwrap_or_default() {
+                    if !v.contains(&r) {
+                        v.push(r);
+                    }
+                }
+            }
+            memo.insert(x, v);
+        }
+        memo.get(&start).cloned().unwrap_or_default()
+    };
+    for (_, _, ps, show) in walked.iter_mut() {
+        if !*show {
+            continue;
+        }
+        let mut v: Vec<Oid> = Vec::new();
+        for p in ps.iter() {
+            for r in resolve(*p, &mut memo) {
+                if !v.contains(&r) {
+                    v.push(r);
+                }
+            }
+        }
+        *ps = v;
+    }
+}
+
+/// `--simplify-merges`: oldest first, drop rewritten parents that are
+/// ancestors of another parent; a merge left with one parent it is
+/// TREESAME to disappears and its children see that parent instead.
+fn simplify_merges(
+    repo: &Repository,
+    specs: &[String],
+    decorated: Option<&HashSet<Oid>>,
+    walked: &mut [RawEntry],
+) -> CliResult<()> {
+    let filtered = |tree: &Oid| -> CliResult<HashMap<String, Oid>> {
+        let mut all = HashMap::new();
+        arks_repo::flatten_tree(repo, tree, "", &mut all)?;
+        Ok(all
+            .into_iter()
+            .filter(|(k, _)| path_in_specs(k, specs))
+            .collect())
+    };
+    let mut replaced: HashMap<Oid, Vec<Oid>> = HashMap::new();
+    for i in (0..walked.len()).rev() {
+        let (oid, c, ps, show) = &mut walked[i];
+        if !*show {
+            continue;
+        }
+        let mut v: Vec<Oid> = Vec::new();
+        for p in ps.iter() {
+            for r in replaced.get(p).cloned().unwrap_or_else(|| vec![*p]) {
+                if !v.contains(&r) {
+                    v.push(r);
+                }
+            }
+        }
+        if v.len() > 1 {
+            let mut keep = Vec::new();
+            for p in &v {
+                let mut redundant = false;
+                for q in &v {
+                    if q != p && arks_repo::ancestor_set(repo, *q)?.contains(p) {
+                        redundant = true;
+                        break;
+                    }
+                }
+                if !redundant {
+                    keep.push(*p);
+                }
+            }
+            v = keep;
+        }
+        if c.parents.len() > 1 && v.len() <= 1 {
+            // Compare with the one parent left (none left: the first).
+            let base = v.first().copied().unwrap_or(c.parents[0]);
+            let same = match decorated {
+                Some(d) => !d.contains(oid),
+                None => filtered(&c.tree)? == filtered(&read_commit(repo, &base)?.tree)?,
+            };
+            if same {
+                *show = false;
+                replaced.insert(*oid, v.clone());
+            }
+        }
+        *ps = v;
+    }
+    Ok(())
 }
 
 /// Patch id of a commit's first-parent diff (for `--cherry-*`).
@@ -925,8 +1074,27 @@ pub fn walk(repo: &Repository, o: &RevOpts, tips: &Tips) -> CliResult<Vec<Walked
     for x in &tips.exclude {
         hidden.extend(walk_from(x)?);
     }
+    let decorated: Option<HashSet<Oid>> = if o.simplify_by_decoration {
+        let mut s = HashSet::new();
+        for (_, oid) in repo.refs().list_refs("refs/")? {
+            s.insert(peel_tags(repo, &oid)?);
+        }
+        if let Ok(h) = repo.head_oid() {
+            s.insert(h);
+        }
+        Some(s)
+    } else {
+        None
+    };
     let stop = HashSet::new();
-    let walked = raw_walk(repo, o, &tips.include, &hidden, &stop)?;
+    let mut walked = raw_walk(repo, o, &tips.include, &hidden, &stop, decorated.as_ref())?;
+    if !o.specs.is_empty() || decorated.is_some() {
+        rewrite_parents(&mut walked, &hidden);
+        if o.simplify_merges {
+            let dec = decorated.as_ref().filter(|_| o.specs.is_empty());
+            simplify_merges(repo, &o.specs, dec, &mut walked)?;
+        }
+    }
     let keep = message_filter(o);
     // Ancestry path: only commits that are descendants of the bottoms
     // (or of the given commits) and ancestors of the tips.
@@ -947,18 +1115,6 @@ pub fn walk(repo: &Repository, o: &RevOpts, tips: &Tips) -> CliResult<Vec<Walked
             Some(set)
         }
         None => None,
-    };
-    let decorated: Option<HashSet<Oid>> = if o.simplify_by_decoration {
-        let mut s = HashSet::new();
-        for (_, oid) in repo.refs().list_refs("refs/")? {
-            s.insert(peel_tags(repo, &oid)?);
-        }
-        if let Ok(h) = repo.head_oid() {
-            s.insert(h);
-        }
-        Some(s)
-    } else {
-        None
     };
     let mut list: Vec<Walked> = Vec::new();
     for (oid, c, parents, show) in &walked {
@@ -981,9 +1137,6 @@ pub fn walk(repo: &Repository, o: &RevOpts, tips: &Tips) -> CliResult<Vec<Walked
             continue;
         }
         if ancestry.as_ref().is_some_and(|s| !s.contains(oid)) {
-            continue;
-        }
-        if decorated.as_ref().is_some_and(|s| !s.contains(oid)) {
             continue;
         }
         let side = tips
