@@ -217,11 +217,10 @@ fn disk_size(repo: &Repository, oid: &Oid) -> u64 {
         .join("objects")
         .join(&hex[..2])
         .join(&hex[2..]);
-    if let Ok(m) = std::fs::metadata(&loose) {
-        return m.len();
-    }
+    // git looks objects up in packs before loose files (both may exist).
+    let loose_len = || std::fs::metadata(&loose).map(|m| m.len()).unwrap_or(0);
     let Ok(rd) = std::fs::read_dir(repo.common_dir().join("objects").join("pack")) else {
-        return 0;
+        return loose_len();
     };
     for e in rd.flatten() {
         let p = e.path();
@@ -250,7 +249,7 @@ fn disk_size(repo: &Repository, oid: &Oid) -> u64 {
             .unwrap_or(pack_len.saturating_sub(trailer));
         return next - me.offset;
     }
-    0
+    loose_len()
 }
 
 struct BatchCtx<'a> {

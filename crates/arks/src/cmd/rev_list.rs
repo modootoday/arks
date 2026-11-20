@@ -267,9 +267,7 @@ fn disk_size(repo: &Repository, oid: &Oid, packs: &[(Vec<(Oid, u64)>, u64)]) -> 
         .join("objects")
         .join(&hex[..2])
         .join(&hex[2..]);
-    if let Ok(m) = std::fs::metadata(&loose) {
-        return m.len();
-    }
+    // git looks objects up in packs before loose files (both may exist).
     for (entries, pack_len) in packs {
         if let Ok(i) = entries.binary_search_by(|(o, _)| o.as_bytes().cmp(oid.as_bytes())) {
             let off = entries[i].1;
@@ -282,7 +280,7 @@ fn disk_size(repo: &Repository, oid: &Oid, packs: &[(Vec<(Oid, u64)>, u64)]) -> 
             return next - off;
         }
     }
-    0
+    std::fs::metadata(&loose).map(|m| m.len()).unwrap_or(0)
 }
 
 fn load_packs(repo: &Repository) -> Vec<(Vec<(Oid, u64)>, u64)> {
