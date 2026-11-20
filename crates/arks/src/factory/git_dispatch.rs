@@ -205,9 +205,6 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "askyesno" => cmd::cmd_askyesno(args),
         "send-email" => cmd::cmd_send_email(args),
         "imap-send" => cmd::cmd_imap_send(args),
-        "filter-branch" => Err(CliError::NotImplemented(format!(
-            "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
-        ))),
         "gui" | "gui.tcl" => cmd::cmd_gui(args),
         "citool" => cmd::cmd_citool(args),
         "gui--askpass" => cmd::cmd_gui_askpass(args),
