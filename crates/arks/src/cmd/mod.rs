@@ -35,6 +35,7 @@ pub mod log_cmd;
 pub mod log_format;
 pub mod log_graph;
 pub mod ls_remote;
+pub mod ls_files;
 pub mod mailmap;
 pub mod maint;
 pub mod matrix_cmds;
@@ -106,6 +107,7 @@ pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show};
 pub use ls_remote::cmd_ls_remote;
 pub use log_cmd::{cmd_log, cmd_show, cmd_whatchanged};
+pub use ls_files::cmd_ls_files;
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
@@ -125,9 +127,9 @@ pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch::{cmd_am, cmd_format_patch};
 pub use patch_id::cmd_patch_id;
 pub use plumbing::{
-    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_ls_files,
-    cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_show_ref,
-    cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
+    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_ls_tree,
+    cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_show_ref, cmd_symbolic_ref,
+    cmd_update_index, cmd_write_tree,
 };
 pub use pull::cmd_pull;
 pub use push::cmd_push;
