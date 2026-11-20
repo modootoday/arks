@@ -26,6 +26,8 @@ pub(crate) mod search;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_gh;
 
 use crate::http_min::http_exchange;
 use serde_json::{Map, Value};
