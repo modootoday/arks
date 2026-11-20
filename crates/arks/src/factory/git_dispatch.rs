@@ -197,6 +197,14 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "difftool" => cmd::cmd_difftool(args),
         "difftool--helper" => cmd::cmd_difftool_helper(args),
         "mergetool" => cmd::cmd_mergetool(args),
+        "filter-branch" => cmd::cmd_filter_branch(args),
+        "quiltimport" => cmd::cmd_quiltimport(args),
+        "web--browse" => cmd::cmd_web_browse(args),
+        "instaweb" => cmd::cmd_instaweb(args),
+        "askpass" => cmd::cmd_askpass(args),
+        "askyesno" => cmd::cmd_askyesno(args),
+        "send-email" => cmd::cmd_send_email(args),
+        "imap-send" => cmd::cmd_imap_send(args),
         "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
