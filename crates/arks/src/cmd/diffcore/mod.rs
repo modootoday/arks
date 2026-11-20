@@ -8,6 +8,7 @@
 
 pub mod combined;
 pub mod emit;
+pub mod emit_rd;
 pub mod options;
 pub mod rename;
 pub mod sources;
@@ -204,6 +205,21 @@ impl<'r> Content<'r> {
 
     pub fn zero_hex(&self) -> String {
         "0".repeat(self.repo.oid_kind().hex_len())
+    }
+
+    /// A side holding in-memory `bytes` under `path` (no object name; raw
+    /// output shows zeros), such as `range-diff`'s patch texts.
+    pub fn virtual_side(&self, path: &str, bytes: Vec<u8>) -> Side {
+        let mut data = self.data.borrow_mut();
+        // A key no work-tree path can take.
+        let key = PathBuf::from(format!("\0virtual/{}/{path}", data.len()));
+        data.insert((None, Some(key.clone())), std::rc::Rc::new(bytes));
+        Side {
+            path: path.to_string(),
+            mode: 0o100644,
+            oid: None,
+            work: Some(key),
+        }
     }
 }
 

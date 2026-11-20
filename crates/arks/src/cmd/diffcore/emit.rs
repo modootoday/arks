@@ -16,11 +16,11 @@ use super::{Content, MODE_GITLINK, Pair, Side};
 use crate::error::CliResult;
 use std::io::Write;
 
-const RESET: &str = "\x1b[m";
+pub(super) const RESET: &str = "\x1b[m";
 const META: &str = "\x1b[1m";
-const FRAG: &str = "\x1b[36m";
-const OLD: &str = "\x1b[31m";
-const NEW: &str = "\x1b[32m";
+pub(super) const FRAG: &str = "\x1b[36m";
+pub(super) const OLD: &str = "\x1b[31m";
+pub(super) const NEW: &str = "\x1b[32m";
 const WS: &str = "\x1b[41m";
 
 /// Caller context that changes defaults between porcelain and plumbing.
@@ -28,6 +28,8 @@ const WS: &str = "\x1b[41m";
 pub struct EmitCtx {
     /// Raw output shows full object names unless `--abbrev` (plumbing).
     pub raw_full: bool,
+    /// `range-diff`'s diff of two patch texts (see [`super::emit_rd`]).
+    pub range_diff: Option<super::emit_rd::RangeDiffStyle>,
 }
 
 /// git `quote_c_style` for path output (core.quotePath=true).
@@ -94,10 +96,10 @@ pub fn pprint_rename(a: &str, b: &str) -> String {
     )
 }
 
-struct Out<'a, W: Write> {
-    w: &'a mut W,
-    prefix: &'a str,
-    color: bool,
+pub(super) struct Out<'a, W: Write> {
+    pub(super) w: &'a mut W,
+    pub(super) prefix: &'a str,
+    pub(super) color: bool,
 }
 
 impl<W: Write> Out<'_, W> {
@@ -113,7 +115,7 @@ impl<W: Write> Out<'_, W> {
         Ok(())
     }
 
-    fn raw(&mut self, b: &[u8]) -> CliResult<()> {
+    pub(super) fn raw(&mut self, b: &[u8]) -> CliResult<()> {
         self.w.write_all(b)?;
         Ok(())
     }
@@ -147,7 +149,7 @@ enum Stat {
 /// Both sides' bytes of a pair plus whether either side is binary.
 type PairBytes = (std::rc::Rc<Vec<u8>>, std::rc::Rc<Vec<u8>>, bool);
 
-fn pair_lines(c: &Content<'_>, o: &DiffOptions, p: &Pair) -> CliResult<PairBytes> {
+pub(super) fn pair_lines(c: &Content<'_>, o: &DiffOptions, p: &Pair) -> CliResult<PairBytes> {
     let empty = || std::rc::Rc::new(Vec::new());
     let a = match &p.old {
         Some(s) if !s.is_tree() => c.bytes(s)?,
@@ -179,9 +181,10 @@ fn pair_stat(c: &Content<'_>, o: &DiffOptions, p: &Pair) -> CliResult<Stat> {
     Ok(Stat::Lines(i, d))
 }
 
-/// Display name for stat / numstat rows.
+/// Display name for stat / numstat rows (a pair whose two paths differ,
+/// such as `range-diff`'s two patch texts, shows both like a rename).
 fn stat_name(p: &Pair) -> String {
-    if p.is_rename_or_copy() {
+    if p.is_rename_or_copy() || p.old_path() != p.path() {
         pprint_rename(&quote_path(p.old_path()), &quote_path(p.path()))
     } else {
         quote_path(p.path())
@@ -286,8 +289,12 @@ pub fn emit(
             out.line("", "")?;
         }
         for p in pairs {
-            if !stat_only(c, p)? {
-                write_patch(&mut out, c, o, p)?;
+            if stat_only(c, p)? {
+                continue;
+            }
+            match ctx.range_diff {
+                Some(style) => super::emit_rd::write_patch(&mut out, c, o, p, style)?,
+                None => write_patch(&mut out, c, o, p)?,
             }
         }
     }
@@ -330,7 +337,14 @@ fn write_name_status<W: Write>(out: &mut Out<'_, W>, o: &DiffOptions, p: &Pair) 
             out.raw(p.old_path().as_bytes())?;
             out.raw(b"\0")?;
         }
-        out.raw(p.path().as_bytes())?;
+        out.raw(
+            if p.is_rename_or_copy() {
+                p.path()
+            } else {
+                p.old_path()
+            }
+            .as_bytes(),
+        )?;
         out.raw(b"\0")
     } else if p.is_rename_or_copy() {
         out.line(
@@ -342,7 +356,7 @@ fn write_name_status<W: Write>(out: &mut Out<'_, W>, o: &DiffOptions, p: &Pair) 
             ),
         )
     } else {
-        out.line("", &format!("{st}\t{}", quote_path(p.path())))
+        out.line("", &format!("{st}\t{}", quote_path(p.old_path())))
     }
 }
 
@@ -391,7 +405,14 @@ fn write_raw<W: Write>(
             out.raw(p.old_path().as_bytes())?;
             out.raw(b"\0")?;
         }
-        out.raw(p.path().as_bytes())?;
+        out.raw(
+            if p.is_rename_or_copy() {
+                p.path()
+            } else {
+                p.old_path()
+            }
+            .as_bytes(),
+        )?;
         out.raw(b"\0")
     } else if p.is_rename_or_copy() {
         out.line(
@@ -403,7 +424,8 @@ fn write_raw<W: Write>(
             ),
         )
     } else {
-        out.line("", &format!("{head}\t{}", quote_path(p.path())))
+        // One name: the preimage's (the same path unless the pair renames).
+        out.line("", &format!("{head}\t{}", quote_path(p.old_path())))
     }
 }
 
@@ -923,14 +945,25 @@ pub fn check_failed() -> bool {
 }
 
 /// Default xfuncname: a line starting with a letter, `_` or `$`.
-fn is_funcname(line: &[u8]) -> bool {
+pub(crate) fn is_funcname(line: &[u8]) -> bool {
     line.first()
         .is_some_and(|c| c.is_ascii_alphabetic() || *c == b'_' || *c == b'$')
 }
 
 fn funcname<'a>(a: &[&'a [u8]], before: usize) -> Option<&'a [u8]> {
+    funcname_by(a, before, &|l| is_funcname(l).then_some(l))
+}
+
+/// Function-name context of a hunk: the nearest line before `before` that
+/// `pick` accepts, as the part `pick` returns (whitespace-trimmed, at most 80
+/// bytes).
+pub(crate) fn funcname_by<'a>(
+    a: &[&'a [u8]],
+    before: usize,
+    pick: &dyn Fn(&'a [u8]) -> Option<&'a [u8]>,
+) -> Option<&'a [u8]> {
     for line in a[..before.min(a.len())].iter().rev() {
-        if is_funcname(line) {
+        if let Some(line) = pick(line) {
             let mut l = &line[..line.len().min(80)];
             while let Some((&last, rest)) = l.split_last() {
                 if last.is_ascii_whitespace() {
@@ -1248,7 +1281,7 @@ fn all_changes_ignorable(c: &Content<'_>, o: &DiffOptions, p: &Pair) -> CliResul
     Ok(any)
 }
 
-fn run_ignorable(
+pub(super) fn run_ignorable(
     o: &DiffOptions,
     ops: &[Op],
     al: &[&[u8]],
@@ -1275,7 +1308,7 @@ fn run_ignorable(
 
 /// One `+`/`-`/context body line with git's colouring (added lines show
 /// trailing whitespace highlighted).
-fn write_body_line<W: Write>(
+pub(super) fn write_body_line<W: Write>(
     out: &mut Out<'_, W>,
     ind: &str,
     color: &str,
@@ -1381,7 +1414,7 @@ fn words(t: &[u8], re: Option<&crate::cmd::bre::Bre>) -> Vec<(usize, usize)> {
 }
 
 /// Word-diff rendering of one hunk (`--word-diff`, `--color-words`).
-fn word_hunk<W: Write>(
+pub(super) fn word_hunk<W: Write>(
     out: &mut Out<'_, W>,
     o: &DiffOptions,
     mode: &WordDiff,
@@ -1399,18 +1432,18 @@ fn word_hunk<W: Write>(
         if ops[i] == Op::Eq {
             let line = bl[pos[i].1];
             match mode {
+                // The line prefix starts each logical line only (not `~`).
                 WordDiff::Porcelain => {
                     out.raw(out.prefix.as_bytes())?;
                     out.raw(b" ")?;
                     out.raw(line.strip_suffix(b"\n").unwrap_or(line))?;
-                    out.raw(b"\n")?;
-                    out.raw(out.prefix.as_bytes())?;
-                    out.raw(b"~\n")?;
+                    out.raw(b"\n~\n")?;
                 }
                 _ => {
+                    let body = line.strip_suffix(b"\n").unwrap_or(line);
                     out.raw(out.prefix.as_bytes())?;
-                    out.raw(line.strip_suffix(b"\n").unwrap_or(line))?;
-                    if out.color {
+                    out.raw(body)?;
+                    if out.color && !body.is_empty() {
                         out.raw(RESET.as_bytes())?;
                     }
                     out.raw(b"\n")?;
@@ -1537,8 +1570,15 @@ fn word_block<W: Write>(
         if !text.ends_with(b"~\n") {
             text.extend_from_slice(b"~\n");
         }
+        // The line prefix starts each logical line (after a `~`) only.
+        let mut line_start = true;
         for line in text.split_inclusive(|c| *c == b'\n') {
-            out.raw(out.prefix.as_bytes())?;
+            if line == b"~\n" {
+                line_start = true;
+            } else if line_start {
+                out.raw(out.prefix.as_bytes())?;
+                line_start = false;
+            }
             out.raw(line)?;
         }
         return Ok(());

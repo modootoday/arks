@@ -453,11 +453,38 @@ fn m15_fs5_01_range_diff_subjects() {
     );
     let old_range = format!("{base}..old");
     let new_range = format!("{base}..new");
+    // Stock git's matching: each one-line rewrite costs more to pair than to
+    // leave unpaired at the default creation factor (60), so every commit
+    // prints `<` / `>`; a higher factor pairs them up as `!`.
     let out = arks(&repo, &["range-diff", &old_range, &new_range]);
     assert_ok(&out, "range-diff");
-    let text = String::from_utf8_lossy(&out.stdout);
-    assert!(text.contains('='), "expected equal subject row: {text}");
-    assert!(text.contains('!'), "expected changed subject row: {text}");
+    let text = String::from_utf8_lossy(&out.stdout).to_string();
+    assert!(text.contains(" < "), "expected unpaired old rows: {text}");
+    assert!(text.contains(" > "), "expected unpaired new rows: {text}");
+    let paired = arks(
+        &repo,
+        &["range-diff", "--creation-factor=200", &old_range, &new_range],
+    );
+    assert_ok(&paired, "range-diff --creation-factor=200");
+    let paired_text = String::from_utf8_lossy(&paired.stdout).to_string();
+    assert_eq!(
+        paired_text.lines().filter(|l| l.contains(" ! ")).count(),
+        2,
+        "expected two changed pairs: {paired_text}"
+    );
+    // Peer read of the same ranges (stock git as oracle only).
+    for (args, ours) in [
+        (vec!["range-diff", &old_range, &new_range], &text),
+        (
+            vec!["range-diff", "--creation-factor=200", &old_range, &new_range],
+            &paired_text,
+        ),
+    ] {
+        let peer = git(&repo, &args);
+        if peer.status.success() {
+            assert_eq!(&String::from_utf8_lossy(&peer.stdout), ours, "{args:?}");
+        }
+    }
     record_row("M15-FS5-01", true);
 }
 

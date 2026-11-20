@@ -1,0 +1,198 @@
+# Gap group RANGE-DIFF corpus (argv symmetry ladder): `range-diff` with every
+# option of its `-h` list and `format-patch --interdiff / --range-diff`.
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null. Fixture: build-fixture.sh; the
+# `-C .git/rd` repository holds two versions of a series (`old`, `new`) on
+# `base`, a one-commit `solo` branch and notes (default ref and `foo`).
+#
+# --- range-diff: range forms ---
+-C .git/rd range-diff base..old base..new
+-C .git/rd range-diff base old new
+-C .git/rd range-diff old...new
+-C .git/rd range-diff new...old
+-C .git/rd range-diff old~2...new~1
+-C .git/rd range-diff base..old base..old
+-C .git/rd range-diff base..old~1 base..new~1
+-C .git/rd range-diff -s main...main
+-C .git/rd range-diff base..old
+-C .git/rd range-diff old new
+-C .git/rd range-diff ..old base..
+-C .git/rd range-diff base..main base..new
+-C .git/rd range-diff base old^@ new
+-C .git/rd range-diff base ^old new
+-C .git/rd range-diff nonexist old new
+-C .git/rd range-diff base..old nonexist..new
+-C .git/rd range-diff old...nonexist
+-C .git/rd range-diff -s base..old base..new extra
+-C .git/rd range-diff -s base..old base..new HEAD
+-C .git/rd range-diff base old new -- n.txt a.c
+-C .git/rd range-diff -s old...new -- x.txt
+-C .git/rd range-diff
+# --- range-diff: matching ---
+-C .git/rd range-diff -s base old solo
+-C .git/rd range-diff -s base..old~2 base..solo
+-C .git/rd range-diff -s --creation-factor=0 base old new
+-C .git/rd range-diff -s --creation-factor=30 base old new
+-C .git/rd range-diff -s --creation-factor=60 base old new
+-C .git/rd range-diff -s --creation-factor=100 base old new
+-C .git/rd range-diff -s --creation-factor=200 base old new
+-C .git/rd range-diff -s --creation-factor=999 base old new
+-C .git/rd range-diff -s --creation-factor 150 base old new
+-C .git/rd range-diff --creation-factor=200 base old solo
+-C .git/rd range-diff -s --creation-factor=abc base old new
+-C .git/rd range-diff --creation-factor base old new
+-C .git/rd range-diff -s --creation-factor=200 --no-creation-factor base old new
+-C .git/rd range-diff -s --creation base old new
+# --- range-diff: colours, sides, notes ---
+-C .git/rd range-diff --color=always base old new
+-C .git/rd range-diff --color=always --no-dual-color base old new
+-C .git/rd range-diff --color=always --no-dual-color --dual-color base old new
+-C .git/rd range-diff --color=always -U1 base old new
+-C .git/rd range-diff --color=never base old new
+-C .git/rd range-diff --no-color base old new
+-C .git/rd range-diff --left-only base old new
+-C .git/rd range-diff --right-only base old new
+-C .git/rd range-diff --left-only --right-only base old new
+-C .git/rd range-diff --left-only --no-left-only base old new
+-C .git/rd range-diff --no-right-only base old new
+-C .git/rd range-diff --notes base old new
+-C .git/rd range-diff --no-notes base old new
+-C .git/rd range-diff --notes=foo base old new
+-C .git/rd range-diff --notes=refs/notes/foo base old new
+-C .git/rd range-diff --notes=foo --notes base old new
+-C .git/rd range-diff --no-notes --notes=foo base old new
+-C .git/rd range-diff --notes=foo --no-notes base old new
+-C .git/rd range-diff --notes=refs/notes/commits base old new
+-C .git/rd range-diff --bogus base old new
+# --- range-diff: diff output formats of the diff of diffs ---
+-C .git/rd range-diff -s base old new
+-C .git/rd range-diff --no-patch base old new
+-C .git/rd range-diff -p base old new
+-C .git/rd range-diff --patch base old new
+-C .git/rd range-diff -u base old new
+-C .git/rd range-diff -U0 base old new
+-C .git/rd range-diff -U1 base old new
+-C .git/rd range-diff --unified=8 base old new
+-C .git/rd range-diff -W base old new
+-C .git/rd range-diff --function-context base old new
+-C .git/rd range-diff --no-function-context base old new
+-C .git/rd range-diff -U0 --inter-hunk-context=3 base old new
+-C .git/rd range-diff --raw base old new
+-C .git/rd range-diff --patch-with-raw base old new
+-C .git/rd range-diff --patch-with-stat base old new
+-C .git/rd range-diff --numstat base old new
+-C .git/rd range-diff --shortstat base old new
+-C .git/rd range-diff -X base old new
+-C .git/rd range-diff --dirstat base old new
+-C .git/rd range-diff --cumulative base old new
+-C .git/rd range-diff --dirstat-by-file base old new
+-C .git/rd range-diff --check base old new
+-C .git/rd range-diff --summary base old new
+-C .git/rd range-diff --name-only base old new
+-C .git/rd range-diff --name-status base old new
+-C .git/rd range-diff --stat base old new
+-C .git/rd range-diff --stat=40 base old new
+-C .git/rd range-diff --stat-width=30 base old new
+-C .git/rd range-diff --stat-name-width=5 base old new
+-C .git/rd range-diff --stat-graph-width=2 base old new
+-C .git/rd range-diff --stat-count=1 base old new
+-C .git/rd range-diff --compact-summary base old new
+-C .git/rd range-diff -s --stat base old new
+-C .git/rd range-diff --stat --color=always base old new
+-C .git/rd range-diff --binary base old new
+-C .git/rd range-diff --full-index base old new
+-C .git/rd range-diff --no-full-index base old new
+-C .git/rd range-diff --ws-error-highlight=all --color=always base old new
+-C .git/rd range-diff -z --raw base old new
+-C .git/rd range-diff --abbrev=10 base old new
+-C .git/rd range-diff --abbrev base old new
+-C .git/rd range-diff --src-prefix=X/ base old new
+-C .git/rd range-diff --dst-prefix=Y/ base old new
+-C .git/rd range-diff --line-prefix=LP base old new
+-C .git/rd range-diff --no-prefix base old new
+-C .git/rd range-diff --output-indicator-new=X base old new
+-C .git/rd range-diff --output-indicator-old=Y --output-indicator-context=Z base old new
+# --- range-diff: rename, algorithm and other diff options ---
+-C .git/rd range-diff -B base old new
+-C .git/rd range-diff --break-rewrites base old new
+-C .git/rd range-diff -M base old new
+-C .git/rd range-diff --find-renames base old new
+-C .git/rd range-diff -D base old new
+-C .git/rd range-diff --irreversible-delete base old new
+-C .git/rd range-diff -C base old new
+-C .git/rd range-diff --find-copies base old new
+-C .git/rd range-diff --find-copies-harder base old new
+-C .git/rd range-diff --no-renames base old new
+-C .git/rd range-diff --rename-empty base old new
+-C .git/rd range-diff --no-rename-empty base old new
+-C .git/rd range-diff --follow base old new
+-C .git/rd range-diff -l 5 base old new
+-C .git/rd range-diff --minimal base old new
+-C .git/rd range-diff -w base old new
+-C .git/rd range-diff --ignore-all-space base old new
+-C .git/rd range-diff -b base old new
+-C .git/rd range-diff --ignore-space-change base old new
+-C .git/rd range-diff --ignore-space-at-eol base old new
+-C .git/rd range-diff --ignore-cr-at-eol base old new
+-C .git/rd range-diff --ignore-blank-lines base old new
+-C .git/rd range-diff -I Body base old new
+-C .git/rd range-diff --ignore-matching-lines=Body base old new
+-C .git/rd range-diff --indent-heuristic base old new
+-C .git/rd range-diff --no-indent-heuristic base old new
+-C .git/rd range-diff --patience base old new
+-C .git/rd range-diff --histogram base old new
+-C .git/rd range-diff --diff-algorithm=minimal base old new
+-C .git/rd range-diff --anchored=five base old new
+-C .git/rd range-diff --word-diff base old new
+-C .git/rd range-diff --word-diff=porcelain base old new
+-C .git/rd range-diff --word-diff=color base old new
+-C .git/rd range-diff --word-diff-regex=. base old new
+-C .git/rd range-diff --color-words base old new
+-C .git/rd range-diff --color-moved base old new
+-C .git/rd range-diff --color-moved-ws=ignore-all-space base old new
+-C .git/rd range-diff --relative base old new
+-C .git/rd range-diff -a base old new
+-C .git/rd range-diff --text base old new
+-C .git/rd range-diff -R base old new
+-C .git/rd range-diff --exit-code base old new
+-C .git/rd range-diff --quiet base old new
+-C .git/rd range-diff --ext-diff base old new
+-C .git/rd range-diff --no-ext-diff base old new
+-C .git/rd range-diff --textconv base old new
+-C .git/rd range-diff --no-textconv base old new
+-C .git/rd range-diff --ignore-submodules base old new
+-C .git/rd range-diff --submodule base old new
+-C .git/rd range-diff --ita-invisible-in-index base old new
+-C .git/rd range-diff --ita-visible-in-index base old new
+-C .git/rd range-diff -S TWO base old new
+-C .git/rd range-diff -G Body base old new
+-C .git/rd range-diff --pickaxe-all -S FIVE base old new
+-C .git/rd range-diff --pickaxe-regex -S 'F.VE' base old new
+-C .git/rd range-diff -O /dev/null base old new
+-C .git/rd range-diff --rotate-to=b base old new
+-C .git/rd range-diff --skip-to=b base old new
+-C .git/rd range-diff --find-object=HEAD base old new
+-C .git/rd range-diff --diff-filter=M base old new
+-C .git/rd range-diff --diff-filter=A base old new
+-C .git/rd range-diff --output=rd-out.txt base old new
+# --- format-patch --interdiff / --range-diff ---
+-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=old base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=base..old base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter --interdiff=old~2 base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter -v3 --interdiff=old~2 --range-diff=old~2 base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter -v1 --range-diff=old base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter -v2.5 --range-diff=old base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=old --creation-factor=0 base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=old --creation-factor=999 base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter --base=base --range-diff=old base..new~2
+-C .git/rd format-patch --stdout --signature=S --range-diff=old~3 -1 new~3
+-C .git/rd format-patch --stdout --signature=S --interdiff=old~3 -1 new~3
+-C .git/rd format-patch --stdout --signature=S --interdiff=old~2 -1 new~2
+-C .git/rd format-patch --stdout --signature=S -v4 --interdiff=old~2 --range-diff=old~2 -1 new~2
+-C .git/rd format-patch --stdout --signature=S -p --interdiff=old~2 -1 new~2
+-C .git/rd format-patch --stdout --signature=S --range-diff=old base..new~2
+-C .git/rd format-patch --stdout --signature=S --interdiff=old base..new~2
+-C .git/rd format-patch --stdout --signature=S --creation-factor=10 base..new~2
+-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=nonexist base..new~2
+-C .git/rd format-patch -o out --signature=S --cover-letter --range-diff=old base..new~2

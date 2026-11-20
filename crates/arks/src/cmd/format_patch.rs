@@ -53,6 +53,9 @@ struct Opts {
     cover_from_description: String,
     description: Option<String>,
     out_dir: Option<PathBuf>,
+    interdiff: Option<String>,
+    range_diff: Option<String>,
+    creation_factor: i64,
 }
 
 fn options(p: &Parsed) -> CliResult<Opts> {
@@ -98,6 +101,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
             .unwrap_or_else(|| "message".into()),
         description: None,
         out_dir: p.value("output-directory").map(PathBuf::from),
+        ..Opts::default()
     };
     for it in &p.items {
         let Item::Opt { key, val, neg } = it else {
@@ -188,17 +192,16 @@ fn options(p: &Parsed) -> CliResult<Opts> {
             "options '--stdout' and '--output-directory ...' cannot be used together",
         ));
     }
-    for k in ["interdiff", "range-diff"] {
-        if p.value(k).is_some() {
-            return Err(CliError::NotImplemented(format!(
-                "format-patch --{k} is not implemented"
-            )));
+    o.interdiff = p.value("interdiff");
+    o.range_diff = p.value("range-diff");
+    o.creation_factor = crate::cmd::range_diff::embed::DEFAULT_CREATION_FACTOR;
+    if let Some(v) = p.value("creation-factor") {
+        if o.range_diff.is_none() {
+            return Err(CliError::fatal(
+                "the option '--creation-factor' requires '--range-diff'",
+            ));
         }
-    }
-    if p.value("creation-factor").is_some() {
-        return Err(CliError::fatal(
-            "the option '--creation-factor' requires '--range-diff'",
-        ));
+        o.creation_factor = crate::cmd::range_diff::parse_factor(Some(&v))?;
     }
     Ok(o)
 }
@@ -306,6 +309,8 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         return Ok(());
     }
     let total = commits.len();
+    // `--interdiff` / `--range-diff` sections (cover letter or single patch).
+    let reroll = reroll_sections(&repo, &o, &commits, upstream)?;
     let numbered = !o.keep_subject && o.numbered.unwrap_or(total > 1 || o.cover_letter);
     let version = o
         .reroll
@@ -381,6 +386,7 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
             &version,
             &thread_ids[0],
             base_info.as_deref(),
+            &reroll.cover,
         )?;
         let name = if o.numbered_files {
             format!("{}", o.start_number - 1)
@@ -426,6 +432,7 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
             } else {
                 None
             },
+            if o.cover_letter { "" } else { &reroll.patch },
         )?;
         rendered.push((name, body));
     }
@@ -468,6 +475,56 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
 
 fn read_commit(repo: &Repository, oid: &Oid) -> CliResult<Commit> {
     crate::cmd::log_format::read_commit(repo, oid)
+}
+
+/// The `--interdiff` / `--range-diff` text for the cover letter and for a
+/// single patch (after its `---` line).
+#[derive(Default)]
+struct RerollSections {
+    cover: String,
+    patch: String,
+}
+
+fn reroll_sections(
+    repo: &Repository,
+    o: &Opts,
+    commits: &[Oid],
+    upstream: Option<Oid>,
+) -> CliResult<RerollSections> {
+    use crate::cmd::range_diff::embed;
+    let mut out = RerollSections::default();
+    if o.interdiff.is_none() && o.range_diff.is_none() {
+        return Ok(out);
+    }
+    for (k, given) in [("interdiff", &o.interdiff), ("range-diff", &o.range_diff)] {
+        if given.is_some() && !o.cover_letter && commits.len() != 1 {
+            return Err(CliError::fatal(format!(
+                "--{k} requires --cover-letter or single patch"
+            )));
+        }
+    }
+    let tip = *commits.last().expect("non-empty series");
+    // The series' base: the bottom of `<since>..<until>`, else the parent of
+    // its first commit.
+    let origin = match upstream {
+        Some(u) => Some(u),
+        None => read_commit(repo, &commits[0])?.parents.first().copied(),
+    };
+    let reroll = o.reroll.as_deref();
+    if let Some(prev) = &o.interdiff {
+        let title = embed::title("Interdiff", reroll);
+        let diff = embed::interdiff(repo, prev, &tip, !o.no_binary)?;
+        out.cover.push_str(&format!("{title}\n{diff}"));
+        out.patch
+            .push_str(&format!("{title}\n{}\n", embed::indent(&diff)));
+    }
+    if let Some(prev) = &o.range_diff {
+        let title = embed::title("Range-diff", reroll);
+        let rd = embed::range_diff(repo, prev, origin.as_ref(), commits, o.creation_factor)?;
+        out.cover.push_str(&format!("{title}\n{rd}"));
+        out.patch.push_str(&format!("{title}\n{rd}\n"));
+    }
+    Ok(out)
 }
 
 /// The commit's patch text (`--stat` and/or `-p`), git's mail layout.
@@ -648,6 +705,7 @@ fn render_patch(
     ids: &(Option<String>, Option<String>, Option<String>),
     file_name: &str,
     base: Option<&str>,
+    reroll: &str,
 ) -> CliResult<String> {
     if commit.parents.len() > 1 {
         return Err(CliError::NotImplemented(
@@ -691,10 +749,14 @@ fn render_patch(
         text.push_str(&format!("From: {author}\n\n"));
     }
     text.push_str(&body);
-    if o.no_stat {
+    if o.no_stat && reroll.is_empty() {
         text.push('\n');
+    } else if o.no_stat {
+        text.push_str("---\n");
+        text.push_str(reroll);
     } else {
         text.push_str("---\n");
+        text.push_str(reroll);
         text.push_str(&diff_text(repo, oid, commit, true, false, o.no_binary)?);
         text.push('\n');
     }
@@ -742,6 +804,7 @@ fn render_patch(
     Ok(out)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn render_cover(
     repo: &Repository,
     commits: &[Oid],
@@ -750,6 +813,7 @@ fn render_cover(
     version: &str,
     ids: &(Option<String>, Option<String>, Option<String>),
     base: Option<&str>,
+    reroll: &str,
 ) -> CliResult<String> {
     let tip = *commits.last().unwrap_or(&commits[0]);
     let me = committer_signature()?;
@@ -841,7 +905,10 @@ fn render_cover(
     let after = mode_map(repo, &read_commit(repo, &tip)?.tree)?;
     out.push_str(&summary_lines(&before, &after));
     out.push('\n');
+    out.push_str(reroll);
     if let Some(b) = base {
+        // A blank line separates the base information from what precedes.
+        out.push('\n');
         out.push_str(b);
     }
     if let Some(sig) = &o.signature {

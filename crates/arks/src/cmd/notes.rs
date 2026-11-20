@@ -31,7 +31,7 @@ const USAGE: &str = "usage: git notes [--ref <notes-ref>] [list [<object>]]
    or: git notes [--ref <notes-ref>] prune [-n] [-v]
    or: git notes [--ref <notes-ref>] get-ref";
 
-fn full_ref(name: &str) -> String {
+pub(crate) fn full_ref(name: &str) -> String {
     if name.starts_with("refs/notes/") {
         name.to_string()
     } else if let Some(rest) = name.strip_prefix("notes/") {
@@ -56,12 +56,7 @@ pub fn cmd_notes(args: &[String]) -> CliResult<()> {
     let repo = open_repo()?;
     let notes_ref = match top.value("ref") {
         Some(r) => full_ref(&r),
-        None => std::env::var("GIT_NOTES_REF")
-            .ok()
-            .filter(|s| !s.is_empty())
-            .or_else(|| arks_config::ConfigSet::load(Some(repo.common_dir())).get("core.notesRef"))
-            .map(|r| full_ref(&r))
-            .unwrap_or_else(|| "refs/notes/commits".to_string()),
+        None => default_ref(&repo),
     };
     drop(repo);
     let mut rest = top.args();
@@ -97,6 +92,25 @@ pub fn cmd_notes(args: &[String]) -> CliResult<()> {
             format!("error: unknown subcommand: `{other}'\n{USAGE}"),
         )),
     }
+}
+
+/// The notes ref used when none is named: `GIT_NOTES_REF`, `core.notesRef`,
+/// else `refs/notes/commits`.
+pub(crate) fn default_ref(repo: &Repository) -> String {
+    std::env::var("GIT_NOTES_REF")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .or_else(|| arks_config::ConfigSet::load(Some(repo.common_dir())).get("core.notesRef"))
+        .map(|r| full_ref(&r))
+        .unwrap_or_else(|| "refs/notes/commits".to_string())
+}
+
+/// Annotated object (hex) -> note blob under `notes_ref` (empty when absent).
+pub(crate) fn note_map(
+    repo: &Repository,
+    notes_ref: &str,
+) -> CliResult<std::collections::HashMap<String, Oid>> {
+    Ok(load(repo, notes_ref)?.1.into_iter().collect())
 }
 
 fn resolve_object(repo: &Repository, rev: Option<&String>) -> CliResult<Oid> {

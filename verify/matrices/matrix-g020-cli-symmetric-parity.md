@@ -41,7 +41,7 @@ Authoritative venue: Docker clean-room service `g020-cli-symmetric-parity` (`ver
 
 | ID | Condition | Required |
 |----|-----------|----------|
-| M15-FS5-01 | `range-diff A..B C..D` pairwise subject compare (`=`/`!`); stock Git may peer-read same ranges | yes |
+| M15-FS5-01 | `range-diff A..B C..D` with git's documented matching (creation factor; `<`/`>` at the default, `!` pairs at `--creation-factor=200`); stock Git peer-reads the same ranges | yes |
 | M15-FS5-02 | `commit -a -m` stages tracked updates and commits | yes |
 | M15-FS5-03 | Editor honesty: `rebase -i` and `commit` without `-m` fail closed unless EDITOR / sequence-editor is set (**FS1** / O3; historical “exclude” wording superseded) | yes |
 
