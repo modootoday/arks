@@ -849,7 +849,7 @@ fn commit_result(
     if !crate::util::quiet() {
         // An edited message goes through `git commit`, which shows the date
         // only when it differs; otherwise the sequencer always shows it.
-        crate::cmd::core::print_commit_summary_dated(repo, &coid, !o.edit)?;
+        crate::cmd::core::print_commit_summary_dated(repo, &coid, (!o.edit).then_some(true))?;
     }
     Ok(())
 }

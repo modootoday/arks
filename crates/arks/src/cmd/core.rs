@@ -1753,15 +1753,16 @@ fn summary_subject(msg: &str) -> String {
 /// git `print_commit_summary`; the author date shows when it differs from the committer date (amend,
 /// sequencer commits).
 pub(crate) fn print_commit_summary(repo: &Repository, coid: &Oid) -> CliResult<()> {
-    print_commit_summary_dated(repo, coid, false)
+    print_commit_summary_dated(repo, coid, None)
 }
 
-/// [`print_commit_summary`]; `always_date` shows the author date even when it
-/// equals the committer date (sequencer commits: cherry-pick, revert).
+/// [`print_commit_summary`] with the ` Date:` line forced on (sequencer
+/// commits: cherry-pick, revert, squash) or off (`git commit` without an
+/// explicit date); `None` shows it when the dates differ.
 pub(crate) fn print_commit_summary_dated(
     repo: &Repository,
     coid: &Oid,
-    always_date: bool,
+    show_date: Option<bool>,
 ) -> CliResult<()> {
     // git shows the author date for amends and whenever it differs from the
     // committer date (`author_date_is_interesting`).
@@ -1790,10 +1791,9 @@ pub(crate) fn print_commit_summary_dated(
             c.author.name, c.author.email
         ));
     }
-    if always_date
-        || (c.author.timestamp, &c.author.timezone)
-            != (c.committer.timestamp, &c.committer.timezone)
-    {
+    let differs =
+        (c.author.timestamp, &c.author.timezone) != (c.committer.timestamp, &c.committer.timezone);
+    if show_date.unwrap_or(differs) {
         out.push_str(&format!(
             " Date: {}\n",
             crate::cmd::log_format::default_date(&c.author)
