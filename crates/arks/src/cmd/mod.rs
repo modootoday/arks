@@ -1,6 +1,7 @@
 //! CLI command modules grouped by domain context (not wave letters).
 //! Composition root: `main.rs` dispatches here; pure format/graph helpers live in library crates.
 
+pub mod am;
 pub mod apply;
 pub mod archive;
 pub mod attr;
@@ -84,6 +85,7 @@ pub mod unified_diff;
 pub mod working_tree;
 pub mod worktree;
 
+pub use am::cmd_am;
 pub use apply::cmd_apply;
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
 pub use bisect::cmd_bisect;
@@ -136,7 +138,6 @@ pub use merge::cmd_merge;
 pub use merge_base::cmd_merge_base;
 pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
-pub use patch::cmd_am;
 pub use patch_id::cmd_patch_id;
 pub use pick::{cmd_cherry_pick, cmd_revert};
 pub use plumbing::{

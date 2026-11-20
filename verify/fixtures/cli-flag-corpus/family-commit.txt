@@ -911,3 +911,63 @@ apply --reject --check .git/bad.patch
 -C .git/side format-patch --thread=bogus -1 topic
 -C .git/side format-patch -1 -v3 --filename-max-length=13 topic
 -C .git/side format-patch -1 --suffix=.x --filename-max-length=15 topic
+#
+# --- am (side repository mailboxes) ---
+-C .git/side am .git/topic.mbox
+-C .git/side am .git/clash.mbox
+-C .git/side am -3 .git/clash.mbox
+-C .git/side am --3way .git/topic.mbox
+-C .git/side am --no-3way .git/clash.mbox
+-C .git/side am -s .git/topic.mbox
+-C .git/side am --signoff .git/topic.mbox
+-C .git/side am -k .git/topic.mbox
+-C .git/side am --keep .git/topic.mbox
+-C .git/side am --keep-non-patch .git/topic.mbox
+-C .git/side am -i .git/topic.mbox
+-C .git/side am --continue
+-C .git/side am -r
+-C .git/side am --resolved
+-C .git/side am --skip
+-C .git/side am --abort
+-C .git/side am --quit
+-C .git/side am --show-current-patch
+-C .git/side am --show-current-patch=diff
+-C .git/side am -m .git/topic.mbox
+-C .git/side am --message-id .git/topic.mbox
+-C .git/side am --no-message-id .git/topic.mbox
+-C .git/side am -c .git/topic.mbox
+-C .git/side am --scissors .git/topic.mbox
+-C .git/side am --no-scissors .git/topic.mbox
+-C .git/side am -u .git/topic.mbox
+-C .git/side am --utf8 .git/topic.mbox
+-C .git/side am --no-utf8 .git/topic.mbox
+-C .git/side am --keep-cr .git/topic.mbox
+-C .git/side am --no-keep-cr .git/topic.mbox
+-C .git/side am --quoted-cr=strip .git/topic.mbox
+-C .git/side am --quoted-cr=bogus .git/topic.mbox
+-C .git/side am -q .git/topic.mbox
+-C .git/side am --quiet .git/clash.mbox
+-C .git/side am -n .git/topic.mbox
+-C .git/side am --no-verify .git/topic.mbox
+-C .git/side am --verify .git/topic.mbox
+-C .git/side am --whitespace=fix .git/topic.mbox
+-C .git/side am --whitespace=bogus .git/topic.mbox
+-C .git/side am --ignore-space-change .git/topic.mbox
+-C .git/side am --ignore-whitespace .git/topic.mbox
+-C .git/side am -C1 .git/topic.mbox
+-C .git/side am -p1 .git/topic.mbox
+-C .git/side am --directory=sub .git/topic.mbox
+-C .git/side am --exclude=c.txt .git/topic.mbox
+-C .git/side am --include=b.txt .git/topic.mbox
+-C .git/side am --reject .git/clash.mbox
+-C .git/side am --resolvemsg=x .git/topic.mbox
+-C .git/side am --patch-format=mbox .git/topic.mbox
+-C .git/side am --patch-format=bogus .git/topic.mbox
+-C .git/side am --committer-date-is-author-date .git/topic.mbox
+-C .git/side am --rerere-autoupdate .git/topic.mbox
+-C .git/side am --no-gpg-sign .git/topic.mbox
+-C .git/side am --empty=drop .git/topic.mbox
+-C .git/side am --empty=bogus .git/topic.mbox
+-C .git/side am --allow-empty
+-C .git/side am
+-C .git/side am nope.mbox

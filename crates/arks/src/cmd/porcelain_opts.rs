@@ -50,7 +50,7 @@ pub const AM: &[OptDef] = &[
     o("-p", 'p', Req, false),
     o("patch-format", ' ', Req, true),
     o("reject", ' ', No, true),
-    o("resolvemsg", ' ', No, true),
+    o("resolvemsg", ' ', Req, true),
     o("continue", ' ', No, false),
     o("resolved", 'r', No, false),
     o("skip", ' ', No, false),

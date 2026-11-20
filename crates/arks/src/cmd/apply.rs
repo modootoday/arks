@@ -151,12 +151,19 @@ fn parse_opts(args: &[String]) -> CliResult<Opts> {
 /// Rewrite header paths for `-p<n>` and `--directory` so the parser's
 /// `a/` / `b/` stripping yields the paths git would use.
 fn rewrite_paths(text: &[u8], o: &Opts) -> CliResult<Vec<u8>> {
-    if o.strip == 1 && o.directory.is_none() {
+    rewrite_patch_paths(text, o.strip, o.directory.as_deref())
+}
+
+/// [`rewrite_paths`] for callers outside `apply` (`am -p` / `--directory`).
+pub(crate) fn rewrite_patch_paths(
+    text: &[u8],
+    strip: usize,
+    directory: Option<&str>,
+) -> CliResult<Vec<u8>> {
+    if strip == 1 && directory.is_none() {
         return Ok(text.to_vec());
     }
-    let dir = o
-        .directory
-        .as_deref()
+    let dir = directory
         .map(|d| format!("{}/", d.trim_end_matches('/')))
         .unwrap_or_default();
     let fix = |raw: &str, side: &str| -> CliResult<String> {
@@ -168,12 +175,12 @@ fn rewrite_paths(text: &[u8], o: &Opts) -> CliResult<Vec<u8>> {
             return Ok(raw.to_string());
         }
         let comps: Vec<&str> = path.split('/').collect();
-        if comps.len() <= o.strip {
+        if comps.len() <= strip {
             return Err(CliError::fatal(format!(
                 "git apply: bad git-diff - expected /dev/null, got {path}"
             )));
         }
-        Ok(format!("{side}/{dir}{}{tail}", comps[o.strip..].join("/")))
+        Ok(format!("{side}/{dir}{}{tail}", comps[strip..].join("/")))
     };
     let mut out = String::new();
     for line in String::from_utf8_lossy(text).split_inclusive('\n') {
@@ -204,7 +211,7 @@ fn rewrite_paths(text: &[u8], o: &Opts) -> CliResult<Vec<u8>> {
 
 /// Whether `path` passes the `--include` / `--exclude` rules (first match wins;
 /// with only include rules, unmatched paths are left out).
-fn path_selected(path: &str, rules: &[(String, bool)]) -> bool {
+pub(crate) fn path_selected(path: &str, rules: &[(String, bool)]) -> bool {
     for (glob, include) in rules {
         if crate::cmd::log_format::path_in_specs(path, std::slice::from_ref(glob))
             || glob_match(glob, path)

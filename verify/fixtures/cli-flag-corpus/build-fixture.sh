@@ -199,3 +199,10 @@ printf 'diff --git a/src/a.txt b/src/a.txt\n--- a/src/a.txt\n+++ b/src/a.txt\n@@
 printf 'diff --git src/a.txt src/a.txt\n--- src/a.txt\n+++ src/a.txt\n@@ -6,3 +6,3 @@\n zeta\n-eta\n+ETA\n theta\n' > .git/p0.patch
 printf 'diff --git a/docs/n.md b/docs/n.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/n.md\n@@ -0,0 +1,2 @@\n+hello \n+world\n' > .git/new.patch
 printf 'diff --git a/src/a.txt b/src/a.txt\n--- a/src/a.txt\n+++ b/src/a.txt\n@@ -1,2 +1,2 @@\n-alpha\n+ALPHA\n beta\n@@ -7,2 +7,2 @@\n-nothing\n+here\n theta\n' > .git/bad.patch
+# Mailboxes for am lines in the side repository: two clean patches and one
+# that conflicts with main.
+(
+  cd .git/side
+  git format-patch -q --stdout base..topic > .git/topic.mbox
+  git format-patch -q --stdout -1 clash > .git/clash.mbox
+)
