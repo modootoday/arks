@@ -59,6 +59,12 @@ impl Mailmap {
         m
     }
 
+    /// Add one `.mailmap` line.
+    #[cfg(test)]
+    pub fn add_line(&mut self, line: &str) {
+        self.entries.extend(parse_line(line));
+    }
+
     /// Mapped `(name, email)`.
     pub fn map(&self, name: &str, email: &str) -> (String, String) {
         let mut best: Option<&Entry> = None;

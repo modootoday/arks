@@ -11,6 +11,7 @@ pub mod branch_cmd;
 pub mod bre;
 pub mod bundle;
 pub mod clone;
+pub mod cat_file;
 pub mod config;
 pub mod core;
 pub mod credential;
@@ -81,10 +82,10 @@ pub use branch::{cmd_checkout, cmd_switch};
 pub use branch_cmd::cmd_branch;
 pub use bundle::cmd_bundle;
 pub use clone::cmd_clone;
+pub use cat_file::cmd_cat_file;
 pub use config::cmd_config;
 pub use core::{
-    cmd_add, cmd_cat_file, cmd_commit, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status,
-    cmd_update_ref,
+    cmd_add, cmd_commit, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status, cmd_update_ref,
 };
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
