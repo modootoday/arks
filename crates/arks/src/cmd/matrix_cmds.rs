@@ -358,22 +358,77 @@ fn config_val(cfg: &str, key: &str) -> Option<String> {
     None
 }
 
-/// `arks check-ref-format <refname>`
+/// `arks check-ref-format [--normalize] [--[no-]allow-onelevel] [--refspec-pattern] <refname>`
+/// and `--branch <name>`. Exit 1 (silent) for an invalid name.
+/// Cite: https://git-scm.com/docs/git-check-ref-format
 pub fn cmd_check_ref_format(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--allow-onelevel", "--normalize", "--branch"])?;
-    let allow_one = args.iter().any(|a| a == "--allow-onelevel");
-    let name = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("check-ref-format [--allow-onelevel] <refname>".into()))?;
-    if refname_ok(name, allow_one) {
-        Ok(())
-    } else {
-        Err(CliError::Msg(format!("'{name}' is not a valid refname")))
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git check-ref-format [--normalize] [<options>] <refname>\n   or: git check-ref-format --branch <branchname-shorthand>".into(),
+        )
+    };
+    let mut normalize = false;
+    let mut allow_one = false;
+    let mut pattern = false;
+    let mut branch = false;
+    let mut rest: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--normalize" | "--print" => normalize = true,
+            "--allow-onelevel" => allow_one = true,
+            "--no-allow-onelevel" => allow_one = false,
+            "--refspec-pattern" => pattern = true,
+            "--branch" => branch = true,
+            _ if a.starts_with("--") => return Err(usage()),
+            _ => rest.push(a),
+        }
     }
+    if branch {
+        let [name] = rest.as_slice() else {
+            return Err(usage());
+        };
+        let repo = open_repo().ok();
+        let resolved = match repo.as_ref() {
+            Some(r) => previous_branch(r, name).unwrap_or_else(|| (*name).clone()),
+            None => (*name).clone(),
+        };
+        let full = format!("refs/heads/{resolved}");
+        if resolved.starts_with('-') || !refname_ok(&full, false, false) {
+            return Err(CliError::fatal(format!(
+                "'{name}' is not a valid branch name"
+            )));
+        }
+        println!("{resolved}");
+        return Ok(());
+    }
+    let [name] = rest.as_slice() else {
+        return Err(usage());
+    };
+    let mut name = (*name).clone();
+    if normalize {
+        let lead = name.starts_with('/');
+        let trail = name.ends_with('/') && name.len() > 1;
+        let collapsed: Vec<String> = name
+            .split('/')
+            .filter(|p| !p.is_empty())
+            .map(str::to_string)
+            .collect();
+        if trail || (lead && collapsed.is_empty()) {
+            return Err(CliError::silent(1));
+        }
+        name = collapsed.join("/");
+    }
+    if !refname_ok(&name, allow_one, pattern) {
+        return Err(CliError::silent(1));
+    }
+    if normalize {
+        println!("{name}");
+    }
+    Ok(())
 }
 
-fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
+fn refname_ok(name: &str, allow_onelevel: bool, pattern: bool) -> bool {
     if name.is_empty() || name == "@" {
         return false;
     }
@@ -386,8 +441,12 @@ fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
     if name.contains("//") || name.contains(' ') {
         return false;
     }
+    let stars = name.matches('*').count();
+    if stars > usize::from(pattern) {
+        return false;
+    }
     for ch in name.chars() {
-        if ch.is_ascii_control() || "^:~?*[".contains(ch) {
+        if ch.is_ascii_control() || "^:~?[".contains(ch) {
             return false;
         }
     }
@@ -400,25 +459,73 @@ fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
         .any(|p| p.is_empty() || p.starts_with('.') || p.ends_with(".lock"))
 }
 
-/// `arks stripspace` — trim trailing whitespace / blank lines (stdin→stdout).
+/// `arks stripspace [-s | --strip-comments | -c | --comment-lines]` (stdin→stdout):
+/// trailing whitespace removed, blank-line runs collapsed, leading/trailing
+/// blank lines dropped. Cite: https://git-scm.com/docs/git-stripspace
 pub fn cmd_stripspace(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-s", "--strip-comments", "-c", "--comment-lines"])?;
-    let strip_comments = args.iter().any(|a| a == "-s" || a == "--strip-comments");
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input)?;
+    let mut strip_comments = false;
+    let mut comment_lines = false;
+    for a in args {
+        match a.as_str() {
+            "-s" | "--strip-comments" => strip_comments = true,
+            "-c" | "--comment-lines" => comment_lines = true,
+            "-sc" | "-cs" => {
+                strip_comments = true;
+                comment_lines = true;
+            }
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git stripspace [-s | --strip-comments]\n   or: git stripspace [-c | --comment-lines]".into(),
+                ));
+            }
+        }
+    }
+    if strip_comments && comment_lines {
+        return Err(CliError::Exit(
+            129,
+            "error: --comment-lines is incompatible with --strip-comments".into(),
+        ));
+    }
+    let cfg = arks_config::ConfigSet::load_discovered(&crate::util::cwd()?);
+    let cc = cfg
+        .get("core.commentchar")
+        .filter(|c| !c.is_empty() && c != "auto")
+        .unwrap_or_else(|| "#".into());
+    let mut input = Vec::new();
+    io::stdin().read_to_end(&mut input)?;
+    let input = String::from_utf8_lossy(&input).into_owned();
     let mut out = String::new();
+    if comment_lines {
+        let body = input.strip_suffix('\n').unwrap_or(&input);
+        if !input.is_empty() {
+            for line in body.split('\n') {
+                if line.is_empty() {
+                    out.push_str(&cc);
+                } else {
+                    out.push_str(&format!("{cc} {line}"));
+                }
+                out.push('\n');
+            }
+        }
+        print!("{out}");
+        return Ok(());
+    }
+    let mut blank_run = false;
     for line in input.lines() {
-        let l = line.trim_end();
-        if strip_comments && l.trim_start().starts_with('#') {
+        if strip_comments && line.starts_with(cc.as_str()) {
             continue;
         }
+        let l = line.trim_end();
+        if l.is_empty() {
+            blank_run = !out.is_empty();
+            continue;
+        }
+        if blank_run {
+            out.push('\n');
+            blank_run = false;
+        }
         out.push_str(l);
-        out.push('\n');
-    }
-    while out.ends_with("\n\n") {
-        out.pop();
-    }
-    if !out.is_empty() && !out.ends_with('\n') {
         out.push('\n');
     }
     print!("{out}");
@@ -507,80 +614,117 @@ pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks var [-l] <variable>`
+/// `arks var (-l | <variable>)` — logical variables of git-var (2.43 set).
+/// Cite: https://git-scm.com/docs/git-var
 pub fn cmd_var(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-l"])?;
-    let list = args.iter().any(|a| a == "-l");
-    let repo = open_repo().ok();
-    let mut pairs = Vec::new();
-    if let Some(repo) = &repo {
-        pairs.push(("GIT_DIR", repo.git_dir().display().to_string()));
-        pairs.push((
-            "GIT_OBJECT_DIRECTORY",
-            repo.store().objects_dir().display().to_string(),
-        ));
-        if let Ok(wt) = work_tree(repo) {
-            pairs.push(("GIT_WORK_TREE", wt.display().to_string()));
-        }
-        pairs.push(("GIT_COMMON_DIR", repo.common_dir().display().to_string()));
-    }
-    if list {
-        for (k, v) in &pairs {
-            println!("{k}={v}");
-        }
-        return Ok(());
-    }
-    // git-var logical variables. Cite: https://git-scm.com/docs/git-var
-    let cfg = arks_config::ConfigSet::load_discovered(&crate::util::cwd()?);
-    let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
-    let ident = |author: bool| -> CliResult<String> {
-        let s = if author {
-            crate::cmd::shared::commit_signature()?
-        } else {
-            crate::cmd::shared::committer_signature()?
-        };
-        Ok(format!(
-            "{} <{}> {} {}",
-            s.name, s.email, s.timestamp, s.timezone
-        ))
+    let usage = || CliError::Exit(129, "usage: git var (-l | <variable>)".into());
+    let [arg] = args else {
+        return Err(usage());
     };
-    let key = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("var [-l] <variable>".into()))?;
-    let logical = match key.as_str() {
-        "GIT_AUTHOR_IDENT" => Some(ident(true)?),
-        "GIT_COMMITTER_IDENT" => Some(ident(false)?),
-        "GIT_EDITOR" => Some(
-            env("GIT_EDITOR")
-                .or_else(|| cfg.get("core.editor"))
-                .or_else(|| env("VISUAL"))
-                .or_else(|| env("EDITOR"))
-                .unwrap_or_else(|| "vi".into()),
+    let cwd = crate::util::cwd()?;
+    let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+    let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+    let home = env("HOME");
+    let xdg = env("XDG_CONFIG_HOME").or_else(|| home.as_ref().map(|h| format!("{h}/.config")));
+    let ident = |author: bool| -> Option<String> {
+        let s = if author {
+            crate::cmd::shared::commit_signature().ok()?
+        } else {
+            crate::cmd::shared::committer_signature().ok()?
+        };
+        Some(format!("{} <{}> {} {}", s.name, s.email, s.timestamp, s.timezone))
+    };
+    let editor = || {
+        env("GIT_EDITOR")
+            .or_else(|| cfg.get("core.editor"))
+            .or_else(|| env("VISUAL"))
+            .or_else(|| env("EDITOR"))
+            .unwrap_or_else(|| "vi".into())
+    };
+    let nosystem = |k: &str| env(k).is_some_and(|v| arks_config::parse_bool(&v).unwrap_or(true));
+    let vars: Vec<(&str, Vec<String>)> = vec![
+        ("GIT_COMMITTER_IDENT", ident(false).into_iter().collect()),
+        ("GIT_AUTHOR_IDENT", ident(true).into_iter().collect()),
+        ("GIT_EDITOR", vec![editor()]),
+        (
+            "GIT_SEQUENCE_EDITOR",
+            vec![env("GIT_SEQUENCE_EDITOR")
+                .or_else(|| cfg.get("sequence.editor"))
+                .unwrap_or_else(editor)],
         ),
-        "GIT_PAGER" => Some(
-            env("GIT_PAGER")
+        (
+            "GIT_PAGER",
+            vec![env("GIT_PAGER")
                 .or_else(|| cfg.get("core.pager"))
                 .or_else(|| env("PAGER"))
-                .unwrap_or_else(|| "less".into()),
+                .unwrap_or_else(|| "less".into())],
         ),
-        "GIT_DEFAULT_BRANCH" => Some(
-            cfg.get("init.defaultBranch")
-                .unwrap_or_else(|| "master".into()),
+        (
+            "GIT_DEFAULT_BRANCH",
+            vec![cfg.get("init.defaultbranch").unwrap_or_else(|| "master".into())],
         ),
-        _ => None,
-    };
-    if let Some(v) = logical {
-        println!("{v}");
+        ("GIT_SHELL_PATH", vec!["/bin/sh".into()]),
+        (
+            "GIT_ATTR_SYSTEM",
+            if nosystem("GIT_ATTR_NOSYSTEM") {
+                Vec::new()
+            } else {
+                vec!["/etc/gitattributes".into()]
+            },
+        ),
+        (
+            "GIT_ATTR_GLOBAL",
+            cfg.get("core.attributesfile")
+                .or_else(|| xdg.as_ref().map(|x| format!("{x}/git/attributes")))
+                .into_iter()
+                .collect(),
+        ),
+        (
+            "GIT_CONFIG_SYSTEM",
+            if nosystem("GIT_CONFIG_NOSYSTEM") {
+                Vec::new()
+            } else {
+                vec![env("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into())]
+            },
+        ),
+        (
+            "GIT_CONFIG_GLOBAL",
+            match env("GIT_CONFIG_GLOBAL") {
+                Some(g) => vec![g],
+                None => xdg
+                    .iter()
+                    .map(|x| format!("{x}/git/config"))
+                    .chain(home.iter().map(|h| format!("{h}/.gitconfig")))
+                    .collect(),
+            },
+        ),
+    ];
+    if arg == "-l" {
+        let mut out = String::new();
+        for e in cfg.entries() {
+            match &e.value {
+                Some(v) => out.push_str(&format!("{}={v}\n", e.key)),
+                None => out.push_str(&format!("{}\n", e.key)),
+            }
+        }
+        for (k, vs) in &vars {
+            for v in vs {
+                out.push_str(&format!("{k}={v}\n"));
+            }
+        }
+        print!("{out}");
         return Ok(());
     }
-    for (k, v) in pairs {
-        if k == key.as_str() {
-            println!("{v}");
-            return Ok(());
+    match vars.iter().find(|(k, _)| *k == arg.as_str()) {
+        Some((_, vs)) if vs.is_empty() => Err(CliError::silent(1)),
+        Some((_, vs)) => {
+            for v in vs {
+                println!("{v}");
+            }
+            Ok(())
         }
+        None => Err(usage()),
     }
-    Err(CliError::Msg(format!("unknown variable: {key}")))
 }
 
 /// `arks patch-id` — stable id for a diff on stdin.
@@ -678,51 +822,147 @@ pub fn cmd_show_index(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks check-attr` — report attributes for paths from `.gitattributes` (subset).
+/// `arks check-attr [--source <tree-ish>] [--cached] [--stdin [-z]] [-a | --all | <attr>...] [--] <pathname>...`
+/// over the gitattributes(5) sources (see `cmd::attr`).
+/// Cite: https://git-scm.com/docs/git-check-attr
 pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
-    // `[-a | --all | <attr>...] [--] <pathname>...` over the gitattributes(5)
-    // sources (see `cmd::attr`). Cite: https://git-scm.com/docs/git-check-attr
     let mut all = false;
+    let mut cached = false;
+    let mut stdin = false;
+    let mut nul = false;
+    let mut source: Option<String> = None;
     let mut before: Vec<&String> = Vec::new();
     let mut after: Option<Vec<&String>> = None;
-    for a in args {
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
         if let Some(v) = after.as_mut() {
             v.push(a);
             continue;
         }
         match a.as_str() {
             "-a" | "--all" => all = true,
+            "--no-all" => all = false,
+            "--cached" => cached = true,
+            "--no-cached" => cached = false,
+            "--stdin" => stdin = true,
+            "--no-stdin" => stdin = false,
+            "-z" => nul = true,
+            "--source" => {
+                source = args.get(i).cloned();
+                i += 1;
+            }
+            "--no-source" => source = None,
             "--" => after = Some(Vec::new()),
-            "--cached" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            _ if a.starts_with("--source=") => source = Some(a["--source=".len()..].to_string()),
+            _ if a.starts_with('-') && a.len() > 1 => {
+                return Err(CliError::Exit(
+                    129,
+                    format!("error: unknown option `{}'\nusage: git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>...", a.trim_start_matches('-')),
+                ));
             }
             _ => before.push(a),
         }
     }
-    let (attrs, paths): (Vec<&String>, Vec<&String>) = match after {
-        Some(p) => (before, p),
-        None if all => (Vec::new(), before),
-        None if before.len() >= 2 => (vec![before[0]], before[1..].to_vec()),
+    let (attrs, mut paths): (Vec<String>, Vec<String>) = match after {
+        Some(p) => (
+            before.iter().map(|s| s.to_string()).collect(),
+            p.iter().map(|s| s.to_string()).collect(),
+        ),
+        None if all || stdin => (
+            if all {
+                Vec::new()
+            } else {
+                before.iter().map(|s| s.to_string()).collect()
+            },
+            if all {
+                before.iter().map(|s| s.to_string()).collect()
+            } else {
+                Vec::new()
+            },
+        ),
+        None if before.len() >= 2 => (
+            vec![before[0].to_string()],
+            before[1..].iter().map(|s| s.to_string()).collect(),
+        ),
         None => {
             return Err(CliError::Exit(129, "error: No attribute specified".into()));
         }
     };
-    if paths.is_empty() {
-        return Err(CliError::fatal("No file specified"));
+    if all && !attrs.is_empty() {
+        return Err(CliError::Exit(
+            129,
+            "error: Attributes and --all both specified".into(),
+        ));
+    }
+    if stdin {
+        if !paths.is_empty() {
+            return Err(CliError::Exit(129, "error: Can't specify files with --stdin".into()));
+        }
+        let mut input = Vec::new();
+        io::stdin().read_to_end(&mut input)?;
+        let sep = if nul { b'\0' } else { b'\n' };
+        paths = input
+            .split(|b| *b == sep)
+            .filter(|p| !p.is_empty())
+            .map(|p| String::from_utf8_lossy(p).into_owned())
+            .collect();
+    } else if paths.is_empty() {
+        return Err(CliError::Exit(129, "error: No file specified".into()));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    for path in paths {
+    // `--source` / `--cached`: materialize the .gitattributes files of that
+    // tree (or the index) into a scratch tree and read rules from there.
+    let scratch = match (&source, cached) {
+        (Some(rev), _) => {
+            let oid = resolve_rev(&repo, rev)
+                .map_err(|_| CliError::fatal(format!("bad --source or --cached: {rev}")))?;
+            let files = crate::cmd::switch_tree::commit_files(&repo, &oid)
+                .map_err(|_| CliError::fatal(format!("{rev}: not a tree-ish")))?;
+            Some(attr_scratch(
+                &repo,
+                files
+                    .iter()
+                    .filter(|(p, _)| p.ends_with(".gitattributes"))
+                    .map(|(p, f)| (p.clone(), f.oid))
+                    .collect(),
+            )?)
+        }
+        (None, true) => {
+            let index = crate::util::read_index(&repo)?;
+            Some(attr_scratch(
+                &repo,
+                index
+                    .entries
+                    .iter()
+                    .filter(|e| e.stage() == 0 && e.path.ends_with(".gitattributes"))
+                    .map(|e| (e.path.clone(), e.oid))
+                    .collect(),
+            )?)
+        }
+        _ => None,
+    };
+    let base = scratch.as_ref().map(|t| t.path().to_path_buf()).unwrap_or_else(|| work.clone());
+    let mut out = Vec::new();
+    for path in &paths {
         let rel = crate::util::rel_path_from_worktree(&work, Path::new(path))
             .unwrap_or_else(|_| path.to_string());
-        let rules = crate::cmd::attr::Attributes::load(&work, repo.git_dir(), &rel);
+        let rules = crate::cmd::attr::Attributes::load(&base, repo.git_dir(), &rel);
         let found = rules.for_path(&rel);
+        let mut emit = |k: &str, v: &str| {
+            if nul {
+                out.extend_from_slice(format!("{path}\0{k}\0{v}\0").as_bytes());
+            } else {
+                out.extend_from_slice(format!("{path}: {k}: {v}\n").as_bytes());
+            }
+        };
         if all {
             for k in rules.order() {
                 match found.get(k) {
                     Some(v) if *v != crate::cmd::attr::AttrValue::Unspecified => {
-                        println!("{path}: {k}: {}", v.display());
+                        emit(k, v.display());
                     }
                     _ => {}
                 }
@@ -733,10 +973,11 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
                     .get(a.as_str())
                     .map(|v| v.display())
                     .unwrap_or("unspecified");
-                println!("{path}: {a}: {v}");
+                emit(a, v);
             }
         }
     }
+    io::Write::write_all(&mut io::stdout(), &out)?;
     Ok(())
 }
 
@@ -1079,114 +1320,159 @@ pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks check-mailmap` — map identities via `.mailmap` (subset).
+/// `arks check-mailmap [--stdin] <contact>...` — map `Name <email>` through
+/// `.mailmap`, `mailmap.file` and `mailmap.blob`.
+/// Cite: https://git-scm.com/docs/git-check-mailmap, gitmailmap(5)
 pub fn cmd_check_mailmap(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    if args.is_empty() {
-        return Err(CliError::Usage("check-mailmap <identity>…".into()));
+    let mut stdin = false;
+    let mut contacts: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--stdin" => stdin = true,
+            "--no-stdin" => stdin = false,
+            _ if a.starts_with('-') => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git check-mailmap [<options>] <contact>...".into(),
+                ));
+            }
+            _ => contacts.push(a),
+        }
+    }
+    if contacts.is_empty() && !stdin {
+        return Err(CliError::fatal("no contacts specified"));
     }
     let repo = open_repo()?;
-    let work = work_tree(&repo).unwrap_or_else(|_| repo.git_dir().to_path_buf());
-    let map = load_mailmap(&work.join(".mailmap"))?;
-    for id in args {
-        println!("{}", map_identity(&map, id));
+    let map = crate::cmd::plumbing_ext::Mailmap::load(&repo);
+    let mut out = String::new();
+    for c in contacts {
+        out.push_str(&map.check(c)?);
+        out.push('\n');
+    }
+    print!("{out}");
+    if stdin {
+        let mut input = String::new();
+        io::stdin().read_to_string(&mut input)?;
+        let mut o = io::stdout().lock();
+        for line in input.lines() {
+            let mapped = map.check(line)?;
+            io::Write::write_all(&mut o, format!("{mapped}\n").as_bytes())?;
+            io::Write::flush(&mut o)?;
+        }
     }
     Ok(())
 }
 
-fn load_mailmap(path: &Path) -> CliResult<Vec<(String, String)>> {
-    let text = match fs::read_to_string(path) {
-        Ok(t) => t,
-        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(e) => return Err(CliError::Msg(e.to_string())),
+/// `arks column [--command=<name>] [--mode=<mode>] [--raw-mode=<n>] [--width=<w>]
+/// [--indent=<s>] [--nl=<s>] [--padding=<n>]` — lay out stdin lines in columns.
+/// Cite: https://git-scm.com/docs/git-column, git-config `column.ui`
+pub fn cmd_column(args: &[String]) -> CliResult<()> {
+    let mut opts = crate::cmd::plumbing_ext::ColumnOpts::default();
+    let mut command: Option<String> = None;
+    let mut mode_specs: Vec<String> = Vec::new();
+    let mut raw_mode: Option<u32> = None;
+    let mut i = 0;
+    let usage = |m: &str| CliError::Exit(129, format!("error: {m}\nusage: git column [<options>]"));
+    let value = |i: &mut usize, a: &str, name: &str| -> CliResult<Option<String>> {
+        if let Some(v) = a.strip_prefix(&format!("--{name}=")) {
+            return Ok(Some(v.to_string()));
+        }
+        if a == format!("--{name}") {
+            let v = args
+                .get(*i)
+                .cloned()
+                .ok_or_else(|| CliError::Exit(129, format!("error: option `{name}' requires a value")))?;
+            *i += 1;
+            return Ok(Some(v));
+        }
+        Ok(None)
     };
-    let mut out = Vec::new();
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
+    while i < args.len() {
+        let a = args[i].clone();
+        i += 1;
+        if a == "--mode" {
+            mode_specs.push("column".into());
             continue;
         }
-        // Proper Name <proper@email> Commit Name <commit@email>
-        // or Proper Name <proper@email>
-        if let Some((left, right)) = line.split_once('>') {
-            let proper = format!("{left}>").trim().to_string();
-            let rest = right.trim();
-            if rest.is_empty() {
-                out.push((proper.clone(), proper));
-            } else if let Some((cn, _)) = rest.split_once('<') {
-                let _ = cn;
-                let commit = rest.trim().to_string();
-                // Prefer matching on email in commit side.
-                out.push((commit, proper));
+        if let Some(v) = a.strip_prefix("--mode=") {
+            mode_specs.push(v.to_string());
+            continue;
+        }
+        if a == "--no-mode" {
+            mode_specs.clear();
+            raw_mode = Some(0);
+            continue;
+        }
+        let at = i - 1;
+        if let Some(v) = value(&mut i, &a, "command")? {
+            if at != 0 {
+                return Err(CliError::fatal("--command must be the first argument"));
+            }
+            command = Some(v);
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "raw-mode")? {
+            raw_mode = Some(v.parse().map_err(|_| usage("option `raw-mode' expects a numerical value"))?);
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "width")? {
+            opts.width = Some(v.parse().map_err(|_| usage("option `width' expects a numerical value"))?);
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "indent")? {
+            opts.indent = v;
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "nl")? {
+            opts.nl = Some(v);
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "padding")? {
+            opts.padding = v.parse().map_err(|_| usage("option `padding' expects a numerical value"))?;
+            continue;
+        }
+        match a.as_str() {
+            "--no-command" => command = None,
+            "--no-raw-mode" => raw_mode = None,
+            "--no-width" => opts.width = None,
+            "--no-indent" => opts.indent.clear(),
+            "--no-nl" => opts.nl = None,
+            "--no-padding" => opts.padding = 1,
+            _ => {
+                if a.starts_with('-') {
+                    return Err(CliError::Exit(
+                        129,
+                        format!("error: unknown option `{}'\nusage: git column [<options>]", a.trim_start_matches('-')),
+                    ));
+                }
+                return Err(CliError::Exit(129, "usage: git column [<options>]".into()));
             }
         }
     }
-    Ok(out)
-}
-
-fn map_identity(map: &[(String, String)], id: &str) -> String {
-    let id_l = id.to_ascii_lowercase();
-    for (from, to) in map {
-        if id == from || id_l.contains(&email_of(from).to_ascii_lowercase()) {
-            return to.clone();
-        }
-    }
-    id.to_string()
-}
-
-fn email_of(id: &str) -> String {
-    if let (Some(a), Some(b)) = (id.find('<'), id.find('>')) {
-        if b > a {
-            return id[a + 1..b].to_string();
-        }
-    }
-    id.to_string()
-}
-
-/// `arks column` — simple columnar layout of stdin lines (subset).
-pub fn cmd_column(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--mode", "--width", "--padding"])?;
-    let mut cols = 2usize;
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--mode" {
-            i += 1;
-            // ignore mode token (plain|dense|…)
-        } else if let Some(rest) = args[i].strip_prefix("--mode=") {
-            let _ = rest;
-        } else if args[i] == "--width" {
-            i += 1;
-        } else if args[i].starts_with("--width=") {
-        } else if args[i] == "--padding" {
-            i += 1;
-            if let Some(p) = args.get(i) {
-                let _ = p;
-            }
-        } else if !args[i].starts_with('-') {
-            if let Ok(n) = args[i].parse::<usize>() {
-                cols = n.max(1);
+    let mut layout = crate::cmd::plumbing_ext::ColumnLayout::default();
+    if let Some(cmd) = &command {
+        let cwd = crate::util::cwd()?;
+        let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+        for key in ["column.ui".to_string(), format!("column.{cmd}")] {
+            if let Some(v) = cfg.get(&key) {
+                layout
+                    .apply(&v)
+                    .map_err(|bad| CliError::Exit(129, format!("error: invalid column.{cmd} mode {bad}")))?;
             }
         }
-        i += 1;
     }
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    let lines: Vec<&str> = buf.lines().filter(|l| !l.is_empty()).collect();
-    if lines.is_empty() {
-        return Ok(());
+    for spec in &mode_specs {
+        layout
+            .apply(spec)
+            .map_err(|bad| CliError::Exit(129, format!("error: unsupported option '{bad}'")))?;
     }
-    let width = lines.iter().map(|l| l.len()).max().unwrap_or(0) + 2;
-    for chunk in lines.chunks(cols) {
-        let mut row = String::new();
-        for (i, cell) in chunk.iter().enumerate() {
-            if i + 1 == chunk.len() {
-                row.push_str(cell);
-            } else {
-                row.push_str(&format!("{cell:<width$}"));
-            }
-        }
-        println!("{row}");
+    if let Some(r) = raw_mode {
+        layout = crate::cmd::plumbing_ext::ColumnLayout::from_raw(r);
     }
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input)?;
+    let items: Vec<&str> = input.lines().collect();
+    print!("{}", crate::cmd::plumbing_ext::render_columns(&items, &layout, &opts));
     Ok(())
 }
 
@@ -1805,6 +2091,47 @@ pub fn cmd_upload_archive(args: &[String]) -> CliResult<()> {
             Err(CliError::fatal(format!("sent error to the client: {died}")))
         }
     }
+}
+
+/// `@{-N}` → the N-th previously checked out branch (HEAD reflog).
+fn previous_branch(repo: &Repository, spec: &str) -> Option<String> {
+    let n: usize = spec.strip_prefix("@{-")?.strip_suffix('}')?.parse().ok()?;
+    let entries = crate::reflog::read_entries(repo, "HEAD");
+    let mut seen = 0;
+    for (_, _, msg) in entries.iter().rev() {
+        if let Some(rest) = msg.strip_prefix("checkout: moving from ") {
+            seen += 1;
+            if seen == n {
+                return rest.split(" to ").next().map(str::to_string);
+            }
+        }
+    }
+    None
+}
+
+fn attr_scratch(
+    repo: &Repository,
+    files: Vec<(String, Oid)>,
+) -> CliResult<crate::cmd::plumbing_ext::ScratchDir> {
+    let dir = std::env::temp_dir().join(format!(
+        "arks-attr-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    ));
+    fs::create_dir_all(&dir)?;
+    let guard = crate::cmd::plumbing_ext::ScratchDir(dir);
+    for (p, oid) in files {
+        let obj = repo.get_object(&oid)?;
+        let dest = guard.path().join(&p);
+        if let Some(parent) = dest.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(dest, &obj.payload)?;
+    }
+    Ok(guard)
 }
 
 fn parse_expire(v: &str) -> CliResult<i64> {

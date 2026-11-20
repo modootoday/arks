@@ -422,6 +422,18 @@ fn reflog_line(
     Ok(())
 }
 
+/// `~` / `~/` expansion for paths taken from config or the command line.
+pub(crate) fn expand_home(p: &str) -> String {
+    let home = std::env::var("HOME").unwrap_or_default();
+    if p == "~" {
+        return home;
+    }
+    match p.strip_prefix("~/") {
+        Some(rest) => format!("{home}/{rest}"),
+        None => p.to_string(),
+    }
+}
+
 /// Every object reachable from refs (incl. HEAD and other worktrees' HEAD),
 /// reflog entries, the index and `extra` tips.
 pub(crate) fn reachable_all(
@@ -640,4 +652,295 @@ pub(crate) fn verify_one_pack(
         ));
     }
     Ok(out)
+}
+
+/// gitmailmap(5) rules from `.mailmap`, `mailmap.file` and `mailmap.blob`.
+pub(crate) struct Mailmap {
+    /// (old name, old email lowercase, new name, new email)
+    rules: Vec<(Option<String>, String, Option<String>, Option<String>)>,
+}
+
+impl Mailmap {
+    pub(crate) fn load(repo: &Repository) -> Self {
+        let mut texts: Vec<String> = Vec::new();
+        let cfg = arks_config::ConfigSet::load(Some(repo.git_dir()));
+        if let Ok(wt) = crate::util::work_tree(repo) {
+            if let Ok(t) = std::fs::read_to_string(wt.join(".mailmap")) {
+                texts.push(t);
+            }
+        } else if let Some(t) = cfg
+            .get("mailmap.blob")
+            .or_else(|| Some("HEAD:.mailmap".into()))
+            .and_then(|b| crate::cmd::shared::resolve_rev(repo, &b).ok())
+            .and_then(|o| repo.get_object(&o).ok())
+            .map(|o| String::from_utf8_lossy(&o.payload).into_owned())
+        {
+            texts.push(t);
+        }
+        if let Some(b) = cfg.get("mailmap.blob").filter(|_| crate::util::work_tree(repo).is_ok()) {
+            if let Some(t) = crate::cmd::shared::resolve_rev(repo, &b)
+                .ok()
+                .and_then(|o| repo.get_object(&o).ok())
+            {
+                texts.push(String::from_utf8_lossy(&t.payload).into_owned());
+            }
+        }
+        if let Some(f) = cfg.get("mailmap.file") {
+            if let Ok(t) = std::fs::read_to_string(expand_home(&f)) {
+                texts.push(t);
+            }
+        }
+        let mut rules = Vec::new();
+        for text in texts {
+            for line in text.lines() {
+                let line = line.split('#').next().unwrap_or("");
+                let mut parts = Vec::new();
+                let mut rest = line;
+                while let Some(lt) = rest.find('<') {
+                    let Some(gt) = rest[lt..].find('>') else { break };
+                    let name = rest[..lt].trim();
+                    let email = &rest[lt + 1..lt + gt];
+                    parts.push(((!name.is_empty()).then(|| name.to_string()), email.to_string()));
+                    rest = &rest[lt + gt + 1..];
+                }
+                match parts.as_slice() {
+                    [(name, email)] => rules.push((None, email.to_lowercase(), name.clone(), None)),
+                    [(new_name, new_email), (old_name, old_email)] => rules.push((
+                        old_name.clone(),
+                        old_email.to_lowercase(),
+                        new_name.clone(),
+                        Some(new_email.clone()),
+                    )),
+                    _ => {}
+                }
+            }
+        }
+        Self { rules }
+    }
+
+    /// Map one `Name <email>` contact (fatal when unparsable).
+    pub(crate) fn check(&self, contact: &str) -> CliResult<String> {
+        let (name, email) = match (contact.find('<'), contact.rfind('>')) {
+            (Some(a), Some(b)) if b > a => (contact[..a].trim().to_string(), &contact[a + 1..b]),
+            _ => {
+                return Err(CliError::fatal(format!(
+                    "unable to parse contact: {contact}"
+                )));
+            }
+        };
+        let le = email.to_lowercase();
+        // A rule with an old name is more specific; later rules win.
+        let hit = self
+            .rules
+            .iter()
+            .rev()
+            .find(|r| {
+                r.1 == le && r.0.as_deref().is_some_and(|n| n.eq_ignore_ascii_case(&name))
+            })
+            .or_else(|| self.rules.iter().rev().find(|r| r.1 == le && r.0.is_none()));
+        let (n, e) = match hit {
+            Some((_, _, nn, ne)) => (
+                nn.clone().unwrap_or_else(|| name.clone()),
+                ne.clone().unwrap_or_else(|| email.to_string()),
+            ),
+            None => (name.clone(), email.to_string()),
+        };
+        Ok(if n.is_empty() {
+            format!("<{e}>")
+        } else {
+            format!("{n} <{e}>")
+        })
+    }
+}
+
+/// `column` options independent of the layout.
+pub(crate) struct ColumnOpts {
+    pub width: Option<usize>,
+    pub indent: String,
+    pub nl: Option<String>,
+    pub padding: i64,
+}
+
+impl Default for ColumnOpts {
+    fn default() -> Self {
+        Self {
+            width: None,
+            indent: String::new(),
+            nl: None,
+            padding: 1,
+        }
+    }
+}
+
+/// `column.ui`-style layout: enable (always/never/auto), column|row|plain, dense.
+#[derive(Default, Clone, Copy)]
+pub(crate) struct ColumnLayout {
+    pub enabled: Option<bool>,
+    pub row: bool,
+    pub plain: bool,
+    pub dense: bool,
+}
+
+impl ColumnLayout {
+    /// Apply a comma/space separated mode list; the bad token on error.
+    pub(crate) fn apply(&mut self, spec: &str) -> Result<(), String> {
+        for tok in spec.split([',', ' ']).filter(|t| !t.is_empty()) {
+            let (neg, t) = match tok.strip_prefix("no") {
+                Some(r) if r == "dense" => (true, r),
+                _ => (false, tok),
+            };
+            match t {
+                "always" => self.enabled = Some(true),
+                "never" => self.enabled = Some(false),
+                "auto" => self.enabled = Some(false),
+                "column" => {
+                    self.row = false;
+                    self.plain = false;
+                    self.enabled.get_or_insert(true);
+                }
+                "row" => {
+                    self.row = true;
+                    self.plain = false;
+                    self.enabled.get_or_insert(true);
+                }
+                "plain" => {
+                    self.plain = true;
+                    self.enabled.get_or_insert(true);
+                }
+                "dense" => self.dense = !neg,
+                _ => return Err(tok.to_string()),
+            }
+        }
+        Ok(())
+    }
+
+    /// `--raw-mode` bits (COL_ENABLED 0x10, layout mask 0x0F: column 0,
+    /// row 1, plain 15; COL_DENSE 0x20).
+    pub(crate) fn from_raw(r: u32) -> Self {
+        let layout = r & 0x0f;
+        Self {
+            enabled: Some(r & 0x10 != 0 || r & 0x30 == 0x30),
+            row: layout == 1,
+            plain: layout == 15,
+            dense: r & 0x20 != 0,
+        }
+    }
+}
+
+/// Render `items` like git's `print_columns` (column.c `display_table`):
+/// cols = (width - indent) / (longest + padding), rows = ceil(n / cols);
+/// `dense` shrinks rows while the per-column widths still fit; cells are
+/// padded against the initial uniform width.
+pub(crate) fn render_columns(items: &[&str], l: &ColumnLayout, o: &ColumnOpts) -> String {
+    let nl = o.nl.clone().unwrap_or_else(|| "\n".into());
+    let mut out = String::new();
+    if items.is_empty() {
+        return out;
+    }
+    if !l.enabled.unwrap_or(false) || l.plain {
+        for it in items {
+            out.push_str(&o.indent);
+            out.push_str(it);
+            out.push_str(&nl);
+        }
+        return out;
+    }
+    let width = o
+        .width
+        .or_else(|| std::env::var("COLUMNS").ok().and_then(|c| c.parse().ok()))
+        .unwrap_or(80) as i64;
+    let pad = o.padding;
+    let n = items.len();
+    let lens: Vec<i64> = items.iter().map(|s| s.chars().count() as i64).collect();
+    let indent_len = o.indent.chars().count() as i64;
+    let initial = lens.iter().copied().max().unwrap_or(0) + pad;
+    let mut cols = if initial > 0 {
+        ((width - indent_len) / initial).max(1) as usize
+    } else {
+        1
+    };
+    let mut rows = n.div_ceil(cols);
+    let lin = |x: usize, y: usize, rows: usize, cols: usize| {
+        if l.row { y * cols + x } else { x * rows + y }
+    };
+    // Index of the longest cell per column.
+    let col_widths = |rows: usize, cols: usize| -> Vec<usize> {
+        (0..cols)
+            .map(|x| {
+                let mut best = lin(x, 0, rows, cols);
+                for y in 0..rows {
+                    let i = lin(x, y, rows, cols);
+                    if i < n && best < n && lens[best] < lens[i] {
+                        best = i;
+                    }
+                }
+                best
+            })
+            .collect()
+    };
+    let mut widths: Option<Vec<usize>> = None;
+    if l.dense {
+        while rows > 1 {
+            let (r0, c0) = (rows, cols);
+            rows -= 1;
+            cols = n.div_ceil(rows);
+            let w = col_widths(rows, cols);
+            let total: i64 = indent_len
+                + w.iter()
+                    .map(|&i| lens.get(i).copied().unwrap_or(0) + pad)
+                    .sum::<i64>();
+            if total > width {
+                rows = r0;
+                cols = c0;
+                break;
+            }
+        }
+        widths = Some(col_widths(rows, cols));
+    }
+    'rows: for y in 0..rows {
+        for x in 0..cols {
+            let i = lin(x, y, rows, cols);
+            if i >= n {
+                break;
+            }
+            let mut len = lens[i];
+            if let Some(w) = &widths {
+                let cw = lens.get(w[x]).copied().unwrap_or(0);
+                if cw < initial {
+                    len += initial - cw;
+                    len -= pad;
+                }
+            }
+            let newline = if l.row {
+                x == cols - 1 || i == n - 1
+            } else {
+                i + rows >= n
+            };
+            if x == 0 {
+                out.push_str(&o.indent);
+            }
+            out.push_str(items[i]);
+            if newline {
+                out.push_str(&nl);
+                continue 'rows;
+            }
+            out.push_str(&" ".repeat((initial - len).max(0) as usize));
+        }
+    }
+    out
+}
+
+/// Temporary directory removed on drop.
+pub(crate) struct ScratchDir(pub std::path::PathBuf);
+
+impl ScratchDir {
+    pub(crate) fn path(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
+impl Drop for ScratchDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
 }
