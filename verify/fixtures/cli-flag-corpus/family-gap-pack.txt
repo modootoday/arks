@@ -360,3 +360,44 @@ multi-pack-index write -h
 multi-pack-index verify -h
 multi-pack-index expire -h
 multi-pack-index repack -h
+# --- interactive hunk selection (-p): stdin is empty, so each line shows the
+#     first hunk and its prompt, then quits at end of input; scripted
+#     answers are compared in crates/arks/tests/patch_oracle.rs ---
+add -p
+add --patch
+add -p src
+add -p -- src/a.txt
+add -p nosuch
+add --patch -- docs
+reset -p
+reset --patch
+reset -p HEAD
+reset -p HEAD~1
+reset -p HEAD~1 -- README.md
+reset -p -- src
+reset -p t0 src
+checkout -p
+checkout --patch
+checkout -p -- src/a.txt
+checkout -p HEAD
+checkout -p HEAD -- src
+checkout -p HEAD~1
+checkout -p HEAD~1 -- src
+checkout -p t0 -- README.md
+restore -p
+restore --patch src
+restore -p --staged
+restore -p --staged src/new.txt
+restore -p --source=HEAD~1 src/a.txt
+restore -p --source=HEAD src
+restore -p --staged --worktree
+restore -p --source=t0 --staged --worktree README.md
+restore -p --worktree --source=HEAD~1 README.md
+stash push -p
+stash -p
+stash push --patch -m msg
+stash push -p -- src/a.txt
+stash push -p -- docs
+stash save -p
+commit -p -m x
+commit --patch -m x -- src/a.txt
