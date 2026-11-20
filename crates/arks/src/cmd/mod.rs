@@ -37,6 +37,7 @@ pub mod merge;
 pub mod merge_engine;
 pub mod notes;
 pub mod opt_spec;
+pub mod optparse;
 pub mod pack_transport;
 pub mod patch;
 pub mod plumbing;
