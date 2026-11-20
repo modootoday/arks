@@ -40,6 +40,7 @@ pub mod inspect;
 pub mod interactive_patch;
 pub mod internal_helpers;
 pub mod lease;
+pub mod line_log;
 pub mod line_range;
 pub mod lock;
 pub mod log_cmd;

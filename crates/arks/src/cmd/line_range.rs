@@ -27,6 +27,7 @@ impl RangeError {
 }
 
 /// Lines of `content` without their terminators.
+#[cfg(test)]
 pub fn lines_of(content: &[u8]) -> Vec<&[u8]> {
     if content.is_empty() {
         return Vec::new();
