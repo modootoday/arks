@@ -360,7 +360,15 @@ fn bundle_create_list_heads_unbundle() {
     assert_ok(&arks(&dest, &["init"]), "init dest");
     let un = arks(&dest, &["bundle", "unbundle", bundle.to_str().unwrap()]);
     assert_ok(&un, "unbundle");
-    assert!(String::from_utf8_lossy(&un.stdout).contains("refs/heads/main"));
+    let listed = String::from_utf8_lossy(&un.stdout).to_string();
+    assert!(listed.contains("refs/heads/main"));
+    // git-bundle unbundle stores objects only; create the refs it lists.
+    for line in listed.lines() {
+        let (oid, name) = line.split_once(' ').expect("<oid> <ref>");
+        if name.starts_with("refs/") {
+            assert_ok(&arks(&dest, &["update-ref", name, oid]), "update-ref");
+        }
+    }
     assert_ok(&arks(&dest, &["checkout", "main"]), "checkout main");
     assert_eq!(fs::read_to_string(dest.join("a.txt")).unwrap(), "hello\n");
     assert_ok(&arks(&dest, &["checkout", "other"]), "checkout other");

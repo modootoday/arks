@@ -80,3 +80,7 @@ git --git-dir="$u" branch -q -D feature
 rm -f "$ui"
 git config remote.origin.url "$u"
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+# Bundles for `bundle verify / list-heads / unbundle` lines: one with a
+# prerequisite (t0..main) and one complete (feature plus tag v1).
+git bundle create -q .git/range.bundle t0..main
+git bundle create -q .git/full.bundle feature v1
