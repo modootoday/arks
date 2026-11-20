@@ -241,3 +241,68 @@ rerere -h
 -C .git/stratc -c rerere.enabled=true rerere status extra
 -C .git/side -c rerere.enabled=true merge clash
 -C .git/side -c rerere.enabled=true -c rerere.autoUpdate=true merge clash
+# --- pack-objects (stdin is empty: empty packs or no pack with --non-empty;
+#     packs with objects differ in compression bytes and are checked by
+#     crates/arks/tests/pack_oracle.rs against stock index-pack/verify-pack) ---
+pack-objects
+pack-objects --stdout
+pack-objects .git/x
+pack-objects -q .git/x
+pack-objects --non-empty .git/x
+pack-objects --non-empty --stdout
+pack-objects --no-non-empty --stdout
+pack-objects a b
+pack-objects --stdout x
+pack-objects --revs --non-empty .git/x
+pack-objects --revs --stdout
+pack-objects --no-revs --stdout
+pack-objects --non-empty --window=5 --depth=10 --window-memory=1m --threads=2 .git/x
+pack-objects --non-empty --no-window --no-depth --no-threads .git/x
+pack-objects --non-empty --window=x .git/x
+pack-objects --non-empty --depth=y .git/x
+pack-objects --non-empty --compression=0 .git/x
+pack-objects --non-empty --compression=9 --no-compression .git/x
+pack-objects --non-empty --compression=10 .git/x
+pack-objects --non-empty --max-pack-size=2m .git/x
+pack-objects --non-empty --max-pack-size=1k .git/x
+pack-objects --non-empty --max-pack-size=bogus .git/x
+pack-objects --non-empty --index-version=1 .git/x
+pack-objects --non-empty --index-version=2,0x40000000 .git/x
+pack-objects --non-empty --index-version=3 .git/x
+pack-objects --index-version=1 .git/x
+pack-objects --non-empty --delta-base-offset --no-delta-base-offset .git/x
+pack-objects --non-empty --reuse-delta --no-reuse-delta --reuse-object --no-reuse-object .git/x
+pack-objects --non-empty --local --no-local --incremental --no-incremental .git/x
+pack-objects --non-empty --progress --no-progress --all-progress --all-progress-implied -q --no-quiet --quiet .git/x
+pack-objects --non-empty --revs --unpacked .git/x
+pack-objects --non-empty --revs --include-tag --no-include-tag .git/x
+pack-objects --non-empty --revs --keep-unreachable --no-keep-unreachable .git/x
+pack-objects --non-empty --revs --pack-loose-unreachable --no-pack-loose-unreachable .git/x
+pack-objects --non-empty --revs --no-unpack-unreachable .git/x
+pack-objects --non-empty --sparse --no-sparse --thin --no-thin --shallow --no-shallow .git/x
+pack-objects --non-empty --honor-pack-keep --no-honor-pack-keep .git/x
+pack-objects --non-empty --keep-pack=nosuch.pack --no-keep-pack .git/x
+pack-objects --non-empty --keep-true-parents --no-keep-true-parents .git/x
+pack-objects --non-empty --use-bitmap-index --no-use-bitmap-index .git/x
+pack-objects --non-empty --write-bitmap-index --no-write-bitmap-index .git/x
+pack-objects --non-empty --revs --filter=blob:none .git/x
+pack-objects --non-empty --revs --filter=blob:limit=1k --no-filter .git/x
+pack-objects --non-empty --revs --filter=tree:0 .git/x
+pack-objects --non-empty --revs --filter=bogus .git/x
+pack-objects --non-empty --missing=allow-any .git/x
+pack-objects --non-empty --missing=allow-promisor .git/x
+pack-objects --non-empty --missing=error .git/x
+pack-objects --non-empty --missing=bogus .git/x
+pack-objects --non-empty --exclude-promisor-objects --no-exclude-promisor-objects .git/x
+pack-objects --non-empty --delta-islands --no-delta-islands .git/x
+pack-objects --non-empty --uri-protocol=https --no-uri-protocol .git/x
+pack-objects --non-empty --stdin-packs .git/x
+pack-objects --non-empty --no-stdin-packs .git/x
+pack-objects --stdin-packs --revs .git/x
+pack-objects --stdin-packs --all .git/x
+pack-objects --cruft --revs .git/x
+pack-objects --cruft-expiration=now --all .git/x
+pack-objects --cruft --stdin-packs .git/x
+pack-objects --stdout --no-stdout .git/x
+pack-objects --bogus .git/x
+pack-objects --all-progress-implied --stdout
