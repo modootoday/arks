@@ -192,6 +192,10 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "remote-ext" => cmd::cmd_remote_ext(args),
         "remote-fd" => cmd::cmd_remote_fd(args),
         "remote-http" | "remote-https" | "remote-ftp" | "remote-ftps" => cmd::cmd_remote_curl(args),
+        // A3 external tool bridges (git's documented tool / filter / mail /
+        // browser / prompt programs; never `git` itself).
+        "difftool" => cmd::cmd_difftool(args),
+        "difftool--helper" => cmd::cmd_difftool_helper(args),
         "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
