@@ -8,9 +8,9 @@ use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
 use arks_store::ObjectStore;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::fs;
-use std::io::{self, Read, Write};
+use std::io::{self, Read};
 use std::path::Path;
 
 /// `arks commit-graph` — verify/list subset (write format not claimed).
@@ -219,135 +219,9 @@ workflows, or external git-subtree until a native subset is evidenced.
     )))
 }
 
-/// `arks fast-export` — emit a simplified fast-export stream for commits (subset).
+/// `fast-export`: see [`crate::cmd::fast_export`].
 pub fn cmd_fast_export(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--all", "--progress"])?;
-    let all = args.iter().any(|a| a == "--all");
-    let repo = open_repo()?;
-    let tips: Vec<Oid> = if all {
-        let mut tips = Vec::new();
-        for name in ["HEAD", "refs/heads", "refs/tags"] {
-            collect_tips(&repo, name, &mut tips)?;
-        }
-        tips
-    } else {
-        let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-        if revs.is_empty() {
-            vec![resolve_rev(&repo, "HEAD")?]
-        } else {
-            revs.iter()
-                .map(|r| resolve_rev(&repo, r))
-                .collect::<CliResult<Vec<_>>>()?
-        }
-    };
-    let mut seen = HashSet::new();
-    let mut mark: u32 = 1;
-    let mut marks: BTreeMap<String, u32> = BTreeMap::new();
-    for tip in tips {
-        export_commit_walk(&repo, tip, &mut seen, &mut mark, &mut marks)?;
-    }
-    println!("done");
-    Ok(())
-}
-
-fn collect_tips(repo: &arks_repo::Repository, which: &str, out: &mut Vec<Oid>) -> CliResult<()> {
-    if which == "HEAD" {
-        if let Ok(oid) = repo.head_oid() {
-            out.push(oid);
-        }
-        return Ok(());
-    }
-    let dir = repo.git_dir().join(which);
-    if !dir.is_dir() {
-        return Ok(());
-    }
-    walk_ref_dir(&dir, which, repo, out)?;
-    Ok(())
-}
-
-fn walk_ref_dir(
-    dir: &Path,
-    prefix: &str,
-    repo: &arks_repo::Repository,
-    out: &mut Vec<Oid>,
-) -> CliResult<()> {
-    for ent in fs::read_dir(dir)? {
-        let ent = ent?;
-        let name = ent.file_name().to_string_lossy().into_owned();
-        let path = ent.path();
-        if path.is_dir() {
-            walk_ref_dir(&path, &format!("{prefix}/{name}"), repo, out)?;
-        } else if let Ok(oid) = repo.refs().resolve(&format!("{prefix}/{name}")) {
-            out.push(oid);
-        }
-    }
-    Ok(())
-}
-
-fn export_commit_walk(
-    repo: &arks_repo::Repository,
-    oid: Oid,
-    seen: &mut HashSet<String>,
-    mark: &mut u32,
-    marks: &mut BTreeMap<String, u32>,
-) -> CliResult<()> {
-    let hex = oid.to_hex();
-    if !seen.insert(hex.clone()) {
-        return Ok(());
-    }
-    let obj = repo.get_object(&oid)?;
-    if obj.kind != ObjectKind::Commit {
-        return Ok(());
-    }
-    let c = Commit::decode(&obj.payload)?;
-    for p in &c.parents {
-        export_commit_walk(repo, *p, seen, mark, marks)?;
-    }
-    // Export tree blobs (non-recursive depth limited by flatten).
-    let mut files: Vec<(String, Oid)> = Vec::new();
-    arks_repo::flatten_tree_entries(repo, &c.tree, "", &mut files)
-        .map_err(|e| CliError::Msg(e.to_string()))?;
-    for (_path, blob) in &files {
-        let bhex = blob.to_hex();
-        if marks.contains_key(&bhex) {
-            continue;
-        }
-        let blob_obj = repo.get_object(blob)?;
-        if blob_obj.kind != ObjectKind::Blob {
-            continue;
-        }
-        let m = *mark;
-        *mark += 1;
-        marks.insert(bhex.clone(), m);
-        println!("blob");
-        println!("mark :{m}");
-        println!("data {}", blob_obj.payload.len());
-        io::stdout().write_all(&blob_obj.payload)?;
-        println!();
-    }
-    let m = *mark;
-    *mark += 1;
-    marks.insert(hex.clone(), m);
-    println!("commit refs/arks/export/{hex}");
-    println!("mark :{m}");
-    let msg = c.message.as_bytes();
-    println!("data {}", msg.len());
-    io::stdout().write_all(msg)?;
-    if !msg.ends_with(b"\n") {
-        println!();
-    }
-    if let Some(p) = c.parents.first() {
-        if let Some(pm) = marks.get(&p.to_hex()) {
-            println!("from :{pm}");
-        }
-    }
-    for (path, blob) in &files {
-        if let Some(bm) = marks.get(&blob.to_hex()) {
-            println!("M 100644 :{bm} {path}");
-        }
-    }
-    println!();
-    Ok(())
+    crate::cmd::fast_export::cmd_fast_export(args)
 }
 
 /// `arks fast-import` — consume a simplified fast-import stream (subset).

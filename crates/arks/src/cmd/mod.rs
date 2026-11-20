@@ -26,6 +26,7 @@ pub mod date_spec;
 pub mod diff_cmd;
 pub mod diff_render;
 pub mod diffcore;
+pub mod fast_export;
 pub mod fetch;
 pub mod for_each_ref;
 pub mod format_patch;
