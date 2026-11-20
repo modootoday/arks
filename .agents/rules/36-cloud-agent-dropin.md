@@ -10,7 +10,7 @@ Applies when changing transport, config, signing, or option parsing that hosted 
 4. Split bundled short options parser-wide; unsupported spellings fail closed with a named error.
 5. Claimed only with a Docker receipt whose fixture simulates the agent sandbox (TLS-intercepting proxy + private CA + SSH signing program).
 6. Push only to the session's `claude/*` branch (ADR `20261119180100` D1).
-7. Change how hosted sessions install arks only in `modootoday/x.ws.fleet` `infra/claude-env/default/setup.d/20-arks.sh` (regenerate `setup.sh` with `infra/claude-env/compose.sh`, open a PR there); never call the cloud environment API directly — the fleet design session applies merged canon.
+7. Change how hosted sessions install arks only in the private fleet config repository (`infra/claude-env/default/setup.d/20-arks.sh`) (regenerate `setup.sh` with `infra/claude-env/compose.sh`, open a PR there); never call the cloud environment API directly — the fleet design session applies merged canon.
 
 ## Must not
 
