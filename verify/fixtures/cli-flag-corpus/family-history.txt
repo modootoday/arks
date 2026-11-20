@@ -585,3 +585,16 @@ ls-tree --full-tree HEAD
 ls-tree --no-full-tree HEAD
 ls-tree --name-only --object-only HEAD
 ls-tree --format '%(path)' HEAD
+# --- merge-base ---
+merge-base -a main feature
+merge-base --all 3298026^1 3298026^2
+merge-base --no-all -a main feature
+merge-base --octopus main feature t0
+merge-base --octopus -a main feature
+merge-base --independent v1 feature
+merge-base --independent feature v1 t0
+merge-base --is-ancestor t0 main
+merge-base --fork-point main
+merge-base --fork-point main feature
+merge-base --fork-point feature main
+merge-base v1 feature main
