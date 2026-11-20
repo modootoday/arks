@@ -141,60 +141,9 @@ Usage:
     }
 }
 
-/// `arks rerere` — rr-cache status/clear subset.
+/// `rerere`: see [`crate::cmd::rerere`].
 pub fn cmd_rerere(args: &[String]) -> CliResult<()> {
-    if args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks rerere — reuse recorded resolution (subset)
-
-Usage:
-  arks rerere status
-  arks rerere clear
-  arks rerere diff     # not claimed
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(
-        args,
-        &["status", "clear", "diff", "gc", "remaining", "forget"],
-    )?;
-    let sub = args.first().map(String::as_str).unwrap_or("status");
-    let repo = open_repo()?;
-    let rr = repo.git_dir().join("rr-cache");
-    match sub {
-        "status" | "remaining" => {
-            if !rr.is_dir() {
-                return Ok(());
-            }
-            let mut n = 0usize;
-            for ent in fs::read_dir(&rr)? {
-                let ent = ent?;
-                if ent.file_type()?.is_dir() {
-                    println!("{}", ent.file_name().to_string_lossy());
-                    n += 1;
-                }
-            }
-            eprintln!("rerere status: {n} recorded conflict(s) (subset)");
-            Ok(())
-        }
-        "clear" => {
-            if rr.is_dir() {
-                fs::remove_dir_all(&rr)?;
-            }
-            Ok(())
-        }
-        "diff" | "gc" | "forget" => Err(CliError::NotImplemented(format!(
-            "rerere {sub}: not claimed (Partial; status/clear only)"
-        ))),
-        other if other.starts_with('-') => Err(CliError::NotImplemented(format!(
-            "rerere option not claimed: {other}"
-        ))),
-        other => Err(CliError::Usage(format!(
-            "rerere: unknown subcommand {other}"
-        ))),
-    }
+    crate::cmd::rerere::cmd_rerere(args)
 }
 
 /// `arks subtree` — discoverability + honest refuse (full subtree not claimed).

@@ -85,6 +85,7 @@ pub mod remote_local;
 pub mod replace;
 pub mod replay;
 pub mod request_pull;
+pub mod rerere;
 pub mod rev_list;
 pub mod revwalk;
 pub mod server;
