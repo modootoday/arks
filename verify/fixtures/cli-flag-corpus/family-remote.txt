@@ -4,7 +4,8 @@
 # Commands run with stdin from /dev/null. Remotes are local paths only.
 # Fixture extras used here: `origin` -> .git/upstream.git (bare; main is one
 # commit ahead, `topic` + tags v2/lt are new, `feature` + t0 are absent),
-# .git/range.bundle (t0..main) and .git/full.bundle (feature + v1).
+# .git/range.bundle (t0..main), .git/full.bundle (feature + v1) and the
+# submodule repositories under .git/sm (see the submodule section).
 #
 # --- ls-remote ---
 ls-remote origin
@@ -378,6 +379,150 @@ send-pack --signed=no .git/upstream.git feature
 send-pack --push-option=x .git/upstream.git feature
 send-pack --progress .git/upstream.git feature
 send-pack .git/upstream.git main
+#
+# --- submodule (fixture .git/sm: lib, super with lib recorded at lv1 but
+# checked out on lib's main, and clone with lib not initialised). Stock git
+# needs protocol.file.allow=always for local submodule clones.
+-C .git/sm/super submodule
+-C .git/sm/super submodule status
+-C .git/sm/super submodule --quiet status
+-C .git/sm/super submodule status --cached
+-C .git/sm/super submodule --cached
+-C .git/sm/super submodule status --recursive
+-C .git/sm/super submodule status lib
+-C .git/sm/super submodule status -- lib
+-C .git/sm/super submodule status nosuch
+-C .git/sm/clone submodule status
+-C .git/sm/clone submodule init
+-C .git/sm/clone submodule -q init
+-C .git/sm/clone submodule init lib
+-C .git/sm/clone submodule init -- lib
+-C .git/sm/super submodule init
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --recursive
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init -- lib
+-c protocol.file.allow=always -C .git/sm/clone submodule -q update --init
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --depth=1
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --no-recommend-shallow
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --recommend-shallow
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --single-branch
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --no-single-branch
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --jobs=2
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init -j 2
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --progress
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --no-progress
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --remote
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --dissociate
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --filter=blob:none
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --checkout
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --merge
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init --rebase
+-c protocol.file.allow=always -C .git/sm/clone submodule update --init -N
+-C .git/sm/clone submodule update
+-C .git/sm/super submodule update
+-C .git/sm/super submodule update --checkout
+-C .git/sm/super submodule update -f
+-C .git/sm/super submodule update --force
+-C .git/sm/super submodule update --no-fetch
+-C .git/sm/super submodule update -N
+-c protocol.file.allow=always -C .git/sm/super submodule update --remote
+-C .git/sm/super submodule update --remote --no-fetch
+-C .git/sm/super submodule update --merge
+-C .git/sm/super submodule update --rebase
+-C .git/sm/super submodule update --recursive
+-C .git/sm/super submodule update --require-init
+-C .git/sm/super submodule summary
+-C .git/sm/super submodule summary --cached
+-C .git/sm/super submodule summary --files
+-C .git/sm/super submodule summary -n 1
+-C .git/sm/super submodule summary --summary-limit=1
+-C .git/sm/super submodule summary --summary-limit 1
+-C .git/sm/super submodule summary HEAD
+-C .git/sm/super submodule summary HEAD~1
+-C .git/sm/super submodule summary -- lib
+-C .git/sm/super submodule summary HEAD -- lib
+-C .git/sm/super submodule foreach 'echo $name $sm_path $displaypath $sha1 $toplevel'
+-C .git/sm/super submodule foreach --recursive 'echo $name'
+-C .git/sm/super submodule --quiet foreach 'echo $path'
+-C .git/sm/super submodule foreach false
+-C .git/sm/clone submodule foreach 'echo $name'
+-C .git/sm/super submodule sync
+-C .git/sm/super submodule sync --recursive
+-C .git/sm/super submodule sync lib
+-C .git/sm/super submodule --quiet sync
+-C .git/sm/clone submodule sync
+-C .git/sm/super submodule set-branch -b dev lib
+-C .git/sm/super submodule set-branch --branch=dev lib
+-C .git/sm/super submodule set-branch --branch dev -- lib
+-C .git/sm/super submodule set-branch -d lib
+-C .git/sm/super submodule set-branch --default lib
+-C .git/sm/super submodule set-branch -q -b dev lib
+-C .git/sm/super submodule set-branch lib
+-C .git/sm/super submodule set-url lib ../other
+-C .git/sm/super submodule set-url -- lib ../other
+-C .git/sm/super submodule set-url -q lib ../other
+-C .git/sm/super submodule set-url nosuch ../other
+-C .git/sm/super submodule absorbgitdirs
+-C .git/sm/super submodule absorbgitdirs lib
+-C .git/sm/super submodule absorbgitdirs -q
+-C .git/sm/super submodule deinit lib
+-C .git/sm/super submodule deinit -f lib
+-C .git/sm/super submodule deinit --force lib
+-C .git/sm/super submodule deinit --all
+-C .git/sm/super submodule deinit -f --all
+-C .git/sm/super submodule deinit -q -f lib
+-C .git/sm/super submodule deinit
+-C .git/sm/clone submodule deinit lib
+-c protocol.file.allow=always -C .git/sm/super submodule add ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add -b dev ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --branch=dev ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --name=n2 ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add -q ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --depth=1 ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --dissociate ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add -f ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --force ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add ../lib
+-c protocol.file.allow=always -C .git/sm/super submodule add ../lib lib
+-c protocol.file.allow=always -C .git/sm/super submodule add -- ../lib x/lib
+-c protocol.file.allow=always -C .git/sm/super submodule add ../nosuch sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --progress ../lib sub2
+-C .git/sm/super submodule nosuch
+-C .git/sm/super submodule update --depth 1
+-C .git/sm/super submodule update -j2
+-C .git/sm/super submodule update --jobs 2
+-C .git/sm/super submodule update --filter blob:none
+-C .git/sm/super submodule update -i
+-C .git/sm/super submodule update -r
+-C .git/sm/super submodule update -m
+-C .git/sm/super submodule update -qf
+-C .git/sm/super submodule update --reference .git
+-C .git/sm/super submodule --quiet --cached
+-C .git/sm/super submodule --cached status
+-C .git/sm/super submodule --cached summary
+-C .git/sm/super submodule --cached init
+-C .git/sm/super submodule summary --for-status
+-C .git/sm/super submodule summary -n1
+-C .git/sm/super submodule foreach -q 'echo x'
+-C .git/sm/super submodule foreach
+-C .git/sm/super submodule status -q
+-C .git/sm/super submodule sync -q
+-C .git/sm/super submodule init -q
+-C .git/sm/super submodule set-url lib
+-C .git/sm/super submodule set-branch -b dev
+-C .git/sm/super submodule add
+-c protocol.file.allow=always -C .git/sm/super submodule add --name n2 ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --depth 1 ../lib sub2
+-c protocol.file.allow=always -C .git/sm/super submodule add --reference .git ../lib sub2
+-C .git/sm/super submodule status --nosuch
+-C .git/sm/super submodule summary --nosuch
+-C .git/sm/super submodule foreach --nosuch
+-C .git/sm/super submodule absorbgitdirs --nosuch
+-C .git/sm/super submodule absorbgitdirs --quiet
+-C .git/sm/super submodule absorbgitdirs nosuch
+-C .git/sm/super submodule set-url --nosuch lib x
+-C .git/sm/super submodule deinit --nosuch lib
+-C .git/sm/super submodule deinit --cached lib
 #
 # --- server side helpers ---
 update-server-info

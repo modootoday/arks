@@ -84,3 +84,22 @@ git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 # prerequisite (t0..main) and one complete (feature plus tag v1).
 git bundle create -q .git/range.bundle t0..main
 git bundle create -q .git/full.bundle feature v1
+# Submodule extras (family-remote.txt `-C .git/sm/...` lines), all under
+# .git/sm so the fixture's own refs, index and status do not change:
+# `lib` (main: two commits, tag lv1 at the first, branch dev), `super`
+# recording lib at lv1 while its checkout sits on lib's main (status `+`),
+# and `clone`, a plain clone of super whose submodule is not initialised.
+sm="$d/.git/sm"
+mkdir -p "$sm"
+git init -q -b main "$sm/lib"
+(cd "$sm/lib"
+  printf 'lib one\n' > l.txt && git add l.txt && c -m "lib: one" && git tag lv1
+  git branch dev
+  printf 'lib two\n' > l.txt && c -am "lib: two")
+git init -q -b main "$sm/super"
+(cd "$sm/super"
+  printf 'super\n' > s.txt && git add s.txt && c -m "super: init"
+  git -c protocol.file.allow=always submodule add -q ../lib lib 2>/dev/null
+  git -C lib checkout -q lv1 && git add lib && c -m "super: add lib at lv1"
+  git -C lib checkout -q main)
+(cd "$sm" && git clone -q super clone)
