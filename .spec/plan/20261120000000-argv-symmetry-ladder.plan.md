@@ -103,6 +103,11 @@ sub-command groups, helpers) and need a documentation- or completion-derived inv
   where Unix sockets are unavailable). `remote-ext`, `remote-fd` and `remote-http|https|ftp|ftps`
   speak gitremote-helpers(7) (<https://git-scm.com/docs/gitremote-helpers>) on stdin; the HTTP helpers delegate to arks's smart HTTP client, and
   `ftp|ftps` refuse at transfer time (no FTP client). Corpus: `family-a3-helpers.txt`.
+  Host-advisory result (git 2.43 oracle, not a receipt): 159 / 161 lines SAME (2 reasoned DIFFs:
+  the shared two-head merge printer says `CONFLICT (content)` where git says `CONFLICT (add/add)`);
+  rows the 2.43 oracle lacks (`env--helper`, `bisect--helper`, `add--interactive`, `backfill`,
+  `credential-helper-selector`) and the stateful sessions are covered by
+  `crates/arks/tests/a3_helpers_cli.rs`. The 29 rows are Partial until a Docker receipt.
 
 ## Order
 
