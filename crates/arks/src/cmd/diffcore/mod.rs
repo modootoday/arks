@@ -124,10 +124,13 @@ impl Pair {
     }
 }
 
+/// Cache key of one side's bytes: its object id or its worktree path.
+type BlobKey = (Option<Oid>, Option<PathBuf>);
+
 /// Blob content and object-name cache for one diff run.
 pub struct Content<'r> {
     pub repo: &'r Repository,
-    data: RefCell<HashMap<(Option<Oid>, Option<PathBuf>), std::rc::Rc<Vec<u8>>>>,
+    data: RefCell<HashMap<BlobKey, std::rc::Rc<Vec<u8>>>>,
     abbrevs: RefCell<HashMap<(Oid, usize), String>>,
 }
 

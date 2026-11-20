@@ -144,11 +144,10 @@ enum Stat {
     Unmerged,
 }
 
-fn pair_lines<'b>(
-    c: &Content<'_>,
-    o: &DiffOptions,
-    p: &Pair,
-) -> CliResult<(std::rc::Rc<Vec<u8>>, std::rc::Rc<Vec<u8>>, bool)> {
+/// Both sides' bytes of a pair plus whether either side is binary.
+type PairBytes = (std::rc::Rc<Vec<u8>>, std::rc::Rc<Vec<u8>>, bool);
+
+fn pair_lines(c: &Content<'_>, o: &DiffOptions, p: &Pair) -> CliResult<PairBytes> {
     let empty = || std::rc::Rc::new(Vec::new());
     let a = match &p.old {
         Some(s) if !s.is_tree() => c.bytes(s)?,

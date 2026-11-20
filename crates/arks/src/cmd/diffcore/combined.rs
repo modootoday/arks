@@ -370,8 +370,8 @@ fn patch(
             }
             if j < n {
                 w.write_all(lp.as_bytes())?;
-                for i in 0..np {
-                    w.write_all(if added[j][i] { b"+" } else { b" " })?;
+                for &hit in added[j].iter().take(np) {
+                    w.write_all(if hit { b"+" } else { b" " })?;
                 }
                 let l = rl[j];
                 w.write_all(l.strip_suffix(b"\n").unwrap_or(l))?;
