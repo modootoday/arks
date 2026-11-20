@@ -197,9 +197,15 @@ fn run_merge_program(pgm: &str, u: &Unmerged) -> CliResult<bool> {
 pub fn cmd_merge_one_file(args: &[String]) -> CliResult<()> {
     if args.len() != 7 {
         // Stock git prints the usage twice plus a note on stdout.
-        println!("{ONE_FILE_USAGE}\n\n{ONE_FILE_USAGE}\n\nBlob ids and modes should be empty for missing files.");
+        println!(
+            "{ONE_FILE_USAGE}\n\n{ONE_FILE_USAGE}\n\nBlob ids and modes should be empty for missing files."
+        );
         let help = args.len() == 1 && args[0] == "-h";
-        return if help { Ok(()) } else { Err(CliError::silent(1)) };
+        return if help {
+            Ok(())
+        } else {
+            Err(CliError::silent(1))
+        };
     }
     let mut repo = open_repo()?;
     match merge_one_file(&mut repo, args)? {

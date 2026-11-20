@@ -16,11 +16,12 @@
 //!   `merge-recursive-ours` / `merge-recursive-theirs` it behaves like
 //!   `merge-recursive` (as stock git does; pass `--ours` / `--theirs`), and
 //!   as `merge-subtree` it shifts the remote tree first (see `merge_subtree`).
+//!
 //! The work tree and index change; nothing is committed (`git merge` does).
 
 use crate::cmd::merge_engine::{Favor, MergeLabels, merge_trees_worktree};
 use crate::cmd::merge_helpers::{
-    Side, merge_all_one_file, trivial_merge, tree_sides, worktree_matches_index,
+    Side, merge_all_one_file, tree_sides, trivial_merge, worktree_matches_index,
 };
 use crate::cmd::shared::{ObjKind, peel_to_kind, resolve_rev};
 use crate::error::{CliError, CliResult};
@@ -43,7 +44,10 @@ fn split_args(args: &[String]) -> StrategyArgs {
             bases: args[..i].to_vec(),
             dashdash: true,
             head: args.get(i + 1).cloned(),
-            remotes: args.get(i + 2..).map(<[String]>::to_vec).unwrap_or_default(),
+            remotes: args
+                .get(i + 2..)
+                .map(<[String]>::to_vec)
+                .unwrap_or_default(),
         },
         None => StrategyArgs {
             bases: args.to_vec(),
@@ -123,7 +127,11 @@ pub(crate) fn index_tree(repo: &mut Repository) -> CliResult<Option<Oid>> {
 
 /// Best common ancestor of `commit` and the union of `tips` (what
 /// `git merge-base <commit> <tip>...` answers), newest first on ties.
-pub(crate) fn octopus_base(repo: &Repository, commit: &Oid, tips: &[Oid]) -> CliResult<Option<Oid>> {
+pub(crate) fn octopus_base(
+    repo: &Repository,
+    commit: &Oid,
+    tips: &[Oid],
+) -> CliResult<Option<Oid>> {
     let mut union = HashSet::new();
     for t in tips {
         union.extend(arks_repo::ancestor_set(repo, *t)?);
@@ -295,8 +303,17 @@ pub fn cmd_merge_resolve(args: &[String]) -> CliResult<()> {
 }
 
 /// Resolve strategy body; returns the strategy exit code.
-pub(crate) fn resolve(repo: &mut Repository, base: &Oid, head: &Oid, remote: &Oid) -> CliResult<u8> {
-    let (bt, ht, rt) = (tree_of(repo, base)?, tree_of(repo, head)?, tree_of(repo, remote)?);
+pub(crate) fn resolve(
+    repo: &mut Repository,
+    base: &Oid,
+    head: &Oid,
+    remote: &Oid,
+) -> CliResult<u8> {
+    let (bt, ht, rt) = (
+        tree_of(repo, base)?,
+        tree_of(repo, head)?,
+        tree_of(repo, remote)?,
+    );
     let tm = match trivial_merge(repo, &bt, &ht, &rt) {
         Ok(t) => t,
         Err(CliError::Exit(2, m)) => {
@@ -370,9 +387,17 @@ impl RecursiveOpts {
             ("theirs", None) => self.favor = Favor::Theirs,
             ("subtree", v) => self.subtree = Some(v.map(str::to_string)),
             (
-                "patience" | "histogram" | "minimal" | "renormalize" | "no-renormalize"
-                | "ignore-space-change" | "ignore-all-space" | "ignore-space-at-eol"
-                | "ignore-cr-at-eol" | "no-renames" | "find-renames",
+                "patience"
+                | "histogram"
+                | "minimal"
+                | "renormalize"
+                | "no-renormalize"
+                | "ignore-space-change"
+                | "ignore-all-space"
+                | "ignore-space-at-eol"
+                | "ignore-cr-at-eol"
+                | "no-renames"
+                | "find-renames",
                 _,
             ) => {}
             ("diff-algorithm" | "rename-threshold" | "renames", Some(_)) => {}
@@ -383,7 +408,12 @@ impl RecursiveOpts {
 }
 
 fn recursive_program(name: &str, args: &[String]) -> CliResult<()> {
-    let usage = || CliError::Exit(129, format!("usage: git {name} <base>... -- <head> <remote> ..."));
+    let usage = || {
+        CliError::Exit(
+            129,
+            format!("usage: git {name} <base>... -- <head> <remote> ..."),
+        )
+    };
     let a = split_args(args);
     if !a.dashdash || args.len() < 3 {
         return Err(usage());
@@ -428,7 +458,10 @@ fn recursive_program(name: &str, args: &[String]) -> CliResult<()> {
             None => None,
         },
     };
-    let names = (pretty_name(&head_arg, &head), pretty_name(&remote_arg, &remote));
+    let names = (
+        pretty_name(&head_arg, &head),
+        pretty_name(&remote_arg, &remote),
+    );
     let code = recursive(&mut repo, base_tree, &head, &remote, &names, &opts)?;
     exit_code(code)
 }
@@ -505,7 +538,15 @@ pub(crate) fn recursive(
         diff3: matches!(style.as_str(), "diff3" | "zdiff3"),
         favor: opts.favor,
     };
-    let result = merge_trees_worktree(repo, &work, &base_tree, &ours_tree, &their_tree, true, &labels)?;
+    let result = merge_trees_worktree(
+        repo,
+        &work,
+        &base_tree,
+        &ours_tree,
+        &their_tree,
+        true,
+        &labels,
+    )?;
     let mut paths: Vec<&String> = result
         .auto_merged
         .iter()

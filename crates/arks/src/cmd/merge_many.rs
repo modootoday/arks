@@ -33,11 +33,19 @@ pub(crate) struct ManyOpts {
 
 /// Whether a single-head merge is "really trivial" (no path changed on both
 /// sides), which is all `git merge -s octopus <one-head>` can do.
-pub(crate) fn trivially_mergeable(repo: &mut Repository, head: &Oid, theirs: &Oid) -> CliResult<bool> {
+pub(crate) fn trivially_mergeable(
+    repo: &mut Repository,
+    head: &Oid,
+    theirs: &Oid,
+) -> CliResult<bool> {
     let Some(base) = arks_repo::merge_base_oid(repo, head, theirs)? else {
         return Ok(false);
     };
-    let (b, o, t) = (tree_of(repo, &base)?, tree_of(repo, head)?, tree_of(repo, theirs)?);
+    let (b, o, t) = (
+        tree_of(repo, &base)?,
+        tree_of(repo, head)?,
+        tree_of(repo, theirs)?,
+    );
     let probe = crate::cmd::merge_engine::merge_trees_in_memory(repo, &b, &o, &t)?;
     Ok(probe.auto_merged.is_empty() && probe.conflicts.is_empty())
 }
@@ -127,9 +135,7 @@ pub(crate) fn merge_heads(names: &[String], o: &ManyOpts) -> CliResult<ManyOutco
                 0 => {}
                 1 => {
                     write_merge_state(&repo, &kept, &message_for(&repo, &kept, o)?, true)?;
-                    println!(
-                        "Automatic merge failed; fix conflicts and then commit the result."
-                    );
+                    println!("Automatic merge failed; fix conflicts and then commit the result.");
                     return Err(CliError::silent(1));
                 }
                 _ => {
@@ -234,7 +240,10 @@ fn write_merge_state(
     conflicts: bool,
 ) -> CliResult<()> {
     let git_dir = repo.git_dir();
-    let heads: String = kept.iter().map(|(_, o)| format!("{}\n", o.to_hex())).collect();
+    let heads: String = kept
+        .iter()
+        .map(|(_, o)| format!("{}\n", o.to_hex()))
+        .collect();
     std::fs::write(git_dir.join("MERGE_HEAD"), heads)?;
     let mut text = msg.to_string();
     if conflicts {
