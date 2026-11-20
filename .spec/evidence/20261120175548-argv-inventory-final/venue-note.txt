@@ -1,0 +1,9 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip 8ca3c39,
+run 2026-11-20 inside a hosted cloud session with a local dockerd.
+Cargo ran offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted
+read-only, because the container could not use the session egress proxy. Dependencies
+are pinned and checksummed by Cargo.lock; the build, the inventory and every corpus
+ran inside the image. Corpora ran in parallel except family-a3-tools, which ran alone
+afterwards (its filter-branch progress lines depend on wall-clock seconds).
+Override file (session-local, not tracked): service dod-hub-matrix with that volume
+and env only.

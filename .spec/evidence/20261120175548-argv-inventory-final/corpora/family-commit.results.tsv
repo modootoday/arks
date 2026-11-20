@@ -1,0 +1,1059 @@
+L001	SAME	status	
+L002	SAME	status -s	
+L003	SAME	status --short --branch	
+L004	SAME	status -sb -uno	
+L005	SAME	status --porcelain	
+L006	SAME	status --porcelain=v2	
+L007	SAME	status --porcelain=v2 --branch	
+L008	SAME	status -z	
+L009	SAME	status --long	
+L010	SAME	status -v	
+L011	SAME	status -uall	
+L012	SAME	status --untracked-files=no	
+L013	SAME	status --ignored	
+L014	SAME	status --ignored=matching	
+L015	SAME	status --ignored=no	
+L016	SAME	status --ignore-submodules=all	
+L017	SAME	status --column	
+L018	SAME	status --no-column	
+L019	SAME	status --ahead-behind	
+L020	SAME	status --no-ahead-behind	
+L021	SAME	status --renames	
+L022	SAME	status --no-renames	
+L023	SAME	status --find-renames=50	
+L024	SAME	status -s src	
+L025	SAME	status --show-stash	
+L026	SAME	status -s --no-show-stash	
+L027	SAME	interpret-trailers --trailer A=b .git/trailer-msg.txt	
+L028	SAME	interpret-trailers --trim-empty .git/trailer-msg.txt	
+L029	SAME	interpret-trailers --unfold .git/trailer-msg.txt	
+L030	SAME	interpret-trailers --if-missing doNothing --trailer z=1 .git/trailer-msg.txt	
+L031	SAME	interpret-trailers --trailer a=b --no-trailer .git/trailer-msg.txt	
+L032	SAME	interpret-trailers --only-input .git/trailer-msg.txt	
+L033	SAME	interpret-trailers --where=bogus --trailer a=b .git/trailer-msg.txt	
+L034	SAME	interpret-trailers --trailer =x .git/trailer-msg.txt	
+L035	SAME	interpret-trailers --only-trailers --only-input .git/trailer-msg.txt	
+L036	SAME	interpret-trailers --if-exists replace --trailer Fixes=9 .git/trailer-msg.txt	
+L037	SAME	interpret-trailers --where before --trailer Fixes=0 .git/trailer-msg.txt	
+L038	SAME	interpret-trailers --parse .git/trailer-msg.txt	
+L039	SAME	commit --dry-run	
+L040	SAME	commit --dry-run -a	
+L041	SAME	commit --short	
+L042	SAME	commit --porcelain -a	
+L043	SAME	commit -z --branch	
+L044	SAME	commit --long -- src/a.txt	
+L045	SAME	commit -p -m x	
+L046	SAME	commit --interactive -m x	
+L047	SAME	commit -m x	
+L048	SAME	commit -m '  x  ' -m 'y   '	
+L049	SAME	commit -m x --cleanup=verbatim -m '# not a comment'	
+L050	SAME	commit -m x -e	
+L051	SAME	commit -C HEAD~1	
+L052	SAME	commit -c HEAD~1	
+L053	SAME	commit -C HEAD~1 --reset-author	
+L054	SAME	commit --fixup HEAD~1	
+L055	SAME	commit --fixup=amend:HEAD~1	
+L056	SAME	commit --fixup=reword:HEAD~1	
+L057	SAME	commit --squash HEAD~1	
+L058	SAME	commit --squash HEAD~1 -m extra	
+L059	SAME	commit --fixup HEAD~1 -m extra	
+L060	SAME	commit -m x --trailer 'Acked-by: me'	
+L061	SAME	commit -m x -s --trailer 'Acked-by=me'	
+L062	SAME	commit --amend --no-edit	
+L063	SAME	commit --amend	
+L064	SAME	commit --amend -m new	
+L065	SAME	commit --amend --reset-author --no-edit	
+L066	SAME	commit -m x --author 'A U'	
+L067	SAME	commit -m x --author 'Nobody'	
+L068	SAME	commit -m x -i src/a.txt	
+L069	SAME	commit -m x -o src/a.txt	
+L070	SAME	commit -m x src/a.txt	
+L071	SAME	commit -m x --pathspec-from-file=.git/info/exclude	
+L072	SAME	commit -m x -C HEAD	
+L073	SAME	commit -m x -F README.md	
+L074	SAME	commit --allow-empty-message -m ''	
+L075	SAME	commit -m ''	
+L076	SAME	commit --no-status -m x	
+L077	SAME	commit -v -m x	
+L078	SAME	commit -q -m x	
+L079	SAME	commit --no-post-rewrite --amend --no-edit	
+L080	SAME	commit -m x -uno	
+L081	SAME	commit -m x --verify	
+L082	SAME	commit -am x	
+L083	SAME	commit -a --dry-run --short -uno	
+L084	SAME	commit --dry-run -m x -i src/a.txt	
+L085	SAME	commit -t README.md	
+L086	SAME	commit -m x --no-signoff -s	
+L087	SAME	commit -m x --date='2020-01-01 00:00:00 +0000'	
+L088	SAME	add debug.log	
+L089	SAME	add debug.log README.md	
+L090	SAME	add -f debug.log	
+L091	SAME	add -n .	
+L092	SAME	add -n -A	
+L093	SAME	add --dry-run -u	
+L094	SAME	add -v .	
+L095	SAME	add -v -A	
+L096	SAME	add -A	
+L097	SAME	add --all --dry-run	
+L098	SAME	add .	
+L099	SAME	add	
+L100	SAME	add -u	
+L101	SAME	add --no-all .	
+L102	SAME	add --ignore-removal .	
+L103	SAME	add -N untracked.txt	
+L104	SAME	add --intent-to-add untracked.txt	
+L105	SAME	add --refresh	
+L106	SAME	add --refresh src/a.txt	
+L107	SAME	add --renormalize .	
+L108	SAME	add --ignore-errors .	
+L109	SAME	add --ignore-missing -n nope.txt	
+L110	SAME	add --ignore-missing nope.txt	
+L111	SAME	add --sparse src/a.txt	
+L112	SAME	add --chmod=+x src/a.txt	
+L113	SAME	add --chmod=+x --no-chmod src/a.txt	
+L114	SAME	add --pathspec-from-file=.git/info/exclude	
+L115	SAME	add -n -f .	
+L116	SAME	add -A -n --ignored	
+L117	SAME	add nope.txt	
+L118	SAME	add -v --dry-run src	
+L119	SAME	add -e	
+L120	SAME	add -u src	
+L121	SAME	checkout feature	
+L122	SAME	checkout -f feature	
+L123	SAME	checkout --force feature	
+L124	SAME	checkout -q feature	
+L125	SAME	checkout --no-quiet feature	
+L126	SAME	checkout -m feature	
+L127	SAME	checkout --merge feature	
+L128	SAME	checkout --conflict=diff3 feature	
+L129	SAME	checkout --progress feature	
+L130	SAME	checkout --no-progress feature	
+L131	SAME	checkout --recurse-submodules feature	
+L132	SAME	checkout --no-recurse-submodules feature	
+L133	SAME	checkout --overwrite-ignore feature	
+L134	SAME	checkout --ignore-other-worktrees feature	
+L135	SAME	checkout -d feature	
+L136	SAME	checkout --detach	
+L137	SAME	checkout -b topic	
+L138	SAME	checkout -b topic --track main	
+L139	SAME	checkout -b topic -t main	
+L140	SAME	checkout -b topic --no-track main	
+L141	SAME	checkout --track -b topic main	
+L142	SAME	checkout -l -b topic	
+L143	SAME	checkout -B feature main	
+L144	SAME	checkout --guess nope	
+L145	SAME	checkout --no-guess feature	
+L146	SAME	checkout --orphan newroot	
+L147	SAME	checkout --orphan newroot feature	
+L148	SAME	checkout --ours src/a.txt	
+L149	SAME	checkout --theirs src/a.txt	
+L150	SAME	checkout -2 src/a.txt	
+L151	SAME	checkout --overlay HEAD~3 -- src	
+L152	SAME	checkout --no-overlay HEAD~3 -- src	
+L153	SAME	checkout HEAD~3 -- src	
+L154	SAME	checkout --pathspec-from-file=.git/info/exclude	
+L155	SAME	checkout --ignore-skip-worktree-bits -- src/a.txt	
+L156	SAME	checkout -- src/a.txt	
+L157	SAME	checkout src/a.txt	
+L158	SAME	checkout -f	
+L159	SAME	checkout -f HEAD	
+L160	SAME	checkout v1	
+L161	SAME	checkout --detach v1	
+L162	SAME	checkout t0	
+L163	SAME	switch feature	
+L164	SAME	switch -f feature	
+L165	SAME	switch --discard-changes feature	
+L166	SAME	switch -c topic	
+L167	SAME	switch -C feature	
+L168	SAME	switch --create topic --track main	
+L169	SAME	switch -c topic -t main	
+L170	SAME	switch --detach t0	
+L171	SAME	switch -d t0	
+L172	SAME	switch t0	
+L173	SAME	switch --orphan newroot	
+L174	SAME	switch --guess nope	
+L175	SAME	switch --no-guess feature	
+L176	SAME	switch -m feature	
+L177	SAME	switch --conflict=merge feature	
+L178	SAME	switch -q feature	
+L179	SAME	switch --progress feature	
+L180	SAME	switch --ignore-other-worktrees feature	
+L181	SAME	switch --overwrite-ignore feature	
+L182	SAME	switch --recurse-submodules feature	
+L183	SAME	switch -c topic --no-track	
+L184	SAME	switch -	
+L185	SAME	checkout -	
+L186	SAME	restore src/a.txt	
+L187	SAME	restore -S src/new.txt	
+L188	SAME	restore --staged --worktree src/new.txt	
+L189	SAME	restore -s HEAD~3 src	
+L190	SAME	restore --source=HEAD~3 --overlay src	
+L191	SAME	restore --source=HEAD~3 --no-overlay src	
+L192	SAME	restore --ignore-unmerged src/a.txt	
+L193	SAME	restore --ours src/a.txt	
+L194	SAME	restore --theirs src/a.txt	
+L195	SAME	restore -m src/a.txt	
+L196	SAME	restore --conflict=diff3 src/a.txt	
+L197	SAME	restore -q src/a.txt	
+L198	SAME	restore --progress src/a.txt	
+L199	SAME	restore --recurse-submodules src/a.txt	
+L200	SAME	restore --ignore-skip-worktree-bits src/a.txt	
+L201	SAME	restore --pathspec-from-file=.git/info/exclude	
+L202	SAME	restore .	
+L203	SAME	restore -W -S .	
+L204	SAME	restore --no-source src/a.txt	
+L205	SAME	restore	
+L206	SAME	reset	
+L207	SAME	reset -q	
+L208	SAME	reset --soft HEAD~1	
+L209	SAME	reset --hard HEAD~1	
+L210	SAME	reset --mixed HEAD~1	
+L211	SAME	reset --keep HEAD~1	
+L212	SAME	reset --merge HEAD~1	
+L213	SAME	reset --keep HEAD~3	
+L214	SAME	reset --merge HEAD~3	
+L215	SAME	reset --hard	
+L216	SAME	reset --no-refresh HEAD~1	
+L217	SAME	reset --refresh	
+L218	SAME	reset -N HEAD~1	
+L219	SAME	reset --intent-to-add	
+L220	SAME	reset --recurse-submodules --hard	
+L221	SAME	reset HEAD~3 -- src	
+L222	SAME	reset -- src/new.txt	
+L223	SAME	reset --pathspec-from-file=.git/info/exclude	
+L224	SAME	reset --no-quiet	
+L225	SAME	reset feature	
+L226	SAME	rm src/b.txt	
+L227	SAME	rm -n src/b.txt	
+L228	SAME	rm --dry-run -q src/b.txt	
+L229	SAME	rm --cached src/new.txt	
+L230	SAME	rm -f src/a.txt	
+L231	SAME	rm src/a.txt	
+L232	SAME	rm -r src	
+L233	SAME	rm -rf src	
+L234	SAME	rm --ignore-unmatch nope.txt	
+L235	SAME	rm nope.txt	
+L236	SAME	rm --sparse src/b.txt	
+L237	SAME	rm --pathspec-from-file=.git/info/exclude	
+L238	SAME	rm --pathspec-from-file=.git/info/exclude --ignore-unmatch	
+L239	SAME	rm --no-cached --cached src/new.txt	
+L240	SAME	rm -q src/b.txt	
+L241	SAME	mv src/b.txt src/c.txt	
+L242	SAME	mv -v src/b.txt src/c.txt	
+L243	SAME	mv -n src/b.txt src/c.txt	
+L244	SAME	mv --dry-run -v src/b.txt docs	
+L245	SAME	mv src/b.txt docs/x.md	
+L246	SAME	mv -f src/b.txt docs/x.md	
+L247	SAME	mv -k nope.txt src/b.txt docs	
+L248	SAME	mv nope.txt docs	
+L249	SAME	mv untracked.txt docs	
+L250	SAME	mv src docs	
+L251	SAME	mv -v src lib	
+L252	SAME	mv --sparse src/b.txt lib.txt	
+L253	SAME	mv src/b.txt	
+L254	SAME	clean -n	
+L255	SAME	clean -f	
+L256	SAME	clean -fd	
+L257	SAME	clean -nd	
+L258	SAME	clean -nx	
+L259	SAME	clean -nX	
+L260	SAME	clean -n -e '*.txt'	
+L261	SAME	clean -n --exclude=untracked.txt	
+L262	SAME	clean -fq	
+L263	SAME	clean -i	
+L264	SAME	clean --interactive -n	
+L265	SAME	clean	
+L266	SAME	clean -n --no-dry-run	
+L267	SAME	clean -f --no-force	
+L268	SAME	clean -n src	
+L269	SAME	branch	
+L270	SAME	branch -v	
+L271	SAME	branch -vv	
+L272	SAME	branch --no-verbose -v	
+L273	SAME	branch -q topic	
+L274	SAME	branch -t topic main	
+L275	SAME	branch --track=inherit topic main	
+L276	SAME	branch --no-track topic main	
+L277	SAME	branch -u feature	
+L278	SAME	branch --set-upstream-to=feature main	
+L279	SAME	branch -u nope	
+L280	SAME	branch --unset-upstream	
+L281	SAME	branch --color=always	
+L282	SAME	branch --color	
+L283	SAME	branch --no-color	
+L284	SAME	branch -r	
+L285	SAME	branch --contains t0	
+L286	SAME	branch --contains	
+L287	SAME	branch --no-contains feature	
+L288	SAME	branch --merged	
+L289	SAME	branch --merged feature	
+L290	SAME	branch --no-merged	
+L291	SAME	branch --abbrev=10 -v	
+L292	SAME	branch --no-abbrev -v	
+L293	SAME	branch -a	
+L294	SAME	branch -d feature	
+L295	SAME	branch -D feature	
+L296	SAME	branch -m feature feat2	
+L297	SAME	branch -M feature main	
+L298	SAME	branch -c feature feat2	
+L299	SAME	branch -C feature feat2	
+L300	SAME	branch -l 'f*'	
+L301	SAME	branch --list 'f*' --ignore-case	
+L302	SAME	branch -i --list 'F*'	
+L303	SAME	branch --show-current	
+L304	SAME	branch --create-reflog topic	
+L305	SAME	branch --edit-description	
+L306	SAME	branch -f feature t0	
+L307	SAME	branch --force feature HEAD	
+L308	SAME	branch --column	
+L309	SAME	branch --column=never	
+L310	SAME	branch --no-column	
+L311	SAME	branch --sort=-committerdate	
+L312	SAME	branch --sort=refname --no-sort	
+L313	SAME	branch --points-at HEAD	
+L314	SAME	branch --points-at feature	
+L315	SAME	branch --recurse-submodules topic	
+L316	SAME	branch --format='%(refname:short) %(objectname:short)'	
+L317	SAME	branch --format='%(HEAD) %(refname)' --list 'f*'	
+L318	DIFF	branch --omit-empty --format=''	exit 0!=129
+L319	DIFF	branch --no-omit-empty	exit 0!=129; stdout
+L320	SAME	branch -d	
+L321	SAME	branch --delete --no-delete	
+L322	SAME	tag	
+L323	SAME	tag -l	
+L324	SAME	tag -l 'v*'	
+L325	SAME	tag -n	
+L326	SAME	tag -n2	
+L327	SAME	tag -n 'v*'	
+L328	SAME	tag -d v1	
+L329	SAME	tag --delete t0	
+L330	SAME	tag -v v1	
+L331	SAME	tag --verify t0	
+L332	SAME	tag x	
+L333	SAME	tag -a x -m msg	
+L334	SAME	tag -a x	
+L335	SAME	tag -m 'hello' x	
+L336	SAME	tag -m '  hello  ' -m world x	
+L337	SAME	tag -F README.md x	
+L338	SAME	tag --file=README.md x	
+L339	SAME	tag -e -m hi x	
+L340	SAME	tag --no-edit -m hi x	
+L341	SAME	tag -s -m hi x	
+L342	SAME	tag --cleanup=verbatim -m '  hi  ' x	
+L343	SAME	tag --cleanup=whitespace -m '# hi' x	
+L344	SAME	tag --cleanup=strip -m '# hi' -m keep x	
+L345	SAME	tag -u nokey -m hi x	
+L346	SAME	tag -f t0 HEAD	
+L347	SAME	tag --force v1	
+L348	SAME	tag --create-reflog x	
+L349	SAME	tag --column	
+L350	SAME	tag --column=never	
+L351	SAME	tag --no-column	
+L352	SAME	tag --contains t0	
+L353	SAME	tag --contains	
+L354	SAME	tag --no-contains HEAD	
+L355	SAME	tag --merged	
+L356	SAME	tag --merged t0	
+L357	SAME	tag --no-merged t0	
+L358	SAME	tag --points-at HEAD~1	
+L359	SAME	tag --points-at t0	
+L360	SAME	tag --sort=-refname	
+L361	SAME	tag --sort=taggerdate	
+L362	SAME	tag --sort=refname --no-sort	
+L363	SAME	tag --format='%(refname:short) %(objecttype)'	
+L364	DIFF	tag --omit-empty --format=''	exit 0!=129
+L365	SAME	tag --color	
+L366	SAME	tag --color=always	
+L367	SAME	tag -i -l 'V*'	
+L368	SAME	tag --ignore-case	
+L369	SAME	tag --no-annotate -m hi x	
+L370	SAME	tag --annotate -m hi x HEAD~1	
+L371	SAME	tag x feature	
+L372	SAME	merge feature	
+L373	SAME	merge t0	
+L374	SAME	merge v1	
+L375	SAME	merge -n HEAD~1	
+L376	SAME	merge --stat t0	
+L377	SAME	merge --no-ff --no-commit HEAD~2	
+L378	SAME	merge --log -m x feature	
+L379	SAME	merge --squash HEAD~2	
+L380	SAME	merge --abort	
+L381	SAME	merge --quit	
+L382	SAME	merge --continue	
+L383	SAME	merge --verify-signatures feature	
+L384	SAME	merge -s ours feature	
+L385	SAME	merge --strategy=ours t0	
+L386	SAME	merge -s bogus t0	
+L387	SAME	merge -X ours t0	
+L388	SAME	merge --allow-unrelated-histories t0	
+L389	SAME	merge -q t0	
+L390	SAME	merge -v t0	
+L391	SAME	merge --progress t0	
+L392	SAME	merge -S t0	
+L393	SAME	merge --autostash t0	
+L394	SAME	merge --overwrite-ignore t0	
+L395	SAME	merge --signoff t0	
+L396	SAME	merge --no-verify t0	
+L397	SAME	merge --into-name=other t0	
+L398	SAME	merge -e t0	
+L399	SAME	merge --cleanup=strip t0	
+L400	SAME	merge --rerere-autoupdate t0	
+L401	SAME	merge --ff-only t0	
+L402	SAME	merge --no-ff t0	
+L403	SAME	merge -F README.md t0	
+L404	SAME	-C .git/side merge topic	
+L405	SAME	-C .git/side merge -n topic	
+L406	SAME	-C .git/side merge --no-stat topic	
+L407	SAME	-C .git/side merge --summary topic	
+L408	SAME	-C .git/side merge --log topic	
+L409	SAME	-C .git/side merge --log=1 topic	
+L410	SAME	-C .git/side merge --no-log topic	
+L411	SAME	-C .git/side merge --squash topic	
+L412	SAME	-C .git/side merge --no-commit topic	
+L413	SAME	-C .git/side merge --commit topic	
+L414	SAME	-C .git/side merge -e topic	
+L415	SAME	-C .git/side merge --no-edit topic	
+L416	SAME	-C .git/side merge --cleanup=verbatim -m '  x  ' topic	
+L417	SAME	-C .git/side merge --ff-only topic	
+L418	SAME	-C .git/side merge --no-ff topic	
+L419	SAME	-C .git/side merge --ff topic	
+L420	SAME	-C .git/side merge -s ours topic	
+L421	SAME	-C .git/side merge -s recursive topic	
+L422	SAME	-C .git/side merge -s resolve topic	
+L423	SAME	-C .git/side merge --strategy=ort topic	
+L424	SAME	-C .git/side merge -X patience topic	
+L425	SAME	-C .git/side merge -m hello topic	
+L426	SAME	-C .git/side merge -m hello -m world topic	
+L427	SAME	-C .git/side merge -F b.txt topic	
+L428	SAME	-C .git/side merge --into-name=dev topic	
+L429	SAME	-C .git/side merge -v topic	
+L430	SAME	-C .git/side merge -q topic	
+L431	SAME	-C .git/side merge --allow-unrelated-histories topic	
+L432	SAME	-C .git/side merge --progress topic	
+L433	SAME	-C .git/side merge --autostash topic	
+L434	SAME	-C .git/side merge --signoff topic	
+L435	SAME	-C .git/side merge --no-verify topic	
+L436	SAME	-C .git/side merge --verify topic	
+L437	SAME	-C .git/side merge --verify-signatures topic	
+L438	SAME	-C .git/side merge clash	
+L439	SAME	-C .git/side merge --squash clash	
+L440	SAME	-C .git/side merge base	
+L441	SAME	-C .git/side merge --squash base	
+L442	SAME	-C .git/side merge topic~1	
+L443	SAME	-C .git/side merge --ff-only clash	
+L444	SAME	-C .git/side merge --overwrite-ignore topic	
+L445	SAME	-C .git/side merge --rerere-autoupdate topic	
+L446	SAME	-C .git/side merge -S topic	
+L447	SAME	-C .git/side merge --no-gpg-sign topic	
+L448	SAME	-C .git/side merge lineone	
+L449	SAME	-C .git/side merge --no-ff lineone	
+L450	SAME	-C .git/side merge -X ours clash	
+L451	SAME	-C .git/side merge -X theirs clash	
+L452	SAME	-C .git/side merge -Xours clash	
+L453	SAME	-C .git/side merge --strategy-option=theirs clash	
+L454	SAME	-C .git/side merge -s resolve lineone	
+L455	SAME	-C .git/side merge -s resolve clash	
+L456	SAME	stash	
+L457	SAME	stash push	
+L458	SAME	stash -q	
+L459	SAME	stash push --quiet	
+L460	SAME	stash -k	
+L461	SAME	stash --keep-index	
+L462	SAME	stash --no-keep-index	
+L463	SAME	stash --staged	
+L464	SAME	stash -S	
+L465	SAME	stash -u	
+L466	SAME	stash --include-untracked	
+L467	SAME	stash -a	
+L468	SAME	stash --all	
+L469	SAME	stash push -- src/a.txt	
+L470	SAME	stash push src/a.txt	
+L471	SAME	stash push -m hi src/new.txt	
+L472	SAME	stash push --message=hi	
+L473	SAME	stash push -m hi -k	
+L474	SAME	stash push -u -- untracked.txt	
+L475	SAME	stash push nope.txt	
+L476	SAME	stash push --pathspec-from-file=.git/info/exclude	
+L477	SAME	stash save	
+L478	SAME	stash save hello world	
+L479	SAME	stash save -q hello	
+L480	SAME	stash save -k	
+L481	SAME	stash save -u	
+L482	SAME	stash list	
+L483	SAME	stash list --oneline	
+L484	SAME	stash list --stat	
+L485	SAME	stash list -p	
+L486	SAME	stash list --name-only	
+L487	SAME	stash show	
+L488	SAME	stash show -p	
+L489	SAME	stash show --stat	
+L490	SAME	stash show --name-only	
+L491	SAME	stash show stash@{0}	
+L492	SAME	stash show 0	
+L493	SAME	stash show -u	
+L494	SAME	stash show --include-untracked	
+L495	SAME	stash show --only-untracked	
+L496	SAME	stash show --no-include-untracked	
+L497	SAME	stash apply	
+L498	SAME	stash apply --index	
+L499	SAME	stash apply -q	
+L500	SAME	stash apply stash@{0}	
+L501	SAME	stash apply stash@{1}	
+L502	SAME	stash pop	
+L503	SAME	stash pop --index	
+L504	SAME	stash pop -q	
+L505	SAME	stash drop	
+L506	SAME	stash drop -q	
+L507	SAME	stash drop stash@{0}	
+L508	SAME	stash clear	
+L509	SAME	stash create	
+L510	SAME	stash create hello	
+L511	SAME	stash store -m stored HEAD	
+L512	SAME	stash store HEAD	
+L513	SAME	stash store	
+L514	SAME	stash branch topic	
+L515	SAME	stash branch topic stash@{0}	
+L516	SAME	stash bogus	
+L517	SAME	stash drop 0	
+L518	SAME	stash drop stash@{1}	
+L519	SAME	stash show stash@{3}	
+L520	SAME	stash store -m x stash@{0}	
+L521	SAME	stash branch	
+L522	SAME	stash pop 5	
+L523	SAME	-C .git/side cherry-pick topic	
+L524	SAME	-C .git/side cherry-pick lineone	
+L525	SAME	-C .git/side cherry-pick clash	
+L526	SAME	-C .git/side cherry-pick base..topic	
+L527	SAME	-C .git/side cherry-pick topic~1 topic	
+L528	SAME	-C .git/side cherry-pick ^base topic	
+L529	SAME	-C .git/side cherry-pick lineone clash topic	
+L530	SAME	-C .git/side cherry-pick -x lineone	
+L531	SAME	-C .git/side cherry-pick -s lineone	
+L532	SAME	-C .git/side cherry-pick -s -x lineone	
+L533	SAME	-C .git/side cherry-pick --signoff --no-signoff lineone	
+L534	SAME	-C .git/side cherry-pick -n lineone	
+L535	SAME	-C .git/side cherry-pick --no-commit topic	
+L536	SAME	-C .git/side cherry-pick -n clash	
+L537	SAME	-C .git/side cherry-pick -e lineone	
+L538	SAME	-C .git/side cherry-pick --edit lineone	
+L539	SAME	-C .git/side cherry-pick --no-edit lineone	
+L540	SAME	-C .git/side cherry-pick base	
+L541	SAME	-C .git/side cherry-pick --allow-empty base	
+L542	SAME	-C .git/side cherry-pick --keep-redundant-commits base	
+L543	SAME	-C .git/side cherry-pick -m 1 topic	
+L544	SAME	-C .git/side cherry-pick --mainline=2 topic	
+L545	SAME	-C .git/side cherry-pick --ff main	
+L546	SAME	-C .git/side cherry-pick --ff topic	
+L547	SAME	-C .git/side cherry-pick --no-ff topic	
+L548	SAME	-C .git/side cherry-pick	
+L549	SAME	-C .git/side cherry-pick nope	
+L550	SAME	-C .git/side cherry-pick --skip	
+L551	SAME	-C .git/side cherry-pick --quit	
+L552	SAME	-C .git/side cherry-pick --abort	
+L553	SAME	-C .git/side cherry-pick --continue	
+L554	SAME	-C .git/side cherry-pick --allow-empty-message lineone	
+L555	SAME	-C .git/side cherry-pick --cleanup=bogus lineone	
+L556	SAME	-C .git/side cherry-pick --cleanup=strip lineone	
+L557	SAME	-C .git/side cherry-pick --cleanup=verbatim lineone	
+L558	SAME	-C .git/side cherry-pick -S lineone	
+L559	SAME	-C .git/side cherry-pick --gpg-sign lineone	
+L560	SAME	-C .git/side cherry-pick --no-gpg-sign lineone	
+L561	SAME	-C .git/side cherry-pick --rerere-autoupdate lineone	
+L562	SAME	-C .git/side cherry-pick --no-rerere-autoupdate lineone	
+L563	SAME	-C .git/side cherry-pick --strategy=ort lineone	
+L564	SAME	-C .git/side cherry-pick --strategy=ours lineone	
+L565	SAME	-C .git/side cherry-pick -X theirs clash	
+L566	SAME	-C .git/side cherry-pick -X ours clash	
+L567	SAME	-C .git/side cherry-pick --strategy-option=patience lineone	
+L568	SAME	-C .git/side cherry-pick --ff -x topic	
+L569	SAME	-C .git/side cherry-pick -n --ff topic	
+L570	SAME	-C .git/side revert HEAD	
+L571	SAME	-C .git/side revert -n HEAD	
+L572	SAME	-C .git/side revert --no-commit HEAD	
+L573	SAME	-C .git/side revert -s HEAD	
+L574	SAME	-C .git/side revert --reference HEAD	
+L575	SAME	-C .git/side revert --no-reference HEAD	
+L576	SAME	-C .git/side revert -e HEAD	
+L577	SAME	-C .git/side revert --no-edit HEAD	
+L578	SAME	-C .git/side revert -m 1 HEAD	
+L579	SAME	-C .git/side revert HEAD~1	
+L580	SAME	-C .git/side revert	
+L581	SAME	-C .git/side revert --skip	
+L582	SAME	-C .git/side revert --quit	
+L583	SAME	-C .git/side revert --abort	
+L584	SAME	-C .git/side revert --continue	
+L585	SAME	-C .git/side revert -S HEAD	
+L586	SAME	-C .git/side revert --cleanup=strip HEAD	
+L587	SAME	-C .git/side revert --strategy=ort HEAD	
+L588	SAME	-C .git/side revert -X ours HEAD	
+L589	SAME	-C .git/side revert --rerere-autoupdate HEAD	
+L590	SAME	-C .git/side revert -x HEAD	
+L591	SAME	revert -n HEAD~1	
+L592	SAME	cherry-pick -n feature	
+L593	SAME	cherry-pick feature	
+L594	SAME	revert HEAD	
+L595	SAME	worktree add wt1	
+L596	SAME	worktree add wt1 feature	
+L597	SAME	worktree add -b topic wt1	
+L598	SAME	worktree add -b topic wt1 t0	
+L599	SAME	worktree add -B feature wt1	
+L600	SAME	worktree add -B newb wt1 t0	
+L601	SAME	worktree add -f wt1 main	
+L602	SAME	worktree add --force wt1 main	
+L603	SAME	worktree add -d wt1	
+L604	SAME	worktree add --detach wt1 t0	
+L605	DIFF	worktree add --orphan -b orph wt1	exit 0!=129; state
+L606	DIFF	worktree add --orphan wt1	exit 0!=129; state
+L607	SAME	worktree add --no-checkout wt1 feature	
+L608	SAME	worktree add --checkout wt1 feature	
+L609	SAME	worktree add --lock wt1 feature	
+L610	SAME	worktree add --lock --reason because wt1 feature	
+L611	SAME	worktree add --reason because wt1 feature	
+L612	SAME	worktree add -q wt1 feature	
+L613	SAME	worktree add --quiet -b topic wt1	
+L614	SAME	worktree add --track -b topic wt1 main	
+L615	SAME	worktree add --no-track -b topic wt1 main	
+L616	SAME	worktree add --guess-remote wt1	
+L617	SAME	worktree add --no-guess-remote wt1 feature	
+L618	SAME	worktree add wt1 t0	
+L619	SAME	worktree add wt1 nope	
+L620	SAME	worktree add	
+L621	SAME	worktree list	
+L622	SAME	worktree list -v	
+L623	SAME	worktree list --porcelain	
+L624	SAME	worktree list --porcelain -z	
+L625	SAME	worktree list -z	
+L626	SAME	worktree list --expire=now	
+L627	SAME	worktree prune	
+L628	SAME	worktree prune -n	
+L629	SAME	worktree prune -v	
+L630	SAME	worktree prune --expire=now	
+L631	SAME	worktree prune -n -v --expire 1.day.ago	
+L632	SAME	worktree remove nope	
+L633	SAME	worktree remove -f nope	
+L634	SAME	worktree move nope x	
+L635	SAME	worktree lock nope	
+L636	SAME	worktree unlock nope	
+L637	SAME	worktree repair	
+L638	SAME	worktree repair nope	
+L639	SAME	worktree bogus	
+L640	SAME	worktree	
+L641	SAME	worktree lock	
+L642	SAME	worktree unlock	
+L643	SAME	worktree remove	
+L644	SAME	worktree move a	
+L645	SAME	worktree list extra	
+L646	SAME	init	
+L647	SAME	init -q	
+L648	SAME	init --quiet n	
+L649	SAME	init n	
+L650	SAME	init --bare nb.git	
+L651	SAME	init --bare -q nb.git	
+L652	SAME	init -b trunk n	
+L653	SAME	init --initial-branch=trunk n	
+L654	SAME	init --object-format=sha256 n	
+L655	SAME	init --object-format=sha1 n	
+L656	SAME	init --object-format=md5 n	
+L657	SAME	init --shared n	
+L658	SAME	init --shared=all n	
+L659	SAME	init --shared=group n	
+L660	SAME	init --shared=0640 n	
+L661	SAME	init --shared=false n	
+L662	SAME	init --shared=bogus n	
+L663	SAME	init --template= n	
+L664	SAME	init --no-template n	
+L665	SAME	init --template=nonexist n	
+L666	SAME	init --separate-git-dir=sep.git n	
+L667	SAME	init --separate-git-dir sep.git -q n	
+L668	SAME	init --bare --separate-git-dir=sep.git n	
+L669	SAME	init -b x	
+L670	SAME	init a b	
+L671	SAME	-C .git/side rebase topic	
+L672	SAME	-C .git/side rebase lineone	
+L673	SAME	-C .git/side rebase clash	
+L674	SAME	-C .git/side rebase base	
+L675	SAME	-C .git/side rebase main	
+L676	SAME	-C .git/side rebase -f base	
+L677	SAME	-C .git/side rebase --force-rebase base	
+L678	SAME	-C .git/side rebase --no-ff base	
+L679	SAME	-C .git/side rebase --onto topic base	
+L680	SAME	-C .git/side rebase --onto topic base main	
+L681	SAME	-C .git/side rebase --onto=topic base	
+L682	SAME	-C .git/side rebase topic lineone	
+L683	SAME	-C .git/side rebase --root	
+L684	SAME	-C .git/side rebase --root --onto topic	
+L685	SAME	-C .git/side rebase -q topic	
+L686	SAME	-C .git/side rebase --quiet clash	
+L687	SAME	-C .git/side rebase -v topic	
+L688	SAME	-C .git/side rebase --stat topic	
+L689	SAME	-C .git/side rebase -n topic	
+L690	SAME	-C .git/side rebase --no-stat topic	
+L691	SAME	-C .git/side rebase --keep-base topic	
+L692	SAME	-C .git/side rebase --keep-base --onto topic base	
+L693	SAME	-C .git/side rebase -x true topic	
+L694	SAME	-C .git/side rebase --exec false topic	
+L695	SAME	-C .git/side rebase --signoff topic	
+L696	SAME	-C .git/side rebase --committer-date-is-author-date topic	
+L697	SAME	-C .git/side rebase --apply topic	
+L698	SAME	-C .git/side rebase --apply clash	
+L699	SAME	-C .git/side rebase -m topic	
+L700	SAME	-C .git/side rebase --merge topic	
+L701	SAME	-C .git/side rebase -i topic	
+L702	SAME	-C .git/side rebase --interactive topic	
+L703	SAME	-C .git/side rebase -s ours topic	
+L704	SAME	-C .git/side rebase --strategy=ort topic	
+L705	SAME	-C .git/side rebase -X theirs clash	
+L706	SAME	-C .git/side rebase -X ours clash	
+L707	SAME	-C .git/side rebase --strategy-option=patience topic	
+L708	SAME	-C .git/side rebase --empty=drop topic	
+L709	SAME	-C .git/side rebase --empty=keep topic	
+L710	SAME	-C .git/side rebase --empty=bogus topic	
+L711	SAME	-C .git/side rebase --keep-empty topic	
+L712	SAME	-C .git/side rebase --no-keep-empty topic	
+L713	SAME	-C .git/side rebase --allow-empty-message topic	
+L714	SAME	-C .git/side rebase --autosquash topic	
+L715	SAME	-C .git/side rebase --no-autosquash topic	
+L716	SAME	-C .git/side rebase --update-refs topic	
+L717	SAME	-C .git/side rebase --no-update-refs topic	
+L718	SAME	-C .git/side rebase --autostash topic	
+L719	SAME	-C .git/side rebase --no-autostash topic	
+L720	SAME	-C .git/side rebase -r topic	
+L721	SAME	-C .git/side rebase --rebase-merges=rebase-cousins topic	
+L722	SAME	-C .git/side rebase --no-rebase-merges topic	
+L723	SAME	-C .git/side rebase --fork-point topic	
+L724	SAME	-C .git/side rebase --no-fork-point topic	
+L725	SAME	-C .git/side rebase --reschedule-failed-exec topic	
+L726	SAME	-C .git/side rebase --no-reschedule-failed-exec topic	
+L727	SAME	-C .git/side rebase --reapply-cherry-picks topic	
+L728	SAME	-C .git/side rebase --no-reapply-cherry-picks topic	
+L729	SAME	-C .git/side rebase --rerere-autoupdate topic	
+L730	SAME	-C .git/side rebase --no-rerere-autoupdate topic	
+L731	SAME	-C .git/side rebase -S topic	
+L732	SAME	-C .git/side rebase --no-gpg-sign topic	
+L733	SAME	-C .git/side rebase --no-verify topic	
+L734	SAME	-C .git/side rebase --verify topic	
+L735	SAME	-C .git/side rebase -C2 topic	
+L736	SAME	-C .git/side rebase --whitespace=fix topic	
+L737	SAME	-C .git/side rebase --ignore-whitespace topic	
+L738	SAME	-C .git/side rebase --continue	
+L739	SAME	-C .git/side rebase --abort	
+L740	SAME	-C .git/side rebase --skip	
+L741	SAME	-C .git/side rebase --quit	
+L742	SAME	-C .git/side rebase --show-current-patch	
+L743	SAME	-C .git/side rebase --edit-todo	
+L744	SAME	-C .git/side rebase	
+L745	SAME	-C .git/side rebase nope	
+L746	SAME	-C .git/side rebase topic nope	
+L747	SAME	-C .git/side rebase a b c	
+L748	SAME	-C .git/side rebase --continue --abort	
+L749	SAME	-C .git/side rebase --apply -i topic	
+L750	SAME	rebase feature	
+L751	SAME	rebase --autostash feature	
+L752	SAME	rebase -q feature	
+L753	SAME	rebase main	
+L754	SAME	rebase t0	
+L755	SAME	-C .git/side merge --autostash topic	
+L756	SAME	merge --autostash feature	
+L757	SAME	rebase --autostash main feature	
+L758	SAME	apply .git/a.patch	
+L759	SAME	apply --index .git/a.patch	
+L760	SAME	apply --cached .git/a.patch	
+L761	SAME	apply --check .git/a.patch	
+L762	SAME	apply --stat .git/a.patch	
+L763	SAME	apply --numstat .git/a.patch	
+L764	SAME	apply --summary .git/new.patch	
+L765	SAME	apply --stat --summary .git/new.patch	
+L766	SAME	apply --numstat -z .git/a.patch	
+L767	SAME	apply -R .git/fixture.patch	
+L768	SAME	apply --reverse --check .git/fixture.patch	
+L769	SAME	apply .git/fixture.patch	
+L770	SAME	apply --3way .git/a.patch	
+L771	SAME	apply --no-3way .git/a.patch	
+L772	SAME	apply -p0 .git/p0.patch	
+L773	SAME	apply -p 0 .git/p0.patch	
+L774	SAME	apply -p2 .git/a.patch	
+L775	SAME	apply --directory=sub .git/a.patch	
+L776	SAME	apply --directory=sub --check .git/new.patch	
+L777	SAME	apply --include='src/*' .git/a.patch	
+L778	SAME	apply --exclude='src/*' .git/a.patch	
+L779	SAME	apply --exclude='*' --include='src/*' .git/a.patch	
+L780	SAME	apply --no-add .git/a.patch	
+L781	SAME	apply .git/new.patch	
+L782	SAME	apply --unsafe-paths .git/new.patch	
+L783	SAME	apply --whitespace=fix .git/new.patch	
+L784	SAME	apply --whitespace=nowarn .git/new.patch	
+L785	SAME	apply --whitespace=warn .git/new.patch	
+L786	SAME	apply --whitespace=error .git/new.patch	
+L787	SAME	apply --whitespace=error-all .git/new.patch	
+L788	SAME	apply --whitespace=bogus .git/new.patch	
+L789	SAME	apply --ignore-space-change .git/a.patch	
+L790	SAME	apply --ignore-whitespace .git/a.patch	
+L791	SAME	apply -C1 .git/a.patch	
+L792	SAME	apply -C 1 .git/a.patch	
+L793	SAME	apply --unidiff-zero .git/a.patch	
+L794	SAME	apply --reject .git/bad.patch	
+L795	SAME	apply .git/bad.patch	
+L796	SAME	apply --allow-overlap .git/a.patch	
+L797	SAME	apply -v .git/a.patch	
+L798	SAME	apply --verbose --check .git/a.patch	
+L799	SAME	apply -q .git/a.patch	
+L800	SAME	apply --inaccurate-eof .git/a.patch	
+L801	SAME	apply --recount .git/a.patch	
+L802	SAME	apply --allow-empty /dev/null	
+L803	SAME	apply /dev/null	
+L804	SAME	apply --build-fake-ancestor=.git/fake.idx .git/a.patch	
+L805	SAME	apply --apply --stat .git/a.patch	
+L806	SAME	apply --no-apply .git/a.patch	
+L807	SAME	apply nope.patch	
+L808	SAME	apply --reject --check .git/bad.patch	
+L809	SAME	-C .git/side format-patch --stdout --signature=S -1 topic	
+L810	SAME	-C .git/side format-patch --stdout --signature=S -2 topic	
+L811	SAME	-C .git/side format-patch --stdout --signature=S base..topic	
+L812	SAME	-C .git/side format-patch --stdout --signature=S base	
+L813	SAME	-C .git/side format-patch --stdout --signature=S --cover-letter -2 topic	
+L814	SAME	-C .git/side format-patch --stdout --signature=S --no-cover-letter -2 topic	
+L815	SAME	-C .git/side format-patch --stdout --signature=S -1 -s topic	
+L816	SAME	-C .git/side format-patch --stdout --signature=S -1 --signoff --no-signoff topic	
+L817	SAME	-C .git/side format-patch --stdout --signature=S -1 --to=a@b --cc=c@d topic	
+L818	SAME	-C .git/side format-patch --stdout --signature=S -1 --to=a@b --to=e@f --no-to topic	
+L819	SAME	-C .git/side format-patch --stdout --signature=S -1 --add-header='X-Foo: bar' topic	
+L820	SAME	-C .git/side format-patch --stdout --signature=S -1 --in-reply-to='<id@x>' topic	
+L821	SAME	-C .git/side format-patch --stdout --signature=S -1 --subject-prefix=FOO topic	
+L822	SAME	-C .git/side format-patch --stdout --signature=S -1 --rfc topic	
+L823	SAME	-C .git/side format-patch --stdout --signature=S -1 -v2 topic	
+L824	SAME	-C .git/side format-patch --stdout --signature=S -2 --reroll-count=3 topic	
+L825	SAME	-C .git/side format-patch --stdout --signature=S -1 -k topic	
+L826	SAME	-C .git/side format-patch --stdout --signature=S -1 --keep-subject topic	
+L827	SAME	-C .git/side format-patch --stdout --signature=S -2 -n topic	
+L828	SAME	-C .git/side format-patch --stdout --signature=S -2 -N topic	
+L829	SAME	-C .git/side format-patch --stdout --signature=S -1 --numbered topic	
+L830	SAME	-C .git/side format-patch --stdout --signature=S -1 -p topic	
+L831	SAME	-C .git/side format-patch --stdout --signature=S -1 --no-stat topic	
+L832	SAME	-C .git/side format-patch --stdout --signature=S -1 --zero-commit topic	
+L833	SAME	-C .git/side format-patch --stdout -1 --no-signature topic	
+L834	SAME	-C .git/side format-patch --stdout -1 --signature=SIG topic	
+L835	SAME	-C .git/side format-patch --stdout -1 --signature-file=b.txt topic	
+L836	SAME	-C .git/side format-patch --stdout --signature=S -1 --base=base topic	
+L837	SAME	-C .git/side format-patch --stdout --signature=S -1 --from topic	
+L838	SAME	-C .git/side format-patch --stdout --signature=S -1 --from='X Y <x@y>' topic	
+L839	SAME	-C .git/side format-patch --stdout --signature=S -1 --from='X Y <x@y>' --force-in-body-from topic	
+L840	SAME	-C .git/side format-patch --stdout --signature=S -1 --attach=BND topic	
+L841	SAME	-C .git/side format-patch --stdout --signature=S -1 --inline=BND topic	
+L842	SAME	-C .git/side format-patch --stdout --signature=S -1 --no-attach topic	
+L843	SAME	-C .git/side format-patch --stdout --signature=S -1 --no-binary topic	
+L844	SAME	-C .git/side format-patch --stdout --signature=S -1 --binary topic	
+L845	SAME	-C .git/side format-patch --stdout --signature=S --ignore-if-in-upstream main..topic	
+L846	SAME	-C .git/side format-patch --stdout --signature=S -1 --start-number=5 topic	
+L847	DIFF	-C .git/side format-patch --stdout --signature=S -1 --cover-letter --cover-from-description=subject --description-file=b.txt topic	exit 0!=128; stdout
+L848	SAME	-C .git/side format-patch --stdout --signature=S -1 --no-thread topic	
+L849	SAME	-C .git/side format-patch --stdout --signature=S -1 --progress topic	
+L850	SAME	-C .git/side format-patch --stdout --signature=S -1 --no-progress topic	
+L851	SAME	-C .git/side format-patch --stdout --signature=S -1 --creation-factor=50 topic	
+L852	SAME	-C .git/side format-patch -2 topic	
+L853	SAME	-C .git/side format-patch -2 -o out topic	
+L854	SAME	-C .git/side format-patch -2 --output-directory=out topic	
+L855	SAME	-C .git/side format-patch -2 -q topic	
+L856	SAME	-C .git/side format-patch -2 --numbered-files topic	
+L857	SAME	-C .git/side format-patch -2 --suffix=.txt topic	
+L858	SAME	-C .git/side format-patch -2 --start-number=5 topic	
+L859	SAME	-C .git/side format-patch -2 -v3 topic	
+L860	SAME	-C .git/side format-patch -2 --filename-max-length=10 topic	
+L861	SAME	-C .git/side format-patch -1 --cover-letter topic	
+L862	SAME	-C .git/side format-patch --stdout --signature=S -o out -1 topic	
+L863	SAME	-C .git/side format-patch --thread=bogus -1 topic	
+L864	SAME	-C .git/side format-patch -1 -v3 --filename-max-length=13 topic	
+L865	SAME	-C .git/side format-patch -1 --suffix=.x --filename-max-length=15 topic	
+L866	SAME	-C .git/side am .git/topic.mbox	
+L867	SAME	-C .git/side am .git/clash.mbox	
+L868	SAME	-C .git/side am -3 .git/clash.mbox	
+L869	SAME	-C .git/side am --3way .git/topic.mbox	
+L870	SAME	-C .git/side am --no-3way .git/clash.mbox	
+L871	SAME	-C .git/side am -s .git/topic.mbox	
+L872	SAME	-C .git/side am --signoff .git/topic.mbox	
+L873	SAME	-C .git/side am -k .git/topic.mbox	
+L874	SAME	-C .git/side am --keep .git/topic.mbox	
+L875	SAME	-C .git/side am --keep-non-patch .git/topic.mbox	
+L876	SAME	-C .git/side am -i .git/topic.mbox	
+L877	SAME	-C .git/side am --continue	
+L878	SAME	-C .git/side am -r	
+L879	SAME	-C .git/side am --resolved	
+L880	SAME	-C .git/side am --skip	
+L881	SAME	-C .git/side am --abort	
+L882	SAME	-C .git/side am --quit	
+L883	SAME	-C .git/side am --show-current-patch	
+L884	SAME	-C .git/side am --show-current-patch=diff	
+L885	SAME	-C .git/side am -m .git/topic.mbox	
+L886	SAME	-C .git/side am --message-id .git/topic.mbox	
+L887	SAME	-C .git/side am --no-message-id .git/topic.mbox	
+L888	SAME	-C .git/side am -c .git/topic.mbox	
+L889	SAME	-C .git/side am --scissors .git/topic.mbox	
+L890	SAME	-C .git/side am --no-scissors .git/topic.mbox	
+L891	SAME	-C .git/side am -u .git/topic.mbox	
+L892	SAME	-C .git/side am --utf8 .git/topic.mbox	
+L893	SAME	-C .git/side am --no-utf8 .git/topic.mbox	
+L894	SAME	-C .git/side am --keep-cr .git/topic.mbox	
+L895	SAME	-C .git/side am --no-keep-cr .git/topic.mbox	
+L896	SAME	-C .git/side am --quoted-cr=strip .git/topic.mbox	
+L897	SAME	-C .git/side am --quoted-cr=bogus .git/topic.mbox	
+L898	SAME	-C .git/side am -q .git/topic.mbox	
+L899	SAME	-C .git/side am --quiet .git/clash.mbox	
+L900	DIFF	-C .git/side am -n .git/topic.mbox	exit 0!=129; stdout
+L901	DIFF	-C .git/side am --no-verify .git/topic.mbox	exit 0!=129; stdout
+L902	DIFF	-C .git/side am --verify .git/topic.mbox	exit 0!=129; stdout
+L903	SAME	-C .git/side am --whitespace=fix .git/topic.mbox	
+L904	SAME	-C .git/side am --whitespace=bogus .git/topic.mbox	
+L905	SAME	-C .git/side am --ignore-space-change .git/topic.mbox	
+L906	SAME	-C .git/side am --ignore-whitespace .git/topic.mbox	
+L907	SAME	-C .git/side am -C1 .git/topic.mbox	
+L908	SAME	-C .git/side am -p1 .git/topic.mbox	
+L909	SAME	-C .git/side am --directory=sub .git/topic.mbox	
+L910	SAME	-C .git/side am --exclude=c.txt .git/topic.mbox	
+L911	SAME	-C .git/side am --include=b.txt .git/topic.mbox	
+L912	SAME	-C .git/side am --reject .git/clash.mbox	
+L913	SAME	-C .git/side am --resolvemsg=x .git/topic.mbox	
+L914	SAME	-C .git/side am --patch-format=mbox .git/topic.mbox	
+L915	SAME	-C .git/side am --patch-format=bogus .git/topic.mbox	
+L916	SAME	-C .git/side am --committer-date-is-author-date .git/topic.mbox	
+L917	SAME	-C .git/side am --rerere-autoupdate .git/topic.mbox	
+L918	SAME	-C .git/side am --no-gpg-sign .git/topic.mbox	
+L919	SAME	-C .git/side am --empty=drop .git/topic.mbox	
+L920	SAME	-C .git/side am --empty=bogus .git/topic.mbox	
+L921	SAME	-C .git/side am --allow-empty	
+L922	SAME	-C .git/side am	
+L923	SAME	-C .git/side am nope.mbox	
+L924	SAME	notes	
+L925	SAME	notes list	
+L926	SAME	notes list HEAD	
+L927	SAME	notes add -m hello	
+L928	SAME	notes add -m hello -m world	
+L929	SAME	notes add -m '  a  ' -m '' -m b HEAD~2	
+L930	DIFF	notes add --no-separator -m a -m b	exit 0!=129; state
+L931	DIFF	notes add --separator=-- -m a -m b	exit 0!=129; state
+L932	DIFF	notes add --no-stripspace -m '  a  '	exit 0!=129; state
+L933	DIFF	notes add --stripspace -m '  a  '	exit 0!=129; state
+L934	SAME	notes add -m '# c'	
+L935	SAME	notes add -F README.md	
+L936	SAME	notes add -F README.md -m extra	
+L937	SAME	notes add -C HEAD~1	
+L938	SAME	notes add -C HEAD:README.md	
+L939	SAME	notes add -c HEAD:README.md	
+L940	SAME	notes add -m ''	
+L941	SAME	notes add --allow-empty -m ''	
+L942	SAME	notes add	
+L943	SAME	notes add -f -m x	
+L944	SAME	notes add --force -m x HEAD~1	
+L945	SAME	notes add -m z nope	
+L946	SAME	notes add -m a HEAD HEAD~1	
+L947	SAME	notes --ref=foo add -m x	
+L948	SAME	notes --ref foo add -m x	
+L949	SAME	notes --ref=refs/notes/bar add -m x	
+L950	SAME	notes --ref=foo get-ref	
+L951	SAME	notes get-ref	
+L952	SAME	notes show	
+L953	SAME	notes show HEAD~3	
+L954	SAME	notes show nope	
+L955	SAME	notes append -m more	
+L956	DIFF	notes append --separator=-- -m sep	exit 0!=129; state
+L957	DIFF	notes append --no-separator -m sep	exit 0!=129; state
+L958	SAME	notes append -F README.md	
+L959	SAME	notes append --allow-empty -m ''	
+L960	SAME	notes edit	
+L961	SAME	notes edit -m e	
+L962	SAME	notes edit --allow-empty	
+L963	SAME	notes copy HEAD HEAD~3	
+L964	SAME	notes copy -f HEAD~3 HEAD	
+L965	SAME	notes copy HEAD~3	
+L966	SAME	notes copy	
+L967	SAME	notes remove	
+L968	SAME	notes remove HEAD~3	
+L969	SAME	notes remove --ignore-missing HEAD~3	
+L970	SAME	notes remove HEAD HEAD~3	
+L971	SAME	notes remove --stdin	
+L972	SAME	notes prune	
+L973	SAME	notes prune -n	
+L974	SAME	notes prune -v	
+L975	SAME	notes merge	
+L976	SAME	notes merge x	
+L977	SAME	notes merge -v x	
+L978	SAME	notes merge -s ours x	
+L979	SAME	notes merge -s bogus x	
+L980	SAME	notes merge --abort	
+L981	SAME	notes merge --commit	
+L982	SAME	notes bogus	
+L983	SAME	-C .git/side sparse-checkout	
+L984	SAME	-C .git/side sparse-checkout bogus	
+L985	SAME	-C .git/side sparse-checkout init	
+L986	SAME	-C .git/side sparse-checkout init --cone	
+L987	SAME	-C .git/side sparse-checkout init --no-cone	
+L988	SAME	-C .git/side sparse-checkout init --sparse-index	
+L989	SAME	-C .git/side sparse-checkout init --no-sparse-index	
+L990	SAME	-C .git/side sparse-checkout set	
+L991	SAME	-C .git/side sparse-checkout set docs	
+L992	SAME	-C .git/side sparse-checkout set --cone docs	
+L993	SAME	-C .git/side sparse-checkout set --no-cone '/*.txt'	
+L994	SAME	-C .git/side sparse-checkout set --sparse-index docs	
+L995	SAME	-C .git/side sparse-checkout set --no-sparse-index docs	
+L996	SAME	-C .git/side sparse-checkout set --stdin	
+L997	SAME	-C .git/side sparse-checkout set docs/x.md	
+L998	SAME	-C .git/side sparse-checkout set --skip-checks docs/x.md	
+L999	SAME	-C .git/side sparse-checkout add docs	
+L1000	SAME	-C .git/side sparse-checkout add --skip-checks docs	
+L1001	SAME	-C .git/side sparse-checkout add --stdin	
+L1002	SAME	-C .git/side sparse-checkout list	
+L1003	SAME	-C .git/side sparse-checkout disable	
+L1004	SAME	-C .git/side sparse-checkout reapply	
+L1005	SAME	-C .git/side sparse-checkout reapply --cone	
+L1006	SAME	-C .git/side sparse-checkout reapply --sparse-index	
+L1007	DIFF	-C .git/side sparse-checkout check-rules	exit 128!=129
+L1008	DIFF	-C .git/side sparse-checkout check-rules --cone	exit 128!=129
+L1009	DIFF	-C .git/side sparse-checkout check-rules -z --rules-file=a.txt	exit 0!=129
+L1010	DIFF	-C .git/side sparse-checkout check-rules --rules-file=a.txt	exit 0!=129
+L1011	DIFF	-C .git/side sparse-checkout check-rules --no-cone --rules-file=a.txt	exit 0!=129
+L1012	SAME	mailinfo .git/m .git/p	
+L1013	SAME	mailinfo -k .git/m .git/p	
+L1014	SAME	mailinfo -b .git/m .git/p	
+L1015	SAME	mailinfo -m .git/m .git/p	
+L1016	SAME	mailinfo --message-id .git/m .git/p	
+L1017	SAME	mailinfo --no-message-id .git/m .git/p	
+L1018	SAME	mailinfo -u .git/m .git/p	
+L1019	SAME	mailinfo -n .git/m .git/p	
+L1020	SAME	mailinfo --encoding=UTF-8 .git/m .git/p	
+L1021	SAME	mailinfo --scissors .git/m .git/p	
+L1022	SAME	mailinfo --no-scissors .git/m .git/p	
+L1023	SAME	mailinfo --quoted-cr=strip .git/m .git/p	
+L1024	SAME	mailinfo --quoted-cr=bogus .git/m .git/p	
+L1025	SAME	mailinfo .git/m	
+L1026	SAME	mailinfo	
+L1027	SAME	mailsplit .git/fixture.mbox	
+L1028	SAME	mailsplit -o.git .git/fixture.mbox	
+L1029	SAME	mailsplit -o .git .git/fixture.mbox	
+L1030	SAME	mailsplit -b -o.git .git/fixture.mbox	
+L1031	SAME	mailsplit -d2 -o.git .git/fixture.mbox	
+L1032	SAME	mailsplit -d 2 -o.git .git/fixture.mbox	
+L1033	SAME	mailsplit -f3 -o.git .git/fixture.mbox	
+L1034	SAME	mailsplit --keep-cr -o.git .git/fixture.mbox	
+L1035	SAME	mailsplit --mboxrd -o.git .git/fixture.mbox	
+L1036	SAME	mailsplit -o.git	
+L1037	SAME	mailsplit -o.git nope.mbox	
+L1038	SAME	mailsplit	
+L1039	SAME	mailsplit -d3 -o.git .git/fixture.mbox	
+L1040	SAME	mailsplit -d10 -o.git .git/fixture.mbox	
+L1041	SAME	mailsplit -x -o.git .git/fixture.mbox	
+L1042	SAME	mailsplit -o.git .git/side/.git/topic.mbox	
+L1043	SAME	mailsplit -o.git/nope .git/fixture.mbox	
+L1044	SAME	-C .git/side bisect start	
+L1045	SAME	-C .git/side bisect start main	
+L1046	SAME	-C .git/side bisect start main base	
+L1047	SAME	-C .git/side bisect start --term-new=broken --term-old=fine main base	
+L1048	SAME	-C .git/side bisect start --term-bad=broken --term-good=fine main base	
+L1049	SAME	-C .git/side bisect start --no-checkout main base	
+L1050	SAME	-C .git/side bisect start --first-parent main base	
+L1051	SAME	-C .git/side bisect start --term-bad=run	
+L1052	SAME	-C .git/side bisect start --no-checkout	
+L1053	SAME	-C .git/side bisect terms	
+L1054	SAME	-C .git/side bisect terms --term-good	
+L1055	SAME	-C .git/side bisect bad	
+L1056	SAME	-C .git/side bisect reset	
+L1057	SAME	add -A -- src	
+L1058	SAME	add -u -- src	
+L1059	SAME	add -A -- README.md	

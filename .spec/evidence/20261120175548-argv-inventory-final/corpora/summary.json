@@ -1,0 +1,93 @@
+{
+ "agent-tier-a": {
+  "diff": 0,
+  "diff_by_class": {},
+  "lines": 147,
+  "same": 147
+ },
+ "agent-tier-b": {
+  "diff": 0,
+  "diff_by_class": {},
+  "lines": 168,
+  "same": 168
+ },
+ "family-a3-gui": {
+  "diff": 26,
+  "diff_by_class": {
+   "design": 26
+  },
+  "lines": 35,
+  "same": 9
+ },
+ "family-a3-helpers": {
+  "diff": 0,
+  "diff_by_class": {},
+  "lines": 161,
+  "same": 161
+ },
+ "family-a3-tools": {
+  "diff": 1,
+  "diff_by_class": {
+   "timing": 1
+  },
+  "lines": 165,
+  "same": 164
+ },
+ "family-commit": {
+  "diff": 20,
+  "diff_by_class": {
+   "post-pin": 20
+  },
+  "lines": 1059,
+  "same": 1039
+ },
+ "family-gap-blame": {
+  "diff": 16,
+  "diff_by_class": {
+   "post-pin": 16
+  },
+  "lines": 528,
+  "same": 512
+ },
+ "family-gap-pack": {
+  "diff": 13,
+  "diff_by_class": {
+   "post-pin": 13
+  },
+  "lines": 378,
+  "same": 365
+ },
+ "family-gap-range-diff": {
+  "diff": 1,
+  "diff_by_class": {
+   "post-pin": 1
+  },
+  "lines": 184,
+  "same": 183
+ },
+ "family-history": {
+  "diff": 5,
+  "diff_by_class": {
+   "post-pin": 5
+  },
+  "lines": 643,
+  "same": 638
+ },
+ "family-plumbing": {
+  "diff": 20,
+  "diff_by_class": {
+   "open": 1,
+   "post-pin": 19
+  },
+  "lines": 511,
+  "same": 491
+ },
+ "family-remote": {
+  "diff": 3,
+  "diff_by_class": {
+   "post-pin": 3
+  },
+  "lines": 507,
+  "same": 504
+ }
+}
