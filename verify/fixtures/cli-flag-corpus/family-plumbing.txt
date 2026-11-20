@@ -539,7 +539,7 @@ verify-commit nosuch
 verify-commit v1
 verify-tag v1
 verify-tag -v v1
-verify-tag --format=%(refname) v1
+verify-tag '--format=%(refname)' v1
 verify-tag --raw --no-raw --no-format v1
 verify-tag HEAD
 verify-tag
