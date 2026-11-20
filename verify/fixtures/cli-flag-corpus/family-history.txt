@@ -1,0 +1,168 @@
+# History / inspection family corpus (argv symmetry ladder rung A2).
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null. Fixture: build-fixture.sh.
+#
+# --- diff: output formats ---
+diff
+diff --cached
+diff HEAD
+diff HEAD~2 HEAD
+diff --stat HEAD~3 HEAD
+diff --numstat t0 HEAD
+diff --shortstat t0 HEAD
+diff --raw t0 HEAD
+diff --raw --abbrev=10 t0 HEAD
+diff --raw --no-abbrev t0 HEAD
+diff --name-status -z t0 HEAD
+diff --name-only -z t0 HEAD
+diff --numstat -z t0 HEAD
+diff --raw -z t0 HEAD
+diff --patch-with-raw t0 HEAD
+diff --patch-with-stat t0 HEAD
+diff --summary t0 HEAD
+diff --stat --summary t0 HEAD
+diff --compact-summary t0 HEAD
+diff --stat=40 t0 HEAD
+diff --stat=40,10 t0 HEAD
+diff --stat-width=30 t0 HEAD
+diff --stat-name-width=5 t0 HEAD
+diff --stat-graph-width=2 t0 HEAD
+diff --stat-count=1 t0 HEAD
+diff --dirstat t0 HEAD
+diff --dirstat=files t0 HEAD
+diff --dirstat=lines,cumulative t0 HEAD
+diff -X5 t0 HEAD
+diff --cumulative t0 HEAD
+diff --dirstat-by-file t0 HEAD
+diff -U1 t0 HEAD
+diff --unified=0 t0 HEAD
+diff -U t0 HEAD
+diff -W t0 HEAD
+diff --function-context HEAD
+diff --inter-hunk-context=5 -U0 HEAD
+diff --full-index t0 HEAD
+diff --binary t0 HEAD
+diff --abbrev=12 t0 HEAD
+diff --src-prefix=L/ --dst-prefix=R/ t0 HEAD
+diff --no-prefix t0 HEAD
+diff --no-prefix --default-prefix t0 HEAD
+diff --line-prefix='> ' --stat -p t0 HEAD
+diff --output-indicator-new=P --output-indicator-old=M --output-indicator-context=C HEAD
+diff --color HEAD
+diff --color=always --stat t0 HEAD
+diff --color=never HEAD
+diff --no-color HEAD
+diff --color-moved HEAD
+diff --ws-error-highlight=all HEAD
+diff -R HEAD
+diff -R --stat t0 HEAD
+diff -a t0 HEAD
+diff --text --stat t0 HEAD
+diff --check HEAD
+diff --exit-code HEAD
+diff --quiet HEAD
+diff --exit-code HEAD HEAD
+diff --no-exit-code HEAD
+diff -S GAMMA t0 HEAD
+diff -G gam t0 HEAD
+diff -S readme --pickaxe-all t0 HEAD
+diff --pickaxe-regex -S 'GAM+A' t0 HEAD
+diff --diff-filter=A --name-status t0 HEAD
+diff --diff-filter=m --name-status t0 HEAD
+diff --diff-filter='A*' --name-status t0 HEAD
+diff --rotate-to=src/a.txt --name-only t0 HEAD
+diff --skip-to=src/a.txt --name-only t0 HEAD
+diff --relative=src t0 HEAD
+diff --relative=src --name-only t0 HEAD
+diff --no-relative --name-only t0 HEAD
+diff -M t0 HEAD
+diff -C --name-status t0 HEAD
+diff --find-copies-harder --name-status t0 HEAD
+diff -B --stat t0 HEAD
+diff -D t0 HEAD
+diff --no-renames t0 HEAD
+diff -l 5 --stat t0 HEAD
+diff --minimal HEAD
+diff --patience HEAD
+diff --histogram HEAD
+diff --diff-algorithm=patience HEAD
+diff --anchored=delta HEAD
+diff -w HEAD
+diff -b HEAD
+diff --ignore-space-at-eol HEAD
+diff --ignore-cr-at-eol HEAD
+diff --ignore-blank-lines HEAD
+diff -I delta HEAD
+diff --indent-heuristic HEAD
+diff --no-indent-heuristic HEAD
+diff --word-diff HEAD
+diff --word-diff=porcelain HEAD
+diff --word-diff=color HEAD
+diff --color-words HEAD
+diff --word-diff-regex=. HEAD
+diff --ext-diff HEAD
+diff --no-ext-diff HEAD
+diff --textconv HEAD
+diff --no-textconv HEAD
+diff --ignore-submodules HEAD
+diff --submodule=log HEAD
+diff --ita-invisible-in-index HEAD
+diff --find-object=HEAD:README.md --name-only t0 HEAD
+diff -O /dev/null --name-only t0 HEAD
+diff --no-patch HEAD
+diff -s HEAD
+diff --staged --stat
+diff --merge-base main feature --stat
+diff main...feature --name-status
+diff t0 HEAD -- src
+diff --stat t0 HEAD -- src/a.txt README.md
+# --- diff: side history (fixture reflog refs/fixture/history; H = afc18e2) ---
+diff --stat --summary afc18e2~2 afc18e2~1
+diff afc18e2~2 afc18e2~1
+diff --raw afc18e2~2 afc18e2~1
+diff --name-status afc18e2~2 afc18e2~1
+diff -M --raw -z afc18e2~2 afc18e2~1
+diff --numstat afc18e2~2 afc18e2~1
+diff --numstat -z afc18e2~2 afc18e2~1
+diff -C --name-status afc18e2~2 afc18e2~1
+diff -C -C --name-status afc18e2~2 afc18e2~1
+diff --find-copies-harder --name-status afc18e2~2 afc18e2~1
+diff -C --find-copies-harder afc18e2~2 afc18e2~1
+diff -M50% --name-status afc18e2~2 afc18e2~1
+diff -M100% --name-status afc18e2~2 afc18e2~1
+diff --find-renames=99 --name-status afc18e2~2 afc18e2~1
+diff --no-renames --name-status afc18e2~2 afc18e2~1
+diff --no-renames -D afc18e2~2 afc18e2~1
+diff -l1 --stat afc18e2~2 afc18e2~1
+diff --compact-summary afc18e2~2 afc18e2~1
+diff --stat=50,20 afc18e2~2 afc18e2~1
+diff --color afc18e2~2 afc18e2~1
+diff --color --stat afc18e2~2 afc18e2~1
+diff -B --raw afc18e2~1 afc18e2
+diff -B afc18e2~1 afc18e2
+diff -B --summary --stat afc18e2~1 afc18e2
+diff -B/90% --name-status afc18e2~1 afc18e2
+diff -w afc18e2~2 afc18e2~1 -- ws.txt
+diff -b afc18e2~2 afc18e2~1 -- ws.txt
+diff --ignore-space-at-eol afc18e2~2 afc18e2~1 -- ws.txt
+diff --ignore-blank-lines afc18e2~2 afc18e2~1 -- blank.txt
+diff -W afc18e2~2 afc18e2~1 -- code.c
+diff --function-context -U1 afc18e2~2 afc18e2~1 -- code.c
+diff --check afc18e2~2 afc18e2~1
+diff --word-diff afc18e2~2 afc18e2~1 -- code.c ws.txt
+diff --word-diff=porcelain afc18e2~2 afc18e2~1 -- ws.txt
+diff --color-words afc18e2~2 afc18e2~1 -- ws.txt
+diff --patience afc18e2~2 afc18e2~1 -- code.c
+diff --histogram afc18e2~2 afc18e2~1 -- code.c
+diff --relative=nonexistent afc18e2~2 afc18e2~1
+diff -R --name-status afc18e2~2 afc18e2~1
+diff --summary -R afc18e2~2 afc18e2~1
+diff --diff-filter=R --name-status afc18e2~2 afc18e2~1
+diff --diff-filter=T --name-status afc18e2~2 afc18e2~1
+diff --diff-filter=r --name-status afc18e2~2 afc18e2~1
+diff -S same --name-status afc18e2~2 afc18e2~1
+diff -G 'x = 2' afc18e2~2 afc18e2~1
+diff --dirstat=files,0 afc18e2~2 afc18e2~1
+diff --full-index --raw afc18e2~2 afc18e2~1
+diff --abbrev=4 --raw afc18e2~2 afc18e2~1

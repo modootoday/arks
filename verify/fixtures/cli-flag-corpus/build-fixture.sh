@@ -110,3 +110,60 @@ git rev-list --objects "$(git rev-list --max-parents=0 HEAD)" | git pack-objects
 printf 'dangling fresh\n' | git hash-object -w --stdin >/dev/null
 old=$(printf 'dangling old\n' | git hash-object -w --stdin)
 touch -d @1600000000 ".git/objects/${old:0:2}/${old:2}"
+# History-family extras (argv symmetry A2): a three-commit side history
+# rooted outside every ref and kept alive by a reflog without a ref
+# (.git/logs/refs/fixture/history), so refs, `--all`, the index and the
+# work tree are unchanged. Built with a temporary index:
+#   H1 base files; H2 renames (exact + inexact), a copy, a mode change, a
+#   type change, whitespace-only and blank-line edits, a function-body
+#   edit, trailing whitespace; H3 a complete rewrite.
+hx() {
+  local idx="$PWD/.git/fixture-history.index" tree spec m rest p body b
+  rm -f "$idx"
+  for spec in "$@"; do
+    # spec: mode:path:content (content is a printf format)
+    m="${spec%%:*}"; rest="${spec#*:}"; p="${rest%%:*}"; body="${rest#*:}"
+    b=$(printf "$body" | git hash-object -w --stdin)
+    GIT_INDEX_FILE="$idx" git update-index --add --cacheinfo "$m,$b,$p"
+  done
+  tree=$(GIT_INDEX_FILE="$idx" git write-tree)
+  rm -f "$idx"
+  printf '%s' "$tree"
+}
+hc() { # <tree> <message> [<parent>]
+  t=$((t + 3600))
+  GIT_AUTHOR_DATE="$t +0000" GIT_COMMITTER_DATE="$t +0000" \
+    git commit-tree "$1" -m "$2" ${3:+-p "$3"}
+}
+l20='l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n'
+fc1='int one(void)\n{\n\treturn 1;\n}\n\nint two(void)\n{\n\tint x = 2;\n\treturn x;\n}\n\nint three(void)\n{\n\treturn 3;\n}\n'
+fc2="${fc1/x = 2/x = 22}"
+rw1=$(for i in $(seq 1 30); do printf 'original line number %s\\n' "$i"; done)
+rw2=$(for i in $(seq 1 30); do printf 'rewritten content row %s\\n' "$i"; done)
+h_common=("100644:same-renamed.txt:same\ncontent\nhere\n"
+  "100644:code-copy.c:$fc1" "100644:ws.txt:a  b\n        c\nd e \nF\n" "100755:run.sh:echo hi\n"
+  "120000:kind.txt:same.txt" "100644:blank.txt:x\n\n\ny\n" "100644:trail.txt:ok\nbad \n \tmixed\n"
+  "100644:moved.txt:${l20/l7/L7}")
+h1=$(hc "$(hx "100644:big.txt:$l20" "100644:same.txt:same\ncontent\nhere\n" \
+  "100644:code.c:$fc1" "100644:ws.txt:a b\n\tc\nd  e\nf\n" "100644:run.sh:echo hi\n" \
+  "100644:kind.txt:plain\n" "100644:blank.txt:x\ny\n" \
+  "100644:rewrite.txt:$rw1")" "history: base")
+h2=$(hc "$(hx "${h_common[@]}" "100644:code.c:$fc2" "100644:rewrite.txt:$rw1")" \
+  "history: renames, copies, modes" "$h1")
+h3=$(hc "$(hx "${h_common[@]}" "100644:code.c:$fc2" "100644:rewrite.txt:$rw2")" \
+  "history: rewrite" "$h2")
+# H4 merges H3 with a side commit S (from H1); code.c is resolved by hand.
+fc3="${fc1/x = 2/x = 20}"; fc3="${fc3/return 3;/return 33;}"
+fc4="${fc1/x = 2/x = 222}"; fc4="${fc4/return 3;/return 33;}"
+hs=$(hc "$(hx "100644:big.txt:$l20" "100644:same.txt:same\ncontent\nhere\n" \
+  "100644:code.c:$fc3" "100644:ws.txt:a b\n\tc\nd  e\nf\n" "100644:run.sh:echo hi\n" \
+  "100644:kind.txt:plain\n" "100644:blank.txt:x\ny\n" "100644:side.txt:side\n" \
+  "100644:rewrite.txt:$rw1")" "history: side" "$h1")
+h4t=$(hx "${h_common[@]}" "100644:code.c:$fc4" "100644:rewrite.txt:$rw2" \
+  "100644:side.txt:side\n")
+t=$((t + 3600))
+h4=$(GIT_AUTHOR_DATE="$t +0000" GIT_COMMITTER_DATE="$t +0000" \
+  git commit-tree "$h4t" -p "$h3" -p "$hs" -m "history: merge side")
+mkdir -p .git/logs/refs/fixture
+printf '%s %s C O Mitter <committer@example.com> %s +0000\tfixture: history\n' \
+  0000000000000000000000000000000000000000 "$h4" "$t" > .git/logs/refs/fixture/history
