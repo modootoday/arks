@@ -65,6 +65,8 @@ pub mod merge_subtree;
 pub mod merge_tree;
 pub mod notes;
 pub mod opt_parse;
+pub mod pack_bitmap;
+pub mod pack_objects;
 pub mod pack_transport;
 pub mod patch;
 pub mod patch_id;
