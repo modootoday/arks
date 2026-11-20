@@ -124,8 +124,11 @@ impl PackWriter {
         Ok(())
     }
 
-    /// Append the trailer checksum.
+    /// Set the header's object count to the entries written, then append
+    /// the trailer checksum.
     pub fn finish(mut self) -> WrittenPack {
+        let n = (self.entries.len() as u32).to_be_bytes();
+        self.buf[8..12].copy_from_slice(&n);
         checksum::append_checksum(&mut self.buf, self.format);
         let n = self.format.digest_len();
         let checksum = self.buf[self.buf.len() - n..].to_vec();
