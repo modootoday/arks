@@ -244,3 +244,34 @@ mkdir -p .git/strat && (
 )
 cp -a .git/strat .git/stratc
 (cd .git/stratc && git merge-resolve base -- HEAD clash >/dev/null 2>&1 || :)
+# External tool bridges (A3 tools): a nested repository `.git/conflict` left in
+# a conflicted merge (`m.txt` and `n.txt` both changed, `gone.txt` modified on
+# main and deleted on `other`, `ok.txt` merged cleanly) for mergetool lines,
+# and a quilt series under `.git/side/.git/quilt` for quiltimport lines.
+mkdir -p .git/conflict && (
+  cd .git/conflict
+  git init -q -b main .
+  git config user.name "C O Mitter"; git config user.email committer@example.com
+  git config commit.gpgsign false
+  printf 'one\ntwo\nthree\n' > m.txt; printf 'red\ngreen\n' > n.txt
+  printf 'keep\n' > gone.txt; printf 'base\n' > ok.txt
+  git add . && c -m "conflict: base"
+  git checkout -q -b other
+  printf 'one\nTWO (other)\nthree\n' > m.txt; printf 'red\nGREEN (other)\n' > n.txt
+  git rm -q gone.txt; printf 'base\nother\n' > ok.txt
+  git add . && c -m "other: edit and delete"
+  git checkout -q main
+  printf 'one\nTWO (main)\nthree\n' > m.txt; printf 'red\nGREEN (main)\n' > n.txt
+  printf 'keep\nmain\n' > gone.txt
+  git add . && c -m "main: edit"
+  t=$((t + 3600)); GIT_AUTHOR_DATE="$t +0000" GIT_COMMITTER_DATE="$t +0000" \
+    git merge -q other -m "Merge other" >/dev/null 2>&1 || true
+)
+q=.git/side/.git/quilt
+mkdir -p "$q/sub"
+printf 'From: Q U Ilt <quilt@example.com>\nSubject: quilt: extend b\n\nAdd a line to b.\n---\n' > "$q/one.patch"
+printf 'diff --git a/b.txt b/b.txt\n--- a/b.txt\n+++ b/b.txt\n@@ -1 +1,2 @@\n base\n+quilt one\n' >> "$q/one.patch"
+printf 'Second patch without a mail header.\n\nIt adds q.txt.\n\n' > "$q/sub/two.diff"
+printf 'diff --git a/q.txt b/q.txt\nnew file mode 100644\n--- /dev/null\n+++ b/q.txt\n@@ -0,0 +1 @@\n+quilt two\n' >> "$q/sub/two.diff"
+printf '# quilt series\none.patch\nsub/two.diff -p1\n' > "$q/series"
+printf 'one.patch\nmissing.patch\n' > "$q/series-missing"
