@@ -174,7 +174,19 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "merge-recursive-theirs" => cmd::cmd_merge_recursive_theirs(args),
         "merge-resolve" => cmd::cmd_merge_resolve(args),
         "merge-subtree" => cmd::cmd_merge_subtree(args),
-        "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
+        // A3 internal helpers and alias rows (mirrored behaviour; see cmd::internal_helpers).
+        "pickaxe" => cmd::cmd_pickaxe(args),
+        "update" => cmd::cmd_update(args),
+        "add--interactive" => cmd::cmd_add_interactive_helper(args),
+        "bisect--helper" => cmd::cmd_bisect_helper(args),
+        "checkout--worker" => cmd::cmd_checkout_worker(args),
+        "env--helper" => cmd::cmd_env_helper(args),
+        "sh-i18n--envsubst" => cmd::cmd_sh_i18n_envsubst(args),
+        "submodule--helper" => cmd::cmd_submodule_helper(args),
+        "upload-archive--writer" => cmd::cmd_upload_archive_writer(args),
+        "fsmonitor--daemon" => cmd::cmd_fsmonitor_daemon(args),
+        "backfill" => cmd::cmd_backfill(args),
+        "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
         "gui" | "gui.tcl" => cmd::cmd_gui(args),

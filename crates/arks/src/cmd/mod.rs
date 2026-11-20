@@ -5,6 +5,7 @@ pub mod am;
 pub mod apply;
 pub mod archive;
 pub mod attr;
+pub mod backfill;
 pub mod bisect;
 pub mod blame;
 pub mod branch;
@@ -34,6 +35,7 @@ pub mod ignore;
 pub mod index_plumbing;
 pub mod inspect;
 pub mod interactive_patch;
+pub mod internal_helpers;
 pub mod lease;
 pub mod lock;
 pub mod log_cmd;
@@ -96,6 +98,7 @@ pub mod worktree;
 pub use am::cmd_am;
 pub use apply::cmd_apply;
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
+pub use backfill::cmd_backfill;
 pub use bisect::cmd_bisect;
 pub use blame::{cmd_annotate, cmd_blame};
 pub use branch::{cmd_checkout, cmd_switch};
@@ -123,6 +126,11 @@ pub use host_skew::{
     cmd_repo, cmd_survey, cmd_url_parse,
 };
 pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
+pub use internal_helpers::{
+    cmd_add_interactive_helper, cmd_bisect_helper, cmd_checkout_worker, cmd_env_helper,
+    cmd_fsmonitor_daemon, cmd_pickaxe, cmd_sh_i18n_envsubst, cmd_submodule_helper, cmd_update,
+    cmd_upload_archive_writer,
+};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show, cmd_whatchanged};
