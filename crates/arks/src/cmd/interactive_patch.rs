@@ -656,7 +656,11 @@ pub fn cmd_add_edit(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-e", "--edit"])?;
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let changes = collect_file_changes(&repo, &work)?;
+    // `add -e` edits the diff of tracked files only (untracked files are not part of it).
+    let changes: Vec<_> = collect_file_changes(&repo, &work)?
+        .into_iter()
+        .filter(|c| !c.untracked)
+        .collect();
     if changes.is_empty() {
         println!("No changes.");
         return Ok(());
