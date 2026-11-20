@@ -198,7 +198,8 @@ def main():
                            ARKS_HUB_TOKEN_FILE=os.path.join(home, "hub-token"),
                            ARKS_HUB_CLIENT_STATE=os.path.join(home, "hub-client.json"),
                            ARKS_HUB_REPO="local/inventory", BROWSER="false",
-                           ARKS_HUB_TOKEN="inventory-token")
+                           ARKS_HUB_TOKEN="inventory-token", EDITOR="true", VISUAL="true",
+                           GH_EDITOR="true")
                 with open(os.path.join(home, "hub-token"), "w") as f:
                     f.write("inventory-token\n")
                 argv = [arks] + cmd.split() + [spelling] + ([value] if value is not None else [])
