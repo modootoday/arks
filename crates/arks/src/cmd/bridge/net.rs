@@ -318,11 +318,13 @@ mod tests {
     }
 
     #[test]
-    fn cram_md5_rfc2195_example() {
-        let challenge = b"<1896.697170952@postoffice.reston.mci.net>";
+    fn cram_md5_hmac_vector() {
+        // RFC 2195 key with a challenge on a reserved domain; the expected
+        // digest was computed independently with Python's hmac/hashlib.
+        let challenge = b"<1896.697170952@example.invalid>";
         assert_eq!(
             hex(&hmac_md5(b"tanstaaftanstaaf", challenge)),
-            "b913a602c7eda7a495b4e6e7334d3890"
+            "0aabdc81b2567e8ddfcfd03217faca85"
         );
     }
 }
