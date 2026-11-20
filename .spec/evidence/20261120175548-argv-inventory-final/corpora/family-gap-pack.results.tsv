@@ -1,0 +1,378 @@
+L001	SAME	replace HEAD HEAD~1	
+L002	SAME	replace -f HEAD HEAD~1	
+L003	SAME	replace --force HEAD t0	
+L004	SAME	replace --no-force HEAD t0	
+L005	SAME	replace HEAD t0 -f	
+L006	SAME	replace HEAD HEAD:README.md	
+L007	SAME	replace -f HEAD HEAD:README.md	
+L008	SAME	replace HEAD v1	
+L009	SAME	replace v1 HEAD	
+L010	SAME	replace HEAD 't0^{tree}'	
+L011	SAME	replace HEAD nosuch	
+L012	SAME	replace nosuch HEAD	
+L013	SAME	replace a	
+L014	SAME	replace a b c	
+L015	SAME	replace -g HEAD	
+L016	SAME	replace --graft HEAD t0	
+L017	SAME	replace -g HEAD t0 t0	
+L018	SAME	replace -g -f HEAD t0 v1	
+L019	SAME	replace -fg HEAD t0	
+L020	SAME	replace -g v1	
+L021	SAME	replace -g HEAD HEAD~1	
+L022	SAME	replace -g HEAD~1 HEAD~1^1 HEAD~1^2	
+L023	SAME	replace -g HEAD:README.md	
+L024	SAME	replace -g HEAD HEAD:README.md	
+L025	SAME	replace -g HEAD nosuch	
+L026	SAME	replace -g nosuch	
+L027	SAME	replace -g	
+L028	SAME	replace -e HEAD	
+L029	SAME	replace --edit HEAD -f	
+L030	SAME	replace --raw -e HEAD:README.md	
+L031	SAME	replace -e 'HEAD^{tree}'	
+L032	SAME	replace --raw --edit 'HEAD^{tree}'	
+L033	SAME	replace -e v1	
+L034	SAME	replace -e nosuch	
+L035	SAME	replace -e	
+L036	SAME	replace -e HEAD HEAD	
+L037	SAME	replace -d HEAD	
+L038	SAME	replace -d	
+L039	SAME	replace --delete nosuch	
+L040	SAME	replace -d t0 nosuch HEAD	
+L041	SAME	replace	
+L042	SAME	replace -l	
+L043	SAME	replace --list '0*'	
+L044	SAME	replace -l x y	
+L045	SAME	replace --format=short	
+L046	SAME	replace --format=medium -l	
+L047	SAME	replace --format long	
+L048	SAME	replace --no-format -l	
+L049	SAME	replace --format=bad	
+L050	SAME	replace --format=long -d HEAD	
+L051	SAME	replace --format=long -g HEAD	
+L052	SAME	replace --list=x	
+L053	SAME	replace --raw HEAD t0	
+L054	SAME	replace --raw -l	
+L055	SAME	replace -f	
+L056	SAME	replace -f -d HEAD~1	
+L057	SAME	replace -d -l	
+L058	SAME	replace -l -d	
+L059	SAME	replace -e -g HEAD	
+L060	SAME	replace -lg	
+L061	SAME	replace --convert-graft-file	
+L062	SAME	replace --convert-graft-file x	
+L063	SAME	replace --bogus	
+L064	SAME	merge-tree main feature	
+L065	SAME	merge-tree --write-tree t0 feature	
+L066	SAME	-C .git/side merge-tree main clash	
+L067	SAME	-C .git/side merge-tree --write-tree main clash	
+L068	SAME	-C .git/side merge-tree --name-only main clash	
+L069	SAME	-C .git/side merge-tree --no-messages main clash	
+L070	SAME	-C .git/side merge-tree --name-only --no-messages main clash	
+L071	SAME	-C .git/side merge-tree --messages main topic	
+L072	SAME	-C .git/side merge-tree --messages main lineone	
+L073	SAME	-C .git/side merge-tree -z main clash	
+L074	SAME	-C .git/side merge-tree -z --name-only main clash	
+L075	SAME	-C .git/side merge-tree -z --messages main lineone	
+L076	SAME	-C .git/side merge-tree main topic	
+L077	DIFF	-C .git/side merge-tree -X ours main clash	exit 0!=129; stdout
+L078	DIFF	-C .git/side merge-tree -X theirs main clash	exit 0!=129; stdout
+L079	DIFF	-C .git/side merge-tree --strategy-option=ours main clash	exit 0!=129; stdout
+L080	DIFF	-C .git/side merge-tree -Xignore-space-change main clash	exit 1!=129; stdout
+L081	DIFF	-C .git/side merge-tree --no-strategy-option main clash	exit 1!=129; stdout
+L082	DIFF	-C .git/side merge-tree -Xbogus main clash	exit 128!=129
+L083	DIFF	-C .git/side merge-tree --merge-base=base main clash	exit 1!=129; stdout
+L084	DIFF	-C .git/side merge-tree --merge-base base main topic	exit 0!=129; stdout
+L085	DIFF	-C .git/side merge-tree --merge-base=nosuch main clash	exit 128!=129
+L086	DIFF	-C .git/side merge-tree '--merge-base=base^{tree}' main clash	exit 128!=129
+L087	DIFF	-C .git/side merge-tree --no-merge-base main clash	exit 1!=129; stdout
+L088	SAME	-C .git/side merge-tree main nosuch	
+L089	SAME	-C .git/side merge-tree 'main^{tree}' clash	
+L090	SAME	-C .git/side merge-tree --stdin	
+L091	SAME	-C .git/side merge-tree --stdin -z	
+L092	SAME	-C .git/strat merge-tree main proj	
+L093	SAME	-C .git/strat merge-tree --allow-unrelated-histories main proj	
+L094	SAME	-C .git/strat merge-tree main other	
+L095	SAME	-C .git/conflict merge-tree HEAD other	
+L096	SAME	-C .git/conflict merge-tree --name-only -z HEAD other	
+L097	SAME	-C .git/side merge-tree main	
+L098	SAME	-C .git/side merge-tree	
+L099	SAME	-C .git/side merge-tree --write-tree base main clash	
+L100	SAME	-C .git/side merge-tree --write-tree --trivial-merge main clash	
+L101	SAME	-C .git/side merge-tree base main clash	
+L102	SAME	-C .git/side merge-tree --trivial-merge base main clash	
+L103	SAME	-C .git/side merge-tree base main topic	
+L104	SAME	-C .git/side merge-tree base topic main	
+L105	SAME	-C .git/side merge-tree base clash lineone	
+L106	SAME	-C .git/side merge-tree --trivial-merge base main	
+L107	SAME	-C .git/side merge-tree --trivial-merge -z base main clash	
+L108	SAME	-C .git/side merge-tree --name-only base main clash	
+L109	SAME	-C .git/side merge-tree base main nosuch	
+L110	SAME	-C .git/side merge-tree base:a.txt main clash	
+L111	SAME	merge-tree t0 main feature	
+L112	SAME	merge-tree v1 feature main	
+L113	SAME	fast-export main	
+L114	SAME	fast-export --all	
+L115	SAME	fast-export t0	
+L116	SAME	fast-export v1	
+L117	SAME	fast-export feature	
+L118	SAME	fast-export HEAD	
+L119	SAME	fast-export refs/stash	
+L120	SAME	fast-export main~2..main	
+L121	SAME	fast-export main~1	
+L122	SAME	fast-export main feature v1 t0	
+L123	SAME	fast-export v1 t0 main	
+L124	SAME	fast-export feature..main	
+L125	SAME	fast-export ^feature main	
+L126	SAME	fast-export main --not feature	
+L127	SAME	fast-export main...feature	
+L128	SAME	fast-export -- main	
+L129	SAME	fast-export main -- src	
+L130	SAME	fast-export main~1..main -- src/a.txt	
+L131	SAME	fast-export main -- src docs	
+L132	SAME	fast-export main -- nosuch	
+L133	SAME	fast-export main nosuch	
+L134	SAME	fast-export --branches	
+L135	SAME	fast-export --tags	
+L136	SAME	fast-export --glob='refs/heads/*'	
+L137	SAME	fast-export --remotes	
+L138	SAME	fast-export -n 2 main	
+L139	SAME	fast-export --max-count=1 main	
+L140	SAME	fast-export --skip=5 main	
+L141	SAME	fast-export --merges main	
+L142	SAME	fast-export --no-merges main	
+L143	SAME	fast-export --first-parent main	
+L144	SAME	fast-export --date-order main	
+L145	SAME	fast-export --reverse main	
+L146	SAME	fast-export --since=1700010000 --all	
+L147	SAME	fast-export --author=nobody --all	
+L148	SAME	fast-export --stdin	
+L149	SAME	fast-export	
+L150	SAME	fast-export --bogus main	
+L151	SAME	fast-export --no-data main~1	
+L152	SAME	fast-export --data --no-data t0	
+L153	SAME	fast-export --no-data --data t0	
+L154	SAME	fast-export --full-tree main~1..main	
+L155	SAME	fast-export --full-tree --no-data main~2	
+L156	SAME	fast-export --no-full-tree main~2	
+L157	SAME	fast-export --use-done-feature t0	
+L158	SAME	fast-export --no-use-done-feature t0	
+L159	SAME	fast-export --progress=2 t0	
+L160	SAME	fast-export --progress=1 --no-data main~2	
+L161	SAME	fast-export --no-progress t0	
+L162	SAME	fast-export --progress=x main	
+L163	SAME	fast-export --show-original-ids main~2	
+L164	SAME	fast-export --mark-tags v1	
+L165	SAME	fast-export --mark-tags --show-original-ids --all --no-data	
+L166	SAME	fast-export --reference-excluded-parents main~1..main	
+L167	SAME	fast-export --no-reference-excluded-parents main~1..main	
+L168	SAME	fast-export --fake-missing-tagger v1	
+L169	SAME	fast-export --no-fake-missing-tagger v1	
+L170	SAME	fast-export --refspec refs/heads/main:refs/heads/other main~1..main	
+L171	SAME	fast-export --refspec=refs/tags/*:refs/tags/x-* --all --no-data	
+L172	SAME	fast-export --no-refspec t0	
+L173	SAME	fast-export --refspec bad t0	
+L174	SAME	fast-export --anonymize main~2	
+L175	SAME	fast-export --anonymize --all	
+L176	SAME	fast-export --anonymize --anonymize-map=main:trunk --anonymize-map=README.md main	
+L177	SAME	fast-export --anonymize --no-anonymize t0	
+L178	SAME	fast-export --anonymize-map=x main	
+L179	SAME	fast-export --anonymize --reference-excluded-parents main~1..main	
+L180	SAME	fast-export --signed-tags=strip --tag-of-filtered-object=drop --all	
+L181	SAME	fast-export --signed-tags=verbatim t0	
+L182	SAME	fast-export --signed-tags=warn v1	
+L183	SAME	fast-export --signed-tags=warn-strip v1	
+L184	SAME	fast-export --no-signed-tags v1	
+L185	SAME	fast-export --signed-tags=bogus t0	
+L186	SAME	fast-export --tag-of-filtered-object=drop main~1..main v1	
+L187	SAME	fast-export --tag-of-filtered-object=rewrite main~1..main v1	
+L188	SAME	fast-export --tag-of-filtered-object=rewrite v1 -- docs	
+L189	SAME	fast-export --tag-of-filtered-object=abort main~1..main v1	
+L190	SAME	fast-export --no-tag-of-filtered-object v1	
+L191	SAME	fast-export --tag-of-filtered-object=bogus main	
+L192	SAME	fast-export --reencode=yes t0	
+L193	SAME	fast-export --reencode=no t0	
+L194	SAME	fast-export --no-reencode t0	
+L195	SAME	fast-export --reencode=bogus main	
+L196	SAME	fast-export --export-marks=.git/m main~2	
+L197	SAME	fast-export --import-marks-if-exists=.git/nosuch t0	
+L198	SAME	fast-export --import-marks=.git/nosuch t0	
+L199	SAME	fast-export --import-marks .git/info/exclude t0	
+L200	SAME	fast-export --no-import-marks --no-export-marks --no-import-marks-if-exists t0	
+L201	SAME	rerere	
+L202	SAME	rerere status	
+L203	SAME	rerere remaining	
+L204	SAME	rerere diff	
+L205	SAME	rerere clear	
+L206	SAME	rerere gc	
+L207	SAME	rerere forget src/a.txt	
+L208	SAME	rerere bogus	
+L209	SAME	rerere --rerere-autoupdate	
+L210	SAME	rerere --no-rerere-autoupdate status	
+L211	SAME	rerere -h	
+L212	SAME	-C .git/stratc rerere status	
+L213	SAME	-C .git/stratc rerere remaining	
+L214	SAME	-C .git/stratc -c rerere.enabled=true rerere	
+L215	SAME	-C .git/stratc -c rerere.enabled=true rerere status	
+L216	SAME	-C .git/stratc -c rerere.enabled=true rerere remaining	
+L217	SAME	-C .git/stratc -c rerere.enabled=true rerere diff	
+L218	SAME	-C .git/stratc -c rerere.enabled=true rerere --rerere-autoupdate	
+L219	SAME	-C .git/stratc -c rerere.enabled=true rerere forget a.txt	
+L220	SAME	-C .git/stratc -c rerere.enabled=true rerere forget	
+L221	SAME	-C .git/stratc -c rerere.enabled=true rerere forget nosuch	
+L222	SAME	-C .git/stratc -c rerere.enabled=true rerere clear	
+L223	SAME	-C .git/stratc -c rerere.enabled=true rerere gc	
+L224	SAME	-C .git/stratc -c rerere.enabled=true rerere status extra	
+L225	SAME	-C .git/side -c rerere.enabled=true merge clash	
+L226	SAME	-C .git/side -c rerere.enabled=true -c rerere.autoUpdate=true merge clash	
+L227	SAME	pack-objects	
+L228	SAME	pack-objects --stdout	
+L229	SAME	pack-objects .git/x	
+L230	SAME	pack-objects -q .git/x	
+L231	SAME	pack-objects --non-empty .git/x	
+L232	SAME	pack-objects --non-empty --stdout	
+L233	SAME	pack-objects --no-non-empty --stdout	
+L234	SAME	pack-objects a b	
+L235	SAME	pack-objects --stdout x	
+L236	SAME	pack-objects --revs --non-empty .git/x	
+L237	SAME	pack-objects --revs --stdout	
+L238	SAME	pack-objects --no-revs --stdout	
+L239	SAME	pack-objects --non-empty --window=5 --depth=10 --window-memory=1m --threads=2 .git/x	
+L240	SAME	pack-objects --non-empty --no-window --no-depth --no-threads .git/x	
+L241	SAME	pack-objects --non-empty --window=x .git/x	
+L242	SAME	pack-objects --non-empty --depth=y .git/x	
+L243	SAME	pack-objects --non-empty --compression=0 .git/x	
+L244	SAME	pack-objects --non-empty --compression=9 --no-compression .git/x	
+L245	SAME	pack-objects --non-empty --compression=10 .git/x	
+L246	SAME	pack-objects --non-empty --max-pack-size=2m .git/x	
+L247	SAME	pack-objects --non-empty --max-pack-size=1k .git/x	
+L248	SAME	pack-objects --non-empty --max-pack-size=bogus .git/x	
+L249	SAME	pack-objects --non-empty --index-version=1 .git/x	
+L250	SAME	pack-objects --non-empty --index-version=2,0x40000000 .git/x	
+L251	SAME	pack-objects --non-empty --index-version=3 .git/x	
+L252	SAME	pack-objects --index-version=1 .git/x	
+L253	SAME	pack-objects --non-empty --delta-base-offset --no-delta-base-offset .git/x	
+L254	SAME	pack-objects --non-empty --reuse-delta --no-reuse-delta --reuse-object --no-reuse-object .git/x	
+L255	SAME	pack-objects --non-empty --local --no-local --incremental --no-incremental .git/x	
+L256	SAME	pack-objects --non-empty --progress --no-progress --all-progress --all-progress-implied -q --no-quiet --quiet .git/x	
+L257	SAME	pack-objects --non-empty --revs --unpacked .git/x	
+L258	SAME	pack-objects --non-empty --revs --include-tag --no-include-tag .git/x	
+L259	SAME	pack-objects --non-empty --revs --keep-unreachable --no-keep-unreachable .git/x	
+L260	SAME	pack-objects --non-empty --revs --pack-loose-unreachable --no-pack-loose-unreachable .git/x	
+L261	SAME	pack-objects --non-empty --revs --no-unpack-unreachable .git/x	
+L262	SAME	pack-objects --non-empty --sparse --no-sparse --thin --no-thin --shallow --no-shallow .git/x	
+L263	SAME	pack-objects --non-empty --honor-pack-keep --no-honor-pack-keep .git/x	
+L264	SAME	pack-objects --non-empty --keep-pack=nosuch.pack --no-keep-pack .git/x	
+L265	SAME	pack-objects --non-empty --keep-true-parents --no-keep-true-parents .git/x	
+L266	SAME	pack-objects --non-empty --use-bitmap-index --no-use-bitmap-index .git/x	
+L267	SAME	pack-objects --non-empty --write-bitmap-index --no-write-bitmap-index .git/x	
+L268	DIFF	pack-objects --non-empty --revs --filter=blob:none .git/x	exit 0!=128
+L269	SAME	pack-objects --non-empty --revs --filter=blob:limit=1k --no-filter .git/x	
+L270	DIFF	pack-objects --non-empty --revs --filter=tree:0 .git/x	exit 0!=128
+L271	SAME	pack-objects --non-empty --revs --filter=bogus .git/x	
+L272	SAME	pack-objects --non-empty --missing=allow-any .git/x	
+L273	SAME	pack-objects --non-empty --missing=allow-promisor .git/x	
+L274	SAME	pack-objects --non-empty --missing=error .git/x	
+L275	SAME	pack-objects --non-empty --missing=bogus .git/x	
+L276	SAME	pack-objects --non-empty --exclude-promisor-objects --no-exclude-promisor-objects .git/x	
+L277	SAME	pack-objects --non-empty --delta-islands --no-delta-islands .git/x	
+L278	SAME	pack-objects --non-empty --uri-protocol=https --no-uri-protocol .git/x	
+L279	SAME	pack-objects --non-empty --stdin-packs .git/x	
+L280	SAME	pack-objects --non-empty --no-stdin-packs .git/x	
+L281	SAME	pack-objects --stdin-packs --revs .git/x	
+L282	SAME	pack-objects --stdin-packs --all .git/x	
+L283	SAME	pack-objects --cruft --revs .git/x	
+L284	SAME	pack-objects --cruft-expiration=now --all .git/x	
+L285	SAME	pack-objects --cruft --stdin-packs .git/x	
+L286	SAME	pack-objects --stdout --no-stdout .git/x	
+L287	SAME	pack-objects --bogus .git/x	
+L288	SAME	pack-objects --all-progress-implied --stdout	
+L289	SAME	commit-graph	
+L290	SAME	commit-graph verify	
+L291	SAME	commit-graph verify --shallow --progress --no-progress	
+L292	SAME	commit-graph verify --object-dir .git/objects	
+L293	SAME	commit-graph verify extra	
+L294	SAME	commit-graph write	
+L295	SAME	commit-graph write --reachable	
+L296	SAME	commit-graph write --reachable --changed-paths	
+L297	SAME	commit-graph write --reachable --no-changed-paths --max-new-filters=1 --no-max-new-filters	
+L298	SAME	commit-graph write --stdin-commits	
+L299	SAME	commit-graph write --stdin-packs	
+L300	SAME	commit-graph write --append --reachable	
+L301	SAME	commit-graph write --split --reachable	
+L302	SAME	commit-graph write --split=no-merge --reachable	
+L303	SAME	commit-graph write --split=replace --reachable	
+L304	SAME	commit-graph write --split --size-multiple=4 --max-commits=2 --expire-time=1 --reachable	
+L305	SAME	commit-graph write --split=bogus --reachable	
+L306	SAME	commit-graph write --reachable --stdin-commits	
+L307	SAME	commit-graph write --object-dir .git/objects --reachable	
+L308	SAME	commit-graph write --object-dir nosuch	
+L309	SAME	commit-graph --object-dir=.git/objects write --reachable	
+L310	SAME	commit-graph --no-object-dir verify	
+L311	SAME	commit-graph write --progress --no-progress --reachable	
+L312	SAME	commit-graph write extra	
+L313	SAME	commit-graph bogus	
+L314	SAME	commit-graph -h	
+L315	SAME	commit-graph write -h	
+L316	SAME	commit-graph verify -h	
+L317	SAME	multi-pack-index	
+L318	SAME	multi-pack-index write	
+L319	SAME	multi-pack-index verify	
+L320	SAME	multi-pack-index expire	
+L321	SAME	multi-pack-index repack	
+L322	SAME	multi-pack-index repack --batch-size=0	
+L323	SAME	multi-pack-index repack --batch-size=1m	
+L324	SAME	multi-pack-index repack --batch-size=x	
+L325	SAME	multi-pack-index write --bitmap	
+L326	SAME	multi-pack-index write --no-bitmap --progress --no-progress	
+L327	SAME	multi-pack-index write --preferred-pack=nosuch.pack	
+L328	SAME	multi-pack-index write --stdin-packs	
+L329	SAME	multi-pack-index write --refs-snapshot=/dev/null --no-refs-snapshot	
+L330	SAME	multi-pack-index --object-dir=.git/objects write	
+L331	SAME	multi-pack-index --object-dir .git/objects verify	
+L332	SAME	multi-pack-index --object-dir=nosuch write	
+L333	SAME	multi-pack-index write extra	
+L334	SAME	multi-pack-index verify extra	
+L335	SAME	multi-pack-index bogus	
+L336	SAME	multi-pack-index -h	
+L337	SAME	multi-pack-index write -h	
+L338	SAME	multi-pack-index verify -h	
+L339	SAME	multi-pack-index expire -h	
+L340	SAME	multi-pack-index repack -h	
+L341	SAME	add -p	
+L342	SAME	add --patch	
+L343	SAME	add -p src	
+L344	SAME	add -p -- src/a.txt	
+L345	SAME	add -p nosuch	
+L346	SAME	add --patch -- docs	
+L347	SAME	reset -p	
+L348	SAME	reset --patch	
+L349	SAME	reset -p HEAD	
+L350	SAME	reset -p HEAD~1	
+L351	SAME	reset -p HEAD~1 -- README.md	
+L352	SAME	reset -p -- src	
+L353	SAME	reset -p t0 src	
+L354	SAME	checkout -p	
+L355	SAME	checkout --patch	
+L356	SAME	checkout -p -- src/a.txt	
+L357	SAME	checkout -p HEAD	
+L358	SAME	checkout -p HEAD -- src	
+L359	SAME	checkout -p HEAD~1	
+L360	SAME	checkout -p HEAD~1 -- src	
+L361	SAME	checkout -p t0 -- README.md	
+L362	SAME	restore -p	
+L363	SAME	restore --patch src	
+L364	SAME	restore -p --staged	
+L365	SAME	restore -p --staged src/new.txt	
+L366	SAME	restore -p --source=HEAD~1 src/a.txt	
+L367	SAME	restore -p --source=HEAD src	
+L368	SAME	restore -p --staged --worktree	
+L369	SAME	restore -p --source=t0 --staged --worktree README.md	
+L370	SAME	restore -p --worktree --source=HEAD~1 README.md	
+L371	SAME	stash push -p	
+L372	SAME	stash -p	
+L373	SAME	stash push --patch -m msg	
+L374	SAME	stash push -p -- src/a.txt	
+L375	SAME	stash push -p -- docs	
+L376	SAME	stash save -p	
+L377	SAME	commit -p -m x	
+L378	SAME	commit --patch -m x -- src/a.txt	

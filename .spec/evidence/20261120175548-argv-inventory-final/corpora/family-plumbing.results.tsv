@@ -1,0 +1,511 @@
+L001	SAME	config core.bare	
+L002	SAME	config --local core.bare	
+L003	SAME	config --no-local --local core.bare	
+L004	SAME	config --global --no-global core.bare	
+L005	SAME	config --worktree core.bare	
+L006	SAME	config -f .git/config core.bare	
+L007	SAME	config --file=.git/config --list	
+L008	SAME	config --file .git/config --get user.name	
+L009	SAME	config --file nosuch.cfg --get a.b	
+L010	SAME	config --blob HEAD:docs/x.md --list	
+L011	SAME	config --system --no-system --get user.email	
+L012	SAME	config --local --global core.bare	
+L013	SAME	config --get core.bare	
+L014	SAME	config --get-all user.name	
+L015	SAME	config --get-regexp '^user\.'	
+L016	SAME	config --get-regexp 'CORE\.B'	
+L017	SAME	config --get-regexp core 'tru'	
+L018	SAME	config -l	
+L019	SAME	config --list --name-only	
+L020	SAME	config --list --show-origin	
+L021	SAME	config --list --show-scope	
+L022	SAME	config --list --show-origin --show-scope -z	
+L023	SAME	config -z --get-regexp '^core\.'	
+L024	SAME	config --null --get user.email	
+L025	SAME	config --name-only --get-regexp '^user'	
+L026	SAME	config --show-origin --get core.bare	
+L027	SAME	config --show-scope --get-all user.name	
+L028	SAME	config --includes -l	
+L029	SAME	config --no-includes -l	
+L030	SAME	config --get nosuch.key	
+L031	SAME	config --default fallback --get nosuch.key	
+L032	SAME	config --default=7 --int --get nosuch.key	
+L033	SAME	config --get core.filemode 'tr.e'	
+L034	SAME	config --get core.filemode '!false'	
+L035	SAME	config --fixed-value --get core.filemode true	
+L036	SAME	config --no-get --get core.bare	
+L037	SAME	config --bool --get core.filemode	
+L038	SAME	config --int --get core.repositoryformatversion	
+L039	SAME	config --bool-or-int --get core.repositoryformatversion	
+L040	SAME	config --bool-or-str --get user.name	
+L041	SAME	config --path --get user.name	
+L042	SAME	config --type=bool --get core.bare	
+L043	SAME	config -t int --get core.repositoryformatversion	
+L044	SAME	config --type bool --no-type --get core.bare	
+L045	SAME	config --bool --get user.name	
+L046	SAME	config --int --get user.name	
+L047	SAME	config --type=bogus --get core.bare	
+L048	SAME	config --type=color --get nosuch.color	
+L049	SAME	config --get-color color.diff.new red	
+L050	SAME	config --get-color color.nosuch 'bold blue ul'	
+L051	SAME	config --get-color color.nosuch '#ff0000 black'	
+L052	SAME	config --get-colorbool color.ui true	
+L053	SAME	config --get-colorbool color.ui false	
+L054	SAME	config --get-colorbool color.ui	
+L055	SAME	config --get-urlmatch http.sslverify https://example.com/repo.git	
+L056	SAME	config --get-urlmatch http https://example.com	
+L057	SAME	config --get-urlmatch http not-a-url	
+L058	SAME	config a.b c	
+L059	SAME	config --add user.name Second	
+L060	SAME	config --replace-all user.name Only	
+L061	SAME	config --replace-all user.name Only 'C O'	
+L062	SAME	config --unset user.email	
+L063	SAME	config --unset nosuch.key	
+L064	SAME	config --unset-all user.name	
+L065	SAME	config --unset-all nosuch.key	
+L066	SAME	config --rename-section user person	
+L067	SAME	config --rename-section nosuch other	
+L068	SAME	config --rename-section user 'bad name'	
+L069	SAME	config --remove-section commit	
+L070	SAME	config --remove-section nosuch	
+L071	SAME	config --bool x.y yes	
+L072	SAME	config --int x.y 1k	
+L073	SAME	config --int x.y bogus	
+L074	SAME	config --type=color x.c 'bold red'	
+L075	SAME	config --type=color x.c bogus	
+L076	SAME	config --expiry-date x.e 2.weeks.ago	
+L077	SAME	config --fixed-value user.name X 'C O Mitter'	
+L078	SAME	config --blob HEAD:README.md a.b c	
+L079	SAME	config -e	
+L080	SAME	config --edit	
+L081	SAME	config	
+L082	SAME	config core	
+L083	SAME	config .a b	
+L084	SAME	config a. b	
+L085	SAME	config a_b.c d	
+L086	SAME	config a b c d	
+L087	SAME	config --get	
+L088	SAME	config --get-urlmatch http	
+L089	SAME	config --list --get	
+L090	SAME	config --name-only a.b c	
+L091	SAME	config --show-origin a.b c	
+L092	SAME	config --default x a.b c	
+L093	SAME	config --fixed-value a.b c	
+L094	SAME	config --bogus	
+L095	SAME	write-tree	
+L096	SAME	write-tree --missing-ok	
+L097	SAME	write-tree --prefix=src/	
+L098	SAME	write-tree --prefix=src	
+L099	SAME	write-tree --prefix=nosuch/	
+L100	SAME	write-tree --no-prefix --prefix=docs/	
+L101	SAME	commit-tree -m msg HEAD^{tree}	
+L102	SAME	commit-tree -m a -m b -p HEAD HEAD^{tree}	
+L103	SAME	commit-tree -mone -pHEAD -pHEAD~1 HEAD^{tree}	
+L104	SAME	commit-tree -F .git/fixture.patch HEAD^{tree}	
+L105	SAME	commit-tree --no-gpg-sign -m x HEAD^{tree}	
+L106	SAME	commit-tree HEAD^{tree}	
+L107	SAME	commit-tree -m x HEAD	
+L108	SAME	commit-tree -m x	
+L109	SAME	commit-tree -p nosuch -m x HEAD^{tree}	
+L110	SAME	symbolic-ref HEAD	
+L111	SAME	symbolic-ref --short HEAD	
+L112	SAME	symbolic-ref -q HEAD	
+L113	SAME	symbolic-ref --no-recurse HEAD	
+L114	SAME	symbolic-ref --recurse --short HEAD	
+L115	SAME	symbolic-ref refs/heads/main	
+L116	SAME	symbolic-ref -q refs/heads/main	
+L117	SAME	symbolic-ref HEAD refs/heads/feature	
+L118	SAME	symbolic-ref -m reason HEAD refs/heads/feature	
+L119	SAME	symbolic-ref HEAD main	
+L120	SAME	symbolic-ref HEAD refs/heads/bad..name	
+L121	SAME	symbolic-ref -d HEAD	
+L122	SAME	symbolic-ref --delete refs/heads/main	
+L123	SAME	symbolic-ref FOO refs/heads/main	
+L124	SAME	symbolic-ref	
+L125	SAME	show-ref	
+L126	SAME	show-ref --head	
+L127	SAME	show-ref --heads	
+L128	SAME	show-ref --tags -d	
+L129	SAME	show-ref --abbrev	
+L130	SAME	show-ref --abbrev=10 -d v1	
+L131	SAME	show-ref --hash=8 main	
+L132	SAME	show-ref -s --abbrev main	
+L133	SAME	show-ref --hash	
+L134	SAME	show-ref --verify refs/heads/main	
+L135	SAME	show-ref --verify HEAD	
+L136	SAME	show-ref --verify main	
+L137	SAME	show-ref --verify -q refs/heads/nope	
+L138	DIFF	show-ref --exists refs/heads/main	exit 0!=129
+L139	DIFF	show-ref --exists refs/heads/nope	exit 2!=129
+L140	SAME	show-ref --head HEAD	
+L141	SAME	show-ref --exclude-existing	
+L142	SAME	show-ref --exclude-existing=refs/heads/	
+L143	SAME	show-ref --no-heads --heads	
+L144	SAME	show-ref nope	
+L145	SAME	check-ignore debug.log	
+L146	SAME	check-ignore -v debug.log README.md	
+L147	SAME	check-ignore -v -n debug.log README.md	
+L148	SAME	check-ignore --verbose --non-matching -z --stdin	
+L149	SAME	check-ignore --no-index README.md	
+L150	SAME	check-ignore --index debug.log	
+L151	SAME	check-ignore -q debug.log	
+L152	SAME	check-ignore -q -v debug.log	
+L153	SAME	check-ignore -z debug.log	
+L154	SAME	check-ignore --stdin debug.log	
+L155	SAME	check-ignore	
+L156	SAME	hash-object README.md	
+L157	SAME	hash-object README.md src/a.txt	
+L158	SAME	hash-object -w README.md	
+L159	SAME	hash-object -t blob src/b.txt	
+L160	SAME	hash-object -t tree README.md	
+L161	SAME	hash-object -t foo README.md	
+L162	SAME	hash-object -t foo --literally README.md	
+L163	SAME	hash-object --stdin	
+L164	SAME	hash-object --stdin-paths	
+L165	SAME	hash-object --stdin --stdin-paths	
+L166	SAME	hash-object --path=x.txt README.md	
+L167	SAME	hash-object --no-filters README.md	
+L168	SAME	hash-object --no-filters --path=x README.md	
+L169	SAME	hash-object nosuch	
+L170	SAME	hash-object	
+L171	SAME	update-ref refs/heads/new HEAD	
+L172	SAME	update-ref refs/heads/new2 HEAD 0000000000000000000000000000000000000000	
+L173	SAME	update-ref refs/heads/main HEAD~1 0000000000000000000000000000000000000000	
+L174	SAME	update-ref refs/heads/main HEAD~1 HEAD	
+L175	SAME	update-ref refs/heads/main HEAD~1 HEAD~2	
+L176	SAME	update-ref -d refs/heads/feature	
+L177	SAME	update-ref -d refs/heads/nope	
+L178	SAME	update-ref -d refs/heads/main HEAD~3	
+L179	SAME	update-ref -m msg refs/heads/x HEAD	
+L180	SAME	update-ref --create-reflog refs/tags/tl HEAD	
+L181	SAME	update-ref --no-create-reflog refs/tags/tn HEAD	
+L182	SAME	update-ref --no-deref HEAD HEAD~1	
+L183	SAME	update-ref --deref HEAD HEAD~1	
+L184	SAME	update-ref -m '' refs/heads/y HEAD	
+L185	SAME	update-ref --stdin	
+L186	SAME	update-ref -z --stdin	
+L187	SAME	update-ref -z refs/heads/q HEAD	
+L188	SAME	update-ref	
+L189	SAME	update-ref -d	
+L190	SAME	update-index src/a.txt	
+L191	SAME	update-index untracked.txt	
+L192	SAME	update-index --add untracked.txt	
+L193	SAME	update-index --add --verbose untracked.txt src/a.txt	
+L194	SAME	update-index --remove src/a.txt	
+L195	SAME	update-index --force-remove --verbose src/b.txt	
+L196	SAME	update-index --chmod=+x --verbose docs/x.md	
+L197	SAME	update-index --chmod=-x docs/x.md	
+L198	SAME	update-index --chmod=+y docs/x.md	
+L199	SAME	update-index --assume-unchanged docs/x.md	
+L200	SAME	update-index --no-assume-unchanged docs/x.md	
+L201	SAME	update-index --skip-worktree src/b.txt	
+L202	SAME	update-index --no-skip-worktree src/b.txt	
+L203	SAME	update-index --info-only --add debug.log	
+L204	DIFF	update-index --show-index-version	exit 0!=129; stdout
+L205	SAME	update-index --index-version 4	
+L206	SAME	update-index --index-version 3	
+L207	SAME	update-index --index-version 9	
+L208	SAME	update-index --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,zero	
+L209	SAME	update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,zero	
+L210	SAME	update-index --add --cacheinfo 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 zero	
+L211	SAME	update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,src	
+L212	SAME	update-index --refresh	
+L213	SAME	update-index -q --refresh	
+L214	SAME	update-index --really-refresh	
+L215	SAME	update-index --refresh --unmerged --ignore-missing --ignore-submodules	
+L216	SAME	update-index --again	
+L217	SAME	update-index -g src	
+L218	SAME	update-index --again --verbose	
+L219	SAME	update-index --unresolve src/a.txt	
+L220	SAME	update-index --untracked-cache	
+L221	SAME	update-index --no-untracked-cache	
+L222	SAME	update-index --split-index	
+L223	SAME	update-index --no-split-index	
+L224	SAME	update-index --no-fsmonitor	
+L225	SAME	update-index --fsmonitor-valid src/a.txt	
+L226	SAME	update-index --no-fsmonitor-valid src/a.txt	
+L227	SAME	update-index --clear-resolve-undo	
+L228	SAME	update-index --force-write-index	
+L229	SAME	update-index --no-force-write-index	
+L230	SAME	update-index --replace --add src	
+L231	SAME	update-index --stdin	
+L232	SAME	update-index -z --stdin	
+L233	SAME	update-index --index-info	
+L234	SAME	update-index --stdin src/a.txt	
+L235	SAME	update-index --ignore-skip-worktree-entries --remove src/a.txt	
+L236	SAME	update-index --bogus	
+L237	SAME	read-tree HEAD	
+L238	SAME	read-tree HEAD~1	
+L239	SAME	read-tree --empty	
+L240	SAME	read-tree	
+L241	SAME	read-tree --empty HEAD	
+L242	SAME	read-tree -u HEAD	
+L243	SAME	read-tree -i HEAD	
+L244	SAME	read-tree -m -u -i HEAD	
+L245	SAME	read-tree -m HEAD	
+L246	SAME	read-tree -m -i HEAD	
+L247	SAME	read-tree --reset HEAD	
+L248	SAME	read-tree --reset -u HEAD	
+L249	SAME	read-tree -m -u HEAD~1	
+L250	SAME	read-tree -m HEAD feature	
+L251	SAME	read-tree -m -i HEAD feature	
+L252	SAME	read-tree -m -i t0 main feature	
+L253	SAME	read-tree -m -i --aggressive t0 main feature	
+L254	SAME	read-tree -m -i --trivial t0 main feature	
+L255	SAME	read-tree -n HEAD~1	
+L256	SAME	read-tree --dry-run -m -i HEAD~1	
+L257	SAME	read-tree --prefix=sub/ HEAD~1	
+L258	SAME	read-tree --prefix=src/ HEAD	
+L259	SAME	read-tree --index-output=.git/alt-index HEAD~1	
+L260	SAME	read-tree -q -v --no-sparse-checkout --sparse-checkout --exclude-per-directory=.gitignore --debug-unpack --no-debug-unpack --reset HEAD	
+L261	SAME	read-tree --recurse-submodules --reset HEAD	
+L262	SAME	read-tree -m --reset HEAD	
+L263	SAME	read-tree nosuch	
+L264	SAME	checkout-index src/a.txt	
+L265	SAME	checkout-index -f src/a.txt	
+L266	SAME	checkout-index README.md	
+L267	SAME	checkout-index -a	
+L268	SAME	checkout-index -a -f	
+L269	SAME	checkout-index -f -a -q	
+L270	SAME	checkout-index -u -f src/a.txt	
+L271	SAME	checkout-index -n -f -a	
+L272	SAME	checkout-index --no-create --create -f src/a.txt	
+L273	SAME	checkout-index nosuch	
+L274	SAME	checkout-index -q nosuch	
+L275	SAME	checkout-index --stage=2 src/b.txt	
+L276	SAME	checkout-index --stage=all -f src/b.txt	
+L277	SAME	checkout-index --stage=5 src/b.txt	
+L278	SAME	checkout-index -a src/b.txt	
+L279	SAME	checkout-index --stdin src/b.txt	
+L280	SAME	checkout-index --stdin	
+L281	SAME	checkout-index -z --stdin	
+L282	SAME	checkout-index --prefix=out/ src/b.txt	
+L283	SAME	checkout-index --prefix=out/ -a	
+L284	SAME	checkout-index --prefix=pre- README.md	
+L285	SAME	checkout-index --ignore-skip-worktree-bits -f -a	
+L286	SAME	checkout-index	
+L287	SAME	prune -n	
+L288	SAME	prune --dry-run --verbose	
+L289	SAME	prune -nv	
+L290	SAME	prune -n --expire=1.day.ago	
+L291	SAME	prune -n --expire 1.day.ago	
+L292	SAME	prune -n --no-expire	
+L293	SAME	prune -n --progress --no-progress --exclude-promisor-objects	
+L294	SAME	prune -n HEAD	
+L295	SAME	prune -n -- main	
+L296	SAME	prune	
+L297	SAME	prune --expire=1.day.ago	
+L298	SAME	prune -v	
+L299	SAME	prune --bogus	
+L300	SAME	prune-packed -n	
+L301	SAME	prune-packed --dry-run -q	
+L302	SAME	prune-packed -nq	
+L303	SAME	prune-packed	
+L304	SAME	prune-packed --quiet	
+L305	SAME	prune-packed --no-quiet --no-dry-run	
+L306	SAME	prune-packed nosuch	
+L307	SAME	verify-pack .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx	
+L308	SAME	verify-pack -v .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx	
+L309	SAME	verify-pack --verbose --stat-only .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx	
+L310	SAME	verify-pack -s .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx	
+L311	SAME	verify-pack -s --object-format=sha1 .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.pack	
+L312	SAME	verify-pack nosuch.idx	
+L313	SAME	verify-pack	
+L314	SAME	show-index	
+L315	SAME	show-index --object-format=sha1	
+L316	SAME	show-index --object-format=sha256	
+L317	SAME	unpack-objects -n	
+L318	SAME	unpack-objects	
+L319	SAME	unpack-objects -q -r --strict --max-input-size=10	
+L320	SAME	unpack-objects --bogus	
+L321	SAME	check-ref-format refs/heads/main	
+L322	SAME	check-ref-format main	
+L323	SAME	check-ref-format --allow-onelevel main	
+L324	SAME	check-ref-format --no-allow-onelevel main	
+L325	SAME	check-ref-format --normalize refs//heads/x/	
+L326	SAME	check-ref-format --normalize //refs//heads/x	
+L327	SAME	check-ref-format --print refs/heads//x	
+L328	SAME	check-ref-format 'refs/heads/a..b'	
+L329	SAME	check-ref-format 'refs/heads/*'	
+L330	SAME	check-ref-format --refspec-pattern 'refs/heads/*'	
+L331	SAME	check-ref-format --refspec-pattern 'refs/*/*'	
+L332	SAME	check-ref-format 'refs/heads/x.lock'	
+L333	SAME	check-ref-format --branch main	
+L334	SAME	check-ref-format --branch @{-1}	
+L335	SAME	check-ref-format --branch -x	
+L336	SAME	check-ref-format --branch 'a b'	
+L337	SAME	check-ref-format	
+L338	SAME	check-ref-format --bogus x	
+L339	SAME	stripspace	
+L340	SAME	stripspace -s	
+L341	SAME	stripspace --strip-comments	
+L342	SAME	stripspace -c	
+L343	SAME	stripspace --comment-lines	
+L344	SAME	stripspace --bogus	
+L345	SAME	column	
+L346	SAME	column --mode=column --width=40	
+L347	SAME	column --mode=row,dense --padding=2 --indent='> ' --nl='|'	
+L348	SAME	column --raw-mode=1 --command=x	
+L349	SAME	column --mode=nonsense	
+L350	SAME	var -l	
+L351	SAME	var GIT_AUTHOR_IDENT	
+L352	SAME	var GIT_COMMITTER_IDENT	
+L353	SAME	var GIT_EDITOR	
+L354	DIFF	var GIT_SEQUENCE_EDITOR	exit 0!=129; stdout
+L355	SAME	var GIT_PAGER	
+L356	SAME	var GIT_DEFAULT_BRANCH	
+L357	DIFF	var GIT_SHELL_PATH	exit 0!=129; stdout
+L358	SAME	var NOSUCH	
+L359	SAME	var	
+L360	SAME	check-attr -a src/data.bin src/a.txt	
+L361	SAME	check-attr --all -- README.md	
+L362	SAME	check-attr binary label -- src/data.bin src/a.txt	
+L363	SAME	check-attr label src/a.txt	
+L364	SAME	check-attr --cached -a src/a.txt	
+L365	DIFF	check-attr --source HEAD -a src/a.txt	exit 0!=129; stdout
+L366	DIFF	check-attr --source=HEAD~1 label src/b.txt	exit 0!=129; stdout
+L367	SAME	check-attr --stdin -a	
+L368	SAME	check-attr -z --stdin label	
+L369	SAME	check-attr	
+L370	SAME	check-attr label	
+L371	SAME	check-mailmap 'A U Thor <author@example.com>'	
+L372	SAME	check-mailmap '<author@example.com>'	
+L373	SAME	check-mailmap --stdin	
+L374	SAME	check-mailmap nobody	
+L375	SAME	check-mailmap	
+L376	SAME	mktag	
+L377	SAME	mktag --strict	
+L378	SAME	mktag --no-strict	
+L379	SAME	mktag x	
+L380	SAME	mktree	
+L381	SAME	mktree -z	
+L382	SAME	mktree --missing --no-missing	
+L383	SAME	mktree --batch	
+L384	SAME	mktree --no-batch -z	
+L385	SAME	mktree x	
+L386	SAME	mktree --bogus	
+L387	SAME	unpack-file nosuch	
+L388	SAME	unpack-file HEAD	
+L389	SAME	unpack-file	
+L390	SAME	get-tar-commit-id	
+L391	SAME	get-tar-commit-id x	
+L392	SAME	bugreport -o out -s x	
+L393	SAME	bugreport --output-directory=out --suffix=x	
+L394	SAME	bugreport -o out -s x --no-diagnose	
+L395	SAME	bugreport --bogus	
+L396	SAME	diagnose --mode=bogus	
+L397	SAME	hook run --ignore-missing pre-commit	
+L398	SAME	hook run pre-commit	
+L399	DIFF	hook run --to-stdin=README.md --ignore-missing x -- a b	exit 0!=129
+L400	SAME	hook run	
+L401	SAME	hook bogus	
+L402	SAME	hook	
+L403	SAME	for-each-repo --config=maintenance.repo status	
+L404	SAME	for-each-repo --config maintenance.repo -- log -1	
+L405	SAME	for-each-repo	
+L406	SAME	credential-store --file=cs.txt erase	
+L407	SAME	credential-store --file cs.txt get	
+L408	SAME	credential-store get	
+L409	SAME	credential-store bogus	
+L410	SAME	credential-store	
+L411	SAME	fmt-merge-msg	
+L412	SAME	fmt-merge-msg --log	
+L413	SAME	fmt-merge-msg --log=3 --into-name=topic	
+L414	SAME	fmt-merge-msg -m hi	
+L415	SAME	fmt-merge-msg --message=hi --no-log	
+L416	SAME	fmt-merge-msg --summary --no-summary	
+L417	SAME	fmt-merge-msg -F .git/fixture.patch	
+L418	SAME	fmt-merge-msg --file=nosuch	
+L419	SAME	fmt-merge-msg --bogus	
+L420	SAME	fsck	
+L421	SAME	fsck --unreachable	
+L422	SAME	fsck --no-dangling	
+L423	SAME	fsck --dangling --tags	
+L424	SAME	fsck --root	
+L425	SAME	fsck --root --connectivity-only	
+L426	SAME	fsck --cache	
+L427	SAME	fsck --no-reflogs	
+L428	DIFF	fsck --unreachable --no-reflogs	stdout
+L429	SAME	fsck --name-objects --no-name-objects	
+L430	SAME	fsck --full --no-full --strict --no-strict --progress --no-progress	
+L431	SAME	fsck -v	
+L432	SAME	fsck --lost-found	
+L433	SAME	fsck HEAD	
+L434	SAME	fsck HEAD~2	
+L435	SAME	fsck --cache HEAD	
+L436	SAME	fsck nosuch	
+L437	SAME	fsck --bogus	
+L438	SAME	count-objects	
+L439	SAME	count-objects -v	
+L440	SAME	count-objects --verbose --human-readable	
+L441	SAME	count-objects -vH	
+L442	SAME	count-objects -H	
+L443	SAME	count-objects --no-verbose --no-human-readable	
+L444	SAME	count-objects x	
+L445	SAME	pack-refs	
+L446	SAME	pack-refs --all	
+L447	SAME	pack-refs --no-prune	
+L448	SAME	pack-refs --prune --all	
+L449	DIFF	pack-refs --include 'refs/heads/*'	exit 0!=129
+L450	DIFF	pack-refs --include='refs/heads/*' --exclude 'refs/heads/f*'	exit 0!=129
+L451	DIFF	pack-refs --exclude='refs/tags/t*'	exit 0!=129
+L452	DIFF	pack-refs --all --exclude 'refs/heads/*'	exit 0!=129
+L453	DIFF	pack-refs --include 'refs/heads/*' --no-include	exit 0!=129
+L454	SAME	pack-refs --all --no-all	
+L455	DIFF	pack-refs --no-exclude --all	exit 0!=129
+L456	SAME	pack-refs x	
+L457	SAME	merge-file -p src/a.txt README.md src/b.txt	
+L458	SAME	merge-file src/a.txt README.md src/b.txt	
+L459	SAME	merge-file --stdout --diff3 src/a.txt README.md src/b.txt	
+L460	SAME	merge-file -p --zdiff3 src/a.txt README.md src/b.txt	
+L461	SAME	merge-file -p --no-diff3 --diff3 --no-zdiff3 src/a.txt README.md src/b.txt	
+L462	SAME	merge-file -p --ours src/a.txt README.md src/b.txt	
+L463	SAME	merge-file -p --theirs src/a.txt README.md src/b.txt	
+L464	SAME	merge-file -p --union src/a.txt README.md src/b.txt	
+L465	SAME	merge-file -p --union --no-union src/a.txt README.md src/b.txt	
+L466	SAME	merge-file -p --marker-size=3 -L x -L y -L z src/a.txt README.md src/b.txt	
+L467	SAME	merge-file -p --marker-size 10 -Lx src/a.txt README.md src/b.txt	
+L468	SAME	merge-file -q -p src/a.txt README.md src/b.txt	
+L469	SAME	merge-file --no-quiet --no-stdout -p src/a.txt src/a.txt src/a.txt	
+L470	DIFF	merge-file -p --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt	exit 0!=129; stdout
+L471	DIFF	merge-file --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt	exit 0!=129; stdout
+L472	DIFF	merge-file --object-id --no-object-id -p src/a.txt README.md src/b.txt	exit 1!=129; stdout
+L473	SAME	merge-file -L a -L b -L c -L d src/a.txt README.md src/b.txt	
+L474	SAME	merge-file src/a.txt README.md	
+L475	SAME	merge-file nosuch README.md src/b.txt	
+L476	SAME	merge-file --marker-size=x src/a.txt README.md src/b.txt	
+L477	SAME	repack	
+L478	SAME	repack -q	
+L479	SAME	repack -a -d	
+L480	SAME	repack -A -d -q	
+L481	SAME	repack -ad -k	
+L482	SAME	repack -adq --window=10 --depth=5 --threads=1 --window-memory=1m -f -F -n -l	
+L483	SAME	repack -ad -b --no-write-bitmap-index -m --no-write-midx -i --no-delta-islands	
+L484	SAME	repack -ad --pack-kept-objects --keep-pack=none.pack --no-keep-pack	
+L485	DIFF	repack -d --cruft --cruft-expiration=2.weeks.ago --max-cruft-size=1m	exit 0!=129
+L486	SAME	repack -ad --unpack-unreachable=now --max-pack-size=1g -g 2 --no-geometric	
+L487	SAME	repack x	
+L488	SAME	repack --bogus	
+L489	SAME	gc	
+L490	SAME	gc -q	
+L491	SAME	gc --prune=now	
+L492	SAME	gc --prune=1.day.ago	
+L493	SAME	gc --no-prune --aggressive	
+L494	SAME	gc --auto	
+L495	SAME	gc --force --keep-largest-pack --no-cruft	
+L496	DIFF	gc --cruft --max-cruft-size=1m --no-quiet	exit 0!=129
+L497	SAME	gc --prune=bogusdate	
+L498	SAME	gc x	
+L499	SAME	verify-commit HEAD	
+L500	SAME	verify-commit -v --raw HEAD	
+L501	SAME	verify-commit --no-verbose --no-raw HEAD HEAD~1	
+L502	SAME	verify-commit	
+L503	SAME	verify-commit nosuch	
+L504	SAME	verify-commit v1	
+L505	SAME	verify-tag v1	
+L506	SAME	verify-tag -v v1	
+L507	SAME	verify-tag '--format=%(refname)' v1	
+L508	SAME	verify-tag --raw --no-raw --no-format v1	
+L509	SAME	verify-tag HEAD	
+L510	SAME	verify-tag	
+L511	SAME	verify-tag nosuch	
