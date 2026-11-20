@@ -530,3 +530,17 @@ gc --force --keep-largest-pack --no-cruft
 gc --cruft --max-cruft-size=1m --no-quiet
 gc --prune=bogusdate
 gc x
+# --- verify-commit / verify-tag (fixture objects are unsigned) ---
+verify-commit HEAD
+verify-commit -v --raw HEAD
+verify-commit --no-verbose --no-raw HEAD HEAD~1
+verify-commit
+verify-commit nosuch
+verify-commit v1
+verify-tag v1
+verify-tag -v v1
+verify-tag --format=%(refname) v1
+verify-tag --raw --no-raw --no-format v1
+verify-tag HEAD
+verify-tag
+verify-tag nosuch
