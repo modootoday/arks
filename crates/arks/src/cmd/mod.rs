@@ -1,6 +1,7 @@
 //! CLI command modules grouped by domain context (not wave letters).
 //! Composition root: `main.rs` dispatches here; pure format/graph helpers live in library crates.
 
+pub mod add_patch;
 pub mod am;
 pub mod apply;
 pub mod archive;
