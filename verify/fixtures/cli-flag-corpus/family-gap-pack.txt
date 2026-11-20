@@ -1,0 +1,74 @@
+# Packing / export / replace / merge-tree / interactive patch gap corpus
+# (argv symmetry ladder rung A2, gap group "pack").
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md.
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null; see agent-tier-b.txt for fixture extras.
+#
+# --- replace: create / force / type checks ---
+replace HEAD HEAD~1
+replace -f HEAD HEAD~1
+replace --force HEAD t0
+replace --no-force HEAD t0
+replace HEAD t0 -f
+replace HEAD HEAD:README.md
+replace -f HEAD HEAD:README.md
+replace HEAD v1
+replace v1 HEAD
+replace HEAD 't0^{tree}'
+replace HEAD nosuch
+replace nosuch HEAD
+replace a
+replace a b c
+# --- replace: graft ---
+replace -g HEAD
+replace --graft HEAD t0
+replace -g HEAD t0 t0
+replace -g -f HEAD t0 v1
+replace -fg HEAD t0
+replace -g v1
+replace -g HEAD HEAD~1
+replace -g HEAD~1 HEAD~1^1 HEAD~1^2
+replace -g HEAD:README.md
+replace -g HEAD HEAD:README.md
+replace -g HEAD nosuch
+replace -g nosuch
+replace -g
+# --- replace: edit (GIT_EDITOR=true leaves the object unchanged) ---
+replace -e HEAD
+replace --edit HEAD -f
+replace --raw -e HEAD:README.md
+replace -e 'HEAD^{tree}'
+replace --raw --edit 'HEAD^{tree}'
+replace -e v1
+replace -e nosuch
+replace -e
+replace -e HEAD HEAD
+# --- replace: delete / list / format ---
+replace -d HEAD
+replace -d
+replace --delete nosuch
+replace -d t0 nosuch HEAD
+replace
+replace -l
+replace --list '0*'
+replace -l x y
+replace --format=short
+replace --format=medium -l
+replace --format long
+replace --no-format -l
+replace --format=bad
+replace --format=long -d HEAD
+replace --format=long -g HEAD
+replace --list=x
+# --- replace: option checks and cmdmode conflicts ---
+replace --raw HEAD t0
+replace --raw -l
+replace -f
+replace -f -d HEAD~1
+replace -d -l
+replace -l -d
+replace -e -g HEAD
+replace -lg
+replace --convert-graft-file
+replace --convert-graft-file x
+replace --bogus
