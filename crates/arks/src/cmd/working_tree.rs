@@ -1,11 +1,9 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
 use crate::cmd::branch::restore_paths_mode;
-use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev, tree_blob_map};
+use crate::cmd::shared::{head_blob_map, resolve_rev, tree_blob_map};
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
-};
+use crate::util::{open_repo, read_index, rel_path_from_worktree, work_tree, write_index};
 use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
@@ -535,28 +533,30 @@ fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
 }
 
 pub fn cmd_rm(args: &[String]) -> CliResult<()> {
-    // git-rm: `--cached`, `-r`, `-f`, `-q`, `-n`, directory pathspecs, the
+    // git-rm: every option of `git rm -h`, directory pathspecs, the
     // up-to-date safety checks, and `rm '<path>'` output per removed entry.
     // Cite: https://git-scm.com/docs/git-rm
-    let args = crate::util::split_short_bundles(args, "rfqn", "");
-    let (opts, mut paths) = split_dashdash(&args);
-    let mut cached = false;
-    let mut recursive = false;
-    let mut force = false;
-    let mut quiet = false;
-    let mut dry_run = false;
-    for a in &opts {
-        match a.as_str() {
-            "--cached" => cached = true,
-            "-r" => recursive = true,
-            "-f" | "--force" => force = true,
-            "-q" | "--quiet" => quiet = true,
-            "-n" | "--dry-run" => dry_run = true,
-            x if x.starts_with('-') && x.len() > 1 => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
-            }
-            _ => paths.push(a.clone()),
+    use crate::cmd::opt_parse::{Mode, parse, read_pathspec_file};
+    let p = parse("rm", args, crate::cmd::porcelain_opts::RM, Mode::default())?;
+    let cached = p.on("cached");
+    let recursive = p.on("-r");
+    let force = p.on("force");
+    let quiet = p.on("quiet");
+    let dry_run = p.on("dry-run");
+    let ignore_unmatch = p.on("ignore-unmatch");
+    let mut paths = p.args();
+    paths.extend(p.after_dashdash());
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !paths.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
         }
+        paths = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
     }
     if paths.is_empty() {
         return Err(CliError::fatal(
@@ -574,17 +574,31 @@ pub fn cmd_rm(args: &[String]) -> CliResult<()> {
         } else {
             format!("{rel}/")
         };
+        let glob = [rel.clone()];
         let mut hits: Vec<String> = index
             .entries
             .iter()
-            .filter(|e| e.path == rel || rel.is_empty() || e.path.starts_with(&prefix))
+            .filter(|e| {
+                e.path == rel
+                    || rel.is_empty()
+                    || e.path.starts_with(&prefix)
+                    || (rel.contains(['*', '?', '['])
+                        && crate::cmd::log_format::path_in_specs(&e.path, &glob))
+            })
             .map(|e| e.path.clone())
             .collect();
         hits.dedup();
         if hits.is_empty() {
+            if ignore_unmatch {
+                continue;
+            }
             return Err(CliError::fatal(format!(
                 "pathspec '{p}' did not match any files"
             )));
+        }
+        if rel.contains(['*', '?', '[']) && !hits.contains(&rel) {
+            targets.extend(hits);
+            continue;
         }
         if !recursive && !hits.contains(&rel) {
             return Err(CliError::fatal(format!(
@@ -707,77 +721,128 @@ pub fn cmd_rm(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_mv(args: &[String]) -> CliResult<()> {
-    // git-mv(1): `mv <src> <dst>` or `mv <src>... <destination-dir>`.
-    refuse_unknown_flags(args, &[])?;
-    if args.len() < 2 {
-        return Err(CliError::Usage("mv <src> <dst> | mv <src>... <dir>".into()));
+    // git-mv(1): `mv [-v] [-f] [-n] [-k] <source>... <destination>`; tracked
+    // files and directories move in the work tree and the index.
+    // Cite: https://git-scm.com/docs/git-mv
+    use crate::cmd::opt_parse::{Mode, parse};
+    let p = parse("mv", args, crate::cmd::porcelain_opts::MV, Mode::default())?;
+    let verbose = p.on("verbose");
+    let dry_run = p.on("dry-run");
+    let force = p.on("force");
+    let keep_going = p.on("-k");
+    let mut argv = p.args();
+    argv.extend(p.after_dashdash());
+    if argv.len() < 2 {
+        return Err(CliError::Exit(
+            129,
+            "usage: git mv [<options>] <source>... <destination>".into(),
+        ));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let mut index = read_index(&repo)?;
-    let last = &args[args.len() - 1];
-    let last_abs = {
-        let p = Path::new(last);
-        if p.is_absolute() {
-            p.to_path_buf()
+    let dest_arg = argv.pop().unwrap_or_default();
+    let rel_of = |a: &str| -> CliResult<String> {
+        let path = Path::new(a);
+        if path.is_absolute() {
+            rel_path_from_worktree(&work, path)
         } else {
-            work.join(p)
+            let rel = crate::cmd::core::pathspec_rel(&work, a)?;
+            Ok(rel)
         }
     };
-    let sources: &[String] = if args.len() > 2 {
-        if !last_abs.is_dir() {
-            return Err(CliError::Usage(
-                "mv: destination must be a directory when moving multiple sources".into(),
-            ));
-        }
-        &args[..args.len() - 1]
-    } else {
-        &args[..1]
-    };
-    let dest_is_dir = args.len() > 2 || last_abs.is_dir();
-    // Destination directory as worktree-relative (must not require the new
-    // basename to exist yet — canonicalize would fail before rename).
-    let dest_dir_rel = if dest_is_dir {
-        let p = Path::new(last);
-        if p.is_absolute() {
-            Some(rel_path_from_worktree(&work, p)?)
-        } else {
-            Some(last.replace('\\', "/").trim_end_matches('/').to_string())
-        }
-    } else {
-        None
-    };
-    for src_arg in sources {
-        let src = rel_path_from_worktree(&work, Path::new(src_arg))?;
-        let dst = if let Some(dir_rel) = &dest_dir_rel {
-            let base = Path::new(&src)
-                .file_name()
-                .ok_or_else(|| CliError::Msg("mv: bad src".into()))?
-                .to_string_lossy();
-            format!("{dir_rel}/{base}")
-        } else {
-            let p = Path::new(last);
-            if p.is_absolute() {
-                rel_path_from_worktree(&work, p)?
+    let dest_rel = rel_of(&dest_arg)?;
+    let dest_is_dir = argv.len() > 1 || work.join(&dest_rel).is_dir();
+    if argv.len() > 1 && !work.join(&dest_rel).is_dir() {
+        return Err(CliError::fatal(format!(
+            "destination '{dest_arg}' is not a directory"
+        )));
+    }
+    // (source, destination, is_dir) after the checks git makes.
+    let mut moves: Vec<(String, String, bool)> = Vec::new();
+    for src_arg in &argv {
+        let src = rel_of(src_arg)?;
+        let dst = if dest_is_dir {
+            let base = src.rsplit('/').next().unwrap_or(&src).to_string();
+            if dest_rel.is_empty() {
+                base
             } else {
-                last.replace('\\', "/")
+                format!("{dest_rel}/{base}")
             }
+        } else {
+            dest_rel.clone()
         };
         let abs_src = work.join(&src);
         let abs_dst = work.join(&dst);
+        let prefix = format!("{src}/");
+        let tracked_dir = index.entries.iter().any(|e| e.path.starts_with(&prefix));
+        let err = if fs::symlink_metadata(&abs_src).is_err() {
+            Some("bad source")
+        } else if abs_src.is_dir() && !tracked_dir {
+            Some("source directory is empty")
+        } else if !abs_src.is_dir() && !index.entries.iter().any(|e| e.path == src) {
+            Some("not under version control")
+        } else if src == dst || dst.starts_with(&prefix) {
+            Some("can not move directory into itself")
+        } else if abs_dst.exists() && (abs_src.is_dir() || !force) {
+            Some("destination exists")
+        } else {
+            None
+        };
+        if let Some(why) = err {
+            if keep_going {
+                continue;
+            }
+            return Err(CliError::fatal(format!(
+                "{why}, source={src}, destination={dst}"
+            )));
+        }
+        moves.push((src, dst, abs_src.is_dir()));
+    }
+    for (src, dst, is_dir) in &moves {
+        if dry_run {
+            println!("Checking rename of '{src}' to '{dst}'");
+        }
+        if verbose || dry_run {
+            println!("Renaming {src} to {dst}");
+        }
+        if *is_dir && (verbose || dry_run) {
+            let prefix = format!("{src}/");
+            for e in index.entries.iter().filter(|e| e.path.starts_with(&prefix)) {
+                println!("Renaming {} to {dst}/{}", e.path, &e.path[prefix.len()..]);
+            }
+        }
+    }
+    if dry_run {
+        return Ok(());
+    }
+    for (src, dst, is_dir) in &moves {
+        let abs_src = work.join(src);
+        let abs_dst = work.join(dst);
         if let Some(parent) = abs_dst.parent() {
             fs::create_dir_all(parent)?;
         }
+        if !is_dir && abs_dst.is_file() {
+            fs::remove_file(&abs_dst)?;
+        }
         fs::rename(&abs_src, &abs_dst)?;
-        if let Some(pos) = index
-            .entries
-            .iter()
-            .position(|e| e.path == src && e.stage() == 0)
-        {
-            let mut e = index.entries.remove(pos);
-            e.path = dst.clone();
-            e.flags = (dst.len().min(0x0fff)) as u16;
-            index.entries.push(e);
+        if *is_dir {
+            let prefix = format!("{src}/");
+            for e in index
+                .entries
+                .iter_mut()
+                .filter(|e| e.path.starts_with(&prefix))
+            {
+                let rest = e.path[prefix.len()..].to_string();
+                e.path = format!("{dst}/{rest}");
+                e.flags = (e.flags & !0x0fff) | (e.path.len().min(0x0fff)) as u16;
+            }
+        } else {
+            index.entries.retain(|e| &e.path != dst);
+            if let Some(e) = index.entries.iter_mut().find(|e| &e.path == src) {
+                e.path = dst.clone();
+                e.flags = (e.flags & !0x0fff) | (dst.len().min(0x0fff)) as u16;
+            }
         }
     }
     sort_entries(&mut index.entries);
@@ -791,28 +856,32 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     // are left alone. clean.requireForce defaults to true.
     // Cite: https://git-scm.com/docs/git-clean
     // Ignore rules (gitignore(5)) apply unless `-x`; `-X` removes only ignored files.
-    let args = crate::util::split_short_bundles(args, "fndxqX", "");
-    let (opts, mut paths) = split_dashdash(&args);
-    let mut force = 0;
-    let mut dry_run = false;
-    let mut dirs = false;
-    let mut quiet = false;
+    use crate::cmd::opt_parse::{Item, Mode, parse};
+    let p = parse(
+        "clean",
+        args,
+        crate::cmd::porcelain_opts::CLEAN,
+        Mode::default(),
+    )?;
+    let force = p.count("force");
+    let dry_run = p.on("dry-run");
+    let interactive = p.on("interactive");
+    let dirs = p.on("-d");
+    let quiet = p.on("quiet");
+    let excludes = p.values("exclude");
     // 0 = honor ignore rules, 1 = `-x` (also remove ignored), 2 = `-X` (only ignored).
     let mut exclude_mode = 0u8;
-    for a in &opts {
-        match a.as_str() {
-            "-f" | "--force" => force += 1,
-            "-n" | "--dry-run" => dry_run = true,
-            "-d" => dirs = true,
-            "-x" => exclude_mode = 1,
-            "-X" => exclude_mode = 2,
-            "-q" | "--quiet" => quiet = true,
-            x if x.starts_with('-') && x.len() > 1 => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+    for it in &p.items {
+        if let Item::Opt { key, .. } = it {
+            match *key {
+                "-x" => exclude_mode = 1,
+                "-X" => exclude_mode = 2,
+                _ => {}
             }
-            _ => paths.push(a.clone()),
         }
     }
+    let mut paths = p.args();
+    paths.extend(p.after_dashdash());
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     let require_force = cfg
@@ -824,7 +893,7 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
             )
         })
         .unwrap_or(true);
-    if force == 0 && !dry_run && require_force {
+    if force == 0 && !dry_run && !interactive && require_force {
         return Err(CliError::fatal(
             "clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean",
         ));
@@ -833,13 +902,26 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     let index = read_index(&repo)?;
     let indexed: HashSet<String> = index.entries.iter().map(|e| e.path.clone()).collect();
     let mut untracked = Vec::new();
+    let mut ignore = crate::cmd::ignore::Ignore::new(&work).with_cli_patterns(&excludes);
     if exclude_mode == 0 {
-        collect_untracked(&work, &work, &indexed, &mut untracked)?;
+        crate::cmd::shared::collect_untracked_with(
+            &work,
+            &work,
+            &indexed,
+            &mut untracked,
+            Some(&mut ignore),
+        )?;
     } else {
         crate::cmd::shared::collect_untracked_with(&work, &work, &indexed, &mut untracked, None)?;
         if exclude_mode == 2 {
             let mut kept = Vec::new();
-            collect_untracked(&work, &work, &indexed, &mut kept)?;
+            crate::cmd::shared::collect_untracked_with(
+                &work,
+                &work,
+                &indexed,
+                &mut kept,
+                Some(&mut ignore),
+            )?;
             let kept: HashSet<String> = kept.into_iter().collect();
             untracked.retain(|p| !kept.contains(p));
         }
@@ -884,6 +966,40 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
             comps[common..].join("/")
         )
     };
+    if interactive {
+        // `clean -i`: list the candidates, then the command menu; answers come
+        // from stdin and end of input quits.
+        let items: Vec<String> = shown
+            .iter()
+            .filter(|p| (!p.ends_with('/') || dirs) && in_spec(p))
+            .map(|p| display(p))
+            .collect();
+        if items.is_empty() {
+            return Ok(());
+        }
+        println!(
+            "Would remove the following item{}:",
+            if items.len() == 1 { "" } else { "s" }
+        );
+        for i in &items {
+            println!("  {i}");
+        }
+        println!("*** Commands ***");
+        println!("    1: clean                2: filter by pattern    3: select by numbers");
+        println!("    4: ask each             5: quit                 6: help");
+        print!("What now> ");
+        let mut line = String::new();
+        let n = std::io::stdin().read_line(&mut line).unwrap_or(0);
+        if n == 0 || matches!(line.trim(), "5" | "q" | "quit") {
+            println!("Bye.");
+            return Ok(());
+        }
+        if !matches!(line.trim(), "1" | "c" | "clean") {
+            return Err(CliError::NotImplemented(
+                "clean -i: only 'clean' and 'quit' are implemented".into(),
+            ));
+        }
+    }
     for p in shown {
         let is_dir = p.ends_with('/');
         if (is_dir && !dirs) || !in_spec(&p) {

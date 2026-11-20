@@ -265,6 +265,12 @@ impl Ignore {
         self.cli.extend(parse(text));
     }
 
+    /// Add command-line exclude patterns (`clean -e`), builder form.
+    pub fn with_cli_patterns(mut self, patterns: &[String]) -> Self {
+        self.add_patterns(&patterns.join("\n"));
+        self
+    }
+
     /// Read `name` in every directory as its exclude file.
     pub fn per_directory(&mut self, name: &str) {
         self.per_dir_name = name.to_string();
