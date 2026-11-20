@@ -482,3 +482,72 @@ merge -F README.md t0
 -C .git/side merge --strategy-option=theirs clash
 -C .git/side merge -s resolve lineone
 -C .git/side merge -s resolve clash
+#
+# --- stash ---
+stash
+stash push
+stash -q
+stash push --quiet
+stash -k
+stash --keep-index
+stash --no-keep-index
+stash --staged
+stash -S
+stash -u
+stash --include-untracked
+stash -a
+stash --all
+stash push -- src/a.txt
+stash push src/a.txt
+stash push -m hi src/new.txt
+stash push --message=hi
+stash push -m hi -k
+stash push -u -- untracked.txt
+stash push nope.txt
+stash push --pathspec-from-file=.git/info/exclude
+stash save
+stash save hello world
+stash save -q hello
+stash save -k
+stash save -u
+stash list
+stash list --oneline
+stash list --stat
+stash list -p
+stash list --name-only
+stash show
+stash show -p
+stash show --stat
+stash show --name-only
+stash show stash@{0}
+stash show 0
+stash show -u
+stash show --include-untracked
+stash show --only-untracked
+stash show --no-include-untracked
+stash apply
+stash apply --index
+stash apply -q
+stash apply stash@{0}
+stash apply stash@{1}
+stash pop
+stash pop --index
+stash pop -q
+stash drop
+stash drop -q
+stash drop stash@{0}
+stash clear
+stash create
+stash create hello
+stash store -m stored HEAD
+stash store HEAD
+stash store
+stash branch topic
+stash branch topic stash@{0}
+stash bogus
+stash drop 0
+stash drop stash@{1}
+stash show stash@{3}
+stash store -m x stash@{0}
+stash branch
+stash pop 5
