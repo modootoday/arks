@@ -1138,19 +1138,19 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
 
 /// `arks merge-file` — three-way line merge of `<base> <ours> <theirs>` files.
 pub fn cmd_merge_file(args: &[String]) -> CliResult<()> {
-    use crate::cmd::optparse::{self, Item, Opt};
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
     use crate::cmd::plumbing_ext::{MergeFavor, MergeStyle};
-    const SPEC: &[Opt] = &[
-        Opt::flag("stdout").with_short('p'),
-        Opt::flag("object-id"),
-        Opt::flag("diff3"),
-        Opt::flag("zdiff3"),
-        Opt::flag("ours"),
-        Opt::flag("theirs"),
-        Opt::flag("union"),
-        Opt::value("marker-size"),
-        Opt::flag("quiet").with_short('q'),
-        Opt::short_value('L', "L"),
+    const SPEC: &[OptDef] = &[
+        o("stdout", 'p', No, true),
+        o("object-id", ' ', No, true),
+        o("diff3", ' ', No, true),
+        o("zdiff3", ' ', No, true),
+        o("ours", ' ', No, true),
+        o("theirs", ' ', No, true),
+        o("union", ' ', No, true),
+        o("marker-size", ' ', Req, true),
+        o("quiet", 'q', No, true),
+        o("-L", 'L', Req, false),
     ];
     let usage = || {
         CliError::Exit(
@@ -1158,36 +1158,34 @@ pub fn cmd_merge_file(args: &[String]) -> CliResult<()> {
             "usage: git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>".into(),
         )
     };
-    let items = optparse::parse("merge-file", args, SPEC, optparse::Mode::default())?;
+    let items = opt_parse::parse("merge-file", args, SPEC, opt_parse::Mode::default())?;
     let mut style = MergeStyle::Merge;
     let mut favor = MergeFavor::None;
     let mut labels: Vec<String> = Vec::new();
-    for it in &items {
-        if let Item::Opt { name, value, neg } = it {
-            match (*name, *neg) {
-                ("diff3", false) => style = MergeStyle::Diff3,
-                ("zdiff3", false) => style = MergeStyle::Zdiff3,
-                ("diff3" | "zdiff3", true) => style = MergeStyle::Merge,
-                ("ours", false) => favor = MergeFavor::Ours,
-                ("theirs", false) => favor = MergeFavor::Theirs,
-                ("union", false) => favor = MergeFavor::Union,
-                ("ours" | "theirs" | "union", true) => favor = MergeFavor::None,
-                ("L", _) => {
-                    if labels.len() == 3 {
-                        return Err(CliError::Exit(
-                            129,
-                            "error: too many labels on the command line".into(),
-                        ));
-                    }
-                    labels.push(value.clone().unwrap_or_default());
+    for (key, value, neg) in items.opts() {
+        match (key, neg) {
+            ("diff3", false) => style = MergeStyle::Diff3,
+            ("zdiff3", false) => style = MergeStyle::Zdiff3,
+            ("diff3" | "zdiff3", true) => style = MergeStyle::Merge,
+            ("ours", false) => favor = MergeFavor::Ours,
+            ("theirs", false) => favor = MergeFavor::Theirs,
+            ("union", false) => favor = MergeFavor::Union,
+            ("ours" | "theirs" | "union", true) => favor = MergeFavor::None,
+            ("-L", _) => {
+                if labels.len() == 3 {
+                    return Err(CliError::Exit(
+                        129,
+                        "error: too many labels on the command line".into(),
+                    ));
                 }
-                _ => {}
+                labels.push(value.unwrap_or_default().to_string());
             }
+            _ => {}
         }
     }
-    let to_stdout = optparse::on(&items, "stdout");
-    let object_id = optparse::on(&items, "object-id");
-    let marker = match optparse::value(&items, "marker-size") {
+    let to_stdout = items.on("stdout");
+    let object_id = items.on("object-id");
+    let marker = match items.value("marker-size") {
         Some(v) => v.parse::<usize>().map_err(|_| {
             CliError::Exit(
                 129,
@@ -1196,7 +1194,7 @@ pub fn cmd_merge_file(args: &[String]) -> CliResult<()> {
         })?,
         None => 7,
     };
-    let names = optparse::positionals(&items);
+    let names = items.operands();
     if names.len() != 3 {
         return Err(usage());
     }

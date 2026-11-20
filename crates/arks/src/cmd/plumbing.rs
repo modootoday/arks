@@ -25,10 +25,10 @@ use std::path::Path;
 pub fn cmd_write_tree(args: &[String]) -> CliResult<()> {
     // `--missing-ok` (arks never checks object presence while writing trees)
     // and `--prefix=<dir>/` (print the subtree). Cite: git-write-tree(1).
-    use crate::cmd::optparse::{self, Opt};
-    const SPEC: &[Opt] = &[Opt::flag("missing-ok"), Opt::value("prefix")];
-    let items = optparse::parse("write-tree", args, SPEC, optparse::Mode::default())?;
-    let prefix = optparse::value(&items, "prefix");
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[o("missing-ok", ' ', No, true), o("prefix", ' ', Req, true)];
+    let items = opt_parse::parse("write-tree", args, SPEC, opt_parse::Mode::default())?;
+    let prefix = items.value("prefix");
     let mut repo = open_repo()?;
     let index = read_index(&repo)?;
     let unmerged: Vec<&IndexEntry> = index.entries.iter().filter(|e| e.stage() != 0).collect();
@@ -74,15 +74,15 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
     // `-p`, `-m` / `-F` (paragraphs in order; stdin when neither), and
     // `-S[<keyid>]` / `--gpg-sign[=<keyid>]` / `--no-gpg-sign` (commit.gpgSign
     // honored). Cite: git-commit-tree(1).
-    use crate::cmd::optparse::{self, Arg, Item, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::short_value('p', "p"),
-        Opt::short_value('m', "m"),
-        Opt::short_value('F', "F"),
-        Opt::flag("gpg-sign").with_short('S').arg(Arg::Optional),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("-p", 'p', Req, false),
+        o("-m", 'm', Req, false),
+        o("-F", 'F', Req, false),
+        o("gpg-sign", 'S', Opt, true),
     ];
-    let items = optparse::parse("commit-tree", args, SPEC, optparse::Mode::default())?;
-    let pos = optparse::positionals(&items);
+    let items = opt_parse::parse("commit-tree", args, SPEC, opt_parse::Mode::default())?;
+    let pos = items.operands();
     if pos.len() != 1 {
         return Err(CliError::fatal("must give exactly one tree"));
     }
@@ -90,13 +90,10 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
     let mut parents: Vec<Oid> = Vec::new();
     let mut message: Option<String> = None;
     let mut sign_args: Vec<String> = Vec::new();
-    for it in &items {
-        let Item::Opt { name, value, neg } = it else {
-            continue;
-        };
-        match *name {
-            "p" => {
-                let p = value.as_deref().unwrap_or("");
+    for (name, value, neg) in items.opts() {
+        match name {
+            "-p" => {
+                let p = value.unwrap_or("");
                 let oid = resolve_rev(&repo, p)
                     .map_err(|_| CliError::fatal(format!("not a valid object name {p}")))?;
                 let oid = crate::cmd::shared::peel_to_kind(
@@ -111,11 +108,11 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
                     parents.push(oid);
                 }
             }
-            "m" | "F" => {
-                let text = if *name == "m" {
-                    value.clone().unwrap_or_default()
+            "-m" | "-F" => {
+                let text = if name == "-m" {
+                    value.unwrap_or_default().to_string()
                 } else {
-                    let f = value.as_deref().unwrap_or("");
+                    let f = value.unwrap_or("");
                     let bytes = if f == "-" {
                         let mut b = Vec::new();
                         io::stdin().read_to_end(&mut b)?;
@@ -133,7 +130,7 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
                 }
                 m.push_str(&text);
                 // `-m` completes its line; `-F` content is kept verbatim.
-                if *name == "m" && !m.ends_with('\n') {
+                if name == "-m" && !m.ends_with('\n') {
                     m.push('\n');
                 }
             }
@@ -191,20 +188,20 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
 pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
     // Read (`-q`, `--short`, `--[no-]recurse`), set (`-m <reason>`) and
     // delete (`-d`). Cite: https://git-scm.com/docs/git-symbolic-ref
-    use crate::cmd::optparse::{self, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::flag("quiet").with_short('q'),
-        Opt::flag("delete").with_short('d'),
-        Opt::flag("short"),
-        Opt::flag("recurse"),
-        Opt::short_value('m', "m"),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("quiet", 'q', No, true),
+        o("delete", 'd', No, true),
+        o("short", ' ', No, true),
+        o("recurse", ' ', No, true),
+        o("-m", 'm', Req, false),
     ];
-    let items = optparse::parse("symbolic-ref", args, SPEC, optparse::Mode::default())?;
-    let pos = optparse::positionals(&items);
-    let quiet = optparse::on(&items, "quiet");
-    let short = optparse::on(&items, "short");
-    let recurse = optparse::flag(&items, "recurse").unwrap_or(true);
-    let reason = optparse::value(&items, "m");
+    let items = opt_parse::parse("symbolic-ref", args, SPEC, opt_parse::Mode::default())?;
+    let pos = items.operands();
+    let quiet = items.on("quiet");
+    let short = items.on("short");
+    let recurse = items.flag("recurse").unwrap_or(true);
+    let reason = items.value("-m");
     let usage = || {
         CliError::Exit(
             129,
@@ -212,7 +209,7 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
         )
     };
     let mut repo = open_repo()?;
-    if optparse::on(&items, "delete") {
+    if items.on("delete") {
         if pos.len() != 1 {
             return Err(usage());
         }
@@ -318,32 +315,32 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
     // `--abbrev[=<n>]`, `-q`, `--exclude-existing[=<pattern>]` and tail-matching
     // patterns over every ref under refs/ (incl. refs/stash).
     // Cite: https://git-scm.com/docs/git-show-ref
-    use crate::cmd::optparse::{self, Arg, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::flag("tags"),
-        Opt::flag("heads"),
-        Opt::flag("branches"),
-        Opt::flag("exists"),
-        Opt::flag("verify"),
-        Opt::flag("head"),
-        Opt::flag("dereference").with_short('d'),
-        Opt::opt_value("hash").with_short('s'),
-        Opt::opt_value("abbrev"),
-        Opt::flag("quiet").with_short('q'),
-        Opt::bare("exclude-existing").arg(Arg::Optional),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("tags", ' ', No, true),
+        o("heads", ' ', No, true),
+        o("branches", ' ', No, true),
+        o("exists", ' ', No, true),
+        o("verify", ' ', No, true),
+        o("head", ' ', No, true),
+        o("dereference", 'd', No, true),
+        o("hash", 's', Opt, true),
+        o("abbrev", ' ', Opt, true),
+        o("quiet", 'q', No, true),
+        o("exclude-existing", ' ', Opt, false),
     ];
-    let items = optparse::parse("show-ref", args, SPEC, optparse::Mode::default())?;
-    let patterns = optparse::positionals(&items);
-    let heads = optparse::on(&items, "heads") || optparse::on(&items, "branches");
-    let tags = optparse::on(&items, "tags");
-    let verify = optparse::on(&items, "verify");
-    let deref = optparse::on(&items, "dereference");
-    let quiet = optparse::on(&items, "quiet");
-    let show_head = optparse::on(&items, "head");
-    let hash_only = optparse::flag(&items, "hash").unwrap_or(false);
+    let items = opt_parse::parse("show-ref", args, SPEC, opt_parse::Mode::default())?;
+    let patterns = items.operands();
+    let heads = items.on("heads") || items.on("branches");
+    let tags = items.on("tags");
+    let verify = items.on("verify");
+    let deref = items.on("dereference");
+    let quiet = items.on("quiet");
+    let show_head = items.on("head");
+    let hash_only = items.flag("hash").unwrap_or(false);
     let width = |name: &str| -> CliResult<Option<usize>> {
-        match optparse::flag(&items, name) {
-            Some(true) => match optparse::value(&items, name) {
+        match items.flag(name) {
+            Some(true) => match items.value(name) {
                 Some(v) => v
                     .parse::<usize>()
                     .map(|n| Some(n.clamp(4, 40)))
@@ -359,17 +356,12 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
         }
     };
     let abbrev = match width("hash")? {
-        Some(n) if optparse::value(&items, "hash").is_some() => Some(n),
+        Some(n) if items.value("hash").is_some() => Some(n),
         _ => width("abbrev")?,
     };
     let repo = open_repo()?;
-    if let Some(pat) = items.iter().rev().find_map(|i| match i {
-        optparse::Item::Opt {
-            name: "exclude-existing",
-            value,
-            ..
-        } => Some(value.clone().unwrap_or_default()),
-        _ => None,
+    if let Some(pat) = items.opts().rev().find_map(|(key, value, _)| {
+        (key == "exclude-existing").then(|| value.unwrap_or_default().to_string())
     }) {
         let mut input = String::new();
         io::stdin().read_to_string(&mut input)?;
@@ -409,7 +401,7 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
         }
         Ok(())
     };
-    if optparse::on(&items, "exists") {
+    if items.on("exists") {
         let name = patterns
             .first()
             .ok_or_else(|| CliError::fatal("--exists requires exactly one reference"))?;
@@ -655,23 +647,23 @@ pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
     // Tracked paths are not reported unless --no-index. Exit 0 when some
     // path is ignored, 1 when none is.
     // Cite: https://git-scm.com/docs/git-check-ignore
-    use crate::cmd::optparse::{self, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::flag("quiet").with_short('q'),
-        Opt::flag("verbose").with_short('v'),
-        Opt::flag("stdin"),
-        Opt::short('z', "z"),
-        Opt::flag("non-matching").with_short('n'),
-        Opt::flag("index"),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("quiet", 'q', No, true),
+        o("verbose", 'v', No, true),
+        o("stdin", ' ', No, true),
+        o("-z", 'z', No, false),
+        o("non-matching", 'n', No, true),
+        o("index", ' ', No, true),
     ];
-    let items = optparse::parse("check-ignore", args, SPEC, optparse::Mode::default())?;
-    let verbose = optparse::on(&items, "verbose");
-    let non_matching = optparse::on(&items, "non-matching");
-    let quiet = optparse::on(&items, "quiet");
-    let no_index = optparse::flag(&items, "index") == Some(false);
-    let stdin = optparse::on(&items, "stdin");
-    let nul = optparse::on(&items, "z");
-    let mut paths = optparse::positionals(&items);
+    let items = opt_parse::parse("check-ignore", args, SPEC, opt_parse::Mode::default())?;
+    let verbose = items.on("verbose");
+    let non_matching = items.on("non-matching");
+    let quiet = items.on("quiet");
+    let no_index = items.flag("index") == Some(false);
+    let stdin = items.on("stdin");
+    let nul = items.on("-z");
+    let mut paths = items.operands();
     if stdin {
         if !paths.is_empty() {
             return Err(CliError::fatal("cannot specify pathnames with --stdin"));

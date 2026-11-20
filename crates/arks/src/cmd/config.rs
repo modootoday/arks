@@ -10,47 +10,47 @@
 //! (1 invalid key / missing, 2 no section, 5 unset missing / multiple values).
 //! Cite: <https://git-scm.com/docs/git-config>.
 
-use crate::cmd::optparse::{self, Item, Opt};
+use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
 use crate::error::{CliError, CliResult};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-const SPEC: &[Opt] = &[
-    Opt::flag("global"),
-    Opt::flag("system"),
-    Opt::flag("local"),
-    Opt::flag("worktree"),
-    Opt::value("file").with_short('f'),
-    Opt::value("blob"),
-    Opt::flag("get"),
-    Opt::flag("get-all"),
-    Opt::flag("get-regexp"),
-    Opt::flag("get-urlmatch"),
-    Opt::flag("replace-all"),
-    Opt::flag("add"),
-    Opt::flag("unset"),
-    Opt::flag("unset-all"),
-    Opt::flag("rename-section"),
-    Opt::flag("remove-section"),
-    Opt::flag("list").with_short('l'),
-    Opt::flag("fixed-value"),
-    Opt::flag("edit").with_short('e'),
-    Opt::flag("get-color"),
-    Opt::flag("get-colorbool"),
-    Opt::value("type").with_short('t'),
-    Opt::bare("bool"),
-    Opt::bare("int"),
-    Opt::bare("bool-or-int"),
-    Opt::bare("bool-or-str"),
-    Opt::bare("path"),
-    Opt::bare("expiry-date"),
-    Opt::flag("null").with_short('z'),
-    Opt::flag("name-only"),
-    Opt::flag("includes"),
-    Opt::flag("show-origin"),
-    Opt::flag("show-scope"),
-    Opt::value("default"),
+const SPEC: &[OptDef] = &[
+    o("global", ' ', No, true),
+    o("system", ' ', No, true),
+    o("local", ' ', No, true),
+    o("worktree", ' ', No, true),
+    o("file", 'f', Req, true),
+    o("blob", ' ', Req, true),
+    o("get", ' ', No, true),
+    o("get-all", ' ', No, true),
+    o("get-regexp", ' ', No, true),
+    o("get-urlmatch", ' ', No, true),
+    o("replace-all", ' ', No, true),
+    o("add", ' ', No, true),
+    o("unset", ' ', No, true),
+    o("unset-all", ' ', No, true),
+    o("rename-section", ' ', No, true),
+    o("remove-section", ' ', No, true),
+    o("list", 'l', No, true),
+    o("fixed-value", ' ', No, true),
+    o("edit", 'e', No, true),
+    o("get-color", ' ', No, true),
+    o("get-colorbool", ' ', No, true),
+    o("type", 't', Req, true),
+    o("bool", ' ', No, false),
+    o("int", ' ', No, false),
+    o("bool-or-int", ' ', No, false),
+    o("bool-or-str", ' ', No, false),
+    o("path", ' ', No, false),
+    o("expiry-date", ' ', No, false),
+    o("null", 'z', No, true),
+    o("name-only", ' ', No, true),
+    o("includes", ' ', No, true),
+    o("show-origin", ' ', No, true),
+    o("show-scope", ' ', No, true),
+    o("default", ' ', Req, true),
 ];
 
 const ACTIONS: &[&str] = &[
@@ -98,18 +98,18 @@ enum Loc {
 }
 
 pub fn cmd_config(args: &[String]) -> CliResult<()> {
-    let items = optparse::parse("config", args, SPEC, optparse::Mode::default())?;
-    let pos = optparse::positionals(&items);
+    let items = opt_parse::parse("config", args, SPEC, opt_parse::Mode::default())?;
+    let pos = items.operands();
 
     // Location (last-wins per flag; more than one is an error).
     let mut locs: Vec<&str> = Vec::new();
     for l in ["global", "system", "local", "worktree"] {
-        if optparse::on(&items, l) {
+        if items.on(l) {
             locs.push(l);
         }
     }
-    let file = optparse::value(&items, "file");
-    let blob = optparse::value(&items, "blob");
+    let file = items.value("file");
+    let blob = items.value("blob");
     if file.is_some() {
         locs.push("file");
     }
@@ -121,11 +121,7 @@ pub fn cmd_config(args: &[String]) -> CliResult<()> {
     }
 
     // Action.
-    let acts: Vec<&str> = ACTIONS
-        .iter()
-        .copied()
-        .filter(|a| optparse::on(&items, a))
-        .collect();
+    let acts: Vec<&str> = ACTIONS.iter().copied().filter(|a| items.on(a)).collect();
     if acts.len() > 1 {
         return Err(usage("only one action at a time"));
     }
@@ -133,16 +129,14 @@ pub fn cmd_config(args: &[String]) -> CliResult<()> {
 
     // Type: the last of --type / --bool / ... wins; --no-type resets.
     let mut ty: Option<String> = None;
-    for it in &items {
-        if let Item::Opt { name, value, neg } = it {
-            match *name {
-                "type" if *neg => ty = None,
-                "type" => ty = value.clone(),
-                "bool" | "int" | "bool-or-int" | "bool-or-str" | "path" | "expiry-date" => {
-                    ty = Some((*name).to_string())
-                }
-                _ => {}
+    for (name, value, neg) in items.opts() {
+        match name {
+            "type" if neg => ty = None,
+            "type" => ty = value.map(str::to_string),
+            "bool" | "int" | "bool-or-int" | "bool-or-str" | "path" | "expiry-date" => {
+                ty = Some(name.to_string())
             }
+            _ => {}
         }
     }
     if let Some(t) = &ty {
@@ -155,13 +149,13 @@ pub fn cmd_config(args: &[String]) -> CliResult<()> {
             )));
         }
     }
-    let null = optparse::on(&items, "null");
-    let name_only = optparse::on(&items, "name-only");
-    let show_origin = optparse::on(&items, "show-origin");
-    let show_scope = optparse::on(&items, "show-scope");
-    let fixed = optparse::on(&items, "fixed-value");
-    let default = optparse::value(&items, "default");
-    let includes = optparse::flag(&items, "includes");
+    let null = items.on("null");
+    let name_only = items.on("name-only");
+    let show_origin = items.on("show-origin");
+    let show_scope = items.on("show-scope");
+    let fixed = items.on("fixed-value");
+    let default = items.value("default");
+    let includes = items.flag("includes");
 
     if action.is_empty() {
         action = match pos.len() {

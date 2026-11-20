@@ -8,7 +8,7 @@
 //! <https://git-scm.com/docs/git-read-tree>,
 //! <https://git-scm.com/docs/git-checkout-index>.
 
-use crate::cmd::optparse::{self, Arg, Item, Opt};
+use crate::cmd::opt_parse::{self, Item, OptDef, Takes::*, o};
 use crate::cmd::shared::{index_stat_matches, resolve_rev};
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, work_tree};
@@ -135,39 +135,39 @@ fn fatal_path(msg: &str, path: &str) -> CliError {
     )
 }
 
-const UPDATE_INDEX_SPEC: &[Opt] = &[
-    Opt::short('q', "q"),
-    Opt::flag("ignore-submodules"),
-    Opt::flag("add"),
-    Opt::flag("replace"),
-    Opt::flag("remove"),
-    Opt::flag("unmerged"),
-    Opt::bare("refresh"),
-    Opt::bare("really-refresh"),
-    Opt::value("cacheinfo").no_neg(),
-    Opt::value("chmod").no_neg(),
-    Opt::flag("assume-unchanged"),
-    Opt::flag("skip-worktree"),
-    Opt::flag("ignore-skip-worktree-entries"),
-    Opt::flag("info-only"),
-    Opt::flag("force-remove"),
-    Opt::short('z', "z"),
-    Opt::bare("stdin"),
-    Opt::bare("index-info"),
-    Opt::bare("unresolve"),
-    Opt::bare("again").with_short('g'),
-    Opt::flag("ignore-missing"),
-    Opt::flag("verbose"),
-    Opt::bare("clear-resolve-undo"),
-    Opt::value("index-version"),
-    Opt::flag("show-index-version"),
-    Opt::flag("split-index"),
-    Opt::flag("untracked-cache"),
-    Opt::flag("test-untracked-cache"),
-    Opt::flag("force-untracked-cache"),
-    Opt::flag("force-write-index"),
-    Opt::flag("fsmonitor"),
-    Opt::flag("fsmonitor-valid"),
+const UPDATE_INDEX_SPEC: &[OptDef] = &[
+    o("-q", 'q', No, false),
+    o("ignore-submodules", ' ', No, true),
+    o("add", ' ', No, true),
+    o("replace", ' ', No, true),
+    o("remove", ' ', No, true),
+    o("unmerged", ' ', No, true),
+    o("refresh", ' ', No, false),
+    o("really-refresh", ' ', No, false),
+    o("cacheinfo", ' ', Req, false),
+    o("chmod", ' ', Req, false),
+    o("assume-unchanged", ' ', No, true),
+    o("skip-worktree", ' ', No, true),
+    o("ignore-skip-worktree-entries", ' ', No, true),
+    o("info-only", ' ', No, true),
+    o("force-remove", ' ', No, true),
+    o("-z", 'z', No, false),
+    o("stdin", ' ', No, false),
+    o("index-info", ' ', No, false),
+    o("unresolve", ' ', No, false),
+    o("again", 'g', No, false),
+    o("ignore-missing", ' ', No, true),
+    o("verbose", ' ', No, true),
+    o("clear-resolve-undo", ' ', No, false),
+    o("index-version", ' ', Req, true),
+    o("show-index-version", ' ', No, true),
+    o("split-index", ' ', No, true),
+    o("untracked-cache", ' ', No, true),
+    o("test-untracked-cache", ' ', No, true),
+    o("force-untracked-cache", ' ', No, true),
+    o("force-write-index", ' ', No, true),
+    o("fsmonitor", ' ', No, true),
+    o("fsmonitor-valid", ' ', No, true),
 ];
 
 #[derive(Default)]
@@ -598,7 +598,7 @@ fn refuse_locked(repo: &Repository, items: &[Item]) -> CliResult<()> {
     let has = |n: &str| {
         items
             .iter()
-            .any(|i| matches!(i, Item::Opt { name, .. } if *name == n))
+            .any(|i| matches!(i, Item::Opt { key, .. } if *key == n))
     };
     if lock.is_file() {
         let why = if has("refresh") || has("really-refresh") {
@@ -640,14 +640,14 @@ pub(crate) fn update_index(args: &[String]) -> CliResult<()> {
         .map(|i| i + 1)
         .unwrap_or(args.len());
     let again_specs: Vec<String> = args[cut..].to_vec();
-    let items = optparse::parse(
+    let items = opt_parse::parse(
         "update-index",
         &args[..cut],
         UPDATE_INDEX_SPEC,
-        optparse::Mode::default(),
+        opt_parse::Mode::default(),
     )?;
     let mut repo = open_repo()?;
-    refuse_locked(&repo, &items)?;
+    refuse_locked(&repo, &items.items)?;
     let work = work_tree(&repo)?;
     let index = read_index(&repo)?;
     let disk_version = index.version;
@@ -664,12 +664,15 @@ pub(crate) fn update_index(args: &[String]) -> CliResult<()> {
     let mut force_write = false;
     let mut show_version = false;
     let mut new_version: Option<u32> = None;
+    // A trailing `--` leaves no item but still follows `--stdin` in argv.
+    let trailing_dashdash = args[..cut].last().is_some_and(|a| a == "--");
+    let items = &items.items;
     let mut i = 0;
     while i < items.len() {
         let it = items[i].clone();
         i += 1;
         let (name, value, neg) = match it {
-            Item::Pos(p) => {
+            Item::Arg(p) | Item::AfterDashDash(p) => {
                 if read_stdin {
                     return Err(CliError::Exit(
                         129,
@@ -680,12 +683,12 @@ pub(crate) fn update_index(args: &[String]) -> CliResult<()> {
                 ui.update_one(&path)?;
                 continue;
             }
-            Item::DashDash => continue,
-            Item::Opt { name, value, neg } => (name, value, neg),
+            Item::Opt { key, val, neg } => (key, val, neg),
+            Item::Unknown(_) | Item::Number(_) => continue,
         };
         let on = !neg;
         match name {
-            "q" => ui.st.quiet = true,
+            "-q" => ui.st.quiet = true,
             "ignore-submodules" => ui.st.ignore_submodules = on,
             "add" => ui.st.add = on,
             "replace" => ui.st.replace = on,
@@ -702,7 +705,7 @@ pub(crate) fn update_index(args: &[String]) -> CliResult<()> {
                     // Legacy `--cacheinfo <mode> <object> <path>`.
                     let take = |i: &mut usize| -> Option<String> {
                         match items.get(*i) {
-                            Some(Item::Pos(p)) => {
+                            Some(Item::Arg(p)) => {
                                 *i += 1;
                                 Some(p.clone())
                             }
@@ -735,9 +738,9 @@ pub(crate) fn update_index(args: &[String]) -> CliResult<()> {
             "ignore-skip-worktree-entries" => {}
             "info-only" => ui.st.info_only = on,
             "force-remove" => ui.st.force_remove = on,
-            "z" => nul = true,
+            "-z" => nul = true,
             "stdin" => {
-                if i < items.len() {
+                if i < items.len() || trailing_dashdash {
                     return Err(CliError::Exit(
                         129,
                         "error: option 'stdin' must be the last argument".into(),
@@ -843,23 +846,23 @@ pub(crate) fn update_index(args: &[String]) -> CliResult<()> {
 // ---------------------------------------------------------------------------
 // read-tree
 
-const READ_TREE_SPEC: &[Opt] = &[
-    Opt::value("index-output"),
-    Opt::flag("empty"),
-    Opt::flag("verbose").with_short('v'),
-    Opt::short('m', "m"),
-    Opt::flag("trivial"),
-    Opt::flag("aggressive"),
-    Opt::flag("reset"),
-    Opt::value("prefix").no_neg(),
-    Opt::short('u', "u"),
-    Opt::value("exclude-per-directory").no_neg(),
-    Opt::short('i', "i"),
-    Opt::flag("dry-run").with_short('n'),
-    Opt::flag("sparse-checkout"),
-    Opt::flag("debug-unpack"),
-    Opt::flag("recurse-submodules").arg(Arg::Optional),
-    Opt::flag("quiet").with_short('q'),
+const READ_TREE_SPEC: &[OptDef] = &[
+    o("index-output", ' ', Req, true),
+    o("empty", ' ', No, true),
+    o("verbose", 'v', No, true),
+    o("-m", 'm', No, false),
+    o("trivial", ' ', No, true),
+    o("aggressive", ' ', No, true),
+    o("reset", ' ', No, true),
+    o("prefix", ' ', Req, false),
+    o("-u", 'u', No, false),
+    o("exclude-per-directory", ' ', Req, false),
+    o("-i", 'i', No, false),
+    o("dry-run", 'n', No, true),
+    o("sparse-checkout", ' ', No, true),
+    o("debug-unpack", ' ', No, true),
+    o("recurse-submodules", ' ', Opt, true),
+    o("quiet", 'q', No, true),
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -1020,17 +1023,22 @@ fn remove_empty_parents(work: &Path, file: &Path) {
 }
 
 pub(crate) fn read_tree(args: &[String]) -> CliResult<()> {
-    let items = optparse::parse("read-tree", args, READ_TREE_SPEC, optparse::Mode::default())?;
-    let trees: Vec<String> = optparse::positionals(&items);
-    let merge = optparse::on(&items, "m");
-    let reset = optparse::on(&items, "reset");
-    let prefix = optparse::value(&items, "prefix");
-    let update = optparse::on(&items, "u");
-    let index_only = optparse::on(&items, "i");
-    let dry_run = optparse::on(&items, "dry-run");
-    let aggressive = optparse::on(&items, "aggressive");
-    let empty = optparse::on(&items, "empty");
-    let index_output = optparse::value(&items, "index-output");
+    let items = opt_parse::parse(
+        "read-tree",
+        args,
+        READ_TREE_SPEC,
+        opt_parse::Mode::default(),
+    )?;
+    let trees: Vec<String> = items.operands();
+    let merge = items.on("-m");
+    let reset = items.on("reset");
+    let prefix = items.value("prefix");
+    let update = items.on("-u");
+    let index_only = items.on("-i");
+    let dry_run = items.on("dry-run");
+    let aggressive = items.on("aggressive");
+    let empty = items.on("empty");
+    let index_output = items.value("index-output");
     if [merge, reset, prefix.is_some()]
         .iter()
         .filter(|b| **b)
@@ -1049,7 +1057,7 @@ pub(crate) fn read_tree(args: &[String]) -> CliResult<()> {
     if update && index_only {
         return Err(CliError::fatal("-u and -i at the same time makes no sense"));
     }
-    if optparse::value(&items, "exclude-per-directory").is_some() && !update {
+    if items.value("exclude-per-directory").is_some() && !update {
         return Err(CliError::fatal(
             "--exclude-per-directory is meaningless unless -u",
         ));
@@ -1358,19 +1366,19 @@ pub(crate) fn read_tree(args: &[String]) -> CliResult<()> {
 // ---------------------------------------------------------------------------
 // checkout-index
 
-const CHECKOUT_INDEX_SPEC: &[Opt] = &[
-    Opt::flag("all").with_short('a'),
-    Opt::flag("ignore-skip-worktree-bits"),
-    Opt::flag("force").with_short('f'),
-    Opt::flag("quiet").with_short('q'),
-    Opt::bare("no-create").with_short('n'),
-    Opt::bare("create"),
-    Opt::flag("index").with_short('u'),
-    Opt::short('z', "z"),
-    Opt::flag("stdin"),
-    Opt::flag("temp"),
-    Opt::value("prefix"),
-    Opt::value("stage").no_neg(),
+const CHECKOUT_INDEX_SPEC: &[OptDef] = &[
+    o("all", 'a', No, true),
+    o("ignore-skip-worktree-bits", ' ', No, true),
+    o("force", 'f', No, true),
+    o("quiet", 'q', No, true),
+    o("no-create", 'n', No, false),
+    o("create", ' ', No, false),
+    o("index", 'u', No, true),
+    o("-z", 'z', No, false),
+    o("stdin", ' ', No, true),
+    o("temp", ' ', No, true),
+    o("prefix", ' ', Req, true),
+    o("stage", ' ', Req, false),
 ];
 
 fn temp_name(dir: &Path) -> PathBuf {
@@ -1398,32 +1406,30 @@ fn temp_name(dir: &Path) -> PathBuf {
 }
 
 pub(crate) fn checkout_index(args: &[String]) -> CliResult<()> {
-    let items = optparse::parse(
+    let items = opt_parse::parse(
         "checkout-index",
         args,
         CHECKOUT_INDEX_SPEC,
-        optparse::Mode::default(),
+        opt_parse::Mode::default(),
     )?;
-    let all = optparse::on(&items, "all");
-    let force = optparse::on(&items, "force");
-    let quiet = optparse::on(&items, "quiet");
+    let all = items.on("all");
+    let force = items.on("force");
+    let quiet = items.on("quiet");
     let mut create = true;
-    for it in &items {
-        if let Item::Opt { name, .. } = it {
-            match *name {
-                "no-create" => create = false,
-                "create" => create = true,
-                _ => {}
-            }
+    for (key, _, _) in items.opts() {
+        match key {
+            "no-create" => create = false,
+            "create" => create = true,
+            _ => {}
         }
     }
-    let update_stat = optparse::on(&items, "index");
-    let nul = optparse::on(&items, "z");
-    let stdin = optparse::on(&items, "stdin");
-    let temp = optparse::on(&items, "temp");
-    let ignore_skip = optparse::on(&items, "ignore-skip-worktree-bits");
-    let prefix = optparse::value(&items, "prefix").unwrap_or_default();
-    let stage = match optparse::value(&items, "stage").as_deref() {
+    let update_stat = items.on("index");
+    let nul = items.on("-z");
+    let stdin = items.on("stdin");
+    let temp = items.on("temp");
+    let ignore_skip = items.on("ignore-skip-worktree-bits");
+    let prefix = items.value("prefix").unwrap_or_default();
+    let stage = match items.value("stage").as_deref() {
         None => Some(0u16),
         Some("all") => None,
         Some(s @ ("1" | "2" | "3")) => Some(s.parse().unwrap_or(0)),
@@ -1432,7 +1438,7 @@ pub(crate) fn checkout_index(args: &[String]) -> CliResult<()> {
         }
     };
     let temp = temp || stage.is_none();
-    let paths = optparse::positionals(&items);
+    let paths = items.operands();
     if all && !paths.is_empty() {
         return Err(CliError::fatal(
             "git checkout-index: don't mix '--all' and explicit filenames",

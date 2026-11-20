@@ -222,17 +222,17 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
     // `-t <type>`, `-w`, `--stdin`, `--stdin-paths`, `--[no-]filters`,
     // `--path <file>`, `--literally`. Non-blob objects must parse unless
     // `--literally`. Cite: https://git-scm.com/docs/git-hash-object
-    use crate::cmd::optparse::{self, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::short_value('t', "t"),
-        Opt::short('w', "w"),
-        Opt::flag("stdin"),
-        Opt::flag("stdin-paths"),
-        Opt::flag("filters"),
-        Opt::flag("literally"),
-        Opt::value("path"),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("-t", 't', Req, false),
+        o("-w", 'w', No, false),
+        o("stdin", ' ', No, true),
+        o("stdin-paths", ' ', No, true),
+        o("filters", ' ', No, true),
+        o("literally", ' ', No, true),
+        o("path", ' ', Req, true),
     ];
-    let items = optparse::parse("hash-object", args, SPEC, optparse::Mode::default())?;
+    let items = opt_parse::parse("hash-object", args, SPEC, opt_parse::Mode::default())?;
     let usage = |m: &str| {
         CliError::Exit(
             129,
@@ -241,14 +241,14 @@ pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
             ),
         )
     };
-    let files = optparse::positionals(&items);
-    let write = optparse::on(&items, "w");
-    let stdin = optparse::on(&items, "stdin");
-    let stdin_paths = optparse::on(&items, "stdin-paths");
-    let no_filters = optparse::flag(&items, "filters") == Some(false);
-    let literally = optparse::on(&items, "literally");
-    let path_opt = optparse::value(&items, "path");
-    let ty = optparse::value(&items, "t").unwrap_or_else(|| "blob".into());
+    let files = items.operands();
+    let write = items.on("-w");
+    let stdin = items.on("stdin");
+    let stdin_paths = items.on("stdin-paths");
+    let no_filters = items.flag("filters") == Some(false);
+    let literally = items.on("literally");
+    let path_opt = items.value("path");
+    let ty = items.value("-t").unwrap_or_else(|| "blob".into());
     if stdin_paths {
         if stdin {
             return Err(usage("Can't use --stdin-paths with --stdin"));
@@ -378,25 +378,25 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
     // `prepare`/`commit`/`abort`) with `-z`. `<new>`/`<old>` are revisions;
     // an all-zero `<old>` requires the ref to be absent.
     // Cite: https://git-scm.com/docs/git-update-ref
-    use crate::cmd::optparse::{self, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::short_value('m', "m"),
-        Opt::short('d', "d"),
-        Opt::flag("deref"),
-        Opt::short('z', "z"),
-        Opt::flag("stdin"),
-        Opt::flag("create-reflog"),
-        Opt::bare("no-verify"),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("-m", 'm', Req, false),
+        o("-d", 'd', No, false),
+        o("deref", ' ', No, true),
+        o("-z", 'z', No, false),
+        o("stdin", ' ', No, true),
+        o("create-reflog", ' ', No, true),
+        o("no-verify", ' ', No, false),
     ];
-    let items = optparse::parse("update-ref", args, SPEC, optparse::Mode::default())?;
-    let positional = optparse::positionals(&items);
-    let delete = optparse::on(&items, "d");
-    let no_verify = optparse::on(&items, "no-verify");
-    let no_deref = optparse::flag(&items, "deref") == Some(false);
-    let message = optparse::value(&items, "m");
-    let create_reflog = optparse::on(&items, "create-reflog");
-    let nul = optparse::on(&items, "z");
-    let stdin = optparse::on(&items, "stdin");
+    let items = opt_parse::parse("update-ref", args, SPEC, opt_parse::Mode::default())?;
+    let positional = items.operands();
+    let delete = items.on("-d");
+    let no_verify = items.on("no-verify");
+    let no_deref = items.flag("deref") == Some(false);
+    let message = items.value("-m");
+    let create_reflog = items.on("create-reflog");
+    let nul = items.on("-z");
+    let stdin = items.on("stdin");
     let usage = || {
         CliError::Exit(
             129,

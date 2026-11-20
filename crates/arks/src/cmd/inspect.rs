@@ -5,7 +5,7 @@
 //! Cite: <https://git-scm.com/docs/git-pack-refs>
 //! Output order and wording follow observed stock git (family-plumbing corpus).
 
-use crate::cmd::optparse::{self, Opt};
+use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
 use arks_object::{Commit, ObjectKind, Tree};
@@ -111,33 +111,33 @@ fn tag_header(payload: &[u8]) -> (Option<Oid>, String, String) {
 /// missing objects. OBJ-004: content whose recomputed name differs from its
 /// path is reported and treated as missing (sha1 collision pretend refuse).
 pub fn cmd_fsck(args: &[String]) -> CliResult<()> {
-    const SPEC: &[Opt] = &[
-        Opt::flag("verbose").with_short('v'),
-        Opt::flag("unreachable"),
-        Opt::flag("dangling"),
-        Opt::flag("tags"),
-        Opt::flag("root"),
-        Opt::flag("cache"),
-        Opt::flag("reflogs"),
-        Opt::flag("full"),
-        Opt::flag("connectivity-only"),
-        Opt::flag("strict"),
-        Opt::flag("lost-found"),
-        Opt::flag("progress"),
-        Opt::flag("name-objects"),
+    const SPEC: &[OptDef] = &[
+        o("verbose", 'v', No, true),
+        o("unreachable", ' ', No, true),
+        o("dangling", ' ', No, true),
+        o("tags", ' ', No, true),
+        o("root", ' ', No, true),
+        o("cache", ' ', No, true),
+        o("reflogs", ' ', No, true),
+        o("full", ' ', No, true),
+        o("connectivity-only", ' ', No, true),
+        o("strict", ' ', No, true),
+        o("lost-found", ' ', No, true),
+        o("progress", ' ', No, true),
+        o("name-objects", ' ', No, true),
     ];
-    let items = optparse::parse("fsck", args, SPEC, optparse::Mode::default())?;
-    let verbose = optparse::on(&items, "verbose");
-    let show_unreachable = optparse::on(&items, "unreachable");
-    let show_dangling = optparse::flag(&items, "dangling").unwrap_or(true);
-    let show_tags = optparse::on(&items, "tags");
-    let show_root = optparse::on(&items, "root");
-    let use_cache = optparse::on(&items, "cache");
-    let lost_found = optparse::on(&items, "lost-found");
+    let items = opt_parse::parse("fsck", args, SPEC, opt_parse::Mode::default())?;
+    let verbose = items.on("verbose");
+    let show_unreachable = items.on("unreachable");
+    let show_dangling = items.flag("dangling").unwrap_or(true);
+    let show_tags = items.on("tags");
+    let show_root = items.on("root");
+    let use_cache = items.on("cache");
+    let lost_found = items.on("lost-found");
     // --lost-found implies --no-reflogs.
-    let reflogs = optparse::flag(&items, "reflogs").unwrap_or(true) && !lost_found;
-    let connectivity_only = optparse::on(&items, "connectivity-only");
-    let heads = optparse::positionals(&items);
+    let reflogs = items.flag("reflogs").unwrap_or(true) && !lost_found;
+    let connectivity_only = items.on("connectivity-only");
+    let heads = items.operands();
 
     let repo = open_repo()?;
     let format = repo.object_format();
@@ -414,14 +414,14 @@ fn on_disk_bytes(meta: &fs::Metadata) -> u64 {
 
 /// `arks count-objects [-v | --verbose] [-H | --human-readable]`.
 pub fn cmd_count_objects(args: &[String]) -> CliResult<()> {
-    const SPEC: &[Opt] = &[
-        Opt::flag("verbose").with_short('v'),
-        Opt::flag("human-readable").with_short('H'),
+    const SPEC: &[OptDef] = &[
+        o("verbose", 'v', No, true),
+        o("human-readable", 'H', No, true),
     ];
-    let items = optparse::parse("count-objects", args, SPEC, optparse::Mode::default())?;
-    let verbose = optparse::on(&items, "verbose");
-    let hr = optparse::on(&items, "human-readable");
-    if !optparse::positionals(&items).is_empty() {
+    let items = opt_parse::parse("count-objects", args, SPEC, opt_parse::Mode::default())?;
+    let verbose = items.on("verbose");
+    let hr = items.on("human-readable");
+    if !items.operands().is_empty() {
         return Err(CliError::Exit(
             129,
             "usage: git count-objects [-v] [-H | --human-readable]".into(),
@@ -522,37 +522,23 @@ pub fn cmd_count_objects(args: &[String]) -> CliResult<()> {
 /// Without `--all` (or `--include`) only tags are packed; refs already packed
 /// stay packed. Loose copies are removed unless `--no-prune`.
 pub fn cmd_pack_refs(args: &[String]) -> CliResult<()> {
-    const SPEC: &[Opt] = &[
-        Opt::flag("all"),
-        Opt::flag("prune"),
-        Opt::value("include"),
-        Opt::value("exclude"),
+    const SPEC: &[OptDef] = &[
+        o("all", ' ', No, true),
+        o("prune", ' ', No, true),
+        o("include", ' ', Req, true),
+        o("exclude", ' ', Req, true),
     ];
-    let items = optparse::parse("pack-refs", args, SPEC, optparse::Mode::default())?;
-    if !optparse::positionals(&items).is_empty() {
+    let items = opt_parse::parse("pack-refs", args, SPEC, opt_parse::Mode::default())?;
+    if !items.operands().is_empty() {
         return Err(CliError::Exit(
             129,
             "usage: git pack-refs [--all] [--no-prune] [--include <pattern>] [--exclude <pattern>]"
                 .into(),
         ));
     }
-    let all = optparse::on(&items, "all");
-    let prune = optparse::flag(&items, "prune").unwrap_or(true);
-    let (mut includes, mut excludes): (Vec<String>, Vec<String>) = (Vec::new(), Vec::new());
-    for it in &items {
-        if let optparse::Item::Opt { name, value, neg } = it {
-            let list = match *name {
-                "include" => &mut includes,
-                "exclude" => &mut excludes,
-                _ => continue,
-            };
-            if *neg {
-                list.clear();
-            } else if let Some(v) = value {
-                list.push(v.clone());
-            }
-        }
-    }
+    let all = items.on("all");
+    let prune = items.flag("prune").unwrap_or(true);
+    let (mut includes, excludes) = (items.values("include"), items.values("exclude"));
     if includes.is_empty() {
         includes.push("refs/tags/*".into());
     }
