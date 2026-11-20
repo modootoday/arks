@@ -515,3 +515,55 @@ grep --no-quiet e
 grep --no-column --column e
 grep e HEAD:src
 grep -c e HEAD HEAD~3
+# --- ls-files ---
+ls-files -t
+ls-files -v
+ls-files -f
+ls-files -c -m -d -t
+ls-files --no-cached -m
+ls-files --no-deleted -d -c
+ls-files --no-modified -m
+ls-files --no-others -o
+ls-files --no-stage -s
+ls-files --no-unmerged -u
+ls-files -s --abbrev
+ls-files -s --abbrev=10
+ls-files -s --no-abbrev
+ls-files --deduplicate -c -m
+ls-files --no-deduplicate -c -m
+ls-files -o --directory
+ls-files -o --no-directory --directory
+ls-files -o --directory --no-empty-directory
+ls-files -o --directory --empty-directory
+ls-files -o -x '*.txt'
+ls-files -o --exclude='*.log'
+ls-files -o --no-exclude-standard
+ls-files -i -o -x '*.log'
+ls-files -c -i -x '*.md'
+ls-files -o -X .git/info/exclude
+ls-files -o --exclude-from=.git/info/exclude
+ls-files -o --exclude-per-directory=.gitignore
+ls-files -o --no-exclude-per-directory
+ls-files --eol
+ls-files --no-eol
+ls-files --format='%(objectmode) %(objecttype) %(objectsize) %(objectsize:padded)|%(stage) %(eolinfo:index) %(eolinfo:worktree) %(eolattr) %(path)'
+ls-files --format='%(path)%x09%(objectname)'
+ls-files --debug
+ls-files --no-debug
+ls-files --with-tree=HEAD~3
+ls-files --no-with-tree
+ls-files -k
+ls-files --killed
+ls-files --no-killed
+ls-files --resolve-undo
+ls-files --no-resolve-undo
+ls-files -z -t
+ls-files --error-unmatch nope
+ls-files --no-error-unmatch nope
+ls-files --sparse
+ls-files --no-sparse
+ls-files --recurse-submodules
+ls-files --no-recurse-submodules
+ls-files --full-name src
+ls-files --no-full-name src
+ls-files --no-ignored -o
