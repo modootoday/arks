@@ -148,6 +148,39 @@ pub fn read_line_stdin() -> Option<String> {
     Some(s)
 }
 
+/// The editor git-var(1) documents for `GIT_EDITOR`: `$GIT_EDITOR`,
+/// `core.editor`, `$VISUAL` (not on a dumb terminal), `$EDITOR`, then `vi`.
+pub fn editor(cfg: &arks_config::ConfigSet) -> String {
+    let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+    let dumb = env("TERM").is_none_or(|t| t == "dumb");
+    env("GIT_EDITOR")
+        .or_else(|| cfg.get("core.editor").filter(|v| !v.is_empty()))
+        .or_else(|| if dumb { None } else { env("VISUAL") })
+        .or_else(|| env("EDITOR"))
+        .unwrap_or_else(|| "vi".into())
+}
+
+/// Run `editor` on `path` through the shell.
+pub fn edit(editor: &str, path: &Path) -> CliResult<()> {
+    if editor == ":" {
+        return Ok(());
+    }
+    let c = shell(
+        &format!("{editor} \"$@\""),
+        editor,
+        &[path.to_string_lossy().into_owned()],
+    );
+    let st = run(c)?;
+    if st.success() {
+        Ok(())
+    } else {
+        Err(CliError::Exit(
+            1,
+            "error: there was a problem with the editor".into(),
+        ))
+    }
+}
+
 /// A fresh private temporary directory `<tmp>/<prefix>XXXXXX`.
 pub fn temp_dir(prefix: &str) -> CliResult<PathBuf> {
     let base = std::env::var_os("TMPDIR")
