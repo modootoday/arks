@@ -24,7 +24,7 @@ checkout--worker,internal,Refuse/N/A,must-implement,git internal helper (--*); n
 checkout-index,main,Partial,must-implement,dispatch present but omitted from arks --help (help honesty gap)
 cherry,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 cherry-pick,main,Partial,must-implement,conflicted sequencer edges documented; clean ranges claimed
-citool,gui-or-internal,Refuse/N/A,must-implement,host 2.54 GUI; FS7 external handoff
+citool,gui-or-internal,Partial,must-implement,A3 host-tested; terminal commit tool (--amend/--nocommit)
 clean,main,Partial,must-implement,SoT N/A: -e exclude pathspec extras beyond pin subset
 clone,main,Partial,must-implement,SoT: not --shared; bundle-uri/filter subsets Claimed elsewhere
 column,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
@@ -37,9 +37,9 @@ credential,credential,Partial,must-implement,SoT N/A: forge OAuth / bundled GCM
 credential-cache,credential,Refuse/N/A,must-implement,credential-cache daemon not claimed; use store/wincred/libsecret/osxkeychain
 credential-cache--daemon,internal,Refuse/N/A,must-implement,git internal helper (--*); not alias inventory
 credential-helper-selector,ancillary,Refuse/N/A,must-implement,Windows GCM selector; use credential-wincred/store
-credential-manager,ancillary,Refuse/N/A,must-implement,Windows Git Credential Manager; not spawned by arks
+credential-manager,ancillary,Partial,must-implement,A3 host-tested; helper protocol on the OS store (fake backend in CI)
 credential-store,credential,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-credential-wincred,ancillary,Partial,must-implement,host 2.54 list-cmds; arks first-party wincred helper (Partial)
+credential-wincred,ancillary,Partial,must-implement,A3 host-tested; helper protocol on the OS store (fake backend in CI)
 daemon,server,Partial,must-implement,G32 Claimed server; full git-daemon option set not stamped here
 describe,main,Partial,must-implement,SoT N/A: --match globs beyond claimed
 diagnose,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
@@ -68,10 +68,10 @@ fsmonitor--daemon,internal,Refuse/N/A,must-implement,git internal helper (--*); 
 gc,main,Partial,must-implement,SoT refuse/N/A: --prune=now (CORR-001); --auto/detach
 get-tar-commit-id,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 grep,main,Partial,must-implement,SoT N/A: -P PCRE
-gui,gui-or-internal,Refuse/N/A,must-implement,host 2.54 GUI; FS7 external handoff
-gui--askpass,gui-or-internal,Refuse/N/A,must-implement,git internal helper (--*)
-gui--askyesno,gui-or-internal,Refuse/N/A,must-implement,git internal helper (--*)
-gui.tcl,gui-or-internal,Refuse/N/A,must-implement,git internal helper
+gui,gui-or-internal,Partial,must-implement,A3 host-tested; terminal UI with git-gui argv (blame/browser/citool/version)
+gui--askpass,gui-or-internal,Partial,must-implement,A3 host-tested; terminal askpass prompt
+gui--askyesno,gui-or-internal,Partial,must-implement,A3 host-tested; terminal yes/no prompt
+gui.tcl,gui-or-internal,Partial,must-implement,A3 host-tested; same entry as gui
 hash-object,main,Partial,must-implement,SoT N/A/edge: --stdin-paths batch extras
 help,main,Partial,must-implement,dispatch present but omitted from arks --help (help honesty gap)
 history,porcelain,Partial,must-implement,host 2.54+ skew; Partial help/refuse (not pin 2.39.5)
@@ -177,7 +177,7 @@ tag,main,Partial,must-implement,command present; signing depth owned by R4/G38 â
 unpack-file,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 unpack-objects,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 update,ancillary,Refuse/N/A,must-implement,listed on host but not executable porcelain (not a git command)
-update-git-for-windows,ancillary,Refuse/N/A,must-implement,Windows packaging updater; not git porcelain
+update-git-for-windows,ancillary,Partial,must-implement,A3 host-tested; reports a newer arks release only; never installs
 update-index,main,Partial,must-implement,SoT N/A: --stdin full + chmod skip-worktree edges
 update-ref,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar â€” survey does not invent Claimed
 update-server-info,server,Partial,must-implement,G29 Claimed; option depth not stamped here
