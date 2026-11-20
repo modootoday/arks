@@ -532,34 +532,63 @@ pub fn cmd_stripspace(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks mktag` — read tag object from stdin, write if headers look valid.
+/// `arks mktag [--[no-]strict]` — validate a tag object on stdin and write it.
+/// Cite: https://git-scm.com/docs/git-mktag
 pub fn cmd_mktag(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    let mut strict = true;
+    for a in args {
+        match a.as_str() {
+            "--strict" => strict = true,
+            "--no-strict" => strict = false,
+            _ if a.starts_with('-') => return Err(CliError::Exit(129, "usage: git mktag".into())),
+            _ => {}
+        }
+    }
     let mut buf = Vec::new();
     io::stdin().read_to_end(&mut buf)?;
-    let text = std::str::from_utf8(&buf)
-        .map_err(|_| CliError::Msg("mktag: tag payload must be utf-8".into()))?;
-    let mut has_object = false;
-    let mut has_type = false;
-    let mut has_tag = false;
-    for line in text.lines() {
-        if line.is_empty() {
-            break;
-        }
-        if let Some(rest) = line.strip_prefix("object ") {
-            has_object = Oid::from_hex(rest.trim()).is_ok();
-        } else if line.starts_with("type ") {
-            has_type = true;
-        } else if line.starts_with("tag ") {
-            has_tag = true;
-        }
-    }
-    if !(has_object && has_type && has_tag) {
-        return Err(CliError::Msg(
-            "mktag: missing object/type/tag headers".into(),
+    let bad = || {
+        CliError::Exit(
+            128,
+            "error: tag input does not pass fsck\nfatal: tag on stdin did not pass our strict fsck check".into(),
+        )
+    };
+    let text = std::str::from_utf8(&buf).map_err(|_| bad())?;
+    let mut lines = text.split('\n');
+    let object = lines
+        .next()
+        .and_then(|l| l.strip_prefix("object "))
+        .and_then(|h| Oid::from_hex(h).ok())
+        .ok_or_else(bad)?;
+    let ty = lines
+        .next()
+        .and_then(|l| l.strip_prefix("type "))
+        .ok_or_else(bad)?
+        .to_string();
+    let tag = lines.next().and_then(|l| l.strip_prefix("tag ")).ok_or_else(bad)?;
+    if tag.is_empty() || (strict && !refname_ok(&format!("refs/tags/{tag}"), false, false)) {
+        return Err(CliError::Exit(
+            128,
+            format!("error: tag input does not pass fsck: badTagName: invalid 'tag' name: {tag}\nfatal: tag on stdin did not pass our strict fsck check"),
         ));
     }
+    let tagger = lines.next().unwrap_or("");
+    if strict && !tagger.starts_with("tagger ") {
+        return Err(bad());
+    }
     let mut repo = open_repo()?;
+    let target = repo.get_object(&object).map_err(|_| {
+        CliError::fatal(format!(
+            "could not read tagged object '{}'",
+            object.to_hex()
+        ))
+    })?;
+    if target.kind.as_str() != ty {
+        return Err(CliError::fatal(format!(
+            "object '{}' tagged as '{ty}', but is a '{}' type",
+            object.to_hex(),
+            target.kind.as_str()
+        )));
+    }
     let format = repo.object_format();
     let obj = RawObject::new(ObjectKind::Tag, buf);
     let oid = repo.store_mut().put(format, &obj)?;
@@ -567,50 +596,115 @@ pub fn cmd_mktag(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks mktree` — build tree from ls-tree style stdin lines.
+/// `arks mktree [-z] [--missing] [--batch]` — build trees from ls-tree lines.
+/// Cite: https://git-scm.com/docs/git-mktree
 pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-z", "--missing"])?;
-    let nul = args.iter().any(|a| a == "-z");
-    let mut buf = Vec::new();
-    io::stdin().read_to_end(&mut buf)?;
-    if nul {
-        for b in &mut buf {
-            if *b == 0 {
-                *b = b'\n';
+    let (mut nul, mut missing, mut batch) = (false, false, false);
+    for a in args {
+        match a.as_str() {
+            "-z" => nul = true,
+            "--missing" => missing = true,
+            "--no-missing" => missing = false,
+            "--batch" => batch = true,
+            "--no-batch" => batch = false,
+            // Positional arguments are accepted and ignored, as in stock git.
+            _ if a == "-" || !a.starts_with('-') || a == "--" => {}
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git mktree [-z] [--missing] [--batch]".into(),
+                ));
             }
         }
     }
-    let text = String::from_utf8(buf).map_err(|_| CliError::Msg("mktree: invalid utf-8".into()))?;
-    let mut entries = Vec::new();
-    for line in text.lines() {
+    let mut buf = Vec::new();
+    io::stdin().read_to_end(&mut buf)?;
+    let sep = if nul { b'\0' } else { b'\n' };
+    let mut repo = open_repo()?;
+    let format = repo.object_format();
+    let mut entries: Vec<TreeEntry> = Vec::new();
+    let mut seen_any = false;
+    let mut out = String::new();
+    let flush = |entries: &mut Vec<TreeEntry>,
+                     repo: &mut Repository,
+                     out: &mut String|
+     -> CliResult<()> {
+        let tree = Tree::new(std::mem::take(entries)).map_err(|e| CliError::fatal(e.to_string()))?;
+        let payload = tree.encode().map_err(|e| CliError::Msg(e.to_string()))?;
+        let obj = RawObject::new(ObjectKind::Tree, payload);
+        let oid = repo.store_mut().put(format, &obj)?;
+        out.push_str(&oid.to_hex());
+        out.push('\n');
+        Ok(())
+    };
+    let recs: Vec<&[u8]> = buf.split(|b| *b == sep).collect();
+    let n = recs.len();
+    for (i, rec) in recs.into_iter().enumerate() {
+        let line = String::from_utf8_lossy(rec);
         if line.is_empty() {
-            continue;
+            if i + 1 == n {
+                break;
+            }
+            if batch {
+                flush(&mut entries, &mut repo, &mut out)?;
+                seen_any = false;
+                continue;
+            }
+            return Err(CliError::fatal("input format error: (blank line only valid in batch mode)"));
         }
+        seen_any = true;
         let (meta, name) = line
             .split_once('\t')
-            .ok_or_else(|| CliError::Usage("mktree: expected mode type oid\\tname".into()))?;
-        let parts: Vec<&str> = meta.split_whitespace().collect();
+            .ok_or_else(|| CliError::fatal(format!("input format error: {line}")))?;
+        let parts: Vec<&str> = meta.split(' ').collect();
         if parts.len() != 3 {
-            return Err(CliError::Usage(
-                "mktree: expected '<mode> <type> <oid>\\t<name>'".into(),
-            ));
+            return Err(CliError::fatal(format!("input format error: {line}")));
         }
         let mode = TreeMode::parse(parts[0])
-            .map_err(|e| CliError::Msg(format!("mktree: bad mode {}: {e}", parts[0])))?;
-        let oid = Oid::from_hex(parts[2]).map_err(|e| CliError::Msg(e.to_string()))?;
+            .map_err(|_| CliError::fatal(format!("input format error: {line}")))?;
+        let oid = Oid::from_hex(parts[2])
+            .map_err(|_| CliError::fatal(format!("input format error: {line}")))?;
+        let want = if mode.is_tree() {
+            "tree"
+        } else if parts[0] == "160000" {
+            "commit"
+        } else {
+            "blob"
+        };
+        if parts[1] != want {
+            return Err(CliError::fatal(format!(
+                "entry '{name}' object type ({}) doesn't match mode type ({want})",
+                parts[1]
+            )));
+        }
+        if !missing && want != "commit" {
+            match repo.get_object(&oid) {
+                Ok(o) if o.kind.as_str() == want => {}
+                Ok(o) => {
+                    return Err(CliError::fatal(format!(
+                        "entry '{name}' object {} is a {} but specified type was ({want})",
+                        oid.to_hex(),
+                        o.kind.as_str()
+                    )));
+                }
+                Err(_) => {
+                    return Err(CliError::fatal(format!(
+                        "entry '{name}' object {} is unavailable",
+                        oid.to_hex()
+                    )));
+                }
+            }
+        }
         entries.push(TreeEntry {
             mode,
             name: name.to_string(),
             oid,
         });
     }
-    let tree = Tree::new(entries).map_err(|e| CliError::Msg(e.to_string()))?;
-    let payload = tree.encode().map_err(|e| CliError::Msg(e.to_string()))?;
-    let mut repo = open_repo()?;
-    let format = repo.object_format();
-    let obj = RawObject::new(ObjectKind::Tree, payload);
-    let oid = repo.store_mut().put(format, &obj)?;
-    println!("{}", oid.to_hex());
+    if seen_any || !batch || (out.is_empty() && !buf.is_empty()) {
+        flush(&mut entries, &mut repo, &mut out)?;
+    }
+    print!("{out}");
     Ok(())
 }
 
@@ -1810,44 +1904,65 @@ pub fn cmd_mailsplit(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks get-tar-commit-id` — read commit oid from `arks archive`/`git archive` tar (subset).
+/// `arks get-tar-commit-id` — print the commit id stored in a `git archive`
+/// tar's pax global header (`comment=`); exit 1 when absent.
+/// Cite: https://git-scm.com/docs/git-get-tar-commit-id
 pub fn cmd_get_tar_commit_id(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let mut buf = Vec::new();
-    io::stdin().read_to_end(&mut buf)?;
-    // git archive --prefix embeds pax/global header with `comment=<oid>` or `42 comment=<oid>`.
-    let text = String::from_utf8_lossy(&buf);
-    for token in ["comment=", "42 comment="].iter() {
-        if let Some(idx) = text.find(token) {
-            let rest = &text[idx + token.len()..];
-            let oid: String = rest.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
-            if oid.len() == 40 || oid.len() == 64 {
-                println!("{oid}");
-                return Ok(());
-            }
-        }
+    if !args.is_empty() {
+        return Err(CliError::Exit(129, "usage: git get-tar-commit-id".into()));
     }
-    Err(CliError::Msg(
-        "get-tar-commit-id: no commit comment found in tar stream".into(),
-    ))
+    let mut buf = vec![0u8; 1024];
+    let mut got = 0;
+    let mut stdin = io::stdin().lock();
+    while got < 1024 {
+        let n = stdin.read(&mut buf[got..])?;
+        if n == 0 {
+            break;
+        }
+        got += n;
+    }
+    if got < 1024 {
+        return Err(CliError::fatal(
+            "git get-tar-commit-id: EOF before reading tar header: Success",
+        ));
+    }
+    // Header block: typeflag 'g' at 156, ustar magic at 257; record at 512.
+    if buf[156] != b'g' || &buf[257..262] != b"ustar" {
+        return Err(CliError::silent(1));
+    }
+    let rec = &buf[512..1024];
+    let text = String::from_utf8_lossy(rec);
+    let Some(rest) = text.strip_prefix("52 comment=").or_else(|| text.strip_prefix("76 comment=")) else {
+        return Err(CliError::silent(1));
+    };
+    let oid: String = rest.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
+    if oid.len() != 40 && oid.len() != 64 {
+        return Err(CliError::silent(1));
+    }
+    println!("{oid}");
+    Ok(())
 }
 
-/// `arks unpack-file <blob>` — write blob to temp file; print path (subset).
+/// `arks unpack-file <blob>` — write the blob to `.merge_file_XXXXXX` in the
+/// current directory and print that name. Cite: https://git-scm.com/docs/git-unpack-file
 pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let rev = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("unpack-file <blob>".into()))?;
+    let [rev] = args else {
+        return Err(CliError::Exit(129, "usage: git unpack-file <blob>".into()));
+    };
     let repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev)?;
-    let obj = repo.get_object(&oid)?;
+    let oid = resolve_rev(&repo, rev).map_err(|_| CliError::fatal(format!("Not a valid object name {rev}")))?;
+    let obj = repo
+        .get_object(&oid)
+        .map_err(|_| CliError::fatal(format!("unable to read blob object {}", oid.to_hex())))?;
     if obj.kind != ObjectKind::Blob {
-        return Err(CliError::Msg(format!("unpack-file: {rev} is not a blob")));
+        return Err(CliError::fatal(format!(
+            "unable to read blob object {}",
+            oid.to_hex()
+        )));
     }
-    let path = std::env::temp_dir().join(format!(".merge_file_{}", &oid.to_hex()[..8]));
-    fs::write(&path, &obj.payload)?;
-    println!("{}", path.display());
+    let name = crate::cmd::plumbing_ext::unique_merge_file_name(&crate::util::cwd()?);
+    fs::write(&name, &obj.payload)?;
+    println!("{}", name.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default());
     Ok(())
 }
 

@@ -524,6 +524,30 @@ pub(crate) fn loose_objects(repo: &Repository) -> Vec<(Oid, std::path::PathBuf)>
     out
 }
 
+/// A unique `.merge_file_XXXXXX` name in `dir`.
+pub(crate) fn unique_merge_file_name(dir: &std::path::Path) -> std::path::PathBuf {
+    let alphabet = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let mut n = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0)
+        ^ u128::from(std::process::id());
+    loop {
+        let mut s = String::from(".merge_file_");
+        for _ in 0..6 {
+            s.push(alphabet[(n % 62) as usize] as char);
+            n /= 62;
+        }
+        let p = dir.join(&s);
+        if !p.exists() {
+            return p;
+        }
+        n = n
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+    }
+}
+
 /// `verify-pack` for one pack/idx pair: checks the pack checksum, every
 /// object, and the idx; returns the verbose / stat text.
 pub(crate) fn verify_one_pack(
