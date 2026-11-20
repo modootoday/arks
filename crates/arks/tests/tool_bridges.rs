@@ -174,8 +174,8 @@ fn send_email_dry_run_and_sendmail_command() {
     std::fs::write(
         &script,
         format!(
-            "#!/bin/sh\necho \"$@\" >> {0}\ncat >> {0}\n",
-            sink.display()
+            "#!/bin/sh\necho \"$@\" >> '{0}'\ncat >> '{0}'\n",
+            sink.display().to_string().replace('\\', "/")
         ),
     )
     .unwrap();
@@ -184,7 +184,12 @@ fn send_email_dry_run_and_sendmail_command() {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
     }
-    let cmd = format!("--sendmail-cmd={}", script.display());
+    // --sendmail-cmd runs through the shell (as in git), where backslashes
+    // are escapes; Windows accepts '/' in paths.
+    let cmd = format!(
+        "--sendmail-cmd={}",
+        script.display().to_string().replace('\\', "/")
+    );
     ok(
         &d,
         &[
