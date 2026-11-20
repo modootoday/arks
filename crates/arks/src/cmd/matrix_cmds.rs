@@ -14,53 +14,6 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
-/// `arks ls-remote [<options>] [<remote> [<patterns>…]]`
-pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--heads", "--tags", "-h", "-t"])?;
-    let heads = args.iter().any(|a| a == "--heads" || a == "-h");
-    let tags = args.iter().any(|a| a == "--tags" || a == "-t");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    let remote_or_url = positional.first().map(|s| s.as_str()).unwrap_or("origin");
-    let patterns: Vec<&str> = positional.iter().skip(1).map(|s| s.as_str()).collect();
-    let url = resolve_remote_url(remote_or_url)?;
-    let refs = arks_remote::ls_remote(&url).map_err(|e| CliError::Msg(e.to_string()))?;
-    for r in refs {
-        if heads && !r.name.starts_with("refs/heads/") {
-            continue;
-        }
-        if tags && !r.name.starts_with("refs/tags/") {
-            continue;
-        }
-        // git-ls-remote: patterns match the tail of a ref name (path components).
-        if !patterns.is_empty()
-            && !patterns
-                .iter()
-                .any(|p| r.name == *p || r.name.ends_with(&format!("/{p}")))
-        {
-            continue;
-        }
-        println!("{}\t{}", r.oid.to_hex(), r.name);
-    }
-    Ok(())
-}
-
-fn resolve_remote_url(name_or_url: &str) -> CliResult<String> {
-    if name_or_url.contains("://")
-        || name_or_url.starts_with("git@")
-        || Path::new(name_or_url).exists()
-    {
-        return Ok(name_or_url.to_string());
-    }
-    let repo = open_repo()?;
-    let cfg = repo.git_dir().join("config");
-    let remotes = arks_remote::list_remotes(&cfg)?;
-    remotes
-        .into_iter()
-        .find(|r| r.name == name_or_url)
-        .map(|r| r.url)
-        .ok_or_else(|| CliError::Msg(format!("No such remote: {name_or_url}")))
-}
-
 /// `arks prune` — delete unreachable loose objects.
 pub fn cmd_prune(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-n", "--dry-run", "-v", "--verbose"])?;

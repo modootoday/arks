@@ -14,6 +14,7 @@ pub mod config;
 pub mod core;
 pub mod credential;
 pub mod diff_render;
+pub mod fetch;
 pub mod for_each_ref;
 pub mod grep;
 pub mod history;
@@ -27,14 +28,17 @@ pub mod lock;
 pub mod log_cmd;
 pub mod log_format;
 pub mod log_graph;
+pub mod ls_remote;
 pub mod maint;
 pub mod matrix_cmds;
 pub mod matrix_rest;
 pub mod merge;
 pub mod merge_engine;
 pub mod notes;
+pub mod opt_spec;
 pub mod patch;
 pub mod plumbing;
+pub mod push;
 pub mod range_diff;
 pub mod raw_diff;
 pub mod remote;
@@ -69,6 +73,7 @@ pub use core::{
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
+pub use fetch::cmd_fetch;
 pub use for_each_ref::cmd_for_each_ref;
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
@@ -80,15 +85,16 @@ pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show};
+pub use ls_remote::cmd_ls_remote;
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
     cmd_credential_store, cmd_diagnose, cmd_fmt_merge_msg, cmd_for_each_repo,
-    cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_ls_remote, cmd_mailinfo,
-    cmd_mailsplit, cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant,
-    cmd_patch_id, cmd_prune, cmd_prune_packed, cmd_request_pull, cmd_shell, cmd_show_branch,
-    cmd_show_index, cmd_stripspace, cmd_unpack_file, cmd_unpack_objects, cmd_upload_archive,
-    cmd_var, cmd_verify_pack,
+    cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_mailinfo, cmd_mailsplit,
+    cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant, cmd_patch_id,
+    cmd_prune, cmd_prune_packed, cmd_request_pull, cmd_shell, cmd_show_branch, cmd_show_index,
+    cmd_stripspace, cmd_unpack_file, cmd_unpack_objects, cmd_upload_archive, cmd_var,
+    cmd_verify_pack,
 };
 pub use matrix_rest::{
     cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_fetch_pack, cmd_http_fetch,
@@ -102,9 +108,10 @@ pub use plumbing::{
     cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_rev_list,
     cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
+pub use push::cmd_push;
 pub use range_diff::cmd_range_diff;
 pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
-pub use remote::{cmd_clone, cmd_fetch, cmd_push, cmd_remote};
+pub use remote::{cmd_clone, cmd_remote};
 pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use server::{

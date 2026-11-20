@@ -1,4 +1,4 @@
-//! Remote client porcelain (fetch / push / clone / remote).
+//! Remote client porcelain (clone / remote) and helpers shared with fetch / push.
 
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags};
@@ -90,110 +90,11 @@ pub fn cmd_remote(args: &[String]) -> CliResult<()> {
     }
 }
 
-pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
-    // Cloud drop-in §O: `fetch <remote> <branch>...` writes FETCH_HEAD; `-q`.
-    // C7b: local path / file:// remotes and `<src>:<dst>` refspecs on them.
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let args = &args
-        .iter()
-        .filter(|a| *a != "-q" && *a != "--quiet")
-        .cloned()
-        .collect::<Vec<_>>();
-    refuse_unknown_flags(args, &["--depth", "--filter"])?;
-    let mut depth: Option<u32> = None;
-    let mut filter: Option<String> = None;
-    let mut positional = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--depth" {
-            i += 1;
-            let n = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("fetch --depth <n>".into()))?;
-            depth = Some(parse_depth(n)?);
-        } else if let Some(rest) = args[i].strip_prefix("--depth=") {
-            depth = Some(parse_depth(rest)?);
-        } else if args[i] == "--filter" {
-            i += 1;
-            let spec = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("fetch --filter <spec>".into()))?;
-            filter = Some(parse_filter(spec)?);
-        } else if let Some(rest) = args[i].strip_prefix("--filter=") {
-            filter = Some(parse_filter(rest)?);
-        } else {
-            positional.push(args[i].clone());
-        }
-        i += 1;
-    }
-    let remote_name = positional.first().map(String::as_str).unwrap_or("origin");
-    let mut repo = open_repo()?;
-    // SHAL-001 (M20 Cx-4) / CORR-005 (M20 Cx-6): plant shallow.lock → fetch/deepen refuse.
-    // Cite: https://git-scm.com/docs/gitrepository-layout (shallow)
-    let shallow_lock = repo.common_dir().join("shallow.lock");
-    if shallow_lock.is_file() {
-        return Err(CliError::Msg(format!(
-            "Unable to create '{}' (SHAL-001 / CORR-005 — concurrent shallow rewrite / deepen refuse; lease ≠ skip)",
-            shallow_lock.display()
-        )));
-    }
-    // SHAL-004 (M20 Cx-7): shallow + grafts while peers fetch/unshallow.
-    let shallow = repo.common_dir().join("shallow");
-    let grafts = repo.git_dir().join("info/grafts");
-    let grafts_common = repo.common_dir().join("info/grafts");
-    if shallow.is_file() && (grafts.is_file() || grafts_common.is_file()) {
-        return Err(CliError::Msg(
-            "fetch refused (SHAL-004 — shallow + grafts interaction; serialize unshallow vs shallow fetch peers)".into(),
-        ));
-    }
-    let cfg = repo.git_dir().join("config");
-    let remotes = arks_remote::list_remotes(&cfg)?;
-    let configured = remotes.iter().find(|r| r.name == remote_name);
-    let local_url = match configured {
-        Some(r) if arks_remote::is_local_remote(&r.url) => Some(r.url.clone()),
-        None if arks_remote::is_local_remote(remote_name) => Some(remote_name.to_string()),
-        _ => None,
-    };
-    if let Some(url) = local_url {
-        if depth.is_some() || filter.is_some() {
-            return Err(CliError::NotImplemented(
-                "fetch --depth/--filter from a local path is not claimed".into(),
-            ));
-        }
-        drop(repo);
-        let specs = configured.map(|r| r.fetch.clone()).unwrap_or_default();
-        return crate::cmd::remote_local::fetch_local(
-            &url,
-            configured.map(|r| r.name.as_str()),
-            &specs,
-            &positional[1.min(positional.len())..],
-            quiet,
-        );
-    }
-    let remote =
-        configured.ok_or_else(|| CliError::Msg(format!("No such remote: {remote_name}")))?;
-    let opts = arks_remote::FetchOptions {
-        depth,
-        filter,
-        ..Default::default()
-    };
-    let result = arks_remote::fetch_remote_with(&mut repo, &remote.url, remote_name, &opts)?;
-    for (name, oid) in result.updated {
-        println!("{name}: {}", oid.to_hex());
-    }
-    write_fetch_head(
-        &repo,
-        remote_name,
-        &remote.url,
-        &positional[1.min(positional.len())..],
-    )
-}
-
 /// Write `FETCH_HEAD` per git-fetch §OUTPUT / gitrepository-layout: one line per
 /// fetched branch, `<oid>\t[not-for-merge]\tbranch '<b>' of <url>`. Explicit
 /// branch arguments are all for-merge; without them only the current branch's
 /// upstream is for-merge.
-fn write_fetch_head(
+pub(crate) fn write_fetch_head(
     repo: &arks_repo::Repository,
     remote_name: &str,
     url: &str,
@@ -251,257 +152,6 @@ fn write_fetch_head(
     }
     fs::write(repo.git_dir().join("FETCH_HEAD"), lines)?;
     Ok(())
-}
-
-pub fn cmd_push(args: &[String]) -> CliResult<()> {
-    // `-u` / `--set-upstream`: write branch.<name>.remote + .merge after a successful
-    // branch push (git-push). Tag short names DWIM to refs/tags/ when no head exists.
-    // Cloud drop-in §O: `--dry-run`/`-n` (local resolution only, no network),
-    // `<src>:<dst>` refspecs, `-q`; remote-tracking ref updated after success.
-    let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "unq", "o"),
-        &[("-n", "--dry-run"), ("--quiet", "-q")],
-    );
-    let dry_run = args.iter().any(|a| a == "--dry-run");
-    let quiet = args.iter().any(|a| a == "-q");
-    let args = &args
-        .iter()
-        .filter(|a| *a != "--dry-run" && *a != "-q")
-        .cloned()
-        .collect::<Vec<_>>();
-    refuse_unknown_flags(
-        args,
-        &[
-            "--force-with-lease",
-            "--push-option",
-            "-o",
-            "-u",
-            "--set-upstream",
-        ],
-    )?;
-    let mut force_with_lease = false;
-    let mut set_upstream = false;
-    let mut lease_expect: Option<(String, String)> = None;
-    let mut push_options: Vec<String> = Vec::new();
-    let mut positional: Vec<String> = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--force-with-lease" {
-            force_with_lease = true;
-        } else if let Some(rest) = args[i].strip_prefix("--force-with-lease=") {
-            force_with_lease = true;
-            let (r, e) = rest
-                .split_once(':')
-                .ok_or_else(|| CliError::Usage("push --force-with-lease=<ref>:<expect>".into()))?;
-            lease_expect = Some((r.to_string(), e.to_string()));
-        } else if args[i] == "-u" || args[i] == "--set-upstream" {
-            set_upstream = true;
-        } else if args[i] == "--push-option" || args[i] == "-o" {
-            i += 1;
-            let v = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("push --push-option <string>".into()))?;
-            push_options.push(v.clone());
-        } else if let Some(rest) = args[i].strip_prefix("--push-option=") {
-            push_options.push(rest.to_string());
-        } else if args[i].starts_with('-') {
-            return Err(CliError::Usage(format!("unknown push flag {}", args[i])));
-        } else {
-            positional.push(args[i].clone());
-        }
-        i += 1;
-    }
-    let remote_name = positional.first().map(String::as_str).unwrap_or("origin");
-    let refspec = positional.get(1).map(String::as_str);
-    let repo = open_repo()?;
-    let cfg = repo.git_dir().join("config");
-    let remotes = arks_remote::list_remotes(&cfg)?;
-    let configured = remotes.iter().find(|r| r.name == remote_name).cloned();
-    // C7b: a local path / file:// URL works without a configured remote.
-    let remote = match configured.clone() {
-        Some(r) => r,
-        None if arks_remote::is_local_remote(remote_name) => arks_remote::RemoteConfig {
-            name: remote_name.to_string(),
-            url: remote_name.to_string(),
-            fetch: Vec::new(),
-        },
-        None => return Err(CliError::Msg(format!("No such remote: {remote_name}"))),
-    };
-    let remote = &remote;
-    let (refname, oid) = match refspec {
-        // Empty-source delete: `arks push <remote> :<ref>` (S3 / git push shape).
-        Some(rs) if rs.starts_with(':') => {
-            let name = rs[1..].trim();
-            if name.is_empty() {
-                return Err(CliError::Usage("push :<ref>".into()));
-            }
-            let full = if name.starts_with("refs/") {
-                name.to_string()
-            } else {
-                // Deletes prefer heads; tags use full refs/tags/ or existing tag DWIM.
-                let heads = format!("refs/heads/{name}");
-                let tags = format!("refs/tags/{name}");
-                if repo.refs().resolve(&tags).is_ok() && repo.refs().resolve(&heads).is_err() {
-                    tags
-                } else {
-                    heads
-                }
-            };
-            let zero = arks_oid::Oid::from_hex("0000000000000000000000000000000000000000")
-                .map_err(|e| CliError::Msg(e.to_string()))?;
-            (full, zero)
-        }
-        Some(rs) if rs.contains(':') => {
-            let (src, dst) = rs.split_once(':').expect("contains ':'");
-            if src.starts_with('+') {
-                return Err(CliError::NotImplemented(
-                    "push +<src>:<dst> (force) not claimed; use --force-with-lease".into(),
-                ));
-            }
-            let oid = crate::cmd::shared::resolve_rev(&repo, src)?;
-            let full = if dst.starts_with("refs/") {
-                dst.to_string()
-            } else if repo.refs().resolve(&format!("refs/tags/{src}")).is_ok() {
-                format!("refs/tags/{dst}")
-            } else {
-                format!("refs/heads/{dst}")
-            };
-            (full, oid)
-        }
-        Some(name) => {
-            let full = if name == "HEAD" {
-                match repo.head_target()? {
-                    arks_refs::RefTarget::Symbolic(s) => s,
-                    arks_refs::RefTarget::Direct(_) => {
-                        return Err(CliError::Msg(
-                            "detached HEAD push requires explicit ref".into(),
-                        ));
-                    }
-                }
-            } else if name.starts_with("refs/") {
-                name.to_string()
-            } else {
-                resolve_push_dwim(&repo, name)?
-            };
-            let oid = repo.refs().resolve(&full)?;
-            (full, oid)
-        }
-        None => {
-            let oid = repo.head_oid()?;
-            let full = match repo.head_target()? {
-                arks_refs::RefTarget::Symbolic(s) => s,
-                arks_refs::RefTarget::Direct(_) => {
-                    return Err(CliError::Msg(
-                        "detached HEAD push requires explicit ref".into(),
-                    ));
-                }
-            };
-            (full, oid)
-        }
-    };
-    let expected_old = if let Some((r, expect_hex)) = lease_expect {
-        let full = if r.starts_with("refs/") {
-            r
-        } else {
-            format!("refs/heads/{r}")
-        };
-        if full != refname {
-            return Err(CliError::Usage(
-                "push --force-with-lease ref must match the pushed ref".into(),
-            ));
-        }
-        Some(arks_oid::Oid::from_hex(&expect_hex).map_err(|e| CliError::Msg(e.to_string()))?)
-    } else if force_with_lease {
-        // Default: expect remote-tracking tip for the same branch.
-        let tracking = format!(
-            "refs/remotes/{}/{}",
-            remote_name,
-            refname
-                .strip_prefix("refs/heads/")
-                .unwrap_or(refname.as_str())
-        );
-        Some(repo.refs().resolve(&tracking).map_err(|_| {
-            CliError::Msg(format!(
-                "force-with-lease: missing tracking ref {tracking}; pass --force-with-lease=<ref>:<expect>"
-            ))
-        })?)
-    } else {
-        None
-    };
-    if dry_run {
-        eprintln!("To {}", remote.url);
-        eprintln!(" * {} -> {} (dry run)", &oid.to_hex()[..7], refname);
-        return Ok(());
-    }
-    let is_zero = oid.to_hex().bytes().all(|b| b == b'0');
-    if arks_remote::is_local_remote(&remote.url) {
-        if expected_old.is_some() || !push_options.is_empty() {
-            return Err(CliError::NotImplemented(
-                "push --force-with-lease/--push-option to a local path is not claimed".into(),
-            ));
-        }
-        let src_label = refspec
-            .map(|r| r.split(':').next().unwrap_or(r))
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| refname.strip_prefix("refs/heads/").unwrap_or(&refname))
-            .to_string();
-        crate::cmd::remote_local::push_local(
-            &remote.url,
-            &[crate::cmd::remote_local::LocalPush {
-                src_label,
-                dst: refname.clone(),
-                new: (!is_zero).then_some(oid),
-                force: false,
-            }],
-            quiet,
-        )?;
-    } else {
-        arks_remote::push_remote_with(
-            &repo,
-            &remote.url,
-            &[arks_remote::PushUpdate {
-                refname: refname.clone(),
-                new_oid: oid,
-                expected_old,
-            }],
-            &arks_remote::PushOptions { push_options },
-        )?;
-    }
-    // git-push: update refs/remotes/<remote>/<branch> after a successful branch push.
-    if let (Some(branch), true) = (refname.strip_prefix("refs/heads/"), configured.is_some()) {
-        let tracking = format!("refs/remotes/{remote_name}/{branch}");
-        let mut repo_mut = open_repo()?;
-        if oid.to_hex().bytes().all(|b| b == b'0') {
-            let _ = repo_mut.refs_mut().delete(&tracking, None);
-        } else {
-            repo_mut.refs_mut().update(&tracking, &oid, None)?;
-        }
-    }
-    if set_upstream {
-        if let Some(branch) = refname.strip_prefix("refs/heads/") {
-            // Match git: branch.<name>.remote + branch.<name>.merge
-            crate::cmd::config::cmd_config(&[
-                format!("branch.{branch}.remote"),
-                remote_name.to_string(),
-            ])?;
-            crate::cmd::config::cmd_config(&[format!("branch.{branch}.merge"), refname.clone()])?;
-        }
-    }
-    Ok(())
-}
-
-/// Resolve a short push name: prefer `refs/heads/`, else `refs/tags/` (git DWIM).
-fn resolve_push_dwim(repo: &arks_repo::Repository, name: &str) -> CliResult<String> {
-    let heads = format!("refs/heads/{name}");
-    if repo.refs().resolve(&heads).is_ok() {
-        return Ok(heads);
-    }
-    let tags = format!("refs/tags/{name}");
-    if repo.refs().resolve(&tags).is_ok() {
-        return Ok(tags);
-    }
-    // Default error path keeps heads form (historical message shape).
-    Err(CliError::Msg(format!("ref not found: {heads}")))
 }
 
 pub fn cmd_clone(args: &[String]) -> CliResult<()> {
@@ -718,7 +368,7 @@ fn download_http_bundle(url: &str) -> CliResult<PathBuf> {
     Ok(final_path)
 }
 
-fn parse_depth(raw: &str) -> CliResult<u32> {
+pub(crate) fn parse_depth(raw: &str) -> CliResult<u32> {
     let n: u32 = raw
         .parse()
         .map_err(|_| CliError::Usage(format!("invalid --depth '{raw}'")))?;
@@ -729,7 +379,7 @@ fn parse_depth(raw: &str) -> CliResult<u32> {
 }
 
 /// Claimed partial-clone filter-spec (`blob:none` / `tree:0`; R3 / S1 / O2).
-fn parse_filter(raw: &str) -> CliResult<String> {
+pub(crate) fn parse_filter(raw: &str) -> CliResult<String> {
     arks_remote::validate_claimed_filter(raw)
         .map_err(|e| CliError::NotImplemented(e.to_string()))?;
     Ok(raw.to_string())
