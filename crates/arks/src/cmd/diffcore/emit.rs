@@ -242,8 +242,13 @@ pub fn emit(
             {
                 continue;
             }
-            // Pure renames / mode changes without content change still list.
-            stats.push((i, pair_stat(c, o, p)?));
+            // Pure renames / mode changes without content change still list;
+            // stat-dirty text files do not (binary ones still show sizes).
+            let st = pair_stat(c, o, p)?;
+            if !matches!(st, Stat::Binary(..)) && stat_only(c, p)? {
+                continue;
+            }
+            stats.push((i, st));
         }
         if o.numstat {
             for (i, s) in &stats {
@@ -281,10 +286,28 @@ pub fn emit(
             out.line("", "")?;
         }
         for p in pairs {
-            write_patch(&mut out, c, o, p)?;
+            if !stat_only(c, p)? {
+                write_patch(&mut out, c, o, p)?;
+            }
         }
     }
     Ok(())
+}
+
+/// A work-tree side whose stat data changed but whose content and mode
+/// equal the other side's: raw and name formats list it, while patch and
+/// stat formats have nothing to show and skip it.
+fn stat_only(c: &Content<'_>, p: &Pair) -> CliResult<bool> {
+    let (Some(a), Some(b)) = (&p.old, &p.new) else {
+        return Ok(false);
+    };
+    if p.unmerged || p.is_rename_or_copy() || a.mode != b.mode || a.is_tree() {
+        return Ok(false);
+    }
+    if a.work.is_none() && b.work.is_none() {
+        return Ok(false);
+    }
+    Ok(c.oid(a)? == c.oid(b)?)
 }
 
 fn write_name_only<W: Write>(out: &mut Out<'_, W>, o: &DiffOptions, p: &Pair) -> CliResult<()> {

@@ -11,10 +11,10 @@
 //! `--combined-all-paths`), <https://git-scm.com/docs/diff-format>
 //! (§COMBINED DIFF FORMAT, §diff format for merges).
 
-use super::emit::quote_path;
+use super::emit::{EmitCtx, quote_path};
 use super::options::DiffOptions;
 use super::xdiff::{self, Op};
-use super::{Content, Side};
+use super::{Content, Pair, Side};
 use crate::cmd::log_format::read_commit;
 use crate::error::CliResult;
 use arks_oid::Oid;
@@ -106,12 +106,23 @@ pub fn emit(
     o: &DiffOptions,
     mode: Mode,
     all_paths: bool,
+    ctx: EmitCtx,
+    first_parent: &[Pair],
     entries: &[Entry],
 ) -> CliResult<()> {
     if o.no_output {
         return Ok(());
     }
     let lp = &o.line_prefix;
+    let mut separator = false;
+    if wants_stat(o) && !o.name_only && !o.name_status {
+        // Stat formats of a merge describe the diff to its first parent.
+        let mut so = o.clone();
+        so.patch = false;
+        so.raw = false;
+        super::emit::emit(w, c, &so, ctx, first_parent)?;
+        separator = !first_parent.is_empty();
+    }
     let term = if o.nul { "\0" } else { "\n" };
     if o.name_only {
         for e in entries {
@@ -144,7 +155,7 @@ pub fn emit(
                     .parents
                     .iter()
                     .chain(std::iter::once(&e.result))
-                    .map(|s| hex(c, o, s, true))
+                    .map(|s| hex(c, o, s, ctx.raw_full))
                     .collect();
                 write!(w, "{lp}{colons}{} {} {st}", modes.join(" "), ids.join(" "))?;
             }
@@ -175,13 +186,26 @@ pub fn emit(
         if !o.patch {
             return Ok(());
         }
+        separator = true;
     }
     if o.patch {
+        if separator && !entries.is_empty() {
+            writeln!(w, "{lp}")?;
+        }
         for e in entries {
-            patch(w, c, o, mode, e)?;
+            let mut buf = Vec::new();
+            // `--cc` omits a path all of whose hunks were dropped.
+            if patch(&mut buf, c, o, mode, e)? || mode == Mode::Combined {
+                w.write_all(&buf)?;
+            }
         }
     }
     Ok(())
+}
+
+/// Formats that `-c` / `--cc` take from the first-parent diff.
+pub fn wants_stat(o: &DiffOptions) -> bool {
+    o.stat || o.numstat || o.shortstat || o.dirstat.is_some() || o.summary
 }
 
 /// A row of the combined patch.
@@ -191,13 +215,14 @@ struct Row {
     marks: Vec<u8>,
 }
 
+/// Write one path's combined patch; false when it has no hunk to show.
 fn patch(
     w: &mut impl Write,
     c: &Content<'_>,
     o: &DiffOptions,
     mode: Mode,
     e: &Entry,
-) -> CliResult<()> {
+) -> CliResult<bool> {
     let lp = &o.line_prefix;
     let np = e.parents.len();
     let bytes = |s: &Option<Side>| -> CliResult<Vec<u8>> {
@@ -238,7 +263,7 @@ fn patch(
     )?;
     if pbs.iter().any(|b| xdiff::is_binary(b)) || xdiff::is_binary(&rb) {
         writeln!(w, "{lp}Binary files differ")?;
-        return Ok(());
+        return Ok(true);
     }
     writeln!(w, "{lp}--- a/{}", e.path)?;
     writeln!(w, "{lp}+++ b/{}", e.path)?;
@@ -287,9 +312,43 @@ fn patch(
     }
     // Interesting positions: a lost row or an added line.
     let n = rl.len();
-    let interesting =
-        |j: usize| -> bool { !lost[j].is_empty() || (j < n && added[j].iter().any(|x| *x)) };
+    let mut marked: Vec<bool> = (0..=n)
+        .map(|j| !lost[j].is_empty() || (j < n && added[j].iter().any(|x| *x)))
+        .collect();
     let ctx = o.context();
+    let changed_at = |j: usize, i: usize| -> bool {
+        (j < n && added[j][i]) || lost[j].iter().any(|r| r.marks[i] == b'-')
+    };
+    if mode == Mode::Dense {
+        // Changes closer than the context width form one group; a group
+        // that leaves some parent's lines untouched merely picks that
+        // parent's version and is dropped.
+        let mut j = 0;
+        while j <= n {
+            if !marked[j] {
+                j += 1;
+                continue;
+            }
+            let start = j;
+            let mut last = j;
+            let mut k = j + 1;
+            while k <= n && k - last <= ctx.max(1) {
+                if marked[k] {
+                    last = k;
+                }
+                k += 1;
+            }
+            let group = start..=last;
+            if (0..np).any(|i| !group.clone().any(|x| marked[x] && changed_at(x, i))) {
+                for x in group {
+                    marked[x] = false;
+                }
+            }
+            j = last + 1;
+        }
+    }
+    let interesting = |j: usize| -> bool { marked[j] };
+    let any_hunk = marked.iter().any(|m| *m);
     // Hunks over positions 0..=n (position j covers lost[j] then line j).
     let mut hunks: Vec<(usize, usize)> = Vec::new();
     let mut j = 0;
@@ -326,12 +385,6 @@ fn patch(
     }
     for (s, end) in merged {
         // Positions s..end; line j included when j < n.
-        let changed_vs = |i: usize| -> bool {
-            (s..end).any(|j| (j < n && added[j][i]) || lost[j].iter().any(|r| r.marks[i] == b'-'))
-        };
-        if mode == Mode::Dense && (0..np).any(|i| !changed_vs(i)) {
-            continue;
-        }
         let last_line = end.min(n);
         let mut ranges = Vec::new();
         for i in 0..np {
@@ -379,7 +432,7 @@ fn patch(
             }
         }
     }
-    Ok(())
+    Ok(any_hunk)
 }
 
 /// Add parent `i`'s lost lines to the rows at one position: lines equal
