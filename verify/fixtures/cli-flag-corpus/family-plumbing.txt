@@ -103,3 +103,35 @@ config --show-origin a.b c
 config --default x a.b c
 config --fixed-value a.b c
 config --bogus
+# --- write-tree / commit-tree ---
+write-tree
+write-tree --missing-ok
+write-tree --prefix=src/
+write-tree --prefix=src
+write-tree --prefix=nosuch/
+write-tree --no-prefix --prefix=docs/
+commit-tree -m msg HEAD^{tree}
+commit-tree -m a -m b -p HEAD HEAD^{tree}
+commit-tree -mone -pHEAD -pHEAD~1 HEAD^{tree}
+commit-tree -F .git/fixture.patch HEAD^{tree}
+commit-tree --no-gpg-sign -m x HEAD^{tree}
+commit-tree HEAD^{tree}
+commit-tree -m x HEAD
+commit-tree -m x
+commit-tree -p nosuch -m x HEAD^{tree}
+# --- symbolic-ref ---
+symbolic-ref HEAD
+symbolic-ref --short HEAD
+symbolic-ref -q HEAD
+symbolic-ref --no-recurse HEAD
+symbolic-ref --recurse --short HEAD
+symbolic-ref refs/heads/main
+symbolic-ref -q refs/heads/main
+symbolic-ref HEAD refs/heads/feature
+symbolic-ref -m reason HEAD refs/heads/feature
+symbolic-ref HEAD main
+symbolic-ref HEAD refs/heads/bad..name
+symbolic-ref -d HEAD
+symbolic-ref --delete refs/heads/main
+symbolic-ref FOO refs/heads/main
+symbolic-ref

@@ -25,82 +25,153 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 
 pub fn cmd_write_tree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    // `--missing-ok` (arks never checks object presence while writing trees)
+    // and `--prefix=<dir>/` (print the subtree). Cite: git-write-tree(1).
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[Opt::flag("missing-ok"), Opt::value("prefix")];
+    let items = optparse::parse("write-tree", args, SPEC, optparse::Mode::default())?;
+    let prefix = optparse::value(&items, "prefix");
     let mut repo = open_repo()?;
     let index = read_index(&repo)?;
+    let unmerged: Vec<&IndexEntry> = index.entries.iter().filter(|e| e.stage() != 0).collect();
+    if !unmerged.is_empty() {
+        let mut msg = String::new();
+        let mut last = "";
+        for e in unmerged {
+            if e.path != last {
+                msg.push_str(&format!("{}: unmerged ({})\n", e.path, e.oid.to_hex()));
+                last = &e.path;
+            }
+        }
+        msg.push_str("fatal: git-write-tree: error building trees");
+        return Err(CliError::Exit(128, msg));
+    }
+    let format = repo.object_format();
     let oid = if index.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        let format = repo.object_format();
         repo.store_mut().put(format, &obj)?
     } else {
-        let format = repo.object_format();
         write_tree_from_index(repo.store_mut(), &index.entries, format)?
+    };
+    let oid = match prefix.as_deref().map(|p| p.trim_end_matches('/')) {
+        Some(p) if !p.is_empty() => crate::cmd::shared::tree_entry_at(&repo, &oid, p)
+            .filter(|o| {
+                repo.get_object(o)
+                    .map(|obj| obj.kind == ObjectKind::Tree)
+                    .unwrap_or(false)
+            })
+            .ok_or_else(|| {
+                CliError::fatal(format!(
+                    "git-write-tree: prefix {} not found",
+                    prefix.as_deref().unwrap_or("")
+                ))
+            })?,
+        _ => oid,
     };
     println!("{}", oid.to_hex());
     Ok(())
 }
 
 pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-p", "-m"])?;
+    // `-p`, `-m` / `-F` (paragraphs in order; stdin when neither), and
+    // `-S[<keyid>]` / `--gpg-sign[=<keyid>]` / `--no-gpg-sign` (commit.gpgSign
+    // honored). Cite: git-commit-tree(1).
+    use crate::cmd::optparse::{self, Arg, Item, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::short_value('p', "p"),
+        Opt::short_value('m', "m"),
+        Opt::short_value('F', "F"),
+        Opt::flag("gpg-sign").with_short('S').arg(Arg::Optional),
+    ];
+    let items = optparse::parse("commit-tree", args, SPEC, optparse::Mode::default())?;
+    let pos = optparse::positionals(&items);
+    if pos.len() != 1 {
+        return Err(CliError::fatal("must give exactly one tree"));
+    }
+    let mut repo = open_repo()?;
     let mut parents: Vec<Oid> = Vec::new();
     let mut message: Option<String> = None;
-    let mut tree_arg: Option<String> = None;
-    let mut i = 0;
-    while i < args.len() {
-        match args[i].as_str() {
-            "-p" => {
-                i += 1;
-                let p = args
-                    .get(i)
-                    .ok_or_else(|| CliError::Usage("commit-tree: -p requires a parent".into()))?;
-                parents.push(Oid::from_hex(p).or_else(|_| {
-                    let repo = open_repo()?;
-                    resolve_rev(&repo, p)
-                })?);
+    let mut sign_args: Vec<String> = Vec::new();
+    for it in &items {
+        let Item::Opt { name, value, neg } = it else {
+            continue;
+        };
+        match *name {
+            "p" => {
+                let p = value.as_deref().unwrap_or("");
+                let oid = resolve_rev(&repo, p)
+                    .map_err(|_| CliError::fatal(format!("not a valid object name {p}")))?;
+                let oid = crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Commit,
+                    p,
+                )?;
+                if parents.contains(&oid) {
+                    eprintln!("error: duplicate parent {} ignored", oid.to_hex());
+                } else {
+                    parents.push(oid);
+                }
             }
-            "-m" => {
-                i += 1;
-                let part = args
-                    .get(i)
-                    .ok_or_else(|| CliError::Usage("commit-tree: -m requires a message".into()))?;
-                message = Some(match message {
-                    Some(mut m) => {
-                        m.push('\n');
-                        m.push_str(part);
-                        m
-                    }
-                    None => part.clone(),
+            "m" | "F" => {
+                let text = if *name == "m" {
+                    value.clone().unwrap_or_default()
+                } else {
+                    let f = value.as_deref().unwrap_or("");
+                    let bytes = if f == "-" {
+                        let mut b = Vec::new();
+                        io::stdin().read_to_end(&mut b)?;
+                        b
+                    } else {
+                        fs::read(f).map_err(|e| {
+                            CliError::fatal(format!("could not read log file '{f}': {e}"))
+                        })?
+                    };
+                    String::from_utf8_lossy(&bytes).into_owned()
+                };
+                let m = message.get_or_insert_with(String::new);
+                if !m.is_empty() {
+                    m.push('\n');
+                }
+                m.push_str(&text);
+                // `-m` completes its line; `-F` content is kept verbatim.
+                if *name == "m" && !m.ends_with('\n') {
+                    m.push('\n');
+                }
+            }
+            "gpg-sign" => {
+                sign_args.push(match (neg, value) {
+                    (true, _) => "--no-gpg-sign".into(),
+                    (false, Some(k)) => format!("--gpg-sign={k}"),
+                    (false, None) => "--gpg-sign".into(),
                 });
             }
-            other if other.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!(
-                    "unsupported option: {other}"
-                )));
-            }
-            other => {
-                if tree_arg.is_some() {
-                    return Err(CliError::Usage(
-                        "commit-tree: only one tree argument claimed".into(),
-                    ));
-                }
-                tree_arg = Some(other.to_owned());
-            }
+            _ => {}
         }
-        i += 1;
     }
-    let tree_s = tree_arg
-        .ok_or_else(|| CliError::Usage("commit-tree <tree> [-p <parent>]… -m <msg>".into()))?;
-    let message =
-        message.ok_or_else(|| CliError::Usage("commit-tree: -m <msg> required".into()))?;
-    let message = if message.ends_with('\n') {
-        message
-    } else {
-        format!("{message}\n")
+    let message = match message {
+        Some(m) => m,
+        None => {
+            let mut b = Vec::new();
+            io::stdin().read_to_end(&mut b)?;
+            String::from_utf8_lossy(&b).into_owned()
+        }
     };
-    let mut repo = open_repo()?;
-    let tree = resolve_rev(&repo, &tree_s)?;
+    let tree_s = &pos[0];
+    let tree = resolve_rev(&repo, tree_s)
+        .map_err(|_| CliError::fatal(format!("not a valid object name {tree_s}")))?;
+    let is_tree = repo
+        .get_object(&tree)
+        .map(|o| o.kind == ObjectKind::Tree)
+        .unwrap_or(false);
+    if !is_tree {
+        return Err(CliError::fatal(format!(
+            "{} is not a valid 'tree' object",
+            tree.to_hex()
+        )));
+    }
     // Author and committer come from their own identities (git-commit-tree).
-    let commit = Commit {
+    let mut commit = Commit {
         tree,
         parents,
         author: commit_signature()?,
@@ -108,6 +179,10 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
         gpgsig: None,
         message,
     };
+    let (sign, key) = crate::cmd::sign::want_sign_commit(&sign_args, &repo)?;
+    if sign {
+        crate::cmd::sign::sign_commit(&repo, &mut commit, key.as_deref())?;
+    }
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
     let format = repo.object_format();
     let coid = repo.store_mut().put(format, &cobj)?;
@@ -446,64 +521,127 @@ fn print_tree(
 }
 
 pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
-    // `--short` / `-q` on read. Cite: https://git-scm.com/docs/git-symbolic-ref
-    refuse_unknown_flags(args, &["--short", "-q", "--quiet"])?;
-    let short = args.iter().any(|a| a == "--short");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let args: Vec<String> = args
-        .iter()
-        .filter(|a| !a.starts_with('-'))
-        .cloned()
-        .collect();
-    let args = args.as_slice();
-    if args.is_empty() {
-        return Err(CliError::Usage(
-            "symbolic-ref <name> [<target>]  (read or set)".into(),
-        ));
-    }
+    // Read (`-q`, `--short`, `--[no-]recurse`), set (`-m <reason>`) and
+    // delete (`-d`). Cite: https://git-scm.com/docs/git-symbolic-ref
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::flag("quiet").with_short('q'),
+        Opt::flag("delete").with_short('d'),
+        Opt::flag("short"),
+        Opt::flag("recurse"),
+        Opt::short_value('m', "m"),
+    ];
+    let items = optparse::parse("symbolic-ref", args, SPEC, optparse::Mode::default())?;
+    let pos = optparse::positionals(&items);
+    let quiet = optparse::on(&items, "quiet");
+    let short = optparse::on(&items, "short");
+    let recurse = optparse::flag(&items, "recurse").unwrap_or(true);
+    let reason = optparse::value(&items, "m");
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git symbolic-ref [-m <reason>] <name> <ref>\n   or: git symbolic-ref [-q] [--short] [--no-recurse] <name>\n   or: git symbolic-ref --delete [-q] <name>".into(),
+        )
+    };
     let mut repo = open_repo()?;
-    if args.len() == 1 {
-        let name = &args[0];
-        match repo.refs().read(name)? {
-            RefTarget::Symbolic(target) => {
-                if short {
-                    let s = ["refs/heads/", "refs/tags/", "refs/remotes/", "refs/"]
-                        .iter()
-                        .find_map(|p| target.strip_prefix(p))
-                        .unwrap_or(&target);
-                    println!("{s}");
+    if optparse::on(&items, "delete") {
+        if pos.len() != 1 {
+            return Err(usage());
+        }
+        let name = &pos[0];
+        if name == "HEAD" {
+            return Err(CliError::fatal("deleting 'HEAD' is not allowed"));
+        }
+        return match repo.refs().read(name) {
+            Ok(RefTarget::Symbolic(_)) => {
+                let path = repo.git_dir().join(name);
+                let path = if path.is_file() {
+                    path
                 } else {
-                    println!("{target}");
-                }
+                    repo.common_dir().join(name)
+                };
+                fs::remove_file(&path)?;
                 Ok(())
             }
-            RefTarget::Direct(_) if quiet => Err(CliError::silent(1)),
-            RefTarget::Direct(_) => {
-                Err(CliError::fatal(format!("ref {name} is not a symbolic ref")))
+            _ => Err(CliError::fatal(format!(
+                "Cannot delete {name}, not a symbolic ref"
+            ))),
+        };
+    }
+    match pos.len() {
+        1 => {
+            let name = &pos[0];
+            let mut target = match repo.refs().read(name) {
+                Ok(RefTarget::Symbolic(t)) => t,
+                _ if quiet => return Err(CliError::silent(1)),
+                _ => {
+                    return Err(CliError::fatal(format!("ref {name} is not a symbolic ref")));
+                }
+            };
+            if recurse {
+                for _ in 0..5 {
+                    match repo.refs().read(&target) {
+                        Ok(RefTarget::Symbolic(t)) => target = t,
+                        _ => break,
+                    }
+                }
             }
-        }
-    } else if args.len() == 2 {
-        let name = &args[0];
-        let target = &args[1];
-        if !target.starts_with("refs/") {
-            return Err(CliError::Usage(
-                "symbolic-ref target must be a refs/ path".into(),
-            ));
-        }
-        // REF-021 (M19 Cx-2): concurrent symbolic-ref retarget honors exclusive lock.
-        repo.refs_mut().set_symbolic(name, target).map_err(|e| {
-            let s = e.to_string();
-            if s.contains("locked") || s.contains(".lock") {
-                CliError::Msg(format!(
-                    "{s} (REF-021 — concurrent symbolic-ref retarget fail-closed; lease ≠ skip)"
-                ))
+            if short {
+                let s = ["refs/heads/", "refs/tags/", "refs/remotes/", "refs/"]
+                    .iter()
+                    .find_map(|p| target.strip_prefix(p))
+                    .unwrap_or(&target);
+                println!("{s}");
             } else {
-                CliError::Msg(s)
+                println!("{target}");
             }
-        })?;
-        Ok(())
-    } else {
-        Err(CliError::Usage("symbolic-ref <name> [<target>]".into()))
+            Ok(())
+        }
+        2 => {
+            let name = &pos[0];
+            let target = &pos[1];
+            if name == "HEAD" && !target.starts_with("refs/") {
+                return Err(CliError::fatal("Refusing to point HEAD outside of refs/"));
+            }
+            if !arks_refs::is_valid_refname_allow_onelevel(target) {
+                return Err(CliError::fatal(format!(
+                    "Refusing to set '{name}' to invalid ref '{target}'"
+                )));
+            }
+            let old = repo.refs().resolve(name).ok();
+            if !name.contains('/') && name != "HEAD" {
+                // One-level symbolic refs (`FOO`) live directly in $GIT_DIR.
+                let path = repo.git_dir().join(name);
+                let lock = path.with_file_name(format!("{name}.lock"));
+                if lock.exists() {
+                    return Err(CliError::fatal(format!(
+                        "Unable to create '{}': File exists.",
+                        lock.display()
+                    )));
+                }
+                fs::write(&lock, format!("ref: {target}\n"))?;
+                fs::rename(&lock, &path)?;
+                return Ok(());
+            }
+            // REF-021 (M19 Cx-2): concurrent symbolic-ref retarget honors exclusive lock.
+            repo.refs_mut().set_symbolic(name, target).map_err(|e| {
+                let s = e.to_string();
+                if s.contains("locked") || s.contains(".lock") {
+                    CliError::Msg(format!(
+                        "{s} (REF-021 — concurrent symbolic-ref retarget fail-closed; lease ≠ skip)"
+                    ))
+                } else {
+                    CliError::Msg(s)
+                }
+            })?;
+            if name == "HEAD" {
+                if let (Some(msg), Ok(new)) = (reason, repo.refs().resolve(name)) {
+                    crate::reflog::append_reflog(&repo, "HEAD", old.as_ref(), &new, &msg)?;
+                }
+            }
+            Ok(())
+        }
+        _ => Err(usage()),
     }
 }
 
