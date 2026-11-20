@@ -164,6 +164,16 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "diff-pairs" => cmd::cmd_diff_pairs(args),
         "format-rev" => cmd::cmd_format_rev(args),
         "url-parse" => cmd::cmd_url_parse(args),
+        // A3 merge strategy programs and merge helpers.
+        "merge-index" => cmd::cmd_merge_index(args),
+        "merge-one-file" => cmd::cmd_merge_one_file(args),
+        "merge-octopus" => cmd::cmd_merge_octopus(args),
+        "merge-ours" => cmd::cmd_merge_ours(args),
+        "merge-recursive" => cmd::cmd_merge_recursive(args),
+        "merge-recursive-ours" => cmd::cmd_merge_recursive_ours(args),
+        "merge-recursive-theirs" => cmd::cmd_merge_recursive_theirs(args),
+        "merge-resolve" => cmd::cmd_merge_resolve(args),
+        "merge-subtree" => cmd::cmd_merge_subtree(args),
         "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),

@@ -50,6 +50,9 @@ pub mod matrix_rest;
 pub mod merge;
 pub mod merge_base;
 pub mod merge_engine;
+pub mod merge_helpers;
+pub mod merge_strategies;
+pub mod merge_subtree;
 pub mod notes;
 pub mod opt_parse;
 pub mod opt_spec;
@@ -141,6 +144,11 @@ pub use matrix_rest::{
 };
 pub use merge::cmd_merge;
 pub use merge_base::cmd_merge_base;
+pub use merge_helpers::{cmd_merge_index, cmd_merge_one_file};
+pub use merge_strategies::{
+    cmd_merge_octopus, cmd_merge_ours, cmd_merge_recursive, cmd_merge_recursive_ours,
+    cmd_merge_recursive_theirs, cmd_merge_resolve, cmd_merge_subtree,
+};
 pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch_id::cmd_patch_id;
