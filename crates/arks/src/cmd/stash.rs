@@ -151,20 +151,15 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
                 ));
             }
             let repo = open_repo()?;
+            // Pin 2.39.5 stores any object name it can resolve (the
+            // stash-like check arrived in 2.43); an unknown name fails with 1.
             let oid = if a[0].starts_with("stash@{") || a[0].starts_with("refs/stash@{") {
                 entry(&repo, &entry_index(&a)?)?
             } else {
-                resolve_rev(&repo, &a[0])?
+                resolve_rev(&repo, &a[0]).map_err(|_| {
+                    CliError::Exit(1, format!("Cannot update refs/stash with {}", a[0]))
+                })?
             };
-            let stash_like = crate::cmd::log_format::read_commit(&repo, &oid)
-                .map(|c| c.parents.len() >= 2)
-                .unwrap_or(false);
-            if !stash_like {
-                return Err(CliError::fatal(format!(
-                    "'{}' is not a stash-like commit",
-                    oid.to_hex()
-                )));
-            }
             let msg = p
                 .value("message")
                 .unwrap_or_else(|| "Created via \"git stash store\".".into());
