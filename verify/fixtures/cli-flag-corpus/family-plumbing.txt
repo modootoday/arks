@@ -304,3 +304,185 @@ checkout-index --prefix=out/ -a
 checkout-index --prefix=pre- README.md
 checkout-index --ignore-skip-worktree-bits -f -a
 checkout-index
+# --- prune / prune-packed ---
+prune -n
+prune --dry-run --verbose
+prune -nv
+prune -n --expire=1.day.ago
+prune -n --expire 1.day.ago
+prune -n --no-expire
+prune -n --progress --no-progress --exclude-promisor-objects
+prune -n HEAD
+prune -n -- main
+prune
+prune --expire=1.day.ago
+prune -v
+prune --bogus
+prune-packed -n
+prune-packed --dry-run -q
+prune-packed -nq
+prune-packed
+prune-packed --quiet
+prune-packed --no-quiet --no-dry-run
+prune-packed nosuch
+# --- verify-pack / show-index / unpack-objects ---
+verify-pack .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack -v .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack --verbose --stat-only .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack -s .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack -s --object-format=sha1 .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.pack
+verify-pack nosuch.idx
+verify-pack
+show-index
+show-index --object-format=sha1
+show-index --object-format=sha256
+unpack-objects -n
+unpack-objects
+unpack-objects -q -r --strict --max-input-size=10
+unpack-objects --bogus
+# --- check-ref-format ---
+check-ref-format refs/heads/main
+check-ref-format main
+check-ref-format --allow-onelevel main
+check-ref-format --no-allow-onelevel main
+check-ref-format --normalize refs//heads/x/
+check-ref-format --normalize //refs//heads/x
+check-ref-format --print refs/heads//x
+check-ref-format 'refs/heads/a..b'
+check-ref-format 'refs/heads/*'
+check-ref-format --refspec-pattern 'refs/heads/*'
+check-ref-format --refspec-pattern 'refs/*/*'
+check-ref-format 'refs/heads/x.lock'
+check-ref-format --branch main
+check-ref-format --branch @{-1}
+check-ref-format --branch -x
+check-ref-format --branch 'a b'
+check-ref-format
+check-ref-format --bogus x
+# --- stripspace / column (stdin is empty) ---
+stripspace
+stripspace -s
+stripspace --strip-comments
+stripspace -c
+stripspace --comment-lines
+stripspace --bogus
+column
+column --mode=column --width=40
+column --mode=row,dense --padding=2 --indent='> ' --nl='|'
+column --raw-mode=1 --command=x
+column --mode=nonsense
+# --- var ---
+var -l
+var GIT_AUTHOR_IDENT
+var GIT_COMMITTER_IDENT
+var GIT_EDITOR
+var GIT_SEQUENCE_EDITOR
+var GIT_PAGER
+var GIT_DEFAULT_BRANCH
+var GIT_SHELL_PATH
+var NOSUCH
+var
+# --- check-attr / check-mailmap ---
+check-attr -a src/data.bin src/a.txt
+check-attr --all -- README.md
+check-attr binary label -- src/data.bin src/a.txt
+check-attr label src/a.txt
+check-attr --cached -a src/a.txt
+check-attr --source HEAD -a src/a.txt
+check-attr --source=HEAD~1 label src/b.txt
+check-attr --stdin -a
+check-attr -z --stdin label
+check-attr
+check-attr label
+check-mailmap 'A U Thor <author@example.com>'
+check-mailmap '<author@example.com>'
+check-mailmap --stdin
+check-mailmap nobody
+check-mailmap
+# --- mktag / mktree / unpack-file / get-tar-commit-id (stdin is empty) ---
+mktag
+mktag --strict
+mktag --no-strict
+mktag x
+mktree
+mktree -z
+mktree --missing --no-missing
+mktree --batch
+mktree --no-batch -z
+mktree x
+mktree --bogus
+unpack-file nosuch
+unpack-file HEAD
+unpack-file
+get-tar-commit-id
+get-tar-commit-id x
+# --- bugreport / diagnose (fixed suffix so file names compare; diagnose
+# echoes host facts such as the git version and free disk space, so only
+# its refusals are compared here) ---
+bugreport -o out -s x
+bugreport --output-directory=out --suffix=x
+bugreport -o out -s x --no-diagnose
+bugreport --bogus
+diagnose --mode=bogus
+# --- hook / for-each-repo / credential-store / fmt-merge-msg ---
+hook run --ignore-missing pre-commit
+hook run pre-commit
+hook run --to-stdin=README.md --ignore-missing x -- a b
+hook run
+hook bogus
+hook
+for-each-repo --config=maintenance.repo status
+for-each-repo --config maintenance.repo -- log -1
+for-each-repo
+credential-store --file=cs.txt erase
+credential-store --file cs.txt get
+credential-store get
+credential-store bogus
+credential-store
+fmt-merge-msg
+fmt-merge-msg --log
+fmt-merge-msg --log=3 --into-name=topic
+fmt-merge-msg -m hi
+fmt-merge-msg --message=hi --no-log
+fmt-merge-msg --summary --no-summary
+fmt-merge-msg -F .git/fixture.patch
+fmt-merge-msg --file=nosuch
+fmt-merge-msg --bogus
+# --- fsck / count-objects / pack-refs ---
+fsck
+fsck --unreachable
+fsck --no-dangling
+fsck --dangling --tags
+fsck --root
+fsck --root --connectivity-only
+fsck --cache
+fsck --no-reflogs
+fsck --unreachable --no-reflogs
+fsck --name-objects --no-name-objects
+fsck --full --no-full --strict --no-strict --progress --no-progress
+fsck -v
+fsck --lost-found
+fsck HEAD
+fsck HEAD~2
+fsck --cache HEAD
+fsck nosuch
+fsck --bogus
+count-objects
+count-objects -v
+count-objects --verbose --human-readable
+count-objects -vH
+count-objects -H
+count-objects --no-verbose --no-human-readable
+count-objects x
+pack-refs
+pack-refs --all
+pack-refs --no-prune
+pack-refs --prune --all
+pack-refs --include 'refs/heads/*'
+pack-refs --include='refs/heads/*' --exclude 'refs/heads/f*'
+pack-refs --exclude='refs/tags/t*'
+pack-refs --all --exclude 'refs/heads/*'
+pack-refs --include 'refs/heads/*' --no-include
+pack-refs --all --no-all
+pack-refs --no-exclude --all
+pack-refs x
