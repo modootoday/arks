@@ -42,15 +42,17 @@ Version **0.2.0**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior
 5. Promoting `status_now` requires tip evidence — **no invent Claimed** from HELP alone.
 6. Clean-room gate: compose `dod-daemon-matrix` → `verify/scripts/run-daemon-git-arks-matrix-e2e.sh` (default smoke; `ARKS_DOD_STRICT=1` for Missing=0 DoD).
 
-## Counts (inventoriable + ledger rows; living CSV tip ≥ `a21ad01`; was Missing~25 at `c297e34`)
+## Counts (inventoriable + ledger rows; living CSV after A5; was Refuse/N/A 16 before A5, Missing~25 at `c297e34`)
 
 | status_now | Count (living CSV) |
 |------------|------:|
-| Parity | **20** |
+| Parity | **37** |
 | Partial | **0** |
 | Missing | **0** |
-| Refuse/N/A | 16 |
-| arks-only | 3 |
+| Refuse/N/A | **0** |
+| arks-only | 2 |
+
+**A5 (host-tested):** the 16 former Refuse/N/A rows and the retired `--listen host:port` row are `Parity` with CSV note `host-tested` — unit tests in `arks-server` (`daemon::*`), CLI tests `crates/arks/tests/daemon_cli.rs`, and the `ARKS_DAEMON_FLAGS_PARITY=1` A5 block of `verify/scripts/run-daemon-git-arks-matrix-e2e.sh`, which sends identical raw `git://` requests to stock `git daemon` and `arks daemon` and requires identical replies, hook arguments, `--inetd` exit status and argv exit codes. These are host runs (advisory, rule 28); no Docker pin receipt yet, so no Claimed/Verified wording. The paragraphs below describe the pre-A5 state.
 
 **Parity:** inventoriable peer-mapped flags + services (including IW-DAEMON-FLAGS-PARITY deepen — timeouts, listen/port, max-connections, strict-paths, base-path, reuseaddr, enable/disable, dirs, upload-archive/receive-pack, `related:git:// client` **Parity pointer**) per living CSV + [[evidence:root/20261111045108-daemon-flags-parity]] / reconfirm receipts.  
 **Partial:** none remaining on living inventoriable daemon rows (flag-depth / platform SO_REUSEADDR notes stay in CSV `notes` where applicable — not a Missing reopen).  
