@@ -8,109 +8,82 @@ use arks_object::{Commit, ObjectKind, RawObject};
 use arks_store::ObjectStore;
 
 pub fn cmd_tag(args: &[String]) -> CliResult<()> {
-    // git-tag: create (`-a`/`-s`/`-u`/`-m`/`-F`/`-f`; `-m` implies `-a`), delete
-    // (`-d`, prints `Deleted tag ...`), list (`-l <pattern>...`, `-n[<num>]`,
-    // `--contains`, `--no-contains`, `--points-at`, `--merged`, `--no-merged`).
+    // git-tag: every option of `git tag -h`: create (`-a`/`-s`/`-u`/`-m`/`-F`/
+    // `-e`/`--cleanup`/`-f`), delete (`-d`), verify (`-v`), list (`-l`,
+    // `-n[<num>]`, filters, `--sort`, `--format`, `--column`, `-i`).
     // Cite: https://git-scm.com/docs/git-tag
-    let args = crate::util::split_short_bundles(args, "adfls", "mFu");
-    let mut annotated = false;
-    let mut signed = false;
-    let mut delete = false;
-    let mut force = false;
-    let mut list = false;
-    let mut lines: Option<usize> = None;
-    let mut messages: Vec<String> = Vec::new();
-    let mut local_user: Option<String> = None;
+    use crate::cmd::opt_parse::{Item, Mode, parse};
+    use crate::cmd::trailers::{self, Cleanup};
+    let args = crate::cmd::branch_cmd::lastarg_default(
+        args,
+        &[
+            "merged",
+            "no-merged",
+            "contains",
+            "no-contains",
+            "points-at",
+        ],
+    );
+    let p = parse(
+        "tag",
+        &args,
+        crate::cmd::porcelain_opts::TAG,
+        Mode::default(),
+    )?;
+    let mut list = p.on("list");
+    let delete = p.on("delete");
+    let verify = p.on("verify");
+    let force = p.on("force");
+    let lines: Option<usize> = match p.last("-n") {
+        None => None,
+        Some(None) => Some(1),
+        Some(Some(n)) => Some(
+            n.parse()
+                .map_err(|_| CliError::fatal(format!("invalid -n value: {n}")))?,
+        ),
+    };
     let mut filters: Vec<(&'static str, Option<String>)> = Vec::new();
-    let mut positional: Vec<String> = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        let a = args[i].clone();
-        i += 1;
-        let mut next = |what: &str| -> CliResult<String> {
-            let v = args
-                .get(i)
-                .cloned()
-                .ok_or_else(|| CliError::fatal(format!("option `{what}' requires a value")))?;
-            i += 1;
-            Ok(v)
-        };
-        match a.as_str() {
-            "-a" | "--annotate" => annotated = true,
-            "-s" | "--sign" => signed = true,
-            "-d" | "--delete" => delete = true,
-            "-f" | "--force" => force = true,
-            "-l" | "--list" => list = true,
-            "-n" => lines = Some(1),
-            "-m" | "--message" => messages.push(next("message")?),
-            "-F" | "--file" => {
-                let f = next("file")?;
-                let text = if f == "-" {
-                    let mut buf = String::new();
-                    std::io::Read::read_to_string(&mut std::io::stdin(), &mut buf)?;
-                    buf
-                } else {
-                    std::fs::read_to_string(&f).map_err(|e| {
-                        CliError::fatal(format!("could not open or read '{f}': {e}"))
-                    })?
-                };
-                messages.push(text);
-            }
-            "-u" | "--local-user" => local_user = Some(next("local-user")?),
-            "--contains" | "--no-contains" | "--points-at" | "--merged" | "--no-merged" => {
-                let key: &'static str = match a.as_str() {
-                    "--contains" => "contains",
-                    "--no-contains" => "no-contains",
-                    "--points-at" => "points-at",
-                    "--merged" => "merged",
-                    _ => "no-merged",
-                };
-                let val = args.get(i).filter(|v| !v.starts_with('-')).cloned();
-                if val.is_some() {
-                    i += 1;
-                }
-                filters.push((key, val));
-                list = true;
-            }
-            "--no-color" | "--color=never" => {}
-            x => {
-                if let Some(v) = x.strip_prefix("--message=") {
-                    messages.push(v.to_string());
-                } else if let Some(v) = x.strip_prefix("--local-user=").or(x.strip_prefix("-u=")) {
-                    local_user = Some(v.to_string());
-                } else if let Some(n) = x
-                    .strip_prefix("-n")
-                    .filter(|n| n.bytes().all(|b| b.is_ascii_digit()))
-                {
-                    lines = Some(n.parse().unwrap_or(1));
-                } else if let Some((k, v)) = [
-                    "--contains=",
-                    "--no-contains=",
-                    "--points-at=",
-                    "--merged=",
-                    "--no-merged=",
-                ]
-                .iter()
-                .find_map(|k| x.strip_prefix(k).map(|v| (*k, v)))
-                {
-                    let key: &'static str = match k {
-                        "--contains=" => "contains",
-                        "--no-contains=" => "no-contains",
-                        "--points-at=" => "points-at",
-                        "--merged=" => "merged",
-                        _ => "no-merged",
-                    };
-                    filters.push((key, Some(v.to_string())));
-                    list = true;
-                } else if x.starts_with('-') {
-                    return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
-                } else {
-                    positional.push(a.clone());
-                }
-            }
+    for it in &p.items {
+        if let Item::Opt {
+            key,
+            val,
+            neg: false,
+        } = it
+        {
+            let k: &'static str = match *key {
+                "contains" => "contains",
+                "no-contains" => "no-contains",
+                "points-at" => "points-at",
+                "merged" => "merged",
+                "no-merged" => "no-merged",
+                _ => continue,
+            };
+            filters.push((k, val.clone()));
+            list = true;
         }
     }
+    let mut positional = p.args();
+    positional.extend(p.after_dashdash());
     let mut repo = open_repo()?;
+    if verify {
+        // `tag -v` shows each tag object (without its signature) and verifies it.
+        for name in &positional {
+            let oid = repo
+                .refs()
+                .resolve(&format!("refs/tags/{name}"))
+                .map_err(|_| CliError::Exit(1, format!("error: tag '{name}' not found.")))?;
+            let obj = repo.get_object(&oid)?;
+            if obj.kind == ObjectKind::Tag {
+                let text = String::from_utf8_lossy(&obj.payload);
+                let shown = text
+                    .find("-----BEGIN ")
+                    .map_or(text.as_ref(), |i| &text[..i]);
+                print!("{shown}");
+            }
+            crate::cmd::sign::cmd_verify_tag(std::slice::from_ref(name))?;
+        }
+        return Ok(());
+    }
     if delete {
         if positional.is_empty() {
             return Err(CliError::fatal("tag name required"));
@@ -135,11 +108,34 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
             Err(CliError::Exit(1, errs.join("\n")))
         };
     }
+    let format = p.value("format");
+    let sorted = !p.values("sort").is_empty();
+    let ignore_case = p.on("ignore-case");
+    let column = crate::cmd::branch_cmd::column_mode(&p)?;
     if list || lines.is_some() || positional.is_empty() {
-        if positional.is_empty() && lines.is_none() && filters.is_empty() {
+        if let Some(f) = &format {
+            if f.is_empty() && p.on("omit-empty") {
+                return Ok(());
+            }
+        }
+        if format.is_some() || sorted {
+            let f = format.unwrap_or_else(|| "%(refname:strip=2)".to_string());
+            return crate::cmd::branch_cmd::list_with_format(&p, &f, &["refs/tags/"], &positional);
+        }
+        let patterns: Vec<String> = if ignore_case {
+            positional.iter().map(|s| s.to_ascii_lowercase()).collect()
+        } else {
+            positional.clone()
+        };
+        if column && lines.is_none() {
+            let names = tag_names(&repo, &patterns, ignore_case)?;
+            crate::cmd::branch_cmd::print_columns(&names, "", 2);
+            return Ok(());
+        }
+        if patterns.is_empty() && lines.is_none() && filters.is_empty() {
             return list_tags(&repo);
         }
-        return list_tags_filtered(&repo, &positional, lines, &filters);
+        return list_tags_filtered(&repo, &patterns, lines, &filters, ignore_case);
     }
     if positional.len() > 2 {
         return Err(CliError::fatal("too many arguments"));
@@ -157,25 +153,81 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
     let start = positional.get(1).map(String::as_str).unwrap_or("HEAD");
     let target = resolve_rev(&repo, start)
         .map_err(|_| CliError::fatal(format!("Failed to resolve '{start}' as a valid ref.")))?;
-    // `-m` / `-F` imply an annotated tag; multiple `-m` become paragraphs.
-    let message = (!messages.is_empty()).then(|| {
-        messages
-            .iter()
-            .map(|m| m.trim_end_matches('\n').to_string())
-            .collect::<Vec<_>>()
-            .join("\n\n")
-    });
+    // Message: `-m` paragraphs, `-F` file, else the editor for `-a`/`-s`/`-e`.
+    let messages = p.values("message");
+    let file = p.value("file");
+    if !messages.is_empty() && file.is_some() {
+        return Err(CliError::fatal(
+            "options '-F' and '-m' cannot be used together",
+        ));
+    }
+    let signed = p.on("sign") || p.value("local-user").is_some();
+    let annotated = p.on("annotate") || signed || !messages.is_empty() || file.is_some();
+    let cleanup = match p.value("cleanup") {
+        Some(v) => trailers::parse_cleanup(&v)?,
+        None => Cleanup::Default,
+    };
+    let mut text: Option<String> = if !messages.is_empty() {
+        Some(messages.join("\n\n"))
+    } else if let Some(f) = &file {
+        Some(if f == "-" {
+            let mut buf = String::new();
+            std::io::Read::read_to_string(&mut std::io::stdin(), &mut buf)?;
+            buf
+        } else {
+            std::fs::read_to_string(f)
+                .map_err(|e| CliError::fatal(format!("could not open or read '{f}': {e}")))?
+        })
+    } else {
+        None
+    };
+    let edit = p.on("edit") || (annotated && text.is_none());
     let old = repo.refs().resolve(&full).ok();
-    if signed || local_user.is_some() {
-        let msg = message.ok_or_else(|| {
-            CliError::Usage("tag -s requires -m <message> (claimed non-interactive subset)".into())
-        })?;
-        write_signed_tag(&mut repo, name, &target, &msg, local_user.as_deref())?;
-    } else if annotated || message.is_some() {
-        let msg = message.ok_or_else(|| CliError::Usage("tag -a requires -m <message>".into()))?;
-        crate::cmd::write_annotated_tag(&mut repo, name, &target, &msg)?;
+    if annotated || edit {
+        if edit {
+            let seed = text.clone().unwrap_or_default();
+            text = Some(edit_tag_message(&repo, name, &seed)?);
+        }
+        let msg = trailers::cleanup(text.as_deref().unwrap_or(""), cleanup, edit);
+        if msg.trim().is_empty() && edit && file.is_none() && messages.is_empty() {
+            return Err(CliError::fatal("no tag message?"));
+        }
+        if signed {
+            write_signed_tag(
+                &mut repo,
+                name,
+                &target,
+                &msg,
+                p.value("local-user").as_deref(),
+            )
+            .map_err(|e| CliError::fatal(format!("unable to sign the tag: {e}")))?;
+        } else if cleanup == Cleanup::Verbatim {
+            // Verbatim keeps the message bytes (no added final newline).
+            let sig = crate::cmd::shared::committer_signature()?;
+            let kind = repo.get_object(&target)?.kind;
+            let mut payload = crate::cmd::encode_tag_payload(
+                &target,
+                kind.as_str(),
+                name,
+                &sig.format_line(),
+                "",
+            );
+            payload.pop();
+            payload.extend_from_slice(msg.as_bytes());
+            let obj = RawObject::new(ObjectKind::Tag, payload);
+            let format = repo.object_format();
+            let tag_oid = repo.store_mut().put(format, &obj)?;
+            repo.refs_mut().update(&full, &tag_oid, None)?;
+        } else {
+            crate::cmd::write_annotated_tag(&mut repo, name, &target, &msg)?;
+        }
     } else {
         repo.refs_mut().update(&full, &target, old.as_ref())?;
+    }
+    if p.on("create-reflog") {
+        if let Ok(new) = repo.refs().resolve(&full) {
+            let _ = crate::reflog::append_reflog(&repo, &full, old.as_ref(), &new, "tag: tagging");
+        }
     }
     // git-tag -f reports a replaced tag on stdout.
     if let Some(prev) = old
@@ -189,12 +241,71 @@ pub fn cmd_tag(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
+/// Run the editor on `.git/TAG_EDITMSG` seeded with `seed`.
+fn edit_tag_message(repo: &arks_repo::Repository, name: &str, seed: &str) -> CliResult<String> {
+    let path = repo.git_dir().join("TAG_EDITMSG");
+    let mut text = seed.to_string();
+    if !text.is_empty() && !text.ends_with('\n') {
+        text.push('\n');
+    }
+    text.push_str(&format!(
+        "\n#\n# Write a message for tag:\n#   {name}\n# Lines starting with '#' will be ignored.\n"
+    ));
+    std::fs::write(&path, &text)?;
+    if let Some(editor) = ["ARKS_EDITOR", "GIT_EDITOR", "EDITOR"]
+        .iter()
+        .find_map(|v| std::env::var(v).ok().filter(|s| !s.is_empty()))
+    {
+        let ok = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(format!("{editor} \"$@\""))
+            .arg(&editor)
+            .arg(&path)
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false);
+        if !ok {
+            return Err(CliError::Exit(
+                1,
+                "error: There was a problem with the editor.".into(),
+            ));
+        }
+    }
+    Ok(std::fs::read_to_string(&path)?)
+}
+
+/// Tag names matching `patterns` (lower-cased patterns with `ignore_case`).
+fn tag_names(
+    repo: &arks_repo::Repository,
+    patterns: &[String],
+    ignore_case: bool,
+) -> CliResult<Vec<String>> {
+    let mut refs = repo.refs().list_refs("refs/tags/")?;
+    refs.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(refs
+        .into_iter()
+        .map(|(full, _)| full.trim_start_matches("refs/tags/").to_string())
+        .filter(|n| {
+            let subject = if ignore_case {
+                n.to_ascii_lowercase()
+            } else {
+                n.clone()
+            };
+            patterns.is_empty()
+                || patterns
+                    .iter()
+                    .any(|p| crate::cmd::branch_cmd::fnmatch(p.as_bytes(), subject.as_bytes()))
+        })
+        .collect())
+}
+
 /// `tag -l` with patterns, `-n<num>` annotation lines and commit filters.
 fn list_tags_filtered(
     repo: &arks_repo::Repository,
     patterns: &[String],
     lines: Option<usize>,
     filters: &[(&'static str, Option<String>)],
+    ignore_case: bool,
 ) -> CliResult<()> {
     use crate::cmd::shared::{ObjKind, is_ancestor, peel_tags, peel_to_kind};
     let mut resolved = Vec::new();
@@ -209,10 +320,15 @@ fn list_tags_filtered(
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
     for (full, oid) in refs {
         let name = full.strip_prefix("refs/tags/").unwrap_or(&full);
+        let subject = if ignore_case {
+            name.to_ascii_lowercase()
+        } else {
+            name.to_string()
+        };
         if !patterns.is_empty()
             && !patterns
                 .iter()
-                .any(|p| crate::cmd::branch_cmd::fnmatch(p.as_bytes(), name.as_bytes()))
+                .any(|p| crate::cmd::branch_cmd::fnmatch(p.as_bytes(), subject.as_bytes()))
         {
             continue;
         }
