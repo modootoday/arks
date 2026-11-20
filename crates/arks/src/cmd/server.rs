@@ -28,18 +28,140 @@ type SshListener = std::thread::JoinHandle<Result<(), arks_server::ServerError>>
 /// Background forge listener thread handle.
 type ForgeListener = std::thread::JoinHandle<Result<(), String>>;
 
-pub fn cmd_upload_pack(args: &[String]) -> CliResult<()> {
-    let dir = require_dir(args)?;
-    let repo = Repository::open(&dir).or_else(|_| Repository::discover(&dir))?;
-    // Duplex pack-protocol (SSH command-mode / local --upload-pack).
-    upload_pack_session(&repo, io::stdin(), io::stdout()).map_err(|e| CliError::Msg(e.to_string()))
+const UPLOAD_PACK_OPTS: &[&str] = &[
+    "|strict",
+    "|timeout=",
+    "|stateless-rpc",
+    "|advertise-refs",
+    "|http-backend-info-refs",
+];
+
+const RECEIVE_PACK_OPTS: &[&str] = &[
+    "q|quiet",
+    "|stateless-rpc",
+    "|advertise-refs",
+    "|http-backend-info-refs",
+    "|reject-thin-pack-for-testing",
+];
+
+/// Open the repository a server helper names: `--strict` takes the path as
+/// the git directory itself; otherwise `<dir>/.git` and `<dir>.git` are
+/// tried too (git-upload-pack OPTIONS).
+fn server_repo(p: &crate::cmd::opt_spec::Parsed, usage: &str) -> CliResult<Repository> {
+    let [dir] = p.args.as_slice() else {
+        return Err(CliError::Exit(129, usage.into()));
+    };
+    let path = PathBuf::from(dir);
+    let found = if p.on("strict") {
+        Repository::open(&path).ok()
+    } else {
+        Repository::open(&path)
+            .or_else(|_| Repository::open(path.join(".git")))
+            .or_else(|_| Repository::open(format!("{dir}.git")))
+            .ok()
+    };
+    found.ok_or_else(|| CliError::fatal(format!("'{dir}' does not appear to be a git repository")))
 }
 
+/// Reader that remembers whether the client sent anything at all.
+struct SawInput<R> {
+    inner: R,
+    any: bool,
+}
+
+impl<R: Read> Read for SawInput<R> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let n = self.inner.read(buf)?;
+        self.any |= n > 0;
+        Ok(n)
+    }
+}
+
+fn hung_up() -> CliError {
+    CliError::fatal("the remote end hung up unexpectedly")
+}
+
+/// `upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]
+/// [--advertise-refs] <directory>`. Cite: <https://git-scm.com/docs/git-upload-pack>.
+pub fn cmd_upload_pack(args: &[String]) -> CliResult<()> {
+    let p = crate::cmd::opt_spec::parse(args, UPLOAD_PACK_OPTS)?;
+    let repo = server_repo(
+        &p,
+        "usage: git upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n                       [--advertise-refs] <directory>",
+    )?;
+    if let Some(t) = p.value("timeout") {
+        t.parse::<u64>().map_err(|_| {
+            CliError::Exit(
+                129,
+                "error: option `timeout' expects a numerical value".into(),
+            )
+        })?;
+    }
+    let mut out = io::stdout().lock();
+    if p.on("advertise-refs") || p.on("http-backend-info-refs") {
+        out.write_all(&arks_server::upload_pack_advertisement(&repo).map_err(server_err)?)?;
+        out.flush()?;
+        return Ok(());
+    }
+    if p.on("stateless-rpc") {
+        // One request on stdin, one response on stdout, no advertisement.
+        let mut body = Vec::new();
+        io::stdin().read_to_end(&mut body)?;
+        if body.is_empty() {
+            return Err(hung_up());
+        }
+        let resp = arks_server::upload_pack_result(&repo, &body).map_err(server_err)?;
+        out.write_all(&resp)?;
+        out.flush()?;
+        return Ok(());
+    }
+    let mut input = SawInput {
+        inner: io::stdin(),
+        any: false,
+    };
+    // Duplex pack-protocol (SSH command-mode / local --upload-pack).
+    upload_pack_session(&repo, &mut input, &mut out).map_err(server_err)?;
+    if !input.any {
+        return Err(hung_up());
+    }
+    Ok(())
+}
+
+/// `receive-pack [-q] [--stateless-rpc] [--advertise-refs] <git-dir>`.
+/// Cite: <https://git-scm.com/docs/git-receive-pack>.
 pub fn cmd_receive_pack(args: &[String]) -> CliResult<()> {
-    let dir = require_dir(args)?;
-    let mut repo = Repository::open(&dir).or_else(|_| Repository::discover(&dir))?;
-    receive_pack_session(&mut repo, io::stdin(), io::stdout())
-        .map_err(|e| CliError::Msg(e.to_string()))
+    let p = crate::cmd::opt_spec::parse(args, RECEIVE_PACK_OPTS)?;
+    let mut repo = server_repo(&p, "usage: git receive-pack <git-dir>")?;
+    let mut out = io::stdout().lock();
+    if p.on("advertise-refs") || p.on("http-backend-info-refs") {
+        out.write_all(&arks_server::receive_pack_advertisement(&repo).map_err(server_err)?)?;
+        out.flush()?;
+        return Ok(());
+    }
+    if p.on("stateless-rpc") {
+        let mut body = Vec::new();
+        io::stdin().read_to_end(&mut body)?;
+        if body.is_empty() {
+            return Err(hung_up());
+        }
+        let resp = arks_server::receive_pack(&mut repo, &body).map_err(server_err)?;
+        out.write_all(&resp)?;
+        out.flush()?;
+        return Ok(());
+    }
+    let mut input = SawInput {
+        inner: io::stdin(),
+        any: false,
+    };
+    receive_pack_session(&mut repo, &mut input, &mut out).map_err(server_err)?;
+    if !input.any {
+        return Err(hung_up());
+    }
+    Ok(())
+}
+
+fn server_err(e: arks_server::ServerError) -> CliError {
+    CliError::Msg(e.to_string())
 }
 
 /// Transitional `arks serve-http` — HTTP-only (`≡ arks serve --no-ssh --no-forge`).
@@ -1532,11 +1654,19 @@ fn cmd_serve_ssh_git_pack_smoke() -> CliResult<()> {
     client
 }
 
+/// `http-backend`: CGI program. Stock git takes no arguments and finds the
+/// repository from `GIT_PROJECT_ROOT` + `PATH_INFO` (or `PATH_TRANSLATED`);
+/// arks also accepts the repository directory as one argument.
+/// Cite: <https://git-scm.com/docs/git-http-backend>.
 pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
-    let dir = require_dir(args)?;
+    let path_info = std::env::var("PATH_INFO").unwrap_or_else(|_| "/info/refs".into());
+    let (dir, path) = if args.is_empty() {
+        cgi_repo_and_path(&path_info)?
+    } else {
+        (require_dir(args)?, path_info)
+    };
     let mut repo = Repository::open(&dir).or_else(|_| Repository::discover(&dir))?;
     let method = std::env::var("REQUEST_METHOD").unwrap_or_else(|_| "GET".into());
-    let path = std::env::var("PATH_INFO").unwrap_or_else(|_| "/info/refs".into());
     let query = std::env::var("QUERY_STRING").unwrap_or_default();
     let git_protocol = std::env::var("HTTP_GIT_PROTOCOL")
         .ok()
@@ -1578,6 +1708,46 @@ pub fn cmd_http_backend(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
+/// Split a CGI request into the repository directory and the service path
+/// (`/info/refs`, `/git-upload-pack`, `/HEAD`, `/objects/...`).
+fn cgi_repo_and_path(path_info: &str) -> CliResult<(PathBuf, String)> {
+    const SERVICES: &[&str] = &[
+        "/info/refs",
+        "/git-upload-pack",
+        "/git-receive-pack",
+        "/HEAD",
+        "/objects/",
+    ];
+    let cut = SERVICES
+        .iter()
+        .filter_map(|s| path_info.rfind(s))
+        .min()
+        .ok_or_else(|| CliError::fatal(format!("Request not supported: '{path_info}'")))?;
+    let (repo_part, service) = path_info.split_at(cut);
+    let dir = match std::env::var("GIT_PROJECT_ROOT") {
+        Ok(root) => PathBuf::from(root).join(repo_part.trim_start_matches('/')),
+        Err(_) => {
+            let translated = std::env::var("PATH_TRANSLATED").map_err(|_| {
+                CliError::fatal("No GIT_PROJECT_ROOT or PATH_TRANSLATED from server")
+            })?;
+            let base = translated
+                .strip_suffix(service)
+                .ok_or_else(|| CliError::fatal("PATH_TRANSLATED does not end in PATH_INFO"))?;
+            PathBuf::from(base)
+        }
+    };
+    let exported = std::env::var_os("GIT_HTTP_EXPORT_ALL").is_some()
+        || dir.join("git-daemon-export-ok").is_file()
+        || dir.join(".git").join("git-daemon-export-ok").is_file();
+    if !exported {
+        return Err(CliError::fatal(format!(
+            "Repository not exported: '{}'",
+            dir.display()
+        )));
+    }
+    Ok((dir, service.to_string()))
+}
+
 /// Resolve Basic auth from CLI flags and/or env (`ARKS_HTTP_BASIC` / `ARKS_HTTP_BASIC_FILE`).
 fn resolve_basic_auth(
     cli_user_pass: Option<&str>,
@@ -1610,8 +1780,20 @@ fn resolve_basic_auth(
     Ok(None)
 }
 
+/// `update-server-info [-f | --force]` in the current repository (arks also
+/// takes an optional repository path). Cite: <https://git-scm.com/docs/git-update-server-info>.
 pub fn cmd_update_server_info(args: &[String]) -> CliResult<()> {
-    let dir = require_dir_optional_cwd(args)?;
+    let p = crate::cmd::opt_spec::parse(args, &["f|force"])?;
+    let dir = match p.args.as_slice() {
+        [] => std::env::current_dir()?,
+        [d] => PathBuf::from(d),
+        _ => {
+            return Err(CliError::Exit(
+                129,
+                "usage: git update-server-info [-f | --force]".into(),
+            ));
+        }
+    };
     let repo = Repository::open(&dir).or_else(|_| Repository::discover(&dir))?;
     // FS5 / MAINT-004 closest: refuse under info lock rather than racing writers.
     let info_lock = repo.git_dir().join("info").join("refs.lock");
@@ -1621,6 +1803,7 @@ pub fn cmd_update_server_info(args: &[String]) -> CliResult<()> {
             info_lock.display()
         )));
     }
+    // The files are always rewritten in full, so --force changes nothing.
     update_server_info(&repo).map_err(|e| CliError::Msg(e.to_string()))
 }
 
@@ -1916,13 +2099,6 @@ fn require_dir(args: &[String]) -> CliResult<PathBuf> {
         dir = Some(PathBuf::from(a));
     }
     dir.ok_or_else(|| CliError::Usage("directory required".into()))
-}
-
-fn require_dir_optional_cwd(args: &[String]) -> CliResult<PathBuf> {
-    if args.is_empty() {
-        return Ok(std::env::current_dir()?);
-    }
-    require_dir(args)
 }
 
 fn resolve_git_dir(dir: &std::path::Path) -> CliResult<PathBuf> {
