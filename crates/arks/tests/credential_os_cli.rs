@@ -141,7 +141,9 @@ fn used_as_credential_helper() {
     let t = tempfile::tempdir().unwrap();
     let s = t.path().join("store");
     let cfg = t.path().join("cfg");
-    let helper = format!("!{} credential-manager", env!("CARGO_BIN_EXE_arks"));
+    // Backslashes are escapes inside git config values; Windows accepts '/'.
+    let exe = env!("CARGO_BIN_EXE_arks").replace('\\', "/");
+    let helper = format!("!{exe} credential-manager");
     std::fs::write(&cfg, format!("[credential]\n\thelper = \"{helper}\"\n")).unwrap();
     let e = fake(&s);
     let mut envs: Vec<(&str, &str)> = e.iter().map(|(k, v)| (*k, v.as_str())).collect();
