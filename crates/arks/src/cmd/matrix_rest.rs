@@ -9,7 +9,6 @@ use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, Tre
 use arks_oid::Oid;
 use arks_store::ObjectStore;
 use std::collections::BTreeMap;
-use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 
@@ -18,66 +17,9 @@ pub fn cmd_commit_graph(args: &[String]) -> CliResult<()> {
     crate::cmd::commit_graph::cmd_commit_graph(args)
 }
 
-/// `arks multi-pack-index` — list/verify subset (write not claimed).
+/// `multi-pack-index`: see [`crate::cmd::midx`].
 pub fn cmd_multi_pack_index(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks multi-pack-index — MIDX helpers (subset)
-
-Usage:
-  arks multi-pack-index list
-  arks multi-pack-index verify
-  arks multi-pack-index write   # not claimed
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(args, &["list", "verify", "write", "expire", "repack"])?;
-    let sub = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("list");
-    let repo = open_repo()?;
-    let pack_dir = repo.git_dir().join("objects/pack");
-    let midx = pack_dir.join("multi-pack-index");
-    match sub {
-        "list" => {
-            if midx.is_file() {
-                println!("{}", midx.display());
-            }
-            if pack_dir.is_dir() {
-                for ent in fs::read_dir(&pack_dir)? {
-                    let ent = ent?;
-                    let name = ent.file_name().to_string_lossy().into_owned();
-                    if name.ends_with(".pack") {
-                        println!("{}", ent.path().display());
-                    }
-                }
-            }
-            Ok(())
-        }
-        "verify" => {
-            if !midx.is_file() {
-                return Err(CliError::Msg(
-                    "multi-pack-index verify: no multi-pack-index present".into(),
-                ));
-            }
-            let n = fs::metadata(&midx)?.len();
-            println!(
-                "ok\t{}\t{n} bytes (presence check; checksum algebra not claimed)",
-                midx.display()
-            );
-            Ok(())
-        }
-        "write" | "expire" | "repack" => Err(CliError::NotImplemented(format!(
-            "multi-pack-index {sub}: not claimed (Partial; list/verify only)"
-        ))),
-        other => Err(CliError::Usage(format!(
-            "multi-pack-index: unknown subcommand {other}"
-        ))),
-    }
+    crate::cmd::midx::cmd_multi_pack_index(args)
 }
 
 /// `rerere`: see [`crate::cmd::rerere`].
