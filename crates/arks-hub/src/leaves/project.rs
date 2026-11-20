@@ -3,7 +3,7 @@
 //! Projects are owner-scoped (`--owner`, default `@me`) and addressed by number.
 //! `--format json` prints gh-shaped JSON (camelCase).
 
-use super::{Args, Ctx, Fail, Res, arr, n, print_json, row, s, usage};
+use super::{Args, Ctx, Fail, Res, arr, json_filtered, n, row, s, usage};
 use serde_json::{Map, Value, json};
 use std::io::Write;
 
@@ -73,10 +73,10 @@ fn owner(a: &Args<'_>) -> String {
 }
 
 fn json_mode(a: &Args<'_>) -> Result<bool, Fail> {
-    if a.get(&["-q", "--jq", "-t", "--template"]).is_some() {
-        return usage("--jq/--template are not supported; use --format json");
-    }
     match a.get(FORMAT) {
+        None if a.get(&["-q", "--jq", "-t", "--template"]).is_some() => {
+            usage("cannot use `--jq` or `--template` without `--format json`")
+        }
         None => Ok(false),
         Some("json") => Ok(true),
         Some(f) => usage(format!("invalid format {f:?} (json)")),
@@ -121,7 +121,7 @@ fn gh_project(ctx: &Ctx, p: &Value) -> Value {
 
 fn print_project_url(ctx: &Ctx, out: &mut dyn Write, a: &Args<'_>, p: &Value) -> Res {
     if json_mode(a)? {
-        return print_json(out, &gh_project(ctx, p));
+        return json_filtered(out, a, &gh_project(ctx, p));
     }
     let login = p
         .pointer("/owner/login")
@@ -148,7 +148,7 @@ fn list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         .collect();
     if json {
         let total = rows.len();
-        return print_json(out, &json!({"projects": rows, "totalCount": total}));
+        return json_filtered(out, &a, &json!({"projects": rows, "totalCount": total}));
     }
     for p in &rows {
         let state = if p["closed"].as_bool().unwrap_or(false) {
@@ -175,7 +175,7 @@ fn view(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
     let p = ctx.api("GET", &base(&owner(&a), num), None)?;
     let g = gh_project(ctx, &p);
     if json_mode(&a)? {
-        return print_json(out, &g);
+        return json_filtered(out, &a, &g);
     }
     if a.has(&["-w", "--web"]) {
         writeln!(out, "{}", g["url"].as_str().unwrap_or(""))?;
@@ -264,7 +264,7 @@ fn delete(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
     let num = number(&a)?;
     let p = ctx.api("DELETE", &base(&owner(&a), num), None)?;
     if json_mode(&a)? {
-        return print_json(out, &gh_project(ctx, &p));
+        return json_filtered(out, &a, &gh_project(ctx, &p));
     }
     writeln!(out, "Deleted project {num}")?;
     Ok(())
@@ -380,7 +380,7 @@ fn field_create(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         Some(&json!({"name": name, "data_type": dt, "options": options})),
     )?;
     if json_mode(&a)? {
-        return print_json(out, &gh_field(&f));
+        return json_filtered(out, &a, &gh_field(&f));
     }
     row(
         out,
@@ -407,7 +407,7 @@ fn field_list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
     let rows: Vec<Value> = arr(&all).iter().take(limit).map(gh_field).collect();
     if json_mode(&a)? {
         let total = rows.len();
-        return print_json(out, &json!({"fields": rows, "totalCount": total}));
+        return json_filtered(out, &a, &json!({"fields": rows, "totalCount": total}));
     }
     for f in &rows {
         row(
@@ -442,9 +442,44 @@ fn gh_item(i: &Value) -> Value {
     v
 }
 
+/// Projects filter syntax subset: `field:value` (comma = any of), `-field:value`,
+/// `no:field`, `is:archived|open`, and free text matched against the title.
+fn item_matches(i: &Value, query: &str) -> bool {
+    let text = |v: &Value| match v {
+        Value::String(s) => s.to_ascii_lowercase(),
+        Value::Null => String::new(),
+        other => other.to_string().to_ascii_lowercase(),
+    };
+    for tok in query.split_whitespace() {
+        let (neg, tok) = match tok.strip_prefix('-') {
+            Some(t) => (true, t),
+            None => (false, tok),
+        };
+        let hit = match tok.split_once(':') {
+            Some(("no", f)) => text(&i[f.to_ascii_lowercase()]).is_empty(),
+            Some(("is", "archived")) => i["archived"].as_bool() == Some(true),
+            Some(("is", "open")) => i["archived"].as_bool() != Some(true),
+            Some(("is", kind)) => i["content"]["type"]
+                .as_str()
+                .is_some_and(|t| t.eq_ignore_ascii_case(kind)),
+            Some(("title", v)) => text(&i["title"]).contains(&v.to_ascii_lowercase()),
+            Some((f, v)) => {
+                let have = text(&i[f.to_ascii_lowercase()]);
+                v.split(',')
+                    .any(|x| have == x.trim_matches('"').to_ascii_lowercase())
+            }
+            None => text(&i["title"]).contains(&tok.to_ascii_lowercase()),
+        };
+        if hit == neg {
+            return false;
+        }
+    }
+    true
+}
+
 fn print_item(out: &mut dyn Write, a: &Args<'_>, verb: &str, i: &Value) -> Res {
     if json_mode(a)? {
-        return print_json(out, &gh_item(i));
+        return json_filtered(out, a, &gh_item(i));
     }
     writeln!(out, "{verb} item {}", n(i, "id"))?;
     Ok(())
@@ -590,14 +625,20 @@ fn item_edit(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
 }
 
 fn item_list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
-    let a = Args::parse(raw, &vals(&["-L", "--limit"]), &[])?;
+    let a = Args::parse(raw, &vals(&["-L", "--limit", "--query"]), &[])?;
     let num = number(&a)?;
     let limit = a.limit(30)?;
     let all = ctx.api("GET", &format!("{}/items", base(&owner(&a), num)), None)?;
-    let rows: Vec<Value> = arr(&all).iter().take(limit).map(gh_item).collect();
+    let query = a.get(&["--query"]).unwrap_or("");
+    let rows: Vec<Value> = arr(&all)
+        .iter()
+        .map(gh_item)
+        .filter(|i| item_matches(i, query))
+        .take(limit)
+        .collect();
     if json_mode(&a)? {
         let total = rows.len();
-        return print_json(out, &json!({"items": rows, "totalCount": total}));
+        return json_filtered(out, &a, &json!({"items": rows, "totalCount": total}));
     }
     for i in &rows {
         row(

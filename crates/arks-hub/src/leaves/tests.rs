@@ -14,15 +14,15 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 type Leaf = fn(&Ctx, &[String], &mut dyn Write) -> Res;
 
-struct Forge {
+pub(super) struct Forge {
     stop: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<Result<(), String>>>,
-    dir: PathBuf,
+    pub(super) dir: PathBuf,
     ctx: Ctx,
 }
 
 impl Forge {
-    fn start() -> Self {
+    pub(super) fn start() -> Self {
         static SEQ: AtomicU64 = AtomicU64::new(0);
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -43,6 +43,8 @@ impl Forge {
             data_dir: dir.join("data"),
             rebind_desired: None,
             tls: None,
+            git_root: None,
+            git_url: None,
         };
         let stop = Arc::new(AtomicBool::new(false));
         let stop2 = stop.clone();
@@ -66,27 +68,27 @@ impl Forge {
         }
     }
 
-    fn run(&self, leaf: Leaf, argv: &[&str]) -> Result<String, Fail> {
+    pub(super) fn run(&self, leaf: Leaf, argv: &[&str]) -> Result<String, Fail> {
         let args: Vec<String> = argv.iter().map(|s| s.to_string()).collect();
         let mut out = Vec::new();
         leaf(&self.ctx, &args, &mut out)?;
         Ok(String::from_utf8(out).unwrap())
     }
 
-    fn ok(&self, leaf: Leaf, argv: &[&str]) -> String {
+    pub(super) fn ok(&self, leaf: Leaf, argv: &[&str]) -> String {
         match self.run(leaf, argv) {
             Ok(s) => s,
             Err(e) => panic!("{argv:?} failed: {e:?}"),
         }
     }
 
-    fn file(&self, name: &str, content: &str) -> String {
+    pub(super) fn file(&self, name: &str, content: &str) -> String {
         let p = self.dir.join(name);
         std::fs::write(&p, content).unwrap();
         p.to_string_lossy().into_owned()
     }
 
-    fn api(&self, method: &str, path: &str, body: Option<Value>) -> Value {
+    pub(super) fn api(&self, method: &str, path: &str, body: Option<Value>) -> Value {
         self.ctx.api(method, path, body.as_ref()).unwrap()
     }
 }
@@ -101,15 +103,15 @@ impl Drop for Forge {
     }
 }
 
-fn is_usage<T: std::fmt::Debug>(r: Result<T, Fail>) -> bool {
+pub(super) fn is_usage<T: std::fmt::Debug>(r: Result<T, Fail>) -> bool {
     matches!(r, Err(Fail::Usage(_)))
 }
 
-fn is_api<T: std::fmt::Debug>(r: Result<T, Fail>) -> bool {
+pub(super) fn is_api<T: std::fmt::Debug>(r: Result<T, Fail>) -> bool {
     matches!(r, Err(Fail::Api(_)))
 }
 
-fn json_of(s: &str) -> Value {
+pub(super) fn json_of(s: &str) -> Value {
     serde_json::from_str(s).unwrap_or_else(|e| panic!("not JSON ({e}): {s}"))
 }
 
@@ -229,14 +231,14 @@ fn discussion_leaves_round_trip() {
     let body = f.file("c.md", "a comment\n");
     f.ok(discussion::run, &["comment", "1", "-F", &body]);
     assert!(is_usage(f.run(discussion::run, &["comment", "1"])));
-    let view = f.ok(discussion::run, &["view", "1", "--comments"]);
+    let view = f.ok(discussion::run, &["view", "1"]);
     assert!(view.contains("title:\tShip plan v2"), "{view}");
-    assert!(
-        view.contains("category:\tGeneral") && view.contains("a comment"),
-        "{view}"
-    );
+    assert!(view.contains("category:\tGeneral"), "{view}");
+    // gh prints only the comments when --comments output is piped.
+    let comments = f.ok(discussion::run, &["view", "1", "--comments"]);
+    assert!(comments.contains("a comment"), "{comments}");
     let vj = json_of(&f.ok(discussion::run, &["view", "1", "--json", "comments,state"]));
-    assert_eq!(vj["comments"], json!(1));
+    assert_eq!(vj["comments"].as_array().map(Vec::len), Some(1));
     assert_eq!(vj["state"], json!("OPEN"));
     assert!(is_api(f.run(discussion::run, &["view", "99"])));
     assert!(is_api(

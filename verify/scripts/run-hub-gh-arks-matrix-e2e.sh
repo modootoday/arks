@@ -6,7 +6,8 @@
 # IW-HUB-FULL expand + Missing→0: sot:root/arks-remaining-incompletes-wave (ARKS_HUB_IW_FULL=1).
 # IW-HUB-MUTATE subset: sot:root/arks-honesty-leftovers-wave (ARKS_HUB_IW_MUTATE=1).
 # IW-HUB-ASSETS / CHECKOUT / UX / STUBS: sot:root/arks-in-scope-leftovers-wave.
-# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse + in-scope `later` refuse check (adr:root/20261119230000).
+# ARKS_HUB_IW_ACTIONS=1: platform-only OUT refuse + formerly-`later` rows wired (adr:root/20261119230000).
+# ARKS_HUB_IW_GH_ARGV=1: every in-scope gh leaf with gh argv against `arks serve` (+ argv inventory; plan A4).
 # ARKS_HUB_IW_FORGE_GROUPS=1: arks-owned gist/discussion/project/ssh-key/gpg-key/
 #   repo autolink/repo deploy-key leaves against `arks serve` (host run = Partial; adr:root/20261119230000).
 # B3 client remote ≠ flat-leaf Claimed.
@@ -181,11 +182,11 @@ hub_scope_run() {
 # --- Platform-only OUT refuse + in-scope later refuse (ARKS_HUB_IW_ACTIONS=1) ---
 # GitHub-platform-only groups (Actions run/workflow/cache/secret/variable,
 # attestations, Codespaces) and leaves (release verify*) are out of scope for
-# the arks forge. Rulesets (`ruleset` / `rs`), `repo gitignore|license` and
-# `pr checks` are in scope but `later` ([[adr:root/20261119230000]]). Each must
-# refuse with exit 2 and make no forge call: ARKS_HUB_API points at a closed
-# port so a stray network call fails instead of greening. Later rows must say
-# "later — in scope". This is refuse honesty, not a Claimed feature.
+# the arks forge ([[adr:root/20261119230000]]). Each must refuse with exit 2
+# and make no forge call: ARKS_HUB_API points at a closed port so a stray network
+# call fails instead of greening. The formerly `later` rows (rulesets, repo
+# gitignore|license, pr checks) are implemented now and must not refuse as later.
+# This is refuse honesty, not a Claimed feature.
 if [[ "${ARKS_HUB_IW_ACTIONS:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse path (adr:root/20261119230000)"
   OUT_WORK="$(mktemp -d /tmp/arks-hub-out.XXXXXX)"
@@ -223,6 +224,9 @@ codespace list
 release verify v1.0.0
 release verify-asset v1.0.0 a.bin
 LEAVES
+  # Formerly `later` in-scope rows are implemented (plan:root/20261120000000 A4):
+  # against the closed port they fail as transport errors (exit 1), never as a
+  # `later` refusal (exit 2).
   while IFS= read -r leaf; do
     [[ -z "$leaf" ]] && continue
     set +e
@@ -230,12 +234,12 @@ LEAVES
     "$ARKS_BIN" hub $leaf >"$OUT_WORK/out.txt" 2>&1
     oec=$?
     set -e
-    if [[ "$oec" -ne 2 ]] || ! grep -Fq 'later — in scope, not yet implemented' "$OUT_WORK/out.txt"; then
-      echo "FAIL in-scope later refuse: hub $leaf exit=$oec (want 2 + later text)" >&2
+    if [[ "$oec" -eq 2 ]] || grep -Fq 'later — in scope' "$OUT_WORK/out.txt"; then
+      echo "FAIL formerly-later row still refused: hub $leaf exit=$oec" >&2
       cat "$OUT_WORK/out.txt" >&2 || true
       OUT_OK=0
     else
-      echo "hub-gh-arks-matrix-e2e: later refuse ok (hub $leaf exit=2)"
+      echo "hub-gh-arks-matrix-e2e: formerly-later row wired (hub $leaf exit=$oec)"
     fi
   done <<'LEAVES'
 ruleset list
@@ -300,7 +304,7 @@ AA==
 -----END PGP PUBLIC KEY BLOCK-----
 KEY
   hub_scope_run auth-login "$ARKS_BIN" hub auth login
-  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "forge groups"
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --public --description "forge groups"
   hub_scope_run issue-create "$ARKS_BIN" hub issue create --title tracked --body b
   # gist
   hub_scope_run gist-create "$ARKS_BIN" gist create "$WORK/a.txt" "$WORK/notes.md" -d demo --public
@@ -429,6 +433,231 @@ PY
   exit 0
 fi
 
+# --- gh argv symmetry (ARKS_HUB_IW_GH_ARGV=1) ---
+# Rung A4 of plan:root/20261120000000: every in-scope gh leaf parses gh's flags and
+# behaves like gh against a local `arks serve` forge with Git content
+# (--forge-git-root). Covers the formerly `later` rows (ruleset/rs, repo
+# gitignore|license, pr checks over arks commit statuses, browse, repo
+# clone|sync|read-dir|read-file, search code|commits, issue develop, issue
+# artifact *, auth switch) plus gh export flags (--json/--jq/--template). Local Git
+# work uses arks itself (git personality); stock git/gh are never run. The
+# flag-level inventory (verify/scripts/run-gh-argv-inventory.py) must accept every
+# oracle flag. Host run = Partial (host-advisory); Docker only writes a receipt.
+if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: gh argv symmetry path (plan:root/20261120000000 A4)"
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  cleanup_scope() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  # Absolute binary path: some steps run inside the local clone.
+  ARKS_BIN="$(cd "$(dirname "$ARKS_BIN")" && pwd)/$(basename "$ARKS_BIN")"
+  export ARKS_PERSONALITY=gh
+  export ARKS_HUB_REPO="local/argv"
+  export ARKS_HUB_HOSTS_FILE="$WORK/home/.config/arks/hub-hosts.json"
+  ARKS_GIT() { ARKS_PERSONALITY=git "$ARKS_BIN" "$@"; }
+  # Expect a specific non-zero exit (gh exit classes: 1 failed, 8 pending).
+  hub_argv_expect() {
+    local name="$1" want="$2"
+    shift 2
+    local ec
+    set +e
+    "$@" >"$WORK/${name}.out" 2>&1
+    ec=$?
+    set -e
+    if [[ "$ec" -ne "$want" ]]; then
+      echo "FAIL HF-ARGV $name exit=$ec (want $want)" >&2
+      cat "$WORK/${name}.out" >&2
+      SCOPE_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: HF-ARGV $name exit=$want ok"
+    fi
+  }
+  # accounts: two logins on one host, switch between them
+  hub_scope_run auth-login "$ARKS_BIN" auth login
+  printf 'second-token\n' >"$WORK/tok2"
+  ARKS_HUB_LOGIN=octo hub_scope_run auth-login2 sh -c "\"$ARKS_BIN\" auth login --with-token <\"$WORK/tok2\""
+  hub_scope_run auth-status "$ARKS_BIN" auth status --json hosts --jq '.hosts[][] | select(.active) | .login'
+  hub_scope_run auth-switch "$ARKS_BIN" auth switch -u local
+  hub_scope_run auth-token "$ARKS_BIN" auth token
+  # repository with bootstrap files from the template catalogs
+  hub_scope_run gitignore-list "$ARKS_BIN" repo gitignore list
+  hub_scope_run gitignore-view "$ARKS_BIN" repo gitignore view Rust
+  hub_scope_run license-list "$ARKS_BIN" repo license list
+  hub_scope_run license-view "$ARKS_BIN" repo license view mit
+  hub_scope_run repo-create "$ARKS_BIN" repo create argv --public --add-readme --gitignore Rust --license mit -d "argv repo"
+  hub_scope_run repo-view-json "$ARKS_BIN" repo view --json nameWithOwner,licenseInfo,isEmpty --template '{{.nameWithOwner}} {{.licenseInfo.key}} {{.isEmpty}}'
+  hub_scope_run read-dir "$ARKS_BIN" repo read-dir --json name,type --jq '.[].name'
+  hub_scope_run read-file "$ARKS_BIN" repo read-file .gitignore
+  hub_scope_run repo-clone "$ARKS_BIN" repo clone local/argv
+  CLONE_URL="$(sed -n 's/^clone_url=//p' "$WORK/repo-clone.out")"
+  # local work with arks (git personality), pushed to the forge's Git directory
+  hub_scope_run local-clone ARKS_GIT clone "$CLONE_URL" "$WORK/argv"
+  (
+    cd "$WORK/argv"
+    ARKS_GIT checkout -q -b feature
+    printf 'fn main() {}\n' >main.rs
+    ARKS_GIT add main.rs
+    ARKS_GIT -c user.name=Dev -c user.email=dev@example.invalid commit -q -m "Add main" -m "Body line"
+    ARKS_GIT push -q origin feature
+  ) >"$WORK/local-push.out" 2>&1 || { echo "FAIL HF-ARGV local push" >&2; cat "$WORK/local-push.out" >&2; SCOPE_OK=0; }
+  hub_scope_run pr-create sh -c "cd \"$WORK/argv\" && \"$ARKS_BIN\" pr create --fill -B main -l enhancement -r octo"
+  hub_scope_run pr-list "$ARKS_BIN" pr list --json number,headRefName,labels --jq '.[] | "\(.number) \(.headRefName) \(.labels[0].name)"'
+  hub_scope_run pr-view "$ARKS_BIN" pr view 1
+  hub_scope_run pr-diff "$ARKS_BIN" pr diff 1
+  hub_scope_run pr-diff-names "$ARKS_BIN" pr diff 1 --name-only
+  hub_argv_expect pr-checks-none 1 "$ARKS_BIN" pr checks 1
+  SHA="$("$ARKS_BIN" pr view 1 --json headRefOid --jq .headRefOid)"
+  hub_scope_run status-pending "$ARKS_BIN" api -X POST "repos/local/argv/statuses/$SHA" -f state=pending -f context=ci
+  hub_argv_expect pr-checks-pending 8 "$ARKS_BIN" pr checks 1
+  hub_scope_run status-ok "$ARKS_BIN" api -X POST "repos/local/argv/statuses/$SHA" -f state=success -f context=ci -f description=green
+  hub_scope_run pr-checks "$ARKS_BIN" pr checks 1
+  printf '%s\n' '{"name":"protect-main","enforcement":"active",' \
+    '"conditions":{"ref_name":{"include":["~DEFAULT_BRANCH"],"exclude":[]}},' \
+    '"rules":[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"lint"}]}}]}' \
+    >"$WORK/ruleset.json"
+  hub_scope_run ruleset-create "$ARKS_BIN" api -X POST repos/local/argv/rulesets --input "$WORK/ruleset.json"
+  hub_scope_run ruleset-list "$ARKS_BIN" ruleset list
+  hub_scope_run rs-view "$ARKS_BIN" rs view 1
+  hub_scope_run ruleset-check "$ARKS_BIN" ruleset check --default
+  hub_argv_expect pr-checks-required 8 "$ARKS_BIN" pr checks 1 --required
+  hub_argv_expect pr-merge-blocked 1 "$ARKS_BIN" pr merge 1 --squash
+  hub_scope_run status-lint "$ARKS_BIN" api -X POST "repos/local/argv/statuses/$SHA" -f state=success -f context=lint
+  hub_scope_run pr-review "$ARKS_BIN" pr review 1 --approve
+  hub_scope_run pr-merge "$ARKS_BIN" pr merge 1 --squash --delete-branch
+  hub_scope_run pr-merged "$ARKS_BIN" pr view 1 --json state,mergeCommit --jq '.state'
+  hub_scope_run read-dir-after "$ARKS_BIN" repo read-dir
+  hub_scope_run pr-revert "$ARKS_BIN" pr revert 1
+  # issues: develop (linked branch on the forge) and artifacts
+  hub_scope_run issue-create "$ARKS_BIN" issue create -t "Login fails" -b "see @local" -l bug -a @me
+  hub_scope_run issue-develop "$ARKS_BIN" issue develop 1 --name fix-login
+  hub_scope_run issue-develop-list "$ARKS_BIN" issue develop 1 --list
+  printf '# Plan\nsteps\n' >"$WORK/plan.md"
+  hub_scope_run art-create "$ARKS_BIN" issue artifact create 1 "$WORK/plan.md#Login plan" https://runbooks.example.invalid/login
+  hub_scope_run art-list "$ARKS_BIN" issue artifact list 1 --json number,name,type --jq '.[] | "\(.number) \(.type) \(.name)"'
+  hub_scope_run art-edit "$ARKS_BIN" issue artifact edit 1 1 --body "steps v2"
+  hub_scope_run art-view "$ARKS_BIN" issue artifact view 1 1 --version 1
+  hub_scope_run art-download "$ARKS_BIN" issue artifact download 1 --dir "$WORK/art"
+  hub_scope_run art-delete "$ARKS_BIN" issue artifact delete 1 2 --yes
+  # search over Git content and records
+  hub_scope_run search-code "$ARKS_BIN" search code main --repo local/argv
+  hub_scope_run search-commits "$ARKS_BIN" search commits reverts --repo local/argv --json sha --jq 'length'
+  hub_scope_run search-issues "$ARKS_BIN" search issues Login --label bug --json number,title --jq '.[0].title'
+  hub_scope_run search-prs "$ARKS_BIN" search prs --merged --repo local/argv
+  # browse never launches a browser; fork + remote sync
+  hub_scope_run browse "$ARKS_BIN" browse 1 --no-browser
+  hub_scope_run browse-file "$ARKS_BIN" browse main.rs:1 -n
+  hub_scope_run repo-fork "$ARKS_BIN" repo fork local/argv --org forks
+  hub_scope_run repo-sync "$ARKS_BIN" repo sync forks/argv
+  hub_scope_run repo-sync-local sh -c "cd \"$WORK/argv\" && \"$ARKS_BIN\" repo sync"
+  # releases: tag created at target, generated notes, asset, source archive
+  printf 'bin-v1\n' >"$WORK/tool.bin"
+  hub_scope_run release-create "$ARKS_BIN" release create v1.0.0 "$WORK/tool.bin#Tool" --generate-notes
+  hub_scope_run release-view "$ARKS_BIN" release view v1.0.0 --json tagName,assets,body --jq '.assets[0].label'
+  hub_scope_run release-download "$ARKS_BIN" release download v1.0.0 -p 'tool*' -D "$WORK/dl"
+  hub_scope_run release-archive "$ARKS_BIN" release download v1.0.0 --archive tar.gz -O "$WORK/src.tar.gz"
+  hub_scope_run label-list "$ARKS_BIN" label list --json name --jq '.[].name'
+  # unknown flags are refused like gh; argv inventory accepts every oracle flag
+  hub_argv_expect pr-bogus 2 "$ARKS_BIN" pr list --no-such-flag
+  if command -v gh >/dev/null 2>&1; then
+    hub_scope_run argv-inventory python3 verify/scripts/run-gh-argv-inventory.py "$ARKS_BIN" "$WORK/inventory"
+    if ! python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d["flags"] == d["accepted"] and d["refused"] == 0 and d["unvalidated"] == 0 else 1)' "$WORK/inventory/summary.json"; then
+      echo "FAIL HF-ARGV inventory: not every gh flag accepted" >&2
+      grep -v ACCEPTED "$WORK/inventory/gh-argv-inventory.tsv" >&2 || true
+      SCOPE_OK=0
+    fi
+  else
+    echo "hub-gh-arks-matrix-e2e: note: stock gh (oracle) missing — argv inventory skipped"
+  fi
+  if [[ "$SCOPE_OK" -eq 1 ]]; then
+    if ! grep -Fxq 'octo' "$WORK/auth-status.out" \
+      || ! grep -Fxq 'local-dev-token' "$WORK/auth-token.out" \
+      || ! grep -Fxq 'Rust' "$WORK/gitignore-list.out" \
+      || ! grep -Fq '/target/' "$WORK/gitignore-view.out" \
+      || ! grep -Fq $'mit\tMIT License' "$WORK/license-list.out" \
+      || ! grep -Fq 'SPDX-License-Identifier: MIT' "$WORK/license-view.out" \
+      || ! grep -Fxq 'local/argv mit false' "$WORK/repo-view-json.out" \
+      || ! grep -Fxq 'LICENSE' "$WORK/read-dir.out" \
+      || ! grep -Fq 'recipe=arks clone' "$WORK/repo-clone.out" \
+      || ! grep -Fxq '1 feature enhancement' "$WORK/pr-list.out" \
+      || ! grep -Fq 'title:	Add main' "$WORK/pr-view.out" \
+      || ! grep -Fq '+fn main() {}' "$WORK/pr-diff.out" \
+      || ! grep -Fxq 'main.rs' "$WORK/pr-diff-names.out" \
+      || ! grep -Fq $'ci\tpass' "$WORK/pr-checks.out" \
+      || ! grep -Fq 'protect-main' "$WORK/ruleset-list.out" \
+      || ! grep -Fq 'required_status_checks' "$WORK/rs-view.out" \
+      || ! grep -Fq 'rules apply to branch main' "$WORK/ruleset-check.out" \
+      || ! grep -Fq 'required status check "lint"' "$WORK/pr-merge-blocked.out" \
+      || ! grep -Fxq 'MERGED' "$WORK/pr-merged.out" \
+      || ! grep -Fxq 'main.rs' "$WORK/read-dir-after.out" \
+      || ! grep -Fq '/pull/2' "$WORK/pr-revert.out" \
+      || ! grep -Fq 'fix-login' "$WORK/issue-develop-list.out" \
+      || ! grep -Fxq '1 generic Login plan' "$WORK/art-list.out" \
+      || ! grep -Fxq '2 link runbooks.example.invalid' "$WORK/art-list.out" \
+      || ! grep -Fq 'steps' "$WORK/art-view.out" \
+      || ! grep -Fq 'steps v2' "$WORK/art/1-Login plan.md" \
+      || ! grep -Fq 'local/argv:main.rs:fn main() {}' "$WORK/search-code.out" \
+      || ! grep -Fxq '1' "$WORK/search-commits.out" \
+      || ! grep -Fxq 'Login fails' "$WORK/search-issues.out" \
+      || ! grep -Fq $'local/argv\t1\tclosed' "$WORK/search-prs.out" \
+      || ! grep -Fq '/local/argv/pull/1' "$WORK/browse.out" \
+      || ! grep -Fq '/local/argv/blob/main/main.rs#L1' "$WORK/browse-file.out" \
+      || ! grep -Fq 'merge_type=' "$WORK/repo-sync.out" \
+      || ! grep -Fq 'recipe=arks fetch origin' "$WORK/repo-sync-local.out" \
+      || ! grep -Fxq 'Tool' "$WORK/release-view.out" \
+      || ! cmp -s "$WORK/tool.bin" "$WORK/dl/tool.bin" \
+      || ! python3 -c 'import sys,tarfile; n=tarfile.open(sys.argv[1]).getnames(); sys.exit(0 if any(x.endswith("/main.rs") for x in n) else 1)' "$WORK/src.tar.gz" \
+      || ! grep -Fxq 'bug' "$WORK/label-list.out" \
+      || ! grep -Fq 'unknown flag: --no-such-flag' "$WORK/pr-bogus.out"; then
+      echo "FAIL gh-argv output shapes" >&2
+      SCOPE_OK=0
+    fi
+  fi
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    cat "$WORK/server.err" >&2 || true
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT gh argv symmetry" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: gh argv symmetry Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: gh argv symmetry greens (host run = Partial unless Docker receipt)"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT=".spec/evidence/${TS}-hub-gh-argv"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    cp "$WORK/inventory/summary.json" "$OUT/inventory-summary.json" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
+import json, sys, time
+out, tip, image = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-gh-argv/v1",
+    "gate": "IW-HUB-GH-ARGV",
+    "disposition": "product-path-run",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "note": "Receipt only; row promotion needs an owning SoT update.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
+fi
+
 # --- IW-HUB-ASSETS (ARKS_HUB_IW_ASSETS=1) ---
 if [[ "${ARKS_HUB_IW_ASSETS:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: IW-HUB-ASSETS path (sot:root/arks-in-scope-leftovers-wave)"
@@ -447,20 +676,21 @@ if [[ "${ARKS_HUB_IW_ASSETS:-0}" == "1" ]]; then
   SCOPE_OK=1
   echo 'asset-bytes-v1' >"$WORK/payload.bin"
   hub_scope_run auth-login "$ARKS_BIN" hub auth login
-  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-ASSETS"
-  hub_scope_run release-create "$ARKS_BIN" hub release create --repo local/hubscope --tag v1.0.0 --title r --notes n
-  hub_scope_run release-upload "$ARKS_BIN" hub release upload --repo local/hubscope --tag v1.0.0 --file "$WORK/payload.bin" --name payload.bin
-  hub_scope_run release-download "$ARKS_BIN" hub release download --repo local/hubscope --asset-id 1 --output "$WORK/got.bin"
-  hub_scope_run release-edit "$ARKS_BIN" hub release edit --repo local/hubscope --tag v1.0.0 --title r-ed --notes n2
-  hub_scope_run release-delete-asset "$ARKS_BIN" hub release delete-asset --repo local/hubscope --asset-id 1
-  hub_scope_run release-create2 "$ARKS_BIN" hub release create --repo local/hubscope --tag v1.0.1 --title r2 --notes n
-  hub_scope_run release-delete "$ARKS_BIN" hub release delete --repo local/hubscope --tag v1.0.1
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --public --description "IW-HUB-ASSETS"
+  hub_scope_run release-create "$ARKS_BIN" hub release create v1.0.0 --repo local/hubscope --title r --notes n
+  hub_scope_run release-upload "$ARKS_BIN" hub release upload v1.0.0 "$WORK/payload.bin" --repo local/hubscope
+  hub_scope_run release-download "$ARKS_BIN" hub release download v1.0.0 --repo local/hubscope -p payload.bin -O "$WORK/got.bin"
+  hub_scope_run release-edit "$ARKS_BIN" hub release edit v1.0.0 --repo local/hubscope --title r-ed --notes n2
+  hub_scope_run release-view "$ARKS_BIN" hub release view v1.0.0 --repo local/hubscope --json name --jq .name
+  hub_scope_run release-delete-asset "$ARKS_BIN" hub release delete-asset v1.0.0 payload.bin --repo local/hubscope -y
+  hub_scope_run release-create2 "$ARKS_BIN" hub release create v1.0.1 --repo local/hubscope --title r2 --notes n
+  hub_scope_run release-delete "$ARKS_BIN" hub release delete v1.0.1 --repo local/hubscope -y
   if [[ "$SCOPE_OK" -eq 1 ]]; then
     if ! cmp -s "$WORK/payload.bin" "$WORK/got.bin"; then
       echo "FAIL HF-SCOPE asset round-trip" >&2
       SCOPE_OK=0
     fi
-    if ! grep -Fq 'r-ed' "$WORK/release-edit.out"; then
+    if ! grep -Fxq 'r-ed' "$WORK/release-view.out"; then
       echo "FAIL HF-SCOPE release edit" >&2
       SCOPE_OK=0
     fi
@@ -519,7 +749,7 @@ if [[ "${ARKS_HUB_IW_CHECKOUT:-0}" == "1" ]]; then
   hub_scope_boot WORK
   SCOPE_OK=1
   hub_scope_run auth-login "$ARKS_BIN" hub auth login
-  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-CHECKOUT"
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --public --description "IW-HUB-CHECKOUT"
   hub_scope_run pr-create "$ARKS_BIN" hub pr create --repo local/hubscope --title co-pr --body b --head feature --base main
   hub_scope_run pr-checkout "$ARKS_BIN" hub pr checkout 1 --repo local/hubscope
   hub_scope_run co-alias "$ARKS_BIN" hub co 1 --repo local/hubscope
@@ -661,9 +891,9 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; 
   SCOPE_OK=1
   export ARKS_HUB_REPO="local/hubscope"
   hub_scope_run auth-login "$ARKS_BIN" hub auth login
-  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --description "IW-HUB-STUBS"
-  hub_scope_run repo-create2 "$ARKS_BIN" hub repo create hubdest --description "transfer-dest"
-  hub_scope_run repo-edit "$ARKS_BIN" hub repo edit --repo local/hubscope --description "stubs-ed"
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --public --description "IW-HUB-STUBS"
+  hub_scope_run repo-create2 "$ARKS_BIN" hub repo create hubdest --public --description "transfer-dest"
+  hub_scope_run repo-edit "$ARKS_BIN" hub repo edit local/hubscope --description "stubs-ed"
   hub_scope_run repo-set-default "$ARKS_BIN" hub repo set-default local/hubscope
   hub_scope_run issue-create "$ARKS_BIN" hub issue create --title stub-issue --body b
   hub_scope_run issue-status "$ARKS_BIN" hub issue status 1
@@ -675,22 +905,22 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; 
   # After transfer, next create on hubscope gets a fresh number; delete that leaf.
   hub_scope_run issue-create2 "$ARKS_BIN" hub issue create --repo local/hubscope --title del-me --body b
   # Parse number from create2 JSON body (hub_http_print dumps JSON).
-  DEL_NUM="$(python3 -c 'import re; t=open("'"$WORK"'/issue-create2.out",encoding="utf-8").read(); m=re.search(r"\"number\"\s*:\s*(\d+)", t); print(m.group(1) if m else "2")')"
+  DEL_NUM="$(sed -n 's#.*/issues/\([0-9][0-9]*\)$#\1#p' "$WORK/issue-create2.out" | tail -n1)"
   hub_scope_run issue-delete "$ARKS_BIN" hub issue delete "$DEL_NUM" --repo local/hubscope
   hub_scope_run pr-create-draft "$ARKS_BIN" hub pr create --title stub-pr --body pb --head f --base main --draft
-  hub_scope_run pr-status-draft "$ARKS_BIN" hub pr status 1
+  hub_scope_run pr-status-draft "$ARKS_BIN" hub pr view 1 --json isDraft --template 'draft={{.isDraft}}{{"\n"}}'
   hub_scope_run pr-ready "$ARKS_BIN" hub pr ready 1
-  hub_scope_run pr-status-ready "$ARKS_BIN" hub pr status 1
+  hub_scope_run pr-status-ready "$ARKS_BIN" hub pr status
   hub_scope_run pr-lock "$ARKS_BIN" hub pr lock 1
   hub_scope_run pr-unlock "$ARKS_BIN" hub pr unlock 1
   hub_scope_run pr-review "$ARKS_BIN" hub pr review 1 --body lgtm --event APPROVE
-  hub_scope_run label-create "$ARKS_BIN" hub label create --repo local/hubscope --name bug --color ff0000
+  hub_scope_run label-create "$ARKS_BIN" hub label create bug --repo local/hubscope --color ff0000
   hub_scope_run label-clone "$ARKS_BIN" hub label clone --repo local/hubdest --from local/hubscope
   hub_scope_run repo-archive "$ARKS_BIN" hub repo archive --repo local/hubscope
   hub_scope_run repo-unarchive "$ARKS_BIN" hub repo unarchive --repo local/hubscope
   hub_scope_run repo-rename "$ARKS_BIN" hub repo rename --repo local/hubscope hubrenamed
   export ARKS_HUB_REPO="local/hubrenamed"
-  hub_scope_run api-get "$ARKS_BIN" hub api --method GET /repos/local/hubrenamed
+  hub_scope_run api-get "$ARKS_BIN" hub api --method GET /repos/local/hubrenamed -i
   hub_scope_run status-agg "$ARKS_BIN" hub status
   set +e
   "$ARKS_BIN" hub pr >"$WORK/group-help-pr.out" 2>&1
@@ -703,9 +933,11 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; 
   else
     echo "hub-gh-arks-matrix-e2e: HF-SCOPE group-help-pr ok"
   fi
+  hub_scope_run repo-view-edit "$ARKS_BIN" hub repo view local/hubrenamed --json description --jq .description
   hub_scope_run repo-delete "$ARKS_BIN" hub repo delete --repo local/hubdest
-  # Terminal Partial honesty: git/CI/OAuth must stay exit 2
-  for term in "pr diff 1" "pr checks 1" "pr update-branch 1" "pr revert 1" "repo fork" "auth refresh"; do
+  # Without Git content, statuses or a merge these leaves must fail honestly
+  # (they are implemented since plan A4; see ARKS_HUB_IW_GH_ARGV=1).
+  for term in "pr diff 1" "pr checks 1" "pr update-branch 1" "pr revert 1" "repo fork"; do
     set +e
     # shellcheck disable=SC2086
     "$ARKS_BIN" hub $term >"$WORK/term-${term// /_}.out" 2>&1
@@ -719,7 +951,7 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; 
     fi
   done
   if [[ "$SCOPE_OK" -eq 1 ]]; then
-    if ! grep -Fq 'description' "$WORK/repo-edit.out" \
+    if ! grep -Fxq 'stubs-ed' "$WORK/repo-view-edit.out" \
       || ! grep -Fq 'default_repo=local/hubscope' "$WORK/repo-set-default.out" \
       || ! grep -Fq "deleted=${DEL_NUM}" "$WORK/issue-delete.out" \
       || ! grep -Fq 'draft=true' "$WORK/pr-status-draft.out" \
@@ -737,8 +969,8 @@ if [[ "${ARKS_HUB_IW_STUBS:-0}" == "1" || "${ARKS_HUB_IW_STUBS2:-0}" == "1" ]]; 
       || ! grep -Fq 'archived=false' "$WORK/repo-unarchive.out" \
       || ! grep -Fq 'name=hubrenamed' "$WORK/repo-rename.out" \
       || ! grep -Fq 'deleted=local/hubdest' "$WORK/repo-delete.out" \
-      || ! grep -Fq 'http_status=200' "$WORK/api-get.out" \
-      || ! grep -Fq 'issues_open=' "$WORK/status-agg.out"; then
+      || ! grep -Fq 'HTTP/1.1 200' "$WORK/api-get.out" \
+      || ! grep -Fq 'Assigned Issues' "$WORK/status-agg.out"; then
       echo "FAIL HF-SCOPE STUBS exhaust shapes" >&2
       SCOPE_OK=0
     fi
@@ -878,35 +1110,36 @@ PY
   }
 
   run_mut auth-login "$ARKS_BIN" hub auth login
-  run_mut repo-create "$ARKS_BIN" hub repo create hubmut --description "IW-HUB-MUTATE"
+  run_mut repo-create "$ARKS_BIN" hub repo create hubmut --public --description "IW-HUB-MUTATE"
   run_mut issue-create "$ARKS_BIN" hub issue create --repo local/hubmut --title "mut-issue" --body "body0"
   run_mut issue-edit "$ARKS_BIN" hub issue edit 1 --repo local/hubmut --title "mut-issue-ed" --body "body1"
   run_mut issue-comment "$ARKS_BIN" hub issue comment 1 --repo local/hubmut --body "ic1"
   run_mut issue-close "$ARKS_BIN" hub issue close 1 --repo local/hubmut
-  run_mut issue-view-closed "$ARKS_BIN" hub issue view 1 --repo local/hubmut
+  run_mut issue-view-closed "$ARKS_BIN" hub issue view 1 --repo local/hubmut --json state,title --template '{{.state}} {{.title}}{{"\n"}}'
+  run_mut issue-comments "$ARKS_BIN" hub issue view 1 --repo local/hubmut --comments
   run_mut issue-reopen "$ARKS_BIN" hub issue reopen 1 --repo local/hubmut
   run_mut pr-create "$ARKS_BIN" hub pr create --repo local/hubmut --title "mut-pr" --body "pb0" --head f --base main
   run_mut pr-edit "$ARKS_BIN" hub pr edit 1 --repo local/hubmut --title "mut-pr-ed" --body "pb1"
   run_mut pr-comment "$ARKS_BIN" hub pr comment 1 --repo local/hubmut --body "pc1"
+  run_mut pr-comments "$ARKS_BIN" hub pr view 1 --repo local/hubmut --comments
   run_mut pr-close "$ARKS_BIN" hub pr close 1 --repo local/hubmut
   run_mut pr-reopen "$ARKS_BIN" hub pr reopen 1 --repo local/hubmut
-  run_mut pr-merge "$ARKS_BIN" hub pr merge 1 --repo local/hubmut
+  run_mut pr-merge "$ARKS_BIN" hub pr merge 1 --repo local/hubmut --merge
   run_mut release-create "$ARKS_BIN" hub release create --repo local/hubmut --tag v0.1.0 --title "r" --notes "n"
   run_mut release-view "$ARKS_BIN" hub release view --repo local/hubmut --tag v0.1.0
-  run_mut label-create "$ARKS_BIN" hub label create --repo local/hubmut --name bug --color ff0000 --description "b"
-  run_mut label-edit "$ARKS_BIN" hub label edit --repo local/hubmut --name bug --color 00ff00 --description "fixed"
+  run_mut label-create "$ARKS_BIN" hub label create bug --repo local/hubmut --color ff0000 --description "b"
+  run_mut label-edit "$ARKS_BIN" hub label edit bug --repo local/hubmut --color 00ff00 --description "fixed"
   run_mut label-list-before-del "$ARKS_BIN" hub label list --repo local/hubmut
-  run_mut label-delete "$ARKS_BIN" hub label delete --repo local/hubmut --name bug
+  run_mut label-delete "$ARKS_BIN" hub label delete bug --repo local/hubmut --yes
   run_mut label-list-after-del "$ARKS_BIN" hub label list --repo local/hubmut
 
   if [[ "$MUT_OK" -eq 1 ]]; then
-    if ! grep -Fq '"state":"closed"' "$WORK/issue-view-closed.out" \
-      || ! grep -Fq 'mut-issue-ed' "$WORK/issue-edit.out" \
-      || ! grep -Fq 'ic1' "$WORK/issue-comment.out" \
-      || ! grep -Fq 'pc1' "$WORK/pr-comment.out" \
-      || ! grep -Fq '"merged":true' "$WORK/pr-merge.out" \
+    if ! grep -Fxq 'CLOSED mut-issue-ed' "$WORK/issue-view-closed.out" \
+      || ! grep -Fq 'ic1' "$WORK/issue-comments.out" \
+      || ! grep -Fq 'pc1' "$WORK/pr-comments.out" \
+      || ! grep -Fq 'Merged pull request local/hubmut#1' "$WORK/pr-merge.out" \
       || ! grep -Fq 'v0.1.0' "$WORK/release-view.out" \
-      || ! grep -Fq '00ff00' "$WORK/label-edit.out" \
+      || ! grep -Fq '#00FF00' "$WORK/label-list-before-del.out" \
       || ! grep -Fq 'bug' "$WORK/label-list-before-del.out" \
       || grep -Fq 'bug' "$WORK/label-list-after-del.out"; then
       echo "FAIL HF-MUT peer-faithful mutate shapes" >&2
@@ -1057,7 +1290,7 @@ PY
   run_full auth-login "$ARKS_BIN" hub auth login
   run_full auth-status "$ARKS_BIN" hub auth status
   run_full auth-token "$ARKS_BIN" hub auth token
-  run_full repo-create "$ARKS_BIN" hub repo create hubfull --description "IW-HUB-FULL"
+  run_full repo-create "$ARKS_BIN" hub repo create hubfull --public --description "IW-HUB-FULL"
   run_full repo-list "$ARKS_BIN" hub repo list
   run_full repo-view "$ARKS_BIN" hub repo view local/hubfull
   run_full issue-create "$ARKS_BIN" hub issue create --repo local/hubfull --title "full-issue" --body "HF"
@@ -1066,10 +1299,11 @@ PY
   run_full pr-create "$ARKS_BIN" hub pr create --repo local/hubfull --title "full-pr" --body "HF" --head feature --base main
   run_full pr-list "$ARKS_BIN" hub pr list --repo local/hubfull
   run_full pr-view "$ARKS_BIN" hub pr view 1 --repo local/hubfull
-  run_full label-create "$ARKS_BIN" hub label create --repo local/hubfull --name bug --color ff0000 --description "bug"
+  run_full label-create "$ARKS_BIN" hub label create bug --repo local/hubfull --color ff0000 --description "bug"
   run_full label-list "$ARKS_BIN" hub label list --repo local/hubfull
   run_full release-create "$ARKS_BIN" hub release create --repo local/hubfull --tag v0.0.1 --title "r1" --notes "n"
   run_full release-list "$ARKS_BIN" hub release list --repo local/hubfull
+  run_full repo-create-org "$ARKS_BIN" hub repo create acme/hubfull-org --public
   run_full org-list "$ARKS_BIN" hub org list
   run_full search-repos "$ARKS_BIN" hub search repos hubfull
   run_full search-issues "$ARKS_BIN" hub search issues full-issue
@@ -1079,7 +1313,7 @@ PY
   if [[ "$FULL_OK" -eq 1 ]]; then
     if ! grep -Fq 'bug' "$WORK/label-list.out" \
       || ! grep -Fq 'v0.0.1' "$WORK/release-list.out" \
-      || ! grep -Fq 'local' "$WORK/org-list.out" \
+      || ! grep -Fxq 'acme' "$WORK/org-list.out" \
       || ! grep -Fq 'hubfull' "$WORK/search-repos.out" \
       || ! grep -Fq 'full-issue' "$WORK/search-issues.out" \
       || ! grep -Fq 'full-pr' "$WORK/search-prs.out"; then
@@ -1250,14 +1484,14 @@ PY
   # Claimed subset (normative): auth/repo/issue/pr create|list|view via nested + flat.
   run_flat auth-login "$ARKS_BIN" hub auth login
   run_flat auth-status "$ARKS_BIN" hub auth status
-  run_flat repo-create "$ARKS_BIN" hub repo create hubflat --description "IW-HUB-FLAT"
+  run_flat repo-create "$ARKS_BIN" hub repo create hubflat --public --description "IW-HUB-FLAT"
   run_flat repo-list "$ARKS_BIN" hub repo list
   run_flat issue-create-hub "$ARKS_BIN" hub issue create --repo local/hubflat --title "flat-issue" --body "HF"
   run_flat issue-list-flat "$ARKS_BIN" issue list --repo local/hubflat
-  run_flat issue-view-flat "$ARKS_BIN" issue view 1 --repo local/hubflat
+  run_flat issue-view-flat "$ARKS_BIN" issue view 1 --repo local/hubflat --json number,title
   run_flat pr-create-flat "$ARKS_BIN" pr create --repo local/hubflat --title "flat-pr" --body "HF" --head feature --base main
   run_flat pr-list-hub "$ARKS_BIN" hub pr list --repo local/hubflat
-  run_flat pr-view-flat "$ARKS_BIN" pr view 1 --repo local/hubflat
+  run_flat pr-view-flat "$ARKS_BIN" pr view 1 --repo local/hubflat --json number,title
 
   if [[ "$SUBSET_OK" -eq 1 ]]; then
     if ! grep -Fq 'flat-issue' "$WORK/issue-list-flat.out" \

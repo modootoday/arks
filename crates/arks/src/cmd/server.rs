@@ -204,6 +204,8 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         .cloned()
         .unwrap_or_else(|| "127.0.0.1:3920".into());
     let mut forge_data: Option<PathBuf> = file_cfg.get("forge_data").map(PathBuf::from);
+    let mut forge_git_root: Option<PathBuf> = file_cfg.get("forge_git_root").map(PathBuf::from);
+    let mut forge_git_url: Option<String> = file_cfg.get("forge_git_url").cloned();
     let mut listen_from_cfg = file_cfg.get("bind").cloned();
     let mut ssh_listen_cfg = file_cfg
         .get("ssh_listen")
@@ -281,6 +283,21 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
                     .ok_or_else(|| CliError::Usage("serve --forge-listen needs ADDR".into()))?
                     .clone();
             }
+            "--forge-git-root" => {
+                i += 1;
+                forge_git_root =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        CliError::Usage("serve --forge-git-root needs DIR".into())
+                    })?));
+            }
+            "--forge-git-url" => {
+                i += 1;
+                forge_git_url = Some(
+                    args.get(i)
+                        .ok_or_else(|| CliError::Usage("serve --forge-git-url needs URL".into()))?
+                        .clone(),
+                );
+            }
             "--forge-data" => {
                 i += 1;
                 forge_data =
@@ -336,6 +353,12 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
             }
             other if other.starts_with("--forge-listen=") => {
                 forge_listen = other[15..].to_string();
+            }
+            other if other.starts_with("--forge-git-root=") => {
+                forge_git_root = Some(PathBuf::from(&other[17..]));
+            }
+            other if other.starts_with("--forge-git-url=") => {
+                forge_git_url = Some(other[16..].to_string());
             }
             other if other.starts_with("--forge-data=") => {
                 forge_data = Some(PathBuf::from(&other[13..]));
@@ -401,7 +424,12 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
 
     let product_tls = resolve_product_tls_from_args(&forwarded)?;
     let mut forge_opts = if enable_forge {
-        Some(resolve_forge_opts(&forge_listen, forge_data)?)
+        Some(resolve_forge_opts(
+            &forge_listen,
+            forge_data,
+            forge_git_root,
+            forge_git_url,
+        )?)
     } else {
         None
     };
@@ -510,6 +538,8 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
 fn resolve_forge_opts(
     forge_listen: &str,
     forge_data: Option<PathBuf>,
+    forge_git_root: Option<PathBuf>,
+    forge_git_url: Option<String>,
 ) -> CliResult<ForgeServeOptions> {
     let listen: SocketAddr = forge_listen
         .parse()
@@ -519,6 +549,8 @@ fn resolve_forge_opts(
         data_dir: forge_data.unwrap_or_else(arks_hub::default_forge_data_dir),
         rebind_desired: None,
         tls: None,
+        git_root: forge_git_root,
+        git_url: forge_git_url,
     })
 }
 

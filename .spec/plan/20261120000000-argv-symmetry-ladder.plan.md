@@ -3,7 +3,7 @@ id: plan:root/20261120000000
 title: argv symmetry ladder (A0–A_final) — every command and argv symmetric with git, gh and git daemon
 status: active
 created: 2026-11-20T00:00:00Z
-updated: 2026-11-20T02:00:00Z
+updated: 2026-11-20T03:00:00Z
 tags: [cli, argv, symmetry, flags, git, gh, daemon, inventory, plan, no-invent-pass]
 verify: manual
 rel:
@@ -73,6 +73,18 @@ sub-command groups, helpers) and need a documentation- or completion-derived inv
    exists). `update-git-for-windows` checks for a newer `arks` release and never installs Git
    for Windows.
 3. Every other former refuse row follows git's documented behaviour.
+
+## Progress
+
+- **A4 (host-advisory, not a receipt):** `verify/scripts/run-gh-argv-inventory.py` with the
+  installed gh 2.89.0 as oracle (pin 2.103.3; newer leaves from
+  `verify/matrices/gh-argv-supplement.csv`): baseline 264 / 1,268 flag spellings accepted
+  (780 unvalidated: leaves that ignored unknown flags) →
+  [[evidence:root/20261120015729-gh-argv-inventory-baseline]]; after A4 all 1,268 accepted and every
+  leaf refuses unknown flags ([[evidence:root/20261120040000-gh-argv-inventory-a4]]). The formerly `later` rows (rulesets, template catalogs, `pr checks`
+  over arks commit statuses, `browse`, `repo clone|sync|read-*`, `search code|commits`,
+  `issue develop|artifact`, `auth switch`) are implemented against the forge and tested in crate
+  tests plus `ARKS_HUB_IW_GH_ARGV=1` of the hub e2e script. Rows stay Partial until a Docker receipt.
 
 ## Order
 

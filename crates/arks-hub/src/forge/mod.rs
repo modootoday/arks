@@ -4,11 +4,22 @@
 //! REST routes. Paths and field names follow the GitHub REST shape as a wire
 //! convention only; arks defines the semantics. Never spawns git/gh.
 
+pub(crate) mod archive;
+pub(crate) mod artifacts;
 pub(crate) mod autolink;
 pub(crate) mod discussion;
 pub(crate) mod gist;
+pub(crate) mod git;
+pub(crate) mod issues;
 pub(crate) mod keys;
 pub(crate) mod project;
+pub(crate) mod pulls;
+pub(crate) mod releases;
+pub(crate) mod repos;
+pub(crate) mod rules;
+pub(crate) mod search;
+pub(crate) mod status;
+pub(crate) mod templates;
 
 use crate::store::HubStore;
 use serde_json::{Value, json};
@@ -19,6 +30,10 @@ pub(crate) struct Req<'a> {
     pub path: &'a str,
     pub query: &'a str,
     pub body: &'a [u8],
+    /// `Accept` header (diff / patch / octet-stream negotiation).
+    pub accept: &'a str,
+    /// `Content-Type` of the body (release asset uploads).
+    pub content_type: &'a str,
 }
 
 impl Req<'_> {
@@ -47,6 +62,15 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
         project::route,
         discussion::route,
         autolink::route,
+        templates::route,
+        artifacts::route,
+        status::route,
+        rules::route,
+        issues::route,
+        pulls::route,
+        releases::route,
+        search::route,
+        repos::route,
     ] {
         if let Some(resp) = router(st, req)? {
             return Ok(Some(resp));

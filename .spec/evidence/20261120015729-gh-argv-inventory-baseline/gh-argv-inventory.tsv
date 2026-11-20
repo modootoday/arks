@@ -1,0 +1,1269 @@
+gh_command	flag	meta	verdict	note
+auth login	--clipboard		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	-c		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--git-protocol	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	-p	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--hostname	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	-h	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--insecure-storage		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--scopes	strings	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	-s	strings	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--skip-ssh-key		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--web		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	-w		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--with-token		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth logout	--hostname	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth logout	-h	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth logout	--user	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth logout	-u	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth status	--active		UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	-a		UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	--hostname	string	UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	-h	string	UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	--jq	expression	UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	--json	fields	UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	--show-token		UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	-t		UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth status	--template	string	UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
+auth token	--hostname	string	UNVALIDATED	***
+auth token	-h	string	UNVALIDATED	***
+auth token	--user	string	UNVALIDATED	***
+auth token	-u	string	UNVALIDATED	***
+auth refresh	--clipboard		REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	-c		REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	--hostname	string	REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	-h	string	REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	--insecure-storage		REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	--remove-scopes	strings	REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	-r	strings	REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	--reset-scopes		REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	--scopes	strings	REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth refresh	-s	strings	REFUSED	arks hub auth refresh: terminal Partial — OAuth refresh not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+auth switch	--hostname	string	REFUSED	arks hub auth switch: terminal Partial/Refuse — not local-forge Claimed ([[sot:root/arks-in-scope-leftovers-wave]])
+auth switch	-h	string	REFUSED	arks hub auth switch: terminal Partial/Refuse — not local-forge Claimed ([[sot:root/arks-in-scope-leftovers-wave]])
+auth switch	--user	string	REFUSED	arks hub auth switch: terminal Partial/Refuse — not local-forge Claimed ([[sot:root/arks-in-scope-leftovers-wave]])
+auth switch	-u	string	REFUSED	arks hub auth switch: terminal Partial/Refuse — not local-forge Claimed ([[sot:root/arks-in-scope-leftovers-wave]])
+pr	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub pr --repo: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+pr	-R	[HOST/]OWNER/REPO	REFUSED	arks hub pr -R: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+pr create	--assignee	login	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-a	login	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--base	branch	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-B	branch	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--body	string	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-b	string	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--body-file	file	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-F	file	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--draft		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-d		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--dry-run		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--editor		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-e		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--fill		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-f		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--fill-first		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--fill-verbose		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--head	branch	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-H	branch	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--label	name	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-l	name	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--milestone	name	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-m	name	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--no-maintainer-edit		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--project	title	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-p	title	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--recover	string	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--reviewer	handle	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-r	handle	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--template	file	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-T	file	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--title	string	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-t	string	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--web		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-w		UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr create	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr create: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--app	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--assignee	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-a	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--author	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-A	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--base	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-B	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--draft		UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-d		UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--head	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-H	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--jq	expression	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-q	expression	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--json	fields	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--label	strings	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-l	strings	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--limit	int	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-L	int	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--search	query	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-S	query	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--state	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-s	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--template	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-t	string	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--web		UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-w		UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr list	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr list: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	--conflict-status		UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	-c		UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	--jq	expression	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	-q	expression	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	--json	fields	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	--template	string	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	-t	string	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr status	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr status: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	--comments		UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	-c		UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	--jq	expression	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	-q	expression	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	--json	fields	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	--template	string	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	-t	string	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	--web		UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	-w		UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr view	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr view: connect 127.0.0.1:9: Connection refused (os error 111)
+pr diff	--color	string	REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	--exclude	patterns	REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	-e	patterns	REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	--name-only		REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	--patch		REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	--web		REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	-w		REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr diff	-R	[HOST/]OWNER/REPO	REFUSED	arks hub pr diff: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr edit	--add-assignee	login	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--add-label	name	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--add-project	title	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--add-reviewer	login	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--base	branch	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	-B	branch	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--body	string	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	-b	string	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--body-file	file	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	-F	file	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--milestone	name	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	-m	name	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--remove-assignee	login	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--remove-label	name	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--remove-milestone		UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--remove-project	title	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--remove-reviewer	login	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--title	string	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	-t	string	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr edit	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr edit: connect 127.0.0.1:9: Connection refused (os error 111)
+pr close	--comment	string	UNVALIDATED	arks hub pr close: connect 127.0.0.1:9: Connection refused (os error 111)
+pr close	-c	string	UNVALIDATED	arks hub pr close: connect 127.0.0.1:9: Connection refused (os error 111)
+pr close	--delete-branch		UNVALIDATED	arks hub pr close: connect 127.0.0.1:9: Connection refused (os error 111)
+pr close	-d		UNVALIDATED	arks hub pr close: connect 127.0.0.1:9: Connection refused (os error 111)
+pr close	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr close: connect 127.0.0.1:9: Connection refused (os error 111)
+pr close	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr close: connect 127.0.0.1:9: Connection refused (os error 111)
+pr reopen	--comment	string	UNVALIDATED	arks hub pr reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+pr reopen	-c	string	UNVALIDATED	arks hub pr reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+pr reopen	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+pr reopen	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--body	text	UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	-b	text	UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--body-file	file	UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	-F	file	UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--create-if-none		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--delete-last		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--edit-last		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--editor		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	-e		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--web		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	-w		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--yes		UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr comment	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr comment: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--admin		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--author-email	text	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-A	text	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--auto		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--body	text	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-b	text	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--body-file	file	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-F	file	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--delete-branch		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-d		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--disable-auto		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--match-head-commit	SHA	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--merge		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-m		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--rebase		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-r		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--squash		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-s		UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--subject	text	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-t	text	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr merge	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr merge: connect 127.0.0.1:9: Connection refused (os error 111)
+pr ready	--undo		UNVALIDATED	arks hub pr ready: connect 127.0.0.1:9: Connection refused (os error 111)
+pr ready	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr ready: connect 127.0.0.1:9: Connection refused (os error 111)
+pr ready	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr ready: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	--approve		UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	-a		UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	--body	string	UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	-b	string	UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	--body-file	file	UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	-F	file	UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	--comment		UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	-c		UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	--request-changes		UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	-r		UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr review	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr review: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checks	--fail-fast		REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--interval	int	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	-i	int	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--jq	expression	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	-q	expression	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--json	fields	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--required		REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--template	string	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	-t	string	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--watch		REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--web		REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	-w		REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr checks	-R	[HOST/]OWNER/REPO	REFUSED	arks hub pr checks: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+pr lock	--reason	string	UNVALIDATED	arks hub pr lock: connect 127.0.0.1:9: Connection refused (os error 111)
+pr lock	-r	string	UNVALIDATED	arks hub pr lock: connect 127.0.0.1:9: Connection refused (os error 111)
+pr lock	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr lock: connect 127.0.0.1:9: Connection refused (os error 111)
+pr lock	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr lock: connect 127.0.0.1:9: Connection refused (os error 111)
+pr unlock	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr unlock: connect 127.0.0.1:9: Connection refused (os error 111)
+pr unlock	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr unlock: connect 127.0.0.1:9: Connection refused (os error 111)
+pr update-branch	--rebase		REFUSED	arks hub pr update-branch: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]
+pr update-branch	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub pr update-branch: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]
+pr update-branch	-R	[HOST/]OWNER/REPO	REFUSED	arks hub pr update-branch: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]
+pr revert	--body	string	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	-b	string	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	--body-file	file	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	-F	file	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	--draft		REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	-d		REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	--title	string	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	-t	string	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr revert	-R	[HOST/]OWNER/REPO	REFUSED	arks hub pr revert: terminal Partial — requires git/CI semantics not Claimed ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+pr checkout	--branch	string	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	-b	string	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	--detach		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	--force		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	-f		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	--recurse-submodules		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+pr checkout	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	--branch	string	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	-b	string	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	--detach		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	--force		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	-f		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	--recurse-submodules		UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+co	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub pr checkout: connect 127.0.0.1:9: Connection refused (os error 111)
+issue	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue --repo: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue -R: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue create	--assignee	login	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-a	login	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--body	string	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-b	string	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--body-file	file	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-F	file	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--editor		UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-e		UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--label	name	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-l	name	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--milestone	name	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-m	name	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--project	title	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-p	title	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--recover	string	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--template	name	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-T	name	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--title	string	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-t	string	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--web		UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-w		UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue create	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue create: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--app	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--assignee	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-a	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--author	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-A	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--jq	expression	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-q	expression	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--json	fields	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--label	strings	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-l	strings	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--limit	int	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-L	int	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--mention	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--milestone	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-m	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--search	query	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-S	query	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--state	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-s	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--template	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-t	string	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--web		UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-w		UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue list	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue list: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	--jq	expression	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	-q	expression	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	--json	fields	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	--template	string	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	-t	string	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue status	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue status: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	--comments		UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	-c		UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	--jq	expression	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	-q	expression	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	--json	fields	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	--template	string	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	-t	string	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	--web		UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	-w		UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue view	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue view: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	--comment	string	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	-c	string	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	--duplicate-of	string	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	--reason	string	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	-r	string	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue close	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue close: connect 127.0.0.1:9: Connection refused (os error 111)
+issue reopen	--comment	string	UNVALIDATED	arks hub issue reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+issue reopen	-c	string	UNVALIDATED	arks hub issue reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+issue reopen	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+issue reopen	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue reopen: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--body	text	UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	-b	text	UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--body-file	file	UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	-F	file	UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--create-if-none		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--delete-last		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--edit-last		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--editor		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	-e		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--web		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	-w		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--yes		UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue comment	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue comment: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--add-assignee	login	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--add-label	name	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--add-project	title	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--body	string	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	-b	string	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--body-file	file	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	-F	file	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--milestone	name	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	-m	name	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--remove-assignee	login	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--remove-label	name	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--remove-milestone		UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--remove-project	title	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--title	string	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	-t	string	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue edit	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue edit: connect 127.0.0.1:9: Connection refused (os error 111)
+issue delete	--yes		UNVALIDATED	arks hub issue delete: connect 127.0.0.1:9: Connection refused (os error 111)
+issue delete	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue delete: connect 127.0.0.1:9: Connection refused (os error 111)
+issue delete	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue delete: connect 127.0.0.1:9: Connection refused (os error 111)
+issue lock	--reason	string	UNVALIDATED	arks hub issue lock: connect 127.0.0.1:9: Connection refused (os error 111)
+issue lock	-r	string	UNVALIDATED	arks hub issue lock: connect 127.0.0.1:9: Connection refused (os error 111)
+issue lock	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue lock: connect 127.0.0.1:9: Connection refused (os error 111)
+issue lock	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue lock: connect 127.0.0.1:9: Connection refused (os error 111)
+issue unlock	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue unlock: connect 127.0.0.1:9: Connection refused (os error 111)
+issue unlock	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue unlock: connect 127.0.0.1:9: Connection refused (os error 111)
+issue pin	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue pin: connect 127.0.0.1:9: Connection refused (os error 111)
+issue pin	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue pin: connect 127.0.0.1:9: Connection refused (os error 111)
+issue unpin	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue unpin: connect 127.0.0.1:9: Connection refused (os error 111)
+issue unpin	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue unpin: connect 127.0.0.1:9: Connection refused (os error 111)
+issue transfer	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue transfer: --to owner/name required
+issue transfer	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub issue transfer: --to owner/name required
+issue develop	--base	string	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	-b	string	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	--branch-repo	string	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	--checkout		REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	-c		REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	--list		REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	-l		REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	--name	string	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	-n	string	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue develop	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue develop: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	--attach	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	--body	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	-b	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	--body-file	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	-F	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	--name	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	--type	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact create	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact delete	--yes		REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact delete	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact delete	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	--clobber		REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	--dir	directory	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	-D	directory	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	--output	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	-O	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	--skip-existing		REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	--version	number	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact download	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	--attach	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	--body	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	-b	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	--body-file	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	-F	file	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	--name	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	--restore-version	number	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact edit	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	--jq	expression	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	-q	expression	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	--json	fields	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	--limit	int	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	-L	int	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	--template	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	-t	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	--type	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact list	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	--jq	expression	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	-q	expression	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	--json	fields	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	--template	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	-t	string	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	--version	number	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	--web		REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	-w		REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+issue artifact view	-R	[HOST/]OWNER/REPO	REFUSED	arks hub issue artifact: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+release	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub release --repo: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+release	-R	[HOST/]OWNER/REPO	REFUSED	arks hub release -R: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+release create	--discussion-category	string	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--draft		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	-d		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--fail-on-no-commits		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--generate-notes		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--latest		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--notes	string	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	-n	string	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--notes-file	file	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	-F	file	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--notes-from-tag		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--notes-start-tag	string	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--prerelease		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	-p		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--target	branch	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--title	string	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	-t	string	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--verify-tag		UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release create	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release create: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--exclude-drafts		UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--exclude-pre-releases		UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--jq	expression	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	-q	expression	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--json	fields	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--limit	int	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	-L	int	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--order	string	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	-O	string	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--template	string	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	-t	string	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release list	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release list: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	--jq	expression	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	-q	expression	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	--json	fields	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	--template	string	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	-t	string	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	--web		UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	-w		UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release view	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release view: connect 127.0.0.1:9: Connection refused (os error 111)
+release upload	--clobber		UNVALIDATED	arks hub release upload: --file required
+release upload	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release upload: --file required
+release upload	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release upload: --file required
+release download	--archive	format	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	-A	format	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	--clobber		UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	--dir	directory	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	-D	directory	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	--output	file	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	-O	file	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	--pattern	stringArray	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	-p	stringArray	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	--skip-existing		UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release download	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release download: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--discussion-category	string	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--draft		UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--latest		UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--notes	string	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	-n	string	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--notes-file	file	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	-F	file	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--prerelease		UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--tag	string	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--target	branch	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--title	string	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	-t	string	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--verify-tag		UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release edit	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release edit: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete	--cleanup-tag		UNVALIDATED	arks hub release delete: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete	--yes		UNVALIDATED	arks hub release delete: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete	-y		UNVALIDATED	arks hub release delete: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release delete: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release delete: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete-asset	--yes		UNVALIDATED	arks hub release delete-asset: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete-asset	-y		UNVALIDATED	arks hub release delete-asset: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete-asset	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release delete-asset: connect 127.0.0.1:9: Connection refused (os error 111)
+release delete-asset	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub release delete-asset: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	--branch	string	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	-b	string	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	--jq	expression	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	-q	expression	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	--json	fields	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	--template	string	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	-t	string	UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	--web		UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo view	-w		UNVALIDATED	arks hub repo view: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--archived		UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--fork		UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--jq	expression	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	-q	expression	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--json	fields	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--language	string	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	-l	string	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--limit	int	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	-L	int	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--no-archived		UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--source		UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--template	string	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	-t	string	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--topic	strings	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo list	--visibility	string	UNVALIDATED	arks hub repo list: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--add-readme		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--clone		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-c		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--description	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-d	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--disable-issues		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--disable-wiki		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--gitignore	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-g	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--homepage	URL	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-h	URL	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--include-all-branches		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--internal		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--license	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-l	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--private		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--public		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--push		UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--remote	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-r	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--source	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-s	string	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--team	name	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-t	name	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	--template	repository	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo create	-p	repository	UNVALIDATED	arks hub repo create: connect 127.0.0.1:9: Connection refused (os error 111)
+repo edit	--accept-visibility-change-consequences		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--add-topic	strings	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--allow-forking		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--allow-update-branch		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--default-branch	name	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--delete-branch-on-merge		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--description	string	UNVALIDATED	arks hub repo edit: connect 127.0.0.1:9: Connection refused (os error 111)
+repo edit	-d	string	UNVALIDATED	arks hub repo edit: connect 127.0.0.1:9: Connection refused (os error 111)
+repo edit	--enable-advanced-security		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-auto-merge		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-discussions		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-issues		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-merge-commit		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-projects		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-rebase-merge		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-secret-scanning		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-secret-scanning-push-protection		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-squash-merge		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--enable-wiki		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--homepage	URL	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	-h	URL	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--remove-topic	strings	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--squash-merge-commit-message	string	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--template		UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo edit	--visibility	string	UNVALIDATED	arks hub repo edit: require --description and/or --private/--public
+repo delete	--yes		UNVALIDATED	arks hub repo delete: connect 127.0.0.1:9: Connection refused (os error 111)
+repo fork	--clone		REFUSED	arks hub repo fork: terminal Partial — git object copy / spawn forbidden ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+repo fork	--default-branch-only		REFUSED	arks hub repo fork: terminal Partial — git object copy / spawn forbidden ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+repo fork	--fork-name	string	REFUSED	arks hub repo fork: terminal Partial — git object copy / spawn forbidden ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+repo fork	--org	string	REFUSED	arks hub repo fork: terminal Partial — git object copy / spawn forbidden ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+repo fork	--remote		REFUSED	arks hub repo fork: terminal Partial — git object copy / spawn forbidden ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+repo fork	--remote-name	string	REFUSED	arks hub repo fork: terminal Partial — git object copy / spawn forbidden ([[sot:root/arks-in-scope-leftovers-wave]] / [[research:root/20261111135200]])
+repo rename	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub repo rename: NEW_NAME required
+repo rename	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub repo rename: NEW_NAME required
+repo rename	--yes		UNVALIDATED	arks hub repo rename: NEW_NAME required
+repo rename	-y		UNVALIDATED	arks hub repo rename: NEW_NAME required
+repo archive	--yes		UNVALIDATED	arks hub repo archive: connect 127.0.0.1:9: Connection refused (os error 111)
+repo archive	-y		UNVALIDATED	arks hub repo archive: connect 127.0.0.1:9: Connection refused (os error 111)
+repo unarchive	--yes		UNVALIDATED	arks hub repo unarchive: connect 127.0.0.1:9: Connection refused (os error 111)
+repo unarchive	-y		UNVALIDATED	arks hub repo unarchive: connect 127.0.0.1:9: Connection refused (os error 111)
+repo set-default	--unset		UNVALIDATED	default_repo=local/inventory
+repo set-default	-u		UNVALIDATED	default_repo=local/inventory
+repo set-default	--view		UNVALIDATED	default_repo=local/inventory
+repo set-default	-v		UNVALIDATED	default_repo=local/inventory
+repo clone	--no-upstream		REFUSED	arks hub repo clone: Deferred — MUST NOT spawn git/gh
+repo clone	--upstream-remote-name	string	REFUSED	arks hub repo clone: Deferred — MUST NOT spawn git/gh
+repo clone	-u	string	REFUSED	arks hub repo clone: Deferred — MUST NOT spawn git/gh
+repo sync	--branch	string	REFUSED	arks hub repo sync: Deferred — MUST NOT spawn git/gh
+repo sync	-b	string	REFUSED	arks hub repo sync: Deferred — MUST NOT spawn git/gh
+repo sync	--force		REFUSED	arks hub repo sync: Deferred — MUST NOT spawn git/gh
+repo sync	--source	string	REFUSED	arks hub repo sync: Deferred — MUST NOT spawn git/gh
+repo sync	-s	string	REFUSED	arks hub repo sync: Deferred — MUST NOT spawn git/gh
+repo read-dir	--jq	expression	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	-q	expression	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	--json	fields	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	--ref	string	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	-R	[HOST/]OWNER/REPO	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	--template	string	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-dir	-t	string	REFUSED	arks hub repo read-dir: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--allow-escape-sequences		REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--clobber		REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--jq	expression	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	-q	expression	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--json	fields	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--output	path	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	-o	path	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--ref	string	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	-R	[HOST/]OWNER/REPO	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	--template	string	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo read-file	-t	string	REFUSED	arks hub repo read-file: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-in-scope-leftovers-wave]]
+repo license view	--web		REFUSED	arks hub repo license: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+repo license view	-w		REFUSED	arks hub repo license: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+repo autolink	--repo	[HOST/]OWNER/REPO	UNVALIDATED	keyPrefix, urlTemplate
+repo autolink	-R	[HOST/]OWNER/REPO	UNVALIDATED	keyPrefix, urlTemplate
+repo autolink create	--numeric		ACCEPTED	
+repo autolink create	-n		ACCEPTED	
+repo autolink create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink delete	--yes		ACCEPTED	
+repo autolink delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink list	--jq	expression	REFUSED	arks repo autolink list: unknown flag: --jq
+repo autolink list	-q	expression	REFUSED	arks repo autolink list: unknown flag: -q
+repo autolink list	--json	fields	ACCEPTED	
+repo autolink list	--template	string	REFUSED	arks repo autolink list: unknown flag: --template
+repo autolink list	-t	string	REFUSED	arks repo autolink list: unknown flag: -t
+repo autolink list	--web		ACCEPTED	
+repo autolink list	-w		ACCEPTED	
+repo autolink list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink view	--jq	expression	REFUSED	arks repo autolink view: unknown flag: --jq
+repo autolink view	-q	expression	REFUSED	arks repo autolink view: unknown flag: -q
+repo autolink view	--json	fields	ACCEPTED	
+repo autolink view	--template	string	REFUSED	arks repo autolink view: unknown flag: --template
+repo autolink view	-t	string	REFUSED	arks repo autolink view: unknown flag: -t
+repo autolink view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key	--repo	[HOST/]OWNER/REPO	UNVALIDATED	JSON fields: id, key, title, createdAt, readOnly
+repo deploy-key	-R	[HOST/]OWNER/REPO	UNVALIDATED	JSON fields: id, key, title, createdAt, readOnly
+repo deploy-key add	--allow-write		ACCEPTED	
+repo deploy-key add	-w		ACCEPTED	
+repo deploy-key add	--title	string	ACCEPTED	
+repo deploy-key add	-t	string	ACCEPTED	
+repo deploy-key add	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key add	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key list	--jq	expression	REFUSED	arks repo deploy-key list: unknown flag: --jq
+repo deploy-key list	-q	expression	REFUSED	arks repo deploy-key list: unknown flag: -q
+repo deploy-key list	--json	fields	ACCEPTED	
+repo deploy-key list	--template	string	REFUSED	arks repo deploy-key list: unknown flag: --template
+repo deploy-key list	-t	string	REFUSED	arks repo deploy-key list: unknown flag: -t
+repo deploy-key list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub label --repo: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+label	-R	[HOST/]OWNER/REPO	REFUSED	arks hub label -R: Partial stub (not Claimed); refuse exit 2 — [[sot:root/arks-honesty-leftovers-wave]]
+label list	--jq	expression	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	-q	expression	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--json	fields	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--limit	int	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	-L	int	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--order	string	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--search	string	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	-S	string	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--sort	string	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--template	string	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	-t	string	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--web		UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	-w		UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label list	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label list: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	--color	string	UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	-c	string	UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	--description	string	UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	-d	string	UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	--force		UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	-f		UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label create	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label create: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	--color	string	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	-c	string	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	--description	string	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	-d	string	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	--name	string	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	-n	string	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label edit	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label edit: connect 127.0.0.1:9: Connection refused (os error 111)
+label delete	--yes		UNVALIDATED	arks hub label delete: connect 127.0.0.1:9: Connection refused (os error 111)
+label delete	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label delete: connect 127.0.0.1:9: Connection refused (os error 111)
+label delete	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label delete: connect 127.0.0.1:9: Connection refused (os error 111)
+label clone	--force		UNVALIDATED	arks hub label clone: --from owner/name required
+label clone	-f		UNVALIDATED	arks hub label clone: --from owner/name required
+label clone	--repo	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label clone: --from owner/name required
+label clone	-R	[HOST/]OWNER/REPO	UNVALIDATED	arks hub label clone: --from owner/name required
+search issues	--app	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--archived		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--assignee	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--author	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--closed	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--commenter	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--comments	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--created	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--include-prs		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--interactions	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--involves	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--jq	expression	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	-q	expression	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--json	fields	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--label	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--language	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--limit	int	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	-L	int	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--locked		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--match	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--mentions	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--milestone	title	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--no-assignee		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--no-label		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--no-milestone		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--no-project		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--order	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--owner	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--project	owner/number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--reactions	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--repo	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	-R	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--sort	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--state	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--team-mentions	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--template	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	-t	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--updated	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--visibility	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	--web		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search issues	-w		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--app	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--archived		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--assignee	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--author	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--base	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-B	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--checks	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--closed	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--commenter	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--comments	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--created	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--draft		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--head	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-H	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--interactions	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--involves	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--jq	expression	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-q	expression	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--json	fields	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--label	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--language	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--limit	int	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-L	int	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--locked		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--match	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--mentions	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--merged		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--merged-at	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--milestone	title	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--no-assignee		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--no-label		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--no-milestone		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--no-project		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--order	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--owner	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--project	owner/number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--reactions	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--repo	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-R	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--review	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--review-requested	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--reviewed-by	user	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--sort	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--state	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--team-mentions	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--template	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-t	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--updated	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--visibility	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	--web		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search prs	-w		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--archived		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--created	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--followers	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--forks	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--good-first-issues	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--help-wanted-issues	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--include-forks	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--jq	expression	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	-q	expression	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--json	fields	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--language	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--license	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--limit	int	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	-L	int	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--match	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--number-topics	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--order	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--owner	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--size	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--sort	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--stars	number	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--template	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	-t	string	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--topic	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--updated	date	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--visibility	strings	UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	--web		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search repos	-w		UNVALIDATED	arks hub search: connect 127.0.0.1:9: Connection refused (os error 111)
+search code	--extension	string	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--filename	string	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--jq	expression	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	-q	expression	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--json	fields	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--language	string	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--limit	int	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	-L	int	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--match	strings	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--owner	strings	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--repo	strings	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	-R	strings	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--size	string	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--template	string	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	-t	string	UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	--web		UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search code	-w		UNVALIDATED	arks hub search code: use repos|issues|prs (Partial)
+search commits	--author	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--author-date	date	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--author-email	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--author-name	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--committer	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--committer-date	date	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--committer-email	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--committer-name	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--hash	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--jq	expression	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	-q	expression	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--json	fields	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--limit	int	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	-L	int	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--merge		UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--order	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--owner	strings	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--parent	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--repo	strings	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	-R	strings	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--sort	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--template	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	-t	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--tree	string	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--visibility	strings	UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	--web		UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+search commits	-w		UNVALIDATED	arks hub search commits: use repos|issues|prs (Partial)
+status	--exclude	strings	UNVALIDATED	note: status aggregation Partial — forge serve may be down
+status	-e	strings	UNVALIDATED	note: status aggregation Partial — forge serve may be down
+status	--org	string	UNVALIDATED	note: status aggregation Partial — forge serve may be down
+status	-o	string	UNVALIDATED	note: status aggregation Partial — forge serve may be down
+api	--cache	duration	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--field	key=value	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-F	key=value	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--header	key:value	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-H	key:value	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--hostname	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--include		UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-i		UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--input	file	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--jq	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-q	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--method	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-X	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--paginate		UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--preview	strings	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-p	strings	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--raw-field	key=value	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-f	key=value	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--silent		UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--slurp		UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--template	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	-t	string	UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+api	--verbose		UNVALIDATED	arks hub api: connect 127.0.0.1:9: Connection refused (os error 111)
+org list	--limit	int	UNVALIDATED	arks hub org list: connect 127.0.0.1:9: Connection refused (os error 111)
+org list	-L	int	UNVALIDATED	arks hub org list: connect 127.0.0.1:9: Connection refused (os error 111)
+config get	--host	string	UNVALIDATED	arks hub config get: unknown key `--host`
+config get	-h	string	UNVALIDATED	arks hub config get: unknown key `-h`
+config set	--host	string	UNVALIDATED	arks hub config set: KEY VALUE required
+config set	-h	string	UNVALIDATED	arks hub config set: KEY VALUE required
+config list	--host	string	UNVALIDATED	client_state=/tmp/arks-gh-argv-_hs5ga1e/home/hub-client.json
+config list	-h	string	UNVALIDATED	client_state=/tmp/arks-gh-argv-_hs5ga1e/home/hub-client.json
+alias set	--clobber		UNVALIDATED	arks hub alias set: NAME EXPANSION required
+alias set	--shell		UNVALIDATED	arks hub alias set: NAME EXPANSION required
+alias set	-s		UNVALIDATED	arks hub alias set: NAME EXPANSION required
+alias delete	--all		UNVALIDATED	arks hub alias delete: NAME required
+alias import	--clobber		UNVALIDATED	arks hub alias import: FILE required (lines NAME=EXPANSION)
+completion	--shell	string	UNVALIDATED	complete -W "auth pr issue release repo label search status api org config alias completion co browse gist discussion project milestone skill agent-task preview
+completion	-s	string	UNVALIDATED	complete -W "auth pr issue release repo label search status api org config alias completion co browse gist discussion project milestone skill agent-task preview
+browse	--actions		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-a		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--blame		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--branch	string	UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-b	string	UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--commit	string[="last"]	UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-c	string[="last"]	UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--no-browser		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-n		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--projects		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-p		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--releases		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-r		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--repo	[HOST/]OWNER/REPO	UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-R	[HOST/]OWNER/REPO	UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--settings		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-s		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	--wiki		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+browse	-w		UNVALIDATED	note: browse Partial — URL printed only; no browser spawn Claimed
+gist list	--filter	expression	ACCEPTED	
+gist list	--include-content		ACCEPTED	
+gist list	--limit	int	ACCEPTED	
+gist list	-L	int	ACCEPTED	
+gist list	--public		ACCEPTED	
+gist list	--secret		ACCEPTED	
+gist view	--filename	string	ACCEPTED	
+gist view	-f	string	ACCEPTED	
+gist view	--files		ACCEPTED	
+gist view	--raw		ACCEPTED	
+gist view	-r		ACCEPTED	
+gist view	--web		ACCEPTED	
+gist view	-w		ACCEPTED	
+gist create	--desc	string	ACCEPTED	
+gist create	-d	string	ACCEPTED	
+gist create	--filename	string	ACCEPTED	
+gist create	-f	string	ACCEPTED	
+gist create	--public		ACCEPTED	
+gist create	-p		ACCEPTED	
+gist create	--web		ACCEPTED	
+gist create	-w		ACCEPTED	
+gist edit	--add	string	ACCEPTED	
+gist edit	-a	string	ACCEPTED	
+gist edit	--desc	string	ACCEPTED	
+gist edit	-d	string	ACCEPTED	
+gist edit	--filename	string	ACCEPTED	
+gist edit	-f	string	ACCEPTED	
+gist edit	--remove	string	ACCEPTED	
+gist edit	-r	string	ACCEPTED	
+gist delete	--yes		ACCEPTED	
+discussion	--repo	[HOST/]OWNER/REPO	UNVALIDATED	JSON fields: number, title, body, category, state, author, comments, createdAt, updatedAt, url
+discussion	-R	[HOST/]OWNER/REPO	UNVALIDATED	JSON fields: number, title, body, category, state, author, comments, createdAt, updatedAt, url
+discussion create	--body	string	ACCEPTED	
+discussion create	-b	string	ACCEPTED	
+discussion create	--body-file	string	ACCEPTED	
+discussion create	-F	string	ACCEPTED	
+discussion create	--category	string	ACCEPTED	
+discussion create	-c	string	ACCEPTED	
+discussion create	--label	strings	REFUSED	arks discussion create: unknown flag: --label
+discussion create	-l	strings	REFUSED	arks discussion create: unknown flag: -l
+discussion create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion create	--title	string	ACCEPTED	
+discussion create	-t	string	ACCEPTED	
+discussion list	--after	string	REFUSED	arks discussion list: unknown flag: --after
+discussion list	--answered		REFUSED	arks discussion list: unknown flag: --answered
+discussion list	--author	string	ACCEPTED	
+discussion list	-A	string	ACCEPTED	
+discussion list	--category	string	ACCEPTED	
+discussion list	-c	string	ACCEPTED	
+discussion list	--jq	expression	REFUSED	arks discussion list: unknown flag: --jq
+discussion list	-q	expression	REFUSED	arks discussion list: unknown flag: -q
+discussion list	--json	fields	ACCEPTED	
+discussion list	--label	strings	REFUSED	arks discussion list: unknown flag: --label
+discussion list	-l	strings	REFUSED	arks discussion list: unknown flag: -l
+discussion list	--limit	int	ACCEPTED	
+discussion list	-L	int	ACCEPTED	
+discussion list	--order	string	REFUSED	arks discussion list: unknown flag: --order
+discussion list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion list	--search	query	REFUSED	arks discussion list: unknown flag: --search
+discussion list	-S	query	REFUSED	arks discussion list: unknown flag: -S
+discussion list	--sort	string	REFUSED	arks discussion list: unknown flag: --sort
+discussion list	--state	string	ACCEPTED	
+discussion list	-s	string	ACCEPTED	
+discussion list	--template	string	REFUSED	arks discussion list: unknown flag: --template
+discussion list	-t	string	REFUSED	arks discussion list: unknown flag: -t
+discussion list	--web		ACCEPTED	
+discussion list	-w		ACCEPTED	
+discussion view	--after	string	REFUSED	arks discussion view: unknown flag: --after
+discussion view	--comments		ACCEPTED	
+discussion view	-c		ACCEPTED	
+discussion view	--jq	expression	REFUSED	arks discussion view: unknown flag: --jq
+discussion view	-q	expression	REFUSED	arks discussion view: unknown flag: -q
+discussion view	--json	fields	ACCEPTED	
+discussion view	--limit	int	REFUSED	arks discussion view: unknown flag: --limit
+discussion view	-L	int	REFUSED	arks discussion view: unknown flag: -L
+discussion view	--order	string	REFUSED	arks discussion view: unknown flag: --order
+discussion view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion view	--template	string	REFUSED	arks discussion view: unknown flag: --template
+discussion view	-t	string	REFUSED	arks discussion view: unknown flag: -t
+discussion view	--web		ACCEPTED	
+discussion view	-w		ACCEPTED	
+discussion edit	--add-label	name	REFUSED	arks discussion edit: unknown flag: --add-label
+discussion edit	--body	string	ACCEPTED	
+discussion edit	-b	string	ACCEPTED	
+discussion edit	--body-file	string	ACCEPTED	
+discussion edit	-F	string	ACCEPTED	
+discussion edit	--category	string	ACCEPTED	
+discussion edit	-c	string	ACCEPTED	
+discussion edit	--remove-label	name	REFUSED	arks discussion edit: unknown flag: --remove-label
+discussion edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion edit	--title	string	ACCEPTED	
+discussion edit	-t	string	ACCEPTED	
+discussion comment	--body	string	ACCEPTED	
+discussion comment	-b	string	ACCEPTED	
+discussion comment	--body-file	string	ACCEPTED	
+discussion comment	-F	string	ACCEPTED	
+discussion comment	--delete		REFUSED	arks discussion comment: unknown flag: --delete
+discussion comment	--edit		REFUSED	arks discussion comment: unknown flag: --edit
+discussion comment	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion comment	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion comment	--yes		REFUSED	arks discussion comment: unknown flag: --yes
+project list	--closed		ACCEPTED	
+project list	--format	string	ACCEPTED	
+project list	--jq	expression	ACCEPTED	
+project list	-q	expression	ACCEPTED	
+project list	--limit	int	ACCEPTED	
+project list	-L	int	ACCEPTED	
+project list	--owner	string	ACCEPTED	
+project list	--template	string	ACCEPTED	
+project list	-t	string	ACCEPTED	
+project list	--web		ACCEPTED	
+project list	-w		ACCEPTED	
+project view	--format	string	ACCEPTED	
+project view	--jq	expression	ACCEPTED	
+project view	-q	expression	ACCEPTED	
+project view	--owner	string	ACCEPTED	
+project view	--template	string	ACCEPTED	
+project view	-t	string	ACCEPTED	
+project view	--web		ACCEPTED	
+project view	-w		ACCEPTED	
+project create	--format	string	ACCEPTED	
+project create	--jq	expression	ACCEPTED	
+project create	-q	expression	ACCEPTED	
+project create	--owner	string	ACCEPTED	
+project create	--template	string	ACCEPTED	
+project create	-t	string	ACCEPTED	
+project create	--title	string	ACCEPTED	
+project edit	--description	string	ACCEPTED	
+project edit	-d	string	ACCEPTED	
+project edit	--format	string	ACCEPTED	
+project edit	--jq	expression	ACCEPTED	
+project edit	-q	expression	ACCEPTED	
+project edit	--owner	string	ACCEPTED	
+project edit	--readme	string	ACCEPTED	
+project edit	--template	string	ACCEPTED	
+project edit	-t	string	ACCEPTED	
+project edit	--title	string	ACCEPTED	
+project edit	--visibility	string	ACCEPTED	
+project delete	--format	string	ACCEPTED	
+project delete	--jq	expression	ACCEPTED	
+project delete	-q	expression	ACCEPTED	
+project delete	--owner	string	ACCEPTED	
+project delete	--template	string	ACCEPTED	
+project delete	-t	string	ACCEPTED	
+project close	--format	string	ACCEPTED	
+project close	--jq	expression	ACCEPTED	
+project close	-q	expression	ACCEPTED	
+project close	--owner	string	ACCEPTED	
+project close	--template	string	ACCEPTED	
+project close	-t	string	ACCEPTED	
+project close	--undo		ACCEPTED	
+project copy	--drafts		ACCEPTED	
+project copy	--format	string	ACCEPTED	
+project copy	--jq	expression	ACCEPTED	
+project copy	-q	expression	ACCEPTED	
+project copy	--source-owner	string	ACCEPTED	
+project copy	--target-owner	string	ACCEPTED	
+project copy	--template	string	ACCEPTED	
+project copy	-t	string	ACCEPTED	
+project copy	--title	string	ACCEPTED	
+project link	--owner	string	ACCEPTED	
+project link	--repo	string	ACCEPTED	
+project link	-R	string	ACCEPTED	
+project link	--team	string	ACCEPTED	
+project link	-T	string	ACCEPTED	
+project unlink	--owner	string	ACCEPTED	
+project unlink	--repo	string	ACCEPTED	
+project unlink	-R	string	ACCEPTED	
+project unlink	--team	string	ACCEPTED	
+project unlink	-T	string	ACCEPTED	
+project mark-template	--format	string	ACCEPTED	
+project mark-template	--jq	expression	ACCEPTED	
+project mark-template	-q	expression	ACCEPTED	
+project mark-template	--owner	string	ACCEPTED	
+project mark-template	--template	string	ACCEPTED	
+project mark-template	-t	string	ACCEPTED	
+project mark-template	--undo		ACCEPTED	
+project field-create	--data-type	string	ACCEPTED	
+project field-create	--format	string	ACCEPTED	
+project field-create	--jq	expression	ACCEPTED	
+project field-create	-q	expression	ACCEPTED	
+project field-create	--name	string	ACCEPTED	
+project field-create	--owner	string	ACCEPTED	
+project field-create	--single-select-options	strings	ACCEPTED	
+project field-create	--template	string	ACCEPTED	
+project field-create	-t	string	ACCEPTED	
+project field-delete	--format	string	ACCEPTED	
+project field-delete	--id	string	ACCEPTED	
+project field-delete	--jq	expression	ACCEPTED	
+project field-delete	-q	expression	ACCEPTED	
+project field-delete	--template	string	ACCEPTED	
+project field-delete	-t	string	ACCEPTED	
+project field-list	--format	string	ACCEPTED	
+project field-list	--jq	expression	ACCEPTED	
+project field-list	-q	expression	ACCEPTED	
+project field-list	--limit	int	ACCEPTED	
+project field-list	-L	int	ACCEPTED	
+project field-list	--owner	string	ACCEPTED	
+project field-list	--template	string	ACCEPTED	
+project field-list	-t	string	ACCEPTED	
+project item-add	--format	string	ACCEPTED	
+project item-add	--jq	expression	ACCEPTED	
+project item-add	-q	expression	ACCEPTED	
+project item-add	--owner	string	ACCEPTED	
+project item-add	--template	string	ACCEPTED	
+project item-add	-t	string	ACCEPTED	
+project item-add	--url	string	ACCEPTED	
+project item-archive	--format	string	ACCEPTED	
+project item-archive	--id	string	ACCEPTED	
+project item-archive	--jq	expression	ACCEPTED	
+project item-archive	-q	expression	ACCEPTED	
+project item-archive	--owner	string	ACCEPTED	
+project item-archive	--template	string	ACCEPTED	
+project item-archive	-t	string	ACCEPTED	
+project item-archive	--undo		ACCEPTED	
+project item-create	--body	string	ACCEPTED	
+project item-create	--format	string	ACCEPTED	
+project item-create	--jq	expression	ACCEPTED	
+project item-create	-q	expression	ACCEPTED	
+project item-create	--owner	string	ACCEPTED	
+project item-create	--template	string	ACCEPTED	
+project item-create	-t	string	ACCEPTED	
+project item-create	--title	string	ACCEPTED	
+project item-delete	--format	string	ACCEPTED	
+project item-delete	--id	string	ACCEPTED	
+project item-delete	--jq	expression	ACCEPTED	
+project item-delete	-q	expression	ACCEPTED	
+project item-delete	--owner	string	ACCEPTED	
+project item-delete	--template	string	ACCEPTED	
+project item-delete	-t	string	ACCEPTED	
+project item-edit	--body	string	ACCEPTED	
+project item-edit	--clear		ACCEPTED	
+project item-edit	--date	string	ACCEPTED	
+project item-edit	--field-id	string	ACCEPTED	
+project item-edit	--format	string	ACCEPTED	
+project item-edit	--id	string	ACCEPTED	
+project item-edit	--iteration-id	string	ACCEPTED	
+project item-edit	--jq	expression	ACCEPTED	
+project item-edit	-q	expression	ACCEPTED	
+project item-edit	--number	float	ACCEPTED	
+project item-edit	--project-id	string	ACCEPTED	
+project item-edit	--single-select-option-id	string	ACCEPTED	
+project item-edit	--template	string	ACCEPTED	
+project item-edit	-t	string	ACCEPTED	
+project item-edit	--text	string	ACCEPTED	
+project item-edit	--title	string	ACCEPTED	
+project item-list	--format	string	ACCEPTED	
+project item-list	--jq	expression	ACCEPTED	
+project item-list	-q	expression	ACCEPTED	
+project item-list	--limit	int	ACCEPTED	
+project item-list	-L	int	ACCEPTED	
+project item-list	--owner	string	ACCEPTED	
+project item-list	--query	string	REFUSED	arks project item-list: unknown flag: --query
+project item-list	--template	string	ACCEPTED	
+project item-list	-t	string	ACCEPTED	
+ssh-key add	--title	string	ACCEPTED	
+ssh-key add	-t	string	ACCEPTED	
+ssh-key add	--type	string	ACCEPTED	
+ssh-key delete	--yes		ACCEPTED	
+ssh-key delete	-y		ACCEPTED	
+gpg-key add	--title	string	ACCEPTED	
+gpg-key add	-t	string	ACCEPTED	
+gpg-key delete	--yes		ACCEPTED	
+gpg-key delete	-y		ACCEPTED	
+ruleset	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset	-R	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+rs	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub rs: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+rs	-R	[HOST/]OWNER/REPO	REFUSED	arks hub rs: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	--limit	int	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	-L	int	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	--org	string	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	-o	string	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	--parents		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	-p		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	--web		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	-w		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset list	-R	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	--org	string	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	-o	string	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	--parents		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	-p		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	--web		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	-w		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset view	-R	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset check	--default		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset check	--web		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset check	-w		REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset check	--repo	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh
+ruleset check	-R	[HOST/]OWNER/REPO	REFUSED	arks hub ruleset: later — in scope, not yet implemented ([[adr:root/20261119230000]]); refuse exit 2; never spawns gh

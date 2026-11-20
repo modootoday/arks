@@ -1,0 +1,9 @@
+Venue: host (advisory, not a clean-room receipt), tip 3b44a5c, debug build of arks.
+Oracle: installed stock gh 2.89.0 (matrix pin 2.103.3; flags added between the two
+versions are missing from this oracle). Leaves the installed gh lacks come from
+verify/matrices/gh-argv-supplement.csv. Same method as the baseline
+(evidence 20261120015729-gh-argv-inventory-baseline).
+Result after rung A4: 164 commands, 1268 flag spellings, 1268 accepted, 0 refused,
+0 unvalidated (every leaf refuses an unknown flag). Baseline was 264 accepted,
+224 refused, 780 unvalidated. Parse level only; behaviour: hub e2e
+ARKS_HUB_IW_GH_ARGV=1 and arks-hub crate tests (host runs).

@@ -3,7 +3,7 @@ id: sot:root/arks-hub-gh-command-matrix
 title: arks hub gh command matrix
 status: active
 created: 2026-11-10T19:06:00Z
-updated: 2026-11-19T23:00:00Z
+updated: 2026-11-20T03:00:00Z
 tags: [arks-hub, gh, matrix, arks-hub-cmd, cli-parity, native-api, survey, single-release]
 verify: manual
 rel:
@@ -19,7 +19,7 @@ rel:
 
 # arks hub gh command matrix
 
-Version **0.3.0**. Canonical **`gh` → `arks` (flat forge client) command matrix** so humans who already use GitHub CLI can keep muscle memory under the **single** published binary **`arks`**. Logical pillar name may still say “hub”; **taught argv is flat** (`arks pr …`) per [[sot:root/arks-hub-product-intent]] v0.4. CSV column `arks_hub_target` means **leaf path under `arks`** (historical name; `hub` prefix not required). **Surface parity ≠ subprocess.** Implementation MUST use a **native host API client** (host via `arks serve`); MUST **never** spawn `gh` or `git`.
+Version **0.3.1**. Canonical **`gh` → `arks` (flat forge client) command matrix** so humans who already use GitHub CLI can keep muscle memory under the **single** published binary **`arks`**. Logical pillar name may still say “hub”; **taught argv is flat** (`arks pr …`) per [[sot:root/arks-hub-product-intent]] v0.4. CSV column `arks_hub_target` means **leaf path under `arks`** (historical name; `hub` prefix not required). **Surface parity ≠ subprocess.** Implementation MUST use a **native host API client** (host via `arks serve`); MUST **never** spawn `gh` or `git`.
 
 **Survey pin:** host `gh` **2.103.3** (2026-10-26). Captured via `gh help` + `gh help reference` on Windows. Cross-OS: help text is the same CLI contract; re-run survey when advancing the pin. Prior pin **2.103.0** superseded for inventory currency — CSV `gh_pin` column MUST match this survey pin (sibling refresh).
 
@@ -91,3 +91,10 @@ Pillar 3 under [[sot:root/verify-cleanroom-symmetry-matrix]]: compose `dod-hub-m
 4. Do not mark matrix rows Claimed from this SoT alone.
 5. Public docs describe `arks hub`, not a separate `arks-hub` release.
 6. Umbrella + scenario SoTs stay linked for clean-room public-story DoD.
+7. Flag level (rung A4 of [[plan:root/20261120000000]]): `verify/scripts/run-gh-argv-inventory.py`
+   reads each in-scope row's flags from the installed stock `gh <cmd> --help` (oracle only; leaves
+   newer than the installed gh come from `verify/matrices/gh-argv-supplement.csv`) and runs them
+   through `arks`; every flag must be ACCEPTED and every leaf must refuse an unknown flag. Host runs
+   are advisory; the oracle version is recorded with each run (skew against the pin is expected).
+8. `attestation*` and `codespace*` rows are `out-of-scope` (GitHub-platform-only,
+   [[adr:root/20261119230000]] decision 3); the formerly `later` in-scope rows are `v1` since A4.
