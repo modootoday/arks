@@ -774,13 +774,14 @@ fn cm2_pack004_maint003_refuse_gc() {
         stderr_str(&maint)
     );
     let prune = run_in("arks", &arks_repo, &["gc", "--prune=now"]);
+    // CORR-001 is git-symmetric (owner decision 2026-11-20): prune=now runs as in git.
     assert!(
-        !ok(&prune) && stderr_str(&prune).contains("CORR-001"),
-        "gc --prune=now must remain CORR-001 refuse: {}",
+        ok(&prune),
+        "gc --prune=now runs as in git: {}",
         stderr_str(&prune)
     );
 
-    let resolved = lease_blocks && ok(&gc) && ok(&repack) && ok(&maint) && !ok(&prune);
+    let resolved = lease_blocks && ok(&gc) && ok(&repack) && ok(&maint) && ok(&prune);
     record(
         "PACK-004/MAINT-003",
         "pathology_pass",
@@ -789,7 +790,7 @@ fn cm2_pack004_maint003_refuse_gc() {
         } else {
             "fail"
         },
-        "maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now refuse",
+        "maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now git-symmetric",
     );
     assert!(resolved);
 }
@@ -1048,7 +1049,7 @@ fn cm3_agent007_worktree_submodule_composition() {
     );
 }
 
-/// CORR-001 — refuse prune=now / gc under writers (corruption class).
+/// CORR-001 — `gc --prune=now` is git-symmetric (owner decision 2026-11-20).
 #[test]
 fn cm3_corr001_refuse_prune_now() {
     require_git();
@@ -1063,11 +1064,9 @@ fn cm3_corr001_refuse_prune_now() {
     let arks_repo = init_repo("arks", root, "arks-corr001");
     let out = run_in("arks", &arks_repo, &["gc", "--prune=now"]);
     let err = stderr_str(&out);
-    let arks_resolved = !ok(&out)
-        && (err.contains("CORR-001") || err.contains("prune") || err.contains("refuse-closed"));
     assert!(
-        arks_resolved,
-        "arks gc --prune=now must refuse-closed citing CORR-001; stderr={err}"
+        ok(&out) == ok(&gc),
+        "arks gc --prune=now matches stock git exit; stderr={err}"
     );
     // Fs-3: bare `repack` / `maintenance` are usage-fail (need -a / `run`); not CORR-001.
     // Lease-honest paths remain available; prune=now is the corruption-class refuse.
@@ -2084,7 +2083,7 @@ fn cx2_misc005_reset_hard_lock() {
     );
 }
 
-/// CORR-002 — forced overlapping gc refuse.
+/// CORR-002 — `gc --force` is git-symmetric (owner decision 2026-11-20).
 #[test]
 fn cx2_corr002_gc_force_refuse() {
     require_git();
@@ -2100,15 +2099,15 @@ fn cx2_corr002_gc_force_refuse() {
     let out = run_in("arks", &arks_repo, &["gc", "--force"]);
     let err = stderr_str(&out);
     assert!(
-        !ok(&out) && err.contains("CORR-002"),
-        "arks gc --force must refuse CORR-002; stderr={err}"
+        ok(&out) == ok(&gc),
+        "arks gc --force matches stock git exit; stderr={err}"
     );
 
     record(
         "CORR-002",
         "pathology_pass",
         "resolved_pass",
-        "refuse gc --force (CORR-002 overlapping gc honesty)",
+        "gc --force git-symmetric (CORR-002 compat)",
     );
 }
 
@@ -4810,7 +4809,7 @@ fn dz4_toctou004() {
 
 /// Flush comparative receipt after Cm/Cx + Dz-1..Dz-4 (runs last by name).
 #[test]
-fn zzz_write_g017-concurrency-issue-compare_receipt() {
+fn zzz_write_g017_concurrency_issue_compare_receipt() {
     let n = RECEIPT.lock().unwrap().len();
     if n < 145 {
         eprintln!("G17 receipt note: {n} rows so far (expect 145 under --test-threads=1)");
