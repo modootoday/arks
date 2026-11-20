@@ -1254,82 +1254,9 @@ pub fn cmd_merge_file(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks merge-tree [--write-tree] [--merge-base=<c>] <branch1> <branch2>` and the
-/// legacy `merge-tree <base> <ours> <theirs>` — print the merged tree oid
-/// (conflict → exit 1). Never touches the index or the work tree.
-/// Cite: https://git-scm.com/docs/git-merge-tree
+/// `merge-tree`: see [`crate::cmd::merge_tree`].
 pub fn cmd_merge_tree(args: &[String]) -> CliResult<()> {
-    let mut write_tree = false;
-    let mut name_only = false;
-    let mut merge_base: Option<String> = None;
-    let mut positional: Vec<&String> = Vec::new();
-    for a in args {
-        match a.as_str() {
-            "--write-tree" => write_tree = true,
-            "--name-only" => name_only = true,
-            "--messages" | "--no-messages" | "--allow-unrelated-histories" => {}
-            _ if a.starts_with("--merge-base=") => {
-                merge_base = Some(a["--merge-base=".len()..].to_string());
-            }
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => positional.push(a),
-        }
-    }
-    let legacy = !write_tree && positional.len() == 3;
-    if !(positional.len() == 2 || legacy) {
-        return Err(CliError::Usage(
-            "merge-tree [--write-tree] <branch1> <branch2> | merge-tree <base> <b1> <b2>".into(),
-        ));
-    }
-    let mut repo = open_repo()?;
-    let (base_rev, ours_rev, theirs_rev) = if legacy {
-        (Some(positional[0].as_str()), positional[1], positional[2])
-    } else {
-        (merge_base.as_deref(), positional[0], positional[1])
-    };
-    let to_tree = |repo: &arks_repo::Repository, r: &str| -> CliResult<Oid> {
-        let oid = resolve_rev(repo, r)
-            .map_err(|_| CliError::fatal(format!("could not parse as tree '{r}'")))?;
-        crate::cmd::shared::peel_to_kind(repo, &oid, crate::cmd::shared::ObjKind::Tree, r)
-    };
-    let ours = to_tree(&repo, ours_rev)?;
-    let theirs = to_tree(&repo, theirs_rev)?;
-    let base = match base_rev {
-        Some(b) => to_tree(&repo, b)?,
-        None => {
-            let commit = |r: &str| -> CliResult<Oid> {
-                let oid = resolve_rev(&repo, r)?;
-                crate::cmd::shared::peel_to_kind(
-                    &repo,
-                    &oid,
-                    crate::cmd::shared::ObjKind::Commit,
-                    r,
-                )
-            };
-            let (o, t) = (commit(ours_rev)?, commit(theirs_rev)?);
-            let mb = arks_repo::merge_base_oid(&repo, &o, &t)?
-                .ok_or_else(|| CliError::fatal("refusing to merge unrelated histories"))?;
-            to_tree(&repo, &mb.to_hex())?
-        }
-    };
-    let result = crate::cmd::merge_engine::merge_trees_in_memory(&mut repo, &base, &ours, &theirs)?;
-    if !result.conflicts.is_empty() {
-        for c in &result.conflicts {
-            if name_only {
-                println!("{c}");
-            } else {
-                println!("CONFLICT {c}");
-            }
-        }
-        return Err(CliError::silent(1));
-    }
-    let tree = result
-        .tree
-        .ok_or_else(|| CliError::Msg("merge-tree: no result tree".into()))?;
-    println!("{}", tree.to_hex());
-    Ok(())
+    crate::cmd::merge_tree::cmd_merge_tree(args)
 }
 
 /// `arks hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]`.

@@ -61,6 +61,7 @@ pub mod merge_helpers;
 pub mod merge_many;
 pub mod merge_strategies;
 pub mod merge_subtree;
+pub mod merge_tree;
 pub mod notes;
 pub mod opt_parse;
 pub mod pack_transport;
