@@ -165,7 +165,11 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
-        "gui" | "citool" | "gitk" => Err(CliError::NotImplemented(format!(
+        "gui" | "gui.tcl" => cmd::cmd_gui(args),
+        "citool" => cmd::cmd_citool(args),
+        "gui--askpass" => cmd::cmd_gui_askpass(args),
+        "gui--askyesno" => cmd::cmd_gui_askyesno(args),
+        "gitk" => Err(CliError::NotImplemented(format!(
             "{cmd}: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)"
         ))),
         "scalar" => Err(CliError::NotImplemented(

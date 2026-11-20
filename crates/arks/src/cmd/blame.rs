@@ -187,14 +187,19 @@ fn parse_range(spec: &str, total: usize) -> CliResult<(usize, usize)> {
 }
 
 pub fn cmd_blame(args: &[String]) -> CliResult<()> {
-    run(args, false)
+    run(args, false, &mut std::io::stdout().lock())
 }
 
 pub fn cmd_annotate(args: &[String]) -> CliResult<()> {
-    run(args, true)
+    run(args, true, &mut std::io::stdout().lock())
 }
 
-fn run(args: &[String], annotate: bool) -> CliResult<()> {
+/// `git blame` with its output written to `out` (terminal viewers capture it).
+pub fn blame_to(args: &[String], out: &mut dyn Write) -> CliResult<()> {
+    run(args, false, out)
+}
+
+fn run(args: &[String], annotate: bool, sink: &mut dyn Write) -> CliResult<()> {
     let args = crate::util::split_short_bundles(args, "selnpf", "L");
     let mut o = Opts {
         suppress: false,
@@ -340,7 +345,7 @@ fn run(args: &[String], annotate: bool) -> CliResult<()> {
             None => uncommitted.clone(),
         }
     };
-    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    let mut out = std::io::BufWriter::new(sink);
     if o.porcelain {
         let mut seen: std::collections::HashSet<Option<Oid>> = std::collections::HashSet::new();
         let mut k = 0;
