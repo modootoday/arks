@@ -20,11 +20,15 @@ mod delta;
 mod error;
 mod idx;
 mod pack;
+mod writer;
 
 pub use bundle::{BundleFile, encode_bundle, parse_bundle};
 pub use error::PackError;
 pub use idx::{PackIndex, PackIndexEntry};
 pub use pack::{DecodedPack, EncodedPack, ResolvedObject};
+pub use writer::{
+    PackWriter, WrittenPack, create_delta, encode_idx_v1, encode_mtimes, encode_rev, trailer,
+};
 
 #[cfg(test)]
 mod tests;
