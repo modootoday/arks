@@ -136,13 +136,13 @@ s.close()
 PY
 )"
   FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
-  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
-  export HOME="$WORK/home"
-  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  mkdir -p "$WORK/hub-data" "$WORK/userhome/.config/arks"
+  export HOME="$WORK/userhome"
+  export ARKS_HUB_TOKEN_FILE="$WORK/userhome/.config/arks/hub-token"
   export ARKS_HUB_TOKEN="local-dev-token"
   export ARKS_HUB_API="http://${FORGE_LISTEN}"
   export ARKS_HUB_REPO="local/hubscope"
-  export ARKS_HUB_CLIENT_STATE="$WORK/home/.config/arks/hub-client.json"
+  export ARKS_HUB_CLIENT_STATE="$WORK/userhome/.config/arks/hub-client.json"
   "$ARKS_BIN" serve --no-ssh --no-http \
     --forge-listen "$FORGE_LISTEN" \
     --forge-data "$WORK/hub-data" \
@@ -191,7 +191,7 @@ if [[ "${ARKS_HUB_IW_ACTIONS:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: platform-only OUT refuse path (adr:root/20261119230000)"
   OUT_WORK="$(mktemp -d /tmp/arks-hub-out.XXXXXX)"
   trap 'rm -rf "${OUT_WORK:-}"' EXIT
-  export HOME="$OUT_WORK/home"
+  export HOME="$OUT_WORK/userhome"
   mkdir -p "$HOME/.config/arks"
   export ARKS_HUB_TOKEN_FILE="$HOME/.config/arks/hub-token"
   export ARKS_HUB_API="http://127.0.0.1:9"
@@ -461,7 +461,7 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   ARKS_BIN="$(cd "$(dirname "$ARKS_BIN")" && pwd)/$(basename "$ARKS_BIN")"
   export ARKS_PERSONALITY=gh
   export ARKS_HUB_REPO="local/argv"
-  export ARKS_HUB_HOSTS_FILE="$WORK/home/.config/arks/hub-hosts.json"
+  export ARKS_HUB_HOSTS_FILE="$WORK/userhome/.config/arks/hub-hosts.json"
   ARKS_GIT() { ARKS_PERSONALITY=git "$ARKS_BIN" "$@"; }
   # Expect a specific non-zero exit (gh exit classes: 1 failed, 8 pending).
   hub_argv_expect() {
@@ -1065,9 +1065,9 @@ s.close()
 PY
 )"
   FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
-  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
-  export HOME="$WORK/home"
-  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  mkdir -p "$WORK/hub-data" "$WORK/userhome/.config/arks"
+  export HOME="$WORK/userhome"
+  export ARKS_HUB_TOKEN_FILE="$WORK/userhome/.config/arks/hub-token"
   export ARKS_HUB_TOKEN="local-dev-token"
   export ARKS_HUB_API="http://${FORGE_LISTEN}"
   export ARKS_HUB_REPO="local/hubmut"
@@ -1242,9 +1242,9 @@ s.close()
 PY
 )"
   FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
-  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
-  export HOME="$WORK/home"
-  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  mkdir -p "$WORK/hub-data" "$WORK/userhome/.config/arks"
+  export HOME="$WORK/userhome"
+  export ARKS_HUB_TOKEN_FILE="$WORK/userhome/.config/arks/hub-token"
   export ARKS_HUB_TOKEN="local-dev-token"
   export ARKS_HUB_API="http://${FORGE_LISTEN}"
   export ARKS_HUB_REPO="local/hubfull"
@@ -1437,9 +1437,9 @@ s.close()
 PY
 )"
   FORGE_LISTEN="127.0.0.1:${FORGE_PORT}"
-  mkdir -p "$WORK/hub-data" "$WORK/home/.config/arks"
-  export HOME="$WORK/home"
-  export ARKS_HUB_TOKEN_FILE="$WORK/home/.config/arks/hub-token"
+  mkdir -p "$WORK/hub-data" "$WORK/userhome/.config/arks"
+  export HOME="$WORK/userhome"
+  export ARKS_HUB_TOKEN_FILE="$WORK/userhome/.config/arks/hub-token"
   export ARKS_HUB_TOKEN="local-dev-token"
   export ARKS_HUB_API="http://${FORGE_LISTEN}"
   export ARKS_HUB_REPO="local/hubflat"

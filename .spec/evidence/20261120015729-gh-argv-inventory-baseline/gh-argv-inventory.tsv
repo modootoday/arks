@@ -1,21 +1,21 @@
 gh_command	flag	meta	verdict	note
-auth login	--clipboard		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	-c		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--git-protocol	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	-p	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--hostname	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	-h	string	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--insecure-storage		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--scopes	strings	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	-s	strings	UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--skip-ssh-key		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--web		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	-w		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth login	--with-token		UNVALIDATED	arks hub auth login: token stored at /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth logout	--hostname	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth logout	-h	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth logout	--user	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
-auth logout	-u	string	UNVALIDATED	arks hub auth logout: cleared /tmp/arks-gh-argv-_hs5ga1e/home/hub-token
+auth login	--clipboard		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	-c		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--git-protocol	string	UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	-p	string	UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--hostname	string	UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	-h	string	UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--insecure-storage		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--scopes	strings	UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	-s	strings	UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--skip-ssh-key		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--web		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	-w		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth login	--with-token		UNVALIDATED	arks hub auth login: token stored at <tmp-home>/hub-token
+auth logout	--hostname	string	UNVALIDATED	arks hub auth logout: cleared <tmp-home>/hub-token
+auth logout	-h	string	UNVALIDATED	arks hub auth logout: cleared <tmp-home>/hub-token
+auth logout	--user	string	UNVALIDATED	arks hub auth logout: cleared <tmp-home>/hub-token
+auth logout	-u	string	UNVALIDATED	arks hub auth logout: cleared <tmp-home>/hub-token
 auth status	--active		UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
 auth status	-a		UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
 auth status	--hostname	string	UNVALIDATED	connect 127.0.0.1:9: Connection refused (os error 111)
@@ -944,8 +944,8 @@ config get	--host	string	UNVALIDATED	arks hub config get: unknown key `--host`
 config get	-h	string	UNVALIDATED	arks hub config get: unknown key `-h`
 config set	--host	string	UNVALIDATED	arks hub config set: KEY VALUE required
 config set	-h	string	UNVALIDATED	arks hub config set: KEY VALUE required
-config list	--host	string	UNVALIDATED	client_state=/tmp/arks-gh-argv-_hs5ga1e/home/hub-client.json
-config list	-h	string	UNVALIDATED	client_state=/tmp/arks-gh-argv-_hs5ga1e/home/hub-client.json
+config list	--host	string	UNVALIDATED	client_state=<tmp-home>/hub-client.json
+config list	-h	string	UNVALIDATED	client_state=<tmp-home>/hub-client.json
 alias set	--clobber		UNVALIDATED	arks hub alias set: NAME EXPANSION required
 alias set	--shell		UNVALIDATED	arks hub alias set: NAME EXPANSION required
 alias set	-s		UNVALIDATED	arks hub alias set: NAME EXPANSION required
