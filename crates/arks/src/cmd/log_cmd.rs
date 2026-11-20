@@ -918,6 +918,9 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
     }
     let repo = open_repo()?;
     opts.rev.specs = pathspecs(&repo, &paths);
+    if opts.parents || opts.children || opts.graph {
+        opts.rev.rewrite = true;
+    }
     if opts.graph && opts.rev.order.is_none() {
         opts.rev.order = Some(revwalk::Order::Topo);
     }
@@ -1027,6 +1030,10 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
                 m.entry(*p).or_default().push(w.oid);
             }
         }
+        // Each child is prepended as the walk reaches it.
+        for v in m.values_mut() {
+            v.reverse();
+        }
         Some(m)
     } else {
         None
@@ -1095,7 +1102,20 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
         missing_newline: false,
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
+    // `--parents` / `--children` / `--graph` with a pathspec show (and
+    // diff against) the rewritten parents.
+    let rewrite = (!opts.rev.specs.is_empty() || opts.rev.simplify_by_decoration)
+        && (opts.parents || opts.children || opts.graph);
     for w in &list {
+        let rewritten;
+        let w = if rewrite && w.parents != w.commit.parents {
+            let mut x = w.clone();
+            x.commit.parents = x.parents.clone();
+            rewritten = x;
+            &rewritten
+        } else {
+            w
+        };
         let mark = mark_of(w, &opts);
         if let Some(g) = printer.graph.as_mut() {
             g.next_commit(w.oid, graph_parents.remove(&w.oid).unwrap_or_default());

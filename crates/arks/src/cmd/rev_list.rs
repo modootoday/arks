@@ -40,6 +40,79 @@ struct Out {
     bisect_vars: bool,
     bisect_all: bool,
     graph: bool,
+    filter: Option<Filter>,
+}
+
+/// `--filter=<spec>` for `--objects` listings.
+#[derive(Clone, Copy)]
+enum Filter {
+    /// `blob:none`
+    NoBlobs,
+    /// `blob:limit=<n>`: blobs of at least n bytes are omitted.
+    BlobLimit(u64),
+    /// `tree:<depth>`: trees and blobs at depth >= n (root tree: 0).
+    TreeDepth(usize),
+    /// `object:type=<kind>`: only objects of this kind.
+    Kind(ObjectKind),
+}
+
+impl Filter {
+    fn parse(v: &str) -> CliResult<Self> {
+        let bad = || CliError::fatal(format!("invalid filter-spec '{v}'"));
+        if v == "blob:none" {
+            return Ok(Filter::NoBlobs);
+        }
+        if let Some(n) = v.strip_prefix("blob:limit=") {
+            return Ok(Filter::BlobLimit(size_value(n).ok_or_else(bad)?));
+        }
+        if let Some(n) = v.strip_prefix("tree:") {
+            return Ok(Filter::TreeDepth(n.parse().map_err(|_| bad())?));
+        }
+        if let Some(k) = v.strip_prefix("object:type=") {
+            return Ok(Filter::Kind(match k {
+                "blob" => ObjectKind::Blob,
+                "tree" => ObjectKind::Tree,
+                "commit" => ObjectKind::Commit,
+                "tag" => ObjectKind::Tag,
+                _ => return Err(bad()),
+            }));
+        }
+        Err(CliError::NotImplemented(format!(
+            "unsupported option: --filter={v} (sparse and combined filters are not implemented)"
+        )))
+    }
+
+    /// Whether an object at `depth` (root tree 0, its entries 1, ...) is kept.
+    fn keeps(self, repo: &Repository, oid: &Oid, is_tree: bool, depth: usize) -> bool {
+        match self {
+            Filter::NoBlobs => is_tree,
+            Filter::BlobLimit(n) => {
+                is_tree
+                    || repo
+                        .get_object(oid)
+                        .is_ok_and(|o| (o.payload.len() as u64) < n)
+            }
+            Filter::TreeDepth(n) => depth < n,
+            Filter::Kind(k) => {
+                k == if is_tree {
+                    ObjectKind::Tree
+                } else {
+                    ObjectKind::Blob
+                }
+            }
+        }
+    }
+}
+
+/// `<n>[kmg]` byte counts.
+fn size_value(v: &str) -> Option<u64> {
+    let (num, mul) = match v.chars().last()? {
+        'k' | 'K' => (&v[..v.len() - 1], 1024),
+        'm' | 'M' => (&v[..v.len() - 1], 1024 * 1024),
+        'g' | 'G' => (&v[..v.len() - 1], 1024 * 1024 * 1024),
+        _ => (v, 1),
+    };
+    num.parse::<u64>().ok().map(|n| n * mul)
 }
 
 fn take_out(o: &mut Out, a: &mut Args<'_>) -> CliResult<bool> {
@@ -74,8 +147,8 @@ fn take_out(o: &mut Out, a: &mut Args<'_>) -> CliResult<bool> {
         | "--indexed-objects"
         | "--exclude-promisor-objects"
         | "--filter-provided-objects"
-        | "--filter-print-omitted"
-        | "--no-filter" => {}
+        | "--filter-print-omitted" => {}
+        "--no-filter" => o.filter = None,
         x => {
             if let Some(v) = x.strip_prefix("--abbrev=") {
                 let n: usize = v
@@ -95,11 +168,7 @@ fn take_out(o: &mut Out, a: &mut Args<'_>) -> CliResult<bool> {
                     )));
                 }
             } else if let Some(v) = x.strip_prefix("--filter=") {
-                if v != "blob:none" && !v.starts_with("blob:limit=") && !v.starts_with("tree:") {
-                    return Err(CliError::NotImplemented(format!(
-                        "unsupported option: --filter={v}"
-                    )));
-                }
+                o.filter = Some(Filter::parse(v)?);
             } else {
                 return Ok(false);
             }
@@ -121,6 +190,7 @@ fn list_objects(
     repo: &Repository,
     commits: &[Walked],
     excluded_trees: &[Oid],
+    filter: Option<Filter>,
 ) -> CliResult<Vec<(Oid, String)>> {
     let mut seen: HashSet<Oid> = HashSet::new();
     fn mark(repo: &Repository, t: &Oid, seen: &mut HashSet<Oid>) -> CliResult<()> {
@@ -141,17 +211,28 @@ fn list_objects(
         mark(repo, t, &mut seen)?;
     }
     let mut out = Vec::new();
+    #[allow(clippy::too_many_arguments)]
     fn walk(
         repo: &Repository,
         t: &Oid,
         path: &str,
+        depth: usize,
+        filter: Option<Filter>,
         seen: &mut HashSet<Oid>,
         out: &mut Vec<(Oid, String)>,
     ) -> CliResult<()> {
         if !seen.insert(*t) {
             return Ok(());
         }
-        out.push((*t, path.to_string()));
+        let keep = |oid: &Oid, is_tree: bool, d: usize| {
+            filter.is_none_or(|f| f.keeps(repo, oid, is_tree, d))
+        };
+        if keep(t, true, depth) {
+            out.push((*t, path.to_string()));
+        }
+        if matches!(filter, Some(Filter::TreeDepth(n)) if depth + 1 >= n) {
+            return Ok(());
+        }
         let obj = repo.get_object(t)?;
         for e in Tree::decode(&obj.payload, repo.oid_kind())?.entries {
             let p = if path.is_empty() {
@@ -160,10 +241,10 @@ fn list_objects(
                 format!("{path}/{}", e.name)
             };
             if e.mode.is_tree() {
-                walk(repo, &e.oid, &p, seen, out)?;
+                walk(repo, &e.oid, &p, depth + 1, filter, seen, out)?;
             } else if matches!(e.mode, arks_object::TreeMode::Gitlink) {
                 continue;
-            } else if seen.insert(e.oid) {
+            } else if keep(&e.oid, false, depth + 1) && seen.insert(e.oid) {
                 out.push((e.oid, p));
             }
         }
@@ -173,7 +254,7 @@ fn list_objects(
         if w.boundary {
             continue;
         }
-        walk(repo, &w.commit.tree, "", &mut seen, &mut out)?;
+        walk(repo, &w.commit.tree, "", 0, filter, &mut seen, &mut out)?;
     }
     Ok(out)
 }
@@ -262,6 +343,14 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         None => (args.to_vec(), Vec::new()),
     };
     let mut head = head;
+    // `--oneline` is `--pretty=oneline --abbrev-commit`; a later
+    // `--no-abbrev-commit` still wins.
+    let last = |f: &str| head.iter().rposition(|a| a == f);
+    let oneline_abbrevs = match (last("--oneline"), last("--no-abbrev-commit")) {
+        (Some(_), None) => true,
+        (Some(a), Some(b)) => a > b,
+        _ => false,
+    };
     let pretty = if head
         .iter()
         .any(|a| a.starts_with("--pretty") || a.starts_with("--format") || a == "--oneline")
@@ -293,8 +382,14 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         rev.push_rev(&cur);
         a.i += 1;
     }
+    if oneline_abbrevs {
+        out.abbrev_commit = true;
+    }
     let repo = open_repo()?;
     rev.specs = paths;
+    if out.parents || out.children || out.graph {
+        rev.rewrite = true;
+    }
     if out.graph && rev.order.is_none() {
         rev.order = Some(revwalk::Order::Topo);
     }
@@ -379,7 +474,7 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
                 .iter()
                 .filter_map(|e| read_commit(&repo, e).ok().map(|c| c.tree))
                 .collect();
-            for (o, _) in list_objects(&repo, &list, &ex)? {
+            for (o, _) in list_objects(&repo, &list, &ex, out.filter)? {
                 total += disk_size(&repo, &o, &packs);
             }
         }
@@ -423,6 +518,10 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
                 m.entry(*p).or_default().push(x.oid);
             }
         }
+        // Each child is prepended as the walk reaches it.
+        for v in m.values_mut() {
+            v.reverse();
+        }
         m
     } else {
         HashMap::new()
@@ -439,7 +538,18 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
         date: Default::default(),
         decorations: decos.as_ref(),
     };
-    let one_line = matches!(pretty, Some(Pretty::Oneline));
+    let mut ex: Vec<Oid> = Vec::new();
+    if out.objects {
+        for e in &tips.exclude {
+            if let Ok(c) = read_commit(&repo, e) {
+                ex.push(c.tree);
+                if out.objects_edge {
+                    writeln!(w, "-{}", e.to_hex())?;
+                }
+            }
+        }
+    }
+    // Filters only select trees and blobs; commits are always listed.
     for x in &list {
         let mut line = String::new();
         if out.timestamp {
@@ -454,23 +564,18 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
                 line.push(s);
             }
         }
-        let use_abbrev = out.abbrev_commit || one_line;
-        let h = if use_abbrev && out.abbrev < 40 {
-            abbrev_hex(&repo, &x.oid, out.abbrev)
-        } else {
-            x.oid.to_hex()
-        };
-        line.push_str(&h);
+        line.push_str(&hex(&repo, &out, &x.oid));
+        // Parent and child ids stay unabbreviated in rev-list.
         if out.parents {
             for p in &x.parents {
                 line.push(' ');
-                line.push_str(&hex(&repo, &out, p));
+                line.push_str(&p.to_hex());
             }
         }
         if out.children {
             for c in children.get(&x.oid).into_iter().flatten() {
                 line.push(' ');
-                line.push_str(&hex(&repo, &out, c));
+                line.push_str(&c.to_hex());
             }
         }
         if out.header {
@@ -510,22 +615,17 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
                 };
                 let text =
                     crate::cmd::log_cmd::format_commit_header(&repo, &x.oid, &x.commit, spec)?;
-                // rev-list headers end without the trailing record newline.
-                w.write_all(text.as_bytes())?;
+                // The `commit` line carries rev-list's marks and ids; each
+                // record ends with a blank line.
+                let rest = text.split_once('\n').map_or("", |(_, r)| r);
+                writeln!(w, "commit {line}")?;
+                w.write_all(rest.as_bytes())?;
+                writeln!(w)?;
             }
         }
     }
     if out.objects {
-        let mut ex: Vec<Oid> = Vec::new();
-        for e in &tips.exclude {
-            if let Ok(c) = read_commit(&repo, e) {
-                ex.push(c.tree);
-                if out.objects_edge {
-                    writeln!(w, "-{}", e.to_hex())?;
-                }
-            }
-        }
-        for (o, p) in list_objects(&repo, &list, &ex)? {
+        for (o, p) in list_objects(&repo, &list, &ex, out.filter)? {
             let kind = repo.get_object(&o).map(|x| x.kind).ok();
             if out.object_names && kind != Some(ObjectKind::Commit) {
                 writeln!(w, "{} {p}", o.to_hex())?;

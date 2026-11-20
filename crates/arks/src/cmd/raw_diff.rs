@@ -174,9 +174,25 @@ fn commit_header(
     }
     if let Some(p) = &o.pretty {
         let c = read_commit(repo, commit)?;
-        let text = crate::cmd::log_cmd::format_commit_header(repo, commit, &c, p)?;
+        let user_format = p.contains('%') || p.starts_with("format:") || p.starts_with("tformat:");
+        // diff-tree shows full object names unless --abbrev is given.
+        let spec = if user_format && o.diff.abbrev.is_none() {
+            p.replace("%h", "%H")
+                .replace("%t", "%T")
+                .replace("%p", "%P")
+        } else {
+            p.clone()
+        };
+        let text = crate::cmd::log_cmd::format_commit_header(repo, commit, &c, &spec)?;
         out.write_all(text.as_bytes())?;
-        if o.diff.any_format() && !o.diff.no_output && !text.ends_with("\n\n") {
+        // A blank line separates the message from the diff, except after
+        // the one-line format.
+        let separate = if user_format {
+            true
+        } else {
+            p != "oneline" && !text.ends_with("\n\n")
+        };
+        if o.diff.any_format() && !o.diff.no_output && separate {
             out.write_all(b"\n")?;
         }
         return Ok(());

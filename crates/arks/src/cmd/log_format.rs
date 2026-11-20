@@ -46,7 +46,10 @@ pub fn take_pretty(args: &mut Vec<String>) -> CliResult<Pretty> {
             Some((v.to_string(), true))
         } else if let Some(v) = a.strip_prefix("--pretty=") {
             Some((v.to_string(), false))
-        } else if a == "--format" || a == "--pretty" {
+        } else if a == "--pretty" {
+            // Bare `--pretty` means the default (medium) format.
+            Some(("medium".to_string(), false))
+        } else if a == "--format" {
             let v = args
                 .get(i + 1)
                 .cloned()
