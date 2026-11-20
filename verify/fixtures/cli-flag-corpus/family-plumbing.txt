@@ -135,3 +135,36 @@ symbolic-ref -d HEAD
 symbolic-ref --delete refs/heads/main
 symbolic-ref FOO refs/heads/main
 symbolic-ref
+# --- show-ref ---
+show-ref
+show-ref --head
+show-ref --heads
+show-ref --tags -d
+show-ref --abbrev
+show-ref --abbrev=10 -d v1
+show-ref --hash=8 main
+show-ref -s --abbrev main
+show-ref --hash
+show-ref --verify refs/heads/main
+show-ref --verify HEAD
+show-ref --verify main
+show-ref --verify -q refs/heads/nope
+show-ref --exists refs/heads/main
+show-ref --exists refs/heads/nope
+show-ref --head HEAD
+show-ref --exclude-existing
+show-ref --exclude-existing=refs/heads/
+show-ref --no-heads --heads
+show-ref nope
+# --- check-ignore ---
+check-ignore debug.log
+check-ignore -v debug.log README.md
+check-ignore -v -n debug.log README.md
+check-ignore --verbose --non-matching -z --stdin
+check-ignore --no-index README.md
+check-ignore --index debug.log
+check-ignore -q debug.log
+check-ignore -q -v debug.log
+check-ignore -z debug.log
+check-ignore --stdin debug.log
+check-ignore

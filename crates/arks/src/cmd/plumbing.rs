@@ -693,59 +693,105 @@ pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + C7b: --heads/--tags/--verify/--hash/--dereference/-q/--exists
-    // and tail-matching patterns; all refs under refs/ (incl. refs/stash).
+    // `--head`, `--heads`/`--tags`, `--verify`, `--exists`, `-d`, `-s`/`--hash[=<n>]`,
+    // `--abbrev[=<n>]`, `-q`, `--exclude-existing[=<pattern>]` and tail-matching
+    // patterns over every ref under refs/ (incl. refs/stash).
     // Cite: https://git-scm.com/docs/git-show-ref
-    let args = crate::util::split_short_bundles(args, "dsq", "");
-    let mut heads = false;
-    let mut tags = false;
-    let mut verify = false;
-    let mut hash_only = false;
-    let mut deref = false;
-    let mut quiet = false;
-    let mut exists = false;
-    let mut patterns: Vec<&String> = Vec::new();
-    for a in &args {
-        match a.as_str() {
-            "--heads" | "--branches" => heads = true,
-            "--tags" => tags = true,
-            "--verify" => verify = true,
-            "--hash" | "-s" => hash_only = true,
-            "--dereference" | "-d" => deref = true,
-            "--quiet" | "-q" => quiet = true,
-            "--exists" => exists = true,
-            "--" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => patterns.push(a),
+    use crate::cmd::optparse::{self, Arg, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::flag("tags"),
+        Opt::flag("heads"),
+        Opt::flag("branches"),
+        Opt::flag("exists"),
+        Opt::flag("verify"),
+        Opt::flag("head"),
+        Opt::flag("dereference").with_short('d'),
+        Opt::opt_value("hash").with_short('s'),
+        Opt::opt_value("abbrev"),
+        Opt::flag("quiet").with_short('q'),
+        Opt::bare("exclude-existing").arg(Arg::Optional),
+    ];
+    let items = optparse::parse("show-ref", args, SPEC, optparse::Mode::default())?;
+    let patterns = optparse::positionals(&items);
+    let heads = optparse::on(&items, "heads") || optparse::on(&items, "branches");
+    let tags = optparse::on(&items, "tags");
+    let verify = optparse::on(&items, "verify");
+    let deref = optparse::on(&items, "dereference");
+    let quiet = optparse::on(&items, "quiet");
+    let show_head = optparse::on(&items, "head");
+    let hash_only = optparse::flag(&items, "hash").unwrap_or(false);
+    let width = |name: &str| -> CliResult<Option<usize>> {
+        match optparse::flag(&items, name) {
+            Some(true) => match optparse::value(&items, name) {
+                Some(v) => v
+                    .parse::<usize>()
+                    .map(|n| Some(n.clamp(4, 40)))
+                    .map_err(|_| {
+                        CliError::Exit(
+                            129,
+                            format!("error: option `{name}' expects a numerical value"),
+                        )
+                    }),
+                None => Ok(Some(7)),
+            },
+            _ => Ok(None),
         }
-    }
+    };
+    let abbrev = match width("hash")? {
+        Some(n) if optparse::value(&items, "hash").is_some() => Some(n),
+        _ => width("abbrev")?,
+    };
     let repo = open_repo()?;
+    if let Some(pat) = items.iter().rev().find_map(|i| match i {
+        optparse::Item::Opt {
+            name: "exclude-existing",
+            value,
+            ..
+        } => Some(value.clone().unwrap_or_default()),
+        _ => None,
+    }) {
+        let mut input = String::new();
+        io::stdin().read_to_string(&mut input)?;
+        for line in input.lines() {
+            let r = line.trim_end();
+            let refname = r.rsplit(' ').next().unwrap_or(r);
+            if refname.ends_with("^{}") || !refname.starts_with(pat.as_str()) {
+                continue;
+            }
+            if repo.refs().resolve(refname).is_err() {
+                println!("{r}");
+            }
+        }
+        return Ok(());
+    }
+    let fmt_oid = |oid: &Oid| match abbrev {
+        Some(n) => crate::cmd::shared::abbrev_hex(&repo, oid, n),
+        None => oid.to_hex(),
+    };
     let print = |name: &str, oid: &Oid| -> CliResult<()> {
         if !quiet {
             if hash_only {
-                println!("{}", oid.to_hex());
+                println!("{}", fmt_oid(oid));
             } else {
-                println!("{} {name}", oid.to_hex());
+                println!("{} {name}", fmt_oid(oid));
             }
         }
         if deref {
             let peeled = crate::cmd::shared::peel_tags(&repo, oid)?;
             if peeled != *oid && !quiet {
                 if hash_only {
-                    println!("{}", peeled.to_hex());
+                    println!("{}", fmt_oid(&peeled));
                 } else {
-                    println!("{} {name}^{{}}", peeled.to_hex());
+                    println!("{} {name}^{{}}", fmt_oid(&peeled));
                 }
             }
         }
         Ok(())
     };
-    if exists {
+    if optparse::on(&items, "exists") {
         let name = patterns
             .first()
-            .ok_or_else(|| CliError::Usage("show-ref --exists <ref>".into()))?;
+            .ok_or_else(|| CliError::fatal("--exists requires exactly one reference"))?;
         return match repo.refs().read(name) {
             Ok(_) => Ok(()),
             Err(_) => Err(CliError::Exit(
@@ -782,11 +828,17 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
         patterns.is_empty()
             || patterns
                 .iter()
-                .any(|p| n == *p || n.ends_with(&format!("/{p}")))
+                .any(|p| n == p || n.ends_with(&format!("/{p}")))
     });
     refs.sort_by(|a, b| a.0.cmp(&b.0));
-    if refs.is_empty() {
+    let head = (show_head && (patterns.is_empty() || patterns.iter().any(|p| p == "HEAD")))
+        .then(|| repo.head_oid().ok())
+        .flatten();
+    if refs.is_empty() && head.is_none() {
         return Err(CliError::silent(1));
+    }
+    if let Some(h) = head {
+        print("HEAD", &h)?;
     }
     for (name, oid) in refs {
         print(&name, &oid)?;
@@ -1465,32 +1517,52 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + C7b: full gitignore(5) sources and precedence via the
-    // shared matcher; `-v`, `-n`/`--non-matching`, `-q`, `--no-index`.
+    // Full gitignore(5) sources and precedence via the shared matcher;
+    // `-v`, `-n`/`--non-matching`, `-q`, `--[no-]index`, `--stdin`, `-z`.
     // Tracked paths are not reported unless --no-index. Exit 0 when some
     // path is ignored, 1 when none is.
     // Cite: https://git-scm.com/docs/git-check-ignore
-    let args = crate::util::split_short_bundles(args, "vnq", "");
-    let mut verbose = false;
-    let mut non_matching = false;
-    let mut quiet = false;
-    let mut no_index = false;
-    let mut paths: Vec<&String> = Vec::new();
-    for a in &args {
-        match a.as_str() {
-            "-v" | "--verbose" => verbose = true,
-            "-n" | "--non-matching" => non_matching = true,
-            "-q" | "--quiet" => quiet = true,
-            "--no-index" => no_index = true,
-            "--" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => paths.push(a),
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::flag("quiet").with_short('q'),
+        Opt::flag("verbose").with_short('v'),
+        Opt::flag("stdin"),
+        Opt::short('z', "z"),
+        Opt::flag("non-matching").with_short('n'),
+        Opt::flag("index"),
+    ];
+    let items = optparse::parse("check-ignore", args, SPEC, optparse::Mode::default())?;
+    let verbose = optparse::on(&items, "verbose");
+    let non_matching = optparse::on(&items, "non-matching");
+    let quiet = optparse::on(&items, "quiet");
+    let no_index = optparse::flag(&items, "index") == Some(false);
+    let stdin = optparse::on(&items, "stdin");
+    let nul = optparse::on(&items, "z");
+    let mut paths = optparse::positionals(&items);
+    if stdin {
+        if !paths.is_empty() {
+            return Err(CliError::fatal("cannot specify pathnames with --stdin"));
         }
-    }
-    if paths.is_empty() {
+        let mut input = Vec::new();
+        io::stdin().read_to_end(&mut input)?;
+        let sep = if nul { b'\0' } else { b'\n' };
+        paths = input
+            .split(|b| *b == sep)
+            .filter(|p| !p.is_empty())
+            .map(|p| String::from_utf8_lossy(p).into_owned())
+            .collect();
+    } else if nul {
+        return Err(CliError::fatal("-z only makes sense with --stdin"));
+    } else if paths.is_empty() {
         return Err(CliError::fatal("no path specified"));
+    }
+    if quiet && verbose {
+        return Err(CliError::fatal("cannot have both --quiet and --verbose"));
+    }
+    if quiet && paths.len() > 1 {
+        return Err(CliError::fatal(
+            "--quiet is only valid with a single pathname",
+        ));
     }
     if non_matching && !verbose {
         return Err(CliError::fatal(
@@ -1510,8 +1582,10 @@ pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
     };
     let mut ignore = crate::cmd::ignore::Ignore::new(&work);
     let mut any = false;
-    for p in paths {
-        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| (*p).clone());
+    let mut out = io::stdout().lock();
+    let (fs_, eol) = if nul { ("\0", "\0") } else { ("\t", "\n") };
+    for p in &paths {
+        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| p.clone());
         let is_dir = work.join(&rel).is_dir();
         let m = if tracked.contains(&rel) {
             None
@@ -1523,12 +1597,17 @@ pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
             continue;
         }
         match (&m, verbose) {
-            (Some(m), true) => println!("{}:{}:{}\t{p}", m.source, m.line, m.pattern),
-            (Some(m), false) if m.excluded => println!("{p}"),
-            (None, true) if non_matching => println!("::\t{p}"),
+            (Some(m), true) if nul => {
+                write!(out, "{}\0{}\0{}\0{p}\0", m.source, m.line, m.pattern)?
+            }
+            (Some(m), true) => write!(out, "{}:{}:{}{fs_}{p}{eol}", m.source, m.line, m.pattern)?,
+            (Some(m), false) if m.excluded => write!(out, "{p}{eol}")?,
+            (None, true) if non_matching && nul => write!(out, "\0\0\0{p}\0")?,
+            (None, true) if non_matching => write!(out, "::{fs_}{p}{eol}")?,
             _ => {}
         }
     }
+    out.flush()?;
     if any {
         Ok(())
     } else {
