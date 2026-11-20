@@ -78,6 +78,11 @@ def parse_options(help_text):
     for line in help_text.splitlines():
         if not line.startswith("  ") or line.strip().startswith(("usage:", "or:")):
             continue
+        if line.strip().startswith("-NUM "):
+            # "-NUM" is a digit option (archive compression level, grep -C NUM),
+            # not the letter N: probe it with one digit.
+            opts.append(("-1", False, ""))
+            continue
         m = OPT_RE.match(line)
         if not m or not (m.group(1) or m.group(2)):
             continue
