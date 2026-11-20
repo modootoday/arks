@@ -22,6 +22,7 @@ pub mod credential;
 pub mod credential_cache;
 pub mod credential_os;
 pub mod daemon;
+pub mod date_spec;
 pub mod diff_cmd;
 pub mod diff_render;
 pub mod diffcore;

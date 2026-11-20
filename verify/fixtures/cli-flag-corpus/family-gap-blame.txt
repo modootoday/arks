@@ -1,0 +1,142 @@
+# Blame / refs / show-branch / line-log gap corpus (argv symmetry ladder rung A2).
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md
+# One command per line (stock argv without the leading command name), shell-quoted.
+# Commands run with stdin from /dev/null. Fixture: build-fixture.sh.
+#
+# --- for-each-ref ---
+for-each-ref --format='[%(objectsize:disk)]' refs/heads/main
+for-each-ref --format='[%(deltabase)]' refs/heads/main
+for-each-ref --format='[%(upstream:remotename)|%(upstream:remoteref)|%(push)|%(push:short)]' refs/heads
+for-each-ref --format='[%(worktreepath)]' refs/heads
+for-each-ref --format='[%(contents:signature)|%(contents:lines=1)|%(contents:size)]' refs/heads/main refs/tags/v1
+for-each-ref --format='[%(trailers)|%(trailers:only)]' refs/heads/main
+for-each-ref --format='[%(raw)]' refs/tags/v1
+for-each-ref --format='[%(raw:size)]' refs/tags/v1
+for-each-ref --format='[%(tree:short)|%(numparent)|%(parent:short)|%(object:short)]' refs/heads/main refs/tags/v1
+for-each-ref --format='[%(subject:sanitize)]' refs/heads/main refs/tags/v1
+for-each-ref --format='[%(describe)]' refs/heads/main
+for-each-ref --format='[%(ahead-behind:main)]' refs/heads
+for-each-ref --format='[%(color:red)x%(color:reset)]' refs/heads
+for-each-ref --color=always --format='[%(color:red)x%(color:reset)]' refs/heads
+for-each-ref --format='[%(align:10)%(refname:short)%(end)]' refs/heads
+for-each-ref --format='[%(align:10,right)%(refname:short)%(end)]' refs/heads
+for-each-ref --format='[%(align:width=12,position=middle)%(refname:short)%(end)]' refs/heads
+for-each-ref --format='%(if)%(upstream)%(then)up%(else)noup%(end)' refs/heads
+for-each-ref --format='%(if:equals=main)%(refname:short)%(then)M%(else)O%(end)' refs/heads
+for-each-ref --format='%(if:notequals=main)%(refname:short)%(then)M%(else)O%(end)' refs/heads
+for-each-ref --format='[%(authoremail:mailmap)]' refs/heads/main
+for-each-ref --format='[%(refname:lstrip=-1)|%(refname:rstrip=-1)]' refs/heads/main
+for-each-ref --format='[%(contents:subject:sanitize)]' refs/heads/main
+for-each-ref --format='[%(body:x)]' refs/heads/main
+for-each-ref --format='[%(rest)]' refs/heads/main
+for-each-ref --format='[%(signature)]' refs/heads/main
+for-each-ref --format='[%(*objectname)|%(*subject)|%(*authorname)]' refs/tags
+for-each-ref --format='[%(authorname:mailmap)|%(authoremail:trim,localpart)]' refs/heads/main
+for-each-ref --format='[%(upstream:lstrip=1)|%(upstream:track,nobracket)]' refs/heads
+for-each-ref -s refs/tags
+for-each-ref -p refs/tags
+for-each-ref --python refs/tags
+for-each-ref --tcl refs/tags
+for-each-ref --shell --perl refs/tags
+for-each-ref --no-shell refs/tags
+for-each-ref --shell --format="%(subject) it's" refs/tags
+for-each-ref --perl --format="%(subject) it's" refs/tags
+for-each-ref --python --format="%(contents)" refs/tags
+for-each-ref --tcl --format='%(contents)' refs/tags
+for-each-ref --ignore-case refs/HEADS
+for-each-ref --ignore-case --sort=refname
+for-each-ref --omit-empty --format='%(if)%(upstream)%(then)%(refname)%(end)'
+for-each-ref --exclude=refs/heads/f* refs/heads
+for-each-ref --exclude=refs/tags
+for-each-ref --stdin
+for-each-ref --count=1 --no-count
+for-each-ref --color --format='%(color:green)%(refname)' refs/heads
+for-each-ref --color=never --format='%(color:green)%(refname)' refs/heads
+for-each-ref --no-color refs/heads
+for-each-ref --merged main
+for-each-ref --no-merged main
+for-each-ref --contains t0
+for-each-ref --no-contains feature
+for-each-ref --points-at v1
+for-each-ref --points-at=HEAD --no-points-at
+for-each-ref --sort=-refname --sort=objecttype
+for-each-ref --sort=version:refname refs/tags
+for-each-ref --sort=v:refname refs/tags
+for-each-ref --no-sort
+for-each-ref --sort=objectsize refs/heads
+for-each-ref --sort=authordate --format='%(refname) %(authordate:short)'
+for-each-ref --sort=bogus
+for-each-ref --format='%(bogus)'
+for-each-ref --format='%(if)x'
+for-each-ref --format='%(end)'
+for-each-ref --merged
+for-each-ref --contains
+for-each-ref --count=x
+for-each-ref --bogus
+for-each-ref --format='%(bogus)'
+for-each-ref --format='%(if)x'
+for-each-ref --format='%(end)'
+for-each-ref --format='%(then)'
+for-each-ref --format='%(if)%(then)%(then)%(end)'
+for-each-ref --format='%(if)%(else)%(end)'
+for-each-ref --format='%(align)x%(end)'
+for-each-ref --format='%(align:x)x%(end)'
+for-each-ref --format='%(refname:bogus)'
+for-each-ref --format='%(objectname:bogus)'
+for-each-ref --format='%(color:bogus)'
+for-each-ref --format='%(contents:bogus)'
+for-each-ref --format='%(subject:bogus)'
+for-each-ref --format='%(body:x)'
+for-each-ref --format='%(rest)'
+for-each-ref --format='%(refname'
+for-each-ref --format='%(authordate:bogus)'
+for-each-ref --sort=bogus
+for-each-ref --count=x
+for-each-ref --count=-1
+for-each-ref --shell --perl
+for-each-ref --merged
+for-each-ref --merged nonexist
+for-each-ref --points-at nonexist
+for-each-ref --bogus
+for-each-ref --shell --format='%(align:12)%(refname:short)%(end)|' refs/heads
+for-each-ref --shell --format='%(if)%(refname)%(then)a %(refname:short)%(else)b%(end)|' refs/heads
+for-each-ref --shell --format='%(color:red)%(refname:short)' refs/heads
+for-each-ref --format='%(align:8)%(if)%(HEAD)%(then)*%(end)%(refname:short)%(end)|' refs/heads
+for-each-ref --format='%(if)%(HEAD)%(then)%(align:4,right)x%(end)%(end)|' refs/heads
+for-each-ref --format='%(align:3)toolongtext%(end)|' refs/heads
+for-each-ref --format='%(align:position=right,8)%(refname:short)%(end)|' refs/heads
+for-each-ref --format='%(align:width=3,width=9)x%(end)|' refs/heads
+for-each-ref --format='%(if:equals=)%(upstream)%(then)E%(end)' refs/heads
+for-each-ref --format='%(if) %(then)S%(else)N%(end)' refs/heads
+for-each-ref --format='%(contents:lines=2)' refs/heads/main refs/tags/v1
+for-each-ref --format='%(objectname:short=1)|%(objectname:short=50)' refs/heads/main
+for-each-ref --format='%(refname:lstrip=10)|%(refname:rstrip=10)|%(refname:lstrip=-10)' refs/heads/main
+for-each-ref --format='%(authordate:short)|%(authordate:iso)|%(authordate:raw)|%(authordate:unix)|%(authordate:rfc)|%(authordate:iso-strict)|%(authordate:format:%Y-%m %H)|%(authordate:local)|%(authordate:default)' refs/heads/main
+for-each-ref --format='%(tagger)|%(taggerdate)|%(author)|%(committer)' refs/tags/v1 refs/heads/main
+for-each-ref --format='%(creator)' refs/tags/v1 refs/heads/main
+for-each-ref --format='%(objectname)' --sort=objectsize --sort=-objecttype
+for-each-ref --format='%(refname)' --sort=-taggerdate
+for-each-ref --format='%(refname)' --sort=creatordate
+for-each-ref --format='%(refname)' --sort=subject
+for-each-ref --format='%(refname)' --sort=*subject
+for-each-ref --format='%(refname)' --sort=HEAD
+for-each-ref --format='%(refname)' --sort=upstream
+for-each-ref --format='%(refname)' --sort=objectname
+for-each-ref --format='%(push:remotename)|%(push:remoteref)' refs/heads
+for-each-ref --format='%(symref)|%(symref:short)' refs/stash
+for-each-ref --format='%(trailers:key=Signed-off-by)' refs/heads/main
+for-each-ref --format='%(*objecttype)|%(*objectsize)|%(*tree)|%(*parent)' refs/tags/v1
+for-each-ref --format='%(*refname)' refs/tags/v1
+for-each-ref --format='%(*contents)' refs/tags/v1
+for-each-ref --format='%(*describe)' refs/tags/v1
+for-each-ref --format='%(describe:tags)|%(describe:abbrev=4)|%(describe:match=v*)|%(describe:exclude=v*)' refs/heads
+for-each-ref --format='%(contents:body)|%(contents:subject)|%(body)' refs/heads/main
+for-each-ref --format='x' --count 2
+for-each-ref --exclude refs/heads/main --exclude refs/tags/v1
+for-each-ref --exclude='refs/heads/*' --no-exclude refs/heads
+for-each-ref --ignore-case --exclude='REFS/HEADS/*'
+for-each-ref --ignore-case --sort=subject --format='%(subject)'
+for-each-ref --stdin refs/heads
+for-each-ref --format='%(ahead-behind:feature)' refs/heads
+for-each-ref --format='%(ahead-behind)' refs/heads
+for-each-ref --format='%(ahead-behind:nope)' refs/heads
