@@ -15,7 +15,7 @@
 use crate::cmd::opt_parse::{Mode, Takes, o, parse};
 use crate::error::{CliError, CliResult};
 use arks_remote::Credential;
-use std::io::{BufRead, Read, Write};
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
 const CACHE_USAGE: &str = "usage: git credential-cache [<options>] <action>\n\n    --[no-]timeout <n>    number of seconds to cache credentials\n    --[no-]socket <path>  path of cache-daemon socket\n";
@@ -91,6 +91,7 @@ pub fn cmd_credential_cache_daemon(args: &[String]) -> CliResult<()> {
 const SELECTED_KEY: &str = "credential.helperselector.selected";
 
 /// Helpers offered by the selector on this platform.
+#[cfg(unix)]
 fn selector_choices() -> Vec<&'static str> {
     let mut v = vec!["manager"];
     if cfg!(windows) {
@@ -124,6 +125,7 @@ fn ask_on_terminal() -> CliResult<Option<(String, bool)>> {
             choices.len() + 1
         ));
         tty_out.write_all(menu.as_bytes())?;
+        use std::io::BufRead;
         let mut reader = std::io::BufReader::new(tty_in);
         let mut line = String::new();
         reader.read_line(&mut line)?;
