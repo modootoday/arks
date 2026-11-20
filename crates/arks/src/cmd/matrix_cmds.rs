@@ -1571,37 +1571,9 @@ pub fn cmd_verify_pack(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks show-branch` — list branch tips (subset; no --topo-order graph).
+/// `arks show-branch` — see [`crate::cmd::show_branch`].
 pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--all", "-a", "--list"])?;
-    let all = args.iter().any(|a| a == "--all" || a == "-a");
-    let repo = open_repo()?;
-    let mut names: Vec<String> = args
-        .iter()
-        .filter(|a| !a.starts_with('-'))
-        .cloned()
-        .collect();
-    if names.is_empty() || all {
-        names.clear();
-        for (name, _oid) in repo.refs().list_refs("refs/heads/")? {
-            if let Some(short) = name.strip_prefix("refs/heads/") {
-                names.push(short.to_string());
-            }
-        }
-        names.sort();
-    }
-    for n in names {
-        let full = if n.starts_with("refs/") {
-            n.clone()
-        } else {
-            format!("refs/heads/{n}")
-        };
-        match repo.refs().resolve(&full) {
-            Ok(oid) => println!("[{}] {}", &oid.to_hex()[..7.min(oid.to_hex().len())], n),
-            Err(_) => println!("[gone] {n}"),
-        }
-    }
-    Ok(())
+    crate::cmd::show_branch::cmd_show_branch(args)
 }
 
 /// `arks check-mailmap [--stdin] <contact>...` — map `Name <email>` through

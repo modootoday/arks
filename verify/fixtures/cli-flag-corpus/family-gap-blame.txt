@@ -140,3 +140,125 @@ for-each-ref --stdin refs/heads
 for-each-ref --format='%(ahead-behind:feature)' refs/heads
 for-each-ref --format='%(ahead-behind)' refs/heads
 for-each-ref --format='%(ahead-behind:nope)' refs/heads
+# --- show-branch ---
+show-branch
+show-branch main
+show-branch feature
+show-branch main feature
+show-branch feature main
+show-branch main t0
+show-branch t0 main
+show-branch main feature t0
+show-branch -a
+show-branch --all
+show-branch -r
+show-branch --remotes
+show-branch --current
+show-branch --current feature
+show-branch --color main feature
+show-branch --color=always main feature
+show-branch --no-color main feature
+show-branch --topo-order main feature
+show-branch --date-order main feature
+show-branch --sparse main feature
+show-branch --more=2 main feature
+show-branch --more main feature
+show-branch --more=1 main
+show-branch --more=10 main
+show-branch --list
+show-branch --list main feature
+show-branch --list --more=3 main
+show-branch --merge-base main feature
+show-branch --merge-base main feature t0
+show-branch --merge-base main
+show-branch --independent main feature t0
+show-branch --independent feature t0
+show-branch --independent main
+show-branch --no-name main feature
+show-branch --sha1-name main feature
+show-branch --sha1-name --more=3 main feature
+show-branch --topics main feature
+show-branch --topics feature main
+show-branch --topics t0 main feature
+show-branch -g
+show-branch -g=2
+show-branch --reflog
+show-branch --reflog=3 main
+show-branch --reflog=2,1 main
+show-branch -g main feature
+show-branch stash
+show-branch main stash
+show-branch 'refs/heads/*'
+show-branch 'f*'
+show-branch HEAD
+show-branch HEAD~2 main
+show-branch main~1 main^2
+show-branch v1 main
+-C .git/side show-branch
+-C .git/side show-branch --all
+-C .git/side show-branch main topic clash lineone
+-C .git/side show-branch --topo-order main topic clash lineone
+-C .git/side show-branch --sparse main topic clash lineone
+-C .git/side show-branch --more=2 topic clash
+-C .git/side show-branch --sha1-name --all
+-C .git/side show-branch --independent main topic clash lineone base
+-C .git/side show-branch --merge-base main topic clash lineone
+-C .git/side show-branch --topics main topic clash
+-C .git/strat show-branch --all
+-C .git/strat show-branch --topo-order --all
+-C .git/strat show-branch --date-order --all
+-C .git/strat show-branch --sparse --all
+-C .git/strat show-branch main proj
+-C .git/conflict show-branch --all
+show-branch nonexist
+show-branch --bogus
+show-branch --merge-base
+show-branch --independent
+show-branch --list --independent main
+show-branch --reflog --all
+-C .git/strat show-branch --more=3 --all
+-C .git/strat show-branch --reflog main
+show-branch HEAD feature
+show-branch feature HEAD
+show-branch refs/heads/main feature
+show-branch heads/main feature
+show-branch --more=1 --merge-base main
+show-branch --list main feature t0
+show-branch --list main
+show-branch --list --current feature
+show-branch -g2
+show-branch -g main
+show-branch --reflog=10 main
+show-branch --reflog=1,10 main
+show-branch -g --list main
+show-branch -g --more=1 main
+show-branch -g --sha1-name main
+show-branch -g --color=always main
+show-branch --color=always --list main feature
+show-branch --color=always --more=1 main
+show-branch --color=always main feature t0 stash
+show-branch --color=always --sparse main feature
+show-branch -r -a
+show-branch --no-all
+show-branch --name main feature
+show-branch --sha1-name --no-name main feature
+show-branch --no-name --sha1-name main feature
+show-branch --independent --merge-base main feature
+show-branch --more=-1 main feature
+show-branch --more=x main
+show-branch main main
+show-branch t0 t0
+show-branch main v1
+show-branch 'v*'
+show-branch 't*'
+show-branch 'heads/*'
+show-branch 'nomatch*'
+show-branch 'refs/tags/*'
+show-branch -a 'refs/tags/*'
+show-branch --topics main
+show-branch --topics --sparse main feature
+show-branch --date-order --sparse main feature t0
+show-branch --date-order main t0
+show-branch --sparse main t0
+show-branch --sparse --more=1 main t0
+show-branch --sha1-name main t0

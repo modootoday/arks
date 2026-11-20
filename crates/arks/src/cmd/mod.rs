@@ -84,6 +84,7 @@ pub mod rev_list;
 pub mod revwalk;
 pub mod server;
 pub mod shared;
+pub mod show_branch;
 pub mod sign;
 pub mod sparse_checkout;
 pub mod stash;
