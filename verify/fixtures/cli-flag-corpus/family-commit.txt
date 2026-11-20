@@ -1063,3 +1063,37 @@ notes bogus
 -C .git/side sparse-checkout check-rules -z --rules-file=a.txt
 -C .git/side sparse-checkout check-rules --rules-file=a.txt
 -C .git/side sparse-checkout check-rules --no-cone --rules-file=a.txt
+#
+# --- mailinfo / mailsplit (stdin is empty in the corpus) ---
+mailinfo .git/m .git/p
+mailinfo -k .git/m .git/p
+mailinfo -b .git/m .git/p
+mailinfo -m .git/m .git/p
+mailinfo --message-id .git/m .git/p
+mailinfo --no-message-id .git/m .git/p
+mailinfo -u .git/m .git/p
+mailinfo -n .git/m .git/p
+mailinfo --encoding=UTF-8 .git/m .git/p
+mailinfo --scissors .git/m .git/p
+mailinfo --no-scissors .git/m .git/p
+mailinfo --quoted-cr=strip .git/m .git/p
+mailinfo --quoted-cr=bogus .git/m .git/p
+mailinfo .git/m
+mailinfo
+mailsplit .git/fixture.mbox
+mailsplit -o.git .git/fixture.mbox
+mailsplit -o .git .git/fixture.mbox
+mailsplit -b -o.git .git/fixture.mbox
+mailsplit -d2 -o.git .git/fixture.mbox
+mailsplit -d 2 -o.git .git/fixture.mbox
+mailsplit -f3 -o.git .git/fixture.mbox
+mailsplit --keep-cr -o.git .git/fixture.mbox
+mailsplit --mboxrd -o.git .git/fixture.mbox
+mailsplit -o.git
+mailsplit -o.git nope.mbox
+mailsplit
+mailsplit -d3 -o.git .git/fixture.mbox
+mailsplit -d10 -o.git .git/fixture.mbox
+mailsplit -x -o.git .git/fixture.mbox
+mailsplit -o.git .git/side/.git/topic.mbox
+mailsplit -o.git/nope .git/fixture.mbox

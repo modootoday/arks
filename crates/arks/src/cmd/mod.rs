@@ -41,6 +41,7 @@ pub mod ls_files;
 pub mod ls_remote;
 pub mod ls_tree;
 pub mod mailmap;
+pub mod mail;
 pub mod maint;
 pub mod matrix_cmds;
 pub mod matrix_rest;
@@ -121,11 +122,12 @@ pub use log_cmd::{cmd_log, cmd_show, cmd_whatchanged};
 pub use ls_files::cmd_ls_files;
 pub use ls_remote::cmd_ls_remote;
 pub use ls_tree::cmd_ls_tree;
+pub use mail::{cmd_mailinfo, cmd_mailsplit};
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
     cmd_credential_store, cmd_diagnose, cmd_fmt_merge_msg, cmd_for_each_repo,
-    cmd_get_tar_commit_id, cmd_hook, cmd_mailinfo, cmd_mailsplit,
+    cmd_get_tar_commit_id, cmd_hook,
     cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant, cmd_prune,
     cmd_prune_packed, cmd_shell, cmd_show_branch, cmd_show_index, cmd_stripspace, cmd_unpack_file,
     cmd_unpack_objects, cmd_upload_archive, cmd_var, cmd_verify_pack,
