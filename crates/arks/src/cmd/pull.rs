@@ -437,7 +437,7 @@ fn fast_forward(
 }
 
 /// `--stat` block plus `create mode` / `delete mode` / `mode change` lines.
-fn print_diffstat(repo: &arks_repo::Repository, from: &Oid, to: &Oid) -> CliResult<()> {
+pub(crate) fn print_diffstat(repo: &arks_repo::Repository, from: &Oid, to: &Oid) -> CliResult<()> {
     use crate::cmd::switch_tree::commit_files;
     use crate::cmd::unified_diff::{StatRow, stat_change, write_stat};
     let a = commit_files(repo, from)?;

@@ -49,6 +49,7 @@ pub mod remote_admin;
 pub mod remote_local;
 pub mod replace;
 pub mod replay;
+pub mod request_pull;
 pub mod server;
 pub mod shared;
 pub mod sign;
@@ -97,9 +98,8 @@ pub use matrix_cmds::{
     cmd_credential_store, cmd_diagnose, cmd_fmt_merge_msg, cmd_for_each_repo,
     cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_mailinfo, cmd_mailsplit,
     cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant, cmd_patch_id,
-    cmd_prune, cmd_prune_packed, cmd_request_pull, cmd_shell, cmd_show_branch, cmd_show_index,
-    cmd_stripspace, cmd_unpack_file, cmd_unpack_objects, cmd_upload_archive, cmd_var,
-    cmd_verify_pack,
+    cmd_prune, cmd_prune_packed, cmd_shell, cmd_show_branch, cmd_show_index, cmd_stripspace,
+    cmd_unpack_file, cmd_unpack_objects, cmd_upload_archive, cmd_var, cmd_verify_pack,
 };
 pub use matrix_rest::{
     cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_http_fetch, cmd_http_push,
@@ -121,6 +121,7 @@ pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
 pub use remote_admin::cmd_remote;
 pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
+pub use request_pull::cmd_request_pull;
 pub use server::{
     cmd_daemon, cmd_http_backend, cmd_receive_pack, cmd_serve, cmd_serve_http,
     cmd_update_server_info, cmd_upload_pack,
