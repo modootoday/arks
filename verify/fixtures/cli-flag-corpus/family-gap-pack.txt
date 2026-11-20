@@ -214,3 +214,30 @@ fast-export --import-marks-if-exists=.git/nosuch t0
 fast-export --import-marks=.git/nosuch t0
 fast-export --import-marks .git/info/exclude t0
 fast-export --no-import-marks --no-export-marks --no-import-marks-if-exists t0
+# --- rerere ---
+rerere
+rerere status
+rerere remaining
+rerere diff
+rerere clear
+rerere gc
+rerere forget src/a.txt
+rerere bogus
+rerere --rerere-autoupdate
+rerere --no-rerere-autoupdate status
+rerere -h
+-C .git/stratc rerere status
+-C .git/stratc rerere remaining
+-C .git/stratc -c rerere.enabled=true rerere
+-C .git/stratc -c rerere.enabled=true rerere status
+-C .git/stratc -c rerere.enabled=true rerere remaining
+-C .git/stratc -c rerere.enabled=true rerere diff
+-C .git/stratc -c rerere.enabled=true rerere --rerere-autoupdate
+-C .git/stratc -c rerere.enabled=true rerere forget a.txt
+-C .git/stratc -c rerere.enabled=true rerere forget
+-C .git/stratc -c rerere.enabled=true rerere forget nosuch
+-C .git/stratc -c rerere.enabled=true rerere clear
+-C .git/stratc -c rerere.enabled=true rerere gc
+-C .git/stratc -c rerere.enabled=true rerere status extra
+-C .git/side -c rerere.enabled=true merge clash
+-C .git/side -c rerere.enabled=true -c rerere.autoUpdate=true merge clash
