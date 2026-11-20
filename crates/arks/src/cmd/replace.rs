@@ -28,10 +28,9 @@ const USAGE: &str = "usage: git replace [-f] <object> <replacement>
     -e, --edit            edit existing object
     -g, --graft           change a commit's parents
     --convert-graft-file  convert existing graft file
-    -f, --[no-]force      replace the ref if it exists
-    --[no-]raw            do not pretty-print contents for --edit
-    --[no-]format <format>
-                          use this format
+    -f, --force           replace the ref if it exists
+    --raw                 do not pretty-print contents for --edit
+    --format <format>     use this format
 ";
 
 const DEFS: &[OptDef] = &[

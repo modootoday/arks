@@ -31,7 +31,7 @@ const USAGE_WRITE: &str = "usage: git commit-graph write [--object-dir <dir>] [-
 
 fn usage_all() -> String {
     format!(
-        "{USAGE_VERIFY}\n   or: {}\n\n    --[no-]object-dir <dir>\n                          the object directory to store the graph\n",
+        "{USAGE_VERIFY}\n   or: {}\n\n    --object-dir <dir>    the object directory to store the graph\n",
         &USAGE_WRITE["usage: ".len()..]
     )
 }
@@ -153,30 +153,27 @@ const WRITE_DEFS: &[OptDef] = &[
     o("expire-time", ' ', Req, false),
 ];
 
-const OBJDIR_HELP: &str = "    --[no-]object-dir <dir>
-                          the object directory to store the graph
+const OBJDIR_HELP: &str = "    --object-dir <dir>    the object directory to store the graph
 ";
 
 const VERIFY_HELP: &str =
-    "    --[no-]shallow        if the commit-graph is split, only verify the tip file
-    --[no-]progress       force progress reporting
+    "    --shallow             if the commit-graph is split, only verify the tip file
+    --progress            force progress reporting
 ";
 
-const WRITE_HELP: &str = "    --[no-]reachable      start walk at all refs
-    --[no-]stdin-packs    scan pack-indexes listed by stdin for commits
-    --[no-]stdin-commits  start walk at commits listed by stdin
-    --[no-]append         include all commits already in the commit-graph file
-    --[no-]changed-paths  enable computation for changed paths
+const WRITE_HELP: &str = "    --reachable           start walk at all refs
+    --stdin-packs         scan pack-indexes listed by stdin for commits
+    --stdin-commits       start walk at commits listed by stdin
+    --append              include all commits already in the commit-graph file
+    --changed-paths       enable computation for changed paths
     --split[=...]         allow writing an incremental commit-graph file
-    --[no-]max-commits <n>
-                          maximum number of commits in a non-base split commit-graph
-    --[no-]size-multiple <n>
-                          maximum ratio between two levels of a split commit-graph
-    --[no-]expire-time <expiry-date>
+    --max-commits <n>     maximum number of commits in a non-base split commit-graph
+    --size-multiple <n>   maximum ratio between two levels of a split commit-graph
+    --expire-time <expiry-date>
                           only expire files older than a given date-time
-    --[no-]max-new-filters ...
+    --max-new-filters ...
                           maximum number of changed-path Bloom filters to compute
-    --[no-]progress       force progress reporting
+    --progress            force progress reporting
 ";
 
 /// Usage line plus the option list of a subcommand.

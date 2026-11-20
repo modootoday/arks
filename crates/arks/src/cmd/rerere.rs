@@ -24,8 +24,7 @@ use std::path::{Path, PathBuf};
 const USAGE: &str =
     "usage: git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]
 
-    --[no-]rerere-autoupdate
-                          register clean resolutions in index
+    --rerere-autoupdate   register clean resolutions in index
 ";
 
 fn config_bool(repo: &Repository, key: &str) -> Option<bool> {
