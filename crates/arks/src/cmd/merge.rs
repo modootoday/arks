@@ -6,7 +6,7 @@
 
 use crate::cmd::shared::{commit_signature, current_branch_name, is_ancestor, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, refuse_unknown_flags, work_tree};
+use crate::util::{open_repo, work_tree};
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_refs::RefTarget;
 use arks_store::ObjectStore;
@@ -40,37 +40,6 @@ struct MergeOpts {
     no_verify: bool,
     verify_signatures: bool,
     favor: crate::cmd::merge_engine::Favor,
-}
-
-impl MergeOpts {
-    fn simple(ff_only: bool, no_ff: bool, message: Option<String>) -> Self {
-        Self {
-            ff: if ff_only {
-                Ff::Only
-            } else if no_ff {
-                Ff::Never
-            } else {
-                Ff::Allow
-            },
-            commit: true,
-            squash: false,
-            stat: true,
-            log: None,
-            message,
-            edit: false,
-            cleanup: crate::cmd::trailers::Cleanup::Default,
-            strategy: None,
-            into_name: None,
-            quiet: false,
-            allow_unrelated: false,
-            sign_args: Vec::new(),
-            autostash: false,
-            signoff: false,
-            no_verify: false,
-            verify_signatures: false,
-            favor: crate::cmd::merge_engine::Favor::None,
-        }
-    }
 }
 
 const STRATEGIES: &[&str] = &["octopus", "ours", "recursive", "resolve", "subtree", "ort"];
@@ -340,7 +309,6 @@ fn default_merge_message(
     }
     Ok(msg)
 }
-
 
 fn merge_one(name: &str, o: &MergeOpts) -> CliResult<()> {
     let mut repo = open_repo()?;
@@ -734,8 +702,6 @@ fn touched_paths(
         .filter(|k| x.get(*k) != y.get(*k))
         .cloned()
         .collect())
-}
-
 }
 
 /// git merge's closing diffstat (`--stat` block plus `create mode` /

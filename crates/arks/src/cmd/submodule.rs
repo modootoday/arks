@@ -976,7 +976,7 @@ fn update_in(sp: &Super, specs: &[String], o: &UpdateOpts, outer: &str) -> CliRe
                             }
                             Ok(())
                         }
-                        _ => crate::cmd::replay::cmd_rebase(&[target.to_hex()]),
+                        _ => crate::cmd::rebase::cmd_rebase(&[target.to_hex()]),
                     })
                     .map_err(|_| {
                         CliError::fatal(format!(

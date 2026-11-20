@@ -254,26 +254,6 @@ pub fn split_short_bundles(args: &[String], flags: &str, valued: &str) -> Vec<St
     out
 }
 
-/// Rewrite long spellings to the short spelling a command already handles.
-pub fn alias_flags(args: Vec<String>, aliases: &[(&str, &str)]) -> Vec<String> {
-    let mut past_dashdash = false;
-    args.into_iter()
-        .map(|a| {
-            if a == "--" {
-                past_dashdash = true;
-            }
-            if past_dashdash {
-                return a;
-            }
-            aliases
-                .iter()
-                .find(|(long, _)| *long == a)
-                .map(|(_, short)| (*short).to_string())
-                .unwrap_or(a)
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod bundle_tests {
     use super::*;

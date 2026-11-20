@@ -4,9 +4,7 @@ use crate::cmd::shared::{
     collect_untracked, committer_signature, file_mode, file_times, index_stat_matches, resolve_rev,
 };
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    FORMAT, cwd, open_repo, read_index, refuse_unknown_flags, work_tree, write_index,
-};
+use crate::util::{FORMAT, cwd, open_repo, read_index, work_tree, write_index};
 use arks_index::{IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject, write_loose};
 use arks_oid::Oid;

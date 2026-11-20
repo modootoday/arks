@@ -792,14 +792,6 @@ pub(crate) fn ensure_nl(mut message: String) -> String {
     message
 }
 
-pub(crate) fn one_rev<'a>(args: &'a [String], usage: &str) -> CliResult<&'a str> {
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 1 {
-        return Err(CliError::Usage(usage.into()));
-    }
-    Ok(positional[0])
-}
-
 pub(crate) fn tree_map(repo: &Repository, commit_oid: &Oid) -> CliResult<HashMap<String, Oid>> {
     Ok(arks_repo::commit_tree_map(repo, commit_oid)?)
 }

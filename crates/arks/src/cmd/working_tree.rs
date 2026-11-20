@@ -1,7 +1,7 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
 use crate::cmd::branch::restore_paths_mode;
-use crate::cmd::shared::{head_blob_map, resolve_rev, tree_blob_map};
+use crate::cmd::shared::{head_blob_map, resolve_rev};
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, rel_path_from_worktree, work_tree, write_index};
 use arks_index::{Index, IndexEntry, sort_entries};
@@ -9,7 +9,7 @@ use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 pub fn cmd_restore(args: &[String]) -> CliResult<()> {
@@ -1024,14 +1024,6 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// Split argv at the first `--` (options+revs, pathspecs).
-fn split_dashdash(args: &[String]) -> (Vec<String>, Vec<String>) {
-    match args.iter().position(|a| a == "--") {
-        Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
-        None => (args.to_vec(), Vec::new()),
-    }
-}
-
 /// Worktree-relative pathspec (cwd-relative input), `/`-separated, no trailing slash.
 fn pathspec(work: &Path, p: &str) -> String {
     let abs = std::env::current_dir()
@@ -1052,7 +1044,6 @@ fn pathspec(work: &Path, p: &str) -> String {
 fn path_matches(path: &str, specs: &[String]) -> bool {
     crate::cmd::log_format::path_in_specs(path, specs)
 }
-
 
 /// Tracked paths as they are in the working tree (missing files omitted).
 /// Hashes without writing objects; stat-clean entries reuse the index OID.
