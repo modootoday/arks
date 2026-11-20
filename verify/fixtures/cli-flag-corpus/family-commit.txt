@@ -1112,3 +1112,7 @@ mailsplit -o.git/nope .git/fixture.mbox
 -C .git/side bisect terms --term-good
 -C .git/side bisect bad
 -C .git/side bisect reset
+# add -A / -u with pathspecs stage only matching paths.
+add -A -- src
+add -u -- src
+add -A -- README.md
