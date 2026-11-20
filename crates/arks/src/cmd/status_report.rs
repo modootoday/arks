@@ -264,6 +264,12 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
         }
         writeln!(out)?;
     }
+    if !d.staged.is_empty() && mode == Untracked::No {
+        writeln!(
+            out,
+            "Untracked files not listed (use -u option to show untracked files)"
+        )?;
+    }
     if d.staged.is_empty() {
         if !d.unstaged.is_empty() {
             writeln!(

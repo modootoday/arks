@@ -708,3 +708,27 @@ fn pathspec(work: &Path, p: &str) -> String {
 fn path_matches(path: &str, specs: &[String]) -> bool {
     crate::cmd::log_format::path_in_specs(path, specs)
 }
+
+
+/// Tracked paths as they are in the working tree (missing files omitted).
+/// Hashes without writing objects; stat-clean entries reuse the index OID.
+pub(crate) fn worktree_map(repo: &Repository, work: &Path) -> CliResult<HashMap<String, Oid>> {
+    let index = read_index(repo)?;
+    let mut out = HashMap::new();
+    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        let Ok(meta) = fs::metadata(&abs) else {
+            continue;
+        };
+        if !meta.is_file() {
+            continue;
+        }
+        if crate::cmd::shared::index_stat_matches(e, &meta) {
+            out.insert(e.path.clone(), e.oid);
+            continue;
+        }
+        let obj = RawObject::new(ObjectKind::Blob, fs::read(&abs)?);
+        out.insert(e.path.clone(), obj.oid(repo.object_format())?);
+    }
+    Ok(out)
+}

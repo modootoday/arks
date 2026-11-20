@@ -1054,50 +1054,98 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
     // `--no-optional-locks` / `GIT_OPTIONAL_LOCKS=0` (IDX-002 background status
     // vs writers; AGENT-006 / IDX-008 agent readers). arks status is read-only
     // on the index (product default = no optional locks). Cite: git-status.
-    // M16 Sy-1: `-b` branch header claimed.
-    // Cloud drop-in §O: `-sb`, `--short`, `--branch`, `--porcelain=v1`, `-u[all|no|normal]`.
-    let args = &crate::util::alias_flags(
-        crate::util::split_short_bundles(args, "sbz", ""),
-        &[
-            ("--short", "-s"),
-            ("--branch", "-b"),
-            ("--porcelain=v1", "--porcelain"),
-            ("--untracked-files", "-u"),
-            ("--untracked-files=all", "-u"),
-            ("-uall", "-u"),
-            ("--untracked-files=normal", "-unormal"),
-            ("--untracked-files=no", "-uno"),
-            ("--ignored=traditional", "--ignored"),
-        ],
-    );
-    let (args, after_dashdash): (Vec<String>, Vec<String>) =
-        match args.iter().position(|a| a == "--") {
-            Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
-            None => (args.clone(), Vec::new()),
-        };
-    let args = &args;
-    refuse_unknown_flags(
-        args,
-        &[
-            "--no-optional-locks",
-            "--porcelain",
-            "--porcelain=v2",
-            "--ignored",
-            "-s",
-            "-b",
-            "-u",
-            "-unormal",
-            "-uno",
-        ],
+    // Every option of `git status -h` parses through the shared table; the
+    // last of `--short` / `--long` / `--porcelain` wins, `-z` implies
+    // `--porcelain` when no format was chosen.
+    // Cite: https://git-scm.com/docs/git-status
+    use crate::cmd::opt_parse::{Item, Mode, parse};
+    let args: Vec<String> = args
+        .iter()
+        .filter(|a| *a != "--no-optional-locks")
+        .cloned()
+        .collect();
+    let p = parse(
+        "status",
+        &args,
+        crate::cmd::porcelain_opts::STATUS,
+        Mode::default(),
     )?;
-    let untracked_all = args.iter().any(|a| a == "-u");
-    let untracked_no = args.iter().any(|a| a == "-uno");
-    let porcelain_v2 = args.iter().any(|a| a == "--porcelain=v2");
-    let show_ignored = args.iter().any(|a| a == "--ignored");
-    let porcelain = args.iter().any(|a| a == "--porcelain" || a == "-s") || porcelain_v2;
-    let porcelain_v1 = args.iter().any(|a| a == "--porcelain") || porcelain_v2;
-    let show_branch = args.iter().any(|a| a == "-b");
-    let _no_optional = wants_no_optional_locks(args);
+    #[derive(Clone, Copy, PartialEq)]
+    enum Fmt {
+        Unset,
+        Long,
+        Short,
+        V1,
+        V2,
+    }
+    let mut format = Fmt::Unset;
+    for it in &p.items {
+        if let Item::Opt { key, val, neg } = it {
+            match (*key, *neg) {
+                ("short", false) => format = Fmt::Short,
+                ("long", false) => format = Fmt::Long,
+                ("short" | "long" | "porcelain", true) => format = Fmt::Unset,
+                ("porcelain", false) => {
+                    format = match val.as_deref() {
+                        None | Some("v1") => Fmt::V1,
+                        Some("v2") => Fmt::V2,
+                        Some(v) => {
+                            return Err(CliError::fatal(format!(
+                                "unsupported porcelain version '{v}'"
+                            )));
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    let nul = p.on("null");
+    if nul && format == Fmt::Unset {
+        format = Fmt::V1;
+    }
+    let untracked_arg = match p.last("untracked-files") {
+        None => "normal".to_string(),
+        Some(None) => "all".to_string(),
+        Some(Some(v)) => v,
+    };
+    let (untracked_all, untracked_no) = match untracked_arg.as_str() {
+        "all" => (true, false),
+        "normal" | "true" => (false, false),
+        "no" | "false" => (false, true),
+        other => {
+            return Err(CliError::fatal(format!(
+                "Invalid untracked files mode '{other}'"
+            )));
+        }
+    };
+    let show_ignored = match p.last("ignored") {
+        None => false,
+        Some(None) => true,
+        Some(Some(v)) => match v.as_str() {
+            "traditional" | "matching" => true,
+            "no" => false,
+            other => {
+                return Err(CliError::fatal(format!("Invalid ignored mode '{other}'")));
+            }
+        },
+    };
+    if let Some(Some(v)) = p.last("ignore-submodules") {
+        if !matches!(v.as_str(), "none" | "untracked" | "dirty" | "all") {
+            return Err(CliError::fatal(format!(
+                "bad --ignore-submodules argument: {v}"
+            )));
+        }
+    }
+    let porcelain_v2 = format == Fmt::V2;
+    let porcelain_v1 = format == Fmt::V1 || porcelain_v2;
+    let porcelain = format == Fmt::Short || porcelain_v1;
+    let show_branch = p.on("branch");
+    let verbose = if porcelain { 0 } else { p.count("verbose") };
+    let show_stash = p.on("show-stash");
+    let after_dashdash = p.after_dashdash();
+    let _no_optional = wants_no_optional_locks(&args);
+    let args = &p.args();
     let repo = open_repo()?;
     // FSM-002 (M20 Cx-7): concurrent FSM transition refuse.
     let fsm_transition = repo.git_dir().join(".arks-fsm-transition");
@@ -1171,9 +1219,16 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         shown.dedup();
         d.untracked = shown;
     }
-    let mut out = io::BufWriter::new(io::stdout().lock());
+    let stash_entries = if show_stash {
+        fs::read_to_string(repo.common_dir().join("logs/refs/stash"))
+            .map(|t| t.lines().filter(|l| !l.is_empty()).count())
+            .unwrap_or(0)
+    } else {
+        0
+    };
+    let mut out: Vec<u8> = Vec::new();
     if porcelain_v2 {
-        write_porcelain_v2(&mut out, &repo, &d, show_branch)?;
+        write_porcelain_v2(&mut out, &repo, &d, show_branch, stash_entries)?;
     } else if porcelain {
         // v1 porcelain: optional `## branch` then XY PATH (git-status §Short Format):
         // X = index vs HEAD (A/M/D), Y = worktree vs index (M/D), sorted by path,
@@ -1211,9 +1266,36 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
             writeln!(out, "!! {}", show(p))?;
         }
     } else {
-        write_long(&mut out, &d, mode)?;
+        let mut long = Vec::new();
+        write_long(&mut long, &d, mode)?;
+        let long = String::from_utf8_lossy(&long).into_owned();
+        // `--show-stash` goes before the closing "nothing to commit" summary.
+        let (body, summary) = split_status_summary(&long, d.staged.is_empty());
+        out.extend_from_slice(body.as_bytes());
+        if stash_entries > 0 {
+            writeln!(
+                out,
+                "Your stash currently has {stash_entries} {}",
+                if stash_entries == 1 {
+                    "entry"
+                } else {
+                    "entries"
+                }
+            )?;
+        }
+        out.extend_from_slice(summary.as_bytes());
+        if verbose > 0 {
+            write_status_verbose(&mut out, &repo, verbose)?;
+        }
     }
-    io::Write::flush(&mut out)?;
+    if nul && porcelain {
+        for b in out.iter_mut() {
+            if *b == b'\n' {
+                *b = 0;
+            }
+        }
+    }
+    io::stdout().lock().write_all(&out)?;
     // Honesty: status must not create optional index.lock (AGENT-006 / IDX-008 / IDX-002).
     if !had_lock && lock_before.is_file() {
         return Err(CliError::Msg(
@@ -1222,6 +1304,81 @@ pub fn cmd_status(args: &[String]) -> CliResult<()> {
         ));
     }
     Ok(())
+}
+
+/// Split the long status into its body and the trailing one-line summary
+/// ("no changes added to commit ...", "nothing to commit ..."), which is
+/// printed only when nothing is staged.
+fn split_status_summary(long: &str, has_summary: bool) -> (String, String) {
+    if !has_summary {
+        return (long.to_string(), String::new());
+    }
+    let trimmed = long.trim_end_matches('\n');
+    match trimmed.rfind('\n') {
+        Some(i) => (long[..=i].to_string(), long[i + 1..].to_string()),
+        None => (String::new(), long.to_string()),
+    }
+}
+
+/// `status -v`: the staged diff after the long status; `-vv` adds the
+/// unstaged diff, each part under its section title, with the mnemonic
+/// `c/` (HEAD), `i/` (index) and `w/` (work tree) prefixes.
+fn write_status_verbose(out: &mut Vec<u8>, repo: &Repository, level: usize) -> CliResult<()> {
+    use crate::cmd::diff_render::{DiffFormat, changes_between, render};
+    let fmt = DiffFormat {
+        patch: true,
+        ..DiffFormat::default()
+    };
+    let work = work_tree(repo)?;
+    let index: std::collections::HashMap<String, Oid> = read_index(repo)?
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.clone(), e.oid))
+        .collect();
+    let head = crate::cmd::shared::head_blob_map(repo).unwrap_or_default();
+    let staged = changes_between(&head, &index, None);
+    let mut part = Vec::new();
+    render(&mut part, repo, &fmt, &staged)?;
+    if level < 2 {
+        out.extend_from_slice(&part);
+        return Ok(());
+    }
+    if !staged.is_empty() {
+        out.extend_from_slice(b"Changes to be committed:\n");
+        out.extend_from_slice(&reprefix_patch(&part, "c/", "i/"));
+    }
+    let wt = crate::cmd::working_tree::worktree_map(repo, &work)?;
+    let unstaged = changes_between(&index, &wt, Some(work.as_path()));
+    if !unstaged.is_empty() {
+        let mut part = Vec::new();
+        render(&mut part, repo, &fmt, &unstaged)?;
+        if !staged.is_empty() {
+            out.extend_from_slice(b"--------------------------------------------------\n");
+        }
+        out.extend_from_slice(b"Changes not staged for commit:\n");
+        out.extend_from_slice(&reprefix_patch(&part, "i/", "w/"));
+    }
+    Ok(())
+}
+
+/// Swap the `a/` / `b/` prefixes of a rendered patch's header lines.
+fn reprefix_patch(patch: &[u8], src: &str, dst: &str) -> Vec<u8> {
+    let text = String::from_utf8_lossy(patch);
+    let mut out = String::with_capacity(text.len());
+    for line in text.split_inclusive('\n') {
+        if let Some(rest) = line.strip_prefix("diff --git a/") {
+            let rest = rest.replacen(" b/", &format!(" {dst}"), 1);
+            out.push_str(&format!("diff --git {src}{rest}"));
+        } else if let Some(rest) = line.strip_prefix("--- a/") {
+            out.push_str(&format!("--- {src}{rest}"));
+        } else if let Some(rest) = line.strip_prefix("+++ b/") {
+            out.push_str(&format!("+++ {dst}{rest}"));
+        } else {
+            out.push_str(line);
+        }
+    }
+    out.into_bytes()
 }
 
 /// `status --porcelain=v2` (git-status §Porcelain Format Version 2):
@@ -1233,6 +1390,7 @@ fn write_porcelain_v2(
     repo: &Repository,
     d: &crate::cmd::status_report::StatusData,
     show_branch: bool,
+    stash_entries: usize,
 ) -> CliResult<()> {
     let zero = "0".repeat(repo.oid_kind().hex_len());
     if show_branch {
@@ -1272,6 +1430,9 @@ fn write_porcelain_v2(
                 }
             }
         }
+    }
+    if stash_entries > 0 {
+        writeln!(out, "# stash {stash_entries}")?;
     }
     let mut head: std::collections::HashMap<String, (u32, Oid)> = Default::default();
     if let Ok(h) = repo.head_oid() {
