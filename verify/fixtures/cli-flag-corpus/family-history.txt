@@ -432,3 +432,86 @@ cat-file --batch-all-objects --batch-check --follow-symlinks
 cat-file --batch-all-objects --batch-check='%(deltabase)'
 cat-file --batch-check
 cat-file --batch-command
+# --- grep ---
+grep -n --column readme
+grep --no-line-number -n -i README
+grep -z -n readme
+grep -l -z e
+grep --name-only e
+grep --no-files-with-matches -l -c e
+grep -L --no-files-without-match -c e
+grep -C1 more
+grep --context=1 more
+grep -A1 --after-context 2 readme
+grep -B1 last
+grep --before-context=1 last
+grep -2 more
+grep --no-context -C3 more
+grep --heading -n e
+grep --break -C1 e
+grep --heading --break e
+grep -e readme --and -e more
+grep -e readme --and --not -e more
+grep --not -e readme
+grep -e alpha -e readme --all-match
+grep --no-all-match -e alpha -e readme
+grep '(' -e alpha --or -e beta ')' --and -e a
+grep -m1 e
+grep --max-count=1 --no-max-count e
+grep --max-depth 0 e
+grep --max-depth=1 e -- src
+grep -r e
+grep --recursive e
+grep --no-recursive e
+grep --color=always -n readme
+grep --color e
+grep --no-color e
+grep -o e
+grep --no-only-matching -o e
+grep -h e
+grep -H -h e
+grep --full-name e
+grep --no-full-name e
+grep --untracked e
+grep --no-untracked e
+grep --untracked --no-exclude-standard e
+grep --untracked --exclude-standard e
+grep --no-index e
+grep --no-index --exclude-standard e
+grep --index e
+grep --cached --no-cached e
+grep -p e
+grep --show-function -C1 e
+grep --no-show-function -p e
+grep -W e
+grep --function-context -n beta
+grep --no-function-context -W e
+grep -P 're\w+'
+grep --perl-regexp '\d'
+grep --no-perl-regexp -E 'r(ea)+d'
+grep --no-extended-regexp -E 'r(ea)+d'
+grep --no-basic-regexp e
+grep --no-fixed-strings -F e
+grep -f /dev/null
+grep -O e
+grep --open-files-in-pager=cat e
+grep --threads 2 e
+grep --no-threads e
+grep --ext-grep e
+grep --no-ext-grep e
+grep --textconv e
+grep --no-textconv e
+grep --recurse-submodules e
+grep --no-recurse-submodules e
+grep --no-invert-match -v e
+grep --no-ignore-case -i README
+grep --no-word-regexp -w read
+grep --no-text -a e
+grep --no-count -c e
+grep --no-null -z -l e
+grep --no-heading --heading e
+grep --no-break --break e
+grep --no-quiet e
+grep --no-column --column e
+grep e HEAD:src
+grep -c e HEAD HEAD~3
