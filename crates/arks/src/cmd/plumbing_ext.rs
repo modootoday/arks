@@ -589,8 +589,11 @@ pub(crate) fn reachable_all(
     extra: &[Oid],
 ) -> CliResult<std::collections::HashSet<Oid>> {
     let mut tips: Vec<Oid> = extra.to_vec();
-    for (name, oid) in repo.refs().list_refs("")? {
+    for (_name, oid) in repo.refs().list_refs("")? {
         tips.push(oid);
+    }
+    // Every reflog counts, including logs of deleted refs (as git prune does).
+    for name in crate::cmd::inspect::all_reflog_names(repo) {
         for (old, new, _) in crate::reflog::read_entries(repo, &name) {
             tips.push(new);
             tips.extend(old);

@@ -666,7 +666,7 @@ pub fn cmd_pack_refs(args: &[String]) -> CliResult<()> {
 
 /// Every reflog under `logs/` (common dir) plus the per-worktree `HEAD` log,
 /// as ref names (`HEAD`, `refs/...`), whether or not the ref still exists.
-fn all_reflog_names(repo: &Repository) -> Vec<String> {
+pub(crate) fn all_reflog_names(repo: &Repository) -> Vec<String> {
     fn walk(dir: &std::path::Path, prefix: &str, out: &mut Vec<String>) {
         let Ok(rd) = std::fs::read_dir(dir) else {
             return;
