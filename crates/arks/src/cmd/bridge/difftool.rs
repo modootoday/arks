@@ -85,17 +85,13 @@ pub fn cmd_difftool(args: &[String]) -> CliResult<()> {
         tc.print_help();
         return Ok(());
     }
-    // The comparison is parsed first: a bad diff option fails like `git diff`.
+    // The comparison is parsed first. A bad diff option is reported without
+    // the `git diff` usage and exits 255 (observed pin 2.39.5 difftool).
     let queue = match diff_queue(&diff_args) {
         Ok(q) => q,
         Err(CliError::NotImplemented(m)) if m.starts_with("unsupported option: ") => {
             let opt = m.trim_start_matches("unsupported option: ");
-            return Err(CliError::Exit(
-                129,
-                format!(
-                    "error: invalid option: {opt}\nusage: git diff [<options>] [<commit>] [--] [<path>...]"
-                ),
-            ));
+            return Err(CliError::Exit(255, format!("error: invalid option: {opt}")));
         }
         Err(e) => return Err(e),
     };
