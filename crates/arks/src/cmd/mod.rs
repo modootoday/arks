@@ -106,7 +106,7 @@ pub use bisect::cmd_bisect;
 pub use blame::{cmd_annotate, cmd_blame};
 pub use branch::{cmd_checkout, cmd_switch};
 pub use branch_cmd::cmd_branch;
-pub use bridge::{cmd_difftool, cmd_difftool_helper};
+pub use bridge::{cmd_difftool, cmd_difftool_helper, cmd_mergetool};
 pub use bundle::cmd_bundle;
 pub use cat_file::cmd_cat_file;
 pub use clone::cmd_clone;

@@ -196,6 +196,7 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         // browser / prompt programs; never `git` itself).
         "difftool" => cmd::cmd_difftool(args),
         "difftool--helper" => cmd::cmd_difftool_helper(args),
+        "mergetool" => cmd::cmd_mergetool(args),
         "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
