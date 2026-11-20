@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261120000000
 title: argv symmetry ladder (A0–A_final) — every command and argv symmetric with git, gh and git daemon
-status: active
+status: done
 created: 2026-11-20T00:00:00Z
-updated: 2026-11-20T03:00:00Z
+updated: 2026-11-20T18:00:00Z
 tags: [cli, argv, symmetry, flags, git, gh, daemon, inventory, plan, no-invent-pass]
 verify: manual
 rel:
@@ -58,7 +58,7 @@ sub-command groups, helpers) and need a documentation- or completion-derived inv
 | **A3** | The 47 formerly refused commands, including merge-strategy programs, `difftool` / `mergetool`, `filter-branch`, `quiltimport`, `send-email` / `imap-send`, `instaweb`, credential helpers, GUI (`gui`, `citool`) and Windows-only rows | Each command dispatches with git's argv (see A3 design decisions) |
 | **A4** | gh: flag-level inventory for in-scope rows from the gh 2.103.3 manual; implement `later` / `Deferred` rows (ruleset, `repo gitignore|license`, `pr checks`, `browse`, `repo clone|sync|read-*`, `search code|commits`, `issue develop|artifact`, `auth switch`) | gh-matrix in-scope rows v1 with gh-symmetric flags |
 | **A5** | git daemon: review the 16 `Refuse/N/A` daemon rows | Daemon matrix without unreasoned refuse |
-| **A_final** | Docker receipts for inventory + corpora; matrices and `docs/completion.md` match | — |
+| **A_final** | Docker receipts for inventory + corpora; matrices and `docs/completion.md` match | Done ([[evidence:root/20261120175548-argv-inventory-final]]) |
 
 ## A3 design decisions (owner, 2026-11-20)
 
@@ -108,6 +108,29 @@ sub-command groups, helpers) and need a documentation- or completion-derived inv
   rows the 2.43 oracle lacks (`env--helper`, `bisect--helper`, `add--interactive`, `backfill`,
   `credential-helper-selector`) and the stateful sessions are covered by
   `crates/arks/tests/a3_helpers_cli.rs`. The 29 rows are Partial until a Docker receipt.
+
+## A_final result (Docker pin 2.39.5)
+
+[[evidence:root/20261120175548-argv-inventory-final]]:
+
+- **Inventory:** 185 commands; every one of the **1,852** options that stock `git <cmd> -h`
+  lists is accepted (baseline 557 / 1,776). 110 commands are FULL; the 75 that print no option
+  list are covered by the behaviour corpora only.
+- **Behaviour corpora:** 4,486 lines over 12 corpora, **4,381 SAME**. Every one of the 105 DIFF
+  lines is classed in `reasoned-diffs.tsv`:
+  - **post-pin (77):** options git added after 2.39.5 (2.40 to 2.48); the pin refuses them,
+    arks keeps them (owner policy: a superset of newer git), listed in
+    `verify/fixtures/cli-flag-corpus/post-pin-lines.tsv`.
+  - **design (26):** `gui`, `citool` and the Windows-only rows; the oracle image ships neither
+    git-gui nor the Windows helpers (A3 decisions 1 and 2).
+  - **timing (1):** a `filter-branch` progress line that depends on wall-clock seconds.
+  - **open (1):** the order of `fsck --unreachable` output (undocumented object-table order).
+
+Residuals after A_final (not claimed): `send-email` output (no git-email oracle in the image),
+real OS credential stores, TLS / CRAM-MD5 against real mail servers, the daemon on Windows
+(syslog, inetd, detach, user and drive paths), `instaweb` without gitweb pages, gh unknown-flag
+exit 2 versus gh's 1, rulesets not enforced on push, `log -s --raw` / `log --name-only -s`
+(found after the corpus; the pin prints nothing / exits 128).
 
 ## Order
 
