@@ -266,19 +266,16 @@ pub fn cmd_fsck(args: &[String]) -> CliResult<()> {
     // Phase 2: connectivity from the head nodes.
     let mut roots: Vec<Oid> = Vec::new();
     if heads.is_empty() {
-        for (name, oid) in repo.refs().list_refs("")? {
+        for (_name, oid) in repo.refs().list_refs("")? {
             roots.push(oid);
-            if reflogs {
+        }
+        if reflogs {
+            // git-fsck walks every reflog, including logs of deleted refs.
+            for name in all_reflog_names(&repo) {
                 for (old, new, _) in crate::reflog::read_entries(&repo, &name) {
                     roots.push(new);
                     roots.extend(old);
                 }
-            }
-        }
-        if reflogs {
-            for (old, new, _) in crate::reflog::read_entries(&repo, "HEAD") {
-                roots.push(new);
-                roots.extend(old);
             }
         }
     } else {
@@ -665,4 +662,37 @@ pub fn cmd_pack_refs(args: &[String]) -> CliResult<()> {
         let _ = fs::remove_file(&lock);
     }
     result
+}
+
+/// Every reflog under `logs/` (common dir) plus the per-worktree `HEAD` log,
+/// as ref names (`HEAD`, `refs/...`), whether or not the ref still exists.
+pub(crate) fn all_reflog_names(repo: &Repository) -> Vec<String> {
+    fn walk(dir: &std::path::Path, prefix: &str, out: &mut Vec<String>) {
+        let Ok(rd) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for ent in rd.flatten() {
+            let name = ent.file_name().to_string_lossy().to_string();
+            let rel = if prefix.is_empty() {
+                name
+            } else {
+                format!("{prefix}/{name}")
+            };
+            let path = ent.path();
+            if path.is_dir() {
+                walk(&path, &rel, out);
+            } else {
+                out.push(rel);
+            }
+        }
+    }
+    let mut names = Vec::new();
+    walk(
+        &repo.common_dir().join("logs").join("refs"),
+        "refs",
+        &mut names,
+    );
+    names.sort();
+    names.insert(0, "HEAD".to_string());
+    names
 }

@@ -305,6 +305,38 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
             "--first-parent" => first_parent = true,
             "--contains" => contains = true,
             "--dirty" => dirty_mark = Some("-dirty".into()),
+            // A readable work tree is never broken: --broken behaves like
+            // --dirty with git's default mark.
+            "--broken" => dirty_mark = Some("-dirty".into()),
+            "--no-dirty" | "--no-broken" => dirty_mark = None,
+            "--no-tags" => tags_ok = false,
+            "--no-all" => all_refs = false,
+            "--no-always" => always = false,
+            "--no-long" => long = false,
+            "--no-exact-match" => exact = false,
+            "--no-first-parent" => first_parent = false,
+            "--no-contains" => contains = false,
+            "--no-match" => matches.clear(),
+            "--no-exclude" => excludes.clear(),
+            "--abbrev" => abbrev = 7,
+            "--no-abbrev" => abbrev = 0,
+            // --debug only adds stderr diagnostics.
+            "--debug" | "--no-debug" | "--no-candidates" => {}
+            "--candidates" => {
+                let v = args.get(i).cloned().ok_or_else(|| {
+                    CliError::Exit(129, "error: option `candidates' requires a value".into())
+                })?;
+                i += 1;
+                if v.parse::<usize>().map_err(|_| {
+                    CliError::Exit(
+                        129,
+                        "error: option `candidates' expects a numerical value".into(),
+                    )
+                })? == 0
+                {
+                    exact = true;
+                }
+            }
             "--match" | "--exclude" => {
                 let v = args.get(i).cloned().ok_or_else(|| {
                     CliError::fatal(format!("option `{}' requires a value", &a[2..]))
@@ -319,6 +351,18 @@ pub fn cmd_describe(args: &[String]) -> CliResult<()> {
             _ => {
                 if let Some(m) = a.strip_prefix("--dirty=") {
                     dirty_mark = Some(m.to_string());
+                } else if a.starts_with("--broken=") {
+                    dirty_mark = Some("-dirty".into());
+                } else if let Some(n) = a.strip_prefix("--candidates=") {
+                    if n.parse::<usize>().map_err(|_| {
+                        CliError::Exit(
+                            129,
+                            "error: option `candidates' expects a numerical value".into(),
+                        )
+                    })? == 0
+                    {
+                        exact = true;
+                    }
                 } else if let Some(n) = a.strip_prefix("--abbrev=") {
                     abbrev = n
                         .parse()

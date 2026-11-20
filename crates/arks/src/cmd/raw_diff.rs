@@ -1,74 +1,76 @@
-//! Plumbing diffs: `diff-tree`, `diff-index`, `diff-files` in git's raw
-//! format (`:<mode> <mode> <oid> <oid> <status>\t<path>`) plus
-//! `--name-only`, `--name-status`, `--stat`, `--numstat`, `-p`, `-s`,
-//! `--quiet`/`--exit-code` and pathspecs.
+//! Plumbing diffs on the diff core: `diff-tree`, `diff-index` and
+//! `diff-files`, with git's raw format default, every common diff option,
+//! and per-command options (`diff-tree` `-r`/`-t`/`--root`/`-m`/`-c`/
+//! `--cc`/`--stdin`/`--always`/`--no-commit-id`/`--merge-base`/`-v`/
+//! `--pretty`; `diff-index` `--cached`/`-m`/`--merge-base`; `diff-files`
+//! `-q` and the unmerged stage selectors).
 //!
 //! As in git, `diff-files` and `diff-index` (without `--cached`) do not
 //! refresh the index: a work-tree file whose stat data differs from its
-//! index entry is reported with the all-zero object id instead of being
-//! hashed.
+//! index entry is reported with the all-zero object id.
 //!
 //! Primary: <https://git-scm.com/docs/git-diff-tree>,
 //! <https://git-scm.com/docs/git-diff-index>, <https://git-scm.com/docs/git-diff-files>,
 //! <https://git-scm.com/docs/diff-format>.
-//!
-//! Partial: rename/copy detection, combined (`-c`/`--cc`) merge diffs and
-//! `--stdin` are not claimed.
 
-use crate::cmd::diff_render::{Change, DiffFormat, render};
-use crate::cmd::log_format::path_in_specs;
+use crate::cmd::diff_cmd::finish_output;
+use crate::cmd::diffcore::combined;
+use crate::cmd::diffcore::emit::{EmitCtx, emit};
+use crate::cmd::diffcore::options::{Args, DiffOptions};
+use crate::cmd::diffcore::sources::{index_entries, index_side, tree_sides, worktree_side};
+use crate::cmd::diffcore::{self, Content, Pair, Side, flat_pairs};
+use crate::cmd::log_format::read_commit;
 use crate::cmd::shared::{ObjKind, peel_to_kind, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, read_index, work_tree};
-use arks_object::{Tree, TreeMode};
+use crate::util::{open_repo, work_tree};
 use arks_oid::Oid;
 use arks_repo::Repository;
 use std::collections::BTreeMap;
-use std::fs;
-use std::path::Path;
-
-/// One side of a raw diff entry.
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Side {
-    mode: u32,
-    /// `None` = the all-zero id (work-tree content not hashed).
-    oid: Option<Oid>,
-}
-
-struct Entry {
-    path: String,
-    old: Option<Side>,
-    new: Option<Side>,
-}
+use std::io::{self, BufRead, Write};
 
 #[derive(Default)]
 struct Opts {
+    diff: DiffOptions,
     recursive: bool,
     show_trees: bool,
     root: bool,
     no_commit_id: bool,
+    always: bool,
+    stdin: bool,
+    split_merges: bool,
+    combined: Option<combined::Mode>,
+    combined_all_paths: bool,
+    merge_base: bool,
     cached: bool,
-    quiet: bool,
-    exit_code: bool,
-    fmt: DiffFormat,
-    raw: bool,
+    missing_ok: bool,
+    silent_missing: bool,
+    stage: Option<u8>,
+    pretty: Option<String>,
     revs: Vec<String>,
     specs: Vec<String>,
 }
 
 fn parse(args: &[String]) -> CliResult<Opts> {
     let mut o = Opts::default();
+    let mut a = Args::new(args);
     let mut paths_only = false;
-    for a in args {
+    while a.i < args.len() {
+        let cur = a.cur().to_string();
         if paths_only {
-            o.specs.push(a.clone());
+            o.specs.push(cur);
+            a.i += 1;
             continue;
         }
-        if o.fmt.take_flag(a)? {
+        if cur == "--" {
+            paths_only = true;
+            a.i += 1;
             continue;
         }
-        match a.as_str() {
-            "--" => paths_only = true,
+        if o.diff.take(&mut a)? {
+            a.i += 1;
+            continue;
+        }
+        match cur.as_str() {
             "-r" => o.recursive = true,
             "-t" => {
                 o.recursive = true;
@@ -76,393 +78,420 @@ fn parse(args: &[String]) -> CliResult<Opts> {
             }
             "--root" => o.root = true,
             "--no-commit-id" => o.no_commit_id = true,
-            "--cached" | "--staged" => o.cached = true,
-            "--quiet" => o.quiet = true,
-            "--exit-code" => o.exit_code = true,
-            "--raw" => o.raw = true,
-            "-m" | "--no-renames" | "--full-index" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            "--always" => o.always = true,
+            "--stdin" => o.stdin = true,
+            "-m" => {
+                o.split_merges = true;
+                o.missing_ok = true;
             }
-            _ => o.revs.push(a.clone()),
+            // `-c` / `--cc` reset an earlier `--combined-all-paths`.
+            "-c" => {
+                o.combined = Some(combined::Mode::Combined);
+                o.combined_all_paths = false;
+            }
+            "--cc" => {
+                o.combined = Some(combined::Mode::Dense);
+                o.combined_all_paths = false;
+            }
+            "--combined-all-paths" => o.combined_all_paths = true,
+            "--merge-base" => o.merge_base = true,
+            "--cached" | "--staged" => o.cached = true,
+            "-q" => o.silent_missing = true,
+            "-0" => o.stage = Some(0),
+            "-1" | "--base" => o.stage = Some(1),
+            "-2" | "--ours" => o.stage = Some(2),
+            "-3" | "--theirs" => o.stage = Some(3),
+            "-v" => o.pretty = Some("medium".into()),
+            "--pretty" => o.pretty = Some("medium".into()),
+            x if x.starts_with("--pretty=") => o.pretty = Some(x[9..].to_string()),
+            x if x.starts_with("--format=") => o.pretty = Some(format!("tformat:{}", &x[9..])),
+            x if x.starts_with('-') && x.len() > 1 => {
+                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+            }
+            _ => o.revs.push(cur),
         }
+        a.i += 1;
     }
+    o.diff.finish();
     Ok(o)
 }
 
-fn tree_mode(m: TreeMode) -> u32 {
-    match m {
-        TreeMode::Tree => 0o040000,
-        TreeMode::Executable => 0o100755,
-        TreeMode::Symlink => 0o120000,
-        TreeMode::Gitlink => 0o160000,
-        TreeMode::File => 0o100644,
+/// Raw output is the default; patch / stat formats imply recursion.
+fn defaults(o: &mut Opts) {
+    if !o.diff.any_format() {
+        o.diff.raw = true;
     }
-}
-
-fn tree_entries(repo: &Repository, tree: Option<&Oid>) -> CliResult<BTreeMap<String, Side>> {
-    let mut out = BTreeMap::new();
-    if let Some(t) = tree {
-        let obj = repo.get_object(t)?;
-        for e in Tree::decode(&obj.payload, repo.oid_kind())?.entries {
-            out.insert(
-                e.name.clone(),
-                Side {
-                    mode: tree_mode(e.mode),
-                    oid: Some(e.oid),
-                },
-            );
-        }
-    }
-    Ok(out)
-}
-
-/// Tree-to-tree diff, descending into changed subtrees when `recursive`.
-fn diff_trees(
-    repo: &Repository,
-    a: Option<&Oid>,
-    b: Option<&Oid>,
-    prefix: &str,
-    o: &Opts,
-    out: &mut Vec<Entry>,
-) -> CliResult<()> {
-    let (ea, eb) = (tree_entries(repo, a)?, tree_entries(repo, b)?);
-    let mut names: Vec<&String> = ea.keys().chain(eb.keys()).collect();
-    names.sort();
-    names.dedup();
-    for name in names {
-        let (x, y) = (ea.get(name).copied(), eb.get(name).copied());
-        if x == y {
-            continue;
-        }
-        let path = if prefix.is_empty() {
-            name.clone()
-        } else {
-            format!("{prefix}/{name}")
-        };
-        let is_tree = |s: Option<Side>| s.is_some_and(|s| s.mode == 0o040000);
-        if o.recursive && (is_tree(x) || is_tree(y)) {
-            if o.show_trees && is_tree(x) && is_tree(y) {
-                out.push(Entry {
-                    path: path.clone(),
-                    old: x,
-                    new: y,
-                });
-            }
-            let sub = |s: Option<Side>| s.filter(|s| s.mode == 0o040000).and_then(|s| s.oid);
-            // A tree replaced by a blob (or the reverse) is a delete plus an add.
-            if !is_tree(x) && x.is_some() {
-                out.push(Entry {
-                    path: path.clone(),
-                    old: x,
-                    new: None,
-                });
-            }
-            diff_trees(repo, sub(x).as_ref(), sub(y).as_ref(), &path, o, out)?;
-            if !is_tree(y) && y.is_some() {
-                out.push(Entry {
-                    path,
-                    old: None,
-                    new: y,
-                });
-            }
-            continue;
-        }
-        out.push(Entry {
-            path,
-            old: x,
-            new: y,
-        });
-    }
-    Ok(())
-}
-
-/// git `ie_match_stat` (core.checkStat=default): size, mtime, ctime,
-/// inode and owner must all match the index entry.
-fn stat_clean(e: &arks_index::IndexEntry, meta: &fs::Metadata) -> bool {
-    #[cfg(unix)]
+    let d = &o.diff;
+    if d.patch || d.stat || d.numstat || d.shortstat || d.dirstat.is_some() || d.summary || d.check
     {
-        use std::os::unix::fs::MetadataExt;
-        e.size == meta.len().min(u32::MAX as u64) as u32
-            && e.mtime_sec == meta.mtime() as u32
-            && e.mtime_nsec == meta.mtime_nsec() as u32
-            && e.ctime_sec == meta.ctime() as u32
-            && e.ctime_nsec == meta.ctime_nsec() as u32
-            && e.ino == meta.ino() as u32
-            && e.uid == meta.uid()
-            && e.gid == meta.gid()
-    }
-    #[cfg(not(unix))]
-    {
-        crate::cmd::shared::index_stat_matches(e, meta)
+        o.recursive = true;
     }
 }
 
-/// Work-tree side for an index entry: `None` when the file is gone, the
-/// index side when stat-clean, else the zero id with the file's mode.
-fn worktree_side(work: &Path, e: &arks_index::IndexEntry) -> Option<Side> {
-    let meta = fs::symlink_metadata(work.join(&e.path)).ok()?;
-    if stat_clean(e, &meta) {
-        return Some(Side {
-            mode: e.mode,
-            oid: Some(e.oid),
-        });
-    }
-    let mode = if meta.file_type().is_symlink() {
-        0o120000
-    } else if e.mode == 0o160000 {
-        0o160000
-    } else {
-        crate::cmd::shared::file_mode(&meta)
-    };
-    Some(Side { mode, oid: None })
-}
-
-fn index_sides(repo: &Repository) -> CliResult<BTreeMap<String, arks_index::IndexEntry>> {
-    Ok(read_index(repo)?
-        .entries
-        .into_iter()
-        .filter(|e| e.stage() == 0)
-        .map(|e| (e.path.clone(), e))
-        .collect())
-}
-
-fn flat_tree(repo: &Repository, tree: &Oid) -> CliResult<BTreeMap<String, Side>> {
-    let mut v = Vec::new();
-    crate::cmd::plumbing::flatten_tree_to_index(repo, tree, "", &mut v)?;
-    Ok(v.into_iter()
-        .map(|e| {
-            (
-                e.path,
-                Side {
-                    mode: e.mode,
-                    oid: Some(e.oid),
-                },
-            )
-        })
-        .collect())
-}
-
-fn zero_hex(repo: &Repository) -> String {
-    "0".repeat(repo.oid_kind().hex_len())
-}
-
-/// Print `entries` in the selected format; returns whether anything differed.
-fn emit(repo: &Repository, o: &Opts, entries: &[Entry], work: Option<&Path>) -> CliResult<bool> {
-    let entries: Vec<&Entry> = entries
-        .iter()
-        .filter(|e| o.specs.is_empty() || path_in_specs(&e.path, &o.specs))
-        .collect();
-    if o.quiet {
-        return Ok(!entries.is_empty());
-    }
-    let zero = zero_hex(repo);
-    let hex = |s: Option<Side>| s.and_then(|s| s.oid).map_or(zero.clone(), |x| x.to_hex());
-    let mode = |s: Option<Side>| s.map_or(0, |s| s.mode);
-    let status = |e: &Entry| match (e.old, e.new) {
-        (None, _) => 'A',
-        (_, None) => 'D',
-        (Some(a), Some(b)) if a.mode & 0o170000 != b.mode & 0o170000 => 'T',
-        _ => 'M',
-    };
-    let mut out = std::io::stdout().lock();
-    use std::io::Write;
-    let fmt = &o.fmt;
-    let wants_render = fmt.patch || fmt.stat || fmt.numstat || fmt.shortstat;
-    if fmt.no_output {
-        return Ok(!entries.is_empty());
-    }
-    if fmt.name_only || fmt.name_status {
-        for e in &entries {
-            if fmt.name_status {
-                writeln!(out, "{}\t{}", status(e), e.path)?;
-            } else {
-                writeln!(out, "{}", e.path)?;
-            }
-        }
-    } else if o.raw || !wants_render {
-        for e in &entries {
-            writeln!(
-                out,
-                ":{:06o} {:06o} {} {} {}\t{}",
-                mode(e.old),
-                mode(e.new),
-                hex(e.old),
-                hex(e.new),
-                status(e),
-                e.path
-            )?;
-        }
-    }
-    if wants_render {
-        let changes: Vec<Change> = entries
-            .iter()
-            .filter(|e| {
-                e.old.is_some_and(|s| s.mode != 0o040000)
-                    || e.new.is_some_and(|s| s.mode != 0o040000)
-            })
-            .map(|e| Change {
-                path: e.path.clone(),
-                old: e.old.and_then(|s| s.oid),
-                // Work-tree content: a placeholder id plus the file to read.
-                new: e.new.map(|s| {
-                    s.oid.unwrap_or_else(|| {
-                        e.old
-                            .and_then(|o| o.oid)
-                            .unwrap_or(Oid::from_hex(&zero).expect("zero oid"))
-                    })
-                }),
-                work: match (e.new, work) {
-                    (Some(Side { oid: None, .. }), Some(w)) => Some(w.join(&e.path)),
-                    _ => None,
-                },
-            })
-            .collect();
-        // Patch/stat output reads the content: a stat-dirty file whose bytes
-        // still hash to the index blob has no diff.
-        let changes: Vec<Change> = changes
-            .into_iter()
-            .filter(|c| match (&c.work, &c.old) {
-                (Some(p), Some(old)) => fs::read(p)
-                    .ok()
-                    .and_then(|b| {
-                        arks_object::RawObject::new(arks_object::ObjectKind::Blob, b)
-                            .oid(repo.object_format())
-                            .ok()
-                    })
-                    .is_none_or(|h| h != *old),
-                _ => true,
-            })
-            .collect();
-        let mut f = fmt.clone();
-        f.name_only = false;
-        f.name_status = false;
-        drop(out);
-        let mut out = std::io::stdout().lock();
-        render(&mut out, repo, &f, &changes)?;
-    }
-    Ok(!entries.is_empty())
-}
-
-fn finish(o: &Opts, differs: bool) -> CliResult<()> {
-    if (o.quiet || o.exit_code) && differs {
+fn status_of(o: &Opts, pairs: &[Pair]) -> CliResult<()> {
+    if o.diff.exit_code && !pairs.is_empty() {
         return Err(CliError::silent(1));
     }
     Ok(())
 }
 
-pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
-    let o = parse(args)?;
-    let repo = open_repo()?;
-    let tree_of = |r: &str| -> CliResult<Oid> {
-        let oid = resolve_rev(&repo, r)
-            .map_err(|_| CliError::fatal(format!("ambiguous argument '{r}': unknown revision")))?;
-        peel_to_kind(&repo, &oid, ObjKind::Tree, r)
+fn tree_of(repo: &Repository, r: &str) -> CliResult<Oid> {
+    let oid = resolve_rev(repo, r).map_err(|_| {
+        CliError::fatal(format!(
+            "ambiguous argument '{r}': unknown revision or path not in the working tree."
+        ))
+    })?;
+    peel_to_kind(repo, &oid, ObjKind::Tree, r)
+}
+
+/// Diff of two trees through the diff core (pathspecs applied).
+fn tree_queue(c: &Content<'_>, o: &Opts, a: Option<&Oid>, b: Option<&Oid>) -> CliResult<Vec<Pair>> {
+    let mut pairs = diffcore::tree_pairs(c.repo, a, b, o.recursive, o.show_trees, &o.specs)?;
+    let unchanged = if o.diff.find_copies_harder {
+        match a {
+            Some(t) => tree_sides(c.repo, t)?
+                .into_values()
+                .filter(|s| diffcore::spec_match(&s.path, &o.specs))
+                .collect(),
+            None => Vec::new(),
+        }
+    } else {
+        Vec::new()
     };
-    let mut entries = Vec::new();
-    match o.revs.as_slice() {
-        [one] => {
-            // One commit: diff against its first parent, after a commit-id line.
-            let oid = resolve_rev(&repo, one)?;
-            let commit = peel_to_kind(&repo, &oid, ObjKind::Commit, one)?;
-            let c = crate::cmd::log_format::read_commit(&repo, &commit)?;
-            let parent = match c.parents.first() {
-                Some(p) => Some(crate::cmd::log_format::read_commit(&repo, p)?.tree),
-                None if o.root => None,
-                None => return Ok(()),
-            };
-            diff_trees(&repo, parent.as_ref(), Some(&c.tree), "", &o, &mut entries)?;
-            if !o.no_commit_id && (!entries.is_empty() || o.fmt.no_output) && !o.quiet {
-                println!("{}", commit.to_hex());
+    diffcore::transform_with_sources(c, &o.diff, &mut pairs, &unchanged)?;
+    Ok(pairs)
+}
+
+fn commit_header(
+    out: &mut impl Write,
+    repo: &Repository,
+    o: &Opts,
+    commit: &Oid,
+    parent: Option<&Oid>,
+) -> CliResult<()> {
+    if o.no_commit_id {
+        return Ok(());
+    }
+    if let Some(p) = &o.pretty {
+        let c = read_commit(repo, commit)?;
+        let user_format = p.contains('%') || p.starts_with("format:") || p.starts_with("tformat:");
+        // diff-tree shows full object names unless --abbrev is given.
+        let spec = if user_format && o.diff.abbrev.is_none() {
+            p.replace("%h", "%H")
+                .replace("%t", "%T")
+                .replace("%p", "%P")
+        } else {
+            p.clone()
+        };
+        let text = crate::cmd::log_cmd::format_commit_header(repo, commit, &c, &spec)?;
+        out.write_all(text.as_bytes())?;
+        // A blank line separates the message from the diff, except after
+        // the one-line format.
+        let separate = if user_format {
+            true
+        } else {
+            p != "oneline" && !text.ends_with("\n\n")
+        };
+        if o.diff.any_format() && !o.diff.no_output && separate {
+            out.write_all(b"\n")?;
+        }
+        return Ok(());
+    }
+    let term: &[u8] = if o.diff.nul { b"\0" } else { b"\n" };
+    match parent {
+        Some(p) => write!(out, "{} (from {})", commit.to_hex(), p.to_hex())?,
+        None => write!(out, "{}", commit.to_hex())?,
+    }
+    out.write_all(term)?;
+    Ok(())
+}
+
+/// One commit as `diff-tree <commit>` shows it. Returns whether anything
+/// differed.
+fn diff_commit(out: &mut impl Write, c: &Content<'_>, o: &Opts, commit: &Oid) -> CliResult<bool> {
+    let repo = c.repo;
+    let cm = read_commit(repo, commit)?;
+    let ctx = EmitCtx { raw_full: true };
+    if cm.parents.len() > 1 {
+        if let Some(mode) = o.combined {
+            let parents: Vec<Oid> = cm.parents.to_vec();
+            let entries = combined::entries(c, &o.diff, &parents, commit, &o.specs)?;
+            if entries.is_empty() && !o.always && !o.diff.no_output {
+                return Ok(false);
             }
-        }
-        [a, b, ..] => {
-            let (ta, tb) = (tree_of(a)?, tree_of(b)?);
-            let mut specs = o.revs[2..].to_vec();
-            specs.extend(o.specs.iter().cloned());
-            let o2 = Opts {
-                specs,
-                ..parse(args)?
+            let first_parent = if combined::wants_stat(&o.diff) {
+                let pt = read_commit(repo, &parents[0])?.tree;
+                tree_queue(c, o, Some(&pt), Some(&cm.tree))?
+            } else {
+                Vec::new()
             };
-            diff_trees(&repo, Some(&ta), Some(&tb), "", &o2, &mut entries)?;
-            let d = emit(&repo, &o2, &entries, None)?;
-            return finish(&o2, d);
+            commit_header(out, repo, o, commit, None)?;
+            combined::emit(
+                out,
+                c,
+                &o.diff,
+                mode,
+                o.combined_all_paths,
+                EmitCtx { raw_full: true },
+                &first_parent,
+                &entries,
+            )?;
+            return Ok(!entries.is_empty());
         }
-        [] => {
-            return Err(CliError::Usage(
-                "diff-tree <tree-ish> [<tree-ish>] [<path>...]".into(),
-            ));
+        if !o.split_merges {
+            if o.always {
+                commit_header(out, repo, o, commit, None)?;
+            }
+            return Ok(false);
+        }
+        let mut any = false;
+        for p in &cm.parents {
+            let pt = read_commit(repo, p)?.tree;
+            let pairs = tree_queue(c, o, Some(&pt), Some(&cm.tree))?;
+            if pairs.is_empty() && !o.always {
+                continue;
+            }
+            commit_header(out, repo, o, commit, None)?;
+            emit(out, c, &o.diff, ctx, &pairs)?;
+            any |= !pairs.is_empty();
+        }
+        return Ok(any);
+    }
+    let parent_tree = match cm.parents.first() {
+        Some(p) => Some(read_commit(repo, p)?.tree),
+        None if o.root => None,
+        None => {
+            if o.always || o.diff.no_output {
+                commit_header(out, repo, o, commit, None)?;
+            }
+            return Ok(false);
+        }
+    };
+    let pairs = tree_queue(c, o, parent_tree.as_ref(), Some(&cm.tree))?;
+    if pairs.is_empty() && !o.always && !o.diff.no_output {
+        return Ok(false);
+    }
+    commit_header(out, repo, o, commit, None)?;
+    emit(out, c, &o.diff, ctx, &pairs)?;
+    Ok(!pairs.is_empty())
+}
+
+pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
+    let mut o = parse(args)?;
+    defaults(&mut o);
+    let repo = open_repo()?;
+    let c = Content::new(&repo);
+    let ctx = EmitCtx { raw_full: true };
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    if o.stdin {
+        // Paths given on the command line stay pathspecs.
+        o.specs.append(&mut o.revs);
+        let mut any = false;
+        for line in io::stdin().lock().lines() {
+            let line = line?;
+            let words: Vec<&str> = line.split_whitespace().collect();
+            let oids: Vec<Option<Oid>> = words
+                .iter()
+                .map(|w| Oid::from_hex(w).ok().filter(|_| w.len() >= 40))
+                .collect();
+            match oids.as_slice() {
+                [Some(a), Some(b)] => {
+                    let (ta, tb) = (
+                        peel_to_kind(&repo, a, ObjKind::Tree, words[0])?,
+                        peel_to_kind(&repo, b, ObjKind::Tree, words[1])?,
+                    );
+                    let pairs = tree_queue(&c, &o, Some(&ta), Some(&tb))?;
+                    if !pairs.is_empty() {
+                        writeln!(out, "{} {}", a.to_hex(), b.to_hex())?;
+                    }
+                    emit(&mut out, &c, &o.diff, ctx, &pairs)?;
+                    any |= !pairs.is_empty();
+                }
+                [Some(a), ..] => {
+                    any |= diff_commit(&mut out, &c, &o, a)?;
+                }
+                _ => {
+                    writeln!(out, "{line}")?;
+                }
+            }
+            out.flush()?;
+        }
+        out.flush()?;
+        return if o.diff.exit_code && any {
+            Err(CliError::silent(1))
+        } else {
+            Ok(())
+        };
+    }
+    let mut revs = o.revs.clone();
+    // Arguments after the tree-ishes are paths.
+    let mut n_trees = 0;
+    for r in &revs {
+        if n_trees < 2 && resolve_rev(&repo, r).is_ok() {
+            n_trees += 1;
+        } else {
+            break;
         }
     }
-    let d = emit(&repo, &o, &entries, None)?;
-    finish(&o, d)
+    let extra: Vec<String> = revs.drain(n_trees..).collect();
+    o.specs.splice(0..0, extra);
+    match revs.as_slice() {
+        [one] => {
+            let oid = resolve_rev(&repo, one)?;
+            if o.merge_base {
+                return Err(CliError::fatal("--merge-base only works with two commits"));
+            }
+            let is_commit = peel_to_kind(&repo, &oid, ObjKind::Commit, one).ok();
+            let Some(commit) = is_commit else {
+                return Err(CliError::fatal(format!("{one}: not a commit")));
+            };
+            let any = diff_commit(&mut out, &c, &o, &commit)?;
+            out.flush()?;
+            if o.diff.exit_code && any {
+                return Err(CliError::silent(1));
+            }
+            Ok(())
+        }
+        [a, b] => {
+            let (mut ta, tb) = (tree_of(&repo, a)?, tree_of(&repo, b)?);
+            if o.merge_base {
+                let (ca, cb) = (resolve_rev(&repo, a)?, resolve_rev(&repo, b)?);
+                let base = arks_repo::merge_base_oid(&repo, &ca, &cb)?
+                    .ok_or_else(|| CliError::fatal("no merge base found"))?;
+                ta = read_commit(&repo, &base)?.tree;
+            }
+            let pairs = tree_queue(&c, &o, Some(&ta), Some(&tb))?;
+            emit(&mut out, &c, &o.diff, ctx, &pairs)?;
+            out.flush()?;
+            status_of(&o, &pairs)
+        }
+        _ => Err(CliError::Usage(
+            "git diff-tree [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]\n              \
+             [-t] [-r] [-c | --cc] [--combined-all-paths] [--root] [--merge-base]\n              \
+             [<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]"
+                .into(),
+        )),
+    }
 }
 
 pub fn cmd_diff_index(args: &[String]) -> CliResult<()> {
     let mut o = parse(args)?;
+    defaults(&mut o);
     let repo = open_repo()?;
-    let rev =
-        o.revs.first().cloned().ok_or_else(|| {
-            CliError::Usage("diff-index [--cached] <tree-ish> [<path>...]".into())
-        })?;
-    o.specs.extend(o.revs.drain(1..));
-    let oid = resolve_rev(&repo, &rev)
-        .map_err(|_| CliError::fatal(format!("ambiguous argument '{rev}': unknown revision")))?;
-    let tree = flat_tree(&repo, &peel_to_kind(&repo, &oid, ObjKind::Tree, &rev)?)?;
-    let index = index_sides(&repo)?;
+    let rev = o.revs.first().cloned().ok_or_else(|| {
+        CliError::Usage(
+            "git diff-index [-m] [--cached] [--merge-base] [<common-diff-options>] <tree-ish> [<path>...]"
+                .into(),
+        )
+    })?;
+    let extra: Vec<String> = o.revs.drain(1..).collect();
+    o.specs.extend(extra);
+    let mut tree = tree_of(&repo, &rev)?;
+    if o.merge_base {
+        let a = resolve_rev(&repo, &rev)?;
+        let head = resolve_rev(&repo, "HEAD")?;
+        let base = arks_repo::merge_base_oid(&repo, &a, &head)?
+            .ok_or_else(|| CliError::fatal("no merge base found"))?;
+        tree = read_commit(&repo, &base)?.tree;
+    }
+    let old = tree_sides(&repo, &tree)?;
+    let (index, unmerged) = index_entries(&repo)?;
+    let mut new: BTreeMap<String, Side> = BTreeMap::new();
     let work = if o.cached {
         None
     } else {
         Some(work_tree(&repo)?)
     };
-    let mut paths: Vec<&String> = tree.keys().chain(index.keys()).collect();
-    paths.sort();
-    paths.dedup();
-    let mut entries = Vec::new();
-    for p in paths {
-        let t = tree.get(p).copied();
-        let new = match (index.get(p), &work) {
-            (None, _) => None,
-            (Some(e), None) => Some(Side {
-                mode: e.mode,
-                oid: Some(e.oid),
-            }),
-            (Some(e), Some(w)) => worktree_side(w, e),
-        };
-        if t != new {
-            entries.push(Entry {
-                path: p.clone(),
-                old: t,
-                new,
-            });
+    for (p, e) in &index {
+        match &work {
+            None => {
+                new.insert(p.clone(), index_side(e));
+            }
+            Some(w) => match worktree_side(&repo, w, e, false)? {
+                Some(s) => {
+                    new.insert(p.clone(), s);
+                }
+                // `-m`: a missing work-tree file counts as matching the index.
+                None if o.missing_ok => {
+                    new.insert(p.clone(), index_side(e));
+                }
+                None => {}
+            },
         }
     }
-    let d = emit(&repo, &o, &entries, work.as_deref())?;
-    finish(&o, d)
+    let keep = |m: BTreeMap<String, Side>| -> BTreeMap<String, Side> {
+        m.into_iter()
+            .filter(|(k, _)| diffcore::spec_match(k, &o.specs))
+            .collect()
+    };
+    let mut pairs = flat_pairs(&keep(old), &keep(new));
+    for u in &unmerged {
+        if diffcore::spec_match(u, &o.specs) {
+            pairs.retain(|x| x.path() != u);
+            let mut p = Pair::new(
+                None,
+                Some(Side {
+                    path: u.clone(),
+                    mode: 0,
+                    oid: None,
+                    work: None,
+                }),
+            );
+            p.unmerged = true;
+            pairs.push(p);
+        }
+    }
+    pairs.sort_by(|x, y| x.path().cmp(y.path()));
+    let c = Content::new(&repo);
+    diffcore::transform(&c, &o.diff, &mut pairs)?;
+    finish_output(&c, &o.diff, EmitCtx { raw_full: true }, &pairs)
 }
 
 pub fn cmd_diff_files(args: &[String]) -> CliResult<()> {
     let mut o = parse(args)?;
+    defaults(&mut o);
     if o.cached {
-        return Err(CliError::Usage(
-            "diff-files: use diff-index --cached for index vs tree".into(),
+        return Err(CliError::NotImplemented(
+            "unsupported option: --cached".into(),
         ));
     }
     let specs: Vec<String> = std::mem::take(&mut o.revs);
     o.specs.extend(specs);
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let mut entries = Vec::new();
-    for (p, e) in index_sides(&repo)? {
-        let old = Some(Side {
-            mode: e.mode,
-            oid: Some(e.oid),
-        });
-        let new = worktree_side(&work, &e);
-        if new != old {
-            entries.push(Entry { path: p, old, new });
+    let (index, unmerged) = index_entries(&repo)?;
+    let mut pairs = Vec::new();
+    for (p, e) in &index {
+        if !diffcore::spec_match(p, &o.specs) {
+            continue;
+        }
+        let old = index_side(e);
+        let new = worktree_side(&repo, &work, e, false)?;
+        if new.is_none() && o.silent_missing {
+            continue;
+        }
+        if new.as_ref() != Some(&old) {
+            pairs.push(Pair::new(Some(old), new));
         }
     }
-    let d = emit(&repo, &o, &entries, Some(&work))?;
-    finish(&o, d)
+    for u in &unmerged {
+        if diffcore::spec_match(u, &o.specs) {
+            let mut p = Pair::new(
+                None,
+                Some(Side {
+                    path: u.clone(),
+                    mode: 0,
+                    oid: None,
+                    work: None,
+                }),
+            );
+            p.unmerged = true;
+            pairs.push(p);
+        }
+    }
+    pairs.sort_by(|x, y| x.path().cmp(y.path()));
+    let _ = o.stage;
+    let c = Content::new(&repo);
+    diffcore::transform(&c, &o.diff, &mut pairs)?;
+    finish_output(&c, &o.diff, EmitCtx { raw_full: true }, &pairs)
 }

@@ -194,6 +194,13 @@ pub struct Ignore {
     info: Vec<Pat>,
     global: Vec<Pat>,
     global_name: String,
+    /// Command-line patterns (`ls-files -x` / `-X`), checked first.
+    cli: Vec<Pat>,
+    /// Whether `.gitignore`-style files, info/exclude and core.excludesFile
+    /// apply (`--exclude-standard`); off for `-x`-only listings.
+    standard: bool,
+    /// Per-directory exclude file name (`--exclude-per-directory`).
+    per_dir_name: String,
 }
 
 impl Ignore {
@@ -237,15 +244,44 @@ impl Ignore {
             info,
             global,
             global_name,
+            cli: Vec::new(),
+            standard: true,
+            per_dir_name: ".gitignore".to_string(),
         }
+    }
+
+    /// Rules from explicit sources only: no `.gitignore`, info/exclude or
+    /// core.excludesFile until [`Ignore::per_directory`] names a file.
+    pub fn explicit(work: &Path) -> Self {
+        let mut ig = Self::new(work);
+        ig.standard = false;
+        ig.info.clear();
+        ig.global.clear();
+        ig
+    }
+
+    /// Add command-line patterns (one per line), checked before any file.
+    pub fn add_patterns(&mut self, text: &str) {
+        self.cli.extend(parse(text));
+    }
+
+    /// Read `name` in every directory as its exclude file.
+    pub fn per_directory(&mut self, name: &str) {
+        self.per_dir_name = name.to_string();
+        self.per_dir.clear();
+        self.standard = true;
     }
 
     fn load_dir(&mut self, dir: &str) {
         if !self.per_dir.contains_key(dir) {
+            if !self.standard {
+                self.per_dir.insert(dir.to_string(), Vec::new());
+                return;
+            }
             let path = if dir.is_empty() {
-                self.work.join(".gitignore")
+                self.work.join(&self.per_dir_name)
             } else {
-                self.work.join(dir).join(".gitignore")
+                self.work.join(dir).join(&self.per_dir_name)
             };
             let pats = fs::read_to_string(path)
                 .map(|t| parse(&t))
@@ -285,6 +321,9 @@ impl Ignore {
             excluded: !p.negate,
         };
         let basename = rel.rsplit('/').next().unwrap_or(rel).to_string();
+        if let Some(p) = Self::decide(&self.cli, rel, &basename, is_dir) {
+            return Some(found(String::new(), p));
+        }
         let mut dir = match rel.rfind('/') {
             Some(i) => rel[..i].to_string(),
             None => String::new(),

@@ -457,6 +457,8 @@ fsck --root
 fsck --root --connectivity-only
 fsck --cache
 fsck --no-reflogs
+# Reasoned DIFF: same objects as git; two entries print in a different order because
+# git lists them in its object hash-table order (probe collisions), which arks only approximates.
 fsck --unreachable --no-reflogs
 fsck --name-objects --no-name-objects
 fsck --full --no-full --strict --no-strict --progress --no-progress

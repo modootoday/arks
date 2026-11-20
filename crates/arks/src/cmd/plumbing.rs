@@ -16,7 +16,6 @@ use arks_object::{Commit, ObjectKind, RawObject, Tree};
 use arks_oid::Oid;
 use arks_pack::{DecodedPack, EncodedPack, PackIndex, PackIndexEntry};
 use arks_refs::RefTarget;
-use arks_repo::merge_base_oid;
 use arks_store::ObjectStore;
 use std::collections::HashSet;
 use std::fs;
@@ -189,336 +188,6 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-pub fn cmd_ls_files(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + cloud drop-in §O: `-c`/`-o`/`-d`/`-m`/`-u`/`-s`, `--exclude-standard`,
-    // `-z`, `--full-name`, `--error-unmatch`, pathspecs. Output order follows
-    // ls-files.c `show_files`: others, then cached/stage, then deleted/modified.
-    // Paths are shown relative to (and limited to) the current directory.
-    // Cite: https://git-scm.com/docs/git-ls-files
-    // C7b: `-i`/`--ignored` (with -o or -c and --exclude-standard).
-    let args = crate::util::split_short_bundles(args, "cdimosuz", "");
-    let mut flags = HashSet::new();
-    let mut specs_raw: Vec<String> = Vec::new();
-    let mut dashdash = false;
-    for a in &args {
-        if dashdash || !a.starts_with('-') {
-            specs_raw.push(a.clone());
-            continue;
-        }
-        match a.as_str() {
-            "--" => dashdash = true,
-            "-c" | "--cached" => {
-                flags.insert('c');
-            }
-            "-d" | "--deleted" => {
-                flags.insert('d');
-            }
-            "-m" | "--modified" => {
-                flags.insert('m');
-            }
-            "-o" | "--others" => {
-                flags.insert('o');
-            }
-            "-s" | "--stage" => {
-                flags.insert('s');
-            }
-            "-u" | "--unmerged" => {
-                flags.insert('u');
-            }
-            "-z" => {
-                flags.insert('z');
-            }
-            "--exclude-standard" => {
-                flags.insert('x');
-            }
-            "--full-name" => {
-                flags.insert('f');
-            }
-            "--error-unmatch" => {
-                flags.insert('e');
-            }
-            "-i" | "--ignored" => {
-                flags.insert('i');
-            }
-            x => return Err(CliError::NotImplemented(format!("unsupported option: {x}"))),
-        }
-    }
-    let has = |c: char| flags.contains(&c);
-    if has('i') && !(has('o') || has('c')) {
-        return Err(CliError::fatal(
-            "ls-files -i must be used with either -o or -c",
-        ));
-    }
-    if has('i') && !has('x') {
-        return Err(CliError::fatal(
-            "ls-files: --ignored needs some exclude pattern",
-        ));
-    }
-    let stage_fmt = has('s') || has('u');
-    let cached = has('c') || has('s') || has('u') || !(has('o') || has('d') || has('m'));
-    let term = if has('z') { "\0" } else { "\n" };
-    let repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let index = read_index(&repo)?;
-    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
-    let prefix = canon(&crate::util::cwd()?)
-        .strip_prefix(canon(&work))
-        .map(|r| r.to_string_lossy().replace('\\', "/"))
-        .unwrap_or_default();
-    let mut specs: Vec<String> = Vec::new();
-    for sp in &specs_raw {
-        specs.push(crate::cmd::core::pathspec_rel(&work, sp)?);
-    }
-    if specs.is_empty() && !prefix.is_empty() {
-        specs.push(prefix.clone());
-    }
-    let mut matched = vec![false; specs.len()];
-    let mut in_spec = |p: &str| -> bool {
-        if specs.is_empty() {
-            return true;
-        }
-        let mut any = false;
-        for (i, s) in specs.iter().enumerate() {
-            if s.is_empty() || p == s || p.starts_with(&format!("{s}/")) {
-                matched[i] = true;
-                any = true;
-            }
-        }
-        any
-    };
-    let show = |p: &str| -> String {
-        if has('f') || prefix.is_empty() {
-            return p.to_string();
-        }
-        let pre: Vec<&str> = prefix.split('/').collect();
-        let comps: Vec<&str> = p.split('/').collect();
-        let mut common = 0;
-        while common < pre.len() && common + 1 < comps.len() && pre[common] == comps[common] {
-            common += 1;
-        }
-        format!(
-            "{}{}",
-            "../".repeat(pre.len() - common),
-            comps[common..].join("/")
-        )
-    };
-    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
-    if has('o') {
-        let indexed: HashSet<_> = index.entries.iter().map(|e| e.path.clone()).collect();
-        let mut untracked = Vec::new();
-        let mut ig = crate::cmd::ignore::Ignore::new(&work);
-        crate::cmd::shared::collect_untracked_with(
-            &work,
-            &work,
-            &indexed,
-            &mut untracked,
-            (has('x') && !has('i')).then_some(&mut ig),
-        )?;
-        if has('i') {
-            untracked.retain(|p| {
-                ig.matching_with_parents(p, false)
-                    .is_some_and(|m| m.excluded)
-            });
-        }
-        for p in untracked {
-            if in_spec(&p) {
-                write!(out, "{}{term}", show(&p))?;
-            }
-        }
-    }
-    let mut ig_cached = crate::cmd::ignore::Ignore::new(&work);
-    if cached && (!has('i') || has('c')) {
-        for e in &index.entries {
-            if has('i')
-                && !ig_cached
-                    .matching_with_parents(&e.path, false)
-                    .is_some_and(|m| m.excluded)
-            {
-                continue;
-            }
-            if has('u') && !has('s') && !has('c') && e.stage() == 0 {
-                continue;
-            }
-            if !in_spec(&e.path) {
-                continue;
-            }
-            if stage_fmt {
-                write!(
-                    out,
-                    "{:06o} {} {}\t{}{term}",
-                    e.mode,
-                    e.oid.to_hex(),
-                    e.stage(),
-                    show(&e.path)
-                )?;
-            } else {
-                // Unmerged paths are listed once.
-                if e.stage() > 1 {
-                    continue;
-                }
-                write!(out, "{}{term}", show(&e.path))?;
-            }
-        }
-    }
-    if has('d') || has('m') {
-        for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            if !in_spec(&e.path) {
-                continue;
-            }
-            let abs = work.join(&e.path);
-            let gone = !abs.is_file();
-            if has('d') && gone {
-                write!(out, "{}{term}", show(&e.path))?;
-            }
-            if has('m') {
-                let changed = gone || {
-                    let meta = fs::metadata(&abs)?;
-                    !crate::cmd::shared::index_stat_matches(e, &meta)
-                        && RawObject::new(ObjectKind::Blob, fs::read(&abs)?)
-                            .oid(repo.object_format())?
-                            != e.oid
-                };
-                if changed {
-                    write!(out, "{}{term}", show(&e.path))?;
-                }
-            }
-        }
-    }
-    out.flush()?;
-    if has('e') {
-        if let Some(i) = matched.iter().position(|m| !m) {
-            return Err(CliError::Exit(
-                1,
-                format!(
-                    "error: pathspec '{}' did not match any file(s) known to git\n\
-                     Did you forget to 'git add'?",
-                    specs_raw.get(i).cloned().unwrap_or_default()
-                ),
-            ));
-        }
-    }
-    Ok(())
-}
-
-pub fn cmd_ls_tree(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + C7b: `-r`, `-t`, `-d`, `-l`/`--long`, `--name-only`/
-    // `--name-status`, `--full-tree`, and path patterns (a trailing `/`
-    // lists the directory's contents). Cite: https://git-scm.com/docs/git-ls-tree
-    let args = crate::util::split_short_bundles(args, "rtdl", "");
-    let mut o = LsTree::default();
-    let mut positional: Vec<&String> = Vec::new();
-    for a in &args {
-        match a.as_str() {
-            "-r" => o.recursive = true,
-            "-t" => o.show_trees = true,
-            "-d" => o.only_trees = true,
-            "-l" | "--long" => o.long = true,
-            "--name-only" | "--name-status" => o.name_only = true,
-            "--full-tree" | "--full-name" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => positional.push(a),
-        }
-    }
-    let Some((rev, specs)) = positional.split_first() else {
-        return Err(CliError::Usage(
-            "ls-tree [<options>] <tree-ish> [<path>...]".into(),
-        ));
-    };
-    o.specs = specs.iter().map(|s| s.to_string()).collect();
-    let repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev)
-        .map_err(|_| CliError::fatal("Not a valid object name".to_string()))?;
-    let tree_oid =
-        crate::cmd::shared::peel_to_kind(&repo, &oid, crate::cmd::shared::ObjKind::Tree, rev)
-            .map_err(|_| CliError::fatal("not a tree object"))?;
-    print_tree(&repo, &tree_oid, "", &o)
-}
-
-#[derive(Default)]
-struct LsTree {
-    recursive: bool,
-    show_trees: bool,
-    only_trees: bool,
-    long: bool,
-    name_only: bool,
-    specs: Vec<String>,
-}
-
-fn print_tree(
-    repo: &arks_repo::Repository,
-    tree_oid: &Oid,
-    prefix: &str,
-    o: &LsTree,
-) -> CliResult<()> {
-    let obj = repo.get_object(tree_oid)?;
-    if obj.kind != ObjectKind::Tree {
-        return Err(CliError::Msg(format!("not a tree: {}", tree_oid.to_hex())));
-    }
-    let tree = Tree::decode(&obj.payload, repo.oid_kind())?;
-    for e in tree.entries {
-        let path = if prefix.is_empty() {
-            e.name.clone()
-        } else {
-            format!("{prefix}/{}", e.name)
-        };
-        let is_tree = e.mode == arks_object::TreeMode::Tree;
-        // Spec relations: equal / inside a spec dir / ancestor of a spec.
-        let matched = o.specs.is_empty()
-            || o.specs.iter().any(|s| {
-                let t = s.trim_end_matches('/');
-                path == t || path.starts_with(&format!("{t}/"))
-            });
-        let ancestor = o
-            .specs
-            .iter()
-            .any(|s| s.trim_end_matches('/').starts_with(&format!("{path}/")));
-        let list_contents = o.specs.iter().any(|s| *s == format!("{path}/"));
-        if !matched && !ancestor {
-            continue;
-        }
-        let descend = is_tree && (ancestor || list_contents || (matched && o.recursive));
-        let show = if is_tree {
-            (matched && !descend) || (descend && o.show_trees) || (o.only_trees && matched)
-        } else {
-            matched && !o.only_trees
-        };
-        if show {
-            if o.name_only {
-                println!("{path}");
-            } else {
-                let mode = match e.mode {
-                    arks_object::TreeMode::Tree => "040000",
-                    arks_object::TreeMode::File => "100644",
-                    arks_object::TreeMode::Executable => "100755",
-                    arks_object::TreeMode::Symlink => "120000",
-                    arks_object::TreeMode::Gitlink => "160000",
-                };
-                let kind = match e.mode {
-                    arks_object::TreeMode::Tree => "tree",
-                    arks_object::TreeMode::Gitlink => "commit",
-                    _ => "blob",
-                };
-                if o.long {
-                    let size = if kind == "blob" {
-                        repo.get_object(&e.oid)?.payload.len().to_string()
-                    } else {
-                        "-".to_string()
-                    };
-                    println!("{mode} {kind} {} {size:>7}\t{path}", e.oid.to_hex());
-                } else {
-                    println!("{mode} {kind} {}\t{path}", e.oid.to_hex());
-                }
-            }
-        }
-        if descend {
-            print_tree(repo, &e.oid, &path, o)?;
-        }
-    }
-    Ok(())
-}
-
 pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
     // Read (`-q`, `--short`, `--[no-]recurse`), set (`-m <reason>`) and
     // delete (`-d`). Cite: https://git-scm.com/docs/git-symbolic-ref
@@ -642,53 +311,6 @@ pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
         }
         _ => Err(usage()),
     }
-}
-
-pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: `--all` claimed (emit all common ancestors found by pairwise walk).
-    // `--is-ancestor A B`: exit 0 when A is an ancestor of B, else 1 (no output).
-    // Cite: https://git-scm.com/docs/git-merge-base
-    refuse_unknown_flags(args, &["--all", "--is-ancestor"])?;
-    let all = args.iter().any(|a| a == "--all");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if args.iter().any(|a| a == "--is-ancestor") {
-        if positional.len() != 2 {
-            return Err(CliError::fatal("--is-ancestor takes exactly two commits"));
-        }
-        let repo = open_repo()?;
-        let peel = |r: &str| -> CliResult<Oid> {
-            crate::cmd::shared::peel_to_kind(
-                &repo,
-                &resolve_rev(&repo, r)
-                    .map_err(|_| CliError::fatal(format!("Not a valid commit name {r}")))?,
-                crate::cmd::shared::ObjKind::Commit,
-                r,
-            )
-        };
-        let (a, b) = (peel(positional[0])?, peel(positional[1])?);
-        return if crate::cmd::shared::is_ancestor(&repo, &a, &b)? {
-            Ok(())
-        } else {
-            Err(CliError::silent(1))
-        };
-    }
-    if positional.len() != 2 {
-        return Err(CliError::Usage(
-            "merge-base [--all] <commit> <commit>".into(),
-        ));
-    }
-    let repo = open_repo()?;
-    let a = resolve_rev(&repo, positional[0])?;
-    let b = resolve_rev(&repo, positional[1])?;
-    let base =
-        merge_base_oid(&repo, &a, &b)?.ok_or_else(|| CliError::Msg("no merge base".into()))?;
-    println!("{}", base.to_hex());
-    if all {
-        // Claimed subset: primary merge-base only; `--all` accepted for honesty
-        // when a single base exists (multi-base octopus deferred).
-        let _ = all;
-    }
-    Ok(())
 }
 
 pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
@@ -842,135 +464,6 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
     for (name, oid) in refs {
         print(&name, &oid)?;
     }
-    Ok(())
-}
-
-pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + cloud drop-in §O: revision ranges (`A..B`, `A...B`, `^A`),
-    // `--count`, `--max-count`/`-n`/`-<n>`, `--all`, `--first-parent`,
-    // `--no-merges`, `--merges`, `--reverse`. Default order = committer date.
-    // Cite: https://git-scm.com/docs/git-rev-list
-    use crate::cmd::log_format::{resolve_range, walk};
-    let mut count_only = false;
-    let mut max_count: Option<usize> = None;
-    let (mut all, mut first_parent, mut no_merges, mut merges, mut reverse) =
-        (false, false, false, false, false);
-    let mut revs = Vec::new();
-    // C7b: `--parents`, `--left-right` (with `A...B`).
-    let (mut parents, mut left_right) = (false, false);
-    let bad_n = |v: &str| CliError::fatal(format!("'{v}': not an integer"));
-    let mut i = 0;
-    while i < args.len() {
-        let a = args[i].as_str();
-        i += 1;
-        match a {
-            "--count" => count_only = true,
-            "--all" => all = true,
-            "--first-parent" => first_parent = true,
-            "--no-merges" => no_merges = true,
-            "--merges" => merges = true,
-            "--reverse" => reverse = true,
-            "--parents" => parents = true,
-            "--left-right" => left_right = true,
-            "--max-count" | "-n" => {
-                let v = args
-                    .get(i)
-                    .ok_or_else(|| CliError::Usage("rev-list --max-count <n>".into()))?;
-                i += 1;
-                max_count = Some(v.parse().map_err(|_| bad_n(v))?);
-            }
-            "--" => break,
-            _ => {
-                if let Some(v) = a.strip_prefix("--max-count=") {
-                    max_count = Some(v.parse().map_err(|_| bad_n(v))?);
-                } else if a.len() > 1
-                    && a.starts_with('-')
-                    && a[1..].bytes().all(|b| b.is_ascii_digit())
-                {
-                    max_count = Some(a[1..].parse().map_err(|_| bad_n(a))?);
-                } else if a.starts_with('-') {
-                    return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-                } else {
-                    revs.push(a.to_string());
-                }
-            }
-        }
-    }
-    let repo = open_repo()?;
-    if all {
-        let mut refs = repo.refs().list_refs("refs/")?;
-        refs.sort_by(|a, b| a.0.cmp(&b.0));
-        revs.extend(refs.into_iter().map(|(n, _)| n));
-        if repo.head_oid().is_ok() {
-            revs.push("HEAD".into());
-        }
-    }
-    if revs.is_empty() {
-        return Err(CliError::Usage("rev-list <commit>...".into()));
-    }
-    let (inc, exc) = resolve_range(&repo, &revs)?;
-    let peel = |v: Vec<Oid>| -> CliResult<Vec<Oid>> {
-        let mut out = Vec::new();
-        for o in v {
-            let p = crate::cmd::shared::peel_tags(&repo, &o)?;
-            if !out.contains(&p) {
-                out.push(p);
-            }
-        }
-        Ok(out)
-    };
-    let mut list: Vec<(Oid, Vec<Oid>)> = walk(&repo, &peel(inc)?, &peel(exc)?, first_parent)?
-        .into_iter()
-        .filter(|(_, c)| !(no_merges && c.parents.len() > 1) && !(merges && c.parents.len() < 2))
-        .map(|(o, c)| (o, c.parents))
-        .collect();
-    if let Some(m) = max_count {
-        list.truncate(m);
-    }
-    if reverse {
-        list.reverse();
-    }
-    // `--left-right`: `<` for commits reachable from the left side of the
-    // symmetric range `A...B`, `>` for the right.
-    let left_set = if left_right {
-        let sym = revs
-            .iter()
-            .find_map(|r| r.split_once("..."))
-            .ok_or_else(|| CliError::fatal("--left-right needs a symmetric range A...B"))?;
-        let left = resolve_rev(&repo, if sym.0.is_empty() { "HEAD" } else { sym.0 })?;
-        Some(arks_repo::ancestor_set(
-            &repo,
-            crate::cmd::shared::peel_tags(&repo, &left)?,
-        )?)
-    } else {
-        None
-    };
-    if count_only {
-        match &left_set {
-            Some(l) => {
-                let left = list.iter().filter(|(o, _)| l.contains(o)).count();
-                println!("{left}\t{}", list.len() - left);
-            }
-            None => println!("{}", list.len()),
-        }
-        return Ok(());
-    }
-    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
-    for (o, ps) in list {
-        let mark = match &left_set {
-            Some(l) if l.contains(&o) => "<",
-            Some(_) => ">",
-            None => "",
-        };
-        write!(out, "{mark}{}", o.to_hex())?;
-        if parents {
-            for p in &ps {
-                write!(out, " {}", p.to_hex())?;
-            }
-        }
-        writeln!(out)?;
-    }
-    out.flush()?;
     Ok(())
 }
 
@@ -1261,23 +754,96 @@ pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
     let mut tags_only = false;
     let mut name_only = false;
     let mut all = false;
+    let mut undefined = true;
+    let mut always = false;
+    let mut annotate = false;
     let mut refs_pat: Vec<String> = Vec::new();
+    let mut exclude: Vec<String> = Vec::new();
     let mut revs = Vec::new();
-    for a in args {
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        let mut value = |name: &str| -> CliResult<String> {
+            let v = args.get(i).cloned().ok_or_else(|| {
+                CliError::Exit(129, format!("error: option `{name}' requires a value"))
+            })?;
+            i += 1;
+            Ok(v)
+        };
         match a.as_str() {
             "--tags" => tags_only = true,
+            "--no-tags" => tags_only = false,
             "--name-only" => name_only = true,
+            "--no-name-only" => name_only = false,
             "--all" => all = true,
-            "--no-undefined" | "--always" => {}
+            "--no-all" => all = false,
+            "--undefined" => undefined = true,
+            "--no-undefined" => undefined = false,
+            "--always" => always = true,
+            "--no-always" => always = false,
+            "--annotate-stdin" | "--stdin" => annotate = true,
+            "--no-annotate-stdin" => annotate = false,
+            "--refs" => refs_pat.push(value("refs")?),
+            "--no-refs" => refs_pat.clear(),
+            "--exclude" => exclude.push(value("exclude")?),
+            "--no-exclude" => exclude.clear(),
             _ if a.starts_with("--refs=") => refs_pat.push(a["--refs=".len()..].to_string()),
+            _ if a.starts_with("--exclude=") => exclude.push(a["--exclude=".len()..].to_string()),
             _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+                return Err(CliError::Exit(
+                    129,
+                    format!("error: unknown option `{}'", a.trim_start_matches('-')),
+                ));
             }
             _ => revs.push(a.clone()),
         }
     }
     let repo = open_repo()?;
-    let names = name_rev_names(&repo, tags_only, &refs_pat)?;
+    let names = name_rev_names_ex(&repo, tags_only, &refs_pat, &exclude)?;
+    // git prints `undefined` for named revisions even with --always.
+    let _ = always;
+    if annotate {
+        if all || !revs.is_empty() {
+            return Err(CliError::fatal(
+                "Specify either a list, or --all, not both!",
+            ));
+        }
+        // Each full object name in the input gets its name appended (or,
+        // with --name-only, replaced by it).
+        let mut input = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut input)?;
+        let hexlen = repo.head_oid().map(|o| o.to_hex().len()).unwrap_or(40);
+        let mut out = String::new();
+        let b = input.as_bytes();
+        let mut k = 0;
+        while k < b.len() {
+            let is_hex = |x: u8| x.is_ascii_hexdigit() && !x.is_ascii_uppercase();
+            let boundary_before = k == 0 || !is_hex(b[k - 1]);
+            if boundary_before
+                && k + hexlen <= b.len()
+                && b[k..k + hexlen].iter().all(|x| is_hex(*x))
+                && (k + hexlen == b.len() || !is_hex(b[k + hexlen]))
+            {
+                let hex = &input[k..k + hexlen];
+                let name = Oid::from_hex(hex)
+                    .ok()
+                    .and_then(|o| crate::cmd::shared::peel_tags(&repo, &o).ok())
+                    .and_then(|o| names.get(&o).map(|n| n.0.clone()));
+                match (name, name_only) {
+                    (Some(n), true) => out.push_str(&n),
+                    (Some(n), false) => out.push_str(&format!("{hex} ({n})")),
+                    (None, _) => out.push_str(hex),
+                }
+                k += hexlen;
+                continue;
+            }
+            out.push(b[k] as char);
+            k += 1;
+        }
+        print!("{out}");
+        return Ok(());
+    }
     let mut targets: Vec<(String, Oid)> = Vec::new();
     if all {
         let mut v: Vec<(&Oid, &String)> = names.iter().map(|(o, n)| (o, &n.0)).collect();
@@ -1295,10 +861,21 @@ pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
         return Err(CliError::Usage("name-rev [<options>] <commit>...".into()));
     }
     for (label, oid) in targets {
-        let name = names
-            .get(&oid)
-            .map(|n| n.0.clone())
-            .unwrap_or_else(|| "undefined".to_string());
+        let name = match names.get(&oid) {
+            Some(n) => n.0.clone(),
+            None if undefined => "undefined".to_string(),
+            None => {
+                if !name_only {
+                    print!("{label} ");
+                }
+                use std::io::Write as _;
+                std::io::stdout().flush()?;
+                return Err(CliError::fatal(format!(
+                    "cannot describe '{}'",
+                    oid.to_hex()
+                )));
+            }
+        };
         if name_only {
             println!("{name}");
         } else {
@@ -1321,6 +898,16 @@ pub(crate) fn name_rev_names(
     tags_only: bool,
     refs_pat: &[String],
 ) -> CliResult<std::collections::HashMap<Oid, RevName>> {
+    name_rev_names_ex(repo, tags_only, refs_pat, &[])
+}
+
+/// [`name_rev_names`] that also skips refs matching an `--exclude` pattern.
+pub(crate) fn name_rev_names_ex(
+    repo: &arks_repo::Repository,
+    tags_only: bool,
+    refs_pat: &[String],
+    exclude: &[String],
+) -> CliResult<std::collections::HashMap<Oid, RevName>> {
     const MERGE_WEIGHT: u64 = 65535;
     let mut refs = repo.refs().list_refs("refs/")?;
     refs.sort_by(|a, b| a.0.cmp(&b.0));
@@ -1342,7 +929,11 @@ pub(crate) fn name_rev_names(
         if tags_only && !from_tag {
             continue;
         }
-        if refname == "refs/stash" {
+        let pat_hit = |p: &String| {
+            crate::cmd::branch_cmd::fnmatch(p.as_bytes(), refname.as_bytes())
+                || refname.ends_with(&format!("/{p}"))
+        };
+        if exclude.iter().any(pat_hit) {
             continue;
         }
         if !refs_pat.is_empty()

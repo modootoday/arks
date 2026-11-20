@@ -1,28 +1,31 @@
-//! `log` and `show` porcelain: option parsing, commit headers (medium /
-//! oneline / user formats), decorations, and per-commit diff output.
+//! `log`, `show` and `whatchanged`: option parsing (revision options from
+//! `revwalk`, diff options from `diffcore`, log formatting options),
+//! commit headers (medium / short / full / fuller / raw / oneline / user
+//! formats), decorations, merge diffs (`-m`, `-c`, `--cc`,
+//! `--diff-merges`) and per-commit diff output.
 //!
-//! Record layout follows git `log-tree.c`: separator-style formats (medium,
-//! `format:`) put a newline *between* commits; terminator-style formats
-//! (oneline, `tformat:`) end every commit with one. When a diff follows a
+//! Record layout follows git: separator-style formats (medium, `format:`)
+//! put a newline *between* commits; terminator-style formats (oneline,
+//! `tformat:`) end every commit with one. When a diff follows a
 //! non-oneline header, one blank line (or `---` when both a diffstat and a
-//! patch are shown) precedes it. Merges show no diff in `log` (no `-m`).
+//! patch are shown) precedes it.
 //!
 //! Primary: <https://git-scm.com/docs/git-log>, <https://git-scm.com/docs/git-show>,
-//! <https://git-scm.com/docs/pretty-formats>.
+//! <https://git-scm.com/docs/git-whatchanged>, <https://git-scm.com/docs/pretty-formats>.
 //!
-//! Partial: `show` on a merge prints the diffstat against the first parent
-//! and names changed against every parent, but no combined (`--cc`) patch.
-//! `log --graph` draws the full lane graph (see `log_graph`) over a
-//! topo-ordered walk; `show --graph` prints each commit as a lone `*`.
+//! Partial: `-L` line-range tracing and `--follow` rename following are
+//! refused / plain pathspec limits; `log --graph` draws the lane graph
+//! over a topo-ordered walk; `show --graph` prints each commit as a lone `*`.
 
-use crate::cmd::bre::Bre;
-use crate::cmd::diff_render::{DiffFormat, changes_between, render};
-use crate::cmd::log_format::{
-    ChildFirst, DateMode, FmtCtx, Pretty, child_first_order, expand_ctx, path_in_specs,
-    resolve_range, take_pretty, walk_paths,
-};
+use crate::cmd::diffcore::combined;
+use crate::cmd::diffcore::emit::{EmitCtx, emit};
+use crate::cmd::diffcore::options::{Args, DiffOptions};
+use crate::cmd::diffcore::{self, Content, Pair};
+use crate::cmd::log_format::{DateMode, FmtCtx, Pretty, expand_ctx, read_commit, take_pretty};
 use crate::cmd::log_graph::Graph;
-use crate::cmd::shared::{resolve_rev, tag_target, tree_blob_map};
+use crate::cmd::mailmap::Mailmap;
+use crate::cmd::revwalk::{self, RevOpts, Walked};
+use crate::cmd::shared::{abbrev_hex, resolve_rev, tag_target};
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, work_tree};
 use arks_object::{Commit, ObjectKind, Signature};
@@ -33,33 +36,44 @@ use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-/// Options shared by `log` and `show` after parsing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum DiffMerges {
+    Off,
+    FirstParent,
+    Separate,
+    Combined,
+    Dense,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Decorate {
+    No,
+    Short,
+    Full,
+}
+
+/// Options shared by `log`, `show` and `whatchanged` after parsing.
 struct LogOpts {
     pretty: Pretty,
-    diff: DiffFormat,
+    diff: DiffOptions,
+    rev: RevOpts,
     date: DateMode,
-    decorate: bool,
+    decorate: Option<Decorate>,
+    decorate_refs: Vec<String>,
+    decorate_refs_exclude: Vec<String>,
     graph: bool,
-    /// `--topo-order` / `--date-order` (`--graph` implies `--topo-order`).
-    order: Option<ChildFirst>,
-    first_parent: bool,
-    no_merges: bool,
-    merges_only: bool,
-    reverse: bool,
-    all: bool,
-    max_count: Option<usize>,
-    authors: Vec<Bre>,
-    greps: Vec<Bre>,
-    revs: Vec<String>,
-    /// `-S<string>` / `-G<regex>` pickaxe.
-    pickaxe_s: Option<String>,
-    pickaxe_g: Option<Bre>,
-    /// `--since`/`--after` and `--until`/`--before` (committer date, unix).
-    since: Option<i64>,
-    until: Option<i64>,
-    left_right: bool,
-    /// `--diff-filter=<letters>` (upper = include, lower = exclude).
-    diff_filter: Option<String>,
+    abbrev_commit: Option<bool>,
+    abbrev: usize,
+    source: bool,
+    mailmap: bool,
+    quiet: bool,
+    merges: Option<DiffMerges>,
+    combined_all_paths: bool,
+    parents: bool,
+    children: bool,
+    log_size: bool,
+    /// The user asked for a diff format (`-p`, `--stat`, ...).
+    diff_given: bool,
 }
 
 fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
@@ -68,136 +82,240 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         None => (args.to_vec(), Vec::new()),
     };
     let mut head = head;
+    // `--oneline` implies `--abbrev-commit`; the later of it and
+    // `--no-abbrev-commit` wins.
+    let last = |f: &str| head.iter().rposition(|a| a == f);
+    let oneline_abbrevs = match (last("--oneline"), last("--no-abbrev-commit")) {
+        (Some(a), Some(b)) => a > b,
+        _ => false,
+    };
     let pretty = take_pretty(&mut head)?;
+    let repo = open_repo().ok();
+    let mut diff = DiffOptions::default();
+    crate::cmd::diff_cmd::porcelain_defaults(repo.as_ref(), &mut diff);
     let mut o = LogOpts {
         pretty,
-        diff: DiffFormat::default(),
+        diff,
+        rev: RevOpts::default(),
         date: DateMode::Default,
-        decorate: false,
+        decorate: None,
+        decorate_refs: Vec::new(),
+        decorate_refs_exclude: Vec::new(),
         graph: false,
-        order: None,
-        first_parent: false,
-        no_merges: false,
-        merges_only: false,
-        reverse: false,
-        all: false,
-        max_count: None,
-        authors: Vec::new(),
-        greps: Vec::new(),
-        revs: Vec::new(),
-        pickaxe_s: None,
-        pickaxe_g: None,
-        since: None,
-        until: None,
-        left_right: false,
-        diff_filter: None,
+        abbrev_commit: None,
+        abbrev: 7,
+        source: false,
+        mailmap: false,
+        quiet: false,
+        merges: None,
+        combined_all_paths: false,
+        parents: false,
+        children: false,
+        log_size: false,
+        diff_given: false,
     };
-    let date_arg = |v: &str| -> CliResult<i64> {
-        crate::cmd::shared::parse_git_date(v)
-            .map(|(t, _)| t)
-            .ok_or_else(|| CliError::NotImplemented(format!("unsupported date: {v}")))
-    };
-    let mut icase = false;
-    let mut author_pats = Vec::new();
-    let mut grep_pats = Vec::new();
-    let count = |v: &str| -> CliResult<usize> {
-        v.parse()
-            .map_err(|_| CliError::fatal(format!("'{v}': not an integer")))
-    };
-    let mut i = 0;
-    while i < head.len() {
-        let a = head[i].clone();
-        i += 1;
-        if o.diff.take_flag(&a)? {
+    if let Some(r) = &repo {
+        let cfg = arks_config::ConfigSet::load(Some(r.common_dir()));
+        if cfg.get_bool("log.mailmap") == Some(true) {
+            o.mailmap = true;
+        }
+        if let Some(d) = cfg.get("log.date") {
+            o.date = DateMode::parse(&d).unwrap_or_default();
+        }
+        if cfg.get_bool("log.abbrevcommit") == Some(true) {
+            o.abbrev_commit = Some(true);
+        }
+        match cfg.get("log.decorate").as_deref() {
+            Some("full") => o.decorate = Some(Decorate::Full),
+            Some("short") | Some("true") | Some("yes") | Some("1") => {
+                o.decorate = Some(Decorate::Short)
+            }
+            _ => {}
+        }
+    }
+    let mut a = Args::new(&head);
+    while a.i < head.len() {
+        let cur = a.cur().to_string();
+        let before = (o.diff.any_format(), o.diff.no_output);
+        if o.diff.take(&mut a)? {
+            if (o.diff.any_format(), o.diff.no_output) != before {
+                o.diff_given = true;
+            }
+            a.i += 1;
             continue;
         }
-        let mut value = |name: &str| -> CliResult<Option<String>> {
-            if let Some(v) = a.strip_prefix(&format!("{name}=")) {
-                return Ok(Some(v.to_string()));
-            }
-            if a == name {
-                let v = head
-                    .get(i)
-                    .cloned()
-                    .ok_or_else(|| CliError::fatal(format!("option '{name}' requires a value")))?;
-                i += 1;
-                return Ok(Some(v));
-            }
-            Ok(None)
+        if o.rev.take(&mut a)? {
+            a.i += 1;
+            continue;
+        }
+        if take_log_opt(&mut o, &mut a)? {
+            a.i += 1;
+            continue;
+        }
+        if cur.starts_with('-') && cur.len() > 1 {
+            return Err(CliError::NotImplemented(format!(
+                "{cmd}: unsupported option: {cur}"
+            )));
+        }
+        // Pushed in order so `--not` negates only what follows it.
+        o.rev.push_rev(&cur);
+        a.i += 1;
+    }
+    o.diff.finish();
+    if oneline_abbrevs {
+        o.abbrev_commit = Some(true);
+    }
+    // `--abbrev` is a diff option too; it also sets the commit-id length.
+    if o.diff.abbrev_given {
+        o.abbrev = match o.diff.abbrev {
+            Some(0) => 40,
+            Some(n) => n.clamp(4, 40),
+            None => 7,
         };
-        if let Some(v) = value("--max-count")? {
-            o.max_count = Some(count(&v)?);
-        } else if let Some(v) = value("--date")? {
-            o.date = DateMode::parse(&v)?;
-        } else if let Some(v) = value("--author")? {
-            author_pats.push(v);
-        } else if let Some(v) = value("--grep")? {
-            grep_pats.push(v);
-        } else if let Some(v) = value("--since")?.or(value("--after")?) {
-            o.since = Some(date_arg(&v)?);
-        } else if let Some(v) = value("--until")?.or(value("--before")?) {
-            o.until = Some(date_arg(&v)?);
-        } else if let Some(v) = value("--diff-filter")? {
-            o.diff_filter = Some(v);
-        } else if a == "-S" || a == "-G" {
-            let v = head
-                .get(i)
-                .cloned()
-                .ok_or_else(|| CliError::fatal(format!("switch `{}' requires a value", &a[1..])))?;
-            i += 1;
-            if a == "-S" {
-                o.pickaxe_s = Some(v);
+    }
+    // In log, `-c` / `--cc` without a format imply `-p`.
+    if cmd != "show"
+        && matches!(o.merges, Some(DiffMerges::Combined | DiffMerges::Dense))
+        && !o.diff_given
+    {
+        o.diff.patch = true;
+        o.diff_given = true;
+    }
+    Ok((o, paths))
+}
+
+fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
+    let cur = a.cur();
+    match cur {
+        "--graph" => o.graph = true,
+        "--no-graph" => o.graph = false,
+        "-q" | "--quiet" => o.quiet = true,
+        "--no-quiet" => o.quiet = false,
+        "--source" => o.source = true,
+        "--no-source" => o.source = false,
+        "--use-mailmap" | "--mailmap" => o.mailmap = true,
+        "--no-use-mailmap" | "--no-mailmap" => o.mailmap = false,
+        "--decorate" => o.decorate = Some(Decorate::Short),
+        "--no-decorate" => o.decorate = Some(Decorate::No),
+        "--clear-decorations" => {
+            o.decorate_refs.clear();
+            o.decorate_refs_exclude.clear();
+        }
+        "--no-decorate-refs" => o.decorate_refs.clear(),
+        "--no-decorate-refs-exclude" => o.decorate_refs_exclude.clear(),
+        "--abbrev-commit" => o.abbrev_commit = Some(true),
+        "--no-abbrev-commit" => o.abbrev_commit = Some(false),
+        "--no-abbrev" => o.abbrev = 40,
+        "--parents" => o.parents = true,
+        "--children" => o.children = true,
+        "--log-size" => o.log_size = true,
+        "--left-right" => o.rev.left_right = true,
+        "-m" => o.merges = Some(DiffMerges::Separate),
+        // `-c` / `--cc` reset an earlier `--combined-all-paths`.
+        "-c" => {
+            o.merges = Some(DiffMerges::Combined);
+            o.combined_all_paths = false;
+        }
+        "--cc" => {
+            o.merges = Some(DiffMerges::Dense);
+            o.combined_all_paths = false;
+        }
+        "--dd" => {
+            o.merges = Some(DiffMerges::FirstParent);
+            o.diff.patch = true;
+            o.diff_given = true;
+        }
+        "--no-diff-merges" => o.merges = Some(DiffMerges::Off),
+        "--combined-all-paths" => o.combined_all_paths = true,
+        "--relative-date" => o.date = DateMode::parse("relative")?,
+        // Notes refs and signatures: with none present the output is the same.
+        "--notes"
+        | "--no-notes"
+        | "--show-notes"
+        | "--standard-notes"
+        | "--no-standard-notes"
+        | "--show-signature"
+        | "--no-show-signature"
+        | "--expand-tabs"
+        | "--no-expand-tabs"
+        | "--show-linear-break" => {}
+        "-L" => {
+            return Err(CliError::NotImplemented(
+                "unsupported option: -L (line-range history is not implemented)".into(),
+            ));
+        }
+        "--remerge-diff" => {
+            return Err(CliError::NotImplemented(
+                "unsupported option: --remerge-diff (needs an in-memory merge of the parents)"
+                    .into(),
+            ));
+        }
+        _ => {
+            if let Some(v) = a.long_opt("--decorate") {
+                o.decorate = Some(match v.as_deref() {
+                    None | Some("short") | Some("auto") => Decorate::Short,
+                    Some("full") => Decorate::Full,
+                    Some("no") => Decorate::No,
+                    Some(x) => {
+                        return Err(CliError::fatal(format!("invalid --decorate option: {x}")));
+                    }
+                });
+            } else if let Some(v) = a.long_req("--decorate-refs")? {
+                o.decorate_refs.push(v);
+            } else if let Some(v) = a.long_req("--decorate-refs-exclude")? {
+                o.decorate_refs_exclude.push(v);
+            } else if let Some(v) = a.long_req("--date")? {
+                o.date = DateMode::parse(&v)?;
+            } else if let Some(v) = a.long_opt("--abbrev") {
+                o.abbrev = match v {
+                    Some(n) => {
+                        let n: usize = n
+                            .parse()
+                            .map_err(|_| CliError::fatal("--abbrev expects a numerical value"))?;
+                        if n == 0 { 40 } else { n.clamp(4, 40) }
+                    }
+                    None => 7,
+                };
+                o.diff.abbrev = Some(o.abbrev);
+            } else if let Some(v) = a.long_req("--diff-merges")? {
+                o.merges = Some(match v.as_str() {
+                    "off" | "none" => DiffMerges::Off,
+                    "on" | "m" | "separate" => DiffMerges::Separate,
+                    "first-parent" | "1" => DiffMerges::FirstParent,
+                    "combined" | "c" => DiffMerges::Combined,
+                    "dense-combined" | "cc" => DiffMerges::Dense,
+                    "remerge" | "r" => {
+                        return Err(CliError::NotImplemented(
+                            "unsupported option: --diff-merges=remerge".into(),
+                        ));
+                    }
+                    x => {
+                        return Err(CliError::fatal(format!(
+                            "invalid value for '--diff-merges': '{x}'"
+                        )));
+                    }
+                });
+            } else if a.long_req("--encoding")?.is_some()
+                || a.long_opt("--expand-tabs").is_some()
+                || a.long_opt("--notes").is_some()
+                || a.long_opt("--show-notes").is_some()
+            {
+                // UTF-8 commits, no notes: nothing changes.
+            } else if let Some(v) = a.long_req("-L")? {
+                let _ = v;
+                return Err(CliError::NotImplemented(
+                    "unsupported option: -L (line-range history is not implemented)".into(),
+                ));
+            } else if cur.starts_with("-L") && cur.len() > 2 {
+                return Err(CliError::NotImplemented(
+                    "unsupported option: -L (line-range history is not implemented)".into(),
+                ));
             } else {
-                o.pickaxe_g = Some(Bre::with_mode(&v, false, true));
-            }
-        } else if let Some(v) = a.strip_prefix("-S").filter(|r| !r.is_empty()) {
-            o.pickaxe_s = Some(v.to_string());
-        } else if let Some(v) = a.strip_prefix("-G").filter(|r| !r.is_empty()) {
-            o.pickaxe_g = Some(Bre::with_mode(v, false, true));
-        } else if a == "-n" {
-            let v = head
-                .get(i)
-                .cloned()
-                .ok_or_else(|| CliError::fatal("switch `n' requires a value"))?;
-            i += 1;
-            o.max_count = Some(count(&v)?);
-        } else if let Some(rest) = a.strip_prefix("-n").filter(|r| !r.is_empty()) {
-            o.max_count = Some(count(rest)?);
-        } else if a.len() > 1
-            && a.starts_with('-')
-            && !a.starts_with("--")
-            && a[1..].bytes().all(|b| b.is_ascii_digit())
-        {
-            o.max_count = Some(count(&a[1..])?);
-        } else {
-            match a.as_str() {
-                "--graph" => o.graph = true,
-                "--topo-order" => o.order = Some(ChildFirst::Topo),
-                "--date-order" => o.order = Some(ChildFirst::Date),
-                "--first-parent" => o.first_parent = true,
-                "--no-merges" => o.no_merges = true,
-                "--merges" => o.merges_only = true,
-                "--reverse" => o.reverse = true,
-                "--all" => o.all = true,
-                "--left-right" => o.left_right = true,
-                // Rename following is not claimed; with no renames in the
-                // walked history this is the plain pathspec limit.
-                "--follow" => {}
-                "--decorate" | "--decorate=short" => o.decorate = true,
-                "--no-decorate" | "--no-color" | "--color=never" => o.decorate = false,
-                "-i" | "--regexp-ignore-case" => icase = true,
-                x if x.starts_with('-') && x.len() > 1 => {
-                    return Err(CliError::NotImplemented(format!(
-                        "{cmd}: unsupported option: {x}"
-                    )));
-                }
-                _ => o.revs.push(a.clone()),
+                return Ok(false);
             }
         }
     }
-    o.authors = author_pats.iter().map(|p| Bre::new(p, icase)).collect();
-    o.greps = grep_pats.iter().map(|p| Bre::new(p, icase)).collect();
-    Ok((o, paths))
+    Ok(true)
 }
 
 /// Worktree-relative pathspecs from cwd-relative arguments.
@@ -227,22 +345,60 @@ fn pathspecs(repo: &Repository, paths: &[String]) -> Vec<String> {
         .collect()
 }
 
-/// Ref decorations per commit, in git `format_decorations` order: `HEAD`
-/// (as `HEAD -> <branch>` when attached) first, then refs in reverse
-/// refname order; tags as `tag: <name>`, annotated tags on their target.
-pub(crate) fn decorations(repo: &Repository) -> CliResult<HashMap<Oid, Vec<String>>> {
+fn refname_matches(pat: &str, name: &str) -> bool {
+    let full = if pat.starts_with("refs/") {
+        pat.to_string()
+    } else {
+        format!("refs/{pat}")
+    };
+    let globbed = if full.contains(['*', '?', '[']) {
+        full
+    } else {
+        format!("{}/*", full.trim_end_matches('/'))
+    };
+    crate::cmd::branch_cmd::fnmatch(globbed.as_bytes(), name.as_bytes())
+        || name == pat
+        || name == format!("refs/{pat}")
+}
+
+/// Ref decorations per commit, in git order: `HEAD` (as `HEAD -> <branch>`
+/// when attached) first, then refs in reverse refname order; tags as
+/// `tag: <name>`, annotated tags on their target.
+pub(crate) fn decoration_labels(repo: &Repository) -> CliResult<HashMap<Oid, Vec<String>>> {
+    decorations_filtered(repo, false, &[], &[])
+}
+
+fn decorations_filtered(
+    repo: &Repository,
+    full: bool,
+    include: &[String],
+    exclude: &[String],
+) -> CliResult<HashMap<Oid, Vec<String>>> {
     let mut map: HashMap<Oid, Vec<String>> = HashMap::new();
     let head_branch = match repo.head_target() {
         Ok(RefTarget::Symbolic(s)) => Some(s),
         _ => None,
     };
+    let keep = |name: &str| -> bool {
+        (include.is_empty() || include.iter().any(|p| refname_matches(p, name)))
+            && !exclude.iter().any(|p| refname_matches(p, name))
+    };
     let mut refs = repo.refs().list_refs("refs/")?;
     refs.sort_by(|a, b| a.0.cmp(&b.0));
     for (name, oid) in refs.iter().rev() {
-        if Some(name) == head_branch.as_ref() {
+        if Some(name) == head_branch.as_ref() && keep("HEAD") {
             continue;
         }
-        let label = if let Some(t) = name.strip_prefix("refs/tags/") {
+        if !keep(name) {
+            continue;
+        }
+        let label = if full {
+            if name.starts_with("refs/tags/") {
+                format!("tag: {name}")
+            } else {
+                name.clone()
+            }
+        } else if let Some(t) = name.strip_prefix("refs/tags/") {
             format!("tag: {t}")
         } else if let Some(h) = name.strip_prefix("refs/heads/") {
             h.to_string()
@@ -261,15 +417,21 @@ pub(crate) fn decorations(repo: &Repository) -> CliResult<HashMap<Oid, Vec<Strin
         }
         map.entry(target).or_default().push(label);
     }
-    if let Ok(head) = repo.head_oid() {
-        let label = match &head_branch {
-            Some(b) => format!(
-                "HEAD -> {}",
-                b.strip_prefix("refs/heads/").unwrap_or(b.as_str())
-            ),
-            None => "HEAD".to_string(),
-        };
-        map.entry(head).or_default().insert(0, label);
+    if keep("HEAD") {
+        if let Ok(head) = repo.head_oid() {
+            let label = match &head_branch {
+                Some(b) if keep(b) => format!(
+                    "HEAD -> {}",
+                    if full {
+                        b.as_str()
+                    } else {
+                        b.strip_prefix("refs/heads/").unwrap_or(b.as_str())
+                    }
+                ),
+                _ => "HEAD".to_string(),
+            };
+            map.entry(head).or_default().insert(0, label);
+        }
     }
     Ok(map)
 }
@@ -291,93 +453,146 @@ fn indented_message(msg: &str) -> String {
     out
 }
 
-fn person_line(label: &str, sig: &Signature) -> String {
-    format!("{label}{} <{}>\n", sig.name, sig.email)
-}
-
-/// Writes commit records with git's separator / terminator rules.
-struct Printer<'a> {
+/// Per-run formatting state for commit headers.
+struct HeaderFmt<'a> {
     repo: &'a Repository,
-    opts: &'a LogOpts,
+    pretty: Pretty,
+    date: DateMode,
+    decorate: bool,
+    abbrev: Option<usize>,
+    parents: bool,
+    children: Option<&'a HashMap<Oid, Vec<Oid>>>,
+    source: Option<&'a HashMap<Oid, String>>,
+    mailmap: Option<&'a Mailmap>,
+    log_size: bool,
     ctx: FmtCtx<'a>,
-    shown_one: bool,
-    /// `show` (not `log`): merges get a separator before their empty --cc diff.
-    show_merge: bool,
-    /// `--left-right` side mark for the current commit.
-    mark: Option<char>,
-    /// `log --graph` state (topo-ordered walk).
-    graph: Option<Graph<Oid>>,
-    /// The last record's message did not end in a newline.
-    missing_newline: bool,
 }
 
-impl Printer<'_> {
-    fn header(&self, oid: &Oid, c: &Commit) -> String {
-        let deco = self.ctx.decoration(oid);
-        let deco = if deco.is_empty() || !self.opts.decorate {
-            String::new()
-        } else {
-            format!(" ({deco})")
+impl HeaderFmt<'_> {
+    fn hex(&self, oid: &Oid) -> String {
+        match self.abbrev {
+            Some(n) if n < 40 => abbrev_hex(self.repo, oid, n),
+            _ => oid.to_hex(),
+        }
+    }
+
+    fn person(&self, label: &str, sig: &Signature) -> String {
+        let (n, e) = match self.mailmap {
+            Some(m) => m.map(&sig.name, &sig.email),
+            None => (sig.name.clone(), sig.email.clone()),
         };
-        let mark = self.mark.map(|m| format!("{m} ")).unwrap_or_default();
+        format!("{label}{n} <{e}>\n")
+    }
+
+    /// `commit` line (or oneline prefix) pieces: marks, id, parents /
+    /// children, `(from <parent>)`, decorations and source.
+    fn id_line(
+        &self,
+        oid: &Oid,
+        c: &Commit,
+        mark: &str,
+        from: Option<&Oid>,
+        oneline: bool,
+    ) -> String {
+        let mut s = format!("{mark}{}", self.hex(oid));
+        if self.parents {
+            for p in &c.parents {
+                s.push(' ');
+                s.push_str(&self.hex(p));
+            }
+        }
+        if let Some(ch) = self.children {
+            for x in ch.get(oid).into_iter().flatten() {
+                s.push(' ');
+                s.push_str(&self.hex(x));
+            }
+        }
+        if let Some(p) = from {
+            s.push_str(&format!(" (from {})", self.hex(p)));
+        }
+        if self.decorate {
+            let d = self.ctx.decoration(oid);
+            if !d.is_empty() {
+                s.push_str(&format!(" ({d})"));
+            }
+        }
+        if let Some(src) = self.source.and_then(|m| m.get(oid)) {
+            s.push('\t');
+            s.push_str(src);
+        }
+        let _ = oneline;
+        s
+    }
+
+    /// `commit <id>` line, then `log size <n>` (bytes of the rest of the
+    /// record) when `--log-size` is on, then the rest.
+    fn with_commit_line(
+        &self,
+        oid: &Oid,
+        c: &Commit,
+        mark: &str,
+        from: Option<&Oid>,
+        rest: String,
+    ) -> String {
+        let mut s = format!("commit {}\n", self.id_line(oid, c, mark, from, false));
+        if self.log_size {
+            s.push_str(&format!("log size {}\n", rest.len()));
+        }
+        s.push_str(&rest);
+        s
+    }
+
+    fn header(&self, oid: &Oid, c: &Commit, mark: &str, from: Option<&Oid>) -> String {
         let commit_line = || {
-            let mut s = format!("commit {mark}{}{deco}\n", oid.to_hex());
-            if c.parents.len() > 1 {
+            let mut s = String::new();
+            if c.parents.len() > 1 && !matches!(self.pretty, Pretty::Raw) {
                 let ps: Vec<String> = c
                     .parents
                     .iter()
-                    .map(|p| p.to_hex()[..7].to_string())
+                    .map(|p| abbrev_hex(self.repo, p, self.abbrev.unwrap_or(7).min(40)))
                     .collect();
                 s.push_str(&format!("Merge: {}\n", ps.join(" ")));
             }
             s
         };
-        match &self.opts.pretty {
+        match &self.pretty {
             Pretty::Default => {
                 let mut s = commit_line();
-                s.push_str(&person_line("Author: ", &c.author));
-                s.push_str(&format!("Date:   {}\n", self.opts.date.format(&c.author)));
+                s.push_str(&self.person("Author: ", &c.author));
+                s.push_str(&format!("Date:   {}\n", self.date.format(&c.author)));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
-            // pretty-formats: short = author + title; full adds the
-            // committer; fuller adds both dates; raw is the object header.
             Pretty::Short => {
                 let mut s = commit_line();
-                s.push_str(&person_line("Author: ", &c.author));
+                s.push_str(&self.person("Author: ", &c.author));
                 s.push('\n');
                 s.push_str(&indented_message(&crate::cmd::log_format::subject_line(
                     &c.message,
                 )));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Full => {
                 let mut s = commit_line();
-                s.push_str(&person_line("Author: ", &c.author));
-                s.push_str(&person_line("Commit: ", &c.committer));
+                s.push_str(&self.person("Author: ", &c.author));
+                s.push_str(&self.person("Commit: ", &c.committer));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Fuller => {
                 let mut s = commit_line();
-                s.push_str(&person_line("Author:     ", &c.author));
-                s.push_str(&format!(
-                    "AuthorDate: {}\n",
-                    self.opts.date.format(&c.author)
-                ));
-                s.push_str(&person_line("Commit:     ", &c.committer));
-                s.push_str(&format!(
-                    "CommitDate: {}\n",
-                    self.opts.date.format(&c.committer)
-                ));
+                s.push_str(&self.person("Author:     ", &c.author));
+                s.push_str(&format!("AuthorDate: {}\n", self.date.format(&c.author)));
+                s.push_str(&self.person("Commit:     ", &c.committer));
+                s.push_str(&format!("CommitDate: {}\n", self.date.format(&c.committer)));
                 s.push('\n');
                 s.push_str(&indented_message(&c.message));
-                s
+                self.with_commit_line(oid, c, mark, from, s)
             }
             Pretty::Raw => {
-                let mut s = format!("commit {mark}{}{deco}\n", oid.to_hex());
+                let mut s = format!("commit {}\n", self.id_line(oid, c, mark, from, false));
                 s.push_str(&format!("tree {}\n", c.tree.to_hex()));
                 for p in &c.parents {
                     s.push_str(&format!("parent {}\n", p.to_hex()));
@@ -394,12 +609,81 @@ impl Printer<'_> {
                 s.push_str(&indented_message(&c.message));
                 s
             }
-            Pretty::Oneline => format!("{mark}{}{deco} {}\n", &oid.to_hex()[..7], c.subject()),
-            Pretty::TFormat(f) => format!("{}\n", expand_ctx(f, oid, c, &self.ctx)),
-            Pretty::Format(f) => expand_ctx(f, oid, c, &self.ctx),
+            Pretty::Oneline => format!(
+                "{} {}\n",
+                self.id_line(oid, c, mark, from, true),
+                crate::cmd::log_format::subject_line(&c.message)
+            ),
+            Pretty::TFormat(f) => format!("{}{}\n", mark_for_format(mark), self.expand(f, oid, c)),
+            Pretty::Format(f) => format!("{}{}", mark_for_format(mark), self.expand(f, oid, c)),
         }
     }
 
+    fn expand(&self, f: &str, oid: &Oid, c: &Commit) -> String {
+        match self.mailmap {
+            Some(m)
+                if f.contains("%aN")
+                    || f.contains("%aE")
+                    || f.contains("%cN")
+                    || f.contains("%cE") =>
+            {
+                let mut c2 = c.clone();
+                let (an, ae) = m.map(&c.author.name, &c.author.email);
+                let (cn, ce) = m.map(&c.committer.name, &c.committer.email);
+                let f = f
+                    .replace("%aN", &an)
+                    .replace("%aE", &ae)
+                    .replace("%cN", &cn)
+                    .replace("%cE", &ce);
+                c2.message = c.message.clone();
+                expand_ctx(&f, oid, &c2, &self.ctx)
+            }
+            _ => expand_ctx(f, oid, c, &self.ctx),
+        }
+    }
+}
+
+/// User formats show `--left-right` / `--boundary` marks before the text.
+fn mark_for_format(mark: &str) -> &str {
+    mark
+}
+
+/// One commit header as `diff-tree --pretty=<spec>` prints it.
+pub(crate) fn format_commit_header(
+    repo: &Repository,
+    oid: &Oid,
+    c: &Commit,
+    spec: &str,
+) -> CliResult<String> {
+    let mut v = vec![format!("--pretty={spec}")];
+    let pretty = take_pretty(&mut v)?;
+    let h = HeaderFmt {
+        repo,
+        pretty,
+        date: DateMode::Default,
+        decorate: false,
+        abbrev: None,
+        parents: false,
+        children: None,
+        source: None,
+        mailmap: None,
+        log_size: false,
+        ctx: FmtCtx::default(),
+    };
+    Ok(h.header(oid, c, "", None))
+}
+
+/// Writes commit records with git's separator / terminator rules.
+struct Printer<'a> {
+    content: &'a Content<'a>,
+    opts: &'a LogOpts,
+    fmt: HeaderFmt<'a>,
+    shown_one: bool,
+    graph: Option<Graph<Oid>>,
+    missing_newline: bool,
+}
+
+impl Printer<'_> {
     fn uses_terminator(&self) -> bool {
         matches!(self.opts.pretty, Pretty::Oneline | Pretty::TFormat(_))
     }
@@ -408,34 +692,72 @@ impl Printer<'_> {
         matches!(&self.opts.pretty, Pretty::Format(f) | Pretty::TFormat(f) if f.is_empty())
     }
 
-    /// One commit record; `changes` = diff to show after the header.
+    /// Render the diff part of a record (after the header).
+    fn diff_text(&self, diff: &RecordDiff, force_sep: bool) -> CliResult<String> {
+        let d = &self.opts.diff;
+        let empty = match diff {
+            RecordDiff::None => true,
+            RecordDiff::Pairs(p) => p.is_empty(),
+            RecordDiff::Combined(e, _, _) => e.is_empty(),
+        };
+        if !d.any_format() || d.no_output || (empty && !force_sep) {
+            return Ok(String::new());
+        }
+        let mut text = String::new();
+        let is_combined = matches!(diff, RecordDiff::Combined(..));
+        // Merges' combined output keeps the blank line even after --oneline.
+        if (is_combined || !matches!(self.opts.pretty, Pretty::Oneline)) && !self.format_is_empty()
+        {
+            text.push_str(&d.line_prefix);
+            if !is_combined
+                && (d.stat || d.numstat || d.shortstat || d.dirstat.is_some() || d.summary)
+                && d.patch
+                && !d.name_only
+                && !d.name_status
+            {
+                text.push_str("---");
+            }
+            text.push('\n');
+        }
+        let mut buf = Vec::new();
+        match diff {
+            RecordDiff::None => {}
+            RecordDiff::Pairs(p) => emit(&mut buf, self.content, d, EmitCtx::default(), p)?,
+            RecordDiff::Combined(e, mode, fp) => combined::emit(
+                &mut buf,
+                self.content,
+                d,
+                *mode,
+                self.opts.combined_all_paths,
+                EmitCtx::default(),
+                fp,
+                e,
+            )?,
+        }
+        text.push_str(&String::from_utf8_lossy(&buf));
+        Ok(text)
+    }
+
+    /// One commit record.
+    #[allow(clippy::too_many_arguments)]
     fn commit(
         &mut self,
         out: &mut impl Write,
         oid: &Oid,
         c: &Commit,
-        changes: &[crate::cmd::diff_render::Change],
+        mark: &str,
+        from: Option<&Oid>,
+        diff: &RecordDiff,
+        force_sep: bool,
     ) -> CliResult<()> {
-        let header = self.header(oid, c);
-        let mut diff_text = String::new();
-        // `show` on a merge prints the separator even when the combined diff
-        // is empty (log-tree.c always_show_header + --cc).
-        let force_sep = self.show_merge && c.parents.len() > 1;
-        if self.opts.diff.any() && (!changes.is_empty() || force_sep) {
-            if !matches!(self.opts.pretty, Pretty::Oneline) && !self.format_is_empty() {
-                if self.opts.diff.stat && self.opts.diff.patch {
-                    diff_text.push_str("---");
-                }
-                diff_text.push('\n');
-            }
-            let mut buf = Vec::new();
-            render(&mut buf, self.repo, &self.opts.diff, changes)?;
-            diff_text.push_str(&String::from_utf8_lossy(&buf));
-        }
+        let header = self.fmt.header(oid, c, mark, from);
+        let diff_text = self.diff_text(diff, force_sep)?;
         if self.graph.is_some() {
             return self.commit_with_graph(out, &header, &diff_text);
         }
+        let lp = self.opts.diff.line_prefix.clone();
         if self.shown_one && !self.uses_terminator() {
+            write!(out, "{lp}")?;
             writeln!(out)?;
         }
         self.shown_one = true;
@@ -446,16 +768,21 @@ impl Printer<'_> {
                 out.write_all(if i == 0 { b"* " } else { b"  " })?;
                 out.write_all(line.as_bytes())?;
             }
-        } else {
+        } else if lp.is_empty() {
             out.write_all(text.as_bytes())?;
+        } else {
+            // Diff lines carry the prefix already; prefix header lines.
+            let hlen = text.len() - diff_text.len();
+            for line in text[..hlen].split_inclusive('\n') {
+                out.write_all(lp.as_bytes())?;
+                out.write_all(line.as_bytes())?;
+            }
+            out.write_all(diff_text.as_bytes())?;
         }
         Ok(())
     }
 
-    /// [`Printer::commit`] for `log --graph`: every output line gets a graph
-    /// row as prefix. Order per record: separator (non-oneline formats),
-    /// pre-commit rows, the `*` row followed by the message, the rows the
-    /// commit still needs, the terminator (oneline formats), then the diff.
+    /// [`Printer::commit`] for `log --graph`.
     fn commit_with_graph(
         &mut self,
         out: &mut impl Write,
@@ -474,7 +801,6 @@ impl Printer<'_> {
             writeln!(out)?;
         }
         self.shown_one = true;
-        // Terminator formats end each record with a newline of their own.
         let msg = if terminator {
             header.strip_suffix('\n').unwrap_or(header)
         } else {
@@ -521,323 +847,567 @@ impl Printer<'_> {
     }
 }
 
-use crate::cmd::diff_render::status_passes;
-
-fn change_status(c: &crate::cmd::diff_render::Change) -> char {
-    c.status()
+/// The diff shown with one record.
+enum RecordDiff {
+    None,
+    Pairs(Vec<Pair>),
+    /// Combined entries, mode, and the first-parent pairs that stat
+    /// formats describe.
+    Combined(Vec<combined::Entry>, combined::Mode, Vec<Pair>),
 }
 
-/// Commit limiting by its diff (first parent; merges have none):
-/// `-S` (occurrence count of the string changes in some file), `-G` (an
-/// added or removed line matches) and `--diff-filter`.
-/// Cite: https://git-scm.com/docs/git-log#Documentation/git-log.txt--Sltstringgt
-fn diff_selects(
-    repo: &Repository,
-    oid: &Oid,
+/// Diff of `c` against `parent` (root: the empty tree) through diffcore.
+fn diff_against(
+    content: &Content<'_>,
+    o: &DiffOptions,
+    parent: Option<&Oid>,
     c: &Commit,
     specs: &[String],
-    o: &LogOpts,
-) -> CliResult<bool> {
-    if c.parents.len() > 1 {
-        return Ok(false);
-    }
-    let mut changes = commit_changes(repo, oid, c, specs)?;
-    if let Some(f) = &o.diff_filter {
-        changes.retain(|x| status_passes(change_status(x), f));
-        if changes.is_empty() {
-            return Ok(false);
-        }
-    }
-    let blob = |x: &Option<Oid>| -> CliResult<Vec<u8>> {
-        Ok(match x {
-            Some(b) => repo.get_object(b)?.payload,
+) -> CliResult<Vec<Pair>> {
+    let repo = content.repo;
+    let pt = match parent {
+        Some(p) => Some(read_commit(repo, p)?.tree),
+        None => None,
+    };
+    let mut pairs = diffcore::tree_pairs(repo, pt.as_ref(), Some(&c.tree), true, false, specs)?;
+    let unchanged = if o.find_copies_harder {
+        match &pt {
+            Some(t) => crate::cmd::diffcore::sources::tree_sides(repo, t)?
+                .into_values()
+                .filter(|s| diffcore::spec_match(&s.path, specs))
+                .collect(),
             None => Vec::new(),
-        })
-    };
-    if let Some(needle) = &o.pickaxe_s {
-        let count = |hay: &[u8]| -> usize {
-            let n = needle.as_bytes();
-            if n.is_empty() {
-                return 0;
-            }
-            hay.windows(n.len()).filter(|w| *w == n).count()
-        };
-        let mut hit = false;
-        for x in &changes {
-            if count(&blob(&x.old)?) != count(&blob(&x.new)?) {
-                hit = true;
-                break;
-            }
-        }
-        if !hit {
-            return Ok(false);
-        }
-    }
-    if let Some(re) = &o.pickaxe_g {
-        let mut hit = false;
-        for x in &changes {
-            let (a, b) = (blob(&x.old)?, blob(&x.new)?);
-            let al: Vec<&[u8]> = a.split_inclusive(|c| *c == b'\n').collect();
-            let bl: Vec<&[u8]> = b.split_inclusive(|c| *c == b'\n').collect();
-            let matched = crate::cmd::unified_diff::matched_lines(&al, &bl);
-            let kept: std::collections::HashSet<usize> =
-                matched.iter().flatten().copied().collect();
-            let added = bl
-                .iter()
-                .zip(&matched)
-                .filter(|(_, m)| m.is_none())
-                .map(|(l, _)| *l);
-            let removed = al
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| !kept.contains(i))
-                .map(|(_, l)| *l);
-            if added
-                .chain(removed)
-                .any(|l| re.is_match(l.strip_suffix(b"\n").unwrap_or(l)))
-            {
-                hit = true;
-                break;
-            }
-        }
-        if !hit {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
-/// Diff of a commit against its first parent (root: against the empty tree).
-fn commit_changes(
-    repo: &Repository,
-    oid: &Oid,
-    c: &Commit,
-    specs: &[String],
-) -> CliResult<Vec<crate::cmd::diff_render::Change>> {
-    let parent = match c.parents.first() {
-        Some(p) => tree_blob_map(repo, p)?,
-        None => HashMap::new(),
-    };
-    let mine = tree_blob_map(repo, oid)?;
-    let keep = |m: HashMap<String, Oid>| -> HashMap<String, Oid> {
-        m.into_iter()
-            .filter(|(k, _)| path_in_specs(k, specs))
-            .collect()
-    };
-    Ok(changes_between(&keep(parent), &keep(mine), None))
-}
-
-pub fn cmd_log(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1 + cloud drop-in §O. Cite: https://git-scm.com/docs/git-log
-    let (opts, paths) = parse_opts(args, "log")?;
-    if opts.graph && opts.reverse {
-        return Err(CliError::fatal(
-            "options '--reverse' and '--graph' cannot be used together",
-        ));
-    }
-    let repo = open_repo()?;
-    let specs = pathspecs(&repo, &paths);
-    let mut revs = opts.revs.clone();
-    if opts.all {
-        let mut refs = repo.refs().list_refs("refs/")?;
-        refs.sort_by(|a, b| a.0.cmp(&b.0));
-        revs.extend(refs.into_iter().map(|(n, _)| n));
-        if repo.head_oid().is_ok() {
-            revs.push("HEAD".into());
-        }
-    }
-    let (mut inc, exc) = resolve_range(&repo, &revs)?;
-    if inc.is_empty() {
-        return Ok(());
-    }
-    // Non-commit tips (e.g. a tag of a tree) are skipped; tags peel to commits.
-    let mut tips = Vec::new();
-    for o in inc.drain(..) {
-        let p = crate::cmd::shared::peel_tags(&repo, &o)?;
-        if repo.get_object(&p)?.kind == ObjectKind::Commit && !tips.contains(&p) {
-            tips.push(p);
-        }
-    }
-    let mut excl = Vec::new();
-    for o in exc {
-        excl.push(crate::cmd::shared::peel_tags(&repo, &o)?);
-    }
-    let order = opts.order.or(opts.graph.then_some(ChildFirst::Topo));
-    let mut selected = Vec::new();
-    for (oid, c) in walk_paths(&repo, &tips, &excl, opts.first_parent, &specs)? {
-        if (opts.no_merges && c.parents.len() > 1) || (opts.merges_only && c.parents.len() < 2) {
-            continue;
-        }
-        if opts.since.is_some_and(|t| c.committer.timestamp < t)
-            || opts.until.is_some_and(|t| c.committer.timestamp > t)
-        {
-            continue;
-        }
-        if (opts.pickaxe_s.is_some() || opts.pickaxe_g.is_some() || opts.diff_filter.is_some())
-            && !diff_selects(&repo, &oid, &c, &specs, &opts)?
-        {
-            continue;
-        }
-        if !opts.authors.is_empty() {
-            let who = format!("{} <{}>", c.author.name, c.author.email);
-            if !opts.authors.iter().any(|r| r.is_match(who.as_bytes())) {
-                continue;
-            }
-        }
-        if !opts.greps.is_empty()
-            && !opts
-                .greps
-                .iter()
-                .any(|r| c.message.lines().any(|l| r.is_match(l.as_bytes())))
-        {
-            continue;
-        }
-        selected.push((oid, c));
-        if !opts.reverse && order.is_none() && opts.max_count.is_some_and(|m| selected.len() >= m) {
-            break;
-        }
-    }
-    // Graph edges join the shown parents (`--first-parent`: the first
-    // only); child-first ordering waits for every shown parent's children.
-    let mut graph_parents: HashMap<Oid, Vec<Oid>> = HashMap::new();
-    if let Some(mode) = order {
-        let shown: HashSet<Oid> = selected.iter().map(|(o, _)| *o).collect();
-        let shown_parents = |c: &Commit, limit: usize| -> Vec<Oid> {
-            let mut kept: Vec<Oid> = Vec::new();
-            for p in c.parents.iter().take(limit) {
-                if shown.contains(p) && !kept.contains(p) {
-                    kept.push(*p);
-                }
-            }
-            kept
-        };
-        let edge_limit = if opts.first_parent { 1 } else { usize::MAX };
-        let mut order_parents: HashMap<Oid, Vec<Oid>> = HashMap::new();
-        for (oid, c) in &selected {
-            graph_parents.insert(*oid, shown_parents(c, edge_limit));
-            order_parents.insert(*oid, shown_parents(c, usize::MAX));
-        }
-        let walked: Vec<Oid> = selected.iter().map(|(o, _)| *o).collect();
-        let mut by_oid: HashMap<Oid, Commit> = selected.drain(..).collect();
-        let sorted = child_first_order(
-            &walked,
-            |o| order_parents[o].clone(),
-            |o| by_oid[o].committer.timestamp,
-            mode,
-        );
-        selected = sorted
-            .into_iter()
-            .filter_map(|o| by_oid.remove(&o).map(|c| (o, c)))
-            .collect();
-    }
-    if let Some(m) = opts.max_count {
-        selected.truncate(m);
-    }
-    if opts.reverse {
-        selected.reverse();
-    }
-    let decos = if opts.decorate || pretty_uses_decoration(&opts.pretty) {
-        Some(decorations(&repo)?)
-    } else {
-        None
-    };
-    // `--left-right` marks: commits reachable from the left side of `A...B`.
-    let left = if opts.left_right {
-        match revs.iter().find_map(|r| r.split_once("...")) {
-            Some((l, _)) => {
-                let l = resolve_rev(&repo, if l.is_empty() { "HEAD" } else { l })?;
-                Some(arks_repo::ancestor_set(
-                    &repo,
-                    crate::cmd::shared::peel_tags(&repo, &l)?,
-                )?)
-            }
-            None => None,
         }
     } else {
-        None
+        Vec::new()
     };
-    let mut printer = Printer {
-        repo: &repo,
-        opts: &opts,
-        ctx: FmtCtx {
-            date: opts.date,
-            decorations: decos.as_ref(),
-        },
-        shown_one: false,
-        show_merge: false,
-        mark: None,
-        graph: opts.graph.then(Graph::new),
-        missing_newline: false,
-    };
-    let mut out = io::BufWriter::new(io::stdout().lock());
-    for (oid, c) in &selected {
-        let changes = if opts.diff.any() && c.parents.len() < 2 {
-            let mut ch = commit_changes(&repo, oid, c, &specs)?;
-            if let Some(f) = &opts.diff_filter {
-                ch.retain(|x| status_passes(change_status(x), f));
-            }
-            ch
-        } else {
-            Vec::new()
-        };
-        printer.mark = left
-            .as_ref()
-            .map(|l| if l.contains(oid) { '<' } else { '>' });
-        if let Some(g) = printer.graph.as_mut() {
-            g.next_commit(*oid, graph_parents.remove(oid).unwrap_or_default());
-        }
-        printer.commit(&mut out, oid, c, &changes)?;
-    }
-    out.flush()?;
-    Ok(())
+    diffcore::transform_with_sources(content, o, &mut pairs, &unchanged)?;
+    Ok(pairs)
 }
 
 fn pretty_uses_decoration(p: &Pretty) -> bool {
     matches!(p, Pretty::Format(f) | Pretty::TFormat(f) if f.contains("%d") || f.contains("%D"))
 }
 
-pub fn cmd_show(args: &[String]) -> CliResult<()> {
-    // Cloud drop-in §O. Cite: https://git-scm.com/docs/git-show
-    let (mut opts, paths) = parse_opts(args, "show")?;
-    let repo = open_repo()?;
-    let specs = pathspecs(&repo, &paths);
-    let d = &opts.diff;
-    if !(d.patch || d.stat || d.numstat || d.shortstat || d.name_only || d.name_status) {
-        opts.diff.patch = true;
+fn mark_of(w: &Walked, o: &LogOpts) -> String {
+    if w.boundary {
+        return "- ".into();
     }
-    let revs = if opts.revs.is_empty() {
-        vec!["HEAD".to_string()]
+    if let Some(c) = w.cherry {
+        return format!("{c} ");
+    }
+    if o.rev.left_right {
+        if let Some(s) = w.side {
+            return format!("{s} ");
+        }
+    }
+    String::new()
+}
+
+/// Shared driver for `log` and `whatchanged`.
+fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
+    let (mut opts, paths) = parse_opts(args, cmd)?;
+    if cmd == "whatchanged" && !opts.diff.any_format() {
+        opts.diff.raw = true;
+        opts.diff_given = true;
+    }
+    if opts.graph && opts.rev.reverse {
+        return Err(CliError::fatal(
+            "options '--reverse' and '--graph' cannot be used together",
+        ));
+    }
+    let repo = open_repo()?;
+    opts.rev.specs = pathspecs(&repo, &paths);
+    if opts.parents || opts.children || opts.graph {
+        opts.rev.rewrite = true;
+    }
+    if opts.graph && opts.rev.order.is_none() {
+        opts.rev.order = Some(revwalk::Order::Topo);
+    }
+    if opts.diff.follow && opts.rev.specs.len() != 1 {
+        return Err(CliError::fatal("--follow requires exactly one pathspec"));
+    }
+    let mut list = if opts.rev.walk_reflogs {
+        revwalk::walk_reflogs(&repo, &opts.rev)?
     } else {
-        opts.revs.clone()
+        let tips = revwalk::resolve_tips(&repo, &opts.rev, Some("HEAD"))?;
+        if tips.include.is_empty() && tips.given.is_empty() {
+            return Ok(());
+        }
+        // Diff-based limiting and the graph see past `-n` / `--skip`:
+        // walk unlimited, limit (and reverse) afterwards.
+        let mut ro = opts.rev.clone();
+        ro.max_count = None;
+        ro.skip = 0;
+        ro.reverse = false;
+        let mut l = revwalk::walk(&repo, &ro, &tips)?;
+        if opts.source {
+            let src = sources(&repo, &tips, &l)?;
+            SOURCE.with(|s| *s.borrow_mut() = src);
+        }
+        if opts.rev.left_right {
+            // sides already set by the walk
+        }
+        l.retain(|_| true);
+        l
     };
-    let decos = if opts.decorate || pretty_uses_decoration(&opts.pretty) {
-        Some(decorations(&repo)?)
+    let content = Content::new(&repo);
+    let merges = opts.merges.unwrap_or(if opts.rev.first_parent {
+        DiffMerges::FirstParent
+    } else {
+        DiffMerges::Off
+    });
+    // `-q` in log does not suppress diffs (only `show -q` does).
+    let wants_diff = opts.diff.any_format();
+    let selects = opts.diff.pickaxe.is_some()
+        || opts.diff.find_object.is_some()
+        || opts.diff.diff_filter.is_some();
+    let diff_filter_opts = opts.diff.clone();
+    // Pickaxe / --diff-filter limit commits by their (first-parent) diff.
+    if selects {
+        let mut keep = Vec::new();
+        for w in list.drain(..) {
+            if w.commit.parents.len() > 1 && merges != DiffMerges::FirstParent {
+                continue;
+            }
+            let pairs = diff_against(
+                &content,
+                &diff_filter_opts,
+                w.commit.parents.first(),
+                &w.commit,
+                &opts.rev.specs,
+            )?;
+            if !pairs.is_empty() {
+                keep.push(w);
+            }
+        }
+        list = keep;
+    }
+    // whatchanged hides commits without a diff (merges included) before
+    // `-n` / `--skip` count them.
+    if cmd == "whatchanged" && !opts.rev.walk_reflogs {
+        let mut keep = Vec::new();
+        for w in list.drain(..) {
+            if w.commit.parents.len() > 1 {
+                if merges != DiffMerges::Off {
+                    keep.push(w);
+                }
+                continue;
+            }
+            let pairs = diff_against(
+                &content,
+                &opts.diff,
+                w.commit.parents.first(),
+                &w.commit,
+                &opts.rev.specs,
+            )?;
+            if !pairs.is_empty() {
+                keep.push(w);
+            }
+        }
+        list = keep;
+    }
+    let decorate = match opts.decorate {
+        Some(Decorate::No) => false,
+        Some(_) => true,
+        None => false,
+    };
+    let full = opts.decorate == Some(Decorate::Full);
+    let decos = if decorate || pretty_uses_decoration(&opts.pretty) {
+        Some(decorations_filtered(
+            &repo,
+            full,
+            &opts.decorate_refs,
+            &opts.decorate_refs_exclude,
+        )?)
     } else {
         None
     };
-    let mut out = io::BufWriter::new(io::stdout().lock());
+    let children: Option<HashMap<Oid, Vec<Oid>>> = if opts.children {
+        let mut m: HashMap<Oid, Vec<Oid>> = HashMap::new();
+        for w in &list {
+            for p in &w.parents {
+                m.entry(*p).or_default().push(w.oid);
+            }
+        }
+        // Each child is prepended as the walk reaches it.
+        for v in m.values_mut() {
+            v.reverse();
+        }
+        Some(m)
+    } else {
+        None
+    };
+    let mailmap = if opts.mailmap {
+        let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+        Some(Mailmap::load(work_tree(&repo).ok().as_deref(), &cfg))
+    } else {
+        None
+    };
+    let source_map = SOURCE.with(|s| s.borrow().clone());
+    let abbrev = match (opts.abbrev_commit, &opts.pretty) {
+        (Some(false), _) => None,
+        (Some(true), _) | (None, Pretty::Oneline) => Some(opts.abbrev),
+        _ => None,
+    };
+    let graph_parents: HashMap<Oid, Vec<Oid>> = if opts.graph {
+        let shown: HashSet<Oid> = list.iter().map(|w| w.oid).collect();
+        list.iter()
+            .map(|w| {
+                let lim = if opts.rev.first_parent { 1 } else { usize::MAX };
+                let mut kept: Vec<Oid> = Vec::new();
+                for p in w.parents.iter().take(lim) {
+                    if shown.contains(p) && !kept.contains(p) {
+                        kept.push(*p);
+                    }
+                }
+                (w.oid, kept)
+            })
+            .collect()
+    } else {
+        HashMap::new()
+    };
+    let mut graph_parents = graph_parents;
+    if !opts.rev.walk_reflogs {
+        list = list
+            .into_iter()
+            .skip(opts.rev.skip)
+            .take(opts.rev.max_count.unwrap_or(usize::MAX))
+            .collect();
+        if opts.rev.reverse {
+            list.reverse();
+        }
+    }
     let mut printer = Printer {
-        repo: &repo,
+        content: &content,
         opts: &opts,
-        ctx: FmtCtx {
+        fmt: HeaderFmt {
+            repo: &repo,
+            pretty: opts.pretty.clone(),
             date: opts.date,
-            decorations: decos.as_ref(),
+            decorate,
+            abbrev,
+            parents: opts.parents,
+            children: children.as_ref(),
+            source: opts.source.then_some(&source_map),
+            mailmap: mailmap.as_ref(),
+            log_size: opts.log_size,
+            ctx: FmtCtx {
+                date: opts.date,
+                decorations: decos.as_ref(),
+            },
         },
         shown_one: false,
-        show_merge: true,
-        mark: None,
+        graph: opts.graph.then(Graph::new),
+        missing_newline: false,
+    };
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    // `--parents` / `--children` / `--graph` with a pathspec show (and
+    // diff against) the rewritten parents.
+    let rewrite = (!opts.rev.specs.is_empty() || opts.rev.simplify_by_decoration)
+        && (opts.parents || opts.children || opts.graph);
+    for w in &list {
+        let rewritten;
+        let w = if rewrite && w.parents != w.commit.parents {
+            let mut x = w.clone();
+            x.commit.parents = x.parents.clone();
+            rewritten = x;
+            &rewritten
+        } else {
+            w
+        };
+        let mark = mark_of(w, &opts);
+        if let Some(g) = printer.graph.as_mut() {
+            g.next_commit(w.oid, graph_parents.remove(&w.oid).unwrap_or_default());
+        }
+        if let Some((sel, msg)) = &w.reflog {
+            // `-g`: reflog selector lines follow the commit line.
+            let _ = (sel, msg);
+        }
+        let is_merge = w.commit.parents.len() > 1;
+        if !wants_diff {
+            printer.commit(
+                &mut out,
+                &w.oid,
+                &w.commit,
+                &mark,
+                None,
+                &RecordDiff::None,
+                false,
+            )?;
+            continue;
+        }
+        if is_merge {
+            match merges {
+                DiffMerges::Off => {
+                    if cmd == "whatchanged" {
+                        continue;
+                    }
+                    printer.commit(
+                        &mut out,
+                        &w.oid,
+                        &w.commit,
+                        &mark,
+                        None,
+                        &RecordDiff::None,
+                        false,
+                    )?;
+                }
+                DiffMerges::FirstParent => {
+                    let p = diff_against(
+                        &content,
+                        &opts.diff,
+                        w.commit.parents.first(),
+                        &w.commit,
+                        &opts.rev.specs,
+                    )?;
+                    printer.commit(
+                        &mut out,
+                        &w.oid,
+                        &w.commit,
+                        &mark,
+                        None,
+                        &RecordDiff::Pairs(p),
+                        false,
+                    )?;
+                }
+                DiffMerges::Separate => {
+                    for parent in &w.commit.parents {
+                        let p = diff_against(
+                            &content,
+                            &opts.diff,
+                            Some(parent),
+                            &w.commit,
+                            &opts.rev.specs,
+                        )?;
+                        printer.commit(
+                            &mut out,
+                            &w.oid,
+                            &w.commit,
+                            &mark,
+                            Some(parent),
+                            &RecordDiff::Pairs(p),
+                            false,
+                        )?;
+                    }
+                }
+                DiffMerges::Combined | DiffMerges::Dense => {
+                    let mode = if merges == DiffMerges::Dense {
+                        combined::Mode::Dense
+                    } else {
+                        combined::Mode::Combined
+                    };
+                    let e = combined::entries(
+                        &content,
+                        &opts.diff,
+                        &w.commit.parents,
+                        &w.oid,
+                        &opts.rev.specs,
+                    )?;
+                    let fp = if combined::wants_stat(&opts.diff) {
+                        diff_against(
+                            &content,
+                            &opts.diff,
+                            w.commit.parents.first(),
+                            &w.commit,
+                            &opts.rev.specs,
+                        )?
+                    } else {
+                        Vec::new()
+                    };
+                    printer.commit(
+                        &mut out,
+                        &w.oid,
+                        &w.commit,
+                        &mark,
+                        None,
+                        &RecordDiff::Combined(e, mode, fp),
+                        false,
+                    )?;
+                }
+            }
+            continue;
+        }
+        let pairs = diff_against(
+            &content,
+            &opts.diff,
+            w.commit.parents.first(),
+            &w.commit,
+            &opts.rev.specs,
+        )?;
+        if cmd == "whatchanged" && pairs.is_empty() {
+            continue;
+        }
+        printer.commit(
+            &mut out,
+            &w.oid,
+            &w.commit,
+            &mark,
+            None,
+            &RecordDiff::Pairs(pairs),
+            false,
+        )?;
+    }
+    out.flush()?;
+    Ok(())
+}
+
+thread_local! {
+    static SOURCE: std::cell::RefCell<HashMap<Oid, String>> = std::cell::RefCell::new(HashMap::new());
+}
+
+/// `--source`: the tip name each shown commit was first reached from
+/// (tips walked newest first, as the walk visits them).
+fn sources(
+    repo: &Repository,
+    tips: &revwalk::Tips,
+    list: &[Walked],
+) -> CliResult<HashMap<Oid, String>> {
+    let mut m: HashMap<Oid, String> = HashMap::new();
+    let wanted: HashSet<Oid> = list.iter().map(|w| w.oid).collect();
+    // Date-ordered propagation from the tips.
+    let mut heap: std::collections::BinaryHeap<(i64, u64)> = std::collections::BinaryHeap::new();
+    let mut by: HashMap<u64, Oid> = HashMap::new();
+    let mut seq = u64::MAX;
+    let mut seen = HashSet::new();
+    for t in &tips.include {
+        if seen.insert(*t) {
+            let name = tips.names.get(t).cloned().unwrap_or_else(|| t.to_hex());
+            m.entry(*t).or_insert(name);
+            heap.push((read_commit(repo, t)?.committer.timestamp, seq));
+            by.insert(seq, *t);
+            seq -= 1;
+        }
+    }
+    while let Some((_, k)) = heap.pop() {
+        let oid = by[&k];
+        let name = m.get(&oid).cloned().unwrap_or_default();
+        for p in read_commit(repo, &oid)?.parents {
+            m.entry(p).or_insert_with(|| name.clone());
+            if seen.insert(p) && (wanted.contains(&p) || m.len() < 100_000) {
+                heap.push((read_commit(repo, &p)?.committer.timestamp, seq));
+                by.insert(seq, p);
+                seq -= 1;
+            }
+        }
+    }
+    m.retain(|k, _| wanted.contains(k));
+    Ok(m)
+}
+
+pub fn cmd_log(args: &[String]) -> CliResult<()> {
+    // Cite: https://git-scm.com/docs/git-log
+    run_log(args, "log")
+}
+
+pub fn cmd_whatchanged(args: &[String]) -> CliResult<()> {
+    // Cite: https://git-scm.com/docs/git-whatchanged
+    run_log(args, "whatchanged")
+}
+
+pub fn cmd_show(args: &[String]) -> CliResult<()> {
+    // Cite: https://git-scm.com/docs/git-show
+    let (mut opts, paths) = parse_opts(args, "show")?;
+    let repo = open_repo()?;
+    let specs = pathspecs(&repo, &paths);
+    if !opts.diff.any_format() && !opts.diff.no_output {
+        opts.diff.patch = true;
+    }
+    if opts.quiet {
+        opts.diff.no_output = true;
+    }
+    let revs = if opts.rev.revs.is_empty() {
+        vec!["HEAD".to_string()]
+    } else {
+        opts.rev.revs.clone()
+    };
+    let decorate = matches!(opts.decorate, Some(Decorate::Short) | Some(Decorate::Full));
+    let decos = if decorate || pretty_uses_decoration(&opts.pretty) {
+        Some(decorations_filtered(
+            &repo,
+            opts.decorate == Some(Decorate::Full),
+            &opts.decorate_refs,
+            &opts.decorate_refs_exclude,
+        )?)
+    } else {
+        None
+    };
+    let mailmap = if opts.mailmap {
+        let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+        Some(Mailmap::load(work_tree(&repo).ok().as_deref(), &cfg))
+    } else {
+        None
+    };
+    let content = Content::new(&repo);
+    let empty_src = HashMap::new();
+    let merges = opts.merges.unwrap_or(DiffMerges::Dense);
+    let abbrev = match (opts.abbrev_commit, &opts.pretty) {
+        (Some(false), _) => None,
+        (Some(true), _) | (None, Pretty::Oneline) => Some(opts.abbrev),
+        _ => None,
+    };
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    let mut printer = Printer {
+        content: &content,
+        opts: &opts,
+        fmt: HeaderFmt {
+            repo: &repo,
+            pretty: opts.pretty.clone(),
+            date: opts.date,
+            decorate,
+            abbrev,
+            parents: opts.parents,
+            children: None,
+            source: opts.source.then_some(&empty_src),
+            mailmap: mailmap.as_ref(),
+            log_size: opts.log_size,
+            ctx: FmtCtx {
+                date: opts.date,
+                decorations: decos.as_ref(),
+            },
+        },
+        shown_one: false,
         graph: None,
         missing_newline: false,
     };
     for rev in &revs {
+        if rev.contains("..") {
+            // A range walks like `log` (`show A..B`).
+            let mut ro = opts.rev.clone();
+            ro.revs = vec![rev.clone()];
+            ro.no_walk = None;
+            ro.specs = specs.clone();
+            let tips = revwalk::resolve_tips(&repo, &ro, None)?;
+            for w in revwalk::walk(&repo, &ro, &tips)? {
+                show_commit(
+                    &mut printer,
+                    &mut out,
+                    &content,
+                    &opts,
+                    merges,
+                    &w.oid,
+                    &w.commit,
+                    &specs,
+                )?;
+            }
+            continue;
+        }
         let mut oid = resolve_rev(&repo, rev)?;
         loop {
             let obj = repo.get_object(&oid)?;
             match obj.kind {
                 ObjectKind::Commit => {
                     let c = Commit::decode(&obj.payload)?;
-                    let changes = show_changes(&repo, &oid, &c, &opts.diff, &specs)?;
-                    printer.commit(&mut out, &oid, &c, &changes)?;
+                    show_commit(
+                        &mut printer,
+                        &mut out,
+                        &content,
+                        &opts,
+                        merges,
+                        &oid,
+                        &c,
+                        &specs,
+                    )?;
                     break;
                 }
                 ObjectKind::Tag => {
@@ -873,35 +1443,59 @@ pub fn cmd_show(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `show` diff: first-parent for ordinary commits; for merges, the diffstat
-/// against the first parent and names that differ from every parent (no
-/// combined patch -- Partial).
-fn show_changes(
-    repo: &Repository,
+#[allow(clippy::too_many_arguments)]
+fn show_commit(
+    printer: &mut Printer<'_>,
+    out: &mut impl Write,
+    content: &Content<'_>,
+    opts: &LogOpts,
+    merges: DiffMerges,
     oid: &Oid,
     c: &Commit,
-    fmt: &DiffFormat,
     specs: &[String],
-) -> CliResult<Vec<crate::cmd::diff_render::Change>> {
-    if !fmt.any() {
-        return Ok(Vec::new());
-    }
+) -> CliResult<()> {
     if c.parents.len() < 2 {
-        return commit_changes(repo, oid, c, specs);
+        let p = diff_against(content, &opts.diff, c.parents.first(), c, specs)?;
+        return printer.commit(out, oid, c, "", None, &RecordDiff::Pairs(p), false);
     }
-    if fmt.stat || fmt.numstat || fmt.shortstat {
-        return commit_changes(repo, oid, c, specs);
-    }
-    if fmt.name_only || fmt.name_status {
-        let mine = tree_blob_map(repo, oid)?;
-        let mut all = commit_changes(repo, oid, c, specs)?;
-        for p in &c.parents[1..] {
-            let pm = tree_blob_map(repo, p)?;
-            all.retain(|ch| pm.get(&ch.path) != mine.get(&ch.path));
+    let d = &opts.diff;
+    match merges {
+        DiffMerges::Off => printer.commit(out, oid, c, "", None, &RecordDiff::None, false),
+        DiffMerges::FirstParent => {
+            let p = diff_against(content, d, c.parents.first(), c, specs)?;
+            printer.commit(out, oid, c, "", None, &RecordDiff::Pairs(p), false)
         }
-        return Ok(all);
+        DiffMerges::Separate => {
+            for parent in &c.parents {
+                let p = diff_against(content, d, Some(parent), c, specs)?;
+                printer.commit(out, oid, c, "", Some(parent), &RecordDiff::Pairs(p), false)?;
+            }
+            Ok(())
+        }
+        DiffMerges::Combined | DiffMerges::Dense => {
+            // Stat formats of a merge show the first-parent diff.
+            let fp = if combined::wants_stat(d) {
+                diff_against(content, d, c.parents.first(), c, specs)?
+            } else {
+                Vec::new()
+            };
+            let mode = if merges == DiffMerges::Dense {
+                combined::Mode::Dense
+            } else {
+                combined::Mode::Combined
+            };
+            let e = combined::entries(content, d, &c.parents, oid, specs)?;
+            printer.commit(
+                out,
+                oid,
+                c,
+                "",
+                None,
+                &RecordDiff::Combined(e, mode, fp),
+                true,
+            )
+        }
     }
-    Ok(Vec::new())
 }
 
 /// Annotated tag header as `git show` prints it: `tag <name>`, `Tagger:`,
@@ -920,11 +1514,10 @@ fn write_tag(out: &mut impl Write, payload: &[u8], date: DateMode) -> CliResult<
     }
     writeln!(out, "tag {name}")?;
     if let Some(t) = &tagger {
-        write!(out, "{}", person_line("Tagger: ", t))?;
+        writeln!(out, "Tagger: {} <{}>", t.name, t.email)?;
         writeln!(out, "Date:   {}", date.format(t))?;
     }
     writeln!(out)?;
-    // Signature blocks are part of the message body as stored.
     write!(out, "{body}")?;
     if !body.is_empty() && !body.ends_with('\n') {
         writeln!(out)?;

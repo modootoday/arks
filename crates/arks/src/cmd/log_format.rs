@@ -9,7 +9,6 @@
 //! `--topo-order` / `--date-order` (and `--graph`). Partial: `%d`/`%D` decorations, `%ar`/`%cr`
 //! relative dates, and pathspec rename following are not implemented.
 
-use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use arks_object::{Commit, ObjectKind, Signature};
 use arks_oid::Oid;
@@ -46,7 +45,10 @@ pub fn take_pretty(args: &mut Vec<String>) -> CliResult<Pretty> {
             Some((v.to_string(), true))
         } else if let Some(v) = a.strip_prefix("--pretty=") {
             Some((v.to_string(), false))
-        } else if a == "--format" || a == "--pretty" {
+        } else if a == "--pretty" {
+            // Bare `--pretty` means the default (medium) format.
+            Some(("medium".to_string(), false))
+        } else if a == "--format" {
             let v = args
                 .get(i + 1)
                 .cloned()
@@ -263,39 +265,6 @@ pub fn read_commit(repo: &Repository, oid: &Oid) -> CliResult<Commit> {
         return Err(CliError::Msg(format!("{} is not a commit", oid.to_hex())));
     }
     Ok(Commit::decode(&obj.payload)?)
-}
-
-/// Resolve rev arguments into (include, exclude) per gitrevisions.
-pub fn resolve_range(repo: &Repository, revs: &[String]) -> CliResult<(Vec<Oid>, Vec<Oid>)> {
-    let mut inc = Vec::new();
-    let mut exc = Vec::new();
-    let side =
-        |s: &str| -> CliResult<Oid> { resolve_rev(repo, if s.is_empty() { "HEAD" } else { s }) };
-    for r in revs {
-        if let Some((l, rr)) = r.split_once("...") {
-            let a = side(l)?;
-            let b = side(rr)?;
-            inc.push(a);
-            inc.push(b);
-            if let Some(base) = arks_repo::merge_base_oid(repo, &a, &b)? {
-                exc.push(base);
-            }
-        } else if let Some((l, rr)) = r.split_once("..") {
-            exc.push(side(l)?);
-            inc.push(side(rr)?);
-        } else if let Some(x) = r.strip_prefix('^') {
-            exc.push(side(x)?);
-        } else {
-            inc.push(side(r)?);
-        }
-    }
-    if inc.is_empty() {
-        match repo.head_oid() {
-            Ok(o) => inc.push(o),
-            Err(_) => return Ok((Vec::new(), Vec::new())),
-        }
-    }
-    Ok((inc, exc))
 }
 
 /// Pathspec prefix match (`""` matches everything).
