@@ -83,8 +83,10 @@ impl Index {
         };
         let mut buf = Vec::new();
         write_header(&mut buf, write_version, self.entries.len() as u32);
+        let mut prev = "";
         for entry in &self.entries {
-            write_entry_v2(&mut buf, entry, hash_kind, write_version)?;
+            write_entry_v2(&mut buf, entry, hash_kind, write_version, prev)?;
+            prev = &entry.path;
         }
         let safe: Vec<_> = self
             .extensions
