@@ -137,6 +137,16 @@ fn write_line<W: Write>(
     let (ctx, dim, bold) = inner_colors(body);
     out.raw(out.prefix.as_bytes())?;
     match op {
+        // With whitespace errors highlighted on context lines the marker
+        // and the text are coloured separately.
+        Op::Eq if o.ws_highlight_context => {
+            out.raw(format!("{ctx}{ind}{RESET}").as_bytes())?;
+            if !body.is_empty() {
+                out.raw(ctx.as_bytes())?;
+                out.raw(body)?;
+                out.raw(RESET.as_bytes())?;
+            }
+        }
         Op::Eq => {
             out.raw(ctx.as_bytes())?;
             out.raw(ind.as_bytes())?;

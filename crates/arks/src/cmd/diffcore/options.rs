@@ -142,6 +142,8 @@ pub struct DiffOptions {
     pub diff_filter: Option<String>,
     pub output: Option<String>,
     pub ita_invisible: bool,
+    /// `--ws-error-highlight` covers context lines (`context` / `all`).
+    pub ws_highlight_context: bool,
 }
 
 impl Default for DiffOptions {
@@ -205,6 +207,7 @@ impl Default for DiffOptions {
             diff_filter: None,
             output: None,
             ita_invisible: false,
+            ws_highlight_context: false,
         }
     }
 }
@@ -572,6 +575,11 @@ impl DiffOptions {
                     )));
                 }
             }
+            self.ws_highlight_context = v.split(',').fold(false, |on, k| match k {
+                "context" | "all" => true,
+                "none" | "default" => false,
+                _ => on,
+            });
         } else if let Some(v) = a.long_opt("--color-moved") {
             if let Some(m) = v.as_deref() {
                 if !matches!(
