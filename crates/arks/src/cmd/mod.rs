@@ -37,6 +37,7 @@ pub mod merge;
 pub mod merge_engine;
 pub mod notes;
 pub mod opt_spec;
+pub mod pack_transport;
 pub mod patch;
 pub mod plumbing;
 pub mod pull;
@@ -101,11 +102,12 @@ pub use matrix_cmds::{
     cmd_verify_pack,
 };
 pub use matrix_rest::{
-    cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_fetch_pack, cmd_http_fetch,
-    cmd_http_push, cmd_multi_pack_index, cmd_rerere, cmd_send_pack, cmd_subtree,
+    cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_http_fetch, cmd_http_push,
+    cmd_multi_pack_index, cmd_rerere, cmd_subtree,
 };
 pub use merge::cmd_merge;
 pub use notes::cmd_notes;
+pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch::{cmd_am, cmd_format_patch};
 pub use plumbing::{
     cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_ls_files,
