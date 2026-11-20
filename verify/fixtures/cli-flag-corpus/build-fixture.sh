@@ -206,3 +206,41 @@ printf 'diff --git a/src/a.txt b/src/a.txt\n--- a/src/a.txt\n+++ b/src/a.txt\n@@
   git format-patch -q --stdout base..topic > .git/topic.mbox
   git format-patch -q --stdout -1 clash > .git/clash.mbox
 )
+# Family A3 helpers extras (family-a3-helpers.txt `-C .git/strat...` lines):
+# two clean repositories nested inside .git, so the fixture's own refs,
+# objects, index and status are unchanged. `.git/strat` has branches that
+# diverge from `base` (`topic`, `lineone`, `other` merge cleanly into main;
+# `clash` conflicts with it), an unrelated `proj` history and main carrying
+# proj's first commit under lib/ (subtree merges). Stat checks are minimal so
+# stock git does not see the copied fixture as stat-dirty. `.git/stratc` is a
+# copy left in the middle of a conflicted merge-resolve of `clash`.
+mkdir -p .git/strat && (
+  cd .git/strat
+  git init -q -b main .
+  git config user.name "C O Mitter"; git config user.email committer@example.com
+  git config commit.gpgsign false; git config core.checkStat minimal
+  git config core.trustctime false
+  printf 'one\ntwo\nthree\n' > a.txt; printf 'base\n' > b.txt
+  git add . && c -m "strat: base"
+  git tag base
+  git checkout -q -b topic
+  printf 'base\ntopic\n' > b.txt; git add b.txt && c -m "topic: extend b"
+  printf 'new\n' > c.txt; git add c.txt && c -m "topic: add c"
+  git checkout -q -b clash base
+  printf 'one\ntwo\n3\n' > a.txt; git add a.txt && c -m "clash: number three"
+  git checkout -q -b lineone base
+  printf 'ONE\ntwo\nthree\n' > a.txt; git add a.txt && c -m "lineone: shout one"
+  git checkout -q -b other base
+  printf 'other\n' > d.txt; git add d.txt && c -m "other: add d"
+  git checkout -q --orphan proj
+  git rm -rqf .
+  printf 'p1\n' > p.txt; printf 'q\n' > q.txt; git add p.txt q.txt && c -m "proj: one"
+  git checkout -q main
+  printf 'one\ntwo\nTHREE\n' > a.txt; git add a.txt && c -m "main: shout three"
+  git read-tree --prefix=lib/ -u proj && c -m "main: add proj under lib"
+  git checkout -q proj
+  printf 'p2\n' > p.txt; git add p.txt && c -m "proj: two"
+  git checkout -q main
+)
+cp -a .git/strat .git/stratc
+(cd .git/stratc && git merge-resolve base -- HEAD clash >/dev/null 2>&1 || :)

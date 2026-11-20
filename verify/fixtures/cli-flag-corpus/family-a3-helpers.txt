@@ -1,0 +1,187 @@
+# Family A3 MERGE STRATEGIES AND INTERNAL HELPERS corpus (argv symmetry ladder rung A3).
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null.
+# `-C .git/strat` lines run in the nested clean repository the fixture builds
+# (branches topic, lineone, other merge cleanly into main; clash conflicts;
+# proj is an unrelated history whose first commit main carries under lib/).
+# `-C .git/stratc` lines run in a copy stopped in a conflicted merge of clash.
+#
+# --- merge-octopus ---
+-C .git/strat merge-octopus base -- HEAD topic lineone
+-C .git/strat merge-octopus base -- HEAD topic other
+-C .git/strat merge-octopus base -- HEAD lineone topic other
+-C .git/strat merge-octopus base -- HEAD clash topic
+-C .git/strat merge-octopus base -- HEAD lineone clash
+-C .git/strat merge-octopus base -- HEAD base topic
+-C .git/strat merge-octopus base -- HEAD topic topic
+-C .git/strat merge-octopus -- HEAD topic
+-C .git/strat merge-octopus base -- HEAD topic
+-C .git/strat merge-octopus
+-C .git/strat merge-octopus --foo base -- HEAD topic other
+-C .git/strat merge-octopus base -- base topic other
+-C .git/stratc merge-octopus base -- HEAD topic other
+# --- merge-resolve ---
+-C .git/strat merge-resolve base -- HEAD lineone
+-C .git/strat merge-resolve base -- HEAD clash
+-C .git/strat merge-resolve base -- HEAD topic
+-C .git/strat merge-resolve base -- HEAD other
+-C .git/strat merge-resolve base -- HEAD topic other
+-C .git/strat merge-resolve -- HEAD topic
+-C .git/strat merge-resolve
+-C .git/strat merge-resolve nosuch -- HEAD topic
+# --- merge-ours ---
+-C .git/strat merge-ours base -- HEAD topic
+-C .git/strat merge-ours
+-C .git/stratc merge-ours base -- HEAD topic
+# --- merge-recursive / -ours / -theirs ---
+-C .git/strat merge-recursive base -- HEAD lineone
+-C .git/strat merge-recursive base -- HEAD clash
+-C .git/strat merge-recursive base -- HEAD topic
+-C .git/strat merge-recursive -- HEAD topic
+-C .git/strat merge-recursive --ours base -- HEAD clash
+-C .git/strat merge-recursive --theirs base -- HEAD clash
+-C .git/strat merge-recursive --renormalize --diff-algorithm=patience base -- HEAD lineone
+-C .git/strat merge-recursive --bogus base -- HEAD lineone
+-C .git/strat merge-recursive bogus -- HEAD clash
+-C .git/strat merge-recursive base -- HEAD topic other
+-C .git/strat merge-recursive base -- HEAD
+-C .git/strat merge-recursive -- HEAD
+-C .git/strat merge-recursive base HEAD
+-C .git/strat merge-recursive
+-C .git/strat merge-recursive base base -- HEAD lineone
+-C .git/strat merge-recursive base -- topic HEAD
+-C .git/stratc merge-recursive base -- HEAD topic
+-C .git/strat merge-recursive-ours base -- HEAD clash
+-C .git/strat merge-recursive-theirs base -- HEAD clash
+-C .git/strat merge-recursive-ours base -- HEAD lineone
+-C .git/strat merge-recursive-theirs
+# --- merge-subtree ---
+-C .git/strat merge-subtree -- HEAD proj
+-C .git/strat merge-subtree base -- HEAD lineone
+-C .git/strat merge-recursive --subtree=lib -- HEAD proj
+-C .git/strat merge-recursive -- HEAD proj
+-C .git/strat merge-subtree
+# --- git merge front end: several heads and strategies ---
+-C .git/strat merge topic lineone
+-C .git/strat merge topic other lineone
+-C .git/strat merge topic clash
+-C .git/strat merge -s octopus topic lineone
+-C .git/strat merge -s octopus topic clash
+-C .git/strat merge -s ours topic other
+-C .git/strat merge -s resolve topic other
+-C .git/strat merge -s recursive topic other
+-C .git/strat merge -s subtree topic other
+-C .git/strat merge topic base
+-C .git/strat merge base main
+-C .git/strat merge --no-commit topic other
+-C .git/strat merge --squash topic other
+-C .git/strat merge -m custom topic other
+-C .git/strat merge --ff-only topic other
+-C .git/strat merge -q topic other
+-C .git/strat merge --no-stat topic other
+-C .git/strat merge -s resolve lineone
+-C .git/strat merge -s resolve clash
+-C .git/strat merge -s resolve topic
+# Reasoned DIFF (next two lines): the subtree shift, index, work tree and exit code match;
+# the two-head merge printer labels the unrelated-history conflict `CONFLICT (content)`
+# where git says `CONFLICT (add/add)` (shared ort output of `git merge`, commit family).
+-C .git/strat merge -s subtree --allow-unrelated-histories proj
+-C .git/strat merge -Xsubtree=lib --allow-unrelated-histories proj
+-C .git/strat merge -s octopus lineone
+# --- merge-index / merge-one-file ---
+-C .git/stratc merge-index echo -a
+-C .git/stratc merge-index -q false -a
+-C .git/stratc merge-index false -a
+-C .git/stratc merge-index -o false -a
+-C .git/stratc merge-index echo b.txt
+-C .git/stratc merge-index echo nosuch
+-C .git/stratc merge-index echo
+-C .git/stratc merge-index
+-C .git/stratc merge-index -- echo -a
+-C .git/stratc merge-index echo -a -x
+-C .git/stratc merge-index echo a.txt a.txt
+-C .git/stratc merge-index echo -- a.txt
+-C .git/stratc merge-index git-merge-one-file -a
+-C .git/stratc merge-index -o git-merge-one-file -a
+-C .git/stratc merge-index git-merge-one-file a.txt
+-C .git/strat merge-index echo -a
+-C .git/stratc merge-one-file 4cb29ea38f70d7c61b2a3a25b02e3bdf44905402 2f43848a5937429a3caefe5f1f61e7e02d2b62ac a0c2ac00015a2ab50885e8d770bd0ee435a81488 a.txt 100644 100644 100644
+-C .git/strat merge-one-file '' '' df967b96a579e45a18b8251732d16804b2e56a55 new.txt '' '' 100644
+-C .git/strat merge-one-file '' df967b96a579e45a18b8251732d16804b2e56a55 '' new2.txt '' 100644 ''
+-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 df967b96a579e45a18b8251732d16804b2e56a55 '' b.txt 100644 100644 ''
+-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 '' df967b96a579e45a18b8251732d16804b2e56a55 b.txt 100644 '' 100644
+-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 '' '' b.txt 100644 '' ''
+-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 4cb29ea38f70d7c61b2a3a25b02e3bdf44905402 '' b.txt 100644 100644 ''
+-C .git/strat merge-one-file '' df967b96a579e45a18b8251732d16804b2e56a55 df967b96a579e45a18b8251732d16804b2e56a55 both.txt '' 100644 100644
+-C .git/strat merge-one-file a b
+-C .git/strat merge-one-file
+-C .git/strat merge-one-file -h
+# --- pickaxe (blame) / update (not a command in stock git) ---
+pickaxe README.md
+pickaxe -s src/b.txt
+pickaxe -L 1,2 src/a.txt
+pickaxe --porcelain src/b.txt
+update
+update -h
+# --- checkout--worker (empty request stream) ---
+checkout--worker
+checkout--worker --prefix=x
+checkout--worker --no-prefix
+checkout--worker extra
+checkout--worker --bogus
+# --- sh-i18n--envsubst ---
+sh-i18n--envsubst --variables 'x $FOO ${BAR} $FOO $1 ${X_Y}z ${OPEN'
+sh-i18n--envsubst --variables
+sh-i18n--envsubst
+sh-i18n--envsubst a b
+sh-i18n--envsubst --variables a b
+sh-i18n--envsubst '$HOME'
+# --- fsmonitor--daemon (Linux builds have none) ---
+fsmonitor--daemon status
+fsmonitor--daemon start
+fsmonitor--daemon run
+fsmonitor--daemon stop
+fsmonitor--daemon
+# --- submodule--helper ---
+submodule--helper
+submodule--helper bogus
+submodule--helper -h
+submodule--helper status
+-C .git/sm/super submodule--helper status
+-C .git/sm/super submodule--helper summary
+-C .git/sm/clone submodule--helper init
+# --- upload-archive--writer (stdin carries no request) ---
+upload-archive--writer
+upload-archive--writer .
+upload-archive--writer /nonexistent
+upload-archive--writer a b
+# --- credential-cache / credential-cache--daemon (no daemon listens) ---
+credential-cache exit
+credential-cache --socket /nonexistent/a3-cache/socket exit
+credential-cache --socket=/nonexistent/a3-cache/socket get
+credential-cache --socket /nonexistent/a3-cache/socket erase
+credential-cache --timeout 5 --socket /nonexistent/a3-cache/socket get
+credential-cache --no-timeout --no-socket bogus
+credential-cache --timeout=x get
+credential-cache
+credential-cache -h
+credential-cache --bogus get
+credential-cache--daemon
+credential-cache--daemon -h
+credential-cache--daemon relative/socket
+credential-cache--daemon --bogus /tmp/x
+# --- remote helpers (stdin carries no command) ---
+remote-ext
+remote-ext origin
+remote-ext a b c
+remote-ext origin cat
+remote-fd
+remote-fd origin 0,1
+remote-fd origin 7/foo
+remote-fd origin x
+remote-fd origin 0,x
+remote-http
+remote-http origin http://127.0.0.1:9/x
+remote-https origin https://127.0.0.1:9/x
+remote-ftp origin ftp://127.0.0.1:9/x
+remote-ftps origin ftps://127.0.0.1:9/x
