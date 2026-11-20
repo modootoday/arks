@@ -544,7 +544,7 @@ mod wincred_ffi {
 }
 
 #[cfg(windows)]
-use wincred_ffi::{wincred_erase, wincred_get, wincred_store};
+pub(crate) use wincred_ffi::{wincred_erase, wincred_get, wincred_store};
 
 #[cfg(target_os = "macos")]
 fn osx_get(key: &str) -> Result<Option<Credential>, RemoteError> {
