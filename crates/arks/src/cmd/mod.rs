@@ -34,6 +34,7 @@ pub mod log_cmd;
 pub mod log_format;
 pub mod log_graph;
 pub mod ls_remote;
+pub mod mailmap;
 pub mod maint;
 pub mod matrix_cmds;
 pub mod matrix_rest;
@@ -57,6 +58,7 @@ pub mod remote_local;
 pub mod replace;
 pub mod replay;
 pub mod request_pull;
+pub mod revwalk;
 pub mod server;
 pub mod shared;
 pub mod sign;
@@ -101,6 +103,7 @@ pub use lease::cmd_lease;
 pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show};
 pub use ls_remote::cmd_ls_remote;
+pub use log_cmd::{cmd_log, cmd_show, cmd_whatchanged};
 pub use maint::{cmd_gc, cmd_maintenance, cmd_repack};
 pub use matrix_cmds::{
     cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
