@@ -1432,18 +1432,18 @@ pub(super) fn word_hunk<W: Write>(
         if ops[i] == Op::Eq {
             let line = bl[pos[i].1];
             match mode {
+                // The line prefix starts each logical line only (not `~`).
                 WordDiff::Porcelain => {
                     out.raw(out.prefix.as_bytes())?;
                     out.raw(b" ")?;
                     out.raw(line.strip_suffix(b"\n").unwrap_or(line))?;
-                    out.raw(b"\n")?;
-                    out.raw(out.prefix.as_bytes())?;
-                    out.raw(b"~\n")?;
+                    out.raw(b"\n~\n")?;
                 }
                 _ => {
+                    let body = line.strip_suffix(b"\n").unwrap_or(line);
                     out.raw(out.prefix.as_bytes())?;
-                    out.raw(line.strip_suffix(b"\n").unwrap_or(line))?;
-                    if out.color {
+                    out.raw(body)?;
+                    if out.color && !body.is_empty() {
                         out.raw(RESET.as_bytes())?;
                     }
                     out.raw(b"\n")?;
@@ -1570,8 +1570,15 @@ fn word_block<W: Write>(
         if !text.ends_with(b"~\n") {
             text.extend_from_slice(b"~\n");
         }
+        // The line prefix starts each logical line (after a `~`) only.
+        let mut line_start = true;
         for line in text.split_inclusive(|c| *c == b'\n') {
-            out.raw(out.prefix.as_bytes())?;
+            if line == b"~\n" {
+                line_start = true;
+            } else if line_start {
+                out.raw(out.prefix.as_bytes())?;
+                line_start = false;
+            }
             out.raw(line)?;
         }
         return Ok(());
