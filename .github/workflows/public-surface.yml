@@ -1,0 +1,44 @@
+# Public surface check (rule 80-public-surface; adapted from modootoday/playpilot's
+# public-surface workflow). The deny list is the ARKS_DENY_TERMS secret; an empty
+# value still runs the generic scans.
+name: public-surface
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-surface-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  public-surface:
+    name: Public surface
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install playpilot (pinned rev)
+        # Run outside the workspace so rust-toolchain.toml does not apply to the install.
+        working-directory: ${{ runner.temp }}
+        run: >-
+          cargo install --locked --git https://github.com/modootoday/playpilot
+          --rev d68f633c74afad7b5520fa14ef6dc3b86277c454 playpilot
+
+      - name: playpilot surface-check
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.after }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          DENY_TERMS: ${{ secrets.ARKS_DENY_TERMS }}
+        run: playpilot surface-check --range "$BASE..$HEAD" --text-env PR_TITLE --text-env PR_BODY --deny-env DENY_TERMS
