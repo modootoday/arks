@@ -438,6 +438,10 @@ pub const REBASE: &[OptDef] = &[
     o("root", ' ', No, true),
     o("reschedule-failed-exec", ' ', No, true),
     o("reapply-cherry-picks", ' ', No, true),
+    // Accepted by git though hidden from `-h`.
+    o("ignore-date", ' ', No, true),
+    o("keep-empty", ' ', No, true),
+    o("allow-empty-message", ' ', No, true),
 ];
 
 pub const RESET: &[OptDef] = &[

@@ -60,6 +60,7 @@ pub mod push;
 pub mod porcelain_opts;
 pub mod range_diff;
 pub mod raw_diff;
+pub mod rebase;
 pub mod remote;
 pub mod remote_admin;
 pub mod remote_local;
@@ -149,7 +150,7 @@ pub use remote_admin::cmd_remote;
 pub use replace::cmd_replace;
 pub use request_pull::cmd_request_pull;
 pub use rev_list::cmd_rev_list;
-pub use replay::cmd_rebase;
+pub use rebase::cmd_rebase;
 pub use server::{
     cmd_http_backend, cmd_receive_pack, cmd_serve, cmd_serve_http, cmd_update_server_info,
     cmd_upload_pack,

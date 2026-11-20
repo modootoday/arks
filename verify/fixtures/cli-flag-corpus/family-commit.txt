@@ -707,3 +707,95 @@ init --separate-git-dir sep.git -q n
 init --bare --separate-git-dir=sep.git n
 init -b x
 init a b
+#
+#
+# --- rebase (side repository) ---
+-C .git/side rebase topic
+-C .git/side rebase lineone
+-C .git/side rebase clash
+-C .git/side rebase base
+-C .git/side rebase main
+-C .git/side rebase -f base
+-C .git/side rebase --force-rebase base
+-C .git/side rebase --no-ff base
+-C .git/side rebase --onto topic base
+-C .git/side rebase --onto topic base main
+-C .git/side rebase --onto=topic base
+-C .git/side rebase topic lineone
+-C .git/side rebase --root
+-C .git/side rebase --root --onto topic
+-C .git/side rebase -q topic
+-C .git/side rebase --quiet clash
+-C .git/side rebase -v topic
+-C .git/side rebase --stat topic
+-C .git/side rebase -n topic
+-C .git/side rebase --no-stat topic
+-C .git/side rebase --keep-base topic
+-C .git/side rebase --keep-base --onto topic base
+-C .git/side rebase -x true topic
+-C .git/side rebase --exec false topic
+-C .git/side rebase --signoff topic
+-C .git/side rebase --committer-date-is-author-date topic
+-C .git/side rebase --apply topic
+-C .git/side rebase --apply clash
+-C .git/side rebase -m topic
+-C .git/side rebase --merge topic
+-C .git/side rebase -i topic
+-C .git/side rebase --interactive topic
+-C .git/side rebase -s ours topic
+-C .git/side rebase --strategy=ort topic
+-C .git/side rebase -X theirs clash
+-C .git/side rebase -X ours clash
+-C .git/side rebase --strategy-option=patience topic
+-C .git/side rebase --empty=drop topic
+-C .git/side rebase --empty=keep topic
+-C .git/side rebase --empty=bogus topic
+-C .git/side rebase --keep-empty topic
+-C .git/side rebase --no-keep-empty topic
+-C .git/side rebase --allow-empty-message topic
+-C .git/side rebase --autosquash topic
+-C .git/side rebase --no-autosquash topic
+-C .git/side rebase --update-refs topic
+-C .git/side rebase --no-update-refs topic
+-C .git/side rebase --autostash topic
+-C .git/side rebase --no-autostash topic
+-C .git/side rebase -r topic
+-C .git/side rebase --rebase-merges=rebase-cousins topic
+-C .git/side rebase --no-rebase-merges topic
+-C .git/side rebase --fork-point topic
+-C .git/side rebase --no-fork-point topic
+-C .git/side rebase --reschedule-failed-exec topic
+-C .git/side rebase --no-reschedule-failed-exec topic
+-C .git/side rebase --reapply-cherry-picks topic
+-C .git/side rebase --no-reapply-cherry-picks topic
+-C .git/side rebase --rerere-autoupdate topic
+-C .git/side rebase --no-rerere-autoupdate topic
+-C .git/side rebase -S topic
+-C .git/side rebase --no-gpg-sign topic
+-C .git/side rebase --no-verify topic
+-C .git/side rebase --verify topic
+-C .git/side rebase -C2 topic
+-C .git/side rebase --whitespace=fix topic
+-C .git/side rebase --ignore-whitespace topic
+-C .git/side rebase --continue
+-C .git/side rebase --abort
+-C .git/side rebase --skip
+-C .git/side rebase --quit
+-C .git/side rebase --show-current-patch
+-C .git/side rebase --edit-todo
+-C .git/side rebase
+-C .git/side rebase nope
+-C .git/side rebase topic nope
+-C .git/side rebase a b c
+-C .git/side rebase --continue --abort
+-C .git/side rebase --apply -i topic
+#
+# --- rebase with local changes ---
+rebase feature
+rebase --autostash feature
+rebase -q feature
+rebase main
+rebase t0
+-C .git/side merge --autostash topic
+merge --autostash feature
+rebase --autostash main feature
