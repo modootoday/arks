@@ -1014,7 +1014,7 @@ pub(crate) fn autostash_pop() -> CliResult<()> {
 /// whose work tree is HEAD with `selected` (path, mode and content, `None`
 /// for a deletion) applied, then print git's "Saved ..." line.
 pub(crate) fn push_patch_stash(
-    selected: &[(String, Option<(u32, Vec<u8>)>)],
+    selected: &[(String, crate::cmd::add_patch::Side)],
     message: Option<&str>,
     quiet: bool,
 ) -> CliResult<()> {

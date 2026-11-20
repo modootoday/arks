@@ -262,7 +262,7 @@ impl Hunk {
 }
 
 /// One side of a file: mode and content (absent = no such file).
-type Side = Option<(u32, Vec<u8>)>;
+pub(crate) type Side = Option<(u32, Vec<u8>)>;
 
 struct FileDiff {
     path: String,

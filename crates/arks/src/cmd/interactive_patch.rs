@@ -780,7 +780,7 @@ pub fn cmd_stash_patch(args: &[String]) -> CliResult<()> {
     if applied.is_empty() {
         return Err(CliError::Exit(1, "No changes selected".into()));
     }
-    let selected: Vec<(String, Option<(u32, Vec<u8>)>)> = applied
+    let selected: Vec<(String, add_patch::Side)> = applied
         .iter()
         .map(|(p, st, _)| (p.clone(), st.clone()))
         .collect();
