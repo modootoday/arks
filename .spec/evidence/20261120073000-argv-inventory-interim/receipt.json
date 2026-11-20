@@ -1,0 +1,15 @@
+{
+  "gate": "argv-inventory",
+  "rung": "A_final interim (after A2-A5)",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "a58b899",
+  "commands": 185,
+  "commands_full": 89,
+  "commands_no_inventory": 75,
+  "options": 1852,
+  "accepted": 1590,
+  "baseline": "20261120000500-argv-inventory-baseline (557/1776)",
+  "note": "Interim progress receipt; the final A_final receipt follows the parser consolidation.",
+  "timestamp": "2026-11-20T07:30:00Z"
+}

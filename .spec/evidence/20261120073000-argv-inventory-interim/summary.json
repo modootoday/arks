@@ -1,0 +1,935 @@
+{
+ "accepted": 1590,
+ "commands": 185,
+ "commands_full": 89,
+ "commands_no_inventory": 75,
+ "git": "git version 2.39.5",
+ "options": 1852,
+ "per_command": {
+  "add": {
+   "accepted": 27,
+   "options": 27,
+   "status": "FULL"
+  },
+  "add--interactive": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "am": {
+   "accepted": 45,
+   "options": 45,
+   "status": "FULL"
+  },
+  "annotate": {
+   "accepted": 13,
+   "options": 31,
+   "status": "PARTIAL"
+  },
+  "apply": {
+   "accepted": 35,
+   "options": 35,
+   "status": "FULL"
+  },
+  "archive": {
+   "accepted": 13,
+   "options": 14,
+   "status": "PARTIAL"
+  },
+  "askpass": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "askyesno": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "backfill": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "bisect": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "bisect--helper": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "blame": {
+   "accepted": 13,
+   "options": 31,
+   "status": "PARTIAL"
+  },
+  "branch": {
+   "accepted": 42,
+   "options": 42,
+   "status": "FULL"
+  },
+  "bugreport": {
+   "accepted": 5,
+   "options": 5,
+   "status": "FULL"
+  },
+  "bundle": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "cat-file": {
+   "accepted": 18,
+   "options": 18,
+   "status": "FULL"
+  },
+  "check-attr": {
+   "accepted": 5,
+   "options": 5,
+   "status": "FULL"
+  },
+  "check-ignore": {
+   "accepted": 9,
+   "options": 9,
+   "status": "FULL"
+  },
+  "check-mailmap": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "check-ref-format": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "checkout": {
+   "accepted": 28,
+   "options": 30,
+   "status": "PARTIAL"
+  },
+  "checkout--worker": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "checkout-index": {
+   "accepted": 16,
+   "options": 16,
+   "status": "FULL"
+  },
+  "cherry": {
+   "accepted": 3,
+   "options": 3,
+   "status": "FULL"
+  },
+  "cherry-pick": {
+   "accepted": 24,
+   "options": 24,
+   "status": "FULL"
+  },
+  "citool": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "clean": {
+   "accepted": 13,
+   "options": 13,
+   "status": "FULL"
+  },
+  "clone": {
+   "accepted": 48,
+   "options": 48,
+   "status": "FULL"
+  },
+  "column": {
+   "accepted": 7,
+   "options": 7,
+   "status": "FULL"
+  },
+  "commit": {
+   "accepted": 53,
+   "options": 53,
+   "status": "FULL"
+  },
+  "commit-graph": {
+   "accepted": 0,
+   "options": 1,
+   "status": "PARTIAL"
+  },
+  "commit-tree": {
+   "accepted": 5,
+   "options": 5,
+   "status": "FULL"
+  },
+  "config": {
+   "accepted": 39,
+   "options": 39,
+   "status": "FULL"
+  },
+  "count-objects": {
+   "accepted": 4,
+   "options": 4,
+   "status": "FULL"
+  },
+  "credential": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "credential-cache": {
+   "accepted": 2,
+   "options": 2,
+   "status": "FULL"
+  },
+  "credential-cache--daemon": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "credential-helper-selector": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "credential-manager": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "credential-store": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "credential-wincred": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "daemon": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "describe": {
+   "accepted": 14,
+   "options": 14,
+   "status": "FULL"
+  },
+  "diagnose": {
+   "accepted": 5,
+   "options": 5,
+   "status": "FULL"
+  },
+  "diff": {
+   "accepted": 22,
+   "options": 22,
+   "status": "FULL"
+  },
+  "diff-files": {
+   "accepted": 22,
+   "options": 22,
+   "status": "FULL"
+  },
+  "diff-index": {
+   "accepted": 22,
+   "options": 22,
+   "status": "FULL"
+  },
+  "diff-pairs": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "diff-tree": {
+   "accepted": 27,
+   "options": 27,
+   "status": "FULL"
+  },
+  "difftool": {
+   "accepted": 14,
+   "options": 14,
+   "status": "FULL"
+  },
+  "difftool--helper": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "env--helper": {
+   "accepted": 3,
+   "options": 3,
+   "status": "FULL"
+  },
+  "fast-export": {
+   "accepted": 1,
+   "options": 17,
+   "status": "PARTIAL"
+  },
+  "fast-import": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "fetch": {
+   "accepted": 54,
+   "options": 54,
+   "status": "FULL"
+  },
+  "fetch-pack": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "filter-branch": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "fmt-merge-msg": {
+   "accepted": 6,
+   "options": 6,
+   "status": "FULL"
+  },
+  "for-each-ref": {
+   "accepted": 8,
+   "options": 16,
+   "status": "PARTIAL"
+  },
+  "for-each-repo": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "format-patch": {
+   "accepted": 42,
+   "options": 44,
+   "status": "PARTIAL"
+  },
+  "format-rev": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "fsck": {
+   "accepted": 14,
+   "options": 14,
+   "status": "FULL"
+  },
+  "fsmonitor--daemon": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "gc": {
+   "accepted": 8,
+   "options": 8,
+   "status": "FULL"
+  },
+  "get-tar-commit-id": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "grep": {
+   "accepted": 69,
+   "options": 70,
+   "status": "PARTIAL"
+  },
+  "gui": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "gui--askpass": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "gui--askyesno": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "gui.tcl": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "hash-object": {
+   "accepted": 7,
+   "options": 7,
+   "status": "FULL"
+  },
+  "help": {
+   "accepted": 18,
+   "options": 18,
+   "status": "FULL"
+  },
+  "history": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "hook": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "http-backend": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "http-fetch": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "http-push": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "imap-send": {
+   "accepted": 5,
+   "options": 5,
+   "status": "FULL"
+  },
+  "index-pack": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "init": {
+   "accepted": 9,
+   "options": 9,
+   "status": "FULL"
+  },
+  "instaweb": {
+   "accepted": 13,
+   "options": 13,
+   "status": "FULL"
+  },
+  "interpret-trailers": {
+   "accepted": 11,
+   "options": 11,
+   "status": "FULL"
+  },
+  "last-modified": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "log": {
+   "accepted": 9,
+   "options": 10,
+   "status": "PARTIAL"
+  },
+  "ls-files": {
+   "accepted": 39,
+   "options": 39,
+   "status": "FULL"
+  },
+  "ls-remote": {
+   "accepted": 13,
+   "options": 13,
+   "status": "FULL"
+  },
+  "ls-tree": {
+   "accepted": 13,
+   "options": 13,
+   "status": "FULL"
+  },
+  "mailinfo": {
+   "accepted": 9,
+   "options": 9,
+   "status": "FULL"
+  },
+  "mailsplit": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "maintenance": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge": {
+   "accepted": 37,
+   "options": 37,
+   "status": "FULL"
+  },
+  "merge-base": {
+   "accepted": 6,
+   "options": 6,
+   "status": "FULL"
+  },
+  "merge-file": {
+   "accepted": 11,
+   "options": 11,
+   "status": "FULL"
+  },
+  "merge-index": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-octopus": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-one-file": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-ours": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-recursive": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-recursive-ours": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-recursive-theirs": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-resolve": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-subtree": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "merge-tree": {
+   "accepted": 4,
+   "options": 7,
+   "status": "PARTIAL"
+  },
+  "mergetool": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "mktag": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "mktree": {
+   "accepted": 3,
+   "options": 3,
+   "status": "FULL"
+  },
+  "multi-pack-index": {
+   "accepted": 0,
+   "options": 1,
+   "status": "PARTIAL"
+  },
+  "mv": {
+   "accepted": 8,
+   "options": 8,
+   "status": "FULL"
+  },
+  "name-rev": {
+   "accepted": 9,
+   "options": 9,
+   "status": "FULL"
+  },
+  "notes": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "pack-objects": {
+   "accepted": 2,
+   "options": 44,
+   "status": "PARTIAL"
+  },
+  "pack-redundant": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "pack-refs": {
+   "accepted": 2,
+   "options": 2,
+   "status": "FULL"
+  },
+  "patch-id": {
+   "accepted": 3,
+   "options": 3,
+   "status": "FULL"
+  },
+  "pickaxe": {
+   "accepted": 13,
+   "options": 31,
+   "status": "PARTIAL"
+  },
+  "prune": {
+   "accepted": 7,
+   "options": 7,
+   "status": "FULL"
+  },
+  "prune-packed": {
+   "accepted": 4,
+   "options": 4,
+   "status": "FULL"
+  },
+  "pull": {
+   "accepted": 59,
+   "options": 59,
+   "status": "FULL"
+  },
+  "push": {
+   "accepted": 35,
+   "options": 35,
+   "status": "FULL"
+  },
+  "quiltimport": {
+   "accepted": 6,
+   "options": 6,
+   "status": "FULL"
+  },
+  "range-diff": {
+   "accepted": 2,
+   "options": 102,
+   "status": "PARTIAL"
+  },
+  "read-tree": {
+   "accepted": 19,
+   "options": 19,
+   "status": "FULL"
+  },
+  "rebase": {
+   "accepted": 48,
+   "options": 48,
+   "status": "FULL"
+  },
+  "receive-pack": {
+   "accepted": 2,
+   "options": 2,
+   "status": "FULL"
+  },
+  "reflog": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "refs": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "remote": {
+   "accepted": 2,
+   "options": 2,
+   "status": "FULL"
+  },
+  "remote-ext": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "remote-fd": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "remote-ftp": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "remote-ftps": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "remote-http": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "remote-https": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "repack": {
+   "accepted": 31,
+   "options": 31,
+   "status": "FULL"
+  },
+  "replace": {
+   "accepted": 4,
+   "options": 13,
+   "status": "PARTIAL"
+  },
+  "replay": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "repo": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "request-pull": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "rerere": {
+   "accepted": 0,
+   "options": 1,
+   "status": "PARTIAL"
+  },
+  "reset": {
+   "accepted": 13,
+   "options": 15,
+   "status": "PARTIAL"
+  },
+  "restore": {
+   "accepted": 22,
+   "options": 24,
+   "status": "PARTIAL"
+  },
+  "rev-list": {
+   "accepted": 35,
+   "options": 35,
+   "status": "FULL"
+  },
+  "rev-parse": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "revert": {
+   "accepted": 20,
+   "options": 20,
+   "status": "FULL"
+  },
+  "rm": {
+   "accepted": 12,
+   "options": 12,
+   "status": "FULL"
+  },
+  "send-email": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "send-pack": {
+   "accepted": 23,
+   "options": 23,
+   "status": "FULL"
+  },
+  "sh-i18n--envsubst": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "shell": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "shortlog": {
+   "accepted": 10,
+   "options": 10,
+   "status": "FULL"
+  },
+  "show": {
+   "accepted": 9,
+   "options": 10,
+   "status": "PARTIAL"
+  },
+  "show-branch": {
+   "accepted": 3,
+   "options": 18,
+   "status": "PARTIAL"
+  },
+  "show-index": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "show-ref": {
+   "accepted": 12,
+   "options": 12,
+   "status": "FULL"
+  },
+  "sparse-checkout": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "stash": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "status": {
+   "accepted": 20,
+   "options": 20,
+   "status": "FULL"
+  },
+  "stripspace": {
+   "accepted": 4,
+   "options": 4,
+   "status": "FULL"
+  },
+  "submodule": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "submodule--helper": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "subtree": {
+   "accepted": 13,
+   "options": 13,
+   "status": "FULL"
+  },
+  "survey": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "switch": {
+   "accepted": 22,
+   "options": 22,
+   "status": "FULL"
+  },
+  "symbolic-ref": {
+   "accepted": 7,
+   "options": 7,
+   "status": "FULL"
+  },
+  "tag": {
+   "accepted": 34,
+   "options": 34,
+   "status": "FULL"
+  },
+  "unpack-file": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "unpack-objects": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "update": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "update-git-for-windows": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "update-index": {
+   "accepted": 35,
+   "options": 35,
+   "status": "FULL"
+  },
+  "update-ref": {
+   "accepted": 6,
+   "options": 6,
+   "status": "FULL"
+  },
+  "update-server-info": {
+   "accepted": 2,
+   "options": 2,
+   "status": "FULL"
+  },
+  "upload-archive": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "upload-archive--writer": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "upload-pack": {
+   "accepted": 3,
+   "options": 3,
+   "status": "FULL"
+  },
+  "url-parse": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "var": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "verify-commit": {
+   "accepted": 3,
+   "options": 3,
+   "status": "FULL"
+  },
+  "verify-pack": {
+   "accepted": 5,
+   "options": 5,
+   "status": "FULL"
+  },
+  "verify-tag": {
+   "accepted": 4,
+   "options": 4,
+   "status": "FULL"
+  },
+  "version": {
+   "accepted": 1,
+   "options": 1,
+   "status": "FULL"
+  },
+  "web--browse": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "worktree": {
+   "accepted": 0,
+   "options": 0,
+   "status": "NO_INVENTORY"
+  },
+  "write-tree": {
+   "accepted": 2,
+   "options": 2,
+   "status": "FULL"
+  }
+ }
+}
