@@ -279,7 +279,7 @@ fn pick_list(repo: &Repository, op: Op, revs: &[String]) -> CliResult<Vec<Oid>> 
         queue.extend(commit.parents.iter().copied());
         found.push((commit.committer.timestamp, c));
     }
-    found.sort_by(|a, b| b.0.cmp(&a.0));
+    found.sort_by_key(|x| std::cmp::Reverse(x.0));
     let mut out: Vec<Oid> = found.into_iter().map(|(_, c)| c).collect();
     if op == Op::Pick {
         out.reverse();
@@ -583,7 +583,7 @@ fn pick_one(op: Op, oid: &Oid, o: &Opts) -> CliResult<()> {
     if op == Op::Pick && o.ff && parent == Some(head) {
         let work = work_tree(&repo)?;
         crate::cmd::switch_tree::two_way_switch(&repo, &work, Some(&head), oid)?;
-        update_head(&repo, &head, oid, &format!("cherry-pick: fast-forward"))?;
+        update_head(&repo, &head, oid, "cherry-pick: fast-forward")?;
         return Ok(());
     }
     let parent_tree = match parent {
@@ -616,9 +616,9 @@ fn pick_one(op: Op, oid: &Oid, o: &Opts) -> CliResult<()> {
                 .ok()
         });
         let wt = on_disk.flatten();
-        if wt != entry.map(|e| e.oid) && !(wt.is_none() && entry.is_none()) {
-            dirty.push((*p).clone());
-        } else if o.no_commit && entry.map(|e| e.oid) != head_map.get(*p).copied() {
+        let worktree_dirty = wt != entry.map(|e| e.oid) && !(wt.is_none() && entry.is_none());
+        let index_dirty = o.no_commit && entry.map(|e| e.oid) != head_map.get(*p).copied();
+        if worktree_dirty || index_dirty {
             dirty.push((*p).clone());
         }
     }

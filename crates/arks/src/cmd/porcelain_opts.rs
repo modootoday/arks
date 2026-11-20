@@ -661,15 +661,6 @@ pub const SPARSE_CHECKOUT__ADD: &[OptDef] =
 pub const SPARSE_CHECKOUT__REAPPLY: &[OptDef] =
     &[o("cone", ' ', No, true), o("sparse-index", ' ', No, true)];
 
-pub const MAILSPLIT: &[OptDef] = &[
-    o("-b", 'b', No, false),
-    o("-d", 'd', Opt, false),
-    o("-f", 'f', Opt, false),
-    o("-o", 'o', Opt, false),
-    o("keep-cr", ' ', No, false),
-    o("mboxrd", ' ', No, false),
-];
-
 pub const BISECT__START: &[OptDef] = &[
     o("term-new", ' ', Req, false),
     o("term-bad", ' ', Req, false),
@@ -685,5 +676,3 @@ pub const BISECT__TERMS: &[OptDef] = &[
     o("term-bad", ' ', No, false),
     o("term-new", ' ', No, false),
 ];
-
-pub const STASH__CREATE: &[OptDef] = &[];

@@ -322,7 +322,7 @@ fn default_merge_message(
             ));
             queue.extend(commit.parents.iter().copied());
         }
-        picked.sort_by(|a, b| b.0.cmp(&a.0));
+        picked.sort_by_key(|x| std::cmp::Reverse(x.0));
         if !picked.is_empty() {
             let short = name.trim_start_matches("refs/heads/");
             if picked.len() > limit {
@@ -652,7 +652,7 @@ fn write_squash_msg(
         queue.extend(commit.parents.iter().copied());
         picked.push((c, commit));
     }
-    picked.sort_by(|a, b| b.1.committer.timestamp.cmp(&a.1.committer.timestamp));
+    picked.sort_by_key(|x| std::cmp::Reverse(x.1.committer.timestamp));
     let mut text = String::from("Squashed commit of the following:\n");
     for (oid, c) in picked {
         text.push_str(&format!(

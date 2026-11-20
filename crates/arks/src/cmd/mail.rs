@@ -246,9 +246,7 @@ pub fn cmd_mailsplit(args: &[String]) -> CliResult<()> {
     let mut messages: Vec<String> = Vec::new();
     for line in text.split_inclusive('\n') {
         if line.starts_with("From ") || (allow_bare && messages.is_empty()) {
-            if line.starts_with("From ") || messages.is_empty() {
-                messages.push(String::new());
-            }
+            messages.push(String::new());
         }
         let Some(cur) = messages.last_mut() else {
             continue;

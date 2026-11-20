@@ -306,7 +306,7 @@ fn start(p: &Parsed) -> CliResult<()> {
                     let b = branch.unwrap_or_else(|| "<branch>".into());
                     print!(
                         "{}",
-                        format!(
+                        format_args!(
                             "There is no tracking information for the current branch.\nPlease specify which branch you want to rebase against.\nSee git-rebase(1) for details.\n\n    git rebase '<branch>'\n\nIf you wish to set tracking information for this branch you can do so with:\n\n    git branch --set-upstream-to=<remote>/<branch> {b}\n\n"
                         )
                     );
@@ -675,7 +675,10 @@ fn topo_oldest_first(repo: &Repository, set: Vec<Oid>) -> CliResult<Vec<Oid>> {
 }
 
 /// What a commit changes (path, before, after), to spot patch-equivalent picks.
-fn change_key(repo: &Repository, c: &Commit) -> CliResult<Vec<(String, Option<Oid>, Option<Oid>)>> {
+/// (path, before, after) for each path a commit changes.
+type ChangeKey = Vec<(String, Option<Oid>, Option<Oid>)>;
+
+fn change_key(repo: &Repository, c: &Commit) -> CliResult<ChangeKey> {
     let mine = tree_map(repo, &c.tree)?;
     let parent = match c.parents.first() {
         Some(p) => tree_map(repo, &read_commit(repo, p)?.tree)?,
@@ -1048,7 +1051,7 @@ fn pick(dir: &Path, oid: &Oid, kind: Kind, o: &Opts, rest: &[String]) -> Result<
         || o.reset_author_date
         || !o.sign_args.is_empty();
     if !rewrite && !squashing && parent == head && kind != Kind::Reword {
-        set_head(&mut repo, dir, head, oid, &format!("rebase: fast-forward")).map_err(fail)?;
+        set_head(&mut repo, dir, head, oid, "rebase: fast-forward").map_err(fail)?;
         let work = work_tree(&repo).map_err(fail)?;
         if let Some(h) = head {
             crate::cmd::switch_tree::two_way_switch(&repo, &work, Some(&h), oid).map_err(fail)?;

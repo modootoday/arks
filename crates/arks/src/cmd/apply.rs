@@ -49,6 +49,11 @@ struct Opts {
     files: Vec<String>,
 }
 
+/// A file with rejected hunks: path, hunk numbers, hunk count, the hunks.
+type Reject = (String, Vec<usize>, usize, Vec<arks_object::Hunk>);
+/// A `--3way` conflict: path, base, ours, theirs.
+type ThreeWay = (String, Option<Vec<u8>>, Vec<u8>, Vec<u8>);
+
 /// `--whitespace=<action>` for added lines with whitespace errors.
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 enum Whitespace {
@@ -96,12 +101,12 @@ fn parse_opts(args: &[String]) -> CliResult<Opts> {
     o.files.extend(p.after_dashdash());
     if let Some(n) = p.value("-p") {
         o.strip = n.parse().map_err(|_| {
-            CliError::Exit(129, format!("error: switch `p' expects a numerical value"))
+            CliError::Exit(129, "error: switch `p' expects a numerical value".into())
         })?;
     }
     if let Some(c) = p.value("-C") {
         c.parse::<usize>().map_err(|_| {
-            CliError::Exit(129, format!("error: switch `C' expects a numerical value"))
+            CliError::Exit(129, "error: switch `C' expects a numerical value".into())
         })?;
     }
     for it in &p.items {
@@ -364,9 +369,9 @@ pub fn cmd_apply(args: &[String]) -> CliResult<()> {
     // Content as already patched in this run (several patches may touch one path).
     let mut staged: HashMap<String, Option<Vec<u8>>> = HashMap::new();
     // `--reject`: (path, rejected hunk numbers, hunk count, rejected hunks).
-    let mut rejects: Vec<(String, Vec<usize>, usize, Vec<arks_object::Hunk>)> = Vec::new();
+    let mut rejects: Vec<Reject> = Vec::new();
     // `--3way` conflicts: (path, base, ours, theirs) blobs for stages 1/2/3.
-    let mut conflicts: Vec<(String, Option<Vec<u8>>, Vec<u8>, Vec<u8>)> = Vec::new();
+    let mut conflicts: Vec<ThreeWay> = Vec::new();
     let mut three_way_msgs: Vec<String> = Vec::new();
     for p in &patches {
         if o.verbose && !o.quiet {

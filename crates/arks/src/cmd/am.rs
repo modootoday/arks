@@ -111,6 +111,9 @@ fn options(p: &Parsed) -> CliResult<Opts> {
     Ok(o)
 }
 
+/// A `--3way` conflict: path, base, ours, theirs.
+type Conflict = (String, Vec<u8>, Vec<u8>, Vec<u8>);
+
 fn state_dir(repo: &Repository) -> PathBuf {
     repo.git_dir().join("rebase-apply")
 }
@@ -610,7 +613,7 @@ fn am_one(msg: &MailMessage, n: usize, o: &Opts) -> CliResult<()> {
         }
     }
     let mut deltas = Vec::new();
-    let mut conflicts: Vec<(String, Vec<u8>, Vec<u8>, Vec<u8>)> = Vec::new();
+    let mut conflicts: Vec<Conflict> = Vec::new();
     for fp in &files {
         let shown = fp.display_path().to_string();
         let base = fp.old_path.as_ref().and_then(|p| head_map.get(p)).copied();

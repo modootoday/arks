@@ -58,7 +58,7 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
                 untracked: if p.on("all") {
                     Untracked::All
                 } else if p.on("include-untracked") {
-                    Untracked::Untracked
+                    Untracked::NotIgnored
                 } else {
                     Untracked::None
                 },
@@ -99,7 +99,11 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
             let p = parse(
                 &format!("stash {sub}"),
                 rest,
-                t::STASH__APPLY,
+                if sub == "pop" {
+                    t::STASH__POP
+                } else {
+                    t::STASH__APPLY
+                },
                 Mode::default(),
             )?;
             stash_apply(&p.args(), p.on("quiet"), p.on("index"), sub == "pop")
@@ -168,7 +172,7 @@ enum Untracked {
     #[default]
     None,
     /// `-u`: untracked files that are not ignored.
-    Untracked,
+    NotIgnored,
     /// `-a`: untracked and ignored files.
     All,
 }
@@ -239,7 +243,7 @@ fn create_stash(repo: &mut Repository, o: &PushOpts) -> CliResult<Option<Created
     let mut untracked = Vec::new();
     match o.untracked {
         Untracked::None => {}
-        Untracked::Untracked => {
+        Untracked::NotIgnored => {
             crate::cmd::shared::collect_untracked(&work, &work, &indexed, &mut untracked)?
         }
         Untracked::All => crate::cmd::shared::collect_untracked_with(

@@ -35,7 +35,7 @@ fn switch_opts(p: &Parsed, force_key: &str) -> CliResult<SwitchOpts> {
                 if !matches!(m.as_str(), "direct" | "inherit") {
                     return Err(CliError::Exit(
                         129,
-                        format!("error: option `track' expects \"direct\" or \"inherit\""),
+                        "error: option `track' expects \"direct\" or \"inherit\"".to_string(),
                     ));
                 }
             }
@@ -409,7 +409,7 @@ pub fn cmd_checkout(args: &[String]) -> CliResult<()> {
             .trim_start_matches("refs/remotes/")
             .split_once('/')
             .map(|(_, b)| b.to_string())
-            .ok_or_else(|| CliError::fatal(format!("missing branch name; try -b")))?;
+            .ok_or_else(|| CliError::fatal("missing branch name; try -b"))?;
         return create_and_switch(&short, Some(&start), false, &o);
     }
     if o.detach {
