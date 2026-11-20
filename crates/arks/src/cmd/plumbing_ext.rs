@@ -1661,3 +1661,385 @@ impl Drop for ScratchDir {
         let _ = std::fs::remove_dir_all(&self.0);
     }
 }
+
+/// Three-way line merge settings (`git merge-file` / xdiff merge).
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum MergeStyle {
+    /// Conflicts refined zealously, nearby conflicts joined.
+    Merge,
+    /// Base section shown, no refinement.
+    Diff3,
+    /// Base section shown, common prefix/suffix moved out of the conflict.
+    Zdiff3,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum MergeFavor {
+    None,
+    Ours,
+    Theirs,
+    Union,
+}
+
+/// Split into lines that keep their `\n` (the last may lack it).
+fn split_lines(t: &[u8]) -> Vec<&[u8]> {
+    let mut out = Vec::new();
+    let mut start = 0;
+    for (i, b) in t.iter().enumerate() {
+        if *b == b'\n' {
+            out.push(&t[start..=i]);
+            start = i + 1;
+        }
+    }
+    if start < t.len() {
+        out.push(&t[start..]);
+    }
+    out
+}
+
+/// Changed regions `(a0, a1, b0, b1)` between `a` and `b` (LCS based, with
+/// common prefix/suffix trimmed first).
+fn diff_hunks(a: &[&[u8]], b: &[&[u8]]) -> Vec<(usize, usize, usize, usize)> {
+    let mut pre = 0;
+    while pre < a.len() && pre < b.len() && a[pre] == b[pre] {
+        pre += 1;
+    }
+    let mut suf = 0;
+    while suf < a.len() - pre && suf < b.len() - pre && a[a.len() - 1 - suf] == b[b.len() - 1 - suf]
+    {
+        suf += 1;
+    }
+    let (am, bm) = (&a[pre..a.len() - suf], &b[pre..b.len() - suf]);
+    let (n, m) = (am.len(), bm.len());
+    if n == 0 && m == 0 {
+        return Vec::new();
+    }
+    // Matched pairs via LCS table (falls back to one hunk when too large).
+    let mut pairs: Vec<(usize, usize)> = Vec::new();
+    if n > 0 && m > 0 && n.saturating_mul(m) <= 16_000_000 {
+        let mut t = vec![0u32; (n + 1) * (m + 1)];
+        for i in (0..n).rev() {
+            for j in (0..m).rev() {
+                t[i * (m + 1) + j] = if am[i] == bm[j] {
+                    t[(i + 1) * (m + 1) + j + 1] + 1
+                } else {
+                    t[(i + 1) * (m + 1) + j].max(t[i * (m + 1) + j + 1])
+                };
+            }
+        }
+        let (mut i, mut j) = (0, 0);
+        while i < n && j < m {
+            if am[i] == bm[j] {
+                pairs.push((i, j));
+                i += 1;
+                j += 1;
+            } else if t[(i + 1) * (m + 1) + j] >= t[i * (m + 1) + j + 1] {
+                i += 1;
+            } else {
+                j += 1;
+            }
+        }
+    }
+    let mut out: Vec<(usize, usize, usize, usize)> = Vec::new();
+    let (mut i, mut j) = (0, 0);
+    for (pi, pj) in pairs.into_iter().chain(std::iter::once((n, m))) {
+        if pi > i || pj > j {
+            out.push((pre + i, pre + pi, pre + j, pre + pj));
+        }
+        i = pi + 1;
+        j = pj + 1;
+    }
+    // Like xdiff, slide pure insertions/deletions as far down as they go.
+    let mut k = 0;
+    while k < out.len() {
+        let (mut a0, mut a1, mut b0, mut b1) = out[k];
+        loop {
+            let next_start = out.get(k + 1).map(|h| (h.0, h.2));
+            let can = if a0 == a1 && b1 < b.len() && a0 < a.len() {
+                b[b0] == b[b1] && next_start.is_none_or(|(na, _)| na > a0)
+            } else if b0 == b1 && a1 < a.len() && b0 < b.len() {
+                a[a0] == a[a1] && next_start.is_none_or(|(_, nb)| nb > b0)
+            } else {
+                false
+            };
+            if !can {
+                break;
+            }
+            a0 += 1;
+            a1 += 1;
+            b0 += 1;
+            b1 += 1;
+        }
+        out[k] = (a0, a1, b0, b1);
+        // Join with the next hunk when they now touch.
+        if let Some(nh) = out.get(k + 1).copied() {
+            if nh.0 == a1 && nh.2 == b1 {
+                out[k] = (a0, nh.1, b0, nh.3);
+                out.remove(k + 1);
+                continue;
+            }
+        }
+        k += 1;
+    }
+    out
+}
+
+/// Three-way merge of `ours` and `theirs` against `base`. Returns the merged
+/// bytes and the number of conflicts. Behaviour derived from observed
+/// `git merge-file` output (see the family-plumbing corpus).
+pub(crate) fn merge_three(
+    base: &[u8],
+    ours: &[u8],
+    theirs: &[u8],
+    labels: [&str; 3],
+    style: MergeStyle,
+    favor: MergeFavor,
+    marker: usize,
+) -> (Vec<u8>, usize) {
+    let (bl, ol, tl) = (split_lines(base), split_lines(ours), split_lines(theirs));
+    let h1 = diff_hunks(&bl, &ol);
+    let h2 = diff_hunks(&bl, &tl);
+    // Regions: Plain(ours range) or Conflict(base, ours, theirs ranges).
+    enum Region {
+        Plain(Vec<u8>),
+        Conflict {
+            b: (usize, usize),
+            o: (usize, usize),
+            t: (usize, usize),
+        },
+    }
+    let mut regions: Vec<Region> = Vec::new();
+    let (mut i1, mut i2) = (0usize, 0usize);
+    let mut pos = 0usize; // base position emitted so far
+    // Map a base index to the side index given the hunks before it.
+    let map = |h: &[(usize, usize, usize, usize)], upto: usize, x: usize| -> usize {
+        let mut off: isize = 0;
+        for k in &h[..upto] {
+            off += (k.3 - k.2) as isize - (k.1 - k.0) as isize;
+        }
+        (x as isize + off) as usize
+    };
+    let push_base = |regions: &mut Vec<Region>, from: usize, to: usize| {
+        if to > from {
+            let mut v = Vec::new();
+            for l in &bl[from..to] {
+                v.extend_from_slice(l);
+            }
+            regions.push(Region::Plain(v));
+        }
+    };
+    while i1 < h1.len() || i2 < h2.len() {
+        let next1 = h1.get(i1).map(|h| h.0).unwrap_or(usize::MAX);
+        let next2 = h2.get(i2).map(|h| h.0).unwrap_or(usize::MAX);
+        let start = next1.min(next2);
+        push_base(&mut regions, pos, start);
+        // Grow the region while hunks of either side overlap or touch it.
+        let (s1, s2) = (i1, i2);
+        let mut end = start;
+        loop {
+            if let Some(h) = h1.get(i1).filter(|h| h.0 <= end) {
+                end = end.max(h.1);
+                i1 += 1;
+            } else if let Some(h) = h2.get(i2).filter(|h| h.0 <= end) {
+                end = end.max(h.1);
+                i2 += 1;
+            } else {
+                break;
+            }
+        }
+        let o0 = map(&h1, s1, start);
+        let o1 = map(&h1, i1, end);
+        let t0 = map(&h2, s2, start);
+        let t1 = map(&h2, i2, end);
+        if i1 == s1 || i2 == s2 || ol[o0..o1] == tl[t0..t1] {
+            // Only one side changed, or both changed identically.
+            let src: &[&[u8]] = if i1 > s1 { &ol[o0..o1] } else { &tl[t0..t1] };
+            let mut v = Vec::new();
+            for l in src {
+                v.extend_from_slice(l);
+            }
+            regions.push(Region::Plain(v));
+        } else {
+            regions.push(Region::Conflict {
+                b: (start, end),
+                o: (o0, o1),
+                t: (t0, t1),
+            });
+        }
+        pos = end;
+    }
+    push_base(&mut regions, pos, bl.len());
+
+    // Refinement.
+    let mut refined: Vec<Region> = Vec::new();
+    for r in regions {
+        let Region::Conflict { b, o, t } = r else {
+            refined.push(r);
+            continue;
+        };
+        match style {
+            MergeStyle::Diff3 => refined.push(Region::Conflict { b, o, t }),
+            MergeStyle::Zdiff3 => {
+                let (mut o, mut t) = (o, t);
+                let mut head = Vec::new();
+                while o.0 < o.1 && t.0 < t.1 && ol[o.0] == tl[t.0] {
+                    head.extend_from_slice(ol[o.0]);
+                    o.0 += 1;
+                    t.0 += 1;
+                }
+                let mut tail: Vec<&[u8]> = Vec::new();
+                while o.1 > o.0 && t.1 > t.0 && ol[o.1 - 1] == tl[t.1 - 1] {
+                    tail.push(ol[o.1 - 1]);
+                    o.1 -= 1;
+                    t.1 -= 1;
+                }
+                if !head.is_empty() {
+                    refined.push(Region::Plain(head));
+                }
+                refined.push(Region::Conflict { b, o, t });
+                if !tail.is_empty() {
+                    let mut v = Vec::new();
+                    for l in tail.iter().rev() {
+                        v.extend_from_slice(l);
+                    }
+                    refined.push(Region::Plain(v));
+                }
+            }
+            MergeStyle::Merge => {
+                let hs = diff_hunks(&ol[o.0..o.1], &tl[t.0..t.1]);
+                let (mut po, mut pt) = (0usize, 0usize);
+                for (a0, a1, c0, c1) in hs {
+                    if a0 > po {
+                        let mut v = Vec::new();
+                        for l in &ol[o.0 + po..o.0 + a0] {
+                            v.extend_from_slice(l);
+                        }
+                        refined.push(Region::Plain(v));
+                    }
+                    refined.push(Region::Conflict {
+                        b,
+                        o: (o.0 + a0, o.0 + a1),
+                        t: (t.0 + c0, t.0 + c1),
+                    });
+                    po = a1;
+                    pt = c1;
+                }
+                let _ = pt;
+                if o.0 + po < o.1 {
+                    let mut v = Vec::new();
+                    for l in &ol[o.0 + po..o.1] {
+                        v.extend_from_slice(l);
+                    }
+                    refined.push(Region::Plain(v));
+                }
+            }
+        }
+    }
+    // Join conflicts separated by fewer than four lines containing alnum.
+    let mut joined: Vec<Region> = Vec::new();
+    if style == MergeStyle::Merge {
+        let mut k = 0;
+        while k < refined.len() {
+            if let (
+                Some(Region::Conflict { .. }),
+                Some(Region::Plain(gap)),
+                Some(Region::Conflict { .. }),
+            ) = (joined.last(), refined.get(k), refined.get(k + 1))
+            {
+                let alnum = split_lines(gap)
+                    .iter()
+                    .filter(|l| l.iter().any(|c| c.is_ascii_alphanumeric()))
+                    .count();
+                if alnum < 4 {
+                    let gap_lines = split_lines(gap).len();
+                    if let (
+                        Some(Region::Conflict { b, o, t }),
+                        Some(Region::Conflict {
+                            b: b2,
+                            o: o2,
+                            t: t2,
+                        }),
+                    ) = (joined.pop(), refined.get(k + 1))
+                    {
+                        let _ = gap_lines;
+                        joined.push(Region::Conflict {
+                            b: (b.0.min(b2.0), b.1.max(b2.1)),
+                            o: (o.0, o2.1),
+                            t: (t.0, t2.1),
+                        });
+                        k += 2;
+                        continue;
+                    }
+                }
+            }
+            joined.push(std::mem::replace(
+                &mut refined[k],
+                Region::Plain(Vec::new()),
+            ));
+            k += 1;
+        }
+    } else {
+        joined = refined;
+    }
+
+    let mut out = Vec::new();
+    let mut conflicts = 0;
+    let section = |out: &mut Vec<u8>, lines: &[&[u8]]| {
+        for l in lines {
+            out.extend_from_slice(l);
+        }
+        if out.last().is_some_and(|c| *c != b'\n') && !lines.is_empty() {
+            out.push(b'\n');
+        }
+    };
+    let n = joined.len();
+    for (idx, r) in joined.into_iter().enumerate() {
+        match r {
+            Region::Plain(v) => out.extend_from_slice(&v),
+            Region::Conflict { b, o, t } => {
+                let (os, ts) = (&ol[o.0..o.1], &tl[t.0..t.1]);
+                match favor {
+                    MergeFavor::Ours => os.iter().for_each(|l| out.extend_from_slice(l)),
+                    MergeFavor::Theirs => ts.iter().for_each(|l| out.extend_from_slice(l)),
+                    MergeFavor::Union => {
+                        os.iter().for_each(|l| out.extend_from_slice(l));
+                        if !ts.is_empty() && out.last().is_some_and(|c| *c != b'\n') {
+                            out.push(b'\n');
+                        }
+                        ts.iter().for_each(|l| out.extend_from_slice(l));
+                        if idx + 1 < n && out.last().is_some_and(|c| *c != b'\n') {
+                            out.push(b'\n');
+                        }
+                    }
+                    MergeFavor::None => {
+                        conflicts += 1;
+                        let m = |c: char| c.to_string().repeat(marker);
+                        let label = |s: &str| {
+                            if s.is_empty() {
+                                String::new()
+                            } else {
+                                format!(" {s}")
+                            }
+                        };
+                        out.extend_from_slice(
+                            format!("{}{}\n", m('<'), label(labels[0])).as_bytes(),
+                        );
+                        section(&mut out, os);
+                        if style != MergeStyle::Merge {
+                            out.extend_from_slice(
+                                format!("{}{}\n", m('|'), label(labels[1])).as_bytes(),
+                            );
+                            section(&mut out, &bl[b.0..b.1]);
+                        }
+                        out.extend_from_slice(format!("{}\n", m('=')).as_bytes());
+                        section(&mut out, ts);
+                        out.extend_from_slice(
+                            format!("{}{}\n", m('>'), label(labels[2])).as_bytes(),
+                        );
+                    }
+                }
+            }
+        }
+    }
+    (out, conflicts)
+}

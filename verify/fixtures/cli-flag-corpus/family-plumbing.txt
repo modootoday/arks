@@ -486,3 +486,24 @@ pack-refs --include 'refs/heads/*' --no-include
 pack-refs --all --no-all
 pack-refs --no-exclude --all
 pack-refs x
+# --- merge-file ---
+merge-file -p src/a.txt README.md src/b.txt
+merge-file src/a.txt README.md src/b.txt
+merge-file --stdout --diff3 src/a.txt README.md src/b.txt
+merge-file -p --zdiff3 src/a.txt README.md src/b.txt
+merge-file -p --no-diff3 --diff3 --no-zdiff3 src/a.txt README.md src/b.txt
+merge-file -p --ours src/a.txt README.md src/b.txt
+merge-file -p --theirs src/a.txt README.md src/b.txt
+merge-file -p --union src/a.txt README.md src/b.txt
+merge-file -p --union --no-union src/a.txt README.md src/b.txt
+merge-file -p --marker-size=3 -L x -L y -L z src/a.txt README.md src/b.txt
+merge-file -p --marker-size 10 -Lx src/a.txt README.md src/b.txt
+merge-file -q -p src/a.txt README.md src/b.txt
+merge-file --no-quiet --no-stdout -p src/a.txt src/a.txt src/a.txt
+merge-file -p --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt
+merge-file --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt
+merge-file --object-id --no-object-id -p src/a.txt README.md src/b.txt
+merge-file -L a -L b -L c -L d src/a.txt README.md src/b.txt
+merge-file src/a.txt README.md
+merge-file nosuch README.md src/b.txt
+merge-file --marker-size=x src/a.txt README.md src/b.txt

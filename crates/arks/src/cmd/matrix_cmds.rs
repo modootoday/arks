@@ -1137,58 +1137,122 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
 
 /// `arks merge-file` — three-way line merge of `<base> <ours> <theirs>` files.
 pub fn cmd_merge_file(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-p", "--stdout", "-q", "--quiet"])?;
-    let to_stdout = args.iter().any(|a| a == "-p" || a == "--stdout");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 3 {
-        return Err(CliError::Usage(
-            "merge-file [-p] <current> <base> <other>".into(),
-        ));
+    use crate::cmd::optparse::{self, Item, Opt};
+    use crate::cmd::plumbing_ext::{MergeFavor, MergeStyle};
+    const SPEC: &[Opt] = &[
+        Opt::flag("stdout").with_short('p'),
+        Opt::flag("object-id"),
+        Opt::flag("diff3"),
+        Opt::flag("zdiff3"),
+        Opt::flag("ours"),
+        Opt::flag("theirs"),
+        Opt::flag("union"),
+        Opt::value("marker-size"),
+        Opt::flag("quiet").with_short('q'),
+        Opt::short_value('L', "L"),
+    ];
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>".into(),
+        )
+    };
+    let items = optparse::parse("merge-file", args, SPEC, optparse::Mode::default())?;
+    let mut style = MergeStyle::Merge;
+    let mut favor = MergeFavor::None;
+    let mut labels: Vec<String> = Vec::new();
+    for it in &items {
+        if let Item::Opt { name, value, neg } = it {
+            match (*name, *neg) {
+                ("diff3", false) => style = MergeStyle::Diff3,
+                ("zdiff3", false) => style = MergeStyle::Zdiff3,
+                ("diff3" | "zdiff3", true) => style = MergeStyle::Merge,
+                ("ours", false) => favor = MergeFavor::Ours,
+                ("theirs", false) => favor = MergeFavor::Theirs,
+                ("union", false) => favor = MergeFavor::Union,
+                ("ours" | "theirs" | "union", true) => favor = MergeFavor::None,
+                ("L", _) => {
+                    if labels.len() == 3 {
+                        return Err(CliError::Exit(
+                            129,
+                            "error: too many labels on the command line".into(),
+                        ));
+                    }
+                    labels.push(value.clone().unwrap_or_default());
+                }
+                _ => {}
+            }
+        }
     }
-    let ours = fs::read_to_string(positional[0].as_str())?;
-    let base = fs::read_to_string(positional[1].as_str())?;
-    let theirs = fs::read_to_string(positional[2].as_str())?;
-    let (merged, conflicts) = merge_lines(&base, &ours, &theirs);
+    let to_stdout = optparse::on(&items, "stdout");
+    let object_id = optparse::on(&items, "object-id");
+    let marker = match optparse::value(&items, "marker-size") {
+        Some(v) => v.parse::<usize>().map_err(|_| {
+            CliError::Exit(
+                129,
+                "error: option `marker-size' expects a numerical value".into(),
+            )
+        })?,
+        None => 7,
+    };
+    let names = optparse::positionals(&items);
+    if names.len() != 3 {
+        return Err(usage());
+    }
+    let mut repo = if object_id { Some(open_repo()?) } else { None };
+    let mut data: Vec<Vec<u8>> = Vec::new();
+    for n in &names {
+        match repo.as_ref() {
+            Some(r) => {
+                let oid = resolve_rev(r, n)
+                    .map_err(|_| CliError::fatal(format!("object '{n}' does not exist")))?;
+                data.push(r.get_object(&oid)?.payload.to_vec());
+            }
+            None => match fs::read(n) {
+                Ok(b) => data.push(b),
+                Err(e) => {
+                    return Err(CliError::Exit(
+                        255,
+                        format!(
+                            "error: Could not stat {n}: {}",
+                            if e.kind() == io::ErrorKind::NotFound {
+                                "No such file or directory".to_string()
+                            } else {
+                                e.to_string()
+                            }
+                        ),
+                    ));
+                }
+            },
+        }
+    }
+    let label = |i: usize| labels.get(i).cloned().unwrap_or_else(|| names[i].clone());
+    let (l0, l1, l2) = (label(0), label(1), label(2));
+    let (merged, conflicts) = crate::cmd::plumbing_ext::merge_three(
+        &data[1],
+        &data[0],
+        &data[2],
+        [&l0, &l1, &l2],
+        style,
+        favor,
+        marker,
+    );
     if to_stdout {
-        print!("{merged}");
+        use std::io::Write;
+        io::stdout().write_all(&merged)?;
+    } else if let Some(r) = repo.as_mut() {
+        let format = r.object_format();
+        let oid = r
+            .store_mut()
+            .put(format, &RawObject::new(ObjectKind::Blob, merged))?;
+        println!("{}", oid.to_hex());
     } else {
-        fs::write(positional[0].as_str(), &merged)?;
+        fs::write(&names[0], &merged)?;
     }
     if conflicts > 0 {
-        if !quiet {
-            eprintln!("{conflicts} conflict(s) during merge-file");
-        }
-        return Err(CliError::Msg(format!("merge-file: {conflicts} conflicts")));
+        return Err(CliError::silent(conflicts.min(127) as u8));
     }
     Ok(())
-}
-
-fn merge_lines(base: &str, ours: &str, theirs: &str) -> (String, usize) {
-    // Minimal LCS-free three-way: if ours==theirs take that; if equals base take other;
-    // else conflict markers. Line-granular whole-file when any side differs.
-    if ours == theirs {
-        return (ours.to_string(), 0);
-    }
-    if ours == base {
-        return (theirs.to_string(), 0);
-    }
-    if theirs == base {
-        return (ours.to_string(), 0);
-    }
-    let mut out = String::new();
-    out.push_str("<<<<<<< ours\n");
-    out.push_str(ours);
-    if !ours.ends_with('\n') {
-        out.push('\n');
-    }
-    out.push_str("=======\n");
-    out.push_str(theirs);
-    if !theirs.ends_with('\n') {
-        out.push('\n');
-    }
-    out.push_str(">>>>>>> theirs\n");
-    (out, 1)
 }
 
 /// `arks merge-tree [--write-tree] [--merge-base=<c>] <branch1> <branch2>` and the
