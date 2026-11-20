@@ -423,23 +423,19 @@ impl<'a> Rewrite<'a> {
         }
         println!();
         let mut sh = self.start_shell()?;
-        // Progress as observed from the pin: whole wall-clock seconds; the
-        // count and estimate are re-sampled only after `next_sample` commits
-        // (every commit while no second has passed), so a line can repeat
-        // the previous sample.
-        let epoch = || {
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_or(0, |d| d.as_secs())
-        };
-        let start = epoch();
+        // Progress as observed from the pin: whole elapsed seconds; the count
+        // and estimate are re-sampled only after `next_sample` commits (every
+        // commit while no second has passed), so a line can repeat the
+        // previous sample. The seconds are elapsed time (not epoch-second
+        // boundaries) so a sub-second run always reports 0.
+        let start = std::time::Instant::now();
         let n = list.len() as u64;
         let (mut next_sample, mut shown, mut secs, mut remaining) = (0u64, 0u64, 0u64, 0u64);
         for (i, w) in list.iter().enumerate() {
             let count = i as u64 + 1;
             if count > next_sample {
                 shown = count;
-                secs = epoch().saturating_sub(start);
+                secs = start.elapsed().as_secs();
                 remaining = (n - count) * secs / count;
                 next_sample = ((secs + 1) * count)
                     .checked_div(secs)
