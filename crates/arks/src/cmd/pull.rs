@@ -101,6 +101,15 @@ const MERGE_KEYS: &[&str] = &[
     "allow-unrelated-histories",
 ];
 
+/// Merge options that leave a fast-forward a fast-forward.
+const FF_SAFE_KEYS: &[&str] = &[
+    "commit",
+    "strategy",
+    "strategy-option",
+    "gpg-sign",
+    "allow-unrelated-histories",
+];
+
 /// Re-spell one parsed occurrence as a long option.
 fn respell(e: &OptEvent) -> String {
     let key = if e.key.len() == 1 {
@@ -353,10 +362,15 @@ fn merge_heads(
     let quiet = p.on("quiet");
     let stat =
         !(quiet || p.on("n") || p.flag("stat") == Some(false) || p.flag("summary") == Some(false));
-    let passthrough = p
-        .events
-        .iter()
-        .any(|e| MERGE_KEYS.contains(&e.key) && e.key != "edit");
+    // A fast-forward needs no merge machinery: `--no-commit`, a strategy,
+    // signing and `--allow-unrelated-histories` do not stop it (git-merge
+    // OPTIONS); `--squash` fast-forwards the index and work tree only.
+    let squash = p.flag("squash") == Some(true);
+    let passthrough = p.events.iter().any(|e| {
+        MERGE_KEYS.contains(&e.key)
+            && !matches!(e.key, "edit" | "squash")
+            && !(FF_SAFE_KEYS.contains(&e.key))
+    });
     if let (Some(h), [one], false, false) = (head, heads, no_ff, passthrough) {
         if h == one.oid || is_ancestor(repo, &one.oid, &h)? {
             if !quiet {
@@ -366,6 +380,9 @@ fn merge_heads(
         }
         if is_ancestor(repo, &h, &one.oid)? {
             let label = format!("pull {}", p.args.join(" "));
+            if squash {
+                return squash_fast_forward(repo, &h, &one.oid, quiet, stat);
+            }
             return fast_forward(repo, &h, &one.oid, label.trim_end(), quiet, stat);
         }
     }
@@ -430,6 +447,53 @@ fn fast_forward(
         crate::cmd::shared::abbrev_hex(repo, theirs, 7)
     );
     println!("Fast-forward");
+    if stat {
+        print_diffstat(repo, head, theirs)?;
+    }
+    Ok(())
+}
+
+/// `pull --squash` on a fast-forward: index and work tree move to `theirs`,
+/// `HEAD` stays, and SQUASH_MSG is left for the next commit.
+fn squash_fast_forward(
+    repo: &arks_repo::Repository,
+    head: &Oid,
+    theirs: &Oid,
+    quiet: bool,
+    stat: bool,
+) -> CliResult<()> {
+    let work = crate::util::work_tree(repo)?;
+    crate::cmd::switch_tree::two_way_switch(repo, &work, Some(head), theirs)
+        .map_err(|e| CliError::Msg(e.to_string().replace("checkout", "merge")))?;
+    let mut msg = String::from("Squashed commit of the following:\n");
+    let mut cur = Some(*theirs);
+    while let Some(c) = cur.filter(|c| c != head) {
+        let obj = repo.get_object(&c)?;
+        let commit =
+            arks_object::Commit::decode(&obj.payload).map_err(|e| CliError::Msg(e.to_string()))?;
+        msg.push_str(&format!(
+            "\ncommit {}\nAuthor: {} <{}>\nDate:   {}\n\n",
+            c.to_hex(),
+            commit.author.name,
+            commit.author.email,
+            crate::cmd::log_format::DateMode::Default.format(&commit.author)
+        ));
+        for line in commit.message.trim_end_matches('\n').lines() {
+            msg.push_str(&format!("    {line}\n"));
+        }
+        cur = commit.parents.first().copied();
+    }
+    std::fs::write(repo.git_dir().join("SQUASH_MSG"), msg)?;
+    if quiet {
+        return Ok(());
+    }
+    println!(
+        "Updating {}..{}",
+        crate::cmd::shared::abbrev_hex(repo, head, 7),
+        crate::cmd::shared::abbrev_hex(repo, theirs, 7)
+    );
+    println!("Fast-forward");
+    println!("Squash commit -- not updating HEAD");
     if stat {
         print_diffstat(repo, head, theirs)?;
     }
