@@ -150,38 +150,146 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_hash_object(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-w"])?;
-    let write = args.iter().any(|a| a == "-w");
-    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    let payload = if paths.is_empty() {
+    // `-t <type>`, `-w`, `--stdin`, `--stdin-paths`, `--[no-]filters`,
+    // `--path <file>`, `--literally`. Non-blob objects must parse unless
+    // `--literally`. Cite: https://git-scm.com/docs/git-hash-object
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::short_value('t', "t"),
+        Opt::short('w', "w"),
+        Opt::flag("stdin"),
+        Opt::flag("stdin-paths"),
+        Opt::flag("filters"),
+        Opt::flag("literally"),
+        Opt::value("path"),
+    ];
+    let items = optparse::parse("hash-object", args, SPEC, optparse::Mode::default())?;
+    let usage = |m: &str| {
+        CliError::Exit(
+            129,
+            format!(
+                "error: {m}\nusage: git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n                       [--stdin [--literally]] [--] <file>..."
+            ),
+        )
+    };
+    let files = optparse::positionals(&items);
+    let write = optparse::on(&items, "w");
+    let stdin = optparse::on(&items, "stdin");
+    let stdin_paths = optparse::on(&items, "stdin-paths");
+    let no_filters = optparse::flag(&items, "filters") == Some(false);
+    let literally = optparse::on(&items, "literally");
+    let path_opt = optparse::value(&items, "path");
+    let ty = optparse::value(&items, "t").unwrap_or_else(|| "blob".into());
+    if stdin_paths {
+        if stdin {
+            return Err(usage("Can't use --stdin-paths with --stdin"));
+        }
+        if !files.is_empty() {
+            return Err(usage("Can't specify files with --stdin-paths"));
+        }
+        if path_opt.is_some() {
+            return Err(usage("Can't use --stdin-paths with --path"));
+        }
+    }
+    if path_opt.is_some() && no_filters {
+        return Err(usage("Can't use --path with --no-filters"));
+    }
+    let kind = match ObjectKind::parse(&ty) {
+        Ok(k) => Some(k),
+        Err(_) if literally => None,
+        Err(_) => return Err(CliError::fatal(format!("invalid object type \"{ty}\""))),
+    };
+    let repo = open_repo().ok();
+    let format = repo.as_ref().map(|r| r.object_format()).unwrap_or(FORMAT);
+    let mut repo = repo;
+    let mut inputs: Vec<(Vec<u8>, Option<String>)> = Vec::new();
+    if stdin {
         let mut buf = Vec::new();
         io::stdin().read_to_end(&mut buf)?;
-        buf
-    } else if paths.len() == 1 {
-        fs::read(paths[0].as_str())?
-    } else {
-        return Err(CliError::Usage(
-            "hash-object: at most one path (or stdin)".into(),
-        ));
+        inputs.push((buf, path_opt.clone()));
+    }
+    let mut names = files.clone();
+    if stdin_paths {
+        let mut s = String::new();
+        io::stdin().read_to_string(&mut s)?;
+        names.extend(s.lines().map(str::to_string));
+    }
+    let mut out = String::new();
+    let mut hash_one = |payload: Vec<u8>, filter_path: Option<String>| -> CliResult<()> {
+        let mut payload = payload;
+        if kind == Some(ObjectKind::Blob) && !no_filters {
+            if let (Some(p), Some(r)) = (filter_path.as_deref(), repo.as_ref()) {
+                if let Some(wt) = r.work_tree() {
+                    if let Some(f) = apply_clean_filter(wt, p, &payload)? {
+                        payload = f;
+                    }
+                }
+            }
+        }
+        let oid = match kind {
+            Some(k) => {
+                if !literally {
+                    crate::cmd::plumbing_ext::validate_object(k, &payload, format)?;
+                }
+                let obj = RawObject::new(k, payload);
+                if write {
+                    let r = repo
+                        .as_mut()
+                        .ok_or_else(|| CliError::fatal("not a git repository"))?;
+                    r.store_mut().put(format, &obj)?
+                } else {
+                    obj.oid(format)?
+                }
+            }
+            None => {
+                // `--literally` with an unknown type: hash `<type> <len>\0<payload>`.
+                let mut raw = format!("{ty} {}\0", payload.len()).into_bytes();
+                raw.extend_from_slice(&payload);
+                let digest = arks_hash::hash_bytes(format, &raw)
+                    .map_err(|e| CliError::Msg(e.to_string()))?;
+                let hex: String = digest
+                    .as_bytes()
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect();
+                if write {
+                    return Err(CliError::fatal(format!(
+                        "writing object of unknown type '{ty}' is not supported"
+                    )));
+                }
+                out.push_str(&hex);
+                out.push('\n');
+                return Ok(());
+            }
+        };
+        out.push_str(&oid.to_hex());
+        out.push('\n');
+        Ok(())
     };
-    let obj = RawObject::new(ObjectKind::Blob, payload);
-    let format = open_repo().map(|r| r.object_format()).unwrap_or(FORMAT);
-    let oid = if write {
-        let mut repo = open_repo()?;
-        // OBJ-001 (M20 Cx-5): identical concurrent loose creates are idempotent; honesty note.
-        let format = repo.object_format();
-        let oid = repo.store_mut().put(format, &obj)?;
+    for (payload, p) in inputs {
+        hash_one(payload, p)?;
+    }
+    for name in &names {
+        let payload = fs::read(name).map_err(|e| {
+            CliError::fatal(format!(
+                "could not open '{name}' for reading: {}",
+                if e.kind() == io::ErrorKind::NotFound {
+                    "No such file or directory".to_string()
+                } else {
+                    e.to_string()
+                }
+            ))
+        })?;
+        let fp = path_opt.clone().or_else(|| Some(name.clone()));
+        hash_one(payload, fp)?;
+    }
+    if write {
+        // OBJ-001 / OBJ-008 (M20 Cx-5): identical concurrent loose creates are idempotent.
         eprintln!(
             "note: OBJ-001 — concurrent identical loose object creates are content-addressed/idempotent; do not invent unlock-by-delete under live writers"
         );
-        eprintln!(
-            "note: OBJ-008 — concurrent hash-object of large inputs saturates CPU/temp; serialize heavy hash jobs"
-        );
-        oid
-    } else {
-        obj.oid(format)?
-    };
-    println!("{}", oid.to_hex());
+    }
+    print!("{out}");
     Ok(())
 }
 
@@ -312,36 +420,47 @@ pub(crate) fn run_claimed_hooks(
 }
 
 pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
-    // `-m <reason>`, `--no-deref`, `--create-reflog`; `<new>`/`<old>` are any
-    // revision (get_oid), not only full hex.
+    // `-m <reason>`, `-d`, `--[no-]deref`, `--[no-]create-reflog`, `--stdin`
+    // transactions (`update`/`create`/`delete`/`verify`/`option`/`start`/
+    // `prepare`/`commit`/`abort`) with `-z`. `<new>`/`<old>` are revisions;
+    // an all-zero `<old>` requires the ref to be absent.
     // Cite: https://git-scm.com/docs/git-update-ref
-    let mut delete = false;
-    let mut no_verify = false;
-    let mut no_deref = false;
-    let mut message: Option<String> = None;
-    let mut positional: Vec<&String> = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        let a = &args[i];
-        i += 1;
-        match a.as_str() {
-            "-d" => delete = true,
-            "--no-verify" => no_verify = true,
-            "--no-deref" => no_deref = true,
-            "--create-reflog" => {}
-            "-m" => {
-                let v = args
-                    .get(i)
-                    .ok_or_else(|| CliError::fatal("switch `m' requires a value"))?;
-                i += 1;
-                message = Some(v.clone());
-            }
-            _ if a.starts_with("-m") && a.len() > 2 => message = Some(a[2..].to_string()),
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => positional.push(a),
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::short_value('m', "m"),
+        Opt::short('d', "d"),
+        Opt::flag("deref"),
+        Opt::short('z', "z"),
+        Opt::flag("stdin"),
+        Opt::flag("create-reflog"),
+        Opt::bare("no-verify"),
+    ];
+    let items = optparse::parse("update-ref", args, SPEC, optparse::Mode::default())?;
+    let positional = optparse::positionals(&items);
+    let delete = optparse::on(&items, "d");
+    let no_verify = optparse::on(&items, "no-verify");
+    let no_deref = optparse::flag(&items, "deref") == Some(false);
+    let message = optparse::value(&items, "m");
+    let create_reflog = optparse::on(&items, "create-reflog");
+    let nul = optparse::on(&items, "z");
+    let stdin = optparse::on(&items, "stdin");
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git update-ref [<options>] -d <refname> [<old-val>]\n   or: git update-ref [<options>]    <refname> <new-val> [<old-val>]\n   or: git update-ref [<options>] --stdin [-z]".into(),
+        )
+    };
+    if message.as_deref() == Some("") {
+        return Err(CliError::fatal(
+            "Refusing to perform update with empty message.",
+        ));
+    }
+    if stdin {
+        if delete || !positional.is_empty() {
+            return Err(usage());
         }
+    } else if nul {
+        return Err(usage());
     }
     let mut repo = open_repo()?;
     // CORR-003 (M20 Cx-7): replace-refs concurrent honesty — refuse under replace.lock.
@@ -373,74 +492,62 @@ pub fn cmd_update_ref(args: &[String]) -> CliResult<()> {
         )));
     }
     run_claimed_hooks(&repo, no_verify, &["reference-transaction", "update"], None)?;
-    let rev = |r: &str| -> CliResult<Oid> {
-        resolve_rev(&repo, r).map_err(|_| CliError::fatal(format!("{r}: not a valid SHA1")))
+    let opts = crate::cmd::plumbing_ext::RefUpdateOpts {
+        no_deref,
+        create_reflog,
+        message: message.clone(),
     };
-    let (name, new, old) = if delete {
-        let name = positional
-            .first()
-            .ok_or_else(|| CliError::Usage("update-ref -d <ref> [<old>]".into()))?;
-        (
-            name.as_str(),
-            None,
-            positional.get(1).map(|s| rev(s)).transpose()?,
-        )
+    if stdin {
+        return crate::cmd::plumbing_ext::update_ref_stdin(&mut repo, nul, &opts);
+    }
+    let rev = |repo: &Repository, r: &str| -> CliResult<Option<Oid>> {
+        if !r.is_empty() && r.bytes().all(|b| b == b'0') && r.len() >= 40 {
+            return Ok(None);
+        }
+        resolve_rev(repo, r)
+            .map(Some)
+            .map_err(|_| CliError::fatal(format!("{r}: not a valid SHA1")))
+    };
+    let op = if delete {
+        if positional.is_empty() || positional.len() > 2 {
+            return Err(usage());
+        }
+        crate::cmd::plumbing_ext::RefOp {
+            name: positional[0].clone(),
+            new: None,
+            old: positional.get(1).map(|s| rev(&repo, s)).transpose()?,
+            no_deref,
+            verify: false,
+        }
     } else {
-        if positional.len() < 2 {
-            return Err(CliError::Usage("update-ref <ref> <new> [<old>]".into()));
+        if positional.len() < 2 || positional.len() > 3 {
+            return Err(usage());
         }
-        let old = positional.get(2).map(|s| rev(s)).transpose()?;
-        (positional[0].as_str(), Some(rev(positional[1])?), old)
+        let new = rev(&repo, &positional[1])?;
+        crate::cmd::plumbing_ext::RefOp {
+            name: positional[0].clone(),
+            new: Some(new),
+            old: positional.get(2).map(|s| rev(&repo, s)).transpose()?,
+            no_deref,
+            verify: false,
+        }
     };
-    // Follow a symbolic ref (HEAD -> refs/heads/main) unless --no-deref.
-    let mut target = name.to_string();
-    if !no_deref {
-        for _ in 0..5 {
-            match repo.refs().read(&target) {
-                Ok(RefTarget::Symbolic(next)) => target = next,
-                _ => break,
+    let target = op.target(&repo);
+    if let Err(e) = op.check(&repo, &target) {
+        return Err(match e {
+            crate::cmd::plumbing_ext::RefCheck::Missing(msg)
+            | crate::cmd::plumbing_ext::RefCheck::Mismatch(msg)
+                if delete =>
+            {
+                CliError::Exit(1, format!("error: {msg}"))
             }
-        }
-    }
-    let current = repo.refs().resolve(&target).ok();
-    if let (Some(want), Some(have)) = (old.as_ref(), current.as_ref())
-        && want != have
-    {
-        return Err(CliError::fatal(format!(
-            "update_ref failed for ref '{target}': cannot lock ref '{target}': is at {} but expected {}",
-            have.to_hex(),
-            want.to_hex()
-        )));
-    }
-    if current.is_none() && (old.is_some() || delete) {
-        let msg = format!("cannot lock ref '{target}': unable to resolve reference '{target}'");
-        return Err(if delete {
-            CliError::Exit(1, format!("error: {msg}"))
-        } else {
-            CliError::fatal(format!("update_ref failed for ref '{target}': {msg}"))
+            crate::cmd::plumbing_ext::RefCheck::Missing(msg)
+            | crate::cmd::plumbing_ext::RefCheck::Mismatch(msg) => {
+                CliError::fatal(format!("update_ref failed for ref '{target}': {msg}"))
+            }
         });
     }
-    match new {
-        None => repo.refs_mut().delete(&target, old.as_ref())?,
-        Some(new) => {
-            repo.refs_mut().update(&target, &new, old.as_ref())?;
-            // core.logAllRefUpdates default (non-bare): heads, remotes, notes, HEAD.
-            let logged = |r: &str| {
-                r == "HEAD"
-                    || ["refs/heads/", "refs/remotes/", "refs/notes/"]
-                        .iter()
-                        .any(|p| r.starts_with(p))
-            };
-            let msg = message.as_deref().unwrap_or("");
-            if logged(&target) {
-                crate::reflog::append_reflog(&repo, &target, current.as_ref(), &new, msg)?;
-            }
-            if target != name && name == "HEAD" {
-                crate::reflog::append_reflog(&repo, "HEAD", current.as_ref(), &new, msg)?;
-            }
-        }
-    }
-    Ok(())
+    op.apply(&mut repo, &target, &opts)
 }
 
 pub fn cmd_rev_parse(args: &[String]) -> CliResult<()> {
@@ -1924,7 +2031,11 @@ fn run_editor_cmd(editor: &str, path: &Path) -> CliResult<()> {
 }
 
 /// FS6: run `filter.<name>.clean` when `.gitattributes` assigns `filter=<name>` (LFS closest).
-fn apply_clean_filter(work: &Path, rel: &str, payload: &[u8]) -> CliResult<Option<Vec<u8>>> {
+pub(crate) fn apply_clean_filter(
+    work: &Path,
+    rel: &str,
+    payload: &[u8],
+) -> CliResult<Option<Vec<u8>>> {
     let Some(name) = attribute_filter_name(work, rel)? else {
         return Ok(None);
     };

@@ -43,6 +43,7 @@ pub mod patch;
 pub mod plumbing;
 pub mod pull;
 pub mod push;
+pub mod plumbing_ext;
 pub mod range_diff;
 pub mod raw_diff;
 pub mod remote;

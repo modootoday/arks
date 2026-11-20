@@ -168,3 +168,39 @@ check-ignore -q -v debug.log
 check-ignore -z debug.log
 check-ignore --stdin debug.log
 check-ignore
+# --- hash-object ---
+hash-object README.md
+hash-object README.md src/a.txt
+hash-object -w README.md
+hash-object -t blob src/b.txt
+hash-object -t tree README.md
+hash-object -t foo README.md
+hash-object -t foo --literally README.md
+hash-object --stdin
+hash-object --stdin-paths
+hash-object --stdin --stdin-paths
+hash-object --path=x.txt README.md
+hash-object --no-filters README.md
+hash-object --no-filters --path=x README.md
+hash-object nosuch
+hash-object
+# --- update-ref ---
+update-ref refs/heads/new HEAD
+update-ref refs/heads/new2 HEAD 0000000000000000000000000000000000000000
+update-ref refs/heads/main HEAD~1 0000000000000000000000000000000000000000
+update-ref refs/heads/main HEAD~1 HEAD
+update-ref refs/heads/main HEAD~1 HEAD~2
+update-ref -d refs/heads/feature
+update-ref -d refs/heads/nope
+update-ref -d refs/heads/main HEAD~3
+update-ref -m msg refs/heads/x HEAD
+update-ref --create-reflog refs/tags/tl HEAD
+update-ref --no-create-reflog refs/tags/tn HEAD
+update-ref --no-deref HEAD HEAD~1
+update-ref --deref HEAD HEAD~1
+update-ref -m '' refs/heads/y HEAD
+update-ref --stdin
+update-ref -z --stdin
+update-ref -z refs/heads/q HEAD
+update-ref
+update-ref -d
