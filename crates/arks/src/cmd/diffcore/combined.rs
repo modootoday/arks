@@ -100,6 +100,7 @@ fn hex(c: &Content<'_>, o: &DiffOptions, s: &Option<Side>, raw: bool) -> String 
 }
 
 /// Emit combined output for `entries`.
+#[allow(clippy::too_many_arguments)]
 pub fn emit(
     w: &mut impl Write,
     c: &Content<'_>,

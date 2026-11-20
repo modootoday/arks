@@ -143,10 +143,7 @@ fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
 /// `3.days.ago`, `yesterday`, `now`). Times are UTC.
 fn approxidate(v: &str, now: i64) -> Option<i64> {
     let v = v.trim().to_ascii_lowercase();
-    let words: Vec<&str> = v
-        .split(|c: char| c == '.' || c == ' ' || c == ',')
-        .filter(|w| !w.is_empty())
-        .collect();
+    let words: Vec<&str> = v.split(['.', ' ', ',']).filter(|w| !w.is_empty()).collect();
     let unit = |w: &str| -> Option<i64> {
         let w = w.strip_suffix('s').unwrap_or(w);
         Some(match w {
