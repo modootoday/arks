@@ -1,7 +1,7 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
-use crate::cmd::branch::restore_paths;
-use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev};
+use crate::cmd::branch::restore_paths_mode;
+use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev, tree_blob_map};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
@@ -15,66 +15,115 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 pub fn cmd_restore(args: &[String]) -> CliResult<()> {
-    // Cite: https://git-scm.com/docs/git-restore (`-s`/`--source`, `-S`/`--staged`,
-    // `-W`/`--worktree`, `--` separator).
-    let args = crate::util::split_short_bundles(args, "SWq", "s");
-    let mut staged = false;
-    let mut wt_flag = false;
-    let mut source: Option<String> = None;
-    let mut paths = Vec::new();
-    let mut i = 0;
-    let mut dashdash = false;
-    while i < args.len() {
-        let a = &args[i];
-        i += 1;
-        if dashdash || !a.starts_with('-') || a == "-" {
-            paths.push(a);
-            continue;
-        }
-        match a.as_str() {
-            "--" => dashdash = true,
-            "--staged" | "-S" => staged = true,
-            "--worktree" | "-W" => wt_flag = true,
-            "-q" | "--quiet" => {}
-            "--source" | "-s" => {
-                source = Some(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("restore: --source <tree-ish>".into()))?
-                        .clone(),
-                );
-                i += 1;
-            }
-            x => {
-                if let Some(v) = x.strip_prefix("--source=") {
-                    source = Some(v.to_string());
-                } else {
-                    return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
-                }
-            }
+    // Every option of `git restore -h`. Cite: https://git-scm.com/docs/git-restore
+    use crate::cmd::opt_parse::{Mode, parse, read_pathspec_file};
+    let p = parse(
+        "restore",
+        args,
+        crate::cmd::porcelain_opts::RESTORE,
+        Mode::default(),
+    )?;
+    if let Some(style) = p.value("conflict") {
+        if !matches!(style.as_str(), "merge" | "diff3" | "zdiff3") {
+            return Err(CliError::fatal(format!("unknown conflict style '{style}'")));
         }
     }
-    let worktree = wt_flag || !staged;
+    let staged = p.on("staged");
+    let worktree = p.on("worktree") || !staged;
+    let source = p.value("source");
+    let mut paths = p.args();
+    paths.extend(p.after_dashdash());
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !paths.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
+        }
+        paths = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
+    }
+    if p.on("patch") {
+        let mut a = vec!["-p".to_string()];
+        a.extend(paths);
+        return crate::cmd::interactive_patch::cmd_checkout_patch(&a);
+    }
     if paths.is_empty() {
-        return Err(CliError::Usage("restore: path required".into()));
+        return Err(CliError::fatal("you must specify path(s) to restore"));
     }
-    restore_paths(&paths, staged, worktree, source.as_deref())
+    let stage = if p.on("ours") {
+        Some(2)
+    } else if p.on("theirs") {
+        Some(3)
+    } else {
+        None
+    };
+    if (stage.is_some() || p.on("merge")) && staged {
+        return Err(CliError::fatal(
+            "'--merge', '--ours' and '--theirs' cannot be used with '--staged'",
+        ));
+    }
+    let refs: Vec<&String> = paths.iter().collect();
+    if let Some(st) = stage {
+        if crate::cmd::branch::checkout_stage_paths(&refs, st)? {
+            return Ok(());
+        }
+    }
+    // `--overlay` keeps paths missing from the source; restore defaults to no overlay.
+    let overlay = p.on("overlay");
+    restore_paths_mode(&refs, staged, worktree, source.as_deref(), overlay)
 }
 
 pub fn cmd_reset(args: &[String]) -> CliResult<()> {
-    // git-reset: `[--soft|--mixed|--hard] [<commit>]` and `[<tree-ish>] [--] <pathspec>...`.
+    // git-reset: `[--soft|--mixed|--hard|--merge|--keep] [<commit>]` and
+    // `[<tree-ish>] [--] <pathspec>...`; every option of `git reset -h`.
     // Cloud drop-in §O: pathspec form, detached HEAD, tree modes, git output lines.
-    let (opts, mut paths) = split_dashdash(args);
-    refuse_unknown_flags(&opts, &["--soft", "--mixed", "--hard", "-q", "--quiet"])?;
-    let quiet = opts.iter().any(|a| a == "-q" || a == "--quiet");
-    let mode = if opts.iter().any(|a| a == "--soft") {
-        "soft"
-    } else if opts.iter().any(|a| a == "--hard") {
-        "hard"
-    } else {
-        "mixed"
-    };
+    // Cite: https://git-scm.com/docs/git-reset
+    use crate::cmd::opt_parse::{Item, Mode, parse, read_pathspec_file};
+    let p = parse(
+        "reset",
+        args,
+        crate::cmd::porcelain_opts::RESET,
+        Mode::default(),
+    )?;
+    let quiet = p.on("quiet");
+    let mut mode = "mixed";
+    for it in &p.items {
+        if let Item::Opt {
+            key, neg: false, ..
+        } = it
+        {
+            if matches!(*key, "soft" | "mixed" | "hard" | "merge" | "keep") {
+                mode = key;
+            }
+        }
+    }
+    if p.on("patch") {
+        let mut a = vec!["-p".to_string()];
+        a.extend(p.args());
+        a.extend(p.after_dashdash());
+        return crate::cmd::interactive_patch::cmd_reset_patch(&a);
+    }
+    let intent = p.on("intent-to-add");
+    let quiet = quiet || p.on("no-refresh");
+    let opts = p.args();
+    let mut paths = p.after_dashdash();
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !paths.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
+        }
+        paths = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
+    }
     let mut repo = open_repo()?;
-    let positional: Vec<&String> = opts.iter().filter(|a| !a.starts_with('-')).collect();
+    let positional: Vec<&String> = opts.iter().collect();
     let mut rev = "HEAD".to_string();
     for (i, p) in positional.iter().enumerate() {
         if i == 0 && resolve_rev(&repo, p).is_ok() {
@@ -103,15 +152,17 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         }
         let specs: Vec<String> = paths.iter().map(|p| pathspec(&work, p)).collect();
         let mut index = read_index(&repo)?;
-        let mut kept: Vec<IndexEntry> = index
+        let (mut kept, dropped): (Vec<IndexEntry>, Vec<IndexEntry>) = index
             .entries
             .drain(..)
-            .filter(|e| !path_matches(&e.path, &specs))
-            .collect();
+            .partition(|e| !path_matches(&e.path, &specs));
         for (path, f) in &target_files {
             if path_matches(path, &specs) {
                 kept.push(index_entry_for(&repo, path, f.oid, f.mode)?);
             }
+        }
+        if intent {
+            kept.extend(intent_entries(&repo, &dropped, &target_files)?);
         }
         sort_entries(&mut kept);
         index.entries = kept;
@@ -122,9 +173,11 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         }
         return Ok(());
     }
-    let prior_paths: Vec<String> = read_index(&repo)
-        .map(|i| i.entries.into_iter().map(|e| e.path).collect())
-        .unwrap_or_default();
+    if mode == "keep" || mode == "merge" {
+        keep_or_merge_check(&repo, &work, &target, mode == "keep", &rev)?;
+    }
+    let prior_index = read_index(&repo).map(|i| i.entries).unwrap_or_default();
+    let prior_paths: Vec<String> = prior_index.iter().map(|e| e.path.clone()).collect();
     let old = repo.head_oid().ok();
     match repo.head_target()? {
         RefTarget::Symbolic(name) => {
@@ -151,6 +204,14 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
     if mode == "soft" {
         return Ok(());
     }
+    if mode == "keep" {
+        crate::cmd::switch_tree::two_way_switch(&repo, &work, old.as_ref(), &target)?;
+        return Ok(());
+    }
+    if mode == "merge" {
+        merge_reset_tree(&repo, &work, &target)?;
+        return Ok(());
+    }
     if mode == "hard" {
         reset_tree_paths(&repo, &work, &target, &prior_paths)?;
         if !quiet {
@@ -166,11 +227,19 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
     for (path, f) in &target_files {
         entries.push(index_entry_for(&repo, path, f.oid, f.mode)?);
     }
+    if intent {
+        entries.extend(intent_entries(&repo, &prior_index, &target_files)?);
+    }
     sort_entries(&mut entries);
+    let version = if entries.iter().any(|e| e.flags_extended.is_some()) {
+        3
+    } else {
+        2
+    };
     write_index(
         &repo,
         &Index {
-            version: 2,
+            version,
             entries,
             extensions: Vec::new(),
         },
@@ -179,6 +248,159 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         print_unstaged(&repo, &work)?;
     }
     Ok(())
+}
+
+/// `reset -N`: paths dropped from the index by the reset stay as
+/// intent-to-add entries (empty blob, extended flag).
+fn intent_entries(
+    repo: &Repository,
+    dropped: &[IndexEntry],
+    target: &HashMap<String, crate::cmd::switch_tree::TreeFile>,
+) -> CliResult<Vec<IndexEntry>> {
+    let empty = RawObject::new(ObjectKind::Blob, Vec::new()).oid(repo.object_format())?;
+    let mut out: Vec<IndexEntry> = Vec::new();
+    for e in dropped.iter().filter(|e| e.stage() == 0) {
+        if target.contains_key(&e.path) {
+            continue;
+        }
+        let mut n = e.clone();
+        n.oid = empty;
+        n.size = 0;
+        n.flags = (e.path.len().min(0x0fff)) as u16 | arks_index::CE_EXTENDED;
+        n.flags_extended = Some(crate::cmd::core::INTENT_TO_ADD);
+        out.push(n);
+    }
+    Ok(out)
+}
+
+/// `reset --keep` / `--merge` refuse (changing nothing) when a path the reset
+/// rewrites has local changes: stat-dirty index entries are "not uptodate",
+/// staged changes would be overwritten (`--keep`).
+fn keep_or_merge_check(
+    repo: &Repository,
+    work: &Path,
+    target: &Oid,
+    keep: bool,
+    rev: &str,
+) -> CliResult<()> {
+    let head = match repo.head_oid() {
+        Ok(h) => crate::cmd::switch_tree::commit_files(repo, &h)?,
+        Err(_) => HashMap::new(),
+    };
+    let tgt = crate::cmd::switch_tree::commit_files(repo, target)?;
+    let index = read_index(repo)?;
+    let idx: HashMap<&str, &IndexEntry> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.as_str(), e))
+        .collect();
+    let mut paths: Vec<&String> = head.keys().chain(tgt.keys()).collect();
+    paths.sort();
+    paths.dedup();
+    let fail = |p: &str, why: &str| {
+        CliError::Exit(
+            128,
+            format!(
+                "error: Entry '{p}' {why}. Cannot merge.\nfatal: Could not reset index file to revision '{rev}'."
+            ),
+        )
+    };
+    for p in paths {
+        let (h, t) = (head.get(p).map(|f| f.oid), tgt.get(p).map(|f| f.oid));
+        let i = idx.get(p.as_str()).map(|e| e.oid);
+        let rewrites = if keep { h != t } else { i != t };
+        if !rewrites {
+            continue;
+        }
+        if let Some(e) = idx.get(p.as_str()) {
+            let clean = fs::symlink_metadata(work.join(p))
+                .map(|m| strict_stat_matches(e, &m))
+                .unwrap_or(false);
+            if !clean {
+                return Err(fail(p, "not uptodate"));
+            }
+        }
+        if keep && i != h {
+            return Err(fail(p, "would be overwritten by merge"));
+        }
+    }
+    Ok(())
+}
+
+/// git's default stat comparison (core.trustctime, core.checkStat=default):
+/// size, mtime, ctime, inode, device, owner and file mode.
+fn strict_stat_matches(e: &IndexEntry, meta: &fs::Metadata) -> bool {
+    let fresh = stat_entry(&e.path, e.oid, meta);
+    (
+        fresh.size,
+        fresh.mtime_sec,
+        fresh.mtime_nsec,
+        fresh.ctime_sec,
+        fresh.ctime_nsec,
+        fresh.ino,
+        fresh.dev,
+        fresh.uid,
+        fresh.gid,
+    ) == (
+        e.size,
+        e.mtime_sec,
+        e.mtime_nsec,
+        e.ctime_sec,
+        e.ctime_nsec,
+        e.ino,
+        e.dev,
+        e.uid,
+        e.gid,
+    ) && (fresh.mode == e.mode || e.mode == 0o120000)
+}
+
+/// The tree half of `reset --merge`: the index becomes `target`; working-tree
+/// files are rewritten only where the index and `target` differ.
+fn merge_reset_tree(repo: &Repository, work: &Path, target: &Oid) -> CliResult<()> {
+    let tgt = crate::cmd::switch_tree::commit_files(repo, target)?;
+    let index = read_index(repo)?;
+    let idx: HashMap<String, IndexEntry> = index
+        .entries
+        .into_iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.clone(), e))
+        .collect();
+    let mut entries = Vec::new();
+    for (p, e) in &idx {
+        if !tgt.contains_key(p) {
+            let abs = work.join(p);
+            if abs.is_file() || abs.is_symlink() {
+                fs::remove_file(&abs)?;
+            }
+            let _ = e;
+        }
+    }
+    for (p, f) in &tgt {
+        match idx.get(p) {
+            Some(e) if e.oid == f.oid => entries.push(e.clone()),
+            _ => {
+                let abs = work.join(p);
+                if let Some(parent) = abs.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+                fs::write(&abs, repo.get_object(&f.oid)?.payload)?;
+                let meta = fs::metadata(&abs)?;
+                let mut e = stat_entry(p, f.oid, &meta);
+                e.mode = f.mode;
+                entries.push(e);
+            }
+        }
+    }
+    sort_entries(&mut entries);
+    write_index(
+        repo,
+        &Index {
+            version: 2,
+            entries,
+            extensions: Vec::new(),
+        },
+    )
 }
 
 /// Make the index and working tree match `target` (the tree half of
@@ -283,6 +505,12 @@ fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
     let mut lines = Vec::new();
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
         let abs = work.join(&e.path);
+        if e.flags_extended
+            .is_some_and(|f| f & crate::cmd::core::INTENT_TO_ADD != 0)
+        {
+            lines.push(format!("A\t{}", e.path));
+            continue;
+        }
         match fs::metadata(&abs) {
             Err(_) => lines.push(format!("D\t{}", e.path)),
             Ok(m) => {
