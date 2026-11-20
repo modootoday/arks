@@ -96,23 +96,36 @@ fn reachable(repo: &Repository, commit: &Oid, pos: &HashMap<Oid, usize>) -> Opti
 }
 
 /// The `.bitmap` bytes for the pack described by `index` (`kinds` gives
-/// each idx entry's object type).
+/// each idx entry's object type); bits follow pack (offset) order.
 pub(crate) fn encode(
     repo: &Repository,
     index: &PackIndex,
     kinds: &[ObjectKind],
 ) -> CliResult<Vec<u8>> {
-    // Pack order positions.
     let mut by_offset: Vec<usize> = (0..index.entries.len()).collect();
     by_offset.sort_by_key(|i| index.entries[*i].offset);
+    let order: Vec<(Oid, ObjectKind, usize)> = by_offset
+        .iter()
+        .map(|&i| (index.entries[i].oid, kinds[i], i))
+        .collect();
+    encode_ordered(repo, &order, &index.pack_checksum)
+}
+
+/// A bitmap over `order` (bit position = place in `order`); each element is
+/// (object, type, index position written for a selected commit), and
+/// `checksum` is the pack's (or multi-pack-index's) trailer.
+pub(crate) fn encode_ordered(
+    repo: &Repository,
+    order: &[(Oid, ObjectKind, usize)],
+    checksum: &[u8],
+) -> CliResult<Vec<u8>> {
     let mut pos: HashMap<Oid, usize> = HashMap::new();
-    let mut idx_pos: HashMap<Oid, usize> = HashMap::new();
+    let mut idx_pos: HashMap<Oid, (usize, ObjectKind)> = HashMap::new();
     let mut type_bits: [Vec<usize>; 4] = Default::default();
-    for (p, &i) in by_offset.iter().enumerate() {
-        let e = &index.entries[i];
-        pos.insert(e.oid, p);
-        idx_pos.insert(e.oid, i);
-        let t = match kinds[i] {
+    for (p, (oid, kind, i)) in order.iter().enumerate() {
+        pos.insert(*oid, p);
+        idx_pos.insert(*oid, (*i, *kind));
+        let t = match kind {
             ObjectKind::Commit => 0,
             ObjectKind::Tree => 1,
             ObjectKind::Blob => 2,
@@ -132,15 +145,15 @@ pub(crate) fn encode(
         let Ok(c) = crate::cmd::shared::peel_tags(repo, &oid) else {
             continue;
         };
-        if !pos.contains_key(&c) || !done.insert(c) {
+        let Some((i, kind)) = idx_pos.get(&c).copied() else {
             continue;
-        }
-        if kinds[idx_pos[&c]] != ObjectKind::Commit {
+        };
+        if kind != ObjectKind::Commit || !done.insert(c) {
             continue;
         }
         if let Some(mut bits) = reachable(repo, &c, &pos) {
             bits.sort_unstable();
-            selected.push((idx_pos[&c], bits));
+            selected.push((i, bits));
         }
     }
     let mut out = Vec::new();
@@ -148,7 +161,7 @@ pub(crate) fn encode(
     out.extend_from_slice(&1u16.to_be_bytes());
     out.extend_from_slice(&BITMAP_OPT_FULL_DAG.to_be_bytes());
     out.extend_from_slice(&(selected.len() as u32).to_be_bytes());
-    out.extend_from_slice(&index.pack_checksum);
+    out.extend_from_slice(checksum);
     for t in &type_bits {
         out.extend_from_slice(&ewah(t));
     }
