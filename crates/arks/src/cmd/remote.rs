@@ -1,4 +1,4 @@
-//! Remote client porcelain (clone / remote) and helpers shared with fetch / push.
+//! Remote client porcelain (fetch / push / clone / remote).
 
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags};
@@ -154,132 +154,35 @@ pub(crate) fn write_fetch_head(
     Ok(())
 }
 
-pub fn cmd_clone(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(
-        args,
-        &["--reference", "--depth", "--filter", "--bundle-uri"],
-    )?;
-    // MISC-009 (M20 Cx-8): clone --reference while donor under gc/maintenance.
-    let mut reference: Option<PathBuf> = None;
-    let mut depth: Option<u32> = None;
-    let mut filter: Option<String> = None;
-    // FS5: local-file `--bundle-uri` seeds objects via unbundle after clone.
-    let mut bundle_uri: Option<PathBuf> = None;
-    let mut positional = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--reference" {
-            i += 1;
-            let p = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("clone --reference <repo>".into()))?;
-            reference = Some(PathBuf::from(p));
-        } else if let Some(rest) = args[i].strip_prefix("--reference=") {
-            reference = Some(PathBuf::from(rest));
-        } else if args[i] == "--depth" {
-            i += 1;
-            let n = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("clone --depth <n>".into()))?;
-            depth = Some(parse_depth(n)?);
-        } else if let Some(rest) = args[i].strip_prefix("--depth=") {
-            depth = Some(parse_depth(rest)?);
-        } else if args[i] == "--filter" {
-            i += 1;
-            let spec = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("clone --filter <spec>".into()))?;
-            filter = Some(parse_filter(spec)?);
-        } else if let Some(rest) = args[i].strip_prefix("--filter=") {
-            filter = Some(parse_filter(rest)?);
-        } else if args[i] == "--bundle-uri" {
-            i += 1;
-            let p = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("clone --bundle-uri <path>".into()))?;
-            bundle_uri = Some(PathBuf::from(p));
-        } else if let Some(rest) = args[i].strip_prefix("--bundle-uri=") {
-            bundle_uri = Some(PathBuf::from(rest));
-        } else {
-            positional.push(args[i].clone());
-        }
-        i += 1;
-    }
-    if let Some(ref_path) = &reference {
-        let donor_git = if ref_path.join(".git").is_dir() {
-            ref_path.join(".git")
-        } else {
-            ref_path.clone()
-        };
-        let donor_lock = donor_git.join("gc.lock");
-        let donor_maint = donor_git.join("maintenance.lock");
-        let donor_pack_lock = donor_git.join("objects/pack").join("pack.lock");
-        if donor_lock.is_file() || donor_maint.is_file() || donor_pack_lock.is_file() {
-            return Err(CliError::Msg(
-                "clone --reference refused (MISC-009 — donor under gc/maintenance; missing alternate objects risk; quiesce donor first)".into(),
-            ));
-        }
-        // Honesty even when unlocked: still warn.
-        eprintln!(
-            "note: MISC-009 — clone --reference borrows donor objects; do not gc donor under live reference clones"
-        );
-    }
-    if positional.is_empty() || positional.len() > 2 {
-        return Err(CliError::Usage("clone <url> [<directory>]".into()));
-    }
-    let url = &positional[0];
-    let dest = if let Some(d) = positional.get(1) {
-        PathBuf::from(d)
+/// MISC-009 (M20 Cx-8): `clone --reference` while the donor is under gc/maintenance.
+pub(crate) fn refuse_busy_reference(ref_path: &std::path::Path) -> CliResult<()> {
+    let donor_git = if ref_path.join(".git").is_dir() {
+        ref_path.join(".git")
     } else {
-        PathBuf::from(clone_dest_name(url))
+        ref_path.to_path_buf()
     };
-    // NET-009: early refuse when dest already non-empty (before transport).
-    if dest.exists() {
-        if !dest.is_dir() {
-            return Err(CliError::Msg(format!(
-                "destination path '{}' exists and is not a directory (NET-009)",
-                dest.display()
-            )));
-        }
-        let mut entries = std::fs::read_dir(&dest).map_err(|e| CliError::Msg(e.to_string()))?;
-        if entries.next().is_some() {
-            return Err(CliError::Msg(format!(
-                "destination path '{}' exists and is not an empty directory (NET-009 — concurrent clone dest collision refuse)",
-                dest.display()
-            )));
-        }
+    let donor_lock = donor_git.join("gc.lock");
+    let donor_maint = donor_git.join("maintenance.lock");
+    let donor_pack_lock = donor_git.join("objects/pack").join("pack.lock");
+    if donor_lock.is_file() || donor_maint.is_file() || donor_pack_lock.is_file() {
+        return Err(CliError::Msg(
+            "clone --reference refused (MISC-009 — donor under gc/maintenance; missing alternate objects risk; quiesce donor first)".into(),
+        ));
     }
-    let opts = arks_remote::FetchOptions {
-        depth,
-        filter,
-        ..Default::default()
-    };
-    if arks_remote::HttpRemoteUrl::parse(url).is_ok() {
-        arks_remote::clone_http_with(url, &dest, &opts)?;
-    } else if arks_remote::SshRemoteUrl::parse(url).is_ok() {
-        arks_remote::clone_ssh_with(url, &dest, &opts)?;
-    } else if arks_remote::GitDaemonUrl::parse(url).is_ok() {
-        arks_remote::clone_git_with(url, &dest, &opts)?;
-    } else if arks_remote::LocalRemoteUrl::parse(url).is_ok() {
-        arks_remote::clone_local_with(url, &dest, &opts)?;
-    } else {
-        return Err(CliError::Msg(format!(
-            "unsupported clone URL '{url}' (claimed: http(s), ssh://, user@host:path, git://, local path, same-host file://)"
-        )));
-    }
-    if let Some(bundle) = &bundle_uri {
-        // FS5 + NET-006: local file or http(s) download with race/truncation honesty.
-        let uri = bundle.display().to_string();
-        let local_bundle = resolve_bundle_uri(&uri)?;
-        let cwd = std::env::current_dir().map_err(|e| CliError::Msg(e.to_string()))?;
-        std::env::set_current_dir(&dest).map_err(|e| CliError::Msg(e.to_string()))?;
-        let unbundle_args = vec!["unbundle".into(), local_bundle.display().to_string()];
-        let res = crate::cmd::bundle::cmd_bundle(&unbundle_args);
-        let _ = std::env::set_current_dir(&cwd);
-        res?;
-        eprintln!("note: FS5/NET-006 — seeded objects from --bundle-uri {uri}");
-    }
-    println!("Cloned into '{}'", dest.display());
+    Ok(())
+}
+
+/// FS5 + NET-006: seed a fresh clone's objects from `--bundle-uri` (local file
+/// or http(s) download with race/truncation honesty).
+pub(crate) fn seed_bundle_uri(uri: &str, dest: &std::path::Path) -> CliResult<()> {
+    let local_bundle = resolve_bundle_uri(uri)?;
+    let cwd = std::env::current_dir().map_err(|e| CliError::Msg(e.to_string()))?;
+    std::env::set_current_dir(dest).map_err(|e| CliError::Msg(e.to_string()))?;
+    let unbundle_args = vec!["unbundle".into(), local_bundle.display().to_string()];
+    let res = crate::cmd::bundle::cmd_bundle(&unbundle_args);
+    let _ = std::env::set_current_dir(&cwd);
+    res?;
+    eprintln!("note: FS5/NET-006 — seeded objects from --bundle-uri {uri}");
     Ok(())
 }
 
@@ -386,7 +289,7 @@ pub(crate) fn parse_filter(raw: &str) -> CliResult<String> {
 }
 
 /// Infer a directory name from a clone URL (HTTP, SSH, or path).
-fn clone_dest_name(url: &str) -> String {
+pub(crate) fn clone_dest_name(url: &str) -> String {
     let trimmed = url.trim().trim_end_matches('/');
     if let Ok(ssh) = arks_remote::SshRemoteUrl::parse(trimmed) {
         let leaf = ssh
@@ -428,7 +331,7 @@ mod tests {
 
     #[test]
     fn clone_refuses_malformed_sparse_oid_filter() {
-        let err = cmd_clone(&[
+        let err = crate::cmd::clone::cmd_clone(&[
             "--filter=sparse:oid=abc".into(),
             "https://example.invalid/repo.git".into(),
         ])
@@ -442,7 +345,7 @@ mod tests {
 
     #[test]
     fn clone_refuses_unclaimed_filter_spec() {
-        let err = cmd_clone(&[
+        let err = crate::cmd::clone::cmd_clone(&[
             "--filter=blob:limit=*".into(),
             "https://example.invalid/repo.git".into(),
         ])

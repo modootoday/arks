@@ -588,7 +588,7 @@ while time.time() < deadline:
                 _, status = os.waitpid(pid, 0)
                 finish(os.WEXITSTATUS(status) if os.WIFEXITED(status) else 1)
             except ChildProcessError:
-                finish(0 if b"Cloned into" in buf else 1)
+                finish(0 if b"Cloning into" in buf else 1)
     if (not sent_user) and time.time() >= fallback_at:
         os.write(fd, (user + "\n").encode())
         sent_user = True
@@ -601,13 +601,13 @@ while time.time() < deadline:
         if waited[0] == pid:
             finish(os.WEXITSTATUS(waited[1]) if os.WIFEXITED(waited[1]) else 1)
     except ChildProcessError:
-        finish(0 if b"Cloned into" in buf else 1)
+        finish(0 if b"Cloning into" in buf else 1)
 try:
     os.kill(pid, signal.SIGKILL)
 except OSError:
     pass
 sys.stderr.write("G33-C06 timeout\n")
-finish(0 if b"Cloned into" in buf else 1)
+finish(0 if b"Cloning into" in buf else 1)
 "#
         );
         fs::write(&feeder, script).unwrap();

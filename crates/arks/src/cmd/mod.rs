@@ -10,6 +10,7 @@ pub mod branch;
 pub mod branch_cmd;
 pub mod bre;
 pub mod bundle;
+pub mod clone;
 pub mod config;
 pub mod core;
 pub mod credential;
@@ -65,6 +66,7 @@ pub use blame::{cmd_annotate, cmd_blame};
 pub use branch::{cmd_checkout, cmd_switch};
 pub use branch_cmd::cmd_branch;
 pub use bundle::cmd_bundle;
+pub use clone::cmd_clone;
 pub use config::cmd_config;
 pub use core::{
     cmd_add, cmd_cat_file, cmd_commit, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status,
@@ -111,7 +113,7 @@ pub use plumbing::{
 pub use push::cmd_push;
 pub use range_diff::cmd_range_diff;
 pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
-pub use remote::{cmd_clone, cmd_remote};
+pub use remote::cmd_remote;
 pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use server::{
