@@ -225,10 +225,38 @@ fn parse_pack_idx_oids(bytes: &[u8]) -> CliResult<Vec<Oid>> {
 pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
     // git-cherry: `[-v] [<upstream> [<head> [<limit>]]]`.
     // Cite: https://git-scm.com/docs/git-cherry
-    refuse_unknown_flags(args, &["-v"])?;
-    let verbose = args.iter().any(|a| a == "-v");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    let mut verbose = false;
+    let mut abbrev: Option<usize> = None;
+    let mut positional: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "-v" | "--verbose" => verbose = true,
+            "--no-verbose" => verbose = false,
+            "--abbrev" => abbrev = Some(7),
+            "--no-abbrev" => abbrev = None,
+            x if x.starts_with("--abbrev=") => {
+                let n: usize = x[9..].parse().map_err(|_| {
+                    CliError::Exit(
+                        129,
+                        "error: option `abbrev' expects a numerical value".into(),
+                    )
+                })?;
+                abbrev = Some(if n == 0 { 40 } else { n.clamp(4, 40) });
+            }
+            x if x.starts_with('-') && x.len() > 1 => {
+                return Err(CliError::Exit(
+                    129,
+                    format!("error: unknown option `{}'", x.trim_start_matches('-')),
+                ));
+            }
+            _ => positional.push(a),
+        }
+    }
     let repo = open_repo()?;
+    let hex = |o: &Oid| match abbrev {
+        Some(n) if n < 40 => crate::cmd::shared::abbrev_hex(&repo, o, n),
+        _ => o.to_hex(),
+    };
     let head = match positional.get(1) {
         Some(h) => resolve_rev(&repo, h)?,
         None => repo.head_oid()?,
@@ -269,9 +297,9 @@ pub fn cmd_cherry(args: &[String]) -> CliResult<()> {
         };
         if verbose {
             let c = arks_object::Commit::decode(&repo.get_object(&oid)?.payload)?;
-            println!("{mark} {} {}", oid.to_hex(), c.subject());
+            println!("{mark} {} {}", hex(&oid), c.subject());
         } else {
-            println!("{mark} {}", oid.to_hex());
+            println!("{mark} {}", hex(&oid));
         }
     }
     Ok(())

@@ -598,3 +598,9 @@ merge-base --fork-point main
 merge-base --fork-point main feature
 merge-base --fork-point feature main
 merge-base v1 feature main
+# --- cherry ---
+cherry --verbose t0
+cherry --no-verbose -v t0
+cherry --abbrev t0
+cherry --abbrev=10 -v t0
+cherry --no-abbrev t0
