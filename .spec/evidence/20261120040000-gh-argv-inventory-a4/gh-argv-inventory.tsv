@@ -1,0 +1,1269 @@
+gh_command	flag	meta	verdict	note
+auth login	--clipboard		ACCEPTED	
+auth login	-c		ACCEPTED	
+auth login	--git-protocol	string	ACCEPTED	
+auth login	-p	string	ACCEPTED	
+auth login	--hostname	string	ACCEPTED	
+auth login	-h	string	ACCEPTED	
+auth login	--insecure-storage		ACCEPTED	
+auth login	--scopes	strings	ACCEPTED	
+auth login	-s	strings	ACCEPTED	
+auth login	--skip-ssh-key		ACCEPTED	
+auth login	--web		ACCEPTED	
+auth login	-w		ACCEPTED	
+auth login	--with-token		ACCEPTED	
+auth logout	--hostname	string	ACCEPTED	
+auth logout	-h	string	ACCEPTED	
+auth logout	--user	string	ACCEPTED	
+auth logout	-u	string	ACCEPTED	
+auth status	--active		ACCEPTED	
+auth status	-a		ACCEPTED	
+auth status	--hostname	string	ACCEPTED	
+auth status	-h	string	ACCEPTED	
+auth status	--jq	expression	ACCEPTED	
+auth status	--json	fields	ACCEPTED	
+auth status	--show-token		ACCEPTED	
+auth status	-t		ACCEPTED	
+auth status	--template	string	ACCEPTED	
+auth token	--hostname	string	ACCEPTED	
+auth token	-h	string	ACCEPTED	
+auth token	--user	string	ACCEPTED	
+auth token	-u	string	ACCEPTED	
+auth refresh	--clipboard		ACCEPTED	
+auth refresh	-c		ACCEPTED	
+auth refresh	--hostname	string	ACCEPTED	
+auth refresh	-h	string	ACCEPTED	
+auth refresh	--insecure-storage		ACCEPTED	
+auth refresh	--remove-scopes	strings	ACCEPTED	
+auth refresh	-r	strings	ACCEPTED	
+auth refresh	--reset-scopes		ACCEPTED	
+auth refresh	--scopes	strings	ACCEPTED	
+auth refresh	-s	strings	ACCEPTED	
+auth switch	--hostname	string	ACCEPTED	
+auth switch	-h	string	ACCEPTED	
+auth switch	--user	string	ACCEPTED	
+auth switch	-u	string	ACCEPTED	
+pr	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr create	--assignee	login	ACCEPTED	
+pr create	-a	login	ACCEPTED	
+pr create	--base	branch	ACCEPTED	
+pr create	-B	branch	ACCEPTED	
+pr create	--body	string	ACCEPTED	
+pr create	-b	string	ACCEPTED	
+pr create	--body-file	file	ACCEPTED	
+pr create	-F	file	ACCEPTED	
+pr create	--draft		ACCEPTED	
+pr create	-d		ACCEPTED	
+pr create	--dry-run		ACCEPTED	
+pr create	--editor		ACCEPTED	
+pr create	-e		ACCEPTED	
+pr create	--fill		ACCEPTED	
+pr create	-f		ACCEPTED	
+pr create	--fill-first		ACCEPTED	
+pr create	--fill-verbose		ACCEPTED	
+pr create	--head	branch	ACCEPTED	
+pr create	-H	branch	ACCEPTED	
+pr create	--label	name	ACCEPTED	
+pr create	-l	name	ACCEPTED	
+pr create	--milestone	name	ACCEPTED	
+pr create	-m	name	ACCEPTED	
+pr create	--no-maintainer-edit		ACCEPTED	
+pr create	--project	title	ACCEPTED	
+pr create	-p	title	ACCEPTED	
+pr create	--recover	string	ACCEPTED	
+pr create	--reviewer	handle	ACCEPTED	
+pr create	-r	handle	ACCEPTED	
+pr create	--template	file	ACCEPTED	
+pr create	-T	file	ACCEPTED	
+pr create	--title	string	ACCEPTED	
+pr create	-t	string	ACCEPTED	
+pr create	--web		ACCEPTED	
+pr create	-w		ACCEPTED	
+pr create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr list	--app	string	ACCEPTED	
+pr list	--assignee	string	ACCEPTED	
+pr list	-a	string	ACCEPTED	
+pr list	--author	string	ACCEPTED	
+pr list	-A	string	ACCEPTED	
+pr list	--base	string	ACCEPTED	
+pr list	-B	string	ACCEPTED	
+pr list	--draft		ACCEPTED	
+pr list	-d		ACCEPTED	
+pr list	--head	string	ACCEPTED	
+pr list	-H	string	ACCEPTED	
+pr list	--jq	expression	ACCEPTED	
+pr list	-q	expression	ACCEPTED	
+pr list	--json	fields	ACCEPTED	
+pr list	--label	strings	ACCEPTED	
+pr list	-l	strings	ACCEPTED	
+pr list	--limit	int	ACCEPTED	
+pr list	-L	int	ACCEPTED	
+pr list	--search	query	ACCEPTED	
+pr list	-S	query	ACCEPTED	
+pr list	--state	string	ACCEPTED	
+pr list	-s	string	ACCEPTED	
+pr list	--template	string	ACCEPTED	
+pr list	-t	string	ACCEPTED	
+pr list	--web		ACCEPTED	
+pr list	-w		ACCEPTED	
+pr list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr status	--conflict-status		ACCEPTED	
+pr status	-c		ACCEPTED	
+pr status	--jq	expression	ACCEPTED	
+pr status	-q	expression	ACCEPTED	
+pr status	--json	fields	ACCEPTED	
+pr status	--template	string	ACCEPTED	
+pr status	-t	string	ACCEPTED	
+pr status	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr status	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr view	--comments		ACCEPTED	
+pr view	-c		ACCEPTED	
+pr view	--jq	expression	ACCEPTED	
+pr view	-q	expression	ACCEPTED	
+pr view	--json	fields	ACCEPTED	
+pr view	--template	string	ACCEPTED	
+pr view	-t	string	ACCEPTED	
+pr view	--web		ACCEPTED	
+pr view	-w		ACCEPTED	
+pr view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr diff	--color	string	ACCEPTED	
+pr diff	--exclude	patterns	ACCEPTED	
+pr diff	-e	patterns	ACCEPTED	
+pr diff	--name-only		ACCEPTED	
+pr diff	--patch		ACCEPTED	
+pr diff	--web		ACCEPTED	
+pr diff	-w		ACCEPTED	
+pr diff	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr diff	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr edit	--add-assignee	login	ACCEPTED	
+pr edit	--add-label	name	ACCEPTED	
+pr edit	--add-project	title	ACCEPTED	
+pr edit	--add-reviewer	login	ACCEPTED	
+pr edit	--base	branch	ACCEPTED	
+pr edit	-B	branch	ACCEPTED	
+pr edit	--body	string	ACCEPTED	
+pr edit	-b	string	ACCEPTED	
+pr edit	--body-file	file	ACCEPTED	
+pr edit	-F	file	ACCEPTED	
+pr edit	--milestone	name	ACCEPTED	
+pr edit	-m	name	ACCEPTED	
+pr edit	--remove-assignee	login	ACCEPTED	
+pr edit	--remove-label	name	ACCEPTED	
+pr edit	--remove-milestone		ACCEPTED	
+pr edit	--remove-project	title	ACCEPTED	
+pr edit	--remove-reviewer	login	ACCEPTED	
+pr edit	--title	string	ACCEPTED	
+pr edit	-t	string	ACCEPTED	
+pr edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr close	--comment	string	ACCEPTED	
+pr close	-c	string	ACCEPTED	
+pr close	--delete-branch		ACCEPTED	
+pr close	-d		ACCEPTED	
+pr close	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr close	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr reopen	--comment	string	ACCEPTED	
+pr reopen	-c	string	ACCEPTED	
+pr reopen	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr reopen	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr comment	--body	text	ACCEPTED	
+pr comment	-b	text	ACCEPTED	
+pr comment	--body-file	file	ACCEPTED	
+pr comment	-F	file	ACCEPTED	
+pr comment	--create-if-none		ACCEPTED	
+pr comment	--delete-last		ACCEPTED	
+pr comment	--edit-last		ACCEPTED	
+pr comment	--editor		ACCEPTED	
+pr comment	-e		ACCEPTED	
+pr comment	--web		ACCEPTED	
+pr comment	-w		ACCEPTED	
+pr comment	--yes		ACCEPTED	
+pr comment	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr comment	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr merge	--admin		ACCEPTED	
+pr merge	--author-email	text	ACCEPTED	
+pr merge	-A	text	ACCEPTED	
+pr merge	--auto		ACCEPTED	
+pr merge	--body	text	ACCEPTED	
+pr merge	-b	text	ACCEPTED	
+pr merge	--body-file	file	ACCEPTED	
+pr merge	-F	file	ACCEPTED	
+pr merge	--delete-branch		ACCEPTED	
+pr merge	-d		ACCEPTED	
+pr merge	--disable-auto		ACCEPTED	
+pr merge	--match-head-commit	SHA	ACCEPTED	
+pr merge	--merge		ACCEPTED	
+pr merge	-m		ACCEPTED	
+pr merge	--rebase		ACCEPTED	
+pr merge	-r		ACCEPTED	
+pr merge	--squash		ACCEPTED	
+pr merge	-s		ACCEPTED	
+pr merge	--subject	text	ACCEPTED	
+pr merge	-t	text	ACCEPTED	
+pr merge	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr merge	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr ready	--undo		ACCEPTED	
+pr ready	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr ready	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr review	--approve		ACCEPTED	
+pr review	-a		ACCEPTED	
+pr review	--body	string	ACCEPTED	
+pr review	-b	string	ACCEPTED	
+pr review	--body-file	file	ACCEPTED	
+pr review	-F	file	ACCEPTED	
+pr review	--comment		ACCEPTED	
+pr review	-c		ACCEPTED	
+pr review	--request-changes		ACCEPTED	
+pr review	-r		ACCEPTED	
+pr review	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr review	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr checks	--fail-fast		ACCEPTED	
+pr checks	--interval	int	ACCEPTED	
+pr checks	-i	int	ACCEPTED	
+pr checks	--jq	expression	ACCEPTED	
+pr checks	-q	expression	ACCEPTED	
+pr checks	--json	fields	ACCEPTED	
+pr checks	--required		ACCEPTED	
+pr checks	--template	string	ACCEPTED	
+pr checks	-t	string	ACCEPTED	
+pr checks	--watch		ACCEPTED	
+pr checks	--web		ACCEPTED	
+pr checks	-w		ACCEPTED	
+pr checks	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr checks	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr lock	--reason	string	ACCEPTED	
+pr lock	-r	string	ACCEPTED	
+pr lock	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr lock	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr unlock	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr unlock	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr update-branch	--rebase		ACCEPTED	
+pr update-branch	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr update-branch	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr revert	--body	string	ACCEPTED	
+pr revert	-b	string	ACCEPTED	
+pr revert	--body-file	file	ACCEPTED	
+pr revert	-F	file	ACCEPTED	
+pr revert	--draft		ACCEPTED	
+pr revert	-d		ACCEPTED	
+pr revert	--title	string	ACCEPTED	
+pr revert	-t	string	ACCEPTED	
+pr revert	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr revert	-R	[HOST/]OWNER/REPO	ACCEPTED	
+pr checkout	--branch	string	ACCEPTED	
+pr checkout	-b	string	ACCEPTED	
+pr checkout	--detach		ACCEPTED	
+pr checkout	--force		ACCEPTED	
+pr checkout	-f		ACCEPTED	
+pr checkout	--recurse-submodules		ACCEPTED	
+pr checkout	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+pr checkout	-R	[HOST/]OWNER/REPO	ACCEPTED	
+co	--branch	string	ACCEPTED	
+co	-b	string	ACCEPTED	
+co	--detach		ACCEPTED	
+co	--force		ACCEPTED	
+co	-f		ACCEPTED	
+co	--recurse-submodules		ACCEPTED	
+co	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+co	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue create	--assignee	login	ACCEPTED	
+issue create	-a	login	ACCEPTED	
+issue create	--body	string	ACCEPTED	
+issue create	-b	string	ACCEPTED	
+issue create	--body-file	file	ACCEPTED	
+issue create	-F	file	ACCEPTED	
+issue create	--editor		ACCEPTED	
+issue create	-e		ACCEPTED	
+issue create	--label	name	ACCEPTED	
+issue create	-l	name	ACCEPTED	
+issue create	--milestone	name	ACCEPTED	
+issue create	-m	name	ACCEPTED	
+issue create	--project	title	ACCEPTED	
+issue create	-p	title	ACCEPTED	
+issue create	--recover	string	ACCEPTED	
+issue create	--template	name	ACCEPTED	
+issue create	-T	name	ACCEPTED	
+issue create	--title	string	ACCEPTED	
+issue create	-t	string	ACCEPTED	
+issue create	--web		ACCEPTED	
+issue create	-w		ACCEPTED	
+issue create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue list	--app	string	ACCEPTED	
+issue list	--assignee	string	ACCEPTED	
+issue list	-a	string	ACCEPTED	
+issue list	--author	string	ACCEPTED	
+issue list	-A	string	ACCEPTED	
+issue list	--jq	expression	ACCEPTED	
+issue list	-q	expression	ACCEPTED	
+issue list	--json	fields	ACCEPTED	
+issue list	--label	strings	ACCEPTED	
+issue list	-l	strings	ACCEPTED	
+issue list	--limit	int	ACCEPTED	
+issue list	-L	int	ACCEPTED	
+issue list	--mention	string	ACCEPTED	
+issue list	--milestone	string	ACCEPTED	
+issue list	-m	string	ACCEPTED	
+issue list	--search	query	ACCEPTED	
+issue list	-S	query	ACCEPTED	
+issue list	--state	string	ACCEPTED	
+issue list	-s	string	ACCEPTED	
+issue list	--template	string	ACCEPTED	
+issue list	-t	string	ACCEPTED	
+issue list	--web		ACCEPTED	
+issue list	-w		ACCEPTED	
+issue list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue status	--jq	expression	ACCEPTED	
+issue status	-q	expression	ACCEPTED	
+issue status	--json	fields	ACCEPTED	
+issue status	--template	string	ACCEPTED	
+issue status	-t	string	ACCEPTED	
+issue status	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue status	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue view	--comments		ACCEPTED	
+issue view	-c		ACCEPTED	
+issue view	--jq	expression	ACCEPTED	
+issue view	-q	expression	ACCEPTED	
+issue view	--json	fields	ACCEPTED	
+issue view	--template	string	ACCEPTED	
+issue view	-t	string	ACCEPTED	
+issue view	--web		ACCEPTED	
+issue view	-w		ACCEPTED	
+issue view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue close	--comment	string	ACCEPTED	
+issue close	-c	string	ACCEPTED	
+issue close	--duplicate-of	string	ACCEPTED	
+issue close	--reason	string	ACCEPTED	
+issue close	-r	string	ACCEPTED	
+issue close	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue close	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue reopen	--comment	string	ACCEPTED	
+issue reopen	-c	string	ACCEPTED	
+issue reopen	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue reopen	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue comment	--body	text	ACCEPTED	
+issue comment	-b	text	ACCEPTED	
+issue comment	--body-file	file	ACCEPTED	
+issue comment	-F	file	ACCEPTED	
+issue comment	--create-if-none		ACCEPTED	
+issue comment	--delete-last		ACCEPTED	
+issue comment	--edit-last		ACCEPTED	
+issue comment	--editor		ACCEPTED	
+issue comment	-e		ACCEPTED	
+issue comment	--web		ACCEPTED	
+issue comment	-w		ACCEPTED	
+issue comment	--yes		ACCEPTED	
+issue comment	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue comment	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue edit	--add-assignee	login	ACCEPTED	
+issue edit	--add-label	name	ACCEPTED	
+issue edit	--add-project	title	ACCEPTED	
+issue edit	--body	string	ACCEPTED	
+issue edit	-b	string	ACCEPTED	
+issue edit	--body-file	file	ACCEPTED	
+issue edit	-F	file	ACCEPTED	
+issue edit	--milestone	name	ACCEPTED	
+issue edit	-m	name	ACCEPTED	
+issue edit	--remove-assignee	login	ACCEPTED	
+issue edit	--remove-label	name	ACCEPTED	
+issue edit	--remove-milestone		ACCEPTED	
+issue edit	--remove-project	title	ACCEPTED	
+issue edit	--title	string	ACCEPTED	
+issue edit	-t	string	ACCEPTED	
+issue edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue delete	--yes		ACCEPTED	
+issue delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue lock	--reason	string	ACCEPTED	
+issue lock	-r	string	ACCEPTED	
+issue lock	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue lock	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue unlock	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue unlock	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue pin	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue pin	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue unpin	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue unpin	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue transfer	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue transfer	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue develop	--base	string	ACCEPTED	
+issue develop	-b	string	ACCEPTED	
+issue develop	--branch-repo	string	ACCEPTED	
+issue develop	--checkout		ACCEPTED	
+issue develop	-c		ACCEPTED	
+issue develop	--list		ACCEPTED	
+issue develop	-l		ACCEPTED	
+issue develop	--name	string	ACCEPTED	
+issue develop	-n	string	ACCEPTED	
+issue develop	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue develop	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact create	--attach	file	ACCEPTED	
+issue artifact create	--body	string	ACCEPTED	
+issue artifact create	-b	string	ACCEPTED	
+issue artifact create	--body-file	file	ACCEPTED	
+issue artifact create	-F	file	ACCEPTED	
+issue artifact create	--name	string	ACCEPTED	
+issue artifact create	--type	string	ACCEPTED	
+issue artifact create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact delete	--yes		ACCEPTED	
+issue artifact delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact download	--clobber		ACCEPTED	
+issue artifact download	--dir	directory	ACCEPTED	
+issue artifact download	-D	directory	ACCEPTED	
+issue artifact download	--output	file	ACCEPTED	
+issue artifact download	-O	file	ACCEPTED	
+issue artifact download	--skip-existing		ACCEPTED	
+issue artifact download	--version	number	ACCEPTED	
+issue artifact download	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact download	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact edit	--attach	file	ACCEPTED	
+issue artifact edit	--body	string	ACCEPTED	
+issue artifact edit	-b	string	ACCEPTED	
+issue artifact edit	--body-file	file	ACCEPTED	
+issue artifact edit	-F	file	ACCEPTED	
+issue artifact edit	--name	string	ACCEPTED	
+issue artifact edit	--restore-version	number	ACCEPTED	
+issue artifact edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact list	--jq	expression	ACCEPTED	
+issue artifact list	-q	expression	ACCEPTED	
+issue artifact list	--json	fields	ACCEPTED	
+issue artifact list	--limit	int	ACCEPTED	
+issue artifact list	-L	int	ACCEPTED	
+issue artifact list	--template	string	ACCEPTED	
+issue artifact list	-t	string	ACCEPTED	
+issue artifact list	--type	string	ACCEPTED	
+issue artifact list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact view	--jq	expression	ACCEPTED	
+issue artifact view	-q	expression	ACCEPTED	
+issue artifact view	--json	fields	ACCEPTED	
+issue artifact view	--template	string	ACCEPTED	
+issue artifact view	-t	string	ACCEPTED	
+issue artifact view	--version	number	ACCEPTED	
+issue artifact view	--web		ACCEPTED	
+issue artifact view	-w		ACCEPTED	
+issue artifact view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+issue artifact view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release create	--discussion-category	string	ACCEPTED	
+release create	--draft		ACCEPTED	
+release create	-d		ACCEPTED	
+release create	--fail-on-no-commits		ACCEPTED	
+release create	--generate-notes		ACCEPTED	
+release create	--latest		ACCEPTED	
+release create	--notes	string	ACCEPTED	
+release create	-n	string	ACCEPTED	
+release create	--notes-file	file	ACCEPTED	
+release create	-F	file	ACCEPTED	
+release create	--notes-from-tag		ACCEPTED	
+release create	--notes-start-tag	string	ACCEPTED	
+release create	--prerelease		ACCEPTED	
+release create	-p		ACCEPTED	
+release create	--target	branch	ACCEPTED	
+release create	--title	string	ACCEPTED	
+release create	-t	string	ACCEPTED	
+release create	--verify-tag		ACCEPTED	
+release create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release list	--exclude-drafts		ACCEPTED	
+release list	--exclude-pre-releases		ACCEPTED	
+release list	--jq	expression	ACCEPTED	
+release list	-q	expression	ACCEPTED	
+release list	--json	fields	ACCEPTED	
+release list	--limit	int	ACCEPTED	
+release list	-L	int	ACCEPTED	
+release list	--order	string	ACCEPTED	
+release list	-O	string	ACCEPTED	
+release list	--template	string	ACCEPTED	
+release list	-t	string	ACCEPTED	
+release list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release view	--jq	expression	ACCEPTED	
+release view	-q	expression	ACCEPTED	
+release view	--json	fields	ACCEPTED	
+release view	--template	string	ACCEPTED	
+release view	-t	string	ACCEPTED	
+release view	--web		ACCEPTED	
+release view	-w		ACCEPTED	
+release view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release upload	--clobber		ACCEPTED	
+release upload	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release upload	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release download	--archive	format	ACCEPTED	
+release download	-A	format	ACCEPTED	
+release download	--clobber		ACCEPTED	
+release download	--dir	directory	ACCEPTED	
+release download	-D	directory	ACCEPTED	
+release download	--output	file	ACCEPTED	
+release download	-O	file	ACCEPTED	
+release download	--pattern	stringArray	ACCEPTED	
+release download	-p	stringArray	ACCEPTED	
+release download	--skip-existing		ACCEPTED	
+release download	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release download	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release edit	--discussion-category	string	ACCEPTED	
+release edit	--draft		ACCEPTED	
+release edit	--latest		ACCEPTED	
+release edit	--notes	string	ACCEPTED	
+release edit	-n	string	ACCEPTED	
+release edit	--notes-file	file	ACCEPTED	
+release edit	-F	file	ACCEPTED	
+release edit	--prerelease		ACCEPTED	
+release edit	--tag	string	ACCEPTED	
+release edit	--target	branch	ACCEPTED	
+release edit	--title	string	ACCEPTED	
+release edit	-t	string	ACCEPTED	
+release edit	--verify-tag		ACCEPTED	
+release edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release delete	--cleanup-tag		ACCEPTED	
+release delete	--yes		ACCEPTED	
+release delete	-y		ACCEPTED	
+release delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+release delete-asset	--yes		ACCEPTED	
+release delete-asset	-y		ACCEPTED	
+release delete-asset	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+release delete-asset	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo view	--branch	string	ACCEPTED	
+repo view	-b	string	ACCEPTED	
+repo view	--jq	expression	ACCEPTED	
+repo view	-q	expression	ACCEPTED	
+repo view	--json	fields	ACCEPTED	
+repo view	--template	string	ACCEPTED	
+repo view	-t	string	ACCEPTED	
+repo view	--web		ACCEPTED	
+repo view	-w		ACCEPTED	
+repo list	--archived		ACCEPTED	
+repo list	--fork		ACCEPTED	
+repo list	--jq	expression	ACCEPTED	
+repo list	-q	expression	ACCEPTED	
+repo list	--json	fields	ACCEPTED	
+repo list	--language	string	ACCEPTED	
+repo list	-l	string	ACCEPTED	
+repo list	--limit	int	ACCEPTED	
+repo list	-L	int	ACCEPTED	
+repo list	--no-archived		ACCEPTED	
+repo list	--source		ACCEPTED	
+repo list	--template	string	ACCEPTED	
+repo list	-t	string	ACCEPTED	
+repo list	--topic	strings	ACCEPTED	
+repo list	--visibility	string	ACCEPTED	
+repo create	--add-readme		ACCEPTED	
+repo create	--clone		ACCEPTED	
+repo create	-c		ACCEPTED	
+repo create	--description	string	ACCEPTED	
+repo create	-d	string	ACCEPTED	
+repo create	--disable-issues		ACCEPTED	
+repo create	--disable-wiki		ACCEPTED	
+repo create	--gitignore	string	ACCEPTED	
+repo create	-g	string	ACCEPTED	
+repo create	--homepage	URL	ACCEPTED	
+repo create	-h	URL	ACCEPTED	
+repo create	--include-all-branches		ACCEPTED	
+repo create	--internal		ACCEPTED	
+repo create	--license	string	ACCEPTED	
+repo create	-l	string	ACCEPTED	
+repo create	--private		ACCEPTED	
+repo create	--public		ACCEPTED	
+repo create	--push		ACCEPTED	
+repo create	--remote	string	ACCEPTED	
+repo create	-r	string	ACCEPTED	
+repo create	--source	string	ACCEPTED	
+repo create	-s	string	ACCEPTED	
+repo create	--team	name	ACCEPTED	
+repo create	-t	name	ACCEPTED	
+repo create	--template	repository	ACCEPTED	
+repo create	-p	repository	ACCEPTED	
+repo edit	--accept-visibility-change-consequences		ACCEPTED	
+repo edit	--add-topic	strings	ACCEPTED	
+repo edit	--allow-forking		ACCEPTED	
+repo edit	--allow-update-branch		ACCEPTED	
+repo edit	--default-branch	name	ACCEPTED	
+repo edit	--delete-branch-on-merge		ACCEPTED	
+repo edit	--description	string	ACCEPTED	
+repo edit	-d	string	ACCEPTED	
+repo edit	--enable-advanced-security		ACCEPTED	
+repo edit	--enable-auto-merge		ACCEPTED	
+repo edit	--enable-discussions		ACCEPTED	
+repo edit	--enable-issues		ACCEPTED	
+repo edit	--enable-merge-commit		ACCEPTED	
+repo edit	--enable-projects		ACCEPTED	
+repo edit	--enable-rebase-merge		ACCEPTED	
+repo edit	--enable-secret-scanning		ACCEPTED	
+repo edit	--enable-secret-scanning-push-protection		ACCEPTED	
+repo edit	--enable-squash-merge		ACCEPTED	
+repo edit	--enable-wiki		ACCEPTED	
+repo edit	--homepage	URL	ACCEPTED	
+repo edit	-h	URL	ACCEPTED	
+repo edit	--remove-topic	strings	ACCEPTED	
+repo edit	--squash-merge-commit-message	string	ACCEPTED	
+repo edit	--template		ACCEPTED	
+repo edit	--visibility	string	ACCEPTED	
+repo delete	--yes		ACCEPTED	
+repo fork	--clone		ACCEPTED	
+repo fork	--default-branch-only		ACCEPTED	
+repo fork	--fork-name	string	ACCEPTED	
+repo fork	--org	string	ACCEPTED	
+repo fork	--remote		ACCEPTED	
+repo fork	--remote-name	string	ACCEPTED	
+repo rename	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo rename	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo rename	--yes		ACCEPTED	
+repo rename	-y		ACCEPTED	
+repo archive	--yes		ACCEPTED	
+repo archive	-y		ACCEPTED	
+repo unarchive	--yes		ACCEPTED	
+repo unarchive	-y		ACCEPTED	
+repo set-default	--unset		ACCEPTED	
+repo set-default	-u		ACCEPTED	
+repo set-default	--view		ACCEPTED	
+repo set-default	-v		ACCEPTED	
+repo clone	--no-upstream		ACCEPTED	
+repo clone	--upstream-remote-name	string	ACCEPTED	
+repo clone	-u	string	ACCEPTED	
+repo sync	--branch	string	ACCEPTED	
+repo sync	-b	string	ACCEPTED	
+repo sync	--force		ACCEPTED	
+repo sync	--source	string	ACCEPTED	
+repo sync	-s	string	ACCEPTED	
+repo read-dir	--jq	expression	ACCEPTED	
+repo read-dir	-q	expression	ACCEPTED	
+repo read-dir	--json	fields	ACCEPTED	
+repo read-dir	--ref	string	ACCEPTED	
+repo read-dir	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo read-dir	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo read-dir	--template	string	ACCEPTED	
+repo read-dir	-t	string	ACCEPTED	
+repo read-file	--allow-escape-sequences		ACCEPTED	
+repo read-file	--clobber		ACCEPTED	
+repo read-file	--jq	expression	ACCEPTED	
+repo read-file	-q	expression	ACCEPTED	
+repo read-file	--json	fields	ACCEPTED	
+repo read-file	--output	path	ACCEPTED	
+repo read-file	-o	path	ACCEPTED	
+repo read-file	--ref	string	ACCEPTED	
+repo read-file	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo read-file	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo read-file	--template	string	ACCEPTED	
+repo read-file	-t	string	ACCEPTED	
+repo license view	--web		ACCEPTED	
+repo license view	-w		ACCEPTED	
+repo autolink	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink create	--numeric		ACCEPTED	
+repo autolink create	-n		ACCEPTED	
+repo autolink create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink delete	--yes		ACCEPTED	
+repo autolink delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink list	--jq	expression	ACCEPTED	
+repo autolink list	-q	expression	ACCEPTED	
+repo autolink list	--json	fields	ACCEPTED	
+repo autolink list	--template	string	ACCEPTED	
+repo autolink list	-t	string	ACCEPTED	
+repo autolink list	--web		ACCEPTED	
+repo autolink list	-w		ACCEPTED	
+repo autolink list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink view	--jq	expression	ACCEPTED	
+repo autolink view	-q	expression	ACCEPTED	
+repo autolink view	--json	fields	ACCEPTED	
+repo autolink view	--template	string	ACCEPTED	
+repo autolink view	-t	string	ACCEPTED	
+repo autolink view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo autolink view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key add	--allow-write		ACCEPTED	
+repo deploy-key add	-w		ACCEPTED	
+repo deploy-key add	--title	string	ACCEPTED	
+repo deploy-key add	-t	string	ACCEPTED	
+repo deploy-key add	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key add	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key list	--jq	expression	ACCEPTED	
+repo deploy-key list	-q	expression	ACCEPTED	
+repo deploy-key list	--json	fields	ACCEPTED	
+repo deploy-key list	--template	string	ACCEPTED	
+repo deploy-key list	-t	string	ACCEPTED	
+repo deploy-key list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+repo deploy-key list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+label	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label list	--jq	expression	ACCEPTED	
+label list	-q	expression	ACCEPTED	
+label list	--json	fields	ACCEPTED	
+label list	--limit	int	ACCEPTED	
+label list	-L	int	ACCEPTED	
+label list	--order	string	ACCEPTED	
+label list	--search	string	ACCEPTED	
+label list	-S	string	ACCEPTED	
+label list	--sort	string	ACCEPTED	
+label list	--template	string	ACCEPTED	
+label list	-t	string	ACCEPTED	
+label list	--web		ACCEPTED	
+label list	-w		ACCEPTED	
+label list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+label list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label create	--color	string	ACCEPTED	
+label create	-c	string	ACCEPTED	
+label create	--description	string	ACCEPTED	
+label create	-d	string	ACCEPTED	
+label create	--force		ACCEPTED	
+label create	-f		ACCEPTED	
+label create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+label create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label edit	--color	string	ACCEPTED	
+label edit	-c	string	ACCEPTED	
+label edit	--description	string	ACCEPTED	
+label edit	-d	string	ACCEPTED	
+label edit	--name	string	ACCEPTED	
+label edit	-n	string	ACCEPTED	
+label edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+label edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label delete	--yes		ACCEPTED	
+label delete	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+label delete	-R	[HOST/]OWNER/REPO	ACCEPTED	
+label clone	--force		ACCEPTED	
+label clone	-f		ACCEPTED	
+label clone	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+label clone	-R	[HOST/]OWNER/REPO	ACCEPTED	
+search issues	--app	string	ACCEPTED	
+search issues	--archived		ACCEPTED	
+search issues	--assignee	string	ACCEPTED	
+search issues	--author	string	ACCEPTED	
+search issues	--closed	date	ACCEPTED	
+search issues	--commenter	user	ACCEPTED	
+search issues	--comments	number	ACCEPTED	
+search issues	--created	date	ACCEPTED	
+search issues	--include-prs		ACCEPTED	
+search issues	--interactions	number	ACCEPTED	
+search issues	--involves	user	ACCEPTED	
+search issues	--jq	expression	ACCEPTED	
+search issues	-q	expression	ACCEPTED	
+search issues	--json	fields	ACCEPTED	
+search issues	--label	strings	ACCEPTED	
+search issues	--language	string	ACCEPTED	
+search issues	--limit	int	ACCEPTED	
+search issues	-L	int	ACCEPTED	
+search issues	--locked		ACCEPTED	
+search issues	--match	strings	ACCEPTED	
+search issues	--mentions	user	ACCEPTED	
+search issues	--milestone	title	ACCEPTED	
+search issues	--no-assignee		ACCEPTED	
+search issues	--no-label		ACCEPTED	
+search issues	--no-milestone		ACCEPTED	
+search issues	--no-project		ACCEPTED	
+search issues	--order	string	ACCEPTED	
+search issues	--owner	strings	ACCEPTED	
+search issues	--project	owner/number	ACCEPTED	
+search issues	--reactions	number	ACCEPTED	
+search issues	--repo	strings	ACCEPTED	
+search issues	-R	strings	ACCEPTED	
+search issues	--sort	string	ACCEPTED	
+search issues	--state	string	ACCEPTED	
+search issues	--team-mentions	string	ACCEPTED	
+search issues	--template	string	ACCEPTED	
+search issues	-t	string	ACCEPTED	
+search issues	--updated	date	ACCEPTED	
+search issues	--visibility	strings	ACCEPTED	
+search issues	--web		ACCEPTED	
+search issues	-w		ACCEPTED	
+search prs	--app	string	ACCEPTED	
+search prs	--archived		ACCEPTED	
+search prs	--assignee	string	ACCEPTED	
+search prs	--author	string	ACCEPTED	
+search prs	--base	string	ACCEPTED	
+search prs	-B	string	ACCEPTED	
+search prs	--checks	string	ACCEPTED	
+search prs	--closed	date	ACCEPTED	
+search prs	--commenter	user	ACCEPTED	
+search prs	--comments	number	ACCEPTED	
+search prs	--created	date	ACCEPTED	
+search prs	--draft		ACCEPTED	
+search prs	--head	string	ACCEPTED	
+search prs	-H	string	ACCEPTED	
+search prs	--interactions	number	ACCEPTED	
+search prs	--involves	user	ACCEPTED	
+search prs	--jq	expression	ACCEPTED	
+search prs	-q	expression	ACCEPTED	
+search prs	--json	fields	ACCEPTED	
+search prs	--label	strings	ACCEPTED	
+search prs	--language	string	ACCEPTED	
+search prs	--limit	int	ACCEPTED	
+search prs	-L	int	ACCEPTED	
+search prs	--locked		ACCEPTED	
+search prs	--match	strings	ACCEPTED	
+search prs	--mentions	user	ACCEPTED	
+search prs	--merged		ACCEPTED	
+search prs	--merged-at	date	ACCEPTED	
+search prs	--milestone	title	ACCEPTED	
+search prs	--no-assignee		ACCEPTED	
+search prs	--no-label		ACCEPTED	
+search prs	--no-milestone		ACCEPTED	
+search prs	--no-project		ACCEPTED	
+search prs	--order	string	ACCEPTED	
+search prs	--owner	strings	ACCEPTED	
+search prs	--project	owner/number	ACCEPTED	
+search prs	--reactions	number	ACCEPTED	
+search prs	--repo	strings	ACCEPTED	
+search prs	-R	strings	ACCEPTED	
+search prs	--review	string	ACCEPTED	
+search prs	--review-requested	user	ACCEPTED	
+search prs	--reviewed-by	user	ACCEPTED	
+search prs	--sort	string	ACCEPTED	
+search prs	--state	string	ACCEPTED	
+search prs	--team-mentions	string	ACCEPTED	
+search prs	--template	string	ACCEPTED	
+search prs	-t	string	ACCEPTED	
+search prs	--updated	date	ACCEPTED	
+search prs	--visibility	strings	ACCEPTED	
+search prs	--web		ACCEPTED	
+search prs	-w		ACCEPTED	
+search repos	--archived		ACCEPTED	
+search repos	--created	date	ACCEPTED	
+search repos	--followers	number	ACCEPTED	
+search repos	--forks	number	ACCEPTED	
+search repos	--good-first-issues	number	ACCEPTED	
+search repos	--help-wanted-issues	number	ACCEPTED	
+search repos	--include-forks	string	ACCEPTED	
+search repos	--jq	expression	ACCEPTED	
+search repos	-q	expression	ACCEPTED	
+search repos	--json	fields	ACCEPTED	
+search repos	--language	string	ACCEPTED	
+search repos	--license	strings	ACCEPTED	
+search repos	--limit	int	ACCEPTED	
+search repos	-L	int	ACCEPTED	
+search repos	--match	strings	ACCEPTED	
+search repos	--number-topics	number	ACCEPTED	
+search repos	--order	string	ACCEPTED	
+search repos	--owner	strings	ACCEPTED	
+search repos	--size	string	ACCEPTED	
+search repos	--sort	string	ACCEPTED	
+search repos	--stars	number	ACCEPTED	
+search repos	--template	string	ACCEPTED	
+search repos	-t	string	ACCEPTED	
+search repos	--topic	strings	ACCEPTED	
+search repos	--updated	date	ACCEPTED	
+search repos	--visibility	strings	ACCEPTED	
+search repos	--web		ACCEPTED	
+search repos	-w		ACCEPTED	
+search code	--extension	string	ACCEPTED	
+search code	--filename	string	ACCEPTED	
+search code	--jq	expression	ACCEPTED	
+search code	-q	expression	ACCEPTED	
+search code	--json	fields	ACCEPTED	
+search code	--language	string	ACCEPTED	
+search code	--limit	int	ACCEPTED	
+search code	-L	int	ACCEPTED	
+search code	--match	strings	ACCEPTED	
+search code	--owner	strings	ACCEPTED	
+search code	--repo	strings	ACCEPTED	
+search code	-R	strings	ACCEPTED	
+search code	--size	string	ACCEPTED	
+search code	--template	string	ACCEPTED	
+search code	-t	string	ACCEPTED	
+search code	--web		ACCEPTED	
+search code	-w		ACCEPTED	
+search commits	--author	string	ACCEPTED	
+search commits	--author-date	date	ACCEPTED	
+search commits	--author-email	string	ACCEPTED	
+search commits	--author-name	string	ACCEPTED	
+search commits	--committer	string	ACCEPTED	
+search commits	--committer-date	date	ACCEPTED	
+search commits	--committer-email	string	ACCEPTED	
+search commits	--committer-name	string	ACCEPTED	
+search commits	--hash	string	ACCEPTED	
+search commits	--jq	expression	ACCEPTED	
+search commits	-q	expression	ACCEPTED	
+search commits	--json	fields	ACCEPTED	
+search commits	--limit	int	ACCEPTED	
+search commits	-L	int	ACCEPTED	
+search commits	--merge		ACCEPTED	
+search commits	--order	string	ACCEPTED	
+search commits	--owner	strings	ACCEPTED	
+search commits	--parent	string	ACCEPTED	
+search commits	--repo	strings	ACCEPTED	
+search commits	-R	strings	ACCEPTED	
+search commits	--sort	string	ACCEPTED	
+search commits	--template	string	ACCEPTED	
+search commits	-t	string	ACCEPTED	
+search commits	--tree	string	ACCEPTED	
+search commits	--visibility	strings	ACCEPTED	
+search commits	--web		ACCEPTED	
+search commits	-w		ACCEPTED	
+status	--exclude	strings	ACCEPTED	
+status	-e	strings	ACCEPTED	
+status	--org	string	ACCEPTED	
+status	-o	string	ACCEPTED	
+api	--cache	duration	ACCEPTED	
+api	--field	key=value	ACCEPTED	
+api	-F	key=value	ACCEPTED	
+api	--header	key:value	ACCEPTED	
+api	-H	key:value	ACCEPTED	
+api	--hostname	string	ACCEPTED	
+api	--include		ACCEPTED	
+api	-i		ACCEPTED	
+api	--input	file	ACCEPTED	
+api	--jq	string	ACCEPTED	
+api	-q	string	ACCEPTED	
+api	--method	string	ACCEPTED	
+api	-X	string	ACCEPTED	
+api	--paginate		ACCEPTED	
+api	--preview	strings	ACCEPTED	
+api	-p	strings	ACCEPTED	
+api	--raw-field	key=value	ACCEPTED	
+api	-f	key=value	ACCEPTED	
+api	--silent		ACCEPTED	
+api	--slurp		ACCEPTED	
+api	--template	string	ACCEPTED	
+api	-t	string	ACCEPTED	
+api	--verbose		ACCEPTED	
+org list	--limit	int	ACCEPTED	
+org list	-L	int	ACCEPTED	
+config get	--host	string	ACCEPTED	
+config get	-h	string	ACCEPTED	
+config set	--host	string	ACCEPTED	
+config set	-h	string	ACCEPTED	
+config list	--host	string	ACCEPTED	
+config list	-h	string	ACCEPTED	
+alias set	--clobber		ACCEPTED	
+alias set	--shell		ACCEPTED	
+alias set	-s		ACCEPTED	
+alias delete	--all		ACCEPTED	
+alias import	--clobber		ACCEPTED	
+completion	--shell	string	ACCEPTED	
+completion	-s	string	ACCEPTED	
+browse	--actions		ACCEPTED	
+browse	-a		ACCEPTED	
+browse	--blame		ACCEPTED	
+browse	--branch	string	ACCEPTED	
+browse	-b	string	ACCEPTED	
+browse	--commit	string[="last"]	ACCEPTED	
+browse	-c	string[="last"]	ACCEPTED	
+browse	--no-browser		ACCEPTED	
+browse	-n		ACCEPTED	
+browse	--projects		ACCEPTED	
+browse	-p		ACCEPTED	
+browse	--releases		ACCEPTED	
+browse	-r		ACCEPTED	
+browse	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+browse	-R	[HOST/]OWNER/REPO	ACCEPTED	
+browse	--settings		ACCEPTED	
+browse	-s		ACCEPTED	
+browse	--wiki		ACCEPTED	
+browse	-w		ACCEPTED	
+gist list	--filter	expression	ACCEPTED	
+gist list	--include-content		ACCEPTED	
+gist list	--limit	int	ACCEPTED	
+gist list	-L	int	ACCEPTED	
+gist list	--public		ACCEPTED	
+gist list	--secret		ACCEPTED	
+gist view	--filename	string	ACCEPTED	
+gist view	-f	string	ACCEPTED	
+gist view	--files		ACCEPTED	
+gist view	--raw		ACCEPTED	
+gist view	-r		ACCEPTED	
+gist view	--web		ACCEPTED	
+gist view	-w		ACCEPTED	
+gist create	--desc	string	ACCEPTED	
+gist create	-d	string	ACCEPTED	
+gist create	--filename	string	ACCEPTED	
+gist create	-f	string	ACCEPTED	
+gist create	--public		ACCEPTED	
+gist create	-p		ACCEPTED	
+gist create	--web		ACCEPTED	
+gist create	-w		ACCEPTED	
+gist edit	--add	string	ACCEPTED	
+gist edit	-a	string	ACCEPTED	
+gist edit	--desc	string	ACCEPTED	
+gist edit	-d	string	ACCEPTED	
+gist edit	--filename	string	ACCEPTED	
+gist edit	-f	string	ACCEPTED	
+gist edit	--remove	string	ACCEPTED	
+gist edit	-r	string	ACCEPTED	
+gist delete	--yes		ACCEPTED	
+discussion	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion create	--body	string	ACCEPTED	
+discussion create	-b	string	ACCEPTED	
+discussion create	--body-file	string	ACCEPTED	
+discussion create	-F	string	ACCEPTED	
+discussion create	--category	string	ACCEPTED	
+discussion create	-c	string	ACCEPTED	
+discussion create	--label	strings	ACCEPTED	
+discussion create	-l	strings	ACCEPTED	
+discussion create	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion create	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion create	--title	string	ACCEPTED	
+discussion create	-t	string	ACCEPTED	
+discussion list	--after	string	ACCEPTED	
+discussion list	--answered		ACCEPTED	
+discussion list	--author	string	ACCEPTED	
+discussion list	-A	string	ACCEPTED	
+discussion list	--category	string	ACCEPTED	
+discussion list	-c	string	ACCEPTED	
+discussion list	--jq	expression	ACCEPTED	
+discussion list	-q	expression	ACCEPTED	
+discussion list	--json	fields	ACCEPTED	
+discussion list	--label	strings	ACCEPTED	
+discussion list	-l	strings	ACCEPTED	
+discussion list	--limit	int	ACCEPTED	
+discussion list	-L	int	ACCEPTED	
+discussion list	--order	string	ACCEPTED	
+discussion list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion list	--search	query	ACCEPTED	
+discussion list	-S	query	ACCEPTED	
+discussion list	--sort	string	ACCEPTED	
+discussion list	--state	string	ACCEPTED	
+discussion list	-s	string	ACCEPTED	
+discussion list	--template	string	ACCEPTED	
+discussion list	-t	string	ACCEPTED	
+discussion list	--web		ACCEPTED	
+discussion list	-w		ACCEPTED	
+discussion view	--after	string	ACCEPTED	
+discussion view	--comments		ACCEPTED	
+discussion view	-c		ACCEPTED	
+discussion view	--jq	expression	ACCEPTED	
+discussion view	-q	expression	ACCEPTED	
+discussion view	--json	fields	ACCEPTED	
+discussion view	--limit	int	ACCEPTED	
+discussion view	-L	int	ACCEPTED	
+discussion view	--order	string	ACCEPTED	
+discussion view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion view	--template	string	ACCEPTED	
+discussion view	-t	string	ACCEPTED	
+discussion view	--web		ACCEPTED	
+discussion view	-w		ACCEPTED	
+discussion edit	--add-label	name	ACCEPTED	
+discussion edit	--body	string	ACCEPTED	
+discussion edit	-b	string	ACCEPTED	
+discussion edit	--body-file	string	ACCEPTED	
+discussion edit	-F	string	ACCEPTED	
+discussion edit	--category	string	ACCEPTED	
+discussion edit	-c	string	ACCEPTED	
+discussion edit	--remove-label	name	ACCEPTED	
+discussion edit	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion edit	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion edit	--title	string	ACCEPTED	
+discussion edit	-t	string	ACCEPTED	
+discussion comment	--body	string	ACCEPTED	
+discussion comment	-b	string	ACCEPTED	
+discussion comment	--body-file	string	ACCEPTED	
+discussion comment	-F	string	ACCEPTED	
+discussion comment	--delete		ACCEPTED	
+discussion comment	--edit		ACCEPTED	
+discussion comment	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+discussion comment	-R	[HOST/]OWNER/REPO	ACCEPTED	
+discussion comment	--yes		ACCEPTED	
+project list	--closed		ACCEPTED	
+project list	--format	string	ACCEPTED	
+project list	--jq	expression	ACCEPTED	
+project list	-q	expression	ACCEPTED	
+project list	--limit	int	ACCEPTED	
+project list	-L	int	ACCEPTED	
+project list	--owner	string	ACCEPTED	
+project list	--template	string	ACCEPTED	
+project list	-t	string	ACCEPTED	
+project list	--web		ACCEPTED	
+project list	-w		ACCEPTED	
+project view	--format	string	ACCEPTED	
+project view	--jq	expression	ACCEPTED	
+project view	-q	expression	ACCEPTED	
+project view	--owner	string	ACCEPTED	
+project view	--template	string	ACCEPTED	
+project view	-t	string	ACCEPTED	
+project view	--web		ACCEPTED	
+project view	-w		ACCEPTED	
+project create	--format	string	ACCEPTED	
+project create	--jq	expression	ACCEPTED	
+project create	-q	expression	ACCEPTED	
+project create	--owner	string	ACCEPTED	
+project create	--template	string	ACCEPTED	
+project create	-t	string	ACCEPTED	
+project create	--title	string	ACCEPTED	
+project edit	--description	string	ACCEPTED	
+project edit	-d	string	ACCEPTED	
+project edit	--format	string	ACCEPTED	
+project edit	--jq	expression	ACCEPTED	
+project edit	-q	expression	ACCEPTED	
+project edit	--owner	string	ACCEPTED	
+project edit	--readme	string	ACCEPTED	
+project edit	--template	string	ACCEPTED	
+project edit	-t	string	ACCEPTED	
+project edit	--title	string	ACCEPTED	
+project edit	--visibility	string	ACCEPTED	
+project delete	--format	string	ACCEPTED	
+project delete	--jq	expression	ACCEPTED	
+project delete	-q	expression	ACCEPTED	
+project delete	--owner	string	ACCEPTED	
+project delete	--template	string	ACCEPTED	
+project delete	-t	string	ACCEPTED	
+project close	--format	string	ACCEPTED	
+project close	--jq	expression	ACCEPTED	
+project close	-q	expression	ACCEPTED	
+project close	--owner	string	ACCEPTED	
+project close	--template	string	ACCEPTED	
+project close	-t	string	ACCEPTED	
+project close	--undo		ACCEPTED	
+project copy	--drafts		ACCEPTED	
+project copy	--format	string	ACCEPTED	
+project copy	--jq	expression	ACCEPTED	
+project copy	-q	expression	ACCEPTED	
+project copy	--source-owner	string	ACCEPTED	
+project copy	--target-owner	string	ACCEPTED	
+project copy	--template	string	ACCEPTED	
+project copy	-t	string	ACCEPTED	
+project copy	--title	string	ACCEPTED	
+project link	--owner	string	ACCEPTED	
+project link	--repo	string	ACCEPTED	
+project link	-R	string	ACCEPTED	
+project link	--team	string	ACCEPTED	
+project link	-T	string	ACCEPTED	
+project unlink	--owner	string	ACCEPTED	
+project unlink	--repo	string	ACCEPTED	
+project unlink	-R	string	ACCEPTED	
+project unlink	--team	string	ACCEPTED	
+project unlink	-T	string	ACCEPTED	
+project mark-template	--format	string	ACCEPTED	
+project mark-template	--jq	expression	ACCEPTED	
+project mark-template	-q	expression	ACCEPTED	
+project mark-template	--owner	string	ACCEPTED	
+project mark-template	--template	string	ACCEPTED	
+project mark-template	-t	string	ACCEPTED	
+project mark-template	--undo		ACCEPTED	
+project field-create	--data-type	string	ACCEPTED	
+project field-create	--format	string	ACCEPTED	
+project field-create	--jq	expression	ACCEPTED	
+project field-create	-q	expression	ACCEPTED	
+project field-create	--name	string	ACCEPTED	
+project field-create	--owner	string	ACCEPTED	
+project field-create	--single-select-options	strings	ACCEPTED	
+project field-create	--template	string	ACCEPTED	
+project field-create	-t	string	ACCEPTED	
+project field-delete	--format	string	ACCEPTED	
+project field-delete	--id	string	ACCEPTED	
+project field-delete	--jq	expression	ACCEPTED	
+project field-delete	-q	expression	ACCEPTED	
+project field-delete	--template	string	ACCEPTED	
+project field-delete	-t	string	ACCEPTED	
+project field-list	--format	string	ACCEPTED	
+project field-list	--jq	expression	ACCEPTED	
+project field-list	-q	expression	ACCEPTED	
+project field-list	--limit	int	ACCEPTED	
+project field-list	-L	int	ACCEPTED	
+project field-list	--owner	string	ACCEPTED	
+project field-list	--template	string	ACCEPTED	
+project field-list	-t	string	ACCEPTED	
+project item-add	--format	string	ACCEPTED	
+project item-add	--jq	expression	ACCEPTED	
+project item-add	-q	expression	ACCEPTED	
+project item-add	--owner	string	ACCEPTED	
+project item-add	--template	string	ACCEPTED	
+project item-add	-t	string	ACCEPTED	
+project item-add	--url	string	ACCEPTED	
+project item-archive	--format	string	ACCEPTED	
+project item-archive	--id	string	ACCEPTED	
+project item-archive	--jq	expression	ACCEPTED	
+project item-archive	-q	expression	ACCEPTED	
+project item-archive	--owner	string	ACCEPTED	
+project item-archive	--template	string	ACCEPTED	
+project item-archive	-t	string	ACCEPTED	
+project item-archive	--undo		ACCEPTED	
+project item-create	--body	string	ACCEPTED	
+project item-create	--format	string	ACCEPTED	
+project item-create	--jq	expression	ACCEPTED	
+project item-create	-q	expression	ACCEPTED	
+project item-create	--owner	string	ACCEPTED	
+project item-create	--template	string	ACCEPTED	
+project item-create	-t	string	ACCEPTED	
+project item-create	--title	string	ACCEPTED	
+project item-delete	--format	string	ACCEPTED	
+project item-delete	--id	string	ACCEPTED	
+project item-delete	--jq	expression	ACCEPTED	
+project item-delete	-q	expression	ACCEPTED	
+project item-delete	--owner	string	ACCEPTED	
+project item-delete	--template	string	ACCEPTED	
+project item-delete	-t	string	ACCEPTED	
+project item-edit	--body	string	ACCEPTED	
+project item-edit	--clear		ACCEPTED	
+project item-edit	--date	string	ACCEPTED	
+project item-edit	--field-id	string	ACCEPTED	
+project item-edit	--format	string	ACCEPTED	
+project item-edit	--id	string	ACCEPTED	
+project item-edit	--iteration-id	string	ACCEPTED	
+project item-edit	--jq	expression	ACCEPTED	
+project item-edit	-q	expression	ACCEPTED	
+project item-edit	--number	float	ACCEPTED	
+project item-edit	--project-id	string	ACCEPTED	
+project item-edit	--single-select-option-id	string	ACCEPTED	
+project item-edit	--template	string	ACCEPTED	
+project item-edit	-t	string	ACCEPTED	
+project item-edit	--text	string	ACCEPTED	
+project item-edit	--title	string	ACCEPTED	
+project item-list	--format	string	ACCEPTED	
+project item-list	--jq	expression	ACCEPTED	
+project item-list	-q	expression	ACCEPTED	
+project item-list	--limit	int	ACCEPTED	
+project item-list	-L	int	ACCEPTED	
+project item-list	--owner	string	ACCEPTED	
+project item-list	--query	string	ACCEPTED	
+project item-list	--template	string	ACCEPTED	
+project item-list	-t	string	ACCEPTED	
+ssh-key add	--title	string	ACCEPTED	
+ssh-key add	-t	string	ACCEPTED	
+ssh-key add	--type	string	ACCEPTED	
+ssh-key delete	--yes		ACCEPTED	
+ssh-key delete	-y		ACCEPTED	
+gpg-key add	--title	string	ACCEPTED	
+gpg-key add	-t	string	ACCEPTED	
+gpg-key delete	--yes		ACCEPTED	
+gpg-key delete	-y		ACCEPTED	
+ruleset	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset	-R	[HOST/]OWNER/REPO	ACCEPTED	
+rs	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+rs	-R	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset list	--limit	int	ACCEPTED	
+ruleset list	-L	int	ACCEPTED	
+ruleset list	--org	string	ACCEPTED	
+ruleset list	-o	string	ACCEPTED	
+ruleset list	--parents		ACCEPTED	
+ruleset list	-p		ACCEPTED	
+ruleset list	--web		ACCEPTED	
+ruleset list	-w		ACCEPTED	
+ruleset list	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset list	-R	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset view	--org	string	ACCEPTED	
+ruleset view	-o	string	ACCEPTED	
+ruleset view	--parents		ACCEPTED	
+ruleset view	-p		ACCEPTED	
+ruleset view	--web		ACCEPTED	
+ruleset view	-w		ACCEPTED	
+ruleset view	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset view	-R	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset check	--default		ACCEPTED	
+ruleset check	--web		ACCEPTED	
+ruleset check	-w		ACCEPTED	
+ruleset check	--repo	[HOST/]OWNER/REPO	ACCEPTED	
+ruleset check	-R	[HOST/]OWNER/REPO	ACCEPTED	
