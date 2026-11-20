@@ -19,8 +19,9 @@ fn git_available() -> bool {
 
 /// The transcripts follow the prompt set of the pin (git 2.39.5). Later git
 /// releases add hunk commands and change which letters a prompt lists, so the
-/// stdout comparison applies only to oracles up to 2.43 (the pin and the
-/// host-advisory oracle); exit code and resulting state are compared always.
+/// stdout and exit-code comparison applies only to oracles up to 2.43 (the pin
+/// and the host-advisory oracle; later `stash push -p` with nothing selected
+/// exits 128 instead of 1); the resulting state is compared always.
 fn oracle_prompts_match_pin() -> bool {
     let out = Command::new("git").arg("--version").output().unwrap();
     let text = String::from_utf8_lossy(&out.stdout);
@@ -124,8 +125,8 @@ fn compare(args: &[&str], answers: &str) {
             String::from_utf8_lossy(&go),
             "stdout of {args:?} with {answers:?}"
         );
+        assert_eq!(ac, gc, "exit of {args:?} with {answers:?}");
     }
-    assert_eq!(ac, gc, "exit of {args:?} with {answers:?}");
     assert_eq!(
         state(a.path()),
         state(g.path()),
