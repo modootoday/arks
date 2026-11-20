@@ -126,7 +126,7 @@ impl Drop for ArksHttp {
 fn seed_bare(root: &Path) -> PathBuf {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
-    assert_ok(&arks(&work, &["init"]), "init");
+    assert_ok(&arks(&work, &["init", "-b", "main"]), "init");
     fs::write(work.join("hello.txt"), b"hello g031-server-protocol-v2\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");

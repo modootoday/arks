@@ -143,7 +143,7 @@ fn help_lists_wave_pb_and_omits_deferred() {
 fn refuse_deferred_and_unclaimed_flags() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     // Still refuse-closed / usage-fail under current claims.
     assert_fail(&arks(repo, &["filter-branch"]), "filter-branch");
@@ -165,7 +165,7 @@ fn cherry_pick_single_clean_commit() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     assert_ok(&arks(repo, &["branch", "topic"]), "branch");
     assert_ok(&arks(repo, &["checkout", "topic"]), "checkout topic");
@@ -188,7 +188,7 @@ fn revert_single_clean_commit() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     seed_commit(repo, "a.txt", "two\n", "c2");
     assert_ok(&arks(repo, &["revert", "HEAD"]), "revert");
@@ -204,7 +204,7 @@ fn revert_single_clean_commit() {
 fn rebase_replays_linear_commits() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "base\n", "base");
     assert_ok(&arks(repo, &["branch", "feature"]), "branch");
     assert_ok(&arks(repo, &["checkout", "feature"]), "checkout feature");
@@ -227,7 +227,7 @@ fn rebase_replays_linear_commits() {
 fn format_patch_and_am_round_trip() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "base");
     assert_ok(&arks(repo, &["branch", "base"]), "branch base");
     seed_commit(repo, "b.txt", "two\n", "add-b");
@@ -271,7 +271,7 @@ fn format_patch_and_am_round_trip() {
 
     let dest = tmp.path().join("dest");
     fs::create_dir_all(&dest).unwrap();
-    assert_ok(&arks(&dest, &["init"]), "init dest");
+    assert_ok(&arks(&dest, &["init", "-b", "main"]), "init dest");
     for patch in &series {
         assert_ok(
             &arks(&dest, &["am", patch.to_str().unwrap()]),
@@ -287,7 +287,7 @@ fn format_patch_and_am_round_trip() {
 fn bisect_start_bad_good_reset() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "1\n", "c1");
     let good = rev(repo, "HEAD");
     seed_commit(repo, "a.txt", "2\n", "c2");
@@ -317,7 +317,7 @@ fn bundle_create_list_heads_unbundle() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path().join("src");
     fs::create_dir_all(&repo).unwrap();
-    assert_ok(&arks(&repo, &["init"]), "init");
+    assert_ok(&arks(&repo, &["init", "-b", "main"]), "init");
     seed_commit(&repo, "a.txt", "hello\n", "c1");
     assert_ok(&arks(&repo, &["branch", "other"]), "branch other");
     assert_ok(&arks(&repo, &["checkout", "other"]), "checkout other");
@@ -357,7 +357,7 @@ fn bundle_create_list_heads_unbundle() {
 
     let dest = tmp.path().join("dest");
     fs::create_dir_all(&dest).unwrap();
-    assert_ok(&arks(&dest, &["init"]), "init dest");
+    assert_ok(&arks(&dest, &["init", "-b", "main"]), "init dest");
     let un = arks(&dest, &["bundle", "unbundle", bundle.to_str().unwrap()]);
     assert_ok(&un, "unbundle");
     let listed = String::from_utf8_lossy(&un.stdout).to_string();
@@ -379,7 +379,7 @@ fn bundle_create_list_heads_unbundle() {
 fn conflicted_cherry_pick_and_rebase_refuse() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "base\n", "base");
     assert_ok(&arks(repo, &["branch", "feature"]), "branch");
     assert_ok(&arks(repo, &["checkout", "feature"]), "checkout feature");

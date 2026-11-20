@@ -118,7 +118,7 @@ fn g037_gpgsig_ssh_ssh_commit_sign_verify_stock_roundtrip() {
     let repo = tmp.path().join("repo");
     fs::create_dir_all(&repo).unwrap();
 
-    assert_ok(&arks(&repo, &["init"]), "init");
+    assert_ok(&arks(&repo, &["init", "-b", "main"]), "init");
     fs::write(repo.join("README"), b"g037-gpgsig-ssh\n").unwrap();
     assert_ok(&arks(&repo, &["add", "README"]), "add");
     assert_ok(
@@ -162,7 +162,7 @@ fn g037_gpgsig_ssh_ssh_format_still_required_for_ssh_key_path() {
     let (pub_key, allowed) = setup_ephemeral_ssh(&keys);
     let repo = tmp.path().join("repo");
     fs::create_dir_all(&repo).unwrap();
-    assert_ok(&arks(&repo, &["init"]), "init");
+    assert_ok(&arks(&repo, &["init", "-b", "main"]), "init");
     fs::write(repo.join("f"), b"x\n").unwrap();
     assert_ok(&arks(&repo, &["add", "f"]), "add");
     assert_ok(

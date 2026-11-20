@@ -378,7 +378,7 @@ fn m16_sy4_02_submodule_add_ssh() {
     let tmp = TempDir::new().unwrap();
     let super_repo = tmp.path().join("super");
     fs::create_dir_all(&super_repo).unwrap();
-    let out = arks_with_ssh(&super_repo, &fx.ssh_cmd, &["init"]);
+    let out = arks_with_ssh(&super_repo, &fx.ssh_cmd, &["init", "-b", "main"]);
     assert_ok(&out, "super init");
     fs::write(super_repo.join("root.txt"), "root\n").unwrap();
     assert_ok(

@@ -131,7 +131,7 @@ impl Drop for ArksDaemon {
 fn seed_bare_under(base: &Path) -> PathBuf {
     let work = base.join("seed");
     fs::create_dir_all(&work).unwrap();
-    assert_ok(&arks(&work, &["init"]), "init");
+    assert_ok(&arks(&work, &["init", "-b", "main"]), "init");
     fs::write(work.join("hello.txt"), b"hello g032-git-daemon-wire\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "commit");

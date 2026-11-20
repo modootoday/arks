@@ -70,7 +70,7 @@ fn arks_commit_readable_by_git() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "arks init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "arks init");
     fs::write(repo.join("a.txt"), b"alpha").unwrap();
     assert_ok(&arks(repo, &["add", "a.txt"]), "arks add");
     assert_ok(&arks(repo, &["commit", "-m", "arks-first"]), "arks commit");
@@ -128,7 +128,7 @@ fn nested_path_roundtrip() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     fs::create_dir_all(repo.join("src")).unwrap();
     fs::write(repo.join("src/main.rs"), b"fn main() {}\n").unwrap();
     assert_ok(&arks(repo, &["add", "src/main.rs"]), "add nested");
