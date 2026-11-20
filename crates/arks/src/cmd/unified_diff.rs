@@ -99,7 +99,45 @@ pub fn write_file_patch_paths(
     } else {
         myers(&al, &bl)
     };
-    emit_hunks(out, &al, &bl, &script, context)
+    emit_hunks(out, &al, &bl, &script, context, HunkStyle::default())
+}
+
+/// How [`emit_hunks`] decorates hunks.
+#[derive(Clone, Copy)]
+pub struct HunkStyle {
+    /// Append the default xfuncname context to `@@` lines.
+    pub funcname: bool,
+    /// Print each line only up to its first NUL (C-string output).
+    pub cut_nul: bool,
+}
+
+impl Default for HunkStyle {
+    fn default() -> Self {
+        Self {
+            funcname: true,
+            cut_nul: false,
+        }
+    }
+}
+
+/// Only the `@@` hunks (no file headers) of the line diff `old` → `new`.
+pub fn write_hunks(
+    out: &mut impl Write,
+    old: &[u8],
+    new: &[u8],
+    context: usize,
+    style: HunkStyle,
+) -> CliResult<()> {
+    let al = split_lines(old);
+    let bl = split_lines(new);
+    let script = if al.len() + bl.len() > MAX_LINES {
+        let mut s = vec![Op::Del; al.len()];
+        s.extend(std::iter::repeat_n(Op::Ins, bl.len()));
+        s
+    } else {
+        myers(&al, &bl)
+    };
+    emit_hunks(out, &al, &bl, &script, context, style)
 }
 
 /// One `--stat` row: path plus `(insertions, deletions)`, or binary sizes.
@@ -402,6 +440,7 @@ fn emit_hunks(
     b: &[&[u8]],
     ops: &[Op],
     ctx: usize,
+    style: HunkStyle,
 ) -> CliResult<()> {
     // Positions (ai, bi) before each op.
     let mut pos = Vec::with_capacity(ops.len() + 1);
@@ -444,7 +483,11 @@ fn emit_hunks(
                 format!("{s},{l}")
             }
         };
-        let func = funcname(a, a0);
+        let func = if style.funcname {
+            funcname(a, a0)
+        } else {
+            None
+        };
         write!(out, "@@ -{} +{} @@", range(a0, a_len), range(b0, b_len))?;
         if let Some(f) = func {
             out.write_all(b" ")?;
@@ -459,6 +502,12 @@ fn emit_hunks(
                 Op::Ins => (b'+', b[bi]),
             };
             out.write_all(&[sigil])?;
+            if style.cut_nul {
+                if let Some(nul) = line.iter().position(|c| *c == 0) {
+                    out.write_all(&line[..nul])?;
+                    continue;
+                }
+            }
             out.write_all(line)?;
             if !line.ends_with(b"\n") {
                 out.write_all(b"\n\\ No newline at end of file\n")?;

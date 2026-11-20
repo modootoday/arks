@@ -755,6 +755,7 @@ pub fn cmd_commit(args: &[String]) -> CliResult<()> {
             let _ = crate::reflog::append_reflog(&repo, "HEAD", head.as_ref(), &coid, &reflog_msg);
         }
     }
+    crate::cmd::rerere::auto_rerere(&repo, None)?;
     for f in [
         "MERGE_HEAD",
         "MERGE_MSG",

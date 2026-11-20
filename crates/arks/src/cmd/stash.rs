@@ -47,8 +47,17 @@ pub fn cmd_stash(args: &[String]) -> CliResult<()> {
             };
             let p = parse(&format!("stash {sub}"), rest, table, Mode::default())?;
             if p.on("patch") {
-                // FS3 interactive hunk selection.
-                return cmd_stash_patch(&["-p".to_string()]);
+                let mut a = vec!["-p".to_string()];
+                if let Some(m) = p.value("message") {
+                    a.extend(["-m".to_string(), m]);
+                }
+                if p.on("quiet") {
+                    a.push("-q".to_string());
+                }
+                a.push("--".to_string());
+                a.extend(p.args());
+                a.extend(p.after_dashdash());
+                return cmd_stash_patch(&a);
             }
             let mut o = PushOpts {
                 message: p.value("message"),
@@ -188,10 +197,6 @@ struct PushOpts {
 }
 
 /// Public for FS3 `stash -p`.
-pub(crate) fn stash_push_public() -> CliResult<()> {
-    stash_push(&PushOpts::default())
-}
-
 fn put(repo: &mut Repository, kind: ObjectKind, payload: Vec<u8>) -> CliResult<Oid> {
     let format = repo.object_format();
     Ok(repo
@@ -1001,6 +1006,71 @@ pub(crate) fn autostash_pop() -> CliResult<()> {
         Err(_) => eprintln!(
             "Applying autostash resulted in conflicts.\nYour changes are safe in the stash.\nYou can run \"git stash pop\" or \"git stash drop\" at any time."
         ),
+    }
+    Ok(())
+}
+
+/// `stash push -p`: record a stash whose index is the current index and
+/// whose work tree is HEAD with `selected` (path, mode and content, `None`
+/// for a deletion) applied, then print git's "Saved ..." line.
+pub(crate) fn push_patch_stash(
+    selected: &[(String, crate::cmd::add_patch::Side)],
+    message: Option<&str>,
+    quiet: bool,
+) -> CliResult<()> {
+    let mut repo = open_repo()?;
+    let head = repo
+        .head_oid()
+        .map_err(|_| CliError::fatal("You do not have the initial commit yet"))?;
+    let index = read_index(&repo)?;
+    let i_tree = tree_of(&mut repo, &index.entries)?;
+    let h_commit = crate::cmd::log_format::read_commit(&repo, &head)?;
+    let mut map = head_entry_map(&repo, &h_commit.tree)?;
+    for (path, side) in selected {
+        match side {
+            Some((mode, bytes)) => {
+                let oid = put(&mut repo, ObjectKind::Blob, bytes.clone())?;
+                map.insert(path.clone(), (oid, *mode));
+            }
+            None => {
+                map.remove(path);
+            }
+        }
+    }
+    let w_tree = tree_from_map(&mut repo, &map)?;
+    let branch = match repo.head_target()? {
+        RefTarget::Symbolic(s) => s.strip_prefix("refs/heads/").unwrap_or(&s).to_string(),
+        RefTarget::Direct(_) => "(no branch)".to_string(),
+    };
+    let base = format!(
+        "{branch}: {} {}",
+        abbrev_hex(&repo, &head, 7),
+        crate::cmd::log_format::subject_line(&h_commit.message)
+    );
+    let author = commit_signature()?;
+    let committer = committer_signature()?;
+    let mut commit = |tree: Oid, parents: Vec<Oid>, msg: String| -> CliResult<Oid> {
+        let c = Commit {
+            tree,
+            parents,
+            author: author.clone(),
+            committer: committer.clone(),
+            gpgsig: None,
+            message: msg,
+        };
+        let payload = c.encode()?;
+        put(&mut repo, ObjectKind::Commit, payload)
+    };
+    let i_commit = commit(i_tree, vec![head], format!("index on {base}\n"))?;
+    let w_msg = match message {
+        Some(m) => format!("On {branch}: {m}"),
+        None => format!("WIP on {base}"),
+    };
+    let w_commit = commit(w_tree, vec![head, i_commit], w_msg.clone())?;
+    let repo = open_repo()?;
+    store(&repo, w_commit, &w_msg)?;
+    if !quiet {
+        println!("Saved working directory and index state {w_msg}");
     }
     Ok(())
 }

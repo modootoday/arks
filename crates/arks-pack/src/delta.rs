@@ -9,8 +9,6 @@ use crate::error::PackError;
 /// Encode a non-negative integer in the delta size encoding (least significant
 /// 7-bit group first). Not the pack offset encoding.
 ///
-/// M4 encode does not emit deltas; unit tests use this to build fixtures.
-#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn write_size(buf: &mut Vec<u8>, mut value: u64) {
     loop {
         let mut byte = (value & 0x7f) as u8;
@@ -205,5 +203,130 @@ mod tests {
             apply_delta(b"x", &delta),
             Err(PackError::BadDelta("result size mismatch"))
         );
+    }
+}
+
+const BLOCK: usize = 16;
+const MAX_CANDIDATES: usize = 64;
+
+fn block_hash(b: &[u8]) -> u64 {
+    b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, c| {
+        (h ^ u64::from(*c)).wrapping_mul(0x0100_0000_01b3)
+    })
+}
+
+fn push_insert(out: &mut Vec<u8>, lit: &[u8]) {
+    for chunk in lit.chunks(0x7f) {
+        out.push(chunk.len() as u8);
+        out.extend_from_slice(chunk);
+    }
+}
+
+fn push_copy(out: &mut Vec<u8>, mut off: usize, mut len: usize) {
+    while len > 0 {
+        let n = len.min(0x10000);
+        let mut cmd = 0x80u8;
+        let mut args = Vec::with_capacity(7);
+        for (bit, shift) in [(0x01u8, 0u32), (0x02, 8), (0x04, 16), (0x08, 24)] {
+            let b = ((off >> shift) & 0xff) as u8;
+            if b != 0 {
+                cmd |= bit;
+                args.push(b);
+            }
+        }
+        let size = if n == 0x10000 { 0 } else { n };
+        for (bit, shift) in [(0x10u8, 0u32), (0x20, 8), (0x40, 16)] {
+            let b = ((size >> shift) & 0xff) as u8;
+            if b != 0 {
+                cmd |= bit;
+                args.push(b);
+            }
+        }
+        out.push(cmd);
+        out.extend_from_slice(&args);
+        off += n;
+        len -= n;
+    }
+}
+
+/// Greedy delta of `target` against `base` (16-byte block index over the
+/// base, longest verified match per position). `None` when the delta is
+/// not shorter than `max_size` or the base is too large to address.
+pub(crate) fn create(base: &[u8], target: &[u8], max_size: usize) -> Option<Vec<u8>> {
+    if base.is_empty() || base.len() > u32::MAX as usize {
+        return None;
+    }
+    let mut out = Vec::new();
+    write_size(&mut out, base.len() as u64);
+    write_size(&mut out, target.len() as u64);
+    let mut index: std::collections::HashMap<u64, Vec<usize>> = std::collections::HashMap::new();
+    let mut p = 0;
+    while p + BLOCK <= base.len() {
+        let v = index.entry(block_hash(&base[p..p + BLOCK])).or_default();
+        if v.len() < MAX_CANDIDATES {
+            v.push(p);
+        }
+        p += BLOCK;
+    }
+    let mut lit: Vec<u8> = Vec::new();
+    let mut i = 0;
+    while i < target.len() {
+        let mut best = (0usize, 0usize);
+        if i + BLOCK <= target.len() {
+            if let Some(cands) = index.get(&block_hash(&target[i..i + BLOCK])) {
+                for &c in cands {
+                    let mut n = 0;
+                    while c + n < base.len() && i + n < target.len() && base[c + n] == target[i + n]
+                    {
+                        n += 1;
+                    }
+                    if n > best.1 {
+                        best = (c, n);
+                    }
+                }
+            }
+        }
+        if best.1 < BLOCK {
+            lit.push(target[i]);
+            i += 1;
+            if out.len() + lit.len() >= max_size {
+                return None;
+            }
+            continue;
+        }
+        // Grow the match backwards over pending literals.
+        let (mut c, mut n) = best;
+        while c > 0 && lit.last().is_some_and(|l| *l == base[c - 1]) {
+            lit.pop();
+            c -= 1;
+            n += 1;
+        }
+        push_insert(&mut out, &lit);
+        lit.clear();
+        push_copy(&mut out, c, n);
+        i = i - (best.0 - c) + n;
+        if out.len() >= max_size {
+            return None;
+        }
+    }
+    push_insert(&mut out, &lit);
+    (out.len() < max_size).then_some(out)
+}
+
+#[cfg(test)]
+mod create_tests {
+    use super::*;
+
+    #[test]
+    fn delta_round_trips() {
+        let base: Vec<u8> = (0..4000u32).map(|i| (i * 7 % 251) as u8).collect();
+        let mut target = base.clone();
+        target[1000] ^= 0x55;
+        target.extend_from_slice(b"tail bytes");
+        target.splice(2000..2000, b"inserted text".iter().copied());
+        let d = create(&base, &target, usize::MAX).expect("delta");
+        assert!(d.len() < target.len() / 4);
+        assert_eq!(apply_delta(&base, &d).unwrap(), target);
+        assert!(create(&base, b"short", 3).is_none());
     }
 }

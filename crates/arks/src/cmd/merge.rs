@@ -523,6 +523,7 @@ fn merge_one(name: &str, o: &MergeOpts) -> CliResult<()> {
             if resolve {
                 eprintln!("fatal: merge program failed");
             }
+            crate::cmd::rerere::auto_rerere(&repo, None)?;
             if o.squash {
                 say("Squash commit -- not updating HEAD".to_string());
             }

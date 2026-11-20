@@ -114,8 +114,6 @@ pub(crate) fn read_ofs_offset(data: &[u8]) -> Result<(u64, usize), PackError> {
     Ok((ofs, i))
 }
 
-/// M4 encode does not emit ofs-deltas; unit tests use this to build fixtures.
-#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn write_ofs_offset(buf: &mut Vec<u8>, mut offset: u64) -> Result<(), PackError> {
     if offset == 0 {
         return Err(PackError::BadOfsOffset);

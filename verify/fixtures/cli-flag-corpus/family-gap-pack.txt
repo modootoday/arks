@@ -1,0 +1,403 @@
+# Packing / export / replace / merge-tree / interactive patch gap corpus
+# (argv symmetry ladder rung A2, gap group "pack").
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md.
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null; see agent-tier-b.txt for fixture extras.
+#
+# --- replace: create / force / type checks ---
+replace HEAD HEAD~1
+replace -f HEAD HEAD~1
+replace --force HEAD t0
+replace --no-force HEAD t0
+replace HEAD t0 -f
+replace HEAD HEAD:README.md
+replace -f HEAD HEAD:README.md
+replace HEAD v1
+replace v1 HEAD
+replace HEAD 't0^{tree}'
+replace HEAD nosuch
+replace nosuch HEAD
+replace a
+replace a b c
+# --- replace: graft ---
+replace -g HEAD
+replace --graft HEAD t0
+replace -g HEAD t0 t0
+replace -g -f HEAD t0 v1
+replace -fg HEAD t0
+replace -g v1
+replace -g HEAD HEAD~1
+replace -g HEAD~1 HEAD~1^1 HEAD~1^2
+replace -g HEAD:README.md
+replace -g HEAD HEAD:README.md
+replace -g HEAD nosuch
+replace -g nosuch
+replace -g
+# --- replace: edit (GIT_EDITOR=true leaves the object unchanged) ---
+replace -e HEAD
+replace --edit HEAD -f
+replace --raw -e HEAD:README.md
+replace -e 'HEAD^{tree}'
+replace --raw --edit 'HEAD^{tree}'
+replace -e v1
+replace -e nosuch
+replace -e
+replace -e HEAD HEAD
+# --- replace: delete / list / format ---
+replace -d HEAD
+replace -d
+replace --delete nosuch
+replace -d t0 nosuch HEAD
+replace
+replace -l
+replace --list '0*'
+replace -l x y
+replace --format=short
+replace --format=medium -l
+replace --format long
+replace --no-format -l
+replace --format=bad
+replace --format=long -d HEAD
+replace --format=long -g HEAD
+replace --list=x
+# --- replace: option checks and cmdmode conflicts ---
+replace --raw HEAD t0
+replace --raw -l
+replace -f
+replace -f -d HEAD~1
+replace -d -l
+replace -l -d
+replace -e -g HEAD
+replace -lg
+replace --convert-graft-file
+replace --convert-graft-file x
+replace --bogus
+# --- merge-tree: write-tree mode ---
+merge-tree main feature
+merge-tree --write-tree t0 feature
+-C .git/side merge-tree main clash
+-C .git/side merge-tree --write-tree main clash
+-C .git/side merge-tree --name-only main clash
+-C .git/side merge-tree --no-messages main clash
+-C .git/side merge-tree --name-only --no-messages main clash
+-C .git/side merge-tree --messages main topic
+-C .git/side merge-tree --messages main lineone
+-C .git/side merge-tree -z main clash
+-C .git/side merge-tree -z --name-only main clash
+-C .git/side merge-tree -z --messages main lineone
+-C .git/side merge-tree main topic
+-C .git/side merge-tree -X ours main clash
+-C .git/side merge-tree -X theirs main clash
+-C .git/side merge-tree --strategy-option=ours main clash
+-C .git/side merge-tree -Xignore-space-change main clash
+-C .git/side merge-tree --no-strategy-option main clash
+-C .git/side merge-tree -Xbogus main clash
+-C .git/side merge-tree --merge-base=base main clash
+-C .git/side merge-tree --merge-base base main topic
+-C .git/side merge-tree --merge-base=nosuch main clash
+-C .git/side merge-tree '--merge-base=base^{tree}' main clash
+-C .git/side merge-tree --no-merge-base main clash
+-C .git/side merge-tree main nosuch
+-C .git/side merge-tree 'main^{tree}' clash
+-C .git/side merge-tree --stdin
+-C .git/side merge-tree --stdin -z
+-C .git/strat merge-tree main proj
+-C .git/strat merge-tree --allow-unrelated-histories main proj
+-C .git/strat merge-tree main other
+-C .git/conflict merge-tree HEAD other
+-C .git/conflict merge-tree --name-only -z HEAD other
+-C .git/side merge-tree main
+-C .git/side merge-tree
+-C .git/side merge-tree --write-tree base main clash
+-C .git/side merge-tree --write-tree --trivial-merge main clash
+# --- merge-tree: trivial merge ---
+-C .git/side merge-tree base main clash
+-C .git/side merge-tree --trivial-merge base main clash
+-C .git/side merge-tree base main topic
+-C .git/side merge-tree base topic main
+-C .git/side merge-tree base clash lineone
+-C .git/side merge-tree --trivial-merge base main
+-C .git/side merge-tree --trivial-merge -z base main clash
+-C .git/side merge-tree --name-only base main clash
+-C .git/side merge-tree base main nosuch
+-C .git/side merge-tree base:a.txt main clash
+merge-tree t0 main feature
+merge-tree v1 feature main
+# --- fast-export: walks and labels ---
+fast-export main
+fast-export --all
+fast-export t0
+fast-export v1
+fast-export feature
+fast-export HEAD
+fast-export refs/stash
+fast-export main~2..main
+fast-export main~1
+fast-export main feature v1 t0
+fast-export v1 t0 main
+fast-export feature..main
+fast-export ^feature main
+fast-export main --not feature
+fast-export main...feature
+fast-export -- main
+fast-export main -- src
+fast-export main~1..main -- src/a.txt
+fast-export main -- src docs
+fast-export main -- nosuch
+fast-export main nosuch
+fast-export --branches
+fast-export --tags
+fast-export --glob='refs/heads/*'
+fast-export --remotes
+fast-export -n 2 main
+fast-export --max-count=1 main
+fast-export --skip=5 main
+fast-export --merges main
+fast-export --no-merges main
+fast-export --first-parent main
+fast-export --date-order main
+fast-export --reverse main
+fast-export --since=1700010000 --all
+fast-export --author=nobody --all
+fast-export --stdin
+fast-export
+fast-export --bogus main
+# --- fast-export: stream options ---
+fast-export --no-data main~1
+fast-export --data --no-data t0
+fast-export --no-data --data t0
+fast-export --full-tree main~1..main
+fast-export --full-tree --no-data main~2
+fast-export --no-full-tree main~2
+fast-export --use-done-feature t0
+fast-export --no-use-done-feature t0
+fast-export --progress=2 t0
+fast-export --progress=1 --no-data main~2
+fast-export --no-progress t0
+fast-export --progress=x main
+fast-export --show-original-ids main~2
+fast-export --mark-tags v1
+fast-export --mark-tags --show-original-ids --all --no-data
+fast-export --reference-excluded-parents main~1..main
+fast-export --no-reference-excluded-parents main~1..main
+fast-export --fake-missing-tagger v1
+fast-export --no-fake-missing-tagger v1
+fast-export --refspec refs/heads/main:refs/heads/other main~1..main
+fast-export --refspec=refs/tags/*:refs/tags/x-* --all --no-data
+fast-export --no-refspec t0
+fast-export --refspec bad t0
+fast-export --anonymize main~2
+fast-export --anonymize --all
+fast-export --anonymize --anonymize-map=main:trunk --anonymize-map=README.md main
+fast-export --anonymize --no-anonymize t0
+fast-export --anonymize-map=x main
+fast-export --anonymize --reference-excluded-parents main~1..main
+# --- fast-export: tags, encodings and marks ---
+fast-export --signed-tags=strip --tag-of-filtered-object=drop --all
+fast-export --signed-tags=verbatim t0
+fast-export --signed-tags=warn v1
+fast-export --signed-tags=warn-strip v1
+fast-export --no-signed-tags v1
+fast-export --signed-tags=bogus t0
+fast-export --tag-of-filtered-object=drop main~1..main v1
+fast-export --tag-of-filtered-object=rewrite main~1..main v1
+fast-export --tag-of-filtered-object=rewrite v1 -- docs
+fast-export --tag-of-filtered-object=abort main~1..main v1
+fast-export --no-tag-of-filtered-object v1
+fast-export --tag-of-filtered-object=bogus main
+fast-export --reencode=yes t0
+fast-export --reencode=no t0
+fast-export --no-reencode t0
+fast-export --reencode=bogus main
+fast-export --export-marks=.git/m main~2
+fast-export --import-marks-if-exists=.git/nosuch t0
+fast-export --import-marks=.git/nosuch t0
+fast-export --import-marks .git/info/exclude t0
+fast-export --no-import-marks --no-export-marks --no-import-marks-if-exists t0
+# --- rerere ---
+rerere
+rerere status
+rerere remaining
+rerere diff
+rerere clear
+rerere gc
+rerere forget src/a.txt
+rerere bogus
+rerere --rerere-autoupdate
+rerere --no-rerere-autoupdate status
+rerere -h
+-C .git/stratc rerere status
+-C .git/stratc rerere remaining
+-C .git/stratc -c rerere.enabled=true rerere
+-C .git/stratc -c rerere.enabled=true rerere status
+-C .git/stratc -c rerere.enabled=true rerere remaining
+-C .git/stratc -c rerere.enabled=true rerere diff
+-C .git/stratc -c rerere.enabled=true rerere --rerere-autoupdate
+-C .git/stratc -c rerere.enabled=true rerere forget a.txt
+-C .git/stratc -c rerere.enabled=true rerere forget
+-C .git/stratc -c rerere.enabled=true rerere forget nosuch
+-C .git/stratc -c rerere.enabled=true rerere clear
+-C .git/stratc -c rerere.enabled=true rerere gc
+-C .git/stratc -c rerere.enabled=true rerere status extra
+-C .git/side -c rerere.enabled=true merge clash
+-C .git/side -c rerere.enabled=true -c rerere.autoUpdate=true merge clash
+# --- pack-objects (stdin is empty: empty packs or no pack with --non-empty;
+#     packs with objects differ in compression bytes and are checked by
+#     crates/arks/tests/pack_oracle.rs against stock index-pack/verify-pack) ---
+pack-objects
+pack-objects --stdout
+pack-objects .git/x
+pack-objects -q .git/x
+pack-objects --non-empty .git/x
+pack-objects --non-empty --stdout
+pack-objects --no-non-empty --stdout
+pack-objects a b
+pack-objects --stdout x
+pack-objects --revs --non-empty .git/x
+pack-objects --revs --stdout
+pack-objects --no-revs --stdout
+pack-objects --non-empty --window=5 --depth=10 --window-memory=1m --threads=2 .git/x
+pack-objects --non-empty --no-window --no-depth --no-threads .git/x
+pack-objects --non-empty --window=x .git/x
+pack-objects --non-empty --depth=y .git/x
+pack-objects --non-empty --compression=0 .git/x
+pack-objects --non-empty --compression=9 --no-compression .git/x
+pack-objects --non-empty --compression=10 .git/x
+pack-objects --non-empty --max-pack-size=2m .git/x
+pack-objects --non-empty --max-pack-size=1k .git/x
+pack-objects --non-empty --max-pack-size=bogus .git/x
+pack-objects --non-empty --index-version=1 .git/x
+pack-objects --non-empty --index-version=2,0x40000000 .git/x
+pack-objects --non-empty --index-version=3 .git/x
+pack-objects --index-version=1 .git/x
+pack-objects --non-empty --delta-base-offset --no-delta-base-offset .git/x
+pack-objects --non-empty --reuse-delta --no-reuse-delta --reuse-object --no-reuse-object .git/x
+pack-objects --non-empty --local --no-local --incremental --no-incremental .git/x
+pack-objects --non-empty --progress --no-progress --all-progress --all-progress-implied -q --no-quiet --quiet .git/x
+pack-objects --non-empty --revs --unpacked .git/x
+pack-objects --non-empty --revs --include-tag --no-include-tag .git/x
+pack-objects --non-empty --revs --keep-unreachable --no-keep-unreachable .git/x
+pack-objects --non-empty --revs --pack-loose-unreachable --no-pack-loose-unreachable .git/x
+pack-objects --non-empty --revs --no-unpack-unreachable .git/x
+pack-objects --non-empty --sparse --no-sparse --thin --no-thin --shallow --no-shallow .git/x
+pack-objects --non-empty --honor-pack-keep --no-honor-pack-keep .git/x
+pack-objects --non-empty --keep-pack=nosuch.pack --no-keep-pack .git/x
+pack-objects --non-empty --keep-true-parents --no-keep-true-parents .git/x
+pack-objects --non-empty --use-bitmap-index --no-use-bitmap-index .git/x
+pack-objects --non-empty --write-bitmap-index --no-write-bitmap-index .git/x
+pack-objects --non-empty --revs --filter=blob:none .git/x
+pack-objects --non-empty --revs --filter=blob:limit=1k --no-filter .git/x
+pack-objects --non-empty --revs --filter=tree:0 .git/x
+pack-objects --non-empty --revs --filter=bogus .git/x
+pack-objects --non-empty --missing=allow-any .git/x
+pack-objects --non-empty --missing=allow-promisor .git/x
+pack-objects --non-empty --missing=error .git/x
+pack-objects --non-empty --missing=bogus .git/x
+pack-objects --non-empty --exclude-promisor-objects --no-exclude-promisor-objects .git/x
+pack-objects --non-empty --delta-islands --no-delta-islands .git/x
+pack-objects --non-empty --uri-protocol=https --no-uri-protocol .git/x
+pack-objects --non-empty --stdin-packs .git/x
+pack-objects --non-empty --no-stdin-packs .git/x
+pack-objects --stdin-packs --revs .git/x
+pack-objects --stdin-packs --all .git/x
+pack-objects --cruft --revs .git/x
+pack-objects --cruft-expiration=now --all .git/x
+pack-objects --cruft --stdin-packs .git/x
+pack-objects --stdout --no-stdout .git/x
+pack-objects --bogus .git/x
+pack-objects --all-progress-implied --stdout
+# --- commit-graph (written files are byte-checked by the oracle test) ---
+commit-graph
+commit-graph verify
+commit-graph verify --shallow --progress --no-progress
+commit-graph verify --object-dir .git/objects
+commit-graph verify extra
+commit-graph write
+commit-graph write --reachable
+commit-graph write --reachable --changed-paths
+commit-graph write --reachable --no-changed-paths --max-new-filters=1 --no-max-new-filters
+commit-graph write --stdin-commits
+commit-graph write --stdin-packs
+commit-graph write --append --reachable
+commit-graph write --split --reachable
+commit-graph write --split=no-merge --reachable
+commit-graph write --split=replace --reachable
+commit-graph write --split --size-multiple=4 --max-commits=2 --expire-time=1 --reachable
+commit-graph write --split=bogus --reachable
+commit-graph write --reachable --stdin-commits
+commit-graph write --object-dir .git/objects --reachable
+commit-graph write --object-dir nosuch
+commit-graph --object-dir=.git/objects write --reachable
+commit-graph --no-object-dir verify
+commit-graph write --progress --no-progress --reachable
+commit-graph write extra
+commit-graph bogus
+commit-graph -h
+commit-graph write -h
+commit-graph verify -h
+# --- multi-pack-index ---
+multi-pack-index
+multi-pack-index write
+multi-pack-index verify
+multi-pack-index expire
+multi-pack-index repack
+multi-pack-index repack --batch-size=0
+multi-pack-index repack --batch-size=1m
+multi-pack-index repack --batch-size=x
+multi-pack-index write --bitmap
+multi-pack-index write --no-bitmap --progress --no-progress
+multi-pack-index write --preferred-pack=nosuch.pack
+multi-pack-index write --stdin-packs
+multi-pack-index write --refs-snapshot=/dev/null --no-refs-snapshot
+multi-pack-index --object-dir=.git/objects write
+multi-pack-index --object-dir .git/objects verify
+multi-pack-index --object-dir=nosuch write
+multi-pack-index write extra
+multi-pack-index verify extra
+multi-pack-index bogus
+multi-pack-index -h
+multi-pack-index write -h
+multi-pack-index verify -h
+multi-pack-index expire -h
+multi-pack-index repack -h
+# --- interactive hunk selection (-p): stdin is empty, so each line shows the
+#     first hunk and its prompt, then quits at end of input; scripted
+#     answers are compared in crates/arks/tests/patch_oracle.rs ---
+add -p
+add --patch
+add -p src
+add -p -- src/a.txt
+add -p nosuch
+add --patch -- docs
+reset -p
+reset --patch
+reset -p HEAD
+reset -p HEAD~1
+reset -p HEAD~1 -- README.md
+reset -p -- src
+reset -p t0 src
+checkout -p
+checkout --patch
+checkout -p -- src/a.txt
+checkout -p HEAD
+checkout -p HEAD -- src
+checkout -p HEAD~1
+checkout -p HEAD~1 -- src
+checkout -p t0 -- README.md
+restore -p
+restore --patch src
+restore -p --staged
+restore -p --staged src/new.txt
+restore -p --source=HEAD~1 src/a.txt
+restore -p --source=HEAD src
+restore -p --staged --worktree
+restore -p --source=t0 --staged --worktree README.md
+restore -p --worktree --source=HEAD~1 README.md
+stash push -p
+stash -p
+stash push --patch -m msg
+stash push -p -- src/a.txt
+stash push -p -- docs
+stash save -p
+commit -p -m x
+commit --patch -m x -- src/a.txt

@@ -8,193 +8,23 @@ use crate::util::{open_repo, refuse_unknown_flags};
 use arks_object::{Commit, ObjectKind, RawObject, Signature, Tree, TreeEntry, TreeMode};
 use arks_oid::Oid;
 use arks_store::ObjectStore;
-use std::collections::{BTreeMap, HashSet};
-use std::fs;
-use std::io::{self, Read, Write};
+use std::collections::BTreeMap;
+use std::io::{self, Read};
 use std::path::Path;
 
-/// `arks commit-graph` — verify/list subset (write format not claimed).
+/// `commit-graph`: see [`crate::cmd::commit_graph`].
 pub fn cmd_commit_graph(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks commit-graph — commit-graph file helpers (subset)
-
-Usage:
-  arks commit-graph verify
-  arks commit-graph list
-
-write / --append / split not claimed (format depth).
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(args, &["verify", "write", "list"])?;
-    let sub = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("verify");
-    let repo = open_repo()?;
-    let path = repo
-        .git_dir()
-        .join("objects/info/commit-graph")
-        .canonicalize()
-        .unwrap_or_else(|_| repo.git_dir().join("objects/info/commit-graph"));
-    let alt = repo.git_dir().join("objects/info/commit-graphs");
-    match sub {
-        "verify" => {
-            if path.is_file() {
-                let n = fs::metadata(&path)?.len();
-                println!("ok\t{}\t{n} bytes", path.display());
-                Ok(())
-            } else if alt.is_dir() {
-                println!("ok\tchain dir\t{}", alt.display());
-                Ok(())
-            } else {
-                Err(CliError::Msg(
-                    "commit-graph verify: no commit-graph present".into(),
-                ))
-            }
-        }
-        "list" => {
-            if path.is_file() {
-                println!("{}", path.display());
-            }
-            if alt.is_dir() {
-                for ent in fs::read_dir(&alt)? {
-                    let ent = ent?;
-                    println!("{}", ent.path().display());
-                }
-            }
-            Ok(())
-        }
-        "write" => Err(CliError::NotImplemented(
-            "commit-graph write: on-disk format writer not claimed (Partial; verify/list only)"
-                .into(),
-        )),
-        other => Err(CliError::Usage(format!(
-            "commit-graph: unknown subcommand {other}"
-        ))),
-    }
+    crate::cmd::commit_graph::cmd_commit_graph(args)
 }
 
-/// `arks multi-pack-index` — list/verify subset (write not claimed).
+/// `multi-pack-index`: see [`crate::cmd::midx`].
 pub fn cmd_multi_pack_index(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks multi-pack-index — MIDX helpers (subset)
-
-Usage:
-  arks multi-pack-index list
-  arks multi-pack-index verify
-  arks multi-pack-index write   # not claimed
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(args, &["list", "verify", "write", "expire", "repack"])?;
-    let sub = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("list");
-    let repo = open_repo()?;
-    let pack_dir = repo.git_dir().join("objects/pack");
-    let midx = pack_dir.join("multi-pack-index");
-    match sub {
-        "list" => {
-            if midx.is_file() {
-                println!("{}", midx.display());
-            }
-            if pack_dir.is_dir() {
-                for ent in fs::read_dir(&pack_dir)? {
-                    let ent = ent?;
-                    let name = ent.file_name().to_string_lossy().into_owned();
-                    if name.ends_with(".pack") {
-                        println!("{}", ent.path().display());
-                    }
-                }
-            }
-            Ok(())
-        }
-        "verify" => {
-            if !midx.is_file() {
-                return Err(CliError::Msg(
-                    "multi-pack-index verify: no multi-pack-index present".into(),
-                ));
-            }
-            let n = fs::metadata(&midx)?.len();
-            println!(
-                "ok\t{}\t{n} bytes (presence check; checksum algebra not claimed)",
-                midx.display()
-            );
-            Ok(())
-        }
-        "write" | "expire" | "repack" => Err(CliError::NotImplemented(format!(
-            "multi-pack-index {sub}: not claimed (Partial; list/verify only)"
-        ))),
-        other => Err(CliError::Usage(format!(
-            "multi-pack-index: unknown subcommand {other}"
-        ))),
-    }
+    crate::cmd::midx::cmd_multi_pack_index(args)
 }
 
-/// `arks rerere` — rr-cache status/clear subset.
+/// `rerere`: see [`crate::cmd::rerere`].
 pub fn cmd_rerere(args: &[String]) -> CliResult<()> {
-    if args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks rerere — reuse recorded resolution (subset)
-
-Usage:
-  arks rerere status
-  arks rerere clear
-  arks rerere diff     # not claimed
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(
-        args,
-        &["status", "clear", "diff", "gc", "remaining", "forget"],
-    )?;
-    let sub = args.first().map(String::as_str).unwrap_or("status");
-    let repo = open_repo()?;
-    let rr = repo.git_dir().join("rr-cache");
-    match sub {
-        "status" | "remaining" => {
-            if !rr.is_dir() {
-                return Ok(());
-            }
-            let mut n = 0usize;
-            for ent in fs::read_dir(&rr)? {
-                let ent = ent?;
-                if ent.file_type()?.is_dir() {
-                    println!("{}", ent.file_name().to_string_lossy());
-                    n += 1;
-                }
-            }
-            eprintln!("rerere status: {n} recorded conflict(s) (subset)");
-            Ok(())
-        }
-        "clear" => {
-            if rr.is_dir() {
-                fs::remove_dir_all(&rr)?;
-            }
-            Ok(())
-        }
-        "diff" | "gc" | "forget" => Err(CliError::NotImplemented(format!(
-            "rerere {sub}: not claimed (Partial; status/clear only)"
-        ))),
-        other if other.starts_with('-') => Err(CliError::NotImplemented(format!(
-            "rerere option not claimed: {other}"
-        ))),
-        other => Err(CliError::Usage(format!(
-            "rerere: unknown subcommand {other}"
-        ))),
-    }
+    crate::cmd::rerere::cmd_rerere(args)
 }
 
 /// `arks subtree` — discoverability + honest refuse (full subtree not claimed).
@@ -219,135 +49,9 @@ workflows, or external git-subtree until a native subset is evidenced.
     )))
 }
 
-/// `arks fast-export` — emit a simplified fast-export stream for commits (subset).
+/// `fast-export`: see [`crate::cmd::fast_export`].
 pub fn cmd_fast_export(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--all", "--progress"])?;
-    let all = args.iter().any(|a| a == "--all");
-    let repo = open_repo()?;
-    let tips: Vec<Oid> = if all {
-        let mut tips = Vec::new();
-        for name in ["HEAD", "refs/heads", "refs/tags"] {
-            collect_tips(&repo, name, &mut tips)?;
-        }
-        tips
-    } else {
-        let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-        if revs.is_empty() {
-            vec![resolve_rev(&repo, "HEAD")?]
-        } else {
-            revs.iter()
-                .map(|r| resolve_rev(&repo, r))
-                .collect::<CliResult<Vec<_>>>()?
-        }
-    };
-    let mut seen = HashSet::new();
-    let mut mark: u32 = 1;
-    let mut marks: BTreeMap<String, u32> = BTreeMap::new();
-    for tip in tips {
-        export_commit_walk(&repo, tip, &mut seen, &mut mark, &mut marks)?;
-    }
-    println!("done");
-    Ok(())
-}
-
-fn collect_tips(repo: &arks_repo::Repository, which: &str, out: &mut Vec<Oid>) -> CliResult<()> {
-    if which == "HEAD" {
-        if let Ok(oid) = repo.head_oid() {
-            out.push(oid);
-        }
-        return Ok(());
-    }
-    let dir = repo.git_dir().join(which);
-    if !dir.is_dir() {
-        return Ok(());
-    }
-    walk_ref_dir(&dir, which, repo, out)?;
-    Ok(())
-}
-
-fn walk_ref_dir(
-    dir: &Path,
-    prefix: &str,
-    repo: &arks_repo::Repository,
-    out: &mut Vec<Oid>,
-) -> CliResult<()> {
-    for ent in fs::read_dir(dir)? {
-        let ent = ent?;
-        let name = ent.file_name().to_string_lossy().into_owned();
-        let path = ent.path();
-        if path.is_dir() {
-            walk_ref_dir(&path, &format!("{prefix}/{name}"), repo, out)?;
-        } else if let Ok(oid) = repo.refs().resolve(&format!("{prefix}/{name}")) {
-            out.push(oid);
-        }
-    }
-    Ok(())
-}
-
-fn export_commit_walk(
-    repo: &arks_repo::Repository,
-    oid: Oid,
-    seen: &mut HashSet<String>,
-    mark: &mut u32,
-    marks: &mut BTreeMap<String, u32>,
-) -> CliResult<()> {
-    let hex = oid.to_hex();
-    if !seen.insert(hex.clone()) {
-        return Ok(());
-    }
-    let obj = repo.get_object(&oid)?;
-    if obj.kind != ObjectKind::Commit {
-        return Ok(());
-    }
-    let c = Commit::decode(&obj.payload)?;
-    for p in &c.parents {
-        export_commit_walk(repo, *p, seen, mark, marks)?;
-    }
-    // Export tree blobs (non-recursive depth limited by flatten).
-    let mut files: Vec<(String, Oid)> = Vec::new();
-    arks_repo::flatten_tree_entries(repo, &c.tree, "", &mut files)
-        .map_err(|e| CliError::Msg(e.to_string()))?;
-    for (_path, blob) in &files {
-        let bhex = blob.to_hex();
-        if marks.contains_key(&bhex) {
-            continue;
-        }
-        let blob_obj = repo.get_object(blob)?;
-        if blob_obj.kind != ObjectKind::Blob {
-            continue;
-        }
-        let m = *mark;
-        *mark += 1;
-        marks.insert(bhex.clone(), m);
-        println!("blob");
-        println!("mark :{m}");
-        println!("data {}", blob_obj.payload.len());
-        io::stdout().write_all(&blob_obj.payload)?;
-        println!();
-    }
-    let m = *mark;
-    *mark += 1;
-    marks.insert(hex.clone(), m);
-    println!("commit refs/arks/export/{hex}");
-    println!("mark :{m}");
-    let msg = c.message.as_bytes();
-    println!("data {}", msg.len());
-    io::stdout().write_all(msg)?;
-    if !msg.ends_with(b"\n") {
-        println!();
-    }
-    if let Some(p) = c.parents.first() {
-        if let Some(pm) = marks.get(&p.to_hex()) {
-            println!("from :{pm}");
-        }
-    }
-    for (path, blob) in &files {
-        if let Some(bm) = marks.get(&blob.to_hex()) {
-            println!("M 100644 :{bm} {path}");
-        }
-    }
-    println!();
-    Ok(())
+    crate::cmd::fast_export::cmd_fast_export(args)
 }
 
 /// `arks fast-import` — consume a simplified fast-import stream (subset).

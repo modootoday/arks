@@ -14,7 +14,7 @@ use crate::write_tree::write_tree_from_index;
 use arks_index::IndexEntry;
 use arks_object::{Commit, ObjectKind, RawObject, Tree};
 use arks_oid::Oid;
-use arks_pack::{DecodedPack, EncodedPack, PackIndex, PackIndexEntry};
+use arks_pack::{DecodedPack, PackIndex, PackIndexEntry};
 use arks_refs::RefTarget;
 use arks_store::ObjectStore;
 use std::collections::HashSet;
@@ -511,65 +511,9 @@ pub(crate) fn flatten_tree_to_index(
     Ok(())
 }
 
+/// `pack-objects`: see [`crate::cmd::pack_objects`].
 pub fn cmd_pack_objects(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: stdin OID list → undeltified pack+idx (git-pack-objects).
-    // Cite: https://git-scm.com/docs/git-pack-objects
-    refuse_unknown_flags(args, &["--stdout", "-q"])?;
-    let stdout_pack = args.iter().any(|a| a == "--stdout");
-    let quiet = args.iter().any(|a| a == "-q");
-    let base = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("pack");
-    let mut stdin = String::new();
-    io::stdin().read_to_string(&mut stdin)?;
-    let mut oids = Vec::new();
-    let mut seen = HashSet::new();
-    for line in stdin.lines() {
-        let t = line.split_whitespace().next().unwrap_or("");
-        if t.is_empty() {
-            continue;
-        }
-        let oid = Oid::from_hex(t)?;
-        if seen.insert(oid) {
-            oids.push(oid);
-        }
-    }
-    if oids.is_empty() {
-        return Err(CliError::Usage(
-            "pack-objects: pass object OIDs on stdin".into(),
-        ));
-    }
-    let repo = open_repo()?;
-    let mut objects = Vec::new();
-    for oid in &oids {
-        objects.push(repo.get_object(oid)?);
-    }
-    let encoded = EncodedPack::from_undeltified(repo.object_format(), &objects)?;
-    if stdout_pack {
-        io::stdout().write_all(&encoded.pack)?;
-        return Ok(());
-    }
-    let hex = {
-        let hash_len = repo.object_format().digest_len();
-        let dig = &encoded.pack[encoded.pack.len() - hash_len..];
-        dig.iter().map(|b| format!("{b:02x}")).collect::<String>()
-    };
-    let pack_path = Path::new(&format!("{base}-{hex}.pack")).to_path_buf();
-    let idx_path = Path::new(&format!("{base}-{hex}.idx")).to_path_buf();
-    if let Some(parent) = pack_path.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
-    }
-    fs::write(&pack_path, &encoded.pack)?;
-    fs::write(&idx_path, &encoded.idx)?;
-    if !quiet {
-        // git-pack-objects prints the checksum hex (basename suffix).
-        println!("{hex}");
-    }
-    Ok(())
+    crate::cmd::pack_objects::cmd_pack_objects(args)
 }
 
 pub fn cmd_checkout_index(args: &[String]) -> CliResult<()> {

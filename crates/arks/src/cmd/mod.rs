@@ -1,6 +1,7 @@
 //! CLI command modules grouped by domain context (not wave letters).
 //! Composition root: `main.rs` dispatches here; pure format/graph helpers live in library crates.
 
+pub mod add_patch;
 pub mod am;
 pub mod apply;
 pub mod archive;
@@ -16,6 +17,7 @@ pub mod bundle;
 pub mod cat_file;
 pub mod clone;
 pub mod commit;
+pub mod commit_graph;
 pub mod config;
 pub mod core;
 pub mod credential;
@@ -26,6 +28,7 @@ pub mod date_spec;
 pub mod diff_cmd;
 pub mod diff_render;
 pub mod diffcore;
+pub mod fast_export;
 pub mod fetch;
 pub mod for_each_ref;
 pub mod format_patch;
@@ -61,8 +64,12 @@ pub mod merge_helpers;
 pub mod merge_many;
 pub mod merge_strategies;
 pub mod merge_subtree;
+pub mod merge_tree;
+pub mod midx;
 pub mod notes;
 pub mod opt_parse;
+pub mod pack_bitmap;
+pub mod pack_objects;
 pub mod pack_transport;
 pub mod patch;
 pub mod patch_id;
@@ -83,6 +90,7 @@ pub mod remote_local;
 pub mod replace;
 pub mod replay;
 pub mod request_pull;
+pub mod rerere;
 pub mod rev_list;
 pub mod revwalk;
 pub mod server;
