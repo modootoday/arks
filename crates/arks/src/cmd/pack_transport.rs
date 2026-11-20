@@ -248,12 +248,14 @@ pub fn cmd_send_pack(args: &[String]) -> CliResult<()> {
         }
     };
     if p.on("mirror") {
+        // Every ref mirrored; a non-fast-forward still needs --force.
         for (n, o) in local_refs.iter().filter(|(n, _)| n != "refs/stash") {
-            push(&mut updates, n, n, Some(*o), true);
+            let label = crate::cmd::remote_local::short_ref(n).to_string();
+            push(&mut updates, &label, n, Some(*o), force);
         }
         for (n, _) in &remote_refs {
             if !local_refs.iter().any(|(l, _)| l == n && l != "refs/stash") {
-                push(&mut updates, "", n, None, true);
+                push(&mut updates, "", n, None, force);
             }
         }
     } else if p.on("all") {
@@ -350,6 +352,28 @@ pub fn cmd_send_pack(args: &[String]) -> CliResult<()> {
         }
         for l in lines {
             println!("{l}");
+        }
+    }
+    // --remote=<name>: refresh that remote's tracking refs for pushed refs.
+    if let (Some(name), false) = (p.value("remote"), opts.dry_run) {
+        let repo = open_repo()?;
+        let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
+        let specs = cfg.get_all(&format!("remote.{name}.fetch"));
+        let mut repo_mut = open_repo()?;
+        for (u, st) in updates.iter().zip(&statuses) {
+            if matches!(st, PushStatus::Rejected(_) | PushStatus::RemoteRejected(_)) {
+                continue;
+            }
+            let Some(t) = specs
+                .iter()
+                .find_map(|sp| parse_refspec(sp).map_src(&u.dst))
+            else {
+                continue;
+            };
+            match u.new {
+                Some(n) => repo_mut.refs_mut().update(&t, &n, None)?,
+                None => crate::cmd::remote_local::delete_ref_any(&mut repo_mut, &t)?,
+            }
         }
     }
     if statuses
