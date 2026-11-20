@@ -496,6 +496,11 @@ fn prepare_index(o: &Opts) -> CliResult<Vec<arks_index::IndexEntry>> {
         sort_entries(&mut entries);
         index.entries = entries;
     }
+    // Intent-to-add entries are not committed.
+    index.entries.retain(|e| {
+        e.flags_extended
+            .is_none_or(|f| f & crate::cmd::core::INTENT_TO_ADD == 0)
+    });
     Ok(index.entries)
 }
 

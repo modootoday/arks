@@ -697,18 +697,85 @@ fn shorten_ref_name(full: &str) -> String {
 }
 
 pub fn cmd_add(args: &[String]) -> CliResult<()> {
-    // Fs-4 + M16 Sy-1: `-A`/`-u`/`--chmod=+x|-x` (git-add). Cite: https://git-scm.com/docs/git-add
+    // Every option of `git add -h` parses through the shared table.
     // FS3: hunk-level `-p`, `-e` edit, `-i` menu (plus FS1 scripted/TTY answers).
-    if args.iter().any(|a| a == "-i" || a == "--interactive") {
-        return crate::cmd::interactive_patch::cmd_add_interactive(args);
+    // Cite: https://git-scm.com/docs/git-add
+    use crate::cmd::opt_parse::{Mode, parse, read_pathspec_file};
+    let p = parse(
+        "add",
+        args,
+        crate::cmd::porcelain_opts::ADD,
+        Mode::default(),
+    )?;
+    let mut pathspecs = p.args();
+    pathspecs.extend(p.after_dashdash());
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !pathspecs.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
+        }
+        pathspecs = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
     }
-    if args.iter().any(|a| a == "-e" || a == "--edit") {
-        return crate::cmd::interactive_patch::cmd_add_edit(args);
+    if p.on("interactive") {
+        let mut a = vec!["-i".to_string()];
+        a.extend(pathspecs);
+        return crate::cmd::interactive_patch::cmd_add_interactive(&a);
     }
-    if args.iter().any(|a| a == "-p" || a == "--patch") {
-        return crate::cmd::interactive_patch::cmd_add_patch_hunks(args);
+    if p.on("edit") {
+        return crate::cmd::interactive_patch::cmd_add_edit(&["-e".to_string()]);
     }
-    refuse_unknown_flags(args, &["-A", "--all", "-u", "--update", "--chmod"])?;
+    if p.on("patch") {
+        let mut a = vec!["-p".to_string()];
+        a.extend(pathspecs);
+        return crate::cmd::interactive_patch::cmd_add_patch_hunks(&a);
+    }
+    let dry_run = p.on("dry-run");
+    let verbose = p.on("verbose") || dry_run;
+    let force = p.on("force");
+    let intent = p.on("intent-to-add");
+    let ignore_missing = p.on("ignore-missing");
+    if ignore_missing && !dry_run {
+        return Err(CliError::fatal(
+            "the option '--ignore-missing' requires '--dry-run'",
+        ));
+    }
+    let renormalize = p.on("renormalize");
+    // `--no-all` / `--ignore-removal`: stage additions and modifications only.
+    let no_removal = p.flag("all") == Some(false) || p.on("ignore-removal");
+    let all = p.on("all");
+    let update = p.on("update") || renormalize;
+    if all && update {
+        return Err(CliError::fatal(
+            "options '-A' and '-u' cannot be used together",
+        ));
+    }
+    if p.on("refresh") {
+        // Refresh only rewrites cached stat data; the staged content is unchanged.
+        if pathspecs.is_empty() {
+            eprintln!("Nothing specified, nothing added.");
+        }
+        return Ok(());
+    }
+    let chmod_mode: Option<u32> = match p.value("chmod").as_deref() {
+        None => None,
+        Some("+x") => Some(0o100755),
+        Some("-x") => Some(0o100644),
+        Some(other) => {
+            return Err(CliError::fatal(format!(
+                "--chmod param '{other}' must be either -x or +x"
+            )));
+        }
+    };
+    if pathspecs.is_empty() && !all && !update {
+        eprintln!("Nothing specified, nothing added.\nhint: Maybe you wanted to say 'git add .'?");
+        return Ok(());
+    }
+    let positional: Vec<&String> = pathspecs.iter().collect();
     // HOOK-005 (M20 Cx-4): nested index write under held lock (hook/agent) refuse-closed.
     // Keep LOCK-001/LOCK-004 + retry guidance so Cm-2/Cx-2 regressions stay honest.
     {
@@ -748,62 +815,6 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
             )));
         }
     }
-    let all = args.iter().any(|a| a == "-A" || a == "--all");
-    let update = args.iter().any(|a| a == "-u" || a == "--update");
-    let mut chmod_mode: Option<u32> = None;
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--chmod" {
-            i += 1;
-            let v = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("add --chmod=+x|-x".into()))?;
-            chmod_mode = Some(match v.as_str() {
-                "+x" => 0o100755,
-                "-x" => 0o100644,
-                other => {
-                    return Err(CliError::Usage(format!(
-                        "add --chmod: unsupported mode '{other}' (claim +x|-x)"
-                    )));
-                }
-            });
-        } else if let Some(rest) = args[i].strip_prefix("--chmod=") {
-            chmod_mode = Some(match rest {
-                "+x" => 0o100755,
-                "-x" => 0o100644,
-                other => {
-                    return Err(CliError::Usage(format!(
-                        "add --chmod: unsupported mode '{other}' (claim +x|-x)"
-                    )));
-                }
-            });
-        }
-        i += 1;
-    }
-    let positional: Vec<&String> = {
-        let mut out = Vec::new();
-        let mut skip_next = false;
-        for a in args {
-            if skip_next {
-                skip_next = false;
-                continue;
-            }
-            if a == "--chmod" {
-                skip_next = true;
-                continue;
-            }
-            if a.starts_with("--chmod=") || a.starts_with('-') {
-                continue;
-            }
-            out.push(a);
-        }
-        out
-    };
-    if positional.is_empty() && !all && !update {
-        return Err(CliError::Usage(
-            "add: path required (or -A/--all / -u/--update)".into(),
-        ));
-    }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let mut index = read_index(&repo)?;
@@ -826,6 +837,8 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
     // tree) adds untracked files below it and stages modifications and
     // removals of tracked files below it.
     let mut removable: HashSet<String> = HashSet::new();
+    let mut ignore = crate::cmd::ignore::Ignore::new(&work);
+    let mut ignored_named: Vec<String> = Vec::new();
     for p in &positional {
         let rel = pathspec_rel(&work, p)?;
         let abs = if rel.is_empty() {
@@ -847,25 +860,55 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         if abs.is_dir() {
             let mut nested = Vec::new();
             let indexed: std::collections::HashSet<_> = std::collections::HashSet::new();
-            collect_untracked(&work, &abs, &indexed, &mut nested)?;
-            paths.extend(nested);
+            if force {
+                crate::cmd::shared::collect_untracked_with(
+                    &work,
+                    &abs,
+                    &indexed,
+                    &mut nested,
+                    None,
+                )?;
+            } else {
+                collect_untracked(&work, &abs, &indexed, &mut nested)?;
+            }
+            if !update {
+                paths.extend(nested);
+            }
         } else if !abs.exists() && tracked.is_empty() {
+            if ignore_missing {
+                continue;
+            }
             return Err(CliError::fatal(format!(
                 "pathspec '{p}' did not match any files"
             )));
         } else if !tracked.contains(&rel) {
-            paths.push(rel.clone());
+            if !force && ignore.is_ignored(&rel, false) {
+                ignored_named.push(rel.clone());
+            } else if !update {
+                paths.push(rel.clone());
+            }
         }
         removable.extend(tracked.iter().cloned());
         paths.extend(tracked);
     }
     paths.sort();
     paths.dedup();
+    if !ignored_named.is_empty() {
+        let mut msg =
+            String::from("The following paths are ignored by one of your .gitignore files:\n");
+        for r in &ignored_named {
+            msg.push_str(r);
+            msg.push('\n');
+        }
+        msg.push_str("hint: Use -f if you really want to add them.");
+        return Err(CliError::Exit(1, msg));
+    }
     let mut updates: HashMap<String, IndexEntry> = HashMap::new();
     let mut removals: HashSet<String> = HashSet::new();
     // Pf4-2: classify dirty paths serially (stat short-circuit), then parallel
     // content-addressed loose writes (safe; OID path rename). Index lock stays serial.
     let mut dirty: Vec<String> = Vec::new();
+    let mut intents: Vec<String> = Vec::new();
     {
         let stage0: HashMap<&str, &IndexEntry> = index
             .entries
@@ -876,7 +919,7 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         for rel in paths {
             let abs = work.join(&rel);
             if !abs.is_file() {
-                if all || update || removable.contains(&rel) {
+                if !no_removal && (all || update || removable.contains(&rel)) {
                     removals.insert(rel);
                 }
                 continue;
@@ -887,15 +930,50 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
             let meta = fs::metadata(&abs)?;
             // Git-style ce_match_stat short-circuit: unchanged stage-0 entries skip
             // re-hash/re-write (git-add / index refresh). Cite: gitformat-index.
-            if chmod_mode.is_none() {
+            if chmod_mode.is_none() && !renormalize {
                 if let Some(existing) = stage0.get(rel.as_str()) {
                     if index_stat_matches(existing, &meta) {
                         continue;
                     }
                 }
             }
+            if intent && !stage0.contains_key(rel.as_str()) {
+                intents.push(rel);
+                continue;
+            }
             dirty.push(rel);
         }
+    }
+    // `--dry-run` / `--verbose`: name each path, in path order.
+    if verbose {
+        // Tracked updates and removals first, then new files, each in path order.
+        let tracked: HashSet<&str> = index.entries.iter().map(|e| e.path.as_str()).collect();
+        let mut shown: Vec<(bool, &String, &str)> = dirty
+            .iter()
+            .chain(intents.iter())
+            .map(|r| (!tracked.contains(r.as_str()), r, "add"))
+            .chain(removals.iter().map(|r| (false, r, "remove")))
+            .collect();
+        shown.sort();
+        for (_, r, what) in shown {
+            println!("{what} '{r}'");
+        }
+    }
+    if dry_run {
+        return Ok(());
+    }
+    for rel in intents {
+        // `-N`: an empty-blob entry flagged intent-to-add (index v3 extended flag).
+        let meta = fs::metadata(work.join(&rel))?;
+        let mut e = crate::cmd::working_tree::stat_entry(
+            &rel,
+            RawObject::new(ObjectKind::Blob, Vec::new()).oid(repo.object_format())?,
+            &meta,
+        );
+        e.size = 0;
+        e.flags |= arks_index::CE_EXTENDED;
+        e.flags_extended = Some(INTENT_TO_ADD);
+        updates.insert(rel, e);
     }
     if !dirty.is_empty() {
         let objects_dir = repo.store().objects_dir().to_path_buf();
@@ -963,10 +1041,16 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         });
         index.entries.extend(updates.into_values());
         sort_entries(&mut index.entries);
+        if index.entries.iter().any(|e| e.flags_extended.is_some()) && index.version < 3 {
+            index.version = 3;
+        }
         write_index(&repo, &index)?;
     }
     Ok(())
 }
+
+/// On-disk extended flag of an intent-to-add entry (gitformat-index).
+pub(crate) const INTENT_TO_ADD: u16 = 0x2000;
 
 /// Worktree-relative form of a cwd-relative pathspec (`""` = whole tree).
 pub(crate) fn pathspec_rel(work: &Path, p: &str) -> CliResult<String> {
