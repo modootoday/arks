@@ -1,0 +1,484 @@
+# Family COMMIT / BRANCH / WORKTREE corpus (argv symmetry ladder rung A2).
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null.
+# Lines with `-C .git/side` run in the nested side repository the fixture
+# builds (branches topic, lineone, clash diverging from main; tag base).
+#
+# --- status ---
+status
+status -s
+status --short --branch
+status -sb -uno
+status --porcelain
+status --porcelain=v2
+status --porcelain=v2 --branch
+status -z
+status --long
+status -v
+status -uall
+status --untracked-files=no
+status --ignored
+status --ignored=matching
+status --ignored=no
+status --ignore-submodules=all
+status --column
+status --no-column
+status --ahead-behind
+status --no-ahead-behind
+status --renames
+status --no-renames
+status --find-renames=50
+status -s src
+status --show-stash
+status -s --no-show-stash
+#
+# --- tr ---
+interpret-trailers --trailer A=b .git/trailer-msg.txt
+interpret-trailers --trim-empty .git/trailer-msg.txt
+interpret-trailers --unfold .git/trailer-msg.txt
+interpret-trailers --if-missing doNothing --trailer z=1 .git/trailer-msg.txt
+interpret-trailers --trailer a=b --no-trailer .git/trailer-msg.txt
+interpret-trailers --only-input .git/trailer-msg.txt
+interpret-trailers --where=bogus --trailer a=b .git/trailer-msg.txt
+interpret-trailers --trailer =x .git/trailer-msg.txt
+interpret-trailers --only-trailers --only-input .git/trailer-msg.txt
+interpret-trailers --if-exists replace --trailer Fixes=9 .git/trailer-msg.txt
+interpret-trailers --where before --trailer Fixes=0 .git/trailer-msg.txt
+interpret-trailers --parse .git/trailer-msg.txt
+#
+# --- commit ---
+commit --dry-run
+commit --dry-run -a
+commit --short
+commit --porcelain -a
+commit -z --branch
+commit --long -- src/a.txt
+commit -p -m x
+commit --interactive -m x
+commit -m x
+commit -m '  x  ' -m 'y   '
+commit -m x --cleanup=verbatim -m '# not a comment'
+commit -m x -e
+commit -C HEAD~1
+commit -c HEAD~1
+commit -C HEAD~1 --reset-author
+commit --fixup HEAD~1
+commit --fixup=amend:HEAD~1
+commit --fixup=reword:HEAD~1
+commit --squash HEAD~1
+commit --squash HEAD~1 -m extra
+commit --fixup HEAD~1 -m extra
+commit -m x --trailer 'Acked-by: me'
+commit -m x -s --trailer 'Acked-by=me'
+commit --amend --no-edit
+commit --amend
+commit --amend -m new
+commit --amend --reset-author --no-edit
+commit -m x --author 'A U'
+commit -m x --author 'Nobody'
+commit -m x -i src/a.txt
+commit -m x -o src/a.txt
+commit -m x src/a.txt
+commit -m x --pathspec-from-file=.git/info/exclude
+commit -m x -C HEAD
+commit -m x -F README.md
+commit --allow-empty-message -m ''
+commit -m ''
+commit --no-status -m x
+commit -v -m x
+commit -q -m x
+commit --no-post-rewrite --amend --no-edit
+commit -m x -uno
+commit -m x --verify
+commit -am x
+commit -a --dry-run --short -uno
+commit --dry-run -m x -i src/a.txt
+commit -t README.md
+commit -m x --no-signoff -s
+commit -m x --date='2020-01-01 00:00:00 +0000'
+#
+# --- add ---
+add debug.log
+add debug.log README.md
+add -f debug.log
+add -n .
+add -n -A
+add --dry-run -u
+add -v .
+add -v -A
+add -A
+add --all --dry-run
+add .
+add
+add -u
+add --no-all .
+add --ignore-removal .
+add -N untracked.txt
+add --intent-to-add untracked.txt
+add --refresh
+add --refresh src/a.txt
+add --renormalize .
+add --ignore-errors .
+add --ignore-missing -n nope.txt
+add --ignore-missing nope.txt
+add --sparse src/a.txt
+add --chmod=+x src/a.txt
+add --chmod=+x --no-chmod src/a.txt
+add --pathspec-from-file=.git/info/exclude
+add -n -f .
+add -A -n --ignored
+add nope.txt
+add -v --dry-run src
+add -e
+add -u src
+#
+# --- co ---
+checkout feature
+checkout -f feature
+checkout --force feature
+checkout -q feature
+checkout --no-quiet feature
+checkout -m feature
+checkout --merge feature
+checkout --conflict=diff3 feature
+checkout --progress feature
+checkout --no-progress feature
+checkout --recurse-submodules feature
+checkout --no-recurse-submodules feature
+checkout --overwrite-ignore feature
+checkout --ignore-other-worktrees feature
+checkout -d feature
+checkout --detach
+checkout -b topic
+checkout -b topic --track main
+checkout -b topic -t main
+checkout -b topic --no-track main
+checkout --track -b topic main
+checkout -l -b topic
+checkout -B feature main
+checkout --guess nope
+checkout --no-guess feature
+checkout --orphan newroot
+checkout --orphan newroot feature
+checkout --ours src/a.txt
+checkout --theirs src/a.txt
+checkout -2 src/a.txt
+checkout --overlay HEAD~3 -- src
+checkout --no-overlay HEAD~3 -- src
+checkout HEAD~3 -- src
+checkout --pathspec-from-file=.git/info/exclude
+checkout --ignore-skip-worktree-bits -- src/a.txt
+checkout -- src/a.txt
+checkout src/a.txt
+checkout -f
+checkout -f HEAD
+checkout v1
+checkout --detach v1
+checkout t0
+switch feature
+switch -f feature
+switch --discard-changes feature
+switch -c topic
+switch -C feature
+switch --create topic --track main
+switch -c topic -t main
+switch --detach t0
+switch -d t0
+switch t0
+switch --orphan newroot
+switch --guess nope
+switch --no-guess feature
+switch -m feature
+switch --conflict=merge feature
+switch -q feature
+switch --progress feature
+switch --ignore-other-worktrees feature
+switch --overwrite-ignore feature
+switch --recurse-submodules feature
+switch -c topic --no-track
+switch -
+checkout -
+restore src/a.txt
+restore -S src/new.txt
+restore --staged --worktree src/new.txt
+restore -s HEAD~3 src
+restore --source=HEAD~3 --overlay src
+restore --source=HEAD~3 --no-overlay src
+restore --ignore-unmerged src/a.txt
+restore --ours src/a.txt
+restore --theirs src/a.txt
+restore -m src/a.txt
+restore --conflict=diff3 src/a.txt
+restore -q src/a.txt
+restore --progress src/a.txt
+restore --recurse-submodules src/a.txt
+restore --ignore-skip-worktree-bits src/a.txt
+restore --pathspec-from-file=.git/info/exclude
+restore .
+restore -W -S .
+restore --no-source src/a.txt
+restore
+reset
+reset -q
+reset --soft HEAD~1
+reset --hard HEAD~1
+reset --mixed HEAD~1
+reset --keep HEAD~1
+reset --merge HEAD~1
+reset --keep HEAD~3
+reset --merge HEAD~3
+reset --hard
+reset --no-refresh HEAD~1
+reset --refresh
+reset -N HEAD~1
+reset --intent-to-add
+reset --recurse-submodules --hard
+reset HEAD~3 -- src
+reset -- src/new.txt
+reset --pathspec-from-file=.git/info/exclude
+reset --no-quiet
+reset feature
+#
+# --- reset ---
+#
+# --- restore ---
+#
+# --- rmc ---
+rm src/b.txt
+rm -n src/b.txt
+rm --dry-run -q src/b.txt
+rm --cached src/new.txt
+rm -f src/a.txt
+rm src/a.txt
+rm -r src
+rm -rf src
+rm --ignore-unmatch nope.txt
+rm nope.txt
+rm --sparse src/b.txt
+rm --pathspec-from-file=.git/info/exclude
+rm --pathspec-from-file=.git/info/exclude --ignore-unmatch
+rm --no-cached --cached src/new.txt
+rm -q src/b.txt
+mv src/b.txt src/c.txt
+mv -v src/b.txt src/c.txt
+mv -n src/b.txt src/c.txt
+mv --dry-run -v src/b.txt docs
+mv src/b.txt docs/x.md
+mv -f src/b.txt docs/x.md
+mv -k nope.txt src/b.txt docs
+mv nope.txt docs
+mv untracked.txt docs
+mv src docs
+mv -v src lib
+mv --sparse src/b.txt lib.txt
+mv src/b.txt
+clean -n
+clean -f
+clean -fd
+clean -nd
+clean -nx
+clean -nX
+clean -n -e '*.txt'
+clean -n --exclude=untracked.txt
+clean -fq
+clean -i
+clean --interactive -n
+clean
+clean -n --no-dry-run
+clean -f --no-force
+clean -n src
+#
+# --- branch ---
+branch
+branch -v
+branch -vv
+branch --no-verbose -v
+branch -q topic
+branch -t topic main
+branch --track=inherit topic main
+branch --no-track topic main
+branch -u feature
+branch --set-upstream-to=feature main
+branch -u nope
+branch --unset-upstream
+branch --color=always
+branch --color
+branch --no-color
+branch -r
+branch --contains t0
+branch --contains
+branch --no-contains feature
+branch --merged
+branch --merged feature
+branch --no-merged
+branch --abbrev=10 -v
+branch --no-abbrev -v
+branch -a
+branch -d feature
+branch -D feature
+branch -m feature feat2
+branch -M feature main
+branch -c feature feat2
+branch -C feature feat2
+branch -l 'f*'
+branch --list 'f*' --ignore-case
+branch -i --list 'F*'
+branch --show-current
+branch --create-reflog topic
+branch --edit-description
+branch -f feature t0
+branch --force feature HEAD
+branch --column
+branch --column=never
+branch --no-column
+branch --sort=-committerdate
+branch --sort=refname --no-sort
+branch --points-at HEAD
+branch --points-at feature
+branch --recurse-submodules topic
+branch --format='%(refname:short) %(objectname:short)'
+branch --format='%(HEAD) %(refname)' --list 'f*'
+branch --omit-empty --format=''
+branch --no-omit-empty
+branch -d
+branch --delete --no-delete
+#
+# --- tag ---
+tag
+tag -l
+tag -l 'v*'
+tag -n
+tag -n2
+tag -n 'v*'
+tag -d v1
+tag --delete t0
+tag -v v1
+tag --verify t0
+tag x
+tag -a x -m msg
+tag -a x
+tag -m 'hello' x
+tag -m '  hello  ' -m world x
+tag -F README.md x
+tag --file=README.md x
+tag -e -m hi x
+tag --no-edit -m hi x
+tag -s -m hi x
+tag --cleanup=verbatim -m '  hi  ' x
+tag --cleanup=whitespace -m '# hi' x
+tag --cleanup=strip -m '# hi' -m keep x
+tag -u nokey -m hi x
+tag -f t0 HEAD
+tag --force v1
+tag --create-reflog x
+tag --column
+tag --column=never
+tag --no-column
+tag --contains t0
+tag --contains
+tag --no-contains HEAD
+tag --merged
+tag --merged t0
+tag --no-merged t0
+tag --points-at HEAD~1
+tag --points-at t0
+tag --sort=-refname
+tag --sort=taggerdate
+tag --sort=refname --no-sort
+tag --format='%(refname:short) %(objecttype)'
+tag --omit-empty --format=''
+tag --color
+tag --color=always
+tag -i -l 'V*'
+tag --ignore-case
+tag --no-annotate -m hi x
+tag --annotate -m hi x HEAD~1
+tag x feature
+#
+# --- merge ---
+merge feature
+merge t0
+merge v1
+merge -n HEAD~1
+merge --stat t0
+merge --no-ff --no-commit HEAD~2
+merge --log -m x feature
+merge --squash HEAD~2
+merge --abort
+merge --quit
+merge --continue
+merge --verify-signatures feature
+merge -s ours feature
+merge --strategy=ours t0
+merge -s bogus t0
+merge -X ours t0
+merge --allow-unrelated-histories t0
+merge -q t0
+merge -v t0
+merge --progress t0
+merge -S t0
+merge --autostash t0
+merge --overwrite-ignore t0
+merge --signoff t0
+merge --no-verify t0
+merge --into-name=other t0
+merge -e t0
+merge --cleanup=strip t0
+merge --rerere-autoupdate t0
+merge --ff-only t0
+merge --no-ff t0
+merge -F README.md t0
+#
+# --- merge (side repository) ---
+-C .git/side merge topic
+-C .git/side merge -n topic
+-C .git/side merge --no-stat topic
+-C .git/side merge --summary topic
+-C .git/side merge --log topic
+-C .git/side merge --log=1 topic
+-C .git/side merge --no-log topic
+-C .git/side merge --squash topic
+-C .git/side merge --no-commit topic
+-C .git/side merge --commit topic
+-C .git/side merge -e topic
+-C .git/side merge --no-edit topic
+-C .git/side merge --cleanup=verbatim -m '  x  ' topic
+-C .git/side merge --ff-only topic
+-C .git/side merge --no-ff topic
+-C .git/side merge --ff topic
+-C .git/side merge -s ours topic
+-C .git/side merge -s recursive topic
+-C .git/side merge -s resolve topic
+-C .git/side merge --strategy=ort topic
+-C .git/side merge -X patience topic
+-C .git/side merge -m hello topic
+-C .git/side merge -m hello -m world topic
+-C .git/side merge -F b.txt topic
+-C .git/side merge --into-name=dev topic
+-C .git/side merge -v topic
+-C .git/side merge -q topic
+-C .git/side merge --allow-unrelated-histories topic
+-C .git/side merge --progress topic
+-C .git/side merge --autostash topic
+-C .git/side merge --signoff topic
+-C .git/side merge --no-verify topic
+-C .git/side merge --verify topic
+-C .git/side merge --verify-signatures topic
+-C .git/side merge clash
+-C .git/side merge --squash clash
+-C .git/side merge base
+-C .git/side merge --squash base
+-C .git/side merge topic~1
+-C .git/side merge --ff-only clash
+-C .git/side merge --overwrite-ignore topic
+-C .git/side merge --rerere-autoupdate topic
+-C .git/side merge -S topic
+-C .git/side merge --no-gpg-sign topic
+-C .git/side merge lineone
+-C .git/side merge --no-ff lineone
+-C .git/side merge -X ours clash
+-C .git/side merge -X theirs clash
+-C .git/side merge -Xours clash
+-C .git/side merge --strategy-option=theirs clash
+-C .git/side merge -s resolve lineone
+-C .git/side merge -s resolve clash
