@@ -204,3 +204,103 @@ update-ref -z --stdin
 update-ref -z refs/heads/q HEAD
 update-ref
 update-ref -d
+# --- update-index ---
+update-index src/a.txt
+update-index untracked.txt
+update-index --add untracked.txt
+update-index --add --verbose untracked.txt src/a.txt
+update-index --remove src/a.txt
+update-index --force-remove --verbose src/b.txt
+update-index --chmod=+x --verbose docs/x.md
+update-index --chmod=-x docs/x.md
+update-index --chmod=+y docs/x.md
+update-index --assume-unchanged docs/x.md
+update-index --no-assume-unchanged docs/x.md
+update-index --skip-worktree src/b.txt
+update-index --no-skip-worktree src/b.txt
+update-index --info-only --add debug.log
+update-index --show-index-version
+update-index --index-version 4
+update-index --index-version 3
+update-index --index-version 9
+update-index --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,zero
+update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,zero
+update-index --add --cacheinfo 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 zero
+update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,src
+update-index --refresh
+update-index -q --refresh
+update-index --really-refresh
+update-index --refresh --unmerged --ignore-missing --ignore-submodules
+update-index --again
+update-index -g src
+update-index --again --verbose
+update-index --unresolve src/a.txt
+update-index --untracked-cache
+update-index --no-untracked-cache
+update-index --split-index
+update-index --no-split-index
+update-index --no-fsmonitor
+update-index --fsmonitor-valid src/a.txt
+update-index --no-fsmonitor-valid src/a.txt
+update-index --clear-resolve-undo
+update-index --force-write-index
+update-index --no-force-write-index
+update-index --replace --add src
+update-index --stdin
+update-index -z --stdin
+update-index --index-info
+update-index --stdin src/a.txt
+update-index --ignore-skip-worktree-entries --remove src/a.txt
+update-index --bogus
+# --- read-tree ---
+read-tree HEAD
+read-tree HEAD~1
+read-tree --empty
+read-tree
+read-tree --empty HEAD
+read-tree -u HEAD
+read-tree -i HEAD
+read-tree -m -u -i HEAD
+read-tree -m HEAD
+read-tree -m -i HEAD
+read-tree --reset HEAD
+read-tree --reset -u HEAD
+read-tree -m -u HEAD~1
+read-tree -m HEAD feature
+read-tree -m -i HEAD feature
+read-tree -m -i t0 main feature
+read-tree -m -i --aggressive t0 main feature
+read-tree -m -i --trivial t0 main feature
+read-tree -n HEAD~1
+read-tree --dry-run -m -i HEAD~1
+read-tree --prefix=sub/ HEAD~1
+read-tree --prefix=src/ HEAD
+read-tree --index-output=.git/alt-index HEAD~1
+read-tree -q -v --no-sparse-checkout --sparse-checkout --exclude-per-directory=.gitignore --debug-unpack --no-debug-unpack --reset HEAD
+read-tree --recurse-submodules --reset HEAD
+read-tree -m --reset HEAD
+read-tree nosuch
+# --- checkout-index ---
+checkout-index src/a.txt
+checkout-index -f src/a.txt
+checkout-index README.md
+checkout-index -a
+checkout-index -a -f
+checkout-index -f -a -q
+checkout-index -u -f src/a.txt
+checkout-index -n -f -a
+checkout-index --no-create --create -f src/a.txt
+checkout-index nosuch
+checkout-index -q nosuch
+checkout-index --stage=2 src/b.txt
+checkout-index --stage=all -f src/b.txt
+checkout-index --stage=5 src/b.txt
+checkout-index -a src/b.txt
+checkout-index --stdin src/b.txt
+checkout-index --stdin
+checkout-index -z --stdin
+checkout-index --prefix=out/ src/b.txt
+checkout-index --prefix=out/ -a
+checkout-index --prefix=pre- README.md
+checkout-index --ignore-skip-worktree-bits -f -a
+checkout-index

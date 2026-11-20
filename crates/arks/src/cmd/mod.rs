@@ -22,6 +22,7 @@ pub mod history;
 pub mod hooks;
 pub mod host_skew;
 pub mod ignore;
+pub mod index_plumbing;
 pub mod inspect;
 pub mod interactive_patch;
 pub mod lease;
