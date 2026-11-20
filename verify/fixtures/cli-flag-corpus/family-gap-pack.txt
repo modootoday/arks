@@ -72,3 +72,54 @@ replace -lg
 replace --convert-graft-file
 replace --convert-graft-file x
 replace --bogus
+# --- merge-tree: write-tree mode ---
+merge-tree main feature
+merge-tree --write-tree t0 feature
+-C .git/side merge-tree main clash
+-C .git/side merge-tree --write-tree main clash
+-C .git/side merge-tree --name-only main clash
+-C .git/side merge-tree --no-messages main clash
+-C .git/side merge-tree --name-only --no-messages main clash
+-C .git/side merge-tree --messages main topic
+-C .git/side merge-tree --messages main lineone
+-C .git/side merge-tree -z main clash
+-C .git/side merge-tree -z --name-only main clash
+-C .git/side merge-tree -z --messages main lineone
+-C .git/side merge-tree main topic
+-C .git/side merge-tree -X ours main clash
+-C .git/side merge-tree -X theirs main clash
+-C .git/side merge-tree --strategy-option=ours main clash
+-C .git/side merge-tree -Xignore-space-change main clash
+-C .git/side merge-tree --no-strategy-option main clash
+-C .git/side merge-tree -Xbogus main clash
+-C .git/side merge-tree --merge-base=base main clash
+-C .git/side merge-tree --merge-base base main topic
+-C .git/side merge-tree --merge-base=nosuch main clash
+-C .git/side merge-tree '--merge-base=base^{tree}' main clash
+-C .git/side merge-tree --no-merge-base main clash
+-C .git/side merge-tree main nosuch
+-C .git/side merge-tree 'main^{tree}' clash
+-C .git/side merge-tree --stdin
+-C .git/side merge-tree --stdin -z
+-C .git/strat merge-tree main proj
+-C .git/strat merge-tree --allow-unrelated-histories main proj
+-C .git/strat merge-tree main other
+-C .git/conflict merge-tree HEAD other
+-C .git/conflict merge-tree --name-only -z HEAD other
+-C .git/side merge-tree main
+-C .git/side merge-tree
+-C .git/side merge-tree --write-tree base main clash
+-C .git/side merge-tree --write-tree --trivial-merge main clash
+# --- merge-tree: trivial merge ---
+-C .git/side merge-tree base main clash
+-C .git/side merge-tree --trivial-merge base main clash
+-C .git/side merge-tree base main topic
+-C .git/side merge-tree base topic main
+-C .git/side merge-tree base clash lineone
+-C .git/side merge-tree --trivial-merge base main
+-C .git/side merge-tree --trivial-merge -z base main clash
+-C .git/side merge-tree --name-only base main clash
+-C .git/side merge-tree base main nosuch
+-C .git/side merge-tree base:a.txt main clash
+merge-tree t0 main feature
+merge-tree v1 feature main
