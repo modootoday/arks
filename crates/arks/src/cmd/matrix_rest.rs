@@ -13,70 +13,9 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 
-/// `arks commit-graph` — verify/list subset (write format not claimed).
+/// `commit-graph`: see [`crate::cmd::commit_graph`].
 pub fn cmd_commit_graph(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks commit-graph — commit-graph file helpers (subset)
-
-Usage:
-  arks commit-graph verify
-  arks commit-graph list
-
-write / --append / split not claimed (format depth).
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(args, &["verify", "write", "list"])?;
-    let sub = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .map(String::as_str)
-        .unwrap_or("verify");
-    let repo = open_repo()?;
-    let path = repo
-        .git_dir()
-        .join("objects/info/commit-graph")
-        .canonicalize()
-        .unwrap_or_else(|_| repo.git_dir().join("objects/info/commit-graph"));
-    let alt = repo.git_dir().join("objects/info/commit-graphs");
-    match sub {
-        "verify" => {
-            if path.is_file() {
-                let n = fs::metadata(&path)?.len();
-                println!("ok\t{}\t{n} bytes", path.display());
-                Ok(())
-            } else if alt.is_dir() {
-                println!("ok\tchain dir\t{}", alt.display());
-                Ok(())
-            } else {
-                Err(CliError::Msg(
-                    "commit-graph verify: no commit-graph present".into(),
-                ))
-            }
-        }
-        "list" => {
-            if path.is_file() {
-                println!("{}", path.display());
-            }
-            if alt.is_dir() {
-                for ent in fs::read_dir(&alt)? {
-                    let ent = ent?;
-                    println!("{}", ent.path().display());
-                }
-            }
-            Ok(())
-        }
-        "write" => Err(CliError::NotImplemented(
-            "commit-graph write: on-disk format writer not claimed (Partial; verify/list only)"
-                .into(),
-        )),
-        other => Err(CliError::Usage(format!(
-            "commit-graph: unknown subcommand {other}"
-        ))),
-    }
+    crate::cmd::commit_graph::cmd_commit_graph(args)
 }
 
 /// `arks multi-pack-index` — list/verify subset (write not claimed).

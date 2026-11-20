@@ -16,6 +16,7 @@ pub mod bundle;
 pub mod cat_file;
 pub mod clone;
 pub mod commit;
+pub mod commit_graph;
 pub mod config;
 pub mod core;
 pub mod credential;
