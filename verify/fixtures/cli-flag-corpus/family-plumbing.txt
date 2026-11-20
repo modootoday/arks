@@ -1,0 +1,105 @@
+# Plumbing / maintenance / config family corpus (argv symmetry ladder rung A2).
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md.
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null; see agent-tier-b.txt for fixture extras.
+#
+# --- config: locations ---
+config core.bare
+config --local core.bare
+config --no-local --local core.bare
+config --global --no-global core.bare
+config --worktree core.bare
+config -f .git/config core.bare
+config --file=.git/config --list
+config --file .git/config --get user.name
+config --file nosuch.cfg --get a.b
+config --blob HEAD:docs/x.md --list
+config --system --no-system --get user.email
+config --local --global core.bare
+# --- config: reads ---
+config --get core.bare
+config --get-all user.name
+config --get-regexp '^user\.'
+config --get-regexp 'CORE\.B'
+config --get-regexp core 'tru'
+config -l
+config --list --name-only
+config --list --show-origin
+config --list --show-scope
+config --list --show-origin --show-scope -z
+config -z --get-regexp '^core\.'
+config --null --get user.email
+config --name-only --get-regexp '^user'
+config --show-origin --get core.bare
+config --show-scope --get-all user.name
+config --includes -l
+config --no-includes -l
+config --get nosuch.key
+config --default fallback --get nosuch.key
+config --default=7 --int --get nosuch.key
+config --get core.filemode 'tr.e'
+config --get core.filemode '!false'
+config --fixed-value --get core.filemode true
+config --no-get --get core.bare
+# --- config: types ---
+config --bool --get core.filemode
+config --int --get core.repositoryformatversion
+config --bool-or-int --get core.repositoryformatversion
+config --bool-or-str --get user.name
+config --path --get user.name
+config --type=bool --get core.bare
+config -t int --get core.repositoryformatversion
+config --type bool --no-type --get core.bare
+config --bool --get user.name
+config --int --get user.name
+config --type=bogus --get core.bare
+config --type=color --get nosuch.color
+# --- config: colors and URLs ---
+config --get-color color.diff.new red
+config --get-color color.nosuch 'bold blue ul'
+config --get-color color.nosuch '#ff0000 black'
+config --get-colorbool color.ui true
+config --get-colorbool color.ui false
+config --get-colorbool color.ui
+config --get-urlmatch http.sslverify https://example.com/repo.git
+config --get-urlmatch http https://example.com
+config --get-urlmatch http not-a-url
+# --- config: writes (exit status; file content checked by later reads) ---
+config a.b c
+config --add user.name Second
+config --replace-all user.name Only
+config --replace-all user.name Only 'C O'
+config --unset user.email
+config --unset nosuch.key
+config --unset-all user.name
+config --unset-all nosuch.key
+config --rename-section user person
+config --rename-section nosuch other
+config --rename-section user 'bad name'
+config --remove-section commit
+config --remove-section nosuch
+config --bool x.y yes
+config --int x.y 1k
+config --int x.y bogus
+config --type=color x.c 'bold red'
+config --type=color x.c bogus
+config --expiry-date x.e 2.weeks.ago
+config --fixed-value user.name X 'C O Mitter'
+config --blob HEAD:README.md a.b c
+config -e
+config --edit
+# --- config: usage errors ---
+config
+config core
+config .a b
+config a. b
+config a_b.c d
+config a b c d
+config --get
+config --get-urlmatch http
+config --list --get
+config --name-only a.b c
+config --show-origin a.b c
+config --default x a.b c
+config --fixed-value a.b c
+config --bogus
