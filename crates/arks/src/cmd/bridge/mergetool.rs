@@ -68,7 +68,16 @@ pub fn cmd_mergetool(args: &[String]) -> CliResult<()> {
         Some(t) => (t, false),
         None => match tc.configured(gui) {
             Some(t) => (t, false),
-            None => (tc.guess()?, true),
+            // No installed default is not fatal (observed pin 2.39.5): the
+            // message goes to stderr and each conflicted path stays unresolved.
+            None => match tc.guess() {
+                Ok(t) => (t, true),
+                Err(CliError::Exit(1, m)) => {
+                    eprintln!("{m}");
+                    (String::new(), true)
+                }
+                Err(e) => return Err(e),
+            },
         },
     };
     let prompt = match p.flag("no-prompt") {
