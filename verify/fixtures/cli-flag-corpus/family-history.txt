@@ -413,3 +413,22 @@ patch-id
 patch-id --stable
 patch-id --unstable
 patch-id --verbatim
+# --- cat-file ---
+cat-file -p HEAD
+cat-file -t v1
+cat-file -s HEAD:README.md
+cat-file --allow-unknown-type -t HEAD
+cat-file -e HEAD~1
+cat-file commit v1
+cat-file --use-mailmap -p HEAD
+cat-file --textconv HEAD:README.md
+cat-file --filters HEAD:README.md
+cat-file --filters --path=README.md HEAD:README.md
+cat-file --batch-all-objects --batch-check
+cat-file --batch-all-objects --batch-check='%(objectname) %(objecttype) %(objectsize:disk)'
+cat-file --batch-all-objects --batch --buffer
+cat-file -Z --batch-all-objects --batch-check
+cat-file --batch-all-objects --batch-check --follow-symlinks
+cat-file --batch-all-objects --batch-check='%(deltabase)'
+cat-file --batch-check
+cat-file --batch-command
