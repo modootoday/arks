@@ -262,3 +262,191 @@ show-branch --date-order main t0
 show-branch --sparse main t0
 show-branch --sparse --more=1 main t0
 show-branch --sha1-name main t0
+# --- blame / annotate / pickaxe ---
+blame HEAD src/a.txt
+blame -c HEAD src/a.txt
+blame -t HEAD src/a.txt
+blame -l HEAD src/a.txt
+blame -s HEAD src/a.txt
+blame -e HEAD src/a.txt
+blame -f HEAD src/a.txt
+blame -n HEAD src/a.txt
+blame -fn HEAD src/a.txt
+blame -w HEAD src/a.txt
+blame --abbrev=4 HEAD src/a.txt
+blame --abbrev=12 HEAD src/a.txt
+blame --abbrev HEAD src/a.txt
+blame --no-abbrev HEAD src/a.txt
+blame --date=short HEAD src/a.txt
+blame --date=iso HEAD src/a.txt
+blame --date=raw HEAD src/a.txt
+blame --date=unix HEAD src/a.txt
+blame --date=format:%Y HEAD src/a.txt
+blame --incremental HEAD src/a.txt
+blame --show-stats HEAD src/a.txt
+blame --score-debug HEAD src/a.txt
+blame --progress HEAD src/a.txt
+blame --minimal HEAD src/a.txt
+blame --color-lines HEAD src/a.txt
+blame --color-by-age HEAD src/a.txt
+blame --reverse t0 src/a.txt
+blame --reverse t0..HEAD src/a.txt
+blame --first-parent HEAD README.md
+blame --encoding=UTF-8 HEAD src/a.txt
+blame --ignore-rev HEAD~1 HEAD README.md
+blame --ignore-rev t0 HEAD src/a.txt
+blame -L 2,3 HEAD src/a.txt
+blame -L 2,+2 HEAD src/a.txt
+blame -L 5,-2 HEAD src/a.txt
+blame -L /beta/,+2 HEAD src/a.txt
+blame -L /beta/,/delta/ HEAD src/a.txt
+blame -L '^/eta/' HEAD src/a.txt
+blame -L 1,2 -L 7,8 HEAD src/a.txt
+blame -L 1,3 -L 2,4 HEAD src/a.txt
+blame -L 3 HEAD src/a.txt
+blame -L 2, HEAD src/a.txt
+blame -L ,2 HEAD src/a.txt
+blame -L 20,30 HEAD src/a.txt
+blame -L 0,1 HEAD src/a.txt
+blame -L x HEAD src/a.txt
+blame --porcelain HEAD src/a.txt
+blame --line-porcelain -L 1,2 HEAD src/a.txt
+blame --incremental -L 1,2 HEAD src/a.txt
+blame -M HEAD src/a.txt
+blame -C HEAD src/a.txt
+blame -C -C HEAD src/a.txt
+blame -C -C -C HEAD src/a.txt
+blame -M20 -C30 HEAD src/a.txt
+blame --show-name HEAD src/a.txt
+blame --show-number HEAD src/a.txt
+blame --show-email HEAD src/a.txt
+blame -p HEAD README.md
+blame HEAD -- README.md
+blame README.md HEAD
+blame nonexist.txt
+blame HEAD nonexist.txt
+blame --bogus README.md
+blame -s src/new.txt
+blame feature src/b.txt
+blame main src/data.bin
+blame v1 README.md
+blame t0..HEAD src/a.txt
+blame t0..HEAD README.md
+blame --root t0..HEAD README.md
+blame -b t0..HEAD README.md
+blame -S .git/revs src/a.txt
+annotate HEAD src/a.txt
+annotate -s HEAD src/a.txt
+annotate -l HEAD src/a.txt
+annotate -L 1,2 HEAD src/a.txt
+annotate --porcelain -L 1,2 HEAD src/a.txt
+annotate -c HEAD src/a.txt
+annotate -t HEAD src/a.txt
+annotate -e HEAD src/a.txt
+annotate -n HEAD src/a.txt
+annotate -f HEAD src/a.txt
+pickaxe -c HEAD src/a.txt
+blame --color-lines --color-by-age HEAD README.md
+blame -c -t HEAD README.md
+blame -c -e HEAD README.md
+blame -c -s HEAD README.md
+blame -c -n HEAD README.md
+blame -c --date=short HEAD README.md
+blame -t -e HEAD README.md
+blame --date=format:%Y-%m -L 1,1 HEAD README.md
+blame --date=format:%Y-%m-%d_%H -L 1,1 HEAD README.md
+blame '--date=format:%Y %Y %Y %Y %Y' -L 1,1 HEAD README.md
+blame --date=format:x -L 1,1 HEAD README.md
+blame --date=rfc -L 1,1 HEAD README.md
+blame --date=default -L 1,1 HEAD README.md
+blame --date=local -L 1,1 HEAD README.md
+blame --date=iso-strict -L 1,1 HEAD README.md
+blame --date=human -L 1,1 HEAD README.md
+blame --date=relative -L 1,1 HEAD README.md
+blame --date=short -c -L 1,1 HEAD README.md
+blame --date=format:%Y -c -L 1,1 HEAD README.md
+blame -c --date=unix -L 1,1 HEAD README.md
+blame -L 1,1 -c -l HEAD README.md
+blame -L 1,1 -c -b HEAD README.md
+blame -L 1,1 -c --root HEAD README.md
+blame -L 1,1 -c -f HEAD README.md
+blame -L 1,1 -c --abbrev=4 HEAD README.md
+blame -L 1,1 -s -n -f -e HEAD README.md
+blame -L 1,1 -s -e HEAD README.md
+blame -L 1,1 -s -t HEAD README.md
+blame -L 1,1 --score-debug -s HEAD README.md
+blame -L 1,1 --score-debug -f -n HEAD README.md
+blame --show-stats -s HEAD src/b.txt
+blame --show-stats --porcelain HEAD src/b.txt
+blame --show-stats --incremental HEAD src/b.txt
+blame --incremental HEAD src/b.txt
+blame --porcelain HEAD src/b.txt
+blame --line-porcelain HEAD src/b.txt
+blame -p HEAD src/data.bin
+blame -L 1,1 --porcelain -t HEAD README.md
+blame -L 1,1 --porcelain -c HEAD README.md
+blame -L 1,1 --incremental -c HEAD README.md
+blame --color-lines HEAD src/b.txt
+blame --color-lines -s HEAD src/b.txt
+blame --color-lines -c HEAD src/b.txt
+blame --color-by-age -c HEAD src/b.txt
+blame --color-by-age --porcelain -L 1,1 HEAD src/b.txt
+blame -M HEAD docs/x.md
+blame --reverse t0..feature src/b.txt
+blame --reverse t0.. src/b.txt
+blame --reverse HEAD src/b.txt
+blame --reverse t0..HEAD README.md
+blame --reverse --porcelain t0..HEAD README.md
+blame --first-parent t0..HEAD src/b.txt
+blame --first-parent HEAD src/b.txt
+blame HEAD^2 src/b.txt
+blame -L 2,2 --reverse t0..HEAD src/b.txt
+blame HEAD~3..HEAD src/b.txt
+blame --root HEAD~3..HEAD src/b.txt
+blame --porcelain HEAD~3..HEAD src/b.txt
+blame -L 1,1 --porcelain --root HEAD README.md
+blame -w HEAD src/b.txt
+blame --ignore-rev 7d4185b HEAD src/b.txt
+blame --ignore-rev 7d4185b -s HEAD src/b.txt
+blame --ignore-rev 7d4185b --porcelain HEAD src/b.txt
+blame --ignore-rev 7d4185b --ignore-rev 9bd4826 HEAD src/b.txt
+blame --ignore-rev nonexist HEAD src/b.txt
+blame --ignore-revs-file nonexist HEAD src/b.txt
+blame --ignore-rev 7d4185b --no-ignore-rev HEAD src/b.txt
+blame -C -C -C HEAD src/b.txt
+blame -s afc18e2~2 same-renamed.txt
+blame -s afc18e2 same-renamed.txt
+blame --porcelain -L 1,1 afc18e2 same-renamed.txt
+blame -s afc18e2 code-copy.c
+blame -s -C afc18e2 code-copy.c
+blame -s -C -C afc18e2 code-copy.c
+blame -s -C -C -C afc18e2 code-copy.c
+blame -s afc18e2 moved.txt
+blame -s -M afc18e2 moved.txt
+blame -s -C afc18e2 moved.txt
+blame -s -C -C afc18e2 moved.txt
+blame -s afc18e2 code.c
+blame -s -L :two afc18e2 code.c
+blame -s -L :three afc18e2 code.c
+blame -s -L :one afc18e2 code.c
+blame -s -L :nomatch afc18e2 code.c
+blame -s -L :two -L :one afc18e2 code.c
+blame -s -L '/return/,+1' -L '/return/,+1' afc18e2 code.c
+blame -s afc18e2 ws.txt
+blame -s -w afc18e2 ws.txt
+blame -s afc18e2 blank.txt
+blame -s afc18e2 rewrite.txt
+blame -s -L 1,3 afc18e2 big.txt
+blame -s afc18e2 side.txt
+blame -s --first-parent afc18e2 code.c
+blame -s --since=1700040000 afc18e2 code.c
+blame -s --reverse afc18e2~3..afc18e2 code.c
+blame -s --reverse afc18e2~3..afc18e2 same.txt
+blame -f afc18e2 same-renamed.txt
+blame -s -n afc18e2 same-renamed.txt
+blame -c -f afc18e2 same-renamed.txt
+blame --incremental afc18e2 same-renamed.txt
+blame -s --ignore-rev afc18e2 afc18e2 code.c
+blame -s --ignore-rev afc18e2~1 afc18e2 rewrite.txt
+blame -s --ignore-rev afc18e2~2 afc18e2 ws.txt
+blame -s -L 3,3 --reverse afc18e2~3..afc18e2 code.c
