@@ -14,154 +14,149 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
-/// `arks prune` — delete unreachable loose objects.
+/// `arks prune [-n] [-v] [--progress] [--expire <time>] [--exclude-promisor-objects] [--] [<head>...]`
+/// — delete loose objects unreachable from refs, reflogs, the index and the
+/// given heads. Cite: https://git-scm.com/docs/git-prune
 pub fn cmd_prune(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-n", "--dry-run", "-v", "--verbose"])?;
-    let dry = args.iter().any(|a| a == "-n" || a == "--dry-run");
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
+    let mut dry = false;
+    let mut verbose = false;
+    let mut expire: Option<i64> = None;
+    let mut heads: Vec<String> = Vec::new();
+    let mut i = 0;
+    let mut dashdash = false;
+    while i < args.len() {
+        let a = args[i].as_str();
+        i += 1;
+        if dashdash {
+            heads.push(a.to_string());
+            continue;
+        }
+        match a {
+            "-n" | "--dry-run" => dry = true,
+            "--no-dry-run" => dry = false,
+            "-v" | "--verbose" => verbose = true,
+            "--no-verbose" => verbose = false,
+            "-nv" | "-vn" => {
+                dry = true;
+                verbose = true;
+            }
+            "--progress" | "--no-progress" | "--exclude-promisor-objects"
+            | "--no-exclude-promisor-objects" => {}
+            // `--no-expire` keeps everything, like `--expire=never`.
+            "--no-expire" => expire = Some(0),
+            "--expire" => {
+                let v = args.get(i).ok_or_else(|| {
+                    CliError::Exit(129, "error: option `expire' requires a value".into())
+                })?;
+                i += 1;
+                expire = Some(parse_expire(v)?);
+            }
+            "--" => dashdash = true,
+            _ if a.starts_with("--expire=") => expire = Some(parse_expire(&a[9..])?),
+            _ if a.starts_with('-') => {
+                return Err(CliError::Exit(
+                    129,
+                    format!("error: unknown option `{}'\nusage: git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]", a.trim_start_matches('-')),
+                ));
+            }
+            _ => heads.push(a.to_string()),
+        }
+    }
     let repo = open_repo()?;
-    let reachable = reachable_oids(&repo)?;
-    let objects = repo.store().objects_dir();
-    let mut removed = 0u64;
-    if let Ok(rd) = fs::read_dir(objects) {
-        for ent in rd.flatten() {
-            let prefix = ent.file_name().to_string_lossy().to_string();
-            if prefix.len() != 2 || !prefix.chars().all(|c| c.is_ascii_hexdigit()) {
+    let mut tips = Vec::new();
+    for h in &heads {
+        tips.push(resolve_rev(&repo, h).map_err(|_| {
+            CliError::fatal(format!("unrecognized argument: {h}"))
+        })?);
+    }
+    let reachable = crate::cmd::plumbing_ext::reachable_all(&repo, &tips)?;
+    let mut out = String::new();
+    for (oid, path) in crate::cmd::plumbing_ext::loose_objects(&repo) {
+        if reachable.contains(&oid) {
+            continue;
+        }
+        if let Some(cut) = expire {
+            let mtime = fs::metadata(&path)
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0);
+            if mtime > cut {
                 continue;
             }
-            let dir = ent.path();
-            if !dir.is_dir() {
-                continue;
-            }
-            if let Ok(inner) = fs::read_dir(&dir) {
-                for obj in inner.flatten() {
-                    let hex = format!("{}{}", prefix, obj.file_name().to_string_lossy());
-                    if hex.len() != 40 {
-                        continue;
-                    }
-                    let Ok(oid) = Oid::from_hex(&hex) else {
-                        continue;
-                    };
-                    if reachable.contains(&oid) {
-                        continue;
-                    }
-                    if verbose || dry {
-                        println!("{}", oid.to_hex());
-                    }
-                    if !dry {
-                        let _ = fs::remove_file(obj.path());
-                    }
-                    removed += 1;
-                }
+        }
+        if dry || verbose {
+            let kind = repo
+                .get_object(&oid)
+                .map(|o| o.kind.as_str().to_string())
+                .unwrap_or_else(|_| "unknown".into());
+            out.push_str(&format!("{} {kind}\n", oid.to_hex()));
+        }
+        if !dry {
+            let _ = fs::remove_file(&path);
+            if let Some(dir) = path.parent() {
+                let _ = fs::remove_dir(dir);
             }
         }
     }
-    if dry {
-        eprintln!("Would remove {removed} loose object(s)");
+    // `prune` also runs prune-packed (dry-run lists `rm -f <path>`).
+    let packed = packed_oids(&repo)?;
+    for (oid, path) in crate::cmd::plumbing_ext::loose_objects(&repo) {
+        if packed.contains(&oid) {
+            if dry {
+                out.push_str(&format!("rm -f {}\n", shown_path(&path)));
+            } else {
+                let _ = fs::remove_file(&path);
+            }
+        }
     }
+    print!("{out}");
     Ok(())
 }
 
-/// `arks prune-packed` — remove loose objects also present in packs.
+/// `arks prune-packed [-n | --dry-run] [-q | --quiet]` — remove loose objects
+/// that are also in a pack. Cite: https://git-scm.com/docs/git-prune-packed
 pub fn cmd_prune_packed(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-n", "--dry-run", "-q", "--quiet"])?;
-    let dry = args.iter().any(|a| a == "-n" || a == "--dry-run");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
+    let mut dry = false;
+    let mut quiet = false;
+    for a in args {
+        match a.as_str() {
+            "-n" | "--dry-run" => dry = true,
+            "--no-dry-run" => dry = false,
+            "-q" | "--quiet" => quiet = true,
+            "--no-quiet" => quiet = false,
+            "-nq" | "-qn" => {
+                dry = true;
+                quiet = true;
+            }
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git prune-packed [-n | --dry-run] [-q | --quiet]".into(),
+                ));
+            }
+        }
+    }
     let repo = open_repo()?;
     let pack_oids = packed_oids(&repo)?;
-    let objects = repo.store().objects_dir();
-    let mut removed = 0u64;
-    if let Ok(rd) = fs::read_dir(objects) {
-        for ent in rd.flatten() {
-            let prefix = ent.file_name().to_string_lossy().to_string();
-            if prefix.len() != 2 || !prefix.chars().all(|c| c.is_ascii_hexdigit()) {
-                continue;
-            }
-            let dir = ent.path();
-            if !dir.is_dir() {
-                continue;
-            }
-            if let Ok(inner) = fs::read_dir(&dir) {
-                for obj in inner.flatten() {
-                    let hex = format!("{}{}", prefix, obj.file_name().to_string_lossy());
-                    let Ok(oid) = Oid::from_hex(&hex) else {
-                        continue;
-                    };
-                    if !pack_oids.contains(&oid) {
-                        continue;
-                    }
-                    if !quiet && !dry {
-                        println!("{}", oid.to_hex());
-                    }
-                    if !dry {
-                        let _ = fs::remove_file(obj.path());
-                    }
-                    removed += 1;
-                }
+    let mut out = String::new();
+    for (oid, path) in crate::cmd::plumbing_ext::loose_objects(&repo) {
+        if !pack_oids.contains(&oid) {
+            continue;
+        }
+        if dry {
+            out.push_str(&format!("rm -f {}\n", shown_path(&path)));
+        } else {
+            let _ = fs::remove_file(&path);
+            if let Some(dir) = path.parent() {
+                let _ = fs::remove_dir(dir);
             }
         }
     }
-    if dry && !quiet {
-        eprintln!("Would prune-packed {removed} loose object(s)");
-    }
+    let _ = quiet;
+    print!("{out}");
     Ok(())
-}
-
-fn reachable_oids(repo: &Repository) -> CliResult<HashSet<Oid>> {
-    let mut seen = HashSet::new();
-    let refs = repo.refs().list_refs("")?;
-    for (_name, oid) in refs {
-        walk_reach(repo, &oid, &mut seen)?;
-    }
-    if let Ok(head) = repo.head_oid() {
-        walk_reach(repo, &head, &mut seen)?;
-    }
-    Ok(seen)
-}
-
-fn walk_reach(repo: &Repository, oid: &Oid, seen: &mut HashSet<Oid>) -> CliResult<()> {
-    if !seen.insert(*oid) {
-        return Ok(());
-    }
-    let obj = match repo.get_object(oid) {
-        Ok(o) => o,
-        Err(_) => return Ok(()),
-    };
-    match obj.kind {
-        ObjectKind::Commit => {
-            let c = arks_object::Commit::decode(&obj.payload)?;
-            walk_reach(repo, &c.tree, seen)?;
-            for p in c.parents {
-                walk_reach(repo, &p, seen)?;
-            }
-        }
-        ObjectKind::Tree => {
-            let t = Tree::decode(&obj.payload, repo.oid_kind())?;
-            for e in t.entries {
-                walk_reach(repo, &e.oid, seen)?;
-            }
-        }
-        ObjectKind::Blob => {}
-        ObjectKind::Tag => {
-            if let Some(target) = tag_target(&obj.payload) {
-                walk_reach(repo, &target, seen)?;
-            }
-        }
-    }
-    Ok(())
-}
-
-fn tag_target(payload: &[u8]) -> Option<Oid> {
-    let text = std::str::from_utf8(payload).ok()?;
-    for line in text.lines() {
-        if let Some(rest) = line.strip_prefix("object ") {
-            return Oid::from_hex(rest.trim()).ok();
-        }
-        if line.is_empty() {
-            break;
-        }
-    }
-    None
 }
 
 fn packed_oids(repo: &Repository) -> CliResult<HashSet<Oid>> {
@@ -646,23 +641,40 @@ pub fn cmd_credential_store(args: &[String]) -> CliResult<()> {
     }
 }
 
-/// `arks show-index` — list oid/offset from a pack `.idx` on stdin or path.
+/// `arks show-index [--object-format=<hash>]` — dump a pack `.idx` from stdin
+/// as `<offset> <oid> (<crc32>)`. Cite: https://git-scm.com/docs/git-show-index
 pub fn cmd_show_index(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let bytes = if let Some(path) = args.first() {
-        fs::read(path)?
-    } else {
-        let mut buf = Vec::new();
-        io::stdin().read_to_end(&mut buf)?;
-        buf
-    };
-    let format = open_repo()
+    let mut format = open_repo()
         .map(|r| r.object_format())
         .unwrap_or(arks_store::ObjectFormat::Sha1);
-    let idx = arks_pack::PackIndex::decode(&bytes, format)?;
-    for e in &idx.entries {
-        println!("{}\t{}", e.oid.to_hex(), e.offset);
+    for a in args {
+        match a.strip_prefix("--object-format=") {
+            Some("sha1") => format = arks_store::ObjectFormat::Sha1,
+            Some("sha256") => format = arks_store::ObjectFormat::Sha256,
+            Some(other) => {
+                return Err(CliError::fatal(format!("Unknown hash algorithm '{other}'")));
+            }
+            None if a == "--no-object-format" => {}
+            None => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git show-index [--object-format=<hash-algorithm>]".into(),
+                ));
+            }
+        }
     }
+    let mut bytes = Vec::new();
+    io::stdin().read_to_end(&mut bytes)?;
+    if bytes.is_empty() {
+        return Err(CliError::fatal("unable to read header"));
+    }
+    let idx = arks_pack::PackIndex::decode(&bytes, format)
+        .map_err(|_| CliError::fatal("unable to read index"))?;
+    let mut out = String::new();
+    for e in &idx.entries {
+        out.push_str(&format!("{} {} ({:08x})\n", e.offset, e.oid.to_hex(), e.crc32));
+    }
+    print!("{out}");
     Ok(())
 }
 
@@ -897,78 +909,140 @@ pub fn cmd_hook(args: &[String]) -> CliResult<()> {
     }
 }
 
-/// `arks unpack-objects` — explode a pack from stdin into loose objects.
+/// `arks unpack-objects [-n] [-q] [-r] [--strict] [--max-input-size=<n>]` —
+/// explode a pack from stdin into loose objects.
+/// Cite: https://git-scm.com/docs/git-unpack-objects
 pub fn cmd_unpack_objects(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-q", "--quiet", "-n", "--dry-run"])?;
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let dry = args.iter().any(|a| a == "-n" || a == "--dry-run");
+    let mut dry = false;
+    let mut max: Option<u64> = None;
+    for a in args {
+        match a.as_str() {
+            "-n" => dry = true,
+            "-q" | "-r" | "--strict" => {}
+            _ if a.starts_with("--strict=") || a.starts_with("--pack_header=") => {}
+            _ if a.starts_with("--max-input-size=") => {
+                max = a["--max-input-size=".len()..].parse().ok();
+            }
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git unpack-objects [-n] [-q] [-r] [--strict]".into(),
+                ));
+            }
+        }
+    }
     let mut buf = Vec::new();
     io::stdin().read_to_end(&mut buf)?;
+    if let Some(m) = max {
+        if m > 0 && buf.len() as u64 > m {
+            return Err(CliError::fatal("pack exceeds maximum allowed size"));
+        }
+    }
     let mut repo = open_repo()?;
     let format = repo.object_format();
-    let decoded = arks_pack::DecodedPack::decode(&buf, format)?;
-    let mut n = 0u64;
-    for obj in &decoded.objects {
-        if !dry {
-            let _ = repo.store_mut().put(format, &obj.object)?;
+    let decoded = arks_pack::DecodedPack::decode(&buf, format)
+        .map_err(|e| CliError::fatal(format!("{e}")))?;
+    if !dry {
+        for obj in &decoded.objects {
+            if !repo.store().exists(&obj.oid).unwrap_or(false) {
+                repo.store_mut().put(format, &obj.object)?;
+            }
         }
-        n += 1;
-    }
-    if !quiet {
-        eprintln!("Unpacked {n} object(s)");
     }
     Ok(())
 }
 
-/// `arks verify-pack [-v] <pack>` — validate pack + companion idx when present.
+/// `arks verify-pack [-v | --verbose] [-s | --stat-only] [--object-format=<hash>] <pack>.idx...`
+/// Cite: https://git-scm.com/docs/git-verify-pack
 pub fn cmd_verify_pack(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-v", "--verbose", "-s", "--stat-only"])?;
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
-    let pack_path = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("verify-pack [-v] <pack>".into()))?;
-    let bytes = fs::read(pack_path)?;
-    let format = open_repo()
+    let mut verbose = false;
+    let mut stat_only = false;
+    let mut format = open_repo()
         .map(|r| r.object_format())
         .unwrap_or(arks_store::ObjectFormat::Sha1);
-    let decoded = arks_pack::DecodedPack::decode(&bytes, format)?;
-    let idx_path = {
-        let p = Path::new(pack_path);
-        if let Some(stem) = p.file_stem() {
-            p.with_file_name(format!("{}.idx", stem.to_string_lossy()))
-        } else {
-            Path::new(&format!("{pack_path}.idx")).to_path_buf()
-        }
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx...".into(),
+        )
     };
-    // pack-*.pack → pack-*.idx
-    let idx_path = if pack_path.ends_with(".pack") {
-        Path::new(&pack_path.replace(".pack", ".idx")).to_path_buf()
-    } else {
-        idx_path
-    };
-    if idx_path.is_file() {
-        let idx_bytes = fs::read(&idx_path)?;
-        let idx = arks_pack::PackIndex::decode(&idx_bytes, format)?;
-        if idx.entries.len() != decoded.objects.len() {
-            return Err(CliError::Msg(format!(
-                "verify-pack: idx count {} != pack objects {}",
-                idx.entries.len(),
-                decoded.objects.len()
-            )));
+    let mut packs: Vec<&String> = Vec::new();
+    let mut dashdash = false;
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        if dashdash {
+            packs.push(a);
+            continue;
         }
-        if verbose {
-            for e in &idx.entries {
-                println!("{}\t{}", e.oid.to_hex(), e.offset);
+        if a == "--object-format" {
+            format = match it.next().map(String::as_str) {
+                Some("sha1") => arks_store::ObjectFormat::Sha1,
+                Some("sha256") => arks_store::ObjectFormat::Sha256,
+                _ => return Err(usage()),
+            };
+            continue;
+        }
+        match a.as_str() {
+            "-v" | "--verbose" => verbose = true,
+            "--no-verbose" => verbose = false,
+            "-s" | "--stat-only" => stat_only = true,
+            "--no-stat-only" => stat_only = false,
+            "-vs" | "-sv" => {
+                verbose = true;
+                stat_only = true;
+            }
+            "--" => dashdash = true,
+            "--object-format=sha256" => format = arks_store::ObjectFormat::Sha256,
+            "--object-format=sha1" | "--no-object-format" => {
+                if a != "--no-object-format" {
+                    format = arks_store::ObjectFormat::Sha1;
+                }
+            }
+            _ if a.starts_with('-') => return Err(usage()),
+            _ => packs.push(a),
+        }
+    }
+    if packs.is_empty() {
+        return Err(usage());
+    }
+    let mut failed = false;
+    let mut out = String::new();
+    for p in packs {
+        let base = p
+            .strip_suffix(".idx")
+            .or_else(|| p.strip_suffix(".pack"))
+            .unwrap_or(p);
+        let pack_path = format!("{base}.pack");
+        let idx_path = format!("{base}.idx");
+        let res = crate::cmd::plumbing_ext::verify_one_pack(
+            Path::new(&pack_path),
+            Path::new(&idx_path),
+            format,
+            verbose,
+            stat_only,
+        );
+        match res {
+            Ok(text) => {
+                out.push_str(&text);
+                if verbose && !stat_only {
+                    out.push_str(&format!("{pack_path}: ok\n"));
+                }
+            }
+            Err(e) => {
+                print!("{out}");
+                out.clear();
+                eprintln!("error: {e}");
+                if verbose {
+                    println!("{pack_path}: bad");
+                }
+                failed = true;
             }
         }
-    } else if verbose {
-        eprintln!(
-            "note: no idx beside pack; pack decode ok ({} objects)",
-            decoded.objects.len()
-        );
     }
-    println!("ok: {} object(s) in {}", decoded.objects.len(), pack_path);
+    print!("{out}");
+    if failed {
+        return Err(CliError::silent(1));
+    }
     Ok(())
 }
 
@@ -1731,4 +1805,17 @@ pub fn cmd_upload_archive(args: &[String]) -> CliResult<()> {
             Err(CliError::fatal(format!("sent error to the client: {died}")))
         }
     }
+}
+
+fn parse_expire(v: &str) -> CliResult<i64> {
+    crate::cmd::config::expiry_date(v)
+        .ok_or_else(|| CliError::fatal(format!("malformed expiration date '{v}'")))
+}
+
+/// A path as git prints it: relative to the current directory when below it.
+fn shown_path(p: &Path) -> String {
+    let cwd = std::env::current_dir().unwrap_or_default();
+    p.strip_prefix(&cwd)
+        .map(|r| r.display().to_string())
+        .unwrap_or_else(|_| p.display().to_string())
 }

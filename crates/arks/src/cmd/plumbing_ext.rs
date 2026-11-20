@@ -10,6 +10,8 @@ use arks_object::ObjectKind;
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
+
+use std::collections::HashMap;
 use std::io::{self, Read};
 
 pub(crate) struct RefUpdateOpts {
@@ -418,4 +420,224 @@ fn reflog_line(
         .open(&path)?
         .write_all(line.as_bytes())?;
     Ok(())
+}
+
+/// Every object reachable from refs (incl. HEAD and other worktrees' HEAD),
+/// reflog entries, the index and `extra` tips.
+pub(crate) fn reachable_all(
+    repo: &Repository,
+    extra: &[Oid],
+) -> CliResult<std::collections::HashSet<Oid>> {
+    let mut tips: Vec<Oid> = extra.to_vec();
+    for (name, oid) in repo.refs().list_refs("")? {
+        tips.push(oid);
+        for (old, new, _) in crate::reflog::read_entries(repo, &name) {
+            tips.push(new);
+            tips.extend(old);
+        }
+    }
+    if let Ok(h) = repo.head_oid() {
+        tips.push(h);
+    }
+    for (old, new, _) in crate::reflog::read_entries(repo, "HEAD") {
+        tips.push(new);
+        tips.extend(old);
+    }
+    let mut seen = std::collections::HashSet::new();
+    if let Ok(index) = crate::util::read_index(repo) {
+        for e in &index.entries {
+            if e.mode != 0o160000 {
+                seen.insert(e.oid);
+            }
+        }
+    }
+    let mut stack = tips;
+    while let Some(oid) = stack.pop() {
+        if !seen.insert(oid) {
+            continue;
+        }
+        let Ok(obj) = repo.get_object(&oid) else {
+            continue;
+        };
+        match obj.kind {
+            ObjectKind::Commit => {
+                if let Ok(c) = arks_object::Commit::decode(&obj.payload) {
+                    stack.push(c.tree);
+                    stack.extend(c.parents);
+                }
+            }
+            ObjectKind::Tree => {
+                if let Ok(t) = arks_object::Tree::decode(&obj.payload, repo.oid_kind()) {
+                    for e in t.entries {
+                        if e.mode != arks_object::TreeMode::Gitlink {
+                            stack.push(e.oid);
+                        }
+                    }
+                }
+            }
+            ObjectKind::Tag => {
+                if let Some(t) = crate::cmd::shared::tag_target(&obj.payload) {
+                    stack.push(t);
+                }
+            }
+            ObjectKind::Blob => {}
+        }
+    }
+    Ok(seen)
+}
+
+/// Loose objects as (oid, path), sorted by object name.
+pub(crate) fn loose_objects(repo: &Repository) -> Vec<(Oid, std::path::PathBuf)> {
+    let dir = repo.store().objects_dir().to_path_buf();
+    let mut out = Vec::new();
+    let Ok(rd) = std::fs::read_dir(&dir) else {
+        return out;
+    };
+    for ent in rd.flatten() {
+        let prefix = ent.file_name().to_string_lossy().into_owned();
+        if prefix.len() != 2 || !prefix.bytes().all(|b| b.is_ascii_hexdigit()) {
+            continue;
+        }
+        let Ok(inner) = std::fs::read_dir(ent.path()) else {
+            continue;
+        };
+        for obj in inner.flatten() {
+            let hex = format!("{prefix}{}", obj.file_name().to_string_lossy());
+            if let Ok(oid) = Oid::from_hex(&hex) {
+                out.push((oid, obj.path()));
+            }
+        }
+    }
+    out.sort_by_key(|(o, _)| o.to_hex());
+    out
+}
+
+/// `verify-pack` for one pack/idx pair: checks the pack checksum, every
+/// object, and the idx; returns the verbose / stat text.
+pub(crate) fn verify_one_pack(
+    pack: &std::path::Path,
+    idx: &std::path::Path,
+    format: arks_store::ObjectFormat,
+    verbose: bool,
+    stat_only: bool,
+) -> CliResult<String> {
+    let bytes = std::fs::read(pack)
+        .map_err(|e| CliError::Msg(format!("packfile {} cannot be accessed: {e}", pack.display())))?;
+    let idx_bytes = std::fs::read(idx)
+        .map_err(|e| CliError::Msg(format!("{}: {e}", idx.display())))?;
+    let index = arks_pack::PackIndex::decode(&idx_bytes, format)
+        .map_err(|e| CliError::Msg(format!("{}: {e}", idx.display())))?;
+    let decoded = arks_pack::DecodedPack::decode(&bytes, format)
+        .map_err(|e| CliError::Msg(format!("{}: {e}", pack.display())))?;
+    if index.entries.len() != decoded.objects.len() || index.pack_checksum != decoded.checksum {
+        return Err(CliError::Msg(format!(
+            "Packfile index for {} SHA1 mismatch",
+            pack.display()
+        )));
+    }
+    if !verbose && !stat_only {
+        return Ok(String::new());
+    }
+    let hash_len = format.digest_len();
+    let body_end = bytes.len() - hash_len;
+    let mut by_offset: Vec<&arks_pack::ResolvedObject> = decoded.objects.iter().collect();
+    by_offset.sort_by_key(|o| o.offset);
+    let offsets: Vec<u64> = by_offset.iter().map(|o| o.offset).collect();
+    let oid_at: HashMap<u64, Oid> = by_offset.iter().map(|o| (o.offset, o.oid)).collect();
+    // Per entry: (declared size, base offset if delta).
+    let mut meta: HashMap<u64, (u64, Option<u64>)> = HashMap::new();
+    for &off in &offsets {
+        let mut p = off as usize;
+        let mut c = bytes[p];
+        p += 1;
+        let ty = (c >> 4) & 7;
+        let mut size = u64::from(c & 15);
+        let mut shift = 4;
+        while c & 0x80 != 0 {
+            c = bytes[p];
+            p += 1;
+            size |= u64::from(c & 0x7f) << shift;
+            shift += 7;
+        }
+        let base = match ty {
+            6 => {
+                let mut c = bytes[p];
+                p += 1;
+                let mut ofs = u64::from(c & 0x7f);
+                while c & 0x80 != 0 {
+                    c = bytes[p];
+                    p += 1;
+                    ofs = ((ofs + 1) << 7) | u64::from(c & 0x7f);
+                }
+                Some(off - ofs)
+            }
+            7 => {
+                let base = Oid::from_bytes(
+                    match format {
+                        arks_store::ObjectFormat::Sha1 => arks_oid::OidKind::Sha1,
+                        _ => arks_oid::OidKind::Sha256,
+                    },
+                    &bytes[p..p + hash_len],
+                )
+                .ok();
+                base.and_then(|b| decoded.objects.iter().find(|o| o.oid == b))
+                    .map(|o| o.offset)
+            }
+            _ => None,
+        };
+        meta.insert(off, (size, base));
+    }
+    let depth = |mut off: u64| {
+        let mut d = 0usize;
+        while let Some((_, Some(b))) = meta.get(&off) {
+            d += 1;
+            off = *b;
+        }
+        d
+    };
+    let mut out = String::new();
+    let mut chains: std::collections::BTreeMap<usize, usize> = std::collections::BTreeMap::new();
+    let mut non_delta = 0usize;
+    // Objects are listed in idx (object name) order? git lists in pack order.
+    for (i, o) in by_offset.iter().enumerate() {
+        let next = offsets.get(i + 1).copied().unwrap_or(body_end as u64);
+        let (size, base) = meta[&o.offset];
+        let in_pack = next - o.offset;
+        match base {
+            None => {
+                non_delta += 1;
+                if !stat_only {
+                    out.push_str(&format!(
+                        "{} {:<6} {size} {in_pack} {}\n",
+                        o.oid.to_hex(),
+                        o.object.kind.as_str(),
+                        o.offset
+                    ));
+                }
+            }
+            Some(b) => {
+                let d = depth(o.offset);
+                *chains.entry(d).or_default() += 1;
+                if !stat_only {
+                    out.push_str(&format!(
+                        "{} {:<6} {size} {in_pack} {} {d} {}\n",
+                        o.oid.to_hex(),
+                        o.object.kind.as_str(),
+                        o.offset,
+                        oid_at.get(&b).map(Oid::to_hex).unwrap_or_default()
+                    ));
+                }
+            }
+        }
+    }
+    if non_delta > 0 {
+        out.push_str(&format!("non delta: {non_delta} objects\n"));
+    }
+    for (d, n) in chains {
+        out.push_str(&format!(
+            "chain length = {d}: {n} object{}\n",
+            if n == 1 { "" } else { "s" }
+        ));
+    }
+    Ok(out)
 }
