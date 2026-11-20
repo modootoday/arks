@@ -51,6 +51,7 @@ pub mod merge;
 pub mod merge_base;
 pub mod merge_engine;
 pub mod merge_helpers;
+pub mod merge_many;
 pub mod merge_strategies;
 pub mod merge_subtree;
 pub mod notes;
