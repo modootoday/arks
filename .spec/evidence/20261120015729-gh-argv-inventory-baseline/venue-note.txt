@@ -1,0 +1,8 @@
+Venue: host (advisory, not a clean-room receipt), tip b1a447c, debug build of arks.
+Oracle: installed stock gh 2.89.0 (the matrix pin is 2.103.3; flags added between the
+two versions are missing from this oracle). Leaves the installed gh lacks (discussion,
+issue artifact, repo read-dir|read-file) come from verify/matrices/gh-argv-supplement.csv.
+gh is only read for --help text; arks ran with ARKS_PERSONALITY=gh against a closed
+API port (ARKS_HUB_API=http://127.0.0.1:9) in a throw-away HOME.
+UNVALIDATED = the leaf also accepted a bogus flag, so its acceptance is not counted.
+Baseline: 164 commands, 1268 flag spellings, 264 accepted, 224 refused, 780 unvalidated.

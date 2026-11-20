@@ -1,0 +1,99 @@
+# gh leaves the installed oracle gh lacks; flag names and value kinds from the online gh manual (cli.github.com, fetched 2026-11-20; pin 2.103.3 or later).
+# Consumed by verify/scripts/run-gh-argv-inventory.py. A long of (json-fields) lists the --json fields in meta.
+gh_command,short,long,meta,desc
+issue artifact,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact create,,--attach,file,Attach an image or video file
+issue artifact create,-b,--body,string,Content for a single document
+issue artifact create,-F,--body-file,file,Read content for a single artifact from file
+issue artifact create,,--name,string,Name for a single artifact
+issue artifact create,,--type,string,Type for documents: {generic|plan|embedded_html}
+issue artifact create,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact delete,,--yes,,Confirm deletion without prompting
+issue artifact delete,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact download,,--clobber,,Overwrite existing files of the same name
+issue artifact download,-D,--dir,directory,The directory to download files into
+issue artifact download,-O,--output,file,The file to write a single artifact to
+issue artifact download,,--skip-existing,,Skip downloading when files of the same name exist
+issue artifact download,,--version,number,Download the version with this number
+issue artifact download,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact edit,,--attach,file,Attach an image or video file
+issue artifact edit,-b,--body,string,New content
+issue artifact edit,-F,--body-file,file,Read new content from file
+issue artifact edit,,--name,string,New name
+issue artifact edit,,--restore-version,number,Restore the version with this number
+issue artifact edit,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact list,-q,--jq,expression,Filter JSON output using a jq expression
+issue artifact list,,--json,fields,Output JSON with the specified fields
+issue artifact list,-L,--limit,int,Maximum number of artifacts to fetch
+issue artifact list,-t,--template,string,Format JSON output using a Go template
+issue artifact list,,--type,string,Filter by type: {generic|plan|link|embedded_html}
+issue artifact list,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact list,,(json-fields),"body,bodyHtml,createdAt,creator,description,id,name,number,type,updatedAt,updatedByActor,url",
+issue artifact view,-q,--jq,expression,Filter JSON output using a jq expression
+issue artifact view,,--json,fields,Output JSON with the specified fields
+issue artifact view,-t,--template,string,Format JSON output using a Go template
+issue artifact view,,--version,number,Show the version with this number
+issue artifact view,-w,--web,,Open the artifact
+issue artifact view,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+issue artifact view,,(json-fields),"body,bodyHtml,createdAt,creator,description,id,name,number,type,updatedAt,updatedByActor,url,versions",
+repo read-dir,-q,--jq,expression,Filter JSON output using a jq expression
+repo read-dir,,--json,fields,Output JSON with the specified fields
+repo read-dir,,--ref,string,"The branch, tag, or commit to list from"
+repo read-dir,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+repo read-dir,-t,--template,string,Format JSON output using a Go template
+repo read-dir,,(json-fields),"gitSHA,gitType,mode,modeOctal,name,nameRaw,path,pathRaw,size,submodule,type",
+repo read-file,,--allow-escape-sequences,,Allow printing terminal escape sequences
+repo read-file,,--clobber,,Overwrite the output path if it already exists
+repo read-file,-q,--jq,expression,Filter JSON output using a jq expression
+repo read-file,,--json,fields,Output JSON with the specified fields
+repo read-file,-o,--output,path,Write the file to a path instead of stdout
+repo read-file,,--ref,string,"The branch, tag, or commit to read from"
+repo read-file,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+repo read-file,-t,--template,string,Format JSON output using a Go template
+repo read-file,,(json-fields),"content,downloadUrl,encoding,gitSHA,gitUrl,htmlUrl,name,path,size,type,url",
+discussion,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+discussion comment,-b,--body,string,Comment body text
+discussion comment,-F,--body-file,string,Read body text from file
+discussion comment,,--delete,,Delete the specified comment
+discussion comment,,--edit,,Edit the specified comment
+discussion comment,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+discussion comment,,--yes,,Skip the delete confirmation prompt
+discussion create,-b,--body,string,Body for the discussion
+discussion create,-F,--body-file,string,Read body text from file
+discussion create,-c,--category,string,Category name or slug for the discussion
+discussion create,-l,--label,strings,Labels to apply to the discussion
+discussion create,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+discussion create,-t,--title,string,Title for the discussion
+discussion edit,,--add-label,name,Add labels by name
+discussion edit,-b,--body,string,New body for the discussion
+discussion edit,-F,--body-file,string,Read body text from file
+discussion edit,-c,--category,string,New category name or slug for the discussion
+discussion edit,,--remove-label,name,Remove labels by name
+discussion edit,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+discussion edit,-t,--title,string,New title for the discussion
+discussion list,,--after,string,Cursor for the next page of results
+discussion list,,--answered,,Filter by answered state
+discussion list,-A,--author,string,Filter by author
+discussion list,-c,--category,string,Filter by category name or slug
+discussion list,-q,--jq,expression,Filter JSON output using a jq expression
+discussion list,,--json,fields,Output JSON with the specified fields
+discussion list,-l,--label,strings,Filter by label
+discussion list,-L,--limit,int,Maximum number of discussions to fetch
+discussion list,,--order,string,Order of results: {asc|desc}
+discussion list,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+discussion list,-S,--search,query,Search discussions with query
+discussion list,,--sort,string,Sort by field: {created|updated}
+discussion list,-s,--state,string,Filter by state: {open|closed|all}
+discussion list,-t,--template,string,Format JSON output using a Go template
+discussion list,-w,--web,,List discussions in the web browser
+discussion list,,(json-fields),"answerChosenAt,answerChosenBy,answered,author,body,category,closed,closedAt,createdAt,id,labels,locked,number,stateReason,title,updatedAt,url",
+discussion view,,--after,string,Cursor for the next page
+discussion view,-c,--comments,,View discussion comments
+discussion view,-q,--jq,expression,Filter JSON output using a jq expression
+discussion view,,--json,fields,Output JSON with the specified fields
+discussion view,-L,--limit,int,Maximum number of comments or replies to fetch
+discussion view,,--order,string,Order of comments or replies: {oldest|newest}
+discussion view,-R,--repo,[HOST/]OWNER/REPO,Select another repository
+discussion view,-t,--template,string,Format JSON output using a Go template
+discussion view,-w,--web,,Open a discussion in the browser
+discussion view,,(json-fields),"answerChosenAt,answerChosenBy,answered,author,body,category,closed,closedAt,comments,createdAt,id,labels,locked,number,reactionGroups,state,stateReason,title,updatedAt,url",

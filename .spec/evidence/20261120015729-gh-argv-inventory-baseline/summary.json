@@ -1,0 +1,1162 @@
+{
+ "accepted": 264,
+ "commands": 164,
+ "commands_full": 52,
+ "commands_no_oracle": 0,
+ "flags": 1268,
+ "note": "installed gh is the flag oracle; leaves missing from it come from verify/matrices/gh-argv-supplement.csv (online gh manual)",
+ "oracle": "gh version 2.89.0 (2026-03-26)",
+ "per_command": {
+  "alias": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "alias delete": {
+   "accepted": 0,
+   "flags": 1,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "alias import": {
+   "accepted": 0,
+   "flags": 1,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "alias list": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "alias set": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "api": {
+   "accepted": 0,
+   "flags": 23,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "auth": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "auth login": {
+   "accepted": 0,
+   "flags": 13,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "auth logout": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "auth refresh": {
+   "accepted": 0,
+   "flags": 10,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "auth status": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "auth switch": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "auth token": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "browse": {
+   "accepted": 0,
+   "flags": 19,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "co": {
+   "accepted": 0,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "completion": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "config": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "config clear-cache": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "config get": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "config list": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "config set": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "discussion": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "discussion comment": {
+   "accepted": 6,
+   "flags": 9,
+   "source": "supplement",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "discussion create": {
+   "accepted": 10,
+   "flags": 12,
+   "source": "supplement",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "discussion edit": {
+   "accepted": 10,
+   "flags": 12,
+   "source": "supplement",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "discussion list": {
+   "accepted": 13,
+   "flags": 25,
+   "source": "supplement",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "discussion view": {
+   "accepted": 7,
+   "flags": 15,
+   "source": "supplement",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "gist": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "gist clone": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "gist create": {
+   "accepted": 8,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gist delete": {
+   "accepted": 1,
+   "flags": 1,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gist edit": {
+   "accepted": 8,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gist list": {
+   "accepted": 6,
+   "flags": 6,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gist rename": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "gist view": {
+   "accepted": 7,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gpg-key": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "gpg-key add": {
+   "accepted": 2,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gpg-key delete": {
+   "accepted": 2,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "gpg-key list": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "issue": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact create": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact delete": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact download": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact edit": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact list": {
+   "accepted": 0,
+   "flags": 10,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue artifact view": {
+   "accepted": 0,
+   "flags": 10,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue close": {
+   "accepted": 0,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue comment": {
+   "accepted": 0,
+   "flags": 14,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue create": {
+   "accepted": 0,
+   "flags": 23,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue delete": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue develop": {
+   "accepted": 0,
+   "flags": 11,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "issue edit": {
+   "accepted": 0,
+   "flags": 17,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue list": {
+   "accepted": 0,
+   "flags": 25,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue lock": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue pin": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue reopen": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue status": {
+   "accepted": 0,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue transfer": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue unlock": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue unpin": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "issue view": {
+   "accepted": 0,
+   "flags": 11,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "label": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "label clone": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "label create": {
+   "accepted": 0,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "label delete": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "label edit": {
+   "accepted": 0,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "label list": {
+   "accepted": 0,
+   "flags": 15,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "org": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "org list": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "pr checkout": {
+   "accepted": 0,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr checks": {
+   "accepted": 0,
+   "flags": 14,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "pr close": {
+   "accepted": 0,
+   "flags": 6,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr comment": {
+   "accepted": 0,
+   "flags": 14,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr create": {
+   "accepted": 0,
+   "flags": 37,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr diff": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "pr edit": {
+   "accepted": 0,
+   "flags": 21,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr list": {
+   "accepted": 0,
+   "flags": 28,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr lock": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr merge": {
+   "accepted": 0,
+   "flags": 22,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr ready": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr reopen": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr revert": {
+   "accepted": 0,
+   "flags": 10,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "pr review": {
+   "accepted": 0,
+   "flags": 12,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr status": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr unlock": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "pr update-branch": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "pr view": {
+   "accepted": 0,
+   "flags": 11,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "project": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "project close": {
+   "accepted": 7,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project copy": {
+   "accepted": 9,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project create": {
+   "accepted": 7,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project delete": {
+   "accepted": 6,
+   "flags": 6,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project edit": {
+   "accepted": 11,
+   "flags": 11,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project field-create": {
+   "accepted": 9,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project field-delete": {
+   "accepted": 6,
+   "flags": 6,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project field-list": {
+   "accepted": 8,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project item-add": {
+   "accepted": 7,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project item-archive": {
+   "accepted": 8,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project item-create": {
+   "accepted": 8,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project item-delete": {
+   "accepted": 7,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project item-edit": {
+   "accepted": 16,
+   "flags": 16,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project item-list": {
+   "accepted": 8,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "project link": {
+   "accepted": 5,
+   "flags": 5,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project list": {
+   "accepted": 11,
+   "flags": 11,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project mark-template": {
+   "accepted": 7,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project unlink": {
+   "accepted": 5,
+   "flags": 5,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "project view": {
+   "accepted": 8,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "release": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "release create": {
+   "accepted": 0,
+   "flags": 20,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release delete": {
+   "accepted": 0,
+   "flags": 5,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release delete-asset": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release download": {
+   "accepted": 0,
+   "flags": 12,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release edit": {
+   "accepted": 0,
+   "flags": 15,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release list": {
+   "accepted": 0,
+   "flags": 13,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release upload": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "release view": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "repo archive": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo autolink": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo autolink create": {
+   "accepted": 4,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "repo autolink delete": {
+   "accepted": 3,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "repo autolink list": {
+   "accepted": 5,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "repo autolink view": {
+   "accepted": 3,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "repo clone": {
+   "accepted": 0,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "repo create": {
+   "accepted": 0,
+   "flags": 26,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo delete": {
+   "accepted": 0,
+   "flags": 1,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo deploy-key": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo deploy-key add": {
+   "accepted": 6,
+   "flags": 6,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "repo deploy-key delete": {
+   "accepted": 2,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "repo deploy-key list": {
+   "accepted": 3,
+   "flags": 7,
+   "source": "gh-help",
+   "status": "PARTIAL",
+   "validates_argv": true
+  },
+  "repo edit": {
+   "accepted": 0,
+   "flags": 25,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo fork": {
+   "accepted": 0,
+   "flags": 6,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "repo gitignore": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "repo gitignore list": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "repo gitignore view": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "repo license": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "repo license list": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "repo license view": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "repo list": {
+   "accepted": 0,
+   "flags": 15,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo read-dir": {
+   "accepted": 0,
+   "flags": 8,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "repo read-file": {
+   "accepted": 0,
+   "flags": 12,
+   "source": "supplement",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "repo rename": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo set-default": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo sync": {
+   "accepted": 0,
+   "flags": 5,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "repo unarchive": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "repo view": {
+   "accepted": 0,
+   "flags": 9,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "rs": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "ruleset": {
+   "accepted": 0,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "ruleset check": {
+   "accepted": 0,
+   "flags": 5,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "ruleset list": {
+   "accepted": 0,
+   "flags": 10,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "ruleset view": {
+   "accepted": 0,
+   "flags": 8,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": true
+  },
+  "search": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "search code": {
+   "accepted": 0,
+   "flags": 17,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "search commits": {
+   "accepted": 0,
+   "flags": 27,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "search issues": {
+   "accepted": 0,
+   "flags": 41,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "search prs": {
+   "accepted": 0,
+   "flags": 51,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "search repos": {
+   "accepted": 0,
+   "flags": 28,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  },
+  "ssh-key": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": false
+  },
+  "ssh-key add": {
+   "accepted": 3,
+   "flags": 3,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "ssh-key delete": {
+   "accepted": 2,
+   "flags": 2,
+   "source": "gh-help",
+   "status": "FULL",
+   "validates_argv": true
+  },
+  "ssh-key list": {
+   "accepted": 0,
+   "flags": 0,
+   "source": "gh-help",
+   "status": "NO_FLAGS",
+   "validates_argv": true
+  },
+  "status": {
+   "accepted": 0,
+   "flags": 4,
+   "source": "gh-help",
+   "status": "NONE",
+   "validates_argv": false
+  }
+ },
+ "pin": "2.103.3",
+ "refused": 224,
+ "unvalidated": 780
+}
