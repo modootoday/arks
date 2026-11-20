@@ -1,7 +1,8 @@
 //! Three-way tree merge for M15 Fs-2 (diverged histories).
 //!
 //! Cite: <https://git-scm.com/docs/git-merge>, <https://git-scm.com/docs/git-merge-base>
-//! Conflicted paths land as index stages 1/2/3 + worktree conflict markers.
+//! Paths changed on both sides get a line-level three-way content merge;
+//! conflicted paths land as index stages 1/2/3 + worktree conflict markers.
 
 use crate::error::{CliError, CliResult};
 use crate::util::write_index;
@@ -25,6 +26,8 @@ struct Side {
 pub(crate) struct MergeResult {
     pub tree: Option<Oid>,
     pub conflicts: Vec<String>,
+    /// Paths that went through a content merge (git prints `Auto-merging`).
+    pub auto_merged: Vec<String>,
 }
 
 /// Three-way merge of commit tips into the index + worktree; returns the merge
@@ -40,17 +43,54 @@ pub(crate) fn merge_three_way_opts(
     theirs: &Oid,
     ours_checked_out: bool,
 ) -> CliResult<MergeResult> {
+    merge_three_way_labeled(
+        repo,
+        work,
+        ours,
+        theirs,
+        ours_checked_out,
+        &MergeLabels::default(),
+    )
+}
+
+/// [`merge_three_way_opts`] with conflict marker labels.
+pub(crate) fn merge_three_way_labeled(
+    repo: &mut Repository,
+    work: &Path,
+    ours: &Oid,
+    theirs: &Oid,
+    ours_checked_out: bool,
+    labels: &MergeLabels,
+) -> CliResult<MergeResult> {
     let keep = ours_checked_out;
     let base = merge_base_oid(repo, ours, theirs)?
         .ok_or_else(|| CliError::Msg("merge: no common ancestor".into()))?;
     let ours_c = load_commit(repo, ours)?;
     let theirs_c = load_commit(repo, theirs)?;
     let base_c = load_commit(repo, &base)?;
-    let plan = plan_trees(repo, &base_c.tree, &ours_c.tree, &theirs_c.tree)?;
+    let plan = plan_trees(repo, &base_c.tree, &ours_c.tree, &theirs_c.tree, labels)?;
     let mut entries = plan.entries;
     let conflicts = plan.conflicts;
+    let auto_merged = plan.auto_merged;
     for op in plan.ops {
         match op {
+            WorkOp::Merged { path, bytes } => {
+                let format = repo.object_format();
+                repo.store_mut()
+                    .put(format, &RawObject::new(ObjectKind::Blob, bytes.clone()))?;
+                let abs = work.join(&path);
+                if let Some(parent) = abs.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+                fs::write(abs, bytes)?;
+            }
+            WorkOp::ConflictText { path, bytes } => {
+                let abs = work.join(&path);
+                if let Some(parent) = abs.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+                fs::write(abs, bytes)?;
+            }
             WorkOp::Write { path, side, ours } => {
                 if !(keep && ours) {
                     write_blob(repo, work, &path, &side)?;
@@ -77,6 +117,7 @@ pub(crate) fn merge_three_way_opts(
         return Ok(MergeResult {
             tree: None,
             conflicts,
+            auto_merged,
         });
     }
 
@@ -91,6 +132,7 @@ pub(crate) fn merge_three_way_opts(
     Ok(MergeResult {
         tree: Some(tree),
         conflicts,
+        auto_merged,
     })
 }
 
@@ -108,6 +150,16 @@ enum WorkOp {
         ours: Option<Side>,
         theirs: Option<Side>,
     },
+    /// A clean content merge: store the blob and write it.
+    Merged {
+        path: String,
+        bytes: Vec<u8>,
+    },
+    /// A conflicted content merge: write the file with markers.
+    ConflictText {
+        path: String,
+        bytes: Vec<u8>,
+    },
 }
 
 /// Pure three-way tree merge plan: result index entries (stage 0 or 1/2/3),
@@ -116,9 +168,16 @@ struct MergePlan {
     entries: Vec<IndexEntry>,
     conflicts: Vec<String>,
     ops: Vec<WorkOp>,
+    auto_merged: Vec<String>,
 }
 
-fn plan_trees(repo: &Repository, base: &Oid, ours: &Oid, theirs: &Oid) -> CliResult<MergePlan> {
+fn plan_trees(
+    repo: &Repository,
+    base: &Oid,
+    ours: &Oid,
+    theirs: &Oid,
+    labels: &MergeLabels,
+) -> CliResult<MergePlan> {
     let base_side = blob_sides(repo, base)?;
     let ours_side = blob_sides(repo, ours)?;
     let theirs_side = blob_sides(repo, theirs)?;
@@ -131,6 +190,7 @@ fn plan_trees(repo: &Repository, base: &Oid, ours: &Oid, theirs: &Oid) -> CliRes
     let mut entries: Vec<IndexEntry> = Vec::new();
     let mut conflicts = Vec::new();
     let mut ops = Vec::new();
+    let mut auto_merged = Vec::new();
     let take = |entries: &mut Vec<IndexEntry>, path: &str, s: &Side, ours: bool| {
         entries.push(stage0(path, s));
         WorkOp::Write {
@@ -166,6 +226,50 @@ fn plan_trees(repo: &Repository, base: &Oid, ours: &Oid, theirs: &Oid) -> CliRes
             (Some(_), None, None) => ops.push(WorkOp::Remove(path.clone())),
             (Some(x), Some(y), None) if x.oid == y.oid => ops.push(WorkOp::Remove(path.clone())),
             (Some(x), None, Some(z)) if x.oid == z.oid => ops.push(WorkOp::Remove(path.clone())),
+            (_, Some(y), Some(z)) if y.mode != 0o160000 && z.mode != 0o160000 => {
+                // Both sides changed the content: line-level three-way merge.
+                let blob = |s: Option<&Side>| -> CliResult<Vec<u8>> {
+                    Ok(match s {
+                        Some(s) => repo.get_object(&s.oid)?.payload,
+                        None => Vec::new(),
+                    })
+                };
+                let (bb, yb, zb) = (blob(b)?, blob(Some(y))?, blob(Some(z))?);
+                let binary = [&bb, &yb, &zb]
+                    .iter()
+                    .any(|v| v[..v.len().min(8000)].contains(&0));
+                auto_merged.push(path.clone());
+                let (merged, conflicted) = if binary {
+                    (yb.clone(), true)
+                } else {
+                    merge_text(&bb, &yb, &zb, labels)
+                };
+                // Mode: the side that changed it wins.
+                let mode = match b {
+                    Some(x) if x.mode == y.mode => z.mode,
+                    _ => y.mode,
+                };
+                if !conflicted {
+                    let oid = RawObject::new(ObjectKind::Blob, merged.clone())
+                        .oid(repo.object_format())?;
+                    entries.push(stage0(&path, &Side { mode, oid }));
+                    ops.push(WorkOp::Merged {
+                        path: path.clone(),
+                        bytes: merged,
+                    });
+                    continue;
+                }
+                conflicts.push(path.clone());
+                if let Some(x) = b {
+                    entries.push(stage_n(&path, x, 1));
+                }
+                entries.push(stage_n(&path, y, 2));
+                entries.push(stage_n(&path, z, 3));
+                ops.push(WorkOp::ConflictText {
+                    path: path.clone(),
+                    bytes: merged,
+                });
+            }
             _ => {
                 // Conflict: stages 1/2/3 + markers
                 conflicts.push(path.clone());
@@ -190,6 +294,7 @@ fn plan_trees(repo: &Repository, base: &Oid, ours: &Oid, theirs: &Oid) -> CliRes
         entries,
         conflicts,
         ops,
+        auto_merged,
     })
 }
 
@@ -203,15 +308,22 @@ pub(crate) fn merge_trees_in_memory(
     ours: &Oid,
     theirs: &Oid,
 ) -> CliResult<MergeResult> {
-    let mut plan = plan_trees(repo, base, ours, theirs)?;
+    let mut plan = plan_trees(repo, base, ours, theirs, &MergeLabels::default())?;
     if !plan.conflicts.is_empty() {
         return Ok(MergeResult {
             tree: None,
             conflicts: plan.conflicts,
+            auto_merged: plan.auto_merged,
         });
     }
     sort_entries(&mut plan.entries);
     let format = repo.object_format();
+    for op in &plan.ops {
+        if let WorkOp::Merged { bytes, .. } = op {
+            repo.store_mut()
+                .put(format, &RawObject::new(ObjectKind::Blob, bytes.clone()))?;
+        }
+    }
     let tree = if plan.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
         repo.store_mut().put(format, &obj)?
@@ -221,6 +333,7 @@ pub(crate) fn merge_trees_in_memory(
     Ok(MergeResult {
         tree: Some(tree),
         conflicts: Vec::new(),
+        auto_merged: plan.auto_merged,
     })
 }
 
@@ -357,4 +470,183 @@ fn write_conflict_file(
     }
     fs::write(abs, body)?;
     Ok(())
+}
+
+/// Conflict marker labels and style for content merges.
+#[derive(Clone, Debug)]
+pub(crate) struct MergeLabels {
+    pub ours: String,
+    pub base: String,
+    pub theirs: String,
+    /// `merge.conflictStyle=diff3` / `--conflict=diff3`: show the base too.
+    pub diff3: bool,
+    /// `-X ours` / `-X theirs` / `-X union`: resolve conflicting hunks.
+    pub favor: Favor,
+}
+
+/// Side taken for conflicting hunks of a content merge.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) enum Favor {
+    #[default]
+    None,
+    Ours,
+    Theirs,
+    Union,
+}
+
+impl Default for MergeLabels {
+    fn default() -> Self {
+        Self {
+            ours: "ours".into(),
+            base: "base".into(),
+            theirs: "theirs".into(),
+            diff3: false,
+            favor: Favor::None,
+        }
+    }
+}
+
+fn split_keep(b: &[u8]) -> Vec<&[u8]> {
+    if b.is_empty() {
+        return Vec::new();
+    }
+    b.split_inclusive(|c| *c == b'\n').collect()
+}
+
+/// Line-level three-way merge (diff3 over two LCS alignments with the base).
+/// Chunks changed on one side take that side; identical changes merge;
+/// overlapping or touching changes conflict, trimmed to the lines that differ
+/// (common leading / trailing lines of both sides stay outside the markers).
+/// Returns the merged bytes and whether any conflict was written.
+/// Cite: <https://git-scm.com/docs/git-merge-file> (behaviour, not code).
+pub(crate) fn merge_text(
+    base: &[u8],
+    ours: &[u8],
+    theirs: &[u8],
+    labels: &MergeLabels,
+) -> (Vec<u8>, bool) {
+    use crate::cmd::unified_diff::matched_lines;
+    let b = split_keep(base);
+    let a = split_keep(ours);
+    let c = split_keep(theirs);
+    let ma = matched_lines(&a, &b);
+    let mc = matched_lines(&c, &b);
+    let (nb, na, nc) = (b.len(), a.len(), c.len());
+    let mut out: Vec<u8> = Vec::new();
+    let mut conflicted = false;
+    let (mut i, mut j, mut k) = (0usize, 0usize, 0usize);
+    let nl = |v: &mut Vec<u8>| {
+        if !v.is_empty() && !v.ends_with(b"\n") {
+            v.push(b'\n');
+        }
+    };
+    loop {
+        while i < nb && ma[i] == Some(j) && mc[i] == Some(k) {
+            out.extend_from_slice(b[i]);
+            i += 1;
+            j += 1;
+            k += 1;
+        }
+        if i >= nb && j >= na && k >= nc {
+            break;
+        }
+        // Next base line kept by both sides.
+        let mut ii = i;
+        let (mut jj, mut kk) = (na, nc);
+        while ii < nb {
+            if let (Some(x), Some(y)) = (ma[ii], mc[ii]) {
+                if x >= j && y >= k {
+                    jj = x;
+                    kk = y;
+                    break;
+                }
+            }
+            ii += 1;
+        }
+        if ii >= nb {
+            ii = nb;
+            jj = na;
+            kk = nc;
+        }
+        let bs = &b[i..ii];
+        let as_ = &a[j..jj];
+        let cs = &c[k..kk];
+        if as_ == bs {
+            cs.iter().for_each(|l| out.extend_from_slice(l));
+        } else if cs == bs || as_ == cs {
+            as_.iter().for_each(|l| out.extend_from_slice(l));
+        } else if labels.favor != Favor::None {
+            if labels.favor != Favor::Theirs {
+                as_.iter().for_each(|l| out.extend_from_slice(l));
+            }
+            if labels.favor != Favor::Ours {
+                if labels.favor == Favor::Union {
+                    nl(&mut out);
+                }
+                cs.iter().for_each(|l| out.extend_from_slice(l));
+            }
+        } else {
+            // Zealous trimming: shared head and tail of both sides stay outside.
+            let mut pre = 0;
+            while pre < as_.len() && pre < cs.len() && as_[pre] == cs[pre] {
+                pre += 1;
+            }
+            let mut suf = 0;
+            while suf < as_.len() - pre
+                && suf < cs.len() - pre
+                && as_[as_.len() - 1 - suf] == cs[cs.len() - 1 - suf]
+            {
+                suf += 1;
+            }
+            if labels.diff3 {
+                pre = 0;
+                suf = 0;
+            }
+            as_[..pre].iter().for_each(|l| out.extend_from_slice(l));
+            nl(&mut out);
+            out.extend_from_slice(format!("<<<<<<< {}\n", labels.ours).as_bytes());
+            as_[pre..as_.len() - suf]
+                .iter()
+                .for_each(|l| out.extend_from_slice(l));
+            nl(&mut out);
+            if labels.diff3 {
+                out.extend_from_slice(format!("||||||| {}\n", labels.base).as_bytes());
+                bs.iter().for_each(|l| out.extend_from_slice(l));
+                nl(&mut out);
+            }
+            out.extend_from_slice(b"=======\n");
+            cs[pre..cs.len() - suf]
+                .iter()
+                .for_each(|l| out.extend_from_slice(l));
+            nl(&mut out);
+            out.extend_from_slice(format!(">>>>>>> {}\n", labels.theirs).as_bytes());
+            as_[as_.len() - suf..]
+                .iter()
+                .for_each(|l| out.extend_from_slice(l));
+            conflicted = true;
+        }
+        i = ii;
+        j = jj;
+        k = kk;
+    }
+    (out, conflicted)
+}
+
+#[cfg(test)]
+mod diff3_tests {
+    use super::*;
+
+    #[test]
+    fn clean_and_conflicting_merges() {
+        let l = MergeLabels::default();
+        let (m, c) = merge_text(b"1\n2\n3\n", b"ONE\n2\n3\n", b"1\n2\n3\n4\n", &l);
+        assert!(!c);
+        assert_eq!(m, b"ONE\n2\n3\n4\n");
+        let (m, c) = merge_text(b"1\n2\n3\n", b"1\n2\nX\n", b"1\n2\nY\n", &l);
+        assert!(c);
+        assert_eq!(
+            m,
+            b"1\n2\n<<<<<<< ours\nX\n=======\nY\n>>>>>>> theirs\n".to_vec()
+        );
+    }
 }
