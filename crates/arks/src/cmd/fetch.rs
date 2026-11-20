@@ -277,8 +277,10 @@ pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
             prefetch: p.on("prefetch"),
             set_upstream: p.on("set-upstream"),
         };
-        if targets.len() > 1 && !opts.quiet && !opts.porcelain {
-            eprintln!("Fetching {target}");
+        // `fetch --multiple`, groups and `--all` over several remotes announce
+        // each remote on stdout.
+        if (p.on("multiple") || targets.len() > 1) && !opts.quiet && !opts.porcelain {
+            println!("Fetching {target}");
         }
         first = false;
         let res = if arks_remote::is_local_remote(&source.url) {

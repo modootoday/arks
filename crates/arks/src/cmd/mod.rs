@@ -44,6 +44,7 @@ pub mod push;
 pub mod range_diff;
 pub mod raw_diff;
 pub mod remote;
+pub mod remote_admin;
 pub mod remote_local;
 pub mod replace;
 pub mod replay;
@@ -115,7 +116,7 @@ pub use pull::cmd_pull;
 pub use push::cmd_push;
 pub use range_diff::cmd_range_diff;
 pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
-pub use remote::cmd_remote;
+pub use remote_admin::cmd_remote;
 pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use server::{
