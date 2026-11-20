@@ -39,7 +39,7 @@ Public clean-room Definition of Done is **three peer pillars** under the behavio
 | Pillar | Stock peer | Product entry | Tip honesty (public) |
 |--------|------------|---------------|----------------------|
 | **1. CLI** | `git` | `arks <cmd>` / personality `git` | Inventory Claimed where matrices + receipts say so; unfinished flags fail closed |
-| **2. Daemon** | `git-daemon` | `arks daemon` | Flag surface **Partial** deepen; archive byte-identical **B5 Claimed**; syslog facility **B5+ Claimed** |
+| **2. Daemon** | `git-daemon` | `arks daemon` | Every option **Parity, host-tested** (Docker receipt pending); archive byte-identical **B5 Claimed**; syslog facility **B5+ Claimed** |
 | **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | Flat+expand **Claimed** where evidenced; other v1 **Partial** (Missing=0); **B3** HTTPS remote **Claimed**; nested `arks hub …` transitional |
 
 **Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **B1/B2 Claimed**; product in-process TLS **B9 Claimed**; HTTP+SSH+forge zero-downtime rebind **B7 Claimed**; forge-in-serve hosting e2e **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]). See [Self-host](../self-host/) and [Ports](../ports/).

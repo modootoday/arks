@@ -108,7 +108,7 @@ arks serve --no-ssh --no-forge /path/to/repos
 | `arks serve` | Host umbrella (`--no-http` / `--no-ssh` / `--no-forge`) | HTTP git wire Claimed where evidenced; SSH **B1/B2 Claimed**; TLS **B9 Claimed**; forge-in-serve hosting e2e **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]) |
 | `arks serve config …` | Server config store | **B7 Claimed (HTTP+SSH+forge)** rebind; Windows file-mtime Partial (≠ hub) |
 | `arks serve ssh-smoke` | Local SSH banner smoke | **Partial** (smoke ≠ B1/B2 Claimed e2e) |
-| `arks daemon` | `git://` peer (`git-daemon` symmetry) | Flag deepen **Partial**; archive **B5 Claimed**; **B5+ Claimed** facility/priority (collector PRI); classic double-fork **Refuse**; Windows `--user`/`--group`/`--syslog` Missing refuse |
+| `arks daemon` | `git://` peer (`git-daemon` symmetry) | Every `git daemon` option with git semantics (**Parity, host-tested**; Docker receipt pending); archive **B5 Claimed**; **B5+ Claimed** facility/priority (collector PRI); Windows `--user`/`--group`/`--syslog`/`--detach` refused |
 | Flat `arks pr` / `issue` / `auth` / … | Forge **client** | Flat subset + expand **Claimed** where evidenced; other v1 leaves **Partial** (Missing=0); **B3** HTTPS remote **Claimed**; never `gh` |
 | Personality `git`/`gh` | Drop-in sample+expand+named exit tables | **Claimed** sample+expand+named rows ([[evidence:root/20261111020515-personality-expand]], [[evidence:root/20261111025151-personality-exit-tables]]); CLI survey Partial×117 remain |
 | `arks agent …` | Optional review / CEV extension | **B4 Claimed** fixture e2e; smokes Partial; not git-alias DoD |
