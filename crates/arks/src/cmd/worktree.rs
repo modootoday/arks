@@ -6,7 +6,7 @@
 
 use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, refuse_unknown_flags, work_tree};
+use crate::util::{open_repo, work_tree};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
@@ -14,10 +14,39 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+const USAGE: &str =
+    "usage: git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]
+                        [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
+   or: git worktree list [-v | --porcelain [-z]]
+   or: git worktree lock [--reason <string>] <worktree>
+   or: git worktree move <worktree> <new-path>
+   or: git worktree prune [-n] [-v] [--expire <expire>]
+   or: git worktree remove [-f] <worktree>
+   or: git worktree repair [<path>...]
+   or: git worktree unlock <worktree>";
+
+/// Parse a subcommand's options against its table.
+fn sub_opts(
+    sub: &str,
+    args: &[String],
+    defs: &[crate::cmd::opt_parse::OptDef],
+) -> CliResult<(crate::cmd::opt_parse::Parsed, Vec<String>)> {
+    let p = crate::cmd::opt_parse::parse(
+        &format!("worktree {sub}"),
+        args,
+        defs,
+        crate::cmd::opt_parse::Mode::default(),
+    )?;
+    let mut pos = p.args();
+    pos.extend(p.after_dashdash());
+    Ok((p, pos))
+}
+
 pub fn cmd_worktree(args: &[String]) -> CliResult<()> {
-    let sub = args.first().map(String::as_str).ok_or_else(|| {
-        CliError::Usage("worktree <add|list|remove|prune|move|lock|unlock>".into())
-    })?;
+    let sub = args
+        .first()
+        .map(String::as_str)
+        .ok_or_else(|| CliError::Exit(129, format!("error: need a subcommand\n{USAGE}")))?;
     let rest = &args[1..];
     match sub {
         "add" => wt_add(rest),
@@ -29,140 +58,219 @@ pub fn cmd_worktree(args: &[String]) -> CliResult<()> {
         "lock" => wt_lock(rest),
         "unlock" => wt_unlock(rest),
         "repair" => wt_repair(rest),
-        other => Err(CliError::NotImplemented(format!(
-            "worktree {other} not claimed"
-        ))),
+        other => Err(CliError::Exit(
+            129,
+            format!("error: unknown subcommand: `{other}'\n{USAGE}"),
+        )),
     }
 }
 
 fn wt_add(args: &[String]) -> CliResult<()> {
-    // M16 Sy-2: `--detach` claimed; `-B`/`-f`/`--orphan` remain refuse. Cite: git-worktree 2.39.0
-    refuse_unknown_flags(
+    // Every option of `git worktree add -h`. Cite: https://git-scm.com/docs/git-worktree
+    use crate::cmd::opt_parse::{Mode, parse};
+    let p = parse(
+        "worktree add",
         args,
-        &["-b", "-B", "-f", "--force", "--detach", "-d", "--orphan"],
+        crate::cmd::porcelain_opts::WORKTREE__ADD,
+        Mode::default(),
     )?;
-    if args
+    let new_b = p.value("-b");
+    let reset_b = p.value("-B");
+    let detach = p.on("detach");
+    let orphan = p.on("orphan");
+    let force = p.count("force") > 0;
+    let quiet = p.on("quiet");
+    let checkout = p.flag("checkout") != Some(false);
+    let lock = p.on("lock");
+    let reason = p.value("reason");
+    let track = p.flag("track");
+    if [new_b.is_some(), reset_b.is_some(), detach]
         .iter()
-        .any(|a| a == "--orphan" || a == "-f" || a == "--force" || a == "-B")
+        .filter(|x| **x)
+        .count()
+        > 1
     {
-        return Err(CliError::NotImplemented(
-            "worktree add: --orphan/-f/-B not claimed".into(),
+        return Err(CliError::fatal(
+            "options '-b', '-B', and '--detach' cannot be used together",
         ));
     }
-    let mut new_branch: Option<String> = None;
-    let mut detach = false;
-    let mut positional = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "-b" {
-            i += 1;
-            new_branch = Some(
-                args.get(i)
-                    .ok_or_else(|| CliError::Usage("worktree add -b <branch> <path>".into()))?
-                    .clone(),
-            );
-        } else if args[i] == "--detach" || args[i] == "-d" {
-            detach = true;
-        } else if !args[i].starts_with('-') {
-            positional.push(args[i].clone());
-        } else {
-            return Err(CliError::NotImplemented(format!(
-                "unsupported option: {}",
-                args[i]
-            )));
-        }
-        i += 1;
+    if reason.is_some() && !lock {
+        return Err(CliError::fatal("the option '--reason' requires '--lock'"));
     }
-    if detach && new_branch.is_some() {
-        return Err(CliError::Usage(
-            "worktree add: -b and --detach are mutually exclusive".into(),
+    if orphan && detach {
+        return Err(CliError::fatal(
+            "options '--orphan' and '--detach' cannot be used together",
         ));
     }
-    if positional.is_empty() {
-        return Err(CliError::Usage(
-            "worktree add [-b <branch>|--detach] <path> [<commit-ish>]".into(),
+    if orphan && !checkout {
+        return Err(CliError::fatal(
+            "options '--orphan' and '--no-checkout' cannot be used together",
+        ));
+    }
+    let mut positional = p.args();
+    positional.extend(p.after_dashdash());
+    if positional.is_empty() || positional.len() > 2 {
+        return Err(CliError::Exit(
+            129,
+            "usage: git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n                        [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]".into(),
+        ));
+    }
+    if orphan && positional.len() > 1 {
+        return Err(CliError::fatal(
+            "'--orphan' and '<commit-ish>' cannot be used together",
         ));
     }
     let path = PathBuf::from(&positional[0]);
-    let commit_ish = positional.get(1).map(String::as_str);
+    let commit_ish = positional.get(1).cloned();
 
     let mut repo = open_repo()?;
     let common = repo.common_dir().to_path_buf();
     let abs_path = absolutize(&path)?;
-    if abs_path.exists() {
-        return Err(CliError::Msg(format!(
+    if abs_path.exists()
+        && fs::read_dir(&abs_path)
+            .map(|mut d| d.next().is_some())
+            .unwrap_or(true)
+    {
+        return Err(CliError::fatal(format!(
             "'{}' already exists",
-            abs_path.display()
+            positional[0]
         )));
     }
-
-    let oid = match commit_ish {
-        Some(rev) => resolve_rev(&repo, rev)?,
-        None => repo.head_oid()?,
+    let basename = abs_path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    // What HEAD of the new worktree will be: a branch (created, reset or
+    // existing), a detached commit, or an unborn orphan branch.
+    let mut branch: Option<(String, bool)> = None; // (name, create)
+    let mut oid: Option<Oid> = None;
+    let checked_out_elsewhere = |repo: &Repository, full: &str| -> CliResult<Option<PathBuf>> {
+        Ok(list_worktrees(repo)?
+            .into_iter()
+            .find(|wt| wt.branch.as_deref() == Some(full))
+            .map(|wt| wt.path))
     };
-
-    let head_payload = if detach {
-        format!("{}\n", oid.to_hex())
-    } else if let Some(name) = &new_branch {
-        let full = branch_ref(name);
-        if repo.refs().read(&full).is_ok() {
-            return Err(CliError::Msg(format!(
-                "a branch named '{name}' already exists"
-            )));
+    let resolve_commit = |repo: &Repository, rev: &str| -> CliResult<Oid> {
+        let o = resolve_rev(repo, rev)
+            .map_err(|_| CliError::fatal(format!("invalid reference: {rev}")))?;
+        crate::cmd::shared::peel_to_kind(repo, &o, crate::cmd::shared::ObjKind::Commit, rev)
+    };
+    if orphan {
+        let name = new_b
+            .clone()
+            .or(reset_b.clone())
+            .unwrap_or(basename.clone());
+        branch = Some((name, false));
+    } else if let Some(name) = new_b.clone().or(reset_b.clone()) {
+        let start = commit_ish.clone().unwrap_or_else(|| "HEAD".into());
+        oid = Some(resolve_commit(&repo, &start)?);
+        if new_b.is_some() && repo.refs().resolve(&branch_ref(&name)).is_ok() {
+            eprintln!("Preparing worktree (new branch '{name}')");
+            return Err(CliError::Exit(
+                255,
+                format!("fatal: a branch named '{name}' already exists"),
+            ));
         }
-        repo.refs_mut().update(&full, &oid, None)?;
-        // Fail-closed: branch already checked out elsewhere.
-        for wt in list_worktrees(&repo)? {
-            if wt.branch.as_deref() == Some(full.as_str()) {
-                return Err(CliError::Msg(format!(
-                    "'{name}' is already checked out at '{}'",
-                    wt.path.display()
+        if reset_b.is_some() && !force {
+            if let Some(at) = checked_out_elsewhere(&repo, &branch_ref(&name))? {
+                return Err(CliError::fatal(format!(
+                    "'{name}' is already used by worktree at '{}'",
+                    at.display()
                 )));
             }
         }
-        format!("ref: {full}\n")
-    } else if let Some(rev) = commit_ish {
-        // Treat commit-ish as an existing branch when it resolves as refs/heads/*.
+        branch = Some((name, true));
+    } else if detach {
+        let start = commit_ish.clone().unwrap_or_else(|| "HEAD".into());
+        oid = Some(resolve_commit(&repo, &start)?);
+    } else if let Some(rev) = &commit_ish {
         let full = branch_ref(rev);
-        match repo.refs().resolve(&full) {
-            Ok(resolved) if resolved == oid => {
-                for wt in list_worktrees(&repo)? {
-                    if wt.branch.as_deref() == Some(full.as_str()) {
-                        return Err(CliError::Msg(format!(
-                            "'{}' is already checked out at '{}'",
-                            full.strip_prefix("refs/heads/").unwrap_or(&full),
-                            wt.path.display()
-                        )));
-                    }
-                }
-                format!("ref: {full}\n")
-            }
-            Ok(_) | Err(_) => {
-                return Err(CliError::Usage(
-                    "worktree add: detached commit-ish requires -b <branch> or --detach".into(),
-                ));
-            }
+        if repo.refs().resolve(&full).is_ok() && !rev.starts_with("refs/") {
+            oid = Some(repo.refs().resolve(&full)?);
+            branch = Some((rev.clone(), false));
+        } else {
+            oid = Some(resolve_commit(&repo, rev)?);
         }
     } else {
-        match repo.head_target()? {
-            RefTarget::Symbolic(name) if name.starts_with("refs/heads/") => {
-                for wt in list_worktrees(&repo)? {
-                    if wt.branch.as_deref() == Some(name.as_str()) {
-                        return Err(CliError::Msg(format!(
-                            "'{}' is already checked out at '{}'",
-                            name.strip_prefix("refs/heads/").unwrap_or(&name),
-                            wt.path.display()
-                        )));
-                    }
-                }
-                format!("ref: {name}\n")
+        // DWIM: a branch named after the last path component.
+        let full = branch_ref(&basename);
+        match repo.refs().resolve(&full) {
+            Ok(o) => {
+                oid = Some(o);
+                branch = Some((basename.clone(), false));
             }
-            _ => {
-                return Err(CliError::Usage(
-                    "worktree add: detached HEAD requires -b <branch> or --detach".into(),
-                ));
+            Err(_) => {
+                oid = Some(repo.head_oid()?);
+                branch = Some((basename.clone(), true));
             }
         }
+    }
+    if let Some((name, false)) = &branch {
+        if !orphan && !force {
+            if let Some(at) = checked_out_elsewhere(&repo, &branch_ref(name))? {
+                return Err(CliError::fatal(format!(
+                    "'{name}' is already used by worktree at '{}'",
+                    at.display()
+                )));
+            }
+        }
+    }
+    if !quiet {
+        match (&branch, orphan, oid) {
+            (Some((name, _)), true, _) => eprintln!("Preparing worktree (new branch '{name}')"),
+            (Some((name, true)), _, _) if reset_b.is_some() => {
+                if repo.refs().resolve(&branch_ref(name)).is_ok() {
+                    let old = repo.refs().resolve(&branch_ref(name))?;
+                    eprintln!(
+                        "Preparing worktree (resetting branch '{name}'; was at {})",
+                        crate::cmd::shared::abbrev_hex(&repo, &old, 7)
+                    );
+                } else {
+                    eprintln!("Preparing worktree (new branch '{name}')");
+                }
+            }
+            (Some((name, true)), _, _) => eprintln!("Preparing worktree (new branch '{name}')"),
+            (Some((name, false)), _, _) => {
+                eprintln!("Preparing worktree (checking out '{name}')")
+            }
+            (None, _, Some(o)) => eprintln!(
+                "Preparing worktree (detached HEAD {})",
+                crate::cmd::shared::abbrev_hex(&repo, &o, 7)
+            ),
+            _ => {}
+        }
+    }
+    if let (Some((name, true)), Some(o)) = (&branch, oid) {
+        let full = branch_ref(name);
+        let old = repo.refs().resolve(&full).ok();
+        repo.refs_mut().update(&full, &o, old.as_ref())?;
+        let start = commit_ish.clone().unwrap_or_else(|| "HEAD".into());
+        let _ = crate::reflog::append_reflog(
+            &repo,
+            &full,
+            old.as_ref(),
+            &o,
+            &format!("branch: Created from {start}"),
+        );
+        let auto = commit_ish
+            .as_deref()
+            .is_some_and(|c| repo.refs().resolve(&format!("refs/remotes/{c}")).is_ok());
+        if track == Some(true) || (track.is_none() && auto) {
+            if let Some(line) = crate::cmd::branch::set_upstream(
+                &repo,
+                &full,
+                commit_ish.as_deref().unwrap_or("HEAD"),
+                None,
+            )? {
+                if !quiet {
+                    println!("{line}");
+                }
+            }
+        }
+    }
+    let head_payload = match &branch {
+        Some((name, _)) => format!("ref: {}\n", branch_ref(name)),
+        None => format!("{}\n", oid.map(|o| o.to_hex()).unwrap_or_default()),
     };
 
     let id = worktree_id_from_path(&abs_path);
@@ -174,6 +282,9 @@ fn wt_add(args: &[String]) -> CliResult<()> {
         )));
     }
     fs::create_dir_all(&admin)?;
+    if lock {
+        fs::write(admin.join("locked"), reason.clone().unwrap_or_default())?;
+    }
     // commondir relative to admin → common
     let rel_common = pathdiff_to(&admin, &common)?;
     fs::write(
@@ -192,34 +303,37 @@ fn wt_add(args: &[String]) -> CliResult<()> {
     let gitfile_abs = strip_verbatim(fs::canonicalize(&gitfile).unwrap_or(gitfile.clone()));
     fs::write(admin.join("gitdir"), format!("{}\n", gitfile_abs.display()))?;
 
+    let Some(oid) = oid else {
+        // --orphan: unborn branch, empty index and work tree.
+        return Ok(());
+    };
+    if !checkout {
+        return Ok(());
+    }
     let linked = Repository::open(&admin)?;
     arks_remote::checkout_commit(&linked, &abs_path, &oid)
         .map_err(|e| CliError::Msg(e.to_string()))?;
-    // git-worktree add: progress on stderr, `HEAD is now at` on stdout.
-    if detach {
-        eprintln!("Preparing worktree (detached HEAD {})", &oid.to_hex()[..7]);
-    } else if let Some(name) = &new_branch {
-        eprintln!("Preparing worktree (new branch '{name}')");
-    } else {
-        let label = head_payload
-            .trim()
-            .strip_prefix("ref: refs/heads/")
-            .or_else(|| head_payload.trim().strip_prefix("ref: "))
-            .unwrap_or(head_payload.trim());
-        eprintln!("Preparing worktree (checking out '{label}')");
+    if !quiet {
+        let subject = crate::cmd::log_format::read_commit(&repo, &oid)
+            .map(|c| c.subject().to_string())
+            .unwrap_or_default();
+        println!(
+            "HEAD is now at {} {subject}",
+            crate::cmd::shared::abbrev_hex(&repo, &oid, 7)
+        );
     }
-    let subject = crate::cmd::log_format::read_commit(&repo, &oid)
-        .map(|c| c.subject().to_string())
-        .unwrap_or_default();
-    println!(
-        "HEAD is now at {} {subject}",
-        crate::cmd::shared::abbrev_hex(&repo, &oid, 7)
-    );
     Ok(())
 }
 
 fn wt_repair(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    let (_, paths) = sub_opts("repair", args, &[])?;
+    let mut bad = false;
+    for p in &paths {
+        if !Path::new(p).join(".git").exists() {
+            eprintln!("error: not a valid path: {p}");
+            bad = true;
+        }
+    }
     let repo = open_repo()?;
     // WT-005 (M20 Cx-5): main move leaves stale absolute gitdir pointers.
     // WT-009 (M20 Cx-6): concurrent dual repair — refuse when repair.lock held.
@@ -263,45 +377,57 @@ fn wt_repair(args: &[String]) -> CliResult<()> {
             "note: WT-010 — extensions.worktreeConfig present; mixed true/false clients diverge effective config"
         );
     }
-    println!("worktree repair: no stale gitdir pointers detected");
+    if bad {
+        return Err(CliError::silent(1));
+    }
     Ok(())
 }
 
 fn wt_list(args: &[String]) -> CliResult<()> {
     // M16 Sy-2: `--porcelain` / `-v` claimed; `-z` remains refuse.
     // Cite: https://git-scm.com/docs/git-worktree/2.39.0
-    refuse_unknown_flags(args, &["-v", "--verbose", "--porcelain", "-z"])?;
-    if args.iter().any(|a| a == "-z") {
-        return Err(CliError::NotImplemented(
-            "worktree list: -z not claimed".into(),
+    let (p, pos) = sub_opts("list", args, crate::cmd::porcelain_opts::WORKTREE__LIST)?;
+    if !pos.is_empty() {
+        return Err(CliError::Exit(129, USAGE.to_string()));
+    }
+    let porcelain = p.on("porcelain");
+    let verbose = p.on("verbose");
+    let nul = p.on("-z");
+    if nul && !porcelain {
+        return Err(CliError::fatal("the option '-z' requires '--porcelain'"));
+    }
+    if porcelain && verbose {
+        return Err(CliError::fatal(
+            "options '--verbose' and '--porcelain' cannot be used together",
         ));
     }
-    let porcelain = args.iter().any(|a| a == "--porcelain");
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
+    // `--expire` only changes which missing worktrees list as prunable.
+    let _ = p.value("expire");
+    let eol = if nul { '\0' } else { '\n' };
     let repo = open_repo()?;
     let trees = list_worktrees(&repo)?;
     if porcelain {
         for wt in trees {
-            println!("worktree {}", path_to_unix(&wt.path));
-            println!("HEAD {}", wt.oid.to_hex());
+            print!("worktree {}{eol}", path_to_unix(&wt.path));
+            print!("HEAD {}{eol}", wt.oid.to_hex());
             if let Some(b) = &wt.branch {
-                println!("branch {b}");
+                print!("branch {b}{eol}");
             } else {
-                println!("detached");
+                print!("detached{eol}");
             }
             if wt.locked {
                 if let Some(reason) = &wt.lock_reason {
                     let reason = reason.trim();
                     if reason.is_empty() {
-                        println!("locked");
+                        print!("locked{eol}");
                     } else {
-                        println!("locked {reason}");
+                        print!("locked {reason}{eol}");
                     }
                 } else {
-                    println!("locked");
+                    print!("locked{eol}");
                 }
             }
-            println!();
+            print!("{eol}");
         }
         return Ok(());
     }
@@ -349,33 +475,12 @@ fn wt_list(args: &[String]) -> CliResult<()> {
 }
 
 fn wt_lock(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--reason"])?;
-    let mut reason: Option<String> = None;
-    let mut positional = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--reason" {
-            i += 1;
-            reason = Some(
-                args.get(i)
-                    .ok_or_else(|| {
-                        CliError::Usage("worktree lock --reason <string> <worktree>".into())
-                    })?
-                    .clone(),
-            );
-        } else if !args[i].starts_with('-') {
-            positional.push(args[i].clone());
-        } else {
-            return Err(CliError::NotImplemented(format!(
-                "unsupported option: {}",
-                args[i]
-            )));
-        }
-        i += 1;
+    let (p, pos) = sub_opts("lock", args, crate::cmd::porcelain_opts::WORKTREE__LOCK)?;
+    if pos.len() != 1 {
+        return Err(CliError::Exit(129, USAGE.to_string()));
     }
-    let path_arg = positional
-        .first()
-        .ok_or_else(|| CliError::Usage("worktree lock [--reason <string>] <worktree>".into()))?;
+    let reason = p.value("reason");
+    let path_arg = &pos[0];
     let repo = open_repo()?;
     let target = find_worktree(&repo, path_arg)?;
     if target.is_main {
@@ -399,11 +504,11 @@ fn wt_lock(args: &[String]) -> CliResult<()> {
 }
 
 fn wt_unlock(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let path_arg = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("worktree unlock <worktree>".into()))?;
+    let (_, pos) = sub_opts("unlock", args, &[])?;
+    if pos.len() != 1 {
+        return Err(CliError::Exit(129, USAGE.to_string()));
+    }
+    let path_arg = &pos[0];
     let repo = open_repo()?;
     let target = find_worktree(&repo, path_arg)?;
     if target.is_main {
@@ -426,18 +531,20 @@ fn wt_unlock(args: &[String]) -> CliResult<()> {
 }
 
 fn wt_remove(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-f", "--force"])?;
-    let force = args.iter().any(|a| a == "-f" || a == "--force");
-    let path_arg = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("worktree remove [-f] <worktree>".into()))?;
+    let (p, pos) = sub_opts("remove", args, crate::cmd::porcelain_opts::WORKTREE__REMOVE)?;
+    if pos.len() != 1 {
+        return Err(CliError::Exit(129, USAGE.to_string()));
+    }
+    // `-f` removes a dirty worktree; `-f -f` also a locked one.
+    let forces = p.count("force");
+    let force = forces > 0;
+    let path_arg = &pos[0];
     let repo = open_repo()?;
     let target = find_worktree(&repo, path_arg)?;
     if target.is_main {
         return Err(CliError::Msg("cannot remove the main working tree".into()));
     }
-    if target.locked {
+    if target.locked && forces < 2 {
         return Err(CliError::Msg(format!(
             "working tree '{}' is locked; unlock before remove",
             target.path.display()
@@ -460,11 +567,15 @@ fn wt_remove(args: &[String]) -> CliResult<()> {
 }
 
 fn wt_prune(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-n", "--dry-run", "-v", "--expire"])?;
-    if args.iter().any(|a| a.starts_with('-')) {
-        return Err(CliError::NotImplemented(
-            "worktree prune options not claimed".into(),
-        ));
+    let (p, pos) = sub_opts("prune", args, crate::cmd::porcelain_opts::WORKTREE__PRUNE)?;
+    if !pos.is_empty() {
+        return Err(CliError::Exit(129, USAGE.to_string()));
+    }
+    let dry_run = p.on("dry-run");
+    let verbose = p.on("verbose") || dry_run;
+    // `--expire never` keeps everything; other times prune what is stale now.
+    if p.value("expire").as_deref() == Some("never") {
+        return Ok(());
     }
     let repo = open_repo()?;
     let common = repo.common_dir();
@@ -502,19 +613,24 @@ fn wt_prune(args: &[String]) -> CliResult<()> {
             }
         };
         if stale {
-            fs::remove_dir_all(&admin)?;
+            let id = entry.file_name().to_string_lossy().into_owned();
+            if verbose {
+                println!("Removing worktrees/{id}: gitdir file points to non-existent location");
+            }
+            if !dry_run {
+                fs::remove_dir_all(&admin)?;
+            }
         }
     }
     Ok(())
 }
 
 fn wt_move(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    let (p, args) = sub_opts("move", args, crate::cmd::porcelain_opts::WORKTREE__MOVE)?;
     if args.len() != 2 {
-        return Err(CliError::Usage(
-            "worktree move <worktree> <new-path>".into(),
-        ));
+        return Err(CliError::Exit(129, USAGE.to_string()));
     }
+    let forces = p.count("force");
     let repo = open_repo()?;
     // SUB-008 (M20 Cx-3): stock refuses move when worktree contains submodules.
     // Cite: https://git-scm.com/docs/git-worktree (move notes)
@@ -527,7 +643,7 @@ fn wt_move(args: &[String]) -> CliResult<()> {
     if target.is_main {
         return Err(CliError::Msg("cannot move the main working tree".into()));
     }
-    if target.locked {
+    if target.locked && forces < 2 {
         return Err(CliError::Msg(format!(
             "working tree '{}' is locked",
             target.path.display()
@@ -653,7 +769,7 @@ fn find_worktree(repo: &Repository, arg: &str) -> CliResult<WorktreeInfo> {
             }
         }
     }
-    Err(CliError::Msg(format!("'{arg}' is not a working tree")))
+    Err(CliError::fatal(format!("'{arg}' is not a working tree")))
 }
 
 fn read_worktree_path(admin: &Path) -> CliResult<PathBuf> {

@@ -627,3 +627,56 @@ revert -n HEAD~1
 cherry-pick -n feature
 cherry-pick feature
 revert HEAD
+#
+# --- worktree ---
+worktree add wt1
+worktree add wt1 feature
+worktree add -b topic wt1
+worktree add -b topic wt1 t0
+worktree add -B feature wt1
+worktree add -B newb wt1 t0
+worktree add -f wt1 main
+worktree add --force wt1 main
+worktree add -d wt1
+worktree add --detach wt1 t0
+worktree add --orphan -b orph wt1
+worktree add --orphan wt1
+worktree add --no-checkout wt1 feature
+worktree add --checkout wt1 feature
+worktree add --lock wt1 feature
+worktree add --lock --reason because wt1 feature
+worktree add --reason because wt1 feature
+worktree add -q wt1 feature
+worktree add --quiet -b topic wt1
+worktree add --track -b topic wt1 main
+worktree add --no-track -b topic wt1 main
+worktree add --guess-remote wt1
+worktree add --no-guess-remote wt1 feature
+worktree add wt1 t0
+worktree add wt1 nope
+worktree add
+worktree list
+worktree list -v
+worktree list --porcelain
+worktree list --porcelain -z
+worktree list -z
+worktree list --expire=now
+worktree prune
+worktree prune -n
+worktree prune -v
+worktree prune --expire=now
+worktree prune -n -v --expire 1.day.ago
+worktree remove nope
+worktree remove -f nope
+worktree move nope x
+worktree lock nope
+worktree unlock nope
+worktree repair
+worktree repair nope
+worktree bogus
+worktree
+worktree lock
+worktree unlock
+worktree remove
+worktree move a
+worktree list extra
