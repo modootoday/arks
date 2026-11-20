@@ -211,7 +211,10 @@ fn commit_header(
 fn diff_commit(out: &mut impl Write, c: &Content<'_>, o: &Opts, commit: &Oid) -> CliResult<bool> {
     let repo = c.repo;
     let cm = read_commit(repo, commit)?;
-    let ctx = EmitCtx { raw_full: true };
+    let ctx = EmitCtx {
+        raw_full: true,
+        ..Default::default()
+    };
     if cm.parents.len() > 1 {
         if let Some(mode) = o.combined {
             let parents: Vec<Oid> = cm.parents.to_vec();
@@ -232,7 +235,10 @@ fn diff_commit(out: &mut impl Write, c: &Content<'_>, o: &Opts, commit: &Oid) ->
                 &o.diff,
                 mode,
                 o.combined_all_paths,
-                EmitCtx { raw_full: true },
+                EmitCtx {
+                    raw_full: true,
+                    ..Default::default()
+                },
                 &first_parent,
                 &entries,
             )?;
@@ -281,7 +287,10 @@ pub fn cmd_diff_tree(args: &[String]) -> CliResult<()> {
     defaults(&mut o);
     let repo = open_repo()?;
     let c = Content::new(&repo);
-    let ctx = EmitCtx { raw_full: true };
+    let ctx = EmitCtx {
+        raw_full: true,
+        ..Default::default()
+    };
     let mut out = io::BufWriter::new(io::stdout().lock());
     if o.stdin {
         // Paths given on the command line stay pathspecs.
@@ -444,7 +453,15 @@ pub fn cmd_diff_index(args: &[String]) -> CliResult<()> {
     pairs.sort_by(|x, y| x.path().cmp(y.path()));
     let c = Content::new(&repo);
     diffcore::transform(&c, &o.diff, &mut pairs)?;
-    finish_output(&c, &o.diff, EmitCtx { raw_full: true }, &pairs)
+    finish_output(
+        &c,
+        &o.diff,
+        EmitCtx {
+            raw_full: true,
+            ..Default::default()
+        },
+        &pairs,
+    )
 }
 
 pub fn cmd_diff_files(args: &[String]) -> CliResult<()> {
@@ -493,5 +510,13 @@ pub fn cmd_diff_files(args: &[String]) -> CliResult<()> {
     let _ = o.stage;
     let c = Content::new(&repo);
     diffcore::transform(&c, &o.diff, &mut pairs)?;
-    finish_output(&c, &o.diff, EmitCtx { raw_full: true }, &pairs)
+    finish_output(
+        &c,
+        &o.diff,
+        EmitCtx {
+            raw_full: true,
+            ..Default::default()
+        },
+        &pairs,
+    )
 }
