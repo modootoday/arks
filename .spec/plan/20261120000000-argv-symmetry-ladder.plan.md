@@ -3,7 +3,7 @@ id: plan:root/20261120000000
 title: argv symmetry ladder (A0–A_final) — every command and argv symmetric with git, gh and git daemon
 status: active
 created: 2026-11-20T00:00:00Z
-updated: 2026-11-20T00:00:00Z
+updated: 2026-11-20T02:00:00Z
 tags: [cli, argv, symmetry, flags, git, gh, daemon, inventory, plan, no-invent-pass]
 verify: manual
 rel:
@@ -55,10 +55,24 @@ sub-command groups, helpers) and need a documentation- or completion-derived inv
 | **A0** | Inventory tool + baseline | Done (this plan) |
 | **A1** | Inventory completion: per-subcommand `-h` (stash, notes, worktree, remote, submodule, bisect, sparse-checkout, maintenance, …) and documentation-derived lists for the rev-list / diff option families | Every must-implement command has an option list |
 | **A2** | Porcelain waves by family — history/inspection (log, show, rev-list, diff*, grep, blame, …); commit/branch (commit, branch, tag, checkout, switch, restore, reset, add, rm, mv, clean, status, stash, merge, rebase, cherry-pick, revert, am, apply, format-patch); remote (clone, fetch, pull, push, ls-remote, remote, submodule); plumbing/maintenance (update-index, read-tree, pack-objects, repack, gc, config, refs, …) | Acceptance 100% per family + behaviour corpus lines SAME (reasoned DIFF listed) |
-| **A3** | The 47 formerly refused commands, including merge-strategy programs, `difftool` / `mergetool`, `filter-branch`, `quiltimport`, `send-email` / `imap-send`, `instaweb`, credential helpers, GUI (`gui`, `citool`) and Windows-only rows | Each command dispatches with git's argv; GUI / Windows rows need a design note before code |
+| **A3** | The 47 formerly refused commands, including merge-strategy programs, `difftool` / `mergetool`, `filter-branch`, `quiltimport`, `send-email` / `imap-send`, `instaweb`, credential helpers, GUI (`gui`, `citool`) and Windows-only rows | Each command dispatches with git's argv (see A3 design decisions) |
 | **A4** | gh: flag-level inventory for in-scope rows from the gh 2.103.3 manual; implement `later` / `Deferred` rows (ruleset, `repo gitignore|license`, `pr checks`, `browse`, `repo clone|sync|read-*`, `search code|commits`, `issue develop|artifact`, `auth switch`) | gh-matrix in-scope rows v1 with gh-symmetric flags |
 | **A5** | git daemon: review the 16 `Refuse/N/A` daemon rows | Daemon matrix without unreasoned refuse |
 | **A_final** | Docker receipts for inventory + corpora; matrices and `docs/completion.md` match | — |
+
+## A3 design decisions (owner, 2026-11-20)
+
+1. **GUI rows** (`gui`, `citool`, `gui--askpass`, `gui--askyesno`, `gui.tcl`): git ships these as a
+   Tcl/Tk program that arks cannot reuse. arks implements them as a **terminal UI** with git's
+   command names and argv (`arks gui [blame|browser|citool|version]`, `arks citool`, askpass /
+   askyesno prompts on the terminal). No windowing toolkit dependency.
+2. **Windows-only rows** (`credential-manager`, `credential-wincred`, `update-git-for-windows`):
+   implemented on every OS. The credential rows speak the credential-helper protocol
+   (`get` / `store` / `erase`) backed by the OS credential store (Windows Credential Manager on
+   Windows, the platform keychain or secret service elsewhere, with an honest refuse when none
+   exists). `update-git-for-windows` checks for a newer `arks` release and never installs Git
+   for Windows.
+3. Every other former refuse row follows git's documented behaviour.
 
 ## Order
 
