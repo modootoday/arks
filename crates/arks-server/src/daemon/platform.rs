@@ -63,10 +63,10 @@ mod tests {
 
     #[test]
     fn passwd_home_reads_sixth_field() {
-        let text = "root:x:0:0:root:/root:/bin/sh\nalice:x:1000:1000::/home/alice:/bin/sh\n";
+        let text = "root:x:0:0:root:/root:/bin/sh\nalice:x:1000:1000::/srv/users/alice:/bin/sh\n";
         assert_eq!(
             passwd_home(text, "alice"),
-            Some(PathBuf::from("/home/alice"))
+            Some(PathBuf::from("/srv/users/alice"))
         );
         assert_eq!(passwd_home(text, "bob"), None);
     }
