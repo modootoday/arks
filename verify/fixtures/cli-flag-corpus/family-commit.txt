@@ -680,3 +680,30 @@ worktree unlock
 worktree remove
 worktree move a
 worktree list extra
+#
+# --- init ---
+init
+init -q
+init --quiet n
+init n
+init --bare nb.git
+init --bare -q nb.git
+init -b trunk n
+init --initial-branch=trunk n
+init --object-format=sha256 n
+init --object-format=sha1 n
+init --object-format=md5 n
+init --shared n
+init --shared=all n
+init --shared=group n
+init --shared=0640 n
+init --shared=false n
+init --shared=bogus n
+init --template= n
+init --no-template n
+init --template=nonexist n
+init --separate-git-dir=sep.git n
+init --separate-git-dir sep.git -q n
+init --bare --separate-git-dir=sep.git n
+init -b x
+init a b

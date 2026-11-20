@@ -19,52 +19,75 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::thread;
 pub fn cmd_init(args: &[String]) -> CliResult<()> {
-    // git-init: https://git-scm.com/docs/git-init
-    // `--bare` (M16 Sy-1), `--object-format=sha256` ([[adr:root/20261110214800]]),
-    // `-q/--quiet`, `-b/--initial-branch`, and re-initialisation of an existing repository.
-    refuse_unknown_flags(
+    // Every option of `git init -h`. Cite: https://git-scm.com/docs/git-init
+    use crate::cmd::opt_parse::{Mode, parse};
+    let p = parse(
+        "init",
         args,
-        &[
-            "--bare",
-            "--object-format",
-            "-q",
-            "--quiet",
-            "-b",
-            "--initial-branch",
-        ],
+        crate::cmd::porcelain_opts::INIT,
+        Mode::default(),
     )?;
-    let bare = args.iter().any(|a| a == "--bare");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let mut object_format = "sha1".to_string();
-    let mut initial_branch: Option<String> = None;
-    let mut positional = Vec::new();
-    let mut i = 0;
-    while i < args.len() {
-        let a = args[i].as_str();
-        if a == "--object-format" {
-            i += 1;
-            let v = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("init --object-format <sha1|sha256>".into()))?;
-            object_format = v.to_ascii_lowercase();
-        } else if let Some(rest) = a.strip_prefix("--object-format=") {
-            object_format = rest.to_ascii_lowercase();
-        } else if a == "-b" || a == "--initial-branch" {
-            i += 1;
-            let v = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage(format!("init: option `{a}` requires a value")))?;
-            initial_branch = Some(v.clone());
-        } else if let Some(rest) = a.strip_prefix("--initial-branch=") {
-            initial_branch = Some(rest.to_string());
-        } else if !a.starts_with('-') {
-            positional.push(args[i].clone());
+    let bare = p.on("bare");
+    let quiet = p.on("quiet");
+    let mut object_format = p
+        .value("object-format")
+        .map(|v| v.to_ascii_lowercase())
+        .unwrap_or_else(|| "sha1".to_string());
+    if object_format.is_empty() {
+        object_format = "sha1".into();
+    }
+    let initial_branch = p.value("initial-branch");
+    // `--shared[=<perm>]`: core.sharedRepository (0 = umask, 1 = group, 2 = all, or octal).
+    let shared: Option<String> = match p.last("shared") {
+        None => None,
+        Some(v) => {
+            let v = v.unwrap_or_else(|| "group".into());
+            match v.to_ascii_lowercase().as_str() {
+                "false" | "umask" | "0" | "no" | "off" => None,
+                "true" | "group" | "1" | "yes" | "on" => Some("1".into()),
+                "all" | "world" | "everybody" | "2" => Some("2".into()),
+                o if o.len() > 1 && o.starts_with('0') && o.chars().all(|c| c.is_digit(8)) => {
+                    Some(o.to_string())
+                }
+                _ => {
+                    return Err(CliError::fatal(format!(
+                        "bad boolean config value '{v}' for 'arg'"
+                    )));
+                }
+            }
         }
-        i += 1;
+    };
+    // `--template=<dir>` (empty: none); else GIT_TEMPLATE_DIR, init.templateDir,
+    // then the conventional system template directory when it exists.
+    let template: Option<PathBuf> = match p.last("template") {
+        Some(Some(t)) if t.is_empty() => None,
+        Some(Some(t)) => Some(PathBuf::from(t)),
+        Some(None) | None => std::env::var("GIT_TEMPLATE_DIR")
+            .ok()
+            .filter(|t| !t.is_empty())
+            .or_else(|| arks_config::ConfigSet::load(None).get("init.templateDir"))
+            .map(PathBuf::from)
+            .or_else(|| {
+                let d = PathBuf::from("/usr/share/git-core/templates");
+                d.is_dir().then_some(d)
+            }),
+    };
+    let separate = p.value("separate-git-dir");
+    if separate.is_some() && bare {
+        return Err(CliError::fatal(
+            "options '--separate-git-dir' and '--bare' cannot be used together",
+        ));
+    }
+    let positional = p.args();
+    if positional.len() > 1 {
+        return Err(CliError::Exit(
+            129,
+            "usage: git init [-q | --quiet] [--bare] [--template=<template-directory>]\n                [--separate-git-dir <git-dir>] [--object-format=<format>]\n                [-b <branch-name> | --initial-branch=<branch-name>]\n                [--shared[=<permissions>]] [<directory>]".into(),
+        ));
     }
     if object_format != "sha1" && object_format != "sha256" {
-        return Err(CliError::Usage(format!(
-            "init --object-format: unknown '{object_format}' (claimed: sha1, sha256)"
+        return Err(CliError::fatal(format!(
+            "unknown hash algorithm '{object_format}'"
         )));
     }
     let dir = if let Some(p) = positional.first() {
@@ -73,7 +96,22 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
         cwd()?
     };
     fs::create_dir_all(&dir)?;
-    let git_dir = if bare { dir.clone() } else { dir.join(".git") };
+    let git_dir = match &separate {
+        Some(sep) => {
+            let sep = PathBuf::from(sep);
+            let abs = if sep.is_absolute() {
+                sep
+            } else {
+                cwd()?.join(sep)
+            };
+            fs::create_dir_all(&abs)?;
+            let abs = abs.canonicalize().unwrap_or(abs);
+            fs::write(dir.join(".git"), format!("gitdir: {}\n", abs.display()))?;
+            abs
+        }
+        None if bare => dir.clone(),
+        None => dir.join(".git"),
+    };
     let display_dir = |p: &Path| {
         let shown = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
         format!("{}/", shown.display())
@@ -122,12 +160,20 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
             "invalid initial branch name: '{branch}'"
         )));
     }
+    fs::create_dir_all(&git_dir)?;
+    if let Some(t) = &template {
+        if t.is_dir() {
+            copy_template(t, &git_dir)?;
+        } else {
+            eprintln!("warning: templates not found in {}", t.display());
+        }
+    }
     fs::create_dir_all(git_dir.join("objects"))?;
     fs::create_dir_all(git_dir.join("refs/heads"))?;
     fs::create_dir_all(git_dir.join("refs/tags"))?;
     fs::write(git_dir.join("HEAD"), format!("ref: refs/heads/{branch}\n"))?;
     let bare_cfg = if bare { "true" } else { "false" };
-    let cfg = if object_format == "sha256" {
+    let mut cfg = if object_format == "sha256" {
         format!(
             "[core]\n\trepositoryformatversion = 1\n\tfilemode = true\n\tbare = {bare_cfg}\n\tlogallrefupdates = true\n[extensions]\n\tobjectFormat = sha256\n"
         )
@@ -136,12 +182,40 @@ pub fn cmd_init(args: &[String]) -> CliResult<()> {
             "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = {bare_cfg}\n\tlogallrefupdates = true\n"
         )
     };
+    if let Some(sh) = &shared {
+        cfg = cfg.replacen(
+            &format!("\tbare = {bare_cfg}\n"),
+            &format!("\tbare = {bare_cfg}\n\tsharedrepository = {sh}\n"),
+            1,
+        );
+        cfg.push_str("[receive]\n\tdenyNonFastforwards = true\n");
+    }
     fs::write(git_dir.join("config"), cfg)?;
     if !quiet {
         println!(
-            "Initialized empty Git repository in {}",
+            "Initialized empty {}Git repository in {}",
+            if shared.is_some() { "shared " } else { "" },
             display_dir(&git_dir)
         );
+    }
+    Ok(())
+}
+
+/// Copy a template directory into a new git dir without replacing files.
+fn copy_template(from: &Path, to: &Path) -> CliResult<()> {
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let target = to.join(entry.file_name());
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            fs::create_dir_all(&target)?;
+            copy_template(&entry.path(), &target)?;
+        } else if !target.exists() {
+            if entry.file_name() == "config" {
+                continue;
+            }
+            fs::copy(entry.path(), &target)?;
+        }
     }
     Ok(())
 }
