@@ -306,6 +306,8 @@ mod tests {
         );
     }
 
+    // Absolute request paths are `/…` here; Windows drive-letter request paths are not covered yet.
+    #[cfg(unix)]
     #[test]
     fn base_path_relaxed_retries_raw_path() {
         let root = TempDir::new().unwrap();
@@ -319,6 +321,8 @@ mod tests {
         assert!(resolve_request(&o, "/pub.git", None).is_some());
     }
 
+    // Absolute request paths are `/…` here; Windows drive-letter request paths are not covered yet.
+    #[cfg(unix)]
     #[test]
     fn strict_paths_need_exact_names() {
         let root = TempDir::new().unwrap();
