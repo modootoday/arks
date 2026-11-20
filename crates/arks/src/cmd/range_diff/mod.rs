@@ -14,6 +14,7 @@
 //! the notes included in the patch texts.
 
 pub mod assign;
+pub mod embed;
 pub mod patch_text;
 
 use crate::cmd::diffcore::emit::{EmitCtx, emit};
