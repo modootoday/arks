@@ -660,3 +660,4 @@ describe --no-always
 describe --no-exact-match
 describe --no-first-parent
 describe --no-contains --contains HEAD~3
+log --graph --first-parent --oneline --all

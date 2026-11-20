@@ -1204,12 +1204,14 @@ pub fn walk(repo: &Repository, o: &RevOpts, tips: &Tips) -> CliResult<Vec<Walked
         let sorted = crate::cmd::log_format::child_first_order(
             &ids,
             |x| {
-                by[x]
-                    .parents
-                    .iter()
-                    .copied()
-                    .filter(|p| shown.contains(p))
-                    .collect()
+                // The sort sees every parent a commit has, even when
+                // --first-parent walked only the first one.
+                let ps = if o.first_parent {
+                    &by[x].commit.parents
+                } else {
+                    &by[x].parents
+                };
+                ps.iter().copied().filter(|p| shown.contains(p)).collect()
             },
             |x| match ord {
                 Order::AuthorDate => by[x].commit.author.timestamp,
