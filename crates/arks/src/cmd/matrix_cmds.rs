@@ -1643,18 +1643,92 @@ pub fn cmd_shell(args: &[String]) -> CliResult<()> {
     }
 }
 
-/// `arks upload-archive <directory>` — serve `git archive` over the upload-archive protocol (subset).
+/// `arks upload-archive <directory>`: the server half of `archive --remote`.
+/// Reads `argument <arg>` pkt-lines up to a flush, answers `ACK` + flush,
+/// then streams the archive on side-band 1 (errors on bands 2 and 3).
+/// Cite: <https://git-scm.com/docs/git-upload-archive>,
+/// <https://git-scm.com/docs/gitprotocol-common> (pkt-line, side-band).
 pub fn cmd_upload_archive(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let dir = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("upload-archive <directory>".into()))?;
-    // Protocol subset: without full pkt-line argument parse, materialize HEAD tar to stdout
-    // when invoked as a local helper. SSH/git-daemon protocol depth remains Partial.
-    let prev = std::env::current_dir()?;
-    std::env::set_current_dir(dir)?;
-    let result = crate::cmd::cmd_archive(&["--format=tar".into(), "HEAD".into()]);
-    let _ = std::env::set_current_dir(prev);
-    result.map_err(|e| CliError::Msg(format!("upload-archive: {e}")))
+    use std::io::{Read, Write};
+    let usage = || CliError::Exit(129, "usage: git upload-archive <repository>".into());
+    if args.iter().any(|a| a == "-h") {
+        return Err(usage());
+    }
+    let [dir] = args else {
+        return Err(usage());
+    };
+    let repo = arks_repo::Repository::open(dir)
+        .or_else(|_| arks_repo::Repository::open(std::path::Path::new(dir).join(".git")))
+        .map_err(|_| CliError::fatal(format!("'{dir}' does not appear to be a git repository")))?;
+    let mut input = std::io::stdin().lock();
+    let mut argv: Vec<String> = Vec::new();
+    let mut complete = false;
+    loop {
+        let mut len = [0u8; 4];
+        if input.read_exact(&mut len).is_err() {
+            break;
+        }
+        let Some(n) = std::str::from_utf8(&len)
+            .ok()
+            .and_then(|h| usize::from_str_radix(h, 16).ok())
+        else {
+            break;
+        };
+        if n == 0 {
+            complete = true;
+            break;
+        }
+        if n < 4 {
+            break;
+        }
+        let mut buf = vec![0u8; n - 4];
+        if input.read_exact(&mut buf).is_err() {
+            break;
+        }
+        let line = String::from_utf8_lossy(&buf);
+        let line = line.strip_suffix('\n').unwrap_or(&line);
+        match line.strip_prefix("argument ") {
+            Some(a) => argv.push(a.to_string()),
+            None => break,
+        }
+    }
+    let pkt = |band: Option<u8>, data: &[u8]| -> Vec<u8> {
+        let extra = usize::from(band.is_some());
+        let mut v = format!("{:04x}", data.len() + 4 + extra).into_bytes();
+        v.extend(band);
+        v.extend_from_slice(data);
+        v
+    };
+    let mut out = std::io::stdout().lock();
+    out.write_all(&pkt(None, b"ACK\n"))?;
+    out.write_all(b"0000")?;
+    let result = if complete {
+        crate::cmd::archive::archive_bytes_for_args(&repo, &argv)
+    } else {
+        Err(CliError::fatal("the remote end hung up unexpectedly"))
+    };
+    match result {
+        Ok(bytes) => {
+            for chunk in bytes.chunks(65515) {
+                out.write_all(&pkt(Some(1), chunk))?;
+            }
+            out.write_all(b"0000")?;
+            out.flush()?;
+            Ok(())
+        }
+        Err(e) => {
+            let msg = e.to_string();
+            let msg = msg.trim_end();
+            let msg = if msg.starts_with("fatal: ") || msg.starts_with("error: ") {
+                msg.to_string()
+            } else {
+                format!("fatal: {msg}")
+            };
+            out.write_all(&pkt(Some(2), format!("{msg}\n").as_bytes()))?;
+            let died = "git upload-archive: archiver died with error";
+            out.write_all(&pkt(Some(3), died.as_bytes()))?;
+            out.flush()?;
+            Err(CliError::fatal(format!("sent error to the client: {died}")))
+        }
+    }
 }

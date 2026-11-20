@@ -59,9 +59,43 @@ pub fn cmd_archive(args: &[String]) -> CliResult<()> {
         println!("tar\ntgz\ntar.gz\nzip");
         return Ok(());
     }
-    if let Some(remote) = p.value("remote") {
-        return archive_remote(&remote, args);
+    let output = p.value("output");
+    let repo = match p.value("remote") {
+        Some(remote) => remote_repo(&remote)?,
+        None => open_repo()?,
+    };
+    // git opens (and truncates) `--output` before reading the tree-ish.
+    if let Some(path) = &output {
+        // MISC-002 (M20 Cx-5): parallel archive to same occupied prefix refuse.
+        let outp = std::path::Path::new(path);
+        if outp.exists() {
+            return Err(CliError::Msg(format!(
+                "archive output '{}' exists (MISC-002 — parallel archive/checkout-index to same prefix refuse; choose a unique path)",
+                outp.display()
+            )));
+        }
+        fs::write(outp, b"")?;
     }
+    let bytes = archive_bytes(&repo, &p)?;
+    match output {
+        Some(path) => fs::write(path, bytes)?,
+        None => {
+            let mut out = io::stdout().lock();
+            out.write_all(&bytes)?;
+            out.flush()?;
+        }
+    }
+    Ok(())
+}
+
+/// The archive stream for `args` (stock `git archive` options, no
+/// `--remote`), read from `repo`; `upload-archive` serves the same bytes.
+pub(crate) fn archive_bytes_for_args(repo: &Repository, args: &[String]) -> CliResult<Vec<u8>> {
+    let p = parse(args, ARCHIVE_OPTS)?;
+    archive_bytes(repo, &p)
+}
+
+fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_spec::Parsed) -> CliResult<Vec<u8>> {
     let output = p.value("output");
     let format = match p.value("format") {
         Some(f) => f,
@@ -93,10 +127,9 @@ pub fn cmd_archive(args: &[String]) -> CliResult<()> {
             "usage: git archive [<options>] <tree-ish> [<path>...]".into(),
         ));
     };
-    let repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev)
+    let oid = resolve_rev(repo, rev)
         .map_err(|_| CliError::fatal(format!("not a valid object name: {rev}")))?;
-    let (commit, tree) = peel_tree(&repo, &oid)?;
+    let (commit, tree) = peel_tree(repo, &oid)?;
     let commit_time = commit.as_ref().map(|c| c.1).unwrap_or_else(|| {
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -122,7 +155,7 @@ pub fn cmd_archive(args: &[String]) -> CliResult<()> {
             symlink: None,
         });
     }
-    collect_tree(&repo, &tree, "", &prefix, &pathspecs, &mut members)?;
+    collect_tree(repo, &tree, "", &prefix, &pathspecs, &mut members)?;
     for spec in &pathspecs {
         let base = spec.trim_end_matches('/');
         let hit = members.iter().any(|m| {
@@ -178,34 +211,16 @@ pub fn cmd_archive(args: &[String]) -> CliResult<()> {
     }
 
     let comment = commit.as_ref().map(|c| c.0.to_hex());
-    let bytes = match format.as_str() {
+    Ok(match format.as_str() {
         "zip" => zip_bytes(&members, mtime, comment.as_deref(), level.unwrap_or(6)),
         "tar" => tar_bytes(&members, mtime, comment.as_deref()),
         _ => gzip(&tar_bytes(&members, mtime, comment.as_deref())),
-    };
-    match output {
-        Some(path) => {
-            // MISC-002 (M20 Cx-5): parallel archive to same occupied prefix refuse.
-            let outp = std::path::Path::new(&path);
-            if outp.exists() {
-                return Err(CliError::Msg(format!(
-                    "archive output '{}' exists (MISC-002 — parallel archive/checkout-index to same prefix refuse; choose a unique path)",
-                    outp.display()
-                )));
-            }
-            fs::write(outp, bytes)?;
-        }
-        None => {
-            let mut out = io::stdout().lock();
-            out.write_all(&bytes)?;
-            out.flush()?;
-        }
-    }
-    Ok(())
+    })
 }
 
-/// `--remote=<repo>` for a local repository: archive inside that repository.
-fn archive_remote(remote: &str, args: &[String]) -> CliResult<()> {
+/// `--remote=<repo>` for a local repository: the archive is built from that
+/// repository and written here (`-o` stays relative to this directory).
+fn remote_repo(remote: &str) -> CliResult<Repository> {
     let repo = open_repo().ok();
     let cfg = arks_config::ConfigSet::load(repo.as_ref().map(|r| r.common_dir()));
     let url = crate::cmd::fetch::configured_source(&cfg, remote)
@@ -216,32 +231,7 @@ fn archive_remote(remote: &str, args: &[String]) -> CliResult<()> {
             "archive --remote is claimed for local-path repositories (the daemon serves upload-archive)".into(),
         ));
     }
-    let peer = arks_remote::open_local_remote(&url).map_err(|e| CliError::fatal(e.to_string()))?;
-    let dir = peer.git_dir().to_path_buf();
-    let rest: Vec<String> = {
-        let mut out = Vec::new();
-        let mut skip = false;
-        for a in args {
-            if skip {
-                skip = false;
-                continue;
-            }
-            if a == "--remote" || a == "--exec" {
-                skip = true;
-                continue;
-            }
-            if a.starts_with("--remote=") || a.starts_with("--exec=") {
-                continue;
-            }
-            out.push(a.clone());
-        }
-        out
-    };
-    let prev = std::env::current_dir()?;
-    std::env::set_current_dir(&dir)?;
-    let res = cmd_archive(&rest);
-    let _ = std::env::set_current_dir(prev);
-    res
+    arks_remote::open_local_remote(&url).map_err(|e| CliError::fatal(e.to_string()))
 }
 
 fn file_is_executable(path: &str) -> bool {
