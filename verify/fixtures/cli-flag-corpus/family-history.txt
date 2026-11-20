@@ -604,3 +604,19 @@ cherry --no-verbose -v t0
 cherry --abbrev t0
 cherry --abbrev=10 -v t0
 cherry --no-abbrev t0
+# --- name-rev ---
+name-rev --no-tags --tags HEAD~2
+name-rev --refs feature 9bd4826
+name-rev --no-refs --refs=x HEAD
+name-rev --exclude=main HEAD
+name-rev --exclude main --tags HEAD
+name-rev --no-exclude --exclude=main HEAD
+name-rev --no-name-only HEAD
+name-rev --no-all HEAD
+name-rev --refs=nope --always HEAD
+name-rev --refs=nope --no-always HEAD
+name-rev --refs=nope --no-undefined --name-only HEAD
+name-rev --refs=nope --undefined HEAD
+name-rev --annotate-stdin
+name-rev --no-annotate-stdin HEAD
+name-rev 504170b

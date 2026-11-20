@@ -754,23 +754,96 @@ pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
     let mut tags_only = false;
     let mut name_only = false;
     let mut all = false;
+    let mut undefined = true;
+    let mut always = false;
+    let mut annotate = false;
     let mut refs_pat: Vec<String> = Vec::new();
+    let mut exclude: Vec<String> = Vec::new();
     let mut revs = Vec::new();
-    for a in args {
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        let mut value = |name: &str| -> CliResult<String> {
+            let v = args.get(i).cloned().ok_or_else(|| {
+                CliError::Exit(129, format!("error: option `{name}' requires a value"))
+            })?;
+            i += 1;
+            Ok(v)
+        };
         match a.as_str() {
             "--tags" => tags_only = true,
+            "--no-tags" => tags_only = false,
             "--name-only" => name_only = true,
+            "--no-name-only" => name_only = false,
             "--all" => all = true,
-            "--no-undefined" | "--always" => {}
+            "--no-all" => all = false,
+            "--undefined" => undefined = true,
+            "--no-undefined" => undefined = false,
+            "--always" => always = true,
+            "--no-always" => always = false,
+            "--annotate-stdin" | "--stdin" => annotate = true,
+            "--no-annotate-stdin" => annotate = false,
+            "--refs" => refs_pat.push(value("refs")?),
+            "--no-refs" => refs_pat.clear(),
+            "--exclude" => exclude.push(value("exclude")?),
+            "--no-exclude" => exclude.clear(),
             _ if a.starts_with("--refs=") => refs_pat.push(a["--refs=".len()..].to_string()),
+            _ if a.starts_with("--exclude=") => exclude.push(a["--exclude=".len()..].to_string()),
             _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+                return Err(CliError::Exit(
+                    129,
+                    format!("error: unknown option `{}'", a.trim_start_matches('-')),
+                ));
             }
             _ => revs.push(a.clone()),
         }
     }
     let repo = open_repo()?;
-    let names = name_rev_names(&repo, tags_only, &refs_pat)?;
+    let names = name_rev_names_ex(&repo, tags_only, &refs_pat, &exclude)?;
+    // git prints `undefined` for named revisions even with --always.
+    let _ = always;
+    if annotate {
+        if all || !revs.is_empty() {
+            return Err(CliError::fatal(
+                "Specify either a list, or --all, not both!",
+            ));
+        }
+        // Each full object name in the input gets its name appended (or,
+        // with --name-only, replaced by it).
+        let mut input = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut input)?;
+        let hexlen = repo.head_oid().map(|o| o.to_hex().len()).unwrap_or(40);
+        let mut out = String::new();
+        let b = input.as_bytes();
+        let mut k = 0;
+        while k < b.len() {
+            let is_hex = |x: u8| x.is_ascii_hexdigit() && !x.is_ascii_uppercase();
+            let boundary_before = k == 0 || !is_hex(b[k - 1]);
+            if boundary_before
+                && k + hexlen <= b.len()
+                && b[k..k + hexlen].iter().all(|x| is_hex(*x))
+                && (k + hexlen == b.len() || !is_hex(b[k + hexlen]))
+            {
+                let hex = &input[k..k + hexlen];
+                let name = Oid::from_hex(hex)
+                    .ok()
+                    .and_then(|o| crate::cmd::shared::peel_tags(&repo, &o).ok())
+                    .and_then(|o| names.get(&o).map(|n| n.0.clone()));
+                match (name, name_only) {
+                    (Some(n), true) => out.push_str(&n),
+                    (Some(n), false) => out.push_str(&format!("{hex} ({n})")),
+                    (None, _) => out.push_str(hex),
+                }
+                k += hexlen;
+                continue;
+            }
+            out.push(b[k] as char);
+            k += 1;
+        }
+        print!("{out}");
+        return Ok(());
+    }
     let mut targets: Vec<(String, Oid)> = Vec::new();
     if all {
         let mut v: Vec<(&Oid, &String)> = names.iter().map(|(o, n)| (o, &n.0)).collect();
@@ -788,10 +861,21 @@ pub fn cmd_name_rev(args: &[String]) -> CliResult<()> {
         return Err(CliError::Usage("name-rev [<options>] <commit>...".into()));
     }
     for (label, oid) in targets {
-        let name = names
-            .get(&oid)
-            .map(|n| n.0.clone())
-            .unwrap_or_else(|| "undefined".to_string());
+        let name = match names.get(&oid) {
+            Some(n) => n.0.clone(),
+            None if undefined => "undefined".to_string(),
+            None => {
+                if !name_only {
+                    print!("{label} ");
+                }
+                use std::io::Write as _;
+                std::io::stdout().flush()?;
+                return Err(CliError::fatal(format!(
+                    "cannot describe '{}'",
+                    oid.to_hex()
+                )));
+            }
+        };
         if name_only {
             println!("{name}");
         } else {
@@ -814,6 +898,16 @@ pub(crate) fn name_rev_names(
     tags_only: bool,
     refs_pat: &[String],
 ) -> CliResult<std::collections::HashMap<Oid, RevName>> {
+    name_rev_names_ex(repo, tags_only, refs_pat, &[])
+}
+
+/// [`name_rev_names`] that also skips refs matching an `--exclude` pattern.
+pub(crate) fn name_rev_names_ex(
+    repo: &arks_repo::Repository,
+    tags_only: bool,
+    refs_pat: &[String],
+    exclude: &[String],
+) -> CliResult<std::collections::HashMap<Oid, RevName>> {
     const MERGE_WEIGHT: u64 = 65535;
     let mut refs = repo.refs().list_refs("refs/")?;
     refs.sort_by(|a, b| a.0.cmp(&b.0));
@@ -835,7 +929,11 @@ pub(crate) fn name_rev_names(
         if tags_only && !from_tag {
             continue;
         }
-        if refname == "refs/stash" {
+        let pat_hit = |p: &String| {
+            crate::cmd::branch_cmd::fnmatch(p.as_bytes(), refname.as_bytes())
+                || refname.ends_with(&format!("/{p}"))
+        };
+        if exclude.iter().any(pat_hit) {
             continue;
         }
         if !refs_pat.is_empty()
