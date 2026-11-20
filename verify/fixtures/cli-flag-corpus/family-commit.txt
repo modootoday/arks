@@ -551,3 +551,79 @@ stash show stash@{3}
 stash store -m x stash@{0}
 stash branch
 stash pop 5
+#
+# --- cherry-pick / revert (side repository) ---
+-C .git/side cherry-pick topic
+-C .git/side cherry-pick lineone
+-C .git/side cherry-pick clash
+-C .git/side cherry-pick base..topic
+-C .git/side cherry-pick topic~1 topic
+-C .git/side cherry-pick ^base topic
+-C .git/side cherry-pick lineone clash topic
+-C .git/side cherry-pick -x lineone
+-C .git/side cherry-pick -s lineone
+-C .git/side cherry-pick -s -x lineone
+-C .git/side cherry-pick --signoff --no-signoff lineone
+-C .git/side cherry-pick -n lineone
+-C .git/side cherry-pick --no-commit topic
+-C .git/side cherry-pick -n clash
+-C .git/side cherry-pick -e lineone
+-C .git/side cherry-pick --edit lineone
+-C .git/side cherry-pick --no-edit lineone
+-C .git/side cherry-pick base
+-C .git/side cherry-pick --allow-empty base
+-C .git/side cherry-pick --keep-redundant-commits base
+-C .git/side cherry-pick -m 1 topic
+-C .git/side cherry-pick --mainline=2 topic
+-C .git/side cherry-pick --ff main
+-C .git/side cherry-pick --ff topic
+-C .git/side cherry-pick --no-ff topic
+-C .git/side cherry-pick
+-C .git/side cherry-pick nope
+-C .git/side cherry-pick --skip
+-C .git/side cherry-pick --quit
+-C .git/side cherry-pick --abort
+-C .git/side cherry-pick --continue
+-C .git/side cherry-pick --allow-empty-message lineone
+-C .git/side cherry-pick --cleanup=bogus lineone
+-C .git/side cherry-pick --cleanup=strip lineone
+-C .git/side cherry-pick --cleanup=verbatim lineone
+-C .git/side cherry-pick -S lineone
+-C .git/side cherry-pick --gpg-sign lineone
+-C .git/side cherry-pick --no-gpg-sign lineone
+-C .git/side cherry-pick --rerere-autoupdate lineone
+-C .git/side cherry-pick --no-rerere-autoupdate lineone
+-C .git/side cherry-pick --strategy=ort lineone
+-C .git/side cherry-pick --strategy=ours lineone
+-C .git/side cherry-pick -X theirs clash
+-C .git/side cherry-pick -X ours clash
+-C .git/side cherry-pick --strategy-option=patience lineone
+-C .git/side cherry-pick --ff -x topic
+-C .git/side cherry-pick -n --ff topic
+-C .git/side revert HEAD
+-C .git/side revert -n HEAD
+-C .git/side revert --no-commit HEAD
+-C .git/side revert -s HEAD
+-C .git/side revert --reference HEAD
+-C .git/side revert --no-reference HEAD
+-C .git/side revert -e HEAD
+-C .git/side revert --no-edit HEAD
+-C .git/side revert -m 1 HEAD
+-C .git/side revert HEAD~1
+-C .git/side revert
+-C .git/side revert --skip
+-C .git/side revert --quit
+-C .git/side revert --abort
+-C .git/side revert --continue
+-C .git/side revert -S HEAD
+-C .git/side revert --cleanup=strip HEAD
+-C .git/side revert --strategy=ort HEAD
+-C .git/side revert -X ours HEAD
+-C .git/side revert --rerere-autoupdate HEAD
+-C .git/side revert -x HEAD
+#
+# --- status while a pick or merge is stopped is covered by the conflict lines above ---
+revert -n HEAD~1
+cherry-pick -n feature
+cherry-pick feature
+revert HEAD

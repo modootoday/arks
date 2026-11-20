@@ -52,6 +52,7 @@ pub mod pack_transport;
 pub mod opt_parse;
 pub mod patch;
 pub mod patch_id;
+pub mod pick;
 pub mod plumbing;
 pub mod plumbing_ext;
 pub mod pull;
@@ -134,6 +135,7 @@ pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch::{cmd_am, cmd_format_patch};
 pub use patch_id::cmd_patch_id;
+pub use pick::{cmd_cherry_pick, cmd_revert};
 pub use plumbing::{
     cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_name_rev,
     cmd_pack_objects, cmd_read_tree, cmd_show_ref, cmd_symbolic_ref, cmd_update_index,
@@ -145,9 +147,9 @@ pub use range_diff::cmd_range_diff;
 pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
 pub use remote_admin::cmd_remote;
 pub use replace::cmd_replace;
-pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use request_pull::cmd_request_pull;
 pub use rev_list::cmd_rev_list;
+pub use replay::cmd_rebase;
 pub use server::{
     cmd_http_backend, cmd_receive_pack, cmd_serve, cmd_serve_http, cmd_update_server_info,
     cmd_upload_pack,

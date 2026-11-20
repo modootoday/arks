@@ -62,13 +62,36 @@ pub(crate) fn merge_three_way_labeled(
     ours_checked_out: bool,
     labels: &MergeLabels,
 ) -> CliResult<MergeResult> {
-    let keep = ours_checked_out;
     let base = merge_base_oid(repo, ours, theirs)?
         .ok_or_else(|| CliError::Msg("merge: no common ancestor".into()))?;
     let ours_c = load_commit(repo, ours)?;
     let theirs_c = load_commit(repo, theirs)?;
     let base_c = load_commit(repo, &base)?;
-    let plan = plan_trees(repo, &base_c.tree, &ours_c.tree, &theirs_c.tree, labels)?;
+    merge_trees_worktree(
+        repo,
+        work,
+        &base_c.tree,
+        &ours_c.tree,
+        &theirs_c.tree,
+        ours_checked_out,
+        labels,
+    )
+}
+
+/// Three-way merge of trees with an explicit base (cherry-pick / revert use
+/// the picked commit's parent, or the commit itself) into the index and work
+/// tree; the index is rebuilt from the merge result.
+pub(crate) fn merge_trees_worktree(
+    repo: &mut Repository,
+    work: &Path,
+    base_tree: &Oid,
+    ours_tree: &Oid,
+    theirs_tree: &Oid,
+    ours_checked_out: bool,
+    labels: &MergeLabels,
+) -> CliResult<MergeResult> {
+    let keep = ours_checked_out;
+    let plan = plan_trees(repo, base_tree, ours_tree, theirs_tree, labels)?;
     let mut entries = plan.entries;
     let conflicts = plan.conflicts;
     let auto_merged = plan.auto_merged;

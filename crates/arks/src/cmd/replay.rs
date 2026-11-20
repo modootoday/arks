@@ -12,8 +12,7 @@
 //! `.spec/sot/multi-agent-git-concurrency-scenarios.sot.md`.
 
 use crate::cmd::shared::{
-    commit_signature, committer_signature, flatten_tree, head_blob_map, index_stat_matches,
-    resolve_rev,
+    committer_signature, flatten_tree, head_blob_map, index_stat_matches, resolve_rev,
 };
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, read_index, refuse_unknown_flags, work_tree, write_index};
@@ -33,192 +32,6 @@ pub(crate) struct PathDelta {
     pub(crate) base: Option<Oid>,
     /// Blob in the tip tree; absent when the path is deleted.
     pub(crate) tip: Option<Oid>,
-}
-
-pub fn cmd_cherry_pick(args: &[String]) -> CliResult<()> {
-    // M16 Sy-5: ranges, --no-commit, conflict markers, --continue/--abort.
-    if args.iter().any(|a| a == "--continue") {
-        refuse_unknown_flags(args, &["--continue"])?;
-        return cherry_pick_continue();
-    }
-    if args.iter().any(|a| a == "--abort") {
-        refuse_unknown_flags(args, &["--abort"])?;
-        return cherry_pick_abort();
-    }
-    refuse_unknown_flags(args, &["--no-commit", "-n", "--no-edit", "--ff"])?;
-    let no_commit = args.iter().any(|a| a == "--no-commit" || a == "-n");
-    let rev = one_rev(args, "cherry-pick <commit>|A..B")?;
-    let repo = open_repo()?;
-    refuse_exclusive_sequencer_state(&repo, SequencerOp::CherryPick)?;
-    let commits = resolve_pick_list(&repo, rev)?;
-    if commits.is_empty() {
-        return Err(CliError::Msg("cherry-pick: empty revision range".into()));
-    }
-    drop(repo);
-    if commits.len() > 1 {
-        write_sequencer_head()?;
-    }
-    for (i, oid) in commits.iter().enumerate() {
-        // Todo stores commits after the one about to apply (continue must not re-pick).
-        if commits.len() > 1 {
-            advance_sequencer_todo(i + 1, &commits)?;
-        }
-        match cherry_pick_oid(oid, no_commit) {
-            Ok(()) => {}
-            Err(e) => {
-                if is_conflict_error(&e) {
-                    return Err(e);
-                }
-                clear_sequencer_state()?;
-                return Err(precheck_error(e, "cherry-pick"));
-            }
-        }
-    }
-    clear_sequencer_state()?;
-    Ok(())
-}
-
-/// git sequencer refusal shape for a dirty index / work tree before
-/// cherry-pick or revert (exit 128). Partial: arks refuses any dirty tracked
-/// path, git only paths the picked commit touches.
-/// Cite: https://git-scm.com/docs/git-cherry-pick, https://git-scm.com/docs/git-revert
-fn precheck_error(e: CliError, op: &str) -> CliError {
-    let CliError::Msg(m) = &e else {
-        return e;
-    };
-    if m.contains("index does not match HEAD") || m.contains("unmerged entries") {
-        return CliError::Exit(
-            128,
-            format!(
-                "error: your local changes would be overwritten by {op}.\n\
-                 hint: commit your changes or stash them to proceed.\n\
-                 fatal: {op} failed"
-            ),
-        );
-    }
-    if let Some(path) = m
-        .strip_prefix("worktree path '")
-        .and_then(|r| r.split_once("' is dirty"))
-        .map(|(p, _)| p.to_string())
-    {
-        return CliError::Exit(
-            128,
-            format!(
-                "error: Your local changes to the following files would be overwritten by merge:\n\
-                 \t{path}\n\
-                 Please commit your changes or stash them before you merge.\n\
-                 Aborting\n\
-                 fatal: {op} failed"
-            ),
-        );
-    }
-    e
-}
-
-pub fn cmd_revert(args: &[String]) -> CliResult<()> {
-    // `--no-edit` accepted: arks never opens an editor for the revert message.
-    refuse_unknown_flags(args, &["--no-edit", "-n", "--no-commit"])?;
-    let no_commit = args.iter().any(|a| a == "-n" || a == "--no-commit");
-    let rev = one_rev(args, "revert <commit>|A..B")?;
-    let repo = open_repo()?;
-    let commits = resolve_pick_list(&repo, rev)?;
-    if commits.is_empty() {
-        return Err(CliError::Msg("revert: empty revision range".into()));
-    }
-    // Revert applies newest-first for ranges (git-revert).
-    let mut commits = commits;
-    commits.reverse();
-    drop(repo);
-    if no_commit {
-        return revert_into_index(&commits);
-    }
-    for oid in &commits {
-        let repo = open_repo()?;
-        let head_map = ensure_clean(&repo).map_err(|e| precheck_error(e, "revert"))?;
-        let commit = read_commit(&repo, oid)?;
-        if commit.parents.len() > 1 {
-            return Err(CliError::NotImplemented(
-                "revert of a merge commit is not claimed".into(),
-            ));
-        }
-        let deltas = inverse_deltas(&repo, &commit)?;
-        let message = format!(
-            "Revert \"{}\"\n\nThis reverts commit {}.\n",
-            commit.subject(),
-            oid.to_hex()
-        );
-        let author = commit_signature()?;
-        let committer = committer_signature()?;
-        drop(repo);
-        apply_checked(&head_map, &deltas, message, author, committer)?;
-    }
-    Ok(())
-}
-
-/// `revert -n`: apply the inverse of each commit to the index and work tree
-/// without committing. The index need not match HEAD; only the paths a revert
-/// touches must be unmodified (index == base, work tree == index), otherwise
-/// arks refuses instead of merging.
-/// Cite: https://git-scm.com/docs/git-revert#Documentation/git-revert.txt---no-commit
-fn revert_into_index(commits: &[Oid]) -> CliResult<()> {
-    let repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let mut index = read_index(&repo)?;
-    if index.entries.iter().any(|e| e.stage() != 0) {
-        return Err(CliError::fatal("revert failed: index has unmerged entries"));
-    }
-    for oid in commits {
-        let commit = read_commit(&repo, oid)?;
-        if commit.parents.len() > 1 {
-            return Err(CliError::NotImplemented(
-                "revert of a merge commit is not claimed".into(),
-            ));
-        }
-        for d in inverse_deltas(&repo, &commit)? {
-            let have = index
-                .entries
-                .iter()
-                .find(|e| e.path == d.path)
-                .map(|e| e.oid);
-            let abs = work.join(&d.path);
-            let on_disk = match fs::read(&abs) {
-                Ok(bytes) => {
-                    Some(RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?)
-                }
-                Err(_) => None,
-            };
-            if have != d.base || on_disk != have {
-                return Err(CliError::Exit(
-                    128,
-                    format!(
-                        "error: Your local changes to the following files would be overwritten by merge:\n\t{}\n\
-                         Please commit your changes or stash them before you merge.\nAborting\n\
-                         fatal: revert failed",
-                        d.path
-                    ),
-                ));
-            }
-            index.entries.retain(|e| e.path != d.path);
-            match d.tip {
-                Some(tip) => {
-                    if let Some(parent) = abs.parent() {
-                        fs::create_dir_all(parent)?;
-                    }
-                    fs::write(&abs, repo.get_object(&tip)?.payload)?;
-                    let meta = fs::metadata(&abs)?;
-                    index
-                        .entries
-                        .push(crate::cmd::working_tree::stat_entry(&d.path, tip, &meta));
-                }
-                None => {
-                    let _ = fs::remove_file(&abs);
-                }
-            }
-        }
-    }
-    sort_entries(&mut index.entries);
-    write_index(&repo, &index)?;
-    Ok(())
 }
 
 pub fn cmd_rebase(args: &[String]) -> CliResult<()> {
@@ -554,13 +367,6 @@ fn apply_checked_opts(
     commit_tree(&result, message, author, committer)
 }
 
-fn is_conflict_error(e: &CliError) -> bool {
-    match e {
-        CliError::Msg(m) => m.contains("cherry-pick: conflicts"),
-        _ => false,
-    }
-}
-
 fn write_cherry_pick_conflict(
     head_map: &HashMap<String, Oid>,
     clean: &[&PathDelta],
@@ -797,130 +603,12 @@ fn stamp_path(path: &Path, len: usize) -> (u32, u32, u32, u32, u32) {
     }
 }
 
-fn cherry_pick_continue() -> CliResult<()> {
-    let repo = open_repo()?;
-    let git_dir = repo.git_dir().to_path_buf();
-    let cherry_path = git_dir.join("CHERRY_PICK_HEAD");
-    if !cherry_path.is_file() && !sequencer_dir(&repo).join("todo").is_file() {
-        return Err(CliError::Msg(
-            "cherry-pick --continue: no cherry-pick in progress".into(),
-        ));
-    }
-    let index = read_index(&repo)?;
-    if index.entries.iter().any(|e| e.stage() != 0) {
-        return Err(CliError::Msg(
-            "cherry-pick --continue: unmerged paths remain; resolve and stage first".into(),
-        ));
-    }
-    let message = if sequencer_dir(&repo).join("message").is_file() {
-        fs::read_to_string(sequencer_dir(&repo).join("message"))?
-    } else if cherry_path.is_file() {
-        let oid = Oid::from_hex(fs::read_to_string(&cherry_path)?.trim())?;
-        let commit = read_commit(&repo, &oid)?;
-        ensure_nl(commit.message)
-    } else {
-        return Err(CliError::Msg(
-            "cherry-pick --continue: missing commit message".into(),
-        ));
-    };
-    let author = if cherry_path.is_file() {
-        let oid = Oid::from_hex(fs::read_to_string(&cherry_path)?.trim())?;
-        read_commit(&repo, &oid)?.author
-    } else {
-        commit_signature()?
-    };
-    let committer = committer_signature()?;
-    let files = {
-        let mut map = HashMap::new();
-        for e in index.entries.iter().filter(|e| e.stage() == 0) {
-            map.insert(e.path.clone(), e.oid);
-        }
-        map
-    };
-    drop(repo);
-    commit_tree(&files, message, author, committer)?;
-    let repo = open_repo()?;
-    let _ = fs::remove_file(repo.git_dir().join("CHERRY_PICK_HEAD"));
-    // Continue remaining todo lines.
-    let todo_path = sequencer_dir(&repo).join("todo");
-    if todo_path.is_file() {
-        let text = fs::read_to_string(&todo_path)?;
-        let remaining: Vec<Oid> = text
-            .lines()
-            .filter_map(|line| {
-                let line = line.trim();
-                if line.is_empty() {
-                    return None;
-                }
-                let hex = line.strip_prefix("pick ").unwrap_or(line);
-                let hex = hex.split_whitespace().next()?;
-                Oid::from_hex(hex).ok()
-            })
-            .collect();
-        drop(repo);
-        if remaining.is_empty() {
-            clear_sequencer_state()?;
-            return Ok(());
-        }
-        for (i, oid) in remaining.iter().enumerate() {
-            advance_sequencer_todo(i + 1, &remaining)?;
-            match cherry_pick_oid(oid, false) {
-                Ok(()) => {}
-                Err(e) => {
-                    if is_conflict_error(&e) {
-                        return Err(e);
-                    }
-                    clear_sequencer_state()?;
-                    return Err(e);
-                }
-            }
-        }
-        clear_sequencer_state()?;
-    } else {
-        drop(repo);
-        clear_sequencer_state()?;
-    }
-    Ok(())
-}
-
-fn cherry_pick_abort() -> CliResult<()> {
-    let mut repo = open_repo()?;
-    let seq = sequencer_dir(&repo);
-    let head_file = seq.join("head");
-    let orig = repo.git_dir().join("ORIG_HEAD");
-    let restore = if head_file.is_file() {
-        Oid::from_hex(fs::read_to_string(&head_file)?.trim())?
-    } else if orig.is_file() {
-        Oid::from_hex(fs::read_to_string(&orig)?.trim())?
-    } else {
-        return Err(CliError::Msg(
-            "cherry-pick --abort: no cherry-pick in progress".into(),
-        ));
-    };
-    match repo.head_target()? {
-        RefTarget::Symbolic(name) => {
-            let old = repo.head_oid().ok();
-            repo.refs_mut().update(&name, &restore, old.as_ref())?;
-        }
-        RefTarget::Direct(_) => {
-            let old = repo.head_oid().ok();
-            repo.refs_mut().update("HEAD", &restore, old.as_ref())?;
-        }
-    }
-    let work = work_tree(&repo)?;
-    arks_remote::checkout_commit(&repo, &work, &restore)?;
-    drop(repo);
-    clear_sequencer_state()?;
-    println!("cherry-pick aborted");
-    Ok(())
-}
-
 fn sequencer_dir(repo: &Repository) -> PathBuf {
     repo.git_dir().join("sequencer")
 }
 
 #[derive(Clone, Copy)]
-enum SequencerOp {
+pub(crate) enum SequencerOp {
     Rebase,
     CherryPick,
 }
@@ -928,7 +616,10 @@ enum SequencerOp {
 /// Fail-closed when another sequencer / pseudoref critical section is live.
 /// Cite: gitrepository-layout (MERGE_HEAD, CHERRY_PICK_HEAD, rebase-merge).
 /// Catalog: SEQ-001, SEQ-002, SEQ-003, REF-018 (M19 Cx-1); SEQ-006 (Cx-2 interactive todo).
-fn refuse_exclusive_sequencer_state(repo: &Repository, op: SequencerOp) -> CliResult<()> {
+pub(crate) fn refuse_exclusive_sequencer_state(
+    repo: &Repository,
+    op: SequencerOp,
+) -> CliResult<()> {
     // SEQ-004 (M20 Cx-6): rerere shared rr-cache writes under lock.
     let rr_lock = repo.common_dir().join("rr-cache.lock");
     if rr_lock.is_file() {
@@ -980,72 +671,6 @@ fn refuse_exclusive_sequencer_state(repo: &Repository, op: SequencerOp) -> CliRe
         }
         _ => Ok(()),
     }
-}
-
-fn write_sequencer_head() -> CliResult<()> {
-    let repo = open_repo()?;
-    let seq = sequencer_dir(&repo);
-    fs::create_dir_all(&seq)?;
-    if let Ok(head) = repo.head_oid() {
-        fs::write(seq.join("head"), format!("{}\n", head.to_hex()))?;
-        fs::write(
-            repo.git_dir().join("ORIG_HEAD"),
-            format!("{}\n", head.to_hex()),
-        )?;
-    }
-    Ok(())
-}
-
-fn advance_sequencer_todo(done: usize, commits: &[Oid]) -> CliResult<()> {
-    let repo = open_repo()?;
-    let seq = sequencer_dir(&repo);
-    if !seq.is_dir() {
-        return Ok(());
-    }
-    let mut body = String::new();
-    for oid in commits.iter().skip(done) {
-        body.push_str(&format!("pick {}\n", oid.to_hex()));
-    }
-    fs::write(seq.join("todo"), body)?;
-    Ok(())
-}
-
-fn clear_sequencer_state() -> CliResult<()> {
-    let repo = open_repo()?;
-    let git = repo.git_dir();
-    let _ = fs::remove_file(git.join("CHERRY_PICK_HEAD"));
-    let seq = git.join("sequencer");
-    if seq.is_dir() {
-        let _ = fs::remove_dir_all(&seq);
-    }
-    Ok(())
-}
-
-fn resolve_pick_list(repo: &Repository, rev: &str) -> CliResult<Vec<Oid>> {
-    if let Some((left, right)) = rev.split_once("..") {
-        if left.contains('.') || right.contains('.') {
-            // Reject `...` here; cherry-pick uses A..B.
-            if rev.contains("...") {
-                return Err(CliError::NotImplemented(
-                    "cherry-pick A...B not claimed; use A..B".into(),
-                ));
-            }
-        }
-        let start = if left.is_empty() {
-            return Err(CliError::Usage(
-                "cherry-pick A..B requires both ends".into(),
-            ));
-        } else {
-            resolve_commit(repo, left)?
-        };
-        let end = if right.is_empty() {
-            repo.head_oid()?
-        } else {
-            resolve_commit(repo, right)?
-        };
-        return replay_list(repo, end, start);
-    }
-    Ok(vec![resolve_commit(repo, rev)?])
 }
 
 pub(crate) fn ensure_applicable(
@@ -1315,16 +940,6 @@ pub(crate) fn deltas_for_commit(repo: &Repository, commit: &Commit) -> CliResult
     let mut tip = HashMap::new();
     flatten_tree(repo, &commit.tree, "", &mut tip)?;
     let base = match commit.parents.first() {
-        Some(parent) => tree_map(repo, parent)?,
-        None => HashMap::new(),
-    };
-    Ok(changed_paths(&base, &tip))
-}
-
-pub(crate) fn inverse_deltas(repo: &Repository, commit: &Commit) -> CliResult<Vec<PathDelta>> {
-    let mut base = HashMap::new();
-    flatten_tree(repo, &commit.tree, "", &mut base)?;
-    let tip = match commit.parents.first() {
         Some(parent) => tree_map(repo, parent)?,
         None => HashMap::new(),
     };
