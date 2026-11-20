@@ -48,6 +48,7 @@ fn matches(entry: &Credential, q: &Credential, with_password: bool) -> bool {
         && (!with_password || eq(&entry.password, &q.password))
 }
 
+#[cfg(unix)]
 fn request_text(action: &str, timeout: u64, desc: &Credential) -> String {
     format!(
         "action={action}\ntimeout={timeout}\n{}",
