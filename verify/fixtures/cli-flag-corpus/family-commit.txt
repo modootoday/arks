@@ -1032,3 +1032,34 @@ notes merge -s bogus x
 notes merge --abort
 notes merge --commit
 notes bogus
+#
+# --- sparse-checkout (side repository: files at the root stay in the cone) ---
+-C .git/side sparse-checkout
+-C .git/side sparse-checkout bogus
+-C .git/side sparse-checkout init
+-C .git/side sparse-checkout init --cone
+-C .git/side sparse-checkout init --no-cone
+-C .git/side sparse-checkout init --sparse-index
+-C .git/side sparse-checkout init --no-sparse-index
+-C .git/side sparse-checkout set
+-C .git/side sparse-checkout set docs
+-C .git/side sparse-checkout set --cone docs
+-C .git/side sparse-checkout set --no-cone '/*.txt'
+-C .git/side sparse-checkout set --sparse-index docs
+-C .git/side sparse-checkout set --no-sparse-index docs
+-C .git/side sparse-checkout set --stdin
+-C .git/side sparse-checkout set docs/x.md
+-C .git/side sparse-checkout set --skip-checks docs/x.md
+-C .git/side sparse-checkout add docs
+-C .git/side sparse-checkout add --skip-checks docs
+-C .git/side sparse-checkout add --stdin
+-C .git/side sparse-checkout list
+-C .git/side sparse-checkout disable
+-C .git/side sparse-checkout reapply
+-C .git/side sparse-checkout reapply --cone
+-C .git/side sparse-checkout reapply --sparse-index
+-C .git/side sparse-checkout check-rules
+-C .git/side sparse-checkout check-rules --cone
+-C .git/side sparse-checkout check-rules -z --rules-file=a.txt
+-C .git/side sparse-checkout check-rules --rules-file=a.txt
+-C .git/side sparse-checkout check-rules --no-cone --rules-file=a.txt
