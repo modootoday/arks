@@ -166,7 +166,7 @@ pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
     }
 
     // Which remotes, and which command-line refspecs.
-    let (targets, refspecs): (Vec<String>, Vec<String>) = if p.on("all") {
+    let (mut targets, refspecs): (Vec<String>, Vec<String>) = if p.on("all") {
         if !positional.is_empty() {
             return Err(CliError::fatal(
                 "fetch --all does not take a repository argument",
@@ -197,6 +197,9 @@ pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
             (vec![name], positional.iter().skip(1).cloned().collect())
         }
     };
+    // A remote named twice is fetched once.
+    let mut seen = std::collections::HashSet::new();
+    targets.retain(|t| seen.insert(t.clone()));
 
     if p.on("negotiate-only") {
         return negotiate_only(&cfg, &targets, &p.values("negotiation-tip"));

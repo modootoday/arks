@@ -515,7 +515,8 @@ pub(crate) fn fetch_local(
 
     // Prune: local refs under a destination pattern without a remote source.
     let mut pruned: Vec<(String, Oid)> = Vec::new();
-    if o.prune || o.prune_tags {
+    // `--prune-tags` alone only adds the tag refspec; deleting needs --prune.
+    if o.prune {
         let mut pspecs: Vec<Refspec> = specs.clone();
         if o.prune_tags
             && !specs

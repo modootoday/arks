@@ -17,7 +17,6 @@ const LS_REMOTE_OPTS: &[&str] = &[
     "|exec=",
     "t|tags",
     "h|heads",
-    "b|branches",
     "|refs",
     "|get-url",
     "|sort=",
@@ -106,7 +105,7 @@ pub(crate) fn version_cmp(a: &str, b: &str) -> Ordering {
 
 pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
     let p = parse(args, LS_REMOTE_OPTS)?;
-    let heads = p.on("heads") || p.on("branches");
+    let heads = p.on("heads");
     let tags = p.on("tags");
     let repo = open_repo().ok();
     let cfg = arks_config::ConfigSet::load(repo.as_ref().map(|r| r.common_dir()));
