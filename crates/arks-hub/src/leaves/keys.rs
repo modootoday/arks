@@ -3,7 +3,7 @@
 //! Keys are validated locally ([`crate::key_formats`]) before upload so bad input
 //! fails fast with exit 2; the forge validates again before storing.
 
-use super::{Args, Ctx, Fail, Res, arr, n, print_json_fields, read_input, row, s, usage};
+use super::{Args, Ctx, EXPORT, Fail, Res, arr, json_out, n, read_input, row, s, usage};
 use crate::key_formats::{parse_pgp_public_key, parse_ssh_public_key};
 use serde_json::{Map, Value, json};
 use std::io::Write;
@@ -203,12 +203,12 @@ pub(crate) fn run_deploy(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res
     let rest = args.get(1..).unwrap_or(&[]);
     match sub {
         "list" | "ls" => {
-            let a = Args::parse(rest, &["-R", "--repo", "--json"], &[])?;
+            let a = Args::parse(rest, &[&["-R", "--repo"][..], EXPORT].concat(), &[])?;
             let (o, r) = ctx.repo(&a)?;
             let keys = ctx.api("GET", &format!("/repos/{o}/{r}/keys"), None)?;
             let rows: Vec<Map<String, Value>> = arr(&keys).iter().map(deploy_row).collect();
-            if let Some(f) = a.get(&["--json"]) {
-                return print_json_fields(out, &rows, f, DEPLOY_JSON, false);
+            if json_out(out, &a, &rows, DEPLOY_JSON, false)? {
+                return Ok(());
             }
             for m in &rows {
                 let ro = m["readOnly"].as_bool().unwrap_or(true);

@@ -1,7 +1,7 @@
 //! `arks discussion …` — gh-symmetric discussion client
 //! (`create|list|view|edit|comment`).
 
-use super::{Args, Ctx, Fail, Res, arr, n, print_json_fields, read_input, row, s, usage};
+use super::{Args, Ctx, Fail, Res, arr, json_out, n, read_input, row, s, usage};
 use serde_json::{Map, Value, json};
 use std::io::Write;
 
@@ -141,6 +141,10 @@ fn list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
             "-L",
             "--limit",
             "--json",
+            "-q",
+            "--jq",
+            "-t",
+            "--template",
             "-R",
             "--repo",
         ],
@@ -173,8 +177,8 @@ fn list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         .take(limit)
         .map(|d| gh_row(ctx, &o, &r, d))
         .collect();
-    if let Some(fields) = a.get(&["--json"]) {
-        return print_json_fields(out, &rows, fields, JSON_FIELDS, false);
+    if json_out(out, &a, &rows, JSON_FIELDS, false)? {
+        return Ok(());
     }
     for m in &rows {
         row(
@@ -194,15 +198,15 @@ fn list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
 fn view(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
     let a = Args::parse(
         raw,
-        &["--json", "-R", "--repo"],
+        &["--json", "-q", "--jq", "-t", "--template", "-R", "--repo"],
         &["--comments", "-c", "-w", "--web"],
     )?;
     let (o, r) = ctx.repo(&a)?;
     let num = number_arg(&a)?;
     let d = ctx.api("GET", &format!("/repos/{o}/{r}/discussions/{num}"), None)?;
     let m = gh_row(ctx, &o, &r, &d);
-    if let Some(fields) = a.get(&["--json"]) {
-        return print_json_fields(out, &[m], fields, JSON_FIELDS, true);
+    if json_out(out, &a, std::slice::from_ref(&m), JSON_FIELDS, true)? {
+        return Ok(());
     }
     writeln!(out, "title:\t{}", s(&d, "title"))?;
     writeln!(out, "number:\t{num}")?;

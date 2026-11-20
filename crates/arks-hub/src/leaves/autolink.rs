@@ -1,6 +1,6 @@
 //! `arks repo autolink …` — gh-symmetric autolink client (`create|list|view|delete`).
 
-use super::{Args, Ctx, Fail, Res, arr, n, print_json_fields, row, s, usage};
+use super::{Args, Ctx, EXPORT, Fail, Res, arr, json_out, n, row, s, usage};
 use serde_json::{Map, Value, json};
 use std::io::Write;
 
@@ -49,12 +49,16 @@ pub(crate) fn run(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res {
     let rest = args.get(1..).unwrap_or(&[]);
     match sub {
         "list" | "ls" => {
-            let a = Args::parse(rest, &["-R", "--repo", "--json"], &["-w", "--web"])?;
+            let a = Args::parse(
+                rest,
+                &[&["-R", "--repo"][..], EXPORT].concat(),
+                &["-w", "--web"],
+            )?;
             let (o, r) = ctx.repo(&a)?;
             let all = ctx.api("GET", &format!("/repos/{o}/{r}/autolinks"), None)?;
             let rows: Vec<Map<String, Value>> = arr(&all).iter().map(gh_row).collect();
-            if let Some(f) = a.get(&["--json"]) {
-                return print_json_fields(out, &rows, f, JSON_FIELDS, false);
+            if json_out(out, &a, &rows, JSON_FIELDS, false)? {
+                return Ok(());
             }
             for m in &rows {
                 row(
@@ -91,13 +95,17 @@ pub(crate) fn run(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res {
             Ok(())
         }
         "view" => {
-            let a = Args::parse(rest, &["-R", "--repo", "--json"], &["-w", "--web"])?;
+            let a = Args::parse(
+                rest,
+                &[&["-R", "--repo"][..], EXPORT].concat(),
+                &["-w", "--web"],
+            )?;
             let (o, r) = ctx.repo(&a)?;
             let id = id_arg(&a)?;
             let v = ctx.api("GET", &format!("/repos/{o}/{r}/autolinks/{id}"), None)?;
             let m = gh_row(&v);
-            if let Some(f) = a.get(&["--json"]) {
-                return print_json_fields(out, &[m], f, JSON_FIELDS, true);
+            if json_out(out, &a, std::slice::from_ref(&m), JSON_FIELDS, true)? {
+                return Ok(());
             }
             writeln!(out, "Autolink in {o}/{r}\n")?;
             writeln!(out, "ID: {id}")?;
