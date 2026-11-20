@@ -618,6 +618,12 @@ fn file_header(repo: &Repository, f: &FileDiff, reversed: bool) -> CliResult<Vec
     let (a, b) = if reversed { ("b", "a") } else { ("a", "b") };
     let p = &f.path;
     let mut h = format!("diff --git {a}/{p} {b}/{p}\n");
+    if let (Some((_, x)), Some((_, y))) = (&f.old, &f.new) {
+        if x == y {
+            // A mode change alone: the mode lines follow as the only hunk.
+            return Ok(h.into_bytes());
+        }
+    }
     let (ao, bo) = (abbrev(repo, &f.old)?, abbrev(repo, &f.new)?);
     match (&f.old, &f.new) {
         (None, Some((m, _))) => {
@@ -670,7 +676,9 @@ fn build_file(path: String, old: Side, new: Side) -> CliResult<FileDiff> {
     let b = new.as_ref().map(|s| s.1.as_slice()).unwrap_or(b"");
     let is_bin = |x: &[u8]| x[..x.len().min(8000)].contains(&0);
     let binary = is_bin(a) || is_bin(b);
-    if a != b || (old.is_none() != new.is_none()) {
+    // A binary file changed on both sides offers nothing to select.
+    let both = old.is_some() && new.is_some();
+    if (a != b || (old.is_none() != new.is_none())) && !(binary && both) {
         if binary {
             hunks.push(Hunk {
                 old_start: 0,
@@ -1069,12 +1077,40 @@ fn set_index(repo: &mut Repository, work: &Path, path: &str, side: &Side) -> Cli
         e.oid = oid;
         e.mode = *mode;
         e.size = bytes.len().min(u32::MAX as usize) as u32;
+        let same_as_worktree = read_worktree(work, path).is_some_and(|(_, w)| &w == bytes);
+        if !same_as_worktree {
+            e.mtime_sec = 0;
+            e.mtime_nsec = 0;
+        }
         if let Some(f) = e.flags_extended.as_mut() {
             *f &= !0x2000;
         }
         index.entries.push(e);
     }
     sort_entries(&mut index.entries);
+    // Racy-git (Documentation/technical/racy-git.txt): an entry whose mtime
+    // is not older than the index file it was read from may hide a change
+    // made in the same second; when its file no longer matches, smudge the
+    // size so that readers compare content again.
+    let read_at = fs::metadata(repo.git_dir().join("index"))
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_secs());
+    for e in &mut index.entries {
+        if u64::from(e.mtime_sec) < read_at || e.mode == 0o160000 || e.path == path {
+            continue;
+        }
+        let matches = read_worktree(work, &e.path).is_some_and(|(_, w)| {
+            RawObject::new(ObjectKind::Blob, w)
+                .oid(repo.object_format())
+                .ok()
+                == Some(e.oid)
+        });
+        if !matches {
+            e.size = 0;
+        }
+    }
     write_index(repo, &index)?;
     Ok(())
 }
