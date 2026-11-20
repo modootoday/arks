@@ -186,6 +186,9 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "upload-archive--writer" => cmd::cmd_upload_archive_writer(args),
         "fsmonitor--daemon" => cmd::cmd_fsmonitor_daemon(args),
         "backfill" => cmd::cmd_backfill(args),
+        "credential-cache" => cmd::cmd_credential_cache(args),
+        "credential-cache--daemon" => cmd::cmd_credential_cache_daemon(args),
+        "credential-helper-selector" => cmd::cmd_credential_helper_selector(args),
         "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),

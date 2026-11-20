@@ -30,6 +30,7 @@
 #![deny(unsafe_code)]
 
 mod advertise;
+mod cache;
 mod checkout;
 mod clone;
 mod config;
@@ -51,6 +52,9 @@ mod walk;
 #[allow(unsafe_code)] // Windows Cred* FFI for first-party wincred helper only.
 mod wallet;
 
+pub use cache::{
+    CacheStore, DEFAULT_CACHE_TIMEOUT, cache_client, default_cache_socket, run_cache_daemon,
+};
 pub use checkout::{
     checkout_commit, checkout_tree, missing_blob_oids, missing_checkout_oids, smudge_worktree_blob,
 };
@@ -63,7 +67,7 @@ pub use config::{
 };
 pub use credential::{
     Credential, CredentialSource, approve as credential_approve, fill as credential_fill,
-    reject as credential_reject,
+    reject as credential_reject, run_helper as credential_run_helper,
 };
 pub use error::RemoteError;
 pub use fetch::{

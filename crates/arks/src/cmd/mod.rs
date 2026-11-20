@@ -19,6 +19,7 @@ pub mod config;
 pub mod core;
 pub mod credential;
 pub mod credential_os;
+pub mod credential_cache;
 pub mod daemon;
 pub mod diff_cmd;
 pub mod diff_render;
@@ -113,6 +114,9 @@ pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
 pub use credential_os::cmd_credential_manager;
+pub use credential_cache::{
+    cmd_credential_cache, cmd_credential_cache_daemon, cmd_credential_helper_selector,
+};
 pub use daemon::cmd_daemon;
 pub use diff_cmd::cmd_diff;
 pub use fetch::cmd_fetch;
