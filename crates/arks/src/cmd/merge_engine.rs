@@ -30,30 +30,8 @@ pub(crate) struct MergeResult {
     pub auto_merged: Vec<String>,
 }
 
-/// Three-way merge of commit tips into the index + worktree; returns the merge
-/// tree when conflict-free. On conflicts, index/worktree are left conflicted
-/// and `conflicts` is non-empty (caller MUST NOT create a merge commit).
-/// With `ours_checked_out` the work tree already
-/// holds `ours`, so paths whose result is the `ours` blob are not rewritten
-/// (unrelated local edits survive, as with git-merge).
-pub(crate) fn merge_three_way_opts(
-    repo: &mut Repository,
-    work: &Path,
-    ours: &Oid,
-    theirs: &Oid,
-    ours_checked_out: bool,
-) -> CliResult<MergeResult> {
-    merge_three_way_labeled(
-        repo,
-        work,
-        ours,
-        theirs,
-        ours_checked_out,
-        &MergeLabels::default(),
-    )
-}
-
-/// [`merge_three_way_opts`] with conflict marker labels.
+/// Three-way merge of commit tips (base = their merge base) into the index
+/// and work tree, with conflict marker labels.
 pub(crate) fn merge_three_way_labeled(
     repo: &mut Repository,
     work: &Path,
