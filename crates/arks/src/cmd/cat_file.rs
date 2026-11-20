@@ -210,7 +210,7 @@ fn all_objects(repo: &Repository) -> Vec<Oid> {
 }
 
 /// On-disk size: the loose file, else the packed entry's span.
-fn disk_size(repo: &Repository, oid: &Oid) -> u64 {
+pub(crate) fn disk_size(repo: &Repository, oid: &Oid) -> u64 {
     let hex = oid.to_hex();
     let loose = repo
         .common_dir()

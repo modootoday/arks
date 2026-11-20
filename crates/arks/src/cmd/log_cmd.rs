@@ -13,8 +13,9 @@
 //! Primary: <https://git-scm.com/docs/git-log>, <https://git-scm.com/docs/git-show>,
 //! <https://git-scm.com/docs/git-whatchanged>, <https://git-scm.com/docs/pretty-formats>.
 //!
-//! Partial: `-L` line-range tracing and `--follow` rename following are
-//! refused / plain pathspec limits; `log --graph` draws the lane graph
+//! `-L` line-range history lives in `line_log`.
+//!
+//! Partial: `--follow` rename following is a plain pathspec limit; `log --graph` draws the lane graph
 //! over a topo-ordered walk; `show --graph` prints each commit as a lone `*`.
 
 use crate::cmd::diffcore::combined;
@@ -43,6 +44,8 @@ enum DiffMerges {
     Separate,
     Combined,
     Dense,
+    /// `--remerge-diff`: diff against an in-memory re-merge of the parents.
+    Remerge,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -74,6 +77,8 @@ struct LogOpts {
     log_size: bool,
     /// The user asked for a diff format (`-p`, `--stat`, ...).
     diff_given: bool,
+    /// `-L <range>:<file>` values (line-range history).
+    line_ranges: Vec<String>,
 }
 
 fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
@@ -90,6 +95,7 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         _ => false,
     };
     let pretty = take_pretty(&mut head)?;
+    let remerge_patch = head.iter().any(|a| a == "--remerge-diff");
     let repo = open_repo().ok();
     let mut diff = DiffOptions::default();
     crate::cmd::diff_cmd::porcelain_defaults(repo.as_ref(), &mut diff);
@@ -113,6 +119,7 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         children: false,
         log_size: false,
         diff_given: false,
+        line_ranges: Vec::new(),
     };
     if let Some(r) = &repo {
         let cfg = arks_config::ConfigSet::load(Some(r.common_dir()));
@@ -172,6 +179,11 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
             Some(n) => n.clamp(4, 40),
             None => 7,
         };
+    }
+    // `--remerge-diff` (not `--diff-merges=remerge`) without a format implies `-p`.
+    if remerge_patch && o.merges == Some(DiffMerges::Remerge) && !o.diff_given {
+        o.diff.patch = true;
+        o.diff_given = true;
     }
     // In log, `-c` / `--cc` without a format imply `-p`.
     if cmd != "show"
@@ -239,17 +251,7 @@ fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
         | "--expand-tabs"
         | "--no-expand-tabs"
         | "--show-linear-break" => {}
-        "-L" => {
-            return Err(CliError::NotImplemented(
-                "unsupported option: -L (line-range history is not implemented)".into(),
-            ));
-        }
-        "--remerge-diff" => {
-            return Err(CliError::NotImplemented(
-                "unsupported option: --remerge-diff (needs an in-memory merge of the parents)"
-                    .into(),
-            ));
-        }
+        "--remerge-diff" => o.merges = Some(DiffMerges::Remerge),
         _ => {
             if let Some(v) = a.long_opt("--decorate") {
                 o.decorate = Some(match v.as_deref() {
@@ -284,11 +286,7 @@ fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
                     "first-parent" | "1" => DiffMerges::FirstParent,
                     "combined" | "c" => DiffMerges::Combined,
                     "dense-combined" | "cc" => DiffMerges::Dense,
-                    "remerge" | "r" => {
-                        return Err(CliError::NotImplemented(
-                            "unsupported option: --diff-merges=remerge".into(),
-                        ));
-                    }
+                    "remerge" | "r" => DiffMerges::Remerge,
                     x => {
                         return Err(CliError::fatal(format!(
                             "invalid value for '--diff-merges': '{x}'"
@@ -301,15 +299,8 @@ fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
                 || a.long_opt("--show-notes").is_some()
             {
                 // UTF-8 commits, no notes: nothing changes.
-            } else if let Some(v) = a.long_req("-L")? {
-                let _ = v;
-                return Err(CliError::NotImplemented(
-                    "unsupported option: -L (line-range history is not implemented)".into(),
-                ));
-            } else if cur.starts_with("-L") && cur.len() > 2 {
-                return Err(CliError::NotImplemented(
-                    "unsupported option: -L (line-range history is not implemented)".into(),
-                ));
+            } else if let Some(v) = a.short_req('L')? {
+                o.line_ranges.push(v);
             } else {
                 return Ok(false);
             }
@@ -694,11 +685,16 @@ impl Printer<'_> {
 
     /// Render the diff part of a record (after the header).
     fn diff_text(&self, diff: &RecordDiff, force_sep: bool) -> CliResult<String> {
+        if let RecordDiff::Text(t) = diff {
+            return Ok(t.clone());
+        }
         let d = &self.opts.diff;
         let empty = match diff {
             RecordDiff::None => true,
             RecordDiff::Pairs(p) => p.is_empty(),
             RecordDiff::Combined(e, _, _) => e.is_empty(),
+            RecordDiff::Text(t) => t.is_empty(),
+            RecordDiff::Remerge(p, _) => p.is_empty(),
         };
         if !d.any_format() || d.no_output || (empty && !force_sep) {
             return Ok(String::new());
@@ -721,8 +717,14 @@ impl Printer<'_> {
         }
         let mut buf = Vec::new();
         match diff {
-            RecordDiff::None => {}
+            RecordDiff::None | RecordDiff::Text(_) => {}
             RecordDiff::Pairs(p) => emit(&mut buf, self.content, d, EmitCtx::default(), p)?,
+            RecordDiff::Remerge(p, msgs) => {
+                let mut b = Vec::new();
+                emit(&mut b, self.content, d, EmitCtx::default(), p)?;
+                let t = crate::cmd::remerge::annotate(&String::from_utf8_lossy(&b), msgs);
+                buf.extend_from_slice(t.as_bytes());
+            }
             RecordDiff::Combined(e, mode, fp) => combined::emit(
                 &mut buf,
                 self.content,
@@ -854,6 +856,10 @@ enum RecordDiff {
     /// Combined entries, mode, and the first-parent pairs that stat
     /// formats describe.
     Combined(Vec<combined::Entry>, combined::Mode, Vec<Pair>),
+    /// Pre-rendered text after the header (`-L` patches).
+    Text(String),
+    /// `--remerge-diff` pairs and their conflict messages.
+    Remerge(Vec<Pair>, Vec<(String, String)>),
 }
 
 /// Diff of `c` against `parent` (root: the empty tree) through diffcore.
@@ -905,6 +911,56 @@ fn mark_of(w: &Walked, o: &LogOpts) -> String {
 }
 
 /// Shared driver for `log` and `whatchanged`.
+/// `-L`: keep the commits that change the tracked ranges (newest first,
+/// before `-n` / `--skip`) and return their patches (`\n` + text).
+fn line_log_select(
+    repo: &Repository,
+    opts: &LogOpts,
+    paths: &[String],
+    list: &mut Vec<Walked>,
+) -> CliResult<HashMap<Oid, String>> {
+    if !paths.is_empty() {
+        return Err(CliError::fatal(
+            "-L<range>:<file> cannot be used with pathspec",
+        ));
+    }
+    let d = &opts.diff;
+    if d.raw
+        || d.name_only
+        || d.name_status
+        || d.numstat
+        || d.stat
+        || d.shortstat
+        || d.dirstat.is_some()
+        || d.summary
+        || d.check
+    {
+        return Err(CliError::fatal(
+            "-L does not yet support diff formats besides -p and -s",
+        ));
+    }
+    let work = work_tree(repo)?;
+    let specs = crate::cmd::line_log::parse_specs(&opts.line_ranges, &work)?;
+    let tips = revwalk::resolve_tips(repo, &opts.rev, Some("HEAD"))?;
+    let Some(tip) = tips.include.first().copied() else {
+        list.clear();
+        return Ok(HashMap::new());
+    };
+    let pairs: Vec<(Oid, Commit)> = list.iter().map(|w| (w.oid, w.commit.clone())).collect();
+    let shown = crate::cmd::line_log::filter(repo, &pairs, tip, &specs, opts.rev.first_parent)?;
+    let mut patches = HashMap::new();
+    let mut keep = Vec::new();
+    let mut all: Vec<Option<Walked>> = list.drain(..).map(Some).collect();
+    for s in shown {
+        if let Some(w) = all[s.index].take() {
+            patches.insert(w.oid, format!("\n{}", s.patch.unwrap_or_default()));
+            keep.push(w);
+        }
+    }
+    *list = keep;
+    Ok(patches)
+}
+
 fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
     let (mut opts, paths) = parse_opts(args, cmd)?;
     if cmd == "whatchanged" && !opts.diff.any_format() {
@@ -950,6 +1006,11 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
         }
         l.retain(|_| true);
         l
+    };
+    let line_log = if opts.line_ranges.is_empty() {
+        None
+    } else {
+        Some(line_log_select(&repo, &opts, &paths, &mut list)?)
     };
     let content = Content::new(&repo);
     let merges = opts.merges.unwrap_or(if opts.rev.first_parent {
@@ -1125,6 +1186,14 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
             let _ = (sel, msg);
         }
         let is_merge = w.commit.parents.len() > 1;
+        if let Some(patches) = &line_log {
+            let diff = match patches.get(&w.oid) {
+                Some(t) if !opts.diff.no_output => RecordDiff::Text(t.clone()),
+                _ => RecordDiff::None,
+            };
+            printer.commit(&mut out, &w.oid, &w.commit, &mark, None, &diff, false)?;
+            continue;
+        }
         if !wants_diff {
             printer.commit(
                 &mut out,
@@ -1190,6 +1259,23 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
                             false,
                         )?;
                     }
+                }
+                DiffMerges::Remerge => {
+                    let (p, msgs) = crate::cmd::remerge::remerge_pairs(
+                        &content,
+                        &opts.diff,
+                        &w.commit,
+                        &opts.rev.specs,
+                    )?;
+                    printer.commit(
+                        &mut out,
+                        &w.oid,
+                        &w.commit,
+                        &mark,
+                        None,
+                        &RecordDiff::Remerge(p, msgs),
+                        false,
+                    )?;
                 }
                 DiffMerges::Combined | DiffMerges::Dense => {
                     let mode = if merges == DiffMerges::Dense {
@@ -1454,6 +1540,17 @@ fn show_commit(
     c: &Commit,
     specs: &[String],
 ) -> CliResult<()> {
+    if !opts.line_ranges.is_empty() {
+        let work = work_tree(content.repo)?;
+        let ls = crate::cmd::line_log::parse_specs(&opts.line_ranges, &work)?;
+        let t = crate::cmd::line_log::show_text(content.repo, c, &ls)?;
+        let diff = if opts.diff.no_output {
+            RecordDiff::None
+        } else {
+            RecordDiff::Text(format!("\n{t}"))
+        };
+        return printer.commit(out, oid, c, "", None, &diff, false);
+    }
     if c.parents.len() < 2 {
         let p = diff_against(content, &opts.diff, c.parents.first(), c, specs)?;
         return printer.commit(out, oid, c, "", None, &RecordDiff::Pairs(p), false);
@@ -1471,6 +1568,10 @@ fn show_commit(
                 printer.commit(out, oid, c, "", Some(parent), &RecordDiff::Pairs(p), false)?;
             }
             Ok(())
+        }
+        DiffMerges::Remerge => {
+            let (p, msgs) = crate::cmd::remerge::remerge_pairs(content, d, c, specs)?;
+            printer.commit(out, oid, c, "", None, &RecordDiff::Remerge(p, msgs), false)
         }
         DiffMerges::Combined | DiffMerges::Dense => {
             // Stat formats of a merge show the first-parent diff.
