@@ -39,6 +39,7 @@ pub mod notes;
 pub mod opt_spec;
 pub mod patch;
 pub mod plumbing;
+pub mod pull;
 pub mod push;
 pub mod range_diff;
 pub mod raw_diff;
@@ -102,7 +103,7 @@ pub use matrix_rest::{
     cmd_commit_graph, cmd_fast_export, cmd_fast_import, cmd_fetch_pack, cmd_http_fetch,
     cmd_http_push, cmd_multi_pack_index, cmd_rerere, cmd_send_pack, cmd_subtree,
 };
-pub use merge::{cmd_merge, cmd_pull};
+pub use merge::cmd_merge;
 pub use notes::cmd_notes;
 pub use patch::{cmd_am, cmd_format_patch};
 pub use plumbing::{
@@ -110,6 +111,7 @@ pub use plumbing::{
     cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_rev_list,
     cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
+pub use pull::cmd_pull;
 pub use push::cmd_push;
 pub use range_diff::cmd_range_diff;
 pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};

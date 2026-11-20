@@ -1,11 +1,11 @@
-//! Merge and pull (M15 Fs-1/Fs-2).
+//! Merge (M15 Fs-1/Fs-2); `pull` lives in `cmd::pull`.
 //!
 //! Cite: <https://git-scm.com/docs/git-merge>
 //! Fs-1: FF + `--no-ff` when FF-capable.
 //! Fs-2: diverged three-way merge (clean or conflicted index).
 
 use crate::cmd::merge_engine::merge_three_way_opts;
-use crate::cmd::shared::{commit_signature, current_branch_name, is_ancestor, resolve_rev};
+use crate::cmd::shared::{commit_signature, is_ancestor, resolve_rev};
 use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags, work_tree};
 use arks_object::{Commit, ObjectKind, RawObject};
@@ -158,58 +158,6 @@ fn take_merge_message(args: &[String]) -> CliResult<(Vec<String>, Option<String>
         i += 1;
     }
     Ok((out, msg))
-}
-
-pub fn cmd_pull(args: &[String]) -> CliResult<()> {
-    // Cloud drop-in §O: `--ff-only`, `--no-rebase`, `--no-edit`, `pull <remote> <branch>`.
-    let args = &crate::util::split_short_bundles(args, "rq", "");
-    refuse_unknown_flags(
-        args,
-        &[
-            "--rebase",
-            "-r",
-            "--no-rebase",
-            "--ff-only",
-            "--ff",
-            "--no-ff",
-            "--no-edit",
-            "-q",
-            "--quiet",
-        ],
-    )?;
-    let rebase = args.iter().any(|a| a == "--rebase" || a == "-r")
-        && !args.iter().any(|a| a == "--no-rebase");
-    let ff_only = args.iter().any(|a| a == "--ff-only");
-    let no_ff = args.iter().any(|a| a == "--no-ff");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    let remote_name = positional.first().map(|s| s.as_str()).unwrap_or("origin");
-    let mut fetch_args = vec![remote_name.to_string()];
-    if let Some(b) = positional.get(1) {
-        fetch_args.push((*b).clone());
-    }
-    crate::cmd::cmd_fetch(&fetch_args)?;
-    let repo = open_repo()?;
-    let branch = match positional.get(1) {
-        Some(b) => b.trim_start_matches("refs/heads/").to_string(),
-        None => current_branch_name(&repo)?,
-    };
-    let upstream = format!("refs/remotes/{remote_name}/{branch}");
-    if repo.refs().resolve(&upstream).is_err() {
-        return Err(CliError::Msg(format!(
-            "no upstream tracking ref {upstream}; fetch may have no matching branch"
-        )));
-    }
-    let upstream_rev = format!("{remote_name}/{branch}");
-    if rebase {
-        crate::cmd::replay::rebase_onto(&upstream_rev)
-    } else {
-        // Fs-2: allow three-way merge pull (not forced --ff-only).
-        merge_onto(&upstream_rev, ff_only, no_ff)
-    }
-}
-
-fn merge_onto(name: &str, ff_only: bool, no_ff: bool) -> CliResult<()> {
-    merge_onto_msg(name, ff_only, no_ff, None)
 }
 
 fn merge_onto_msg(
