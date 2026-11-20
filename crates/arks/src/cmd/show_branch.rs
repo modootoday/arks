@@ -282,10 +282,7 @@ fn name_commits(
     let first_parent_chain = |names: &mut HashMap<Oid, Name>, start: Oid| -> usize {
         let mut named = 0;
         let mut c = start;
-        loop {
-            let Some(n) = names.get(&c).cloned() else {
-                break;
-            };
+        while let Some(n) = names.get(&c).cloned() {
             let Some(node) = walk.nodes.get(&c) else {
                 break;
             };
@@ -502,8 +499,7 @@ pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
     let sparse = p.on("sparse");
     let date_order = p
         .opts()
-        .filter(|(k, _, _)| *k == "topo-order" || *k == "date-order")
-        .last()
+        .rfind(|(k, _, _)| *k == "topo-order" || *k == "date-order")
         .is_some_and(|(k, _, _)| k == "date-order");
     let reflog = p.last("reflog").map(|v| v.unwrap_or_default());
     let mut operands = p.operands();
@@ -695,10 +691,10 @@ pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
 
     if extra < 0 {
         // --list: one line per rev.
-        for i in 0..num_rev {
+        for (i, name) in ref_names.iter().enumerate() {
             let mark = if head_at == Some(i) { '*' } else { ' ' };
             let text = header_text(&mut walk, i)?;
-            writeln!(out, "{mark} [{}] {text}", ref_names[i])?;
+            writeln!(out, "{mark} [{name}] {text}")?;
         }
         out.flush()?;
         return Ok(());
@@ -743,16 +739,10 @@ pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
         }
     };
     if num_rev > 1 {
-        for i in 0..num_rev {
+        for (i, name) in ref_names.iter().enumerate() {
             let mark = if head_at == Some(i) { '*' } else { '!' };
             let text = header_text(&mut walk, i)?;
-            writeln!(
-                out,
-                "{}{} [{}] {text}",
-                " ".repeat(i),
-                paint(i, mark),
-                ref_names[i]
-            )?;
+            writeln!(out, "{}{} [{name}] {text}", " ".repeat(i), paint(i, mark))?;
         }
         writeln!(out, "{}", "-".repeat(num_rev))?;
     }
@@ -764,7 +754,6 @@ pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
         name_commits(&walk, &sorted, &revs, &ref_names)
     };
     let mut shown_merge_point = false;
-    let mut extra = extra;
     for c in &sorted {
         let flags = walk.nodes[c].flags;
         let is_merge_point = flags & all_revs == all_revs;

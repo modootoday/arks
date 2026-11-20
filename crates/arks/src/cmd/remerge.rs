@@ -16,13 +16,16 @@ use crate::error::CliResult;
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_repo::merge_base_oid;
 
+/// Diff pairs and the conflict messages of one re-merge.
+pub type RemergeDiff = (Vec<Pair>, Vec<(String, String)>);
+
 /// Pairs (re-merge result → recorded merge) and the conflict messages.
 pub fn remerge_pairs(
     content: &Content<'_>,
     o: &DiffOptions,
     c: &Commit,
     specs: &[String],
-) -> CliResult<(Vec<Pair>, Vec<(String, String)>)> {
+) -> CliResult<RemergeDiff> {
     let repo = content.repo;
     let [p1, p2] = c.parents.as_slice() else {
         return Ok((Vec::new(), Vec::new()));

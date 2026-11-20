@@ -228,10 +228,9 @@ fn refname_arg(name: &str, arg: &str) -> Option<String> {
         _ => {
             if let Some(n) = arg.strip_prefix("lstrip=").or(arg.strip_prefix("strip=")) {
                 strip_components(name, n.parse().ok()?, true)
-            } else if let Some(n) = arg.strip_prefix("rstrip=") {
-                strip_components(name, n.parse().ok()?, false)
             } else {
-                return None;
+                let n = arg.strip_prefix("rstrip=")?;
+                strip_components(name, n.parse().ok()?, false)
             }
         }
     })

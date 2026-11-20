@@ -38,6 +38,9 @@ pub(crate) struct RemergeFile {
     pub bytes: Option<Vec<u8>>,
 }
 
+/// Files of a re-merge by path and its conflict messages.
+pub(crate) type Remerged = (BTreeMap<String, RemergeFile>, Vec<(String, String)>);
+
 /// Re-merge three trees without touching the object store, the index or
 /// the work tree: the resulting files by path, and the conflict messages
 /// (`(path, "CONFLICT (content): Merge conflict in <path>")`).
@@ -47,7 +50,7 @@ pub(crate) fn remerge_files(
     ours: &Oid,
     theirs: &Oid,
     labels: &MergeLabels,
-) -> CliResult<(BTreeMap<String, RemergeFile>, Vec<(String, String)>)> {
+) -> CliResult<Remerged> {
     let plan = plan_trees(repo, base, ours, theirs, labels)?;
     let ours_side = blob_sides(repo, ours)?;
     let theirs_side = blob_sides(repo, theirs)?;

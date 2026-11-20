@@ -842,9 +842,9 @@ fn run(args: &[String], annotate: bool, sink: &mut dyn Write) -> CliResult<()> {
                     move_score = Some(DEFAULT_MOVE_SCORE);
                 }
                 if let Some(v) = val {
-                    copy_score = v.parse().map_err(|_| {
-                        usage_err(&format!("error: switch `C' expects a numerical value"))
-                    })?;
+                    copy_score = v
+                        .parse()
+                        .map_err(|_| usage_err("error: switch `C' expects a numerical value"))?;
                 }
             }
             "-M" => {
@@ -1062,7 +1062,7 @@ fn run(args: &[String], annotate: bool, sink: &mut dyn Write) -> CliResult<()> {
             }
             list.push((eng.date(c)?, c));
         }
-        list.sort_by(|a, b| b.0.cmp(&a.0));
+        list.sort_by_key(|x| std::cmp::Reverse(x.0));
         for (_, c) in &list {
             let mut ps = eng.commit(*c)?.parents.clone();
             if rev.first_parent {
