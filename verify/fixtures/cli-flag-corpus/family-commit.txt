@@ -852,3 +852,62 @@ apply --apply --stat .git/a.patch
 apply --no-apply .git/a.patch
 apply nope.patch
 apply --reject --check .git/bad.patch
+#
+# --- format-patch (side repository; explicit signatures keep the version out) ---
+-C .git/side format-patch --stdout --signature=S -1 topic
+-C .git/side format-patch --stdout --signature=S -2 topic
+-C .git/side format-patch --stdout --signature=S base..topic
+-C .git/side format-patch --stdout --signature=S base
+-C .git/side format-patch --stdout --signature=S --cover-letter -2 topic
+-C .git/side format-patch --stdout --signature=S --no-cover-letter -2 topic
+-C .git/side format-patch --stdout --signature=S -1 -s topic
+-C .git/side format-patch --stdout --signature=S -1 --signoff --no-signoff topic
+-C .git/side format-patch --stdout --signature=S -1 --to=a@b --cc=c@d topic
+-C .git/side format-patch --stdout --signature=S -1 --to=a@b --to=e@f --no-to topic
+-C .git/side format-patch --stdout --signature=S -1 --add-header='X-Foo: bar' topic
+-C .git/side format-patch --stdout --signature=S -1 --in-reply-to='<id@x>' topic
+-C .git/side format-patch --stdout --signature=S -1 --subject-prefix=FOO topic
+-C .git/side format-patch --stdout --signature=S -1 --rfc topic
+-C .git/side format-patch --stdout --signature=S -1 -v2 topic
+-C .git/side format-patch --stdout --signature=S -2 --reroll-count=3 topic
+-C .git/side format-patch --stdout --signature=S -1 -k topic
+-C .git/side format-patch --stdout --signature=S -1 --keep-subject topic
+-C .git/side format-patch --stdout --signature=S -2 -n topic
+-C .git/side format-patch --stdout --signature=S -2 -N topic
+-C .git/side format-patch --stdout --signature=S -1 --numbered topic
+-C .git/side format-patch --stdout --signature=S -1 -p topic
+-C .git/side format-patch --stdout --signature=S -1 --no-stat topic
+-C .git/side format-patch --stdout --signature=S -1 --zero-commit topic
+-C .git/side format-patch --stdout -1 --no-signature topic
+-C .git/side format-patch --stdout -1 --signature=SIG topic
+-C .git/side format-patch --stdout -1 --signature-file=b.txt topic
+-C .git/side format-patch --stdout --signature=S -1 --base=base topic
+-C .git/side format-patch --stdout --signature=S -1 --from topic
+-C .git/side format-patch --stdout --signature=S -1 --from='X Y <x@y>' topic
+-C .git/side format-patch --stdout --signature=S -1 --from='X Y <x@y>' --force-in-body-from topic
+-C .git/side format-patch --stdout --signature=S -1 --attach=BND topic
+-C .git/side format-patch --stdout --signature=S -1 --inline=BND topic
+-C .git/side format-patch --stdout --signature=S -1 --no-attach topic
+-C .git/side format-patch --stdout --signature=S -1 --no-binary topic
+-C .git/side format-patch --stdout --signature=S -1 --binary topic
+-C .git/side format-patch --stdout --signature=S --ignore-if-in-upstream main..topic
+-C .git/side format-patch --stdout --signature=S -1 --start-number=5 topic
+-C .git/side format-patch --stdout --signature=S -1 --cover-letter --cover-from-description=subject --description-file=b.txt topic
+-C .git/side format-patch --stdout --signature=S -1 --no-thread topic
+-C .git/side format-patch --stdout --signature=S -1 --progress topic
+-C .git/side format-patch --stdout --signature=S -1 --no-progress topic
+-C .git/side format-patch --stdout --signature=S -1 --creation-factor=50 topic
+-C .git/side format-patch -2 topic
+-C .git/side format-patch -2 -o out topic
+-C .git/side format-patch -2 --output-directory=out topic
+-C .git/side format-patch -2 -q topic
+-C .git/side format-patch -2 --numbered-files topic
+-C .git/side format-patch -2 --suffix=.txt topic
+-C .git/side format-patch -2 --start-number=5 topic
+-C .git/side format-patch -2 -v3 topic
+-C .git/side format-patch -2 --filename-max-length=10 topic
+-C .git/side format-patch -1 --cover-letter topic
+-C .git/side format-patch --stdout --signature=S -o out -1 topic
+-C .git/side format-patch --thread=bogus -1 topic
+-C .git/side format-patch -1 -v3 --filename-max-length=13 topic
+-C .git/side format-patch -1 --suffix=.x --filename-max-length=15 topic

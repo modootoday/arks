@@ -22,6 +22,7 @@ pub mod diff_render;
 pub mod diffcore;
 pub mod fetch;
 pub mod for_each_ref;
+pub mod format_patch;
 pub mod grep;
 pub mod history;
 pub mod hooks;
@@ -104,6 +105,7 @@ pub use daemon::cmd_daemon;
 pub use diff_cmd::cmd_diff;
 pub use fetch::cmd_fetch;
 pub use for_each_ref::cmd_for_each_ref;
+pub use format_patch::cmd_format_patch;
 pub use grep::cmd_grep;
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use host_skew::{
@@ -134,7 +136,7 @@ pub use merge::cmd_merge;
 pub use merge_base::cmd_merge_base;
 pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
-pub use patch::{cmd_am, cmd_format_patch};
+pub use patch::cmd_am;
 pub use patch_id::cmd_patch_id;
 pub use pick::{cmd_cherry_pick, cmd_revert};
 pub use plumbing::{
