@@ -275,3 +275,42 @@ printf 'Second patch without a mail header.\n\nIt adds q.txt.\n\n' > "$q/sub/two
 printf 'diff --git a/q.txt b/q.txt\nnew file mode 100644\n--- /dev/null\n+++ b/q.txt\n@@ -0,0 +1 @@\n+quilt two\n' >> "$q/sub/two.diff"
 printf '# quilt series\none.patch\nsub/two.diff -p1\n' > "$q/series"
 printf 'one.patch\nmissing.patch\n' > "$q/series-missing"
+# Range-diff gap extras (family-gap-range-diff.txt `-C .git/rd` lines): a clean
+# repository nested inside .git (the fixture's own refs, objects, index and
+# status are unchanged) with two versions of a series on `base`. `old` and
+# `new` share an identical commit, a reworded one, a re-edited one, a dropped
+# and an added one plus renames, mode changes, deletions and a binary file;
+# `solo` holds one commit against three on `old` (stock git's assignment
+# leaves them unpaired); notes on both default and `refs/notes/foo` refs.
+mkdir -p .git/rd && (
+  cd .git/rd
+  git init -q -b main .
+  git config user.name "C O Mitter"; git config user.email committer@example.com
+  git config commit.gpgsign false
+  printf 'int main(void)\n{\n\tone();\n\ttwo();\n\tthree();\n\tfour();\n\tfive();\n\tsix();\n}\n' > a.c
+  printf '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n' > n.txt
+  printf 'mv1\nmv2\nmv3\nmv4\nmv5\n' > m.txt
+  printf 'sh\n' > s.sh; printf 'del\n' > d.txt
+  git add . && c -m "rd: base"
+  git tag base
+  git checkout -q -b old
+  printf 'int main(void)\n{\n\tone();\n\tTWO();\n\tthree();\n\tfour();\n\tfive();\n\tsix();\n}\n' > a.c
+  git add . && c -m "shout two" -m "Body old."
+  printf '1\n2\n3\n4\nfive\n6\n7\n8\n9\n10\n' > n.txt; git add . && c -m "five words"
+  printf 'x\n' > x.txt; git add . && c -m "add x"
+  git mv m.txt m2.txt; chmod +x s.sh; git rm -q d.txt; git add . && c -m "rename and mode"
+  printf 'gone\n' > g.txt; git add . && c -m "dropped later"
+  git checkout -q -b new base
+  printf 'int main(void)\n{\n\tone();\n\tTWO();\n\tthree();\n\tfour();\n\tfive();\n\tsix();\n}\n' > a.c
+  git add . && c -m "shout two" -m "Body new."
+  printf 'x\n' > x.txt; git add . && c -m "add x"
+  printf '1\n2\n3\n4\nFIVE\n6\n7\n8\n9\n10\n' > n.txt; git add . && c -m "five words"
+  git mv m.txt m3.txt; chmod +x s.sh; git rm -q d.txt; git add . && c -m "rename and mode"
+  printf 'bin\0ary\n' > b.bin; printf 'y\ny\n' > y.txt; git add . && c -m "brand new"
+  git checkout -q -b solo base
+  printf 'y\ny\n' > y.txt; git add . && c -m "solo commit"
+  git checkout -q main
+  GIT_COMMITTER_DATE="$t +0000" git notes add -m "old note" old~1
+  GIT_COMMITTER_DATE="$t +0000" git notes --ref=foo add -m "foo note" old~2
+  GIT_COMMITTER_DATE="$t +0000" git notes --ref=foo add -m "foo note two" new~2
+)
