@@ -75,6 +75,32 @@ impl RefOp {
         target: &str,
         o: &RefUpdateOpts,
     ) -> CliResult<()> {
+        // Updating through a symbolic ref (e.g. HEAD) also locks the symref
+        // itself, so an existing `<symref>.lock` fails like git-update-ref.
+        if self.name != target {
+            let sym_path = if self.name.starts_with("refs/") {
+                repo.common_dir().join(&self.name)
+            } else {
+                repo.git_dir().join(&self.name)
+            };
+            let lock = std::path::PathBuf::from(format!("{}.lock", sym_path.display()));
+            if lock.exists() {
+                return Err(CliError::Exit(
+                    128,
+                    format!(
+                        "fatal: update_ref failed for ref '{name}': cannot lock ref '{name}': \
+                         Unable to create '{lock}': File exists.\n\n\
+                         Another git process seems to be running in this repository, e.g.\n\
+                         an editor opened by 'git commit'. Please make sure all processes\n\
+                         are terminated then try again. If it still fails, a git process\n\
+                         may have crashed in this repository earlier:\n\
+                         remove the file manually to continue.",
+                        name = self.name,
+                        lock = lock.display()
+                    ),
+                ));
+            }
+        }
         let current = repo.refs().resolve(target).ok();
         // With --no-deref a symbolic ref is replaced, so do not compare-and-swap
         // against the oid it points at.
