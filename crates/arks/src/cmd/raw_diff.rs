@@ -84,8 +84,15 @@ fn parse(args: &[String]) -> CliResult<Opts> {
                 o.split_merges = true;
                 o.missing_ok = true;
             }
-            "-c" => o.combined = Some(combined::Mode::Combined),
-            "--cc" => o.combined = Some(combined::Mode::Dense),
+            // `-c` / `--cc` reset an earlier `--combined-all-paths`.
+            "-c" => {
+                o.combined = Some(combined::Mode::Combined);
+                o.combined_all_paths = false;
+            }
+            "--cc" => {
+                o.combined = Some(combined::Mode::Dense);
+                o.combined_all_paths = false;
+            }
             "--combined-all-paths" => o.combined_all_paths = true,
             "--merge-base" => o.merge_base = true,
             "--cached" | "--staged" => o.cached = true,
@@ -196,12 +203,27 @@ fn diff_commit(out: &mut impl Write, c: &Content<'_>, o: &Opts, commit: &Oid) ->
             if entries.is_empty() && !o.always && !o.diff.no_output {
                 return Ok(false);
             }
+            let first_parent = if combined::wants_stat(&o.diff) {
+                let pt = read_commit(repo, &parents[0])?.tree;
+                tree_queue(c, o, Some(&pt), Some(&cm.tree))?
+            } else {
+                Vec::new()
+            };
             commit_header(out, repo, o, commit, None)?;
-            combined::emit(out, c, &o.diff, mode, o.combined_all_paths, &entries)?;
+            combined::emit(
+                out,
+                c,
+                &o.diff,
+                mode,
+                o.combined_all_paths,
+                EmitCtx { raw_full: true },
+                &first_parent,
+                &entries,
+            )?;
             return Ok(!entries.is_empty());
         }
         if !o.split_merges {
-            if o.always || o.diff.no_output {
+            if o.always {
                 commit_header(out, repo, o, commit, None)?;
             }
             return Ok(false);
