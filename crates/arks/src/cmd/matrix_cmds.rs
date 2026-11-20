@@ -40,7 +40,9 @@ pub fn cmd_prune(args: &[String]) -> CliResult<()> {
                 dry = true;
                 verbose = true;
             }
-            "--progress" | "--no-progress" | "--exclude-promisor-objects"
+            "--progress"
+            | "--no-progress"
+            | "--exclude-promisor-objects"
             | "--no-exclude-promisor-objects" => {}
             // `--no-expire` keeps everything, like `--expire=never`.
             "--no-expire" => expire = Some(0),
@@ -56,7 +58,10 @@ pub fn cmd_prune(args: &[String]) -> CliResult<()> {
             _ if a.starts_with('-') => {
                 return Err(CliError::Exit(
                     129,
-                    format!("error: unknown option `{}'\nusage: git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]", a.trim_start_matches('-')),
+                    format!(
+                        "error: unknown option `{}'\nusage: git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]",
+                        a.trim_start_matches('-')
+                    ),
                 ));
             }
             _ => heads.push(a.to_string()),
@@ -65,9 +70,10 @@ pub fn cmd_prune(args: &[String]) -> CliResult<()> {
     let repo = open_repo()?;
     let mut tips = Vec::new();
     for h in &heads {
-        tips.push(resolve_rev(&repo, h).map_err(|_| {
-            CliError::fatal(format!("unrecognized argument: {h}"))
-        })?);
+        tips.push(
+            resolve_rev(&repo, h)
+                .map_err(|_| CliError::fatal(format!("unrecognized argument: {h}")))?,
+        );
     }
     let reachable = crate::cmd::plumbing_ext::reachable_all(&repo, &tips)?;
     let mut out = String::new();
@@ -564,11 +570,16 @@ pub fn cmd_mktag(args: &[String]) -> CliResult<()> {
         .and_then(|l| l.strip_prefix("type "))
         .ok_or_else(bad)?
         .to_string();
-    let tag = lines.next().and_then(|l| l.strip_prefix("tag ")).ok_or_else(bad)?;
+    let tag = lines
+        .next()
+        .and_then(|l| l.strip_prefix("tag "))
+        .ok_or_else(bad)?;
     if tag.is_empty() || (strict && !refname_ok(&format!("refs/tags/{tag}"), false, false)) {
         return Err(CliError::Exit(
             128,
-            format!("error: tag input does not pass fsck: badTagName: invalid 'tag' name: {tag}\nfatal: tag on stdin did not pass our strict fsck check"),
+            format!(
+                "error: tag input does not pass fsck: badTagName: invalid 'tag' name: {tag}\nfatal: tag on stdin did not pass our strict fsck check"
+            ),
         ));
     }
     let tagger = lines.next().unwrap_or("");
@@ -625,18 +636,17 @@ pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
     let mut entries: Vec<TreeEntry> = Vec::new();
     let mut seen_any = false;
     let mut out = String::new();
-    let flush = |entries: &mut Vec<TreeEntry>,
-                     repo: &mut Repository,
-                     out: &mut String|
-     -> CliResult<()> {
-        let tree = Tree::new(std::mem::take(entries)).map_err(|e| CliError::fatal(e.to_string()))?;
-        let payload = tree.encode().map_err(|e| CliError::Msg(e.to_string()))?;
-        let obj = RawObject::new(ObjectKind::Tree, payload);
-        let oid = repo.store_mut().put(format, &obj)?;
-        out.push_str(&oid.to_hex());
-        out.push('\n');
-        Ok(())
-    };
+    let flush =
+        |entries: &mut Vec<TreeEntry>, repo: &mut Repository, out: &mut String| -> CliResult<()> {
+            let tree =
+                Tree::new(std::mem::take(entries)).map_err(|e| CliError::fatal(e.to_string()))?;
+            let payload = tree.encode().map_err(|e| CliError::Msg(e.to_string()))?;
+            let obj = RawObject::new(ObjectKind::Tree, payload);
+            let oid = repo.store_mut().put(format, &obj)?;
+            out.push_str(&oid.to_hex());
+            out.push('\n');
+            Ok(())
+        };
     let recs: Vec<&[u8]> = buf.split(|b| *b == sep).collect();
     let n = recs.len();
     for (i, rec) in recs.into_iter().enumerate() {
@@ -650,7 +660,9 @@ pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
                 seen_any = false;
                 continue;
             }
-            return Err(CliError::fatal("input format error: (blank line only valid in batch mode)"));
+            return Err(CliError::fatal(
+                "input format error: (blank line only valid in batch mode)",
+            ));
         }
         seen_any = true;
         let (meta, name) = line
@@ -726,7 +738,10 @@ pub fn cmd_var(args: &[String]) -> CliResult<()> {
         } else {
             crate::cmd::shared::committer_signature().ok()?
         };
-        Some(format!("{} <{}> {} {}", s.name, s.email, s.timestamp, s.timezone))
+        Some(format!(
+            "{} <{}> {} {}",
+            s.name, s.email, s.timestamp, s.timezone
+        ))
     };
     let editor = || {
         env("GIT_EDITOR")
@@ -742,20 +757,27 @@ pub fn cmd_var(args: &[String]) -> CliResult<()> {
         ("GIT_EDITOR", vec![editor()]),
         (
             "GIT_SEQUENCE_EDITOR",
-            vec![env("GIT_SEQUENCE_EDITOR")
-                .or_else(|| cfg.get("sequence.editor"))
-                .unwrap_or_else(editor)],
+            vec![
+                env("GIT_SEQUENCE_EDITOR")
+                    .or_else(|| cfg.get("sequence.editor"))
+                    .unwrap_or_else(editor),
+            ],
         ),
         (
             "GIT_PAGER",
-            vec![env("GIT_PAGER")
-                .or_else(|| cfg.get("core.pager"))
-                .or_else(|| env("PAGER"))
-                .unwrap_or_else(|| "less".into())],
+            vec![
+                env("GIT_PAGER")
+                    .or_else(|| cfg.get("core.pager"))
+                    .or_else(|| env("PAGER"))
+                    .unwrap_or_else(|| "less".into()),
+            ],
         ),
         (
             "GIT_DEFAULT_BRANCH",
-            vec![cfg.get("init.defaultbranch").unwrap_or_else(|| "master".into())],
+            vec![
+                cfg.get("init.defaultbranch")
+                    .unwrap_or_else(|| "master".into()),
+            ],
         ),
         ("GIT_SHELL_PATH", vec!["/bin/sh".into()]),
         (
@@ -868,14 +890,20 @@ pub fn cmd_credential_store(args: &[String]) -> CliResult<()> {
         } else if a.starts_with('-') {
             return Err(CliError::Exit(
                 129,
-                format!("error: unknown option `{}'\nusage: git credential-store [<options>] <action>", a.trim_start_matches('-')),
+                format!(
+                    "error: unknown option `{}'\nusage: git credential-store [<options>] <action>",
+                    a.trim_start_matches('-')
+                ),
             ));
         } else if op.is_none() {
             op = Some(a);
         }
     }
     let op = op.ok_or_else(|| {
-        CliError::Exit(129, "usage: git credential-store [<options>] <action>".into())
+        CliError::Exit(
+            129,
+            "usage: git credential-store [<options>] <action>".into(),
+        )
     })?;
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
@@ -928,7 +956,12 @@ pub fn cmd_show_index(args: &[String]) -> CliResult<()> {
         .map_err(|_| CliError::fatal("unable to read index"))?;
     let mut out = String::new();
     for e in &idx.entries {
-        out.push_str(&format!("{} {} ({:08x})\n", e.offset, e.oid.to_hex(), e.crc32));
+        out.push_str(&format!(
+            "{} {} ({:08x})\n",
+            e.offset,
+            e.oid.to_hex(),
+            e.crc32
+        ));
     }
     print!("{out}");
     Ok(())
@@ -971,7 +1004,10 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
             _ if a.starts_with('-') && a.len() > 1 => {
                 return Err(CliError::Exit(
                     129,
-                    format!("error: unknown option `{}'\nusage: git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>...", a.trim_start_matches('-')),
+                    format!(
+                        "error: unknown option `{}'\nusage: git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>...",
+                        a.trim_start_matches('-')
+                    ),
                 ));
             }
             _ => before.push(a),
@@ -1010,7 +1046,10 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
     }
     if stdin {
         if !paths.is_empty() {
-            return Err(CliError::Exit(129, "error: Can't specify files with --stdin".into()));
+            return Err(CliError::Exit(
+                129,
+                "error: Can't specify files with --stdin".into(),
+            ));
         }
         let mut input = Vec::new();
         io::stdin().read_to_end(&mut input)?;
@@ -1056,7 +1095,10 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
         }
         _ => None,
     };
-    let base = scratch.as_ref().map(|t| t.path().to_path_buf()).unwrap_or_else(|| work.clone());
+    let base = scratch
+        .as_ref()
+        .map(|t| t.path().to_path_buf())
+        .unwrap_or_else(|| work.clone());
     let mut out = Vec::new();
     for path in &paths {
         let rel = crate::util::rel_path_from_worktree(&work, Path::new(path))
@@ -1243,7 +1285,9 @@ pub fn cmd_hook(args: &[String]) -> CliResult<()> {
     if sub != "run" {
         return Err(CliError::Exit(
             129,
-            format!("error: unknown subcommand: `{sub}'\nusage: git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]"),
+            format!(
+                "error: unknown subcommand: `{sub}'\nusage: git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]"
+            ),
         ));
     }
     let mut ignore_missing = false;
@@ -1269,7 +1313,9 @@ pub fn cmd_hook(args: &[String]) -> CliResult<()> {
                 i += 1;
             }
             "--no-to-stdin" => to_stdin = None,
-            _ if a.starts_with("--to-stdin=") => to_stdin = Some(a["--to-stdin=".len()..].to_string()),
+            _ if a.starts_with("--to-stdin=") => {
+                to_stdin = Some(a["--to-stdin=".len()..].to_string())
+            }
             _ if a.starts_with('-') => return Err(usage()),
             _ => name = Some(a.clone()),
         }
@@ -1553,10 +1599,9 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
             return Ok(Some(v.to_string()));
         }
         if a == format!("--{name}") {
-            let v = args
-                .get(*i)
-                .cloned()
-                .ok_or_else(|| CliError::Exit(129, format!("error: option `{name}' requires a value")))?;
+            let v = args.get(*i).cloned().ok_or_else(|| {
+                CliError::Exit(129, format!("error: option `{name}' requires a value"))
+            })?;
             *i += 1;
             return Ok(Some(v));
         }
@@ -1587,11 +1632,17 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
             continue;
         }
         if let Some(v) = value(&mut i, &a, "raw-mode")? {
-            raw_mode = Some(v.parse().map_err(|_| usage("option `raw-mode' expects a numerical value"))?);
+            raw_mode = Some(
+                v.parse()
+                    .map_err(|_| usage("option `raw-mode' expects a numerical value"))?,
+            );
             continue;
         }
         if let Some(v) = value(&mut i, &a, "width")? {
-            opts.width = Some(v.parse().map_err(|_| usage("option `width' expects a numerical value"))?);
+            opts.width = Some(
+                v.parse()
+                    .map_err(|_| usage("option `width' expects a numerical value"))?,
+            );
             continue;
         }
         if let Some(v) = value(&mut i, &a, "indent")? {
@@ -1603,7 +1654,9 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
             continue;
         }
         if let Some(v) = value(&mut i, &a, "padding")? {
-            opts.padding = v.parse().map_err(|_| usage("option `padding' expects a numerical value"))?;
+            opts.padding = v
+                .parse()
+                .map_err(|_| usage("option `padding' expects a numerical value"))?;
             continue;
         }
         match a.as_str() {
@@ -1617,7 +1670,10 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
                 if a.starts_with('-') {
                     return Err(CliError::Exit(
                         129,
-                        format!("error: unknown option `{}'\nusage: git column [<options>]", a.trim_start_matches('-')),
+                        format!(
+                            "error: unknown option `{}'\nusage: git column [<options>]",
+                            a.trim_start_matches('-')
+                        ),
                     ));
                 }
                 return Err(CliError::Exit(129, "usage: git column [<options>]".into()));
@@ -1630,9 +1686,9 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
         let cfg = arks_config::ConfigSet::load_discovered(&cwd);
         for key in ["column.ui".to_string(), format!("column.{cmd}")] {
             if let Some(v) = cfg.get(&key) {
-                layout
-                    .apply(&v)
-                    .map_err(|bad| CliError::Exit(129, format!("error: invalid column.{cmd} mode {bad}")))?;
+                layout.apply(&v).map_err(|bad| {
+                    CliError::Exit(129, format!("error: invalid column.{cmd} mode {bad}"))
+                })?;
             }
         }
     }
@@ -1647,7 +1703,10 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
     let items: Vec<&str> = input.lines().collect();
-    print!("{}", crate::cmd::plumbing_ext::render_columns(&items, &layout, &opts));
+    print!(
+        "{}",
+        crate::cmd::plumbing_ext::render_columns(&items, &layout, &opts)
+    );
     Ok(())
 }
 
@@ -1672,7 +1731,10 @@ pub fn cmd_for_each_repo(args: &[String]) -> CliResult<()> {
         } else if a.starts_with('-') {
             return Err(CliError::Exit(
                 129,
-                format!("error: unknown option `{}'\nusage: git for-each-repo --config=<config> [--] <arguments>", a.trim_start_matches('-')),
+                format!(
+                    "error: unknown option `{}'\nusage: git for-each-repo --config=<config> [--] <arguments>",
+                    a.trim_start_matches('-')
+                ),
             ));
         } else {
             break;
@@ -1695,7 +1757,9 @@ pub fn cmd_for_each_repo(args: &[String]) -> CliResult<()> {
             .map_err(|e| CliError::Msg(e.to_string()))?;
         if !status.success() {
             // The first failing repository's status ends the loop.
-            return Err(CliError::silent(status.code().unwrap_or(1).clamp(1, 255) as u8));
+            return Err(CliError::silent(
+                status.code().unwrap_or(1).clamp(1, 255) as u8
+            ));
         }
     }
     Ok(())
@@ -1714,7 +1778,8 @@ pub fn cmd_fmt_merge_msg(args: &[String]) -> CliResult<()> {
     let usage = || {
         CliError::Exit(
             129,
-            "usage: git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]".into(),
+            "usage: git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
+                .into(),
         )
     };
     while i < args.len() {
@@ -2054,7 +2119,10 @@ pub fn cmd_get_tar_commit_id(args: &[String]) -> CliResult<()> {
     }
     let rec = &buf[512..1024];
     let text = String::from_utf8_lossy(rec);
-    let Some(rest) = text.strip_prefix("52 comment=").or_else(|| text.strip_prefix("76 comment=")) else {
+    let Some(rest) = text
+        .strip_prefix("52 comment=")
+        .or_else(|| text.strip_prefix("76 comment="))
+    else {
         return Err(CliError::silent(1));
     };
     let oid: String = rest.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
@@ -2072,7 +2140,8 @@ pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
         return Err(CliError::Exit(129, "usage: git unpack-file <blob>".into()));
     };
     let repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev).map_err(|_| CliError::fatal(format!("Not a valid object name {rev}")))?;
+    let oid = resolve_rev(&repo, rev)
+        .map_err(|_| CliError::fatal(format!("Not a valid object name {rev}")))?;
     let obj = repo
         .get_object(&oid)
         .map_err(|_| CliError::fatal(format!("unable to read blob object {}", oid.to_hex())))?;
@@ -2084,7 +2153,12 @@ pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
     }
     let name = crate::cmd::plumbing_ext::unique_merge_file_name(&crate::util::cwd()?);
     fs::write(&name, &obj.payload)?;
-    println!("{}", name.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default());
+    println!(
+        "{}",
+        name.file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    );
     Ok(())
 }
 
@@ -2103,7 +2177,10 @@ pub fn cmd_bugreport(args: &[String]) -> CliResult<()> {
     text.push_str("Anything else you want to add:\n\n");
     text.push_str("Please review the rest of the bug report below.\nYou can delete any lines you don't wish to share.\n\n\n");
     text.push_str("[System Info]\n");
-    text.push_str(&format!("arks version:\narks version {}\n", env!("CARGO_PKG_VERSION")));
+    text.push_str(&format!(
+        "arks version:\narks version {}\n",
+        env!("CARGO_PKG_VERSION")
+    ));
     text.push_str(&format!(
         "uname: {} {}\n",
         std::env::consts::OS,
@@ -2129,10 +2206,7 @@ pub fn cmd_bugreport(args: &[String]) -> CliResult<()> {
         }
     }
     fs::write(&path, text)?;
-    eprintln!(
-        "Created new report at '{}'.",
-        path.display()
-    );
+    eprintln!("Created new report at '{}'.", path.display());
     if let Some(mode) = &o.diagnose {
         let zip = o.target("git-diagnostics", "zip")?;
         crate::cmd::plumbing_ext::write_diagnostics(&zip, mode)?;
@@ -2149,7 +2223,10 @@ pub fn cmd_diagnose(args: &[String]) -> CliResult<()> {
     let zip = o.target("git-diagnostics", "zip")?;
     let mode = o.diagnose.clone().unwrap_or_else(|| "stats".into());
     crate::cmd::plumbing_ext::write_diagnostics(&zip, &mode)?;
-    eprintln!("Diagnostics complete.\nAll of the gathered info is captured in '{}'", zip.display());
+    eprintln!(
+        "Diagnostics complete.\nAll of the gathered info is captured in '{}'",
+        zip.display()
+    );
     Ok(())
 }
 

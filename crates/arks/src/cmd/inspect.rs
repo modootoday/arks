@@ -202,10 +202,11 @@ pub fn cmd_fsck(args: &[String]) -> CliResult<()> {
             inserted.push(*o);
         }
     }
-    let copies = loose
-        .iter()
-        .map(|(o, p)| (*o, Some(p.clone())))
-        .chain(packs.iter().flat_map(|(_, oids)| oids.iter().map(|o| (*o, None))));
+    let copies = loose.iter().map(|(o, p)| (*o, Some(p.clone()))).chain(
+        packs
+            .iter()
+            .flat_map(|(_, oids)| oids.iter().map(|o| (*o, None))),
+    );
     for (oid, path) in copies {
         for (c, ty) in children(&oid) {
             expected.entry(c).or_insert(ty);
@@ -365,7 +366,9 @@ pub fn cmd_fsck(args: &[String]) -> CliResult<()> {
     if lost_found {
         let base = repo.git_dir().join("lost-found");
         for oid in dangling {
-            let Ok(obj) = repo.get_object(&oid) else { continue };
+            let Ok(obj) = repo.get_object(&oid) else {
+                continue;
+            };
             let (sub, body) = match obj.kind {
                 ObjectKind::Commit => ("commit", format!("{}\n", oid.to_hex()).into_bytes()),
                 ObjectKind::Blob => ("other", obj.payload.to_vec()),
@@ -444,7 +447,9 @@ pub fn cmd_count_objects(args: &[String]) -> CliResult<()> {
             .collect();
         dirs.sort();
         for d in dirs {
-            let Ok(inner) = fs::read_dir(&d) else { continue };
+            let Ok(inner) = fs::read_dir(&d) else {
+                continue;
+            };
             let mut files: Vec<_> = inner.flatten().collect();
             files.sort_by_key(|e| e.file_name());
             for f in files {
@@ -594,12 +599,16 @@ pub fn cmd_pack_refs(args: &[String]) -> CliResult<()> {
                     stack.push(p);
                     continue;
                 }
-                let Ok(rel) = p.strip_prefix(&root) else { continue };
+                let Ok(rel) = p.strip_prefix(&root) else {
+                    continue;
+                };
                 let name = rel.to_string_lossy().replace('\\', "/");
                 if name.ends_with(".lock") {
                     continue;
                 }
-                let Ok(text) = fs::read_to_string(&p) else { continue };
+                let Ok(text) = fs::read_to_string(&p) else {
+                    continue;
+                };
                 if let Ok(o) = Oid::from_hex(text.trim()) {
                     loose.push((name, o, p));
                 }

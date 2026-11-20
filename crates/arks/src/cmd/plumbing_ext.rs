@@ -455,7 +455,7 @@ pub(crate) fn credential_store(
         let mut out = Vec::new();
         let mut i = 0;
         while i < b.len() {
-            if b[i] == b'%' && i + 2 < b.len() + 1 && i + 2 <= b.len() - 1 {
+            if b[i] == b'%' && i + 2 < b.len() {
                 if let Ok(v) = u8::from_str_radix(&s[i + 1..i + 3], 16) {
                     out.push(v);
                     i += 3;
@@ -679,10 +679,14 @@ pub(crate) fn verify_one_pack(
     verbose: bool,
     stat_only: bool,
 ) -> CliResult<String> {
-    let bytes = std::fs::read(pack)
-        .map_err(|e| CliError::Msg(format!("packfile {} cannot be accessed: {e}", pack.display())))?;
-    let idx_bytes = std::fs::read(idx)
-        .map_err(|e| CliError::Msg(format!("{}: {e}", idx.display())))?;
+    let bytes = std::fs::read(pack).map_err(|e| {
+        CliError::Msg(format!(
+            "packfile {} cannot be accessed: {e}",
+            pack.display()
+        ))
+    })?;
+    let idx_bytes =
+        std::fs::read(idx).map_err(|e| CliError::Msg(format!("{}: {e}", idx.display())))?;
     let index = arks_pack::PackIndex::decode(&idx_bytes, format)
         .map_err(|e| CliError::Msg(format!("{}: {e}", idx.display())))?;
     let decoded = arks_pack::DecodedPack::decode(&bytes, format)
@@ -800,10 +804,13 @@ pub(crate) fn verify_one_pack(
     Ok(out)
 }
 
+/// `(proper name, proper email, commit name, commit email)`.
+type MailmapRule = (Option<String>, String, Option<String>, Option<String>);
+
 /// gitmailmap(5) rules from `.mailmap`, `mailmap.file` and `mailmap.blob`.
 pub(crate) struct Mailmap {
     /// (old name, old email lowercase, new name, new email)
-    rules: Vec<(Option<String>, String, Option<String>, Option<String>)>,
+    rules: Vec<MailmapRule>,
 }
 
 impl Mailmap {
@@ -823,7 +830,10 @@ impl Mailmap {
         {
             texts.push(t);
         }
-        if let Some(b) = cfg.get("mailmap.blob").filter(|_| crate::util::work_tree(repo).is_ok()) {
+        if let Some(b) = cfg
+            .get("mailmap.blob")
+            .filter(|_| crate::util::work_tree(repo).is_ok())
+        {
             if let Some(t) = crate::cmd::shared::resolve_rev(repo, &b)
                 .ok()
                 .and_then(|o| repo.get_object(&o).ok())
@@ -843,10 +853,15 @@ impl Mailmap {
                 let mut parts = Vec::new();
                 let mut rest = line;
                 while let Some(lt) = rest.find('<') {
-                    let Some(gt) = rest[lt..].find('>') else { break };
+                    let Some(gt) = rest[lt..].find('>') else {
+                        break;
+                    };
                     let name = rest[..lt].trim();
                     let email = &rest[lt + 1..lt + gt];
-                    parts.push(((!name.is_empty()).then(|| name.to_string()), email.to_string()));
+                    parts.push((
+                        (!name.is_empty()).then(|| name.to_string()),
+                        email.to_string(),
+                    ));
                     rest = &rest[lt + gt + 1..];
                 }
                 match parts.as_slice() {
@@ -881,7 +896,10 @@ impl Mailmap {
             .iter()
             .rev()
             .find(|r| {
-                r.1 == le && r.0.as_deref().is_some_and(|n| n.eq_ignore_ascii_case(&name))
+                r.1 == le
+                    && r.0
+                        .as_deref()
+                        .is_some_and(|n| n.eq_ignore_ascii_case(&name))
             })
             .or_else(|| self.rules.iter().rev().find(|r| r.1 == le && r.0.is_none()));
         let (n, e) = match hit {
@@ -1147,7 +1165,9 @@ pub(crate) fn fmt_merge_msg(
         .iter()
         .enumerate()
         .map(|(i, e)| {
-            let in_head = head.as_ref().is_some_and(|h| *h != e.oid && is_anc(&e.oid, h));
+            let in_head = head
+                .as_ref()
+                .is_some_and(|h| *h != e.oid && is_anc(&e.oid, h));
             let in_other = entries
                 .iter()
                 .enumerate()
@@ -1155,7 +1175,12 @@ pub(crate) fn fmt_merge_msg(
             !in_head && !in_other
         })
         .collect();
-    let kept: Vec<&Entry> = entries.iter().zip(&keep).filter(|(_, k)| **k).map(|(e, _)| e).collect();
+    let kept: Vec<&Entry> = entries
+        .iter()
+        .zip(&keep)
+        .filter(|(_, k)| **k)
+        .map(|(e, _)| e)
+        .collect();
     let mut out = String::new();
     if let Some(m) = message {
         out.push_str(m);
@@ -1197,7 +1222,11 @@ pub(crate) fn fmt_merge_msg(
             let mut sub = Vec::new();
             for (k, one, many) in [
                 (Kind::Branch, "branch", "branches"),
-                (Kind::Rtb, "remote-tracking branch", "remote-tracking branches"),
+                (
+                    Kind::Rtb,
+                    "remote-tracking branch",
+                    "remote-tracking branches",
+                ),
                 (Kind::Tag, "tag", "tags"),
                 (Kind::Commit, "commit", "commits"),
             ] {
@@ -1217,9 +1246,10 @@ pub(crate) fn fmt_merge_msg(
         let dest = match into {
             Some(i) => i.to_string(),
             None => match repo.head_target() {
-                Ok(arks_refs::RefTarget::Symbolic(t)) => {
-                    t.strip_prefix("refs/heads/").map(str::to_string).unwrap_or(t)
-                }
+                Ok(arks_refs::RefTarget::Symbolic(t)) => t
+                    .strip_prefix("refs/heads/")
+                    .map(str::to_string)
+                    .unwrap_or(t),
                 _ => "HEAD".to_string(),
             },
         };
@@ -1228,7 +1258,7 @@ pub(crate) fn fmt_merge_msg(
         let suppressed = if suppress.is_empty() {
             dest == "main" || dest == "master"
         } else {
-            suppress.iter().any(|s| *s == dest)
+            suppress.contains(&dest)
         };
         if !suppressed {
             out.push_str(&format!(" into {dest}"));
@@ -1245,7 +1275,9 @@ pub(crate) fn fmt_merge_msg(
         .and_then(|c| c.chars().next())
         .unwrap_or('#');
     let me_author = crate::cmd::shared::commit_signature().ok().map(|s| s.name);
-    let me_committer = crate::cmd::shared::committer_signature().ok().map(|s| s.name);
+    let me_committer = crate::cmd::shared::committer_signature()
+        .ok()
+        .map(|s| s.name);
     for e in &kept {
         let label = match e.kind {
             Kind::Raw => e.src.clone(),
@@ -1263,16 +1295,23 @@ pub(crate) fn fmt_merge_msg(
             if !seen.insert(c) || head.as_ref().is_some_and(|h| is_anc(&c, h)) {
                 continue;
             }
-            let Ok(obj) = repo.get_object(&c) else { continue };
-            let Ok(cm) = arks_object::Commit::decode(&obj.payload) else { continue };
+            let Ok(obj) = repo.get_object(&c) else {
+                continue;
+            };
+            let Ok(cm) = arks_object::Commit::decode(&obj.payload) else {
+                continue;
+            };
             stack.extend(cm.parents.iter().copied());
             commits.push((cm.committer.timestamp, cm));
         }
-        commits.sort_by(|a, b| b.0.cmp(&a.0));
+        commits.sort_by_key(|c| std::cmp::Reverse(c.0));
         // Credits: authors of listed commits; committers of merges and of the tip.
         let mut authors: Vec<(String, usize)> = Vec::new();
         let mut committers: Vec<(String, usize)> = Vec::new();
-        let bump = |list: &mut Vec<(String, usize)>, name: &str| match list.iter_mut().find(|(n, _)| n == name) {
+        let bump = |list: &mut Vec<(String, usize)>, name: &str| match list
+            .iter_mut()
+            .find(|(n, _)| n == name)
+        {
             Some(p) => p.1 += 1,
             None => list.push((name.to_string(), 1)),
         };
@@ -1289,8 +1328,13 @@ pub(crate) fn fmt_merge_msg(
             subjects.push(cm.message.lines().next().unwrap_or("").to_string());
         }
         out.push('\n');
-        for (label_word, mut people, me) in [("By", authors, &me_author), ("Via", committers, &me_committer)] {
-            if people.is_empty() || (people.len() == 1 && me.as_deref() == Some(people[0].0.as_str())) {
+        for (label_word, mut people, me) in [
+            ("By", authors, &me_author),
+            ("Via", committers, &me_committer),
+        ] {
+            if people.is_empty()
+                || (people.len() == 1 && me.as_deref() == Some(people[0].0.as_str()))
+            {
                 continue;
             }
             people.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
@@ -1330,7 +1374,9 @@ impl ReportOpts {
         let usage = || {
             CliError::Exit(
                 129,
-                format!("usage: git {cmd} [(-o | --output-directory) <path>] [(-s | --suffix) <format>]"),
+                format!(
+                    "usage: git {cmd} [(-o | --output-directory) <path>] [(-s | --suffix) <format>]"
+                ),
             )
         };
         let mut o = Self {
@@ -1351,7 +1397,11 @@ impl ReportOpts {
                 if let Some(v) = a.strip_prefix(&format!("{name_long}=")) {
                     return Ok(Some(v.to_string()));
                 }
-                if name_short.len() == 2 && a.len() > 2 && a.starts_with(name_short) && !a.starts_with("--") {
+                if name_short.len() == 2
+                    && a.len() > 2
+                    && a.starts_with(name_short)
+                    && !a.starts_with("--")
+                {
                     return Ok(Some(a[2..].to_string()));
                 }
                 Ok(None)
@@ -1368,13 +1418,16 @@ impl ReportOpts {
                 o.diagnose = Some("stats".into());
             } else if bugreport && a == "--no-diagnose" {
                 o.diagnose = None;
-            } else if let Some(m) = a
-                .strip_prefix(if bugreport { "--diagnose=" } else { "--mode=" })
+            } else if let Some(m) =
+                a.strip_prefix(if bugreport { "--diagnose=" } else { "--mode=" })
             {
                 if m != "stats" && m != "all" {
                     return Err(CliError::Exit(
                         129,
-                        format!("error: invalid --{} value '{m}'", if bugreport { "diagnose" } else { "mode" }),
+                        format!(
+                            "error: invalid --{} value '{m}'",
+                            if bugreport { "diagnose" } else { "mode" }
+                        ),
                     ));
                 }
                 o.diagnose = Some(m.to_string());
@@ -1382,7 +1435,10 @@ impl ReportOpts {
                 let m = args.get(i).cloned().ok_or_else(usage)?;
                 i += 1;
                 if m != "stats" && m != "all" {
-                    return Err(CliError::Exit(129, format!("error: invalid --mode value '{m}'")));
+                    return Err(CliError::Exit(
+                        129,
+                        format!("error: invalid --mode value '{m}'"),
+                    ));
                 }
                 o.diagnose = Some(m);
             } else if !bugreport && !a.starts_with('-') {
@@ -1396,8 +1452,12 @@ impl ReportOpts {
 
     /// `<dir>/<prefix>-<strftime(suffix)>.<ext>`.
     pub(crate) fn target(&self, prefix: &str, ext: &str) -> CliResult<std::path::PathBuf> {
-        std::fs::create_dir_all(&self.dir)
-            .map_err(|e| CliError::fatal(format!("could not create leading directories for '{}': {e}", self.dir.display())))?;
+        std::fs::create_dir_all(&self.dir).map_err(|e| {
+            CliError::fatal(format!(
+                "could not create leading directories for '{}': {e}",
+                self.dir.display()
+            ))
+        })?;
         let stamp = strftime_now(&self.suffix);
         let name = if stamp.is_empty() {
             format!("{prefix}.{ext}")
@@ -1506,11 +1566,14 @@ pub(crate) fn write_diagnostics(zip: &std::path::Path, mode: &str) -> CliResult<
             let git_dir = repo.git_dir().to_path_buf();
             let mut stack = vec![git_dir.clone()];
             while let Some(dir) = stack.pop() {
-                let Ok(rd) = std::fs::read_dir(&dir) else { continue };
+                let Ok(rd) = std::fs::read_dir(&dir) else {
+                    continue;
+                };
                 for e in rd.flatten() {
                     let path = e.path();
                     let rel = path.strip_prefix(&git_dir).unwrap_or(&path).to_path_buf();
-                    if rel == std::path::Path::new("objects") || rel == std::path::Path::new("refs") {
+                    if rel == std::path::Path::new("objects") || rel == std::path::Path::new("refs")
+                    {
                         continue;
                     }
                     if path.is_dir() {
@@ -1534,7 +1597,11 @@ fn crc32(data: &[u8]) -> u32 {
     for &b in data {
         crc ^= u32::from(b);
         for _ in 0..8 {
-            crc = if crc & 1 != 0 { (crc >> 1) ^ 0xedb8_8320 } else { crc >> 1 };
+            crc = if crc & 1 != 0 {
+                (crc >> 1) ^ 0xedb8_8320
+            } else {
+                crc >> 1
+            };
         }
     }
     !crc
