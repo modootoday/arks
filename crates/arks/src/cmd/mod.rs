@@ -42,6 +42,7 @@ pub mod maint;
 pub mod matrix_cmds;
 pub mod matrix_rest;
 pub mod merge;
+pub mod merge_base;
 pub mod merge_engine;
 pub mod notes;
 pub mod opt_spec;
@@ -124,14 +125,16 @@ pub use matrix_rest::{
     cmd_multi_pack_index, cmd_rerere, cmd_subtree,
 };
 pub use merge::cmd_merge;
+pub use merge::{cmd_merge, cmd_pull};
+pub use merge_base::cmd_merge_base;
 pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch::{cmd_am, cmd_format_patch};
 pub use patch_id::cmd_patch_id;
 pub use plumbing::{
-    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_merge_base,
-    cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_show_ref, cmd_symbolic_ref,
-    cmd_update_index, cmd_write_tree,
+    cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_name_rev,
+    cmd_pack_objects, cmd_read_tree, cmd_show_ref, cmd_symbolic_ref, cmd_update_index,
+    cmd_write_tree,
 };
 pub use pull::cmd_pull;
 pub use push::cmd_push;
