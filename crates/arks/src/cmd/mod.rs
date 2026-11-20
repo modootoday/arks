@@ -44,6 +44,7 @@ pub mod opt_spec;
 pub mod optparse;
 pub mod pack_transport;
 pub mod patch;
+pub mod patch_id;
 pub mod plumbing;
 pub mod plumbing_ext;
 pub mod pull;
@@ -105,7 +106,7 @@ pub use matrix_cmds::{
     cmd_bugreport, cmd_check_attr, cmd_check_mailmap, cmd_check_ref_format, cmd_cherry, cmd_column,
     cmd_credential_store, cmd_diagnose, cmd_fmt_merge_msg, cmd_for_each_repo,
     cmd_get_tar_commit_id, cmd_hook, cmd_interpret_trailers, cmd_mailinfo, cmd_mailsplit,
-    cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant, cmd_patch_id,
+    cmd_merge_file, cmd_merge_tree, cmd_mktag, cmd_mktree, cmd_pack_redundant,
     cmd_prune, cmd_prune_packed, cmd_shell, cmd_show_branch, cmd_show_index, cmd_stripspace,
     cmd_unpack_file, cmd_unpack_objects, cmd_upload_archive, cmd_var, cmd_verify_pack,
 };
@@ -117,6 +118,7 @@ pub use merge::cmd_merge;
 pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch::{cmd_am, cmd_format_patch};
+pub use patch_id::cmd_patch_id;
 pub use plumbing::{
     cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_ls_files,
     cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_rev_list,

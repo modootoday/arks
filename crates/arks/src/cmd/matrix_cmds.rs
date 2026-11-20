@@ -843,33 +843,6 @@ pub fn cmd_var(args: &[String]) -> CliResult<()> {
     }
 }
 
-/// `arks patch-id` — stable id for a diff on stdin.
-pub fn cmd_patch_id(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--stable", "--unstable"])?;
-    let mut buf = Vec::new();
-    io::stdin().read_to_end(&mut buf)?;
-    let text = String::from_utf8_lossy(&buf);
-    let mut filtered = String::new();
-    for line in text.lines() {
-        if line.starts_with("index ")
-            || line.starts_with("diff --git ")
-            || line.starts_with("--- ")
-            || line.starts_with("+++ ")
-        {
-            continue;
-        }
-        filtered.push_str(line);
-        filtered.push('\n');
-    }
-    let obj = RawObject::new(ObjectKind::Blob, filtered.into_bytes());
-    let format = open_repo()
-        .map(|r| r.object_format())
-        .unwrap_or(arks_store::ObjectFormat::Sha1);
-    let oid = obj.oid(format)?;
-    println!("{} {}", oid.to_hex(), "0".repeat(40));
-    Ok(())
-}
-
 /// `arks credential-store [--file=<path>] (get|store|erase)` — the stock
 /// `~/.git-credentials` file format (`<proto>://<user>:<pass>@<host>[/path]`),
 /// natively. Cite: https://git-scm.com/docs/git-credential-store
