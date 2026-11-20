@@ -385,6 +385,25 @@ impl Parsed {
             .collect()
     }
 
+    /// Every operand in argv order: the arguments before `--`, then those after it.
+    pub fn operands(&self) -> Vec<String> {
+        self.items
+            .iter()
+            .filter_map(|it| match it {
+                Item::Arg(a) | Item::AfterDashDash(a) => Some(a.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Declared-option occurrences in argv order as `(key, value, negated)`.
+    pub fn opts(&self) -> impl DoubleEndedIterator<Item = (&'static str, Option<&str>, bool)> + '_ {
+        self.items.iter().filter_map(|it| match it {
+            Item::Opt { key, val, neg } => Some((*key, val.as_deref(), *neg)),
+            _ => None,
+        })
+    }
+
     /// Arguments after `--` (empty when there was none).
     pub fn after_dashdash(&self) -> Vec<String> {
         self.items
@@ -516,6 +535,24 @@ mod tests {
         assert_eq!(p.value("-b").as_deref(), Some("foo"));
         assert_eq!(p.last("gpg-sign"), Some(None));
         assert_eq!(p.after_dashdash(), v(&["-a"]));
+    }
+
+    #[test]
+    fn operands_and_occurrences() {
+        let p = parse(
+            "x",
+            &v(&["one", "-mhi", "--no-all", "two", "--", "-a"]),
+            DEFS,
+            Mode::default(),
+        )
+        .unwrap();
+        assert_eq!(p.operands(), v(&["one", "two", "-a"]));
+        let seen: Vec<_> = p.opts().collect();
+        assert_eq!(
+            seen,
+            vec![("message", Some("hi"), false), ("all", None, true)]
+        );
+        assert_eq!(p.opts().next_back(), Some(("all", None, true)));
     }
 
     #[test]
