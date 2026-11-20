@@ -567,3 +567,21 @@ ls-files --no-recurse-submodules
 ls-files --full-name src
 ls-files --no-full-name src
 ls-files --no-ignored -o
+# --- ls-tree ---
+ls-tree -z HEAD
+ls-tree --object-only -r HEAD
+ls-tree --no-object-only HEAD
+ls-tree --long HEAD
+ls-tree --no-long -l HEAD
+ls-tree --name-status HEAD
+ls-tree --no-name-only --name-only HEAD
+ls-tree --abbrev HEAD
+ls-tree --abbrev=10 -r HEAD
+ls-tree --no-abbrev HEAD
+ls-tree --format='%(objectmode) %(objecttype) %(objectname) %(objectsize) %(objectsize:padded) %(path)' -r HEAD
+ls-tree --full-name HEAD src
+ls-tree --no-full-name HEAD
+ls-tree --full-tree HEAD
+ls-tree --no-full-tree HEAD
+ls-tree --name-only --object-only HEAD
+ls-tree --format '%(path)' HEAD
