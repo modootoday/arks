@@ -458,7 +458,7 @@ fn prepare_index(o: &Opts) -> CliResult<Vec<arks_index::IndexEntry>> {
     if o.all {
         cmd_add(&["-u".into()])?;
     }
-    if !o.pathspecs.is_empty() && !o.patch {
+    if !o.pathspecs.is_empty() && !o.patch && !o.interactive {
         check_pathspecs_known(&o.pathspecs)?;
     }
     if o.patch {
@@ -466,13 +466,17 @@ fn prepare_index(o: &Opts) -> CliResult<Vec<arks_index::IndexEntry>> {
         a.extend(o.pathspecs.iter().cloned());
         cmd_add(&a)?;
     } else if o.interactive {
-        cmd_add(&["-i".to_string()])?;
+        // Paths only narrow the `add -i` listing; the commit takes the
+        // index as the session left it (observed pin 2.39.5).
+        let mut a = vec!["-i".to_string(), "--".to_string()];
+        a.extend(o.pathspecs.iter().cloned());
+        cmd_add(&a)?;
     } else if !o.pathspecs.is_empty() {
         cmd_add(&o.pathspecs)?;
     }
     let repo = open_repo()?;
     let mut index = read_index(&repo)?;
-    if !o.pathspecs.is_empty() && !o.include && !o.patch {
+    if !o.pathspecs.is_empty() && !o.include && !o.patch && !o.interactive {
         // `--only` (the default with paths): HEAD plus the named paths.
         let work = work_tree(&repo)?;
         let specs = o
