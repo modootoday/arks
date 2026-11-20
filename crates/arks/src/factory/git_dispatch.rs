@@ -192,9 +192,19 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "remote-ext" => cmd::cmd_remote_ext(args),
         "remote-fd" => cmd::cmd_remote_fd(args),
         "remote-http" | "remote-https" | "remote-ftp" | "remote-ftps" => cmd::cmd_remote_curl(args),
-        "filter-branch" => Err(CliError::NotImplemented(format!(
-            "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
-        ))),
+        // A3 external tool bridges (git's documented tool / filter / mail /
+        // browser / prompt programs; never `git` itself).
+        "difftool" => cmd::cmd_difftool(args),
+        "difftool--helper" => cmd::cmd_difftool_helper(args),
+        "mergetool" => cmd::cmd_mergetool(args),
+        "filter-branch" => cmd::cmd_filter_branch(args),
+        "quiltimport" => cmd::cmd_quiltimport(args),
+        "web--browse" => cmd::cmd_web_browse(args),
+        "instaweb" => cmd::cmd_instaweb(args),
+        "askpass" => cmd::cmd_askpass(args),
+        "askyesno" => cmd::cmd_askyesno(args),
+        "send-email" => cmd::cmd_send_email(args),
+        "imap-send" => cmd::cmd_imap_send(args),
         "gui" | "gui.tcl" => cmd::cmd_gui(args),
         "citool" => cmd::cmd_citool(args),
         "gui--askpass" => cmd::cmd_gui_askpass(args),

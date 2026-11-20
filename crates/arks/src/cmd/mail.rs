@@ -54,6 +54,36 @@ pub fn cmd_mailinfo(args: &[String]) -> CliResult<()> {
             format!("error: empty patch: '{patch_out}'"),
         ));
     }
+    let info = mail_info(&raw, keep, keep_brackets, scissors);
+    let msg = info.msg;
+    let patch = info.patch;
+    fs::write(msg_out, msg)?;
+    fs::write(patch_out, patch)?;
+    println!("Author: {}", info.name);
+    println!("Email: {}", info.email);
+    println!("Subject: {}", info.subject);
+    if let Some(d) = info.date {
+        println!("Date: {d}");
+    }
+    println!();
+    Ok(())
+}
+
+/// What `mailinfo` extracts from one mail.
+pub(crate) struct MailInfo {
+    pub name: String,
+    pub email: String,
+    pub subject: String,
+    pub date: Option<String>,
+    /// Message body (without the patch), newline-terminated when not empty.
+    pub msg: String,
+    /// The patch, from the `---` / `diff` / `Index:` line on.
+    pub patch: String,
+}
+
+/// Split one mail into author, subject, date, message and patch
+/// (`keep`: `-k`, `keep_brackets`: `-b`, `scissors`: `--scissors`).
+pub(crate) fn mail_info(raw: &str, keep: bool, keep_brackets: bool, scissors: bool) -> MailInfo {
     let raw = raw.replace("\r\n", "\n");
     // Headers (folded lines joined), skipping an mbox `From ` line.
     let mut headers: Vec<(String, String)> = Vec::new();
@@ -120,16 +150,14 @@ pub fn cmd_mailinfo(args: &[String]) -> CliResult<()> {
     if !msg.is_empty() {
         msg.push('\n');
     }
-    fs::write(msg_out, msg)?;
-    fs::write(patch_out, patch)?;
-    println!("Author: {name}");
-    println!("Email: {email}");
-    println!("Subject: {subject}");
-    if let Some(d) = get("date") {
-        println!("Date: {d}");
+    MailInfo {
+        name,
+        email,
+        subject,
+        date: get("date"),
+        msg,
+        patch,
     }
-    println!();
-    Ok(())
 }
 
 fn is_scissors(line: &str) -> bool {

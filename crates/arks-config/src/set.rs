@@ -47,6 +47,12 @@ pub fn push_cli_override(spec: &str) {
     }
 }
 
+/// The `git -c` overrides recorded so far, in order (for child processes,
+/// which receive them through `GIT_CONFIG_PARAMETERS` like git's children).
+pub fn cli_overrides() -> Vec<(String, Option<String>)> {
+    CLI_OVERRIDES.lock().map(|g| g.clone()).unwrap_or_default()
+}
+
 impl ConfigSet {
     pub fn new() -> Self {
         Self::default()

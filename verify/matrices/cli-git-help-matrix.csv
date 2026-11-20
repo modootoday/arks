@@ -5,8 +5,8 @@ am,main,Partial,must-implement,SoT N/A: interactive
 annotate,main,Partial,must-implement,synonym for blame; same edges
 apply,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 archive,main,Partial,must-implement,HELP claims --format=tar; other formats not stamped here
-askpass,gui-or-internal,Refuse/N/A,must-implement,Windows askpass helper; not alias porcelain
-askyesno,gui-or-internal,Refuse/N/A,must-implement,Windows helper; not alias porcelain
+askpass,gui-or-internal,Partial,must-implement,A3 host-tested; GIT_ASKPASS / core.askPass / SSH_ASKPASS then terminal prompt
+askyesno,gui-or-internal,Partial,must-implement,A3 host-tested; GIT_ASK_YESNO helper then terminal y/n prompt
 backfill,ancillary,Partial,must-implement,A3 host-tested; crate tests (git 2.49 contract); promisor blob backfill
 bisect,main,Partial,must-implement,SoT N/A: visualize GUI
 bisect--helper,internal,Partial,must-implement,A3 host-tested; crate tests (absent from host 2.43); --bisect-<sub> routes to bisect
@@ -48,14 +48,14 @@ diff-files,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not
 diff-index,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 diff-pairs,plumbing,Partial,must-implement,host 2.54+ skew; Partial help/refuse (not pin 2.39.5)
 diff-tree,main,Partial,must-implement,SoT N/A: recursive combine
-difftool,main,Refuse/N/A,must-implement,explicit product exclusion / refuse arm or SoT N/A
-difftool--helper,internal,Refuse/N/A,must-implement,explicit product exclusion / refuse arm or SoT N/A
+difftool,main,Partial,must-implement,A3 host-tested; diff.tool / difftool.<tool>.cmd / --extcmd / --dir-diff (family-a3-tools corpus)
+difftool--helper,internal,Partial,must-implement,A3 host-tested; external-diff entry point with difftool environment
 env--helper,internal,Partial,must-implement,A3 host-tested; crate tests (absent from host 2.43); --type=bool|ulong
 fast-export,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 fast-import,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 fetch,main,Partial,must-implement,filter/shallow Claimed subsets; not every man-page option stamped here
 fetch-pack,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-filter-branch,main,Refuse/N/A,must-implement,explicit product exclusion / refuse arm or SoT N/A
+filter-branch,main,Partial,must-implement,A3 host-tested; documented filters in one sh with refs/original backup (family-a3-tools corpus)
 fmt-merge-msg,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 for-each-ref,main,Partial,must-implement,SoT N/A: color/atom full set
 for-each-repo,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
@@ -80,11 +80,11 @@ host-env,arks-only,arks-only,out-of-matrix-trimmed,TRIMMED over-design
 http-backend,server,Partial,must-implement,Wave Sv Claimed; CGI edge depth not stamped here
 http-fetch,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 http-push,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-imap-send,main,Refuse/N/A,must-implement,SMTP/IMAP send not claimed; use external MUA
+imap-send,main,Partial,must-implement,A3 host-tested; IMAP APPEND over imap:// / imaps:// / imap.tunnel (local test server)
 index-pack,main,Partial,must-implement,SoT N/A: thin-pack exotic
 init,main,Partial,must-implement,SoT N/A: template/shared exotic
 init-db,main,Synonym-wired,synonym->init,pin list-cmds; arks no HELP / generic not-implemented
-instaweb,main,Refuse/N/A,must-implement,explicit product exclusion / refuse arm or SoT N/A
+instaweb,main,Partial,must-implement,A3 host-tested; --start/--stop/--restart run arks serve-http (git HTTP; no gitweb pages)
 interpret-trailers,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 last-modified,porcelain,Partial,must-implement,host 2.54+ skew; Partial HEAD-path stub (not pin 2.39.5)
 lease,arks-only,arks-only,out-of-matrix-keep,intentional asymmetry B
@@ -110,7 +110,7 @@ merge-recursive-theirs,merge-strategy,Partial,must-implement,A3 host-tested; sam
 merge-resolve,merge-strategy,Partial,must-implement,A3 host-tested; trivial in-index merge + merge-one-file
 merge-subtree,merge-strategy,Partial,must-implement,A3 host-tested; merge-recursive with subtree shift (also -s subtree / -X subtree)
 merge-tree,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-mergetool,main,Refuse/N/A,must-implement,explicit product exclusion / refuse arm or SoT N/A
+mergetool,main,Partial,must-implement,A3 host-tested; merge.tool / mergetool.<tool>.cmd / trustExitCode / .orig backups (family-a3-tools corpus)
 mktag,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 mktree,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 multi-pack-index,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
@@ -126,7 +126,7 @@ prune,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-impl
 prune-packed,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 pull,main,Partial,must-implement,cred/forge OAuth browser UX N/A; rebase/FF/3way claimed subset
 push,main,Partial,must-implement,tip claims delete/lease/options subsets; exotic refspecs historically refuse
-quiltimport,main,Refuse/N/A,must-implement,quilt series import not claimed; use am/apply
+quiltimport,main,Partial,must-implement,A3 host-tested; series walk with mailinfo + apply --index + commit (family-a3-tools corpus)
 range-diff,main,Partial,must-implement,SoT N/A: merge-commit dual diff full emit
 read-tree,main,Partial,must-implement,SoT N/A: 3-tree full merge-index
 rebase,main,Partial,must-implement,TTY -i Claimed FS1; exotic sequencer edges remain
@@ -152,7 +152,7 @@ rev-list,main,Partial,must-implement,SoT N/A: --objects full graph extras beyond
 rev-parse,main,Partial,must-implement,SoT N/A: --parseopt shell helper
 revert,main,Partial,must-implement,same sequencer class as cherry-pick
 rm,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-send-email,ancillary,Refuse/N/A,must-implement,SMTP send-email not claimed (like imap-send); external MUA
+send-email,ancillary,Partial,must-implement,A3 host-tested; SMTP / sendmail transports against a local SMTP sink (no peer oracle on host)
 send-pack,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 serve-http,arks-only,arks-only,out-of-matrix-keep,KEEP git HTTP listener
 sh-i18n--envsubst,internal,Partial,must-implement,A3 host-tested; --variables and named substitution
@@ -190,7 +190,7 @@ verify-commit,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M
 verify-pack,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 verify-tag,main,Partial,must-implement,dispatch present but omitted from arks --help (help honesty gap)
 version,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-web--browse,internal,Refuse/N/A,must-implement,git internal helper (--*); not alias inventory
+web--browse,internal,Partial,must-implement,A3 host-tested; -b/-t/-c, web.browser, browser.<tool>.path|cmd
 whatchanged,main,Synonym-wired,synonym->log,pin list-cmds; arks no HELP / generic not-implemented
 worktree,main,Partial,must-implement,SoT N/A: main-worktree remove
 write-tree,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed

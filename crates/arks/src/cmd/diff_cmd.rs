@@ -142,6 +142,27 @@ pub fn finish_output(
 
 pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     // Cite: https://git-scm.com/docs/git-diff
+    match diff_queue(args)? {
+        Queue::NoIndex(files, o) => diff_no_index(&files, &o),
+        Queue::Repo(repo, o, pairs, _) => {
+            let c = Content::new(&repo);
+            finish_output(&c, &o, EmitCtx::default(), &pairs)
+        }
+    }
+}
+
+/// The resolved `git diff` request: `--no-index` files, or the filtered
+/// pair queue of a repository comparison (after rename detection) and
+/// whether one side of it is the work tree.
+#[allow(clippy::large_enum_variant)] // one short-lived value per command
+pub enum Queue {
+    NoIndex(Vec<String>, DiffOptions),
+    Repo(Repository, DiffOptions, Vec<Pair>, bool),
+}
+
+/// Parse `git diff` arguments and build the pair queue without emitting it
+/// (shared with `difftool`, which launches a tool per pair instead).
+pub fn diff_queue(args: &[String]) -> CliResult<Queue> {
     let repo = open_repo().ok();
     let (mut o, rest) = parse_porcelain(repo.as_ref(), args)?;
     let mut cached = false;
@@ -173,7 +194,7 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
     if no_index || repo.is_none() {
         let mut files = positional.clone();
         files.extend(paths_raw.iter().cloned());
-        return diff_no_index(&files, &o);
+        return Ok(Queue::NoIndex(files, o));
     }
     let repo = repo.unwrap_or_else(|| unreachable!());
     let work = work_tree(&repo)?;
@@ -295,9 +316,12 @@ pub fn cmd_diff(args: &[String]) -> CliResult<()> {
         }
         pairs.sort_by(|x, y| x.path().cmp(y.path()));
     }
-    let c = Content::new(&repo);
-    diffcore::transform_with_sources(&c, &o, &mut pairs, &unchanged)?;
-    finish_output(&c, &o, EmitCtx::default(), &pairs)
+    {
+        let c = Content::new(&repo);
+        diffcore::transform_with_sources(&c, &o, &mut pairs, &unchanged)?;
+    }
+    let with_worktree = revs.len() < 2 && !cached;
+    Ok(Queue::Repo(repo, o, pairs, with_worktree))
 }
 
 /// `diff --no-index <path> <path>`: compare two files or directories on

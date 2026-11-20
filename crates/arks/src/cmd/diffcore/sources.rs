@@ -39,7 +39,7 @@ pub fn index_side(e: &IndexEntry) -> Side {
 }
 
 /// git `ie_match_stat` (core.checkStat=default).
-fn stat_clean(e: &IndexEntry, meta: &fs::Metadata) -> bool {
+pub(crate) fn stat_clean(e: &IndexEntry, meta: &fs::Metadata) -> bool {
     #[cfg(unix)]
     {
         use std::os::unix::fs::MetadataExt;

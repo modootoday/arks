@@ -388,7 +388,7 @@ fn glob_match(pat: &str, s: &str) -> bool {
 }
 
 /// Ref names selected by a pseudo revision.
-fn select_refs(repo: &Repository, code: &str) -> CliResult<Vec<String>> {
+pub(crate) fn select_refs(repo: &Repository, code: &str) -> CliResult<Vec<String>> {
     let (sel, ex) = code.split_once('\u{2}').unwrap_or((code, ""));
     let excludes: Vec<&str> = ex.split('\u{3}').filter(|s| !s.is_empty()).collect();
     let mut refs: Vec<String> = repo
