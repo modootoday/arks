@@ -574,7 +574,9 @@ fn tty_fill(desc: &mut Credential) -> Result<(), RemoteError> {
     Ok(())
 }
 
-fn run_helper(
+/// Run one configured credential helper (`get` / `store` / `erase`) for `desc`;
+/// a `get` answer is returned. First-party helpers run in-process.
+pub fn run_helper(
     helper: &str,
     operation: &str,
     desc: &Credential,
@@ -588,11 +590,10 @@ fn run_helper(
     if is_store_helper(helper) {
         return run_store_helper(operation, desc);
     }
+    // Native in-memory cache daemon (never the stock credential-cache program).
     if is_cache_helper(helper) {
-        return Err(RemoteError::Msg(
-            "credential.helper=cache: credential-cache daemon not claimed; use store/wincred/libsecret/osxkeychain"
-                .into(),
-        ));
+        let (socket, timeout) = crate::cache::helper_options(helper);
+        return crate::cache::cache_client(operation, desc, &socket, timeout);
     }
     refuse_forbidden_helper_program(helper)?;
     let mut cmd = spawn_helper_command(helper, operation)?;

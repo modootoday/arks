@@ -30,6 +30,7 @@
 #![deny(unsafe_code)]
 
 mod advertise;
+mod cache;
 mod checkout;
 mod clone;
 mod config;
@@ -51,6 +52,9 @@ mod walk;
 #[allow(unsafe_code)] // Windows Cred* FFI for first-party wincred helper only.
 mod wallet;
 
+pub use cache::{
+    CacheStore, DEFAULT_CACHE_TIMEOUT, cache_client, default_cache_socket, run_cache_daemon,
+};
 pub use checkout::{
     checkout_commit, checkout_tree, missing_blob_oids, missing_checkout_oids, smudge_worktree_blob,
 };
@@ -63,16 +67,16 @@ pub use config::{
 };
 pub use credential::{
     Credential, CredentialSource, approve as credential_approve, fill as credential_fill,
-    reject as credential_reject,
+    reject as credential_reject, run_helper as credential_run_helper,
 };
 pub use error::RemoteError;
 pub use fetch::{
     FetchOptions, FetchOutcome, fetch_git, fetch_git_with, fetch_http, fetch_http_with,
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
-pub use http::http_get;
+pub use http::{UreqTransport, http_get};
 pub use local::{copy_objects, is_local_remote, local_refs, open_local_remote};
-pub use ls_remote::{RemoteRef, ls_remote};
+pub use ls_remote::{RemoteRef, ls_remote, ls_remote_with_head};
 pub use os_store::{OsStore, run_os_store_helper, select_os_store};
 pub use push::{
     PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,

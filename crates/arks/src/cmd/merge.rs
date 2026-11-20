@@ -40,6 +40,8 @@ struct MergeOpts {
     no_verify: bool,
     verify_signatures: bool,
     favor: crate::cmd::merge_engine::Favor,
+    /// `-s subtree` (`Some(None)`) or `-X subtree=<path>` (`Some(Some(path))`).
+    subtree_shift: Option<Option<String>>,
 }
 
 const STRATEGIES: &[&str] = &["octopus", "ours", "recursive", "resolve", "subtree", "ort"];
@@ -107,10 +109,14 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
     // (diff algorithms, whitespace, renames) give the same result for the
     // line merges this engine performs.
     let mut favor = crate::cmd::merge_engine::Favor::None;
+    let mut subtree_shift =
+        (strategies.last().map(String::as_str) == Some("subtree")).then_some(None);
     for x in p.values("strategy-option") {
         match x.as_str() {
             "ours" => favor = crate::cmd::merge_engine::Favor::Ours,
             "theirs" => favor = crate::cmd::merge_engine::Favor::Theirs,
+            "subtree" => subtree_shift = Some(None),
+            s if s.starts_with("subtree=") => subtree_shift = Some(Some(s[8..].to_string())),
             _ => {}
         }
     }
@@ -157,6 +163,7 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
         no_verify: p.on("no-verify"),
         verify_signatures: p.on("verify-signatures"),
         favor,
+        subtree_shift,
     };
     let repo = open_repo()?;
     // SEQ-004 (M20 Cx-6): rerere rr-cache lock during merge.
@@ -172,9 +179,23 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
         return Err(CliError::fatal("No remote for the current branch."));
     }
     if positional.len() > 1 {
-        return Err(CliError::NotImplemented(
-            "merge of several heads (octopus) not implemented".into(),
-        ));
+        // Several heads: octopus (or `-s ours`) in `cmd::merge_many`.
+        drop(repo);
+        let many = crate::cmd::merge_many::ManyOpts {
+            strategy: o.strategy.clone(),
+            quiet: o.quiet,
+            stat: o.stat,
+            message: o.message.clone(),
+            commit: o.commit,
+            squash: o.squash,
+            ff_only: o.ff == Ff::Only,
+            into_name: o.into_name.clone(),
+            log: o.log,
+        };
+        return match crate::cmd::merge_many::merge_heads(&positional, &many)? {
+            crate::cmd::merge_many::ManyOutcome::Single(one) => merge_one(&one, &o),
+            crate::cmd::merge_many::ManyOutcome::Done => Ok(()),
+        };
     }
     drop(repo);
     merge_one(&positional[0], &o)
@@ -415,13 +436,37 @@ fn merge_one(name: &str, o: &MergeOpts) -> CliResult<()> {
             diff3: matches!(style.as_str(), "diff3" | "zdiff3"),
             favor: o.favor,
         };
+        if strategy == "octopus" {
+            // One head under octopus: only a really trivial merge succeeds.
+            say("Trying really trivial in-index merge...".to_string());
+            if !crate::cmd::merge_many::trivially_mergeable(&mut repo, &head, &theirs)? {
+                say("Nope.".to_string());
+                eprintln!("error: Merge requires file-level merging");
+                return Err(CliError::Exit(
+                    2,
+                    "Merge with strategy octopus failed.".into(),
+                ));
+            }
+            say("Wonderful.".to_string());
+            trivial = true;
+        }
         let resolve = strategy == "resolve";
         if resolve {
             say("Trying really trivial in-index merge...".to_string());
         }
-        let result = crate::cmd::merge_engine::merge_three_way_labeled(
-            &mut repo, &work, &head, &theirs, true, &labels,
-        )?;
+        let result = match &o.subtree_shift {
+            Some(prefix) => crate::cmd::merge_subtree::merge_shifted(
+                &mut repo,
+                &work,
+                &head,
+                &theirs,
+                prefix.as_deref(),
+                &labels,
+            )?,
+            None => crate::cmd::merge_engine::merge_three_way_labeled(
+                &mut repo, &work, &head, &theirs, true, &labels,
+            )?,
+        };
         if resolve {
             if result.auto_merged.is_empty() && result.conflicts.is_empty() {
                 say("Wonderful.".to_string());
@@ -707,7 +752,7 @@ fn touched_paths(
 /// git merge's closing diffstat (`--stat` block plus `create mode` /
 /// `delete mode` / `mode change` summary lines) from `from` to `to`.
 /// Cite: https://git-scm.com/docs/git-merge (merge.stat, default true).
-fn print_merge_diffstat(
+pub(crate) fn print_merge_diffstat(
     repo: &arks_repo::Repository,
     from: &arks_oid::Oid,
     to: &arks_oid::Oid,

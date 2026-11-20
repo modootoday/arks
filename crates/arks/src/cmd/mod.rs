@@ -5,6 +5,7 @@ pub mod am;
 pub mod apply;
 pub mod archive;
 pub mod attr;
+pub mod backfill;
 pub mod bisect;
 pub mod blame;
 pub mod branch;
@@ -17,6 +18,7 @@ pub mod commit;
 pub mod config;
 pub mod core;
 pub mod credential;
+pub mod credential_cache;
 pub mod credential_os;
 pub mod daemon;
 pub mod diff_cmd;
@@ -34,6 +36,7 @@ pub mod ignore;
 pub mod index_plumbing;
 pub mod inspect;
 pub mod interactive_patch;
+pub mod internal_helpers;
 pub mod lease;
 pub mod lock;
 pub mod log_cmd;
@@ -50,6 +53,10 @@ pub mod matrix_rest;
 pub mod merge;
 pub mod merge_base;
 pub mod merge_engine;
+pub mod merge_helpers;
+pub mod merge_many;
+pub mod merge_strategies;
+pub mod merge_subtree;
 pub mod notes;
 pub mod opt_parse;
 pub mod opt_spec;
@@ -68,6 +75,7 @@ pub mod raw_diff;
 pub mod rebase;
 pub mod remote;
 pub mod remote_admin;
+pub mod remote_helpers;
 pub mod remote_local;
 pub mod replace;
 pub mod replay;
@@ -92,6 +100,7 @@ pub mod worktree;
 pub use am::cmd_am;
 pub use apply::cmd_apply;
 pub use archive::{cmd_archive, encode_tag_payload, write_annotated_tag};
+pub use backfill::cmd_backfill;
 pub use bisect::cmd_bisect;
 pub use blame::{cmd_annotate, cmd_blame};
 pub use branch::{cmd_checkout, cmd_switch};
@@ -104,6 +113,9 @@ pub use config::cmd_config;
 pub use core::{cmd_add, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status, cmd_update_ref};
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
+};
+pub use credential_cache::{
+    cmd_credential_cache, cmd_credential_cache_daemon, cmd_credential_helper_selector,
 };
 pub use credential_os::cmd_credential_manager;
 pub use daemon::cmd_daemon;
@@ -119,6 +131,11 @@ pub use host_skew::{
     cmd_repo, cmd_survey, cmd_url_parse,
 };
 pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
+pub use internal_helpers::{
+    cmd_add_interactive_helper, cmd_bisect_helper, cmd_checkout_worker, cmd_env_helper,
+    cmd_fsmonitor_daemon, cmd_pickaxe, cmd_sh_i18n_envsubst, cmd_submodule_helper, cmd_update,
+    cmd_upload_archive_writer,
+};
 pub use lease::cmd_lease;
 pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show, cmd_whatchanged};
@@ -141,6 +158,11 @@ pub use matrix_rest::{
 };
 pub use merge::cmd_merge;
 pub use merge_base::cmd_merge_base;
+pub use merge_helpers::{cmd_merge_index, cmd_merge_one_file};
+pub use merge_strategies::{
+    cmd_merge_octopus, cmd_merge_ours, cmd_merge_recursive, cmd_merge_recursive_ours,
+    cmd_merge_recursive_theirs, cmd_merge_resolve, cmd_merge_subtree,
+};
 pub use notes::cmd_notes;
 pub use pack_transport::{cmd_fetch_pack, cmd_send_pack};
 pub use patch_id::cmd_patch_id;
@@ -156,6 +178,7 @@ pub use range_diff::cmd_range_diff;
 pub use raw_diff::{cmd_diff_files, cmd_diff_index, cmd_diff_tree};
 pub use rebase::cmd_rebase;
 pub use remote_admin::cmd_remote;
+pub use remote_helpers::{cmd_remote_curl, cmd_remote_ext, cmd_remote_fd};
 pub use replace::cmd_replace;
 pub use request_pull::cmd_request_pull;
 pub use rev_list::cmd_rev_list;

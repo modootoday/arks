@@ -69,3 +69,35 @@ fn ls_remote_http(url: &str) -> Result<Vec<RemoteRef>, RemoteError> {
     }
     Ok(from_ad(parse_advertisement(&info.body, "git-upload-pack")?))
 }
+
+/// Refs advertised by `url` plus the `HEAD` symref target when the peer
+/// advertises one (smart HTTP `symref=HEAD:<ref>` capability; other
+/// transports report refs only). Used by the `remote-http` helper's `list`.
+pub fn ls_remote_with_head(url: &str) -> Result<(Vec<RemoteRef>, Option<String>), RemoteError> {
+    if crate::local::is_local_remote(url)
+        || SshRemoteUrl::parse(url).is_ok()
+        || GitDaemonUrl::parse(url).is_ok()
+    {
+        return Ok((ls_remote(url)?, None));
+    }
+    let mut transport = UreqTransport::new();
+    let info = transport.exchange(&HttpRequest {
+        method: "GET".into(),
+        url: join_url(url, "info/refs?service=git-upload-pack"),
+        headers: vec![("Accept".into(), UPLOAD_AD.into())],
+        body: Vec::new(),
+    })?;
+    require_success(&info, "info/refs")?;
+    let ct = header(&info.headers, "content-type");
+    if looks_like_dumb_info_refs(ct, &info.body) {
+        return Ok((from_ad(parse_dumb_info_refs(&info.body)?), None));
+    }
+    if !content_type_is(ct, "git-upload-pack-advertisement") {
+        return Err(RemoteError::Protocol(
+            "info/refs was not a git-upload-pack advertisement".into(),
+        ));
+    }
+    let ad = parse_advertisement(&info.body, "git-upload-pack")?;
+    let head = crate::advertise::symref_target(&ad.capabilities, "HEAD");
+    Ok((from_ad(ad), head))
+}
