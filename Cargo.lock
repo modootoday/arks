@@ -58,7 +58,14 @@ name = "arks-hub"
 version = "0.0.0"
 dependencies = [
  "arks-net",
+ "arks-object",
+ "arks-oid",
+ "arks-refs",
+ "arks-repo",
+ "arks-store",
  "base64",
+ "crc32fast",
+ "flate2",
  "rustls",
  "rustls-pemfile",
  "serde",

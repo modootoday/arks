@@ -76,6 +76,31 @@ fn discussion_json(st: &HubStore, d: &Discussion) -> Value {
     })
 }
 
+/// Start a discussion announcing a published release (`release create --discussion-category`).
+pub(crate) fn create_for_release(
+    st: &mut HubStore,
+    owner: &str,
+    repo: &str,
+    title: &str,
+    body: &str,
+    category: &str,
+) {
+    let now = now_secs();
+    let d = Discussion {
+        number: next_id(&mut st.db.next_discussion),
+        owner: owner.into(),
+        repo: repo.into(),
+        title: title.into(),
+        body: body.into(),
+        category: category.into(),
+        state: default_open(),
+        user: st.actor.clone(),
+        created_at: now,
+        updated_at: now,
+    };
+    st.db.discussions.push(d);
+}
+
 pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
     let Some(seg) = segments(req.path, "/repos/") else {
         return Ok(None);

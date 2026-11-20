@@ -43,6 +43,8 @@ impl Forge {
             data_dir: dir.join("data"),
             rebind_desired: None,
             tls: None,
+            git_root: None,
+            git_url: None,
         };
         let stop = Arc::new(AtomicBool::new(false));
         let stop2 = stop.clone();

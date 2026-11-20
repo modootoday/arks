@@ -1,14 +1,34 @@
-//! File-backed local hub store (Partial; not Claimed). Never spawns git/gh.
+//! File-backed local forge store (`db.json`; Partial; not Claimed). Never spawns git/gh.
+//!
+//! Every field added after the first schema carries `#[serde(default…)]`, so older
+//! `db.json` files keep loading. Feature logic lives in `crate::forge::*`; this
+//! module owns the stored model, persistence, tokens and asset bytes.
 
+use crate::forge::artifacts::Artifact;
 use crate::forge::autolink::Autolink;
 use crate::forge::discussion::{Discussion, DiscussionComment};
 use crate::forge::gist::Gist;
 use crate::forge::keys::{DeployKey, GpgKey, SshKey};
 use crate::forge::project::{Project, ProjectField, ProjectItem};
+use crate::forge::rules::Ruleset;
+use crate::forge::status::CommitStatus;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+fn yes() -> bool {
+    true
+}
+
+fn main_branch() -> String {
+    "main".into()
+}
+
+fn issue_kind() -> String {
+    "issue".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct HubDb {
@@ -46,8 +66,18 @@ pub struct HubDb {
     pub next_project_item: u64,
     #[serde(default)]
     pub next_discussion_comment: u64,
+    #[serde(default)]
+    pub next_status: u64,
+    #[serde(default)]
+    pub next_ruleset: u64,
+    #[serde(default)]
+    pub next_artifact: u64,
     pub tokens: Vec<String>,
     pub user_login: String,
+    /// Token → account login (multi-account `auth login|switch`); unknown tokens act
+    /// as `user_login`.
+    #[serde(default)]
+    pub token_logins: BTreeMap<String, String>,
     pub repos: Vec<Repo>,
     pub issues: Vec<Issue>,
     pub pulls: Vec<Pull>,
@@ -83,6 +113,12 @@ pub struct HubDb {
     pub deploy_keys: Vec<DeployKey>,
     #[serde(default)]
     pub autolinks: Vec<Autolink>,
+    #[serde(default)]
+    pub statuses: Vec<CommitStatus>,
+    #[serde(default)]
+    pub rulesets: Vec<Ruleset>,
+    #[serde(default, rename = "issue_artifacts")]
+    pub artifacts: Vec<Artifact>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -95,6 +131,74 @@ pub struct Repo {
     /// Local-forge metadata archive flag (≠ git gc; never spawn git).
     #[serde(default)]
     pub archived: bool,
+    #[serde(default)]
+    pub homepage: String,
+    #[serde(default)]
+    pub topics: Vec<String>,
+    #[serde(default = "main_branch")]
+    pub default_branch: String,
+    /// `internal` when set; otherwise visibility follows `private`.
+    #[serde(default)]
+    pub internal: bool,
+    #[serde(default = "yes")]
+    pub has_issues: bool,
+    #[serde(default = "yes")]
+    pub has_wiki: bool,
+    #[serde(default = "yes")]
+    pub has_projects: bool,
+    #[serde(default)]
+    pub has_discussions: bool,
+    #[serde(default)]
+    pub is_template: bool,
+    #[serde(default)]
+    pub delete_branch_on_merge: bool,
+    #[serde(default = "yes")]
+    pub allow_merge_commit: bool,
+    #[serde(default = "yes")]
+    pub allow_squash_merge: bool,
+    #[serde(default = "yes")]
+    pub allow_rebase_merge: bool,
+    #[serde(default)]
+    pub allow_auto_merge: bool,
+    #[serde(default)]
+    pub allow_update_branch: bool,
+    #[serde(default = "yes")]
+    pub allow_forking: bool,
+    #[serde(default)]
+    pub squash_merge_commit_message: String,
+    /// `owner/name` of the fork parent.
+    #[serde(default)]
+    pub parent: Option<String>,
+    #[serde(default)]
+    pub license: Option<String>,
+    #[serde(default)]
+    pub created_at: u64,
+    #[serde(default)]
+    pub updated_at: u64,
+}
+
+impl Repo {
+    pub fn full_name(&self) -> String {
+        format!("{}/{}", self.owner, self.name)
+    }
+
+    pub fn visibility(&self) -> &'static str {
+        if self.internal {
+            "internal"
+        } else if self.private {
+            "private"
+        } else {
+            "public"
+        }
+    }
+}
+
+/// A branch linked to an issue (`issue develop`).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LinkedBranch {
+    pub name: String,
+    /// `owner/name` of the repository holding the branch.
+    pub repo: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,6 +214,27 @@ pub struct Issue {
     pub locked: bool,
     #[serde(default)]
     pub pinned: bool,
+    #[serde(default)]
+    pub labels: Vec<String>,
+    #[serde(default)]
+    pub assignees: Vec<String>,
+    /// Milestone number.
+    #[serde(default)]
+    pub milestone: Option<u64>,
+    #[serde(default)]
+    pub state_reason: Option<String>,
+    #[serde(default)]
+    pub lock_reason: Option<String>,
+    #[serde(default)]
+    pub projects: Vec<String>,
+    #[serde(default)]
+    pub linked_branches: Vec<LinkedBranch>,
+    #[serde(default)]
+    pub created_at: u64,
+    #[serde(default)]
+    pub updated_at: u64,
+    #[serde(default)]
+    pub closed_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -123,7 +248,7 @@ pub struct Pull {
     pub head: String,
     pub base: String,
     pub user: String,
-    /// Local-forge metadata merge only (≠ git worktree merge; never spawn git).
+    /// Merged flag; with forge Git content the base branch really moves.
     #[serde(default)]
     pub merged: bool,
     /// Draft PR metadata (gh `pr ready` clears this).
@@ -131,9 +256,39 @@ pub struct Pull {
     pub draft: bool,
     #[serde(default)]
     pub locked: bool,
+    #[serde(default)]
+    pub labels: Vec<String>,
+    #[serde(default)]
+    pub assignees: Vec<String>,
+    /// Requested reviewers (logins).
+    #[serde(default)]
+    pub reviewers: Vec<String>,
+    #[serde(default)]
+    pub milestone: Option<u64>,
+    #[serde(default)]
+    pub projects: Vec<String>,
+    #[serde(default = "yes")]
+    pub maintainer_can_modify: bool,
+    #[serde(default)]
+    pub lock_reason: Option<String>,
+    /// Auto-merge method (`merge` / `squash` / `rebase`) while enabled.
+    #[serde(default)]
+    pub auto_merge: Option<String>,
+    #[serde(default)]
+    pub merge_commit_sha: Option<String>,
+    #[serde(default)]
+    pub merged_by: Option<String>,
+    #[serde(default)]
+    pub created_at: u64,
+    #[serde(default)]
+    pub updated_at: u64,
+    #[serde(default)]
+    pub closed_at: Option<u64>,
+    #[serde(default)]
+    pub merged_at: Option<u64>,
 }
 
-/// PR review metadata only (≠ CI checks; never spawn git/gh).
+/// Pull-request review (≠ CI checks; never spawn git/gh).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Review {
     pub id: u64,
@@ -144,6 +299,8 @@ pub struct Review {
     pub event: String,
     pub user: String,
     pub state: String,
+    #[serde(default)]
+    pub submitted_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -151,10 +308,17 @@ pub struct Comment {
     pub id: u64,
     pub owner: String,
     pub repo: String,
-    /// Issue or PR number (GitHub comments API shares issues path).
+    /// Issue or pull-request number (see `kind`: arks numbers them separately).
     pub number: u64,
     pub body: String,
     pub user: String,
+    /// `issue` or `pull`.
+    #[serde(default = "issue_kind")]
+    pub kind: String,
+    #[serde(default)]
+    pub created_at: u64,
+    #[serde(default)]
+    pub updated_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -165,6 +329,10 @@ pub struct Label {
     pub name: String,
     pub color: String,
     pub description: String,
+    #[serde(default)]
+    pub created_at: u64,
+    #[serde(default)]
+    pub updated_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -177,6 +345,19 @@ pub struct Release {
     pub body: String,
     pub draft: bool,
     pub prerelease: bool,
+    #[serde(default)]
+    pub target_commitish: String,
+    /// Explicit `make_latest` choice; `None` = automatic (newest published).
+    #[serde(default)]
+    pub make_latest: Option<bool>,
+    #[serde(default)]
+    pub discussion_category: Option<String>,
+    #[serde(default)]
+    pub author: String,
+    #[serde(default)]
+    pub created_at: u64,
+    #[serde(default)]
+    pub published_at: Option<u64>,
 }
 
 /// Release asset metadata; bytes live under `data_dir/assets/{id}.bin`.
@@ -189,6 +370,10 @@ pub struct ReleaseAsset {
     pub name: String,
     pub content_type: String,
     pub size: u64,
+    #[serde(default)]
+    pub label: String,
+    #[serde(default)]
+    pub created_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -204,6 +389,14 @@ pub struct Milestone {
 pub struct HubStore {
     path: PathBuf,
     pub db: HubDb,
+    /// Root holding forge repositories' Git directories (`<data>/git` by default).
+    pub git_root: PathBuf,
+    /// Optional clone URL base (`<base>/<owner>/<name>.git`).
+    pub git_url: Option<String>,
+    /// Login of the account behind the current request's token.
+    pub actor: String,
+    /// External base URL of this forge (`http://127.0.0.1:3920`) for `html_url`s.
+    pub public_base: String,
 }
 
 impl HubStore {
@@ -242,6 +435,7 @@ impl HubStore {
                 ..HubDb::default()
             };
             // Seed a default repo for local smoke.
+            let now = now_secs();
             db.repos.push(Repo {
                 id: 1,
                 owner: "local".into(),
@@ -249,11 +443,40 @@ impl HubStore {
                 description: "local hub seed repo".into(),
                 private: false,
                 archived: false,
+                homepage: String::new(),
+                topics: Vec::new(),
+                default_branch: main_branch(),
+                internal: false,
+                has_issues: true,
+                has_wiki: true,
+                has_projects: true,
+                has_discussions: false,
+                is_template: false,
+                delete_branch_on_merge: false,
+                allow_merge_commit: true,
+                allow_squash_merge: true,
+                allow_rebase_merge: true,
+                allow_auto_merge: false,
+                allow_update_branch: false,
+                allow_forking: true,
+                squash_merge_commit_message: String::new(),
+                parent: None,
+                license: None,
+                created_at: now,
+                updated_at: now,
             });
             db.next_repo = 2;
             db
         };
-        let store = Self { path, db };
+        let actor = db.user_login.clone();
+        let store = Self {
+            path,
+            db,
+            git_root: dir.join("git"),
+            git_url: None,
+            actor,
+            public_base: "http://127.0.0.1:3920".into(),
+        };
         store.save()?;
         Ok(store)
     }
@@ -275,623 +498,52 @@ impl HubStore {
         }
     }
 
+    /// Account login for a token (falls back to the forge's default user).
+    pub fn login_for(&self, token: Option<&str>) -> String {
+        token
+            .and_then(|t| self.db.token_logins.get(t))
+            .cloned()
+            .unwrap_or_else(|| self.db.user_login.clone())
+    }
+
     pub fn ensure_token(&mut self, token: &str) {
         if !self.db.tokens.iter().any(|t| t == token) {
             self.db.tokens.push(token.to_string());
         }
     }
 
-    pub fn create_issue(&mut self, owner: &str, repo: &str, title: &str, body: &str) -> Issue {
-        let number = self.db.next_issue;
-        self.db.next_issue += 1;
-        let issue = Issue {
-            number,
-            owner: owner.into(),
-            repo: repo.into(),
-            title: title.into(),
-            body: body.into(),
-            state: "open".into(),
-            user: self.db.user_login.clone(),
-            locked: false,
-            pinned: false,
-        };
-        self.db.issues.push(issue.clone());
-        issue
-    }
-
-    pub fn create_pull(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        title: &str,
-        body: &str,
-        head: &str,
-        base: &str,
-    ) -> Pull {
-        let number = self.db.next_pr;
-        self.db.next_pr += 1;
-        let pull = Pull {
-            number,
-            owner: owner.into(),
-            repo: repo.into(),
-            title: title.into(),
-            body: body.into(),
-            state: "open".into(),
-            head: head.into(),
-            base: base.into(),
-            user: self.db.user_login.clone(),
-            merged: false,
-            draft: false,
-            locked: false,
-        };
-        self.db.pulls.push(pull.clone());
-        pull
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn create_pull_draft(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        title: &str,
-        body: &str,
-        head: &str,
-        base: &str,
-        draft: bool,
-    ) -> Pull {
-        let mut pull = self.create_pull(owner, repo, title, body, head, base);
-        if draft {
-            if let Some(p) = self
-                .db
-                .pulls
-                .iter_mut()
-                .find(|p| p.owner == owner && p.repo == repo && p.number == pull.number)
-            {
-                p.draft = true;
-                pull = p.clone();
-            }
-        }
-        pull
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn patch_issue(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        number: u64,
-        title: Option<&str>,
-        body: Option<&str>,
-        state: Option<&str>,
-        locked: Option<bool>,
-        pinned: Option<bool>,
-    ) -> Option<Issue> {
-        let issue = self
-            .db
-            .issues
-            .iter_mut()
-            .find(|i| i.owner == owner && i.repo == repo && i.number == number)?;
-        if let Some(t) = title {
-            issue.title = t.into();
-        }
-        if let Some(b) = body {
-            issue.body = b.into();
-        }
-        if let Some(s) = state {
-            issue.state = s.into();
-        }
-        if let Some(l) = locked {
-            issue.locked = l;
-        }
-        if let Some(p) = pinned {
-            issue.pinned = p;
-        }
-        Some(issue.clone())
-    }
-
-    pub fn transfer_issue(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        number: u64,
-        to_owner: &str,
-        to_repo: &str,
-    ) -> Option<Issue> {
-        // Ensure destination repo exists in local forge.
-        if !self
-            .db
-            .repos
-            .iter()
-            .any(|r| r.owner == to_owner && r.name == to_repo)
-        {
-            return None;
-        }
-        let issue = self
-            .db
-            .issues
-            .iter_mut()
-            .find(|i| i.owner == owner && i.repo == repo && i.number == number)?;
-        issue.owner = to_owner.into();
-        issue.repo = to_repo.into();
-        // Re-number into destination sequence.
-        let new_number = self.db.next_issue;
-        self.db.next_issue += 1;
-        issue.number = new_number;
-        Some(issue.clone())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn patch_pull(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        number: u64,
-        title: Option<&str>,
-        body: Option<&str>,
-        state: Option<&str>,
-        draft: Option<bool>,
-        locked: Option<bool>,
-    ) -> Option<Pull> {
-        let pull = self
-            .db
-            .pulls
-            .iter_mut()
-            .find(|p| p.owner == owner && p.repo == repo && p.number == number)?;
-        if let Some(t) = title {
-            pull.title = t.into();
-        }
-        if let Some(b) = body {
-            pull.body = b.into();
-        }
-        if let Some(s) = state {
-            pull.state = s.into();
-        }
-        if let Some(d) = draft {
-            pull.draft = d;
-        }
-        if let Some(l) = locked {
-            pull.locked = l;
-        }
-        Some(pull.clone())
-    }
-
-    pub fn create_review(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        pull_number: u64,
-        body: &str,
-        event: &str,
-    ) -> Option<Review> {
-        if !self
-            .db
-            .pulls
-            .iter()
-            .any(|p| p.owner == owner && p.repo == repo && p.number == pull_number)
-        {
-            return None;
-        }
-        if self.db.next_review == 0 {
-            self.db.next_review = 1;
-        }
-        let id = self.db.next_review;
-        self.db.next_review += 1;
-        let state = match event {
-            "APPROVE" => "APPROVED",
-            "REQUEST_CHANGES" => "CHANGES_REQUESTED",
-            _ => "COMMENTED",
-        };
-        let review = Review {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            pull_number,
-            body: body.into(),
-            event: event.into(),
-            user: self.db.user_login.clone(),
-            state: state.into(),
-        };
-        self.db.reviews.push(review.clone());
-        Some(review)
-    }
-
-    pub fn rename_repo(&mut self, owner: &str, name: &str, new_name: &str) -> Option<Repo> {
-        if self
-            .db
-            .repos
-            .iter()
-            .any(|r| r.owner == owner && r.name == new_name)
-        {
-            return None;
-        }
-        let repo = self
-            .db
-            .repos
-            .iter_mut()
-            .find(|r| r.owner == owner && r.name == name)?;
-        repo.name = new_name.into();
-        let out = repo.clone();
-        // Retarget issues/pulls/labels under old name.
-        for i in self
-            .db
-            .issues
-            .iter_mut()
-            .filter(|i| i.owner == owner && i.repo == name)
-        {
-            i.repo = new_name.into();
-        }
-        for p in self
-            .db
-            .pulls
-            .iter_mut()
-            .filter(|p| p.owner == owner && p.repo == name)
-        {
-            p.repo = new_name.into();
-        }
-        for l in self
-            .db
-            .labels
-            .iter_mut()
-            .filter(|l| l.owner == owner && l.repo == name)
-        {
-            l.repo = new_name.into();
-        }
-        Some(out)
-    }
-
-    pub fn delete_repo(&mut self, owner: &str, name: &str) -> bool {
-        let before = self.db.repos.len();
-        self.db
-            .repos
-            .retain(|r| !(r.owner == owner && r.name == name));
-        if self.db.repos.len() == before {
-            return false;
-        }
-        self.db
-            .issues
-            .retain(|i| !(i.owner == owner && i.repo == name));
-        self.db
-            .pulls
-            .retain(|p| !(p.owner == owner && p.repo == name));
-        self.db
-            .labels
-            .retain(|l| !(l.owner == owner && l.repo == name));
-        self.db
-            .releases
-            .retain(|r| !(r.owner == owner && r.repo == name));
-        true
-    }
-
-    /// Metadata-only merge: marks pull merged+closed. Never touches git objects.
-    pub fn merge_pull(&mut self, owner: &str, repo: &str, number: u64) -> Option<Pull> {
-        let pull = self
-            .db
-            .pulls
-            .iter_mut()
-            .find(|p| p.owner == owner && p.repo == repo && p.number == number)?;
-        pull.merged = true;
-        pull.state = "closed".into();
-        Some(pull.clone())
-    }
-
-    pub fn create_comment(&mut self, owner: &str, repo: &str, number: u64, body: &str) -> Comment {
-        if self.db.next_comment == 0 {
-            self.db.next_comment = 1;
-        }
-        let id = self.db.next_comment;
-        self.db.next_comment += 1;
-        let comment = Comment {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            number,
-            body: body.into(),
-            user: self.db.user_login.clone(),
-        };
-        self.db.comments.push(comment.clone());
-        comment
-    }
-
-    pub fn patch_label(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        name: &str,
-        new_name: Option<&str>,
-        color: Option<&str>,
-        description: Option<&str>,
-    ) -> Option<Label> {
-        let label = self
-            .db
-            .labels
-            .iter_mut()
-            .find(|l| l.owner == owner && l.repo == repo && l.name == name)?;
-        if let Some(n) = new_name {
-            label.name = n.into();
-        }
-        if let Some(c) = color {
-            label.color = c.into();
-        }
-        if let Some(d) = description {
-            label.description = d.into();
-        }
-        Some(label.clone())
-    }
-
-    pub fn delete_label(&mut self, owner: &str, repo: &str, name: &str) -> bool {
-        let before = self.db.labels.len();
-        self.db
-            .labels
-            .retain(|l| !(l.owner == owner && l.repo == repo && l.name == name));
-        self.db.labels.len() != before
-    }
-
-    pub fn find_release(&self, owner: &str, repo: &str, tag_or_id: &str) -> Option<&Release> {
-        if let Ok(id) = tag_or_id.parse::<u64>() {
-            if let Some(r) = self
-                .db
-                .releases
-                .iter()
-                .find(|r| r.owner == owner && r.repo == repo && r.id == id)
-            {
-                return Some(r);
-            }
-        }
-        self.db
-            .releases
-            .iter()
-            .find(|r| r.owner == owner && r.repo == repo && r.tag_name == tag_or_id)
-    }
-
-    pub fn create_repo(&mut self, owner: &str, name: &str, description: &str) -> Repo {
-        let id = self.db.next_repo;
-        self.db.next_repo += 1;
-        let repo = Repo {
-            id,
-            owner: owner.into(),
-            name: name.into(),
-            description: description.into(),
-            private: false,
-            archived: false,
-        };
-        self.db.repos.push(repo.clone());
-        repo
-    }
-
-    pub fn patch_repo(
-        &mut self,
-        owner: &str,
-        name: &str,
-        description: Option<&str>,
-        private: Option<bool>,
-        archived: Option<bool>,
-    ) -> Option<Repo> {
-        let repo = self
-            .db
-            .repos
-            .iter_mut()
-            .find(|r| r.owner == owner && r.name == name)?;
-        if let Some(d) = description {
-            repo.description = d.into();
-        }
-        if let Some(p) = private {
-            repo.private = p;
-        }
-        if let Some(a) = archived {
-            repo.archived = a;
-        }
-        Some(repo.clone())
-    }
-
-    pub fn delete_issue(&mut self, owner: &str, repo: &str, number: u64) -> bool {
-        let before = self.db.issues.len();
-        self.db
-            .issues
-            .retain(|i| !(i.owner == owner && i.repo == repo && i.number == number));
-        self.db.issues.len() < before
-    }
-
-    pub fn create_label(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        name: &str,
-        color: &str,
-        description: &str,
-    ) -> Label {
-        if self.db.next_label == 0 {
-            self.db.next_label = 1;
-        }
-        let id = self.db.next_label;
-        self.db.next_label += 1;
-        let label = Label {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: name.into(),
-            color: color.into(),
-            description: description.into(),
-        };
-        self.db.labels.push(label.clone());
-        label
-    }
-
-    pub fn create_release(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        tag_name: &str,
-        name: &str,
-        body: &str,
-    ) -> Release {
-        if self.db.next_release == 0 {
-            self.db.next_release = 1;
-        }
-        let id = self.db.next_release;
-        self.db.next_release += 1;
-        let release = Release {
-            id,
-            owner: owner.into(),
-            repo: repo.into(),
-            tag_name: tag_name.into(),
-            name: if name.is_empty() {
-                tag_name.into()
-            } else {
-                name.into()
-            },
-            body: body.into(),
-            draft: false,
-            prerelease: false,
-        };
-        self.db.releases.push(release.clone());
-        release
-    }
-
-    fn data_root(&self) -> PathBuf {
+    pub fn data_root(&self) -> PathBuf {
         self.path
             .parent()
             .map(Path::to_path_buf)
             .unwrap_or_else(|| PathBuf::from("."))
     }
 
-    fn assets_dir(&self) -> PathBuf {
+    pub fn assets_dir(&self) -> PathBuf {
         self.data_root().join("assets")
     }
 
-    pub fn upload_release_asset(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        release_id: u64,
-        name: &str,
-        content_type: &str,
-        bytes: &[u8],
-    ) -> Option<ReleaseAsset> {
-        if !self
-            .db
-            .releases
-            .iter()
-            .any(|r| r.owner == owner && r.repo == repo && r.id == release_id)
-        {
-            return None;
-        }
-        if self.db.next_asset == 0 {
-            self.db.next_asset = 1;
-        }
-        let id = self.db.next_asset;
-        self.db.next_asset += 1;
-        let dir = self.assets_dir();
-        let _ = fs::create_dir_all(&dir);
-        let path = dir.join(format!("{id}.bin"));
-        fs::write(&path, bytes).ok()?;
-        let asset = ReleaseAsset {
-            id,
-            release_id,
-            owner: owner.into(),
-            repo: repo.into(),
-            name: name.into(),
-            content_type: if content_type.is_empty() {
-                "application/octet-stream".into()
-            } else {
-                content_type.into()
-            },
-            size: bytes.len() as u64,
-        };
-        self.db.assets.push(asset.clone());
-        Some(asset)
-    }
-
-    pub fn find_asset(&self, owner: &str, repo: &str, id: u64) -> Option<&ReleaseAsset> {
-        self.db
-            .assets
-            .iter()
-            .find(|a| a.owner == owner && a.repo == repo && a.id == id)
-    }
-
     pub fn read_asset_bytes(&self, id: u64) -> Option<Vec<u8>> {
-        let path = self.assets_dir().join(format!("{id}.bin"));
-        fs::read(path).ok()
+        fs::read(self.assets_dir().join(format!("{id}.bin"))).ok()
     }
 
-    pub fn delete_asset(&mut self, owner: &str, repo: &str, id: u64) -> bool {
-        let before = self.db.assets.len();
+    pub fn find_repo(&self, owner: &str, name: &str) -> Option<&Repo> {
         self.db
-            .assets
-            .retain(|a| !(a.owner == owner && a.repo == repo && a.id == id));
-        let path = self.assets_dir().join(format!("{id}.bin"));
-        let _ = fs::remove_file(path);
-        self.db.assets.len() != before
-    }
-
-    pub fn update_release(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        tag_or_id: &str,
-        name: Option<&str>,
-        body: Option<&str>,
-        tag_name: Option<&str>,
-    ) -> Option<Release> {
-        let id = self.find_release(owner, repo, tag_or_id)?.id;
-        let rel = self
-            .db
-            .releases
-            .iter_mut()
-            .find(|r| r.owner == owner && r.repo == repo && r.id == id)?;
-        if let Some(n) = name {
-            rel.name = n.into();
-        }
-        if let Some(b) = body {
-            rel.body = b.into();
-        }
-        if let Some(t) = tag_name {
-            rel.tag_name = t.into();
-        }
-        Some(rel.clone())
-    }
-
-    pub fn delete_release(&mut self, owner: &str, repo: &str, tag_or_id: &str) -> bool {
-        let Some(id) = self.find_release(owner, repo, tag_or_id).map(|r| r.id) else {
-            return false;
-        };
-        self.db
-            .releases
-            .retain(|r| !(r.owner == owner && r.repo == repo && r.id == id));
-        let asset_ids: Vec<u64> = self
-            .db
-            .assets
+            .repos
             .iter()
-            .filter(|a| a.owner == owner && a.repo == repo && a.release_id == id)
-            .map(|a| a.id)
-            .collect();
-        for aid in asset_ids {
-            let _ = self.delete_asset(owner, repo, aid);
-        }
-        true
+            .find(|r| r.owner == owner && r.name == name)
     }
 
-    pub fn create_milestone(
-        &mut self,
-        owner: &str,
-        repo: &str,
-        title: &str,
-        description: &str,
-    ) -> Milestone {
-        if self.db.next_milestone == 0 {
-            self.db.next_milestone = 1;
-        }
-        let number = self.db.next_milestone;
-        self.db.next_milestone += 1;
-        let m = Milestone {
-            number,
-            owner: owner.into(),
-            repo: repo.into(),
-            title: title.into(),
-            description: description.into(),
-            state: "open".into(),
-        };
-        self.db.milestones.push(m.clone());
-        m
+    pub fn find_repo_mut(&mut self, owner: &str, name: &str) -> Option<&mut Repo> {
+        self.db
+            .repos
+            .iter_mut()
+            .find(|r| r.owner == owner && r.name == name)
+    }
+
+    /// Git directory for a forge repository, when it has content.
+    pub fn git_dir(&self, owner: &str, name: &str) -> Option<PathBuf> {
+        crate::forge::git::repo_dir(&self.git_root, owner, name)
     }
 }
 
@@ -926,6 +578,10 @@ mod tests {
         let db: HubDb = serde_json::from_str(raw).expect("legacy db loads");
         assert_eq!(db.next_issue, 3);
         assert_eq!(db.user_login, "local");
+        assert!(
+            db.artifacts.is_empty(),
+            "old Actions artifacts are not issue artifacts"
+        );
         let out = serde_json::to_string(&db).unwrap();
         assert!(!out.contains("workflows"));
         assert!(!out.contains("next_run"));
@@ -955,5 +611,30 @@ mod tests {
         assert_eq!(db.gpg_keys[0].key_id, "00000000");
         assert_eq!(db.discussions[0].state, "open");
         assert!(db.deploy_keys.is_empty() && db.autolinks.is_empty());
+    }
+
+    /// Core records written before the gh-argv wave (no labels, timestamps, repo
+    /// settings) load with gh-like defaults.
+    #[test]
+    fn legacy_core_records_load_with_defaults() {
+        let raw = r#"{
+            "next_issue": 2, "next_pr": 2, "next_repo": 2, "next_label": 1,
+            "tokens": ["t"], "user_login": "local",
+            "repos": [{"id": 1, "owner": "o", "name": "r", "description": "", "private": false}],
+            "issues": [{"number": 1, "owner": "o", "repo": "r", "title": "t", "body": "",
+                        "state": "open", "user": "local"}],
+            "pulls": [{"number": 1, "owner": "o", "repo": "r", "title": "p", "body": "",
+                       "state": "open", "head": "f", "base": "main", "user": "local"}],
+            "comments": [{"id": 1, "owner": "o", "repo": "r", "number": 1, "body": "c",
+                          "user": "local"}]
+        }"#;
+        let db: HubDb = serde_json::from_str(raw).expect("legacy core loads");
+        let r = &db.repos[0];
+        assert_eq!(r.default_branch, "main");
+        assert!(r.has_issues && r.allow_merge_commit && !r.is_template);
+        assert!(db.issues[0].labels.is_empty());
+        assert!(db.pulls[0].maintainer_can_modify);
+        assert_eq!(db.comments[0].kind, "issue");
+        assert!(db.statuses.is_empty() && db.rulesets.is_empty());
     }
 }

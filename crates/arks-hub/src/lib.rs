@@ -10,6 +10,7 @@
 //! `.spec/sot/arks-cli-personality-factory.sot.md`
 
 #![forbid(unsafe_code)]
+#![recursion_limit = "256"]
 
 mod forge;
 mod http_min;

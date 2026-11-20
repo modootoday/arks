@@ -22,3 +22,13 @@ rustls-pemfile = { workspace = true }
 base64 = { workspace = true }
 sha1collisiondetection = { workspace = true }
 sha2 = { workspace = true }
+# Forge repository content (contents API, search, pull-request diff/merge): in-process
+# Git object and ref access; never spawns git.
+arks-oid = { workspace = true }
+arks-object = { workspace = true }
+arks-refs = { workspace = true }
+arks-repo = { workspace = true }
+arks-store = { workspace = true }
+# Source archives for `release download --archive` (tar.gz / zip).
+flate2 = { workspace = true }
+crc32fast = { workspace = true }

@@ -31,6 +31,10 @@ pub struct ForgeServeOptions {
     pub rebind_desired: Option<ForgeListenRebindSlot>,
     /// Optional rustls server config for in-process TLS terminate (B3/B9).
     pub tls: Option<Arc<ServerConfig>>,
+    /// Root of forge repositories' Git directories (default `<data_dir>/git`).
+    pub git_root: Option<PathBuf>,
+    /// Clone URL base announced as `clone_url` (`<base>/<owner>/<name>.git`).
+    pub git_url: Option<String>,
 }
 
 impl std::fmt::Debug for ForgeServeOptions {
@@ -40,6 +44,8 @@ impl std::fmt::Debug for ForgeServeOptions {
             .field("data_dir", &self.data_dir)
             .field("rebind_desired", &self.rebind_desired.is_some())
             .field("tls", &self.tls.is_some())
+            .field("git_root", &self.git_root)
+            .field("git_url", &self.git_url)
             .finish()
     }
 }
@@ -53,6 +59,8 @@ impl Default for ForgeServeOptions {
             data_dir: default_forge_data_dir(),
             rebind_desired: None,
             tls: None,
+            git_root: None,
+            git_url: None,
         }
     }
 }
@@ -112,6 +120,8 @@ pub fn run_serve(args: &[String]) -> Result<(), String> {
             data_dir: data,
             rebind_desired: None,
             tls: None,
+            git_root: std::env::var_os("ARKS_HUB_GIT_ROOT").map(PathBuf::from),
+            git_url: std::env::var("ARKS_HUB_GIT_URL").ok(),
         },
         stop,
     )
@@ -125,8 +135,18 @@ pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result
              [[sot:root/arks-self-host-server]])"
         );
     }
-    let store = Arc::new(Mutex::new(HubStore::open(&opts.data_dir)?));
+    let mut hub = HubStore::open(&opts.data_dir)?;
+    if let Some(root) = &opts.git_root {
+        hub.git_root = root.clone();
+    }
+    hub.git_url = opts.git_url.clone();
     let mut listener = TcpListener::bind(opts.listen).map_err(|e| e.to_string())?;
+    hub.public_base = format!(
+        "{}://{}",
+        forge_serve_scheme(&opts),
+        listener.local_addr().map_err(|e| e.to_string())?
+    );
+    let store = Arc::new(Mutex::new(hub));
     listener.set_nonblocking(true).map_err(|e| e.to_string())?;
     let mut current = opts.listen;
     let scheme = forge_serve_scheme(&opts);
@@ -289,18 +309,6 @@ fn handle_client<S: Read + Write>(
         .split_once('?')
         .map(|(p, q)| (p.to_string(), q.to_string()))
         .unwrap_or((req.path.clone(), String::new()));
-    let query_q = query
-        .split('&')
-        .filter_map(|pair| {
-            let (k, v) = pair.split_once('=')?;
-            if k == "q" {
-                Some(urlencoding_lite_decode(v))
-            } else {
-                None
-            }
-        })
-        .next()
-        .unwrap_or_default();
 
     let mut st = store
         .lock()
@@ -316,837 +324,77 @@ fn handle_client<S: Read + Write>(
             json!({"message":"Requires authentication","documentation_url":"arks hub auth login"});
         return respond(stream, 401, &body);
     }
+    st.actor = st.login_for(token.as_deref());
 
-    // Register token (local login bridge).
+    // Register token (local login bridge); `login` names the account (multi-account).
     if req.method == "POST" && path == "/login" {
         let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
         let tok = v
             .get("token")
             .and_then(|x| x.as_str())
-            .unwrap_or("local-dev-token");
-        st.ensure_token(tok);
+            .unwrap_or("local-dev-token")
+            .to_string();
+        st.ensure_token(&tok);
+        if let Some(login) = v
+            .get("login")
+            .and_then(|x| x.as_str())
+            .filter(|s| !s.is_empty())
+        {
+            st.db.token_logins.insert(tok.clone(), login.to_string());
+        }
         st.save()?;
-        return respond(
-            stream,
-            200,
-            &json!({"token": tok, "login": st.db.user_login}),
-        );
+        let login = st.login_for(Some(&tok));
+        return respond(stream, 200, &json!({"token": tok, "login": login}));
     }
 
     if req.method == "GET" && path == "/user" {
+        let login = st.actor.clone();
         return respond(
             stream,
             200,
-            &json!({"login": st.db.user_login, "id": 1, "type": "User"}),
+            &json!({"login": login, "id": 1, "type": "User", "name": login}),
         );
     }
+    if req.method == "GET" {
+        if let Some(login) = path.strip_prefix("/users/").filter(|l| !l.contains('/')) {
+            let body = crate::forge::repos::user_json(&st, login);
+            return respond(stream, 200, &body);
+        }
+    }
 
-    // arks-owned forge groups (gist, keys, projects, discussions, autolinks).
+    let accept = header_value(&req.headers, "accept").unwrap_or_default();
+    let content_type = header_value(&req.headers, "content-type").unwrap_or_default();
     let forge_req = crate::forge::Req {
         method: &req.method,
         path: &path,
         query: &query,
         body: &req.body,
+        accept: &accept,
+        content_type: &content_type,
     };
     if let Some((status, body)) = crate::forge::route(&mut st, &forge_req)? {
-        return respond(stream, status, &body);
-    }
-
-    if req.method == "GET" && path == "/user/repos" {
-        let repos: Vec<Value> = st
-            .db
-            .repos
-            .iter()
-            .map(|r| {
-                json!({
-                    "id": r.id,
-                    "name": r.name,
-                    "full_name": format!("{}/{}", r.owner, r.name),
-                    "private": r.private,
-                    "description": r.description,
-                    "owner": {"login": r.owner},
-                })
-            })
-            .collect();
-        return respond(stream, 200, &Value::Array(repos));
-    }
-
-    if req.method == "POST" && path == "/user/repos" {
-        let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-        let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("repo");
-        let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
-        let owner = st.db.user_login.clone();
-        let repo = st.create_repo(&owner, name, desc);
-        st.save()?;
-        return respond(
-            stream,
-            201,
-            &json!({
-                "id": repo.id,
-                "name": repo.name,
-                "full_name": format!("{}/{}", repo.owner, repo.name),
-                "private": repo.private,
-                "description": repo.description,
-                "owner": {"login": repo.owner},
-            }),
-        );
-    }
-
-    // /repos/{owner}/{repo}/…
-    if let Some(rest) = path.strip_prefix("/repos/") {
-        let parts: Vec<&str> = rest.split('/').collect();
-        if parts.len() >= 2 {
-            let owner = parts[0];
-            let repo = parts[1];
-            if parts.len() == 2 && req.method == "GET" {
-                if let Some(r) = st
-                    .db
-                    .repos
-                    .iter()
-                    .find(|r| r.owner == owner && r.name == repo)
-                {
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "id": r.id,
-                            "name": r.name,
-                            "full_name": format!("{}/{}", r.owner, r.name),
-                            "private": r.private,
-                            "description": r.description,
-                            "archived": r.archived,
-                            "owner": {"login": r.owner},
-                        }),
-                    );
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            if parts.len() == 2 && req.method == "PATCH" {
-                let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                let description = v.get("description").and_then(|x| x.as_str());
-                let private = v.get("private").and_then(|x| x.as_bool());
-                let archived = v.get("archived").and_then(|x| x.as_bool());
-                let new_name = v.get("name").and_then(|x| x.as_str());
-                let r = if let Some(nn) = new_name.filter(|n| *n != repo) {
-                    st.rename_repo(owner, repo, nn).and_then(|renamed| {
-                        st.patch_repo(
-                            &renamed.owner,
-                            &renamed.name,
-                            description,
-                            private,
-                            archived,
-                        )
-                        .or(Some(renamed))
-                    })
-                } else {
-                    st.patch_repo(owner, repo, description, private, archived)
-                };
-                if let Some(r) = r {
-                    st.save()?;
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "id": r.id,
-                            "name": r.name,
-                            "full_name": format!("{}/{}", r.owner, r.name),
-                            "private": r.private,
-                            "description": r.description,
-                            "archived": r.archived,
-                            "owner": {"login": r.owner},
-                        }),
-                    );
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            if parts.len() == 2 && req.method == "DELETE" {
-                if st.delete_repo(owner, repo) {
-                    st.save()?;
-                    return respond(stream, 204, &json!({}));
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            if parts.len() == 3 && parts[2] == "issues" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .issues
-                        .iter()
-                        .filter(|i| i.owner == owner && i.repo == repo)
-                        .map(|i| {
-                            json!({
-                                "number": i.number,
-                                "title": i.title,
-                                "body": i.body,
-                                "state": i.state,
-                                "user": {"login": i.user},
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("issue");
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let issue = st.create_issue(owner, repo, title, body);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "number": issue.number,
-                            "title": issue.title,
-                            "body": issue.body,
-                            "state": issue.state,
-                            "user": {"login": issue.user},
-                        }),
-                    );
-                }
-            }
-            if parts.len() == 4
-                && parts[2] == "issues"
-                && let Ok(n) = parts[3].parse::<u64>()
-            {
-                if req.method == "PATCH" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str());
-                    let body = v.get("body").and_then(|x| x.as_str());
-                    let state = v.get("state").and_then(|x| x.as_str());
-                    let locked = v.get("locked").and_then(|x| x.as_bool());
-                    let pinned = v.get("pinned").and_then(|x| x.as_bool());
-                    // Transfer: {"owner":"o","repo":"r"} or {"transfer_to":"o/r"}
-                    if let Some(to) = v
-                        .get("transfer_to")
-                        .and_then(|x| x.as_str())
-                        .and_then(|s| s.split_once('/'))
-                        .or_else(|| {
-                            let o = v.get("owner").and_then(|x| x.as_str())?;
-                            let r = v.get("repo").and_then(|x| x.as_str())?;
-                            Some((o, r))
-                        })
-                    {
-                        if let Some(i) = st.transfer_issue(owner, repo, n, to.0, to.1) {
-                            st.save()?;
-                            return respond(
-                                stream,
-                                200,
-                                &json!({
-                                    "number": i.number,
-                                    "title": i.title,
-                                    "body": i.body,
-                                    "state": i.state,
-                                    "locked": i.locked,
-                                    "pinned": i.pinned,
-                                    "owner": {"login": i.owner},
-                                    "repository": {"full_name": format!("{}/{}", i.owner, i.repo)},
-                                    "user": {"login": i.user},
-                                }),
-                            );
-                        }
-                        return respond(stream, 404, &json!({"message":"Not Found"}));
-                    }
-                    if let Some(i) =
-                        st.patch_issue(owner, repo, n, title, body, state, locked, pinned)
-                    {
-                        st.save()?;
-                        return respond(
-                            stream,
-                            200,
-                            &json!({
-                                "number": i.number,
-                                "title": i.title,
-                                "body": i.body,
-                                "state": i.state,
-                                "locked": i.locked,
-                                "pinned": i.pinned,
-                                "user": {"login": i.user},
-                            }),
-                        );
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if req.method == "DELETE" {
-                    if st.delete_issue(owner, repo, n) {
-                        st.save()?;
-                        return respond(stream, 204, &json!({}));
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if let Some(i) = st
-                    .db
-                    .issues
-                    .iter()
-                    .find(|i| i.owner == owner && i.repo == repo && i.number == n)
-                {
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "number": i.number,
-                            "title": i.title,
-                            "body": i.body,
-                            "state": i.state,
-                            "locked": i.locked,
-                            "pinned": i.pinned,
-                            "user": {"login": i.user},
-                        }),
-                    );
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            // Issue/PR comments (GitHub shares /issues/{n}/comments for both).
-            if parts.len() == 5
-                && parts[2] == "issues"
-                && parts[4] == "comments"
-                && let Ok(n) = parts[3].parse::<u64>()
-            {
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let c = st.create_comment(owner, repo, n, body);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "id": c.id,
-                            "body": c.body,
-                            "user": {"login": c.user},
-                            "issue_url": format!("/repos/{owner}/{repo}/issues/{n}"),
-                        }),
-                    );
-                }
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .comments
-                        .iter()
-                        .filter(|c| c.owner == owner && c.repo == repo && c.number == n)
-                        .map(|c| {
-                            json!({
-                                "id": c.id,
-                                "body": c.body,
-                                "user": {"login": c.user},
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-            }
-            if parts.len() == 3 && parts[2] == "pulls" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .pulls
-                        .iter()
-                        .filter(|p| p.owner == owner && p.repo == repo)
-                        .map(|p| {
-                            json!({
-                                "number": p.number,
-                                "title": p.title,
-                                "body": p.body,
-                                "state": p.state,
-                                "draft": p.draft,
-                                "merged": p.merged,
-                                "head": {"ref": p.head},
-                                "base": {"ref": p.base},
-                                "user": {"login": p.user},
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("pr");
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let head = v.get("head").and_then(|x| x.as_str()).unwrap_or("head");
-                    let base = v.get("base").and_then(|x| x.as_str()).unwrap_or("main");
-                    let draft = v.get("draft").and_then(|x| x.as_bool()).unwrap_or(false);
-                    let pull = st.create_pull_draft(owner, repo, title, body, head, base, draft);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "number": pull.number,
-                            "title": pull.title,
-                            "body": pull.body,
-                            "state": pull.state,
-                            "draft": pull.draft,
-                            "merged": pull.merged,
-                            "head": {"ref": pull.head},
-                            "base": {"ref": pull.base},
-                            "user": {"login": pull.user},
-                        }),
-                    );
-                }
-            }
-            if parts.len() == 4
-                && parts[2] == "pulls"
-                && let Ok(n) = parts[3].parse::<u64>()
-            {
-                if req.method == "PATCH" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v.get("title").and_then(|x| x.as_str());
-                    let body = v.get("body").and_then(|x| x.as_str());
-                    let state = v.get("state").and_then(|x| x.as_str());
-                    let draft = v.get("draft").and_then(|x| x.as_bool());
-                    let locked = v.get("locked").and_then(|x| x.as_bool());
-                    if let Some(p) =
-                        st.patch_pull(owner, repo, n, title, body, state, draft, locked)
-                    {
-                        st.save()?;
-                        return respond(
-                            stream,
-                            200,
-                            &json!({
-                                "number": p.number,
-                                "title": p.title,
-                                "body": p.body,
-                                "state": p.state,
-                                "draft": p.draft,
-                                "locked": p.locked,
-                                "merged": p.merged,
-                                "head": {"ref": p.head},
-                                "base": {"ref": p.base},
-                                "user": {"login": p.user},
-                            }),
-                        );
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if let Some(p) = st
-                    .db
-                    .pulls
-                    .iter()
-                    .find(|p| p.owner == owner && p.repo == repo && p.number == n)
-                {
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "number": p.number,
-                            "title": p.title,
-                            "body": p.body,
-                            "state": p.state,
-                            "draft": p.draft,
-                            "locked": p.locked,
-                            "merged": p.merged,
-                            "head": {"ref": p.head},
-                            "base": {"ref": p.base},
-                            "user": {"login": p.user},
-                        }),
-                    );
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            // PR reviews metadata (≠ CI checks).
-            if parts.len() == 5
-                && parts[2] == "pulls"
-                && parts[4] == "reviews"
-                && let Ok(n) = parts[3].parse::<u64>()
-            {
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let event = v.get("event").and_then(|x| x.as_str()).unwrap_or("COMMENT");
-                    if let Some(r) = st.create_review(owner, repo, n, body, event) {
-                        st.save()?;
-                        return respond(
-                            stream,
-                            200,
-                            &json!({
-                                "id": r.id,
-                                "body": r.body,
-                                "event": r.event,
-                                "state": r.state,
-                                "user": {"login": r.user},
-                                "pull_request_url": format!("/repos/{owner}/{repo}/pulls/{n}"),
-                            }),
-                        );
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .reviews
-                        .iter()
-                        .filter(|r| r.owner == owner && r.repo == repo && r.pull_number == n)
-                        .map(|r| {
-                            json!({
-                                "id": r.id,
-                                "body": r.body,
-                                "event": r.event,
-                                "state": r.state,
-                                "user": {"login": r.user},
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-            }
-            // Metadata merge only (≠ git merge; never spawn git).
-            if parts.len() == 5
-                && parts[2] == "pulls"
-                && parts[4] == "merge"
-                && let Ok(n) = parts[3].parse::<u64>()
-                && req.method == "PUT"
-            {
-                if let Some(p) = st.merge_pull(owner, repo, n) {
-                    st.save()?;
-                    return respond(
-                        stream,
-                        200,
-                        &json!({
-                            "sha": format!("local-merge-{}", p.number),
-                            "merged": true,
-                            "message": "Pull Request successfully merged (local-forge metadata)",
-                            "number": p.number,
-                            "state": p.state,
-                        }),
-                    );
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            if parts.len() == 3 && parts[2] == "labels" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .labels
-                        .iter()
-                        .filter(|l| l.owner == owner && l.repo == repo)
-                        .map(|l| {
-                            json!({
-                                "id": l.id,
-                                "name": l.name,
-                                "color": l.color,
-                                "description": l.description,
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("label");
-                    let color = v.get("color").and_then(|x| x.as_str()).unwrap_or("ededed");
-                    let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
-                    let label = st.create_label(owner, repo, name, color, desc);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "id": label.id,
-                            "name": label.name,
-                            "color": label.color,
-                            "description": label.description,
-                        }),
-                    );
-                }
-            }
-            if parts.len() == 4 && parts[2] == "labels" {
-                let name = parts[3];
-                if req.method == "PATCH" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let new_name = v.get("new_name").and_then(|x| x.as_str());
-                    let color = v.get("color").and_then(|x| x.as_str());
-                    let desc = v.get("description").and_then(|x| x.as_str());
-                    if let Some(label) = st.patch_label(owner, repo, name, new_name, color, desc) {
-                        st.save()?;
-                        return respond(
-                            stream,
-                            200,
-                            &json!({
-                                "id": label.id,
-                                "name": label.name,
-                                "color": label.color,
-                                "description": label.description,
-                            }),
-                        );
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if req.method == "DELETE" {
-                    if st.delete_label(owner, repo, name) {
-                        st.save()?;
-                        return respond(stream, 204, &json!({}));
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-            }
-            // Releases (local forge; assets Claimed under IW-HUB-ASSETS).
-            if parts.len() == 3 && parts[2] == "releases" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .releases
-                        .iter()
-                        .filter(|r| r.owner == owner && r.repo == repo)
-                        .map(|r| release_json(&st, r))
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let tag = v
-                        .get("tag_name")
-                        .and_then(|x| x.as_str())
-                        .unwrap_or("v0.0.0");
-                    let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("");
-                    let body = v.get("body").and_then(|x| x.as_str()).unwrap_or("");
-                    let rel = st.create_release(owner, repo, tag, name, body);
-                    st.save()?;
-                    return respond(stream, 201, &release_json(&st, &rel));
-                }
-            }
-            // release view / edit / delete by id
-            if parts.len() == 4 && parts[2] == "releases" {
-                let key = parts[3];
-                if req.method == "GET" {
-                    if let Some(r) = st.find_release(owner, repo, key) {
-                        return respond(stream, 200, &release_json(&st, r));
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if req.method == "PATCH" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let name = v.get("name").and_then(|x| x.as_str());
-                    let body = v.get("body").and_then(|x| x.as_str());
-                    let tag = v.get("tag_name").and_then(|x| x.as_str());
-                    if let Some(r) = st.update_release(owner, repo, key, name, body, tag) {
-                        st.save()?;
-                        return respond(stream, 200, &release_json(&st, &r));
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if req.method == "DELETE" {
-                    if st.delete_release(owner, repo, key) {
-                        st.save()?;
-                        return respond(stream, 204, &json!({}));
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-            }
-            if parts.len() == 5
-                && parts[2] == "releases"
-                && parts[3] == "tags"
-                && req.method == "GET"
-            {
-                if let Some(r) = st.find_release(owner, repo, parts[4]) {
-                    return respond(stream, 200, &release_json(&st, r));
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            // POST /repos/{o}/{r}/releases/{id}/assets?name=
-            if parts.len() == 5
-                && parts[2] == "releases"
-                && parts[4] == "assets"
-                && req.method == "POST"
-            {
-                let release_id: u64 = parts[3].parse().unwrap_or(0);
-                let name = query
-                    .split('&')
-                    .find_map(|pair| {
-                        let (k, v) = pair.split_once('=')?;
-                        (k == "name").then(|| v.to_string())
-                    })
-                    .unwrap_or_else(|| "asset.bin".into());
-                let ctype = header_value(&req.headers, "content-type")
-                    .unwrap_or_else(|| "application/octet-stream".into());
-                if let Some(a) =
-                    st.upload_release_asset(owner, repo, release_id, &name, &ctype, &req.body)
-                {
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "id": a.id,
-                            "name": a.name,
-                            "size": a.size,
-                            "content_type": a.content_type,
-                            "state": "uploaded",
-                        }),
-                    );
-                }
-                return respond(stream, 404, &json!({"message":"Not Found"}));
-            }
-            // GET/DELETE /repos/{o}/{r}/releases/assets/{id}
-            if parts.len() == 5 && parts[2] == "releases" && parts[3] == "assets" {
-                let asset_id: u64 = parts[4].parse().unwrap_or(0);
-                if req.method == "GET" {
-                    if let Some(a) = st.find_asset(owner, repo, asset_id) {
-                        let accept = header_value(&req.headers, "accept").unwrap_or_default();
-                        if accept.contains("application/octet-stream") {
-                            if let Some(bytes) = st.read_asset_bytes(a.id) {
-                                return write_http_response(
-                                    stream,
-                                    200,
-                                    "OK",
-                                    &a.content_type,
-                                    &bytes,
-                                );
-                            }
-                        }
-                        return respond(
-                            stream,
-                            200,
-                            &json!({
-                                "id": a.id,
-                                "name": a.name,
-                                "size": a.size,
-                                "content_type": a.content_type,
-                                "state": "uploaded",
-                            }),
-                        );
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-                if req.method == "DELETE" {
-                    if st.delete_asset(owner, repo, asset_id) {
-                        st.save()?;
-                        return respond(stream, 204, &json!({}));
-                    }
-                    return respond(stream, 404, &json!({"message":"Not Found"}));
-                }
-            }
-            // Milestones (Partial local forge).
-            if parts.len() == 3 && parts[2] == "milestones" {
-                if req.method == "GET" {
-                    let items: Vec<Value> = st
-                        .db
-                        .milestones
-                        .iter()
-                        .filter(|m| m.owner == owner && m.repo == repo)
-                        .map(|m| {
-                            json!({
-                                "number": m.number,
-                                "title": m.title,
-                                "description": m.description,
-                                "state": m.state,
-                            })
-                        })
-                        .collect();
-                    return respond(stream, 200, &Value::Array(items));
-                }
-                if req.method == "POST" {
-                    let v: Value = serde_json::from_slice(&req.body).unwrap_or(json!({}));
-                    let title = v
-                        .get("title")
-                        .and_then(|x| x.as_str())
-                        .unwrap_or("milestone");
-                    let desc = v.get("description").and_then(|x| x.as_str()).unwrap_or("");
-                    let m = st.create_milestone(owner, repo, title, desc);
-                    st.save()?;
-                    return respond(
-                        stream,
-                        201,
-                        &json!({
-                            "number": m.number,
-                            "title": m.title,
-                            "description": m.description,
-                            "state": m.state,
-                        }),
-                    );
-                }
-            }
+        // Raw payloads (asset bytes, archives, diffs) ride in marker fields.
+        if let Some(b64) = body.get("__bytes_b64").and_then(Value::as_str) {
+            use base64::Engine as _;
+            let bytes = base64::engine::general_purpose::STANDARD
+                .decode(b64)
+                .map_err(|e| e.to_string())?;
+            let ctype = body
+                .get("__content_type")
+                .and_then(Value::as_str)
+                .unwrap_or("application/octet-stream");
+            return write_http_response(stream, status, "OK", ctype, &bytes);
         }
-    }
-
-    // GET /orgs — unique owners from local repos (Partial).
-    if req.method == "GET" && path == "/orgs" {
-        let mut owners: Vec<String> = st.db.repos.iter().map(|r| r.owner.clone()).collect();
-        owners.sort();
-        owners.dedup();
-        let items: Vec<Value> = owners
-            .into_iter()
-            .map(|login| json!({"login": login, "type": "Organization"}))
-            .collect();
-        return respond(stream, 200, &Value::Array(items));
-    }
-
-    // GET /search/{repos|issues|pulls}?q=… — local substring filter (Partial).
-    if req.method == "GET" && path.starts_with("/search/") {
-        let kind = path.trim_start_matches("/search/");
-        let q = query_q.to_ascii_lowercase();
-        let items = match kind {
-            "repos" => {
-                let arr: Vec<Value> = st
-                    .db
-                    .repos
-                    .iter()
-                    .filter(|r| {
-                        q.is_empty()
-                            || r.name.to_ascii_lowercase().contains(&q)
-                            || r.description.to_ascii_lowercase().contains(&q)
-                            || r.owner.to_ascii_lowercase().contains(&q)
-                    })
-                    .map(|r| {
-                        json!({
-                            "id": r.id,
-                            "name": r.name,
-                            "full_name": format!("{}/{}", r.owner, r.name),
-                            "description": r.description,
-                        })
-                    })
-                    .collect();
-                json!({"total_count": arr.len(), "items": arr})
-            }
-            "issues" => {
-                let arr: Vec<Value> = st
-                    .db
-                    .issues
-                    .iter()
-                    .filter(|i| {
-                        q.is_empty()
-                            || i.title.to_ascii_lowercase().contains(&q)
-                            || i.body.to_ascii_lowercase().contains(&q)
-                    })
-                    .map(|i| {
-                        json!({
-                            "number": i.number,
-                            "title": i.title,
-                            "state": i.state,
-                            "repository_url": format!("/repos/{}/{}", i.owner, i.repo),
-                        })
-                    })
-                    .collect();
-                json!({"total_count": arr.len(), "items": arr})
-            }
-            "pulls" | "prs" => {
-                let arr: Vec<Value> = st
-                    .db
-                    .pulls
-                    .iter()
-                    .filter(|p| {
-                        q.is_empty()
-                            || p.title.to_ascii_lowercase().contains(&q)
-                            || p.body.to_ascii_lowercase().contains(&q)
-                    })
-                    .map(|p| {
-                        json!({
-                            "number": p.number,
-                            "title": p.title,
-                            "state": p.state,
-                            "repository_url": format!("/repos/{}/{}", p.owner, p.repo),
-                        })
-                    })
-                    .collect();
-                json!({"total_count": arr.len(), "items": arr})
-            }
-            other => {
-                return respond(
-                    stream,
-                    404,
-                    &json!({"message": format!("search kind `{other}` not claimed (Partial)")}),
-                );
-            }
-        };
-        return respond(stream, 200, &items);
+        if let Some(text) = body.get("__raw_text").and_then(Value::as_str) {
+            return write_http_response(
+                stream,
+                status,
+                "OK",
+                "text/plain; charset=utf-8",
+                text.as_bytes(),
+            );
+        }
+        return respond(stream, status, &body);
     }
 
     respond(
@@ -1191,38 +439,6 @@ pub(crate) fn urlencoding_lite_decode(s: &str) -> String {
         }
     }
     out
-}
-
-fn release_json(st: &HubStore, r: &crate::store::Release) -> Value {
-    let upload_url = format!(
-        "/repos/{}/{}/releases/{}/assets{{?name,label}}",
-        r.owner, r.repo, r.id
-    );
-    let assets: Vec<Value> = st
-        .db
-        .assets
-        .iter()
-        .filter(|a| a.release_id == r.id)
-        .map(|a| {
-            json!({
-                "id": a.id,
-                "name": a.name,
-                "size": a.size,
-                "content_type": a.content_type,
-                "state": "uploaded",
-            })
-        })
-        .collect();
-    json!({
-        "id": r.id,
-        "tag_name": r.tag_name,
-        "name": r.name,
-        "body": r.body,
-        "draft": r.draft,
-        "prerelease": r.prerelease,
-        "upload_url": upload_url,
-        "assets": assets,
-    })
 }
 
 fn header_value(headers: &[(String, String)], name: &str) -> Option<String> {
