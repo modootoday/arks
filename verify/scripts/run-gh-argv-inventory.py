@@ -189,7 +189,7 @@ def main():
 
             def probe(spelling, value):
                 cwd = os.path.join(work, "cwd")
-                home = os.path.join(work, "home")
+                home = os.path.join(work, "userhome")
                 for d in (cwd, home):
                     shutil.rmtree(d, ignore_errors=True)
                     os.makedirs(d)

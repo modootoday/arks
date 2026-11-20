@@ -1,0 +1,3 @@
+Redaction (2026-11-20): absolute temp HOME paths under /tmp/arks-gh-argv-<random>/ in the
+recorded notes were replaced with <tmp-home>/ so the receipt passes the public surface scan
+(C4.6). Verdicts and counts are unchanged.

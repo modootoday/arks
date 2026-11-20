@@ -332,7 +332,7 @@ impl GitRepo {
     ) -> Result<Oid, String> {
         let sig = Signature {
             name: who.to_string(),
-            email: format!("{who}@users.noreply.arks.invalid"),
+            email: format!("{who}@example.invalid"),
             timestamp: when,
             timezone: "+0000".into(),
         };
