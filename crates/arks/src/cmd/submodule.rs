@@ -1371,16 +1371,15 @@ fn sync_in(
 
 // ------------------------------------------------------- set-branch / url --
 
-fn module_by_path(sp: &Super, path: &str) -> CliResult<Module> {
+/// The `.gitmodules` section name for `path`. Pin 2.39.5 `set-branch` and
+/// `set-url` do not require a mapping: an unmapped path names the section
+/// itself (observed: `[submodule "<path>"]` is written, exit 0).
+fn section_name_for_path(sp: &Super, path: &str) -> (String, bool) {
     let full = normalize(&format!("{}{path}", sp.prefix));
-    sp.gitmodules()
-        .into_iter()
-        .find(|m| m.path == full)
-        .ok_or_else(|| {
-            CliError::fatal(format!(
-                "no submodule mapping found in .gitmodules for path '{path}'"
-            ))
-        })
+    match sp.gitmodules().into_iter().find(|m| m.path == full) {
+        Some(m) => (m.name, true),
+        None => (full, false),
+    }
 }
 
 fn sm_set_branch(args: &[String]) -> CliResult<()> {
@@ -1409,9 +1408,9 @@ fn sm_set_branch(args: &[String]) -> CliResult<()> {
         return Err(CliError::fatal("--branch or --default required"));
     }
     let sp = Super::open()?;
-    let m = module_by_path(&sp, path)?;
+    let (name, _) = section_name_for_path(&sp, path);
     let gm = sp.gitmodules_path();
-    let sec = format!("submodule.{}", m.name);
+    let sec = format!("submodule.{name}");
     let text = fs::read_to_string(&gm).unwrap_or_default();
     match branch {
         Some(b) => edit_file(&gm, |t| cfg_set(t, &sec, "branch", &b)),
@@ -1431,10 +1430,13 @@ fn sm_set_url(args: &[String]) -> CliResult<()> {
         ));
     };
     let sp = Super::open()?;
-    let m = module_by_path(&sp, path)?;
+    let (name, mapped) = section_name_for_path(&sp, path);
     edit_file(&sp.gitmodules_path(), |t| {
-        cfg_set(t, &format!("submodule.{}", m.name), "url", url)
+        cfg_set(t, &format!("submodule.{name}"), "url", url)
     })?;
+    if !mapped {
+        return Ok(());
+    }
     sync_in(
         &sp,
         std::slice::from_ref(path),
