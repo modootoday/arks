@@ -10,7 +10,7 @@
 //! <https://git-scm.com/docs/gitrepository-layout> (`objects/info/alternates`,
 //! gitfile), <https://git-scm.com/docs/git-sparse-checkout>.
 
-use crate::cmd::opt_spec::{Parsed, parse};
+use crate::cmd::opt_parse::{Mode, OptDef, Parsed, Takes::*, o, parse};
 use crate::cmd::remote_local::peel;
 use crate::error::{CliError, CliResult};
 use arks_oid::Oid;
@@ -20,44 +20,44 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Every option `git clone -h` lists (pin 2.39.5 plus host 2.43 additions).
-const CLONE_OPTS: &[&str] = &[
-    "v|verbose",
-    "q|quiet",
-    "|progress",
-    "|reject-shallow",
-    "n|no-checkout",
-    "|bare",
-    "|mirror",
-    "l|local",
-    "|no-hardlinks",
-    "s|shared",
-    "|recurse-submodules=?",
-    "|recursive=?",
-    "j|jobs=",
-    "|template=",
-    "|reference=",
-    "|reference-if-able=",
-    "|dissociate",
-    "o|origin=",
-    "b|branch=",
-    "u|upload-pack=",
-    "|depth=",
-    "|shallow-since=",
-    "|shallow-exclude=",
-    "|single-branch",
-    "|tags",
-    "|shallow-submodules",
-    "|separate-git-dir=",
-    "c|config=",
-    "|server-option=",
-    "4|ipv4",
-    "6|ipv6",
-    "|filter=",
-    "|also-filter-submodules",
-    "|remote-submodules",
-    "|sparse",
-    "|bundle-uri=",
-    "|ref-format=",
+const CLONE_OPTS: &[OptDef] = &[
+    o("verbose", 'v', No, true),
+    o("quiet", 'q', No, true),
+    o("progress", ' ', No, true),
+    o("reject-shallow", ' ', No, true),
+    o("no-checkout", 'n', No, true),
+    o("bare", ' ', No, true),
+    o("mirror", ' ', No, true),
+    o("local", 'l', No, true),
+    o("no-hardlinks", ' ', No, true),
+    o("shared", 's', No, true),
+    o("recurse-submodules", ' ', Opt, true),
+    o("recursive", ' ', Opt, true),
+    o("jobs", 'j', Req, true),
+    o("template", ' ', Req, true),
+    o("reference", ' ', Req, true),
+    o("reference-if-able", ' ', Req, true),
+    o("dissociate", ' ', No, true),
+    o("origin", 'o', Req, true),
+    o("branch", 'b', Req, true),
+    o("upload-pack", 'u', Req, true),
+    o("depth", ' ', Req, true),
+    o("shallow-since", ' ', Req, true),
+    o("shallow-exclude", ' ', Req, true),
+    o("single-branch", ' ', No, true),
+    o("tags", ' ', No, true),
+    o("shallow-submodules", ' ', No, true),
+    o("separate-git-dir", ' ', Req, true),
+    o("config", 'c', Req, true),
+    o("server-option", ' ', Req, true),
+    o("ipv4", '4', No, true),
+    o("ipv6", '6', No, true),
+    o("filter", ' ', Req, true),
+    o("also-filter-submodules", ' ', No, true),
+    o("remote-submodules", ' ', No, true),
+    o("sparse", ' ', No, true),
+    o("bundle-uri", ' ', Req, true),
+    o("ref-format", ' ', Req, true),
 ];
 
 /// Ordered config entries written into the new repository.
@@ -96,39 +96,42 @@ impl ConfigOut {
 }
 
 pub fn cmd_clone(args: &[String]) -> CliResult<()> {
-    let p = parse(args, CLONE_OPTS)?;
-    if p.args.is_empty() {
+    let p = parse("clone", args, CLONE_OPTS, Mode::default())?;
+    let operands = p.operands();
+    if operands.is_empty() {
         return Err(CliError::Exit(
             129,
             "fatal: You must specify a repository to clone.".into(),
         ));
     }
-    if p.args.len() > 2 {
+    if operands.len() > 2 {
         return Err(CliError::Exit(129, "fatal: Too many arguments.".into()));
     }
     let bare = p.on("bare") || p.on("mirror");
-    if bare && p.seen("origin") {
+    if bare && p.flag("origin").is_some() {
         return Err(CliError::fatal(
             "options '--bare' and '--origin foo' cannot be used together",
         ));
     }
-    if bare && p.seen("separate-git-dir") {
+    if bare && p.flag("separate-git-dir").is_some() {
         return Err(CliError::fatal(
             "options '--bare' and '--separate-git-dir' cannot be used together",
         ));
     }
-    if p.on("also-filter-submodules") && !p.seen("filter") {
+    if p.on("also-filter-submodules") && !p.flag("filter").is_some() {
         return Err(CliError::fatal(
             "the option '--also-filter-submodules' requires '--filter'",
         ));
     }
-    if p.on("also-filter-submodules") && !(p.seen("recurse-submodules") || p.seen("recursive")) {
+    if p.on("also-filter-submodules")
+        && !(p.flag("recurse-submodules").is_some() || p.flag("recursive").is_some())
+    {
         return Err(CliError::fatal(
             "the option '--also-filter-submodules' requires '--recurse-submodules'",
         ));
     }
-    let url = p.args[0].clone();
-    let dest = match p.args.get(1) {
+    let url = operands[0].clone();
+    let dest = match operands.get(1) {
         Some(d) => PathBuf::from(d),
         None => {
             let base = crate::cmd::remote::clone_dest_name(&url);
@@ -436,7 +439,7 @@ fn clone_into(
         let (k, v) = kv.split_once('=').unwrap_or((kv.as_str(), "true"));
         cfg.set(k, v);
     }
-    let recurse = p.seen("recurse-submodules") || p.seen("recursive");
+    let recurse = p.flag("recurse-submodules").is_some() || p.flag("recursive").is_some();
     if recurse && (p.on("recurse-submodules") || p.on("recursive")) {
         let spec = p
             .value("recurse-submodules")

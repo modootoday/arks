@@ -4,57 +4,57 @@
 //! Primary: <https://git-scm.com/docs/git-fetch>,
 //! <https://git-scm.com/docs/fetch-options>.
 
-use crate::cmd::opt_spec::{Parsed, parse};
+use crate::cmd::opt_parse::{Mode, OptDef, Parsed, Takes::*, o, parse};
 use crate::cmd::remote_local::{FetchSource, LocalFetchOpts, fetch_local};
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
 use std::io::Read;
 
 /// Every option `git fetch -h` lists (pin 2.39.5 plus host 2.43 additions).
-pub(crate) const FETCH_OPTS: &[&str] = &[
-    "v|verbose",
-    "q|quiet",
-    "|all",
-    "|set-upstream",
-    "a|append",
-    "|atomic",
-    "|upload-pack=",
-    "f|force",
-    "m|multiple",
-    "t|tags",
-    "n|",
-    "j|jobs=",
-    "|prefetch",
-    "p|prune",
-    "P|prune-tags",
-    "|recurse-submodules=?",
-    "|dry-run",
-    "|porcelain",
-    "|write-fetch-head",
-    "k|keep",
-    "u|update-head-ok",
-    "|progress",
-    "|depth=",
-    "|shallow-since=",
-    "|shallow-exclude=",
-    "|deepen=",
-    "|unshallow",
-    "|refetch",
-    "|update-shallow",
-    "|refmap=",
-    "o|server-option=",
-    "4|ipv4",
-    "6|ipv6",
-    "|negotiation-tip=",
-    "|negotiate-only",
-    "|filter=",
-    "|auto-maintenance",
-    "|auto-gc",
-    "|show-forced-updates",
-    "|write-commit-graph",
-    "|stdin",
-    "|recurse-submodules-default=",
-    "|submodule-prefix=",
+pub(crate) const FETCH_OPTS: &[OptDef] = &[
+    o("verbose", 'v', No, true),
+    o("quiet", 'q', No, true),
+    o("all", ' ', No, true),
+    o("set-upstream", ' ', No, true),
+    o("append", 'a', No, true),
+    o("atomic", ' ', No, true),
+    o("upload-pack", ' ', Req, true),
+    o("force", 'f', No, true),
+    o("multiple", 'm', No, true),
+    o("tags", 't', No, true),
+    o("-n", 'n', No, false),
+    o("jobs", 'j', Req, true),
+    o("prefetch", ' ', No, true),
+    o("prune", 'p', No, true),
+    o("prune-tags", 'P', No, true),
+    o("recurse-submodules", ' ', Opt, true),
+    o("dry-run", ' ', No, true),
+    o("porcelain", ' ', No, true),
+    o("write-fetch-head", ' ', No, true),
+    o("keep", 'k', No, true),
+    o("update-head-ok", 'u', No, true),
+    o("progress", ' ', No, true),
+    o("depth", ' ', Req, true),
+    o("shallow-since", ' ', Req, true),
+    o("shallow-exclude", ' ', Req, true),
+    o("deepen", ' ', Req, true),
+    o("unshallow", ' ', No, true),
+    o("refetch", ' ', No, true),
+    o("update-shallow", ' ', No, true),
+    o("refmap", ' ', Req, true),
+    o("server-option", 'o', Req, true),
+    o("ipv4", '4', No, true),
+    o("ipv6", '6', No, true),
+    o("negotiation-tip", ' ', Req, true),
+    o("negotiate-only", ' ', No, true),
+    o("filter", ' ', Req, true),
+    o("auto-maintenance", ' ', No, true),
+    o("auto-gc", ' ', No, true),
+    o("show-forced-updates", ' ', No, true),
+    o("write-commit-graph", ' ', No, true),
+    o("stdin", ' ', No, true),
+    o("recurse-submodules-default", ' ', Req, true),
+    o("submodule-prefix", ' ', Req, true),
 ];
 
 /// Configured remote `name` (url, fetch refspecs, tagOpt) from the config set.
@@ -102,11 +102,12 @@ fn expand_group(cfg: &arks_config::ConfigSet, name: &str) -> Vec<String> {
 }
 
 pub fn cmd_fetch(args: &[String]) -> CliResult<()> {
-    let p = parse(args, FETCH_OPTS)?;
+    let p = parse("fetch", args, FETCH_OPTS, Mode::default())?;
     fetch_parsed(&p)
 }
 
 pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
+    let operands = p.operands();
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     let shallow = repo.common_dir().join("shallow");
@@ -153,7 +154,7 @@ pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
         .value("filter")
         .map(|f| crate::cmd::remote::parse_filter(&f))
         .transpose()?;
-    let mut positional = p.args.clone();
+    let mut positional = operands.clone();
     if p.on("stdin") {
         let mut s = String::new();
         std::io::stdin().read_to_string(&mut s)?;
@@ -205,7 +206,7 @@ pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
         return negotiate_only(&cfg, &targets, &p.values("negotiation-tip"));
     }
 
-    let tags = if p.on("n") {
+    let tags = if p.on("-n") {
         Some(false)
     } else {
         p.flag("tags")
@@ -276,7 +277,7 @@ pub(crate) fn fetch_parsed(p: &Parsed) -> CliResult<()> {
             prune_tags,
             update_head_ok: p.on("update-head-ok"),
             atomic: p.on("atomic"),
-            refmap: p.seen("refmap").then(|| p.values("refmap")),
+            refmap: p.flag("refmap").is_some().then(|| p.values("refmap")),
             prefetch: p.on("prefetch"),
             set_upstream: p.on("set-upstream"),
         };

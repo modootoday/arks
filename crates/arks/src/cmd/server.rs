@@ -5,6 +5,7 @@
 //! Forge-in-serve: Partial local API via `arks-hub` (design ≠ Claimed).
 //! No CELIR. Lease not required. No `gix`.
 
+use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::error::{CliError, CliResult};
 use arks_hub::{ForgeServeOptions, serve_forge_api, spawn_forge_api};
 use arks_repo::Repository;
@@ -26,27 +27,28 @@ type SshListener = std::thread::JoinHandle<Result<(), arks_server::ServerError>>
 /// Background forge listener thread handle.
 type ForgeListener = std::thread::JoinHandle<Result<(), String>>;
 
-const UPLOAD_PACK_OPTS: &[&str] = &[
-    "|strict",
-    "|timeout=",
-    "|stateless-rpc",
-    "|advertise-refs",
-    "|http-backend-info-refs",
+const UPLOAD_PACK_OPTS: &[OptDef] = &[
+    o("strict", ' ', No, true),
+    o("timeout", ' ', Req, true),
+    o("stateless-rpc", ' ', No, true),
+    o("advertise-refs", ' ', No, true),
+    o("http-backend-info-refs", ' ', No, true),
 ];
 
-const RECEIVE_PACK_OPTS: &[&str] = &[
-    "q|quiet",
-    "|stateless-rpc",
-    "|advertise-refs",
-    "|http-backend-info-refs",
-    "|reject-thin-pack-for-testing",
+const RECEIVE_PACK_OPTS: &[OptDef] = &[
+    o("quiet", 'q', No, true),
+    o("stateless-rpc", ' ', No, true),
+    o("advertise-refs", ' ', No, true),
+    o("http-backend-info-refs", ' ', No, true),
+    o("reject-thin-pack-for-testing", ' ', No, true),
 ];
 
 /// Open the repository a server helper names: `--strict` takes the path as
 /// the git directory itself; otherwise `<dir>/.git` and `<dir>.git` are
 /// tried too (git-upload-pack OPTIONS).
-fn server_repo(p: &crate::cmd::opt_spec::Parsed, usage: &str) -> CliResult<Repository> {
-    let [dir] = p.args.as_slice() else {
+fn server_repo(p: &crate::cmd::opt_parse::Parsed, usage: &str) -> CliResult<Repository> {
+    let operands = p.operands();
+    let [dir] = operands.as_slice() else {
         return Err(CliError::Exit(129, usage.into()));
     };
     let path = PathBuf::from(dir);
@@ -82,7 +84,7 @@ fn hung_up() -> CliError {
 /// `upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]
 /// [--advertise-refs] <directory>`. Cite: <https://git-scm.com/docs/git-upload-pack>.
 pub fn cmd_upload_pack(args: &[String]) -> CliResult<()> {
-    let p = crate::cmd::opt_spec::parse(args, UPLOAD_PACK_OPTS)?;
+    let p = parse("upload-pack", args, UPLOAD_PACK_OPTS, Mode::default())?;
     let repo = server_repo(
         &p,
         "usage: git upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n                       [--advertise-refs] <directory>",
@@ -128,7 +130,7 @@ pub fn cmd_upload_pack(args: &[String]) -> CliResult<()> {
 /// `receive-pack [-q] [--stateless-rpc] [--advertise-refs] <git-dir>`.
 /// Cite: <https://git-scm.com/docs/git-receive-pack>.
 pub fn cmd_receive_pack(args: &[String]) -> CliResult<()> {
-    let p = crate::cmd::opt_spec::parse(args, RECEIVE_PACK_OPTS)?;
+    let p = parse("receive-pack", args, RECEIVE_PACK_OPTS, Mode::default())?;
     let mut repo = server_repo(&p, "usage: git receive-pack <git-dir>")?;
     let mut out = io::stdout().lock();
     if p.on("advertise-refs") || p.on("http-backend-info-refs") {
@@ -1813,8 +1815,14 @@ fn resolve_basic_auth(
 /// `update-server-info [-f | --force]` in the current repository (arks also
 /// takes an optional repository path). Cite: <https://git-scm.com/docs/git-update-server-info>.
 pub fn cmd_update_server_info(args: &[String]) -> CliResult<()> {
-    let p = crate::cmd::opt_spec::parse(args, &["f|force"])?;
-    let dir = match p.args.as_slice() {
+    let p = parse(
+        "update-server-info",
+        args,
+        &[o("force", 'f', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    let dir = match operands.as_slice() {
         [] => std::env::current_dir()?,
         [d] => PathBuf::from(d),
         _ => {

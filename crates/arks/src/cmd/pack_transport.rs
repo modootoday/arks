@@ -5,7 +5,7 @@
 //! Primary: <https://git-scm.com/docs/git-fetch-pack>,
 //! <https://git-scm.com/docs/git-send-pack>.
 
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::cmd::remote_local::{
     LocalPush, LocalPushOpts, PushStatus, advertised_refs, dwim, parse_refspec, push_local,
 };
@@ -14,32 +14,32 @@ use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
 use std::io::Read;
 
-const FETCH_PACK_OPTS: &[&str] = &[
-    "|all",
-    "|stdin",
-    "q|quiet",
-    "k|keep",
-    "|thin",
-    "|include-tag",
-    "|upload-pack=",
-    "|exec=",
-    "|depth=",
-    "|shallow-since=",
-    "|shallow-exclude=",
-    "|deepen-relative",
-    "|refetch",
-    "|no-progress",
-    "|diag-url",
-    "v|verbose",
-    "|check-self-contained-and-connected",
-    "|cloning",
-    "|update-shallow",
-    "|lock-pack",
-    "|from-promisor",
-    "|filter=",
-    "|no-dependents",
-    "|stateless-rpc",
-    "|reject-shallow",
+const FETCH_PACK_OPTS: &[OptDef] = &[
+    o("all", ' ', No, true),
+    o("stdin", ' ', No, true),
+    o("quiet", 'q', No, true),
+    o("keep", 'k', No, true),
+    o("thin", ' ', No, true),
+    o("include-tag", ' ', No, true),
+    o("upload-pack", ' ', Req, true),
+    o("exec", ' ', Req, true),
+    o("depth", ' ', Req, true),
+    o("shallow-since", ' ', Req, true),
+    o("shallow-exclude", ' ', Req, true),
+    o("deepen-relative", ' ', No, true),
+    o("refetch", ' ', No, true),
+    o("no-progress", ' ', No, true),
+    o("diag-url", ' ', No, true),
+    o("verbose", 'v', No, true),
+    o("check-self-contained-and-connected", ' ', No, true),
+    o("cloning", ' ', No, true),
+    o("update-shallow", ' ', No, true),
+    o("lock-pack", ' ', No, true),
+    o("from-promisor", ' ', No, true),
+    o("filter", ' ', Req, true),
+    o("no-dependents", ' ', No, true),
+    o("stateless-rpc", ' ', No, true),
+    o("reject-shallow", ' ', No, true),
 ];
 
 const FETCH_PACK_USAGE: &str = "usage: git fetch-pack [--all] [--stdin] [--quiet | -q] [--keep | -k] [--thin] [--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [--diag-url] [-v] [<host>:]<directory> [<refs>...]";
@@ -65,15 +65,16 @@ fn diag_url(url: &str) {
 }
 
 pub fn cmd_fetch_pack(args: &[String]) -> CliResult<()> {
-    let p = parse(args, FETCH_PACK_OPTS)?;
-    let Some(url) = p.args.first() else {
+    let p = parse("fetch-pack", args, FETCH_PACK_OPTS, Mode::default())?;
+    let operands = p.operands();
+    let Some(url) = operands.first() else {
         return Err(CliError::Exit(129, FETCH_PACK_USAGE.into()));
     };
     if p.on("diag-url") {
         diag_url(url);
         return Ok(());
     }
-    let mut wanted: Vec<String> = p.args[1..].to_vec();
+    let mut wanted: Vec<String> = operands[1..].to_vec();
     if p.on("stdin") {
         let mut s = String::new();
         std::io::stdin().read_to_string(&mut s)?;
@@ -146,37 +147,38 @@ pub fn cmd_fetch_pack(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-const SEND_PACK_OPTS: &[&str] = &[
-    "v|verbose",
-    "q|quiet",
-    "|receive-pack=",
-    "|exec=",
-    "|remote=",
-    "|all",
-    "n|dry-run",
-    "|mirror",
-    "f|force",
-    "|signed=?",
-    "|push-option=",
-    "|progress",
-    "|thin",
-    "|atomic",
-    "|stateless-rpc",
-    "|stdin",
-    "|helper-status",
-    "|force-with-lease=?",
-    "|force-if-includes",
+const SEND_PACK_OPTS: &[OptDef] = &[
+    o("verbose", 'v', No, true),
+    o("quiet", 'q', No, true),
+    o("receive-pack", ' ', Req, true),
+    o("exec", ' ', Req, true),
+    o("remote", ' ', Req, true),
+    o("all", ' ', No, true),
+    o("dry-run", 'n', No, true),
+    o("mirror", ' ', No, true),
+    o("force", 'f', No, true),
+    o("signed", ' ', Opt, true),
+    o("push-option", ' ', Req, true),
+    o("progress", ' ', No, true),
+    o("thin", ' ', No, true),
+    o("atomic", ' ', No, true),
+    o("stateless-rpc", ' ', No, true),
+    o("stdin", ' ', No, true),
+    o("helper-status", ' ', No, true),
+    o("force-with-lease", ' ', Opt, true),
+    o("force-if-includes", ' ', No, true),
 ];
 
 pub fn cmd_send_pack(args: &[String]) -> CliResult<()> {
-    let p = parse(args, SEND_PACK_OPTS)?;
-    let Some(url) = p.args.first().cloned() else {
+    let p = parse("send-pack", args, SEND_PACK_OPTS, Mode::default())?;
+    let operands = p.operands();
+    let Some(url) = operands.first().cloned() else {
         return Err(CliError::Exit(
             129,
             "usage: git send-pack [--mirror] [--dry-run] [--force]\n              [--receive-pack=<git-receive-pack>]\n              [--verbose] [--thin] [--atomic]\n              [--[no-]signed | --signed=(true|false|if-asked)]\n              [<host>:]<directory> (--all | <ref>...)".into(),
         ));
     };
-    let mut specs: Vec<String> = p.args[1..].to_vec();
+    let mut specs: Vec<String> = operands[1..].to_vec();
     if p.on("stdin") {
         let mut s = String::new();
         std::io::stdin().read_to_string(&mut s)?;
@@ -302,12 +304,11 @@ pub fn cmd_send_pack(args: &[String]) -> CliResult<()> {
         push(&mut updates, &label, &dst, Some(oid), f);
     }
     // --force-with-lease=<ref>:<expect> (a bare lease needs tracking refs).
-    for e in p
-        .events
-        .iter()
-        .filter(|e| e.key == "force-with-lease" && !e.neg)
+    for (_, value, _) in p
+        .opts()
+        .filter(|(key, _, neg)| *key == "force-with-lease" && !neg)
     {
-        if let Some((r, x)) = e.value.as_deref().and_then(|v| v.split_once(':')) {
+        if let Some((r, x)) = value.and_then(|v| v.split_once(':')) {
             let full = if r.starts_with("refs/") {
                 r.to_string()
             } else {
