@@ -164,6 +164,8 @@ fn argv_errors_match_git_daemon() {
     }
 }
 
+// --inetd implies --syslog; arks has no Windows Event Log sink yet (A5 gap).
+#[cfg(unix)]
 #[test]
 fn inetd_conflicts_log_to_the_chosen_destination() {
     // Default destination under --inetd is syslog: nothing on stderr, exit 1.
@@ -183,6 +185,8 @@ fn inetd_conflicts_log_to_the_chosen_destination() {
     );
 }
 
+// --inetd implies --syslog; arks has no Windows Event Log sink yet (A5 gap).
+#[cfg(unix)]
 #[test]
 fn inetd_serves_one_connection_on_stdio() {
     let root = tempfile::TempDir::new().unwrap();

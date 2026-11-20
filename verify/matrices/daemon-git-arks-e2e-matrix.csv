@@ -19,7 +19,7 @@
 "--forbid-override=<service>","flag","Parity","must-implement","host-tested: repository config ignored; disabled+forbidden refuses before path lookup"
 "--access-hook=<path>","flag","Parity","must-implement","host-tested: args service path %H %CH %IP %P; cwd repository; first stdout line = decline message"
 "--[no-]informative-errors","flag","Parity","must-implement","host-tested: default 'access denied or repository not exported'; informative names the reason"
-"--inetd","flag","Parity","must-implement","host-tested: one connection on stdin/stdout; exit 255 on refusal; incompatible with listen/port/detach/user/group"
+"--inetd","flag","Parity","must-implement","host-tested: one connection on stdin/stdout; exit 255 on refusal; incompatible with listen/port/detach/user/group; Unix only — Windows needs an Event Log sink for the implied --syslog (gap)"
 "--listen=<host_or_ipaddr>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
 "--port=<n>","flag","Parity","must-implement","IW-DAEMON-FLAGS-PARITY Claimed (evidence:root/20261111034816-daemon-flags-parity)"
 "--user=<user>","flag","Parity","must-implement","host-tested: getpwnam name only (no numeric ids); initgroups+setgid+setuid after bind (root only)"
