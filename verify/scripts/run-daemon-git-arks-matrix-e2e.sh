@@ -69,6 +69,7 @@ if [[ "${ARKS_DAEMON_FLAGS_PARITY:-0}" == "1" ]]; then
     fi
   done
   # Bind listen+port+verbose+timeouts+strict-paths+base-path; clone via git://
+  # (--strict-paths: no suffix guessing, so the non-bare repository is named by its .git)
   PORT="$(python3 - <<'PY'
 import socket
 s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()
@@ -78,7 +79,7 @@ PY
     --timeout=30 --init-timeout=5 --max-connections=8 --strict-paths \
     --base-path="$WORK" --export-all --reuseaddr \
     --enable=upload-pack --disable=receive-pack \
-    "$WORK/repo" >"$WORK/daemon.out" 2>"$WORK/daemon.err" &
+    "$WORK/repo/.git" >"$WORK/daemon.out" 2>"$WORK/daemon.err" &
   DPID=$!
   sleep 0.3
   if ! kill -0 "$DPID" 2>/dev/null; then
@@ -87,14 +88,14 @@ PY
     DF_OK=0
   else
     mkdir -p "$WORK/clone"
-    if ! git -c protocol.version=1 clone --quiet "git://127.0.0.1:${PORT}/repo" "$WORK/clone/repo" 2>"$WORK/clone.err"; then
+    if ! git -c protocol.version=1 clone --quiet "git://127.0.0.1:${PORT}/repo/.git" "$WORK/clone/repo" 2>"$WORK/clone.err"; then
       echo "FAIL DF: git:// clone via listen/port/base-path" >&2
       cat "$WORK/clone.err" "$WORK/daemon.err" >&2 || true
       DF_OK=0
     fi
     # receive-pack disabled: push should fail (no new commit needed — empty push probe).
     set +e
-    git -C "$WORK/clone/repo" push "git://127.0.0.1:${PORT}/repo" HEAD:refs/heads/denied 2>"$WORK/push.err"
+    git -C "$WORK/clone/repo" push "git://127.0.0.1:${PORT}/repo/.git" HEAD:refs/heads/denied 2>"$WORK/push.err"
     push_ec=$?
     set -e
     if [[ "$push_ec" -eq 0 ]]; then
@@ -139,6 +140,146 @@ PY
     kill "$APID" 2>/dev/null || true
     wait "$APID" 2>/dev/null || true
   fi
+  # --- A5 (plan:root/20261120000000): former Refuse/N/A rows vs stock git daemon oracle ---
+  # Same daemon argv + same raw git:// requests to both daemons; replies must match.
+  A5="$WORK/a5"
+  mkdir -p "$A5/srv"
+  for r in pub hidden noup arch priv; do git init -q --bare "$A5/srv/$r.git"; done
+  for r in pub noup arch priv; do touch "$A5/srv/$r.git/git-daemon-export-ok"; done
+  git -C "$A5/srv/noup.git" config daemon.uploadpack false
+  git -C "$A5/srv/arch.git" config daemon.uploadarch true
+  git init -q "$A5/srv/work"
+  touch "$A5/srv/work/.git/git-daemon-export-ok"
+  mkdir -p "$A5/srv/vhost/localhost"
+  git init -q --bare "$A5/srv/vhost/localhost/v.git"
+  touch "$A5/srv/vhost/localhost/v.git/git-daemon-export-ok"
+  cat >"$A5/hook.sh" <<'HOOK'
+#!/bin/sh
+echo "$*|$REMOTE_ADDR" >>"$(dirname "$0")/hook-$DAEMON_KIND.log"
+case "$2" in *priv*) echo "declined by hook"; exit 1;; esac
+exit 0
+HOOK
+  chmod +x "$A5/hook.sh"
+  cat >"$A5/ask.py" <<'PY'
+import socket, sys
+port, reqs = int(sys.argv[1]), sys.argv[2:]
+for r in reqs:
+    payload = r.encode().decode("unicode_escape").encode("latin1")
+    s = socket.create_connection(("127.0.0.1", port))
+    s.sendall(b"%04x" % (len(payload) + 4) + payload)
+    s.settimeout(3)
+    data = b""
+    try:
+        while len(data) < 4:
+            d = s.recv(4096)
+            if not d:
+                break
+            data += d
+        if data[:4] != b"0000" and len(data) >= 4:
+            want = int(data[:4], 16)
+            while len(data) < want:
+                d = s.recv(4096)
+                if not d:
+                    break
+                data += d
+            data = data[:want]
+    except Exception:
+        pass
+    s.close()
+    line = data.decode("latin1")
+    # Advertisements differ in agent/capabilities; keep only the reply class.
+    print(r, "=>", line if "ERR" in line else ("ADVERT" if line else "EMPTY"))
+PY
+  a5_case() {
+    local name="$1" args="$2"; shift 2
+    local out_git="$A5/$name.git.out" out_arks="$A5/$name.arks.out" p
+    for kind in git arks; do
+      p="$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1])')"
+      if [[ "$kind" == git ]]; then
+        DAEMON_KIND=git git daemon --listen=127.0.0.1 --port="$p" $args >/dev/null 2>"$A5/$name.$kind.err" &
+      else
+        DAEMON_KIND=arks "$ARKS_BIN" daemon --listen=127.0.0.1 --port="$p" $args >/dev/null 2>"$A5/$name.$kind.err" &
+      fi
+      local pid=$!
+      for _ in $(seq 1 50); do
+        python3 -c "import socket;socket.create_connection(('127.0.0.1',$p)).close()" 2>/dev/null && break
+        sleep 0.1
+      done
+      python3 "$A5/ask.py" "$p" "$@" >"$A5/$name.$kind.out"
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    done
+    if diff -u "$out_git" "$out_arks" >"$A5/$name.diff"; then
+      echo "daemon-git-arks-matrix-e2e: A5 $name SAME"
+    else
+      echo "FAIL A5 $name: reply differs from stock git daemon" >&2
+      cat "$A5/$name.diff" >&2
+      DF_OK=0
+    fi
+  }
+  S="$A5/srv"
+  a5_case generic-errors "--base-path=$S" \
+    'git-upload-pack /nope.git\0' 'git-upload-pack /hidden.git\0' 'git-upload-pack pub.git\0' \
+    'git-receive-pack /pub.git\0' 'git-upload-pack /noup.git\0' 'git-upload-pack /pub\0' \
+    'git-upload-pack /work\0' 'git-upload-pack //pub.git\0' 'git-upload-pack /../srv/pub.git\0'
+  a5_case informative-hook "--informative-errors --base-path=$S --access-hook=$A5/hook.sh" \
+    'git-upload-pack /nope.git\0' 'git-upload-pack /hidden.git\0' 'git-receive-pack /pub.git\0' \
+    'git-upload-pack /noup.git\0' 'git-upload-pack /priv.git\0host=localhost\0' \
+    'git-upload-pack /pub.git\0host=localhost:9999\0' 'git-upload-pack ~root/x\0'
+  a5_case override "--informative-errors --base-path=$S --forbid-override=upload-pack --forbid-override=receive-pack" \
+    'git-upload-pack /noup.git\0' 'git-receive-pack /pub.git\0' 'git-upload-archive /pub.git\0'
+  a5_case whitelist "--informative-errors $S/pub.git $S/work" \
+    "git-upload-pack $S/pub.git\\0" "git-upload-pack $S/pub\\0" "git-upload-pack $S/work\\0" \
+    "git-upload-pack $S/arch.git\\0"
+  # Not compared: a missing path under --strict-paths (stock git dies on the
+  # safe.directory check and closes without a reply; arks answers ERR).
+  a5_case strict "--informative-errors --strict-paths $S/pub.git $S/work" \
+    "git-upload-pack $S/pub.git\\0" "git-upload-pack $S/pub.git/\\0" "git-upload-pack $S/work\\0"
+  a5_case relaxed "--informative-errors --base-path=$S --base-path-relaxed" \
+    "git-upload-pack $S/pub.git\\0" 'git-upload-pack /pub.git\0' 'git-upload-pack /zzz.git\0'
+  a5_case interpolated "--informative-errors --base-path=$S --interpolated-path=$S/vhost/%H%D" \
+    'git-upload-pack /v.git\0host=LocalHost:77\0' 'git-upload-pack /v.git\0host=other\0' \
+    'git-upload-pack /pub.git\0'
+  a5_case user-path "--informative-errors --user-path=a5-no-such-dir" \
+    'git-upload-pack ~root/x.git\0' 'git-upload-pack ~a5nouser/x.git\0'
+  if ! diff <(cut -d'|' -f1 "$A5/hook-git.log") <(cut -d'|' -f1 "$A5/hook-arks.log") >"$A5/hook.diff"; then
+    echo "FAIL A5 access-hook arguments differ" >&2
+    cat "$A5/hook.diff" >&2
+    DF_OK=0
+  else
+    echo "daemon-git-arks-matrix-e2e: A5 access-hook arguments SAME"
+  fi
+  # --inetd: one request on stdin/stdout; exit status and reply must match.
+  for kind in git arks; do
+    set +e
+    if [[ "$kind" == git ]]; then
+      printf '0020git-upload-pack /hidden.git\0' | git daemon --inetd --informative-errors --base-path="$S" >"$A5/inetd.$kind.out"
+    else
+      printf '0020git-upload-pack /hidden.git\0' | "$ARKS_BIN" daemon --inetd --informative-errors --base-path="$S" >"$A5/inetd.$kind.out"
+    fi
+    echo "ec=$?" >>"$A5/inetd.$kind.out"
+    set -e
+  done
+  if cmp -s "$A5/inetd.git.out" "$A5/inetd.arks.out"; then
+    echo "daemon-git-arks-matrix-e2e: A5 inetd SAME"
+  else
+    echo "FAIL A5 inetd differs" >&2
+    cat "$A5/inetd.git.out" "$A5/inetd.arks.out" >&2
+    DF_OK=0
+  fi
+  # Argv errors: exit status of the same bad command lines.
+  for args in "--port 9418" "--enable=bogus" "--log-destination=foo" "--strict-paths" \
+    "--group=root" "--inetd --port=1" "--listen=127.0.0.1:1"; do
+    set +e
+    git daemon $args </dev/null >/dev/null 2>&1; g=$?
+    "$ARKS_BIN" daemon $args </dev/null >/dev/null 2>&1; a=$?
+    set -e
+    if [[ "$g" -ne "$a" ]]; then
+      echo "FAIL A5 argv '$args': git exit $g, arks exit $a" >&2
+      DF_OK=0
+    fi
+  done
+  echo "daemon-git-arks-matrix-e2e: A5 argv exit codes checked"
   if [[ "$DF_OK" -ne 1 ]]; then
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
       echo "daemon-git-arks-matrix-e2e: FAIL STRICT IW-DAEMON-FLAGS-PARITY" >&2
@@ -172,6 +313,11 @@ receipt = {
         "service:upload-archive",
     ],
     "parity_pointers": ["related:git:// client"],
+    "a5_oracle_compared": [
+        "--base-path-relaxed", "--user-path", "--interpolated-path", "--allow-override",
+        "--forbid-override", "--access-hook", "--[no-]informative-errors", "--inetd",
+        "daemon.* config override", "REMOTE_ADDR env for hooks", "--listen host:port form",
+    ],
     "note": "upload-archive enable+ustar Parity; path-filter/non-ustar Stay Partial; SysV double-fork Refuse; git:// client Parity pointer (not daemon DoD).",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
@@ -245,7 +391,7 @@ with open(path, "ab") as out:
             data, _ = s.recvfrom(65535)
             out.write(data + b"\n")
             out.flush()
-            if b"ARKS_B5PLUS_MARKER" in data:
+            if b"Ready to rumble" in data:
                 open(os.path.join(work, "collector.hit"), "w").write("1\n")
                 break
         except socket.timeout:
@@ -258,10 +404,10 @@ PY
   BASE="$WORK/repo.git"
   mkdir -p "$BASE"
   git init --bare "$BASE" >/dev/null
-  # Touch export-ok so daemon may serve; --syslog arms openlog+marker then listen briefly.
+  # Touch export-ok so daemon may serve; --syslog --verbose logs "Ready to rumble" (daemon.info).
   touch "$BASE/git-daemon-export-ok"
   set +e
-  timeout 3 "$ARKS_BIN" daemon --syslog --listen=127.0.0.1 --port=0 --export-all "$BASE" \
+  timeout 3 "$ARKS_BIN" daemon --syslog --verbose --listen=127.0.0.1 --port=0 --export-all "$BASE" \
     >"$WORK/daemon.out" 2>"$WORK/daemon.err"
   set -e
   sleep 0.5
@@ -269,13 +415,13 @@ PY
   wait "$COLLECTOR_PID" 2>/dev/null || true
 
   B5_OK=0
-  if [[ -f "$WORK/collector.hit" ]] && grep -a -q 'ARKS_B5PLUS_MARKER' "$COLLECT"; then
+  if [[ -f "$WORK/collector.hit" ]] && grep -a -q 'Ready to rumble' "$COLLECT"; then
     # PRI decode: leading <N> where N = facility*8 + severity; daemon+info => 3*8+6=30.
     if python3 - "$COLLECT" <<'PY'
 import re, sys
 raw = open(sys.argv[1], "rb").read()
 text = raw.decode("utf-8", "replace")
-m = re.search(r"<(\d+)>.*?ARKS_B5PLUS_MARKER", text, re.S)
+m = re.search(r"<(\d+)>[^<]*?Ready to rumble", text, re.S)
 if not m:
     # Some syslogd paths strip PRI; accept marker+bound /dev/log only as Partial.
     print("NO_PRI")
@@ -322,7 +468,7 @@ receipt = {
     "severity": "info",
     "severity_num": 6,
     "pri": 30,
-    "marker": "ARKS_B5PLUS_MARKER",
+    "marker": "Ready to rumble",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:

@@ -24,7 +24,12 @@ mod walk;
 pub use auth::{
     BASIC_REALM, BasicAuthConfig, BasicCredential, base64_encode, basic_authorization_header,
 };
-pub use daemon::{DaemonOptions, serve_daemon, serve_daemon_inetd, spawn_loopback_daemon};
+pub use daemon::{
+    DEFAULT_DAEMON_PORT, DaemonListeners, DaemonLog, DaemonOptions, DaemonPlatform, DaemonService,
+    HostInfo, LogDestination, Outcome as DaemonOutcome, SYSLOG_IDENT, SYSLOG_SOCKET, ServicePolicy,
+    ServiceTable, StdPlatform, bind_daemon, serve_daemon, serve_daemon_inetd,
+    spawn_loopback_daemon,
+};
 pub use dumb::{dumb_info_refs_body, serve_dumb_path, update_server_info};
 pub use error::ServerError;
 pub use http::{HttpRequest, HttpResponse, handle_smart_http, handle_smart_http_auth};

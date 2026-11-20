@@ -3,7 +3,7 @@ id: sot:root/arks-daemon-product-intent
 title: arks-daemon product intent
 status: active
 created: 2026-11-10T19:16:00Z
-updated: 2026-11-11T00:40:00Z
+updated: 2026-11-20T00:00:00Z
 tags: [arks-daemon, git-daemon, daemon, internal-crate, single-release, git-symmetry, self-host]
 verify: manual
 rel:
@@ -41,8 +41,8 @@ Version **0.1.0**. Normative intent for **`git-daemon` symmetry** inside the **s
 6. Related server porcelain (`upload-pack`, `receive-pack`, `http-backend`, `serve` / transitional `serve-http`, `update-server-info`) remains on the `arks` CLI / `arks-server` graph per [[sot:root/cli-surface]] / [[sot:root/remote-host-compatibility-surface]]; this SoT owns the **daemon peer** responsibility split. Self-host product surface is [[sot:root/arks-self-host-server]] (`arks serve` flags — not folded into daemon).
 7. **Product self-host** (localhost / LAN / WAN reachability using only `arks`) is owned by [[sot:root/arks-self-host-server]]. Daemon flag symmetry is **adjacent**, not a substitute: stock `git-daemon` parity does **not** by itself define the arks self-host product story.
 8. **Upload-archive B5 is Claimed.** Byte-identical ustar vs stock git-daemon pin **2.39.5** evidenced by Docker `cmp -s` ([[evidence:root/20261111091600-claimed-daemon-archive]]; [[sot:root/arks-claimed-residual-gates]]; IW-B5 via [[research:root/20261111084400]] / [[research:root/20261111090827]]). Protocol/structural agreement remains a weaker Partial oracle and **MUST NOT** alone invent Claimed.
-9. **Syslog B5+ is Claimed** with collector PRI receipt ([[evidence:root/20261111025206-daemon-b5-plus-syslog]]; facility daemon=3 + severity info=6 → PRI 30). Unix `openlog(LOG_DAEMON)` + `syslog(LOG_INFO, …)` marker; Windows Event Log ≠ POSIX syslog (**N/A** / Missing refuse). Gate: [[sot:root/arks-honesty-leftovers-wave]] + [[research:root/20261111114312]].
-10. **IW-DAEMON-FLAGS-PARITY** ([[sot:root/arks-in-scope-leftovers-wave]]): peer-mapped flags + `service:upload-archive` enable+ustar Parity ([[evidence:root/20261111045108-daemon-flags-parity]]); path-filter / non-ustar formats Stay Partial. `related:git:// client` **Parity pointer** (not daemon flag DoD; do not double-count client lane). **Classic SysV double-fork Claimed is Refuse** — peer `git-daemon --detach` is single-fork + `setsid` ([[research:root/20261111093543]], [[research:root/20261111105924]]); arks Partial re-exec detach ≠ Claimed peer parity. **`--syslog` B5+ facility/priority Claimed** via collector (rule 9).
+9. **Syslog B5+ is Claimed** with collector PRI receipt ([[evidence:root/20261111025206-daemon-b5-plus-syslog]]; facility daemon=3 + severity info=6 → PRI 30). Since A5 ([[sot:root/arks-daemon-git-command-matrix]] §A5) the sink writes `<PRI>arks-daemon[pid]: message` datagrams straight to `/dev/log` (facility daemon; `--verbose` lines at info, errors at err) instead of a fixed marker line; the collector keys on the `--verbose` `Ready to rumble` line. Windows Event Log ≠ POSIX syslog (**N/A** / Missing refuse). Gate: [[sot:root/arks-honesty-leftovers-wave]] + [[research:root/20261111114312]].
+10. **IW-DAEMON-FLAGS-PARITY** ([[sot:root/arks-in-scope-leftovers-wave]]): peer-mapped flags + `service:upload-archive` enable+ustar Parity ([[evidence:root/20261111045108-daemon-flags-parity]]); path-filter / non-ustar formats Stay Partial. `related:git:// client` **Parity pointer** (not daemon flag DoD; do not double-count client lane). **Classic SysV double-fork Claimed is Refuse** — peer `git-daemon --detach` is single-fork + `setsid` ([[research:root/20261111093543]], [[research:root/20261111105924]]); since A5 arks `--detach` is the same single fork + `setsid` (no re-exec). **`--syslog` B5+ facility/priority Claimed** via collector (rule 9).
 
 ### Non-goals
 

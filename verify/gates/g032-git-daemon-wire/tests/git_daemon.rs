@@ -92,15 +92,16 @@ impl ArksDaemon {
     fn start(base: &Path, export_all: bool) -> Self {
         let port = free_port();
         let listen = format!("127.0.0.1:{port}");
+        // git daemon spelling: `--opt=<value>`; the base path maps `/server.git`.
         let mut args = vec![
             "daemon".to_string(),
-            "--listen".into(),
-            listen.clone(),
+            "--listen=127.0.0.1".into(),
+            format!("--port={port}"),
+            format!("--base-path={}", base.to_str().unwrap()),
         ];
         if export_all {
             args.push("--export-all".into());
         }
-        args.push(base.to_str().unwrap().into());
         let child = Command::new(arks_bin())
             .args(&args)
             .stdin(Stdio::null())

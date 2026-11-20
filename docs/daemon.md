@@ -24,8 +24,15 @@ It is **not** the product forge host. For HTTP/SSH/forge API hosting, use [`arks
 
 ```bash
 arks daemon --help
-arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
+arks daemon --listen=127.0.0.1 --port=9418 --base-path=/srv/git --export-all
+arks daemon --inetd --base-path=/srv/git          # from inetd / systemd socket
+arks daemon --detach --pid-file=/run/arks-daemon.pid --user=git --base-path=/srv/git
 ```
+
+Options and their spelling are the ones of `git daemon` (`--opt=<value>`; the first
+non-option word starts the directory list). One deliberate difference: without
+`--listen`, `arks daemon` binds `127.0.0.1` instead of every interface; pass
+`--listen=0.0.0.0` to expose it like `git daemon` does.
 
 ## Versus `arks serve`
 
@@ -38,7 +45,7 @@ arks daemon --listen=127.0.0.1 --port=9418 /path/to/repos
 
 ## Honesty
 
-Daemon flag inventory: peer-mapped flags **Parity** (IW-DAEMON-FLAGS-PARITY); `service:upload-archive` enable+ustar **Parity** via `git archive --remote` (path-filter / non-ustar Stay Partial) + **B5 Claimed** byte-identical ustar; `related:git:// client` Stay Partial pointer. Refuse: `--inetd` / `--pid-file` / **classic SysV double-fork** (peer `--detach` is single-fork+`setsid`) / `--access-hook`. Unix **`--syslog`** (**B5+ Claimed** facility/priority with collector PRI). Windows: `--syslog` / `--user` / `--group` honest **Missing** refuse (Event Log ≠ syslog).
+Daemon flag inventory: every `git daemon` option is implemented with git semantics — `--inetd`, `--detach`, `--pid-file`, `--user`/`--group`, `--syslog` / `--log-destination`, `--base-path-relaxed`, `--user-path`, `--interpolated-path`, `--allow-override`/`--forbid-override` with per-repository `daemon.<service>`, `--access-hook`, `--[no-]informative-errors` (**Parity, host-tested** against stock `git daemon`; a Docker pin receipt is still pending, so not Claimed). `service:upload-archive` enable+ustar **Parity** via `git archive --remote` (path-filter / non-ustar Stay Partial) + **B5 Claimed** byte-identical ustar. Windows: `--syslog` / `--detach` / `--user` / `--group` are refused (no `/dev/log`, `fork` or `setuid`).
 
 Residual honesty ([[sot:root/arks-claimed-residual-gates]] / [[sot:root/arks-remaining-incompletes-wave]]):
 
@@ -46,7 +53,7 @@ Residual honesty ([[sot:root/arks-claimed-residual-gates]] / [[sot:root/arks-rem
 |------|-------|-------|
 | **B5** archive format parity | **Claimed** | Docker `cmp -s` vs stock git-daemon **2.39.5** ([[evidence:root/20261111091600-claimed-daemon-archive]]) |
 | **B5+** syslog facility/priority | **Claimed** | Docker collector PRI=30 (`LOG_DAEMON`+`LOG_INFO`); Windows Event Log ≠ POSIX syslog (N/A) |
-| Classic double-fork | **Refuse (terminal)** | Peer detach is single-fork+`setsid` |
+| Classic double-fork | **Refuse (terminal)** | Peer detach is single-fork+`setsid`; `arks daemon --detach` does the same |
 
 **Partial ≠ Parity Claimed.** Do not treat daemon flag completeness as “self-host Done.”
 

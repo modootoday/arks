@@ -14,6 +14,7 @@ pub mod clone;
 pub mod config;
 pub mod core;
 pub mod credential;
+pub mod daemon;
 pub mod diff_render;
 pub mod fetch;
 pub mod for_each_ref;
@@ -82,6 +83,7 @@ pub use core::{
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
+pub use daemon::cmd_daemon;
 pub use fetch::cmd_fetch;
 pub use for_each_ref::cmd_for_each_ref;
 pub use grep::cmd_grep;
@@ -126,8 +128,8 @@ pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use request_pull::cmd_request_pull;
 pub use server::{
-    cmd_daemon, cmd_http_backend, cmd_receive_pack, cmd_serve, cmd_serve_http,
-    cmd_update_server_info, cmd_upload_pack,
+    cmd_http_backend, cmd_receive_pack, cmd_serve, cmd_serve_http, cmd_update_server_info,
+    cmd_upload_pack,
 };
 pub use sign::{cmd_verify_commit, cmd_verify_tag};
 pub use sparse_checkout::cmd_sparse_checkout;

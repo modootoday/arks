@@ -1154,14 +1154,14 @@ fn git_daemon_clone_fetch_push_roundtrip() {
     let base = TempDir::new().unwrap();
     let bare = base.path().join("repo.git");
     let (_, tip) = seed_bare_for_daemon(&bare);
-    let (addr, stop, handle) = spawn_loopback_daemon(DaemonOptions {
-        base_path: base.path().to_path_buf(),
+    let mut opts = DaemonOptions {
+        base_path: Some(base.path().to_path_buf()),
         export_all: true,
-        allow_receive: true,
         strict_paths: true,
         ..DaemonOptions::default()
-    })
-    .unwrap();
+    };
+    opts.services.receive_pack.enabled = true;
+    let (addr, stop, handle) = spawn_loopback_daemon(opts).unwrap();
     let url = format!("git://{}/repo.git", addr);
 
     let dest = TempDir::new().unwrap();
