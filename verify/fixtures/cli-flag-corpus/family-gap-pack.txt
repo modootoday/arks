@@ -306,3 +306,57 @@ pack-objects --cruft --stdin-packs .git/x
 pack-objects --stdout --no-stdout .git/x
 pack-objects --bogus .git/x
 pack-objects --all-progress-implied --stdout
+# --- commit-graph (written files are byte-checked by the oracle test) ---
+commit-graph
+commit-graph verify
+commit-graph verify --shallow --progress --no-progress
+commit-graph verify --object-dir .git/objects
+commit-graph verify extra
+commit-graph write
+commit-graph write --reachable
+commit-graph write --reachable --changed-paths
+commit-graph write --reachable --no-changed-paths --max-new-filters=1 --no-max-new-filters
+commit-graph write --stdin-commits
+commit-graph write --stdin-packs
+commit-graph write --append --reachable
+commit-graph write --split --reachable
+commit-graph write --split=no-merge --reachable
+commit-graph write --split=replace --reachable
+commit-graph write --split --size-multiple=4 --max-commits=2 --expire-time=1 --reachable
+commit-graph write --split=bogus --reachable
+commit-graph write --reachable --stdin-commits
+commit-graph write --object-dir .git/objects --reachable
+commit-graph write --object-dir nosuch
+commit-graph --object-dir=.git/objects write --reachable
+commit-graph --no-object-dir verify
+commit-graph write --progress --no-progress --reachable
+commit-graph write extra
+commit-graph bogus
+commit-graph -h
+commit-graph write -h
+commit-graph verify -h
+# --- multi-pack-index ---
+multi-pack-index
+multi-pack-index write
+multi-pack-index verify
+multi-pack-index expire
+multi-pack-index repack
+multi-pack-index repack --batch-size=0
+multi-pack-index repack --batch-size=1m
+multi-pack-index repack --batch-size=x
+multi-pack-index write --bitmap
+multi-pack-index write --no-bitmap --progress --no-progress
+multi-pack-index write --preferred-pack=nosuch.pack
+multi-pack-index write --stdin-packs
+multi-pack-index write --refs-snapshot=/dev/null --no-refs-snapshot
+multi-pack-index --object-dir=.git/objects write
+multi-pack-index --object-dir .git/objects verify
+multi-pack-index --object-dir=nosuch write
+multi-pack-index write extra
+multi-pack-index verify extra
+multi-pack-index bogus
+multi-pack-index -h
+multi-pack-index write -h
+multi-pack-index verify -h
+multi-pack-index expire -h
+multi-pack-index repack -h
