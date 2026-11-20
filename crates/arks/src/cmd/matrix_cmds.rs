@@ -851,7 +851,17 @@ pub fn cmd_var(args: &[String]) -> CliResult<()> {
                 None => out.push_str(&format!("{}\n", e.key)),
             }
         }
-        for (k, vs) in &vars {
+        // `-l` lists the variables pin 2.39.5 knows; the later ones
+        // (GIT_SEQUENCE_EDITOR 2.40, GIT_SHELL_PATH / GIT_ATTR_* /
+        // GIT_CONFIG_* 2.42) stay readable by name only.
+        const PIN_LISTED: &[&str] = &[
+            "GIT_COMMITTER_IDENT",
+            "GIT_AUTHOR_IDENT",
+            "GIT_EDITOR",
+            "GIT_PAGER",
+            "GIT_DEFAULT_BRANCH",
+        ];
+        for (k, vs) in vars.iter().filter(|(k, _)| PIN_LISTED.contains(k)) {
             for v in vs {
                 out.push_str(&format!("{k}={v}\n"));
             }
