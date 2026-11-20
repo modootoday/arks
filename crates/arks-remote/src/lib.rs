@@ -74,9 +74,9 @@ pub use fetch::{
     FetchOptions, FetchOutcome, fetch_git, fetch_git_with, fetch_http, fetch_http_with,
     fetch_remote, fetch_remote_with, fetch_ssh, fetch_ssh_with, validate_claimed_filter,
 };
-pub use http::http_get;
+pub use http::{UreqTransport, http_get};
 pub use local::{copy_objects, is_local_remote, local_refs, open_local_remote};
-pub use ls_remote::{RemoteRef, ls_remote};
+pub use ls_remote::{RemoteRef, ls_remote, ls_remote_with_head};
 pub use os_store::{OsStore, run_os_store_helper, select_os_store};
 pub use push::{
     PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,
