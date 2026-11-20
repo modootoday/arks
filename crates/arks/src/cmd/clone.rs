@@ -423,7 +423,12 @@ fn clone_into(
 
     // Config, in the order stock git writes it.
     let mut cfg = ConfigOut::default();
-    cfg.set("core.repositoryformatversion", "0");
+    let format_version = if p.value("filter").is_some() {
+        "1"
+    } else {
+        "0"
+    };
+    cfg.set("core.repositoryformatversion", format_version);
     cfg.set("core.filemode", "true");
     cfg.set("core.bare", if bare { "true" } else { "false" });
     cfg.set("core.logallrefupdates", "true");
@@ -469,6 +474,12 @@ fn clone_into(
     }
     if mirror {
         cfg.set(&format!("remote.{origin}.mirror"), "true");
+    }
+    // git records the partial-clone remote even when a local clone ignores
+    // the filter (format version 1, promisor + filter on the remote).
+    if let Some(f) = p.value("filter") {
+        cfg.set(&format!("remote.{origin}.promisor"), "true");
+        cfg.set(&format!("remote.{origin}.partialclonefilter"), &f);
     }
     if p.on("sparse") && !bare && !p.on("no-checkout") {
         cfg.set("extensions.worktreeConfig", "true");
