@@ -971,3 +971,64 @@ apply --reject --check .git/bad.patch
 -C .git/side am --allow-empty
 -C .git/side am
 -C .git/side am nope.mbox
+#
+# --- notes ---
+notes
+notes list
+notes list HEAD
+notes add -m hello
+notes add -m hello -m world
+notes add -m '  a  ' -m '' -m b HEAD~2
+notes add --no-separator -m a -m b
+notes add --separator=-- -m a -m b
+notes add --no-stripspace -m '  a  '
+notes add --stripspace -m '  a  '
+notes add -m '# c'
+notes add -F README.md
+notes add -F README.md -m extra
+notes add -C HEAD~1
+notes add -C HEAD:README.md
+notes add -c HEAD:README.md
+notes add -m ''
+notes add --allow-empty -m ''
+notes add
+notes add -f -m x
+notes add --force -m x HEAD~1
+notes add -m z nope
+notes add -m a HEAD HEAD~1
+notes --ref=foo add -m x
+notes --ref foo add -m x
+notes --ref=refs/notes/bar add -m x
+notes --ref=foo get-ref
+notes get-ref
+notes show
+notes show HEAD~3
+notes show nope
+notes append -m more
+notes append --separator=-- -m sep
+notes append --no-separator -m sep
+notes append -F README.md
+notes append --allow-empty -m ''
+notes edit
+notes edit -m e
+notes edit --allow-empty
+notes copy HEAD HEAD~3
+notes copy -f HEAD~3 HEAD
+notes copy HEAD~3
+notes copy
+notes remove
+notes remove HEAD~3
+notes remove --ignore-missing HEAD~3
+notes remove HEAD HEAD~3
+notes remove --stdin
+notes prune
+notes prune -n
+notes prune -v
+notes merge
+notes merge x
+notes merge -v x
+notes merge -s ours x
+notes merge -s bogus x
+notes merge --abort
+notes merge --commit
+notes bogus
