@@ -21,6 +21,7 @@ dependencies = [
  "arks-server",
  "arks-store",
  "libc",
+ "serde_json",
  "tempfile",
  "thiserror",
 ]

@@ -85,6 +85,7 @@ pub mod switch_tree;
 pub mod tag;
 pub mod trailers;
 pub mod unified_diff;
+pub mod update_check;
 pub mod working_tree;
 pub mod worktree;
 
@@ -168,5 +169,6 @@ pub use stash::cmd_stash;
 pub use submodule::cmd_submodule;
 pub use tag::{cmd_describe, cmd_tag};
 pub use trailers::cmd_interpret_trailers;
+pub use update_check::cmd_update_git_for_windows;
 pub use working_tree::{cmd_clean, cmd_mv, cmd_reset, cmd_restore, cmd_rm};
 pub use worktree::cmd_worktree;

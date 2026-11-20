@@ -66,6 +66,7 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "credential-store" => cmd::cmd_credential_store(args),
         "credential-wincred" => cmd::cmd_credential_wincred(args),
         "credential-manager" => cmd::cmd_credential_manager(args),
+        "update-git-for-windows" => cmd::cmd_update_git_for_windows(args),
         "credential-libsecret" => cmd::cmd_credential_libsecret(args),
         "credential-osxkeychain" => cmd::cmd_credential_osxkeychain(args),
         "grep" => cmd::cmd_grep(args),
