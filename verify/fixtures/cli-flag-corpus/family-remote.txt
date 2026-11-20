@@ -1,0 +1,396 @@
+# Remote / transport family corpus (argv-symmetry ladder rung A2).
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null. Remotes are local paths only.
+# Fixture extras used here: `origin` -> .git/upstream.git (bare; main is one
+# commit ahead, `topic` + tags v2/lt are new, `feature` + t0 are absent),
+# .git/range.bundle (t0..main) and .git/full.bundle (feature + v1).
+#
+# --- ls-remote ---
+ls-remote origin
+ls-remote .git/upstream.git
+ls-remote --heads origin
+ls-remote --branches origin
+ls-remote -h origin
+ls-remote --tags origin
+ls-remote -t origin
+ls-remote --refs origin
+ls-remote --heads --tags origin
+ls-remote --symref origin
+ls-remote --symref origin HEAD
+ls-remote --get-url origin
+ls-remote --get-url
+ls-remote --get-url nosuch
+ls-remote --exit-code origin refs/heads/nosuch
+ls-remote --exit-code origin main
+ls-remote -q origin
+ls-remote --quiet origin
+ls-remote --sort=refname origin
+ls-remote --sort=-refname origin
+ls-remote --sort=version:refname --tags origin
+ls-remote --upload-pack=git-upload-pack origin
+ls-remote -o x origin
+ls-remote --server-option=x origin
+ls-remote origin 'refs/tags/*'
+ls-remote origin main topic
+ls-remote .
+ls-remote --heads .
+#
+# --- fetch ---
+fetch origin
+fetch
+fetch -q origin
+fetch --quiet origin
+fetch -v origin
+fetch --verbose origin
+fetch --all
+fetch --multiple origin origin
+fetch -m origin
+fetch --dry-run origin
+fetch -n origin
+fetch --no-tags origin
+fetch -t origin
+fetch --tags origin
+fetch origin topic
+fetch origin topic:refs/heads/topic
+fetch origin +topic:refs/heads/topic
+fetch origin 'refs/heads/*:refs/remotes/up/*'
+fetch -f origin main:refs/heads/main2
+fetch --force origin topic:feature
+fetch origin topic:feature
+fetch -a origin
+fetch --append origin
+fetch --no-write-fetch-head origin
+fetch --write-fetch-head origin
+fetch -p origin
+fetch --prune origin
+fetch -P origin
+fetch --prune-tags origin
+fetch --atomic origin
+fetch --set-upstream origin main
+fetch -k origin
+fetch --keep origin
+fetch -u origin main:main
+fetch --update-head-ok origin main:main
+fetch --refmap= origin main
+fetch --refmap='refs/heads/*:refs/remotes/r/*' origin main
+fetch -j2 origin
+fetch --jobs=2 origin
+fetch --no-recurse-submodules origin
+fetch --recurse-submodules=no origin
+fetch --progress origin
+fetch --no-progress origin
+fetch --show-forced-updates origin
+fetch --no-show-forced-updates origin
+fetch --no-auto-maintenance origin
+fetch --no-auto-gc origin
+fetch --no-write-commit-graph origin
+fetch -4 origin
+fetch --ipv6 origin
+fetch -o x origin
+fetch --server-option=x origin
+fetch --negotiation-tip=main origin
+fetch --prefetch origin
+fetch --refetch origin
+fetch --upload-pack=git-upload-pack origin
+fetch .git/upstream.git
+fetch .git/upstream.git topic
+fetch .git/upstream.git topic:refs/heads/up-topic
+fetch --porcelain origin
+fetch --stdin origin
+#
+# --- pull ---
+pull
+pull origin
+pull origin main
+pull -q origin main
+pull -v origin main
+pull --ff-only origin main
+pull --ff origin main
+pull --no-ff origin main
+pull --no-commit origin main
+pull --squash origin main
+pull -n origin main
+pull --stat origin main
+pull --no-stat origin main
+pull --log origin main
+pull --no-log origin main
+pull --no-edit origin main
+pull --no-verify origin main
+pull --verify origin main
+pull -r origin topic
+pull --rebase origin topic
+pull --rebase=false origin main
+pull --no-rebase origin main
+pull --no-autostash origin main
+pull -s ort origin main
+pull --strategy=ort origin main
+pull -X ours origin main
+pull --strategy-option=theirs origin main
+pull --allow-unrelated-histories origin main
+pull --dry-run origin main
+pull -t origin main
+pull --tags origin main
+pull --no-tags origin main
+pull -p origin main
+pull -a origin main
+pull -k origin main
+pull -f origin main
+pull --set-upstream origin main
+pull --signoff origin main
+pull --no-signoff origin main
+pull --cleanup=strip origin main
+pull --no-gpg-sign origin main
+pull --no-verify-signatures origin main
+pull --progress origin main
+pull -j2 origin main
+pull --no-recurse-submodules origin main
+pull --ff-only origin topic
+pull .git/upstream.git main
+#
+# --- push ---
+push origin main
+push origin feature
+push -q origin feature
+push -v origin feature
+push --porcelain origin feature
+push -n origin feature
+push --dry-run origin feature
+push --porcelain --dry-run origin feature
+push origin feature:refs/heads/f2
+push origin t0
+push --tags origin
+push --all origin
+push --branches origin
+push --mirror origin
+push -d origin topic
+push --delete origin topic
+push origin :topic
+push -f origin main
+push --force origin main
+push origin +main
+push --force-with-lease origin main
+push --force-with-lease=main origin main
+push --force-with-lease=main:847f0a6e69171e56e7bd3fbbbd2007be9daea1ae origin main
+push --force-if-includes --force-with-lease origin main
+push --atomic origin feature main
+push --atomic origin feature
+push -u origin feature
+push --set-upstream origin feature
+push --prune origin 'refs/heads/*:refs/heads/*'
+push --follow-tags origin feature
+push --no-verify origin feature
+push --thin origin feature
+push --no-thin origin feature
+push --repo=origin feature
+push --receive-pack=git-receive-pack origin feature
+push --exec=git-receive-pack origin feature
+push --progress origin feature
+push --signed=no origin feature
+push --no-signed origin feature
+push -o x origin feature
+push --push-option=x origin feature
+push --recurse-submodules=no origin feature
+push --no-recurse-submodules origin feature
+push -4 origin feature
+push --ipv6 origin feature
+push .git/upstream.git feature
+push origin HEAD
+push origin HEAD:refs/heads/h
+#
+# --- remote ---
+remote
+remote -v
+remote --verbose
+remote show
+remote show origin
+remote show -n origin
+remote get-url origin
+remote get-url --push origin
+remote get-url --all origin
+remote add up .git/upstream.git
+remote add -f up .git/upstream.git
+remote add --fetch up .git/upstream.git
+remote add -t topic up .git/upstream.git
+remote add -t topic -t main up .git/upstream.git
+remote add -m main up .git/upstream.git
+remote add --master=main -f up .git/upstream.git
+remote add --mirror=fetch up .git/upstream.git
+remote add --mirror=push up .git/upstream.git
+remote add --tags -f up .git/upstream.git
+remote add --no-tags -f up .git/upstream.git
+remote rename origin up
+remote rename --no-progress origin up
+remote remove origin
+remote rm origin
+remote set-head origin main
+remote set-head origin -a
+remote set-head origin --auto
+remote set-head origin -d
+remote set-head origin --delete
+remote set-branches origin topic
+remote set-branches --add origin topic
+remote set-url origin .git/other.git
+remote set-url --push origin .git/other.git
+remote set-url --add origin .git/other.git
+remote set-url --add --push origin .git/other.git
+remote set-url --delete origin upstream
+remote prune origin
+remote prune -n origin
+remote prune --dry-run origin
+remote update
+remote update origin
+remote update -p
+remote update --prune origin
+remote -v update
+#
+# --- clone (local sources) ---
+clone .git/upstream.git cl
+clone -q .git/upstream.git cl
+clone --quiet .git/upstream.git cl
+clone -v .git/upstream.git cl
+clone --progress .git/upstream.git cl
+clone -n .git/upstream.git cl
+clone --no-checkout .git/upstream.git cl
+clone -b topic .git/upstream.git cl
+clone --branch=topic .git/upstream.git cl
+clone --branch v2 .git/upstream.git cl
+clone -o up .git/upstream.git cl
+clone --origin=up .git/upstream.git cl
+clone --single-branch .git/upstream.git cl
+clone --no-single-branch .git/upstream.git cl
+clone --no-tags .git/upstream.git cl
+clone -l .git/upstream.git cl
+clone --local .git/upstream.git cl
+clone --no-local .git/upstream.git cl
+clone --no-hardlinks .git/upstream.git cl
+clone -s .git/upstream.git cl
+clone --shared .git/upstream.git cl
+clone --reference .git/upstream.git .git/upstream.git cl
+clone --reference-if-able .git/nosuch .git/upstream.git cl
+clone --dissociate --reference .git/upstream.git .git/upstream.git cl
+clone --depth=1 .git/upstream.git cl
+clone --depth 1 --no-single-branch .git/upstream.git cl
+clone --shallow-since=2000-01-01 .git/upstream.git cl
+clone --shallow-exclude=v1 .git/upstream.git cl
+clone --bare .git/upstream.git .git/cl.git
+clone --mirror .git/upstream.git .git/cl.git
+clone -c foo.bar=baz .git/upstream.git cl
+clone --config=foo.bar=baz .git/upstream.git cl
+clone --template= .git/upstream.git cl
+clone -j2 .git/upstream.git cl
+clone --jobs=2 .git/upstream.git cl
+clone --no-recurse-submodules .git/upstream.git cl
+clone --recurse-submodules .git/upstream.git cl
+clone --no-shallow-submodules .git/upstream.git cl
+clone --no-remote-submodules .git/upstream.git cl
+clone --separate-git-dir=.git/sep.git .git/upstream.git cl
+clone --sparse .git/upstream.git cl
+clone --filter=blob:none .git/upstream.git cl
+clone --no-reject-shallow .git/upstream.git cl
+clone -u git-upload-pack .git/upstream.git cl
+clone --upload-pack=git-upload-pack .git/upstream.git cl
+clone -4 .git/upstream.git cl
+clone --ipv6 .git/upstream.git cl
+clone --server-option=x .git/upstream.git cl
+clone .git/upstream.git
+clone .git/nosuch.git cl
+clone .git/upstream.git src
+#
+# --- archive ---
+archive --list
+archive -l
+archive --format=tar HEAD -o out.tar
+archive --format=tar --output=out.tar HEAD
+archive --format=zip -o out.zip HEAD
+archive -o out.tgz HEAD
+archive -o out.tar.gz HEAD
+archive --format=tar --prefix=p/ -o out.tar HEAD
+archive --format=tar -o out.tar HEAD src
+archive --format=tar -o out.tar HEAD:src
+archive --format=tar --add-file=untracked.txt -o out.tar HEAD
+archive --format=tar --add-virtual-file=v.txt:hello -o out.tar HEAD
+archive --format=tar --worktree-attributes -o out.tar HEAD
+archive --format=tar --mtime=2020-01-01 -o out.tar HEAD
+archive --format=tar -v -o out.tar HEAD
+archive --format=tar --verbose -o out.tar HEAD
+archive --format=tar.gz -9 -o out.tgz HEAD
+archive --format=zip -0 -o out.zip HEAD
+archive --format=tar --no-prefix -o out.tar HEAD
+archive --format=tar --remote=.git/upstream.git -o out.tar main
+archive --remote=.git/upstream.git --list
+archive --format=tar v1 -o out.tar
+archive --format=tar nosuch -o out.tar
+#
+# --- bundle ---
+bundle verify .git/range.bundle
+bundle verify -q .git/range.bundle
+bundle verify --quiet .git/full.bundle
+bundle list-heads .git/range.bundle
+bundle list-heads .git/full.bundle
+bundle list-heads .git/full.bundle refs/heads/feature
+bundle unbundle .git/full.bundle
+bundle unbundle --progress .git/full.bundle
+bundle create out.bundle main
+bundle create -q out.bundle main
+bundle create --quiet out.bundle --all
+bundle create --version=2 out.bundle main
+bundle create --version=3 out.bundle main
+bundle create --progress out.bundle main
+bundle create --no-progress out.bundle t0..main
+bundle create out.bundle --branches --tags
+bundle create out.bundle main ^t0
+bundle create out.bundle nosuch
+#
+# --- request-pull ---
+request-pull t0 .git/upstream.git main
+request-pull -p t0 .git/upstream.git main
+request-pull t0 origin main
+request-pull t0 .git/upstream.git
+#
+# --- fetch-pack / send-pack ---
+fetch-pack .git/upstream.git refs/heads/main
+fetch-pack --all .git/upstream.git
+fetch-pack -q --all .git/upstream.git
+fetch-pack --quiet --all .git/upstream.git
+fetch-pack --thin --all .git/upstream.git
+fetch-pack --include-tag --all .git/upstream.git
+fetch-pack --no-progress --all .git/upstream.git
+fetch-pack -v --all .git/upstream.git
+fetch-pack --check-self-contained-and-connected --all .git/upstream.git
+fetch-pack --upload-pack=git-upload-pack --all .git/upstream.git
+fetch-pack --exec=git-upload-pack .git/upstream.git main
+send-pack .git/upstream.git feature
+send-pack --all .git/upstream.git
+send-pack --dry-run .git/upstream.git feature
+send-pack -n .git/upstream.git feature
+send-pack --force .git/upstream.git main
+send-pack -f .git/upstream.git main
+send-pack --mirror .git/upstream.git
+send-pack --atomic .git/upstream.git feature
+send-pack -q .git/upstream.git feature
+send-pack -v .git/upstream.git feature
+send-pack --thin .git/upstream.git feature
+send-pack --receive-pack=git-receive-pack .git/upstream.git feature
+send-pack --exec=git-receive-pack .git/upstream.git feature
+send-pack --remote=origin .git/upstream.git feature
+send-pack --signed=no .git/upstream.git feature
+send-pack --push-option=x .git/upstream.git feature
+send-pack --progress .git/upstream.git feature
+send-pack .git/upstream.git main
+#
+# --- server side helpers ---
+update-server-info
+update-server-info -f
+update-server-info --force
+upload-pack --stateless-rpc .git/upstream.git
+upload-pack --strict --stateless-rpc .git/upstream.git
+upload-pack --no-strict --stateless-rpc .git/upstream.git
+upload-pack --timeout=5 --stateless-rpc .git/upstream.git
+upload-pack --strict --stateless-rpc .git
+upload-pack --stateless-rpc .git/nosuch
+receive-pack --stateless-rpc .git/upstream.git
+receive-pack -q --stateless-rpc .git/upstream.git
+receive-pack --quiet --stateless-rpc .git/upstream.git
+upload-archive .git/upstream.git
+upload-archive .
