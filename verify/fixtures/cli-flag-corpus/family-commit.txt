@@ -1,0 +1,1114 @@
+# Family COMMIT / BRANCH / WORKTREE corpus (argv symmetry ladder rung A2).
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null.
+# Lines with `-C .git/side` run in the nested side repository the fixture
+# builds (branches topic, lineone, clash diverging from main; tag base).
+#
+# --- status ---
+status
+status -s
+status --short --branch
+status -sb -uno
+status --porcelain
+status --porcelain=v2
+status --porcelain=v2 --branch
+status -z
+status --long
+status -v
+status -uall
+status --untracked-files=no
+status --ignored
+status --ignored=matching
+status --ignored=no
+status --ignore-submodules=all
+status --column
+status --no-column
+status --ahead-behind
+status --no-ahead-behind
+status --renames
+status --no-renames
+status --find-renames=50
+status -s src
+status --show-stash
+status -s --no-show-stash
+#
+# --- tr ---
+interpret-trailers --trailer A=b .git/trailer-msg.txt
+interpret-trailers --trim-empty .git/trailer-msg.txt
+interpret-trailers --unfold .git/trailer-msg.txt
+interpret-trailers --if-missing doNothing --trailer z=1 .git/trailer-msg.txt
+interpret-trailers --trailer a=b --no-trailer .git/trailer-msg.txt
+interpret-trailers --only-input .git/trailer-msg.txt
+interpret-trailers --where=bogus --trailer a=b .git/trailer-msg.txt
+interpret-trailers --trailer =x .git/trailer-msg.txt
+interpret-trailers --only-trailers --only-input .git/trailer-msg.txt
+interpret-trailers --if-exists replace --trailer Fixes=9 .git/trailer-msg.txt
+interpret-trailers --where before --trailer Fixes=0 .git/trailer-msg.txt
+interpret-trailers --parse .git/trailer-msg.txt
+#
+# --- commit ---
+commit --dry-run
+commit --dry-run -a
+commit --short
+commit --porcelain -a
+commit -z --branch
+commit --long -- src/a.txt
+commit -p -m x
+commit --interactive -m x
+commit -m x
+commit -m '  x  ' -m 'y   '
+commit -m x --cleanup=verbatim -m '# not a comment'
+commit -m x -e
+commit -C HEAD~1
+commit -c HEAD~1
+commit -C HEAD~1 --reset-author
+commit --fixup HEAD~1
+commit --fixup=amend:HEAD~1
+commit --fixup=reword:HEAD~1
+commit --squash HEAD~1
+commit --squash HEAD~1 -m extra
+commit --fixup HEAD~1 -m extra
+commit -m x --trailer 'Acked-by: me'
+commit -m x -s --trailer 'Acked-by=me'
+commit --amend --no-edit
+commit --amend
+commit --amend -m new
+commit --amend --reset-author --no-edit
+commit -m x --author 'A U'
+commit -m x --author 'Nobody'
+commit -m x -i src/a.txt
+commit -m x -o src/a.txt
+commit -m x src/a.txt
+commit -m x --pathspec-from-file=.git/info/exclude
+commit -m x -C HEAD
+commit -m x -F README.md
+commit --allow-empty-message -m ''
+commit -m ''
+commit --no-status -m x
+commit -v -m x
+commit -q -m x
+commit --no-post-rewrite --amend --no-edit
+commit -m x -uno
+commit -m x --verify
+commit -am x
+commit -a --dry-run --short -uno
+commit --dry-run -m x -i src/a.txt
+commit -t README.md
+commit -m x --no-signoff -s
+commit -m x --date='2020-01-01 00:00:00 +0000'
+#
+# --- add ---
+add debug.log
+add debug.log README.md
+add -f debug.log
+add -n .
+add -n -A
+add --dry-run -u
+add -v .
+add -v -A
+add -A
+add --all --dry-run
+add .
+add
+add -u
+add --no-all .
+add --ignore-removal .
+add -N untracked.txt
+add --intent-to-add untracked.txt
+add --refresh
+add --refresh src/a.txt
+add --renormalize .
+add --ignore-errors .
+add --ignore-missing -n nope.txt
+add --ignore-missing nope.txt
+add --sparse src/a.txt
+add --chmod=+x src/a.txt
+add --chmod=+x --no-chmod src/a.txt
+add --pathspec-from-file=.git/info/exclude
+add -n -f .
+add -A -n --ignored
+add nope.txt
+add -v --dry-run src
+add -e
+add -u src
+#
+# --- co ---
+checkout feature
+checkout -f feature
+checkout --force feature
+checkout -q feature
+checkout --no-quiet feature
+checkout -m feature
+checkout --merge feature
+checkout --conflict=diff3 feature
+checkout --progress feature
+checkout --no-progress feature
+checkout --recurse-submodules feature
+checkout --no-recurse-submodules feature
+checkout --overwrite-ignore feature
+checkout --ignore-other-worktrees feature
+checkout -d feature
+checkout --detach
+checkout -b topic
+checkout -b topic --track main
+checkout -b topic -t main
+checkout -b topic --no-track main
+checkout --track -b topic main
+checkout -l -b topic
+checkout -B feature main
+checkout --guess nope
+checkout --no-guess feature
+checkout --orphan newroot
+checkout --orphan newroot feature
+checkout --ours src/a.txt
+checkout --theirs src/a.txt
+checkout -2 src/a.txt
+checkout --overlay HEAD~3 -- src
+checkout --no-overlay HEAD~3 -- src
+checkout HEAD~3 -- src
+checkout --pathspec-from-file=.git/info/exclude
+checkout --ignore-skip-worktree-bits -- src/a.txt
+checkout -- src/a.txt
+checkout src/a.txt
+checkout -f
+checkout -f HEAD
+checkout v1
+checkout --detach v1
+checkout t0
+switch feature
+switch -f feature
+switch --discard-changes feature
+switch -c topic
+switch -C feature
+switch --create topic --track main
+switch -c topic -t main
+switch --detach t0
+switch -d t0
+switch t0
+switch --orphan newroot
+switch --guess nope
+switch --no-guess feature
+switch -m feature
+switch --conflict=merge feature
+switch -q feature
+switch --progress feature
+switch --ignore-other-worktrees feature
+switch --overwrite-ignore feature
+switch --recurse-submodules feature
+switch -c topic --no-track
+switch -
+checkout -
+restore src/a.txt
+restore -S src/new.txt
+restore --staged --worktree src/new.txt
+restore -s HEAD~3 src
+restore --source=HEAD~3 --overlay src
+restore --source=HEAD~3 --no-overlay src
+restore --ignore-unmerged src/a.txt
+restore --ours src/a.txt
+restore --theirs src/a.txt
+restore -m src/a.txt
+restore --conflict=diff3 src/a.txt
+restore -q src/a.txt
+restore --progress src/a.txt
+restore --recurse-submodules src/a.txt
+restore --ignore-skip-worktree-bits src/a.txt
+restore --pathspec-from-file=.git/info/exclude
+restore .
+restore -W -S .
+restore --no-source src/a.txt
+restore
+reset
+reset -q
+reset --soft HEAD~1
+reset --hard HEAD~1
+reset --mixed HEAD~1
+reset --keep HEAD~1
+reset --merge HEAD~1
+reset --keep HEAD~3
+reset --merge HEAD~3
+reset --hard
+reset --no-refresh HEAD~1
+reset --refresh
+reset -N HEAD~1
+reset --intent-to-add
+reset --recurse-submodules --hard
+reset HEAD~3 -- src
+reset -- src/new.txt
+reset --pathspec-from-file=.git/info/exclude
+reset --no-quiet
+reset feature
+#
+# --- reset ---
+#
+# --- restore ---
+#
+# --- rmc ---
+rm src/b.txt
+rm -n src/b.txt
+rm --dry-run -q src/b.txt
+rm --cached src/new.txt
+rm -f src/a.txt
+rm src/a.txt
+rm -r src
+rm -rf src
+rm --ignore-unmatch nope.txt
+rm nope.txt
+rm --sparse src/b.txt
+rm --pathspec-from-file=.git/info/exclude
+rm --pathspec-from-file=.git/info/exclude --ignore-unmatch
+rm --no-cached --cached src/new.txt
+rm -q src/b.txt
+mv src/b.txt src/c.txt
+mv -v src/b.txt src/c.txt
+mv -n src/b.txt src/c.txt
+mv --dry-run -v src/b.txt docs
+mv src/b.txt docs/x.md
+mv -f src/b.txt docs/x.md
+mv -k nope.txt src/b.txt docs
+mv nope.txt docs
+mv untracked.txt docs
+mv src docs
+mv -v src lib
+mv --sparse src/b.txt lib.txt
+mv src/b.txt
+clean -n
+clean -f
+clean -fd
+clean -nd
+clean -nx
+clean -nX
+clean -n -e '*.txt'
+clean -n --exclude=untracked.txt
+clean -fq
+clean -i
+clean --interactive -n
+clean
+clean -n --no-dry-run
+clean -f --no-force
+clean -n src
+#
+# --- branch ---
+branch
+branch -v
+branch -vv
+branch --no-verbose -v
+branch -q topic
+branch -t topic main
+branch --track=inherit topic main
+branch --no-track topic main
+branch -u feature
+branch --set-upstream-to=feature main
+branch -u nope
+branch --unset-upstream
+branch --color=always
+branch --color
+branch --no-color
+branch -r
+branch --contains t0
+branch --contains
+branch --no-contains feature
+branch --merged
+branch --merged feature
+branch --no-merged
+branch --abbrev=10 -v
+branch --no-abbrev -v
+branch -a
+branch -d feature
+branch -D feature
+branch -m feature feat2
+branch -M feature main
+branch -c feature feat2
+branch -C feature feat2
+branch -l 'f*'
+branch --list 'f*' --ignore-case
+branch -i --list 'F*'
+branch --show-current
+branch --create-reflog topic
+branch --edit-description
+branch -f feature t0
+branch --force feature HEAD
+branch --column
+branch --column=never
+branch --no-column
+branch --sort=-committerdate
+branch --sort=refname --no-sort
+branch --points-at HEAD
+branch --points-at feature
+branch --recurse-submodules topic
+branch --format='%(refname:short) %(objectname:short)'
+branch --format='%(HEAD) %(refname)' --list 'f*'
+branch --omit-empty --format=''
+branch --no-omit-empty
+branch -d
+branch --delete --no-delete
+#
+# --- tag ---
+tag
+tag -l
+tag -l 'v*'
+tag -n
+tag -n2
+tag -n 'v*'
+tag -d v1
+tag --delete t0
+tag -v v1
+tag --verify t0
+tag x
+tag -a x -m msg
+tag -a x
+tag -m 'hello' x
+tag -m '  hello  ' -m world x
+tag -F README.md x
+tag --file=README.md x
+tag -e -m hi x
+tag --no-edit -m hi x
+tag -s -m hi x
+tag --cleanup=verbatim -m '  hi  ' x
+tag --cleanup=whitespace -m '# hi' x
+tag --cleanup=strip -m '# hi' -m keep x
+tag -u nokey -m hi x
+tag -f t0 HEAD
+tag --force v1
+tag --create-reflog x
+tag --column
+tag --column=never
+tag --no-column
+tag --contains t0
+tag --contains
+tag --no-contains HEAD
+tag --merged
+tag --merged t0
+tag --no-merged t0
+tag --points-at HEAD~1
+tag --points-at t0
+tag --sort=-refname
+tag --sort=taggerdate
+tag --sort=refname --no-sort
+tag --format='%(refname:short) %(objecttype)'
+tag --omit-empty --format=''
+tag --color
+tag --color=always
+tag -i -l 'V*'
+tag --ignore-case
+tag --no-annotate -m hi x
+tag --annotate -m hi x HEAD~1
+tag x feature
+#
+# --- merge ---
+merge feature
+merge t0
+merge v1
+merge -n HEAD~1
+merge --stat t0
+merge --no-ff --no-commit HEAD~2
+merge --log -m x feature
+merge --squash HEAD~2
+merge --abort
+merge --quit
+merge --continue
+merge --verify-signatures feature
+merge -s ours feature
+merge --strategy=ours t0
+merge -s bogus t0
+merge -X ours t0
+merge --allow-unrelated-histories t0
+merge -q t0
+merge -v t0
+merge --progress t0
+merge -S t0
+merge --autostash t0
+merge --overwrite-ignore t0
+merge --signoff t0
+merge --no-verify t0
+merge --into-name=other t0
+merge -e t0
+merge --cleanup=strip t0
+merge --rerere-autoupdate t0
+merge --ff-only t0
+merge --no-ff t0
+merge -F README.md t0
+#
+# --- merge (side repository) ---
+-C .git/side merge topic
+-C .git/side merge -n topic
+-C .git/side merge --no-stat topic
+-C .git/side merge --summary topic
+-C .git/side merge --log topic
+-C .git/side merge --log=1 topic
+-C .git/side merge --no-log topic
+-C .git/side merge --squash topic
+-C .git/side merge --no-commit topic
+-C .git/side merge --commit topic
+-C .git/side merge -e topic
+-C .git/side merge --no-edit topic
+-C .git/side merge --cleanup=verbatim -m '  x  ' topic
+-C .git/side merge --ff-only topic
+-C .git/side merge --no-ff topic
+-C .git/side merge --ff topic
+-C .git/side merge -s ours topic
+-C .git/side merge -s recursive topic
+-C .git/side merge -s resolve topic
+-C .git/side merge --strategy=ort topic
+-C .git/side merge -X patience topic
+-C .git/side merge -m hello topic
+-C .git/side merge -m hello -m world topic
+-C .git/side merge -F b.txt topic
+-C .git/side merge --into-name=dev topic
+-C .git/side merge -v topic
+-C .git/side merge -q topic
+-C .git/side merge --allow-unrelated-histories topic
+-C .git/side merge --progress topic
+-C .git/side merge --autostash topic
+-C .git/side merge --signoff topic
+-C .git/side merge --no-verify topic
+-C .git/side merge --verify topic
+-C .git/side merge --verify-signatures topic
+-C .git/side merge clash
+-C .git/side merge --squash clash
+-C .git/side merge base
+-C .git/side merge --squash base
+-C .git/side merge topic~1
+-C .git/side merge --ff-only clash
+-C .git/side merge --overwrite-ignore topic
+-C .git/side merge --rerere-autoupdate topic
+-C .git/side merge -S topic
+-C .git/side merge --no-gpg-sign topic
+-C .git/side merge lineone
+-C .git/side merge --no-ff lineone
+-C .git/side merge -X ours clash
+-C .git/side merge -X theirs clash
+-C .git/side merge -Xours clash
+-C .git/side merge --strategy-option=theirs clash
+-C .git/side merge -s resolve lineone
+-C .git/side merge -s resolve clash
+#
+# --- stash ---
+stash
+stash push
+stash -q
+stash push --quiet
+stash -k
+stash --keep-index
+stash --no-keep-index
+stash --staged
+stash -S
+stash -u
+stash --include-untracked
+stash -a
+stash --all
+stash push -- src/a.txt
+stash push src/a.txt
+stash push -m hi src/new.txt
+stash push --message=hi
+stash push -m hi -k
+stash push -u -- untracked.txt
+stash push nope.txt
+stash push --pathspec-from-file=.git/info/exclude
+stash save
+stash save hello world
+stash save -q hello
+stash save -k
+stash save -u
+stash list
+stash list --oneline
+stash list --stat
+stash list -p
+stash list --name-only
+stash show
+stash show -p
+stash show --stat
+stash show --name-only
+stash show stash@{0}
+stash show 0
+stash show -u
+stash show --include-untracked
+stash show --only-untracked
+stash show --no-include-untracked
+stash apply
+stash apply --index
+stash apply -q
+stash apply stash@{0}
+stash apply stash@{1}
+stash pop
+stash pop --index
+stash pop -q
+stash drop
+stash drop -q
+stash drop stash@{0}
+stash clear
+stash create
+stash create hello
+stash store -m stored HEAD
+stash store HEAD
+stash store
+stash branch topic
+stash branch topic stash@{0}
+stash bogus
+stash drop 0
+stash drop stash@{1}
+stash show stash@{3}
+stash store -m x stash@{0}
+stash branch
+stash pop 5
+#
+# --- cherry-pick / revert (side repository) ---
+-C .git/side cherry-pick topic
+-C .git/side cherry-pick lineone
+-C .git/side cherry-pick clash
+-C .git/side cherry-pick base..topic
+-C .git/side cherry-pick topic~1 topic
+-C .git/side cherry-pick ^base topic
+-C .git/side cherry-pick lineone clash topic
+-C .git/side cherry-pick -x lineone
+-C .git/side cherry-pick -s lineone
+-C .git/side cherry-pick -s -x lineone
+-C .git/side cherry-pick --signoff --no-signoff lineone
+-C .git/side cherry-pick -n lineone
+-C .git/side cherry-pick --no-commit topic
+-C .git/side cherry-pick -n clash
+-C .git/side cherry-pick -e lineone
+-C .git/side cherry-pick --edit lineone
+-C .git/side cherry-pick --no-edit lineone
+-C .git/side cherry-pick base
+-C .git/side cherry-pick --allow-empty base
+-C .git/side cherry-pick --keep-redundant-commits base
+-C .git/side cherry-pick -m 1 topic
+-C .git/side cherry-pick --mainline=2 topic
+-C .git/side cherry-pick --ff main
+-C .git/side cherry-pick --ff topic
+-C .git/side cherry-pick --no-ff topic
+-C .git/side cherry-pick
+-C .git/side cherry-pick nope
+-C .git/side cherry-pick --skip
+-C .git/side cherry-pick --quit
+-C .git/side cherry-pick --abort
+-C .git/side cherry-pick --continue
+-C .git/side cherry-pick --allow-empty-message lineone
+-C .git/side cherry-pick --cleanup=bogus lineone
+-C .git/side cherry-pick --cleanup=strip lineone
+-C .git/side cherry-pick --cleanup=verbatim lineone
+-C .git/side cherry-pick -S lineone
+-C .git/side cherry-pick --gpg-sign lineone
+-C .git/side cherry-pick --no-gpg-sign lineone
+-C .git/side cherry-pick --rerere-autoupdate lineone
+-C .git/side cherry-pick --no-rerere-autoupdate lineone
+-C .git/side cherry-pick --strategy=ort lineone
+-C .git/side cherry-pick --strategy=ours lineone
+-C .git/side cherry-pick -X theirs clash
+-C .git/side cherry-pick -X ours clash
+-C .git/side cherry-pick --strategy-option=patience lineone
+-C .git/side cherry-pick --ff -x topic
+-C .git/side cherry-pick -n --ff topic
+-C .git/side revert HEAD
+-C .git/side revert -n HEAD
+-C .git/side revert --no-commit HEAD
+-C .git/side revert -s HEAD
+-C .git/side revert --reference HEAD
+-C .git/side revert --no-reference HEAD
+-C .git/side revert -e HEAD
+-C .git/side revert --no-edit HEAD
+-C .git/side revert -m 1 HEAD
+-C .git/side revert HEAD~1
+-C .git/side revert
+-C .git/side revert --skip
+-C .git/side revert --quit
+-C .git/side revert --abort
+-C .git/side revert --continue
+-C .git/side revert -S HEAD
+-C .git/side revert --cleanup=strip HEAD
+-C .git/side revert --strategy=ort HEAD
+-C .git/side revert -X ours HEAD
+-C .git/side revert --rerere-autoupdate HEAD
+-C .git/side revert -x HEAD
+#
+# --- status while a pick or merge is stopped is covered by the conflict lines above ---
+revert -n HEAD~1
+cherry-pick -n feature
+cherry-pick feature
+revert HEAD
+#
+# --- worktree ---
+worktree add wt1
+worktree add wt1 feature
+worktree add -b topic wt1
+worktree add -b topic wt1 t0
+worktree add -B feature wt1
+worktree add -B newb wt1 t0
+worktree add -f wt1 main
+worktree add --force wt1 main
+worktree add -d wt1
+worktree add --detach wt1 t0
+worktree add --orphan -b orph wt1
+worktree add --orphan wt1
+worktree add --no-checkout wt1 feature
+worktree add --checkout wt1 feature
+worktree add --lock wt1 feature
+worktree add --lock --reason because wt1 feature
+worktree add --reason because wt1 feature
+worktree add -q wt1 feature
+worktree add --quiet -b topic wt1
+worktree add --track -b topic wt1 main
+worktree add --no-track -b topic wt1 main
+worktree add --guess-remote wt1
+worktree add --no-guess-remote wt1 feature
+worktree add wt1 t0
+worktree add wt1 nope
+worktree add
+worktree list
+worktree list -v
+worktree list --porcelain
+worktree list --porcelain -z
+worktree list -z
+worktree list --expire=now
+worktree prune
+worktree prune -n
+worktree prune -v
+worktree prune --expire=now
+worktree prune -n -v --expire 1.day.ago
+worktree remove nope
+worktree remove -f nope
+worktree move nope x
+worktree lock nope
+worktree unlock nope
+worktree repair
+worktree repair nope
+worktree bogus
+worktree
+worktree lock
+worktree unlock
+worktree remove
+worktree move a
+worktree list extra
+#
+# --- init ---
+init
+init -q
+init --quiet n
+init n
+init --bare nb.git
+init --bare -q nb.git
+init -b trunk n
+init --initial-branch=trunk n
+init --object-format=sha256 n
+init --object-format=sha1 n
+init --object-format=md5 n
+init --shared n
+init --shared=all n
+init --shared=group n
+init --shared=0640 n
+init --shared=false n
+init --shared=bogus n
+init --template= n
+init --no-template n
+init --template=nonexist n
+init --separate-git-dir=sep.git n
+init --separate-git-dir sep.git -q n
+init --bare --separate-git-dir=sep.git n
+init -b x
+init a b
+#
+#
+# --- rebase (side repository) ---
+-C .git/side rebase topic
+-C .git/side rebase lineone
+-C .git/side rebase clash
+-C .git/side rebase base
+-C .git/side rebase main
+-C .git/side rebase -f base
+-C .git/side rebase --force-rebase base
+-C .git/side rebase --no-ff base
+-C .git/side rebase --onto topic base
+-C .git/side rebase --onto topic base main
+-C .git/side rebase --onto=topic base
+-C .git/side rebase topic lineone
+-C .git/side rebase --root
+-C .git/side rebase --root --onto topic
+-C .git/side rebase -q topic
+-C .git/side rebase --quiet clash
+-C .git/side rebase -v topic
+-C .git/side rebase --stat topic
+-C .git/side rebase -n topic
+-C .git/side rebase --no-stat topic
+-C .git/side rebase --keep-base topic
+-C .git/side rebase --keep-base --onto topic base
+-C .git/side rebase -x true topic
+-C .git/side rebase --exec false topic
+-C .git/side rebase --signoff topic
+-C .git/side rebase --committer-date-is-author-date topic
+-C .git/side rebase --apply topic
+-C .git/side rebase --apply clash
+-C .git/side rebase -m topic
+-C .git/side rebase --merge topic
+-C .git/side rebase -i topic
+-C .git/side rebase --interactive topic
+-C .git/side rebase -s ours topic
+-C .git/side rebase --strategy=ort topic
+-C .git/side rebase -X theirs clash
+-C .git/side rebase -X ours clash
+-C .git/side rebase --strategy-option=patience topic
+-C .git/side rebase --empty=drop topic
+-C .git/side rebase --empty=keep topic
+-C .git/side rebase --empty=bogus topic
+-C .git/side rebase --keep-empty topic
+-C .git/side rebase --no-keep-empty topic
+-C .git/side rebase --allow-empty-message topic
+-C .git/side rebase --autosquash topic
+-C .git/side rebase --no-autosquash topic
+-C .git/side rebase --update-refs topic
+-C .git/side rebase --no-update-refs topic
+-C .git/side rebase --autostash topic
+-C .git/side rebase --no-autostash topic
+-C .git/side rebase -r topic
+-C .git/side rebase --rebase-merges=rebase-cousins topic
+-C .git/side rebase --no-rebase-merges topic
+-C .git/side rebase --fork-point topic
+-C .git/side rebase --no-fork-point topic
+-C .git/side rebase --reschedule-failed-exec topic
+-C .git/side rebase --no-reschedule-failed-exec topic
+-C .git/side rebase --reapply-cherry-picks topic
+-C .git/side rebase --no-reapply-cherry-picks topic
+-C .git/side rebase --rerere-autoupdate topic
+-C .git/side rebase --no-rerere-autoupdate topic
+-C .git/side rebase -S topic
+-C .git/side rebase --no-gpg-sign topic
+-C .git/side rebase --no-verify topic
+-C .git/side rebase --verify topic
+-C .git/side rebase -C2 topic
+-C .git/side rebase --whitespace=fix topic
+-C .git/side rebase --ignore-whitespace topic
+-C .git/side rebase --continue
+-C .git/side rebase --abort
+-C .git/side rebase --skip
+-C .git/side rebase --quit
+-C .git/side rebase --show-current-patch
+-C .git/side rebase --edit-todo
+-C .git/side rebase
+-C .git/side rebase nope
+-C .git/side rebase topic nope
+-C .git/side rebase a b c
+-C .git/side rebase --continue --abort
+-C .git/side rebase --apply -i topic
+#
+# --- rebase with local changes ---
+rebase feature
+rebase --autostash feature
+rebase -q feature
+rebase main
+rebase t0
+-C .git/side merge --autostash topic
+merge --autostash feature
+rebase --autostash main feature
+#
+# --- apply (patches under .git/) ---
+apply .git/a.patch
+apply --index .git/a.patch
+apply --cached .git/a.patch
+apply --check .git/a.patch
+apply --stat .git/a.patch
+apply --numstat .git/a.patch
+apply --summary .git/new.patch
+apply --stat --summary .git/new.patch
+apply --numstat -z .git/a.patch
+apply -R .git/fixture.patch
+apply --reverse --check .git/fixture.patch
+apply .git/fixture.patch
+apply --3way .git/a.patch
+apply --no-3way .git/a.patch
+apply -p0 .git/p0.patch
+apply -p 0 .git/p0.patch
+apply -p2 .git/a.patch
+apply --directory=sub .git/a.patch
+apply --directory=sub --check .git/new.patch
+apply --include='src/*' .git/a.patch
+apply --exclude='src/*' .git/a.patch
+apply --exclude='*' --include='src/*' .git/a.patch
+apply --no-add .git/a.patch
+apply .git/new.patch
+apply --unsafe-paths .git/new.patch
+apply --whitespace=fix .git/new.patch
+apply --whitespace=nowarn .git/new.patch
+apply --whitespace=warn .git/new.patch
+apply --whitespace=error .git/new.patch
+apply --whitespace=error-all .git/new.patch
+apply --whitespace=bogus .git/new.patch
+apply --ignore-space-change .git/a.patch
+apply --ignore-whitespace .git/a.patch
+apply -C1 .git/a.patch
+apply -C 1 .git/a.patch
+apply --unidiff-zero .git/a.patch
+apply --reject .git/bad.patch
+apply .git/bad.patch
+apply --allow-overlap .git/a.patch
+apply -v .git/a.patch
+apply --verbose --check .git/a.patch
+apply -q .git/a.patch
+apply --inaccurate-eof .git/a.patch
+apply --recount .git/a.patch
+apply --allow-empty /dev/null
+apply /dev/null
+apply --build-fake-ancestor=.git/fake.idx .git/a.patch
+apply --apply --stat .git/a.patch
+apply --no-apply .git/a.patch
+apply nope.patch
+apply --reject --check .git/bad.patch
+#
+# --- format-patch (side repository; explicit signatures keep the version out) ---
+-C .git/side format-patch --stdout --signature=S -1 topic
+-C .git/side format-patch --stdout --signature=S -2 topic
+-C .git/side format-patch --stdout --signature=S base..topic
+-C .git/side format-patch --stdout --signature=S base
+-C .git/side format-patch --stdout --signature=S --cover-letter -2 topic
+-C .git/side format-patch --stdout --signature=S --no-cover-letter -2 topic
+-C .git/side format-patch --stdout --signature=S -1 -s topic
+-C .git/side format-patch --stdout --signature=S -1 --signoff --no-signoff topic
+-C .git/side format-patch --stdout --signature=S -1 --to=a@b --cc=c@d topic
+-C .git/side format-patch --stdout --signature=S -1 --to=a@b --to=e@f --no-to topic
+-C .git/side format-patch --stdout --signature=S -1 --add-header='X-Foo: bar' topic
+-C .git/side format-patch --stdout --signature=S -1 --in-reply-to='<id@x>' topic
+-C .git/side format-patch --stdout --signature=S -1 --subject-prefix=FOO topic
+-C .git/side format-patch --stdout --signature=S -1 --rfc topic
+-C .git/side format-patch --stdout --signature=S -1 -v2 topic
+-C .git/side format-patch --stdout --signature=S -2 --reroll-count=3 topic
+-C .git/side format-patch --stdout --signature=S -1 -k topic
+-C .git/side format-patch --stdout --signature=S -1 --keep-subject topic
+-C .git/side format-patch --stdout --signature=S -2 -n topic
+-C .git/side format-patch --stdout --signature=S -2 -N topic
+-C .git/side format-patch --stdout --signature=S -1 --numbered topic
+-C .git/side format-patch --stdout --signature=S -1 -p topic
+-C .git/side format-patch --stdout --signature=S -1 --no-stat topic
+-C .git/side format-patch --stdout --signature=S -1 --zero-commit topic
+-C .git/side format-patch --stdout -1 --no-signature topic
+-C .git/side format-patch --stdout -1 --signature=SIG topic
+-C .git/side format-patch --stdout -1 --signature-file=b.txt topic
+-C .git/side format-patch --stdout --signature=S -1 --base=base topic
+-C .git/side format-patch --stdout --signature=S -1 --from topic
+-C .git/side format-patch --stdout --signature=S -1 --from='X Y <x@y>' topic
+-C .git/side format-patch --stdout --signature=S -1 --from='X Y <x@y>' --force-in-body-from topic
+-C .git/side format-patch --stdout --signature=S -1 --attach=BND topic
+-C .git/side format-patch --stdout --signature=S -1 --inline=BND topic
+-C .git/side format-patch --stdout --signature=S -1 --no-attach topic
+-C .git/side format-patch --stdout --signature=S -1 --no-binary topic
+-C .git/side format-patch --stdout --signature=S -1 --binary topic
+-C .git/side format-patch --stdout --signature=S --ignore-if-in-upstream main..topic
+-C .git/side format-patch --stdout --signature=S -1 --start-number=5 topic
+-C .git/side format-patch --stdout --signature=S -1 --cover-letter --cover-from-description=subject --description-file=b.txt topic
+-C .git/side format-patch --stdout --signature=S -1 --no-thread topic
+-C .git/side format-patch --stdout --signature=S -1 --progress topic
+-C .git/side format-patch --stdout --signature=S -1 --no-progress topic
+-C .git/side format-patch --stdout --signature=S -1 --creation-factor=50 topic
+-C .git/side format-patch -2 topic
+-C .git/side format-patch -2 -o out topic
+-C .git/side format-patch -2 --output-directory=out topic
+-C .git/side format-patch -2 -q topic
+-C .git/side format-patch -2 --numbered-files topic
+-C .git/side format-patch -2 --suffix=.txt topic
+-C .git/side format-patch -2 --start-number=5 topic
+-C .git/side format-patch -2 -v3 topic
+-C .git/side format-patch -2 --filename-max-length=10 topic
+-C .git/side format-patch -1 --cover-letter topic
+-C .git/side format-patch --stdout --signature=S -o out -1 topic
+-C .git/side format-patch --thread=bogus -1 topic
+-C .git/side format-patch -1 -v3 --filename-max-length=13 topic
+-C .git/side format-patch -1 --suffix=.x --filename-max-length=15 topic
+#
+# --- am (side repository mailboxes) ---
+-C .git/side am .git/topic.mbox
+-C .git/side am .git/clash.mbox
+-C .git/side am -3 .git/clash.mbox
+-C .git/side am --3way .git/topic.mbox
+-C .git/side am --no-3way .git/clash.mbox
+-C .git/side am -s .git/topic.mbox
+-C .git/side am --signoff .git/topic.mbox
+-C .git/side am -k .git/topic.mbox
+-C .git/side am --keep .git/topic.mbox
+-C .git/side am --keep-non-patch .git/topic.mbox
+-C .git/side am -i .git/topic.mbox
+-C .git/side am --continue
+-C .git/side am -r
+-C .git/side am --resolved
+-C .git/side am --skip
+-C .git/side am --abort
+-C .git/side am --quit
+-C .git/side am --show-current-patch
+-C .git/side am --show-current-patch=diff
+-C .git/side am -m .git/topic.mbox
+-C .git/side am --message-id .git/topic.mbox
+-C .git/side am --no-message-id .git/topic.mbox
+-C .git/side am -c .git/topic.mbox
+-C .git/side am --scissors .git/topic.mbox
+-C .git/side am --no-scissors .git/topic.mbox
+-C .git/side am -u .git/topic.mbox
+-C .git/side am --utf8 .git/topic.mbox
+-C .git/side am --no-utf8 .git/topic.mbox
+-C .git/side am --keep-cr .git/topic.mbox
+-C .git/side am --no-keep-cr .git/topic.mbox
+-C .git/side am --quoted-cr=strip .git/topic.mbox
+-C .git/side am --quoted-cr=bogus .git/topic.mbox
+-C .git/side am -q .git/topic.mbox
+-C .git/side am --quiet .git/clash.mbox
+-C .git/side am -n .git/topic.mbox
+-C .git/side am --no-verify .git/topic.mbox
+-C .git/side am --verify .git/topic.mbox
+-C .git/side am --whitespace=fix .git/topic.mbox
+-C .git/side am --whitespace=bogus .git/topic.mbox
+-C .git/side am --ignore-space-change .git/topic.mbox
+-C .git/side am --ignore-whitespace .git/topic.mbox
+-C .git/side am -C1 .git/topic.mbox
+-C .git/side am -p1 .git/topic.mbox
+-C .git/side am --directory=sub .git/topic.mbox
+-C .git/side am --exclude=c.txt .git/topic.mbox
+-C .git/side am --include=b.txt .git/topic.mbox
+-C .git/side am --reject .git/clash.mbox
+-C .git/side am --resolvemsg=x .git/topic.mbox
+-C .git/side am --patch-format=mbox .git/topic.mbox
+-C .git/side am --patch-format=bogus .git/topic.mbox
+-C .git/side am --committer-date-is-author-date .git/topic.mbox
+-C .git/side am --rerere-autoupdate .git/topic.mbox
+-C .git/side am --no-gpg-sign .git/topic.mbox
+-C .git/side am --empty=drop .git/topic.mbox
+-C .git/side am --empty=bogus .git/topic.mbox
+-C .git/side am --allow-empty
+-C .git/side am
+-C .git/side am nope.mbox
+#
+# --- notes ---
+notes
+notes list
+notes list HEAD
+notes add -m hello
+notes add -m hello -m world
+notes add -m '  a  ' -m '' -m b HEAD~2
+notes add --no-separator -m a -m b
+notes add --separator=-- -m a -m b
+notes add --no-stripspace -m '  a  '
+notes add --stripspace -m '  a  '
+notes add -m '# c'
+notes add -F README.md
+notes add -F README.md -m extra
+notes add -C HEAD~1
+notes add -C HEAD:README.md
+notes add -c HEAD:README.md
+notes add -m ''
+notes add --allow-empty -m ''
+notes add
+notes add -f -m x
+notes add --force -m x HEAD~1
+notes add -m z nope
+notes add -m a HEAD HEAD~1
+notes --ref=foo add -m x
+notes --ref foo add -m x
+notes --ref=refs/notes/bar add -m x
+notes --ref=foo get-ref
+notes get-ref
+notes show
+notes show HEAD~3
+notes show nope
+notes append -m more
+notes append --separator=-- -m sep
+notes append --no-separator -m sep
+notes append -F README.md
+notes append --allow-empty -m ''
+notes edit
+notes edit -m e
+notes edit --allow-empty
+notes copy HEAD HEAD~3
+notes copy -f HEAD~3 HEAD
+notes copy HEAD~3
+notes copy
+notes remove
+notes remove HEAD~3
+notes remove --ignore-missing HEAD~3
+notes remove HEAD HEAD~3
+notes remove --stdin
+notes prune
+notes prune -n
+notes prune -v
+notes merge
+notes merge x
+notes merge -v x
+notes merge -s ours x
+notes merge -s bogus x
+notes merge --abort
+notes merge --commit
+notes bogus
+#
+# --- sparse-checkout (side repository: files at the root stay in the cone) ---
+-C .git/side sparse-checkout
+-C .git/side sparse-checkout bogus
+-C .git/side sparse-checkout init
+-C .git/side sparse-checkout init --cone
+-C .git/side sparse-checkout init --no-cone
+-C .git/side sparse-checkout init --sparse-index
+-C .git/side sparse-checkout init --no-sparse-index
+-C .git/side sparse-checkout set
+-C .git/side sparse-checkout set docs
+-C .git/side sparse-checkout set --cone docs
+-C .git/side sparse-checkout set --no-cone '/*.txt'
+-C .git/side sparse-checkout set --sparse-index docs
+-C .git/side sparse-checkout set --no-sparse-index docs
+-C .git/side sparse-checkout set --stdin
+-C .git/side sparse-checkout set docs/x.md
+-C .git/side sparse-checkout set --skip-checks docs/x.md
+-C .git/side sparse-checkout add docs
+-C .git/side sparse-checkout add --skip-checks docs
+-C .git/side sparse-checkout add --stdin
+-C .git/side sparse-checkout list
+-C .git/side sparse-checkout disable
+-C .git/side sparse-checkout reapply
+-C .git/side sparse-checkout reapply --cone
+-C .git/side sparse-checkout reapply --sparse-index
+-C .git/side sparse-checkout check-rules
+-C .git/side sparse-checkout check-rules --cone
+-C .git/side sparse-checkout check-rules -z --rules-file=a.txt
+-C .git/side sparse-checkout check-rules --rules-file=a.txt
+-C .git/side sparse-checkout check-rules --no-cone --rules-file=a.txt
+#
+# --- mailinfo / mailsplit (stdin is empty in the corpus) ---
+mailinfo .git/m .git/p
+mailinfo -k .git/m .git/p
+mailinfo -b .git/m .git/p
+mailinfo -m .git/m .git/p
+mailinfo --message-id .git/m .git/p
+mailinfo --no-message-id .git/m .git/p
+mailinfo -u .git/m .git/p
+mailinfo -n .git/m .git/p
+mailinfo --encoding=UTF-8 .git/m .git/p
+mailinfo --scissors .git/m .git/p
+mailinfo --no-scissors .git/m .git/p
+mailinfo --quoted-cr=strip .git/m .git/p
+mailinfo --quoted-cr=bogus .git/m .git/p
+mailinfo .git/m
+mailinfo
+mailsplit .git/fixture.mbox
+mailsplit -o.git .git/fixture.mbox
+mailsplit -o .git .git/fixture.mbox
+mailsplit -b -o.git .git/fixture.mbox
+mailsplit -d2 -o.git .git/fixture.mbox
+mailsplit -d 2 -o.git .git/fixture.mbox
+mailsplit -f3 -o.git .git/fixture.mbox
+mailsplit --keep-cr -o.git .git/fixture.mbox
+mailsplit --mboxrd -o.git .git/fixture.mbox
+mailsplit -o.git
+mailsplit -o.git nope.mbox
+mailsplit
+mailsplit -d3 -o.git .git/fixture.mbox
+mailsplit -d10 -o.git .git/fixture.mbox
+mailsplit -x -o.git .git/fixture.mbox
+mailsplit -o.git .git/side/.git/topic.mbox
+mailsplit -o.git/nope .git/fixture.mbox
+#
+# --- bisect (side repository) ---
+-C .git/side bisect start
+-C .git/side bisect start main
+-C .git/side bisect start main base
+-C .git/side bisect start --term-new=broken --term-old=fine main base
+-C .git/side bisect start --term-bad=broken --term-good=fine main base
+-C .git/side bisect start --no-checkout main base
+-C .git/side bisect start --first-parent main base
+-C .git/side bisect start --term-bad=run
+-C .git/side bisect start --no-checkout
+-C .git/side bisect terms
+-C .git/side bisect terms --term-good
+-C .git/side bisect bad
+-C .git/side bisect reset

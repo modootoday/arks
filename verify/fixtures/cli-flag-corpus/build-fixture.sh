@@ -167,3 +167,42 @@ h4=$(GIT_AUTHOR_DATE="$t +0000" GIT_COMMITTER_DATE="$t +0000" \
 mkdir -p .git/logs/refs/fixture
 printf '%s %s C O Mitter <committer@example.com> %s +0000\tfixture: history\n' \
   0000000000000000000000000000000000000000 "$h4" "$t" > .git/logs/refs/fixture/history
+# Family commit extras: a separate clean repository nested inside .git (so the
+# main repository's refs, objects, index and status are unchanged) whose
+# branches diverge from `base`: `topic` (other files) and `lineone` (another
+# line of a.txt) merge cleanly into `main`, `clash` conflicts with it.
+# Corpus lines reach it with `-C .git/side`.
+mkdir -p .git/side && (
+  cd .git/side
+  git init -q -b main .
+  git config user.name "C O Mitter"; git config user.email committer@example.com
+  git config commit.gpgsign false
+  printf 'one\ntwo\nthree\n' > a.txt; printf 'base\n' > b.txt
+  git add . && c -m "side: base"
+  git tag base
+  git checkout -q -b topic
+  printf 'base\ntopic\n' > b.txt; git add b.txt && c -m "topic: extend b"
+  printf 'new\n' > c.txt; git add c.txt && c -m "topic: add c"
+  git checkout -q -b clash base
+  printf 'one\ntwo\n3\n' > a.txt; git add a.txt && c -m "clash: number three"
+  git checkout -q -b lineone base
+  printf 'ONE\ntwo\nthree\n' > a.txt; git add a.txt && c -m "lineone: shout one"
+  git checkout -q main
+  printf 'one\ntwo\nTHREE\n' > a.txt; git add a.txt && c -m "main: shout three"
+)
+# A commit message with a trailer block for interpret-trailers lines.
+printf 'subject\n\nbody text\n\nSigned-off-by: A U Thor <author@example.com>\nFixes: 1\n' > .git/trailer-msg.txt
+# Patches for apply lines: one that applies to src/a.txt (index and work
+# tree), the same without a/ b/ prefixes (-p0), one creating a file with a
+# whitespace error, and one whose second hunk does not apply (--reject).
+printf 'diff --git a/src/a.txt b/src/a.txt\n--- a/src/a.txt\n+++ b/src/a.txt\n@@ -6,3 +6,3 @@\n zeta\n-eta\n+ETA\n theta\n' > .git/a.patch
+printf 'diff --git src/a.txt src/a.txt\n--- src/a.txt\n+++ src/a.txt\n@@ -6,3 +6,3 @@\n zeta\n-eta\n+ETA\n theta\n' > .git/p0.patch
+printf 'diff --git a/docs/n.md b/docs/n.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/n.md\n@@ -0,0 +1,2 @@\n+hello \n+world\n' > .git/new.patch
+printf 'diff --git a/src/a.txt b/src/a.txt\n--- a/src/a.txt\n+++ b/src/a.txt\n@@ -1,2 +1,2 @@\n-alpha\n+ALPHA\n beta\n@@ -7,2 +7,2 @@\n-nothing\n+here\n theta\n' > .git/bad.patch
+# Mailboxes for am lines in the side repository: two clean patches and one
+# that conflicts with main.
+(
+  cd .git/side
+  git format-patch -q --stdout base..topic > .git/topic.mbox
+  git format-patch -q --stdout -1 clash > .git/clash.mbox
+)

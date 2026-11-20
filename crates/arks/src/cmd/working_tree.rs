@@ -1,80 +1,127 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
-use crate::cmd::branch::restore_paths;
-use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev};
+use crate::cmd::branch::restore_paths_mode;
+use crate::cmd::shared::{head_blob_map, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{
-    open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
-};
+use crate::util::{open_repo, read_index, rel_path_from_worktree, work_tree, write_index};
 use arks_index::{Index, IndexEntry, sort_entries};
 use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 pub fn cmd_restore(args: &[String]) -> CliResult<()> {
-    // Cite: https://git-scm.com/docs/git-restore (`-s`/`--source`, `-S`/`--staged`,
-    // `-W`/`--worktree`, `--` separator).
-    let args = crate::util::split_short_bundles(args, "SWq", "s");
-    let mut staged = false;
-    let mut wt_flag = false;
-    let mut source: Option<String> = None;
-    let mut paths = Vec::new();
-    let mut i = 0;
-    let mut dashdash = false;
-    while i < args.len() {
-        let a = &args[i];
-        i += 1;
-        if dashdash || !a.starts_with('-') || a == "-" {
-            paths.push(a);
-            continue;
-        }
-        match a.as_str() {
-            "--" => dashdash = true,
-            "--staged" | "-S" => staged = true,
-            "--worktree" | "-W" => wt_flag = true,
-            "-q" | "--quiet" => {}
-            "--source" | "-s" => {
-                source = Some(
-                    args.get(i)
-                        .ok_or_else(|| CliError::Usage("restore: --source <tree-ish>".into()))?
-                        .clone(),
-                );
-                i += 1;
-            }
-            x => {
-                if let Some(v) = x.strip_prefix("--source=") {
-                    source = Some(v.to_string());
-                } else {
-                    return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
-                }
-            }
+    // Every option of `git restore -h`. Cite: https://git-scm.com/docs/git-restore
+    use crate::cmd::opt_parse::{Mode, parse, read_pathspec_file};
+    let p = parse(
+        "restore",
+        args,
+        crate::cmd::porcelain_opts::RESTORE,
+        Mode::default(),
+    )?;
+    if let Some(style) = p.value("conflict") {
+        if !matches!(style.as_str(), "merge" | "diff3" | "zdiff3") {
+            return Err(CliError::fatal(format!("unknown conflict style '{style}'")));
         }
     }
-    let worktree = wt_flag || !staged;
+    let staged = p.on("staged");
+    let worktree = p.on("worktree") || !staged;
+    let source = p.value("source");
+    let mut paths = p.args();
+    paths.extend(p.after_dashdash());
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !paths.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
+        }
+        paths = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
+    }
+    if p.on("patch") {
+        let mut a = vec!["-p".to_string()];
+        a.extend(paths);
+        return crate::cmd::interactive_patch::cmd_checkout_patch(&a);
+    }
     if paths.is_empty() {
-        return Err(CliError::Usage("restore: path required".into()));
+        return Err(CliError::fatal("you must specify path(s) to restore"));
     }
-    restore_paths(&paths, staged, worktree, source.as_deref())
+    let stage = if p.on("ours") {
+        Some(2)
+    } else if p.on("theirs") {
+        Some(3)
+    } else {
+        None
+    };
+    if (stage.is_some() || p.on("merge")) && staged {
+        return Err(CliError::fatal(
+            "'--merge', '--ours' and '--theirs' cannot be used with '--staged'",
+        ));
+    }
+    let refs: Vec<&String> = paths.iter().collect();
+    if let Some(st) = stage {
+        if crate::cmd::branch::checkout_stage_paths(&refs, st)? {
+            return Ok(());
+        }
+    }
+    // `--overlay` keeps paths missing from the source; restore defaults to no overlay.
+    let overlay = p.on("overlay");
+    restore_paths_mode(&refs, staged, worktree, source.as_deref(), overlay)
 }
 
 pub fn cmd_reset(args: &[String]) -> CliResult<()> {
-    // git-reset: `[--soft|--mixed|--hard] [<commit>]` and `[<tree-ish>] [--] <pathspec>...`.
+    // git-reset: `[--soft|--mixed|--hard|--merge|--keep] [<commit>]` and
+    // `[<tree-ish>] [--] <pathspec>...`; every option of `git reset -h`.
     // Cloud drop-in §O: pathspec form, detached HEAD, tree modes, git output lines.
-    let (opts, mut paths) = split_dashdash(args);
-    refuse_unknown_flags(&opts, &["--soft", "--mixed", "--hard", "-q", "--quiet"])?;
-    let quiet = opts.iter().any(|a| a == "-q" || a == "--quiet");
-    let mode = if opts.iter().any(|a| a == "--soft") {
-        "soft"
-    } else if opts.iter().any(|a| a == "--hard") {
-        "hard"
-    } else {
-        "mixed"
-    };
+    // Cite: https://git-scm.com/docs/git-reset
+    use crate::cmd::opt_parse::{Item, Mode, parse, read_pathspec_file};
+    let p = parse(
+        "reset",
+        args,
+        crate::cmd::porcelain_opts::RESET,
+        Mode::default(),
+    )?;
+    let quiet = p.on("quiet");
+    let mut mode = "mixed";
+    for it in &p.items {
+        if let Item::Opt {
+            key, neg: false, ..
+        } = it
+        {
+            if matches!(*key, "soft" | "mixed" | "hard" | "merge" | "keep") {
+                mode = key;
+            }
+        }
+    }
+    if p.on("patch") {
+        let mut a = vec!["-p".to_string()];
+        a.extend(p.args());
+        a.extend(p.after_dashdash());
+        return crate::cmd::interactive_patch::cmd_reset_patch(&a);
+    }
+    let intent = p.on("intent-to-add");
+    let quiet = quiet || p.on("no-refresh");
+    let opts = p.args();
+    let mut paths = p.after_dashdash();
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !paths.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
+        }
+        paths = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
+    }
     let mut repo = open_repo()?;
-    let positional: Vec<&String> = opts.iter().filter(|a| !a.starts_with('-')).collect();
+    let positional: Vec<&String> = opts.iter().collect();
     let mut rev = "HEAD".to_string();
     for (i, p) in positional.iter().enumerate() {
         if i == 0 && resolve_rev(&repo, p).is_ok() {
@@ -103,15 +150,17 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         }
         let specs: Vec<String> = paths.iter().map(|p| pathspec(&work, p)).collect();
         let mut index = read_index(&repo)?;
-        let mut kept: Vec<IndexEntry> = index
+        let (mut kept, dropped): (Vec<IndexEntry>, Vec<IndexEntry>) = index
             .entries
             .drain(..)
-            .filter(|e| !path_matches(&e.path, &specs))
-            .collect();
+            .partition(|e| !path_matches(&e.path, &specs));
         for (path, f) in &target_files {
             if path_matches(path, &specs) {
                 kept.push(index_entry_for(&repo, path, f.oid, f.mode)?);
             }
+        }
+        if intent {
+            kept.extend(intent_entries(&repo, &dropped, &target_files)?);
         }
         sort_entries(&mut kept);
         index.entries = kept;
@@ -122,9 +171,11 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         }
         return Ok(());
     }
-    let prior_paths: Vec<String> = read_index(&repo)
-        .map(|i| i.entries.into_iter().map(|e| e.path).collect())
-        .unwrap_or_default();
+    if mode == "keep" || mode == "merge" {
+        keep_or_merge_check(&repo, &work, &target, mode == "keep", &rev)?;
+    }
+    let prior_index = read_index(&repo).map(|i| i.entries).unwrap_or_default();
+    let prior_paths: Vec<String> = prior_index.iter().map(|e| e.path.clone()).collect();
     let old = repo.head_oid().ok();
     match repo.head_target()? {
         RefTarget::Symbolic(name) => {
@@ -151,6 +202,14 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
     if mode == "soft" {
         return Ok(());
     }
+    if mode == "keep" {
+        crate::cmd::switch_tree::two_way_switch(&repo, &work, old.as_ref(), &target)?;
+        return Ok(());
+    }
+    if mode == "merge" {
+        merge_reset_tree(&repo, &work, &target)?;
+        return Ok(());
+    }
     if mode == "hard" {
         reset_tree_paths(&repo, &work, &target, &prior_paths)?;
         if !quiet {
@@ -166,11 +225,19 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
     for (path, f) in &target_files {
         entries.push(index_entry_for(&repo, path, f.oid, f.mode)?);
     }
+    if intent {
+        entries.extend(intent_entries(&repo, &prior_index, &target_files)?);
+    }
     sort_entries(&mut entries);
+    let version = if entries.iter().any(|e| e.flags_extended.is_some()) {
+        3
+    } else {
+        2
+    };
     write_index(
         &repo,
         &Index {
-            version: 2,
+            version,
             entries,
             extensions: Vec::new(),
         },
@@ -179,6 +246,159 @@ pub fn cmd_reset(args: &[String]) -> CliResult<()> {
         print_unstaged(&repo, &work)?;
     }
     Ok(())
+}
+
+/// `reset -N`: paths dropped from the index by the reset stay as
+/// intent-to-add entries (empty blob, extended flag).
+fn intent_entries(
+    repo: &Repository,
+    dropped: &[IndexEntry],
+    target: &HashMap<String, crate::cmd::switch_tree::TreeFile>,
+) -> CliResult<Vec<IndexEntry>> {
+    let empty = RawObject::new(ObjectKind::Blob, Vec::new()).oid(repo.object_format())?;
+    let mut out: Vec<IndexEntry> = Vec::new();
+    for e in dropped.iter().filter(|e| e.stage() == 0) {
+        if target.contains_key(&e.path) {
+            continue;
+        }
+        let mut n = e.clone();
+        n.oid = empty;
+        n.size = 0;
+        n.flags = (e.path.len().min(0x0fff)) as u16 | arks_index::CE_EXTENDED;
+        n.flags_extended = Some(crate::cmd::core::INTENT_TO_ADD);
+        out.push(n);
+    }
+    Ok(out)
+}
+
+/// `reset --keep` / `--merge` refuse (changing nothing) when a path the reset
+/// rewrites has local changes: stat-dirty index entries are "not uptodate",
+/// staged changes would be overwritten (`--keep`).
+fn keep_or_merge_check(
+    repo: &Repository,
+    work: &Path,
+    target: &Oid,
+    keep: bool,
+    rev: &str,
+) -> CliResult<()> {
+    let head = match repo.head_oid() {
+        Ok(h) => crate::cmd::switch_tree::commit_files(repo, &h)?,
+        Err(_) => HashMap::new(),
+    };
+    let tgt = crate::cmd::switch_tree::commit_files(repo, target)?;
+    let index = read_index(repo)?;
+    let idx: HashMap<&str, &IndexEntry> = index
+        .entries
+        .iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.as_str(), e))
+        .collect();
+    let mut paths: Vec<&String> = head.keys().chain(tgt.keys()).collect();
+    paths.sort();
+    paths.dedup();
+    let fail = |p: &str, why: &str| {
+        CliError::Exit(
+            128,
+            format!(
+                "error: Entry '{p}' {why}. Cannot merge.\nfatal: Could not reset index file to revision '{rev}'."
+            ),
+        )
+    };
+    for p in paths {
+        let (h, t) = (head.get(p).map(|f| f.oid), tgt.get(p).map(|f| f.oid));
+        let i = idx.get(p.as_str()).map(|e| e.oid);
+        let rewrites = if keep { h != t } else { i != t };
+        if !rewrites {
+            continue;
+        }
+        if let Some(e) = idx.get(p.as_str()) {
+            let clean = fs::symlink_metadata(work.join(p))
+                .map(|m| strict_stat_matches(e, &m))
+                .unwrap_or(false);
+            if !clean {
+                return Err(fail(p, "not uptodate"));
+            }
+        }
+        if keep && i != h {
+            return Err(fail(p, "would be overwritten by merge"));
+        }
+    }
+    Ok(())
+}
+
+/// git's default stat comparison (core.trustctime, core.checkStat=default):
+/// size, mtime, ctime, inode, device, owner and file mode.
+fn strict_stat_matches(e: &IndexEntry, meta: &fs::Metadata) -> bool {
+    let fresh = stat_entry(&e.path, e.oid, meta);
+    (
+        fresh.size,
+        fresh.mtime_sec,
+        fresh.mtime_nsec,
+        fresh.ctime_sec,
+        fresh.ctime_nsec,
+        fresh.ino,
+        fresh.dev,
+        fresh.uid,
+        fresh.gid,
+    ) == (
+        e.size,
+        e.mtime_sec,
+        e.mtime_nsec,
+        e.ctime_sec,
+        e.ctime_nsec,
+        e.ino,
+        e.dev,
+        e.uid,
+        e.gid,
+    ) && (fresh.mode == e.mode || e.mode == 0o120000)
+}
+
+/// The tree half of `reset --merge`: the index becomes `target`; working-tree
+/// files are rewritten only where the index and `target` differ.
+fn merge_reset_tree(repo: &Repository, work: &Path, target: &Oid) -> CliResult<()> {
+    let tgt = crate::cmd::switch_tree::commit_files(repo, target)?;
+    let index = read_index(repo)?;
+    let idx: HashMap<String, IndexEntry> = index
+        .entries
+        .into_iter()
+        .filter(|e| e.stage() == 0)
+        .map(|e| (e.path.clone(), e))
+        .collect();
+    let mut entries = Vec::new();
+    for (p, e) in &idx {
+        if !tgt.contains_key(p) {
+            let abs = work.join(p);
+            if abs.is_file() || abs.is_symlink() {
+                fs::remove_file(&abs)?;
+            }
+            let _ = e;
+        }
+    }
+    for (p, f) in &tgt {
+        match idx.get(p) {
+            Some(e) if e.oid == f.oid => entries.push(e.clone()),
+            _ => {
+                let abs = work.join(p);
+                if let Some(parent) = abs.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+                fs::write(&abs, repo.get_object(&f.oid)?.payload)?;
+                let meta = fs::metadata(&abs)?;
+                let mut e = stat_entry(p, f.oid, &meta);
+                e.mode = f.mode;
+                entries.push(e);
+            }
+        }
+    }
+    sort_entries(&mut entries);
+    write_index(
+        repo,
+        &Index {
+            version: 2,
+            entries,
+            extensions: Vec::new(),
+        },
+    )
 }
 
 /// Make the index and working tree match `target` (the tree half of
@@ -283,6 +503,12 @@ fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
     let mut lines = Vec::new();
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
         let abs = work.join(&e.path);
+        if e.flags_extended
+            .is_some_and(|f| f & crate::cmd::core::INTENT_TO_ADD != 0)
+        {
+            lines.push(format!("A\t{}", e.path));
+            continue;
+        }
         match fs::metadata(&abs) {
             Err(_) => lines.push(format!("D\t{}", e.path)),
             Ok(m) => {
@@ -307,28 +533,30 @@ fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
 }
 
 pub fn cmd_rm(args: &[String]) -> CliResult<()> {
-    // git-rm: `--cached`, `-r`, `-f`, `-q`, `-n`, directory pathspecs, the
+    // git-rm: every option of `git rm -h`, directory pathspecs, the
     // up-to-date safety checks, and `rm '<path>'` output per removed entry.
     // Cite: https://git-scm.com/docs/git-rm
-    let args = crate::util::split_short_bundles(args, "rfqn", "");
-    let (opts, mut paths) = split_dashdash(&args);
-    let mut cached = false;
-    let mut recursive = false;
-    let mut force = false;
-    let mut quiet = false;
-    let mut dry_run = false;
-    for a in &opts {
-        match a.as_str() {
-            "--cached" => cached = true,
-            "-r" => recursive = true,
-            "-f" | "--force" => force = true,
-            "-q" | "--quiet" => quiet = true,
-            "-n" | "--dry-run" => dry_run = true,
-            x if x.starts_with('-') && x.len() > 1 => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
-            }
-            _ => paths.push(a.clone()),
+    use crate::cmd::opt_parse::{Mode, parse, read_pathspec_file};
+    let p = parse("rm", args, crate::cmd::porcelain_opts::RM, Mode::default())?;
+    let cached = p.on("cached");
+    let recursive = p.on("-r");
+    let force = p.on("force");
+    let quiet = p.on("quiet");
+    let dry_run = p.on("dry-run");
+    let ignore_unmatch = p.on("ignore-unmatch");
+    let mut paths = p.args();
+    paths.extend(p.after_dashdash());
+    if let Some(f) = p.value("pathspec-from-file") {
+        if !paths.is_empty() {
+            return Err(CliError::fatal(
+                "'--pathspec-from-file' and pathspec arguments cannot be used together",
+            ));
         }
+        paths = read_pathspec_file(&f, p.on("pathspec-file-nul"))?;
+    } else if p.on("pathspec-file-nul") {
+        return Err(CliError::fatal(
+            "the option '--pathspec-file-nul' requires '--pathspec-from-file'",
+        ));
     }
     if paths.is_empty() {
         return Err(CliError::fatal(
@@ -346,17 +574,31 @@ pub fn cmd_rm(args: &[String]) -> CliResult<()> {
         } else {
             format!("{rel}/")
         };
+        let glob = [rel.clone()];
         let mut hits: Vec<String> = index
             .entries
             .iter()
-            .filter(|e| e.path == rel || rel.is_empty() || e.path.starts_with(&prefix))
+            .filter(|e| {
+                e.path == rel
+                    || rel.is_empty()
+                    || e.path.starts_with(&prefix)
+                    || (rel.contains(['*', '?', '['])
+                        && crate::cmd::log_format::path_in_specs(&e.path, &glob))
+            })
             .map(|e| e.path.clone())
             .collect();
         hits.dedup();
         if hits.is_empty() {
+            if ignore_unmatch {
+                continue;
+            }
             return Err(CliError::fatal(format!(
                 "pathspec '{p}' did not match any files"
             )));
+        }
+        if rel.contains(['*', '?', '[']) && !hits.contains(&rel) {
+            targets.extend(hits);
+            continue;
         }
         if !recursive && !hits.contains(&rel) {
             return Err(CliError::fatal(format!(
@@ -479,77 +721,128 @@ pub fn cmd_rm(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_mv(args: &[String]) -> CliResult<()> {
-    // git-mv(1): `mv <src> <dst>` or `mv <src>... <destination-dir>`.
-    refuse_unknown_flags(args, &[])?;
-    if args.len() < 2 {
-        return Err(CliError::Usage("mv <src> <dst> | mv <src>... <dir>".into()));
+    // git-mv(1): `mv [-v] [-f] [-n] [-k] <source>... <destination>`; tracked
+    // files and directories move in the work tree and the index.
+    // Cite: https://git-scm.com/docs/git-mv
+    use crate::cmd::opt_parse::{Mode, parse};
+    let p = parse("mv", args, crate::cmd::porcelain_opts::MV, Mode::default())?;
+    let verbose = p.on("verbose");
+    let dry_run = p.on("dry-run");
+    let force = p.on("force");
+    let keep_going = p.on("-k");
+    let mut argv = p.args();
+    argv.extend(p.after_dashdash());
+    if argv.len() < 2 {
+        return Err(CliError::Exit(
+            129,
+            "usage: git mv [<options>] <source>... <destination>".into(),
+        ));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
     let mut index = read_index(&repo)?;
-    let last = &args[args.len() - 1];
-    let last_abs = {
-        let p = Path::new(last);
-        if p.is_absolute() {
-            p.to_path_buf()
+    let dest_arg = argv.pop().unwrap_or_default();
+    let rel_of = |a: &str| -> CliResult<String> {
+        let path = Path::new(a);
+        if path.is_absolute() {
+            rel_path_from_worktree(&work, path)
         } else {
-            work.join(p)
+            let rel = crate::cmd::core::pathspec_rel(&work, a)?;
+            Ok(rel)
         }
     };
-    let sources: &[String] = if args.len() > 2 {
-        if !last_abs.is_dir() {
-            return Err(CliError::Usage(
-                "mv: destination must be a directory when moving multiple sources".into(),
-            ));
-        }
-        &args[..args.len() - 1]
-    } else {
-        &args[..1]
-    };
-    let dest_is_dir = args.len() > 2 || last_abs.is_dir();
-    // Destination directory as worktree-relative (must not require the new
-    // basename to exist yet — canonicalize would fail before rename).
-    let dest_dir_rel = if dest_is_dir {
-        let p = Path::new(last);
-        if p.is_absolute() {
-            Some(rel_path_from_worktree(&work, p)?)
-        } else {
-            Some(last.replace('\\', "/").trim_end_matches('/').to_string())
-        }
-    } else {
-        None
-    };
-    for src_arg in sources {
-        let src = rel_path_from_worktree(&work, Path::new(src_arg))?;
-        let dst = if let Some(dir_rel) = &dest_dir_rel {
-            let base = Path::new(&src)
-                .file_name()
-                .ok_or_else(|| CliError::Msg("mv: bad src".into()))?
-                .to_string_lossy();
-            format!("{dir_rel}/{base}")
-        } else {
-            let p = Path::new(last);
-            if p.is_absolute() {
-                rel_path_from_worktree(&work, p)?
+    let dest_rel = rel_of(&dest_arg)?;
+    let dest_is_dir = argv.len() > 1 || work.join(&dest_rel).is_dir();
+    if argv.len() > 1 && !work.join(&dest_rel).is_dir() {
+        return Err(CliError::fatal(format!(
+            "destination '{dest_arg}' is not a directory"
+        )));
+    }
+    // (source, destination, is_dir) after the checks git makes.
+    let mut moves: Vec<(String, String, bool)> = Vec::new();
+    for src_arg in &argv {
+        let src = rel_of(src_arg)?;
+        let dst = if dest_is_dir {
+            let base = src.rsplit('/').next().unwrap_or(&src).to_string();
+            if dest_rel.is_empty() {
+                base
             } else {
-                last.replace('\\', "/")
+                format!("{dest_rel}/{base}")
             }
+        } else {
+            dest_rel.clone()
         };
         let abs_src = work.join(&src);
         let abs_dst = work.join(&dst);
+        let prefix = format!("{src}/");
+        let tracked_dir = index.entries.iter().any(|e| e.path.starts_with(&prefix));
+        let err = if fs::symlink_metadata(&abs_src).is_err() {
+            Some("bad source")
+        } else if abs_src.is_dir() && !tracked_dir {
+            Some("source directory is empty")
+        } else if !abs_src.is_dir() && !index.entries.iter().any(|e| e.path == src) {
+            Some("not under version control")
+        } else if src == dst || dst.starts_with(&prefix) {
+            Some("can not move directory into itself")
+        } else if abs_dst.exists() && (abs_src.is_dir() || !force) {
+            Some("destination exists")
+        } else {
+            None
+        };
+        if let Some(why) = err {
+            if keep_going {
+                continue;
+            }
+            return Err(CliError::fatal(format!(
+                "{why}, source={src}, destination={dst}"
+            )));
+        }
+        moves.push((src, dst, abs_src.is_dir()));
+    }
+    for (src, dst, is_dir) in &moves {
+        if dry_run {
+            println!("Checking rename of '{src}' to '{dst}'");
+        }
+        if verbose || dry_run {
+            println!("Renaming {src} to {dst}");
+        }
+        if *is_dir && (verbose || dry_run) {
+            let prefix = format!("{src}/");
+            for e in index.entries.iter().filter(|e| e.path.starts_with(&prefix)) {
+                println!("Renaming {} to {dst}/{}", e.path, &e.path[prefix.len()..]);
+            }
+        }
+    }
+    if dry_run {
+        return Ok(());
+    }
+    for (src, dst, is_dir) in &moves {
+        let abs_src = work.join(src);
+        let abs_dst = work.join(dst);
         if let Some(parent) = abs_dst.parent() {
             fs::create_dir_all(parent)?;
         }
+        if !is_dir && abs_dst.is_file() {
+            fs::remove_file(&abs_dst)?;
+        }
         fs::rename(&abs_src, &abs_dst)?;
-        if let Some(pos) = index
-            .entries
-            .iter()
-            .position(|e| e.path == src && e.stage() == 0)
-        {
-            let mut e = index.entries.remove(pos);
-            e.path = dst.clone();
-            e.flags = (dst.len().min(0x0fff)) as u16;
-            index.entries.push(e);
+        if *is_dir {
+            let prefix = format!("{src}/");
+            for e in index
+                .entries
+                .iter_mut()
+                .filter(|e| e.path.starts_with(&prefix))
+            {
+                let rest = e.path[prefix.len()..].to_string();
+                e.path = format!("{dst}/{rest}");
+                e.flags = (e.flags & !0x0fff) | (e.path.len().min(0x0fff)) as u16;
+            }
+        } else {
+            index.entries.retain(|e| &e.path != dst);
+            if let Some(e) = index.entries.iter_mut().find(|e| &e.path == src) {
+                e.path = dst.clone();
+                e.flags = (e.flags & !0x0fff) | (dst.len().min(0x0fff)) as u16;
+            }
         }
     }
     sort_entries(&mut index.entries);
@@ -563,28 +856,32 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     // are left alone. clean.requireForce defaults to true.
     // Cite: https://git-scm.com/docs/git-clean
     // Ignore rules (gitignore(5)) apply unless `-x`; `-X` removes only ignored files.
-    let args = crate::util::split_short_bundles(args, "fndxqX", "");
-    let (opts, mut paths) = split_dashdash(&args);
-    let mut force = 0;
-    let mut dry_run = false;
-    let mut dirs = false;
-    let mut quiet = false;
+    use crate::cmd::opt_parse::{Item, Mode, parse};
+    let p = parse(
+        "clean",
+        args,
+        crate::cmd::porcelain_opts::CLEAN,
+        Mode::default(),
+    )?;
+    let force = p.count("force");
+    let dry_run = p.on("dry-run");
+    let interactive = p.on("interactive");
+    let dirs = p.on("-d");
+    let quiet = p.on("quiet");
+    let excludes = p.values("exclude");
     // 0 = honor ignore rules, 1 = `-x` (also remove ignored), 2 = `-X` (only ignored).
     let mut exclude_mode = 0u8;
-    for a in &opts {
-        match a.as_str() {
-            "-f" | "--force" => force += 1,
-            "-n" | "--dry-run" => dry_run = true,
-            "-d" => dirs = true,
-            "-x" => exclude_mode = 1,
-            "-X" => exclude_mode = 2,
-            "-q" | "--quiet" => quiet = true,
-            x if x.starts_with('-') && x.len() > 1 => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
+    for it in &p.items {
+        if let Item::Opt { key, .. } = it {
+            match *key {
+                "-x" => exclude_mode = 1,
+                "-X" => exclude_mode = 2,
+                _ => {}
             }
-            _ => paths.push(a.clone()),
         }
     }
+    let mut paths = p.args();
+    paths.extend(p.after_dashdash());
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     let require_force = cfg
@@ -596,7 +893,7 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
             )
         })
         .unwrap_or(true);
-    if force == 0 && !dry_run && require_force {
+    if force == 0 && !dry_run && !interactive && require_force {
         return Err(CliError::fatal(
             "clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean",
         ));
@@ -605,13 +902,26 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     let index = read_index(&repo)?;
     let indexed: HashSet<String> = index.entries.iter().map(|e| e.path.clone()).collect();
     let mut untracked = Vec::new();
+    let mut ignore = crate::cmd::ignore::Ignore::new(&work).with_cli_patterns(&excludes);
     if exclude_mode == 0 {
-        collect_untracked(&work, &work, &indexed, &mut untracked)?;
+        crate::cmd::shared::collect_untracked_with(
+            &work,
+            &work,
+            &indexed,
+            &mut untracked,
+            Some(&mut ignore),
+        )?;
     } else {
         crate::cmd::shared::collect_untracked_with(&work, &work, &indexed, &mut untracked, None)?;
         if exclude_mode == 2 {
             let mut kept = Vec::new();
-            collect_untracked(&work, &work, &indexed, &mut kept)?;
+            crate::cmd::shared::collect_untracked_with(
+                &work,
+                &work,
+                &indexed,
+                &mut kept,
+                Some(&mut ignore),
+            )?;
             let kept: HashSet<String> = kept.into_iter().collect();
             untracked.retain(|p| !kept.contains(p));
         }
@@ -656,6 +966,40 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
             comps[common..].join("/")
         )
     };
+    if interactive {
+        // `clean -i`: list the candidates, then the command menu; answers come
+        // from stdin and end of input quits.
+        let items: Vec<String> = shown
+            .iter()
+            .filter(|p| (!p.ends_with('/') || dirs) && in_spec(p))
+            .map(|p| display(p))
+            .collect();
+        if items.is_empty() {
+            return Ok(());
+        }
+        println!(
+            "Would remove the following item{}:",
+            if items.len() == 1 { "" } else { "s" }
+        );
+        for i in &items {
+            println!("  {i}");
+        }
+        println!("*** Commands ***");
+        println!("    1: clean                2: filter by pattern    3: select by numbers");
+        println!("    4: ask each             5: quit                 6: help");
+        print!("What now> ");
+        let mut line = String::new();
+        let n = std::io::stdin().read_line(&mut line).unwrap_or(0);
+        if n == 0 || matches!(line.trim(), "5" | "q" | "quit") {
+            println!("Bye.");
+            return Ok(());
+        }
+        if !matches!(line.trim(), "1" | "c" | "clean") {
+            return Err(CliError::NotImplemented(
+                "clean -i: only 'clean' and 'quit' are implemented".into(),
+            ));
+        }
+    }
     for p in shown {
         let is_dir = p.ends_with('/');
         if (is_dir && !dirs) || !in_spec(&p) {
@@ -680,14 +1024,6 @@ pub fn cmd_clean(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// Split argv at the first `--` (options+revs, pathspecs).
-fn split_dashdash(args: &[String]) -> (Vec<String>, Vec<String>) {
-    match args.iter().position(|a| a == "--") {
-        Some(i) => (args[..i].to_vec(), args[i + 1..].to_vec()),
-        None => (args.to_vec(), Vec::new()),
-    }
-}
-
 /// Worktree-relative pathspec (cwd-relative input), `/`-separated, no trailing slash.
 fn pathspec(work: &Path, p: &str) -> String {
     let abs = std::env::current_dir()
@@ -707,4 +1043,27 @@ fn pathspec(work: &Path, p: &str) -> String {
 /// Same pathspec rules as `log` (prefix match or whole-path glob).
 fn path_matches(path: &str, specs: &[String]) -> bool {
     crate::cmd::log_format::path_in_specs(path, specs)
+}
+
+/// Tracked paths as they are in the working tree (missing files omitted).
+/// Hashes without writing objects; stat-clean entries reuse the index OID.
+pub(crate) fn worktree_map(repo: &Repository, work: &Path) -> CliResult<HashMap<String, Oid>> {
+    let index = read_index(repo)?;
+    let mut out = HashMap::new();
+    for e in index.entries.iter().filter(|e| e.stage() == 0) {
+        let abs = work.join(&e.path);
+        let Ok(meta) = fs::metadata(&abs) else {
+            continue;
+        };
+        if !meta.is_file() {
+            continue;
+        }
+        if crate::cmd::shared::index_stat_matches(e, &meta) {
+            out.insert(e.path.clone(), e.oid);
+            continue;
+        }
+        let obj = RawObject::new(ObjectKind::Blob, fs::read(&abs)?);
+        out.insert(e.path.clone(), obj.oid(repo.object_format())?);
+    }
+    Ok(out)
 }

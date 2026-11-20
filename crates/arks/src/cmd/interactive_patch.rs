@@ -656,7 +656,11 @@ pub fn cmd_add_edit(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-e", "--edit"])?;
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    let changes = collect_file_changes(&repo, &work)?;
+    // `add -e` edits the diff of tracked files only (untracked files are not part of it).
+    let changes: Vec<_> = collect_file_changes(&repo, &work)?
+        .into_iter()
+        .filter(|c| !c.untracked)
+        .collect();
     if changes.is_empty() {
         println!("No changes.");
         return Ok(());
@@ -769,6 +773,20 @@ pub fn cmd_add_interactive(args: &[String]) -> CliResult<()> {
         }
     }
     Ok(())
+}
+
+/// `reset -p`: interactive unstaging is not implemented yet.
+pub fn cmd_reset_patch(_args: &[String]) -> CliResult<()> {
+    Err(CliError::NotImplemented(
+        "reset --patch: interactive unstaging not implemented".into(),
+    ))
+}
+
+/// `checkout -p` / `restore -p`: interactive path restore is not implemented yet.
+pub fn cmd_checkout_patch(_args: &[String]) -> CliResult<()> {
+    Err(CliError::NotImplemented(
+        "checkout --patch: interactive restore not implemented".into(),
+    ))
 }
 
 /// FS3 `stash -p`: interactively select hunks/paths, stash those, leave rest in WT.

@@ -4,58 +4,160 @@
 //! Fs-1: FF + `--no-ff` when FF-capable.
 //! Fs-2: diverged three-way merge (clean or conflicted index).
 
-use crate::cmd::merge_engine::merge_three_way_opts;
-use crate::cmd::shared::{commit_signature, is_ancestor, resolve_rev};
+use crate::cmd::shared::{commit_signature, current_branch_name, is_ancestor, resolve_rev};
 use crate::error::{CliError, CliResult};
-use crate::util::{open_repo, refuse_unknown_flags, work_tree};
+use crate::util::{open_repo, work_tree};
 use arks_object::{Commit, ObjectKind, RawObject};
 use arks_refs::RefTarget;
 use arks_store::ObjectStore;
 
+/// Fast-forward policy.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Ff {
+    Allow,
+    Never,
+    Only,
+}
+
+/// Parsed `git merge` options.
+#[derive(Clone)]
+struct MergeOpts {
+    ff: Ff,
+    commit: bool,
+    squash: bool,
+    stat: bool,
+    log: Option<usize>,
+    message: Option<String>,
+    edit: bool,
+    cleanup: crate::cmd::trailers::Cleanup,
+    strategy: Option<String>,
+    into_name: Option<String>,
+    quiet: bool,
+    allow_unrelated: bool,
+    sign_args: Vec<String>,
+    autostash: bool,
+    signoff: bool,
+    no_verify: bool,
+    verify_signatures: bool,
+    favor: crate::cmd::merge_engine::Favor,
+}
+
+const STRATEGIES: &[&str] = &["octopus", "ours", "recursive", "resolve", "subtree", "ort"];
+
 pub fn cmd_merge(args: &[String]) -> CliResult<()> {
-    // Cloud drop-in §O: `--no-edit` (arks never opens an editor for merges),
-    // `-m <msg>`, `-q`. Cite: https://git-scm.com/docs/git-merge
-    if let Some(op) = args
-        .iter()
-        .find(|a| *a == "--abort" || *a == "--continue" || *a == "--quit")
-    {
-        // git-merge --abort/--continue need a merge in progress (MERGE_HEAD).
-        // Cite: https://git-scm.com/docs/git-merge#Documentation/git-merge.txt---abort
-        let repo = open_repo()?;
-        if !repo.git_dir().join("MERGE_HEAD").is_file() {
-            return Err(match op.as_str() {
-                "--abort" => CliError::fatal("There is no merge to abort (MERGE_HEAD missing)."),
-                "--continue" => {
-                    CliError::fatal("There is no merge in progress (MERGE_HEAD missing).")
-                }
-                _ => return Ok(()),
-            });
-        }
-        return Err(CliError::NotImplemented(format!(
-            "merge {op} with a merge in progress is not claimed"
-        )));
-    }
-    let (args, message) = take_merge_message(args)?;
-    let args = &args;
-    refuse_unknown_flags(
+    // Every option of `git merge -h`. Cite: https://git-scm.com/docs/git-merge
+    use crate::cmd::opt_parse::{Item, Mode, parse};
+    let p = parse(
+        "merge",
         args,
-        &[
-            "--ff-only",
-            "--no-ff",
-            "--ff",
-            "--no-edit",
-            "-q",
-            "--quiet",
-            "--no-stat",
-        ],
+        crate::cmd::porcelain_opts::MERGE,
+        Mode::default(),
     )?;
-    let ff_only = args.iter().any(|a| a == "--ff-only");
-    let no_ff = args.iter().any(|a| a == "--no-ff");
-    if ff_only && no_ff {
-        return Err(CliError::Usage(
-            "merge: --ff-only and --no-ff are mutually exclusive".into(),
+    for op in ["abort", "quit", "continue"] {
+        if p.on(op) {
+            return merge_sequencer_op(op);
+        }
+    }
+    let mut ff = Ff::Allow;
+    for it in &p.items {
+        if let Item::Opt { key, neg, .. } = it {
+            match (*key, *neg) {
+                ("ff", false) => ff = Ff::Allow,
+                ("ff", true) => ff = Ff::Never,
+                ("ff-only", _) => ff = Ff::Only,
+                _ => {}
+            }
+        }
+    }
+    let mut stat = true;
+    for it in &p.items {
+        if let Item::Opt { key, neg, .. } = it {
+            match (*key, *neg) {
+                ("stat" | "summary", n) => stat = !n,
+                ("-n", _) => stat = false,
+                _ => {}
+            }
+        }
+    }
+    let messages = p.values("message");
+    let mut message = (!messages.is_empty()).then(|| messages.join("\n\n"));
+    if let Some(f) = p.value("file") {
+        let text = if f == "-" {
+            let mut s = String::new();
+            std::io::Read::read_to_string(&mut std::io::stdin(), &mut s)?;
+            s
+        } else {
+            std::fs::read_to_string(&f)
+                .map_err(|e| CliError::fatal(format!("could not read file '{f}': {e}")))?
+        };
+        message = Some(text);
+    }
+    let strategies = p.values("strategy");
+    for s in &strategies {
+        if !STRATEGIES.contains(&s.as_str()) {
+            return Err(CliError::Exit(
+                1,
+                format!(
+                    "Could not find merge strategy '{s}'.\nAvailable strategies are: octopus ours recursive resolve subtree."
+                ),
+            ));
+        }
+    }
+    // `-X ours|theirs` resolve conflicting hunks; the other ort options
+    // (diff algorithms, whitespace, renames) give the same result for the
+    // line merges this engine performs.
+    let mut favor = crate::cmd::merge_engine::Favor::None;
+    for x in p.values("strategy-option") {
+        match x.as_str() {
+            "ours" => favor = crate::cmd::merge_engine::Favor::Ours,
+            "theirs" => favor = crate::cmd::merge_engine::Favor::Theirs,
+            _ => {}
+        }
+    }
+    let squash = p.on("squash");
+    let commit = p.flag("commit") != Some(false);
+    if squash && ff == Ff::Never {
+        return Err(CliError::fatal(
+            "options '--squash' and '--no-ff.' cannot be used together",
         ));
     }
+    if squash && p.flag("commit") == Some(true) {
+        return Err(CliError::fatal(
+            "options '--squash' and '--commit.' cannot be used together",
+        ));
+    }
+    let cleanup = match p.value("cleanup") {
+        Some(v) => crate::cmd::trailers::parse_cleanup(&v)?,
+        None => crate::cmd::trailers::Cleanup::Default,
+    };
+    let log = match p.last("log") {
+        None => None,
+        Some(None) => Some(20),
+        Some(Some(n)) => Some(
+            n.parse::<usize>()
+                .map_err(|_| CliError::fatal(format!("invalid --log value: {n}")))?,
+        ),
+    };
+    let o = MergeOpts {
+        ff,
+        commit,
+        squash,
+        stat,
+        log,
+        message,
+        edit: p.on("edit"),
+        cleanup,
+        strategy: strategies.last().cloned(),
+        into_name: p.value("into-name"),
+        quiet: p.on("quiet"),
+        allow_unrelated: p.on("allow-unrelated-histories"),
+        sign_args: crate::cmd::commit::sign_args(&p),
+        autostash: p.on("autostash"),
+        signoff: p.on("signoff"),
+        no_verify: p.on("no-verify"),
+        verify_signatures: p.on("verify-signatures"),
+        favor,
+    };
     let repo = open_repo()?;
     // SEQ-004 (M20 Cx-6): rerere rr-cache lock during merge.
     let rr_lock = repo.common_dir().join("rr-cache.lock");
@@ -65,11 +167,479 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
             rr_lock.display()
         )));
     }
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 1 {
-        return Err(CliError::Usage("merge [--ff-only|--no-ff] <branch>".into()));
+    let positional = p.args();
+    if positional.is_empty() {
+        return Err(CliError::fatal("No remote for the current branch."));
     }
-    merge_onto_msg(positional[0], ff_only, no_ff, message)
+    if positional.len() > 1 {
+        return Err(CliError::NotImplemented(
+            "merge of several heads (octopus) not implemented".into(),
+        ));
+    }
+    drop(repo);
+    merge_one(&positional[0], &o)
+}
+
+/// `--abort`, `--quit` and `--continue` of an in-progress merge.
+fn merge_sequencer_op(op: &str) -> CliResult<()> {
+    // git-merge --abort/--continue need a merge in progress (MERGE_HEAD).
+    // Cite: https://git-scm.com/docs/git-merge#Documentation/git-merge.txt---abort
+    let repo = open_repo()?;
+    let git_dir = repo.git_dir().to_path_buf();
+    if !git_dir.join("MERGE_HEAD").is_file() {
+        return match op {
+            "abort" => Err(CliError::fatal(
+                "There is no merge to abort (MERGE_HEAD missing).",
+            )),
+            "continue" => Err(CliError::fatal(
+                "There is no merge in progress (MERGE_HEAD missing).",
+            )),
+            _ => Ok(()),
+        };
+    }
+    let clear = || {
+        for f in ["MERGE_HEAD", "MERGE_MSG", "MERGE_MODE", "AUTO_MERGE"] {
+            let _ = std::fs::remove_file(git_dir.join(f));
+        }
+    };
+    match op {
+        "quit" => {
+            clear();
+            Ok(())
+        }
+        "abort" => {
+            let head = repo.head_oid()?;
+            let work = work_tree(&repo)?;
+            crate::cmd::working_tree::hard_reset_tree(&repo, &work, &head)?;
+            clear();
+            Ok(())
+        }
+        _ => {
+            drop(repo);
+            crate::cmd::commit::cmd_commit(&[])
+        }
+    }
+}
+
+/// Stash local changes, run `f`, then re-apply them (`--autostash`).
+fn with_autostash(f: impl FnOnce() -> CliResult<()>) -> CliResult<()> {
+    let stashed = crate::cmd::stash::autostash_push()?;
+    let result = f();
+    if stashed {
+        crate::cmd::stash::autostash_pop()?;
+    }
+    result
+}
+
+/// What the merged-in name is, for the default message.
+fn merge_label(repo: &arks_repo::Repository, name: &str) -> String {
+    // `<branch>~<n>` / `<branch>^`: "branch '<branch>' (early part)".
+    if let Some(cut) = name.find(['~', '^']) {
+        let (b, rest) = name.split_at(cut);
+        let suffix_ok = rest
+            .chars()
+            .all(|c| c == '~' || c == '^' || c.is_ascii_digit());
+        if suffix_ok && !b.is_empty() && repo.refs().resolve(&format!("refs/heads/{b}")).is_ok() {
+            return format!("branch '{b}' (early part)");
+        }
+    }
+    if name.starts_with("refs/heads/") || repo.refs().resolve(&format!("refs/heads/{name}")).is_ok()
+    {
+        format!("branch '{}'", name.trim_start_matches("refs/heads/"))
+    } else if repo.refs().resolve(&format!("refs/remotes/{name}")).is_ok() {
+        format!("remote-tracking branch '{name}'")
+    } else if repo.refs().resolve(&format!("refs/tags/{name}")).is_ok() {
+        format!("tag '{name}'")
+    } else {
+        format!("commit '{name}'")
+    }
+}
+
+/// The default merge message (`fmt-merge-msg`): `Merge <label>`, plus
+/// ` into <branch>` unless the branch is main/master, plus `--log` lines.
+fn default_merge_message(
+    repo: &arks_repo::Repository,
+    name: &str,
+    head: &arks_oid::Oid,
+    theirs: &arks_oid::Oid,
+    o: &MergeOpts,
+) -> CliResult<String> {
+    let mut msg = format!("Merge {}", merge_label(repo, name));
+    let target = o
+        .into_name
+        .clone()
+        .or_else(|| current_branch_name(repo).ok());
+    if let Some(t) = target {
+        if o.into_name.is_some() || !matches!(t.as_str(), "main" | "master") {
+            msg.push_str(&format!(" into {t}"));
+        }
+    }
+    msg.push('\n');
+    if let Some(limit) = o.log {
+        let ours = arks_repo::ancestor_set(repo, *head)?;
+        let mut queue = vec![*theirs];
+        let mut seen = std::collections::HashSet::new();
+        let mut picked: Vec<(i64, String)> = Vec::new();
+        while let Some(c) = queue.pop() {
+            if ours.contains(&c) || !seen.insert(c) {
+                continue;
+            }
+            let commit = crate::cmd::log_format::read_commit(repo, &c)?;
+            picked.push((
+                commit.committer.timestamp,
+                crate::cmd::log_format::subject_line(&commit.message),
+            ));
+            queue.extend(commit.parents.iter().copied());
+        }
+        picked.sort_by_key(|x| std::cmp::Reverse(x.0));
+        if !picked.is_empty() {
+            let short = name.trim_start_matches("refs/heads/");
+            if picked.len() > limit {
+                msg.push_str(&format!("\n* {short}: ({} commits)\n", picked.len()));
+            } else {
+                msg.push_str(&format!("\n* {short}:\n"));
+            }
+            for (_, s) in picked.iter().take(limit) {
+                msg.push_str(&format!("  {s}\n"));
+            }
+            if picked.len() > limit {
+                msg.push_str("  ...\n");
+            }
+        }
+    }
+    Ok(msg)
+}
+
+fn merge_one(name: &str, o: &MergeOpts) -> CliResult<()> {
+    let mut repo = open_repo()?;
+    let say = |s: String| {
+        if !o.quiet {
+            println!("{s}");
+        }
+    };
+    let theirs = crate::cmd::shared::peel_to_kind(
+        &repo,
+        &resolve_rev(&repo, name)
+            .map_err(|_| CliError::fatal(format!("{name} - not something we can merge")))?,
+        crate::cmd::shared::ObjKind::Commit,
+        name,
+    )?;
+    let head = repo.head_oid()?;
+    let up_to_date = head == theirs || is_ancestor(&repo, &theirs, &head)?;
+    if o.verify_signatures && !up_to_date {
+        let c = crate::cmd::log_format::read_commit(&repo, &theirs)?;
+        if c.gpgsig.is_none() {
+            return Err(CliError::fatal(format!(
+                "Commit {} does not have a GPG signature.",
+                crate::cmd::shared::abbrev_hex(&repo, &theirs, 7)
+            )));
+        }
+    }
+    let _ = repo.refs_mut().update("ORIG_HEAD", &head, None);
+    if up_to_date {
+        say(if o.squash {
+            "Already up to date. (nothing to squash)".to_string()
+        } else {
+            "Already up to date.".to_string()
+        });
+        return Ok(());
+    }
+    if arks_repo::merge_base_oid(&repo, &head, &theirs)?.is_none() && !o.allow_unrelated {
+        return Err(CliError::fatal("refusing to merge unrelated histories"));
+    }
+    if o.autostash {
+        // Stash only once the merge is really going to happen.
+        drop(repo);
+        let mut plain = o.clone();
+        plain.autostash = false;
+        return with_autostash(|| merge_one(name, &plain));
+    }
+    let can_ff = is_ancestor(&repo, &head, &theirs)?;
+    if can_ff && o.ff != Ff::Never && o.strategy.as_deref() != Some("ours") {
+        // Fast-forward keeps non-conflicting local changes (two-way switch).
+        let work = work_tree(&repo)?;
+        crate::cmd::switch_tree::two_way_switch(&repo, &work, Some(&head), &theirs)
+            .map_err(|e| CliError::Msg(e.to_string().replace("checkout", "merge")))?;
+        say(format!(
+            "Updating {}..{}",
+            crate::cmd::shared::abbrev_hex(&repo, &head, 7),
+            crate::cmd::shared::abbrev_hex(&repo, &theirs, 7)
+        ));
+        say("Fast-forward".to_string());
+        if o.squash {
+            say("Squash commit -- not updating HEAD".to_string());
+            write_squash_msg(&repo, &head, &theirs)?;
+        } else {
+            match repo.head_target()? {
+                RefTarget::Symbolic(branch) => {
+                    repo.refs_mut().update(&branch, &theirs, Some(&head))?;
+                    let _ = crate::reflog::append_head_and_branch(
+                        &repo,
+                        &branch,
+                        Some(&head),
+                        &theirs,
+                        &format!("merge {name}: Fast-forward"),
+                    );
+                }
+                RefTarget::Direct(_) => {
+                    repo.refs_mut().update("HEAD", &theirs, Some(&head))?;
+                }
+            }
+        }
+        if o.stat && !o.quiet {
+            print_merge_diffstat(&repo, &head, &theirs)?;
+        }
+        return Ok(());
+    }
+    if o.ff == Ff::Only {
+        return Err(CliError::fatal("Not possible to fast-forward, aborting."));
+    }
+    refuse_dirty_tracked(&repo, &touched_paths(&repo, &head, &theirs)?)?;
+    let strategy = o.strategy.clone().unwrap_or_else(|| "ort".to_string());
+    let work = work_tree(&repo)?;
+    let mut trivial = false;
+    let tree = if strategy == "ours" {
+        crate::cmd::log_format::read_commit(&repo, &head)?.tree
+    } else if can_ff {
+        // `--no-ff` of a fast-forwardable branch: the result is their tree.
+        crate::cmd::switch_tree::two_way_switch(&repo, &work, Some(&head), &theirs)?;
+        crate::cmd::log_format::read_commit(&repo, &theirs)?.tree
+    } else {
+        let style = arks_config::ConfigSet::load(Some(repo.common_dir()))
+            .get("merge.conflictStyle")
+            .unwrap_or_default();
+        let labels = crate::cmd::merge_engine::MergeLabels {
+            ours: "HEAD".into(),
+            base: "merged common ancestors".into(),
+            theirs: name.to_string(),
+            diff3: matches!(style.as_str(), "diff3" | "zdiff3"),
+            favor: o.favor,
+        };
+        let resolve = strategy == "resolve";
+        if resolve {
+            say("Trying really trivial in-index merge...".to_string());
+        }
+        let result = crate::cmd::merge_engine::merge_three_way_labeled(
+            &mut repo, &work, &head, &theirs, true, &labels,
+        )?;
+        if resolve {
+            if result.auto_merged.is_empty() && result.conflicts.is_empty() {
+                say("Wonderful.".to_string());
+                trivial = true;
+            } else {
+                say("Nope.".to_string());
+                say("Trying simple merge.".to_string());
+                say("Simple merge failed, trying Automatic merge.".to_string());
+                eprintln!("error: Merge requires file-level merging");
+            }
+        }
+        for p in result
+            .auto_merged
+            .iter()
+            .filter(|p| !result.conflicts.contains(p))
+        {
+            say(format!("Auto-merging {p}"));
+        }
+        if !result.conflicts.is_empty() {
+            let mut msg = default_merge_message(&repo, name, &head, &theirs, o)?;
+            msg.push_str("\n# Conflicts:\n");
+            for c in &result.conflicts {
+                msg.push_str(&format!("#\t{c}\n"));
+            }
+            if o.squash {
+                write_squash_msg(&repo, &head, &theirs)?;
+                let conflicts_only = msg[msg.find("\n# Conflicts:").unwrap_or(0)..].to_string();
+                std::fs::write(repo.git_dir().join("MERGE_MSG"), conflicts_only)?;
+            } else {
+                std::fs::write(
+                    repo.git_dir().join("MERGE_HEAD"),
+                    format!("{}\n", theirs.to_hex()),
+                )?;
+                std::fs::write(repo.git_dir().join("MERGE_MSG"), &msg)?;
+                std::fs::write(
+                    repo.git_dir().join("MERGE_MODE"),
+                    if o.ff == Ff::Never { "no-ff" } else { "" },
+                )?;
+            }
+            for c in &result.conflicts {
+                if result.auto_merged.contains(c) {
+                    say(format!("Auto-merging {c}"));
+                    if resolve {
+                        eprintln!("ERROR: content conflict in {c}");
+                    } else {
+                        say(format!("CONFLICT (content): Merge conflict in {c}"));
+                    }
+                } else {
+                    say(format!(
+                        "CONFLICT (modify/delete): {c} deleted in one side and modified in the other."
+                    ));
+                }
+            }
+            if resolve {
+                eprintln!("fatal: merge program failed");
+            }
+            if o.squash {
+                say("Squash commit -- not updating HEAD".to_string());
+            }
+            say("Automatic merge failed; fix conflicts and then commit the result.".to_string());
+            return Err(CliError::silent(1));
+        }
+        result
+            .tree
+            .ok_or_else(|| CliError::Msg("merge: missing result tree".into()))?
+    };
+    if o.squash {
+        write_squash_msg(&repo, &head, &theirs)?;
+        say("Squash commit -- not updating HEAD".to_string());
+        if !o.quiet {
+            eprintln!("Automatic merge went well; stopped before committing as requested");
+        }
+        return Ok(());
+    }
+    let mut msg = match &o.message {
+        Some(m) => {
+            let mut m = m.clone();
+            if !m.ends_with('\n') && o.cleanup != crate::cmd::trailers::Cleanup::Verbatim {
+                m.push('\n');
+            }
+            m
+        }
+        None => default_merge_message(&repo, name, &head, &theirs, o)?,
+    };
+    if !o.commit {
+        std::fs::write(
+            repo.git_dir().join("MERGE_HEAD"),
+            format!("{}\n", theirs.to_hex()),
+        )?;
+        std::fs::write(repo.git_dir().join("MERGE_MSG"), &msg)?;
+        std::fs::write(
+            repo.git_dir().join("MERGE_MODE"),
+            if o.ff == Ff::Never { "no-ff" } else { "" },
+        )?;
+        if !o.quiet {
+            eprintln!("Automatic merge went well; stopped before committing as requested");
+        }
+        return Ok(());
+    }
+    if o.signoff {
+        msg = crate::cmd::core::add_signoff(&msg);
+    }
+    if o.edit {
+        let path = repo.git_dir().join("MERGE_MSG");
+        std::fs::write(&path, &msg)?;
+        if let Some(editor) = ["ARKS_EDITOR", "GIT_EDITOR", "EDITOR"]
+            .iter()
+            .find_map(|v| std::env::var(v).ok().filter(|s| !s.is_empty()))
+        {
+            let ok = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(format!("{editor} \"$@\""))
+                .arg(&editor)
+                .arg(&path)
+                .status()
+                .map(|s| s.success())
+                .unwrap_or(false);
+            if !ok {
+                return Err(CliError::Exit(1, "error: editor failed".into()));
+            }
+        }
+        msg = std::fs::read_to_string(&path)?;
+        let _ = std::fs::remove_file(&path);
+    }
+    let msg = crate::cmd::trailers::cleanup(&msg, o.cleanup, o.edit);
+    crate::cmd::core::run_claimed_hooks(&repo, o.no_verify, &["commit-msg"], Some(msg.as_bytes()))?;
+    let author = commit_signature()?;
+    let committer = crate::cmd::shared::committer_signature()?;
+    let mut commit = Commit {
+        tree,
+        parents: vec![head, theirs],
+        author,
+        committer,
+        gpgsig: None,
+        message: msg,
+    };
+    let (do_sign, key) = crate::cmd::sign::want_sign_commit(&o.sign_args, &repo)?;
+    if do_sign {
+        if let Err(e) = crate::cmd::sign::sign_commit(&repo, &mut commit, key.as_deref()) {
+            // git leaves the merge in progress when the commit cannot be signed.
+            std::fs::write(
+                repo.git_dir().join("MERGE_HEAD"),
+                format!("{}\n", theirs.to_hex()),
+            )?;
+            std::fs::write(repo.git_dir().join("MERGE_MSG"), &commit.message)?;
+            std::fs::write(
+                repo.git_dir().join("MERGE_MODE"),
+                if o.ff == Ff::Never { "no-ff" } else { "" },
+            )?;
+            eprintln!("{e}");
+            return Err(CliError::fatal("failed to write commit object"));
+        }
+    }
+    let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
+    let format = repo.object_format();
+    let coid = repo.store_mut().put(format, &cobj)?;
+    let made = if trivial {
+        "In-index merge".to_string()
+    } else {
+        format!("Merge made by the '{strategy}' strategy.")
+    };
+    let reflog = format!("merge {name}: {made}");
+    match repo.head_target()? {
+        RefTarget::Symbolic(branch) => {
+            repo.refs_mut().update(&branch, &coid, Some(&head))?;
+            let _ =
+                crate::reflog::append_head_and_branch(&repo, &branch, Some(&head), &coid, &reflog);
+        }
+        RefTarget::Direct(_) => {
+            repo.refs_mut().update("HEAD", &coid, Some(&head))?;
+            let _ = crate::reflog::append_reflog(&repo, "HEAD", Some(&head), &coid, &reflog);
+        }
+    }
+    say(made);
+    if o.stat && !o.quiet {
+        print_merge_diffstat(&repo, &head, &coid)?;
+    }
+    Ok(())
+}
+
+/// `.git/SQUASH_MSG` after `--squash`: the squashed commits, newest first.
+fn write_squash_msg(
+    repo: &arks_repo::Repository,
+    head: &arks_oid::Oid,
+    theirs: &arks_oid::Oid,
+) -> CliResult<()> {
+    let ours = arks_repo::ancestor_set(repo, *head)?;
+    let mut queue = vec![*theirs];
+    let mut seen = std::collections::HashSet::new();
+    let mut picked = Vec::new();
+    while let Some(c) = queue.pop() {
+        if ours.contains(&c) || !seen.insert(c) {
+            continue;
+        }
+        let commit = crate::cmd::log_format::read_commit(repo, &c)?;
+        queue.extend(commit.parents.iter().copied());
+        picked.push((c, commit));
+    }
+    picked.sort_by_key(|x| std::cmp::Reverse(x.1.committer.timestamp));
+    let mut text = String::from("Squashed commit of the following:\n");
+    for (oid, c) in picked {
+        text.push_str(&format!(
+            "\ncommit {}\nAuthor: {} <{}>\nDate:   {}\n\n",
+            oid.to_hex(),
+            c.author.name,
+            c.author.email,
+            crate::cmd::log_format::default_date(&c.author)
+        ));
+        for l in c.message.lines() {
+            if l.is_empty() {
+                text.push('\n');
+            } else {
+                text.push_str(&format!("    {l}\n"));
+            }
+        }
+    }
+    std::fs::write(repo.git_dir().join("SQUASH_MSG"), text)?;
+    Ok(())
 }
 
 /// Refuse when the index differs from HEAD or a tracked file differs from the index.
@@ -132,176 +702,6 @@ fn touched_paths(
         .filter(|k| x.get(*k) != y.get(*k))
         .cloned()
         .collect())
-}
-
-/// Split `-m <msg>` / `--message=<msg>` out of merge args.
-fn take_merge_message(args: &[String]) -> CliResult<(Vec<String>, Option<String>)> {
-    let mut out = Vec::new();
-    let mut msg: Option<String> = None;
-    let mut i = 0;
-    while i < args.len() {
-        let a = &args[i];
-        if a == "-m" || a == "--message" {
-            i += 1;
-            let v = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("merge -m <message>".into()))?;
-            msg = Some(match msg {
-                Some(m) => format!("{m}\n\n{v}"),
-                None => v.clone(),
-            });
-        } else if let Some(v) = a.strip_prefix("--message=") {
-            msg = Some(v.to_string());
-        } else {
-            out.push(a.clone());
-        }
-        i += 1;
-    }
-    Ok((out, msg))
-}
-
-fn merge_onto_msg(
-    name: &str,
-    ff_only: bool,
-    no_ff: bool,
-    message: Option<String>,
-) -> CliResult<()> {
-    let mut repo = open_repo()?;
-    let theirs = resolve_rev(&repo, name)?;
-    let head = repo.head_oid()?;
-    if head == theirs {
-        println!("Already up to date.");
-        return Ok(());
-    }
-    // Full ancestry (all parents), git-merge-base --is-ancestor semantics.
-    if is_ancestor(&repo, &theirs, &head)? {
-        println!("Already up to date.");
-        return Ok(());
-    }
-    let can_ff = is_ancestor(&repo, &head, &theirs)?;
-    if can_ff {
-        if ff_only || !no_ff {
-            // Fast-forward keeps non-conflicting local changes (two-way switch).
-            let work = work_tree(&repo)?;
-            let carried =
-                crate::cmd::switch_tree::two_way_switch(&repo, &work, Some(&head), &theirs)
-                    .map_err(|e| CliError::Msg(e.to_string().replace("checkout", "merge")))?;
-            let _ = carried;
-            match repo.head_target()? {
-                RefTarget::Symbolic(branch) => {
-                    repo.refs_mut().update(&branch, &theirs, Some(&head))?;
-                }
-                RefTarget::Direct(_) => {
-                    repo.refs_mut().update("HEAD", &theirs, Some(&head))?;
-                }
-            }
-            println!(
-                "Updating {}..{}",
-                crate::cmd::shared::abbrev_hex(&repo, &head, 7),
-                crate::cmd::shared::abbrev_hex(&repo, &theirs, 7)
-            );
-            println!("Fast-forward");
-            print_merge_diffstat(&repo, &head, &theirs)?;
-            if let RefTarget::Symbolic(branch) = repo.head_target()? {
-                let _ = crate::reflog::append_head_and_branch(
-                    &repo,
-                    &branch,
-                    Some(&head),
-                    &theirs,
-                    &format!("merge {name}: Fast-forward"),
-                );
-            }
-            return Ok(());
-        }
-        refuse_dirty_tracked(&repo, &touched_paths(&repo, &head, &theirs)?)?;
-        return create_merge_commit(&mut repo, &head, &theirs, name, None, message);
-    }
-    if ff_only {
-        return Err(CliError::Msg("Not possible to fast-forward".into()));
-    }
-
-    // Fs-2: diverged three-way merge. Refuse when tracked files carry local changes
-    // (conservative superset of git's per-path check; never overwrites local edits).
-    refuse_dirty_tracked(&repo, &touched_paths(&repo, &head, &theirs)?)?;
-    let work = work_tree(&repo)?;
-    let result = merge_three_way_opts(&mut repo, &work, &head, &theirs, true)?;
-    if !result.conflicts.is_empty() {
-        eprintln!(
-            "Automatic merge failed; fix conflicts and then commit the result.\nConflicted: {}",
-            result.conflicts.join(", ")
-        );
-        return Err(CliError::Msg("merge: conflicts".into()));
-    }
-    let tree = result
-        .tree
-        .ok_or_else(|| CliError::Msg("merge: missing result tree".into()))?;
-    create_merge_commit(&mut repo, &head, &theirs, name, Some(tree), message)
-}
-
-fn create_merge_commit(
-    repo: &mut arks_repo::Repository,
-    head: &arks_oid::Oid,
-    theirs: &arks_oid::Oid,
-    name: &str,
-    tree_override: Option<arks_oid::Oid>,
-    message: Option<String>,
-) -> CliResult<()> {
-    let tree = if let Some(t) = tree_override {
-        t
-    } else {
-        let tobj = repo.get_object(theirs)?;
-        if tobj.kind != ObjectKind::Commit {
-            return Err(CliError::Msg("merge tip is not a commit".into()));
-        }
-        Commit::decode(&tobj.payload)?.tree
-    };
-    let msg = match message {
-        Some(m) if m.ends_with('\n') => m,
-        Some(m) => format!("{m}\n"),
-        None => format!("Merge branch '{name}'\n"),
-    };
-    let author = commit_signature()?;
-    let committer = crate::cmd::shared::committer_signature()?;
-    let commit = Commit {
-        tree,
-        parents: vec![*head, *theirs],
-        author,
-        committer,
-        gpgsig: None,
-        message: msg,
-    };
-    let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
-    let format = repo.object_format();
-    let coid = repo.store_mut().put(format, &cobj)?;
-    match repo.head_target()? {
-        RefTarget::Symbolic(branch) => {
-            repo.refs_mut().update(&branch, &coid, Some(head))?;
-        }
-        RefTarget::Direct(_) => {
-            return Err(CliError::NotImplemented(
-                "merge: detached HEAD not claimed".into(),
-            ));
-        }
-    }
-    if tree_override.is_none() {
-        // `--no-ff` of a fast-forwardable branch: move index + work tree like
-        // a two-way checkout so unrelated local edits are carried over.
-        let work = work_tree(repo)?;
-        crate::cmd::switch_tree::two_way_switch(repo, &work, Some(head), &coid)?;
-    }
-    // (Three-way results were already written to the index and work tree.)
-    println!("Merge made by the 'ort' strategy.");
-    print_merge_diffstat(repo, head, &coid)?;
-    if let RefTarget::Symbolic(branch) = repo.head_target()? {
-        let _ = crate::reflog::append_head_and_branch(
-            repo,
-            &branch,
-            Some(head),
-            &coid,
-            &format!("merge {name}: Merge made by the 'ort' strategy."),
-        );
-    }
-    Ok(())
 }
 
 /// git merge's closing diffstat (`--stat` block plus `create mode` /

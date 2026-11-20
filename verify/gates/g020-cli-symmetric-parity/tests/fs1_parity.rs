@@ -335,7 +335,11 @@ fn m15_fs3_02_sparse_checkout_cone() {
     let list = arks(&repo, &["sparse-checkout", "list"]);
     assert_ok(&list, "list");
     let patterns = String::from_utf8_lossy(&list.stdout);
-    assert!(patterns.contains("/keep/"), "missing cone dir: {patterns}");
+    // Cone mode lists directories the way git does (`keep`).
+    assert!(
+        patterns.lines().any(|l| l.trim_matches('/') == "keep"),
+        "missing cone dir: {patterns}"
+    );
     assert!(repo.join("keep/in.txt").is_file() || repo.join("root.txt").is_file());
     assert!(
         !repo.join("drop/out.txt").is_file(),

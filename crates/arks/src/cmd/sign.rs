@@ -12,14 +12,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-pub(crate) fn is_sign_flag(a: &str) -> bool {
-    a == "-S"
-        || a == "--gpg-sign"
-        || a == "--no-gpg-sign"
-        || a.starts_with("--gpg-sign=")
-        || (a.starts_with("-S") && !a.starts_with("--"))
-}
-
 enum SignRequest {
     Yes { keyid: Option<String> },
     No,

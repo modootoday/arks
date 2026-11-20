@@ -37,6 +37,21 @@ pub struct StatusData {
     pub ignored: Vec<String>,
     /// Current directory relative to the work tree (`""` or `dir/sub/`).
     pub prefix: String,
+    /// Unmerged paths -> git's description (`both modified`, ...).
+    pub unmerged: BTreeMap<String, &'static str>,
+    /// Operation in progress, for the long-format banner and hints.
+    pub whence: Whence,
+}
+
+/// The operation a long status reports as in progress.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Whence {
+    Commit,
+    Merge,
+    /// `CHERRY_PICK_HEAD` (abbreviated commit).
+    CherryPick(String),
+    /// `REVERT_HEAD` (abbreviated commit).
+    Revert(String),
 }
 
 impl StatusData {
@@ -80,6 +95,40 @@ pub fn collect(repo: &Repository, mode: Untracked) -> CliResult<StatusData> {
     let initial = repo.head_oid().is_err();
     let mut staged = BTreeMap::new();
     let mut unstaged = BTreeMap::new();
+    let mut stages: BTreeMap<String, [bool; 3]> = BTreeMap::new();
+    for e in index.entries.iter().filter(|e| e.stage() != 0) {
+        stages.entry(e.path.clone()).or_default()[usize::from(e.stage() - 1)] = true;
+    }
+    let unmerged: BTreeMap<String, &'static str> = stages
+        .into_iter()
+        .map(|(p, st)| {
+            let what = match st {
+                [true, true, true] => "both modified",
+                [false, true, true] => "both added",
+                [true, true, false] => "deleted by them",
+                [true, false, true] => "deleted by us",
+                [false, true, false] => "added by us",
+                [false, false, true] => "added by them",
+                _ => "both deleted",
+            };
+            (p, what)
+        })
+        .collect();
+    let git_dir = repo.git_dir();
+    let abbrev_of = |f: &str| -> Option<String> {
+        let hex = fs::read_to_string(git_dir.join(f)).ok()?;
+        let oid = arks_oid::Oid::from_hex(hex.trim()).ok()?;
+        Some(crate::cmd::shared::abbrev_hex(repo, &oid, 7))
+    };
+    let whence = if git_dir.join("MERGE_HEAD").is_file() {
+        Whence::Merge
+    } else if let Some(a) = abbrev_of("CHERRY_PICK_HEAD") {
+        Whence::CherryPick(a)
+    } else if let Some(a) = abbrev_of("REVERT_HEAD") {
+        Whence::Revert(a)
+    } else {
+        Whence::Commit
+    };
     for e in index.entries.iter().filter(|e| e.stage() == 0) {
         match head_paths.get(&e.path) {
             None => {
@@ -139,6 +188,8 @@ pub fn collect(repo: &Repository, mode: Untracked) -> CliResult<StatusData> {
         unstaged,
         untracked,
         ignored: Vec::new(),
+        unmerged,
+        whence,
     })
 }
 
@@ -205,18 +256,73 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
         (None, Some(h)) => writeln!(out, "HEAD detached at {h}")?,
         (None, None) => writeln!(out, "Not currently on any branch.")?,
     }
+    let fixed = d.unmerged.is_empty();
+    match &d.whence {
+        Whence::Commit => {}
+        Whence::Merge => {
+            if fixed {
+                writeln!(out, "All conflicts fixed but you are still merging.")?;
+                writeln!(out, "  (use \"git commit\" to conclude merge)")?;
+            } else {
+                writeln!(out, "You have unmerged paths.")?;
+                writeln!(out, "  (fix conflicts and run \"git commit\")")?;
+                writeln!(out, "  (use \"git merge --abort\" to abort the merge)")?;
+            }
+            writeln!(out)?;
+        }
+        Whence::CherryPick(c) | Whence::Revert(c) => {
+            let (doing, cmd) = if matches!(d.whence, Whence::CherryPick(_)) {
+                ("cherry-picking", "cherry-pick")
+            } else {
+                ("reverting", "revert")
+            };
+            writeln!(out, "You are currently {doing} commit {c}.")?;
+            if fixed {
+                writeln!(out, "  (all conflicts fixed: run \"git {cmd} --continue\")")?;
+            } else {
+                writeln!(out, "  (fix conflicts and run \"git {cmd} --continue\")")?;
+            }
+            writeln!(out, "  (use \"git {cmd} --skip\" to skip this patch)")?;
+            writeln!(
+                out,
+                "  (use \"git {cmd} --abort\" to cancel the {cmd} operation)"
+            )?;
+            writeln!(out)?;
+        }
+    }
+    // git shows the unstage hints only outside a merge / cherry-pick.
+    let plain = matches!(d.whence, Whence::Commit | Whence::Revert(_));
     if d.initial {
         writeln!(out, "\nNo commits yet\n")?;
     }
     if !d.staged.is_empty() {
         writeln!(out, "Changes to be committed:")?;
-        if d.initial {
+        if !plain {
+        } else if d.initial {
             writeln!(out, "  (use \"git rm --cached <file>...\" to unstage)")?;
         } else {
             writeln!(out, "  (use \"git restore --staged <file>...\" to unstage)")?;
         }
         for (p, c) in &d.staged {
             writeln!(out, "\t{:<12}{}", label(*c), d.show(p))?;
+        }
+        writeln!(out)?;
+    }
+    if !d.unmerged.is_empty() {
+        writeln!(out, "Unmerged paths:")?;
+        if plain && !d.initial {
+            writeln!(out, "  (use \"git restore --staged <file>...\" to unstage)")?;
+        }
+        if d.unmerged.values().any(|w| w.contains("deleted")) {
+            writeln!(
+                out,
+                "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
+            )?;
+        } else {
+            writeln!(out, "  (use \"git add <file>...\" to mark resolution)")?;
+        }
+        for (p, w) in &d.unmerged {
+            writeln!(out, "\t{:<17}{}", format!("{w}:"), d.show(p))?;
         }
         writeln!(out)?;
     }
@@ -264,8 +370,14 @@ pub fn write_long(out: &mut impl Write, d: &StatusData, mode: Untracked) -> CliR
         }
         writeln!(out)?;
     }
+    if !d.staged.is_empty() && mode == Untracked::No {
+        writeln!(
+            out,
+            "Untracked files not listed (use -u option to show untracked files)"
+        )?;
+    }
     if d.staged.is_empty() {
-        if !d.unstaged.is_empty() {
+        if !d.unstaged.is_empty() || !d.unmerged.is_empty() {
             writeln!(
                 out,
                 "no changes added to commit (use \"git add\" and/or \"git commit -a\")"
