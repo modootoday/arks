@@ -138,11 +138,15 @@ def main():
             for spelling, valued, meta in opts:
                 if spelling in ("-h", "--help"):
                     continue
-                r = os.path.join(work, "r")
-                shutil.rmtree(r, ignore_errors=True)
+                # A fresh copy per probe: commands that start background
+                # servers (instaweb) may keep files busy in the previous copy.
+                r = os.path.join(tempfile.mkdtemp(dir=work), "r")
                 shutil.copytree(fixture, r, symlinks=True)
                 argv = [arks, cmd, spelling] + ([placeholder(meta)] if valued else [])
                 code, so2, se2 = run(argv, r)
+                if cmd == "instaweb":
+                    run([arks, "instaweb", "--stop"], r)
+                shutil.rmtree(os.path.dirname(r), ignore_errors=True)
                 refused = bool(REFUSED_RE.search(se2 + so2))
                 verdict = "REFUSED" if refused else "ACCEPTED"
                 acc += 0 if refused else 1

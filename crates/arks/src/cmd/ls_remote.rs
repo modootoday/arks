@@ -6,23 +6,23 @@
 //! <https://git-scm.com/docs/git-for-each-ref#_field_names> (sort keys).
 
 use crate::cmd::fetch::{configured_source, default_remote};
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
 use std::cmp::Ordering;
 
-const LS_REMOTE_OPTS: &[&str] = &[
-    "q|quiet",
-    "|upload-pack=",
-    "|exec=",
-    "t|tags",
-    "h|heads",
-    "|refs",
-    "|get-url",
-    "|sort=",
-    "|exit-code",
-    "|symref",
-    "o|server-option=",
+const LS_REMOTE_OPTS: &[OptDef] = &[
+    o("quiet", 'q', No, true),
+    o("upload-pack", ' ', Req, true),
+    o("exec", ' ', Req, true),
+    o("tags", 't', No, true),
+    o("heads", 'h', No, true),
+    o("refs", ' ', No, true),
+    o("get-url", ' ', No, true),
+    o("sort", ' ', Req, true),
+    o("exit-code", ' ', No, true),
+    o("symref", ' ', No, true),
+    o("server-option", 'o', Req, true),
 ];
 
 /// Shell-glob match (`*`, `?`, `[...]`) of `pat` against all of `s`.
@@ -104,12 +104,13 @@ pub(crate) fn version_cmp(a: &str, b: &str) -> Ordering {
 }
 
 pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
-    let p = parse(args, LS_REMOTE_OPTS)?;
+    let p = parse("ls-remote", args, LS_REMOTE_OPTS, Mode::default())?;
+    let operands = p.operands();
     let heads = p.on("heads");
     let tags = p.on("tags");
     let repo = open_repo().ok();
     let cfg = arks_config::ConfigSet::load(repo.as_ref().map(|r| r.common_dir()));
-    let explicit = p.args.first().cloned();
+    let explicit = operands.first().cloned();
     let remote = match (&explicit, &repo) {
         (Some(r), _) => r.clone(),
         (None, Some(r)) => default_remote(r, &cfg),
@@ -140,7 +141,7 @@ pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
             "'{url}' does not appear to be a git repository\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
         )));
     }
-    let patterns: Vec<&String> = p.args.iter().skip(1).collect();
+    let patterns: Vec<&String> = operands.iter().skip(1).collect();
     let refs = arks_remote::ls_remote(&url).map_err(|e| CliError::fatal(e.to_string()))?;
     let mut rows: Vec<(String, String)> = refs
         .into_iter()

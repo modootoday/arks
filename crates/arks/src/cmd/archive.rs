@@ -9,7 +9,7 @@
 //! ustar / pax: POSIX.1-2001 `pax`; zip: PKWARE APPNOTE (local headers,
 //! central directory, `UT` extra field); gzip: RFC 1952.
 
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
@@ -20,28 +20,28 @@ use arks_store::ObjectStore;
 use std::fs;
 use std::io::{self, Write};
 
-const ARCHIVE_OPTS: &[&str] = &[
-    "|format=",
-    "|prefix=",
-    "|add-file=",
-    "|add-virtual-file=",
-    "o|output=",
-    "|worktree-attributes",
-    "v|verbose",
-    "|mtime=",
-    "0|",
-    "1|",
-    "2|",
-    "3|",
-    "4|",
-    "5|",
-    "6|",
-    "7|",
-    "8|",
-    "9|",
-    "l|list",
-    "|remote=",
-    "|exec=",
+const ARCHIVE_OPTS: &[OptDef] = &[
+    o("format", ' ', Req, true),
+    o("prefix", ' ', Req, true),
+    o("add-file", ' ', Req, true),
+    o("add-virtual-file", ' ', Req, true),
+    o("output", 'o', Req, true),
+    o("worktree-attributes", ' ', No, true),
+    o("verbose", 'v', No, true),
+    o("mtime", ' ', Req, true),
+    o("-0", '0', No, false),
+    o("-1", '1', No, false),
+    o("-2", '2', No, false),
+    o("-3", '3', No, false),
+    o("-4", '4', No, false),
+    o("-5", '5', No, false),
+    o("-6", '6', No, false),
+    o("-7", '7', No, false),
+    o("-8", '8', No, false),
+    o("-9", '9', No, false),
+    o("list", 'l', No, true),
+    o("remote", ' ', Req, true),
+    o("exec", ' ', Req, true),
 ];
 
 /// One archive member.
@@ -54,7 +54,7 @@ struct Member {
 }
 
 pub fn cmd_archive(args: &[String]) -> CliResult<()> {
-    let p = parse(args, ARCHIVE_OPTS)?;
+    let p = parse("archive", args, ARCHIVE_OPTS, Mode::default())?;
     if p.on("list") {
         println!("tar\ntgz\ntar.gz\nzip");
         return Ok(());
@@ -91,11 +91,12 @@ pub fn cmd_archive(args: &[String]) -> CliResult<()> {
 /// The archive stream for `args` (stock `git archive` options, no
 /// `--remote`), read from `repo`; `upload-archive` serves the same bytes.
 pub(crate) fn archive_bytes_for_args(repo: &Repository, args: &[String]) -> CliResult<Vec<u8>> {
-    let p = parse(args, ARCHIVE_OPTS)?;
+    let p = parse("archive", args, ARCHIVE_OPTS, Mode::default())?;
     archive_bytes(repo, &p)
 }
 
-fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_spec::Parsed) -> CliResult<Vec<u8>> {
+fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_parse::Parsed) -> CliResult<Vec<u8>> {
+    let operands = p.operands();
     let output = p.value("output");
     let format = match p.value("format") {
         Some(f) => f,
@@ -116,12 +117,12 @@ fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_spec::Parsed) -> CliResu
     }
     let level = ('0'..='9')
         .rev()
-        .find(|c| p.on(&c.to_string()))
+        .find(|c| p.on(&format!("-{c}")))
         .map(|c| c as u8 - b'0');
     if level.is_some_and(|l| l > 1 && format == "tar") {
         // git: compression levels are rejected for plain tar beyond the defaults.
     }
-    let Some(rev) = p.args.first() else {
+    let Some(rev) = operands.first() else {
         return Err(CliError::Exit(
             129,
             "usage: git archive [<options>] <tree-ish> [<path>...]".into(),
@@ -144,7 +145,7 @@ fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_spec::Parsed) -> CliResu
         None => commit_time,
     };
     let prefix = p.value("prefix").unwrap_or_default();
-    let pathspecs: Vec<String> = p.args[1..].to_vec();
+    let pathspecs: Vec<String> = operands[1..].to_vec();
 
     let mut members = Vec::new();
     if prefix.ends_with('/') {
@@ -171,9 +172,9 @@ fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_spec::Parsed) -> CliResu
     // `--add-file` takes the `--prefix` given before it; `--add-virtual-file`
     // paths are used as given.
     let mut cur_prefix = String::new();
-    for e in &p.events {
-        match (e.key, &e.value, e.neg) {
-            ("prefix", Some(v), false) => cur_prefix = v.clone(),
+    for occurrence in p.opts() {
+        match occurrence {
+            ("prefix", Some(v), false) => cur_prefix = v.to_string(),
             ("prefix", _, true) => cur_prefix.clear(),
             ("add-file", Some(f), false) => {
                 let data = fs::read(f)
@@ -181,7 +182,7 @@ fn archive_bytes(repo: &Repository, p: &crate::cmd::opt_spec::Parsed) -> CliResu
                 let name = std::path::Path::new(f)
                     .file_name()
                     .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or(f.clone());
+                    .unwrap_or(f.to_string());
                 let exec = file_is_executable(f);
                 members.push(Member {
                     path: format!("{cur_prefix}{name}"),

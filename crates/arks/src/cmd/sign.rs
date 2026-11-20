@@ -427,14 +427,14 @@ fn gpg_detached_verify(
 /// commit is unsigned or fails verification (an unsigned commit is silent,
 /// like stock git).
 pub fn cmd_verify_commit(args: &[String]) -> CliResult<()> {
-    use crate::cmd::optparse::{self, Opt};
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
     use crate::cmd::shared::resolve_rev;
     use crate::util::open_repo;
     use arks_object::ObjectKind;
-    const SPEC: &[Opt] = &[Opt::flag("verbose").with_short('v'), Opt::flag("raw")];
-    let items = optparse::parse("verify-commit", args, SPEC, optparse::Mode::default())?;
-    let verbose = optparse::on(&items, "verbose");
-    let revs = optparse::positionals(&items);
+    const SPEC: &[OptDef] = &[o("verbose", 'v', No, true), o("raw", ' ', No, true)];
+    let items = opt_parse::parse("verify-commit", args, SPEC, opt_parse::Mode::default())?;
+    let verbose = items.on("verbose");
+    let revs = items.operands();
     if revs.is_empty() {
         return Err(CliError::Exit(
             129,
@@ -511,19 +511,19 @@ pub(crate) fn split_signed_tag(payload: &[u8]) -> CliResult<(Vec<u8>, String)> {
 /// `arks verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>...` — exit 1
 /// when any tag is unsigned (`error: no signature found`) or fails.
 pub fn cmd_verify_tag(args: &[String]) -> CliResult<()> {
-    use crate::cmd::optparse::{self, Opt};
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
     use crate::cmd::shared::resolve_rev;
     use crate::util::open_repo;
     use arks_object::ObjectKind;
-    const SPEC: &[Opt] = &[
-        Opt::flag("verbose").with_short('v'),
-        Opt::flag("raw"),
-        Opt::value("format"),
+    const SPEC: &[OptDef] = &[
+        o("verbose", 'v', No, true),
+        o("raw", ' ', No, true),
+        o("format", ' ', Req, true),
     ];
-    let items = optparse::parse("verify-tag", args, SPEC, optparse::Mode::default())?;
-    let verbose = optparse::on(&items, "verbose");
-    let format = optparse::value(&items, "format");
-    let revs = optparse::positionals(&items);
+    let items = opt_parse::parse("verify-tag", args, SPEC, opt_parse::Mode::default())?;
+    let verbose = items.on("verbose");
+    let format = items.value("format");
+    let revs = items.operands();
     if revs.is_empty() {
         return Err(CliError::Exit(
             129,

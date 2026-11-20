@@ -60,8 +60,6 @@ pub mod merge_strategies;
 pub mod merge_subtree;
 pub mod notes;
 pub mod opt_parse;
-pub mod opt_spec;
-pub mod optparse;
 pub mod pack_transport;
 pub mod patch;
 pub mod patch_id;

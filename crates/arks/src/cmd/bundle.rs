@@ -6,7 +6,7 @@
 //! Primary: <https://git-scm.com/docs/git-bundle>,
 //! <https://git-scm.com/docs/gitformat-bundle>.
 
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, Takes::*, o, parse};
 use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
@@ -130,14 +130,16 @@ fn bundle_create(args: &[String]) -> CliResult<()> {
         .position(|a| !a.starts_with('-'))
         .ok_or_else(|| CliError::Exit(129, USAGE.into()))?;
     let p = parse(
+        "bundle create",
         &args[..file_pos],
         &[
-            "q|quiet",
-            "|progress",
-            "|all-progress",
-            "|all-progress-implied",
-            "|version=",
+            o("quiet", 'q', No, true),
+            o("progress", ' ', No, true),
+            o("all-progress", ' ', No, true),
+            o("all-progress-implied", ' ', No, true),
+            o("version", ' ', Req, true),
         ],
+        Mode::default(),
     )?;
     let version = match p.value("version").as_deref() {
         None => 2,
@@ -363,12 +365,13 @@ fn filtered<'a>(b: &'a Bundle, names: &[String]) -> Vec<&'a (Oid, String)> {
 }
 
 fn bundle_list_heads(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &[])?;
-    let Some(file) = p.args.first() else {
+    let p = parse("bundle list-heads", args, &[], Mode::default())?;
+    let operands = p.operands();
+    let Some(file) = operands.first() else {
         return Err(CliError::Exit(129, USAGE.into()));
     };
     let b = read_bundle(file)?;
-    for (oid, name) in filtered(&b, &p.args[1..]) {
+    for (oid, name) in filtered(&b, &operands[1..]) {
         println!("{} {name}", oid.to_hex());
     }
     Ok(())
@@ -393,8 +396,14 @@ fn check_prereqs(b: &Bundle) -> CliResult<()> {
 }
 
 fn bundle_verify(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["q|quiet"])?;
-    let Some(file) = p.args.first() else {
+    let p = parse(
+        "bundle verify",
+        args,
+        &[o("quiet", 'q', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    let Some(file) = operands.first() else {
         return Err(CliError::Exit(129, USAGE.into()));
     };
     let b = read_bundle(file)?;
@@ -427,8 +436,14 @@ fn bundle_verify(args: &[String]) -> CliResult<()> {
 }
 
 fn bundle_unbundle(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["|progress"])?;
-    let Some(file) = p.args.first() else {
+    let p = parse(
+        "bundle unbundle",
+        args,
+        &[o("progress", ' ', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    let Some(file) = operands.first() else {
         return Err(CliError::Exit(129, USAGE.into()));
     };
     let b = read_bundle(file)?;
@@ -446,7 +461,7 @@ fn bundle_unbundle(args: &[String]) -> CliResult<()> {
         }
     }
     // git-bundle unbundle stores objects only; refs are the caller's job.
-    for (oid, name) in filtered(&b, &p.args[1..]) {
+    for (oid, name) in filtered(&b, &operands[1..]) {
         println!("{} {name}", oid.to_hex());
     }
     Ok(())

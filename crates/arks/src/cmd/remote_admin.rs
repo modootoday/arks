@@ -7,7 +7,7 @@
 //! <https://git-scm.com/docs/git-config#_configuration_file> (syntax).
 
 use crate::cmd::fetch::{configured_source, remote_names};
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, Takes::*, o, parse};
 use crate::cmd::remote_local::{delete_ref_any, parse_refspec};
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
@@ -225,12 +225,21 @@ fn valid_remote_name(name: &str) -> bool {
 }
 
 pub fn cmd_remote(args: &[String]) -> CliResult<()> {
-    let p = crate::cmd::opt_spec::parse_with(args, &["v|verbose"], true)?;
+    let p = parse(
+        "remote",
+        args,
+        &[o("verbose", 'v', No, true)],
+        Mode {
+            stop_at_non_option: true,
+            ..Mode::default()
+        },
+    )?;
+    let operands = p.operands();
     let verbose = p.count("verbose") > 0;
-    let Some(sub) = p.args.first() else {
+    let Some(sub) = operands.first() else {
         return list_remotes(verbose);
     };
-    let rest = &p.args[1..];
+    let rest = &operands[1..];
     match sub.as_str() {
         "add" => remote_add(rest),
         "rename" => remote_rename(rest),
@@ -273,16 +282,25 @@ fn list_remotes(verbose: bool) -> CliResult<()> {
 
 fn remote_add(args: &[String]) -> CliResult<()> {
     let p = parse(
+        "remote add",
         args,
-        &["f|fetch", "|tags", "t|track=", "m|master=", "|mirror=?"],
+        &[
+            o("fetch", 'f', No, true),
+            o("tags", ' ', No, true),
+            o("track", 't', Req, true),
+            o("master", 'm', Req, true),
+            o("mirror", ' ', Opt, true),
+        ],
+        Mode::default(),
     )?;
-    if p.args.len() != 2 {
+    let operands = p.operands();
+    if operands.len() != 2 {
         return Err(CliError::Exit(129, USAGE.into()));
     }
-    let (name, url) = (&p.args[0], &p.args[1]);
-    let mirror = match p.events.iter().rev().find(|e| e.key == "mirror") {
-        Some(e) if e.neg => None,
-        Some(e) => match e.value.as_deref() {
+    let (name, url) = (&operands[0], &operands[1]);
+    let mirror = match p.opts().rev().find(|(key, _, _)| *key == "mirror") {
+        Some((_, _, true)) => None,
+        Some((_, value, false)) => match value {
             None | Some("fetch") => Some("fetch"),
             Some("push") => Some("push"),
             Some(o) => return Err(CliError::fatal(format!("unknown mirror argument: {o}"))),
@@ -356,11 +374,17 @@ fn remote_add(args: &[String]) -> CliResult<()> {
 }
 
 fn remote_rename(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["|progress"])?;
-    if p.args.len() != 2 {
+    let p = parse(
+        "remote rename",
+        args,
+        &[o("progress", ' ', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    if operands.len() != 2 {
         return Err(CliError::Exit(129, USAGE.into()));
     }
-    let (old, new) = (&p.args[0], &p.args[1]);
+    let (old, new) = (&operands[0], &operands[1]);
     let mut repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     let Some(src) = configured_source(&cfg, old) else {
@@ -422,11 +446,12 @@ fn remote_rename(args: &[String]) -> CliResult<()> {
 }
 
 fn remote_remove(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &[])?;
-    if p.args.len() != 1 {
+    let p = parse("remote remove", args, &[], Mode::default())?;
+    let operands = p.operands();
+    if operands.len() != 1 {
         return Err(CliError::Exit(129, USAGE.into()));
     }
-    let name = &p.args[0];
+    let name = &operands[0];
     let mut repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     let Some(src) = configured_source(&cfg, name) else {
@@ -477,8 +502,14 @@ fn remote_head_branch(url: &str) -> Option<String> {
 }
 
 fn remote_set_head(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["a|auto", "d|delete"])?;
-    let Some(name) = p.args.first() else {
+    let p = parse(
+        "remote set-head",
+        args,
+        &[o("auto", 'a', No, true), o("delete", 'd', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    let Some(name) = operands.first() else {
         return Err(CliError::Exit(129, USAGE.into()));
     };
     let mut repo = open_repo()?;
@@ -503,7 +534,7 @@ fn remote_set_head(args: &[String]) -> CliResult<()> {
             }
         }
     } else {
-        match p.args.get(1) {
+        match operands.get(1) {
             Some(b) => b.clone(),
             None => return Err(CliError::Exit(129, USAGE.into())),
         }
@@ -523,8 +554,14 @@ fn remote_set_head(args: &[String]) -> CliResult<()> {
 }
 
 fn remote_set_branches(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["|add"])?;
-    let Some(name) = p.args.first() else {
+    let p = parse(
+        "remote set-branches",
+        args,
+        &[o("add", ' ', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    let Some(name) = operands.first() else {
         return Err(CliError::Exit(129, USAGE.into()));
     };
     let repo = open_repo()?;
@@ -537,7 +574,7 @@ fn remote_set_branches(args: &[String]) -> CliResult<()> {
     if !p.on("add") {
         cf.unset_where("remote", Some(name), "fetch", &|_| true);
     }
-    for b in &p.args[1..] {
+    for b in &operands[1..] {
         cf.add(
             "remote",
             Some(name),
@@ -549,8 +586,14 @@ fn remote_set_branches(args: &[String]) -> CliResult<()> {
 }
 
 fn remote_get_url(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["|push", "|all"])?;
-    let Some(name) = p.args.first() else {
+    let p = parse(
+        "remote get-url",
+        args,
+        &[o("push", ' ', No, true), o("all", ' ', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    let Some(name) = operands.first() else {
         return Err(CliError::Exit(129, USAGE.into()));
     };
     let repo = open_repo()?;
@@ -577,14 +620,24 @@ fn remote_get_url(args: &[String]) -> CliResult<()> {
 }
 
 fn remote_set_url(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["|push", "|add", "|delete"])?;
+    let p = parse(
+        "remote set-url",
+        args,
+        &[
+            o("push", ' ', No, true),
+            o("add", ' ', No, true),
+            o("delete", ' ', No, true),
+        ],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
     let push = p.on("push");
     let key = if push { "pushurl" } else { "url" };
-    let n = p.args.len();
+    let n = operands.len();
     if (p.on("add") || p.on("delete")) && n != 2 || !(2..=3).contains(&n) {
         return Err(CliError::Exit(129, USAGE.into()));
     }
-    let name = &p.args[0];
+    let name = &operands[0];
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     if configured_source(&cfg, name).is_none() {
@@ -593,7 +646,7 @@ fn remote_set_url(args: &[String]) -> CliResult<()> {
     let path = repo.git_dir().join("config");
     let mut cf = ConfigFile::load(&path);
     let current = cf.get_all("remote", Some(name), key);
-    let new = p.args[1].clone();
+    let new = operands[1].clone();
     if p.on("add") {
         cf.add("remote", Some(name), key, &new);
         return cf.save(&path);
@@ -610,7 +663,7 @@ fn remote_set_url(args: &[String]) -> CliResult<()> {
         cf.unset_where("remote", Some(name), key, &move |v| v.contains(&pat));
         return cf.save(&path);
     }
-    let old = p.args.get(2).cloned();
+    let old = operands.get(2).cloned();
     match &old {
         Some(o) => {
             if !current.iter().any(|u| u.contains(o.as_str())) {
@@ -686,13 +739,19 @@ fn peer_refs(url: &str) -> CliResult<Vec<(String, Oid)>> {
 }
 
 fn remote_prune(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["n|dry-run"])?;
-    if p.args.is_empty() {
+    let p = parse(
+        "remote prune",
+        args,
+        &[o("dry-run", 'n', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    if operands.is_empty() {
         return Err(CliError::Exit(129, USAGE.into()));
     }
     let mut repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
-    for name in &p.args {
+    for name in &operands {
         let src = configured_source(&cfg, name).ok_or_else(|| no_such(name))?;
         let remote_refs = peer_refs(&src.url)?;
         let stale = stale_refs(&repo, &src.config_specs, &remote_refs)?;
@@ -715,7 +774,13 @@ fn remote_prune(args: &[String]) -> CliResult<()> {
 }
 
 fn remote_update(args: &[String], verbose: bool) -> CliResult<()> {
-    let p = parse(args, &["p|prune"])?;
+    let p = parse(
+        "remote update",
+        args,
+        &[o("prune", 'p', No, true)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
     let mut fetch: Vec<String> = Vec::new();
     if verbose {
         fetch.push("-v".into());
@@ -723,7 +788,7 @@ fn remote_update(args: &[String], verbose: bool) -> CliResult<()> {
     if p.on("prune") {
         fetch.push("--prune".into());
     }
-    if p.args.is_empty() {
+    if operands.is_empty() {
         let repo = open_repo()?;
         let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
         if !cfg.get_all("remotes.default").is_empty() {
@@ -746,21 +811,27 @@ fn remote_update(args: &[String], verbose: bool) -> CliResult<()> {
         }
     } else {
         fetch.push("--multiple".into());
-        fetch.extend(p.args.iter().cloned());
+        fetch.extend(operands.iter().cloned());
     }
     crate::cmd::fetch::cmd_fetch(&fetch)
 }
 
 fn remote_show(args: &[String], verbose: bool) -> CliResult<()> {
-    let p = parse(args, &["n|"])?;
-    if p.args.is_empty() {
+    let p = parse(
+        "remote show",
+        args,
+        &[o("-n", 'n', No, false)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    if operands.is_empty() {
         return list_remotes(verbose);
     }
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
-    let no_query = p.on("n");
+    let no_query = p.on("-n");
     let mut out = String::new();
-    for name in &p.args {
+    for name in &operands {
         let Some(src) = configured_source(&cfg, name) else {
             return Err(CliError::fatal(format!(
                 "'{name}' does not appear to be a git repository\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."

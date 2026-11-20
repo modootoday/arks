@@ -27,25 +27,25 @@ const TTL_SECS: u64 = 120;
 /// `gc.pruneExpire`, else 2.weeks.ago). Unreachable recent objects stay
 /// loose; cruft packs are not written.
 pub fn cmd_gc(args: &[String]) -> CliResult<()> {
-    use crate::cmd::optparse::{self, Arg, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::flag("quiet").with_short('q'),
-        Opt::opt_value("prune"),
-        Opt::flag("cruft"),
-        Opt::value("max-cruft-size"),
-        Opt::flag("aggressive"),
-        Opt::flag("auto"),
-        Opt::flag("force"),
-        Opt::flag("keep-largest-pack"),
-        Opt::flag("detach").arg(Arg::None),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("quiet", 'q', No, true),
+        o("prune", ' ', Opt, true),
+        o("cruft", ' ', No, true),
+        o("max-cruft-size", ' ', Req, true),
+        o("aggressive", ' ', No, true),
+        o("auto", ' ', No, true),
+        o("force", ' ', No, true),
+        o("keep-largest-pack", ' ', No, true),
+        o("detach", ' ', No, true),
     ];
-    let items = optparse::parse("gc", args, SPEC, optparse::Mode::default())?;
-    if !optparse::positionals(&items).is_empty() {
+    let items = opt_parse::parse("gc", args, SPEC, opt_parse::Mode::default())?;
+    if !items.operands().is_empty() {
         return Err(CliError::Exit(129, "usage: git gc [<options>]".into()));
     }
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.git_dir()));
-    if optparse::on(&items, "auto") {
+    if items.on("auto") {
         // gc.auto threshold: run only with more loose objects than the limit
         // (git estimates from objects/17; the full count is used here).
         let limit: usize = cfg
@@ -62,18 +62,11 @@ pub fn cmd_gc(args: &[String]) -> CliResult<()> {
         cfg.get("gc.pruneexpire")
             .unwrap_or_else(|| "2.weeks.ago".into()),
     );
-    for it in &items {
-        if let optparse::Item::Opt {
-            name: "prune",
-            value,
-            neg,
-        } = it
-        {
-            if *neg {
-                expire = None;
-            } else if let Some(v) = value {
-                expire = Some(v.clone());
-            }
+    for (_, value, neg) in items.opts().filter(|(key, _, _)| *key == "prune") {
+        if neg {
+            expire = None;
+        } else if let Some(v) = value {
+            expire = Some(v.to_string());
         }
     }
     let cutoff =
@@ -113,7 +106,7 @@ pub fn cmd_gc(args: &[String]) -> CliResult<()> {
         loosen_unreachable: true,
         delete: true,
         quiet: true,
-        keep_largest: optparse::on(&items, "keep-largest-pack")
+        keep_largest: items.on("keep-largest-pack")
             || cfg.get("gc.biggestpackthreshold").is_some_and(|v| v != "0"),
         ..RepackOpts::default()
     })?;
@@ -151,60 +144,46 @@ pub fn cmd_gc(args: &[String]) -> CliResult<()> {
 /// loose and `-k` keeps them in the new pack. Delta and window tuning
 /// options are accepted; packs are written undeltified.
 pub fn cmd_repack(args: &[String]) -> CliResult<()> {
-    use crate::cmd::optparse::{self, Opt};
-    const SPEC: &[Opt] = &[
-        Opt::short('a', "a"),
-        Opt::short('A', "A"),
-        Opt::flag("cruft"),
-        Opt::value("cruft-expiration"),
-        Opt::value("max-cruft-size"),
-        Opt::short('d', "d"),
-        Opt::short('f', "f"),
-        Opt::short('F', "F"),
-        Opt::short('n', "n"),
-        Opt::flag("quiet").with_short('q'),
-        Opt::flag("local").with_short('l'),
-        Opt::flag("write-bitmap-index").with_short('b'),
-        Opt::flag("delta-islands").with_short('i'),
-        Opt::value("unpack-unreachable"),
-        Opt::flag("keep-unreachable").with_short('k'),
-        Opt::value("window"),
-        Opt::value("window-memory"),
-        Opt::value("depth"),
-        Opt::value("threads"),
-        Opt::value("max-pack-size"),
-        Opt::value("filter"),
-        Opt::flag("pack-kept-objects"),
-        Opt::value("keep-pack"),
-        Opt::value("geometric").with_short('g'),
-        Opt::flag("write-midx").with_short('m'),
-        Opt::value("expire-to"),
-        Opt::value("filter-to"),
+    use crate::cmd::opt_parse::{self, OptDef, Takes::*, o};
+    const SPEC: &[OptDef] = &[
+        o("-a", 'a', No, false),
+        o("-A", 'A', No, false),
+        o("cruft", ' ', No, true),
+        o("cruft-expiration", ' ', Req, true),
+        o("max-cruft-size", ' ', Req, true),
+        o("-d", 'd', No, false),
+        o("-f", 'f', No, false),
+        o("-F", 'F', No, false),
+        o("-n", 'n', No, false),
+        o("quiet", 'q', No, true),
+        o("local", 'l', No, true),
+        o("write-bitmap-index", 'b', No, true),
+        o("delta-islands", 'i', No, true),
+        o("unpack-unreachable", ' ', Req, true),
+        o("keep-unreachable", 'k', No, true),
+        o("window", ' ', Req, true),
+        o("window-memory", ' ', Req, true),
+        o("depth", ' ', Req, true),
+        o("threads", ' ', Req, true),
+        o("max-pack-size", ' ', Req, true),
+        o("filter", ' ', Req, true),
+        o("pack-kept-objects", ' ', No, true),
+        o("keep-pack", ' ', Req, true),
+        o("geometric", 'g', Req, true),
+        o("write-midx", 'm', No, true),
+        o("expire-to", ' ', Req, true),
+        o("filter-to", ' ', Req, true),
     ];
     // Positional arguments are accepted and ignored, as in stock git.
-    let items = optparse::parse("repack", args, SPEC, optparse::Mode::default())?;
-    let on = |n: &str| optparse::on(&items, n);
-    let mut keep_packs = Vec::new();
-    for it in &items {
-        if let optparse::Item::Opt {
-            name: "keep-pack",
-            value,
-            neg,
-        } = it
-        {
-            if *neg {
-                keep_packs.clear();
-            } else if let Some(v) = value {
-                keep_packs.push(v.clone());
-            }
-        }
-    }
+    let items = opt_parse::parse("repack", args, SPEC, opt_parse::Mode::default())?;
+    let on = |n: &str| items.on(n);
+    let keep_packs = items.values("keep-pack");
     let cruft = on("cruft");
     run_repack(&RepackOpts {
-        all: on("a") || on("A") || cruft,
-        loosen_unreachable: (on("A") || cruft) && !on("keep-unreachable"),
+        all: on("-a") || on("-A") || cruft,
+        loosen_unreachable: (on("-A") || cruft) && !on("keep-unreachable"),
         keep_unreachable: on("keep-unreachable"),
-        delete: on("d"),
+        delete: on("-d"),
         quiet: on("quiet"),
         pack_kept: on("pack-kept-objects"),
         keep_packs,

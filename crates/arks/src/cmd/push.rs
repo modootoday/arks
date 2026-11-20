@@ -5,7 +5,7 @@
 //! Primary: <https://git-scm.com/docs/git-push>, <https://git-scm.com/docs/githooks#_pre_push>.
 
 use crate::cmd::fetch::{configured_source, default_remote};
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::cmd::remote_local::{
     LocalPush, LocalPushOpts, PushStatus, dwim, parse_refspec, push_local, short_ref,
 };
@@ -18,34 +18,34 @@ use arks_repo::Repository;
 use std::io::Write;
 
 /// Every option `git push -h` lists (pin 2.39.5 plus host 2.43 additions).
-const PUSH_OPTS: &[&str] = &[
-    "v|verbose",
-    "q|quiet",
-    "|repo=",
-    "|all",
-    "|branches",
-    "|mirror",
-    "d|delete",
-    "|tags",
-    "n|dry-run",
-    "|porcelain",
-    "f|force",
-    "|force-with-lease=?",
-    "|force-if-includes",
-    "|recurse-submodules=",
-    "|thin",
-    "|receive-pack=",
-    "|exec=",
-    "u|set-upstream",
-    "|progress",
-    "|prune",
-    "|no-verify",
-    "|follow-tags",
-    "|signed=?",
-    "|atomic",
-    "o|push-option=",
-    "4|ipv4",
-    "6|ipv6",
+const PUSH_OPTS: &[OptDef] = &[
+    o("verbose", 'v', No, true),
+    o("quiet", 'q', No, true),
+    o("repo", ' ', Req, true),
+    o("all", ' ', No, true),
+    o("branches", ' ', No, true),
+    o("mirror", ' ', No, true),
+    o("delete", 'd', No, true),
+    o("tags", ' ', No, true),
+    o("dry-run", 'n', No, true),
+    o("porcelain", ' ', No, true),
+    o("force", 'f', No, true),
+    o("force-with-lease", ' ', Opt, true),
+    o("force-if-includes", ' ', No, true),
+    o("recurse-submodules", ' ', Req, true),
+    o("thin", ' ', No, true),
+    o("receive-pack", ' ', Req, true),
+    o("exec", ' ', Req, true),
+    o("set-upstream", 'u', No, true),
+    o("progress", ' ', No, true),
+    o("prune", ' ', No, true),
+    o("no-verify", ' ', No, true),
+    o("follow-tags", ' ', No, true),
+    o("signed", ' ', Opt, true),
+    o("atomic", ' ', No, true),
+    o("push-option", 'o', Req, true),
+    o("ipv4", '4', No, true),
+    o("ipv6", '6', No, true),
 ];
 
 /// One `--force-with-lease` argument.
@@ -57,7 +57,8 @@ enum Lease {
 }
 
 pub fn cmd_push(args: &[String]) -> CliResult<()> {
-    let p = parse(args, PUSH_OPTS)?;
+    let p = parse("push", args, PUSH_OPTS, Mode::default())?;
+    let operands = p.operands();
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     if p.on("mirror") && (p.on("all") || p.on("branches") || p.on("tags") || p.on("delete")) {
@@ -70,7 +71,7 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
             "options '--all/--branches' and '--tags' cannot be used together",
         ));
     }
-    if p.on("delete") && p.args.len() < 2 {
+    if p.on("delete") && operands.len() < 2 {
         return Err(CliError::fatal(
             "--delete doesn't make sense without any refs",
         ));
@@ -97,7 +98,7 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         }
     };
 
-    let mut positional = p.args.clone();
+    let mut positional = operands.clone();
     let repo_arg = if !positional.is_empty() {
         Some(positional.remove(0))
     } else {
@@ -282,18 +283,17 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
 
     // Leases.
     let leases: Vec<Lease> = p
-        .events
-        .iter()
-        .filter(|e| e.key == "force-with-lease")
-        .fold(Vec::new(), |mut acc, e| {
-            if e.neg {
+        .opts()
+        .filter(|(key, _, _)| *key == "force-with-lease")
+        .fold(Vec::new(), |mut acc, (_, value, neg)| {
+            if neg {
                 acc.clear();
             } else {
-                match &e.value {
+                match value {
                     None => acc.push(Lease::All),
                     Some(v) => match v.split_once(':') {
                         Some((r, x)) => acc.push(Lease::Ref(r.to_string(), Some(x.to_string()))),
-                        None => acc.push(Lease::Ref(v.clone(), None)),
+                        None => acc.push(Lease::Ref(v.to_string(), None)),
                     },
                 }
             }

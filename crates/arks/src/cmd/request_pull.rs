@@ -5,7 +5,7 @@
 //!
 //! Primary: <https://git-scm.com/docs/git-request-pull>.
 
-use crate::cmd::opt_spec::parse;
+use crate::cmd::opt_parse::{Mode, Takes::*, o, parse};
 use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
@@ -70,13 +70,19 @@ fn merge_base(repo: &Repository, a: &Oid, b: &Oid) -> CliResult<Option<Oid>> {
 }
 
 pub fn cmd_request_pull(args: &[String]) -> CliResult<()> {
-    let p = parse(args, &["p|"])?;
-    if p.args.len() < 2 || p.args.len() > 3 {
+    let p = parse(
+        "request-pull",
+        args,
+        &[o("-p", 'p', No, false)],
+        Mode::default(),
+    )?;
+    let operands = p.operands();
+    if operands.len() < 2 || operands.len() > 3 {
         print!("{USAGE}");
         return Err(CliError::silent(1));
     }
-    let (start, url_arg) = (&p.args[0], &p.args[1]);
-    let end_arg = p.args.get(2).cloned();
+    let (start, url_arg) = (&operands[0], &operands[1]);
+    let end_arg = operands.get(2).cloned();
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
     let url = crate::cmd::fetch::configured_source(&cfg, url_arg)
@@ -157,7 +163,7 @@ pub fn cmd_request_pull(args: &[String]) -> CliResult<()> {
     std::io::stdout().flush()?;
     crate::cmd::cmd_shortlog(&[format!("^{}", base.to_hex()), end.to_hex()])?;
     crate::cmd::pull::print_diffstat(&repo, &base, &end)?;
-    if p.on("p") {
+    if p.on("-p") {
         println!();
         std::io::stdout().flush()?;
         crate::cmd::cmd_diff(&["-p".into(), base.to_hex(), end.to_hex()])?;

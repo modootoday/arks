@@ -5,7 +5,7 @@
 //! Primary: <https://git-scm.com/docs/git-pull>,
 //! <https://git-scm.com/docs/git-fmt-merge-msg> (merge message shape).
 
-use crate::cmd::opt_spec::{OptEvent, parse};
+use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::cmd::shared::is_ancestor;
 use crate::error::{CliError, CliResult};
 use crate::util::open_repo;
@@ -13,52 +13,52 @@ use arks_oid::Oid;
 use arks_refs::RefTarget;
 
 /// Every option `git pull -h` lists (pin 2.39.5 plus host 2.43 additions).
-const PULL_OPTS: &[&str] = &[
-    "v|verbose",
-    "q|quiet",
-    "|progress",
-    "|recurse-submodules=?",
-    "r|rebase=?",
-    "n|",
-    "|stat",
-    "|summary",
-    "|log=?",
-    "|signoff=?",
-    "|squash",
-    "|commit",
-    "|edit",
-    "|cleanup=",
-    "|ff",
-    "|ff-only",
-    "|verify",
-    "|verify-signatures",
-    "|autostash",
-    "s|strategy=",
-    "X|strategy-option=",
-    "S|gpg-sign=?",
-    "|allow-unrelated-histories",
-    "|all",
-    "a|append",
-    "|upload-pack=",
-    "f|force",
-    "t|tags",
-    "p|prune",
-    "j|jobs=?",
-    "|dry-run",
-    "k|keep",
-    "|depth=",
-    "|shallow-since=",
-    "|shallow-exclude=",
-    "|deepen=",
-    "|unshallow",
-    "|update-shallow",
-    "|refmap=",
-    "o|server-option=",
-    "4|ipv4",
-    "6|ipv6",
-    "|negotiation-tip=",
-    "|show-forced-updates",
-    "|set-upstream",
+const PULL_OPTS: &[OptDef] = &[
+    o("verbose", 'v', No, true),
+    o("quiet", 'q', No, true),
+    o("progress", ' ', No, true),
+    o("recurse-submodules", ' ', Opt, true),
+    o("rebase", 'r', Opt, true),
+    o("-n", 'n', No, false),
+    o("stat", ' ', No, true),
+    o("summary", ' ', No, true),
+    o("log", ' ', Opt, true),
+    o("signoff", ' ', Opt, true),
+    o("squash", ' ', No, true),
+    o("commit", ' ', No, true),
+    o("edit", ' ', No, true),
+    o("cleanup", ' ', Req, true),
+    o("ff", ' ', No, true),
+    o("ff-only", ' ', No, true),
+    o("verify", ' ', No, true),
+    o("verify-signatures", ' ', No, true),
+    o("autostash", ' ', No, true),
+    o("strategy", 's', Req, true),
+    o("strategy-option", 'X', Req, true),
+    o("gpg-sign", 'S', Opt, true),
+    o("allow-unrelated-histories", ' ', No, true),
+    o("all", ' ', No, true),
+    o("append", 'a', No, true),
+    o("upload-pack", ' ', Req, true),
+    o("force", 'f', No, true),
+    o("tags", 't', No, true),
+    o("prune", 'p', No, true),
+    o("jobs", 'j', Opt, true),
+    o("dry-run", ' ', No, true),
+    o("keep", 'k', No, true),
+    o("depth", ' ', Req, true),
+    o("shallow-since", ' ', Req, true),
+    o("shallow-exclude", ' ', Req, true),
+    o("deepen", ' ', Req, true),
+    o("unshallow", ' ', No, true),
+    o("update-shallow", ' ', No, true),
+    o("refmap", ' ', Req, true),
+    o("server-option", 'o', Req, true),
+    o("ipv4", '4', No, true),
+    o("ipv6", '6', No, true),
+    o("negotiation-tip", ' ', Req, true),
+    o("show-forced-updates", ' ', No, true),
+    o("set-upstream", ' ', No, true),
 ];
 
 /// Options handed to `fetch` unchanged.
@@ -111,17 +111,16 @@ const FF_SAFE_KEYS: &[&str] = &[
 ];
 
 /// Re-spell one parsed occurrence as a long option.
-fn respell(e: &OptEvent) -> String {
-    let key = if e.key.len() == 1 {
-        match e.key {
+fn respell((key, value, neg): (&str, Option<&str>, bool)) -> String {
+    let key = match key.strip_prefix('-') {
+        Some(short) => match short {
             "4" => "ipv4",
             "6" => "ipv6",
             k => k,
-        }
-    } else {
-        e.key
+        },
+        None => key,
     };
-    match (&e.value, e.neg) {
+    match (value, neg) {
         (_, true) => format!("--no-{key}"),
         (Some(v), false) => format!("--{key}={v}"),
         (None, false) => format!("--{key}"),
@@ -170,12 +169,13 @@ fn merge_title(heads: &[MergeHead]) -> String {
 }
 
 pub fn cmd_pull(args: &[String]) -> CliResult<()> {
-    let p = parse(args, PULL_OPTS)?;
+    let p = parse("pull", args, PULL_OPTS, Mode::default())?;
+    let operands = p.operands();
     let repo = open_repo()?;
     let cfg = arks_config::ConfigSet::load(Some(repo.common_dir()));
-    let rebase_mode = match p.events.iter().rev().find(|e| e.key == "rebase") {
-        Some(e) if e.neg => Some("false".to_string()),
-        Some(e) => Some(e.value.clone().unwrap_or_else(|| "true".into())),
+    let rebase_mode = match p.opts().rev().find(|(key, _, _)| *key == "rebase") {
+        Some((_, _, true)) => Some("false".to_string()),
+        Some((_, value, false)) => Some(value.unwrap_or("true").to_string()),
         None => None,
     };
     if let Some(m) = &rebase_mode {
@@ -220,13 +220,12 @@ pub fn cmd_pull(args: &[String]) -> CliResult<()> {
 
     // Fetch.
     let mut fetch_args: Vec<String> = p
-        .events
-        .iter()
-        .filter(|e| FETCH_KEYS.contains(&e.key) || ["4", "6"].contains(&e.key))
+        .opts()
+        .filter(|(key, _, _)| FETCH_KEYS.contains(key) || ["-4", "-6"].contains(key))
         .map(respell)
         .collect();
     fetch_args.push("--update-head-ok".into());
-    fetch_args.extend(p.args.iter().cloned());
+    fetch_args.extend(operands.iter().cloned());
     crate::cmd::fetch::cmd_fetch(&fetch_args)?;
     if p.on("dry-run") {
         return Ok(());
@@ -235,7 +234,7 @@ pub fn cmd_pull(args: &[String]) -> CliResult<()> {
     let repo = open_repo()?;
     let heads = read_merge_heads(&repo);
     if heads.is_empty() {
-        return Err(no_merge_candidates(&p.args, &repo));
+        return Err(no_merge_candidates(&operands, &repo));
     }
     if p.on("verify-signatures") {
         for h in &heads {
@@ -289,14 +288,9 @@ pub fn cmd_pull(args: &[String]) -> CliResult<()> {
 
     // Merge message: fmt-merge-msg title, optional shortlog, optional sign-off.
     let mut msg = merge_title(&heads);
-    let log_n = match p.events.iter().rev().find(|e| e.key == "log") {
-        Some(e) if e.neg => None,
-        Some(e) => Some(
-            e.value
-                .as_deref()
-                .and_then(|v| v.parse().ok())
-                .unwrap_or(20usize),
-        ),
+    let log_n = match p.opts().rev().find(|(key, _, _)| *key == "log") {
+        Some((_, _, true)) => None,
+        Some((_, value, false)) => Some(value.and_then(|v| v.parse().ok()).unwrap_or(20usize)),
         None => cfg.get("merge.log").and_then(|v| {
             v.parse::<usize>()
                 .ok()
@@ -350,7 +344,7 @@ fn worktree_dirty(repo: &arks_repo::Repository) -> CliResult<bool> {
 
 /// Fast-forward when possible, else hand the merge to `cmd_merge`.
 fn merge_heads(
-    p: &crate::cmd::opt_spec::Parsed,
+    p: &crate::cmd::opt_parse::Parsed,
     repo: &arks_repo::Repository,
     heads: &[MergeHead],
     head: Option<Oid>,
@@ -358,18 +352,19 @@ fn merge_heads(
     ff_only: bool,
     no_ff: bool,
 ) -> CliResult<()> {
+    let operands = p.operands();
     let msg = msg.to_string();
     let quiet = p.on("quiet");
     let stat =
-        !(quiet || p.on("n") || p.flag("stat") == Some(false) || p.flag("summary") == Some(false));
+        !(quiet || p.on("-n") || p.flag("stat") == Some(false) || p.flag("summary") == Some(false));
     // A fast-forward needs no merge machinery: `--no-commit`, a strategy,
     // signing and `--allow-unrelated-histories` do not stop it (git-merge
     // OPTIONS); `--squash` fast-forwards the index and work tree only.
     let squash = p.flag("squash") == Some(true);
-    let passthrough = p.events.iter().any(|e| {
-        MERGE_KEYS.contains(&e.key)
-            && !matches!(e.key, "edit" | "squash")
-            && !(FF_SAFE_KEYS.contains(&e.key))
+    let passthrough = p.opts().any(|(key, _, _)| {
+        MERGE_KEYS.contains(&key)
+            && !matches!(key, "edit" | "squash")
+            && !(FF_SAFE_KEYS.contains(&key))
     });
     if let (Some(h), [one], false, false) = (head, heads, no_ff, passthrough) {
         if h == one.oid || is_ancestor(repo, &one.oid, &h)? {
@@ -379,7 +374,7 @@ fn merge_heads(
             return Ok(());
         }
         if is_ancestor(repo, &h, &one.oid)? {
-            let label = format!("pull {}", p.args.join(" "));
+            let label = format!("pull {}", operands.join(" "));
             if squash {
                 return squash_fast_forward(repo, &h, &one.oid, quiet, stat);
             }
@@ -395,13 +390,12 @@ fn merge_heads(
     if p.on("quiet") {
         merge_args.push("-q".into());
     }
-    if p.on("n") || p.flag("stat") == Some(false) || p.flag("summary") == Some(false) {
+    if p.on("-n") || p.flag("stat") == Some(false) || p.flag("summary") == Some(false) {
         merge_args.push("--no-stat".into());
     }
     merge_args.extend(
-        p.events
-            .iter()
-            .filter(|e| MERGE_KEYS.contains(&e.key) && !(e.key == "edit"))
+        p.opts()
+            .filter(|(key, _, _)| MERGE_KEYS.contains(key) && *key != "edit")
             .map(respell),
     );
     merge_args.push("-m".into());
