@@ -799,3 +799,56 @@ rebase t0
 -C .git/side merge --autostash topic
 merge --autostash feature
 rebase --autostash main feature
+#
+# --- apply (patches under .git/) ---
+apply .git/a.patch
+apply --index .git/a.patch
+apply --cached .git/a.patch
+apply --check .git/a.patch
+apply --stat .git/a.patch
+apply --numstat .git/a.patch
+apply --summary .git/new.patch
+apply --stat --summary .git/new.patch
+apply --numstat -z .git/a.patch
+apply -R .git/fixture.patch
+apply --reverse --check .git/fixture.patch
+apply .git/fixture.patch
+apply --3way .git/a.patch
+apply --no-3way .git/a.patch
+apply -p0 .git/p0.patch
+apply -p 0 .git/p0.patch
+apply -p2 .git/a.patch
+apply --directory=sub .git/a.patch
+apply --directory=sub --check .git/new.patch
+apply --include='src/*' .git/a.patch
+apply --exclude='src/*' .git/a.patch
+apply --exclude='*' --include='src/*' .git/a.patch
+apply --no-add .git/a.patch
+apply .git/new.patch
+apply --unsafe-paths .git/new.patch
+apply --whitespace=fix .git/new.patch
+apply --whitespace=nowarn .git/new.patch
+apply --whitespace=warn .git/new.patch
+apply --whitespace=error .git/new.patch
+apply --whitespace=error-all .git/new.patch
+apply --whitespace=bogus .git/new.patch
+apply --ignore-space-change .git/a.patch
+apply --ignore-whitespace .git/a.patch
+apply -C1 .git/a.patch
+apply -C 1 .git/a.patch
+apply --unidiff-zero .git/a.patch
+apply --reject .git/bad.patch
+apply .git/bad.patch
+apply --allow-overlap .git/a.patch
+apply -v .git/a.patch
+apply --verbose --check .git/a.patch
+apply -q .git/a.patch
+apply --inaccurate-eof .git/a.patch
+apply --recount .git/a.patch
+apply --allow-empty /dev/null
+apply /dev/null
+apply --build-fake-ancestor=.git/fake.idx .git/a.patch
+apply --apply --stat .git/a.patch
+apply --no-apply .git/a.patch
+apply nope.patch
+apply --reject --check .git/bad.patch
