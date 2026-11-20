@@ -104,3 +104,77 @@ mergetool -y -t x
 -C .git/conflict -c merge.tool=x -c mergetool.x.cmd='test -f "$BASE" && echo base-present; true' -c mergetool.x.trustExitCode=true mergetool m.txt
 -C .git/conflict -c merge.guitool=g -c mergetool.g.cmd='echo GUI' -c merge.tool=x -c mergetool.x.cmd='echo X' -c mergetool.x.trustExitCode=true -c mergetool.g.trustExitCode=true mergetool -g m.txt
 -C .git/conflict -c merge.guitool=g -c mergetool.g.cmd='echo GUI' -c merge.tool=x -c mergetool.x.cmd='echo X' -c mergetool.x.trustExitCode=true mergetool --gui --no-gui m.txt
+# --- filter-branch (each line pauses ten seconds on both sides: the warning) ---
+filter-branch --msg-filter cat
+filter-branch --bogus
+-C .git/side filter-branch --bogus
+-C .git/side filter-branch --msg-filter 'tr a-z A-Z'
+-C .git/side filter-branch --env-filter 'GIT_AUTHOR_NAME=New' -- --all
+-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --msg-filter 'sed s/side/SIDE/' -- --all
+-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --tree-filter 'echo x > new.txt' topic
+-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --index-filter 'git rm -q --cached --ignore-unmatch b.txt' -- --all
+-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --prune-empty --index-filter 'git rm -q --cached --ignore-unmatch c.txt' -- --all
+-C .git/side filter-branch --subdirectory-filter nosuch
+-C .git/side filter-branch --subdirectory-filter .git -- --all
+-C .git/side filter-branch --tag-name-filter 'sed s/^/new-/' --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --msg-filter 'sed s/side/SIDE/' main
+-C .git/side filter-branch --tag-name-filter cat --msg-filter 'sed s/side/SIDE/' -- --all
+-C .git/side filter-branch --parent-filter 'cat' main
+-C .git/side filter-branch --parent-filter 'sed "s/-p [0-9a-f]*//"' --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' lineone
+-C .git/side filter-branch --commit-filter 'git commit-tree "$@"' main
+-C .git/side filter-branch --commit-filter 'skip_commit "$@"' topic
+-C .git/side filter-branch --commit-filter 'git_commit_non_empty_tree "$@"' --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --index-filter 'git rm -q --cached --ignore-unmatch c.txt' topic
+-C .git/side filter-branch --msg-filter 'cat; echo map=$(map $GIT_COMMIT)' main
+-C .git/side filter-branch main
+-C .git/side filter-branch --msg-filter cat base..main
+-C .git/side filter-branch -d /nonexistent/x --msg-filter cat main
+-C .git/side filter-branch --setup 'n=0' --env-filter 'n=$((n+1)); echo commit $n' --msg-filter 'cat; echo X=$n' -- --all
+-C .git/side filter-branch --state-branch fb-state --msg-filter cat main
+-C .git/side filter-branch -f --env-filter 'false' main
+-C .git/side filter-branch --tree-filter 'false' main
+-C .git/side filter-branch --index-filter 'exit 3' main
+-C .git/side filter-branch --msg-filter 'false' main
+-C .git/side filter-branch --parent-filter 'false' main
+-C .git/side filter-branch --commit-filter 'false' main
+-C .git/side filter-branch --prune-empty --commit-filter 'git commit-tree "$@"' main
+-C .git/side filter-branch --tree-filter 'rm b.txt' --prune-empty main
+-C .git/side filter-branch --msg-filter cat nosuch
+-C .git/side filter-branch --msg-filter cat -- --all -- a.txt
+-C .git/side filter-branch --original refs/saved --msg-filter 'sed s/main/MAIN/' main
+-C .git/side filter-branch --setup 'echo SETUP; pwd' --tree-filter 'pwd; ls' --index-filter 'pwd; git ls-files' main
+# --- quiltimport ---
+-C .git/side -c core.checkStat=minimal quiltimport --patches .git/quilt --author 'A U Thor <author@example.com>'
+-C .git/side -c core.checkStat=minimal quiltimport --patches=.git/quilt --author='A U Thor <author@example.com>' --keep-non-patch
+-C .git/side quiltimport -n --patches .git/quilt --author 'A U Thor <author@example.com>'
+-C .git/side quiltimport --dry-run --patches .git/quilt
+-C .git/side -c core.checkStat=minimal quiltimport --patches .git/quilt --series .git/quilt/series-missing --author 'A U Thor <author@example.com>'
+-C .git/side quiltimport --patches .git/nosuch
+-C .git/side quiltimport --patches .git/quilt --author 'bad'
+-C .git/side quiltimport --bogus
+-C .git/side quiltimport --patches .git/quilt --series .git/quilt/nosuch-series
+quiltimport
+-C .git/side -c core.checkStat=minimal quiltimport --patches .git/quilt -n
+# --- web--browse ---
+-c browser.x.cmd=echo web--browse --browser=x http://example.com/a b
+-c browser.x.cmd=echo web--browse -t x http://example.com/
+-c browser.x.path=/bin/echo web--browse --browser=x http://example.com/
+-c web.browser=x -c browser.x.cmd='echo X' web--browse http://example.com/
+-c browser.x.cmd='echo C' -c my.browser=x web--browse -c my.browser http://example.com/
+-c browser.x.cmd='echo C' -c my.browser=x web--browse --config=my.browser http://example.com/
+web--browse --browser=nosuch http://example.com/
+web--browse http://example.com/
+web--browse
+-c browser.x.cmd=echo web--browse -c browser.x.cmd http://example.com/
+-c browser.x.cmd=false web--browse -b x http://example.com/
+# --- instaweb / imap-send / askpass ---
+instaweb --stop
+instaweb stop
+instaweb --bogus
+instaweb -h
+instaweb --httpd=nosuchd --start
+imap-send
+imap-send --list
+imap-send -h
+imap-send -v -q --no-curl
+-c imap.folder=Drafts imap-send
+-c imap.folder=Drafts -c imap.host=imap://127.0.0.1 imap-send
+-c imap.folder=Drafts -c imap.tunnel=false imap-send
