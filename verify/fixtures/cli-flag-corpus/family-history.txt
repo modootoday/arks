@@ -640,3 +640,23 @@ shortlog -s main..feature
 shortlog -s HEAD -- src
 shortlog -s --no-merges HEAD
 shortlog
+# --- describe ---
+describe --no-tags --tags
+describe --no-all --all
+describe --no-long --long
+describe --abbrev
+describe --no-abbrev
+describe --candidates=0
+describe --candidates 5 --tags
+describe --debug
+describe --no-debug
+describe --broken
+describe --broken=-B
+describe --no-dirty --dirty
+describe --no-broken
+describe --no-match --match='t*' --tags
+describe --no-exclude --tags
+describe --no-always
+describe --no-exact-match
+describe --no-first-parent
+describe --no-contains --contains HEAD~3
