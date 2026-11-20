@@ -1,0 +1,57 @@
+# A3 GUI (terminal UI) and Windows-only rows (argv-symmetry ladder rung A3).
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md ("A3 design decisions").
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null, so every window closes at once.
+#
+# Reasoned DIFF (whole file): the peer has no counterpart to compare with.
+# Stock git ships gui / citool / gui--askpass / gui--askyesno / gui.tcl as the
+# optional Tcl/Tk git-gui package (it needs a display), and credential-manager,
+# credential-wincred and update-git-for-windows only in Git for Windows; a
+# Linux pin image answers "not a git command" (exit 1) for each line. The lines
+# record arks' behaviour; crate tests cover the scripted windows, the
+# credential protocol (fake store) and the release check (local feeds).
+# Lines that compare SAME do so only because both sides exit 1 with no output
+# (a closed citool window, a cancelled prompt); they are not peer evidence.
+# No line here reaches a network or a real credential store.
+#
+# --- gui: version and argv errors ---
+gui version
+gui.tcl version
+gui version extra
+gui nosuch
+gui -h
+# --- gui browser / blame (no terminal: print the tree / the annotation) ---
+gui browser
+gui browser HEAD
+gui browser HEAD~1
+gui browser nosuch-rev
+gui blame README.md
+gui blame HEAD README.md
+gui blame --line=2 HEAD README.md
+gui blame --line 2 src/b.txt
+gui blame
+gui blame a b c
+# --- citool: closed without a commit exits 1 ---
+citool
+citool --amend
+citool --nocommit
+citool --amend --nocommit
+gui citool
+gui citool --nocommit
+citool --bogus
+citool extra
+gui
+# --- gui--askpass / gui--askyesno (end of input = cancel / no) ---
+gui--askpass
+gui--askpass 'Password for x:'
+gui--askyesno 'Retry?'
+# --- credential-manager / credential-wincred argv (protocol operations need a store) ---
+credential-wincred
+credential-wincred frobnicate
+credential-manager
+credential-manager --version
+credential-manager frobnicate
+# --- update-git-for-windows argv errors (a real check would contact the feed) ---
+update-git-for-windows --bogus
+update-git-for-windows extra
+update-git-for-windows -y extra
