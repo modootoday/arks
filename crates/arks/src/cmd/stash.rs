@@ -971,3 +971,32 @@ fn stash_clear() -> CliResult<()> {
     let _ = fs::remove_file(repo.common_dir().join("logs").join("refs").join("stash"));
     Ok(())
 }
+
+/// `--autostash` of rebase / merge: stash local changes as an entry named
+/// `autostash` and reset the work tree. Returns whether anything was stashed.
+pub(crate) fn autostash_push() -> CliResult<bool> {
+    let mut repo = open_repo()?;
+    let o = PushOpts {
+        message: Some("autostash".into()),
+        ..PushOpts::default()
+    };
+    let Some(c) = create_stash(&mut repo, &o)? else {
+        return Ok(false);
+    };
+    store(&repo, c.commit, "autostash")?;
+    let work = work_tree(&repo)?;
+    crate::cmd::working_tree::hard_reset_tree(&repo, &work, &c.head)?;
+    println!("Created autostash: {}", abbrev_hex(&repo, &c.commit, 7));
+    Ok(true)
+}
+
+/// Re-apply the autostash entry; when it does not apply, keep it and say so.
+pub(crate) fn autostash_pop() -> CliResult<()> {
+    match stash_apply(&[], true, false, true) {
+        Ok(()) => eprintln!("Applied autostash."),
+        Err(_) => eprintln!(
+            "Applying autostash resulted in conflicts.\nYour changes are safe in the stash.\nYou can run \"git stash pop\" or \"git stash drop\" at any time."
+        ),
+    }
+    Ok(())
+}

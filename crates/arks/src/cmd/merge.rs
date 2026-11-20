@@ -20,6 +20,7 @@ enum Ff {
 }
 
 /// Parsed `git merge` options.
+#[derive(Clone)]
 struct MergeOpts {
     ff: Ff,
     commit: bool,
@@ -207,9 +208,6 @@ pub fn cmd_merge(args: &[String]) -> CliResult<()> {
         ));
     }
     drop(repo);
-    if o.autostash {
-        return with_autostash(|| merge_one(&positional[0], &o));
-    }
     merge_one(&positional[0], &o)
 }
 
@@ -256,27 +254,12 @@ fn merge_sequencer_op(op: &str) -> CliResult<()> {
 
 /// Stash local changes, run `f`, then re-apply them (`--autostash`).
 fn with_autostash(f: impl FnOnce() -> CliResult<()>) -> CliResult<()> {
-    let before = stash_count()?;
-    crate::cmd::stash::cmd_stash(&["push".into(), "-q".into()])?;
-    let stashed = stash_count()? > before;
-    if stashed {
-        eprintln!("Created autostash");
-    }
+    let stashed = crate::cmd::stash::autostash_push()?;
     let result = f();
     if stashed {
-        crate::cmd::stash::cmd_stash(&["pop".into(), "-q".into()])?;
-        eprintln!("Applied autostash.");
+        crate::cmd::stash::autostash_pop()?;
     }
     result
-}
-
-fn stash_count() -> CliResult<usize> {
-    let repo = open_repo()?;
-    Ok(
-        std::fs::read_to_string(repo.common_dir().join("logs/refs/stash"))
-            .map(|t| t.lines().count())
-            .unwrap_or(0),
-    )
 }
 
 /// What the merged-in name is, for the default message.
@@ -395,6 +378,13 @@ fn merge_one(name: &str, o: &MergeOpts) -> CliResult<()> {
     }
     if arks_repo::merge_base_oid(&repo, &head, &theirs)?.is_none() && !o.allow_unrelated {
         return Err(CliError::fatal("refusing to merge unrelated histories"));
+    }
+    if o.autostash {
+        // Stash only once the merge is really going to happen.
+        drop(repo);
+        let mut plain = o.clone();
+        plain.autostash = false;
+        return with_autostash(|| merge_one(name, &plain));
     }
     let can_ff = is_ancestor(&repo, &head, &theirs)?;
     if can_ff && o.ff != Ff::Never && o.strategy.as_deref() != Some("ours") {
