@@ -29,6 +29,13 @@ pub struct Discussion {
     pub created_at: u64,
     #[serde(default)]
     pub updated_at: u64,
+    #[serde(default)]
+    pub labels: Vec<String>,
+    /// Comment id chosen as the answer (answered discussions).
+    #[serde(default)]
+    pub answer_comment: Option<u64>,
+    #[serde(default)]
+    pub closed_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +47,8 @@ pub struct DiscussionComment {
     pub body: String,
     pub user: String,
     pub created_at: u64,
+    #[serde(default)]
+    pub updated_at: u64,
 }
 
 fn comment_json(c: &DiscussionComment) -> Value {
@@ -48,6 +57,7 @@ fn comment_json(c: &DiscussionComment) -> Value {
         "body": c.body,
         "user": {"login": c.user},
         "created_at": iso8601(c.created_at),
+        "updated_at": iso8601(c.updated_at.max(c.created_at)),
     })
 }
 
@@ -71,6 +81,10 @@ fn discussion_json(st: &HubStore, d: &Discussion) -> Value {
         "state": d.state,
         "user": {"login": user},
         "comments": comments,
+        "labels": d.labels,
+        "answered": d.answer_comment.is_some(),
+        "answer_comment_id": d.answer_comment,
+        "closed_at": d.closed_at.map(iso8601),
         "created_at": iso8601(d.created_at),
         "updated_at": iso8601(d.updated_at),
     })
@@ -97,6 +111,9 @@ pub(crate) fn create_for_release(
         user: st.actor.clone(),
         created_at: now,
         updated_at: now,
+        labels: Vec::new(),
+        answer_comment: None,
+        closed_at: None,
     };
     st.db.discussions.push(d);
 }
@@ -111,6 +128,43 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
     let (owner, repo) = (seg[0].to_string(), seg[1].to_string());
     if !repo_exists(st, &owner, &repo) {
         return Ok(Some(not_found()));
+    }
+    if seg.len() == 5 && seg[3] == "comments" {
+        let Some(idx) = seg[4].parse::<u64>().ok().and_then(|id| {
+            st.db
+                .discussion_comments
+                .iter()
+                .position(|c| c.owner == owner && c.repo == repo && c.id == id)
+        }) else {
+            return Ok(Some(not_found()));
+        };
+        return match req.method {
+            "PATCH" => {
+                let v = req.json();
+                let Some(body) = str_field(&v, "body") else {
+                    return Ok(Some(invalid("body can't be blank")));
+                };
+                st.db.discussion_comments[idx].body = body.to_string();
+                st.db.discussion_comments[idx].updated_at = now_secs();
+                let c = st.db.discussion_comments[idx].clone();
+                st.save()?;
+                Ok(Some((200, comment_json(&c))))
+            }
+            "DELETE" => {
+                let id = st.db.discussion_comments.remove(idx).id;
+                for d in st
+                    .db
+                    .discussions
+                    .iter_mut()
+                    .filter(|d| d.answer_comment == Some(id))
+                {
+                    d.answer_comment = None;
+                }
+                st.save()?;
+                Ok(Some((204, json!({}))))
+            }
+            _ => Ok(Some(method_not_allowed())),
+        };
     }
     let number = seg.get(3).and_then(|s| s.parse::<u64>().ok());
     if seg.len() >= 4 && number.is_none() {
@@ -163,9 +217,12 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                 body: v.get("body").and_then(Value::as_str).unwrap_or("").into(),
                 category: category.to_string(),
                 state: default_open(),
-                user: st.db.user_login.clone(),
+                user: st.actor.clone(),
                 created_at: now,
                 updated_at: now,
+                labels: super::issues::strings(&v, "labels").unwrap_or_default(),
+                answer_comment: None,
+                closed_at: None,
             };
             st.db.discussions.push(d.clone());
             st.save()?;
@@ -201,7 +258,18 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                 d.category = c.to_string();
             }
             if let Some(s) = v.get("state").and_then(Value::as_str) {
+                if s != d.state {
+                    d.closed_at = (s == "closed").then(now_secs);
+                }
                 d.state = s.to_string();
+            }
+            if let Some(l) = super::issues::strings(&v, "labels") {
+                d.labels = l;
+            }
+            match v.get("answer_comment_id") {
+                Some(Value::Null) => d.answer_comment = None,
+                Some(x) => d.answer_comment = x.as_u64(),
+                None => {}
             }
             d.updated_at = now_secs();
             st.save()?;
@@ -236,8 +304,9 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                 repo: repo.clone(),
                 number: n,
                 body: body.to_string(),
-                user: st.db.user_login.clone(),
+                user: st.actor.clone(),
                 created_at: now_secs(),
+                updated_at: 0,
             };
             st.db.discussion_comments.push(c.clone());
             st.save()?;

@@ -231,14 +231,14 @@ fn discussion_leaves_round_trip() {
     let body = f.file("c.md", "a comment\n");
     f.ok(discussion::run, &["comment", "1", "-F", &body]);
     assert!(is_usage(f.run(discussion::run, &["comment", "1"])));
-    let view = f.ok(discussion::run, &["view", "1", "--comments"]);
+    let view = f.ok(discussion::run, &["view", "1"]);
     assert!(view.contains("title:\tShip plan v2"), "{view}");
-    assert!(
-        view.contains("category:\tGeneral") && view.contains("a comment"),
-        "{view}"
-    );
+    assert!(view.contains("category:\tGeneral"), "{view}");
+    // gh prints only the comments when --comments output is piped.
+    let comments = f.ok(discussion::run, &["view", "1", "--comments"]);
+    assert!(comments.contains("a comment"), "{comments}");
     let vj = json_of(&f.ok(discussion::run, &["view", "1", "--json", "comments,state"]));
-    assert_eq!(vj["comments"], json!(1));
+    assert_eq!(vj["comments"].as_array().map(Vec::len), Some(1));
     assert_eq!(vj["state"], json!("OPEN"));
     assert!(is_api(f.run(discussion::run, &["view", "99"])));
     assert!(is_api(
