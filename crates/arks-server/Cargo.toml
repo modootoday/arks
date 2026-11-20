@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+arks-config = { workspace = true }
 arks-protocol = { workspace = true }
 arks-pack = { workspace = true }
 arks-oid = { workspace = true }
