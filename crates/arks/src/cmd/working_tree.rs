@@ -1,7 +1,7 @@
 //! Working-tree / index path ops: restore, reset, diff, rm, mv, clean.
 
 use crate::cmd::branch::restore_paths;
-use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev, tree_blob_map};
+use crate::cmd::shared::{collect_untracked, head_blob_map, resolve_rev};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree, write_index,
@@ -11,9 +11,8 @@ use arks_object::{ObjectKind, RawObject};
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
-use std::io::{self, Write};
 use std::path::Path;
 pub fn cmd_restore(args: &[String]) -> CliResult<()> {
     // Cite: https://git-scm.com/docs/git-restore (`-s`/`--source`, `-S`/`--staged`,
@@ -305,166 +304,6 @@ fn print_unstaged(repo: &Repository, work: &Path) -> CliResult<()> {
         }
     }
     Ok(())
-}
-
-pub fn cmd_diff(args: &[String]) -> CliResult<()> {
-    // M16 Sy-1: `--stat`, `--name-only`, `--name-status` claimed (git-diff).
-    // Cloud drop-in §O: `<rev>`, `A..B`, `A...B`, `--cached <rev>`, `-- <path>`,
-    // `--numstat`, `--shortstat`, `-U<n>`, `--exit-code`, `--quiet`.
-    // Cite: https://git-scm.com/docs/git-diff
-    use crate::cmd::diff_render::{DiffFormat, changes_between, render};
-    let (opts, rest) = split_dashdash(args);
-    let mut fmt = DiffFormat::default();
-    let mut cached = false;
-    let mut exit_code = false;
-    let mut quiet = false;
-    let mut no_index = false;
-    let mut diff_filter: Option<String> = None;
-    let mut positional = Vec::new();
-    for a in &opts {
-        if fmt.take_flag(a)? {
-            continue;
-        }
-        match a.as_str() {
-            "--cached" | "--staged" => cached = true,
-            "--exit-code" => exit_code = true,
-            "--quiet" => quiet = true,
-            "--no-index" => no_index = true,
-            x if x.starts_with("--diff-filter=") => {
-                diff_filter = Some(x["--diff-filter=".len()..].to_string());
-            }
-            "--no-color" | "--no-ext-diff" => {}
-            x if x.starts_with('-') && x.len() > 1 => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {x}")));
-            }
-            _ => positional.push(a.clone()),
-        }
-    }
-    if !(fmt.stat || fmt.numstat || fmt.shortstat || fmt.name_only || fmt.name_status) {
-        fmt.patch = true;
-    }
-    if no_index {
-        let mut files = positional.clone();
-        files.extend(rest.iter().cloned());
-        return diff_no_index(&files, &fmt, quiet);
-    }
-    let repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let mut revs: Vec<Oid> = Vec::new();
-    let mut paths: Vec<String> = rest.iter().map(|p| pathspec(&work, p)).collect();
-    for p in &positional {
-        if let Some((l, r)) = p.split_once("...") {
-            let lo = resolve_rev(&repo, if l.is_empty() { "HEAD" } else { l })?;
-            let ro = resolve_rev(&repo, if r.is_empty() { "HEAD" } else { r })?;
-            let base = arks_repo::merge_base_oid(&repo, &lo, &ro)?
-                .ok_or_else(|| CliError::Msg(format!("{p}: no merge base")))?;
-            revs.push(base);
-            revs.push(ro);
-        } else if let Some((l, r)) = p.split_once("..") {
-            revs.push(resolve_rev(&repo, if l.is_empty() { "HEAD" } else { l })?);
-            revs.push(resolve_rev(&repo, if r.is_empty() { "HEAD" } else { r })?);
-        } else if let Ok(o) = resolve_rev(&repo, p) {
-            revs.push(o);
-        } else if work.join(p).exists() || std::path::Path::new(p).exists() {
-            paths.push(pathspec(&work, p));
-        } else {
-            return Err(CliError::fatal(format!(
-                "ambiguous argument '{p}': unknown revision or path not in the working tree.\n\
-                 Use '--' to separate paths from revisions, like this:\n\
-                 'git <command> [<revision>...] -- [<file>...]'"
-            )));
-        }
-    }
-    let index_map = || -> CliResult<HashMap<String, Oid>> {
-        let index = read_index(&repo)?;
-        Ok(index
-            .entries
-            .iter()
-            .filter(|e| e.stage() == 0)
-            .map(|e| (e.path.clone(), e.oid))
-            .collect())
-    };
-    let (a, b, wt) = match (revs.len(), cached) {
-        (0, true) => (head_blob_map(&repo)?, index_map()?, false),
-        (0, false) => (index_map()?, worktree_map(&repo, &work)?, true),
-        (1, true) => (tree_blob_map(&repo, &revs[0])?, index_map()?, false),
-        (1, false) => (
-            tree_blob_map(&repo, &revs[0])?,
-            worktree_map(&repo, &work)?,
-            true,
-        ),
-        (2, _) => (
-            tree_blob_map(&repo, &revs[0])?,
-            tree_blob_map(&repo, &revs[1])?,
-            false,
-        ),
-        _ => {
-            return Err(CliError::Usage(
-                "diff [--cached] [<commit> [<commit>]] [-- <path>...]".into(),
-            ));
-        }
-    };
-    let a = filter_paths(a, &paths);
-    let b = filter_paths(b, &paths);
-    let mut changes = changes_between(&a, &b, wt.then_some(work.as_path()));
-    if let Some(f) = &diff_filter {
-        changes.retain(|c| crate::cmd::diff_render::status_passes(c.status(), f));
-    }
-    if !quiet {
-        // Pf4-1: buffer unified emit (PERF stdout/syscall class).
-        let mut out = io::BufWriter::with_capacity(256 * 1024, io::stdout().lock());
-        render(&mut out, &repo, &fmt, &changes)?;
-        out.flush()?;
-    }
-    if (exit_code || quiet) && !changes.is_empty() {
-        return Err(CliError::silent(1));
-    }
-    Ok(())
-}
-
-/// `diff --no-index <path> <path>`: compare two files on disk (outside or
-/// inside a repository); exits 1 when they differ, as `--exit-code` does.
-/// Partial: directories and output formats other than the patch.
-/// Cite: https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgt--no-index--ltpathgtltpathgt
-fn diff_no_index(
-    files: &[String],
-    fmt: &crate::cmd::diff_render::DiffFormat,
-    quiet: bool,
-) -> CliResult<()> {
-    let [a, b] = files else {
-        return Err(CliError::Usage("diff --no-index <path> <path>".into()));
-    };
-    if fmt.stat || fmt.numstat || fmt.shortstat || fmt.name_only || fmt.name_status {
-        return Err(CliError::NotImplemented(
-            "diff --no-index supports the patch format only".into(),
-        ));
-    }
-    let read = |p: &str| -> CliResult<Vec<u8>> {
-        if Path::new(p).is_dir() {
-            return Err(CliError::NotImplemented(
-                "diff --no-index of directories is not claimed".into(),
-            ));
-        }
-        fs::read(p).map_err(|e| CliError::fatal(format!("{p}: {e}")))
-    };
-    let (x, y) = (read(a)?, read(b)?);
-    if x == y {
-        return Ok(());
-    }
-    if !quiet {
-        let name = |p: &str| p.trim_start_matches("./").to_string();
-        let mut out = io::BufWriter::new(io::stdout().lock());
-        crate::cmd::unified_diff::write_file_patch_paths(
-            &mut out,
-            arks_store::ObjectFormat::Sha1,
-            (&name(a), &name(b)),
-            Some(&x),
-            Some(&y),
-            fmt.context,
-        )?;
-        out.flush()?;
-    }
-    Err(CliError::silent(1))
 }
 
 pub fn cmd_rm(args: &[String]) -> CliResult<()> {
@@ -868,36 +707,4 @@ fn pathspec(work: &Path, p: &str) -> String {
 /// Same pathspec rules as `log` (prefix match or whole-path glob).
 fn path_matches(path: &str, specs: &[String]) -> bool {
     crate::cmd::log_format::path_in_specs(path, specs)
-}
-
-fn filter_paths(map: HashMap<String, Oid>, specs: &[String]) -> HashMap<String, Oid> {
-    if specs.is_empty() {
-        return map;
-    }
-    map.into_iter()
-        .filter(|(k, _)| path_matches(k, specs))
-        .collect()
-}
-
-/// Tracked paths as they are in the working tree (missing files omitted).
-/// Hashes without writing objects; stat-clean entries reuse the index OID.
-fn worktree_map(repo: &Repository, work: &Path) -> CliResult<HashMap<String, Oid>> {
-    let index = read_index(repo)?;
-    let mut out = HashMap::new();
-    for e in index.entries.iter().filter(|e| e.stage() == 0) {
-        let abs = work.join(&e.path);
-        let Ok(meta) = fs::metadata(&abs) else {
-            continue;
-        };
-        if !meta.is_file() {
-            continue;
-        }
-        if crate::cmd::shared::index_stat_matches(e, &meta) {
-            out.insert(e.path.clone(), e.oid);
-            continue;
-        }
-        let obj = RawObject::new(ObjectKind::Blob, fs::read(&abs)?);
-        out.insert(e.path.clone(), obj.oid(repo.object_format())?);
-    }
-    Ok(out)
 }
