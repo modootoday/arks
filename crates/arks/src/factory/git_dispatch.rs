@@ -172,7 +172,7 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "gui--askpass" => cmd::cmd_gui_askpass(args),
         "gui--askyesno" => cmd::cmd_gui_askyesno(args),
         "gitk" => Err(CliError::NotImplemented(format!(
-            "{cmd}: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)"
+            "{cmd}: use external gitk (FS7 handoff; not embedded in arks CLI; arks gui is the terminal git-gui)"
         ))),
         "scalar" => Err(CliError::NotImplemented(
             "scalar: separate large-repo helper (FS6); not claimed as arks porcelain".into(),
