@@ -123,3 +123,94 @@ merge-tree --write-tree t0 feature
 -C .git/side merge-tree base:a.txt main clash
 merge-tree t0 main feature
 merge-tree v1 feature main
+# --- fast-export: walks and labels ---
+fast-export main
+fast-export --all
+fast-export t0
+fast-export v1
+fast-export feature
+fast-export HEAD
+fast-export refs/stash
+fast-export main~2..main
+fast-export main~1
+fast-export main feature v1 t0
+fast-export v1 t0 main
+fast-export feature..main
+fast-export ^feature main
+fast-export main --not feature
+fast-export main...feature
+fast-export -- main
+fast-export main -- src
+fast-export main~1..main -- src/a.txt
+fast-export main -- src docs
+fast-export main -- nosuch
+fast-export main nosuch
+fast-export --branches
+fast-export --tags
+fast-export --glob='refs/heads/*'
+fast-export --remotes
+fast-export -n 2 main
+fast-export --max-count=1 main
+fast-export --skip=5 main
+fast-export --merges main
+fast-export --no-merges main
+fast-export --first-parent main
+fast-export --date-order main
+fast-export --reverse main
+fast-export --since=1700010000 --all
+fast-export --author=nobody --all
+fast-export --stdin
+fast-export
+fast-export --bogus main
+# --- fast-export: stream options ---
+fast-export --no-data main~1
+fast-export --data --no-data t0
+fast-export --no-data --data t0
+fast-export --full-tree main~1..main
+fast-export --full-tree --no-data main~2
+fast-export --no-full-tree main~2
+fast-export --use-done-feature t0
+fast-export --no-use-done-feature t0
+fast-export --progress=2 t0
+fast-export --progress=1 --no-data main~2
+fast-export --no-progress t0
+fast-export --progress=x main
+fast-export --show-original-ids main~2
+fast-export --mark-tags v1
+fast-export --mark-tags --show-original-ids --all --no-data
+fast-export --reference-excluded-parents main~1..main
+fast-export --no-reference-excluded-parents main~1..main
+fast-export --fake-missing-tagger v1
+fast-export --no-fake-missing-tagger v1
+fast-export --refspec refs/heads/main:refs/heads/other main~1..main
+fast-export --refspec=refs/tags/*:refs/tags/x-* --all --no-data
+fast-export --no-refspec t0
+fast-export --refspec bad t0
+fast-export --anonymize main~2
+fast-export --anonymize --all
+fast-export --anonymize --anonymize-map=main:trunk --anonymize-map=README.md main
+fast-export --anonymize --no-anonymize t0
+fast-export --anonymize-map=x main
+fast-export --anonymize --reference-excluded-parents main~1..main
+# --- fast-export: tags, encodings and marks ---
+fast-export --signed-tags=strip --tag-of-filtered-object=drop --all
+fast-export --signed-tags=verbatim t0
+fast-export --signed-tags=warn v1
+fast-export --signed-tags=warn-strip v1
+fast-export --no-signed-tags v1
+fast-export --signed-tags=bogus t0
+fast-export --tag-of-filtered-object=drop main~1..main v1
+fast-export --tag-of-filtered-object=rewrite main~1..main v1
+fast-export --tag-of-filtered-object=rewrite v1 -- docs
+fast-export --tag-of-filtered-object=abort main~1..main v1
+fast-export --no-tag-of-filtered-object v1
+fast-export --tag-of-filtered-object=bogus main
+fast-export --reencode=yes t0
+fast-export --reencode=no t0
+fast-export --no-reencode t0
+fast-export --reencode=bogus main
+fast-export --export-marks=.git/m main~2
+fast-export --import-marks-if-exists=.git/nosuch t0
+fast-export --import-marks=.git/nosuch t0
+fast-export --import-marks .git/info/exclude t0
+fast-export --no-import-marks --no-export-marks --no-import-marks-if-exists t0
