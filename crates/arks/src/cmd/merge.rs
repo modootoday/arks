@@ -506,8 +506,32 @@ fn merge_one(name: &str, o: &MergeOpts) -> CliResult<()> {
                     if o.ff == Ff::Never { "no-ff" } else { "" },
                 )?;
             }
+            // A conflicted path with no common-ancestor stage was added on
+            // both sides: `CONFLICT (add/add)`. The recursive backend (`-s
+            // recursive` / `-s subtree`) reports it before `Auto-merging`,
+            // ort after it (observed pin 2.39.5 output).
+            let index = crate::util::read_index(&repo)?;
+            let added_both = |c: &str| {
+                let stages: Vec<u16> = index
+                    .entries
+                    .iter()
+                    .filter(|e| e.path == c)
+                    .map(|e| e.stage())
+                    .collect();
+                stages.contains(&2) && stages.contains(&3) && !stages.contains(&1)
+            };
+            let recursive_backend = matches!(strategy.as_str(), "recursive" | "subtree");
             for c in &result.conflicts {
-                if result.auto_merged.contains(c) {
+                if result.auto_merged.contains(c) && !resolve && added_both(c) {
+                    let conflict = format!("CONFLICT (add/add): Merge conflict in {c}");
+                    if recursive_backend {
+                        say(conflict);
+                        say(format!("Auto-merging {c}"));
+                    } else {
+                        say(format!("Auto-merging {c}"));
+                        say(conflict);
+                    }
+                } else if result.auto_merged.contains(c) {
                     say(format!("Auto-merging {c}"));
                     if resolve {
                         eprintln!("ERROR: content conflict in {c}");
