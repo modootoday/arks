@@ -124,7 +124,7 @@ if [[ "$RUN_BP" == "1" ]]; then
   }
 
   # Seed repo with arks only (product must not spawn git for setup of arks paths).
-  bp_run BP-INIT zero "$ARKS_BIN" init
+  bp_run BP-INIT zero "$ARKS_BIN" init -b main
   bp_run BP-CONFIG-NAME zero "$ARKS_BIN" config user.name behavioral
   bp_run BP-CONFIG-EMAIL zero "$ARKS_BIN" config user.email behavioral@example.com
   printf 'hello\n' >"$WORK_BP/repo/README"
@@ -258,7 +258,7 @@ if [[ "$RUN_BP" == "1" ]]; then
   mkdir -p "$WORK_BP/serve/repo"
   (
     cd "$WORK_BP/serve/repo"
-    ARKS_PERSONALITY=git "$ARKS_BIN" init
+    ARKS_PERSONALITY=git "$ARKS_BIN" init -b main
     ARKS_PERSONALITY=git "$ARKS_BIN" config user.name behavioral
     ARKS_PERSONALITY=git "$ARKS_BIN" config user.email behavioral@example.com
     printf 'upstream\n' >README

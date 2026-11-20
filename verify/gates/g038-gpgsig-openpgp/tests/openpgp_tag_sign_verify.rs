@@ -172,7 +172,7 @@ fn g038_gpgsig_openpgp_openpgp_commit_and_tag_stock_roundtrip() {
     let repo = tmp.path().join("repo");
     fs::create_dir_all(&repo).unwrap();
 
-    assert_ok(&arks_env(&repo, &gnupghome, &["init"]), "init");
+    assert_ok(&arks_env(&repo, &gnupghome, &["init", "-b", "main"]), "init");
     fs::write(repo.join("README"), b"g038-gpgsig-openpgp\n").unwrap();
     assert_ok(&arks_env(&repo, &gnupghome, &["add", "README"]), "add");
     assert_ok(
@@ -238,7 +238,7 @@ fn g038_gpgsig_openpgp_x509_mock_program_roundtrip() {
     let repo = tmp.path().join("repo");
     fs::create_dir_all(&repo).unwrap();
 
-    assert_ok(&arks_env(&repo, &gnupghome, &["init"]), "init");
+    assert_ok(&arks_env(&repo, &gnupghome, &["init", "-b", "main"]), "init");
     fs::write(repo.join("f"), b"x509\n").unwrap();
     assert_ok(&arks_env(&repo, &gnupghome, &["add", "f"]), "add");
     assert_ok(

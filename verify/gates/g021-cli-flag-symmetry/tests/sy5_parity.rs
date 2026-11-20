@@ -90,7 +90,7 @@ fn assert_fail(out: &std::process::Output, label: &str) {
 
 fn seed_repo(repo: &Path) {
     fs::create_dir_all(repo).unwrap();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     fs::write(repo.join("a.txt"), "one\n").unwrap();
     assert_ok(&arks(repo, &["add", "a.txt"]), "add");
     assert_ok(&arks(repo, &["commit", "-m", "c1"]), "commit c1");

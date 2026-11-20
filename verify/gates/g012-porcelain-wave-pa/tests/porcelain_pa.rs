@@ -113,7 +113,7 @@ fn help_lists_wave_pa_and_omits_deferred() {
 fn refuse_deferred_and_unclaimed_flags() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     // Bare `repack` without -a remains usage-fail; -ad is claimed (Fs-3).
     assert_fail(&arks(repo, &["repack"]), "repack without -a");
     seed_commit(repo, "a.txt", "one\n", "c1");
@@ -129,7 +129,7 @@ fn branch_checkout_switch_roundtrip() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     assert_ok(&arks(repo, &["branch", "topic"]), "branch topic");
     assert_ok(&arks(repo, &["checkout", "topic"]), "checkout topic");
@@ -149,7 +149,7 @@ fn branch_checkout_switch_roundtrip() {
 fn reset_hard_and_diff_dirty() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     fs::write(repo.join("a.txt"), "two\n").unwrap();
     let d = arks(repo, &["diff"]);
@@ -163,7 +163,7 @@ fn reset_hard_and_diff_dirty() {
 fn merge_ff_only() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     assert_ok(&arks(repo, &["branch", "topic"]), "branch");
     assert_ok(&arks(repo, &["checkout", "topic"]), "checkout");
@@ -177,7 +177,7 @@ fn merge_ff_only() {
 fn rm_mv_clean_tag_describe_config_grep_stash() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "hello grepme\n", "c1");
     assert_ok(&arks(repo, &["tag", "v1"]), "tag");
     let desc = arks(repo, &["describe", "--tags"]);
@@ -209,7 +209,7 @@ fn rm_mv_clean_tag_describe_config_grep_stash() {
 fn restore_and_shortlog() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     fs::write(repo.join("a.txt"), "changed\n").unwrap();
     assert_ok(&arks(repo, &["restore", "a.txt"]), "restore");

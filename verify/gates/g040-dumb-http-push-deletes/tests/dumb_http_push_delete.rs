@@ -117,7 +117,7 @@ fn git(cwd: &Path, args: &[&str]) -> std::process::Output {
 fn seed_bare(parent: &Path) -> PathBuf {
     let work = parent.join("seed");
     fs::create_dir_all(&work).unwrap();
-    assert_ok(&arks(&work, &["init"]), "init seed");
+    assert_ok(&arks(&work, &["init", "-b", "main"]), "init seed");
     fs::write(work.join("README"), b"hello dumb\n").unwrap();
     assert_ok(&arks(&work, &["add", "README"]), "add");
     assert_ok(&arks(&work, &["commit", "-m", "c1"]), "commit");

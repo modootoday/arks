@@ -12,7 +12,7 @@ use arks_pack::{DecodedPack, PackIndex, PackIndexEntry, ResolvedObject};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, OnceLock, RwLock};
 
 /// Deferred pack+idx disk write (RAM cache already live). Clone overlaps this
 /// with worktree checkout on the smart-HTTP hot path.
@@ -83,7 +83,12 @@ pub struct FilesystemGitStore {
     packs_loaded: RwLock<bool>,
     /// Optional pack+idx bytes waiting for disk (clone overlaps with checkout).
     pending_pack: Option<PendingPackPersist>,
+    /// Stores named by `objects/info/alternates`, opened on the first miss.
+    alternates: OnceLock<Vec<FilesystemGitStore>>,
 }
+
+/// Alternate object stores nest at most this deep (git uses the same bound).
+const ALTERNATES_MAX_DEPTH: usize = 5;
 
 impl Clone for FilesystemGitStore {
     fn clone(&self) -> Self {
@@ -95,6 +100,7 @@ impl Clone for FilesystemGitStore {
             packs_loaded: RwLock::new(*self.packs_loaded.read().expect("packs_loaded")),
             // Pending disk bytes stay with the owning store (clone is for readers).
             pending_pack: None,
+            alternates: OnceLock::new(),
         }
     }
 }
@@ -116,7 +122,44 @@ impl FilesystemGitStore {
             pack_objects: RwLock::new(HashMap::new()),
             packs_loaded: RwLock::new(false),
             pending_pack: None,
+            alternates: OnceLock::new(),
         }
+    }
+
+    /// Stores listed in `objects/info/alternates` (absolute paths, or paths
+    /// relative to this `objects/` directory; `#` comments skipped).
+    /// Cite: <https://git-scm.com/docs/gitrepository-layout> (`objects/info/alternates`).
+    fn alternate_stores(&self) -> &[FilesystemGitStore] {
+        self.alternates_at(0)
+    }
+
+    fn alternates_at(&self, depth: usize) -> &[FilesystemGitStore] {
+        self.alternates.get_or_init(|| {
+            if depth >= ALTERNATES_MAX_DEPTH {
+                return Vec::new();
+            }
+            let Ok(text) = fs::read_to_string(self.objects_dir.join("info/alternates")) else {
+                return Vec::new();
+            };
+            text.lines()
+                .map(str::trim)
+                .filter(|l| !l.is_empty() && !l.starts_with('#'))
+                .map(|l| {
+                    let p = Path::new(l);
+                    if p.is_absolute() {
+                        p.to_path_buf()
+                    } else {
+                        self.objects_dir.join(p)
+                    }
+                })
+                .filter(|p| p.is_dir() && *p != self.objects_dir)
+                .map(|p| {
+                    let alt = FilesystemGitStore::open(p);
+                    let _ = alt.alternates_at(depth + 1);
+                    alt
+                })
+                .collect()
+        })
     }
 
     pub fn objects_dir(&self) -> &Path {
@@ -385,6 +428,11 @@ impl FilesystemGitStore {
         if let Some(obj) = self.pack_objects.read().expect("pack_objects").get(oid) {
             return Ok(Arc::clone(obj));
         }
+        for alt in self.alternate_stores() {
+            if let Ok(obj) = alt.get_shared(oid) {
+                return Ok(obj);
+            }
+        }
         Err(StoreError::NotFound(oid.to_hex()))
     }
 
@@ -479,11 +527,18 @@ impl ObjectStore for FilesystemGitStore {
             return Ok(true);
         }
         self.load_packs_if_needed()?;
-        Ok(self
+        if self
             .pack_objects
             .read()
             .expect("pack_objects")
-            .contains_key(oid))
+            .contains_key(oid)
+        {
+            return Ok(true);
+        }
+        Ok(self
+            .alternate_stores()
+            .iter()
+            .any(|alt| alt.exists(oid).unwrap_or(false)))
     }
 }
 
@@ -509,6 +564,24 @@ mod tests {
         assert!(store.exists(&oid).unwrap());
         let got = store.get(&oid).unwrap();
         assert_eq!(got, obj);
+    }
+
+    #[test]
+    fn alternates_supply_missing_objects() {
+        let (_d1, mut donor) = store_in_temp();
+        let obj = RawObject::new(ObjectKind::Blob, b"shared");
+        let oid = donor.put(ObjectFormat::Sha1, &obj).unwrap();
+        let dir = TempDir::new().unwrap();
+        let objects = dir.path().join("objects");
+        fs::create_dir_all(objects.join("info")).unwrap();
+        fs::write(
+            objects.join("info/alternates"),
+            format!("# comment\n{}\n", donor.objects_dir().display()),
+        )
+        .unwrap();
+        let store = FilesystemGitStore::open(&objects);
+        assert!(store.exists(&oid).unwrap());
+        assert_eq!(store.get(&oid).unwrap(), obj);
     }
 
     #[test]

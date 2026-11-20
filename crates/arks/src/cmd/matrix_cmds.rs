@@ -14,53 +14,6 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
-/// `arks ls-remote [<options>] [<remote> [<patterns>…]]`
-pub fn cmd_ls_remote(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--heads", "--tags", "-h", "-t"])?;
-    let heads = args.iter().any(|a| a == "--heads" || a == "-h");
-    let tags = args.iter().any(|a| a == "--tags" || a == "-t");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    let remote_or_url = positional.first().map(|s| s.as_str()).unwrap_or("origin");
-    let patterns: Vec<&str> = positional.iter().skip(1).map(|s| s.as_str()).collect();
-    let url = resolve_remote_url(remote_or_url)?;
-    let refs = arks_remote::ls_remote(&url).map_err(|e| CliError::Msg(e.to_string()))?;
-    for r in refs {
-        if heads && !r.name.starts_with("refs/heads/") {
-            continue;
-        }
-        if tags && !r.name.starts_with("refs/tags/") {
-            continue;
-        }
-        // git-ls-remote: patterns match the tail of a ref name (path components).
-        if !patterns.is_empty()
-            && !patterns
-                .iter()
-                .any(|p| r.name == *p || r.name.ends_with(&format!("/{p}")))
-        {
-            continue;
-        }
-        println!("{}\t{}", r.oid.to_hex(), r.name);
-    }
-    Ok(())
-}
-
-fn resolve_remote_url(name_or_url: &str) -> CliResult<String> {
-    if name_or_url.contains("://")
-        || name_or_url.starts_with("git@")
-        || Path::new(name_or_url).exists()
-    {
-        return Ok(name_or_url.to_string());
-    }
-    let repo = open_repo()?;
-    let cfg = repo.git_dir().join("config");
-    let remotes = arks_remote::list_remotes(&cfg)?;
-    remotes
-        .into_iter()
-        .find(|r| r.name == name_or_url)
-        .map(|r| r.url)
-        .ok_or_else(|| CliError::Msg(format!("No such remote: {name_or_url}")))
-}
-
 /// `arks prune` — delete unreachable loose objects.
 pub fn cmd_prune(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["-n", "--dry-run", "-v", "--verbose"])?;
@@ -1538,71 +1491,6 @@ pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks request-pull <start> <url> [<end>]` — summarize commits for a pull request (subset).
-pub fn cmd_request_pull(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() < 2 {
-        return Err(CliError::Usage("request-pull <start> <url> [<end>]".into()));
-    }
-    let start = positional[0].as_str();
-    let url = positional[1].as_str();
-    let end = positional.get(2).map(|s| s.as_str()).unwrap_or("HEAD");
-    let repo = open_repo()?;
-    let start_oid = resolve_rev(&repo, start)?;
-    let end_oid = resolve_rev(&repo, end)?;
-    println!(
-        "The following changes since commit {}:\n",
-        start_oid.to_hex()
-    );
-    println!("  {url}\n");
-    println!("are available in the git repository at:\n");
-    println!("  {url}\n");
-    println!("for you to fetch changes up to {}:\n", end_oid.to_hex());
-    // One-line summaries between start..end (exclusive start) — walk parents of end until start.
-    let mut cur = end_oid;
-    let mut lines = Vec::new();
-    for _ in 0..128 {
-        if cur == start_oid {
-            break;
-        }
-        let obj = repo.get_object(&cur)?;
-        if obj.kind != ObjectKind::Commit {
-            break;
-        }
-        let text = String::from_utf8_lossy(&obj.payload);
-        let subject = text
-            .lines()
-            .skip_while(|l| !l.is_empty())
-            .nth(1)
-            .or_else(|| {
-                text.lines().find(|l| {
-                    !l.starts_with("tree ")
-                        && !l.starts_with("parent ")
-                        && !l.starts_with("author ")
-                        && !l.starts_with("committer ")
-                        && !l.is_empty()
-                })
-            })
-            .unwrap_or("")
-            .to_string();
-        lines.push(format!("  {} {}", &cur.to_hex()[..7], subject));
-        let parent = text
-            .lines()
-            .find_map(|l| l.strip_prefix("parent "))
-            .and_then(|h| Oid::from_hex(h.trim()).ok());
-        match parent {
-            Some(p) => cur = p,
-            None => break,
-        }
-    }
-    lines.reverse();
-    for l in lines {
-        println!("{l}");
-    }
-    Ok(())
-}
-
 /// `arks bugreport` — print environment / version diagnostics (subset).
 pub fn cmd_bugreport(args: &[String]) -> CliResult<()> {
     refuse_unknown_flags(args, &["--output-directory", "-s", "--suffix"])?;
@@ -1755,18 +1643,92 @@ pub fn cmd_shell(args: &[String]) -> CliResult<()> {
     }
 }
 
-/// `arks upload-archive <directory>` — serve `git archive` over the upload-archive protocol (subset).
+/// `arks upload-archive <directory>`: the server half of `archive --remote`.
+/// Reads `argument <arg>` pkt-lines up to a flush, answers `ACK` + flush,
+/// then streams the archive on side-band 1 (errors on bands 2 and 3).
+/// Cite: <https://git-scm.com/docs/git-upload-archive>,
+/// <https://git-scm.com/docs/gitprotocol-common> (pkt-line, side-band).
 pub fn cmd_upload_archive(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let dir = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("upload-archive <directory>".into()))?;
-    // Protocol subset: without full pkt-line argument parse, materialize HEAD tar to stdout
-    // when invoked as a local helper. SSH/git-daemon protocol depth remains Partial.
-    let prev = std::env::current_dir()?;
-    std::env::set_current_dir(dir)?;
-    let result = crate::cmd::cmd_archive(&["--format=tar".into(), "HEAD".into()]);
-    let _ = std::env::set_current_dir(prev);
-    result.map_err(|e| CliError::Msg(format!("upload-archive: {e}")))
+    use std::io::{Read, Write};
+    let usage = || CliError::Exit(129, "usage: git upload-archive <repository>".into());
+    if args.iter().any(|a| a == "-h") {
+        return Err(usage());
+    }
+    let [dir] = args else {
+        return Err(usage());
+    };
+    let repo = arks_repo::Repository::open(dir)
+        .or_else(|_| arks_repo::Repository::open(std::path::Path::new(dir).join(".git")))
+        .map_err(|_| CliError::fatal(format!("'{dir}' does not appear to be a git repository")))?;
+    let mut input = std::io::stdin().lock();
+    let mut argv: Vec<String> = Vec::new();
+    let mut complete = false;
+    loop {
+        let mut len = [0u8; 4];
+        if input.read_exact(&mut len).is_err() {
+            break;
+        }
+        let Some(n) = std::str::from_utf8(&len)
+            .ok()
+            .and_then(|h| usize::from_str_radix(h, 16).ok())
+        else {
+            break;
+        };
+        if n == 0 {
+            complete = true;
+            break;
+        }
+        if n < 4 {
+            break;
+        }
+        let mut buf = vec![0u8; n - 4];
+        if input.read_exact(&mut buf).is_err() {
+            break;
+        }
+        let line = String::from_utf8_lossy(&buf);
+        let line = line.strip_suffix('\n').unwrap_or(&line);
+        match line.strip_prefix("argument ") {
+            Some(a) => argv.push(a.to_string()),
+            None => break,
+        }
+    }
+    let pkt = |band: Option<u8>, data: &[u8]| -> Vec<u8> {
+        let extra = usize::from(band.is_some());
+        let mut v = format!("{:04x}", data.len() + 4 + extra).into_bytes();
+        v.extend(band);
+        v.extend_from_slice(data);
+        v
+    };
+    let mut out = std::io::stdout().lock();
+    out.write_all(&pkt(None, b"ACK\n"))?;
+    out.write_all(b"0000")?;
+    let result = if complete {
+        crate::cmd::archive::archive_bytes_for_args(&repo, &argv)
+    } else {
+        Err(CliError::fatal("the remote end hung up unexpectedly"))
+    };
+    match result {
+        Ok(bytes) => {
+            for chunk in bytes.chunks(65515) {
+                out.write_all(&pkt(Some(1), chunk))?;
+            }
+            out.write_all(b"0000")?;
+            out.flush()?;
+            Ok(())
+        }
+        Err(e) => {
+            let msg = e.to_string();
+            let msg = msg.trim_end();
+            let msg = if msg.starts_with("fatal: ") || msg.starts_with("error: ") {
+                msg.to_string()
+            } else {
+                format!("fatal: {msg}")
+            };
+            out.write_all(&pkt(Some(2), format!("{msg}\n").as_bytes()))?;
+            let died = "git upload-archive: archiver died with error";
+            out.write_all(&pkt(Some(3), died.as_bytes()))?;
+            out.flush()?;
+            Err(CliError::fatal(format!("sent error to the client: {died}")))
+        }
+    }
 }

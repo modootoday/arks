@@ -182,7 +182,7 @@ fn help_lists_pc_and_omits_refuse_closed() {
 fn refuse_closed_and_unknown_flags() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     for cmd in ["backfill", "filter-branch"] {
         assert_fail(&arks(repo, &[cmd]), cmd);
@@ -228,7 +228,7 @@ fn annotated_tag_stock_git_reads() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     assert_ok(
         &arks(repo, &["tag", "-a", "-m", "release", "v1"]),
@@ -246,7 +246,7 @@ fn archive_tar_contains_blob() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "hello-archive\n", "c1");
     let out = repo.join("out.tar");
     assert_ok(
@@ -268,7 +268,7 @@ fn reflog_after_commit() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     let out = arks(repo, &["reflog"]);
     assert_ok(&out, "reflog");
@@ -283,7 +283,7 @@ fn bundle_verify_arks_bundle() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     let bundle = repo.join("r.bundle");
     assert_ok(
@@ -303,7 +303,7 @@ fn bundle_verify_arks_bundle() {
 fn clean_d_removes_untracked_dir() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "one\n", "c1");
     fs::create_dir_all(repo.join("junk/nested")).unwrap();
     fs::write(repo.join("junk/nested/x.txt"), "x").unwrap();
@@ -354,7 +354,7 @@ fn same_dot_git_stock_peer() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     seed_commit(repo, "a.txt", "peer\n", "c1");
     assert_ok(
         &arks(repo, &["tag", "-a", "-m", "t", "vpeer"]),

@@ -74,7 +74,7 @@ fn assert_fail(out: &std::process::Output, label: &str) {
 
 fn init_repo(path: &Path) {
     fs::create_dir_all(path).unwrap();
-    assert_ok(&arks(path, &["init"]), "init");
+    assert_ok(&arks(path, &["init", "-b", "main"]), "init");
 }
 
 fn seed(repo: &Path, file: &str, body: &str, msg: &str) {

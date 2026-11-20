@@ -214,7 +214,7 @@ fn seed_blob(store: &mut FilesystemGitStore, payload: &[u8]) -> Oid {
 fn seed_bare_with_commit(root: &Path) -> (PathBuf, Oid) {
     let work = root.join("seed");
     fs::create_dir_all(&work).unwrap();
-    assert_ok(&arks(&work, &["init"]), "arks init");
+    assert_ok(&arks(&work, &["init", "-b", "main"]), "arks init");
     fs::write(work.join("hello.txt"), b"hello g027-smart-http-pr-contention\n").unwrap();
     assert_ok(&arks(&work, &["add", "hello.txt"]), "arks add");
     assert_ok(&arks(&work, &["commit", "-m", "initial"]), "arks commit");

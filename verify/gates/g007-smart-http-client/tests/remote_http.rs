@@ -393,7 +393,7 @@ fn submodule_add_https_smart_http_loopback() {
 
     let parent = tmp.path().join("parent");
     fs::create_dir_all(&parent).unwrap();
-    assert_ok(&arks(&parent, &["init"]), "parent init");
+    assert_ok(&arks(&parent, &["init", "-b", "main"]), "parent init");
     fs::write(parent.join("ROOT"), b"root\n").unwrap();
     assert_ok(&arks(&parent, &["add", "ROOT"]), "add ROOT");
     assert_ok(&arks(&parent, &["commit", "-m", "root"]), "commit root");

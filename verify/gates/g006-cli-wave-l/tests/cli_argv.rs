@@ -96,7 +96,7 @@ fn help_lists_wave_l_and_h() {
 fn refuse_unimplemented_command_and_flag() {
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     // Product exclusions remain refuse-closed (historical G6 honesty).
     assert_fail(&arks(repo, &["filter-branch"]), "filter-branch");
     assert_fail(&arks(repo, &["backfill"]), "backfill");
@@ -112,7 +112,7 @@ fn init_opens_with_stock_git() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "arks init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "arks init");
     let gd = git(repo, &["rev-parse", "--git-dir"]);
     assert_ok(&gd, "git rev-parse --git-dir");
     let st = git(repo, &["status"]);
@@ -124,7 +124,7 @@ fn hash_object_and_cat_file_parity() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     fs::write(repo.join("blob.txt"), b"hello").unwrap();
     let a = arks(repo, &["hash-object", "-w", "blob.txt"]);
     assert_ok(&a, "arks hash-object -w");
@@ -147,7 +147,7 @@ fn update_ref_and_rev_parse() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     fs::write(repo.join("f"), b"x").unwrap();
     assert_ok(&arks(repo, &["add", "f"]), "add");
     assert_ok(&arks(repo, &["commit", "-m", "c"]), "commit");
@@ -168,7 +168,7 @@ fn add_status_commit_log_show_suite() {
     require_git();
     let tmp = TempDir::new().unwrap();
     let repo = tmp.path();
-    assert_ok(&arks(repo, &["init"]), "init");
+    assert_ok(&arks(repo, &["init", "-b", "main"]), "init");
     fs::write(repo.join("readme"), b"wave-l").unwrap();
     let st0 = arks(repo, &["status"]);
     assert_ok(&st0, "status untracked");
