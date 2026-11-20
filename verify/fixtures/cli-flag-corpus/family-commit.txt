@@ -1097,3 +1097,18 @@ mailsplit -d10 -o.git .git/fixture.mbox
 mailsplit -x -o.git .git/fixture.mbox
 mailsplit -o.git .git/side/.git/topic.mbox
 mailsplit -o.git/nope .git/fixture.mbox
+#
+# --- bisect (side repository) ---
+-C .git/side bisect start
+-C .git/side bisect start main
+-C .git/side bisect start main base
+-C .git/side bisect start --term-new=broken --term-old=fine main base
+-C .git/side bisect start --term-bad=broken --term-good=fine main base
+-C .git/side bisect start --no-checkout main base
+-C .git/side bisect start --first-parent main base
+-C .git/side bisect start --term-bad=run
+-C .git/side bisect start --no-checkout
+-C .git/side bisect terms
+-C .git/side bisect terms --term-good
+-C .git/side bisect bad
+-C .git/side bisect reset
