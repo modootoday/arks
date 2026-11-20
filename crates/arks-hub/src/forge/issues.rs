@@ -700,7 +700,7 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                 .iter()
                 .filter(|i| i.owner == owner && i.repo == repo && list_filter(st, req, i))
                 .collect();
-            items.sort_by(|a, b| b.number.cmp(&a.number));
+            items.sort_by_key(|x| std::cmp::Reverse(x.number));
             let out: Vec<Value> = items
                 .into_iter()
                 .take(limit)

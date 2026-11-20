@@ -169,29 +169,6 @@ pub(crate) fn merge_blockers(
     why
 }
 
-/// Required status contexts for `base` (from active and evaluate rulesets).
-pub(crate) fn required_contexts(st: &HubStore, owner: &str, repo: &str, base: &str) -> Vec<String> {
-    let mut out = Vec::new();
-    for rs in applicable(st, owner, repo, base) {
-        for rule in &rs.rules {
-            if rule.get("type").and_then(Value::as_str) != Some("required_status_checks") {
-                continue;
-            }
-            for c in rule
-                .pointer("/parameters/required_status_checks")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-            {
-                if let Some(ctx) = c.get("context").and_then(Value::as_str) {
-                    out.push(ctx.to_string());
-                }
-            }
-        }
-    }
-    out
-}
-
 fn list_of(v: &Value, ptr: &str) -> Vec<String> {
     v.pointer(ptr)
         .and_then(Value::as_array)

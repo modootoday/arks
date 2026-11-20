@@ -649,7 +649,7 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                 })
                 .filter(|p| base.as_deref().is_none_or(|b| p.base == b))
                 .collect();
-            items.sort_by(|a, b| b.number.cmp(&a.number));
+            items.sort_by_key(|x| std::cmp::Reverse(x.number));
             let out: Vec<Value> = items
                 .into_iter()
                 .take(limit)
