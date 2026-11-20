@@ -103,3 +103,10 @@ git init -q -b main "$sm/super"
   git -C lib checkout -q lv1 && git add lib && c -m "super: add lib at lv1"
   git -C lib checkout -q main)
 (cd "$sm" && git clone -q super clone)
+# Plumbing family extras (no new reachable commits): one pack holding the
+# objects of the first commit (they stay loose too, for prune-packed), a fresh
+# dangling blob and an old dangling blob (for prune --expire).
+git rev-list --objects "$(git rev-list --max-parents=0 HEAD)" | git pack-objects -q .git/objects/pack/pack >/dev/null
+printf 'dangling fresh\n' | git hash-object -w --stdin >/dev/null
+old=$(printf 'dangling old\n' | git hash-object -w --stdin)
+touch -d @1600000000 ".git/objects/${old:0:2}/${old:2}"

@@ -209,11 +209,13 @@ pub(crate) fn read_entry_v4(
     } else {
         None
     };
-    let (strip, r1) = read_varint(data, r)?;
-    let (suffix_len, r2) = read_varint(data, r1)?;
-    if data.len() < r2 + suffix_len {
-        return Err(IndexError::Truncated);
-    }
+    // gitformat-index v4: offset varint `strip`, then the NUL-terminated
+    // suffix; entries are not padded.
+    let (strip, r2) = read_varint(data, r)?;
+    let suffix_len = data[r2..]
+        .iter()
+        .position(|b| *b == 0)
+        .ok_or(IndexError::Truncated)?;
     let suffix = std::str::from_utf8(&data[r2..r2 + suffix_len])
         .map_err(|_| IndexError::Corrupt("path suffix not utf-8".into()))?;
     let prev_len = prev_path.len();
@@ -227,11 +229,7 @@ pub(crate) fn read_entry_v4(
     if path.as_bytes().contains(&0) {
         return Err(IndexError::PathNul);
     }
-    let consumed = r2 - offset + suffix_len;
-    let pad = (8 - (consumed % 8)) % 8;
-    if data.len() < offset + consumed + pad {
-        return Err(IndexError::Truncated);
-    }
+    let consumed = r2 - offset + suffix_len + 1;
     Ok((
         IndexEntry {
             ctime_sec,
@@ -249,7 +247,7 @@ pub(crate) fn read_entry_v4(
             flags_extended,
             path,
         },
-        offset + consumed + pad,
+        offset + consumed,
     ))
 }
 
@@ -262,6 +260,10 @@ fn read_varint(data: &[u8], mut offset: usize) -> Result<(usize, usize), IndexEr
         }
         let b = data[offset];
         offset += 1;
+        // Offset encoding (git varint.c): each continuation adds one.
+        if offset - start > 1 {
+            value += 1;
+        }
         value = (value << 7) | (b & 0x7f) as usize;
         if b & 0x80 == 0 {
             break;
@@ -278,6 +280,7 @@ pub(crate) fn write_entry_v2(
     entry: &IndexEntry,
     hash_kind: OidKind,
     write_version: u32,
+    prev_path: &str,
 ) -> Result<(), IndexError> {
     if entry.path.as_bytes().contains(&0) {
         return Err(IndexError::PathNul);
@@ -313,6 +316,20 @@ pub(crate) fn write_entry_v2(
         let ext = entry.flags_extended.unwrap_or(0);
         buf.extend_from_slice(&ext.to_be_bytes());
     }
+    if write_version >= 4 {
+        // Prefix-compressed path: strip count (offset varint) + suffix + NUL.
+        let prev = prev_path.as_bytes();
+        let common = prev
+            .iter()
+            .zip(path_bytes)
+            .take_while(|(a, b)| a == b)
+            .count();
+        write_varint(buf, (prev.len() - common) as u64);
+        buf.extend_from_slice(&path_bytes[common..]);
+        buf.push(0);
+        let _ = hash_kind;
+        return Ok(());
+    }
     buf.extend_from_slice(path_bytes);
     buf.push(0);
     let consumed = buf.len() - entry_start;
@@ -320,4 +337,19 @@ pub(crate) fn write_entry_v2(
     buf.extend(std::iter::repeat_n(0u8, pad));
     let _ = hash_kind;
     Ok(())
+}
+
+/// git offset varint (`encode_varint`).
+fn write_varint(buf: &mut Vec<u8>, mut value: u64) {
+    let mut tmp = [0u8; 16];
+    let mut pos = tmp.len() - 1;
+    tmp[pos] = (value & 127) as u8;
+    value >>= 7;
+    while value != 0 {
+        value -= 1;
+        pos -= 1;
+        tmp[pos] = 128 | (value & 127) as u8;
+        value >>= 7;
+    }
+    buf.extend_from_slice(&tmp[pos..]);
 }

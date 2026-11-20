@@ -44,6 +44,14 @@ pub struct FacadeOutcome {
 
 /// Dispatch overlap leaf under the given personality.
 pub fn dispatch_overlap(personality: Personality, leaf: &str, args: &[String]) -> FacadeOutcome {
+    // git-config documents distinct exit statuses (1 invalid key, 2 no section,
+    // 3 bad file, 255 write failure, 5 unset/multi-value, 129 usage); the git
+    // personality keeps them instead of folding every failure into 1.
+    if personality == Personality::Git && leaf == "config" {
+        return FacadeOutcome {
+            exit: run_git_exact(leaf, args),
+        };
+    }
     let (mut mode, rest) = match personality {
         Personality::Git => (PeerMode::GitOnly, args.to_vec()),
         Personality::Gh => (PeerMode::ForgeOnly, args.to_vec()),
@@ -118,6 +126,22 @@ fn run_git(leaf: &str, args: &[String]) -> LayerOutcome {
                 eprintln!("{m}");
             }
             LayerOutcome::Failed
+        }
+    }
+}
+
+fn run_git_exact(leaf: &str, args: &[String]) -> ExitCode {
+    match dispatch_git_leaf(leaf, args) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(CliError::Exit(code, m)) => {
+            if !m.is_empty() {
+                eprintln!("{m}");
+            }
+            ExitCode::from(code)
+        }
+        Err(e) => {
+            eprintln!("error: {e}");
+            ExitCode::from(1)
         }
     }
 }

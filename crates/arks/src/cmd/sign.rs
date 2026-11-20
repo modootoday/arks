@@ -431,31 +431,62 @@ fn gpg_detached_verify(
     Ok(if !stderr.is_empty() { stderr } else { stdout })
 }
 
+/// `arks verify-commit [-v | --verbose] [--raw] <commit>...` — exit 1 when any
+/// commit is unsigned or fails verification (an unsigned commit is silent,
+/// like stock git).
 pub fn cmd_verify_commit(args: &[String]) -> CliResult<()> {
+    use crate::cmd::optparse::{self, Opt};
     use crate::cmd::shared::resolve_rev;
-    use crate::util::{open_repo, refuse_unknown_flags};
+    use crate::util::open_repo;
     use arks_object::ObjectKind;
-
-    refuse_unknown_flags(args, &["-v", "--verbose"])?;
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
-    let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    const SPEC: &[Opt] = &[Opt::flag("verbose").with_short('v'), Opt::flag("raw")];
+    let items = optparse::parse("verify-commit", args, SPEC, optparse::Mode::default())?;
+    let verbose = optparse::on(&items, "verbose");
+    let revs = optparse::positionals(&items);
     if revs.is_empty() {
-        return Err(CliError::Usage("verify-commit [-v] <commit>...".into()));
+        return Err(CliError::Exit(
+            129,
+            "usage: git verify-commit [-v | --verbose] [--raw] <commit>...".into(),
+        ));
     }
     let repo = open_repo()?;
-    for rev in revs {
-        let oid = resolve_rev(&repo, rev)?;
+    let mut failed = false;
+    for rev in &revs {
+        let Ok(oid) = resolve_rev(&repo, rev) else {
+            eprintln!("error: commit '{rev}' not found.");
+            failed = true;
+            continue;
+        };
         let obj = repo.get_object(&oid)?;
         if obj.kind != ObjectKind::Commit {
-            return Err(CliError::Msg(format!("{rev}: not a commit")));
+            eprintln!(
+                "error: {rev}: cannot verify a non-commit object of type {}.",
+                obj.kind.as_str()
+            );
+            failed = true;
+            continue;
         }
         let commit = Commit::decode(&obj.payload)?;
-        let msg = verify_commit_object(&repo, &commit)?;
-        eprintln!("{msg}");
-        if verbose {
-            let payload = commit.signing_payload()?;
-            print!("{}", String::from_utf8_lossy(&payload));
+        if !String::from_utf8_lossy(&obj.payload).contains("\ngpgsig") {
+            failed = true;
+            continue;
         }
+        match verify_commit_object(&repo, &commit) {
+            Ok(msg) => {
+                eprintln!("{msg}");
+                if verbose {
+                    let payload = commit.signing_payload()?;
+                    print!("{}", String::from_utf8_lossy(&payload));
+                }
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                failed = true;
+            }
+        }
+    }
+    if failed {
+        return Err(CliError::silent(1));
     }
     Ok(())
 }
@@ -485,30 +516,74 @@ pub(crate) fn split_signed_tag(payload: &[u8]) -> CliResult<(Vec<u8>, String)> {
     Ok((unsigned, armor))
 }
 
+/// `arks verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>...` — exit 1
+/// when any tag is unsigned (`error: no signature found`) or fails.
 pub fn cmd_verify_tag(args: &[String]) -> CliResult<()> {
+    use crate::cmd::optparse::{self, Opt};
     use crate::cmd::shared::resolve_rev;
-    use crate::util::{open_repo, refuse_unknown_flags};
+    use crate::util::open_repo;
     use arks_object::ObjectKind;
-
-    refuse_unknown_flags(args, &["-v", "--verbose"])?;
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
-    let revs: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
+    const SPEC: &[Opt] = &[
+        Opt::flag("verbose").with_short('v'),
+        Opt::flag("raw"),
+        Opt::value("format"),
+    ];
+    let items = optparse::parse("verify-tag", args, SPEC, optparse::Mode::default())?;
+    let verbose = optparse::on(&items, "verbose");
+    let format = optparse::value(&items, "format");
+    let revs = optparse::positionals(&items);
     if revs.is_empty() {
-        return Err(CliError::Usage("verify-tag [-v] <tag>...".into()));
+        return Err(CliError::Exit(
+            129,
+            "usage: git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>...".into(),
+        ));
     }
     let repo = open_repo()?;
-    for rev in revs {
-        let oid = resolve_rev(&repo, rev)?;
+    let mut failed = false;
+    for rev in &revs {
+        let Ok(oid) = resolve_rev(&repo, rev) else {
+            eprintln!("error: tag '{rev}' not found.");
+            failed = true;
+            continue;
+        };
         let obj = repo.get_object(&oid)?;
         if obj.kind != ObjectKind::Tag {
-            return Err(CliError::Msg(format!("{rev}: not a tag object")));
+            eprintln!(
+                "error: {rev}: cannot verify a non-tag object of type {}.",
+                obj.kind.as_str()
+            );
+            failed = true;
+            continue;
         }
-        let (unsigned, armor) = split_signed_tag(&obj.payload)?;
-        let msg = verify_bytes(&repo, &armor, &unsigned, "verify-tag")?;
-        eprintln!("{msg}");
-        if verbose {
-            print!("{}", String::from_utf8_lossy(&unsigned));
+        let Ok((unsigned, armor)) = split_signed_tag(&obj.payload) else {
+            if verbose && format.is_none() {
+                print!("{}", String::from_utf8_lossy(&obj.payload));
+            }
+            eprintln!("error: no signature found");
+            failed = true;
+            continue;
+        };
+        match verify_bytes(&repo, &armor, &unsigned, "verify-tag") {
+            Ok(msg) => {
+                eprintln!("{msg}");
+                if let Some(f) = &format {
+                    // Same atoms as for-each-ref, applied to the tag ref.
+                    crate::cmd::for_each_ref::cmd_for_each_ref(&[
+                        format!("--format={f}"),
+                        format!("refs/tags/{rev}"),
+                    ])?;
+                } else if verbose {
+                    print!("{}", String::from_utf8_lossy(&unsigned));
+                }
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                failed = true;
+            }
         }
+    }
+    if failed {
+        return Err(CliError::silent(1));
     }
     Ok(())
 }

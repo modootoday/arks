@@ -30,6 +30,35 @@ mod tests {
         }
     }
 
+    /// gitformat-index v4: prefix-compressed paths (offset varint strip count,
+    /// NUL-terminated suffix, no padding) round-trip, including a strip count
+    /// that needs a two-byte varint.
+    #[test]
+    fn roundtrip_v4_prefix_compression() {
+        let long = format!("{}/x", "d".repeat(200));
+        let mut entries = vec![
+            sample_entry("a/b", 0),
+            sample_entry("a/c", 0),
+            sample_entry(&long, 0),
+            sample_entry("z", 0),
+        ];
+        sort_entries(&mut entries);
+        let idx = Index {
+            version: 4,
+            entries: entries.clone(),
+            extensions: vec![],
+        };
+        let bytes = idx.write(OidKind::Sha1).unwrap();
+        // "a/c" after "a/b": strip 1, suffix "c" + NUL right after the flags.
+        let second = 12 + 62 + 4 + 1;
+        assert_eq!(&bytes[second + 62..second + 62 + 3], b"\x01c\x00");
+        let back = Index::read(&bytes, OidKind::Sha1).unwrap();
+        assert_eq!(back.version, 4);
+        let paths = |v: &[IndexEntry]| v.iter().map(|e| e.path.clone()).collect::<Vec<_>>();
+        assert_eq!(paths(&back.entries), paths(&entries));
+        assert!(back.entries.iter().all(|e| e.ino == 6 && e.size == 9));
+    }
+
     #[test]
     fn roundtrip_empty_v2() {
         let idx = Index {

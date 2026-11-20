@@ -1,0 +1,546 @@
+# Plumbing / maintenance / config family corpus (argv symmetry ladder rung A2).
+# Plan: .spec/plan/20261120000000-argv-symmetry-ladder.plan.md.
+# One command per line (git argv without the leading `git`), shell-quoted.
+# Commands run with stdin from /dev/null; see agent-tier-b.txt for fixture extras.
+#
+# --- config: locations ---
+config core.bare
+config --local core.bare
+config --no-local --local core.bare
+config --global --no-global core.bare
+config --worktree core.bare
+config -f .git/config core.bare
+config --file=.git/config --list
+config --file .git/config --get user.name
+config --file nosuch.cfg --get a.b
+config --blob HEAD:docs/x.md --list
+config --system --no-system --get user.email
+config --local --global core.bare
+# --- config: reads ---
+config --get core.bare
+config --get-all user.name
+config --get-regexp '^user\.'
+config --get-regexp 'CORE\.B'
+config --get-regexp core 'tru'
+config -l
+config --list --name-only
+config --list --show-origin
+config --list --show-scope
+config --list --show-origin --show-scope -z
+config -z --get-regexp '^core\.'
+config --null --get user.email
+config --name-only --get-regexp '^user'
+config --show-origin --get core.bare
+config --show-scope --get-all user.name
+config --includes -l
+config --no-includes -l
+config --get nosuch.key
+config --default fallback --get nosuch.key
+config --default=7 --int --get nosuch.key
+config --get core.filemode 'tr.e'
+config --get core.filemode '!false'
+config --fixed-value --get core.filemode true
+config --no-get --get core.bare
+# --- config: types ---
+config --bool --get core.filemode
+config --int --get core.repositoryformatversion
+config --bool-or-int --get core.repositoryformatversion
+config --bool-or-str --get user.name
+config --path --get user.name
+config --type=bool --get core.bare
+config -t int --get core.repositoryformatversion
+config --type bool --no-type --get core.bare
+config --bool --get user.name
+config --int --get user.name
+config --type=bogus --get core.bare
+config --type=color --get nosuch.color
+# --- config: colors and URLs ---
+config --get-color color.diff.new red
+config --get-color color.nosuch 'bold blue ul'
+config --get-color color.nosuch '#ff0000 black'
+config --get-colorbool color.ui true
+config --get-colorbool color.ui false
+config --get-colorbool color.ui
+config --get-urlmatch http.sslverify https://example.com/repo.git
+config --get-urlmatch http https://example.com
+config --get-urlmatch http not-a-url
+# --- config: writes (exit status; file content checked by later reads) ---
+config a.b c
+config --add user.name Second
+config --replace-all user.name Only
+config --replace-all user.name Only 'C O'
+config --unset user.email
+config --unset nosuch.key
+config --unset-all user.name
+config --unset-all nosuch.key
+config --rename-section user person
+config --rename-section nosuch other
+config --rename-section user 'bad name'
+config --remove-section commit
+config --remove-section nosuch
+config --bool x.y yes
+config --int x.y 1k
+config --int x.y bogus
+config --type=color x.c 'bold red'
+config --type=color x.c bogus
+config --expiry-date x.e 2.weeks.ago
+config --fixed-value user.name X 'C O Mitter'
+config --blob HEAD:README.md a.b c
+config -e
+config --edit
+# --- config: usage errors ---
+config
+config core
+config .a b
+config a. b
+config a_b.c d
+config a b c d
+config --get
+config --get-urlmatch http
+config --list --get
+config --name-only a.b c
+config --show-origin a.b c
+config --default x a.b c
+config --fixed-value a.b c
+config --bogus
+# --- write-tree / commit-tree ---
+write-tree
+write-tree --missing-ok
+write-tree --prefix=src/
+write-tree --prefix=src
+write-tree --prefix=nosuch/
+write-tree --no-prefix --prefix=docs/
+commit-tree -m msg HEAD^{tree}
+commit-tree -m a -m b -p HEAD HEAD^{tree}
+commit-tree -mone -pHEAD -pHEAD~1 HEAD^{tree}
+commit-tree -F .git/fixture.patch HEAD^{tree}
+commit-tree --no-gpg-sign -m x HEAD^{tree}
+commit-tree HEAD^{tree}
+commit-tree -m x HEAD
+commit-tree -m x
+commit-tree -p nosuch -m x HEAD^{tree}
+# --- symbolic-ref ---
+symbolic-ref HEAD
+symbolic-ref --short HEAD
+symbolic-ref -q HEAD
+symbolic-ref --no-recurse HEAD
+symbolic-ref --recurse --short HEAD
+symbolic-ref refs/heads/main
+symbolic-ref -q refs/heads/main
+symbolic-ref HEAD refs/heads/feature
+symbolic-ref -m reason HEAD refs/heads/feature
+symbolic-ref HEAD main
+symbolic-ref HEAD refs/heads/bad..name
+symbolic-ref -d HEAD
+symbolic-ref --delete refs/heads/main
+symbolic-ref FOO refs/heads/main
+symbolic-ref
+# --- show-ref ---
+show-ref
+show-ref --head
+show-ref --heads
+show-ref --tags -d
+show-ref --abbrev
+show-ref --abbrev=10 -d v1
+show-ref --hash=8 main
+show-ref -s --abbrev main
+show-ref --hash
+show-ref --verify refs/heads/main
+show-ref --verify HEAD
+show-ref --verify main
+show-ref --verify -q refs/heads/nope
+show-ref --exists refs/heads/main
+show-ref --exists refs/heads/nope
+show-ref --head HEAD
+show-ref --exclude-existing
+show-ref --exclude-existing=refs/heads/
+show-ref --no-heads --heads
+show-ref nope
+# --- check-ignore ---
+check-ignore debug.log
+check-ignore -v debug.log README.md
+check-ignore -v -n debug.log README.md
+check-ignore --verbose --non-matching -z --stdin
+check-ignore --no-index README.md
+check-ignore --index debug.log
+check-ignore -q debug.log
+check-ignore -q -v debug.log
+check-ignore -z debug.log
+check-ignore --stdin debug.log
+check-ignore
+# --- hash-object ---
+hash-object README.md
+hash-object README.md src/a.txt
+hash-object -w README.md
+hash-object -t blob src/b.txt
+hash-object -t tree README.md
+hash-object -t foo README.md
+hash-object -t foo --literally README.md
+hash-object --stdin
+hash-object --stdin-paths
+hash-object --stdin --stdin-paths
+hash-object --path=x.txt README.md
+hash-object --no-filters README.md
+hash-object --no-filters --path=x README.md
+hash-object nosuch
+hash-object
+# --- update-ref ---
+update-ref refs/heads/new HEAD
+update-ref refs/heads/new2 HEAD 0000000000000000000000000000000000000000
+update-ref refs/heads/main HEAD~1 0000000000000000000000000000000000000000
+update-ref refs/heads/main HEAD~1 HEAD
+update-ref refs/heads/main HEAD~1 HEAD~2
+update-ref -d refs/heads/feature
+update-ref -d refs/heads/nope
+update-ref -d refs/heads/main HEAD~3
+update-ref -m msg refs/heads/x HEAD
+update-ref --create-reflog refs/tags/tl HEAD
+update-ref --no-create-reflog refs/tags/tn HEAD
+update-ref --no-deref HEAD HEAD~1
+update-ref --deref HEAD HEAD~1
+update-ref -m '' refs/heads/y HEAD
+update-ref --stdin
+update-ref -z --stdin
+update-ref -z refs/heads/q HEAD
+update-ref
+update-ref -d
+# --- update-index ---
+update-index src/a.txt
+update-index untracked.txt
+update-index --add untracked.txt
+update-index --add --verbose untracked.txt src/a.txt
+update-index --remove src/a.txt
+update-index --force-remove --verbose src/b.txt
+update-index --chmod=+x --verbose docs/x.md
+update-index --chmod=-x docs/x.md
+update-index --chmod=+y docs/x.md
+update-index --assume-unchanged docs/x.md
+update-index --no-assume-unchanged docs/x.md
+update-index --skip-worktree src/b.txt
+update-index --no-skip-worktree src/b.txt
+update-index --info-only --add debug.log
+update-index --show-index-version
+update-index --index-version 4
+update-index --index-version 3
+update-index --index-version 9
+update-index --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,zero
+update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,zero
+update-index --add --cacheinfo 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 zero
+update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,src
+update-index --refresh
+update-index -q --refresh
+update-index --really-refresh
+update-index --refresh --unmerged --ignore-missing --ignore-submodules
+update-index --again
+update-index -g src
+update-index --again --verbose
+update-index --unresolve src/a.txt
+update-index --untracked-cache
+update-index --no-untracked-cache
+update-index --split-index
+update-index --no-split-index
+update-index --no-fsmonitor
+update-index --fsmonitor-valid src/a.txt
+update-index --no-fsmonitor-valid src/a.txt
+update-index --clear-resolve-undo
+update-index --force-write-index
+update-index --no-force-write-index
+update-index --replace --add src
+update-index --stdin
+update-index -z --stdin
+update-index --index-info
+update-index --stdin src/a.txt
+update-index --ignore-skip-worktree-entries --remove src/a.txt
+update-index --bogus
+# --- read-tree ---
+read-tree HEAD
+read-tree HEAD~1
+read-tree --empty
+read-tree
+read-tree --empty HEAD
+read-tree -u HEAD
+read-tree -i HEAD
+read-tree -m -u -i HEAD
+read-tree -m HEAD
+read-tree -m -i HEAD
+read-tree --reset HEAD
+read-tree --reset -u HEAD
+read-tree -m -u HEAD~1
+read-tree -m HEAD feature
+read-tree -m -i HEAD feature
+read-tree -m -i t0 main feature
+read-tree -m -i --aggressive t0 main feature
+read-tree -m -i --trivial t0 main feature
+read-tree -n HEAD~1
+read-tree --dry-run -m -i HEAD~1
+read-tree --prefix=sub/ HEAD~1
+read-tree --prefix=src/ HEAD
+read-tree --index-output=.git/alt-index HEAD~1
+read-tree -q -v --no-sparse-checkout --sparse-checkout --exclude-per-directory=.gitignore --debug-unpack --no-debug-unpack --reset HEAD
+read-tree --recurse-submodules --reset HEAD
+read-tree -m --reset HEAD
+read-tree nosuch
+# --- checkout-index ---
+checkout-index src/a.txt
+checkout-index -f src/a.txt
+checkout-index README.md
+checkout-index -a
+checkout-index -a -f
+checkout-index -f -a -q
+checkout-index -u -f src/a.txt
+checkout-index -n -f -a
+checkout-index --no-create --create -f src/a.txt
+checkout-index nosuch
+checkout-index -q nosuch
+checkout-index --stage=2 src/b.txt
+checkout-index --stage=all -f src/b.txt
+checkout-index --stage=5 src/b.txt
+checkout-index -a src/b.txt
+checkout-index --stdin src/b.txt
+checkout-index --stdin
+checkout-index -z --stdin
+checkout-index --prefix=out/ src/b.txt
+checkout-index --prefix=out/ -a
+checkout-index --prefix=pre- README.md
+checkout-index --ignore-skip-worktree-bits -f -a
+checkout-index
+# --- prune / prune-packed ---
+prune -n
+prune --dry-run --verbose
+prune -nv
+prune -n --expire=1.day.ago
+prune -n --expire 1.day.ago
+prune -n --no-expire
+prune -n --progress --no-progress --exclude-promisor-objects
+prune -n HEAD
+prune -n -- main
+prune
+prune --expire=1.day.ago
+prune -v
+prune --bogus
+prune-packed -n
+prune-packed --dry-run -q
+prune-packed -nq
+prune-packed
+prune-packed --quiet
+prune-packed --no-quiet --no-dry-run
+prune-packed nosuch
+# --- verify-pack / show-index / unpack-objects ---
+verify-pack .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack -v .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack --verbose --stat-only .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack -s .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.idx
+verify-pack -s --object-format=sha1 .git/objects/pack/pack-620882b35da00b13a674e9b1f68840bc20e21870.pack
+verify-pack nosuch.idx
+verify-pack
+show-index
+show-index --object-format=sha1
+show-index --object-format=sha256
+unpack-objects -n
+unpack-objects
+unpack-objects -q -r --strict --max-input-size=10
+unpack-objects --bogus
+# --- check-ref-format ---
+check-ref-format refs/heads/main
+check-ref-format main
+check-ref-format --allow-onelevel main
+check-ref-format --no-allow-onelevel main
+check-ref-format --normalize refs//heads/x/
+check-ref-format --normalize //refs//heads/x
+check-ref-format --print refs/heads//x
+check-ref-format 'refs/heads/a..b'
+check-ref-format 'refs/heads/*'
+check-ref-format --refspec-pattern 'refs/heads/*'
+check-ref-format --refspec-pattern 'refs/*/*'
+check-ref-format 'refs/heads/x.lock'
+check-ref-format --branch main
+check-ref-format --branch @{-1}
+check-ref-format --branch -x
+check-ref-format --branch 'a b'
+check-ref-format
+check-ref-format --bogus x
+# --- stripspace / column (stdin is empty) ---
+stripspace
+stripspace -s
+stripspace --strip-comments
+stripspace -c
+stripspace --comment-lines
+stripspace --bogus
+column
+column --mode=column --width=40
+column --mode=row,dense --padding=2 --indent='> ' --nl='|'
+column --raw-mode=1 --command=x
+column --mode=nonsense
+# --- var ---
+var -l
+var GIT_AUTHOR_IDENT
+var GIT_COMMITTER_IDENT
+var GIT_EDITOR
+var GIT_SEQUENCE_EDITOR
+var GIT_PAGER
+var GIT_DEFAULT_BRANCH
+var GIT_SHELL_PATH
+var NOSUCH
+var
+# --- check-attr / check-mailmap ---
+check-attr -a src/data.bin src/a.txt
+check-attr --all -- README.md
+check-attr binary label -- src/data.bin src/a.txt
+check-attr label src/a.txt
+check-attr --cached -a src/a.txt
+check-attr --source HEAD -a src/a.txt
+check-attr --source=HEAD~1 label src/b.txt
+check-attr --stdin -a
+check-attr -z --stdin label
+check-attr
+check-attr label
+check-mailmap 'A U Thor <author@example.com>'
+check-mailmap '<author@example.com>'
+check-mailmap --stdin
+check-mailmap nobody
+check-mailmap
+# --- mktag / mktree / unpack-file / get-tar-commit-id (stdin is empty) ---
+mktag
+mktag --strict
+mktag --no-strict
+mktag x
+mktree
+mktree -z
+mktree --missing --no-missing
+mktree --batch
+mktree --no-batch -z
+mktree x
+mktree --bogus
+unpack-file nosuch
+unpack-file HEAD
+unpack-file
+get-tar-commit-id
+get-tar-commit-id x
+# --- bugreport / diagnose (fixed suffix so file names compare; diagnose
+# echoes host facts such as the git version and free disk space, so only
+# its refusals are compared here) ---
+bugreport -o out -s x
+bugreport --output-directory=out --suffix=x
+bugreport -o out -s x --no-diagnose
+bugreport --bogus
+diagnose --mode=bogus
+# --- hook / for-each-repo / credential-store / fmt-merge-msg ---
+hook run --ignore-missing pre-commit
+hook run pre-commit
+hook run --to-stdin=README.md --ignore-missing x -- a b
+hook run
+hook bogus
+hook
+for-each-repo --config=maintenance.repo status
+for-each-repo --config maintenance.repo -- log -1
+for-each-repo
+credential-store --file=cs.txt erase
+credential-store --file cs.txt get
+credential-store get
+credential-store bogus
+credential-store
+fmt-merge-msg
+fmt-merge-msg --log
+fmt-merge-msg --log=3 --into-name=topic
+fmt-merge-msg -m hi
+fmt-merge-msg --message=hi --no-log
+fmt-merge-msg --summary --no-summary
+fmt-merge-msg -F .git/fixture.patch
+fmt-merge-msg --file=nosuch
+fmt-merge-msg --bogus
+# --- fsck / count-objects / pack-refs ---
+fsck
+fsck --unreachable
+fsck --no-dangling
+fsck --dangling --tags
+fsck --root
+fsck --root --connectivity-only
+fsck --cache
+fsck --no-reflogs
+fsck --unreachable --no-reflogs
+fsck --name-objects --no-name-objects
+fsck --full --no-full --strict --no-strict --progress --no-progress
+fsck -v
+fsck --lost-found
+fsck HEAD
+fsck HEAD~2
+fsck --cache HEAD
+fsck nosuch
+fsck --bogus
+count-objects
+count-objects -v
+count-objects --verbose --human-readable
+count-objects -vH
+count-objects -H
+count-objects --no-verbose --no-human-readable
+count-objects x
+pack-refs
+pack-refs --all
+pack-refs --no-prune
+pack-refs --prune --all
+pack-refs --include 'refs/heads/*'
+pack-refs --include='refs/heads/*' --exclude 'refs/heads/f*'
+pack-refs --exclude='refs/tags/t*'
+pack-refs --all --exclude 'refs/heads/*'
+pack-refs --include 'refs/heads/*' --no-include
+pack-refs --all --no-all
+pack-refs --no-exclude --all
+pack-refs x
+# --- merge-file ---
+merge-file -p src/a.txt README.md src/b.txt
+merge-file src/a.txt README.md src/b.txt
+merge-file --stdout --diff3 src/a.txt README.md src/b.txt
+merge-file -p --zdiff3 src/a.txt README.md src/b.txt
+merge-file -p --no-diff3 --diff3 --no-zdiff3 src/a.txt README.md src/b.txt
+merge-file -p --ours src/a.txt README.md src/b.txt
+merge-file -p --theirs src/a.txt README.md src/b.txt
+merge-file -p --union src/a.txt README.md src/b.txt
+merge-file -p --union --no-union src/a.txt README.md src/b.txt
+merge-file -p --marker-size=3 -L x -L y -L z src/a.txt README.md src/b.txt
+merge-file -p --marker-size 10 -Lx src/a.txt README.md src/b.txt
+merge-file -q -p src/a.txt README.md src/b.txt
+merge-file --no-quiet --no-stdout -p src/a.txt src/a.txt src/a.txt
+merge-file -p --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt
+merge-file --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt
+merge-file --object-id --no-object-id -p src/a.txt README.md src/b.txt
+merge-file -L a -L b -L c -L d src/a.txt README.md src/b.txt
+merge-file src/a.txt README.md
+merge-file nosuch README.md src/b.txt
+merge-file --marker-size=x src/a.txt README.md src/b.txt
+# --- repack / gc (state: refs, index and work tree are unchanged) ---
+repack
+repack -q
+repack -a -d
+repack -A -d -q
+repack -ad -k
+repack -adq --window=10 --depth=5 --threads=1 --window-memory=1m -f -F -n -l
+repack -ad -b --no-write-bitmap-index -m --no-write-midx -i --no-delta-islands
+repack -ad --pack-kept-objects --keep-pack=none.pack --no-keep-pack
+repack -d --cruft --cruft-expiration=2.weeks.ago --max-cruft-size=1m
+repack -ad --unpack-unreachable=now --max-pack-size=1g -g 2 --no-geometric
+repack x
+repack --bogus
+gc
+gc -q
+gc --prune=now
+gc --prune=1.day.ago
+gc --no-prune --aggressive
+gc --auto
+gc --force --keep-largest-pack --no-cruft
+gc --cruft --max-cruft-size=1m --no-quiet
+gc --prune=bogusdate
+gc x
+# --- verify-commit / verify-tag (fixture objects are unsigned) ---
+verify-commit HEAD
+verify-commit -v --raw HEAD
+verify-commit --no-verbose --no-raw HEAD HEAD~1
+verify-commit
+verify-commit nosuch
+verify-commit v1
+verify-tag v1
+verify-tag -v v1
+verify-tag '--format=%(refname)' v1
+verify-tag --raw --no-raw --no-format v1
+verify-tag HEAD
+verify-tag
+verify-tag nosuch

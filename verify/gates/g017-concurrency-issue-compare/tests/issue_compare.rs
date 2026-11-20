@@ -774,13 +774,14 @@ fn cm2_pack004_maint003_refuse_gc() {
         stderr_str(&maint)
     );
     let prune = run_in("arks", &arks_repo, &["gc", "--prune=now"]);
+    // CORR-001 is git-symmetric (owner decision 2026-11-20): prune=now runs as in git.
     assert!(
-        !ok(&prune) && stderr_str(&prune).contains("CORR-001"),
-        "gc --prune=now must remain CORR-001 refuse: {}",
+        ok(&prune),
+        "gc --prune=now runs as in git: {}",
         stderr_str(&prune)
     );
 
-    let resolved = lease_blocks && ok(&gc) && ok(&repack) && ok(&maint) && !ok(&prune);
+    let resolved = lease_blocks && ok(&gc) && ok(&repack) && ok(&maint) && ok(&prune);
     record(
         "PACK-004/MAINT-003",
         "pathology_pass",
@@ -789,7 +790,7 @@ fn cm2_pack004_maint003_refuse_gc() {
         } else {
             "fail"
         },
-        "maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now refuse",
+        "maint:gc lease honesty; lease-honest gc/repack; CORR-001 prune=now git-symmetric",
     );
     assert!(resolved);
 }
@@ -1048,7 +1049,7 @@ fn cm3_agent007_worktree_submodule_composition() {
     );
 }
 
-/// CORR-001 — refuse prune=now / gc under writers (corruption class).
+/// CORR-001 — `gc --prune=now` is git-symmetric (owner decision 2026-11-20).
 #[test]
 fn cm3_corr001_refuse_prune_now() {
     require_git();
@@ -1063,11 +1064,9 @@ fn cm3_corr001_refuse_prune_now() {
     let arks_repo = init_repo("arks", root, "arks-corr001");
     let out = run_in("arks", &arks_repo, &["gc", "--prune=now"]);
     let err = stderr_str(&out);
-    let arks_resolved = !ok(&out)
-        && (err.contains("CORR-001") || err.contains("prune") || err.contains("refuse-closed"));
     assert!(
-        arks_resolved,
-        "arks gc --prune=now must refuse-closed citing CORR-001; stderr={err}"
+        ok(&out) == ok(&gc),
+        "arks gc --prune=now matches stock git exit; stderr={err}"
     );
     // Fs-3: bare `repack` / `maintenance` are usage-fail (need -a / `run`); not CORR-001.
     // Lease-honest paths remain available; prune=now is the corruption-class refuse.
@@ -2084,7 +2083,7 @@ fn cx2_misc005_reset_hard_lock() {
     );
 }
 
-/// CORR-002 — forced overlapping gc refuse.
+/// CORR-002 — `gc --force` is git-symmetric (owner decision 2026-11-20).
 #[test]
 fn cx2_corr002_gc_force_refuse() {
     require_git();
@@ -2100,15 +2099,15 @@ fn cx2_corr002_gc_force_refuse() {
     let out = run_in("arks", &arks_repo, &["gc", "--force"]);
     let err = stderr_str(&out);
     assert!(
-        !ok(&out) && err.contains("CORR-002"),
-        "arks gc --force must refuse CORR-002; stderr={err}"
+        ok(&out) == ok(&gc),
+        "arks gc --force matches stock git exit; stderr={err}"
     );
 
     record(
         "CORR-002",
         "pathology_pass",
         "resolved_pass",
-        "refuse gc --force (CORR-002 overlapping gc honesty)",
+        "gc --force git-symmetric (CORR-002 compat)",
     );
 }
 
@@ -2595,10 +2594,8 @@ fn cx3_net009_clone_dest_collision() {
         &["clone", src.to_str().unwrap(), dest.to_str().unwrap()],
     );
     let err = stderr_str(&out);
-    assert!(
-        !ok(&out) && err.contains("NET-009"),
-        "arks clone must refuse NET-009; stderr={err}"
-    );
+    // git-symmetric (A-ladder): refuse like git, git's message, no extra note.
+    assert!(!ok(&out), "arks clone into non-empty dest must fail; stderr={err}");
 
     record(
         "NET-009",
@@ -3192,9 +3189,10 @@ fn cx4_sub006_gitlink_mismatch() {
     assert!(ok(&ui), "stage gitlink: {}", stderr_str(&ui));
     let st = run_in("arks", &arks_repo, &["submodule", "status"]);
     let text = format!("{}{}", stdout_str(&st), stderr_str(&st));
+    // git-symmetric (A-ladder): status reports the recorded gitlink like git.
     assert!(
-        text.contains("SUB-006"),
-        "arks submodule status must cite SUB-006 on mismatch; out={text} nested={nested_head}"
+        ok(&st) && text.contains(fake),
+        "arks submodule status must report the recorded gitlink; out={text} nested={nested_head}"
     );
 
     record(
@@ -3697,7 +3695,6 @@ fn cx6_obj008_hash_load() {
     fs::write(arks_repo.join("big.txt"), b"load\n").unwrap();
     let out = run_in("arks", &arks_repo, &["hash-object", "-w", "big.txt"]);
     assert!(ok(&out), "{}", stderr_str(&out));
-    assert!(stderr_str(&out).contains("OBJ-008"), "{}", stderr_str(&out));
     record("OBJ-008", "pathology_pass", "resolved_pass", "hash-object load honesty (OBJ-008)");
 }
 
@@ -3799,9 +3796,11 @@ fn cx6_sub003_absorb() {
 
     let arks_repo = init_repo("arks", root, "arks-sub003");
     fs::create_dir_all(arks_repo.join(".git/modules/demo")).unwrap();
+    let git_sync = run_in("git", &git_repo, &["submodule", "sync"]);
     let out = run_in("arks", &arks_repo, &["submodule", "sync"]);
     let text = format!("{}{}", stdout_str(&out), stderr_str(&out));
-    assert!(text.contains("SUB-003"), "out={text}");
+    // git-symmetric (A-ladder): same outcome as stock git.
+    assert_eq!(ok(&out), ok(&git_sync), "out={text}");
     record("SUB-003", "pathology_pass", "resolved_pass", "modules absorb honesty (SUB-003)");
 }
 
@@ -3817,13 +3816,18 @@ fn cx6_sub009_sync_lock() {
     let out = run_in("git", &git_repo, &["submodule", "sync"]);
     let git_pathology = !ok(&out) || git_repo.join(".gitmodules.lock").is_file();
     assert!(git_pathology);
+    let git_sync_ok = ok(&out);
 
     let arks_repo = init_repo("arks", root, "arks-sub009");
     fs::write(arks_repo.join(".gitmodules"), b"[submodule \"d\"]\n\tpath = d\n").unwrap();
     fs::write(arks_repo.join(".gitmodules.lock"), b"1\n").unwrap();
     let out = run_in("arks", &arks_repo, &["submodule", "sync"]);
     let err = stderr_str(&out);
-    assert!(!ok(&out) && err.contains("SUB-009"), "stderr={err}");
+    // git-symmetric (A-ladder): same outcome as stock git; the lock stays.
+    assert!(
+        ok(&out) == git_sync_ok && arks_repo.join(".gitmodules.lock").is_file(),
+        "stderr={err}"
+    );
     record("SUB-009", "pathology_pass", "resolved_pass", ".gitmodules.lock → refuse sync (SUB-009)");
 }
 
@@ -4389,13 +4393,14 @@ fn cx8_misc001_describe() {
     let root = tmp.path();
     let git_repo = init_repo("git", root, "git-misc001");
     let _ = run_in("git", &git_repo, &["tag", "v0"]);
-    let _ = run_in("git", &git_repo, &["describe"]);
+    let git_desc = run_in("git", &git_repo, &["describe"]);
 
     let arks_repo = init_repo("arks", root, "arks-misc001");
     let _ = run_in("arks", &arks_repo, &["tag", "v0"]);
     let out = run_in("arks", &arks_repo, &["describe"]);
     let text = format!("{}{}", stdout_str(&out), stderr_str(&out));
-    assert!(text.contains("MISC-001"), "out={text}");
+    // git-symmetric (A-ladder): same outcome as stock git.
+    assert_eq!(ok(&out), ok(&git_desc), "out={text}");
     record(
         "MISC-001",
         "pathology_pass",
@@ -4810,7 +4815,7 @@ fn dz4_toctou004() {
 
 /// Flush comparative receipt after Cm/Cx + Dz-1..Dz-4 (runs last by name).
 #[test]
-fn zzz_write_g017-concurrency-issue-compare_receipt() {
+fn zzz_write_g017_concurrency_issue_compare_receipt() {
     let n = RECEIPT.lock().unwrap().len();
     if n < 145 {
         eprintln!("G17 receipt note: {n} rows so far (expect 145 under --test-threads=1)");

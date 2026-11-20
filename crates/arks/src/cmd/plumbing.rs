@@ -9,10 +9,9 @@ use crate::cmd::shared::{commit_signature, resolve_rev};
 use crate::error::{CliError, CliResult};
 use crate::util::{
     FORMAT, open_repo, read_index, refuse_unknown_flags, rel_path_from_worktree, work_tree,
-    write_index,
 };
 use crate::write_tree::write_tree_from_index;
-use arks_index::{IndexEntry, sort_entries};
+use arks_index::IndexEntry;
 use arks_object::{Commit, ObjectKind, RawObject, Tree};
 use arks_oid::Oid;
 use arks_pack::{DecodedPack, EncodedPack, PackIndex, PackIndexEntry};
@@ -25,82 +24,153 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 
 pub fn cmd_write_tree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    // `--missing-ok` (arks never checks object presence while writing trees)
+    // and `--prefix=<dir>/` (print the subtree). Cite: git-write-tree(1).
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[Opt::flag("missing-ok"), Opt::value("prefix")];
+    let items = optparse::parse("write-tree", args, SPEC, optparse::Mode::default())?;
+    let prefix = optparse::value(&items, "prefix");
     let mut repo = open_repo()?;
     let index = read_index(&repo)?;
+    let unmerged: Vec<&IndexEntry> = index.entries.iter().filter(|e| e.stage() != 0).collect();
+    if !unmerged.is_empty() {
+        let mut msg = String::new();
+        let mut last = "";
+        for e in unmerged {
+            if e.path != last {
+                msg.push_str(&format!("{}: unmerged ({})\n", e.path, e.oid.to_hex()));
+                last = &e.path;
+            }
+        }
+        msg.push_str("fatal: git-write-tree: error building trees");
+        return Err(CliError::Exit(128, msg));
+    }
+    let format = repo.object_format();
     let oid = if index.entries.is_empty() {
         let obj = RawObject::new(ObjectKind::Tree, Vec::new());
-        let format = repo.object_format();
         repo.store_mut().put(format, &obj)?
     } else {
-        let format = repo.object_format();
         write_tree_from_index(repo.store_mut(), &index.entries, format)?
+    };
+    let oid = match prefix.as_deref().map(|p| p.trim_end_matches('/')) {
+        Some(p) if !p.is_empty() => crate::cmd::shared::tree_entry_at(&repo, &oid, p)
+            .filter(|o| {
+                repo.get_object(o)
+                    .map(|obj| obj.kind == ObjectKind::Tree)
+                    .unwrap_or(false)
+            })
+            .ok_or_else(|| {
+                CliError::fatal(format!(
+                    "git-write-tree: prefix {} not found",
+                    prefix.as_deref().unwrap_or("")
+                ))
+            })?,
+        _ => oid,
     };
     println!("{}", oid.to_hex());
     Ok(())
 }
 
 pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-p", "-m"])?;
+    // `-p`, `-m` / `-F` (paragraphs in order; stdin when neither), and
+    // `-S[<keyid>]` / `--gpg-sign[=<keyid>]` / `--no-gpg-sign` (commit.gpgSign
+    // honored). Cite: git-commit-tree(1).
+    use crate::cmd::optparse::{self, Arg, Item, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::short_value('p', "p"),
+        Opt::short_value('m', "m"),
+        Opt::short_value('F', "F"),
+        Opt::flag("gpg-sign").with_short('S').arg(Arg::Optional),
+    ];
+    let items = optparse::parse("commit-tree", args, SPEC, optparse::Mode::default())?;
+    let pos = optparse::positionals(&items);
+    if pos.len() != 1 {
+        return Err(CliError::fatal("must give exactly one tree"));
+    }
+    let mut repo = open_repo()?;
     let mut parents: Vec<Oid> = Vec::new();
     let mut message: Option<String> = None;
-    let mut tree_arg: Option<String> = None;
-    let mut i = 0;
-    while i < args.len() {
-        match args[i].as_str() {
-            "-p" => {
-                i += 1;
-                let p = args
-                    .get(i)
-                    .ok_or_else(|| CliError::Usage("commit-tree: -p requires a parent".into()))?;
-                parents.push(Oid::from_hex(p).or_else(|_| {
-                    let repo = open_repo()?;
-                    resolve_rev(&repo, p)
-                })?);
+    let mut sign_args: Vec<String> = Vec::new();
+    for it in &items {
+        let Item::Opt { name, value, neg } = it else {
+            continue;
+        };
+        match *name {
+            "p" => {
+                let p = value.as_deref().unwrap_or("");
+                let oid = resolve_rev(&repo, p)
+                    .map_err(|_| CliError::fatal(format!("not a valid object name {p}")))?;
+                let oid = crate::cmd::shared::peel_to_kind(
+                    &repo,
+                    &oid,
+                    crate::cmd::shared::ObjKind::Commit,
+                    p,
+                )?;
+                if parents.contains(&oid) {
+                    eprintln!("error: duplicate parent {} ignored", oid.to_hex());
+                } else {
+                    parents.push(oid);
+                }
             }
-            "-m" => {
-                i += 1;
-                let part = args
-                    .get(i)
-                    .ok_or_else(|| CliError::Usage("commit-tree: -m requires a message".into()))?;
-                message = Some(match message {
-                    Some(mut m) => {
-                        m.push('\n');
-                        m.push_str(part);
-                        m
-                    }
-                    None => part.clone(),
+            "m" | "F" => {
+                let text = if *name == "m" {
+                    value.clone().unwrap_or_default()
+                } else {
+                    let f = value.as_deref().unwrap_or("");
+                    let bytes = if f == "-" {
+                        let mut b = Vec::new();
+                        io::stdin().read_to_end(&mut b)?;
+                        b
+                    } else {
+                        fs::read(f).map_err(|e| {
+                            CliError::fatal(format!("could not read log file '{f}': {e}"))
+                        })?
+                    };
+                    String::from_utf8_lossy(&bytes).into_owned()
+                };
+                let m = message.get_or_insert_with(String::new);
+                if !m.is_empty() {
+                    m.push('\n');
+                }
+                m.push_str(&text);
+                // `-m` completes its line; `-F` content is kept verbatim.
+                if *name == "m" && !m.ends_with('\n') {
+                    m.push('\n');
+                }
+            }
+            "gpg-sign" => {
+                sign_args.push(match (neg, value) {
+                    (true, _) => "--no-gpg-sign".into(),
+                    (false, Some(k)) => format!("--gpg-sign={k}"),
+                    (false, None) => "--gpg-sign".into(),
                 });
             }
-            other if other.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!(
-                    "unsupported option: {other}"
-                )));
-            }
-            other => {
-                if tree_arg.is_some() {
-                    return Err(CliError::Usage(
-                        "commit-tree: only one tree argument claimed".into(),
-                    ));
-                }
-                tree_arg = Some(other.to_owned());
-            }
+            _ => {}
         }
-        i += 1;
     }
-    let tree_s = tree_arg
-        .ok_or_else(|| CliError::Usage("commit-tree <tree> [-p <parent>]… -m <msg>".into()))?;
-    let message =
-        message.ok_or_else(|| CliError::Usage("commit-tree: -m <msg> required".into()))?;
-    let message = if message.ends_with('\n') {
-        message
-    } else {
-        format!("{message}\n")
+    let message = match message {
+        Some(m) => m,
+        None => {
+            let mut b = Vec::new();
+            io::stdin().read_to_end(&mut b)?;
+            String::from_utf8_lossy(&b).into_owned()
+        }
     };
-    let mut repo = open_repo()?;
-    let tree = resolve_rev(&repo, &tree_s)?;
+    let tree_s = &pos[0];
+    let tree = resolve_rev(&repo, tree_s)
+        .map_err(|_| CliError::fatal(format!("not a valid object name {tree_s}")))?;
+    let is_tree = repo
+        .get_object(&tree)
+        .map(|o| o.kind == ObjectKind::Tree)
+        .unwrap_or(false);
+    if !is_tree {
+        return Err(CliError::fatal(format!(
+            "{} is not a valid 'tree' object",
+            tree.to_hex()
+        )));
+    }
     // Author and committer come from their own identities (git-commit-tree).
-    let commit = Commit {
+    let mut commit = Commit {
         tree,
         parents,
         author: commit_signature()?,
@@ -108,6 +178,10 @@ pub fn cmd_commit_tree(args: &[String]) -> CliResult<()> {
         gpgsig: None,
         message,
     };
+    let (sign, key) = crate::cmd::sign::want_sign_commit(&sign_args, &repo)?;
+    if sign {
+        crate::cmd::sign::sign_commit(&repo, &mut commit, key.as_deref())?;
+    }
     let cobj = RawObject::new(ObjectKind::Commit, commit.encode()?);
     let format = repo.object_format();
     let coid = repo.store_mut().put(format, &cobj)?;
@@ -446,64 +520,127 @@ fn print_tree(
 }
 
 pub fn cmd_symbolic_ref(args: &[String]) -> CliResult<()> {
-    // `--short` / `-q` on read. Cite: https://git-scm.com/docs/git-symbolic-ref
-    refuse_unknown_flags(args, &["--short", "-q", "--quiet"])?;
-    let short = args.iter().any(|a| a == "--short");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let args: Vec<String> = args
-        .iter()
-        .filter(|a| !a.starts_with('-'))
-        .cloned()
-        .collect();
-    let args = args.as_slice();
-    if args.is_empty() {
-        return Err(CliError::Usage(
-            "symbolic-ref <name> [<target>]  (read or set)".into(),
-        ));
-    }
+    // Read (`-q`, `--short`, `--[no-]recurse`), set (`-m <reason>`) and
+    // delete (`-d`). Cite: https://git-scm.com/docs/git-symbolic-ref
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::flag("quiet").with_short('q'),
+        Opt::flag("delete").with_short('d'),
+        Opt::flag("short"),
+        Opt::flag("recurse"),
+        Opt::short_value('m', "m"),
+    ];
+    let items = optparse::parse("symbolic-ref", args, SPEC, optparse::Mode::default())?;
+    let pos = optparse::positionals(&items);
+    let quiet = optparse::on(&items, "quiet");
+    let short = optparse::on(&items, "short");
+    let recurse = optparse::flag(&items, "recurse").unwrap_or(true);
+    let reason = optparse::value(&items, "m");
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git symbolic-ref [-m <reason>] <name> <ref>\n   or: git symbolic-ref [-q] [--short] [--no-recurse] <name>\n   or: git symbolic-ref --delete [-q] <name>".into(),
+        )
+    };
     let mut repo = open_repo()?;
-    if args.len() == 1 {
-        let name = &args[0];
-        match repo.refs().read(name)? {
-            RefTarget::Symbolic(target) => {
-                if short {
-                    let s = ["refs/heads/", "refs/tags/", "refs/remotes/", "refs/"]
-                        .iter()
-                        .find_map(|p| target.strip_prefix(p))
-                        .unwrap_or(&target);
-                    println!("{s}");
+    if optparse::on(&items, "delete") {
+        if pos.len() != 1 {
+            return Err(usage());
+        }
+        let name = &pos[0];
+        if name == "HEAD" {
+            return Err(CliError::fatal("deleting 'HEAD' is not allowed"));
+        }
+        return match repo.refs().read(name) {
+            Ok(RefTarget::Symbolic(_)) => {
+                let path = repo.git_dir().join(name);
+                let path = if path.is_file() {
+                    path
                 } else {
-                    println!("{target}");
-                }
+                    repo.common_dir().join(name)
+                };
+                fs::remove_file(&path)?;
                 Ok(())
             }
-            RefTarget::Direct(_) if quiet => Err(CliError::silent(1)),
-            RefTarget::Direct(_) => {
-                Err(CliError::fatal(format!("ref {name} is not a symbolic ref")))
+            _ => Err(CliError::fatal(format!(
+                "Cannot delete {name}, not a symbolic ref"
+            ))),
+        };
+    }
+    match pos.len() {
+        1 => {
+            let name = &pos[0];
+            let mut target = match repo.refs().read(name) {
+                Ok(RefTarget::Symbolic(t)) => t,
+                _ if quiet => return Err(CliError::silent(1)),
+                _ => {
+                    return Err(CliError::fatal(format!("ref {name} is not a symbolic ref")));
+                }
+            };
+            if recurse {
+                for _ in 0..5 {
+                    match repo.refs().read(&target) {
+                        Ok(RefTarget::Symbolic(t)) => target = t,
+                        _ => break,
+                    }
+                }
             }
-        }
-    } else if args.len() == 2 {
-        let name = &args[0];
-        let target = &args[1];
-        if !target.starts_with("refs/") {
-            return Err(CliError::Usage(
-                "symbolic-ref target must be a refs/ path".into(),
-            ));
-        }
-        // REF-021 (M19 Cx-2): concurrent symbolic-ref retarget honors exclusive lock.
-        repo.refs_mut().set_symbolic(name, target).map_err(|e| {
-            let s = e.to_string();
-            if s.contains("locked") || s.contains(".lock") {
-                CliError::Msg(format!(
-                    "{s} (REF-021 — concurrent symbolic-ref retarget fail-closed; lease ≠ skip)"
-                ))
+            if short {
+                let s = ["refs/heads/", "refs/tags/", "refs/remotes/", "refs/"]
+                    .iter()
+                    .find_map(|p| target.strip_prefix(p))
+                    .unwrap_or(&target);
+                println!("{s}");
             } else {
-                CliError::Msg(s)
+                println!("{target}");
             }
-        })?;
-        Ok(())
-    } else {
-        Err(CliError::Usage("symbolic-ref <name> [<target>]".into()))
+            Ok(())
+        }
+        2 => {
+            let name = &pos[0];
+            let target = &pos[1];
+            if name == "HEAD" && !target.starts_with("refs/") {
+                return Err(CliError::fatal("Refusing to point HEAD outside of refs/"));
+            }
+            if !arks_refs::is_valid_refname_allow_onelevel(target) {
+                return Err(CliError::fatal(format!(
+                    "Refusing to set '{name}' to invalid ref '{target}'"
+                )));
+            }
+            let old = repo.refs().resolve(name).ok();
+            if !name.contains('/') && name != "HEAD" {
+                // One-level symbolic refs (`FOO`) live directly in $GIT_DIR.
+                let path = repo.git_dir().join(name);
+                let lock = path.with_file_name(format!("{name}.lock"));
+                if lock.exists() {
+                    return Err(CliError::fatal(format!(
+                        "Unable to create '{}': File exists.",
+                        lock.display()
+                    )));
+                }
+                fs::write(&lock, format!("ref: {target}\n"))?;
+                fs::rename(&lock, &path)?;
+                return Ok(());
+            }
+            // REF-021 (M19 Cx-2): concurrent symbolic-ref retarget honors exclusive lock.
+            repo.refs_mut().set_symbolic(name, target).map_err(|e| {
+                let s = e.to_string();
+                if s.contains("locked") || s.contains(".lock") {
+                    CliError::Msg(format!(
+                        "{s} (REF-021 — concurrent symbolic-ref retarget fail-closed; lease ≠ skip)"
+                    ))
+                } else {
+                    CliError::Msg(s)
+                }
+            })?;
+            if name == "HEAD" {
+                if let (Some(msg), Ok(new)) = (reason, repo.refs().resolve(name)) {
+                    crate::reflog::append_reflog(&repo, "HEAD", old.as_ref(), &new, &msg)?;
+                }
+            }
+            Ok(())
+        }
+        _ => Err(usage()),
     }
 }
 
@@ -555,59 +692,105 @@ pub fn cmd_merge_base(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + C7b: --heads/--tags/--verify/--hash/--dereference/-q/--exists
-    // and tail-matching patterns; all refs under refs/ (incl. refs/stash).
+    // `--head`, `--heads`/`--tags`, `--verify`, `--exists`, `-d`, `-s`/`--hash[=<n>]`,
+    // `--abbrev[=<n>]`, `-q`, `--exclude-existing[=<pattern>]` and tail-matching
+    // patterns over every ref under refs/ (incl. refs/stash).
     // Cite: https://git-scm.com/docs/git-show-ref
-    let args = crate::util::split_short_bundles(args, "dsq", "");
-    let mut heads = false;
-    let mut tags = false;
-    let mut verify = false;
-    let mut hash_only = false;
-    let mut deref = false;
-    let mut quiet = false;
-    let mut exists = false;
-    let mut patterns: Vec<&String> = Vec::new();
-    for a in &args {
-        match a.as_str() {
-            "--heads" | "--branches" => heads = true,
-            "--tags" => tags = true,
-            "--verify" => verify = true,
-            "--hash" | "-s" => hash_only = true,
-            "--dereference" | "-d" => deref = true,
-            "--quiet" | "-q" => quiet = true,
-            "--exists" => exists = true,
-            "--" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => patterns.push(a),
+    use crate::cmd::optparse::{self, Arg, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::flag("tags"),
+        Opt::flag("heads"),
+        Opt::flag("branches"),
+        Opt::flag("exists"),
+        Opt::flag("verify"),
+        Opt::flag("head"),
+        Opt::flag("dereference").with_short('d'),
+        Opt::opt_value("hash").with_short('s'),
+        Opt::opt_value("abbrev"),
+        Opt::flag("quiet").with_short('q'),
+        Opt::bare("exclude-existing").arg(Arg::Optional),
+    ];
+    let items = optparse::parse("show-ref", args, SPEC, optparse::Mode::default())?;
+    let patterns = optparse::positionals(&items);
+    let heads = optparse::on(&items, "heads") || optparse::on(&items, "branches");
+    let tags = optparse::on(&items, "tags");
+    let verify = optparse::on(&items, "verify");
+    let deref = optparse::on(&items, "dereference");
+    let quiet = optparse::on(&items, "quiet");
+    let show_head = optparse::on(&items, "head");
+    let hash_only = optparse::flag(&items, "hash").unwrap_or(false);
+    let width = |name: &str| -> CliResult<Option<usize>> {
+        match optparse::flag(&items, name) {
+            Some(true) => match optparse::value(&items, name) {
+                Some(v) => v
+                    .parse::<usize>()
+                    .map(|n| Some(n.clamp(4, 40)))
+                    .map_err(|_| {
+                        CliError::Exit(
+                            129,
+                            format!("error: option `{name}' expects a numerical value"),
+                        )
+                    }),
+                None => Ok(Some(7)),
+            },
+            _ => Ok(None),
         }
-    }
+    };
+    let abbrev = match width("hash")? {
+        Some(n) if optparse::value(&items, "hash").is_some() => Some(n),
+        _ => width("abbrev")?,
+    };
     let repo = open_repo()?;
+    if let Some(pat) = items.iter().rev().find_map(|i| match i {
+        optparse::Item::Opt {
+            name: "exclude-existing",
+            value,
+            ..
+        } => Some(value.clone().unwrap_or_default()),
+        _ => None,
+    }) {
+        let mut input = String::new();
+        io::stdin().read_to_string(&mut input)?;
+        for line in input.lines() {
+            let r = line.trim_end();
+            let refname = r.rsplit(' ').next().unwrap_or(r);
+            if refname.ends_with("^{}") || !refname.starts_with(pat.as_str()) {
+                continue;
+            }
+            if repo.refs().resolve(refname).is_err() {
+                println!("{r}");
+            }
+        }
+        return Ok(());
+    }
+    let fmt_oid = |oid: &Oid| match abbrev {
+        Some(n) => crate::cmd::shared::abbrev_hex(&repo, oid, n),
+        None => oid.to_hex(),
+    };
     let print = |name: &str, oid: &Oid| -> CliResult<()> {
         if !quiet {
             if hash_only {
-                println!("{}", oid.to_hex());
+                println!("{}", fmt_oid(oid));
             } else {
-                println!("{} {name}", oid.to_hex());
+                println!("{} {name}", fmt_oid(oid));
             }
         }
         if deref {
             let peeled = crate::cmd::shared::peel_tags(&repo, oid)?;
             if peeled != *oid && !quiet {
                 if hash_only {
-                    println!("{}", peeled.to_hex());
+                    println!("{}", fmt_oid(&peeled));
                 } else {
-                    println!("{} {name}^{{}}", peeled.to_hex());
+                    println!("{} {name}^{{}}", fmt_oid(&peeled));
                 }
             }
         }
         Ok(())
     };
-    if exists {
+    if optparse::on(&items, "exists") {
         let name = patterns
             .first()
-            .ok_or_else(|| CliError::Usage("show-ref --exists <ref>".into()))?;
+            .ok_or_else(|| CliError::fatal("--exists requires exactly one reference"))?;
         return match repo.refs().read(name) {
             Ok(_) => Ok(()),
             Err(_) => Err(CliError::Exit(
@@ -644,11 +827,17 @@ pub fn cmd_show_ref(args: &[String]) -> CliResult<()> {
         patterns.is_empty()
             || patterns
                 .iter()
-                .any(|p| n == *p || n.ends_with(&format!("/{p}")))
+                .any(|p| n == p || n.ends_with(&format!("/{p}")))
     });
     refs.sort_by(|a, b| a.0.cmp(&b.0));
-    if refs.is_empty() {
+    let head = (show_head && (patterns.is_empty() || patterns.iter().any(|p| p == "HEAD")))
+        .then(|| repo.head_oid().ok())
+        .flatten();
+    if refs.is_empty() && head.is_none() {
         return Err(CliError::silent(1));
+    }
+    if let Some(h) = head {
+        print("HEAD", &h)?;
     }
     for (name, oid) in refs {
         print(&name, &oid)?;
@@ -786,331 +975,11 @@ pub fn cmd_rev_list(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_update_index(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + M20 Cx-4: `--add`/`--remove`/`--cacheinfo`/`--refresh`/
-    // `--chmod`/`--skip-worktree`/`--no-skip-worktree` claimed subset.
-    refuse_unknown_flags(
-        args,
-        &[
-            "--add",
-            "--remove",
-            "--cacheinfo",
-            "--refresh",
-            "--chmod",
-            "--skip-worktree",
-            "--no-skip-worktree",
-        ],
-    )?;
-    let add = args.iter().any(|a| a == "--add");
-    let remove = args.iter().any(|a| a == "--remove");
-    let refresh = args.iter().any(|a| a == "--refresh");
-    let skip_worktree = args.iter().any(|a| a == "--skip-worktree");
-    let no_skip_worktree = args.iter().any(|a| a == "--no-skip-worktree");
-    let mut repo = open_repo()?;
-    let work = work_tree(&repo)?;
-    let mut index = read_index(&repo)?;
-    let lock = arks_index::index_lock_path(&repo.index_path());
-    if refresh {
-        // M19 Cx-1 MISC-012: honor exclusive index.lock (lease ≠ skip). Stock
-        // `git update-index --refresh` takes the lock; under a held lock it fails.
-        if lock.is_file() {
-            return Err(CliError::Msg(format!(
-                "{} (index locked; MISC-012 — update-index --refresh honors exclusive lock; no poll-skip)",
-                lock.display()
-            )));
-        }
-        return refresh_index(&repo, &work, &mut index, args);
-    }
-    // Parse --chmod=+x|-x (IDX-013).
-    let mut chmod_mode: Option<u32> = None;
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--chmod" {
-            i += 1;
-            let v = args
-                .get(i)
-                .ok_or_else(|| CliError::Usage("update-index --chmod=+x|-x".into()))?;
-            chmod_mode = Some(match v.as_str() {
-                "+x" => 0o100755,
-                "-x" => 0o100644,
-                other => {
-                    return Err(CliError::Usage(format!(
-                        "update-index --chmod: unsupported mode '{other}' (claim +x|-x)"
-                    )));
-                }
-            });
-        } else if let Some(rest) = args[i].strip_prefix("--chmod=") {
-            chmod_mode = Some(match rest {
-                "+x" => 0o100755,
-                "-x" => 0o100644,
-                other => {
-                    return Err(CliError::Usage(format!(
-                        "update-index --chmod: unsupported mode '{other}' (claim +x|-x)"
-                    )));
-                }
-            });
-        }
-        i += 1;
-    }
-    // IDX-013 / IDX-010: writers under index.lock refuse-closed.
-    if chmod_mode.is_some() && lock.is_file() {
-        return Err(CliError::Msg(format!(
-            "{} (IDX-013 — update-index --chmod under exclusive index.lock refuse; lease ≠ skip)",
-            lock.display()
-        )));
-    }
-    if (skip_worktree || no_skip_worktree) && lock.is_file() {
-        return Err(CliError::Msg(format!(
-            "{} (IDX-010 — skip-worktree bit flip under exclusive index.lock refuse; lease ≠ skip)",
-            lock.display()
-        )));
-    }
-    // IDX-004 (M20 Cx-5): split-index sharedindex.lock.
-    let shared = repo.git_dir().join("sharedindex.lock");
-    if shared.is_file() {
-        return Err(CliError::Msg(format!(
-            "{} (IDX-004 — split-index / sharedindex.lock contention refuse; lease ≠ skip)",
-            shared.display()
-        )));
-    }
-    // IDX-005 (M20 Cx-7): untracked-cache / sparse-index expand under concurrency.
-    let uc_lock = repo.git_dir().join("untracked-cache.lock");
-    if uc_lock.is_file() {
-        return Err(CliError::Msg(format!(
-            "{} (IDX-005 — untracked-cache / sparse-index expand race refuse; lease ≠ skip)",
-            uc_lock.display()
-        )));
-    }
-    if (add || remove || chmod_mode.is_some() || skip_worktree || no_skip_worktree)
-        && lock.is_file()
-    {
-        // IDX-011 (M20 Cx-5): index extension / version rewrite under lock refuse.
-        if chmod_mode.is_none() && !skip_worktree && !no_skip_worktree {
-            return Err(CliError::Msg(format!(
-                "{} (IDX-011 — index extension/version rewrite under exclusive index.lock refuse; lease ≠ skip)",
-                lock.display()
-            )));
-        }
-    }
-    const CE_SKIP_WORKTREE: u16 = 0x4000;
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--cacheinfo" {
-            i += 1;
-            let mode = args.get(i).ok_or_else(|| {
-                CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into())
-            })?;
-            i += 1;
-            let oid_s = args.get(i).ok_or_else(|| {
-                CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into())
-            })?;
-            i += 1;
-            let path = args.get(i).ok_or_else(|| {
-                CliError::Usage("update-index --cacheinfo <mode> <oid> <path>".into())
-            })?;
-            // git-update-index --cacheinfo modes are octal (100644 / 100755 / 160000).
-            let mode_u: u32 =
-                if mode.starts_with('0') || mode.chars().all(|c| matches!(c, '0'..='7')) {
-                    u32::from_str_radix(mode, 8).unwrap_or(0o100644)
-                } else {
-                    mode.parse().unwrap_or(0o100644)
-                };
-            let oid = Oid::from_hex(oid_s)?;
-            index
-                .entries
-                .retain(|e| !(e.path == *path && e.stage() == 0));
-            index.entries.push(IndexEntry {
-                ctime_sec: 0,
-                ctime_nsec: 0,
-                mtime_sec: 0,
-                mtime_nsec: 0,
-                dev: 0,
-                ino: 0,
-                mode: mode_u,
-                uid: 0,
-                gid: 0,
-                size: 0,
-                oid,
-                flags: (path.len().min(0x0fff)) as u16,
-                flags_extended: None,
-                path: path.clone(),
-            });
-        } else if !args[i].starts_with('-') {
-            let rel = rel_path_from_worktree(&work, Path::new(&args[i]))?;
-            if remove {
-                index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
-            } else if add {
-                let abs = work.join(&rel);
-                let meta = fs::metadata(&abs)?;
-                let payload = fs::read(&abs)?;
-                let obj = RawObject::new(ObjectKind::Blob, payload);
-                let format = repo.object_format();
-                let oid = repo.store_mut().put(format, &obj)?;
-                index.entries.retain(|e| !(e.path == rel && e.stage() == 0));
-                index.entries.push(IndexEntry {
-                    ctime_sec: 0,
-                    ctime_nsec: 0,
-                    mtime_sec: 0,
-                    mtime_nsec: 0,
-                    dev: 0,
-                    ino: 0,
-                    mode: crate::cmd::shared::file_mode(&meta),
-                    uid: 0,
-                    gid: 0,
-                    size: meta.len().min(u32::MAX as u64) as u32,
-                    oid,
-                    flags: (rel.len().min(0x0fff)) as u16,
-                    flags_extended: None,
-                    path: rel,
-                });
-            } else if let Some(mode) = chmod_mode {
-                // IDX-013: flip executable bit on existing stage-0 entry.
-                let mut found = false;
-                for e in &mut index.entries {
-                    if e.path == rel && e.stage() == 0 {
-                        e.mode = mode;
-                        found = true;
-                    }
-                }
-                if !found {
-                    return Err(CliError::Msg(format!(
-                        "update-index --chmod: path not in index: {rel}"
-                    )));
-                }
-            } else if skip_worktree || no_skip_worktree {
-                // IDX-010: flip skip-worktree extended bit.
-                let mut found = false;
-                for e in &mut index.entries {
-                    if e.path == rel && e.stage() == 0 {
-                        found = true;
-                        let mut flags = e.flags;
-                        let mut ext = e.flags_extended.unwrap_or(0);
-                        if skip_worktree {
-                            flags |= arks_index::CE_EXTENDED;
-                            ext |= CE_SKIP_WORKTREE;
-                            e.flags = flags;
-                            e.flags_extended = Some(ext);
-                        } else {
-                            ext &= !CE_SKIP_WORKTREE;
-                            if ext == 0 {
-                                e.flags = flags & !arks_index::CE_EXTENDED;
-                                e.flags_extended = None;
-                            } else {
-                                e.flags = flags | arks_index::CE_EXTENDED;
-                                e.flags_extended = Some(ext);
-                            }
-                        }
-                    }
-                }
-                if !found {
-                    return Err(CliError::Msg(format!(
-                        "update-index --skip-worktree: path not in index: {rel}"
-                    )));
-                }
-            }
-        }
-        i += 1;
-    }
-    sort_entries(&mut index.entries);
-    write_index(&repo, &index)?;
-    Ok(())
+    crate::cmd::index_plumbing::update_index(args)
 }
 
 pub fn cmd_read_tree(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3: single tree into index; `-m` two-tree baseline claimed lightly.
-    refuse_unknown_flags(args, &["-m", "--reset"])?;
-    let _merge = args.iter().any(|a| a == "-m");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.is_empty() {
-        return Err(CliError::Usage("read-tree [-m] <tree-ish>".into()));
-    }
-    let repo = open_repo()?;
-    // IDX-014 (M20 Cx-3): parallel read-tree contends on index.lock.
-    // Cite: https://git-scm.com/docs/git-read-tree + api-lockfile
-    let lock = arks_index::index_lock_path(&repo.index_path());
-    if lock.is_file() {
-        return Err(CliError::Msg(format!(
-            "{} (IDX-014 — read-tree honors exclusive index.lock; no parallel merge dialect)",
-            lock.display()
-        )));
-    }
-    let oid = resolve_rev(&repo, positional[0])?;
-    let obj = repo.get_object(&oid)?;
-    let tree_oid = match obj.kind {
-        ObjectKind::Tree => oid,
-        ObjectKind::Commit => Commit::decode(&obj.payload)?.tree,
-        other => {
-            return Err(CliError::Msg(format!(
-                "read-tree: {} not a tree-ish",
-                other.as_str()
-            )));
-        }
-    };
-    let mut entries = Vec::new();
-    flatten_tree_to_index(&repo, &tree_oid, "", &mut entries)?;
-    sort_entries(&mut entries);
-    let mut index = read_index(&repo)?;
-    index.entries = entries;
-    write_index(&repo, &index)?;
-    Ok(())
-}
-
-/// `update-index --refresh`: re-read stat data for entries whose content
-/// still matches; print `<path>: needs update` (exit 1) for the others.
-/// Cite: https://git-scm.com/docs/git-update-index#Documentation/git-update-index.txt---refresh
-fn refresh_index(
-    repo: &arks_repo::Repository,
-    work: &std::path::Path,
-    index: &mut arks_index::Index,
-    args: &[String],
-) -> CliResult<()> {
-    let quiet = args.iter().any(|a| a == "-q");
-    let mut stale = Vec::new();
-    for e in index.entries.iter_mut().filter(|e| e.stage() == 0) {
-        let abs = work.join(&e.path);
-        let Ok(meta) = std::fs::symlink_metadata(&abs) else {
-            stale.push(e.path.clone());
-            continue;
-        };
-        if e.mode == 0o160000 || meta.is_dir() {
-            continue;
-        }
-        let bytes = if meta.file_type().is_symlink() {
-            std::fs::read_link(&abs)?
-                .to_string_lossy()
-                .into_owned()
-                .into_bytes()
-        } else {
-            std::fs::read(&abs)?
-        };
-        let oid = RawObject::new(ObjectKind::Blob, bytes).oid(repo.object_format())?;
-        let mode = if meta.file_type().is_symlink() {
-            0o120000
-        } else {
-            crate::cmd::shared::file_mode(&meta)
-        };
-        if oid != e.oid || mode != e.mode {
-            stale.push(e.path.clone());
-            continue;
-        }
-        let fresh = crate::cmd::working_tree::stat_entry(&e.path, oid, &meta);
-        e.ctime_sec = fresh.ctime_sec;
-        e.ctime_nsec = fresh.ctime_nsec;
-        e.mtime_sec = fresh.mtime_sec;
-        e.mtime_nsec = fresh.mtime_nsec;
-        e.dev = fresh.dev;
-        e.ino = fresh.ino;
-        e.uid = fresh.uid;
-        e.gid = fresh.gid;
-        e.size = fresh.size;
-    }
-    write_index(repo, index)?;
-    if stale.is_empty() || quiet {
-        return Ok(());
-    }
-    for p in &stale {
-        println!("{p}: needs update");
-    }
-    Err(CliError::silent(1))
+    crate::cmd::index_plumbing::read_tree(args)
 }
 
 pub(crate) fn flatten_tree_to_index(
@@ -1219,46 +1088,7 @@ pub fn cmd_pack_objects(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_checkout_index(args: &[String]) -> CliResult<()> {
-    // M20 Cx-6 MISC-020: occupied --prefix refuse (export collision class).
-    // Cite: https://git-scm.com/docs/git-checkout-index
-    refuse_unknown_flags(args, &["--prefix", "-a", "--all"])?;
-    let mut prefix: Option<String> = None;
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--prefix" {
-            i += 1;
-            prefix = Some(
-                args.get(i)
-                    .ok_or_else(|| CliError::Usage("checkout-index --prefix <dir>".into()))?
-                    .clone(),
-            );
-        } else if let Some(rest) = args[i].strip_prefix("--prefix=") {
-            prefix = Some(rest.to_string());
-        }
-        i += 1;
-    }
-    let Some(prefix) = prefix else {
-        return Err(CliError::Usage(
-            "checkout-index --prefix=<dir> claimed for MISC-020 collision refuse".into(),
-        ));
-    };
-    let dest = Path::new(&prefix);
-    if dest.exists() {
-        let occupied = if dest.is_dir() {
-            fs::read_dir(dest)?.next().is_some()
-        } else {
-            true
-        };
-        if occupied {
-            return Err(CliError::Msg(format!(
-                "checkout-index --prefix '{}' occupied (MISC-020 — parallel checkout-index prefix collision refuse)",
-                dest.display()
-            )));
-        }
-    }
-    Err(CliError::NotImplemented(
-        "checkout-index content export beyond --prefix collision check not claimed".into(),
-    ))
+    crate::cmd::index_plumbing::checkout_index(args)
 }
 
 pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
@@ -1327,32 +1157,52 @@ pub fn cmd_index_pack(args: &[String]) -> CliResult<()> {
 }
 
 pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
-    // M16 Sy-3 + C7b: full gitignore(5) sources and precedence via the
-    // shared matcher; `-v`, `-n`/`--non-matching`, `-q`, `--no-index`.
+    // Full gitignore(5) sources and precedence via the shared matcher;
+    // `-v`, `-n`/`--non-matching`, `-q`, `--[no-]index`, `--stdin`, `-z`.
     // Tracked paths are not reported unless --no-index. Exit 0 when some
     // path is ignored, 1 when none is.
     // Cite: https://git-scm.com/docs/git-check-ignore
-    let args = crate::util::split_short_bundles(args, "vnq", "");
-    let mut verbose = false;
-    let mut non_matching = false;
-    let mut quiet = false;
-    let mut no_index = false;
-    let mut paths: Vec<&String> = Vec::new();
-    for a in &args {
-        match a.as_str() {
-            "-v" | "--verbose" => verbose = true,
-            "-n" | "--non-matching" => non_matching = true,
-            "-q" | "--quiet" => quiet = true,
-            "--no-index" => no_index = true,
-            "--" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
-            }
-            _ => paths.push(a),
+    use crate::cmd::optparse::{self, Opt};
+    const SPEC: &[Opt] = &[
+        Opt::flag("quiet").with_short('q'),
+        Opt::flag("verbose").with_short('v'),
+        Opt::flag("stdin"),
+        Opt::short('z', "z"),
+        Opt::flag("non-matching").with_short('n'),
+        Opt::flag("index"),
+    ];
+    let items = optparse::parse("check-ignore", args, SPEC, optparse::Mode::default())?;
+    let verbose = optparse::on(&items, "verbose");
+    let non_matching = optparse::on(&items, "non-matching");
+    let quiet = optparse::on(&items, "quiet");
+    let no_index = optparse::flag(&items, "index") == Some(false);
+    let stdin = optparse::on(&items, "stdin");
+    let nul = optparse::on(&items, "z");
+    let mut paths = optparse::positionals(&items);
+    if stdin {
+        if !paths.is_empty() {
+            return Err(CliError::fatal("cannot specify pathnames with --stdin"));
         }
-    }
-    if paths.is_empty() {
+        let mut input = Vec::new();
+        io::stdin().read_to_end(&mut input)?;
+        let sep = if nul { b'\0' } else { b'\n' };
+        paths = input
+            .split(|b| *b == sep)
+            .filter(|p| !p.is_empty())
+            .map(|p| String::from_utf8_lossy(p).into_owned())
+            .collect();
+    } else if nul {
+        return Err(CliError::fatal("-z only makes sense with --stdin"));
+    } else if paths.is_empty() {
         return Err(CliError::fatal("no path specified"));
+    }
+    if quiet && verbose {
+        return Err(CliError::fatal("cannot have both --quiet and --verbose"));
+    }
+    if quiet && paths.len() > 1 {
+        return Err(CliError::fatal(
+            "--quiet is only valid with a single pathname",
+        ));
     }
     if non_matching && !verbose {
         return Err(CliError::fatal(
@@ -1372,8 +1222,10 @@ pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
     };
     let mut ignore = crate::cmd::ignore::Ignore::new(&work);
     let mut any = false;
-    for p in paths {
-        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| (*p).clone());
+    let mut out = io::stdout().lock();
+    let (fs_, eol) = if nul { ("\0", "\0") } else { ("\t", "\n") };
+    for p in &paths {
+        let rel = rel_path_from_worktree(&work, Path::new(p)).unwrap_or_else(|_| p.clone());
         let is_dir = work.join(&rel).is_dir();
         let m = if tracked.contains(&rel) {
             None
@@ -1385,12 +1237,17 @@ pub fn cmd_check_ignore(args: &[String]) -> CliResult<()> {
             continue;
         }
         match (&m, verbose) {
-            (Some(m), true) => println!("{}:{}:{}\t{p}", m.source, m.line, m.pattern),
-            (Some(m), false) if m.excluded => println!("{p}"),
-            (None, true) if non_matching => println!("::\t{p}"),
+            (Some(m), true) if nul => {
+                write!(out, "{}\0{}\0{}\0{p}\0", m.source, m.line, m.pattern)?
+            }
+            (Some(m), true) => write!(out, "{}:{}:{}{fs_}{p}{eol}", m.source, m.line, m.pattern)?,
+            (Some(m), false) if m.excluded => write!(out, "{p}{eol}")?,
+            (None, true) if non_matching && nul => write!(out, "\0\0\0{p}\0")?,
+            (None, true) if non_matching => write!(out, "::{fs_}{p}{eol}")?,
             _ => {}
         }
     }
+    out.flush()?;
     if any {
         Ok(())
     } else {

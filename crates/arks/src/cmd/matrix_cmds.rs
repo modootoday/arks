@@ -14,154 +14,155 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
-/// `arks prune` — delete unreachable loose objects.
+/// `arks prune [-n] [-v] [--progress] [--expire <time>] [--exclude-promisor-objects] [--] [<head>...]`
+/// — delete loose objects unreachable from refs, reflogs, the index and the
+/// given heads. Cite: https://git-scm.com/docs/git-prune
 pub fn cmd_prune(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-n", "--dry-run", "-v", "--verbose"])?;
-    let dry = args.iter().any(|a| a == "-n" || a == "--dry-run");
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
+    let mut dry = false;
+    let mut verbose = false;
+    let mut expire: Option<i64> = None;
+    let mut heads: Vec<String> = Vec::new();
+    let mut i = 0;
+    let mut dashdash = false;
+    while i < args.len() {
+        let a = args[i].as_str();
+        i += 1;
+        if dashdash {
+            heads.push(a.to_string());
+            continue;
+        }
+        match a {
+            "-n" | "--dry-run" => dry = true,
+            "--no-dry-run" => dry = false,
+            "-v" | "--verbose" => verbose = true,
+            "--no-verbose" => verbose = false,
+            "-nv" | "-vn" => {
+                dry = true;
+                verbose = true;
+            }
+            "--progress"
+            | "--no-progress"
+            | "--exclude-promisor-objects"
+            | "--no-exclude-promisor-objects" => {}
+            // `--no-expire` keeps everything, like `--expire=never`.
+            "--no-expire" => expire = Some(0),
+            "--expire" => {
+                let v = args.get(i).ok_or_else(|| {
+                    CliError::Exit(129, "error: option `expire' requires a value".into())
+                })?;
+                i += 1;
+                expire = Some(parse_expire(v)?);
+            }
+            "--" => dashdash = true,
+            _ if a.starts_with("--expire=") => expire = Some(parse_expire(&a[9..])?),
+            _ if a.starts_with('-') => {
+                return Err(CliError::Exit(
+                    129,
+                    format!(
+                        "error: unknown option `{}'\nusage: git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]",
+                        a.trim_start_matches('-')
+                    ),
+                ));
+            }
+            _ => heads.push(a.to_string()),
+        }
+    }
     let repo = open_repo()?;
-    let reachable = reachable_oids(&repo)?;
-    let objects = repo.store().objects_dir();
-    let mut removed = 0u64;
-    if let Ok(rd) = fs::read_dir(objects) {
-        for ent in rd.flatten() {
-            let prefix = ent.file_name().to_string_lossy().to_string();
-            if prefix.len() != 2 || !prefix.chars().all(|c| c.is_ascii_hexdigit()) {
+    let mut tips = Vec::new();
+    for h in &heads {
+        tips.push(
+            resolve_rev(&repo, h)
+                .map_err(|_| CliError::fatal(format!("unrecognized argument: {h}")))?,
+        );
+    }
+    let reachable = crate::cmd::plumbing_ext::reachable_all(&repo, &tips)?;
+    let mut out = String::new();
+    for (oid, path) in crate::cmd::plumbing_ext::loose_objects(&repo) {
+        if reachable.contains(&oid) {
+            continue;
+        }
+        if let Some(cut) = expire {
+            let mtime = fs::metadata(&path)
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0);
+            if mtime > cut {
                 continue;
             }
-            let dir = ent.path();
-            if !dir.is_dir() {
-                continue;
-            }
-            if let Ok(inner) = fs::read_dir(&dir) {
-                for obj in inner.flatten() {
-                    let hex = format!("{}{}", prefix, obj.file_name().to_string_lossy());
-                    if hex.len() != 40 {
-                        continue;
-                    }
-                    let Ok(oid) = Oid::from_hex(&hex) else {
-                        continue;
-                    };
-                    if reachable.contains(&oid) {
-                        continue;
-                    }
-                    if verbose || dry {
-                        println!("{}", oid.to_hex());
-                    }
-                    if !dry {
-                        let _ = fs::remove_file(obj.path());
-                    }
-                    removed += 1;
-                }
+        }
+        if dry || verbose {
+            let kind = repo
+                .get_object(&oid)
+                .map(|o| o.kind.as_str().to_string())
+                .unwrap_or_else(|_| "unknown".into());
+            out.push_str(&format!("{} {kind}\n", oid.to_hex()));
+        }
+        if !dry {
+            let _ = fs::remove_file(&path);
+            if let Some(dir) = path.parent() {
+                let _ = fs::remove_dir(dir);
             }
         }
     }
-    if dry {
-        eprintln!("Would remove {removed} loose object(s)");
+    // `prune` also runs prune-packed (dry-run lists `rm -f <path>`).
+    let packed = packed_oids(&repo)?;
+    for (oid, path) in crate::cmd::plumbing_ext::loose_objects(&repo) {
+        if packed.contains(&oid) {
+            if dry {
+                out.push_str(&format!("rm -f {}\n", shown_path(&path)));
+            } else {
+                let _ = fs::remove_file(&path);
+            }
+        }
     }
+    print!("{out}");
     Ok(())
 }
 
-/// `arks prune-packed` — remove loose objects also present in packs.
+/// `arks prune-packed [-n | --dry-run] [-q | --quiet]` — remove loose objects
+/// that are also in a pack. Cite: https://git-scm.com/docs/git-prune-packed
 pub fn cmd_prune_packed(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-n", "--dry-run", "-q", "--quiet"])?;
-    let dry = args.iter().any(|a| a == "-n" || a == "--dry-run");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
+    let mut dry = false;
+    let mut quiet = false;
+    for a in args {
+        match a.as_str() {
+            "-n" | "--dry-run" => dry = true,
+            "--no-dry-run" => dry = false,
+            "-q" | "--quiet" => quiet = true,
+            "--no-quiet" => quiet = false,
+            "-nq" | "-qn" => {
+                dry = true;
+                quiet = true;
+            }
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git prune-packed [-n | --dry-run] [-q | --quiet]".into(),
+                ));
+            }
+        }
+    }
     let repo = open_repo()?;
     let pack_oids = packed_oids(&repo)?;
-    let objects = repo.store().objects_dir();
-    let mut removed = 0u64;
-    if let Ok(rd) = fs::read_dir(objects) {
-        for ent in rd.flatten() {
-            let prefix = ent.file_name().to_string_lossy().to_string();
-            if prefix.len() != 2 || !prefix.chars().all(|c| c.is_ascii_hexdigit()) {
-                continue;
-            }
-            let dir = ent.path();
-            if !dir.is_dir() {
-                continue;
-            }
-            if let Ok(inner) = fs::read_dir(&dir) {
-                for obj in inner.flatten() {
-                    let hex = format!("{}{}", prefix, obj.file_name().to_string_lossy());
-                    let Ok(oid) = Oid::from_hex(&hex) else {
-                        continue;
-                    };
-                    if !pack_oids.contains(&oid) {
-                        continue;
-                    }
-                    if !quiet && !dry {
-                        println!("{}", oid.to_hex());
-                    }
-                    if !dry {
-                        let _ = fs::remove_file(obj.path());
-                    }
-                    removed += 1;
-                }
+    let mut out = String::new();
+    for (oid, path) in crate::cmd::plumbing_ext::loose_objects(&repo) {
+        if !pack_oids.contains(&oid) {
+            continue;
+        }
+        if dry {
+            out.push_str(&format!("rm -f {}\n", shown_path(&path)));
+        } else {
+            let _ = fs::remove_file(&path);
+            if let Some(dir) = path.parent() {
+                let _ = fs::remove_dir(dir);
             }
         }
     }
-    if dry && !quiet {
-        eprintln!("Would prune-packed {removed} loose object(s)");
-    }
+    let _ = quiet;
+    print!("{out}");
     Ok(())
-}
-
-fn reachable_oids(repo: &Repository) -> CliResult<HashSet<Oid>> {
-    let mut seen = HashSet::new();
-    let refs = repo.refs().list_refs("")?;
-    for (_name, oid) in refs {
-        walk_reach(repo, &oid, &mut seen)?;
-    }
-    if let Ok(head) = repo.head_oid() {
-        walk_reach(repo, &head, &mut seen)?;
-    }
-    Ok(seen)
-}
-
-fn walk_reach(repo: &Repository, oid: &Oid, seen: &mut HashSet<Oid>) -> CliResult<()> {
-    if !seen.insert(*oid) {
-        return Ok(());
-    }
-    let obj = match repo.get_object(oid) {
-        Ok(o) => o,
-        Err(_) => return Ok(()),
-    };
-    match obj.kind {
-        ObjectKind::Commit => {
-            let c = arks_object::Commit::decode(&obj.payload)?;
-            walk_reach(repo, &c.tree, seen)?;
-            for p in c.parents {
-                walk_reach(repo, &p, seen)?;
-            }
-        }
-        ObjectKind::Tree => {
-            let t = Tree::decode(&obj.payload, repo.oid_kind())?;
-            for e in t.entries {
-                walk_reach(repo, &e.oid, seen)?;
-            }
-        }
-        ObjectKind::Blob => {}
-        ObjectKind::Tag => {
-            if let Some(target) = tag_target(&obj.payload) {
-                walk_reach(repo, &target, seen)?;
-            }
-        }
-    }
-    Ok(())
-}
-
-fn tag_target(payload: &[u8]) -> Option<Oid> {
-    let text = std::str::from_utf8(payload).ok()?;
-    for line in text.lines() {
-        if let Some(rest) = line.strip_prefix("object ") {
-            return Oid::from_hex(rest.trim()).ok();
-        }
-        if line.is_empty() {
-            break;
-        }
-    }
-    None
 }
 
 fn packed_oids(repo: &Repository) -> CliResult<HashSet<Oid>> {
@@ -363,22 +364,77 @@ fn config_val(cfg: &str, key: &str) -> Option<String> {
     None
 }
 
-/// `arks check-ref-format <refname>`
+/// `arks check-ref-format [--normalize] [--[no-]allow-onelevel] [--refspec-pattern] <refname>`
+/// and `--branch <name>`. Exit 1 (silent) for an invalid name.
+/// Cite: https://git-scm.com/docs/git-check-ref-format
 pub fn cmd_check_ref_format(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--allow-onelevel", "--normalize", "--branch"])?;
-    let allow_one = args.iter().any(|a| a == "--allow-onelevel");
-    let name = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("check-ref-format [--allow-onelevel] <refname>".into()))?;
-    if refname_ok(name, allow_one) {
-        Ok(())
-    } else {
-        Err(CliError::Msg(format!("'{name}' is not a valid refname")))
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git check-ref-format [--normalize] [<options>] <refname>\n   or: git check-ref-format --branch <branchname-shorthand>".into(),
+        )
+    };
+    let mut normalize = false;
+    let mut allow_one = false;
+    let mut pattern = false;
+    let mut branch = false;
+    let mut rest: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--normalize" | "--print" => normalize = true,
+            "--allow-onelevel" => allow_one = true,
+            "--no-allow-onelevel" => allow_one = false,
+            "--refspec-pattern" => pattern = true,
+            "--branch" => branch = true,
+            _ if a.starts_with("--") => return Err(usage()),
+            _ => rest.push(a),
+        }
     }
+    if branch {
+        let [name] = rest.as_slice() else {
+            return Err(usage());
+        };
+        let repo = open_repo().ok();
+        let resolved = match repo.as_ref() {
+            Some(r) => previous_branch(r, name).unwrap_or_else(|| (*name).clone()),
+            None => (*name).clone(),
+        };
+        let full = format!("refs/heads/{resolved}");
+        if resolved.starts_with('-') || !refname_ok(&full, false, false) {
+            return Err(CliError::fatal(format!(
+                "'{name}' is not a valid branch name"
+            )));
+        }
+        println!("{resolved}");
+        return Ok(());
+    }
+    let [name] = rest.as_slice() else {
+        return Err(usage());
+    };
+    let mut name = (*name).clone();
+    if normalize {
+        let lead = name.starts_with('/');
+        let trail = name.ends_with('/') && name.len() > 1;
+        let collapsed: Vec<String> = name
+            .split('/')
+            .filter(|p| !p.is_empty())
+            .map(str::to_string)
+            .collect();
+        if trail || (lead && collapsed.is_empty()) {
+            return Err(CliError::silent(1));
+        }
+        name = collapsed.join("/");
+    }
+    if !refname_ok(&name, allow_one, pattern) {
+        return Err(CliError::silent(1));
+    }
+    if normalize {
+        println!("{name}");
+    }
+    Ok(())
 }
 
-fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
+fn refname_ok(name: &str, allow_onelevel: bool, pattern: bool) -> bool {
     if name.is_empty() || name == "@" {
         return false;
     }
@@ -391,8 +447,12 @@ fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
     if name.contains("//") || name.contains(' ') {
         return false;
     }
+    let stars = name.matches('*').count();
+    if stars > usize::from(pattern) {
+        return false;
+    }
     for ch in name.chars() {
-        if ch.is_ascii_control() || "^:~?*[".contains(ch) {
+        if ch.is_ascii_control() || "^:~?[".contains(ch) {
             return false;
         }
     }
@@ -405,59 +465,141 @@ fn refname_ok(name: &str, allow_onelevel: bool) -> bool {
         .any(|p| p.is_empty() || p.starts_with('.') || p.ends_with(".lock"))
 }
 
-/// `arks stripspace` — trim trailing whitespace / blank lines (stdin→stdout).
+/// `arks stripspace [-s | --strip-comments | -c | --comment-lines]` (stdin→stdout):
+/// trailing whitespace removed, blank-line runs collapsed, leading/trailing
+/// blank lines dropped. Cite: https://git-scm.com/docs/git-stripspace
 pub fn cmd_stripspace(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-s", "--strip-comments", "-c", "--comment-lines"])?;
-    let strip_comments = args.iter().any(|a| a == "-s" || a == "--strip-comments");
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input)?;
+    let mut strip_comments = false;
+    let mut comment_lines = false;
+    for a in args {
+        match a.as_str() {
+            "-s" | "--strip-comments" => strip_comments = true,
+            "-c" | "--comment-lines" => comment_lines = true,
+            "-sc" | "-cs" => {
+                strip_comments = true;
+                comment_lines = true;
+            }
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git stripspace [-s | --strip-comments]\n   or: git stripspace [-c | --comment-lines]".into(),
+                ));
+            }
+        }
+    }
+    if strip_comments && comment_lines {
+        return Err(CliError::Exit(
+            129,
+            "error: --comment-lines is incompatible with --strip-comments".into(),
+        ));
+    }
+    let cfg = arks_config::ConfigSet::load_discovered(&crate::util::cwd()?);
+    let cc = cfg
+        .get("core.commentchar")
+        .filter(|c| !c.is_empty() && c != "auto")
+        .unwrap_or_else(|| "#".into());
+    let mut input = Vec::new();
+    io::stdin().read_to_end(&mut input)?;
+    let input = String::from_utf8_lossy(&input).into_owned();
     let mut out = String::new();
+    if comment_lines {
+        let body = input.strip_suffix('\n').unwrap_or(&input);
+        if !input.is_empty() {
+            for line in body.split('\n') {
+                if line.is_empty() {
+                    out.push_str(&cc);
+                } else {
+                    out.push_str(&format!("{cc} {line}"));
+                }
+                out.push('\n');
+            }
+        }
+        print!("{out}");
+        return Ok(());
+    }
+    let mut blank_run = false;
     for line in input.lines() {
-        let l = line.trim_end();
-        if strip_comments && l.trim_start().starts_with('#') {
+        if strip_comments && line.starts_with(cc.as_str()) {
             continue;
         }
+        let l = line.trim_end();
+        if l.is_empty() {
+            blank_run = !out.is_empty();
+            continue;
+        }
+        if blank_run {
+            out.push('\n');
+            blank_run = false;
+        }
         out.push_str(l);
-        out.push('\n');
-    }
-    while out.ends_with("\n\n") {
-        out.pop();
-    }
-    if !out.is_empty() && !out.ends_with('\n') {
         out.push('\n');
     }
     print!("{out}");
     Ok(())
 }
 
-/// `arks mktag` — read tag object from stdin, write if headers look valid.
+/// `arks mktag [--[no-]strict]` — validate a tag object on stdin and write it.
+/// Cite: https://git-scm.com/docs/git-mktag
 pub fn cmd_mktag(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
+    let mut strict = true;
+    for a in args {
+        match a.as_str() {
+            "--strict" => strict = true,
+            "--no-strict" => strict = false,
+            _ if a.starts_with('-') => return Err(CliError::Exit(129, "usage: git mktag".into())),
+            _ => {}
+        }
+    }
     let mut buf = Vec::new();
     io::stdin().read_to_end(&mut buf)?;
-    let text = std::str::from_utf8(&buf)
-        .map_err(|_| CliError::Msg("mktag: tag payload must be utf-8".into()))?;
-    let mut has_object = false;
-    let mut has_type = false;
-    let mut has_tag = false;
-    for line in text.lines() {
-        if line.is_empty() {
-            break;
-        }
-        if let Some(rest) = line.strip_prefix("object ") {
-            has_object = Oid::from_hex(rest.trim()).is_ok();
-        } else if line.starts_with("type ") {
-            has_type = true;
-        } else if line.starts_with("tag ") {
-            has_tag = true;
-        }
-    }
-    if !(has_object && has_type && has_tag) {
-        return Err(CliError::Msg(
-            "mktag: missing object/type/tag headers".into(),
+    let bad = || {
+        CliError::Exit(
+            128,
+            "error: tag input does not pass fsck\nfatal: tag on stdin did not pass our strict fsck check".into(),
+        )
+    };
+    let text = std::str::from_utf8(&buf).map_err(|_| bad())?;
+    let mut lines = text.split('\n');
+    let object = lines
+        .next()
+        .and_then(|l| l.strip_prefix("object "))
+        .and_then(|h| Oid::from_hex(h).ok())
+        .ok_or_else(bad)?;
+    let ty = lines
+        .next()
+        .and_then(|l| l.strip_prefix("type "))
+        .ok_or_else(bad)?
+        .to_string();
+    let tag = lines
+        .next()
+        .and_then(|l| l.strip_prefix("tag "))
+        .ok_or_else(bad)?;
+    if tag.is_empty() || (strict && !refname_ok(&format!("refs/tags/{tag}"), false, false)) {
+        return Err(CliError::Exit(
+            128,
+            format!(
+                "error: tag input does not pass fsck: badTagName: invalid 'tag' name: {tag}\nfatal: tag on stdin did not pass our strict fsck check"
+            ),
         ));
     }
+    let tagger = lines.next().unwrap_or("");
+    if strict && !tagger.starts_with("tagger ") {
+        return Err(bad());
+    }
     let mut repo = open_repo()?;
+    let target = repo.get_object(&object).map_err(|_| {
+        CliError::fatal(format!(
+            "could not read tagged object '{}'",
+            object.to_hex()
+        ))
+    })?;
+    if target.kind.as_str() != ty {
+        return Err(CliError::fatal(format!(
+            "object '{}' tagged as '{ty}', but is a '{}' type",
+            object.to_hex(),
+            target.kind.as_str()
+        )));
+    }
     let format = repo.object_format();
     let obj = RawObject::new(ObjectKind::Tag, buf);
     let oid = repo.store_mut().put(format, &obj)?;
@@ -465,127 +607,240 @@ pub fn cmd_mktag(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks mktree` — build tree from ls-tree style stdin lines.
+/// `arks mktree [-z] [--missing] [--batch]` — build trees from ls-tree lines.
+/// Cite: https://git-scm.com/docs/git-mktree
 pub fn cmd_mktree(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-z", "--missing"])?;
-    let nul = args.iter().any(|a| a == "-z");
-    let mut buf = Vec::new();
-    io::stdin().read_to_end(&mut buf)?;
-    if nul {
-        for b in &mut buf {
-            if *b == 0 {
-                *b = b'\n';
+    let (mut nul, mut missing, mut batch) = (false, false, false);
+    for a in args {
+        match a.as_str() {
+            "-z" => nul = true,
+            "--missing" => missing = true,
+            "--no-missing" => missing = false,
+            "--batch" => batch = true,
+            "--no-batch" => batch = false,
+            // Positional arguments are accepted and ignored, as in stock git.
+            _ if a == "-" || !a.starts_with('-') || a == "--" => {}
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git mktree [-z] [--missing] [--batch]".into(),
+                ));
             }
         }
     }
-    let text = String::from_utf8(buf).map_err(|_| CliError::Msg("mktree: invalid utf-8".into()))?;
-    let mut entries = Vec::new();
-    for line in text.lines() {
+    let mut buf = Vec::new();
+    io::stdin().read_to_end(&mut buf)?;
+    let sep = if nul { b'\0' } else { b'\n' };
+    let mut repo = open_repo()?;
+    let format = repo.object_format();
+    let mut entries: Vec<TreeEntry> = Vec::new();
+    let mut seen_any = false;
+    let mut out = String::new();
+    let flush =
+        |entries: &mut Vec<TreeEntry>, repo: &mut Repository, out: &mut String| -> CliResult<()> {
+            let tree =
+                Tree::new(std::mem::take(entries)).map_err(|e| CliError::fatal(e.to_string()))?;
+            let payload = tree.encode().map_err(|e| CliError::Msg(e.to_string()))?;
+            let obj = RawObject::new(ObjectKind::Tree, payload);
+            let oid = repo.store_mut().put(format, &obj)?;
+            out.push_str(&oid.to_hex());
+            out.push('\n');
+            Ok(())
+        };
+    let recs: Vec<&[u8]> = buf.split(|b| *b == sep).collect();
+    let n = recs.len();
+    for (i, rec) in recs.into_iter().enumerate() {
+        let line = String::from_utf8_lossy(rec);
         if line.is_empty() {
-            continue;
-        }
-        let (meta, name) = line
-            .split_once('\t')
-            .ok_or_else(|| CliError::Usage("mktree: expected mode type oid\\tname".into()))?;
-        let parts: Vec<&str> = meta.split_whitespace().collect();
-        if parts.len() != 3 {
-            return Err(CliError::Usage(
-                "mktree: expected '<mode> <type> <oid>\\t<name>'".into(),
+            if i + 1 == n {
+                break;
+            }
+            if batch {
+                flush(&mut entries, &mut repo, &mut out)?;
+                seen_any = false;
+                continue;
+            }
+            return Err(CliError::fatal(
+                "input format error: (blank line only valid in batch mode)",
             ));
         }
+        seen_any = true;
+        let (meta, name) = line
+            .split_once('\t')
+            .ok_or_else(|| CliError::fatal(format!("input format error: {line}")))?;
+        let parts: Vec<&str> = meta.split(' ').collect();
+        if parts.len() != 3 {
+            return Err(CliError::fatal(format!("input format error: {line}")));
+        }
         let mode = TreeMode::parse(parts[0])
-            .map_err(|e| CliError::Msg(format!("mktree: bad mode {}: {e}", parts[0])))?;
-        let oid = Oid::from_hex(parts[2]).map_err(|e| CliError::Msg(e.to_string()))?;
+            .map_err(|_| CliError::fatal(format!("input format error: {line}")))?;
+        let oid = Oid::from_hex(parts[2])
+            .map_err(|_| CliError::fatal(format!("input format error: {line}")))?;
+        let want = if mode.is_tree() {
+            "tree"
+        } else if parts[0] == "160000" {
+            "commit"
+        } else {
+            "blob"
+        };
+        if parts[1] != want {
+            return Err(CliError::fatal(format!(
+                "entry '{name}' object type ({}) doesn't match mode type ({want})",
+                parts[1]
+            )));
+        }
+        if !missing && want != "commit" {
+            match repo.get_object(&oid) {
+                Ok(o) if o.kind.as_str() == want => {}
+                Ok(o) => {
+                    return Err(CliError::fatal(format!(
+                        "entry '{name}' object {} is a {} but specified type was ({want})",
+                        oid.to_hex(),
+                        o.kind.as_str()
+                    )));
+                }
+                Err(_) => {
+                    return Err(CliError::fatal(format!(
+                        "entry '{name}' object {} is unavailable",
+                        oid.to_hex()
+                    )));
+                }
+            }
+        }
         entries.push(TreeEntry {
             mode,
             name: name.to_string(),
             oid,
         });
     }
-    let tree = Tree::new(entries).map_err(|e| CliError::Msg(e.to_string()))?;
-    let payload = tree.encode().map_err(|e| CliError::Msg(e.to_string()))?;
-    let mut repo = open_repo()?;
-    let format = repo.object_format();
-    let obj = RawObject::new(ObjectKind::Tree, payload);
-    let oid = repo.store_mut().put(format, &obj)?;
-    println!("{}", oid.to_hex());
+    if seen_any || !batch || (out.is_empty() && !buf.is_empty()) {
+        flush(&mut entries, &mut repo, &mut out)?;
+    }
+    print!("{out}");
     Ok(())
 }
 
-/// `arks var [-l] <variable>`
+/// `arks var (-l | <variable>)` — logical variables of git-var (2.43 set).
+/// Cite: https://git-scm.com/docs/git-var
 pub fn cmd_var(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-l"])?;
-    let list = args.iter().any(|a| a == "-l");
-    let repo = open_repo().ok();
-    let mut pairs = Vec::new();
-    if let Some(repo) = &repo {
-        pairs.push(("GIT_DIR", repo.git_dir().display().to_string()));
-        pairs.push((
-            "GIT_OBJECT_DIRECTORY",
-            repo.store().objects_dir().display().to_string(),
-        ));
-        if let Ok(wt) = work_tree(repo) {
-            pairs.push(("GIT_WORK_TREE", wt.display().to_string()));
-        }
-        pairs.push(("GIT_COMMON_DIR", repo.common_dir().display().to_string()));
-    }
-    if list {
-        for (k, v) in &pairs {
-            println!("{k}={v}");
-        }
-        return Ok(());
-    }
-    // git-var logical variables. Cite: https://git-scm.com/docs/git-var
-    let cfg = arks_config::ConfigSet::load_discovered(&crate::util::cwd()?);
+    let usage = || CliError::Exit(129, "usage: git var (-l | <variable>)".into());
+    let [arg] = args else {
+        return Err(usage());
+    };
+    let cwd = crate::util::cwd()?;
+    let cfg = arks_config::ConfigSet::load_discovered(&cwd);
     let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
-    let ident = |author: bool| -> CliResult<String> {
+    let home = env("HOME");
+    let xdg = env("XDG_CONFIG_HOME").or_else(|| home.as_ref().map(|h| format!("{h}/.config")));
+    let ident = |author: bool| -> Option<String> {
         let s = if author {
-            crate::cmd::shared::commit_signature()?
+            crate::cmd::shared::commit_signature().ok()?
         } else {
-            crate::cmd::shared::committer_signature()?
+            crate::cmd::shared::committer_signature().ok()?
         };
-        Ok(format!(
+        Some(format!(
             "{} <{}> {} {}",
             s.name, s.email, s.timestamp, s.timezone
         ))
     };
-    let key = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("var [-l] <variable>".into()))?;
-    let logical = match key.as_str() {
-        "GIT_AUTHOR_IDENT" => Some(ident(true)?),
-        "GIT_COMMITTER_IDENT" => Some(ident(false)?),
-        "GIT_EDITOR" => Some(
-            env("GIT_EDITOR")
-                .or_else(|| cfg.get("core.editor"))
-                .or_else(|| env("VISUAL"))
-                .or_else(|| env("EDITOR"))
-                .unwrap_or_else(|| "vi".into()),
-        ),
-        "GIT_PAGER" => Some(
-            env("GIT_PAGER")
-                .or_else(|| cfg.get("core.pager"))
-                .or_else(|| env("PAGER"))
-                .unwrap_or_else(|| "less".into()),
-        ),
-        "GIT_DEFAULT_BRANCH" => Some(
-            cfg.get("init.defaultBranch")
-                .unwrap_or_else(|| "master".into()),
-        ),
-        _ => None,
+    let editor = || {
+        env("GIT_EDITOR")
+            .or_else(|| cfg.get("core.editor"))
+            .or_else(|| env("VISUAL"))
+            .or_else(|| env("EDITOR"))
+            .unwrap_or_else(|| "vi".into())
     };
-    if let Some(v) = logical {
-        println!("{v}");
+    let nosystem = |k: &str| env(k).is_some_and(|v| arks_config::parse_bool(&v).unwrap_or(true));
+    let vars: Vec<(&str, Vec<String>)> = vec![
+        ("GIT_COMMITTER_IDENT", ident(false).into_iter().collect()),
+        ("GIT_AUTHOR_IDENT", ident(true).into_iter().collect()),
+        ("GIT_EDITOR", vec![editor()]),
+        (
+            "GIT_SEQUENCE_EDITOR",
+            vec![
+                env("GIT_SEQUENCE_EDITOR")
+                    .or_else(|| cfg.get("sequence.editor"))
+                    .unwrap_or_else(editor),
+            ],
+        ),
+        (
+            "GIT_PAGER",
+            vec![
+                env("GIT_PAGER")
+                    .or_else(|| cfg.get("core.pager"))
+                    .or_else(|| env("PAGER"))
+                    .unwrap_or_else(|| "less".into()),
+            ],
+        ),
+        (
+            "GIT_DEFAULT_BRANCH",
+            vec![
+                cfg.get("init.defaultbranch")
+                    .unwrap_or_else(|| "master".into()),
+            ],
+        ),
+        ("GIT_SHELL_PATH", vec!["/bin/sh".into()]),
+        (
+            "GIT_ATTR_SYSTEM",
+            if nosystem("GIT_ATTR_NOSYSTEM") {
+                Vec::new()
+            } else {
+                vec!["/etc/gitattributes".into()]
+            },
+        ),
+        (
+            "GIT_ATTR_GLOBAL",
+            cfg.get("core.attributesfile")
+                .or_else(|| xdg.as_ref().map(|x| format!("{x}/git/attributes")))
+                .into_iter()
+                .collect(),
+        ),
+        (
+            "GIT_CONFIG_SYSTEM",
+            if nosystem("GIT_CONFIG_NOSYSTEM") {
+                Vec::new()
+            } else {
+                vec![env("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into())]
+            },
+        ),
+        (
+            "GIT_CONFIG_GLOBAL",
+            match env("GIT_CONFIG_GLOBAL") {
+                Some(g) => vec![g],
+                None => xdg
+                    .iter()
+                    .map(|x| format!("{x}/git/config"))
+                    .chain(home.iter().map(|h| format!("{h}/.gitconfig")))
+                    .collect(),
+            },
+        ),
+    ];
+    if arg == "-l" {
+        let mut out = String::new();
+        for e in cfg.entries() {
+            match &e.value {
+                Some(v) => out.push_str(&format!("{}={v}\n", e.key)),
+                None => out.push_str(&format!("{}\n", e.key)),
+            }
+        }
+        for (k, vs) in &vars {
+            for v in vs {
+                out.push_str(&format!("{k}={v}\n"));
+            }
+        }
+        print!("{out}");
         return Ok(());
     }
-    for (k, v) in pairs {
-        if k == key.as_str() {
-            println!("{v}");
-            return Ok(());
+    match vars.iter().find(|(k, _)| *k == arg.as_str()) {
+        Some((_, vs)) if vs.is_empty() => Err(CliError::silent(1)),
+        Some((_, vs)) => {
+            for v in vs {
+                println!("{v}");
+            }
+            Ok(())
         }
+        None => Err(usage()),
     }
-    Err(CliError::Msg(format!("unknown variable: {key}")))
 }
 
 /// `arks patch-id` — stable id for a diff on stdin.
@@ -615,102 +870,253 @@ pub fn cmd_patch_id(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks credential-store` — native file-store helper (never spawns `git`).
+/// `arks credential-store [--file=<path>] (get|store|erase)` — the stock
+/// `~/.git-credentials` file format (`<proto>://<user>:<pass>@<host>[/path]`),
+/// natively. Cite: https://git-scm.com/docs/git-credential-store
 pub fn cmd_credential_store(args: &[String]) -> CliResult<()> {
-    let op = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage("credential-store <get|store|erase>".into()))?;
+    let mut file: Option<String> = None;
+    let mut op: Option<&str> = None;
+    let mut i = 0;
+    while i < args.len() {
+        let a = args[i].as_str();
+        i += 1;
+        if let Some(v) = a.strip_prefix("--file=") {
+            file = Some(v.to_string());
+        } else if a == "--file" {
+            file = args.get(i).cloned();
+            i += 1;
+        } else if a == "--no-file" {
+            file = None;
+        } else if a.starts_with('-') {
+            return Err(CliError::Exit(
+                129,
+                format!(
+                    "error: unknown option `{}'\nusage: git credential-store [<options>] <action>",
+                    a.trim_start_matches('-')
+                ),
+            ));
+        } else if op.is_none() {
+            op = Some(a);
+        }
+    }
+    let op = op.ok_or_else(|| {
+        CliError::Exit(
+            129,
+            "usage: git credential-store [<options>] <action>".into(),
+        )
+    })?;
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
-    let desc = arks_remote::Credential::parse(&input).map_err(|e| CliError::Msg(e.to_string()))?;
-    let mut source = arks_remote::CredentialSource::empty();
-    source.helpers = vec!["store".into()];
-    match op {
-        "get" => {
-            let filled = arks_remote::credential_fill(desc, &source)
-                .map_err(|e| CliError::Msg(e.to_string()))?;
-            if filled.password.is_some() || filled.username.is_some() {
-                print!("{}", filled.format_attributes());
-            }
-            Ok(())
+    let desc = arks_remote::Credential::parse_attributes(&input);
+    let home = std::env::var("HOME").unwrap_or_default();
+    let paths: Vec<PathBuf> = match &file {
+        Some(f) => vec![PathBuf::from(crate::cmd::plumbing_ext::expand_home(f))],
+        None => {
+            let xdg = std::env::var("XDG_CONFIG_HOME")
+                .ok()
+                .filter(|x| !x.is_empty())
+                .unwrap_or_else(|| format!("{home}/.config"));
+            vec![
+                PathBuf::from(format!("{home}/.git-credentials")),
+                PathBuf::from(format!("{xdg}/git/credentials")),
+            ]
         }
-        "store" => arks_remote::credential_approve(&desc, &source)
-            .map_err(|e| CliError::Msg(e.to_string())),
-        "erase" => {
-            arks_remote::credential_reject(&desc, &source).map_err(|e| CliError::Msg(e.to_string()))
-        }
-        other => Err(CliError::Usage(format!(
-            "credential-store: unknown op '{other}'"
-        ))),
-    }
+    };
+    crate::cmd::plumbing_ext::credential_store(op, &desc, &paths)
 }
 
-/// `arks show-index` — list oid/offset from a pack `.idx` on stdin or path.
+/// `arks show-index [--object-format=<hash>]` — dump a pack `.idx` from stdin
+/// as `<offset> <oid> (<crc32>)`. Cite: https://git-scm.com/docs/git-show-index
 pub fn cmd_show_index(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let bytes = if let Some(path) = args.first() {
-        fs::read(path)?
-    } else {
-        let mut buf = Vec::new();
-        io::stdin().read_to_end(&mut buf)?;
-        buf
-    };
-    let format = open_repo()
+    let mut format = open_repo()
         .map(|r| r.object_format())
         .unwrap_or(arks_store::ObjectFormat::Sha1);
-    let idx = arks_pack::PackIndex::decode(&bytes, format)?;
-    for e in &idx.entries {
-        println!("{}\t{}", e.oid.to_hex(), e.offset);
+    for a in args {
+        match a.strip_prefix("--object-format=") {
+            Some("sha1") => format = arks_store::ObjectFormat::Sha1,
+            Some("sha256") => format = arks_store::ObjectFormat::Sha256,
+            Some(other) => {
+                return Err(CliError::fatal(format!("Unknown hash algorithm '{other}'")));
+            }
+            None if a == "--no-object-format" => {}
+            None => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git show-index [--object-format=<hash-algorithm>]".into(),
+                ));
+            }
+        }
     }
+    let mut bytes = Vec::new();
+    io::stdin().read_to_end(&mut bytes)?;
+    if bytes.is_empty() {
+        return Err(CliError::fatal("unable to read header"));
+    }
+    let idx = arks_pack::PackIndex::decode(&bytes, format)
+        .map_err(|_| CliError::fatal("unable to read index"))?;
+    let mut out = String::new();
+    for e in &idx.entries {
+        out.push_str(&format!(
+            "{} {} ({:08x})\n",
+            e.offset,
+            e.oid.to_hex(),
+            e.crc32
+        ));
+    }
+    print!("{out}");
     Ok(())
 }
 
-/// `arks check-attr` — report attributes for paths from `.gitattributes` (subset).
+/// `arks check-attr [--source <tree-ish>] [--cached] [--stdin [-z]] [-a | --all | <attr>...] [--] <pathname>...`
+/// over the gitattributes(5) sources (see `cmd::attr`).
+/// Cite: https://git-scm.com/docs/git-check-attr
 pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
-    // `[-a | --all | <attr>...] [--] <pathname>...` over the gitattributes(5)
-    // sources (see `cmd::attr`). Cite: https://git-scm.com/docs/git-check-attr
     let mut all = false;
+    let mut cached = false;
+    let mut stdin = false;
+    let mut nul = false;
+    let mut source: Option<String> = None;
     let mut before: Vec<&String> = Vec::new();
     let mut after: Option<Vec<&String>> = None;
-    for a in args {
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
         if let Some(v) = after.as_mut() {
             v.push(a);
             continue;
         }
         match a.as_str() {
             "-a" | "--all" => all = true,
+            "--no-all" => all = false,
+            "--cached" => cached = true,
+            "--no-cached" => cached = false,
+            "--stdin" => stdin = true,
+            "--no-stdin" => stdin = false,
+            "-z" => nul = true,
+            "--source" => {
+                source = args.get(i).cloned();
+                i += 1;
+            }
+            "--no-source" => source = None,
             "--" => after = Some(Vec::new()),
-            "--cached" => {}
-            _ if a.starts_with('-') => {
-                return Err(CliError::NotImplemented(format!("unsupported option: {a}")));
+            _ if a.starts_with("--source=") => source = Some(a["--source=".len()..].to_string()),
+            _ if a.starts_with('-') && a.len() > 1 => {
+                return Err(CliError::Exit(
+                    129,
+                    format!(
+                        "error: unknown option `{}'\nusage: git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>...",
+                        a.trim_start_matches('-')
+                    ),
+                ));
             }
             _ => before.push(a),
         }
     }
-    let (attrs, paths): (Vec<&String>, Vec<&String>) = match after {
-        Some(p) => (before, p),
-        None if all => (Vec::new(), before),
-        None if before.len() >= 2 => (vec![before[0]], before[1..].to_vec()),
+    let (attrs, mut paths): (Vec<String>, Vec<String>) = match after {
+        Some(p) => (
+            before.iter().map(|s| s.to_string()).collect(),
+            p.iter().map(|s| s.to_string()).collect(),
+        ),
+        None if all || stdin => (
+            if all {
+                Vec::new()
+            } else {
+                before.iter().map(|s| s.to_string()).collect()
+            },
+            if all {
+                before.iter().map(|s| s.to_string()).collect()
+            } else {
+                Vec::new()
+            },
+        ),
+        None if before.len() >= 2 => (
+            vec![before[0].to_string()],
+            before[1..].iter().map(|s| s.to_string()).collect(),
+        ),
         None => {
             return Err(CliError::Exit(129, "error: No attribute specified".into()));
         }
     };
-    if paths.is_empty() {
-        return Err(CliError::fatal("No file specified"));
+    if all && !attrs.is_empty() {
+        return Err(CliError::Exit(
+            129,
+            "error: Attributes and --all both specified".into(),
+        ));
+    }
+    if stdin {
+        if !paths.is_empty() {
+            return Err(CliError::Exit(
+                129,
+                "error: Can't specify files with --stdin".into(),
+            ));
+        }
+        let mut input = Vec::new();
+        io::stdin().read_to_end(&mut input)?;
+        let sep = if nul { b'\0' } else { b'\n' };
+        paths = input
+            .split(|b| *b == sep)
+            .filter(|p| !p.is_empty())
+            .map(|p| String::from_utf8_lossy(p).into_owned())
+            .collect();
+    } else if paths.is_empty() {
+        return Err(CliError::Exit(129, "error: No file specified".into()));
     }
     let repo = open_repo()?;
     let work = work_tree(&repo)?;
-    for path in paths {
+    // `--source` / `--cached`: materialize the .gitattributes files of that
+    // tree (or the index) into a scratch tree and read rules from there.
+    let scratch = match (&source, cached) {
+        (Some(rev), _) => {
+            let oid = resolve_rev(&repo, rev)
+                .map_err(|_| CliError::fatal(format!("bad --source or --cached: {rev}")))?;
+            let files = crate::cmd::switch_tree::commit_files(&repo, &oid)
+                .map_err(|_| CliError::fatal(format!("{rev}: not a tree-ish")))?;
+            Some(attr_scratch(
+                &repo,
+                files
+                    .iter()
+                    .filter(|(p, _)| p.ends_with(".gitattributes"))
+                    .map(|(p, f)| (p.clone(), f.oid))
+                    .collect(),
+            )?)
+        }
+        (None, true) => {
+            let index = crate::util::read_index(&repo)?;
+            Some(attr_scratch(
+                &repo,
+                index
+                    .entries
+                    .iter()
+                    .filter(|e| e.stage() == 0 && e.path.ends_with(".gitattributes"))
+                    .map(|e| (e.path.clone(), e.oid))
+                    .collect(),
+            )?)
+        }
+        _ => None,
+    };
+    let base = scratch
+        .as_ref()
+        .map(|t| t.path().to_path_buf())
+        .unwrap_or_else(|| work.clone());
+    let mut out = Vec::new();
+    for path in &paths {
         let rel = crate::util::rel_path_from_worktree(&work, Path::new(path))
             .unwrap_or_else(|_| path.to_string());
-        let rules = crate::cmd::attr::Attributes::load(&work, repo.git_dir(), &rel);
+        let rules = crate::cmd::attr::Attributes::load(&base, repo.git_dir(), &rel);
         let found = rules.for_path(&rel);
+        let mut emit = |k: &str, v: &str| {
+            if nul {
+                out.extend_from_slice(format!("{path}\0{k}\0{v}\0").as_bytes());
+            } else {
+                out.extend_from_slice(format!("{path}: {k}: {v}\n").as_bytes());
+            }
+        };
         if all {
             for k in rules.order() {
                 match found.get(k) {
                     Some(v) if *v != crate::cmd::attr::AttrValue::Unspecified => {
-                        println!("{path}: {k}: {}", v.display());
+                        emit(k, v.display());
                     }
                     _ => {}
                 }
@@ -721,67 +1127,132 @@ pub fn cmd_check_attr(args: &[String]) -> CliResult<()> {
                     .get(a.as_str())
                     .map(|v| v.display())
                     .unwrap_or("unspecified");
-                println!("{path}: {a}: {v}");
+                emit(a, v);
             }
         }
     }
+    io::Write::write_all(&mut io::stdout(), &out)?;
     Ok(())
 }
 
 /// `arks merge-file` — three-way line merge of `<base> <ours> <theirs>` files.
 pub fn cmd_merge_file(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-p", "--stdout", "-q", "--quiet"])?;
-    let to_stdout = args.iter().any(|a| a == "-p" || a == "--stdout");
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
-    if positional.len() != 3 {
-        return Err(CliError::Usage(
-            "merge-file [-p] <current> <base> <other>".into(),
-        ));
+    use crate::cmd::optparse::{self, Item, Opt};
+    use crate::cmd::plumbing_ext::{MergeFavor, MergeStyle};
+    const SPEC: &[Opt] = &[
+        Opt::flag("stdout").with_short('p'),
+        Opt::flag("object-id"),
+        Opt::flag("diff3"),
+        Opt::flag("zdiff3"),
+        Opt::flag("ours"),
+        Opt::flag("theirs"),
+        Opt::flag("union"),
+        Opt::value("marker-size"),
+        Opt::flag("quiet").with_short('q'),
+        Opt::short_value('L', "L"),
+    ];
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>".into(),
+        )
+    };
+    let items = optparse::parse("merge-file", args, SPEC, optparse::Mode::default())?;
+    let mut style = MergeStyle::Merge;
+    let mut favor = MergeFavor::None;
+    let mut labels: Vec<String> = Vec::new();
+    for it in &items {
+        if let Item::Opt { name, value, neg } = it {
+            match (*name, *neg) {
+                ("diff3", false) => style = MergeStyle::Diff3,
+                ("zdiff3", false) => style = MergeStyle::Zdiff3,
+                ("diff3" | "zdiff3", true) => style = MergeStyle::Merge,
+                ("ours", false) => favor = MergeFavor::Ours,
+                ("theirs", false) => favor = MergeFavor::Theirs,
+                ("union", false) => favor = MergeFavor::Union,
+                ("ours" | "theirs" | "union", true) => favor = MergeFavor::None,
+                ("L", _) => {
+                    if labels.len() == 3 {
+                        return Err(CliError::Exit(
+                            129,
+                            "error: too many labels on the command line".into(),
+                        ));
+                    }
+                    labels.push(value.clone().unwrap_or_default());
+                }
+                _ => {}
+            }
+        }
     }
-    let ours = fs::read_to_string(positional[0].as_str())?;
-    let base = fs::read_to_string(positional[1].as_str())?;
-    let theirs = fs::read_to_string(positional[2].as_str())?;
-    let (merged, conflicts) = merge_lines(&base, &ours, &theirs);
+    let to_stdout = optparse::on(&items, "stdout");
+    let object_id = optparse::on(&items, "object-id");
+    let marker = match optparse::value(&items, "marker-size") {
+        Some(v) => v.parse::<usize>().map_err(|_| {
+            CliError::Exit(
+                129,
+                "error: option `marker-size' expects a numerical value".into(),
+            )
+        })?,
+        None => 7,
+    };
+    let names = optparse::positionals(&items);
+    if names.len() != 3 {
+        return Err(usage());
+    }
+    let mut repo = if object_id { Some(open_repo()?) } else { None };
+    let mut data: Vec<Vec<u8>> = Vec::new();
+    for n in &names {
+        match repo.as_ref() {
+            Some(r) => {
+                let oid = resolve_rev(r, n)
+                    .map_err(|_| CliError::fatal(format!("object '{n}' does not exist")))?;
+                data.push(r.get_object(&oid)?.payload.to_vec());
+            }
+            None => match fs::read(n) {
+                Ok(b) => data.push(b),
+                Err(e) => {
+                    return Err(CliError::Exit(
+                        255,
+                        format!(
+                            "error: Could not stat {n}: {}",
+                            if e.kind() == io::ErrorKind::NotFound {
+                                "No such file or directory".to_string()
+                            } else {
+                                e.to_string()
+                            }
+                        ),
+                    ));
+                }
+            },
+        }
+    }
+    let label = |i: usize| labels.get(i).cloned().unwrap_or_else(|| names[i].clone());
+    let (l0, l1, l2) = (label(0), label(1), label(2));
+    let (merged, conflicts) = crate::cmd::plumbing_ext::merge_three(
+        &data[1],
+        &data[0],
+        &data[2],
+        [&l0, &l1, &l2],
+        style,
+        favor,
+        marker,
+    );
     if to_stdout {
-        print!("{merged}");
+        use std::io::Write;
+        io::stdout().write_all(&merged)?;
+    } else if let Some(r) = repo.as_mut() {
+        let format = r.object_format();
+        let oid = r
+            .store_mut()
+            .put(format, &RawObject::new(ObjectKind::Blob, merged))?;
+        println!("{}", oid.to_hex());
     } else {
-        fs::write(positional[0].as_str(), &merged)?;
+        fs::write(&names[0], &merged)?;
     }
     if conflicts > 0 {
-        if !quiet {
-            eprintln!("{conflicts} conflict(s) during merge-file");
-        }
-        return Err(CliError::Msg(format!("merge-file: {conflicts} conflicts")));
+        return Err(CliError::silent(conflicts.min(127) as u8));
     }
     Ok(())
-}
-
-fn merge_lines(base: &str, ours: &str, theirs: &str) -> (String, usize) {
-    // Minimal LCS-free three-way: if ours==theirs take that; if equals base take other;
-    // else conflict markers. Line-granular whole-file when any side differs.
-    if ours == theirs {
-        return (ours.to_string(), 0);
-    }
-    if ours == base {
-        return (theirs.to_string(), 0);
-    }
-    if theirs == base {
-        return (ours.to_string(), 0);
-    }
-    let mut out = String::new();
-    out.push_str("<<<<<<< ours\n");
-    out.push_str(ours);
-    if !ours.ends_with('\n') {
-        out.push('\n');
-    }
-    out.push_str("=======\n");
-    out.push_str(theirs);
-    if !theirs.ends_with('\n') {
-        out.push('\n');
-    }
-    out.push_str(">>>>>>> theirs\n");
-    (out, 1)
 }
 
 /// `arks merge-tree [--write-tree] [--merge-base=<c>] <branch1> <branch2>` and the
@@ -862,113 +1333,242 @@ pub fn cmd_merge_tree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks hook run <name>` — run a sync hook from `$GIT_DIR/hooks` (subset).
+/// `arks hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]`.
+/// Cite: https://git-scm.com/docs/git-hook
 pub fn cmd_hook(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let sub = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage("hook run <hook-name>".into()))?;
-    match sub {
-        "run" => {
-            let name = args
-                .get(1)
-                .ok_or_else(|| CliError::Usage("hook run <hook-name>".into()))?;
-            let repo = open_repo()?;
-            crate::cmd::hooks::run_sync_hooks(&repo, false, &[name.as_str()], None)
-        }
-        "list" => {
-            let repo = open_repo()?;
-            let dir = repo.git_dir().join("hooks");
-            if let Ok(rd) = fs::read_dir(dir) {
-                for e in rd.flatten() {
-                    let n = e.file_name().to_string_lossy().to_string();
-                    if n.ends_with(".sample") {
-                        continue;
-                    }
-                    println!("{n}");
-                }
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]"
+                .into(),
+        )
+    };
+    let Some(sub) = args.first() else {
+        return Err(usage());
+    };
+    if sub != "run" {
+        return Err(CliError::Exit(
+            129,
+            format!(
+                "error: unknown subcommand: `{sub}'\nusage: git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]"
+            ),
+        ));
+    }
+    let mut ignore_missing = false;
+    let mut to_stdin: Option<String> = None;
+    let mut name: Option<String> = None;
+    let mut hook_args: Vec<String> = Vec::new();
+    let mut i = 1;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        if name.is_some() {
+            if a == "--" && hook_args.is_empty() {
+                hook_args.extend(args[i..].iter().cloned());
+                break;
             }
-            Ok(())
+            return Err(usage());
         }
-        other => Err(CliError::NotImplemented(format!(
-            "hook '{other}' not claimed (run|list subset)"
-        ))),
+        match a.as_str() {
+            "--ignore-missing" => ignore_missing = true,
+            "--no-ignore-missing" => ignore_missing = false,
+            "--to-stdin" => {
+                to_stdin = args.get(i).cloned();
+                i += 1;
+            }
+            "--no-to-stdin" => to_stdin = None,
+            _ if a.starts_with("--to-stdin=") => {
+                to_stdin = Some(a["--to-stdin=".len()..].to_string())
+            }
+            _ if a.starts_with('-') => return Err(usage()),
+            _ => name = Some(a.clone()),
+        }
+    }
+    let name = name.ok_or_else(usage)?;
+    let repo = open_repo()?;
+    let path = repo.git_dir().join("hooks").join(&name);
+    let runnable = path.is_file() && {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::metadata(&path)
+                .map(|m| m.permissions().mode() & 0o111 != 0)
+                .unwrap_or(false)
+        }
+        #[cfg(not(unix))]
+        {
+            true
+        }
+    };
+    if !runnable {
+        if ignore_missing {
+            return Ok(());
+        }
+        return Err(CliError::Exit(
+            1,
+            format!("error: cannot find a hook named {name}"),
+        ));
+    }
+    let mut cmd = std::process::Command::new(&path);
+    cmd.args(&hook_args).env("GIT_DIR", repo.git_dir());
+    if let Ok(wt) = work_tree(&repo) {
+        cmd.current_dir(wt);
+    }
+    match &to_stdin {
+        Some(p) => {
+            cmd.stdin(fs::File::open(p).map_err(|e| CliError::fatal(format!("{p}: {e}")))?);
+        }
+        None => {
+            cmd.stdin(std::process::Stdio::null());
+        }
+    }
+    // Hook stdout goes to stderr like run_hooks_opt (stdout_to_stderr).
+    let out = cmd
+        .stdout(std::process::Stdio::piped())
+        .output()
+        .map_err(|e| CliError::fatal(format!("cannot exec '{}': {e}", path.display())))?;
+    io::Write::write_all(&mut io::stderr(), &out.stdout)?;
+    match out.status.code() {
+        Some(0) => Ok(()),
+        Some(c) => Err(CliError::silent(c.clamp(1, 255) as u8)),
+        None => Err(CliError::silent(1)),
     }
 }
 
-/// `arks unpack-objects` — explode a pack from stdin into loose objects.
+/// `arks unpack-objects [-n] [-q] [-r] [--strict] [--max-input-size=<n>]` —
+/// explode a pack from stdin into loose objects.
+/// Cite: https://git-scm.com/docs/git-unpack-objects
 pub fn cmd_unpack_objects(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-q", "--quiet", "-n", "--dry-run"])?;
-    let quiet = args.iter().any(|a| a == "-q" || a == "--quiet");
-    let dry = args.iter().any(|a| a == "-n" || a == "--dry-run");
+    let mut dry = false;
+    let mut max: Option<u64> = None;
+    for a in args {
+        match a.as_str() {
+            "-n" => dry = true,
+            "-q" | "-r" | "--strict" => {}
+            _ if a.starts_with("--strict=") || a.starts_with("--pack_header=") => {}
+            _ if a.starts_with("--max-input-size=") => {
+                max = a["--max-input-size=".len()..].parse().ok();
+            }
+            _ => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git unpack-objects [-n] [-q] [-r] [--strict]".into(),
+                ));
+            }
+        }
+    }
     let mut buf = Vec::new();
     io::stdin().read_to_end(&mut buf)?;
+    if let Some(m) = max {
+        if m > 0 && buf.len() as u64 > m {
+            return Err(CliError::fatal("pack exceeds maximum allowed size"));
+        }
+    }
     let mut repo = open_repo()?;
     let format = repo.object_format();
-    let decoded = arks_pack::DecodedPack::decode(&buf, format)?;
-    let mut n = 0u64;
-    for obj in &decoded.objects {
-        if !dry {
-            let _ = repo.store_mut().put(format, &obj.object)?;
+    let decoded = arks_pack::DecodedPack::decode(&buf, format)
+        .map_err(|e| CliError::fatal(format!("{e}")))?;
+    if !dry {
+        for obj in &decoded.objects {
+            if !repo.store().exists(&obj.oid).unwrap_or(false) {
+                repo.store_mut().put(format, &obj.object)?;
+            }
         }
-        n += 1;
-    }
-    if !quiet {
-        eprintln!("Unpacked {n} object(s)");
     }
     Ok(())
 }
 
-/// `arks verify-pack [-v] <pack>` — validate pack + companion idx when present.
+/// `arks verify-pack [-v | --verbose] [-s | --stat-only] [--object-format=<hash>] <pack>.idx...`
+/// Cite: https://git-scm.com/docs/git-verify-pack
 pub fn cmd_verify_pack(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-v", "--verbose", "-s", "--stat-only"])?;
-    let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
-    let pack_path = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("verify-pack [-v] <pack>".into()))?;
-    let bytes = fs::read(pack_path)?;
-    let format = open_repo()
+    let mut verbose = false;
+    let mut stat_only = false;
+    let mut format = open_repo()
         .map(|r| r.object_format())
         .unwrap_or(arks_store::ObjectFormat::Sha1);
-    let decoded = arks_pack::DecodedPack::decode(&bytes, format)?;
-    let idx_path = {
-        let p = Path::new(pack_path);
-        if let Some(stem) = p.file_stem() {
-            p.with_file_name(format!("{}.idx", stem.to_string_lossy()))
-        } else {
-            Path::new(&format!("{pack_path}.idx")).to_path_buf()
-        }
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx...".into(),
+        )
     };
-    // pack-*.pack → pack-*.idx
-    let idx_path = if pack_path.ends_with(".pack") {
-        Path::new(&pack_path.replace(".pack", ".idx")).to_path_buf()
-    } else {
-        idx_path
-    };
-    if idx_path.is_file() {
-        let idx_bytes = fs::read(&idx_path)?;
-        let idx = arks_pack::PackIndex::decode(&idx_bytes, format)?;
-        if idx.entries.len() != decoded.objects.len() {
-            return Err(CliError::Msg(format!(
-                "verify-pack: idx count {} != pack objects {}",
-                idx.entries.len(),
-                decoded.objects.len()
-            )));
+    let mut packs: Vec<&String> = Vec::new();
+    let mut dashdash = false;
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        if dashdash {
+            packs.push(a);
+            continue;
         }
-        if verbose {
-            for e in &idx.entries {
-                println!("{}\t{}", e.oid.to_hex(), e.offset);
+        if a == "--object-format" {
+            format = match it.next().map(String::as_str) {
+                Some("sha1") => arks_store::ObjectFormat::Sha1,
+                Some("sha256") => arks_store::ObjectFormat::Sha256,
+                _ => return Err(usage()),
+            };
+            continue;
+        }
+        match a.as_str() {
+            "-v" | "--verbose" => verbose = true,
+            "--no-verbose" => verbose = false,
+            "-s" | "--stat-only" => stat_only = true,
+            "--no-stat-only" => stat_only = false,
+            "-vs" | "-sv" => {
+                verbose = true;
+                stat_only = true;
+            }
+            "--" => dashdash = true,
+            "--object-format=sha256" => format = arks_store::ObjectFormat::Sha256,
+            "--object-format=sha1" | "--no-object-format" => {
+                if a != "--no-object-format" {
+                    format = arks_store::ObjectFormat::Sha1;
+                }
+            }
+            _ if a.starts_with('-') => return Err(usage()),
+            _ => packs.push(a),
+        }
+    }
+    if packs.is_empty() {
+        return Err(usage());
+    }
+    let mut failed = false;
+    let mut out = String::new();
+    for p in packs {
+        let base = p
+            .strip_suffix(".idx")
+            .or_else(|| p.strip_suffix(".pack"))
+            .unwrap_or(p);
+        let pack_path = format!("{base}.pack");
+        let idx_path = format!("{base}.idx");
+        let res = crate::cmd::plumbing_ext::verify_one_pack(
+            Path::new(&pack_path),
+            Path::new(&idx_path),
+            format,
+            verbose,
+            stat_only,
+        );
+        match res {
+            Ok(text) => {
+                out.push_str(&text);
+                if verbose && !stat_only {
+                    out.push_str(&format!("{pack_path}: ok\n"));
+                }
+            }
+            Err(e) => {
+                print!("{out}");
+                out.clear();
+                eprintln!("error: {e}");
+                if verbose {
+                    println!("{pack_path}: bad");
+                }
+                failed = true;
             }
         }
-    } else if verbose {
-        eprintln!(
-            "note: no idx beside pack; pack decode ok ({} objects)",
-            decoded.objects.len()
-        );
     }
-    println!("ok: {} object(s) in {}", decoded.objects.len(), pack_path);
+    print!("{out}");
+    if failed {
+        return Err(CliError::silent(1));
+    }
     Ok(())
 }
 
@@ -1005,220 +1605,325 @@ pub fn cmd_show_branch(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks check-mailmap` — map identities via `.mailmap` (subset).
+/// `arks check-mailmap [--stdin] <contact>...` — map `Name <email>` through
+/// `.mailmap`, `mailmap.file` and `mailmap.blob`.
+/// Cite: https://git-scm.com/docs/git-check-mailmap, gitmailmap(5)
 pub fn cmd_check_mailmap(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    if args.is_empty() {
-        return Err(CliError::Usage("check-mailmap <identity>…".into()));
+    let mut stdin = false;
+    let mut contacts: Vec<&String> = Vec::new();
+    for a in args {
+        match a.as_str() {
+            "--stdin" => stdin = true,
+            "--no-stdin" => stdin = false,
+            _ if a.starts_with('-') => {
+                return Err(CliError::Exit(
+                    129,
+                    "usage: git check-mailmap [<options>] <contact>...".into(),
+                ));
+            }
+            _ => contacts.push(a),
+        }
+    }
+    if contacts.is_empty() && !stdin {
+        return Err(CliError::fatal("no contacts specified"));
     }
     let repo = open_repo()?;
-    let work = work_tree(&repo).unwrap_or_else(|_| repo.git_dir().to_path_buf());
-    let map = load_mailmap(&work.join(".mailmap"))?;
-    for id in args {
-        println!("{}", map_identity(&map, id));
+    let map = crate::cmd::plumbing_ext::Mailmap::load(&repo);
+    let mut out = String::new();
+    for c in contacts {
+        out.push_str(&map.check(c)?);
+        out.push('\n');
+    }
+    print!("{out}");
+    if stdin {
+        let mut input = String::new();
+        io::stdin().read_to_string(&mut input)?;
+        let mut o = io::stdout().lock();
+        for line in input.lines() {
+            let mapped = map.check(line)?;
+            io::Write::write_all(&mut o, format!("{mapped}\n").as_bytes())?;
+            io::Write::flush(&mut o)?;
+        }
     }
     Ok(())
 }
 
-fn load_mailmap(path: &Path) -> CliResult<Vec<(String, String)>> {
-    let text = match fs::read_to_string(path) {
-        Ok(t) => t,
-        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(e) => return Err(CliError::Msg(e.to_string())),
+/// `arks column [--command=<name>] [--mode=<mode>] [--raw-mode=<n>] [--width=<w>]
+/// [--indent=<s>] [--nl=<s>] [--padding=<n>]` — lay out stdin lines in columns.
+/// Cite: https://git-scm.com/docs/git-column, git-config `column.ui`
+pub fn cmd_column(args: &[String]) -> CliResult<()> {
+    let mut opts = crate::cmd::plumbing_ext::ColumnOpts::default();
+    let mut command: Option<String> = None;
+    let mut mode_specs: Vec<String> = Vec::new();
+    let mut raw_mode: Option<u32> = None;
+    let mut i = 0;
+    let usage = |m: &str| CliError::Exit(129, format!("error: {m}\nusage: git column [<options>]"));
+    let value = |i: &mut usize, a: &str, name: &str| -> CliResult<Option<String>> {
+        if let Some(v) = a.strip_prefix(&format!("--{name}=")) {
+            return Ok(Some(v.to_string()));
+        }
+        if a == format!("--{name}") {
+            let v = args.get(*i).cloned().ok_or_else(|| {
+                CliError::Exit(129, format!("error: option `{name}' requires a value"))
+            })?;
+            *i += 1;
+            return Ok(Some(v));
+        }
+        Ok(None)
     };
-    let mut out = Vec::new();
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
+    while i < args.len() {
+        let a = args[i].clone();
+        i += 1;
+        if a == "--mode" {
+            mode_specs.push("column".into());
             continue;
         }
-        // Proper Name <proper@email> Commit Name <commit@email>
-        // or Proper Name <proper@email>
-        if let Some((left, right)) = line.split_once('>') {
-            let proper = format!("{left}>").trim().to_string();
-            let rest = right.trim();
-            if rest.is_empty() {
-                out.push((proper.clone(), proper));
-            } else if let Some((cn, _)) = rest.split_once('<') {
-                let _ = cn;
-                let commit = rest.trim().to_string();
-                // Prefer matching on email in commit side.
-                out.push((commit, proper));
+        if let Some(v) = a.strip_prefix("--mode=") {
+            mode_specs.push(v.to_string());
+            continue;
+        }
+        if a == "--no-mode" {
+            mode_specs.clear();
+            raw_mode = Some(0);
+            continue;
+        }
+        let at = i - 1;
+        if let Some(v) = value(&mut i, &a, "command")? {
+            if at != 0 {
+                return Err(CliError::fatal("--command must be the first argument"));
+            }
+            command = Some(v);
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "raw-mode")? {
+            raw_mode = Some(
+                v.parse()
+                    .map_err(|_| usage("option `raw-mode' expects a numerical value"))?,
+            );
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "width")? {
+            opts.width = Some(
+                v.parse()
+                    .map_err(|_| usage("option `width' expects a numerical value"))?,
+            );
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "indent")? {
+            opts.indent = v;
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "nl")? {
+            opts.nl = Some(v);
+            continue;
+        }
+        if let Some(v) = value(&mut i, &a, "padding")? {
+            opts.padding = v
+                .parse()
+                .map_err(|_| usage("option `padding' expects a numerical value"))?;
+            continue;
+        }
+        match a.as_str() {
+            "--no-command" => command = None,
+            "--no-raw-mode" => raw_mode = None,
+            "--no-width" => opts.width = None,
+            "--no-indent" => opts.indent.clear(),
+            "--no-nl" => opts.nl = None,
+            "--no-padding" => opts.padding = 1,
+            _ => {
+                if a.starts_with('-') {
+                    return Err(CliError::Exit(
+                        129,
+                        format!(
+                            "error: unknown option `{}'\nusage: git column [<options>]",
+                            a.trim_start_matches('-')
+                        ),
+                    ));
+                }
+                return Err(CliError::Exit(129, "usage: git column [<options>]".into()));
             }
         }
     }
-    Ok(out)
-}
-
-fn map_identity(map: &[(String, String)], id: &str) -> String {
-    let id_l = id.to_ascii_lowercase();
-    for (from, to) in map {
-        if id == from || id_l.contains(&email_of(from).to_ascii_lowercase()) {
-            return to.clone();
+    let mut layout = crate::cmd::plumbing_ext::ColumnLayout::default();
+    if let Some(cmd) = &command {
+        let cwd = crate::util::cwd()?;
+        let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+        for key in ["column.ui".to_string(), format!("column.{cmd}")] {
+            if let Some(v) = cfg.get(&key) {
+                layout.apply(&v).map_err(|bad| {
+                    CliError::Exit(129, format!("error: invalid column.{cmd} mode {bad}"))
+                })?;
+            }
         }
     }
-    id.to_string()
-}
-
-fn email_of(id: &str) -> String {
-    if let (Some(a), Some(b)) = (id.find('<'), id.find('>')) {
-        if b > a {
-            return id[a + 1..b].to_string();
-        }
+    for spec in &mode_specs {
+        layout
+            .apply(spec)
+            .map_err(|bad| CliError::Exit(129, format!("error: unsupported option '{bad}'")))?;
     }
-    id.to_string()
+    if let Some(r) = raw_mode {
+        layout = crate::cmd::plumbing_ext::ColumnLayout::from_raw(r);
+    }
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input)?;
+    let items: Vec<&str> = input.lines().collect();
+    print!(
+        "{}",
+        crate::cmd::plumbing_ext::render_columns(&items, &layout, &opts)
+    );
+    Ok(())
 }
 
-/// `arks column` — simple columnar layout of stdin lines (subset).
-pub fn cmd_column(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--mode", "--width", "--padding"])?;
-    let mut cols = 2usize;
+/// `arks for-each-repo --config=<key> [--] <arguments>` — run the command in
+/// every repository listed under the multi-valued config `<key>`.
+/// Cite: https://git-scm.com/docs/git-for-each-repo
+pub fn cmd_for_each_repo(args: &[String]) -> CliResult<()> {
+    let mut key: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "--mode" {
+        let a = &args[i];
+        if let Some(v) = a.strip_prefix("--config=") {
+            key = Some(v.to_string());
+        } else if a == "--config" {
             i += 1;
-            // ignore mode token (plain|dense|…)
-        } else if let Some(rest) = args[i].strip_prefix("--mode=") {
-            let _ = rest;
-        } else if args[i] == "--width" {
+            key = args.get(i).cloned();
+        } else if a == "--no-config" {
+            key = None;
+        } else if a == "--" {
             i += 1;
-        } else if args[i].starts_with("--width=") {
-        } else if args[i] == "--padding" {
-            i += 1;
-            if let Some(p) = args.get(i) {
-                let _ = p;
-            }
-        } else if !args[i].starts_with('-') {
-            if let Ok(n) = args[i].parse::<usize>() {
-                cols = n.max(1);
-            }
+            break;
+        } else if a.starts_with('-') {
+            return Err(CliError::Exit(
+                129,
+                format!(
+                    "error: unknown option `{}'\nusage: git for-each-repo --config=<config> [--] <arguments>",
+                    a.trim_start_matches('-')
+                ),
+            ));
+        } else {
+            break;
         }
         i += 1;
     }
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    let lines: Vec<&str> = buf.lines().filter(|l| !l.is_empty()).collect();
-    if lines.is_empty() {
-        return Ok(());
-    }
-    let width = lines.iter().map(|l| l.len()).max().unwrap_or(0) + 2;
-    for chunk in lines.chunks(cols) {
-        let mut row = String::new();
-        for (i, cell) in chunk.iter().enumerate() {
-            if i + 1 == chunk.len() {
-                row.push_str(cell);
-            } else {
-                row.push_str(&format!("{cell:<width$}"));
-            }
-        }
-        println!("{row}");
-    }
-    Ok(())
-}
-
-/// `arks for-each-repo -- <cmd>…` — run arks subcommand in each configured repo (subset).
-pub fn cmd_for_each_repo(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-c", "--config"])?;
-    let dash = args.iter().position(|a| a == "--");
-    let (cfg_key, cmd_args) = if let Some(i) = dash {
-        let key = args[..i]
-            .iter()
-            .find(|a| !a.starts_with('-'))
-            .map(|s| s.as_str())
-            .unwrap_or("arks.repo");
-        (key, &args[i + 1..])
-    } else {
-        return Err(CliError::Usage(
-            "for-each-repo [--] <arks-subcommand>… (needs --)".into(),
-        ));
-    };
-    if cmd_args.is_empty() {
-        return Err(CliError::Usage("for-each-repo -- <cmd>…".into()));
-    }
-    // Discover paths from env ARKS_FOR_EACH_REPOS (pathsep-separated) — no git config multi-value depth yet.
-    let paths = if let Ok(v) = std::env::var("ARKS_FOR_EACH_REPOS") {
-        #[cfg(windows)]
-        let sep = ';';
-        #[cfg(not(windows))]
-        let sep = ':';
-        v.split(sep)
-            .map(|s| s.to_string())
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>()
-    } else {
-        let _ = cfg_key;
-        return Err(CliError::NotImplemented(
-            "for-each-repo: set ARKS_FOR_EACH_REPOS to a path list (config multi-value not claimed)"
-                .into(),
-        ));
-    };
+    let key = key.ok_or_else(|| CliError::fatal("missing --config=<config>"))?;
+    let cmd_args = &args[i.min(args.len())..];
+    let cwd = crate::util::cwd()?;
+    let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+    let paths = cfg.get_all(&key);
     let exe = std::env::current_exe().map_err(|e| CliError::Msg(e.to_string()))?;
     for p in paths {
-        println!("Entering '{p}'");
+        let dir = crate::cmd::plumbing_ext::expand_home(&p);
         let status = std::process::Command::new(&exe)
+            .arg("-C")
+            .arg(&dir)
             .args(cmd_args)
-            .current_dir(&p)
             .status()
             .map_err(|e| CliError::Msg(e.to_string()))?;
         if !status.success() {
-            return Err(CliError::Msg(format!(
-                "for-each-repo: {p}: exit {}",
-                status.code().unwrap_or(-1)
-            )));
+            // The first failing repository's status ends the loop.
+            return Err(CliError::silent(
+                status.code().unwrap_or(1).clamp(1, 255) as u8
+            ));
         }
     }
     Ok(())
 }
 
-/// `arks fmt-merge-msg` — synthesize a merge message from stdin MERGE_HEAD lines (subset).
+/// `arks fmt-merge-msg [-m <message>] [--into-name <branch>] [--log[=<n>] | --no-log] [-F <file>]`
+/// — FETCH_HEAD-style input → merge commit message.
+/// Cite: https://git-scm.com/docs/git-fmt-merge-msg
 pub fn cmd_fmt_merge_msg(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-m", "--message", "--log"])?;
-    let mut message = None;
+    let mut message: Option<String> = None;
+    let mut into: Option<String> = None;
+    let mut log: Option<usize> = None;
+    let mut log_set = false;
+    let mut file: Option<String> = None;
     let mut i = 0;
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
+                .into(),
+        )
+    };
     while i < args.len() {
-        if args[i] == "-m" || args[i] == "--message" {
-            i += 1;
-            message = args.get(i).cloned();
-        } else if let Some(rest) = args[i].strip_prefix("--message=") {
-            message = Some(rest.to_string());
-        }
+        let a = args[i].as_str();
         i += 1;
-    }
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    if let Some(m) = message {
-        println!("{m}");
-        return Ok(());
-    }
-    let mut branches = Vec::new();
-    for line in buf.lines() {
-        let t = line.trim();
-        if t.is_empty() {
-            continue;
-        }
-        // Accept "branch 'x' of url" or raw ref names.
-        if let Some(rest) = t.strip_prefix('\'') {
-            if let Some(end) = rest.find('\'') {
-                branches.push(rest[..end].to_string());
-                continue;
+        let take = |name: &str| -> CliResult<Option<String>> {
+            if let Some(v) = a.strip_prefix(&format!("--{name}=")) {
+                return Ok(Some(v.to_string()));
+            }
+            Ok(None)
+        };
+        if let Some(v) = take("message")? {
+            message = Some(v);
+        } else if let Some(v) = take("into-name")? {
+            into = Some(v);
+        } else if let Some(v) = take("file")? {
+            file = Some(v);
+        } else if let Some(v) = take("log")? {
+            log = Some(v.parse().map_err(|_| usage())?);
+            log_set = true;
+        } else {
+            match a {
+                "-m" | "--message" => {
+                    message = Some(args.get(i).cloned().ok_or_else(usage)?);
+                    i += 1;
+                }
+                "--no-message" => message = None,
+                "--into-name" => {
+                    into = Some(args.get(i).cloned().ok_or_else(usage)?);
+                    i += 1;
+                }
+                "--no-into-name" => into = None,
+                "-F" | "--file" => {
+                    file = Some(args.get(i).cloned().ok_or_else(usage)?);
+                    i += 1;
+                }
+                "--no-file" => file = None,
+                "--log" | "--summary" => {
+                    log = Some(20);
+                    log_set = true;
+                }
+                "--no-log" | "--no-summary" => {
+                    log = None;
+                    log_set = true;
+                }
+                _ if a.starts_with("-m") && a.len() > 2 => message = Some(a[2..].to_string()),
+                _ if a.starts_with("-F") && a.len() > 2 => file = Some(a[2..].to_string()),
+                _ => return Err(usage()),
             }
         }
-        branches.push(t.to_string());
     }
-    if branches.is_empty() {
-        println!("Merge");
-    } else if branches.len() == 1 {
-        println!("Merge branch '{}'", branches[0]);
-    } else {
-        println!(
-            "Merge branches {}",
-            branches
-                .iter()
-                .map(|b| format!("'{b}'"))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
+    let input = match &file {
+        Some(f) if f != "-" => fs::read_to_string(f)
+            .map_err(|e| CliError::fatal(format!("could not open '{f}' for reading: {e}")))?,
+        _ => {
+            let mut s = String::new();
+            io::stdin().read_to_string(&mut s)?;
+            s
+        }
+    };
+    let repo = open_repo()?;
+    if !log_set {
+        let cwd = crate::util::cwd()?;
+        let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+        if let Some(v) = cfg.get("merge.log") {
+            log = match v.parse::<usize>() {
+                Ok(0) => None,
+                Ok(n) => Some(n),
+                Err(_) => arks_config::parse_bool(&v).unwrap_or(false).then_some(20),
+            };
+        }
     }
+    let text = crate::cmd::plumbing_ext::fmt_merge_msg(
+        &repo,
+        &input,
+        message.as_deref(),
+        into.as_deref(),
+        log,
+    )?;
+    print!("{text}");
     Ok(())
 }
 
@@ -1450,108 +2155,142 @@ pub fn cmd_mailsplit(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks get-tar-commit-id` — read commit oid from `arks archive`/`git archive` tar (subset).
+/// `arks get-tar-commit-id` — print the commit id stored in a `git archive`
+/// tar's pax global header (`comment=`); exit 1 when absent.
+/// Cite: https://git-scm.com/docs/git-get-tar-commit-id
 pub fn cmd_get_tar_commit_id(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let mut buf = Vec::new();
-    io::stdin().read_to_end(&mut buf)?;
-    // git archive --prefix embeds pax/global header with `comment=<oid>` or `42 comment=<oid>`.
-    let text = String::from_utf8_lossy(&buf);
-    for token in ["comment=", "42 comment="].iter() {
-        if let Some(idx) = text.find(token) {
-            let rest = &text[idx + token.len()..];
-            let oid: String = rest.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
-            if oid.len() == 40 || oid.len() == 64 {
-                println!("{oid}");
-                return Ok(());
-            }
-        }
+    if !args.is_empty() {
+        return Err(CliError::Exit(129, "usage: git get-tar-commit-id".into()));
     }
-    Err(CliError::Msg(
-        "get-tar-commit-id: no commit comment found in tar stream".into(),
-    ))
+    let mut buf = vec![0u8; 1024];
+    let mut got = 0;
+    let mut stdin = io::stdin().lock();
+    while got < 1024 {
+        let n = stdin.read(&mut buf[got..])?;
+        if n == 0 {
+            break;
+        }
+        got += n;
+    }
+    if got < 1024 {
+        return Err(CliError::fatal(
+            "git get-tar-commit-id: EOF before reading tar header: Success",
+        ));
+    }
+    // Header block: typeflag 'g' at 156, ustar magic at 257; record at 512.
+    if buf[156] != b'g' || &buf[257..262] != b"ustar" {
+        return Err(CliError::silent(1));
+    }
+    let rec = &buf[512..1024];
+    let text = String::from_utf8_lossy(rec);
+    let Some(rest) = text
+        .strip_prefix("52 comment=")
+        .or_else(|| text.strip_prefix("76 comment="))
+    else {
+        return Err(CliError::silent(1));
+    };
+    let oid: String = rest.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
+    if oid.len() != 40 && oid.len() != 64 {
+        return Err(CliError::silent(1));
+    }
+    println!("{oid}");
+    Ok(())
 }
 
-/// `arks unpack-file <blob>` — write blob to temp file; print path (subset).
+/// `arks unpack-file <blob>` — write the blob to `.merge_file_XXXXXX` in the
+/// current directory and print that name. Cite: https://git-scm.com/docs/git-unpack-file
 pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let rev = args
-        .iter()
-        .find(|a| !a.starts_with('-'))
-        .ok_or_else(|| CliError::Usage("unpack-file <blob>".into()))?;
+    let [rev] = args else {
+        return Err(CliError::Exit(129, "usage: git unpack-file <blob>".into()));
+    };
     let repo = open_repo()?;
-    let oid = resolve_rev(&repo, rev)?;
-    let obj = repo.get_object(&oid)?;
+    let oid = resolve_rev(&repo, rev)
+        .map_err(|_| CliError::fatal(format!("Not a valid object name {rev}")))?;
+    let obj = repo
+        .get_object(&oid)
+        .map_err(|_| CliError::fatal(format!("unable to read blob object {}", oid.to_hex())))?;
     if obj.kind != ObjectKind::Blob {
-        return Err(CliError::Msg(format!("unpack-file: {rev} is not a blob")));
+        return Err(CliError::fatal(format!(
+            "unable to read blob object {}",
+            oid.to_hex()
+        )));
     }
-    let path = std::env::temp_dir().join(format!(".merge_file_{}", &oid.to_hex()[..8]));
-    fs::write(&path, &obj.payload)?;
-    println!("{}", path.display());
+    let name = crate::cmd::plumbing_ext::unique_merge_file_name(&crate::util::cwd()?);
+    fs::write(&name, &obj.payload)?;
+    println!(
+        "{}",
+        name.file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    );
     Ok(())
 }
 
-/// `arks bugreport` — print environment / version diagnostics (subset).
+/// `arks bugreport [-o <dir>] [-s <format>] [--diagnose[=<mode>]]` — write a
+/// `git-bugreport-<suffix>.txt` system report (no network, no git spawn).
+/// Cite: https://git-scm.com/docs/git-bugreport
 pub fn cmd_bugreport(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--output-directory", "-s", "--suffix"])?;
-    println!("arks version {}", env!("CARGO_PKG_VERSION"));
-    println!("os={}", std::env::consts::OS);
-    println!("arch={}", std::env::consts::ARCH);
-    if let Ok(cwd) = std::env::current_dir() {
-        println!("cwd={}", cwd.display());
-    }
-    if let Ok(exe) = std::env::current_exe() {
-        println!("exe={}", exe.display());
-    }
-    match open_repo() {
-        Ok(repo) => {
-            println!("git_dir={}", repo.git_dir().display());
-            if let Ok(oid) = repo.head_oid() {
-                println!("HEAD={}", oid.to_hex());
+    let o = crate::cmd::plumbing_ext::ReportOpts::parse(args, "bugreport", true)?;
+    let path = o.target("git-bugreport", "txt")?;
+    let mut text = String::new();
+    text.push_str("Thank you for filling out a Git bug report!\nPlease answer the following questions to help us understand your issue.\n\n");
+    text.push_str("What did you do before the bug happened? (Steps to reproduce your issue)\n\n");
+    text.push_str("What did you expect to happen? (Expected behavior)\n\n");
+    text.push_str("What happened instead? (Actual behavior)\n\n");
+    text.push_str("What's different between what you expected and what actually happened?\n\n");
+    text.push_str("Anything else you want to add:\n\n");
+    text.push_str("Please review the rest of the bug report below.\nYou can delete any lines you don't wish to share.\n\n\n");
+    text.push_str("[System Info]\n");
+    text.push_str(&format!(
+        "arks version:\narks version {}\n",
+        env!("CARGO_PKG_VERSION")
+    ));
+    text.push_str(&format!(
+        "uname: {} {}\n",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    ));
+    text.push_str(&format!(
+        "$SHELL (typically, interactive shell): {}\n\n\n",
+        std::env::var("SHELL").unwrap_or_default()
+    ));
+    text.push_str("[Enabled Hooks]\n");
+    if let Ok(repo) = open_repo() {
+        if let Ok(rd) = fs::read_dir(repo.git_dir().join("hooks")) {
+            let mut names: Vec<String> = rd
+                .flatten()
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .filter(|n| !n.ends_with(".sample"))
+                .collect();
+            names.sort();
+            for n in names {
+                text.push_str(&n);
+                text.push('\n');
             }
         }
-        Err(_) => println!("git_dir=(not a repository)"),
     }
-    println!("note: bugreport subset — no zip bundle; no git/gh spawn");
+    fs::write(&path, text)?;
+    eprintln!("Created new report at '{}'.", path.display());
+    if let Some(mode) = &o.diagnose {
+        let zip = o.target("git-diagnostics", "zip")?;
+        crate::cmd::plumbing_ext::write_diagnostics(&zip, mode)?;
+        eprintln!("Created new diagnostics archive at '{}'.", zip.display());
+    }
     Ok(())
 }
 
-/// `arks diagnose` — collect diagnostic paths for a repo (subset).
+/// `arks diagnose [-o <dir>] [-s <format>] [--mode=stats|all]` — write a
+/// `git-diagnostics-<suffix>.zip` archive of repository diagnostics.
+/// Cite: https://git-scm.com/docs/git-diagnose
 pub fn cmd_diagnose(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--mode", "--output-directory", "--suffix"])?;
-    let repo = open_repo()?;
-    let git = repo.git_dir();
-    println!("arks diagnose (subset)");
-    println!("git_dir={}", git.display());
-    for rel in [
-        "HEAD",
-        "config",
-        "index",
-        "packed-refs",
-        "objects/info/packs",
-        "info/refs",
-    ] {
-        let p = git.join(rel);
-        let st = if p.is_file() {
-            "file"
-        } else if p.is_dir() {
-            "dir"
-        } else {
-            "missing"
-        };
-        println!("{st}\t{}", p.display());
-    }
-    let packs = git.join("objects/pack");
-    if packs.is_dir() {
-        for ent in fs::read_dir(&packs)? {
-            let ent = ent?;
-            let name = ent.file_name().to_string_lossy().into_owned();
-            if name.ends_with(".pack") || name.ends_with(".idx") {
-                println!("pack\t{}", ent.path().display());
-            }
-        }
-    }
-    println!("note: diagnose subset — listing only; no zip; no git/gh spawn");
+    let o = crate::cmd::plumbing_ext::ReportOpts::parse(args, "diagnose", false)?;
+    let zip = o.target("git-diagnostics", "zip")?;
+    let mode = o.diagnose.clone().unwrap_or_else(|| "stats".into());
+    crate::cmd::plumbing_ext::write_diagnostics(&zip, &mode)?;
+    eprintln!(
+        "Diagnostics complete.\nAll of the gathered info is captured in '{}'",
+        zip.display()
+    );
     Ok(())
 }
 
@@ -1731,4 +2470,58 @@ pub fn cmd_upload_archive(args: &[String]) -> CliResult<()> {
             Err(CliError::fatal(format!("sent error to the client: {died}")))
         }
     }
+}
+
+/// `@{-N}` → the N-th previously checked out branch (HEAD reflog).
+fn previous_branch(repo: &Repository, spec: &str) -> Option<String> {
+    let n: usize = spec.strip_prefix("@{-")?.strip_suffix('}')?.parse().ok()?;
+    let entries = crate::reflog::read_entries(repo, "HEAD");
+    let mut seen = 0;
+    for (_, _, msg) in entries.iter().rev() {
+        if let Some(rest) = msg.strip_prefix("checkout: moving from ") {
+            seen += 1;
+            if seen == n {
+                return rest.split(" to ").next().map(str::to_string);
+            }
+        }
+    }
+    None
+}
+
+fn attr_scratch(
+    repo: &Repository,
+    files: Vec<(String, Oid)>,
+) -> CliResult<crate::cmd::plumbing_ext::ScratchDir> {
+    let dir = std::env::temp_dir().join(format!(
+        "arks-attr-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    ));
+    fs::create_dir_all(&dir)?;
+    let guard = crate::cmd::plumbing_ext::ScratchDir(dir);
+    for (p, oid) in files {
+        let obj = repo.get_object(&oid)?;
+        let dest = guard.path().join(&p);
+        if let Some(parent) = dest.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(dest, &obj.payload)?;
+    }
+    Ok(guard)
+}
+
+fn parse_expire(v: &str) -> CliResult<i64> {
+    crate::cmd::config::expiry_date(v)
+        .ok_or_else(|| CliError::fatal(format!("malformed expiration date '{v}'")))
+}
+
+/// A path as git prints it: relative to the current directory when below it.
+fn shown_path(p: &Path) -> String {
+    let cwd = std::env::current_dir().unwrap_or_default();
+    p.strip_prefix(&cwd)
+        .map(|r| r.display().to_string())
+        .unwrap_or_else(|_| p.display().to_string())
 }

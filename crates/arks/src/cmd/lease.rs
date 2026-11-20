@@ -192,7 +192,7 @@ fn lease_inspect(args: &[String]) -> CliResult<()> {
         "note: HOOK-001/HOOK-006 — hook:critical budgets coordinate sync critical sections; no invented async hook runners"
     );
     println!(
-        "note: PACK-004/MAINT-003 — maint:gc leases coordinate writers vs gc/repack; gc --prune=now remains CORR-001 refuse"
+        "note: PACK-004/MAINT-003 — maint:gc leases coordinate writers vs gc/repack; gc --prune=now / --force run as in git (CORR-001/CORR-002 compat)"
     );
     // M20 Cd-4 differentiate honesty (bucket B / G18).
     println!(

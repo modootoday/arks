@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "arks-g17-cleanroom"
+name = "arks-g017-concurrency-issue-compare-cleanroom"
 version = "0.0.0"
 dependencies = [
  "serde_json",

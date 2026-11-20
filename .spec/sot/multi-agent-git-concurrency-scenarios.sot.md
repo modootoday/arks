@@ -3,7 +3,7 @@ id: sot:root/multi-agent-git-concurrency-scenarios
 title: Multi-agent Git concurrency scenario catalog
 status: active
 created: 2026-11-09T02:31:18Z
-updated: 2026-11-10T14:00:00Z
+updated: 2026-11-20T03:00:00Z
 tags: [concurrency, multi-agent, lease, git-compat, performance, scenarios, g017-concurrency-issue-compare, g018-concurrency-issue-compare, m19, m20, m21, cx, cd, dz, deferred-zero]
 verify: manual
 rel:
@@ -35,7 +35,7 @@ rel:
 
 # Multi-agent Git concurrency scenario catalog
 
-Version **0.1.0**. Authoritative **scenario ID catalog** for multi-agent / high-N Git concurrency failure modes, stock-Git behavior, and arks opportunity classification. Evidence and citations: [[research:root/20261109023117]]. Product coordination intent: [[sot:root/lease-concurrency-intent]]. Unit runtime: [[sot:root/arks-lease]].
+Version **0.1.1**. Authoritative **scenario ID catalog** for multi-agent / high-N Git concurrency failure modes, stock-Git behavior, and arks opportunity classification. Evidence and citations: [[research:root/20261109023117]]. Product coordination intent: [[sot:root/lease-concurrency-intent]]. Unit runtime: [[sot:root/arks-lease]].
 
 ## Rule
 
@@ -232,8 +232,8 @@ Honesty: `Deferred=0 Claimed=212 Refuse=0 N/A=9` (catalog rows; L3 product valve
 
 | ID | Class | Scenario | Failure mode | Observable symptoms | Git stock behavior | Severity | Freq@N | Repro sketch | Arks opportunity |
 |----|-------|----------|--------------|---------------------|--------------------|----------|--------|--------------|------------------|
-| CORR-001 | corruption | gc prune=now with concurrent writers | Prune deletes object another process will reference | Missing objects; fsck fail; possible silent corruption | git-gc NOTES; --prune=now warning | S0 | occasional | gc --prune=now during commits | differentiate-beyond-git |
-| CORR-002 | corruption | Forced overlapping gc (--force) | Two gc instances run | Pack/prune interference | git-gc --force | S0 | rare | Two agents gc --force | mitigate-with-compat |
+| CORR-001 | corruption | gc prune=now with concurrent writers | Prune deletes object another process will reference | Missing objects; fsck fail; possible silent corruption | git-gc NOTES; --prune=now warning | S0 | occasional | gc --prune=now during commits | **compat — git-symmetric** (owner, 2026-11-20, [[plan:root/20261120000000]]): `gc --prune=now` runs as in git; concurrent arks gc still serialises on the `maint:gc` lease |
+| CORR-002 | corruption | Forced overlapping gc (--force) | Two gc instances run | Pack/prune interference | git-gc --force | S0 | rare | Two agents gc --force | **compat — git-symmetric** (owner, 2026-11-20): `gc --force` runs as in git |
 | CORR-003 | corruption | Manual lock removal during live writer | See LOCK-008 amplified | Torn index/refs | Operational anti-pattern | S0 | occasional | Delete lock under live writer + second writer | differentiate-beyond-git |
 | CORR-004 | corruption | Partial clone + prune misunderstanding | Local gc removes objects thought unreachable but needed lazily | Later fetch fails; broken checkout | partial clone + gc interactions | S1 | occasional | Aggressive gc on partial clone under agents | mitigate-with-compat |
 | CORR-005 | corruption | Shallow file concurrent deepen | Concurrent fetch --deepen rewrite shallow | Corrupt/inconsistent shallow boundary | layout shallow file | S1 | occasional | Parallel deepen on same repo | mitigate-with-compat |
