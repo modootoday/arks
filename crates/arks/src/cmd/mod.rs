@@ -58,6 +58,7 @@ pub mod remote_local;
 pub mod replace;
 pub mod replay;
 pub mod request_pull;
+pub mod rev_list;
 pub mod revwalk;
 pub mod server;
 pub mod shared;
@@ -124,8 +125,8 @@ pub use patch::{cmd_am, cmd_format_patch};
 pub use patch_id::cmd_patch_id;
 pub use plumbing::{
     cmd_check_ignore, cmd_checkout_index, cmd_commit_tree, cmd_index_pack, cmd_ls_files,
-    cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_rev_list,
-    cmd_show_ref, cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
+    cmd_ls_tree, cmd_merge_base, cmd_name_rev, cmd_pack_objects, cmd_read_tree, cmd_show_ref,
+    cmd_symbolic_ref, cmd_update_index, cmd_write_tree,
 };
 pub use pull::cmd_pull;
 pub use push::cmd_push;
@@ -135,6 +136,7 @@ pub use remote_admin::cmd_remote;
 pub use replace::cmd_replace;
 pub use replay::{cmd_cherry_pick, cmd_rebase, cmd_revert};
 pub use request_pull::cmd_request_pull;
+pub use rev_list::cmd_rev_list;
 pub use server::{
     cmd_http_backend, cmd_receive_pack, cmd_serve, cmd_serve_http, cmd_update_server_info,
     cmd_upload_pack,
