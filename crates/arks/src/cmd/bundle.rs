@@ -186,14 +186,14 @@ fn bundle_create(args: &[String]) -> CliResult<()> {
                 }
             }
             s if s.starts_with('^') => {
-                negative.push(peel_commit(&repo, &resolve_rev(&repo, &s[1..])?))
+                negative.push(peel_commit(&repo, &bundle_rev(&repo, &s[1..])?))
             }
             s if s.contains("..") => {
                 let (a, b) = s.split_once("..").expect("contains ..");
                 let b = b.trim_start_matches('.');
                 let a = if a.is_empty() { "HEAD" } else { a };
                 let b = if b.is_empty() { "HEAD" } else { b };
-                negative.push(peel_commit(&repo, &resolve_rev(&repo, a)?));
+                negative.push(peel_commit(&repo, &bundle_rev(&repo, a)?));
                 push_rev(&repo, &all_refs, b, &mut refs, &mut positive)?;
             }
             s if s.starts_with('-') => {}
@@ -316,8 +316,17 @@ fn push_rev(
         refs.push(("HEAD".into(), h));
         return Ok(());
     }
-    positive.push(peel_commit(repo, &resolve_rev(repo, rev)?));
+    positive.push(peel_commit(repo, &bundle_rev(repo, rev)?));
     Ok(())
+}
+
+/// Resolve a rev-list argument; an unknown one is git's ambiguous-argument fatal.
+fn bundle_rev(repo: &Repository, rev: &str) -> CliResult<Oid> {
+    resolve_rev(repo, rev).map_err(|_| {
+        CliError::fatal(format!(
+            "ambiguous argument '{rev}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'"
+        ))
+    })
 }
 
 fn collect_tree(
