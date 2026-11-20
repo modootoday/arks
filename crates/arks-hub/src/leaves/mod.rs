@@ -8,12 +8,21 @@
 //! against an in-process forge. Never spawns git/gh.
 
 pub(crate) mod autolink;
+pub(crate) mod common;
 pub(crate) mod discussion;
 pub(crate) mod gist;
 pub(crate) mod gotmpl;
+pub(crate) mod issue;
 pub(crate) mod jq;
 pub(crate) mod keys;
+pub(crate) mod label;
+pub(crate) mod misc;
+pub(crate) mod pr;
 pub(crate) mod project;
+pub(crate) mod release;
+pub(crate) mod repo;
+pub(crate) mod ruleset;
+pub(crate) mod search;
 
 #[cfg(test)]
 mod tests;
@@ -78,11 +87,11 @@ impl Ctx {
             .ok_or_else(|| {
                 Fail::Usage("set --repo owner/name, ARKS_HUB_REPO, or repo set-default".into())
             })?;
-        let (o, n) = slug
-            .split_once('/')
-            .filter(|(o, n)| !o.is_empty() && !n.is_empty() && !n.contains('/'))
-            .ok_or_else(|| Fail::Usage(format!("repo must be owner/name (got {slug})")))?;
-        Ok((o.to_string(), n.to_string()))
+        common::parse_slug(&slug).ok_or_else(|| {
+            Fail::Usage(format!(
+                "expected the \"[HOST/]OWNER/REPO\" format, got {slug:?}"
+            ))
+        })
     }
 }
 
@@ -154,7 +163,9 @@ pub(crate) fn finish(label: &str, help: &str, r: Res) -> ExitCode {
 /// Accepts `--name value`, `--name=value`, `-x value`, `-xvalue`, `-x=value`,
 /// bundled boolean shorthands (`-ab`, `-abL5`), `--bool=false`, and `--` (the
 /// rest is passthrough). `--help`, or `-h` when the leaf does not define `-h`,
-/// is [`Fail::Help`]. Unknown flags are refused like gh.
+/// is [`Fail::Help`]. Unknown flags are refused like gh. A value flag listed as
+/// `"--name?"` takes its value only inline (`--name=v`); alone it reads as `""`
+/// (pflag `NoOptDefVal`, e.g. `browse --commit`).
 pub(crate) struct Args<'a> {
     raw: &'a [String],
     flags: Vec<(String, Option<&'a str>)>,
@@ -179,7 +190,10 @@ impl<'a> Args<'a> {
                 if name == "--help" {
                     return Err(Fail::Help);
                 }
-                if values.contains(&name.as_str()) {
+                let optional = values.contains(&format!("{name}?").as_str());
+                if optional && inline.is_none() {
+                    flags.push((name, Some("")));
+                } else if values.contains(&name.as_str()) || optional {
                     let v = match inline {
                         Some(v) => v,
                         None => {
@@ -207,13 +221,16 @@ impl<'a> Args<'a> {
                 while let Some(c) = rest.chars().next() {
                     let name = format!("-{c}");
                     rest = &rest[c.len_utf8()..];
-                    let is_value = values.contains(&name.as_str());
+                    let optional = values.contains(&format!("{name}?").as_str());
+                    let is_value = values.contains(&name.as_str()) || optional;
                     let is_bool = bools.contains(&name.as_str());
                     if c == 'h' && !is_value && !is_bool {
                         return Err(Fail::Help);
                     }
                     if is_value {
-                        let v = if rest.is_empty() {
+                        let v = if rest.is_empty() && optional {
+                            ""
+                        } else if rest.is_empty() {
                             i += 1;
                             raw.get(i).map(String::as_str).ok_or_else(|| {
                                 Fail::Usage(format!("flag needs an argument: '{c}' in {t}"))
@@ -486,8 +503,39 @@ pub(crate) fn dispatch(
         eprintln!("{help}");
         return ExitCode::SUCCESS;
     }
+    // A group run with flags but no command: gh accepts the group's inherited
+    // `-R/--repo` (and shows the group help); anything else is an unknown flag.
+    if first.starts_with('-') {
+        let name = first.split_once('=').map_or(first, |(n, _)| n);
+        if matches!(name, "-R" | "--repo") {
+            eprintln!("{help}");
+            return ExitCode::SUCCESS;
+        }
+        eprintln!("arks {label}: unknown flag: {name}");
+        return ExitCode::from(2);
+    }
     let sub = format!("{label} {first}");
     run_env(&sub, help, |ctx, out| f(ctx, args, out))
+}
+
+/// Leaf without subcommands (`status`, `browse`, `api`, …): help on `help` /
+/// `--help`, else run `f` with every argument.
+pub(crate) fn flat(
+    label: &str,
+    help: &str,
+    args: &[String],
+    f: fn(&Ctx, &[String], &mut dyn Write) -> Res,
+) -> ExitCode {
+    let wants_help = args
+        .iter()
+        .take_while(|a| a.as_str() != "--")
+        .any(|a| a == "--help")
+        || args.first().map(String::as_str) == Some("help");
+    if wants_help {
+        eprintln!("{help}");
+        return ExitCode::SUCCESS;
+    }
+    run_env(label, help, |ctx, out| f(ctx, args, out))
 }
 
 #[cfg(test)]
