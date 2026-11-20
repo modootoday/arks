@@ -904,6 +904,16 @@ pub fn cmd_add(args: &[String]) -> CliResult<()> {
         }
         paths.sort();
         paths.dedup();
+        // git-add: with pathspecs, -A / -u only touch paths that match them.
+        if !positional.is_empty() {
+            let mut specs = Vec::with_capacity(positional.len());
+            for p in &positional {
+                specs.push(pathspec_rel(&work, p)?);
+            }
+            if !specs.iter().any(|s| s.is_empty()) {
+                paths.retain(|x| crate::cmd::log_format::path_in_specs(x, &specs));
+            }
+        }
     }
     // Pathspecs (git-add §DESCRIPTION): a directory (including `.` = the whole
     // tree) adds untracked files below it and stages modifications and
