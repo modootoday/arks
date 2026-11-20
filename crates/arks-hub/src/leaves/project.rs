@@ -442,6 +442,41 @@ fn gh_item(i: &Value) -> Value {
     v
 }
 
+/// Projects filter syntax subset: `field:value` (comma = any of), `-field:value`,
+/// `no:field`, `is:archived|open`, and free text matched against the title.
+fn item_matches(i: &Value, query: &str) -> bool {
+    let text = |v: &Value| match v {
+        Value::String(s) => s.to_ascii_lowercase(),
+        Value::Null => String::new(),
+        other => other.to_string().to_ascii_lowercase(),
+    };
+    for tok in query.split_whitespace() {
+        let (neg, tok) = match tok.strip_prefix('-') {
+            Some(t) => (true, t),
+            None => (false, tok),
+        };
+        let hit = match tok.split_once(':') {
+            Some(("no", f)) => text(&i[f.to_ascii_lowercase()]).is_empty(),
+            Some(("is", "archived")) => i["archived"].as_bool() == Some(true),
+            Some(("is", "open")) => i["archived"].as_bool() != Some(true),
+            Some(("is", kind)) => i["content"]["type"]
+                .as_str()
+                .is_some_and(|t| t.eq_ignore_ascii_case(kind)),
+            Some(("title", v)) => text(&i["title"]).contains(&v.to_ascii_lowercase()),
+            Some((f, v)) => {
+                let have = text(&i[f.to_ascii_lowercase()]);
+                v.split(',')
+                    .any(|x| have == x.trim_matches('"').to_ascii_lowercase())
+            }
+            None => text(&i["title"]).contains(&tok.to_ascii_lowercase()),
+        };
+        if hit == neg {
+            return false;
+        }
+    }
+    true
+}
+
 fn print_item(out: &mut dyn Write, a: &Args<'_>, verb: &str, i: &Value) -> Res {
     if json_mode(a)? {
         return json_filtered(out, a, &gh_item(i));
@@ -590,11 +625,17 @@ fn item_edit(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
 }
 
 fn item_list(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
-    let a = Args::parse(raw, &vals(&["-L", "--limit"]), &[])?;
+    let a = Args::parse(raw, &vals(&["-L", "--limit", "--query"]), &[])?;
     let num = number(&a)?;
     let limit = a.limit(30)?;
     let all = ctx.api("GET", &format!("{}/items", base(&owner(&a), num)), None)?;
-    let rows: Vec<Value> = arr(&all).iter().take(limit).map(gh_item).collect();
+    let query = a.get(&["--query"]).unwrap_or("");
+    let rows: Vec<Value> = arr(&all)
+        .iter()
+        .map(gh_item)
+        .filter(|i| item_matches(i, query))
+        .take(limit)
+        .collect();
     if json_mode(&a)? {
         let total = rows.len();
         return json_filtered(out, &a, &json!({"items": rows, "totalCount": total}));
