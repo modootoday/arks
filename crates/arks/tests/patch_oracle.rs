@@ -17,6 +17,23 @@ fn git_available() -> bool {
         .is_ok_and(|o| o.status.success())
 }
 
+/// The transcripts follow the prompt set of the pin (git 2.39.5). Later git
+/// releases add hunk commands and change which letters a prompt lists, so the
+/// stdout comparison applies only to oracles up to 2.43 (the pin and the
+/// host-advisory oracle); exit code and resulting state are compared always.
+fn oracle_prompts_match_pin() -> bool {
+    let out = Command::new("git").arg("--version").output().unwrap();
+    let text = String::from_utf8_lossy(&out.stdout);
+    let mut nums = text
+        .split_whitespace()
+        .nth(2)
+        .unwrap_or("")
+        .split('.')
+        .map(|n| n.parse::<u32>().unwrap_or(u32::MAX));
+    let (major, minor) = (nums.next().unwrap_or(0), nums.next().unwrap_or(0));
+    major == 2 && (39..=43).contains(&minor)
+}
+
 fn run(dir: &Path, prog: &str, args: &[&str], stdin: &[u8]) -> (i32, Vec<u8>) {
     let mut child = Command::new(prog)
         .args(args)
@@ -101,11 +118,13 @@ fn compare(args: &[&str], answers: &str) {
         args,
         answers.as_bytes(),
     );
-    assert_eq!(
-        String::from_utf8_lossy(&ao),
-        String::from_utf8_lossy(&go),
-        "stdout of {args:?} with {answers:?}"
-    );
+    if oracle_prompts_match_pin() {
+        assert_eq!(
+            String::from_utf8_lossy(&ao),
+            String::from_utf8_lossy(&go),
+            "stdout of {args:?} with {answers:?}"
+        );
+    }
     assert_eq!(ac, gc, "exit of {args:?} with {answers:?}");
     assert_eq!(
         state(a.path()),
