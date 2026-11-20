@@ -517,3 +517,22 @@ show -L 1,1:src/a.txt -L 3,4:src/a.txt --oneline
 log -L 1,1:src/a.txt -L 3,4:src/a.txt --oneline
 log -L 2,2:src/a.txt -L 4,4:src/a.txt --oneline t0
 log -L 7,9:src/a.txt --oneline
+# --- log / show --remerge-diff ---
+log --remerge-diff -1 3298026
+show --remerge-diff 3298026 --oneline
+log --diff-merges=remerge -1 --oneline --stat 3298026
+log --remerge-diff -1 --oneline --name-status 3298026
+log --remerge-diff --oneline -3 3298026
+log --remerge-diff --oneline -1 --raw 3298026
+log --remerge-diff -1 HEAD~1
+log --diff-merges=remerge -1 HEAD~1 --oneline
+log --remerge-diff -1 --oneline
+log --diff-merges=r -1 --oneline
+log --diff-merges=remerge -1 --oneline
+show --remerge-diff HEAD~1
+log --remerge-diff --oneline -3
+log --remerge-diff -1 3298026 -- code.c
+show --diff-merges=remerge 3298026 --stat
+log --remerge-diff --format=%s -2 3298026
+log -1 --oneline --remerge-diff -p 3298026
+log -1 --oneline --remerge-diff -U1 3298026

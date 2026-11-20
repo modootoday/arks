@@ -176,6 +176,14 @@ impl<'r> Content<'r> {
         Ok(v)
     }
 
+    /// Provide the bytes of an object that is not in the repository
+    /// (`log --remerge-diff` merge results).
+    pub fn seed(&self, oid: Oid, bytes: Vec<u8>) {
+        self.data
+            .borrow_mut()
+            .insert((Some(oid), None), std::rc::Rc::new(bytes));
+    }
+
     /// Object id of a side, hashing work-tree content when needed.
     pub fn oid(&self, s: &Side) -> CliResult<Oid> {
         if let Some(o) = s.oid {

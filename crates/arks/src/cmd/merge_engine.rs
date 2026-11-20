@@ -30,6 +30,88 @@ pub(crate) struct MergeResult {
     pub auto_merged: Vec<String>,
 }
 
+/// One file of an in-memory re-merge (`log --remerge-diff`): its mode and
+/// either an existing blob or merged bytes (with conflict markers).
+pub(crate) struct RemergeFile {
+    pub mode: u32,
+    pub oid: Option<Oid>,
+    pub bytes: Option<Vec<u8>>,
+}
+
+/// Re-merge three trees without touching the object store, the index or
+/// the work tree: the resulting files by path, and the conflict messages
+/// (`(path, "CONFLICT (content): Merge conflict in <path>")`).
+pub(crate) fn remerge_files(
+    repo: &Repository,
+    base: &Oid,
+    ours: &Oid,
+    theirs: &Oid,
+    labels: &MergeLabels,
+) -> CliResult<(BTreeMap<String, RemergeFile>, Vec<(String, String)>)> {
+    let plan = plan_trees(repo, base, ours, theirs, labels)?;
+    let ours_side = blob_sides(repo, ours)?;
+    let theirs_side = blob_sides(repo, theirs)?;
+    let mut files = BTreeMap::new();
+    let mut msgs = Vec::new();
+    for op in plan.ops {
+        match op {
+            WorkOp::Write { path, side, .. } => {
+                files.insert(
+                    path,
+                    RemergeFile {
+                        mode: side.mode,
+                        oid: Some(side.oid),
+                        bytes: None,
+                    },
+                );
+            }
+            WorkOp::Remove(_) => {}
+            WorkOp::Merged { path, bytes } | WorkOp::ConflictText { path, bytes } => {
+                let mode = ours_side
+                    .get(&path)
+                    .or_else(|| theirs_side.get(&path))
+                    .map(|s| s.mode)
+                    .unwrap_or(0o100644);
+                if plan.conflicts.contains(&path) {
+                    msgs.push((
+                        path.clone(),
+                        format!("CONFLICT (content): Merge conflict in {path}"),
+                    ));
+                }
+                files.insert(
+                    path,
+                    RemergeFile {
+                        mode,
+                        oid: None,
+                        bytes: Some(bytes),
+                    },
+                );
+            }
+            WorkOp::Conflict { path, ours, theirs } => {
+                let kind = match (&ours, &theirs) {
+                    (Some(_), None) | (None, Some(_)) => "modify/delete",
+                    _ => "add/add",
+                };
+                msgs.push((
+                    path.clone(),
+                    format!("CONFLICT ({kind}): Merge conflict in {path}"),
+                ));
+                if let Some(side) = ours.or(theirs) {
+                    files.insert(
+                        path,
+                        RemergeFile {
+                            mode: side.mode,
+                            oid: Some(side.oid),
+                            bytes: None,
+                        },
+                    );
+                }
+            }
+        }
+    }
+    Ok((files, msgs))
+}
+
 /// Three-way merge of commit tips (base = their merge base) into the index
 /// and work tree, with conflict marker labels.
 pub(crate) fn merge_three_way_labeled(

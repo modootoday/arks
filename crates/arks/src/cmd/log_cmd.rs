@@ -44,6 +44,8 @@ enum DiffMerges {
     Separate,
     Combined,
     Dense,
+    /// `--remerge-diff`: diff against an in-memory re-merge of the parents.
+    Remerge,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -93,6 +95,7 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         _ => false,
     };
     let pretty = take_pretty(&mut head)?;
+    let remerge_patch = head.iter().any(|a| a == "--remerge-diff");
     let repo = open_repo().ok();
     let mut diff = DiffOptions::default();
     crate::cmd::diff_cmd::porcelain_defaults(repo.as_ref(), &mut diff);
@@ -177,6 +180,11 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
             None => 7,
         };
     }
+    // `--remerge-diff` (not `--diff-merges=remerge`) without a format implies `-p`.
+    if remerge_patch && o.merges == Some(DiffMerges::Remerge) && !o.diff_given {
+        o.diff.patch = true;
+        o.diff_given = true;
+    }
     // In log, `-c` / `--cc` without a format imply `-p`.
     if cmd != "show"
         && matches!(o.merges, Some(DiffMerges::Combined | DiffMerges::Dense))
@@ -243,12 +251,7 @@ fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
         | "--expand-tabs"
         | "--no-expand-tabs"
         | "--show-linear-break" => {}
-        "--remerge-diff" => {
-            return Err(CliError::NotImplemented(
-                "unsupported option: --remerge-diff (needs an in-memory merge of the parents)"
-                    .into(),
-            ));
-        }
+        "--remerge-diff" => o.merges = Some(DiffMerges::Remerge),
         _ => {
             if let Some(v) = a.long_opt("--decorate") {
                 o.decorate = Some(match v.as_deref() {
@@ -283,11 +286,7 @@ fn take_log_opt(o: &mut LogOpts, a: &mut Args<'_>) -> CliResult<bool> {
                     "first-parent" | "1" => DiffMerges::FirstParent,
                     "combined" | "c" => DiffMerges::Combined,
                     "dense-combined" | "cc" => DiffMerges::Dense,
-                    "remerge" | "r" => {
-                        return Err(CliError::NotImplemented(
-                            "unsupported option: --diff-merges=remerge".into(),
-                        ));
-                    }
+                    "remerge" | "r" => DiffMerges::Remerge,
                     x => {
                         return Err(CliError::fatal(format!(
                             "invalid value for '--diff-merges': '{x}'"
@@ -695,6 +694,7 @@ impl Printer<'_> {
             RecordDiff::Pairs(p) => p.is_empty(),
             RecordDiff::Combined(e, _, _) => e.is_empty(),
             RecordDiff::Text(t) => t.is_empty(),
+            RecordDiff::Remerge(p, _) => p.is_empty(),
         };
         if !d.any_format() || d.no_output || (empty && !force_sep) {
             return Ok(String::new());
@@ -719,6 +719,12 @@ impl Printer<'_> {
         match diff {
             RecordDiff::None | RecordDiff::Text(_) => {}
             RecordDiff::Pairs(p) => emit(&mut buf, self.content, d, EmitCtx::default(), p)?,
+            RecordDiff::Remerge(p, msgs) => {
+                let mut b = Vec::new();
+                emit(&mut b, self.content, d, EmitCtx::default(), p)?;
+                let t = crate::cmd::remerge::annotate(&String::from_utf8_lossy(&b), msgs);
+                buf.extend_from_slice(t.as_bytes());
+            }
             RecordDiff::Combined(e, mode, fp) => combined::emit(
                 &mut buf,
                 self.content,
@@ -852,6 +858,8 @@ enum RecordDiff {
     Combined(Vec<combined::Entry>, combined::Mode, Vec<Pair>),
     /// Pre-rendered text after the header (`-L` patches).
     Text(String),
+    /// `--remerge-diff` pairs and their conflict messages.
+    Remerge(Vec<Pair>, Vec<(String, String)>),
 }
 
 /// Diff of `c` against `parent` (root: the empty tree) through diffcore.
@@ -1252,6 +1260,23 @@ fn run_log(args: &[String], cmd: &str) -> CliResult<()> {
                         )?;
                     }
                 }
+                DiffMerges::Remerge => {
+                    let (p, msgs) = crate::cmd::remerge::remerge_pairs(
+                        &content,
+                        &opts.diff,
+                        &w.commit,
+                        &opts.rev.specs,
+                    )?;
+                    printer.commit(
+                        &mut out,
+                        &w.oid,
+                        &w.commit,
+                        &mark,
+                        None,
+                        &RecordDiff::Remerge(p, msgs),
+                        false,
+                    )?;
+                }
                 DiffMerges::Combined | DiffMerges::Dense => {
                     let mode = if merges == DiffMerges::Dense {
                         combined::Mode::Dense
@@ -1543,6 +1568,10 @@ fn show_commit(
                 printer.commit(out, oid, c, "", Some(parent), &RecordDiff::Pairs(p), false)?;
             }
             Ok(())
+        }
+        DiffMerges::Remerge => {
+            let (p, msgs) = crate::cmd::remerge::remerge_pairs(content, d, c, specs)?;
+            printer.commit(out, oid, c, "", None, &RecordDiff::Remerge(p, msgs), false)
         }
         DiffMerges::Combined | DiffMerges::Dense => {
             // Stat formats of a merge show the first-parent diff.

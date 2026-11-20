@@ -75,6 +75,7 @@ pub mod push;
 pub mod range_diff;
 pub mod raw_diff;
 pub mod rebase;
+pub mod remerge;
 pub mod remote;
 pub mod remote_admin;
 pub mod remote_helpers;
