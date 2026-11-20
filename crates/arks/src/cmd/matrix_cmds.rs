@@ -848,35 +848,53 @@ pub fn cmd_patch_id(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks credential-store` — native file-store helper (never spawns `git`).
+/// `arks credential-store [--file=<path>] (get|store|erase)` — the stock
+/// `~/.git-credentials` file format (`<proto>://<user>:<pass>@<host>[/path]`),
+/// natively. Cite: https://git-scm.com/docs/git-credential-store
 pub fn cmd_credential_store(args: &[String]) -> CliResult<()> {
-    let op = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage("credential-store <get|store|erase>".into()))?;
+    let mut file: Option<String> = None;
+    let mut op: Option<&str> = None;
+    let mut i = 0;
+    while i < args.len() {
+        let a = args[i].as_str();
+        i += 1;
+        if let Some(v) = a.strip_prefix("--file=") {
+            file = Some(v.to_string());
+        } else if a == "--file" {
+            file = args.get(i).cloned();
+            i += 1;
+        } else if a == "--no-file" {
+            file = None;
+        } else if a.starts_with('-') {
+            return Err(CliError::Exit(
+                129,
+                format!("error: unknown option `{}'\nusage: git credential-store [<options>] <action>", a.trim_start_matches('-')),
+            ));
+        } else if op.is_none() {
+            op = Some(a);
+        }
+    }
+    let op = op.ok_or_else(|| {
+        CliError::Exit(129, "usage: git credential-store [<options>] <action>".into())
+    })?;
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
-    let desc = arks_remote::Credential::parse(&input).map_err(|e| CliError::Msg(e.to_string()))?;
-    let mut source = arks_remote::CredentialSource::empty();
-    source.helpers = vec!["store".into()];
-    match op {
-        "get" => {
-            let filled = arks_remote::credential_fill(desc, &source)
-                .map_err(|e| CliError::Msg(e.to_string()))?;
-            if filled.password.is_some() || filled.username.is_some() {
-                print!("{}", filled.format_attributes());
-            }
-            Ok(())
+    let desc = arks_remote::Credential::parse_attributes(&input);
+    let home = std::env::var("HOME").unwrap_or_default();
+    let paths: Vec<PathBuf> = match &file {
+        Some(f) => vec![PathBuf::from(crate::cmd::plumbing_ext::expand_home(f))],
+        None => {
+            let xdg = std::env::var("XDG_CONFIG_HOME")
+                .ok()
+                .filter(|x| !x.is_empty())
+                .unwrap_or_else(|| format!("{home}/.config"));
+            vec![
+                PathBuf::from(format!("{home}/.git-credentials")),
+                PathBuf::from(format!("{xdg}/git/credentials")),
+            ]
         }
-        "store" => arks_remote::credential_approve(&desc, &source)
-            .map_err(|e| CliError::Msg(e.to_string())),
-        "erase" => {
-            arks_remote::credential_reject(&desc, &source).map_err(|e| CliError::Msg(e.to_string()))
-        }
-        other => Err(CliError::Usage(format!(
-            "credential-store: unknown op '{other}'"
-        ))),
-    }
+    };
+    crate::cmd::plumbing_ext::credential_store(op, &desc, &paths)
 }
 
 /// `arks show-index [--object-format=<hash>]` — dump a pack `.idx` from stdin
@@ -1209,38 +1227,101 @@ pub fn cmd_merge_tree(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks hook run <name>` — run a sync hook from `$GIT_DIR/hooks` (subset).
+/// `arks hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]`.
+/// Cite: https://git-scm.com/docs/git-hook
 pub fn cmd_hook(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &[])?;
-    let sub = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage("hook run <hook-name>".into()))?;
-    match sub {
-        "run" => {
-            let name = args
-                .get(1)
-                .ok_or_else(|| CliError::Usage("hook run <hook-name>".into()))?;
-            let repo = open_repo()?;
-            crate::cmd::hooks::run_sync_hooks(&repo, false, &[name.as_str()], None)
-        }
-        "list" => {
-            let repo = open_repo()?;
-            let dir = repo.git_dir().join("hooks");
-            if let Ok(rd) = fs::read_dir(dir) {
-                for e in rd.flatten() {
-                    let n = e.file_name().to_string_lossy().to_string();
-                    if n.ends_with(".sample") {
-                        continue;
-                    }
-                    println!("{n}");
-                }
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]"
+                .into(),
+        )
+    };
+    let Some(sub) = args.first() else {
+        return Err(usage());
+    };
+    if sub != "run" {
+        return Err(CliError::Exit(
+            129,
+            format!("error: unknown subcommand: `{sub}'\nusage: git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]"),
+        ));
+    }
+    let mut ignore_missing = false;
+    let mut to_stdin: Option<String> = None;
+    let mut name: Option<String> = None;
+    let mut hook_args: Vec<String> = Vec::new();
+    let mut i = 1;
+    while i < args.len() {
+        let a = &args[i];
+        i += 1;
+        if name.is_some() {
+            if a == "--" && hook_args.is_empty() {
+                hook_args.extend(args[i..].iter().cloned());
+                break;
             }
-            Ok(())
+            return Err(usage());
         }
-        other => Err(CliError::NotImplemented(format!(
-            "hook '{other}' not claimed (run|list subset)"
-        ))),
+        match a.as_str() {
+            "--ignore-missing" => ignore_missing = true,
+            "--no-ignore-missing" => ignore_missing = false,
+            "--to-stdin" => {
+                to_stdin = args.get(i).cloned();
+                i += 1;
+            }
+            "--no-to-stdin" => to_stdin = None,
+            _ if a.starts_with("--to-stdin=") => to_stdin = Some(a["--to-stdin=".len()..].to_string()),
+            _ if a.starts_with('-') => return Err(usage()),
+            _ => name = Some(a.clone()),
+        }
+    }
+    let name = name.ok_or_else(usage)?;
+    let repo = open_repo()?;
+    let path = repo.git_dir().join("hooks").join(&name);
+    let runnable = path.is_file() && {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::metadata(&path)
+                .map(|m| m.permissions().mode() & 0o111 != 0)
+                .unwrap_or(false)
+        }
+        #[cfg(not(unix))]
+        {
+            true
+        }
+    };
+    if !runnable {
+        if ignore_missing {
+            return Ok(());
+        }
+        return Err(CliError::Exit(
+            1,
+            format!("error: cannot find a hook named {name}"),
+        ));
+    }
+    let mut cmd = std::process::Command::new(&path);
+    cmd.args(&hook_args).env("GIT_DIR", repo.git_dir());
+    if let Ok(wt) = work_tree(&repo) {
+        cmd.current_dir(wt);
+    }
+    match &to_stdin {
+        Some(p) => {
+            cmd.stdin(fs::File::open(p).map_err(|e| CliError::fatal(format!("{p}: {e}")))?);
+        }
+        None => {
+            cmd.stdin(std::process::Stdio::null());
+        }
+    }
+    // Hook stdout goes to stderr like run_hooks_opt (stdout_to_stderr).
+    let out = cmd
+        .stdout(std::process::Stdio::piped())
+        .output()
+        .map_err(|e| CliError::fatal(format!("cannot exec '{}': {e}", path.display())))?;
+    io::Write::write_all(&mut io::stderr(), &out.stdout)?;
+    match out.status.code() {
+        Some(0) => Ok(()),
+        Some(c) => Err(CliError::silent(c.clamp(1, 255) as u8)),
+        None => Err(CliError::silent(1)),
     }
 }
 
@@ -1570,109 +1651,150 @@ pub fn cmd_column(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks for-each-repo -- <cmd>…` — run arks subcommand in each configured repo (subset).
+/// `arks for-each-repo --config=<key> [--] <arguments>` — run the command in
+/// every repository listed under the multi-valued config `<key>`.
+/// Cite: https://git-scm.com/docs/git-for-each-repo
 pub fn cmd_for_each_repo(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-c", "--config"])?;
-    let dash = args.iter().position(|a| a == "--");
-    let (cfg_key, cmd_args) = if let Some(i) = dash {
-        let key = args[..i]
-            .iter()
-            .find(|a| !a.starts_with('-'))
-            .map(|s| s.as_str())
-            .unwrap_or("arks.repo");
-        (key, &args[i + 1..])
-    } else {
-        return Err(CliError::Usage(
-            "for-each-repo [--] <arks-subcommand>… (needs --)".into(),
-        ));
-    };
-    if cmd_args.is_empty() {
-        return Err(CliError::Usage("for-each-repo -- <cmd>…".into()));
+    let mut key: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        let a = &args[i];
+        if let Some(v) = a.strip_prefix("--config=") {
+            key = Some(v.to_string());
+        } else if a == "--config" {
+            i += 1;
+            key = args.get(i).cloned();
+        } else if a == "--no-config" {
+            key = None;
+        } else if a == "--" {
+            i += 1;
+            break;
+        } else if a.starts_with('-') {
+            return Err(CliError::Exit(
+                129,
+                format!("error: unknown option `{}'\nusage: git for-each-repo --config=<config> [--] <arguments>", a.trim_start_matches('-')),
+            ));
+        } else {
+            break;
+        }
+        i += 1;
     }
-    // Discover paths from env ARKS_FOR_EACH_REPOS (pathsep-separated) — no git config multi-value depth yet.
-    let paths = if let Ok(v) = std::env::var("ARKS_FOR_EACH_REPOS") {
-        #[cfg(windows)]
-        let sep = ';';
-        #[cfg(not(windows))]
-        let sep = ':';
-        v.split(sep)
-            .map(|s| s.to_string())
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>()
-    } else {
-        let _ = cfg_key;
-        return Err(CliError::NotImplemented(
-            "for-each-repo: set ARKS_FOR_EACH_REPOS to a path list (config multi-value not claimed)"
-                .into(),
-        ));
-    };
+    let key = key.ok_or_else(|| CliError::fatal("missing --config=<config>"))?;
+    let cmd_args = &args[i.min(args.len())..];
+    let cwd = crate::util::cwd()?;
+    let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+    let paths = cfg.get_all(&key);
     let exe = std::env::current_exe().map_err(|e| CliError::Msg(e.to_string()))?;
     for p in paths {
-        println!("Entering '{p}'");
+        let dir = crate::cmd::plumbing_ext::expand_home(&p);
         let status = std::process::Command::new(&exe)
+            .arg("-C")
+            .arg(&dir)
             .args(cmd_args)
-            .current_dir(&p)
             .status()
             .map_err(|e| CliError::Msg(e.to_string()))?;
         if !status.success() {
-            return Err(CliError::Msg(format!(
-                "for-each-repo: {p}: exit {}",
-                status.code().unwrap_or(-1)
-            )));
+            // The first failing repository's status ends the loop.
+            return Err(CliError::silent(status.code().unwrap_or(1).clamp(1, 255) as u8));
         }
     }
     Ok(())
 }
 
-/// `arks fmt-merge-msg` — synthesize a merge message from stdin MERGE_HEAD lines (subset).
+/// `arks fmt-merge-msg [-m <message>] [--into-name <branch>] [--log[=<n>] | --no-log] [-F <file>]`
+/// — FETCH_HEAD-style input → merge commit message.
+/// Cite: https://git-scm.com/docs/git-fmt-merge-msg
 pub fn cmd_fmt_merge_msg(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["-m", "--message", "--log"])?;
-    let mut message = None;
+    let mut message: Option<String> = None;
+    let mut into: Option<String> = None;
+    let mut log: Option<usize> = None;
+    let mut log_set = false;
+    let mut file: Option<String> = None;
     let mut i = 0;
+    let usage = || {
+        CliError::Exit(
+            129,
+            "usage: git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]".into(),
+        )
+    };
     while i < args.len() {
-        if args[i] == "-m" || args[i] == "--message" {
-            i += 1;
-            message = args.get(i).cloned();
-        } else if let Some(rest) = args[i].strip_prefix("--message=") {
-            message = Some(rest.to_string());
-        }
+        let a = args[i].as_str();
         i += 1;
-    }
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    if let Some(m) = message {
-        println!("{m}");
-        return Ok(());
-    }
-    let mut branches = Vec::new();
-    for line in buf.lines() {
-        let t = line.trim();
-        if t.is_empty() {
-            continue;
-        }
-        // Accept "branch 'x' of url" or raw ref names.
-        if let Some(rest) = t.strip_prefix('\'') {
-            if let Some(end) = rest.find('\'') {
-                branches.push(rest[..end].to_string());
-                continue;
+        let take = |name: &str| -> CliResult<Option<String>> {
+            if let Some(v) = a.strip_prefix(&format!("--{name}=")) {
+                return Ok(Some(v.to_string()));
+            }
+            Ok(None)
+        };
+        if let Some(v) = take("message")? {
+            message = Some(v);
+        } else if let Some(v) = take("into-name")? {
+            into = Some(v);
+        } else if let Some(v) = take("file")? {
+            file = Some(v);
+        } else if let Some(v) = take("log")? {
+            log = Some(v.parse().map_err(|_| usage())?);
+            log_set = true;
+        } else {
+            match a {
+                "-m" | "--message" => {
+                    message = Some(args.get(i).cloned().ok_or_else(usage)?);
+                    i += 1;
+                }
+                "--no-message" => message = None,
+                "--into-name" => {
+                    into = Some(args.get(i).cloned().ok_or_else(usage)?);
+                    i += 1;
+                }
+                "--no-into-name" => into = None,
+                "-F" | "--file" => {
+                    file = Some(args.get(i).cloned().ok_or_else(usage)?);
+                    i += 1;
+                }
+                "--no-file" => file = None,
+                "--log" | "--summary" => {
+                    log = Some(20);
+                    log_set = true;
+                }
+                "--no-log" | "--no-summary" => {
+                    log = None;
+                    log_set = true;
+                }
+                _ if a.starts_with("-m") && a.len() > 2 => message = Some(a[2..].to_string()),
+                _ if a.starts_with("-F") && a.len() > 2 => file = Some(a[2..].to_string()),
+                _ => return Err(usage()),
             }
         }
-        branches.push(t.to_string());
     }
-    if branches.is_empty() {
-        println!("Merge");
-    } else if branches.len() == 1 {
-        println!("Merge branch '{}'", branches[0]);
-    } else {
-        println!(
-            "Merge branches {}",
-            branches
-                .iter()
-                .map(|b| format!("'{b}'"))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
+    let input = match &file {
+        Some(f) if f != "-" => fs::read_to_string(f)
+            .map_err(|e| CliError::fatal(format!("could not open '{f}' for reading: {e}")))?,
+        _ => {
+            let mut s = String::new();
+            io::stdin().read_to_string(&mut s)?;
+            s
+        }
+    };
+    let repo = open_repo()?;
+    if !log_set {
+        let cwd = crate::util::cwd()?;
+        let cfg = arks_config::ConfigSet::load_discovered(&cwd);
+        if let Some(v) = cfg.get("merge.log") {
+            log = match v.parse::<usize>() {
+                Ok(0) => None,
+                Ok(n) => Some(n),
+                Err(_) => arks_config::parse_bool(&v).unwrap_or(false).then_some(20),
+            };
+        }
     }
+    let text = crate::cmd::plumbing_ext::fmt_merge_msg(
+        &repo,
+        &input,
+        message.as_deref(),
+        into.as_deref(),
+        log,
+    )?;
+    print!("{text}");
     Ok(())
 }
 
@@ -1966,67 +2088,68 @@ pub fn cmd_unpack_file(args: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/// `arks bugreport` — print environment / version diagnostics (subset).
+/// `arks bugreport [-o <dir>] [-s <format>] [--diagnose[=<mode>]]` — write a
+/// `git-bugreport-<suffix>.txt` system report (no network, no git spawn).
+/// Cite: https://git-scm.com/docs/git-bugreport
 pub fn cmd_bugreport(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--output-directory", "-s", "--suffix"])?;
-    println!("arks version {}", env!("CARGO_PKG_VERSION"));
-    println!("os={}", std::env::consts::OS);
-    println!("arch={}", std::env::consts::ARCH);
-    if let Ok(cwd) = std::env::current_dir() {
-        println!("cwd={}", cwd.display());
-    }
-    if let Ok(exe) = std::env::current_exe() {
-        println!("exe={}", exe.display());
-    }
-    match open_repo() {
-        Ok(repo) => {
-            println!("git_dir={}", repo.git_dir().display());
-            if let Ok(oid) = repo.head_oid() {
-                println!("HEAD={}", oid.to_hex());
+    let o = crate::cmd::plumbing_ext::ReportOpts::parse(args, "bugreport", true)?;
+    let path = o.target("git-bugreport", "txt")?;
+    let mut text = String::new();
+    text.push_str("Thank you for filling out a Git bug report!\nPlease answer the following questions to help us understand your issue.\n\n");
+    text.push_str("What did you do before the bug happened? (Steps to reproduce your issue)\n\n");
+    text.push_str("What did you expect to happen? (Expected behavior)\n\n");
+    text.push_str("What happened instead? (Actual behavior)\n\n");
+    text.push_str("What's different between what you expected and what actually happened?\n\n");
+    text.push_str("Anything else you want to add:\n\n");
+    text.push_str("Please review the rest of the bug report below.\nYou can delete any lines you don't wish to share.\n\n\n");
+    text.push_str("[System Info]\n");
+    text.push_str(&format!("arks version:\narks version {}\n", env!("CARGO_PKG_VERSION")));
+    text.push_str(&format!(
+        "uname: {} {}\n",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    ));
+    text.push_str(&format!(
+        "$SHELL (typically, interactive shell): {}\n\n\n",
+        std::env::var("SHELL").unwrap_or_default()
+    ));
+    text.push_str("[Enabled Hooks]\n");
+    if let Ok(repo) = open_repo() {
+        if let Ok(rd) = fs::read_dir(repo.git_dir().join("hooks")) {
+            let mut names: Vec<String> = rd
+                .flatten()
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .filter(|n| !n.ends_with(".sample"))
+                .collect();
+            names.sort();
+            for n in names {
+                text.push_str(&n);
+                text.push('\n');
             }
         }
-        Err(_) => println!("git_dir=(not a repository)"),
     }
-    println!("note: bugreport subset — no zip bundle; no git/gh spawn");
+    fs::write(&path, text)?;
+    eprintln!(
+        "Created new report at '{}'.",
+        path.display()
+    );
+    if let Some(mode) = &o.diagnose {
+        let zip = o.target("git-diagnostics", "zip")?;
+        crate::cmd::plumbing_ext::write_diagnostics(&zip, mode)?;
+        eprintln!("Created new diagnostics archive at '{}'.", zip.display());
+    }
     Ok(())
 }
 
-/// `arks diagnose` — collect diagnostic paths for a repo (subset).
+/// `arks diagnose [-o <dir>] [-s <format>] [--mode=stats|all]` — write a
+/// `git-diagnostics-<suffix>.zip` archive of repository diagnostics.
+/// Cite: https://git-scm.com/docs/git-diagnose
 pub fn cmd_diagnose(args: &[String]) -> CliResult<()> {
-    refuse_unknown_flags(args, &["--mode", "--output-directory", "--suffix"])?;
-    let repo = open_repo()?;
-    let git = repo.git_dir();
-    println!("arks diagnose (subset)");
-    println!("git_dir={}", git.display());
-    for rel in [
-        "HEAD",
-        "config",
-        "index",
-        "packed-refs",
-        "objects/info/packs",
-        "info/refs",
-    ] {
-        let p = git.join(rel);
-        let st = if p.is_file() {
-            "file"
-        } else if p.is_dir() {
-            "dir"
-        } else {
-            "missing"
-        };
-        println!("{st}\t{}", p.display());
-    }
-    let packs = git.join("objects/pack");
-    if packs.is_dir() {
-        for ent in fs::read_dir(&packs)? {
-            let ent = ent?;
-            let name = ent.file_name().to_string_lossy().into_owned();
-            if name.ends_with(".pack") || name.ends_with(".idx") {
-                println!("pack\t{}", ent.path().display());
-            }
-        }
-    }
-    println!("note: diagnose subset — listing only; no zip; no git/gh spawn");
+    let o = crate::cmd::plumbing_ext::ReportOpts::parse(args, "diagnose", false)?;
+    let zip = o.target("git-diagnostics", "zip")?;
+    let mode = o.diagnose.clone().unwrap_or_else(|| "stats".into());
+    crate::cmd::plumbing_ext::write_diagnostics(&zip, &mode)?;
+    eprintln!("Diagnostics complete.\nAll of the gathered info is captured in '{}'", zip.display());
     Ok(())
 }
 

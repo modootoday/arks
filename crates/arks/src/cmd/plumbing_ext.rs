@@ -10,7 +10,6 @@ use arks_object::ObjectKind;
 use arks_oid::Oid;
 use arks_refs::RefTarget;
 use arks_repo::Repository;
-
 use std::collections::HashMap;
 use std::io::{self, Read};
 
@@ -431,6 +430,129 @@ pub(crate) fn expand_home(p: &str) -> String {
     match p.strip_prefix("~/") {
         Some(rest) => format!("{home}/{rest}"),
         None => p.to_string(),
+    }
+}
+
+/// `git credential-store` actions over `<proto>://<user>:<pass>@<host>[/<path>]` lines.
+pub(crate) fn credential_store(
+    op: &str,
+    desc: &arks_remote::Credential,
+    paths: &[std::path::PathBuf],
+) -> CliResult<()> {
+    let enc = |s: &str| -> String {
+        s.bytes()
+            .map(|b| {
+                if b.is_ascii_alphanumeric() || b"-._~".contains(&b) {
+                    (b as char).to_string()
+                } else {
+                    format!("%{b:02X}")
+                }
+            })
+            .collect()
+    };
+    let dec = |s: &str| -> String {
+        let b = s.as_bytes();
+        let mut out = Vec::new();
+        let mut i = 0;
+        while i < b.len() {
+            if b[i] == b'%' && i + 2 < b.len() + 1 && i + 2 <= b.len() - 1 {
+                if let Ok(v) = u8::from_str_radix(&s[i + 1..i + 3], 16) {
+                    out.push(v);
+                    i += 3;
+                    continue;
+                }
+            }
+            out.push(b[i]);
+            i += 1;
+        }
+        String::from_utf8_lossy(&out).into_owned()
+    };
+    // (protocol, user, pass, host, path)
+    let parse = |line: &str| -> Option<(String, String, String, String, String)> {
+        let (proto, rest) = line.split_once("://")?;
+        let (auth, hostpath) = rest.rsplit_once('@')?;
+        let (user, pass) = auth.split_once(':')?;
+        let (host, path) = match hostpath.split_once('/') {
+            Some((h, p)) => (h.to_string(), p.to_string()),
+            None => (hostpath.to_string(), String::new()),
+        };
+        Some((proto.to_string(), dec(user), dec(pass), host, dec(&path)))
+    };
+    let proto = desc.protocol.clone().unwrap_or_default();
+    let host = desc.host.clone().unwrap_or_default();
+    let want_path = desc.path.clone().unwrap_or_default();
+    let matches = |e: &(String, String, String, String, String)| {
+        e.0 == proto
+            && e.3 == host
+            && (e.4.is_empty() || e.4 == want_path)
+            && desc.username.as_deref().is_none_or(|u| u == e.1)
+    };
+    match op {
+        "get" => {
+            for p in paths {
+                let Ok(text) = std::fs::read_to_string(p) else {
+                    continue;
+                };
+                if let Some(e) = text.lines().filter_map(parse).find(|e| matches(e)) {
+                    println!("username={}", e.1);
+                    println!("password={}", e.2);
+                    return Ok(());
+                }
+            }
+            Ok(())
+        }
+        "store" | "erase" => {
+            if op == "store"
+                && (desc.username.is_none() || desc.password.is_none() || proto.is_empty())
+            {
+                return Ok(());
+            }
+            // erase never creates a credential file.
+            if op == "erase" && !paths.iter().any(|p| p.exists()) {
+                return Ok(());
+            }
+            let target = paths
+                .iter()
+                .find(|p| p.exists())
+                .unwrap_or(&paths[0])
+                .clone();
+            let text = std::fs::read_to_string(&target).unwrap_or_default();
+            let mut lines: Vec<String> = text
+                .lines()
+                .filter(|l| !parse(l).is_some_and(|e| matches(&e)))
+                .map(str::to_string)
+                .collect();
+            if op == "store" {
+                let mut line = format!(
+                    "{proto}://{}:{}@{host}",
+                    enc(desc.username.as_deref().unwrap_or("")),
+                    enc(desc.password.as_deref().unwrap_or(""))
+                );
+                if !want_path.is_empty() {
+                    line.push('/');
+                    line.push_str(&enc(&want_path).replace("%2F", "/"));
+                }
+                lines.insert(0, line);
+            }
+            let mut out = lines.join("\n");
+            if !out.is_empty() {
+                out.push('\n');
+            }
+            if let Some(parent) = target.parent() {
+                if !parent.as_os_str().is_empty() {
+                    std::fs::create_dir_all(parent)?;
+                }
+            }
+            std::fs::write(&target, out)?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(&target, std::fs::Permissions::from_mode(0o600));
+            }
+            Ok(())
+        }
+        // Unknown actions are ignored, as the credential helper protocol requires.
+        _ => Ok(()),
     }
 }
 
@@ -951,6 +1073,510 @@ pub(crate) fn render_columns(items: &[&str], l: &ColumnLayout, o: &ColumnOpts) -
             out.push_str(&" ".repeat((initial - len).max(0) as usize));
         }
     }
+    out
+}
+
+/// `fmt-merge-msg`: FETCH_HEAD lines → message (`Merge branch 'x' [of <url>] [into <dst>]`
+/// plus an optional shortlog with `# By` / `# Via` credit lines).
+/// Behaviour derived from observed stock git output (see family-plumbing corpus).
+pub(crate) fn fmt_merge_msg(
+    repo: &Repository,
+    input: &str,
+    message: Option<&str>,
+    into: Option<&str>,
+    log: Option<usize>,
+) -> CliResult<String> {
+    #[derive(Clone, Copy, PartialEq)]
+    enum Kind {
+        Branch,
+        Rtb,
+        Tag,
+        Commit,
+        Raw,
+    }
+    struct Entry {
+        oid: Oid,
+        kind: Kind,
+        /// Name after the kind prefix, as written (quotes kept).
+        name: String,
+        /// Source after ` of `; for `Raw` the whole description.
+        src: String,
+    }
+    let head = repo.head_oid().ok();
+    let mut entries: Vec<Entry> = Vec::new();
+    for (n, line) in input.lines().enumerate() {
+        let bad = || CliError::fatal(format!("error in line {}: {line}", n + 1));
+        let mut f = line.splitn(3, '\t');
+        let (Some(hex), Some(flag), Some(desc)) = (f.next(), f.next(), f.next()) else {
+            return Err(bad());
+        };
+        let oid = Oid::from_hex(hex).map_err(|_| bad())?;
+        match flag {
+            "" => {}
+            "not-for-merge" => continue,
+            _ => return Err(bad()),
+        }
+        let Some((what, src)) = desc.rsplit_once(" of ") else {
+            entries.push(Entry {
+                oid,
+                kind: Kind::Raw,
+                name: desc.to_string(),
+                src: desc.to_string(),
+            });
+            continue;
+        };
+        let (kind, name) = if let Some(n) = what.strip_prefix("branch ") {
+            (Kind::Branch, n)
+        } else if let Some(n) = what.strip_prefix("remote-tracking branch ") {
+            (Kind::Rtb, n)
+        } else if let Some(n) = what.strip_prefix("tag ") {
+            (Kind::Tag, n)
+        } else {
+            (Kind::Commit, what)
+        };
+        entries.push(Entry {
+            oid,
+            kind,
+            name: name.to_string(),
+            src: src.to_string(),
+        });
+    }
+    // Drop strict ancestors of HEAD and parents reachable from another parent.
+    let is_anc = |a: &Oid, b: &Oid| crate::cmd::shared::is_ancestor(repo, a, b).unwrap_or(false);
+    let keep: Vec<bool> = entries
+        .iter()
+        .enumerate()
+        .map(|(i, e)| {
+            let in_head = head.as_ref().is_some_and(|h| *h != e.oid && is_anc(&e.oid, h));
+            let in_other = entries
+                .iter()
+                .enumerate()
+                .any(|(j, p)| j != i && p.oid != e.oid && is_anc(&e.oid, &p.oid));
+            !in_head && !in_other
+        })
+        .collect();
+    let kept: Vec<&Entry> = entries.iter().zip(&keep).filter(|(_, k)| **k).map(|(e, _)| e).collect();
+    let mut out = String::new();
+    if let Some(m) = message {
+        out.push_str(m);
+        if !m.ends_with('\n') {
+            out.push('\n');
+        }
+    }
+    if kept.is_empty() {
+        return Ok(out);
+    }
+    if message.is_none() {
+        // Group by source in order of first appearance; raw lines stand alone.
+        let mut groups: Vec<(bool, &str)> = Vec::new();
+        for e in &kept {
+            let key = (e.kind == Kind::Raw, e.src.as_str());
+            if !groups.contains(&key) {
+                groups.push(key);
+            }
+        }
+        let join = |one: &str, many: &str, names: &[&str]| -> String {
+            match names {
+                [n] => format!("{one} {n}"),
+                [rest @ .., last] => format!("{many} {} and {last}", rest.join(", ")),
+                [] => String::new(),
+            }
+        };
+        let mut parts = Vec::new();
+        for (raw, src) in &groups {
+            if *raw {
+                parts.push((*src).to_string());
+                continue;
+            }
+            let names = |k: Kind| -> Vec<&str> {
+                kept.iter()
+                    .filter(|e| e.kind == k && e.src == *src)
+                    .map(|e| e.name.as_str())
+                    .collect()
+            };
+            let mut sub = Vec::new();
+            for (k, one, many) in [
+                (Kind::Branch, "branch", "branches"),
+                (Kind::Rtb, "remote-tracking branch", "remote-tracking branches"),
+                (Kind::Tag, "tag", "tags"),
+                (Kind::Commit, "commit", "commits"),
+            ] {
+                let n = names(k);
+                if !n.is_empty() {
+                    sub.push(join(one, many, &n));
+                }
+            }
+            let mut p = sub.join(", ");
+            if *src != "." {
+                p.push_str(&format!(" of {src}"));
+            }
+            parts.push(p);
+        }
+        out.push_str("Merge ");
+        out.push_str(&parts.join("; "));
+        let dest = match into {
+            Some(i) => i.to_string(),
+            None => match repo.head_target() {
+                Ok(arks_refs::RefTarget::Symbolic(t)) => {
+                    t.strip_prefix("refs/heads/").map(str::to_string).unwrap_or(t)
+                }
+                _ => "HEAD".to_string(),
+            },
+        };
+        let cfg = arks_config::ConfigSet::load(Some(repo.git_dir()));
+        let suppress = cfg.get_all("merge.suppressdest");
+        let suppressed = if suppress.is_empty() {
+            dest == "main" || dest == "master"
+        } else {
+            suppress.iter().any(|s| *s == dest)
+        };
+        if !suppressed {
+            out.push_str(&format!(" into {dest}"));
+        }
+        out.push('\n');
+    }
+    let Some(limit) = log else {
+        return Ok(out);
+    };
+    let limit = limit.max(1);
+    let cfg = arks_config::ConfigSet::load(Some(repo.git_dir()));
+    let comment = cfg
+        .get("core.commentchar")
+        .and_then(|c| c.chars().next())
+        .unwrap_or('#');
+    let me_author = crate::cmd::shared::commit_signature().ok().map(|s| s.name);
+    let me_committer = crate::cmd::shared::committer_signature().ok().map(|s| s.name);
+    for e in &kept {
+        let label = match e.kind {
+            Kind::Raw => e.src.clone(),
+            Kind::Branch | Kind::Rtb if e.src == "." => e.name.trim_matches('\'').to_string(),
+            Kind::Branch | Kind::Rtb => format!("{} of {}", e.name, e.src),
+            Kind::Tag if e.src == "." => format!("tag {}", e.name),
+            Kind::Tag => format!("tag {} of {}", e.name, e.src),
+            Kind::Commit => e.src.clone(),
+        };
+        // Walk commits not reachable from HEAD, newest first.
+        let mut seen = std::collections::HashSet::new();
+        let mut stack = vec![e.oid];
+        let mut commits: Vec<(i64, arks_object::Commit)> = Vec::new();
+        while let Some(c) = stack.pop() {
+            if !seen.insert(c) || head.as_ref().is_some_and(|h| is_anc(&c, h)) {
+                continue;
+            }
+            let Ok(obj) = repo.get_object(&c) else { continue };
+            let Ok(cm) = arks_object::Commit::decode(&obj.payload) else { continue };
+            stack.extend(cm.parents.iter().copied());
+            commits.push((cm.committer.timestamp, cm));
+        }
+        commits.sort_by(|a, b| b.0.cmp(&a.0));
+        // Credits: authors of listed commits; committers of merges and of the tip.
+        let mut authors: Vec<(String, usize)> = Vec::new();
+        let mut committers: Vec<(String, usize)> = Vec::new();
+        let bump = |list: &mut Vec<(String, usize)>, name: &str| match list.iter_mut().find(|(n, _)| n == name) {
+            Some(p) => p.1 += 1,
+            None => list.push((name.to_string(), 1)),
+        };
+        let mut subjects = Vec::new();
+        for (_, cm) in &commits {
+            if cm.parents.len() > 1 {
+                bump(&mut committers, &cm.committer.name);
+                continue;
+            }
+            if subjects.is_empty() {
+                bump(&mut committers, &cm.committer.name);
+            }
+            bump(&mut authors, &cm.author.name);
+            subjects.push(cm.message.lines().next().unwrap_or("").to_string());
+        }
+        out.push('\n');
+        for (label_word, mut people, me) in [("By", authors, &me_author), ("Via", committers, &me_committer)] {
+            if people.is_empty() || (people.len() == 1 && me.as_deref() == Some(people[0].0.as_str())) {
+                continue;
+            }
+            people.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+            let text = match people.as_slice() {
+                [(n, _)] => n.clone(),
+                [(a, x), (b, y)] => format!("{a} ({x}) and {b} ({y})"),
+                [(a, x), ..] => format!("{a} ({x}) and others"),
+                [] => String::new(),
+            };
+            out.push_str(&format!("{comment} {label_word} {text}\n"));
+        }
+        let total = subjects.len();
+        if total > limit {
+            out.push_str(&format!("* {label}: ({total} commits)\n"));
+        } else {
+            out.push_str(&format!("* {label}:\n"));
+        }
+        for s in subjects.iter().take(limit) {
+            out.push_str(&format!("  {s}\n"));
+        }
+        if total > limit {
+            out.push_str("  ...\n");
+        }
+    }
+    Ok(out)
+}
+
+/// Shared `-o/--output-directory`, `-s/--suffix`, `--diagnose`/`--mode` options.
+pub(crate) struct ReportOpts {
+    pub dir: std::path::PathBuf,
+    pub suffix: String,
+    pub diagnose: Option<String>,
+}
+
+impl ReportOpts {
+    pub(crate) fn parse(args: &[String], cmd: &str, bugreport: bool) -> CliResult<Self> {
+        let usage = || {
+            CliError::Exit(
+                129,
+                format!("usage: git {cmd} [(-o | --output-directory) <path>] [(-s | --suffix) <format>]"),
+            )
+        };
+        let mut o = Self {
+            dir: std::path::PathBuf::from("."),
+            suffix: "%Y-%m-%d-%H%M".into(),
+            diagnose: None,
+        };
+        let mut i = 0;
+        while i < args.len() {
+            let a = args[i].as_str();
+            i += 1;
+            let mut val = |name_short: &str, name_long: &str| -> CliResult<Option<String>> {
+                if a == name_short || a == name_long {
+                    let v = args.get(i).cloned().ok_or_else(usage)?;
+                    i += 1;
+                    return Ok(Some(v));
+                }
+                if let Some(v) = a.strip_prefix(&format!("{name_long}=")) {
+                    return Ok(Some(v.to_string()));
+                }
+                if name_short.len() == 2 && a.len() > 2 && a.starts_with(name_short) && !a.starts_with("--") {
+                    return Ok(Some(a[2..].to_string()));
+                }
+                Ok(None)
+            };
+            if let Some(v) = val("-o", "--output-directory")? {
+                o.dir = std::path::PathBuf::from(v);
+            } else if let Some(v) = val("-s", "--suffix")? {
+                o.suffix = v;
+            } else if a == "--no-output-directory" {
+                o.dir = std::path::PathBuf::from(".");
+            } else if a == "--no-suffix" {
+                o.suffix.clear();
+            } else if bugreport && a == "--diagnose" {
+                o.diagnose = Some("stats".into());
+            } else if bugreport && a == "--no-diagnose" {
+                o.diagnose = None;
+            } else if let Some(m) = a
+                .strip_prefix(if bugreport { "--diagnose=" } else { "--mode=" })
+            {
+                if m != "stats" && m != "all" {
+                    return Err(CliError::Exit(
+                        129,
+                        format!("error: invalid --{} value '{m}'", if bugreport { "diagnose" } else { "mode" }),
+                    ));
+                }
+                o.diagnose = Some(m.to_string());
+            } else if !bugreport && a == "--mode" {
+                let m = args.get(i).cloned().ok_or_else(usage)?;
+                i += 1;
+                if m != "stats" && m != "all" {
+                    return Err(CliError::Exit(129, format!("error: invalid --mode value '{m}'")));
+                }
+                o.diagnose = Some(m);
+            } else if !bugreport && !a.starts_with('-') {
+                // diagnose ignores positional arguments, as stock git does.
+            } else {
+                return Err(usage());
+            }
+        }
+        Ok(o)
+    }
+
+    /// `<dir>/<prefix>-<strftime(suffix)>.<ext>`.
+    pub(crate) fn target(&self, prefix: &str, ext: &str) -> CliResult<std::path::PathBuf> {
+        std::fs::create_dir_all(&self.dir)
+            .map_err(|e| CliError::fatal(format!("could not create leading directories for '{}': {e}", self.dir.display())))?;
+        let stamp = strftime_now(&self.suffix);
+        let name = if stamp.is_empty() {
+            format!("{prefix}.{ext}")
+        } else {
+            format!("{prefix}-{stamp}.{ext}")
+        };
+        let p = self.dir.join(name);
+        if p.exists() {
+            return Err(CliError::fatal(format!(
+                "file '{}' already exists",
+                p.display()
+            )));
+        }
+        Ok(p)
+    }
+}
+
+/// Minimal strftime (`%Y %m %d %H %M %S %%`) in UTC.
+fn strftime_now(fmt: &str) -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let days = secs.div_euclid(86_400);
+    let rem = secs.rem_euclid(86_400);
+    // civil_from_days (Howard Hinnant).
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    let mut out = String::new();
+    let mut it = fmt.chars();
+    while let Some(c) = it.next() {
+        if c != '%' {
+            out.push(c);
+            continue;
+        }
+        match it.next() {
+            Some('Y') => out.push_str(&format!("{y:04}")),
+            Some('m') => out.push_str(&format!("{m:02}")),
+            Some('d') => out.push_str(&format!("{d:02}")),
+            Some('H') => out.push_str(&format!("{:02}", rem / 3600)),
+            Some('M') => out.push_str(&format!("{:02}", rem % 3600 / 60)),
+            Some('S') => out.push_str(&format!("{:02}", rem % 60)),
+            Some('%') => out.push('%'),
+            Some(o) => {
+                out.push('%');
+                out.push(o);
+            }
+            None => out.push('%'),
+        }
+    }
+    out
+}
+
+/// Write a stored (uncompressed) zip with repository diagnostics: a
+/// `diagnostics.log` summary, plus the `.git` metadata files for `all`.
+pub(crate) fn write_diagnostics(zip: &std::path::Path, mode: &str) -> CliResult<()> {
+    let mut files: Vec<(String, Vec<u8>)> = Vec::new();
+    let mut log = format!(
+        "arks version {}\ncpu: {}\nno commit associated with this build\nsizeof-long: {}\nsizeof-size_t: {}\nshell-path: /bin/sh\n",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::ARCH,
+        std::mem::size_of::<std::ffi::c_long>(),
+        std::mem::size_of::<usize>()
+    );
+    if let Ok(repo) = crate::util::open_repo() {
+        let root = crate::util::work_tree(&repo)
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|_| repo.git_dir().to_path_buf());
+        log.push_str(&format!("Repository root: {}\n", root.display()));
+        let objects = repo.store().objects_dir().to_path_buf();
+        // packs-local.txt: one `%-70s %16d` line per file in objects/pack.
+        let mut packs = String::from("Contents of .git/objects:\n");
+        if let Ok(rd) = std::fs::read_dir(objects.join("pack")) {
+            for e in rd.flatten() {
+                let n = e.file_name().to_string_lossy().into_owned();
+                let size = e.metadata().map(|m| m.len()).unwrap_or(0);
+                packs.push_str(&format!("{n:<70} {size:>16}\n"));
+            }
+        }
+        files.push(("packs-local.txt".into(), packs.into_bytes()));
+        // objects-local.txt: loose object count per fan-out directory.
+        let mut stats = format!("Object directory stats for {}:\n", objects.display());
+        let mut total = 0usize;
+        if let Ok(rd) = std::fs::read_dir(&objects) {
+            for e in rd.flatten() {
+                let n = e.file_name().to_string_lossy().into_owned();
+                if n.len() != 2 || !n.chars().all(|c| c.is_ascii_hexdigit()) {
+                    continue;
+                }
+                let count = std::fs::read_dir(e.path()).map(|d| d.count()).unwrap_or(0);
+                total += count;
+                stats.push_str(&format!("{n} : {count:>7} files\n"));
+            }
+        }
+        stats.push_str(&format!("Total: {total} loose objects"));
+        files.push(("objects-local.txt".into(), stats.into_bytes()));
+        if mode == "all" {
+            // A copy of the git directory without objects/ and refs/.
+            let git_dir = repo.git_dir().to_path_buf();
+            let mut stack = vec![git_dir.clone()];
+            while let Some(dir) = stack.pop() {
+                let Ok(rd) = std::fs::read_dir(&dir) else { continue };
+                for e in rd.flatten() {
+                    let path = e.path();
+                    let rel = path.strip_prefix(&git_dir).unwrap_or(&path).to_path_buf();
+                    if rel == std::path::Path::new("objects") || rel == std::path::Path::new("refs") {
+                        continue;
+                    }
+                    if path.is_dir() {
+                        stack.push(path);
+                    } else if let Ok(b) = std::fs::read(&path) {
+                        files.push((format!(".git/{}", rel.display()), b));
+                    }
+                }
+            }
+        }
+    }
+    // Like git, the log is echoed on stdout as it is collected.
+    print!("Collecting diagnostic info\n\n{log}");
+    files.insert(0, ("diagnostics.log".into(), log.into_bytes()));
+    std::fs::write(zip, stored_zip(&files))?;
+    Ok(())
+}
+
+fn crc32(data: &[u8]) -> u32 {
+    let mut crc = 0xffff_ffffu32;
+    for &b in data {
+        crc ^= u32::from(b);
+        for _ in 0..8 {
+            crc = if crc & 1 != 0 { (crc >> 1) ^ 0xedb8_8320 } else { crc >> 1 };
+        }
+    }
+    !crc
+}
+
+fn stored_zip(files: &[(String, Vec<u8>)]) -> Vec<u8> {
+    let mut out = Vec::new();
+    let mut central = Vec::new();
+    for (name, data) in files {
+        let off = out.len() as u32;
+        let crc = crc32(data);
+        let n = name.as_bytes();
+        let size = data.len() as u32;
+        out.extend_from_slice(&0x0403_4b50u32.to_le_bytes());
+        out.extend_from_slice(&[20, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        out.extend_from_slice(&crc.to_le_bytes());
+        out.extend_from_slice(&size.to_le_bytes());
+        out.extend_from_slice(&size.to_le_bytes());
+        out.extend_from_slice(&(n.len() as u16).to_le_bytes());
+        out.extend_from_slice(&0u16.to_le_bytes());
+        out.extend_from_slice(n);
+        out.extend_from_slice(data);
+        central.extend_from_slice(&0x0201_4b50u32.to_le_bytes());
+        central.extend_from_slice(&[20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        central.extend_from_slice(&crc.to_le_bytes());
+        central.extend_from_slice(&size.to_le_bytes());
+        central.extend_from_slice(&size.to_le_bytes());
+        central.extend_from_slice(&(n.len() as u16).to_le_bytes());
+        central.extend_from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        central.extend_from_slice(&off.to_le_bytes());
+        central.extend_from_slice(n);
+    }
+    let cd_off = out.len() as u32;
+    let cd_len = central.len() as u32;
+    out.extend_from_slice(&central);
+    out.extend_from_slice(&0x0605_4b50u32.to_le_bytes());
+    out.extend_from_slice(&[0, 0, 0, 0]);
+    out.extend_from_slice(&(files.len() as u16).to_le_bytes());
+    out.extend_from_slice(&(files.len() as u16).to_le_bytes());
+    out.extend_from_slice(&cd_len.to_le_bytes());
+    out.extend_from_slice(&cd_off.to_le_bytes());
+    out.extend_from_slice(&0u16.to_le_bytes());
     out
 }
 
