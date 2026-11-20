@@ -17,6 +17,7 @@ pub mod commit;
 pub mod config;
 pub mod core;
 pub mod credential;
+pub mod credential_os;
 pub mod daemon;
 pub mod diff_cmd;
 pub mod diff_render;
@@ -25,6 +26,7 @@ pub mod fetch;
 pub mod for_each_ref;
 pub mod format_patch;
 pub mod grep;
+pub mod gui;
 pub mod history;
 pub mod hooks;
 pub mod host_skew;
@@ -83,6 +85,7 @@ pub mod switch_tree;
 pub mod tag;
 pub mod trailers;
 pub mod unified_diff;
+pub mod update_check;
 pub mod working_tree;
 pub mod worktree;
 
@@ -102,12 +105,14 @@ pub use core::{cmd_add, cmd_hash_object, cmd_init, cmd_rev_parse, cmd_status, cm
 pub use credential::{
     cmd_credential, cmd_credential_libsecret, cmd_credential_osxkeychain, cmd_credential_wincred,
 };
+pub use credential_os::cmd_credential_manager;
 pub use daemon::cmd_daemon;
 pub use diff_cmd::cmd_diff;
 pub use fetch::cmd_fetch;
 pub use for_each_ref::cmd_for_each_ref;
 pub use format_patch::cmd_format_patch;
 pub use grep::cmd_grep;
+pub use gui::{cmd_citool, cmd_gui, cmd_gui_askpass, cmd_gui_askyesno};
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use host_skew::{
     cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_replay_exp,
@@ -164,5 +169,6 @@ pub use stash::cmd_stash;
 pub use submodule::cmd_submodule;
 pub use tag::{cmd_describe, cmd_tag};
 pub use trailers::cmd_interpret_trailers;
+pub use update_check::cmd_update_git_for_windows;
 pub use working_tree::{cmd_clean, cmd_mv, cmd_reset, cmd_restore, cmd_rm};
 pub use worktree::cmd_worktree;

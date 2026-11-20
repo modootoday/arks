@@ -65,6 +65,8 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "credential" => cmd::cmd_credential(args),
         "credential-store" => cmd::cmd_credential_store(args),
         "credential-wincred" => cmd::cmd_credential_wincred(args),
+        "credential-manager" => cmd::cmd_credential_manager(args),
+        "update-git-for-windows" => cmd::cmd_update_git_for_windows(args),
         "credential-libsecret" => cmd::cmd_credential_libsecret(args),
         "credential-osxkeychain" => cmd::cmd_credential_osxkeychain(args),
         "grep" => cmd::cmd_grep(args),
@@ -165,8 +167,12 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "backfill" | "filter-branch" => Err(CliError::NotImplemented(format!(
             "{cmd} excluded from alias inventory (M15 Fs-3 explicit exclude); see cli-flag-parity-full"
         ))),
-        "gui" | "citool" | "gitk" => Err(CliError::NotImplemented(format!(
-            "{cmd}: use external gitk/git-gui (FS7 handoff; not embedded in arks CLI)"
+        "gui" | "gui.tcl" => cmd::cmd_gui(args),
+        "citool" => cmd::cmd_citool(args),
+        "gui--askpass" => cmd::cmd_gui_askpass(args),
+        "gui--askyesno" => cmd::cmd_gui_askyesno(args),
+        "gitk" => Err(CliError::NotImplemented(format!(
+            "{cmd}: use external gitk (FS7 handoff; not embedded in arks CLI; arks gui is the terminal git-gui)"
         ))),
         "scalar" => Err(CliError::NotImplemented(
             "scalar: separate large-repo helper (FS6); not claimed as arks porcelain".into(),

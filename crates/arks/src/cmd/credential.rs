@@ -47,8 +47,10 @@ pub fn cmd_credential(args: &[String]) -> CliResult<()> {
     }
 }
 
+/// `git credential-wincred`: the OS credential store on every platform
+/// (see `credential_os`).
 pub fn cmd_credential_wincred(args: &[String]) -> CliResult<()> {
-    cmd_wallet_helper(WalletKind::Wincred, args).map_err(|e| CliError::Msg(e.to_string()))
+    crate::cmd::credential_os::run_helper("credential-wincred", args)
 }
 
 pub fn cmd_credential_libsecret(args: &[String]) -> CliResult<()> {
