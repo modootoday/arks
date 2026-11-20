@@ -620,3 +620,23 @@ name-rev --refs=nope --undefined HEAD
 name-rev --annotate-stdin
 name-rev --no-annotate-stdin HEAD
 name-rev 504170b
+# --- shortlog ---
+shortlog HEAD
+shortlog -se HEAD
+shortlog -c -s HEAD
+shortlog --no-committer -c -s HEAD
+shortlog --no-numbered -n -s HEAD
+shortlog --no-summary -s HEAD
+shortlog --no-email -e -s HEAD
+shortlog -w HEAD
+shortlog -w20,2,4 HEAD
+shortlog --group=committer --group=author -s HEAD
+shortlog --no-group --group=committer -s HEAD
+shortlog --format='%h %s' HEAD
+shortlog --group='format:%an <%ae>' -s HEAD
+shortlog --group=trailer:signed-off-by -s HEAD
+shortlog -s --all
+shortlog -s main..feature
+shortlog -s HEAD -- src
+shortlog -s --no-merges HEAD
+shortlog
