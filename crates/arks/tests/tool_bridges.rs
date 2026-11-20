@@ -468,6 +468,44 @@ fn askpass_helpers_and_browser_commands() {
         ),
         "opened http://h/a\n"
     );
+    // difftool--helper: the external-diff call with the difftool environment.
+    let z = "0000000000000000000000000000000000000000";
+    let helper = arks(&d)
+        .env("GIT_DIFFTOOL_EXTCMD", "echo")
+        .env("GIT_DIFFTOOL_NO_PROMPT", "true")
+        .args([
+            "difftool--helper",
+            "a.txt",
+            "/tmp/old",
+            z,
+            "100644",
+            "a.txt",
+            z,
+            "100644",
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(String::from_utf8_lossy(&helper.stdout), "/tmp/old a.txt\n");
+    let prompted = arks(&d)
+        .env("GIT_DIFFTOOL_EXTCMD", "echo")
+        .env("GIT_DIFF_PATH_COUNTER", "2")
+        .env("GIT_DIFF_PATH_TOTAL", "3")
+        .args([
+            "difftool--helper",
+            "a.txt",
+            "/tmp/old",
+            z,
+            "100644",
+            "a.txt",
+            z,
+            "100644",
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(
+        String::from_utf8_lossy(&prompted.stdout),
+        "\nViewing (2/3): 'a.txt'\nLaunch 'echo' [Y/n]? "
+    );
 }
 
 #[cfg(unix)]
