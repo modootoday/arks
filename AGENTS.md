@@ -19,11 +19,12 @@ Build **arks** (`arks for Git`; working expansion **Agent Revision Kinetic Syste
 5. **Object store / lease boundary** — filesystem `.git` is the sole Git-compat **object store**. **CELIR is not adopted**: it MUST NOT appear in the Cargo graph in any form; M24 and G22–G25 are Withdrawn (`.spec/adr/20261119200000-celir-not-adopted-withdraw-m24.adr.md`). Lease/concurrency has its own SoT. Never silently replace Git object-store semantics in Git-compat mode.
 6. **Public surface** — repo will be public; no secrets in tracked paths; **human** (`docs/`, README, LICENSE, SECURITY) vs **agent** (`AGENTS.md`, `.agents/`, `.spec/`, `verify/` matrices) vocabulary split; thin Pages vs Specfold brain; English-only public copy; no “faster than Git” marketing outside receipts. SoT: `.spec/sot/public-surface.sot.md`; rules `80-public-surface`, `25-spec-classification`. `.spec.local/` stays gitignored.
 7. **Structural conventions** — SRP, modularization, no flat dumps, naming compliance, context-based dirs, anti-fragmentation, and language-standard layouts (Rust Cargo workspace / crates members first; Specfold, docs, and agents are overlays). SoT: `.spec/sot/structural-conventions.sot.md`; rule `15-structural-conventions`.
-8. **No folklore** — prefer updating `.spec/` over chat-only process invention. **No push** while remote is empty / push-deferred unless the owner explicitly authorizes (rule `91-commit-hygiene`).
+8. **No folklore** — prefer updating `.spec/` over chat-only process invention. **Push scope:** agents push only their own `claude/*` topic branch and merge by decision class (rules `91`, `95`).
 9. **Commit order** — Specfold SoT meaning changes land **first**; implementation later, one concern per commit — rules `27-spec-first-commit-order`, `91-commit-hygiene`. SoT body `Version` ≠ product/crate release — rule `26-sot-version-vs-release` (details: `.spec/README.md`).
 10. **CLI surface** — single bin `arks`; personalities `git|gh|arks`; never spawn stock `git`/`gh` on product paths; **`arks serve` ≠ `arks hub`**; ports normative≠demo — rules `30`, `32`, `33`, `34`; skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve`.
 11. **Honesty wording** — stubs/Partial ≠ Claimed/Verified/PASS — rules `28`, `29`; hooks scan commit messages.
 12. **Hooks** — `.cursor/hooks.json` denies force-push to main/master and staging `.spec.local`/secrets; asks on push / blind add / destructive git / `gh`; Hangul guards on edit + commit (rule `05`).
+13. **Unattended operation** — loop, work order, decision classes **A** (auto-merge) / **H** (`needs-human`) / **O** (owner only), stop signals (`agents:pause`), final-completion condition and the tracked `.claude/settings.json` permission baseline — SoT `.spec/sot/autonomous-operation.sot.md`; rule `95`.
 
 ## Progressive disclosure (read more only when needed)
 
@@ -65,6 +66,7 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Lease / concurrency intent (incl. L3 Claimed shape; shared-index = M26) | `.spec/sot/lease-concurrency-intent.sot.md` + skill `review-lease` |
 | Multi-agent Git concurrency scenarios (catalog; Deferred=0) | `.spec/sot/multi-agent-git-concurrency-scenarios.sot.md` + `.spec/research/*-multi-agent-git-concurrency*.research.md` |
 | Agent governance / AGENTS role | `.spec/sot/agent-governance.sot.md` |
+| Unattended operation (loop, work order, decision classes A/H/O, stop signals, final completion, permission baseline) | `.spec/sot/autonomous-operation.sot.md` + rule `95-autonomous-operation` |
 | Agent / Specfold readiness | `.spec/sot/agent-dev-readiness.sot.md` |
 | Inherited conventions map | `.spec/sot/conventions-inherit.sot.md` |
 | English-only / Hangul ban | `.spec/sot/language-english-only.sot.md` + rule `05-english-only` |

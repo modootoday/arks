@@ -8,7 +8,7 @@ Keep history stepwise and avoid clobbering sibling agents.
 2. **Stage only owned paths** — leave unrelated dirty trees unstaged (especially sibling CLI/crate WIP).
 3. **Spec-first** when public SoT meaning changes (rule `27`).
 4. **English commit subjects/bodies** (rule `05`) in Conventional Commits form (rule `92`).
-5. **No push** unless the owner explicitly authorizes (push-deferred / empty remote policy).
+5. **Push scope:** push only the session's own `claude/*` topic branch, then open a PR; never `main`, tags or other branches (rule `95`).
 6. Before multi-file edits, check sibling ownership (rule `90-session-overlap`).
 
 ## Must not
