@@ -1,7 +1,9 @@
 [
-  {"name": "needs-human", "color": "d93f0b", "description": "Class H or O change: the owner reviews and merges (autonomous-operation SoT section 6)"},
-  {"name": "agents:pause", "color": "b60205", "description": "Kill switch: on an owner-written open issue, agents start no new work (section 9)"},
-  {"name": "owner-blocked", "color": "fbca04", "description": "A unit that needs a secret, device, service or decision only the owner can supply (section 10.3)"},
-  {"name": "needs-heavy-build", "color": "5319e7", "description": "Fleet lane: needs a heavy-build device (Docker clean-room receipt)"},
-  {"name": "needs-windows-run", "color": "1d76db", "description": "Fleet lane: needs a Windows run beyond the cross-check"}
+  {"name": "needs-heavy-build", "color": "5319e7", "description": "Run long builds/tests on the build node"},
+  {"name": "needs-windows-run", "color": "1d76db", "description": "Run a Windows-native check; exact command in the body"},
+  {"name": "needs-gui-check", "color": "0e8a16", "description": "GUI run; quality approval is the owner's"},
+  {"name": "needs-human", "color": "d93f0b", "description": "Automation must not build on or merge without measured checks"},
+  {"name": "needs-owner", "color": "fbca04", "description": "Owner decision pending"},
+  {"name": "bug", "color": "d73a4a", "description": "Something does not work as documented"},
+  {"name": "dependencies", "color": "0366d6", "description": "Dependency update"}
 ]
