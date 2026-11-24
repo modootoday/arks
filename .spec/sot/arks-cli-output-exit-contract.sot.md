@@ -22,7 +22,7 @@ rel:
 
 # arks CLI output formats and exit-code contracts
 
-Document revision **0.1.0** (SoT edit counter only — **not** a product/crate release). Normative **contract surface** for **stdout / stderr / machine flags** and **exit codes** under the locked triple personality (`arks` | `git` | `gh`). Dispatch / factory ownership: [[sot:root/arks-cli-personality-factory]]. Command inventory: [[sot:root/cli-surface]] (Git), [[sot:root/arks-hub-cli-surface]] (forge), [[sot:root/arks-self-host-server]] (serve), [[sot:root/arks-daemon-product-intent]] (daemon), [[sot:root/arks-agent-cli-surface]] (agent).
+Document revision **0.2.0** (SoT edit counter only — **not** a product/crate release). Normative **contract surface** for **stdout / stderr / machine flags** and **exit codes** under the locked triple personality (`arks` | `git` | `gh`). Dispatch / factory ownership: [[sot:root/arks-cli-personality-factory]]. Command inventory: [[sot:root/cli-surface]] (Git), [[sot:root/arks-hub-cli-surface]] (forge), [[sot:root/arks-self-host-server]] (serve), [[sot:root/arks-daemon-product-intent]] (daemon), [[sot:root/arks-agent-cli-surface]] (agent).
 
 **Honesty:** This SoT locks **shapes and classes**. Exact per-command numeric tables beyond the class tables below remain **Partial** until evidenced. **Do not invent Claimed** exit numbers or byte-identical peer stderr from this document alone. Document revision ≠ crates.io/`arks` version bump.
 
@@ -60,7 +60,7 @@ Document revision **0.1.0** (SoT edit counter only — **not** a product/crate r
 | Personality | Policy id | Rule |
 |-------------|-----------|------|
 | `git` | `ExitGitFaithful` | Stock **git** success/failure **classes** for that command (alias / CI drop-in). Undocumented → non-zero on any failure. |
-| `gh` | `ExitGhFaithful` | Stock **gh** success/failure **classes** for that command (alias / CI drop-in). Prefer gh-like usage vs runtime distinction when Claimed. |
+| `gh` | `ExitGhFaithful` | Stock **gh** success/failure **classes** for that command (alias / CI drop-in). gh reports flag and argument errors (unknown flag, missing value, missing required argument) with exit **1**, so forge usage failures under personality `gh` exit **1**; `4` stays authentication. Unimplemented stubs keep `2`. |
 | `arks` | `ExitArksUnified` | **Fail-closed OR:** if more than one enabled layer ran, exit non-zero if **either** failed; **0** only when every enabled layer that ran succeeded (or was honestly skipped as inapplicable). Single-peer flags → that peer’s mapper only. |
 
 7. **CI guidance:** scripts that today call `git` / `gh` SHOULD use personality `git` / `gh` (alias, shim, or `ARKS_PERSONALITY`) for peer-native stdout **and** peer-native exit. Bare `arks` unified ≠ CI drop-in unless single-peer flags force one peer.
