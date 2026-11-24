@@ -25,7 +25,7 @@ rel:
 
 # Autonomous operation
 
-Version **1.1.0**. This SoT defines how AI agents run arks **without a human in the loop** until
+Version **1.2.0**. This SoT defines how AI agents run arks **without a human in the loop** until
 the program reaches final completion (§11), and which decisions stay with the owner. It owns the
 *process* of unattended work. Product meaning stays with the domain SoTs; this SoT never makes a
 product claim.
@@ -186,7 +186,9 @@ Notes:
 Agents stop starting new units, finish or abandon the current one without pushing, and report,
 when any of these holds:
 
-1. The owner says stop in chat, or an owner-written open issue carries the label `agents:pause`.
+1. The owner pauses the session's scheduled task, sets `ops = { paused = true }` on the arks
+   Project or Session in the fleet configuration, revokes the session's mailbox token, or says
+   stop in chat (the fleet kill switches, in that order of reach).
 2. `main` has a failing required check that the current unit did not cause and cannot fix in
    class **A**.
 3. The same root cause defeated three fix attempts (§4.7) in two consecutive units.
@@ -195,7 +197,7 @@ when any of these holds:
 5. Disk, Docker or CI capacity is exhausted and cleanup does not recover it.
 6. The final-completion condition (§11) holds.
 
-Resuming needs the owner: removing the `agents:pause` label, or a chat message.
+Resuming needs the owner: re-enabling the task, clearing `ops.paused`, or a chat message.
 
 ## 10. Reporting and escalation
 
@@ -212,9 +214,18 @@ advisory), **Class** (A, H or O with the reason), and the attribution footer.
 
 ### 10.3 Blocks
 
-An owner-blocked or retry-exhausted unit is recorded as an issue labelled `needs-human` (or, when
-issues are unavailable, as an open line in the owning plan) with: the unit, the evidence, what was
+An owner-blocked or retry-exhausted unit is recorded as an issue labelled `needs-owner` and
+mentioned to the fleet coordinator's Owner queue through the mailbox (or, when issues are
+unavailable, as an open line in the owning plan) with: the unit, the evidence, what was
 tried, and the exact owner action that unblocks it.
+
+### 10.4 Label vocabulary
+
+Labels are the playpilot canonical set (`.github/labels.json` mirrors it): `needs-human` (class H
+and O pull requests: automation does not build on or merge them), `needs-owner` (an owner
+decision is pending), the lane labels `needs-heavy-build`, `needs-windows-run` and
+`needs-gui-check` (claimed with `playpilot claim` by fleet nodes), `bug` and `dependencies`.
+arks adds no label of its own.
 
 ## 11. Final completion
 

@@ -24,7 +24,7 @@ Build **arks** (`arks for Git`; working expansion **Agent Revision Kinetic Syste
 10. **CLI surface** — single bin `arks`; personalities `git|gh|arks`; never spawn stock `git`/`gh` on product paths; **`arks serve` ≠ `arks hub`**; ports normative≠demo — rules `30`, `32`, `33`, `34`; skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve`.
 11. **Honesty wording** — stubs/Partial ≠ Claimed/Verified/PASS — rules `28`, `29`; hooks scan commit messages.
 12. **Hooks** — `.cursor/hooks.json` denies force-push to main/master and staging `.spec.local`/secrets; asks on push / blind add / destructive git / `gh`; Hangul guards on edit + commit (rule `05`).
-13. **Unattended operation** — loop, work order, decision classes **A** (auto-merge) / **H** (`needs-human`) / **O** (owner only), stop signals (`agents:pause`), final-completion condition and the tracked `.claude/settings.json` permission baseline — SoT `.spec/sot/autonomous-operation.sot.md`; rule `95`.
+13. **Unattended operation** — loop, work order, decision classes **A** (auto-merge) / **H** (`needs-human`) / **O** (owner only), stop signals (fleet kill switches), final-completion condition and the tracked `.claude/settings.json` permission baseline — SoT `.spec/sot/autonomous-operation.sot.md`; rule `95`.
 
 ## Progressive disclosure (read more only when needed)
 
