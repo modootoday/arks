@@ -147,7 +147,7 @@ pub(crate) fn finish(label: &str, help: &str, r: Res) -> ExitCode {
         Err(Fail::Exit(code)) => ExitCode::from(code),
         Err(Fail::Usage(m)) => {
             eprintln!("arks {label}: {m}");
-            ExitCode::from(2)
+            crate::usage_exit()
         }
         Err(Fail::Api(m)) => {
             eprintln!("arks {label}: {m}");
@@ -514,7 +514,7 @@ pub(crate) fn dispatch(
             return ExitCode::SUCCESS;
         }
         eprintln!("arks {label}: unknown flag: {name}");
-        return ExitCode::from(2);
+        return crate::usage_exit();
     }
     let sub = format!("{label} {first}");
     run_env(&sub, help, |ctx, out| f(ctx, args, out))
