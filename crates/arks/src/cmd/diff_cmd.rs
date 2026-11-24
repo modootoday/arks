@@ -66,7 +66,7 @@ pub fn parse_porcelain(
     let mut o = DiffOptions::default();
     porcelain_defaults(repo, &mut o);
     let rest = o.parse_all(args)?;
-    o.finish();
+    o.finish()?;
     Ok((o, rest))
 }
 

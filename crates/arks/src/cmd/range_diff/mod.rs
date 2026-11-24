@@ -87,7 +87,7 @@ pub fn cmd_range_diff(args: &[String]) -> CliResult<()> {
     let mut diff = DiffOptions::default();
     crate::cmd::diff_cmd::porcelain_defaults(Some(&repo), &mut diff);
     let rest = diff.parse_all(args)?;
-    diff.finish();
+    diff.finish()?;
     let p = parse("range-diff", &rest, OPTS, Mode::default())?;
     let creation_factor = match (p.flag("creation-factor"), p.last("creation-factor")) {
         // `--no-creation-factor` resets the number to zero.

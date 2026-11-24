@@ -112,7 +112,7 @@ fn parse(args: &[String]) -> CliResult<Opts> {
         }
         a.i += 1;
     }
-    o.diff.finish();
+    o.diff.finish()?;
     Ok(o)
 }
 
