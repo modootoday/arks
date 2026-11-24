@@ -25,7 +25,7 @@ rel:
 
 # Autonomous operation
 
-Version **1.0.0**. This SoT defines how AI agents run arks **without a human in the loop** until
+Version **1.1.0**. This SoT defines how AI agents run arks **without a human in the loop** until
 the program reaches final completion (§11), and which decisions stay with the owner. It owns the
 *process* of unattended work. Product meaning stays with the domain SoTs; this SoT never makes a
 product claim.
@@ -250,3 +250,10 @@ The tracked `.claude/settings.json` is the baseline for every agent session in t
 3. The `playpilot guard` PreToolUse hook stays in front of every shell call; it enforces the
    protected branches independently of the allow list.
 4. Permission changes follow §6: narrowing is class **H**, widening is class **O**.
+5. The baseline is generated, not hand-edited: the fleet configuration renders it with
+   `playpilot render settings --project arks` and `playpilot render roles --project arks`
+   (role files under `.claude/agents/`). A session that finds them stale runs
+   `playpilot sync --project arks` and opens one PR with the result. Layering follows the
+   playpilot permission canon (`.agents/rules/permissions.md` at the pinned revision): repo
+   baseline, node profile (`defaultMode: auto`, bypass disabled), the `playpilot guard` hook,
+   and the owner's GitHub rulesets and required checks, which agents never change.

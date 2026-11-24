@@ -1,21 +1,4 @@
 {
-  "env": {
-    "PLAYPILOT_PROTECTED_BRANCHES": "main"
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh -c 'command -v playpilot >/dev/null 2>&1 || for c in cargo /root/.cargo/bin/cargo \"$HOME/.cargo/bin/cargo\"; do command -v \"$c\" >/dev/null 2>&1 && \"$c\" install --locked --quiet --git https://github.com/modootoday/playpilot --rev 39918859deb3a63987bd0a19ebfb841ec84e4e13 playpilot >&2 && break; done; command -v playpilot >/dev/null 2>&1 || [ -x \"$HOME/.cargo/bin/playpilot\" ] || { echo \"playpilot CLI is missing and could not be installed\" >&2; exit 2; }; exec \"$(command -v playpilot || echo \"$HOME/.cargo/bin/playpilot\")\" guard'",
-            "timeout": 240
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(cargo *)",
@@ -142,5 +125,19 @@
       "Write(.spec.local/**)"
     ],
     "disableBypassPermissionsMode": "disable"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'R=fde47840d02fe81976d60d668f7fa08ee0211d24; B=\"$(command -v playpilot || echo \"$HOME/.cargo/bin/playpilot\")\"; D=\"$(dirname \"$(dirname \"$B\")\")\"; if [ \"$(cat \"$D/share/playpilot.rev\" 2>/dev/null)\" != \"$R\" ]; then for c in cargo /root/.cargo/bin/cargo \"$HOME/.cargo/bin/cargo\"; do command -v \"$c\" >/dev/null 2>&1 && \"$c\" install --force --locked --quiet --git https://github.com/modootoday/playpilot --rev \"$R\" --root \"$D\" playpilot >&2 && mkdir -p \"$D/share\" && echo \"$R\" > \"$D/share/playpilot.rev\" && break; done; fi; [ -x \"$B\" ] || { echo \"playpilot CLI is missing and could not be installed\" >&2; exit 2; }; PLAYPILOT_PROTECTED_BRANCHES=main exec \"$B\" guard'",
+            "timeout": 240
+          }
+        ]
+      }
+    ]
   }
 }
