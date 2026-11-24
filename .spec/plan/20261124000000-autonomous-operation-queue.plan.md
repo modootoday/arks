@@ -21,7 +21,7 @@ Each unit is one PR. Status values: `open`, `in-progress`, `done` (with the PR),
 
 | # | Unit | Class | Status | Exit |
 |---|------|-------|--------|------|
-| Q1 | `log -s --raw` prints nothing and `log --name-only -s` exits 128, as pin 2.39.5 | A | in-progress | new corpus lines SAME in Docker |
+| Q1 | `log -s --raw` prints nothing and `log --name-only -s` exits 128, as pin 2.39.5 | A | done | new corpus lines SAME in Docker |
 | Q2 | `fsck --unreachable` output order (family-plumbing L428): derive the order from observed pin output or record Impossible with the reason | A | open | line SAME or reasoned Impossible in the register |
 | Q3 | gh personality: unknown flag exits 1 like gh (arks exits 2) | A | in-progress | gh argv inventory exit-code column matches |
 | Q4 | Rulesets enforced on push to an `arks serve` forge (today stored, not enforced) | A | open | hub e2e journey refuses a push that a ruleset forbids |
