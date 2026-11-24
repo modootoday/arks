@@ -42,9 +42,10 @@ unattended session prompted for routine commands or ran with whatever its launch
    and a deny list for pushes to protected refs, unleased force-pushes, identity or global git
    configuration, secret reads, publishing, privilege escalation and edits to the permission
    files themselves. The `playpilot guard` hook stays.
-5. Declare the labels the loop uses in `.github/labels.json` and add the `Public surface` check
+5. Mirror the playpilot canonical labels in `.github/labels.json` and add the `Public surface` check
    to the required checks of `.github/rulesets/main-protected.json` (both applied by the owner).
-6. A pause label (`agents:pause`) on an owner-written open issue is the kill switch.
+6. The kill switches are the fleet's: pause the scheduled task, `ops.paused` on the fleet Project
+   or Session, or revoke the mailbox token (amended 2026-11-24 to drop an arks-only pause label).
 
 ## Consequences
 
