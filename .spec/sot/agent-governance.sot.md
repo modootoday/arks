@@ -3,7 +3,7 @@ id: sot:root/agent-governance
 title: Agent governance
 status: active
 created: 2026-11-08T08:20:00Z
-updated: 2026-11-11T06:15:00Z
+updated: 2026-11-24T00:00:00Z
 tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, ports, symmetry, hooks, m24, g028-live-private-arks, deferred-zero, l3]
 verify: manual
 rel:
@@ -32,6 +32,7 @@ rel:
     - research:root/20261111035700
     - research:root/20261111055609
     - research:root/20261111061037
+    - sot:root/autonomous-operation
   governs:
     - AGENTS.md
     - .agents/
@@ -41,7 +42,7 @@ rel:
 
 # Agent governance
 
-Version **0.3.2**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
+Version **0.4.0**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
 
 Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classification.md`.
 
@@ -85,7 +86,7 @@ Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classificati
 | Trash | `.specfold/trash/` | Never |
 
 11. **No secrets** in tracked `.spec/` or `.agents/`. Evidence receipts MAY be public when non-secret. Agent dumps → `.spec.local/` or delete.
-12. **Push deferred** while remote is empty / owner has not authorized a clean public history push ([[research:root/20261111041000]]). Agents MUST NOT `git push` origin unless the user explicitly orders it.
+12. **Push scope** (amended 2026-11-24 by [[adr:root/20261124000000]]; the earlier push-deferred policy of [[research:root/20261111041000]] ended when the public remote opened): agents push only the session's own `claude/*` topic branch and open a PR; `main`, tags and other branches are never pushed by agents. Merge rights follow the decision classes of [[sot:root/autonomous-operation]].
 
 ### Product shape (process honesty)
 

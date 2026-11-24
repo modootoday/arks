@@ -66,6 +66,9 @@
           },
           {
             "context": "History"
+          },
+          {
+            "context": "Public surface"
           }
         ]
       }
