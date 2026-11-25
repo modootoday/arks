@@ -1028,6 +1028,7 @@ fn dumb_http_push_roundtrip_via_serve_http() {
             basic_auth: None,
             rebind_desired: None,
             tls: None,
+            pages: None,
         },
     )
     .unwrap();
@@ -1240,6 +1241,7 @@ fn dumb_http_force_with_lease_cas_under_lock() {
             basic_auth: None,
             rebind_desired: None,
             tls: None,
+            pages: None,
         },
     )
     .unwrap();

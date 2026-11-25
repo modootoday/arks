@@ -6,7 +6,7 @@
 
 use crate::auth::BasicAuthConfig;
 use crate::error::ServerError;
-use crate::http::{HttpRequest, handle_smart_http_auth};
+use crate::http::{HttpRequest, HttpResponse, handle_smart_http_auth};
 use arks_repo::Repository;
 use rustls::ServerConfig;
 use std::io::{Read, Write};
@@ -28,6 +28,11 @@ type LoopbackHttp = (
 /// SSH/forge rebind and OpenSSH-class interop are separate gates.
 pub type ListenRebindSlot = Arc<Mutex<Option<SocketAddr>>>;
 
+/// Optional page handler consulted for `GET` requests before git HTTP; it
+/// answers `Some(response)` for the paths it owns and `None` for the rest
+/// (used by `instaweb` for its repository browser pages).
+pub type PageHandler = Arc<dyn Fn(&HttpRequest) -> Option<HttpResponse> + Send + Sync>;
+
 #[derive(Clone, Default)]
 pub struct ServeHttpOptions {
     /// When true, answer `info/refs` (even with `service=`) as dumb text/plain so
@@ -39,6 +44,8 @@ pub struct ServeHttpOptions {
     pub rebind_desired: Option<ListenRebindSlot>,
     /// Optional rustls server config for in-process TLS terminate (B9).
     pub tls: Option<Arc<ServerConfig>>,
+    /// Optional browser pages served beside git HTTP.
+    pub pages: Option<PageHandler>,
 }
 
 impl std::fmt::Debug for ServeHttpOptions {
@@ -48,6 +55,7 @@ impl std::fmt::Debug for ServeHttpOptions {
             .field("basic_auth", &self.basic_auth.as_ref().map(|_| "Some(..)"))
             .field("rebind_desired", &self.rebind_desired.is_some())
             .field("tls", &self.tls.is_some())
+            .field("pages", &self.pages.is_some())
             .finish()
     }
 }
@@ -363,7 +371,14 @@ fn handle_connection_io<S: Read + Write>(
     if opts.dumb_only && (req.path.ends_with("info/refs") || req.path.ends_with("/info/refs")) {
         req.query = String::new();
     }
-    let resp = match handle_smart_http_auth(&mut repo, &req, opts.basic_auth.as_ref()) {
+    let page = match &opts.pages {
+        Some(pages) if req.method == "GET" => pages(&req),
+        _ => None,
+    };
+    let resp = match page
+        .map(Ok)
+        .unwrap_or_else(|| handle_smart_http_auth(&mut repo, &req, opts.basic_auth.as_ref()))
+    {
         Ok(r) => r,
         Err(e) => {
             // Fail closed with an HTTP error body (never silent empty close).
@@ -379,7 +394,7 @@ fn handle_connection_io<S: Read + Write>(
                 "arks serve-http error path={path} query={query} body_len={} hex32=[{hex}] : {msg}",
                 req.body.len()
             );
-            crate::http::HttpResponse {
+            HttpResponse {
                 status: 500,
                 content_type: "text/plain".into(),
                 body: msg.into_bytes(),
@@ -393,6 +408,8 @@ fn handle_connection_io<S: Read + Write>(
         201 => "Created",
         204 => "No Content",
         207 => "Multi-Status",
+        302 => "Found",
+        400 => "Bad Request",
         401 => "Unauthorized",
         403 => "Forbidden",
         404 => "Not Found",
@@ -400,6 +417,7 @@ fn handle_connection_io<S: Read + Write>(
         409 => "Conflict",
         423 => "Locked",
         500 => "Internal Server Error",
+        501 => "Not Implemented",
         _ => "Error",
     };
     let mut header = format!(

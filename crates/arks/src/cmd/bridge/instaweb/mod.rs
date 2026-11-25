@@ -5,10 +5,12 @@
 //! `--module-path`, `--port` (default 1234), `--browser`, `--start`,
 //! `--stop`, `--restart`, the `instaweb.*` variables and the `web.browser`
 //! fallback). arks serves the repository with its own HTTP server
-//! (`arks serve-http`: the repository over git HTTP, no gitweb pages) instead
-//! of gitweb under an external httpd;
+//! (`arks serve-http --gitweb`: the repository browser pages of [`gitweb`]
+//! beside git HTTP) instead of gitweb under an external httpd;
 //! the `--httpd` names git supports are accepted and recorded, and the
 //! server's process id is kept in `$GIT_DIR/pid` as git does.
+
+pub mod gitweb;
 
 use crate::cmd::opt_parse::{OptDef, Takes::*, o, parse};
 use crate::error::{CliError, CliResult};
@@ -149,7 +151,8 @@ fn start(
 ) -> CliResult<()> {
     let conf_dir = git_dir.join("gitweb");
     fs::create_dir_all(&conf_dir)?;
-    let mut conf = format!("httpd = {httpd}\nlisten = {bind}:{port}\nserver = arks serve-http\n");
+    let mut conf =
+        format!("httpd = {httpd}\nlisten = {bind}:{port}\nserver = arks serve-http --gitweb\n");
     if let Some(m) = module_path {
         conf.push_str(&format!("module-path = {m}\n"));
     }
@@ -158,7 +161,7 @@ fn start(
         std::env::current_exe().map_err(|e| CliError::fatal(format!("cannot locate arks: {e}")))?;
     let log = fs::File::create(conf_dir.join("instaweb.log"))?;
     let mut c = std::process::Command::new(exe);
-    c.args(["serve-http", "--listen"])
+    c.args(["serve-http", "--gitweb", "--listen"])
         .arg(format!("{bind}:{port}"))
         .arg(git_dir)
         .stdin(Stdio::null())

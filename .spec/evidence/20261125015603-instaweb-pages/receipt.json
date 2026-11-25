@@ -1,0 +1,16 @@
+{
+  "gate": "Q5 instaweb gitweb-equivalent pages",
+  "unit": "plan:root/20261124000000 Q5",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "d089974",
+  "oracle": "none: the image ships /usr/share/gitweb/gitweb.cgi but it does not compile (Can't locate CGI.pm; the Perl CGI module is not installed), and of the httpds git instaweb supports only python3 is present (lighttpd, apache2, mongoose, plackup, webrick absent). The image is offline, so the module could not be added. No stock page was rendered; nothing here is a stock-vs-arks HTML SAME claim, and the markup is arks's own.",
+  "method": "crates/arks/tests/instaweb_pages.rs builds the corpus fixture's history shape with arks (two branches, a binary file, lightweight and annotated tags, a --no-ff merge), starts arks serve-http --gitweb (and arks instaweb --start) on a loopback port and fetches page URLs over raw HTTP. Assertions derive from https://git-scm.com/docs/gitweb (ACTIONS, AND URLS; description, owner and cloneurl sources) and https://git-scm.com/docs/git-instaweb: status codes, content types, full commit ids in rev-list order, subjects, ref names, file lists per tree, raw blob bytes (text and binary), plain diff and patch text, RSS guid and Atom entry links, 403 for blame, 501 for unimplemented documented actions, 400 for unknown actions, 404 for unknown projects, revisions and paths, and git HTTP (dumb and smart info/refs) unchanged beside the pages.",
+  "results": {
+    "instaweb_pages": {"passed": 5, "failed": 0},
+    "tool_bridges_instaweb": {"passed": 1, "failed": 0},
+    "gitweb_unit": {"passed": 6, "failed": 0}
+  },
+  "not_covered": "byte or structure comparison with stock gitweb HTML (no runnable oracle); the actions blobdiff, blobdiff_plain, history, remotes, search and snapshot (501); blame and blame_incremental (403, the documented default is off); projects other than the served repository",
+  "timestamp": "2026-11-25T01:56:03Z"
+}

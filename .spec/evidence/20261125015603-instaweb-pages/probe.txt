@@ -1,0 +1,20 @@
+git version 2.39.5
+total 260
+drwxr-xr-x 3 root root   4096 Nov  5 08:31 .
+drwxr-xr-x 1 root root   4096 Nov 19 22:16 ..
+-rwxr-xr-x 1 root root 253860 Oct  7  2025 gitweb.cgi
+lrwxrwxrwx 1 root root     10 Oct  7  2025 index.cgi -> gitweb.cgi
+drwxr-xr-x 2 root root   4096 Nov  5 08:31 static
+Can't locate CGI.pm in @INC (you may need to install the CGI module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/gitweb/gitweb.cgi line 15.
+BEGIN failed--compilation aborted at /usr/share/gitweb/gitweb.cgi line 15.
+CGI: Can't locate CGI.pm in @INC (you may need to install the CGI module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl).
+Encode: ok
+Time::HiRes: ok
+lighttpd: absent
+apache2: absent
+mongoose: absent
+plackup: absent
+ruby: absent
+python3: /usr/bin/python3
+probe-done
+rustc 1.99.1 (58cf8f9c3 2026-10-13)

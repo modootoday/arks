@@ -40,8 +40,8 @@ pub use receive::{
     receive_pack_with,
 };
 pub use serve::{
-    ListenRebindSlot, ServeHttpOptions, serve_http, serve_http_scheme, serve_http_with_opts,
-    spawn_loopback, spawn_loopback_with_opts,
+    ListenRebindSlot, PageHandler, ServeHttpOptions, serve_http, serve_http_scheme,
+    serve_http_with_opts, spawn_loopback, spawn_loopback_with_opts,
 };
 pub use ssh_serve::{
     ServeSshOptions, default_authorized_keys_path, default_host_key_path, serve_ssh_listener,

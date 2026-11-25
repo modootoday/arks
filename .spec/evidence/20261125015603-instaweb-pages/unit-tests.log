@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized] target(s) in 1m 10s
+     Running unittests src/main.rs (/cargo-target/release/deps/arks-9e5e741ffcd55354)
+
+running 6 tests
+test cmd::bridge::instaweb::gitweb::html::tests::escapes_markup ... ok
+test cmd::bridge::instaweb::gitweb::params::tests::path_info_form ... ok
+test cmd::bridge::instaweb::gitweb::params::tests::percent_round_trip ... ok
+test cmd::bridge::instaweb::gitweb::html::tests::query_links ... ok
+test cmd::bridge::instaweb::gitweb::params::tests::git_http_paths_are_left_alone ... ok
+test cmd::bridge::instaweb::gitweb::params::tests::query_form_takes_both_separators ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 122 filtered out; finished in 0.00s
+

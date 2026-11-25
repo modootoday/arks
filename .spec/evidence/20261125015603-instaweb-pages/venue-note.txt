@@ -1,0 +1,13 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip d089974,
+run 2026-11-25 inside a hosted cloud session with a local dockerd.
+Cargo ran offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted
+read-only, because the container could not use the session egress proxy. Dependencies
+are pinned and checksummed by Cargo.lock; the build and the tests ran inside the image.
+Override file (session-local, not tracked): service dod-hub-matrix with that volume
+and env only.
+
+What was compared: arks only, against the gitweb and git-instaweb documentation, over
+HTTP on 127.0.0.1 inside the container. probe.txt shows why stock gitweb could not be
+run on the same repository (gitweb.cgi fails to compile without the Perl CGI module;
+no supported httpd besides python3). No SAME/PASS claim against stock pages is made.
+Compiling lines were dropped from the logs; nothing else was edited.
