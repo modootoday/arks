@@ -1,0 +1,6 @@
+review_smoke=fixture
+provider=openai-compat
+base_url=https://api.openai.com/v1
+model=gpt-4o-mini
+chat_http=200
+review_smoke=ok
