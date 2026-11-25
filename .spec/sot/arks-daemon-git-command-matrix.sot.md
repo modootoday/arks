@@ -23,7 +23,7 @@ rel:
 
 # arks daemon ↔ git-daemon command matrix
 
-Version **0.3.0**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior inventory vs **`arks daemon`** on the single published binary. Umbrella: [[sot:root/verify-cleanroom-symmetry-matrix]]. Product shape: [[sot:root/arks-daemon-product-intent]]. Survey: [[research:root/20261111035226]], [[evidence:root/20261111035226]].
+Version **0.3.1**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior inventory vs **`arks daemon`** on the single published binary. Umbrella: [[sot:root/verify-cleanroom-symmetry-matrix]]. Product shape: [[sot:root/arks-daemon-product-intent]]. Survey: [[research:root/20261111035226]], [[evidence:root/20261111035226]].
 
 **Machine e2e table:** `verify/matrices/daemon-git-arks-e2e-matrix.csv` (living `status_now`). Survey extract: `.spec/evidence/20261111035226-git-daemon-arks-daemon-symmetry/matrix.csv`.
 
@@ -98,6 +98,17 @@ no git code copied, no `git` spawned on product paths).
    (`[pid] message`); syslog writes `<PRI>arks-daemon[pid]: message` datagrams to `/dev/log`
    (facility daemon; info for `--verbose` lines, err for errors). Defaults follow git:
    `--max-connections` 32, `--timeout`/`--init-timeout` 0 (none).
+   **Fatal errors** (observed stock `git daemon` 2.39.5, queue unit Q19) follow the log
+   destination: `stderr` prints `fatal: <msg>` without the `[pid]` prefix and exits 128;
+   `syslog` sends `<msg>` at err and exits 1; `none` is silent and exits 128. A connection
+   that closes before its request packet is complete is the fatal
+   `the remote end hung up unexpectedly` (for `--inetd`, the process exit above). git serves
+   each connection in a process re-executed after privileges are dropped, so every
+   connection re-checks `--base-path`: when the serving user cannot see it, the connection
+   ends with the fatal `base-path '<path>' does not exist or is not a directory` before any
+   log line or reply. The parent's `[<n>] Disconnected[ (with error)]` line names the
+   connection by a number (git: the child pid; arks, which serves connections on threads:
+   a per-process connection serial).
 6. **Default bind (arks-only, unchanged).** git binds every interface when `--listen` is absent;
    `arks daemon` keeps the loopback default `127.0.0.1` (rule 3 and
    [[sot:root/arks-self-host-server]] §Bind). git's behaviour is available explicitly with
