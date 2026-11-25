@@ -164,3 +164,53 @@ fn short_deletion_resolves_against_the_advertised_refs() {
         )
     );
 }
+
+#[test]
+fn mixed_report_status_prints_per_ref_table() {
+    let f = fixture();
+    let out = run(&f.work, &["push", "origin", "main", "topic"]);
+    assert_eq!(out.status.code(), Some(1), "{out:?}");
+    assert_eq!(
+        stderr(&out),
+        format!(
+            "To {url}\n * [new branch]      refs/heads/topic -> topic\n ! [remote rejected] refs/heads/main -> main (hook declined)\nerror: failed to push some refs to '{url}'\n",
+            url = f.url
+        )
+    );
+    // The accepted ref landed and its remote-tracking ref moved; the rejected
+    // ref and its tracking ref stayed where they were.
+    let topic = ok(&f.work, &["rev-parse", "topic"]);
+    assert_eq!(ok(&f.bare, &["rev-parse", "refs/heads/topic"]), topic);
+    assert_eq!(
+        ok(&f.work, &["rev-parse", "refs/remotes/origin/topic"]),
+        topic
+    );
+    let old_main = ok(&f.bare, &["rev-parse", "refs/heads/main"]);
+    assert_ne!(old_main, topic);
+    assert_eq!(
+        ok(&f.work, &["rev-parse", "refs/remotes/origin/main"]),
+        old_main
+    );
+
+    // A refused deletion names only the remote ref.
+    let out = run(&f.work, &["push", "origin", ":main"]);
+    assert_eq!(out.status.code(), Some(1), "{out:?}");
+    assert_eq!(
+        stderr(&out),
+        format!(
+            "To {url}\n ! [remote rejected] main (hook declined)\nerror: failed to push some refs to '{url}'\n",
+            url = f.url
+        )
+    );
+    assert!(remote_has(&f, "refs/heads/main"));
+
+    // An update the remote already has is not sent; with nothing else to do
+    // the push succeeds and lists it only under --verbose.
+    let out = run(&f.work, &["push", "-v", "origin", "topic"]);
+    assert!(out.status.success(), "{out:?}");
+    assert!(
+        stderr(&out).contains(" = [up to date]      refs/heads/topic -> topic\n"),
+        "{}",
+        stderr(&out)
+    );
+}

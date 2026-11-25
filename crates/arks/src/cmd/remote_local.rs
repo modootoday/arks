@@ -812,7 +812,8 @@ pub(crate) enum PushStatus {
     Forced(Oid),
     Deleted,
     Rejected(&'static str),
-    RemoteRejected(&'static str),
+    /// The receiving end refused the ref; the reason is the peer's text.
+    RemoteRejected(String),
 }
 
 /// Push updates into a local repository: copy objects, refuse non-fast-forward
@@ -844,10 +845,10 @@ pub(crate) fn push_local(
             PushStatus::New | PushStatus::FastForward(_) | PushStatus::Forced(_)
                 if current.as_deref() == Some(u.dst.as_str()) =>
             {
-                PushStatus::RemoteRejected("branch is currently checked out")
+                PushStatus::RemoteRejected("branch is currently checked out".into())
             }
             PushStatus::Deleted if current.as_deref() == Some(u.dst.as_str()) => {
-                PushStatus::RemoteRejected("deletion of the current branch prohibited")
+                PushStatus::RemoteRejected("deletion of the current branch prohibited".into())
             }
             s => s,
         };
@@ -897,7 +898,11 @@ pub(crate) fn push_local(
     Ok(statuses)
 }
 
-fn classify_push(repo: &Repository, u: &LocalPush, old: Option<Oid>) -> CliResult<PushStatus> {
+pub(crate) fn classify_push(
+    repo: &Repository,
+    u: &LocalPush,
+    old: Option<Oid>,
+) -> CliResult<PushStatus> {
     Ok(match (old, u.new) {
         (None, None) => PushStatus::Rejected("remote ref does not exist"),
         (Some(_), None) => PushStatus::Deleted,
@@ -1021,6 +1026,10 @@ pub(crate) fn report_push(
                 PushStatus::Deleted => format!(" - {:<17} {d}", "[deleted]"),
                 PushStatus::Rejected(why) => {
                     format!(" ! {:<17} {} -> {d} ({why})", "[rejected]", u.src_label)
+                }
+                // A refused deletion names only the remote ref.
+                PushStatus::RemoteRejected(why) if u.new.is_none() => {
+                    format!(" ! [remote rejected] {d} ({why})")
                 }
                 PushStatus::RemoteRejected(why) => {
                     format!(" ! [remote rejected] {} -> {d} ({why})", u.src_label)
