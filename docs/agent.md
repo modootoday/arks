@@ -1,6 +1,6 @@
 ---
 title: arks agent
-description: Optional LLM review and CEV bots on the same arks binary — B4 Claimed e2e; smokes Partial
+description: Optional LLM review and CEV bots on the same arks binary — B4 Claimed e2e; smokes Claimed as diagnostics
 nav_order: 46
 sections:
   - what
@@ -24,9 +24,9 @@ Agent features are **not** required for `git`→`arks` alias DoD, daemon symmetr
 ```bash
 arks agent --help
 arks agent doctor
-arks agent provider smoke ollama   # optional local Ollama Partial; ≠ B4 Claimed
-arks agent provider smoke --mock   # in-process openai-compat mock Partial
-arks agent review --smoke --mock   # fixture + mock chat Partial; ≠ B4 Claimed
+arks agent provider smoke ollama   # one chat against local Ollama (http://); ≠ B4 proof
+arks agent provider smoke --mock   # same, against the in-process openai-compat mock
+arks agent review --smoke --mock   # review fixture through the mock; ≠ B4 proof
 ```
 
 ## Honesty (tip)
@@ -34,8 +34,8 @@ arks agent review --smoke --mock   # fixture + mock chat Partial; ≠ B4 Claimed
 | Leaf / area | Class |
 |-------------|-------|
 | provider / config / doctor | **Partial** (TCP/connect retry + error class) |
-| `provider smoke [ollama\|--mock]` | **Partial** optional local chat or in-process openai-compat mock; documents Missing if daemon absent — never spawns `ollama` CLI |
-| `review --smoke [--mock]` | **Partial** built-in fixture (+ optional mock server); documents Missing if daemon absent without `--mock` — never invents Claimed |
+| `provider smoke [ollama\|openai-compat\|--mock]` | **Claimed (diagnostic)** over plain-HTTP openai-compat endpoints: exit 0 only on a 2xx chat answer, 1 when unreachable ([[evidence:root/20261125031425-claimed-smoke]]); never spawns `ollama` CLI. `https://` vendor endpoints **Partial** (no TLS client yet; a live run needs an owner API key) |
+| `review --smoke [--mock]` | **Claimed (diagnostic)** built-in fixture (+ optional mock server); exit 1 when the provider cannot be reached ([[evidence:root/20261125031425-claimed-smoke]]) |
 | review / cev-check / run / serve / bot | **Partial** (health + openai-compat chat proxy; JSON + stream SSE; connect retry Partial; `--once` OK) |
 | Claimed LLM chatbot / review e2e (**B4**) | **Claimed** — Docker openai-compat fixture e2e ([[evidence:root/20261110231959-claimed-agent-llm]]); smoke ≠ Claimed |
 
