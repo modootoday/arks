@@ -3,31 +3,85 @@
 //!
 //! The helpers speak the credential-helper protocol (`get` / `store` /
 //! `erase`, attributes on standard input). The backing store is the one the
-//! OS provides: Windows Credential Manager through the Win32 `Cred*` API, the
-//! macOS keychain through the `security` tool, the freedesktop Secret Service
-//! over D-Bus through libsecret's `secret-tool` (schema `org.git.Password`,
-//! the one git's libsecret helper uses). When none is reachable the helper
-//! refuses with an error instead of pretending to store anything.
+//! OS provides, reached in-process: Windows Credential Manager through the
+//! Win32 `Cred*` API ([`windows`]), the macOS keychain through
+//! Security.framework ([`keychain`]), the freedesktop Secret Service over
+//! D-Bus elsewhere on Unix ([`secret_service`] on [`dbus`]). When none is
+//! reachable `store` refuses with an error instead of pretending to store
+//! anything, while `get` answers nothing and `erase` has nothing to do.
 //!
 //! `ARKS_CREDENTIAL_BACKEND=fake` selects a test store (one file named by
 //! `ARKS_CREDENTIAL_FAKE_STORE`, or process memory when unset);
-//! `ARKS_CREDENTIAL_BACKEND=none` forces the "no store" refusal.
+//! `ARKS_CREDENTIAL_BACKEND=none` forces the "no store" state.
 //!
 //! Primary: <https://git-scm.com/docs/gitcredentials> (custom helpers),
 //! <https://git-scm.com/docs/git-credential> (attribute format).
-//! Cite: `.spec/sot/credential-helper-askpass.sot.md`.
+//! Cite: `.spec/sot/credential-helper-askpass.sot.md` MUST 7.
+
+#[cfg(all(unix, not(target_os = "macos")))]
+#[allow(unsafe_code)] // getuid() for D-Bus EXTERNAL authentication only.
+mod dbus;
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)] // Security.framework / Core Foundation FFI only.
+mod keychain;
+#[cfg(all(unix, not(target_os = "macos")))]
+mod secret_service;
+#[allow(unsafe_code)] // Win32 Cred* FFI only (compiled on Windows).
+mod windows;
 
 use crate::credential::Credential;
 use crate::error::RemoteError;
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::path::PathBuf;
 
-/// One stored entry: the target (`git:<protocol>://<host>[/<path>]`) and the account.
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct Entry {
-    target: String,
-    username: String,
-    password: String,
+/// Why an operation could not be served.
+#[derive(Debug)]
+pub(crate) enum Failure {
+    /// No store is reachable (the honest-refuse state).
+    Unreachable(String),
+    /// The store is reachable but the operation failed.
+    Other(String),
+}
+
+impl Failure {
+    fn into_remote(self) -> RemoteError {
+        match self {
+            Failure::Unreachable(why) => no_store(&why),
+            Failure::Other(m) => RemoteError::Msg(m),
+        }
+    }
+}
+
+fn no_store(why: &str) -> RemoteError {
+    RemoteError::Msg(format!("no OS credential store is reachable ({why})"))
+}
+
+/// The service a description names: protocol, host (with any port) and path.
+pub(crate) struct Service {
+    pub protocol: String,
+    pub host: String,
+    pub path: String,
+}
+
+impl Service {
+    fn of(desc: &Credential) -> Option<Service> {
+        let protocol = desc.protocol.as_deref().filter(|s| !s.is_empty())?;
+        let host = desc.host.as_deref().filter(|s| !s.is_empty())?;
+        Some(Service {
+            protocol: protocol.into(),
+            host: host.into(),
+            path: desc
+                .path
+                .as_deref()
+                .unwrap_or_default()
+                .trim_end_matches('/')
+                .into(),
+        })
+    }
+
+    /// `git:<protocol>://<host>[/<path>]`, Git Credential Manager's target.
+    fn target(&self) -> String {
+        windows::target_name(self, None)
+    }
 }
 
 /// The selected backing store.
@@ -35,11 +89,11 @@ struct Entry {
 pub enum OsStore {
     /// Test store: entries in a file (or in memory when `None`).
     Fake(Option<PathBuf>),
-    /// Windows Credential Manager (Win32 `CredReadW` / `CredWriteW` / `CredDeleteW`).
+    /// Windows Credential Manager (Win32 `Cred*`).
     Windows,
-    /// macOS keychain via `/usr/bin/security`.
+    /// macOS keychain (Security.framework).
     Keychain,
-    /// Secret Service over D-Bus via libsecret's `secret-tool`.
+    /// freedesktop Secret Service over the D-Bus session bus.
     SecretService,
 }
 
@@ -55,22 +109,7 @@ impl OsStore {
     }
 }
 
-fn on_path(prog: &str) -> bool {
-    let Some(paths) = std::env::var_os("PATH") else {
-        return false;
-    };
-    std::env::split_paths(&paths).any(|d| d.join(prog).is_file())
-}
-
-fn session_bus() -> bool {
-    if std::env::var("DBUS_SESSION_BUS_ADDRESS").is_ok_and(|v| !v.is_empty()) {
-        return true;
-    }
-    std::env::var_os("XDG_RUNTIME_DIR").is_some_and(|d| Path::new(&d).join("bus").exists())
-}
-
-/// Pick the store for this process, or explain why there is none.
-pub fn select_os_store() -> Result<OsStore, RemoteError> {
+fn select() -> Result<OsStore, Failure> {
     match std::env::var("ARKS_CREDENTIAL_BACKEND").as_deref() {
         Ok("fake") => {
             let path = std::env::var_os("ARKS_CREDENTIAL_FAKE_STORE")
@@ -78,51 +117,42 @@ pub fn select_os_store() -> Result<OsStore, RemoteError> {
                 .map(PathBuf::from);
             return Ok(OsStore::Fake(path));
         }
-        Ok("none") => return Err(no_store("ARKS_CREDENTIAL_BACKEND=none")),
+        Ok("none") => return Err(Failure::Unreachable("ARKS_CREDENTIAL_BACKEND=none".into())),
         Ok("") | Err(_) => {}
         Ok(other) => {
-            return Err(RemoteError::Msg(format!(
+            return Err(Failure::Other(format!(
                 "unknown ARKS_CREDENTIAL_BACKEND '{other}' (fake|none)"
             )));
         }
     }
     if cfg!(windows) {
-        return Ok(OsStore::Windows);
+        Ok(OsStore::Windows)
+    } else if cfg!(target_os = "macos") {
+        Ok(OsStore::Keychain)
+    } else if cfg!(unix) {
+        // Reachability is settled when the bus is dialed.
+        Ok(OsStore::SecretService)
+    } else {
+        Err(Failure::Unreachable(
+            "no OS credential store backend for this OS".into(),
+        ))
     }
-    if cfg!(target_os = "macos") {
-        return if Path::new("/usr/bin/security").is_file() {
-            Ok(OsStore::Keychain)
-        } else {
-            Err(no_store("/usr/bin/security not found"))
-        };
-    }
-    if !session_bus() {
-        return Err(no_store("no D-Bus session bus for the Secret Service"));
-    }
-    if !on_path("secret-tool") {
-        return Err(no_store(
-            "secret-tool (libsecret) not found for the Secret Service",
-        ));
-    }
-    Ok(OsStore::SecretService)
 }
 
-fn no_store(why: &str) -> RemoteError {
-    RemoteError::Msg(format!("no OS credential store is reachable ({why})"))
-}
-
-fn target_of(desc: &Credential) -> Option<String> {
-    let protocol = desc.protocol.as_deref().filter(|s| !s.is_empty())?;
-    let host = desc.host.as_deref().filter(|s| !s.is_empty())?;
-    let mut t = format!("git:{protocol}://{host}");
-    if let Some(p) = desc.path.as_deref().filter(|s| !s.is_empty()) {
-        t.push('/');
-        t.push_str(p);
-    }
-    Some(t)
+/// Pick the store for this process, or explain why there is none.
+pub fn select_os_store() -> Result<OsStore, RemoteError> {
+    select().map_err(Failure::into_remote)
 }
 
 // ---------- fake store ----------
+
+/// One fake-store entry: the target and the account.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Entry {
+    target: String,
+    username: String,
+    password: String,
+}
 
 thread_local! {
     static MEMORY: std::cell::RefCell<Vec<Entry>> = const { std::cell::RefCell::new(Vec::new()) };
@@ -140,14 +170,14 @@ fn unesc(s: &str) -> String {
         .replace("%25", "%")
 }
 
-fn fake_load(path: &Option<PathBuf>) -> Result<Vec<Entry>, RemoteError> {
+fn fake_load(path: &Option<PathBuf>) -> Result<Vec<Entry>, Failure> {
     let Some(p) = path else {
         return Ok(MEMORY.with(|m| m.borrow().clone()));
     };
     let text = match std::fs::read_to_string(p) {
         Ok(t) => t,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
-        Err(e) => return Err(RemoteError::Msg(format!("{}: {e}", p.display()))),
+        Err(e) => return Err(Failure::Other(format!("{}: {e}", p.display()))),
     };
     Ok(text
         .lines()
@@ -162,7 +192,7 @@ fn fake_load(path: &Option<PathBuf>) -> Result<Vec<Entry>, RemoteError> {
         .collect())
 }
 
-fn fake_save(path: &Option<PathBuf>, entries: Vec<Entry>) -> Result<(), RemoteError> {
+fn fake_save(path: &Option<PathBuf>, entries: Vec<Entry>) -> Result<(), Failure> {
     let Some(p) = path else {
         MEMORY.with(|m| *m.borrow_mut() = entries);
         return Ok(());
@@ -176,155 +206,217 @@ fn fake_save(path: &Option<PathBuf>, entries: Vec<Entry>) -> Result<(), RemoteEr
             esc(&e.password)
         ));
     }
-    std::fs::write(p, out).map_err(|e| RemoteError::Msg(format!("{}: {e}", p.display())))
+    std::fs::write(p, out).map_err(|e| Failure::Other(format!("{}: {e}", p.display())))
 }
 
-// ---------- Secret Service (secret-tool) ----------
+fn fake_matches(e: &Entry, target: &str, user: Option<&str>) -> bool {
+    e.target == target && user.is_none_or(|u| u == e.username)
+}
 
-fn ss_attrs(desc: &Credential, user: Option<&str>) -> Vec<String> {
-    let mut a = vec!["xdg:schema".to_string(), "org.git.Password".to_string()];
-    if let Some(p) = &desc.protocol {
-        a.extend(["protocol".into(), p.clone()]);
+// ---------- per-OS dispatch ----------
+
+mod platform {
+    use super::*;
+
+    type Found = Option<(Option<String>, String)>;
+
+    #[cfg(windows)]
+    pub fn get(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: Option<&str>,
+    ) -> Result<Found, Failure> {
+        let _ = desc;
+        match store {
+            OsStore::Windows => windows::get(svc, user),
+            _ => Err(elsewhere(store)),
+        }
     }
-    if let Some(h) = &desc.host {
-        let (server, port) = match h.rsplit_once(':') {
-            Some((s, p)) if p.chars().all(|c| c.is_ascii_digit()) && !p.is_empty() => {
-                (s.to_string(), Some(p.to_string()))
+    #[cfg(windows)]
+    pub fn store(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: &str,
+        pass: &str,
+    ) -> Result<(), Failure> {
+        let _ = desc;
+        match store {
+            OsStore::Windows => windows::store(svc, user, pass),
+            _ => Err(elsewhere(store)),
+        }
+    }
+    #[cfg(windows)]
+    pub fn erase(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: Option<&str>,
+    ) -> Result<(), Failure> {
+        let _ = desc;
+        match store {
+            OsStore::Windows => windows::erase(svc, user),
+            _ => Err(elsewhere(store)),
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn get(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: Option<&str>,
+    ) -> Result<Found, Failure> {
+        let _ = desc;
+        match store {
+            OsStore::Keychain => keychain::get(&svc.target(), user),
+            _ => Err(elsewhere(store)),
+        }
+    }
+    #[cfg(target_os = "macos")]
+    pub fn store(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: &str,
+        pass: &str,
+    ) -> Result<(), Failure> {
+        let _ = desc;
+        match store {
+            OsStore::Keychain => keychain::store(&svc.target(), &label(svc), user, pass),
+            _ => Err(elsewhere(store)),
+        }
+    }
+    #[cfg(target_os = "macos")]
+    pub fn erase(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: Option<&str>,
+    ) -> Result<(), Failure> {
+        let _ = desc;
+        match store {
+            OsStore::Keychain => keychain::erase(&svc.target(), user),
+            _ => Err(elsewhere(store)),
+        }
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    pub fn get(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: Option<&str>,
+    ) -> Result<Found, Failure> {
+        let _ = (svc, user);
+        match store {
+            OsStore::SecretService => {
+                Ok(secret_service::get(desc)?.and_then(|c| Some((c.username, c.password?))))
             }
-            _ => (h.clone(), None),
-        };
-        a.extend(["server".into(), server]);
-        if let Some(p) = port {
-            a.extend(["port".into(), p]);
+            _ => Err(elsewhere(store)),
         }
     }
-    if let Some(p) = desc.path.as_deref().filter(|s| !s.is_empty()) {
-        a.extend(["object".into(), p.to_string()]);
-    }
-    if let Some(u) = user {
-        a.extend(["user".into(), u.to_string()]);
-    }
-    a
-}
-
-fn secret_tool(
-    args: &[String],
-    stdin: Option<&str>,
-) -> Result<(bool, String, String), RemoteError> {
-    use std::io::Write;
-    let mut child = Command::new("secret-tool")
-        .args(args)
-        .stdin(if stdin.is_some() {
-            Stdio::piped()
-        } else {
-            Stdio::null()
-        })
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| RemoteError::Msg(format!("secret-tool: {e}")))?;
-    if let (Some(s), Some(mut w)) = (stdin, child.stdin.take()) {
-        w.write_all(s.as_bytes())
-            .map_err(|e| RemoteError::Msg(format!("secret-tool: {e}")))?;
-    }
-    let o = child
-        .wait_with_output()
-        .map_err(|e| RemoteError::Msg(format!("secret-tool: {e}")))?;
-    Ok((
-        o.status.success(),
-        String::from_utf8_lossy(&o.stdout).into_owned(),
-        String::from_utf8_lossy(&o.stderr).trim().to_string(),
-    ))
-}
-
-/// `secret-tool search` output: `attribute.user = <name>` and `secret = <pw>` lines.
-fn parse_search(text: &str) -> Option<(String, String)> {
-    let mut user = None;
-    let mut secret = None;
-    for l in text.lines() {
-        if let Some(v) = l.strip_prefix("attribute.user = ") {
-            user.get_or_insert_with(|| v.to_string());
-        } else if let Some(v) = l.strip_prefix("secret = ") {
-            secret.get_or_insert_with(|| v.to_string());
-        }
-        if user.is_some() && secret.is_some() {
-            break;
+    #[cfg(all(unix, not(target_os = "macos")))]
+    pub fn store(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: &str,
+        pass: &str,
+    ) -> Result<(), Failure> {
+        match store {
+            OsStore::SecretService => secret_service::store(desc, &label(svc), user, pass),
+            _ => Err(elsewhere(store)),
         }
     }
-    Some((user?, secret?))
-}
-
-fn ss_get(desc: &Credential) -> Result<Option<Credential>, RemoteError> {
-    let mut args = vec!["search".to_string(), "--unlock".to_string()];
-    args.extend(ss_attrs(desc, desc.username.as_deref()));
-    let (ok, out, _) = secret_tool(&args, None)?;
-    if !ok {
-        return Ok(None);
+    #[cfg(all(unix, not(target_os = "macos")))]
+    pub fn erase(
+        store: &OsStore,
+        svc: &Service,
+        desc: &Credential,
+        user: Option<&str>,
+    ) -> Result<(), Failure> {
+        let _ = (svc, user);
+        match store {
+            OsStore::SecretService => secret_service::erase(desc),
+            _ => Err(elsewhere(store)),
+        }
     }
-    Ok(parse_search(&out).map(|(u, p)| Credential {
-        username: Some(u),
-        password: Some(p),
-        ..Default::default()
-    }))
-}
 
-fn ss_store(desc: &Credential, user: &str, pass: &str) -> Result<(), RemoteError> {
-    let label = format!(
-        "Git: {}://{}",
-        desc.protocol.as_deref().unwrap_or(""),
-        desc.host.as_deref().unwrap_or("")
-    );
-    let mut args = vec!["store".to_string(), "--label".to_string(), label];
-    args.extend(ss_attrs(desc, Some(user)));
-    let (ok, _, err) = secret_tool(&args, Some(pass))?;
-    if ok {
-        Ok(())
-    } else {
-        Err(RemoteError::Msg(format!(
-            "Secret Service refused the store: {err}"
-        )))
+    #[cfg(not(any(windows, unix)))]
+    pub fn get(
+        store: &OsStore,
+        _: &Service,
+        _: &Credential,
+        _: Option<&str>,
+    ) -> Result<Found, Failure> {
+        Err(elsewhere(store))
     }
-}
+    #[cfg(not(any(windows, unix)))]
+    pub fn store(
+        store: &OsStore,
+        _: &Service,
+        _: &Credential,
+        _: &str,
+        _: &str,
+    ) -> Result<(), Failure> {
+        Err(elsewhere(store))
+    }
+    #[cfg(not(any(windows, unix)))]
+    pub fn erase(
+        store: &OsStore,
+        _: &Service,
+        _: &Credential,
+        _: Option<&str>,
+    ) -> Result<(), Failure> {
+        Err(elsewhere(store))
+    }
 
-fn ss_erase(desc: &Credential) -> Result<(), RemoteError> {
-    let mut args = vec!["clear".to_string()];
-    args.extend(ss_attrs(desc, desc.username.as_deref()));
-    // `clear` with no match is not an error for the helper protocol.
-    let _ = secret_tool(&args, None)?;
-    Ok(())
+    #[cfg_attr(windows, allow(dead_code))]
+    fn label(svc: &Service) -> String {
+        format!("Git: {}", &svc.target()["git:".len()..])
+    }
+
+    fn elsewhere(store: &OsStore) -> Failure {
+        Failure::Unreachable(format!("{} does not exist on this OS", store.name()))
+    }
 }
 
 // ---------- protocol operations ----------
 
-fn matches(e: &Entry, target: &str, desc: &Credential) -> bool {
-    e.target == target && desc.username.as_deref().is_none_or(|u| u == e.username)
+fn wanted_user(desc: &Credential) -> Option<&str> {
+    desc.username.as_deref().filter(|u| !u.is_empty())
 }
 
 /// `get`: the stored username / password for the description, if any.
-pub fn os_store_get(store: &OsStore, desc: &Credential) -> Result<Option<Credential>, RemoteError> {
-    let Some(target) = target_of(desc) else {
+fn get(store: &OsStore, desc: &Credential) -> Result<Option<Credential>, Failure> {
+    let Some(svc) = Service::of(desc) else {
         return Ok(None);
     };
+    let user = wanted_user(desc);
     let found = match store {
-        OsStore::Fake(p) => fake_load(p)?
-            .into_iter()
-            .find(|e| matches(e, &target, desc))
-            .map(|e| Credential {
-                username: Some(e.username),
-                password: Some(e.password),
-                ..Default::default()
-            }),
-        OsStore::SecretService => ss_get(desc)?,
-        OsStore::Windows => platform::windows_get(&target)?,
-        OsStore::Keychain => platform::keychain_get(&target)?,
+        OsStore::Fake(p) => {
+            let target = svc.target();
+            fake_load(p)?
+                .into_iter()
+                .find(|e| fake_matches(e, &target, user))
+                .map(|e| (Some(e.username), e.password))
+        }
+        _ => platform::get(store, &svc, desc, user)?,
     };
     Ok(found
-        .filter(|c| desc.username.is_none() || c.username.is_none() || c.username == desc.username))
+        .filter(|(u, _)| user.is_none() || u.is_none() || u.as_deref() == user)
+        .map(|(u, p)| Credential {
+            username: u,
+            password: Some(p),
+            ..Default::default()
+        }))
 }
 
 /// `store`: remember a complete username / password for the description.
-pub fn os_store_store(store: &OsStore, desc: &Credential) -> Result<(), RemoteError> {
-    let Some(target) = target_of(desc) else {
+fn store(store: &OsStore, desc: &Credential) -> Result<(), Failure> {
+    let Some(svc) = Service::of(desc) else {
         return Ok(());
     };
     let (Some(user), Some(pass)) = (desc.username.as_deref(), desc.password.as_deref()) else {
@@ -332,6 +424,7 @@ pub fn os_store_store(store: &OsStore, desc: &Credential) -> Result<(), RemoteEr
     };
     match store {
         OsStore::Fake(p) => {
+            let target = svc.target();
             let mut all = fake_load(p)?;
             all.retain(|e| !(e.target == target && e.username == user));
             all.push(Entry {
@@ -341,161 +434,62 @@ pub fn os_store_store(store: &OsStore, desc: &Credential) -> Result<(), RemoteEr
             });
             fake_save(p, all)
         }
-        OsStore::SecretService => ss_store(desc, user, pass),
-        OsStore::Windows => platform::windows_store(&target, desc),
-        OsStore::Keychain => platform::keychain_store(&target, desc),
+        _ => platform::store(store, &svc, desc, user, pass),
     }
 }
 
 /// `erase`: forget matching entries (a given password must match too).
-pub fn os_store_erase(store: &OsStore, desc: &Credential) -> Result<(), RemoteError> {
-    let Some(target) = target_of(desc) else {
+fn erase(store: &OsStore, desc: &Credential) -> Result<(), Failure> {
+    let Some(svc) = Service::of(desc) else {
         return Ok(());
     };
     if let Some(pw) = desc.password.as_deref() {
-        let current = os_store_get(store, desc)?;
-        if current.is_some_and(|c| c.password.as_deref() != Some(pw)) {
+        let current = get(store, desc)?;
+        if current.is_none_or(|c| c.password.as_deref() != Some(pw)) {
             return Ok(());
         }
     }
+    let user = wanted_user(desc);
     match store {
         OsStore::Fake(p) => {
+            let target = svc.target();
             let mut all = fake_load(p)?;
-            all.retain(|e| !matches(e, &target, desc));
+            all.retain(|e| !fake_matches(e, &target, user));
             fake_save(p, all)
         }
-        OsStore::SecretService => ss_erase(desc),
-        OsStore::Windows => {
-            if os_store_get(store, desc)?.is_some() {
-                platform::windows_erase(&target)?;
-            }
-            Ok(())
-        }
-        OsStore::Keychain => platform::keychain_erase(&target),
+        _ => platform::erase(store, &svc, desc, user),
     }
 }
 
 /// Run one helper operation; unknown operations are ignored (gitcredentials).
 /// Returns the attribute text to print for `get`.
+///
+/// With no store reachable, `store` fails with the reason, `get` answers
+/// nothing and `erase` succeeds (nothing can be stored there).
 pub fn run_os_store_helper(op: &str, input: &str) -> Result<Option<String>, RemoteError> {
     if !matches!(op, "get" | "store" | "erase") {
         return Ok(None);
     }
-    let store = select_os_store()?;
     let desc = Credential::parse_attributes(input);
-    match op {
-        "get" => Ok(os_store_get(&store, &desc)?.map(|c| {
-            let mut out = String::new();
-            if let Some(u) = c.username {
-                out.push_str(&format!("username={u}\n"));
-            }
-            if let Some(p) = c.password {
-                out.push_str(&format!("password={p}\n"));
-            }
-            out
-        })),
-        "store" => os_store_store(&store, &desc).map(|_| None),
-        _ => os_store_erase(&store, &desc).map(|_| None),
-    }
-}
-
-mod platform {
-    use super::*;
-
-    #[cfg(windows)]
-    pub fn windows_get(target: &str) -> Result<Option<Credential>, RemoteError> {
-        crate::wallet::wincred_get(target)
-    }
-    #[cfg(windows)]
-    pub fn windows_store(target: &str, desc: &Credential) -> Result<(), RemoteError> {
-        crate::wallet::wincred_store(target, desc)
-    }
-    #[cfg(windows)]
-    pub fn windows_erase(target: &str) -> Result<(), RemoteError> {
-        crate::wallet::wincred_erase(target)
-    }
-    #[cfg(not(windows))]
-    pub fn windows_get(_: &str) -> Result<Option<Credential>, RemoteError> {
-        Err(no_store(
-            "Windows Credential Manager exists only on Windows",
-        ))
-    }
-    #[cfg(not(windows))]
-    pub fn windows_store(_: &str, _: &Credential) -> Result<(), RemoteError> {
-        Err(no_store(
-            "Windows Credential Manager exists only on Windows",
-        ))
-    }
-    #[cfg(not(windows))]
-    pub fn windows_erase(_: &str) -> Result<(), RemoteError> {
-        Err(no_store(
-            "Windows Credential Manager exists only on Windows",
-        ))
-    }
-
-    fn security(args: &[&str]) -> Result<std::process::Output, RemoteError> {
-        Command::new("/usr/bin/security")
-            .args(args)
-            .stdin(Stdio::null())
-            .output()
-            .map_err(|e| RemoteError::Msg(format!("security: {e}")))
-    }
-
-    /// `security find-generic-password -s <target> -g`: account on stdout
-    /// attributes (`"acct"<blob>="..."`), password on stderr (`password: "..."`).
-    pub fn keychain_get(target: &str) -> Result<Option<Credential>, RemoteError> {
-        let o = security(&["find-generic-password", "-s", target, "-g"])?;
-        if !o.status.success() {
-            return Ok(None);
-        }
-        let text = format!(
-            "{}{}",
-            String::from_utf8_lossy(&o.stdout),
-            String::from_utf8_lossy(&o.stderr)
-        );
-        let mut user = None;
-        let mut pass = None;
-        for l in text.lines() {
-            let l = l.trim();
-            if let Some(v) = l.strip_prefix("\"acct\"<blob>=") {
-                user = Some(v.trim_matches('"').to_string());
-            } else if let Some(v) = l.strip_prefix("password: ") {
-                pass = Some(v.trim_matches('"').to_string());
-            }
-        }
-        Ok(pass.map(|p| Credential {
-            username: user,
-            password: Some(p),
-            ..Default::default()
-        }))
-    }
-
-    pub fn keychain_store(target: &str, desc: &Credential) -> Result<(), RemoteError> {
-        let user = desc.username.as_deref().unwrap_or("");
-        let pass = desc.password.as_deref().unwrap_or("");
-        let o = security(&[
-            "add-generic-password",
-            "-U",
-            "-a",
-            user,
-            "-s",
-            target,
-            "-w",
-            pass,
-        ])?;
-        if o.status.success() {
-            Ok(())
-        } else {
-            Err(RemoteError::Msg(format!(
-                "macOS keychain refused the store: {}",
-                String::from_utf8_lossy(&o.stderr).trim()
-            )))
-        }
-    }
-
-    pub fn keychain_erase(target: &str) -> Result<(), RemoteError> {
-        let _ = security(&["delete-generic-password", "-s", target])?;
-        Ok(())
+    let result = select().and_then(|s| match op {
+        "get" => get(&s, &desc).map(|c| {
+            c.map(|c| {
+                let mut out = String::new();
+                if let Some(u) = c.username {
+                    out.push_str(&format!("username={u}\n"));
+                }
+                if let Some(p) = c.password {
+                    out.push_str(&format!("password={p}\n"));
+                }
+                out
+            })
+        }),
+        "store" => store(&s, &desc).map(|_| None),
+        _ => erase(&s, &desc).map(|_| None),
+    });
+    match result {
+        Err(Failure::Unreachable(_)) if op != "store" => Ok(None),
+        r => r.map_err(Failure::into_remote),
     }
 }
 
@@ -510,18 +504,18 @@ mod tests {
     #[test]
     fn fake_file_roundtrip_and_matching() {
         let dir = tempfile::TempDir::new().unwrap();
-        let store = OsStore::Fake(Some(dir.path().join("s")));
+        let s = OsStore::Fake(Some(dir.path().join("s")));
         let full = desc("protocol=https\nhost=example.com\nusername=alice\npassword=p\tw\n");
-        os_store_store(&store, &full).unwrap();
+        store(&s, &full).unwrap();
         let bob = desc("protocol=https\nhost=example.com\nusername=bob\npassword=b\n");
-        os_store_store(&store, &bob).unwrap();
-        let got = os_store_get(&store, &desc("protocol=https\nhost=example.com\n"))
+        store(&s, &bob).unwrap();
+        let got = get(&s, &desc("protocol=https\nhost=example.com\n"))
             .unwrap()
             .unwrap();
         assert_eq!(got.username.as_deref(), Some("alice"));
         assert_eq!(got.password.as_deref(), Some("p\tw"));
-        let got = os_store_get(
-            &store,
+        let got = get(
+            &s,
             &desc("protocol=https\nhost=example.com\nusername=bob\n"),
         )
         .unwrap()
@@ -533,25 +527,25 @@ mod tests {
             "protocol=http\nhost=example.com\n",
             "protocol=https\nhost=example.com\npath=r.git\n",
         ] {
-            assert!(os_store_get(&store, &desc(d)).unwrap().is_none(), "{d}");
+            assert!(get(&s, &desc(d)).unwrap().is_none(), "{d}");
         }
         // Erase with a wrong password keeps the entry.
-        os_store_erase(
-            &store,
+        erase(
+            &s,
             &desc("protocol=https\nhost=example.com\nusername=bob\npassword=x\n"),
         )
         .unwrap();
         assert!(
-            os_store_get(
-                &store,
+            get(
+                &s,
                 &desc("protocol=https\nhost=example.com\nusername=bob\n")
             )
             .unwrap()
             .is_some()
         );
-        os_store_erase(&store, &desc("protocol=https\nhost=example.com\n")).unwrap();
+        erase(&s, &desc("protocol=https\nhost=example.com\n")).unwrap();
         assert!(
-            os_store_get(&store, &desc("protocol=https\nhost=example.com\n"))
+            get(&s, &desc("protocol=https\nhost=example.com\n"))
                 .unwrap()
                 .is_none()
         );
@@ -559,51 +553,37 @@ mod tests {
 
     #[test]
     fn incomplete_store_is_ignored() {
-        let store = OsStore::Fake(None);
-        os_store_store(&store, &desc("protocol=https\nhost=h\nusername=u\n")).unwrap();
+        let s = OsStore::Fake(None);
+        store(&s, &desc("protocol=https\nhost=h\nusername=u\n")).unwrap();
         assert!(
-            os_store_get(&store, &desc("protocol=https\nhost=h\n"))
+            get(&s, &desc("protocol=https\nhost=h\n"))
                 .unwrap()
                 .is_none()
         );
-        os_store_store(
-            &store,
+        store(
+            &s,
             &desc("protocol=https\nhost=h\nusername=u\npassword=p\n"),
         )
         .unwrap();
         assert!(
-            os_store_get(&store, &desc("protocol=https\nhost=h\n"))
+            get(&s, &desc("protocol=https\nhost=h\n"))
                 .unwrap()
                 .is_some()
         );
     }
 
     #[test]
-    fn secret_service_attributes_and_search_output() {
-        let a = ss_attrs(
-            &desc("protocol=https\nhost=h.example:8443\npath=x/y.git\n"),
-            Some("u"),
+    fn targets_carry_protocol_host_and_trimmed_path() {
+        let t = |d: &str| Service::of(&desc(d)).map(|s| s.target());
+        assert_eq!(
+            t("protocol=https\nhost=h:8443\n").as_deref(),
+            Some("git:https://h:8443")
         );
         assert_eq!(
-            a,
-            [
-                "xdg:schema",
-                "org.git.Password",
-                "protocol",
-                "https",
-                "server",
-                "h.example",
-                "port",
-                "8443",
-                "object",
-                "x/y.git",
-                "user",
-                "u"
-            ]
+            t("protocol=https\nhost=h\npath=o/r.git/\n").as_deref(),
+            Some("git:https://h/o/r.git")
         );
-        let out = "[/org/freedesktop/secrets/collection/login/3]\nlabel = Git: https://h\nsecret = pw\ncreated = 2026-01-01 00:00:00\nschema = org.git.Password\nattribute.protocol = https\nattribute.server = h\nattribute.user = alice\n";
-        assert_eq!(parse_search(out), Some(("alice".into(), "pw".into())));
-        assert_eq!(parse_search("label = x\n"), None);
+        assert_eq!(t("host=h\n"), None);
     }
 
     #[test]
