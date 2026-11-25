@@ -295,6 +295,25 @@ fn resolve(ctx: &Ctx, a: &Args<'_>, arg: Option<&str>) -> Result<((String, Strin
     Ok(((o, r), p))
 }
 
+/// gh-named commit row (`pr view --json commits`) from a forge commit.
+fn gh_commit(c: &Value) -> Value {
+    let msg = c["commit"]["message"].as_str().unwrap_or("");
+    let (head, body) = msg.split_once("\n\n").unwrap_or((msg, ""));
+    json!({
+        "oid": c["sha"],
+        "messageHeadline": head.lines().next().unwrap_or(""),
+        "messageBody": body,
+        "authoredDate": c["commit"]["author"]["date"],
+        "committedDate": c["commit"]["committer"]["date"],
+        "authors": [{
+            "name": c["commit"]["author"]["name"],
+            "email": c["commit"]["author"]["email"],
+            "login": c["author"]["login"],
+            "id": "",
+        }],
+    })
+}
+
 fn pr_path(o: &str, r: &str, p: &Value) -> String {
     format!("/repos/{o}/{r}/pulls/{}", n(p, "number"))
 }
@@ -789,7 +808,25 @@ fn view(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         let mut m = m.clone();
         if a.get(&["--json"]).is_some_and(|j| j.contains("comments")) {
             let c = comments()?;
-            m.insert("comments".into(), Value::Array(arr(&c).iter().map(|c| json!({"author": {"login": c["user"]["login"]}, "body": c["body"], "createdAt": c["created_at"]})).collect()));
+            m.insert(
+                "comments".into(),
+                Value::Array(arr(&c).iter().map(super::common::gh_comment).collect()),
+            );
+        }
+        let wants = |f: &str| {
+            a.get(&["--json"])
+                .is_some_and(|j| j.split(',').any(|x| x.trim() == f))
+        };
+        if wants("files") {
+            let f = ctx.get(&format!("{}/files", pr_path(&o, &r, &p)))?;
+            m.insert("files".into(), Value::Array(arr(&f).iter().map(|f| json!({"path": f["filename"], "additions": f["additions"], "deletions": f["deletions"]})).collect()));
+        }
+        if wants("commits") {
+            let c = ctx.get(&format!("{}/commits", pr_path(&o, &r, &p)))?;
+            m.insert(
+                "commits".into(),
+                Value::Array(arr(&c).iter().map(gh_commit).collect()),
+            );
         }
         json_out(out, &a, std::slice::from_ref(&m), JSON_FIELDS, true)?;
         return Ok(());

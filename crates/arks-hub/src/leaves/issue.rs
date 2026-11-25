@@ -485,7 +485,10 @@ fn view(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         let mut m = gh_row(ctx, &i);
         if a.get(&["--json"]).is_some_and(|j| j.contains("comments")) {
             let c = comments()?;
-            m.insert("comments".into(), Value::Array(arr(&c).iter().map(|c| json!({"author": {"login": c["user"]["login"]}, "body": c["body"], "createdAt": c["created_at"]})).collect()));
+            m.insert(
+                "comments".into(),
+                Value::Array(arr(&c).iter().map(super::common::gh_comment).collect()),
+            );
         }
         json_out(out, &a, std::slice::from_ref(&m), JSON_FIELDS, true)?;
         return Ok(());

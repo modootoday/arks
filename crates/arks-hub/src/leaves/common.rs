@@ -252,6 +252,18 @@ pub(crate) fn iso_secs(s: &str) -> Option<u64> {
     u64::try_from(days * 86_400 + hh * 3_600 + mm * 60 + ss).ok()
 }
 
+/// gh-named comment row (`issue view` / `pr view --json comments`) from a forge comment.
+pub(crate) fn gh_comment(c: &Value) -> Value {
+    serde_json::json!({
+        "id": c["node_id"],
+        "author": {"login": c["user"]["login"]},
+        "authorAssociation": c["author_association"],
+        "body": c["body"],
+        "createdAt": c["created_at"],
+        "url": c["html_url"],
+    })
+}
+
 /// Add / remove lists of one `issue edit` or `pr edit` (labels, assignees, reviewers).
 #[derive(Default)]
 pub(crate) struct ListEdits {

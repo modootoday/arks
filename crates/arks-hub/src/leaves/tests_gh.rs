@@ -564,3 +564,37 @@ fn concurrent_list_edits_are_deltas() {
     assert_eq!(list(pr::run, "labels"), odd);
     assert!(is_usage(f.run(issue::run, &["edit", "1", r[0], r[1]])));
 }
+
+/// `pr view --json files,commits,comments` carries the pull's files, commits and
+/// comment ids like gh.
+#[test]
+fn pr_view_json_files_commits_comments() {
+    let f = Forge::start();
+    let _g = repo_with_feature(&f, "pv");
+    let r = ["-R", "local/pv"];
+    f.ok(
+        pr::run,
+        &[
+            "create", "-H", "feature", "-B", "main", "-t", "t", "-b", "b", r[0], r[1],
+        ],
+    );
+    f.ok(pr::run, &["comment", "1", "-b", "hello", r[0], r[1]]);
+    let v = json_of(&f.ok(
+        pr::run,
+        &["view", "1", "--json", "files,commits,comments", r[0], r[1]],
+    ));
+    assert_eq!(
+        v["files"],
+        json!([{"path": "a.txt", "additions": 1, "deletions": 0}])
+    );
+    assert_eq!(v["commits"].as_array().unwrap().len(), 1, "{v}");
+    assert_eq!(v["commits"][0]["messageHeadline"], "Add a");
+    assert_eq!(v["commits"][0]["messageBody"], "more");
+    assert_eq!(v["comments"][0]["body"], "hello");
+    assert!(
+        v["comments"][0]["id"]
+            .as_str()
+            .is_some_and(|s| !s.is_empty()),
+        "{v}"
+    );
+}
