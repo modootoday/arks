@@ -93,6 +93,7 @@ pub mod request_pull;
 pub mod rerere;
 pub mod rev_list;
 pub mod revwalk;
+mod serve_rulesets;
 pub mod server;
 pub mod shared;
 pub mod show_branch;
