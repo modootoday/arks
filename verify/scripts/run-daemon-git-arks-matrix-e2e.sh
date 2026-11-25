@@ -300,6 +300,10 @@ PY
     'git-upload-pack /nope.git\0'
   a5_case forbid-disabled "--informative-errors --base-path=$S --disable=upload-pack --forbid-override=upload-pack" \
     'git-upload-pack /yesup.git\0' 'git-upload-pack /nope.git\0'
+  # arch.git gets a commit so both daemons can ACK the archive request.
+  git init -q "$A5/seed"
+  git -C "$A5/seed" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m seed
+  git -C "$A5/seed" push -q "$S/arch.git" HEAD:refs/heads/master
   # upload-archive is asked with an empty argument list: stock git ACKs as soon as its
   # writer starts, arks after reading the arguments (archive ordering is outside A5).
   a5_case config-services "--informative-errors --base-path=$S" \
@@ -465,7 +469,9 @@ PY
       } >"$A5/$tag.$kind.out"
       kill "$dp" "$pid" 2>/dev/null || true
       wait "$pid" 2>/dev/null || true
-      sed -E "s#$base#BASE#g; s/[0-9]+/N/g" "$A5/$tag.$kind.err" | sort >>"$A5/$tag.$kind.out"
+      # Drop the dashed-command wrapper's report of the killed git-daemon (not daemon output).
+      { grep -v '^error: git-daemon died of signal' "$A5/$tag.$kind.err" || true; } |
+        sed -E "s#$base#BASE#g; s/[0-9]+/N/g" | sort >>"$A5/$tag.$kind.out"
     done
     a5_same "$tag"
   done
