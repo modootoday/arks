@@ -4,6 +4,7 @@
 //! <https://git-scm.com/docs/gitprotocol-v2> (extra parameters after a second NUL).
 
 use super::log::DaemonLog;
+use super::path::PathStyle;
 use crate::error::ServerError;
 use std::io::Read;
 
@@ -110,6 +111,10 @@ pub(super) fn parse_service_payload(
 
 /// Split `host[:port]` (or `[v6]:port`), then sanitize and lower-case the host.
 pub(super) fn parse_host_attr(value: &str) -> HostAttr {
+    parse_host_attr_in(value, PathStyle::HOST)
+}
+
+fn parse_host_attr_in(value: &str, style: PathStyle) -> HostAttr {
     let (host, port) = if let Some(inner) = value.strip_prefix('[') {
         match inner.split_once(']') {
             Some((h, after)) => (h, after.strip_prefix(':').unwrap_or("")),
@@ -122,17 +127,18 @@ pub(super) fn parse_host_attr(value: &str) -> HostAttr {
         }
     };
     HostAttr {
-        hostname: sanitize_client(host).to_ascii_lowercase(),
-        port: sanitize_client(port),
+        hostname: sanitize_client(host, style).to_ascii_lowercase(),
+        port: sanitize_client(port, style),
     }
 }
 
 /// Make a client string safe inside a path: drop `/`, collapse runs of `.` and
-/// strip leading/trailing dots (observed stock `git daemon` behaviour).
-pub(super) fn sanitize_client(s: &str) -> String {
+/// strip leading/trailing dots (observed stock `git daemon` behaviour). Windows
+/// also drops `\` and `:` (matrix SoT §Windows rule 5).
+pub(super) fn sanitize_client(s: &str, style: PathStyle) -> String {
     let mut out = String::with_capacity(s.len());
     for c in s.chars() {
-        if c == '/' {
+        if style.is_unsafe_in_host(c) {
             continue;
         }
         if c == '.' && out.ends_with('.') {
@@ -165,15 +171,29 @@ mod tests {
     #[test]
     fn host_sanitizing_matches_stock_git_daemon() {
         // Observed with stock git daemon: `../X/y...z..:12/3` → `xy.z` port `123`.
-        let h = parse_host_attr("../X/y...z..:12/3");
+        let h = parse_host_attr_in("../X/y...z..:12/3", PathStyle::Posix);
         assert_eq!(h.hostname, "xy.z");
         assert_eq!(h.port, "123");
-        assert_eq!(parse_host_attr(".a/b.").hostname, "ab");
-        let v6 = parse_host_attr("[::1]:55");
+        assert_eq!(parse_host_attr_in(".a/b.", PathStyle::Posix).hostname, "ab");
+        let v6 = parse_host_attr_in("[::1]:55", PathStyle::Posix);
         assert_eq!((v6.hostname.as_str(), v6.port.as_str()), ("::1", "55"));
-        let multi = parse_host_attr("a:b:c");
+        let multi = parse_host_attr_in("a:b:c", PathStyle::Posix);
         assert_eq!((multi.hostname.as_str(), multi.port.as_str()), ("a:b", "c"));
-        assert_eq!(parse_host_attr("").hostname, "");
+        assert_eq!(parse_host_attr_in("", PathStyle::Posix).hostname, "");
+    }
+
+    #[test]
+    fn windows_host_sanitizing_drops_drive_and_unc_characters() {
+        let w = PathStyle::Windows;
+        let unc = parse_host_attr_in("\\\\evil\\share", w);
+        assert_eq!(unc.hostname, "evilshare");
+        let drive = parse_host_attr_in("[c:]:7", w);
+        assert_eq!((drive.hostname.as_str(), drive.port.as_str()), ("c", "7"));
+        assert_eq!(parse_host_attr_in("..\\..\\x", w).hostname, "x");
+        assert_eq!(parse_host_attr_in("[::1]:55", w).hostname, "1");
+        // Posix keeps both characters, as before.
+        let posix = parse_host_attr_in("[c:]:7", PathStyle::Posix);
+        assert_eq!(posix.hostname, "c:");
     }
 
     #[test]

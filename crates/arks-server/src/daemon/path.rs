@@ -30,6 +30,33 @@ pub(super) struct ResolvedRepo {
     pub git_dir: PathBuf,
 }
 
+/// Path rules of the serving platform (matrix SoT §Windows): Windows also
+/// separates on `\`, trims trailing dots and spaces, and has case-insensitive
+/// drive letters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum PathStyle {
+    Posix,
+    Windows,
+}
+
+impl PathStyle {
+    /// Style of the platform this binary runs on.
+    pub(super) const HOST: Self = if cfg!(windows) {
+        Self::Windows
+    } else {
+        Self::Posix
+    };
+
+    pub(super) fn is_separator(self, c: char) -> bool {
+        c == '/' || (self == Self::Windows && c == '\\')
+    }
+
+    /// Characters a client `host=` value may not carry into a path.
+    pub(super) fn is_unsafe_in_host(self, c: char) -> bool {
+        self.is_separator(c) || (self == Self::Windows && c == ':')
+    }
+}
+
 /// Non-strict lookup suffixes, in order.
 const SUFFIXES: [&str; 4] = ["/.git", "", ".git/.git", ".git"];
 
@@ -40,7 +67,7 @@ pub(super) fn resolve_request(
     host: Option<&HostContext>,
 ) -> Option<ResolvedRepo> {
     let log = &opts.log;
-    if is_aliased(dir) {
+    if is_aliased(dir, PathStyle::HOST) {
         log.error(&format!("'{dir}': aliased"));
         return None;
     }
@@ -80,7 +107,12 @@ pub(super) fn resolve_request(
         log.error(&format!("'{shown}' does not appear to be a git repository"));
         return None;
     };
-    if !whitelisted(&repo.validated, &opts.whitelist, opts.strict_paths) {
+    if !whitelisted(
+        &repo.validated,
+        &opts.whitelist,
+        opts.strict_paths,
+        PathStyle::HOST,
+    ) {
         log.error(&format!("'{}': not in directory list", repo.validated));
         return None;
     }
@@ -88,17 +120,23 @@ pub(super) fn resolve_request(
 }
 
 /// Paths must start with `/` or `~` and may not contain empty, `.` or `..`
-/// components (a single trailing `/` is fine).
-pub(super) fn is_aliased(dir: &str) -> bool {
+/// components (a single trailing separator is fine). Windows also splits on
+/// `\` and refuses components made only of dots and spaces, which Win32 path
+/// normalisation could turn into `.` or `..`.
+pub(super) fn is_aliased(dir: &str, style: PathStyle) -> bool {
     let Some(rest) = dir.strip_prefix('/').or_else(|| dir.strip_prefix('~')) else {
         return true;
     };
-    let parts: Vec<&str> = rest.split('/').collect();
+    let parts: Vec<&str> = rest.split(|c| style.is_separator(c)).collect();
     let last = parts.len() - 1;
-    parts
-        .iter()
-        .enumerate()
-        .any(|(i, part)| (part.is_empty() && i != last) || *part == "." || *part == "..")
+    parts.iter().enumerate().any(|(i, part)| {
+        (part.is_empty() && i != last)
+            || *part == "."
+            || *part == ".."
+            || (style == PathStyle::Windows
+                && !part.is_empty()
+                && part.chars().all(|c| c == '.' || c == ' '))
+    })
 }
 
 /// `~alice/foo` → `~alice/<user_path>/foo` when `--user-path=<user_path>`.
@@ -191,20 +229,45 @@ pub(super) fn is_git_directory(dir: &Path) -> bool {
 }
 
 /// Whitelist check on the validated path string (no canonicalisation, so a
-/// whitelisted symlink works as in git).
-pub(super) fn whitelisted(validated: &str, whitelist: &[PathBuf], strict: bool) -> bool {
+/// whitelisted symlink works as in git). On Windows both strings are compared
+/// in [`comparable`] form.
+pub(super) fn whitelisted(
+    validated: &str,
+    whitelist: &[PathBuf],
+    strict: bool,
+    style: PathStyle,
+) -> bool {
     if whitelist.is_empty() {
         return true;
     }
+    let validated = comparable(validated, style);
     whitelist.iter().any(|entry| {
-        let entry = entry.to_string_lossy();
+        let entry = comparable(&entry.to_string_lossy(), style);
         if strict {
             validated == entry
         } else {
-            validated.starts_with(entry.as_ref())
+            validated.starts_with(entry.as_str())
                 && matches!(validated.as_bytes().get(entry.len()), None | Some(b'/'))
         }
     })
+}
+
+/// Windows: `\` becomes `/` and a leading drive letter is lower-cased
+/// (`C:\repos` → `c:/repos`, `\\srv\share` → `//srv/share`); the rest of
+/// the path keeps its case. Posix paths are returned unchanged.
+pub(super) fn comparable(path: &str, style: PathStyle) -> String {
+    if style == PathStyle::Posix {
+        return path.to_string();
+    }
+    let mut out: String = path
+        .chars()
+        .map(|c| if c == '\\' { '/' } else { c })
+        .collect();
+    let bytes = out.as_bytes();
+    if bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
+        out[..1].make_ascii_lowercase();
+    }
+    out
 }
 
 #[cfg(test)]
@@ -245,7 +308,7 @@ mod tests {
     #[test]
     fn alias_rules_match_stock_git_daemon() {
         for ok in ["/pub.git", "/pub.git/", "/", "~root/x", "/.pub.git"] {
-            assert!(!is_aliased(ok), "{ok}");
+            assert!(!is_aliased(ok, PathStyle::Posix), "{ok}");
         }
         for bad in [
             "pub.git",
@@ -259,7 +322,7 @@ mod tests {
             "~root/./x",
             "/../srv/pub.git",
         ] {
-            assert!(is_aliased(bad), "{bad}");
+            assert!(is_aliased(bad, PathStyle::Posix), "{bad}");
         }
     }
 
@@ -306,7 +369,7 @@ mod tests {
         );
     }
 
-    // Absolute request paths are `/…` here; Windows drive-letter request paths are not covered yet.
+    // A raw absolute request is `/…` only on unix; the windows_* tests cover drive letters.
     #[cfg(unix)]
     #[test]
     fn base_path_relaxed_retries_raw_path() {
@@ -321,7 +384,7 @@ mod tests {
         assert!(resolve_request(&o, "/pub.git", None).is_some());
     }
 
-    // Absolute request paths are `/…` here; Windows drive-letter request paths are not covered yet.
+    // A raw absolute request is `/…` only on unix; the windows_* tests cover drive letters.
     #[cfg(unix)]
     #[test]
     fn strict_paths_need_exact_names() {
@@ -345,17 +408,169 @@ mod tests {
     #[test]
     fn whitelist_prefix_needs_slash_boundary() {
         let wl = vec![PathBuf::from("/srv/work"), PathBuf::from("/srv/pub.git")];
-        assert!(whitelisted("/srv/work/.git", &wl, false));
-        assert!(whitelisted("/srv/pub.git", &wl, false));
-        assert!(!whitelisted("/srv/workshop.git", &wl, false));
+        assert!(whitelisted("/srv/work/.git", &wl, false, PathStyle::Posix));
+        assert!(whitelisted("/srv/pub.git", &wl, false, PathStyle::Posix));
+        assert!(!whitelisted(
+            "/srv/workshop.git",
+            &wl,
+            false,
+            PathStyle::Posix
+        ));
         // A trailing slash in the whitelist entry needs a second slash (observed).
         assert!(!whitelisted(
             "/srv/work/.git",
             &[PathBuf::from("/srv/work/")],
-            false
+            false,
+            PathStyle::Posix
         ));
-        assert!(!whitelisted("/srv/work/.git", &wl, true));
-        assert!(whitelisted("/x", &[], true));
+        assert!(!whitelisted("/srv/work/.git", &wl, true, PathStyle::Posix));
+        assert!(whitelisted("/x", &[], true, PathStyle::Posix));
+    }
+
+    // Windows rules (matrix SoT §Windows) are pure string logic, so they run everywhere.
+    #[test]
+    fn windows_alias_rules_split_on_backslash_and_trimmed_dots() {
+        let w = PathStyle::Windows;
+        for ok in [
+            "/pub.git",
+            "/pub.git/",
+            "/a/b.git",
+            "/.pub.git",
+            "/a b.git",
+            "/..x",
+        ] {
+            assert!(!is_aliased(ok, w), "{ok}");
+        }
+        for bad in [
+            "/..\\x.git",
+            "/a\\..\\..\\x.git",
+            "/a\\.\\x.git",
+            "/a\\\\x.git",
+            "/\\\\server\\share\\x.git",
+            "/.. /x.git",
+            "/a/... /x.git",
+            "/a/.../x.git",
+            "/ /x.git",
+            "C:\\repos\\x.git",
+            "C:/repos/x.git",
+        ] {
+            assert!(is_aliased(bad, w), "{bad}");
+        }
+        // Posix keeps `\` and dotted names as ordinary characters.
+        assert!(!is_aliased("/..\\x.git", PathStyle::Posix));
+        assert!(!is_aliased("/a/.../x.git", PathStyle::Posix));
+    }
+
+    #[test]
+    fn windows_comparable_form_unifies_separators_and_drive_case() {
+        let w = PathStyle::Windows;
+        assert_eq!(comparable("C:\\Repos\\x.git", w), "c:/Repos/x.git");
+        assert_eq!(comparable("c:/Repos", w), "c:/Repos");
+        assert_eq!(comparable("\\\\srv\\Share\\x", w), "//srv/Share/x");
+        assert_eq!(comparable("C:\\x", PathStyle::Posix), "C:\\x");
+    }
+
+    #[test]
+    fn windows_whitelist_takes_drive_letters_and_unc_shares() {
+        let w = PathStyle::Windows;
+        let wl = vec![PathBuf::from("c:\\repos"), PathBuf::from("\\\\srv\\share")];
+        assert!(whitelisted("C:\\repos/pub.git", &wl, false, w));
+        assert!(whitelisted("C:/repos/team/pub.git", &wl, false, w));
+        assert!(whitelisted("\\\\srv\\share/pub.git", &wl, false, w));
+        assert!(!whitelisted("C:\\repository/pub.git", &wl, false, w));
+        assert!(!whitelisted("D:\\repos/pub.git", &wl, false, w));
+        // Only the drive letter is case-insensitive.
+        assert!(!whitelisted("C:\\Repos/pub.git", &wl, false, w));
+        let exact = vec![PathBuf::from("C:/repos/pub.git")];
+        assert!(whitelisted("c:\\repos\\pub.git", &exact, true, w));
+        assert!(!whitelisted("c:\\repos\\pub.git\\", &exact, true, w));
+        // Posix compares bytes.
+        assert!(!whitelisted(
+            "C:\\repos/pub.git",
+            &wl,
+            false,
+            PathStyle::Posix
+        ));
+    }
+
+    #[test]
+    fn windows_base_path_and_template_prefix_verbatim() {
+        let host = HostContext {
+            hostname: "example.com".into(),
+            ..HostContext::default()
+        };
+        assert_eq!(
+            interpolate("C:\\vhosts\\%H%D", &host, "/a.git"),
+            "C:\\vhosts\\example.com/a.git"
+        );
+        assert_eq!(
+            interpolate("\\\\srv\\git\\%H%D", &host, "/a.git"),
+            "\\\\srv\\git\\example.com/a.git"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_base_path_serves_drive_letter_repos() {
+        let root = TempDir::new().unwrap();
+        bare(&root.path().join("pub.git"));
+        let base = s(root.path());
+        assert!(base.as_bytes().get(1) == Some(&b':'), "{base}");
+        let mut o = opts(root.path());
+        o.base_path = Some(root.path().to_path_buf());
+        let r = resolve_request(&o, "/pub", None).unwrap();
+        assert_eq!(r.validated, format!("{base}/pub.git"));
+        assert!(resolve_request(&o, "/..\\pub.git", None).is_none());
+        assert!(resolve_request(&o, "/sub\\..\\pub.git", None).is_none());
+        assert!(
+            o.log
+                .lines()
+                .contains(&"'/..\\pub.git': aliased".to_string())
+        );
+        // Whitelist with the other drive-letter case and forward slashes.
+        let mut flipped = base.replace('\\', "/");
+        let first = flipped.remove(0);
+        let flipped = if first.is_ascii_uppercase() {
+            format!("{}{flipped}", first.to_ascii_lowercase())
+        } else {
+            format!("{}{flipped}", first.to_ascii_uppercase())
+        };
+        o.whitelist = vec![PathBuf::from(&flipped)];
+        assert!(resolve_request(&o, "/pub.git", None).is_some());
+        o.whitelist = vec![PathBuf::from(format!("{base}\\other"))];
+        assert!(resolve_request(&o, "/pub.git", None).is_none());
+        // --strict-paths with an exact drive-letter entry.
+        o.strict_paths = true;
+        o.whitelist = vec![PathBuf::from(format!("{flipped}\\pub.git"))];
+        assert!(resolve_request(&o, "/pub.git", None).is_some());
+        assert!(resolve_request(&o, "/pub", None).is_none());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_interpolated_path_under_a_drive_letter() {
+        let root = TempDir::new().unwrap();
+        bare(&root.path().join("vhost/example.com/a.git"));
+        let mut o = opts(root.path());
+        o.interpolated_path = Some(format!("{}\\vhost\\%H%D", s(root.path())));
+        let host = HostContext {
+            hostname: "example.com".into(),
+            ..HostContext::default()
+        };
+        let r = resolve_request(&o, "/a.git", Some(&host)).unwrap();
+        assert_eq!(r.git_dir, root.path().join("vhost\\example.com/a.git"));
+        assert!(resolve_request(&o, "/..\\a.git", Some(&host)).is_none());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_user_path_never_resolves() {
+        let mut o = DaemonOptions {
+            log: DaemonLog::memory(true),
+            ..DaemonOptions::default()
+        };
+        o.user_path = Some(String::new());
+        assert!(resolve_request(&o, "~alice/pub.git", None).is_none());
     }
 
     #[test]
