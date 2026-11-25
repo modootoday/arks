@@ -668,6 +668,139 @@ fn stock_git_http_backend_clone_fetch_push() {
     assert_eq!(blob, "from arks");
 }
 
+/// git-fetch TAG AUTO-FOLLOWING against stock `git http-backend`: clone copies
+/// every tag, a default fetch follows only tags that point into the fetched
+/// history, `--tags` takes all, `--no-tags` none; an exact refspec wants only
+/// the ref it names.
+#[test]
+fn stock_git_http_backend_clone_and_fetch_store_tags() {
+    let git_ok = std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !git_ok {
+        return;
+    }
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path().join("peer");
+    let work = root.join("src");
+    std::fs::create_dir_all(&work).unwrap();
+    git_ok_at(&work, &["init", "-b", "main"]);
+    std::fs::write(work.join("README"), b"one\n").unwrap();
+    git_ok_at(&work, &["add", "README"]);
+    git_ok_at(&work, &["commit", "-m", "one"]);
+    git_ok_at(&work, &["tag", "light"]);
+    git_ok_at(&work, &["tag", "-a", "annotated", "-m", "annotated"]);
+    git_ok_at(&work, &["checkout", "-b", "side"]);
+    git_ok_at(&work, &["commit", "--allow-empty", "-m", "side"]);
+    git_ok_at(&work, &["tag", "-a", "on-side", "-m", "side"]);
+    git_ok_at(&work, &["checkout", "main"]);
+    git_ok_at(
+        &root,
+        &["clone", "--bare", work.to_str().unwrap(), "app.git"],
+    );
+    let bare = root.join("app.git");
+    let server = GitBackend::spawn(root.clone());
+    let url = format!("{}/app.git", server.url);
+    let tags = |repo: &Repository| {
+        let mut t: Vec<String> = repo
+            .refs()
+            .list_refs("refs/tags/")
+            .unwrap()
+            .into_iter()
+            .map(|(n, _)| n.trim_start_matches("refs/tags/").to_string())
+            .collect();
+        t.sort();
+        t
+    };
+
+    // Clone copies every tag, annotated tag objects included.
+    let dest = tmp.path().join("clone");
+    clone_http(&url, &dest).unwrap();
+    let mut repo = Repository::discover(&dest).unwrap();
+    assert_eq!(tags(&repo), ["annotated", "light", "on-side"]);
+    let tag_oid = repo.refs().resolve("refs/tags/annotated").unwrap();
+    assert_eq!(repo.get_object(&tag_oid).unwrap().kind, ObjectKind::Tag);
+
+    // Clone --no-tags copies none.
+    let none = tmp.path().join("no-tags");
+    clone_http_with(
+        &url,
+        &none,
+        &FetchOptions {
+            tags: Some(false),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert!(tags(&Repository::discover(&none).unwrap()).is_empty());
+
+    // Default fetch auto-follows a new annotated tag on the fetched branch.
+    git_ok_at(&work, &["commit", "--allow-empty", "-m", "two"]);
+    git_ok_at(&work, &["tag", "-a", "two", "-m", "two"]);
+    git_ok_at(&work, &["push", bare.to_str().unwrap(), "main", "two"]);
+    crate::fetch_http(&mut repo, &url, "origin").unwrap();
+    assert!(tags(&repo).contains(&"two".to_string()));
+    let two = repo.refs().resolve("refs/tags/two").unwrap();
+    assert_eq!(repo.get_object(&two).unwrap().kind, ObjectKind::Tag);
+
+    // An exact refspec for main wants only main, so the side tag is not followed;
+    // --tags then takes it.
+    let only_main = tmp.path().join("only-main");
+    std::fs::create_dir_all(&only_main).unwrap();
+    let mut narrow = empty_repo(&only_main);
+    std::fs::write(
+        narrow.git_dir().join("config"),
+        format!(
+            "[core]\n\trepositoryformatversion = 0\n\tbare = false\n\
+             [remote \"origin\"]\n\turl = {url}\n\
+             \tfetch = +refs/heads/main:refs/remotes/origin/main\n"
+        ),
+    )
+    .unwrap();
+    crate::fetch_http(&mut narrow, &url, "origin").unwrap();
+    assert!(narrow.refs().resolve("refs/remotes/origin/main").is_ok());
+    assert!(narrow.refs().resolve("refs/remotes/origin/side").is_err());
+    assert_eq!(tags(&narrow), ["annotated", "light", "two"]);
+    crate::fetch_http_with(
+        &mut narrow,
+        &url,
+        "origin",
+        &FetchOptions {
+            tags: Some(true),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(tags(&narrow), ["annotated", "light", "on-side", "two"]);
+
+    // --no-tags stores none.
+    let bare_fetch = tmp.path().join("bare-fetch");
+    std::fs::create_dir_all(&bare_fetch).unwrap();
+    let mut quiet = empty_repo(&bare_fetch);
+    std::fs::write(
+        quiet.git_dir().join("config"),
+        format!(
+            "[core]\n\trepositoryformatversion = 0\n\tbare = false\n\
+             [remote \"origin\"]\n\turl = {url}\n\
+             \tfetch = +refs/heads/*:refs/remotes/origin/*\n"
+        ),
+    )
+    .unwrap();
+    crate::fetch_http_with(
+        &mut quiet,
+        &url,
+        "origin",
+        &FetchOptions {
+            tags: Some(false),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert!(tags(&quiet).is_empty());
+}
+
 fn git_ok_at(cwd: &Path, args: &[&str]) {
     let out = std::process::Command::new("git")
         .args(args)
