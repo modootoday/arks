@@ -3,7 +3,7 @@ id: plan:root/20261124000000
 title: Autonomous operation queue — units after the argv-symmetry ladder
 status: active
 created: 2026-11-24T00:00:00Z
-updated: 2026-11-24T00:00:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [autonomy, queue, residual, plan]
 verify: manual
 rel:
@@ -40,19 +40,36 @@ After Q1–Q8 merged, the Docker receipt was re-run on `main` `61358f4`
 4,398 / 4,502 corpus lines SAME; the other 104 all reasoned (77 post-pin, 26 design, 1 timing);
 zero open or unreasoned lines.
 
-§11 check of the autonomous-operation SoT at that tip:
+§11 check of the autonomous-operation SoT at that tip, updated by the Q14 audit (2026-11-25):
 
 | Criterion | State |
 |-----------|-------|
-| 1. No active plan except maintenance | **Not met:** 41 plans still carry `status: active`, most of them historical ladders whose rungs the roadmap records as Done or Withdrawn — unit Q14 |
-| 2. Residual rows Claimed, refused or Impossible | **Not met:** Partial rows remain in the residual register — unit Q14 |
+| 1. No active plan except maintenance | **Not met; every remaining item is a queue unit.** Q14 moved 39 of the 41 `active` plans to `archived`, each with a Status line citing its receipt or decision: 31 done, 1 historical directive and 1 superseded plan, and 6 CELIR plans withdrawn by [[adr:root/20261119200000]]. Two stay `active`: the hub multi-agent scenario plan [[plan:root/20261111042400]] (Q15, Q16) and this queue, which becomes the maintenance queue once its units close |
+| 2. Residual rows Claimed, refused or Impossible | **Not met; every remaining item is a queue unit or a cited reason.** [[sot:root/production-residual-register]] §G maps each open row: live G8 / L9 to Q10 (owner-blocked), hub rows to Q17 and Q18, daemon to Q19, CLI survey and per-command exit tables to Q20, serve / agent Partial labels to Q21; FW-FORGE-B is an owner non-goal with its reason; Impossible and Trimmed rows already cite theirs |
 | 3. Zero unreasoned DIFFs in the latest receipts | **Met** (this receipt) |
 | 4. Required checks green on the `main` tip | **Met** (PR #56 merged with all seven required checks green) |
-| 5. `docs/completion.md` matches the receipts | **Met** (updated with this receipt) |
+| 5. `docs/completion.md` matches the receipts | **Met for this receipt; one row lags:** the flat-forge row still says assets / checkout Partial although the C8 Docker receipts Claim them, and the A4 gh-argv rework needs a re-receipt — folded into Q17 |
+
+Classes for Q14 onwards use the levels of [[sot:root/autonomous-operation]] §6 (A0 auto-merge, A1
+`needs-human`, A2 owner queue); earlier rows use A (agent) and O (owner). Plan statuses follow what
+Specfold accepts for a plan (`draft`, `active`, `superseded`, `archived`; `superseded` also needs a
+superseding document): done, superseded and withdrawn plans all become `archived`, as the withdrawal
+ADR keeps them "as history", and the Status line under each front matter names which of the three
+it is. The argv ladder's earlier `status: done` is corrected the same way.
+Owner question left by Q14: the register keeps one Design-only process row (verify directory
+conventions) that, like the process-closed pin row, carries no product surface; §11 criterion 2
+does not say whether such a row counts, so it is listed in register §G and not queued.
 
 | # | Unit | Class | Status | Exit |
 |---|------|-------|--------|------|
-| Q14 | Plan and residual audit: set each `active` plan to `done` / `archival` / `withdrawn` from the roadmap and receipts, and list every remaining Partial residual as a queue unit or an owner-refused / Impossible row with its reason | A | open | §11 criteria 1 and 2 met, or every remaining item is a queue unit |
+| Q14 | Plan and residual audit: set each `active` plan to `done` / `archival` / `withdrawn` from the roadmap and receipts, and list every remaining Partial residual as a queue unit or an owner-refused / Impossible row with its reason | A0 | done (39 of 41 plans closed with cited evidence; register §G maps every open row; the remainder is Q15–Q21 plus owner-blocked Q9 / Q10) | §11 criteria 1 and 2 met, or every remaining item is a queue unit |
+| Q15 | Hub multi-agent P1–P2 ([[plan:root/20261111042400]]): local `arks serve` forge loopback smoke, then runners for HUB-MA-01…05 and HUB-MA-07 in `verify/scripts/run-hub-local-multi-agent.sh` | A0 | open | Docker receipt per scenario ID; those rows of [[sot:root/arks-hub-local-multi-agent-pr]] move from Scaffold to Claimed and the runner no longer SKIPs them |
+| Q16 | Hub multi-agent P3: HUB-MA-06, 08 and 10 runners; HUB-MA-09 (Actions) against local fixtures or N/A citing [[adr:root/20261119230000]] (Actions are GitHub-platform-only) | A0 | open | every HUB-MA-* ID Claimed by a Docker receipt or N/A with a cited reason; plan [[plan:root/20261111042400]] set to `archived` |
+| Q17 | Hub Docker re-receipt after the A4 gh-argv rework: the 33 v1 `Partial` rows (including the five ruleset rows Q4 left Partial) and the 95 `Claimed` rows marked "re-receipt pending" in `verify/matrices/hub-gh-arks-e2e-matrix.csv` (`dod-hub-matrix`, `ARKS_HUB_IW_GH_ARGV=1`); sync the `docs/completion.md` flat-forge row | A0 | open | receipt under `.spec/evidence/`; no "re-receipt pending" note left; each row Claimed, or Partial with a cited reason sent to the owner queue (A2) |
+| Q18 | Hub `later` arks-only rows: 7 `Deferred` and 1 `Partial` (`arks hub serve` listen/bind) | A0 | open | each row implemented with a receipt or refused with a reason in [[sot:root/arks-hub-gh-command-matrix]]; no `Deferred` left in the hub CSV |
+| Q19 | Daemon A5 Docker pin receipt for the 17 host-tested `Parity` rows and the 1 host-tested arks-only row (`dod-daemon-matrix`, `ARKS_DAEMON_FLAGS_PARITY=1`) | A0 | open | receipt under `.spec/evidence/`; CSV notes drop "host-tested"; the `docs/completion.md` daemon row drops "Docker receipt pending" |
+| Q20 | CLI survey currency: refresh `survey_status` in `verify/matrices/cli-git-help-matrix.csv` (164 `Partial`, 48 of them A3 host-tested) and the personality per-command exit tables ([[sot:root/arks-cli-personality-factory]]) from `.spec/evidence/20261125023636-argv-corpus-receipt-q-final/`; run the A3 rows in Docker | A0 | open | no row `Partial` without a cited reason; the counts in the register, the in-scope leftovers ledger and `docs/completion.md` match the CSV |
+| Q21 | Serve and agent Partial labels: B6 durable SSH listen label (its drop condition, B1/B2 + IW-B7-SSH Claimed, holds), B7 Windows file-mtime reload, `arks serve ssh-smoke`, `arks agent provider smoke` / `review --smoke` | A0 | open | each label Claimed with a receipt (Windows CI test for the reload), removed with a cite, or kept Partial with a reason sent to the owner queue (A2) |
 
 ## Q5 design: instaweb pages
 
