@@ -77,28 +77,25 @@ impl BasicAuthConfig {
 
     /// Validate `Authorization` header value (e.g. `Basic dXNlcjpwYXNz`).
     pub fn check_authorization(&self, authorization: Option<&str>) -> bool {
-        let Some(raw) = authorization.map(str::trim).filter(|s| !s.is_empty()) else {
-            return false;
-        };
-        let Some(rest) = raw
+        self.authorized_user(authorization).is_some()
+    }
+
+    /// The configured user an `Authorization` header authenticates, if any.
+    pub fn authorized_user(&self, authorization: Option<&str>) -> Option<String> {
+        let raw = authorization.map(str::trim).filter(|s| !s.is_empty())?;
+        let rest = raw
             .strip_prefix("Basic ")
-            .or_else(|| raw.strip_prefix("basic "))
-        else {
-            return false;
-        };
-        let Ok(decoded) = base64_decode(rest.trim().as_bytes()) else {
-            return false;
-        };
-        let Ok(pair) = String::from_utf8(decoded) else {
-            return false;
-        };
-        let Some((user, pass)) = pair.split_once(':') else {
-            return false;
-        };
-        self.credentials.iter().any(|c| {
-            constant_eq(c.username.as_bytes(), user.as_bytes())
-                && constant_eq(c.password.as_bytes(), pass.as_bytes())
-        })
+            .or_else(|| raw.strip_prefix("basic "))?;
+        let decoded = base64_decode(rest.trim().as_bytes()).ok()?;
+        let pair = String::from_utf8(decoded).ok()?;
+        let (user, pass) = pair.split_once(':')?;
+        self.credentials
+            .iter()
+            .any(|c| {
+                constant_eq(c.username.as_bytes(), user.as_bytes())
+                    && constant_eq(c.password.as_bytes(), pass.as_bytes())
+            })
+            .then(|| user.to_string())
     }
 }
 

@@ -14,6 +14,7 @@ use crate::hooks::{
     ref_matches_proc_receive, run_post_receive, run_post_update, run_pre_receive, run_proc_receive,
     run_update,
 };
+use crate::push_policy::{PushPolicy, Pusher, RefUpdate, installed_push_policy, verdicts};
 use arks_oid::Oid;
 use arks_pack::DecodedPack;
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_packet};
@@ -66,7 +67,29 @@ pub fn receive_pack_advertisement(repo: &Repository) -> Result<Vec<u8>, ServerEr
     encode_pack_advertisement(&caps, &refs)
 }
 
+/// receive-pack with the installed push policy and a local pusher.
 pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, ServerError> {
+    receive_pack_as(repo, body, &Pusher::local())
+}
+
+/// receive-pack with the installed push policy ([`crate::install_push_policy`]).
+pub fn receive_pack_as(
+    repo: &mut Repository,
+    body: &[u8],
+    pusher: &Pusher,
+) -> Result<Vec<u8>, ServerError> {
+    let policy = installed_push_policy();
+    receive_pack_with(repo, body, pusher, policy.as_deref())
+}
+
+/// receive-pack gated by an explicit push policy: each refused ref is reported
+/// `ng <ref> <reason>` and left unchanged; other refs proceed.
+pub fn receive_pack_with(
+    repo: &mut Repository,
+    body: &[u8],
+    pusher: &Pusher,
+    policy: Option<&dyn PushPolicy>,
+) -> Result<Vec<u8>, ServerError> {
     let (commands, push_options, pack) = split_commands(body)?;
     let quarantine = Quarantine::create(repo.git_dir())?;
     let hook_env = HookEnv {
@@ -113,11 +136,26 @@ pub fn receive_pack(repo: &mut Repository, body: &[u8]) -> Result<Vec<u8>, Serve
     let prefixes = proc_receive_ref_prefixes(repo.git_dir());
     let use_proc = proc_receive_hook_present(repo.git_dir()) && !prefixes.is_empty();
 
+    // Push policy (forge rulesets): decided per ref after unpack, before any ref moves.
+    let updates: Vec<RefUpdate> = commands
+        .iter()
+        .map(|c| RefUpdate {
+            name: c.name.clone(),
+            old: c.old,
+            new: c.new,
+        })
+        .collect();
+    let refused = verdicts(policy, repo, pusher, &updates);
+
     let mut results: Vec<(String, Result<(), String>)> = Vec::new();
     let mut success_cmds: Vec<ReceiveCommand> = Vec::new();
     let mut diverted: Vec<ReceiveCommand> = Vec::new();
     let mut ordinary: Vec<&ReceiveCommand> = Vec::new();
-    for cmd in &commands {
+    for (cmd, refusal) in commands.iter().zip(refused) {
+        if let Some(reason) = refusal {
+            results.push((cmd.name.clone(), Err(reason)));
+            continue;
+        }
         if use_proc && ref_matches_proc_receive(&cmd.name, &prefixes) {
             diverted.push(cmd.clone());
         } else {

@@ -12,7 +12,8 @@ use crate::auth::BasicAuthConfig;
 use crate::dav::{handle_dav, is_dav_method};
 use crate::dumb::serve_dumb_path;
 use crate::error::ServerError;
-use crate::receive::{receive_advertisement, receive_pack};
+use crate::push_policy::Pusher;
+use crate::receive::{receive_advertisement, receive_pack_as};
 use crate::upload::{upload_advertisement, upload_pack_result};
 use crate::v2::{handle_v2_request, v2_capability_advertisement};
 use arks_repo::Repository;
@@ -159,7 +160,16 @@ pub fn handle_smart_http_auth(
     if req.method.eq_ignore_ascii_case("POST")
         && (path.ends_with("/git-receive-pack") || path.ends_with("git-receive-pack"))
     {
-        return Ok(typed(200, RECEIVE_RES, receive_pack(repo, &req.body)?));
+        let pusher = Pusher {
+            transport: "http",
+            verified_user: basic.and_then(|cfg| cfg.authorized_user(req.authorization.as_deref())),
+            authorization: req.authorization.clone(),
+        };
+        return Ok(typed(
+            200,
+            RECEIVE_RES,
+            receive_pack_as(repo, &req.body, &pusher)?,
+        ));
     }
     // Dumb static GETs: objects/…, objects/info/packs, …
     if req.method.eq_ignore_ascii_case("GET") || req.method.eq_ignore_ascii_case("HEAD") {
