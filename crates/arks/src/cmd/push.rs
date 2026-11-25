@@ -146,12 +146,17 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         eprintln!("Pushing to {url}");
     }
 
-    // Remote refs (for DWIM, prune, mirror and statuses).
+    // Remote refs (for DWIM, prune, mirror and statuses): the local repository's
+    // refs, or the receive-pack advertisement of a network remote.
     let remote_refs: Vec<(String, Oid)> = if local {
         let r = arks_remote::open_local_remote(&url).map_err(|e| CliError::fatal(e.to_string()))?;
         r.refs().list_refs("refs/")?
     } else {
-        Vec::new()
+        arks_remote::ls_remote_for_push(&url)?
+            .into_iter()
+            .filter(|r| r.name.starts_with("refs/"))
+            .map(|r| (r.name, r.oid))
+            .collect()
     };
     let local_refs = repo.refs().list_refs("refs/")?;
 
