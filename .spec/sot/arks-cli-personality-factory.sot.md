@@ -3,7 +3,7 @@ id: sot:root/arks-cli-personality-factory
 title: arks CLI personality dispatch and CommandLayer factory
 status: active
 created: 2026-11-10T20:15:00Z
-updated: 2026-11-20T00:10:00Z
+updated: 2026-11-25T03:31:00Z
 tags: [cli, personality, factory, command-layer, registry, overlap, exit-code, arks, git, gh, serve, daemon, design, partial]
 verify: manual
 rel:
@@ -28,7 +28,7 @@ rel:
 
 # arks CLI personality dispatch and CommandLayer factory
 
-Document revision **0.1.4** (SoT edit counter only — **not** a product/crate release). Normative **design** for (1) **personality dispatch** on the single published binary `arks`, (2) lean **CommandLayer + Registry** factory in `crates/arks`, and (3) **overlap** input/output/**exit-code** rules for the native `arks` personality.
+Document revision **0.1.5** (SoT edit counter only — **not** a product/crate release). Normative **design** for (1) **personality dispatch** on the single published binary `arks`, (2) lean **CommandLayer + Registry** factory in `crates/arks`, and (3) **overlap** input/output/**exit-code** rules for the native `arks` personality.
 
 **Honesty:** This SoT is **design intent**. Deep forge/SSH bodies remain **Partial / not Claimed**. CLI **skeleton** (PersonalityResolver + Registry + OverlapFacade + ExitCodePolicy + stubs) MAY land without inventing Claimed feature depth. **IW-PERSONALITY** drop-in **sample Claimed** via [[evidence:root/20261111014608-personality-dropin]]; **IW-PERSONALITY-FULL expand Claimed** via [[evidence:root/20261111020515-personality-expand]] ([[sot:root/arks-remaining-incompletes-wave]]); **IW-PERSONALITY-EXIT** named peer exit-table rows Claimed via [[evidence:root/20261111025151-personality-exit-tables]] ([[sot:root/arks-honesty-leftovers-wave]]); **IW-PERSONALITY-SURVEY** expand + survey2/3/4 Claimed via [[evidence:root/20261111050617-personality-survey]] ([[sot:root/arks-in-scope-leftovers-wave]]); ExitCodePolicy OR-of-failure unit greens **MUST NOT** invent full per-cmd table Claimed; cli survey Missing=0; CLI survey Partial remainder stay Partial beyond named+survey+survey2/3/4 expand (`gh` exit-codes 0/1/2/4). Normative stdout/stderr/exit **classes**: [[sot:root/arks-cli-output-exit-contract]]. Document revision ≠ crates.io/`arks` version bump.
 
@@ -93,6 +93,13 @@ Applies to nouns that exist in **both** Git and `gh` inventories under the nativ
 20. **Single-peer flags** under `arks` force that peer’s exit semantics only.
 21. **Structured multi-status** (e.g. machine-readable per-layer codes) MAY be added later behind an explicit flag; it is **not** the default. Default remains the fail-closed OR policy so scripts that forget flags do not treat a half-failed unified run as success.
 22. **Honesty:** exact numeric tables per command are **Partial** until specified + evidenced. This SoT locks the **contract surface** (triple personality + fail-closed unified default) — **do not invent Claimed exit numbers** here. Stable skeleton classes (0 / 1 / 2) and stream rules: [[sot:root/arks-cli-output-exit-contract]].
+22a. **Per-command exit tables, reconciled (queue Q20, 2026-11-25).** The tables are derived from receipts, one per personality, never hand-written:
+
+| Personality | Per-command exit table | State |
+|-------------|------------------------|-------|
+| `git` | `exit_code_same` column of `.spec/evidence/20261125033117-cli-survey-currency-q20/derived-status.tsv`, derived by `verify/scripts/derive-cli-survey-status.py` from the argv receipt `.spec/evidence/20261125023636-argv-corpus-receipt-q-final/` (every corpus line runs under `ARKS_PERSONALITY=git` and compares the exit code with stock git 2.39.5) | **Verified for the 128 commands** whose CLI survey row is `Verified` ([[sot:root/cli-git-help-matrix]] rule 7): 3,962 of their 4,030 corpus lines exit as the pin; the other 68 are reasoned `post-pin` or `timing` DIFFs. The 36 survey rows still `Partial` carry no pin-compared exit table and keep the reason in their CSV note |
+| `gh` | exit-code column of the gh argv inventory (`verify/scripts/run-gh-argv-inventory.py`, Q3) | **Partial (host-advisory):** the clean-room image has no gh oracle; the hub e2e matrix receipts check named rows only |
+| `arks` (unified) | none | **Partial (design):** rule 19 OR-of-failure is the whole contract; no per-command numeric table is specified, so none is claimed |
 
 ### CommandLayer + Registry factory (`crates/arks`)
 
@@ -175,7 +182,7 @@ argv0 / ARKS_PERSONALITY
 | PersonalityResolver / ARKS_PERSONALITY | **Partial** resolve; drop-in **sample Claimed** under Docker [[evidence:root/20261111014608-personality-dropin]] |
 | CommandLayer + Registry factory | **Partial** (skeleton Registry wraps existing git match; not a Claimed rewrite) |
 | OverlapFacade unified status/config/repo | **Partial** (git path preserved; forge section stub OK) |
-| ExitCodePolicy triple | **Partial** skeleton + **named exit-table rows Claimed** ([[evidence:root/20261111025151-personality-exit-tables]]) + **survey expand Claimed** ([[evidence:root/20261111034718-personality-survey]]); Partial remainder open; **≠ drop-in Claimed alone** |
+| ExitCodePolicy triple | **Partial** skeleton + **named exit-table rows Claimed** ([[evidence:root/20261111025151-personality-exit-tables]]) + **survey expand Claimed** ([[evidence:root/20261111034718-personality-survey]]); Partial remainder open; **≠ drop-in Claimed alone**; **Q20:** `git` per-command exit table Verified for 128 commands from the argv receipt (rule 22a); `gh` host-advisory and `arks` unified tables stay Partial with the rule 22a reasons |
 | Flat forge leaves on bare `arks` | **Partial** beyond Claimed subset; nested `hub` transitional; IW-HUB-FLAT subset Claimed elsewhere |
 | `arks serve --no-forge` / forge-in-serve | Cohost + hosting e2e Claimed elsewhere (IW-FORGE-SERVE) |
 | Git porcelain under `arks` / alias | Per [[sot:root/cli-surface]] Claimed inventory — unchanged by this SoT |
@@ -199,4 +206,4 @@ One binary can honestly serve three muscle memories: stock `git`, stock `gh`, an
 | Exact overlap leaf set beyond status/config/repo | **Open** | Registry-owned; amend when matrix proves more collisions |
 | Exact clap names for `--git-only` / `--forge-only` / machine multi-status | **Partial** | Design names only until Claimed |
 | Whether optional `inbox`/`forge-config` aliases ship | **Open** | Demoted; MAY omit entirely |
-| Per-command unified numeric exit table | **Partial** | Default OR-of-failure until per-command rows land |
+| Per-command unified numeric exit table | **Partial** | Default OR-of-failure until per-command rows land; `git` personality per-command table Verified for 128 commands (rule 22a, Q20) |
