@@ -1487,16 +1487,19 @@ fn serve_config_triggered_reload(label: &str, signal: &str) {
     }
 }
 
-/// `arks serve ssh-smoke` — local TCP/SSH banner (+ optional git-pack self) Partial.
-/// Does **not** invent Claimed OpenSSH git e2e (never spawns ssh/git/gh).
+/// `arks serve ssh-smoke` — SSH banner diagnostic against a listener, or (`--git-pack`)
+/// against an ephemeral in-process listener. A green smoke is not the B1/B2 proof
+/// (that is the Docker receipt); never spawns ssh/git/gh.
 fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
             "arks serve ssh-smoke [--listen HOST:PORT] [--git-pack]\n  \
-             Local SSH banner smoke Partial against serve ssh_listen (or --listen).\n  \
-             --git-pack: ephemeral durable SSH Partial + client id exchange closer to \
-             git-over-SSH e2e (still Partial; Claimed OpenSSH git e2e Missing).\n  \
-             Never spawns git/gh/ssh CLI."
+             SSH banner check against serve ssh_listen (or --listen); exit 0 only when an \
+             SSH-2.0 banner arrives.\n  \
+             --git-pack: start an ephemeral in-process SSH listener, exchange \
+             identification and read its KEXINIT.\n  \
+             Diagnostic only: B1/B2 (OpenSSH wire, git clone ssh://) are proven by Docker \
+             receipts, not by this smoke. Never spawns git/gh/ssh CLI."
         );
         return Ok(());
     }
@@ -1544,10 +1547,10 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
         .parse()
         .map_err(|e| CliError::Usage(format!("ssh-smoke bad ADDR `{addr_s}`: {e}")))?;
 
-    println!("ssh_smoke=partial");
+    println!("ssh_smoke=banner");
     println!("listen={addr}");
     println!("spawns_ssh_cli=never");
-    println!("claimed_ssh_git_e2e=Missing");
+    println!("ssh_git_e2e=not_checked_by_smoke (B1/B2 Docker receipt)");
 
     match TcpStream::connect_timeout(&addr, Duration::from_secs(2)) {
         Ok(mut stream) => {
@@ -1564,44 +1567,28 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
                     );
                     if line.starts_with("SSH-2.0-") {
                         println!("ssh_banner=ok");
-                        eprintln!(
-                            "note: SSH banner smoke Partial succeeded — design ≠ Claimed \
-                             OpenSSH git e2e / cipher interop"
-                        );
                         Ok(())
                     } else {
                         println!("ssh_banner=unexpected");
-                        eprintln!(
-                            "note: TCP up but banner not SSH-2.0-*; Claimed SSH git e2e Missing"
-                        );
                         Err(CliError::Msg(
-                            "arks serve ssh-smoke: banner not SSH-2.0-* (Partial)".into(),
+                            "arks serve ssh-smoke: banner not SSH-2.0-*".into(),
                         ))
                     }
                 }
                 Ok(_) | Err(_) => {
                     println!("tcp_connect=ok");
-                    println!("ssh_banner=Missing");
-                    println!(
-                        "missing_reason=connected but no SSH banner within timeout \
-                         (is durable SSH Partial listening?)"
-                    );
-                    eprintln!(
-                        "note: Claimed SSH git e2e Missing; start `arks serve` with SSH enabled \
-                         or use ops SSHD + upload-pack/receive-pack; try --git-pack for self smoke"
-                    );
-                    Ok(())
+                    println!("ssh_banner=none");
+                    Err(CliError::Msg(format!(
+                        "arks serve ssh-smoke: connected to {addr} but no SSH banner within 2s \
+                         (is `arks serve` running with SSH enabled?)"
+                    )))
                 }
             }
         }
         Err(e) => {
             println!("tcp_connect=fail");
-            println!("ssh_banner=Missing");
+            println!("ssh_banner=none");
             println!("error={e}");
-            eprintln!(
-                "note: SSH git e2e smoke harness Partial — nothing listening on {addr}; \
-                 Claimed OpenSSH git e2e still Missing; try --git-pack; never spawns ssh/git/gh"
-            );
             Err(CliError::Msg(format!(
                 "arks serve ssh-smoke: connect fail ({e})"
             )))
@@ -1609,13 +1596,13 @@ fn cmd_serve_ssh_smoke(args: &[String]) -> CliResult<()> {
     }
 }
 
-/// Ephemeral durable SSH Partial + native client id exchange (closer to git-over-SSH e2e).
-/// Still Partial — never invents Claimed OpenSSH cipher/git e2e; never spawns ssh/git/gh.
+/// Ephemeral in-process SSH listener + native client identification exchange and
+/// KEXINIT read. Diagnostic only (B1/B2 proof is the Docker receipt); never spawns
+/// ssh/git/gh.
 fn cmd_serve_ssh_git_pack_smoke() -> CliResult<()> {
-    println!("ssh_smoke=partial");
-    println!("git_over_ssh_smoke=partial");
+    println!("ssh_smoke=git-pack");
     println!("spawns_ssh_cli=never");
-    println!("claimed_ssh_git_e2e=Missing");
+    println!("ssh_git_e2e=not_checked_by_smoke (B1/B2 Docker receipt)");
 
     let opts = ServeSshOptions::with_defaults(
         "127.0.0.1:0".parse().expect("loopback"),
@@ -1641,41 +1628,45 @@ fn cmd_serve_ssh_git_pack_smoke() -> CliResult<()> {
         );
         if !line.starts_with("SSH-2.0-") {
             return Err(CliError::Msg(
-                "git-pack smoke: durable listener banner not SSH-2.0-* (Partial)".into(),
+                "git-pack smoke: listener banner not SSH-2.0-*".into(),
             ));
         }
         println!("ssh_banner=ok");
         // Client identification (RFC 4253) so server advances past empty-peer path.
         stream
-            .write_all(b"SSH-2.0-arks_git_pack_smoke_partial\r\n")
+            .write_all(b"SSH-2.0-arks_ssh_smoke\r\n")
             .map_err(|e| CliError::Msg(format!("git-pack smoke id write: {e}")))?;
         println!("client_id_exchange=sent");
-        // Best-effort read of any Partial KEXINIT / further wire (may timeout).
+        // RFC 4253 §7.1: the server's first binary packet is SSH_MSG_KEXINIT (20):
+        // uint32 packet_length, byte padding_length, then the message number.
+        let mut wire: Vec<u8> = match banner.find("\r\n") {
+            Some(end) => buf[end + 2..n].to_vec(),
+            None => Vec::new(),
+        };
         let mut more = [0u8; 512];
-        match stream.read(&mut more) {
-            Ok(m) if m > 0 => {
-                println!("server_followup_bytes={m}");
-                println!("kex_or_wire=partial");
-            }
-            _ => {
-                println!("server_followup_bytes=0");
-                println!("kex_or_wire=timeout_or_closed_partial");
+        while wire.len() < 6 {
+            match stream.read(&mut more) {
+                Ok(m) if m > 0 => wire.extend_from_slice(&more[..m]),
+                _ => break,
             }
         }
-        println!("pack_dispatch=server_side_partial_when_channel_opens");
+        println!("server_followup_bytes={}", wire.len());
+        if wire.len() < 6 || wire[5] != 20 {
+            println!("server_kexinit=none");
+            return Err(CliError::Msg(
+                "git-pack smoke: no SSH_MSG_KEXINIT from the listener within 2s".into(),
+            ));
+        }
+        println!("server_kexinit=ok");
         println!("git_over_ssh_smoke=ok");
-        eprintln!(
-            "note: git-over-SSH smoke Partial (durable listen + id exchange) succeeded — \
-             design ≠ Claimed OpenSSH cipher interop / git e2e; never spawns ssh/git/gh"
-        );
         Ok(())
     })();
 
     stop.store(true, Ordering::SeqCst);
     match handle.join() {
         Ok(Ok(())) => println!("durable_stop=ok"),
-        Ok(Err(e)) => eprintln!("note: durable SSH stop err (Partial): {e}"),
-        Err(_) => eprintln!("note: durable SSH join panic (Partial)"),
+        Ok(Err(e)) => eprintln!("note: ephemeral SSH listener stop err: {e}"),
+        Err(_) => eprintln!("note: ephemeral SSH listener join panic"),
     }
     client
 }
