@@ -488,7 +488,7 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
 
     let result = if enable_http {
         let label = match (enable_ssh, forge_join.is_some()) {
-            (true, true) => "arks serve (HTTP + SSH + forge cohost; forge-in-serve Partial depth)",
+            (true, true) => "arks serve (HTTP + SSH + forge)",
             (true, false) => "arks serve (HTTP + SSH)",
             (false, true) => "arks serve --no-ssh (HTTP + forge)",
             (false, false) => "arks serve --no-ssh --no-forge",
@@ -501,7 +501,7 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
         // SSH-only (or SSH+forge with forge already backgrounded): block on SSH thread
         // until process stop (same lifetime as prior main-thread serve_ssh_listener).
         eprintln!(
-            "arks serve: SSH primary listener (forge cohost={}); forge-in-serve Partial depth",
+            "arks serve: SSH primary listener (forge cohost={})",
             forge_join.is_some()
         );
         if let Some((_stop, handle)) = ssh_join.take() {
@@ -1898,25 +1898,24 @@ Usage:
 Default: HTTP + SSH + forge enabled. Opt out with --no-http / --no-ssh / --no-forge
 (preferred over redundant enable flags). Disabling all three is an error.
 
-Honesty ([[sot:root/arks-self-host-server]] §17):
-  - HTTP smart(+dumb) listener: wire Claimed paths (G15/G29/G36 when configured)
-  - In-process SSH listener: Partial durable accept (§17(c)) — bind + id + KEXINIT +
-    curve25519 ECDH + ed25519 host-key sign/NEWKEYS + chacha20-poly1305 encrypted Partial +
-    authorized_keys verify + session exec→pack dispatch; labeled Partial; bind fail-closed;
-    OpenSSH-exact / Claimed SSH e2e Missing; ops SSHD + upload-pack/receive-pack valid
-  - Forge-in-serve: Partial local API (separate bind; design ≠ Claimed product)
-  - Practical today: `arks serve --no-ssh …` (HTTP + Partial forge) or `--no-forge` HTTP-only
-  - Prefer HTTPS via ops TLS front for non-localhost HTTP; in-process TLS not Claimed
+Status ([[sot:root/arks-self-host-server]] §17; receipts under .spec/evidence/):
+  - HTTP smart(+dumb) listener: wire Claimed (G15/G29/G36 when configured)
+  - In-process SSH listener: durable accept + live rebind; OpenSSH ChaCha wire and
+    stock `git clone ssh://` Claimed (B1/B2); bind failure fail-closed; ops SSHD +
+    upload-pack/receive-pack also valid
+  - Forge API in serve: PR/issue hosting e2e Claimed (IW-FORGE-SERVE; separate bind)
+  - In-process TLS (--tls-cert/--tls-key): Claimed (B9); an ops TLS front is also valid
   - Hub OAuth is refused as primary git-remote auth
-  - `serve config` seeds + runtime_* / apply|reload|watch + live HTTP/forge/SSH rebind Partial
-    (unix SIGHUP; Windows file-mtime); clap wins; ≠ config/hub; Claimed zero-downtime Missing
-  - `serve ssh-smoke` / `--git-pack`: banner + durable self smoke Partial (Claimed e2e Missing)
+  - `serve config` seeds + runtime_* / apply|reload|watch; live HTTP/forge/SSH rebind with
+    dual-bind drain Claimed (B7); reload trigger: SIGHUP on unix, serve-config file-mtime
+    on Windows (no SIGHUP there); clap wins; ≠ config/hub
+  - `serve ssh-smoke` / `--git-pack`: SSH banner / self-listener diagnostic (≠ B1/B2 proof)
   - Optional: --ssh-host-key PATH --authorized-keys PATH
 
 Ports ([[sot:root/arks-self-host-server]] / [[research:root/20261111055609]]):
   Normative targets (clone URLs / dedicated host): SSH 22, HTTP 80, HTTPS 443, git:// 9418
   Unprivileged loopback demo binds (current process defaults): HTTP 127.0.0.1:8080;
-    SSH stub 127.0.0.1:2222 — privilege / host-sshd workarounds, NOT more-standard Git ports
+    SSH 127.0.0.1:2222 — privilege / host-sshd workarounds, NOT more-standard Git ports
   Forge API (arks-local convention): 127.0.0.1:3920 (--forge-listen / --forge-data)
 LAN/WAN: ops owns firewall + TLS — not Claimed WAN-safe.
 "

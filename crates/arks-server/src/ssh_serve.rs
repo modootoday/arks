@@ -1,4 +1,9 @@
-//! In-process SSH listener for `arks serve` (Partial — labeled durable; not Claimed).
+//! In-process SSH listener for `arks serve` (durable accept + live rebind).
+//!
+//! Evidence: B1/B2 OpenSSH ChaCha wire + `git clone ssh://`
+//! ([[evidence:root/20261110235116-claimed-ssh]]) and B7 SSH dual-bind rebind
+//! ([[evidence:root/20261111092000-claimed-rebind-ssh]]); with both, the IW-SSH-LABEL
+//! drop condition holds and the listener carries no Partial readiness label (queue Q21).
 //!
 //! Max honest wire today (structured stages):
 //! 1. resolve host-key + `authorized_keys` paths (env / options / defaults)
@@ -12,9 +17,9 @@
 //! 9. session channel + `exec` → `git-upload-pack`|`git-receive-pack` dispatch into
 //!    `upload_pack_stream` / `receive_pack_stream` (Partial; when channel opens)
 //!
-//! SoT §17(c) (v0.2.2): durable Partial accept + same-process live rebind allowed when
-//! labeled Partial; silent degrade / Claimed success still forbidden. Ops SSHD +
-//! `arks upload-pack`/`receive-pack` remains valid. Cite: [[sot:root/arks-self-host-server]]
+//! SoT §17(c)/(d): durable accept + same-process live rebind; bind failure stays
+//! fail-closed and silent degrade is forbidden. Ops SSHD + `arks upload-pack` /
+//! `receive-pack` remains valid. Cite: [[sot:root/arks-self-host-server]]
 
 use crate::error::ServerError;
 use crate::push_policy::Pusher;
@@ -67,7 +72,7 @@ impl SshStage {
     }
 }
 
-/// Options for the in-process SSH git listener (Partial; not Claimed).
+/// Options for the in-process SSH git listener.
 #[derive(Debug, Clone)]
 pub struct ServeSshOptions {
     pub listen: SocketAddr,
@@ -77,7 +82,7 @@ pub struct ServeSshOptions {
     pub host_key: PathBuf,
     /// `authorized_keys` path for public-key auth (when Claimed).
     pub authorized_keys: PathBuf,
-    /// Optional same-process live rebind target (Partial; §17(c); not Claimed zero-downtime).
+    /// Optional same-process live rebind target (§17(c); B7 SSH dual-bind drain).
     pub rebind_desired: Option<ListenRebindSlot>,
 }
 
@@ -1514,11 +1519,10 @@ fn run_kex_stages(
     (stage, notes.join("; "))
 }
 
-/// Run an in-process SSH listener (Partial durable accept per SoT §17(c)).
+/// Run an in-process SSH listener (durable accept per SoT §17(c)).
 ///
-/// Advances structured KEX / sign / NEWKEYS / auth / channel stages as far as
-/// honest Partial allows per connection. Stays up until `stop` is set.
-/// Bind failure fail-closed. Never advertises Claimed OpenSSH / SSH git e2e.
+/// Advances structured KEX / sign / NEWKEYS / auth / channel stages per
+/// connection. Stays up until `stop` is set. Bind failure fail-closed.
 ///
 /// Callers MUST NOT silent-degrade to HTTP-only when SSH was left enabled.
 pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Result<(), ServerError> {
@@ -1548,11 +1552,9 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
     let mut listener = TcpListener::bind(opts.listen)?;
     let mut current = listener.local_addr().unwrap_or(opts.listen);
     listener.set_nonblocking(true)?;
-    let our_id = "SSH-2.0-arks_partial_chacha_auth_channel";
+    let our_id = "SSH-2.0-arks";
     eprintln!(
-        "arks serve SSH durable listen on {current} \
-         (B1/B2 wire Claimed; B7 rebind Claimed; IW-SSH-LABEL readiness Claimed; \
-         hosting e2e / forge-in-serve depth still Partial per SoT); \
+        "arks serve SSH durable listen on {current}; \
          host_key={hk} ({host_st}; format={host_fmt}; load={host_load}); \
          authorized_keys={ak} ({auth_st}; {auth_probe}); path={path} ({repo_st})",
         hk = opts.host_key.display(),
@@ -1576,7 +1578,7 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
                             Ok(l) => {
                                 if let Err(e) = l.set_nonblocking(true) {
                                     eprintln!(
-                                        "arks serve SSH: live rebind Partial bind ok but \
+                                        "arks serve SSH: live rebind bind ok but \
                                          nonblocking fail ({e}); keeping {current}"
                                     );
                                     *g = Some(new_addr);
@@ -1596,7 +1598,7 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
                             }
                             Err(e) => {
                                 eprintln!(
-                                    "arks serve SSH: live rebind Partial fail {current} → \
+                                    "arks serve SSH: live rebind fail {current} → \
                                      {new_addr} ({e}); keeping prior listen"
                                 );
                             }
@@ -1642,7 +1644,7 @@ pub fn serve_ssh_listener(opts: ServeSshOptions, stop: Arc<AtomicBool>) -> Resul
             }
             Err(e) => {
                 return Err(ServerError::Msg(format!(
-                    "arks serve SSH Partial durable accept err on {current}: {e}"
+                    "arks serve SSH durable accept err on {current}: {e}"
                 )));
             }
         }
@@ -1724,7 +1726,7 @@ fn handle_ssh_session(
     let _ = stream.flush();
     let _ = stream.shutdown(Shutdown::Write);
     eprintln!(
-        "arks serve SSH Partial session#{sessions} reached_stage={} \
+        "arks serve SSH session#{sessions} reached_stage={} \
          ({id_part}; {kex_part})",
         stage.as_str()
     );
@@ -1747,7 +1749,7 @@ pub fn spawn_ssh_listener(
     Ok((stop, handle))
 }
 
-/// Ephemeral loopback SSH Partial listener for smokes (not Claimed OpenSSH e2e).
+/// Ephemeral loopback SSH listener for `arks serve ssh-smoke --git-pack`.
 pub fn spawn_loopback_ssh(opts: ServeSshOptions) -> Result<LoopbackSsh, ServerError> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let addr = listener.local_addr()?;
