@@ -44,7 +44,7 @@ pub fn interdiff(repo: &Repository, previous: &str, tip: &Oid, binary: bool) -> 
     o.patch = true;
     o.binary = binary;
     o.color = None;
-    o.finish();
+    o.finish()?;
     let content = Content::new(repo);
     let mut pairs = diffcore::tree_pairs(repo, Some(&a), Some(&b), true, false, &[])?;
     diffcore::transform(&content, &o, &mut pairs)?;

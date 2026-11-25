@@ -396,10 +396,8 @@ impl DiffOptions {
         match cur {
             "-p" | "-u" | "--patch" => self.set_patch(),
             "-s" | "--no-patch" => self.no_output = true,
-            "--raw" => {
-                self.raw = true;
-                self.no_output = false;
-            }
+            // Only the patch options lift an earlier `-s` (pin 2.39.5).
+            "--raw" => self.raw = true,
             "--patch-with-raw" => {
                 self.set_patch();
                 self.raw = true;
@@ -736,8 +734,15 @@ impl DiffOptions {
         Ok(rest)
     }
 
-    /// Settings implied by others once parsing is done.
-    pub fn finish(&mut self) {
+    /// Settings implied by others once parsing is done; rejects output formats
+    /// that cannot be combined (`--name-only`, `--name-status`, `--check`, `-s`).
+    pub fn finish(&mut self) -> CliResult<()> {
+        let exclusive = [self.name_only, self.name_status, self.check, self.no_output];
+        if exclusive.iter().filter(|set| **set).count() > 1 {
+            return Err(CliError::fatal(
+                "options '--name-only', '--name-status', '--check', and '-s' cannot be used together",
+            ));
+        }
         if self.reverse {
             std::mem::swap(&mut self.src_prefix, &mut self.dst_prefix);
         }
@@ -747,6 +752,7 @@ impl DiffOptions {
         if self.find_copies_harder && self.detect == Detect::Off {
             self.detect = Detect::Copies;
         }
+        Ok(())
     }
 
     pub fn use_color(&self) -> bool {

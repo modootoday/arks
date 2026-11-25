@@ -168,7 +168,7 @@ fn parse_opts(args: &[String], cmd: &str) -> CliResult<(LogOpts, Vec<String>)> {
         o.rev.push_rev(&cur);
         a.i += 1;
     }
-    o.diff.finish();
+    o.diff.finish()?;
     if oneline_abbrevs {
         o.abbrev_commit = Some(true);
     }

@@ -1009,7 +1009,7 @@ pub fn patch_id(repo: &Repository, oid: &Oid, c: &Commit) -> CliResult<Option<St
         patch: true,
         ..Default::default()
     };
-    o.finish();
+    o.finish()?;
     let mut buf = Vec::new();
     crate::cmd::diffcore::emit::emit(&mut buf, &content, &o, Default::default(), &pairs)?;
     Ok(

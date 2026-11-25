@@ -661,3 +661,19 @@ describe --no-exact-match
 describe --no-first-parent
 describe --no-contains --contains HEAD~3
 log --graph --first-parent --oneline --all
+log -1 -s --raw
+log -1 --raw -s
+log -1 -s --stat
+log -1 -s --numstat
+log -1 --patch -s --raw
+log -1 -s -p
+log -1 -p -s
+log -1 -s --patch-with-stat
+log -1 --raw --no-patch
+log -1 --name-only -s
+log -1 -s --name-status
+log -1 -s --check
+log -1 --name-only --name-status
+show -s --raw HEAD
+diff-tree -s --raw HEAD
+diff -s --name-only HEAD~1
