@@ -1,0 +1,161 @@
+L001	SAME	-C .git/strat merge-octopus base -- HEAD topic lineone	
+L002	SAME	-C .git/strat merge-octopus base -- HEAD topic other	
+L003	SAME	-C .git/strat merge-octopus base -- HEAD lineone topic other	
+L004	SAME	-C .git/strat merge-octopus base -- HEAD clash topic	
+L005	SAME	-C .git/strat merge-octopus base -- HEAD lineone clash	
+L006	SAME	-C .git/strat merge-octopus base -- HEAD base topic	
+L007	SAME	-C .git/strat merge-octopus base -- HEAD topic topic	
+L008	SAME	-C .git/strat merge-octopus -- HEAD topic	
+L009	SAME	-C .git/strat merge-octopus base -- HEAD topic	
+L010	SAME	-C .git/strat merge-octopus	
+L011	SAME	-C .git/strat merge-octopus --foo base -- HEAD topic other	
+L012	SAME	-C .git/strat merge-octopus base -- base topic other	
+L013	SAME	-C .git/stratc merge-octopus base -- HEAD topic other	
+L014	SAME	-C .git/strat merge-resolve base -- HEAD lineone	
+L015	SAME	-C .git/strat merge-resolve base -- HEAD clash	
+L016	SAME	-C .git/strat merge-resolve base -- HEAD topic	
+L017	SAME	-C .git/strat merge-resolve base -- HEAD other	
+L018	SAME	-C .git/strat merge-resolve base -- HEAD topic other	
+L019	SAME	-C .git/strat merge-resolve -- HEAD topic	
+L020	SAME	-C .git/strat merge-resolve	
+L021	SAME	-C .git/strat merge-resolve nosuch -- HEAD topic	
+L022	SAME	-C .git/strat merge-ours base -- HEAD topic	
+L023	SAME	-C .git/strat merge-ours	
+L024	SAME	-C .git/stratc merge-ours base -- HEAD topic	
+L025	SAME	-C .git/strat merge-recursive base -- HEAD lineone	
+L026	SAME	-C .git/strat merge-recursive base -- HEAD clash	
+L027	SAME	-C .git/strat merge-recursive base -- HEAD topic	
+L028	SAME	-C .git/strat merge-recursive -- HEAD topic	
+L029	SAME	-C .git/strat merge-recursive --ours base -- HEAD clash	
+L030	SAME	-C .git/strat merge-recursive --theirs base -- HEAD clash	
+L031	SAME	-C .git/strat merge-recursive --renormalize --diff-algorithm=patience base -- HEAD lineone	
+L032	SAME	-C .git/strat merge-recursive --bogus base -- HEAD lineone	
+L033	SAME	-C .git/strat merge-recursive bogus -- HEAD clash	
+L034	SAME	-C .git/strat merge-recursive base -- HEAD topic other	
+L035	SAME	-C .git/strat merge-recursive base -- HEAD	
+L036	SAME	-C .git/strat merge-recursive -- HEAD	
+L037	SAME	-C .git/strat merge-recursive base HEAD	
+L038	SAME	-C .git/strat merge-recursive	
+L039	SAME	-C .git/strat merge-recursive base base -- HEAD lineone	
+L040	SAME	-C .git/strat merge-recursive base -- topic HEAD	
+L041	SAME	-C .git/stratc merge-recursive base -- HEAD topic	
+L042	SAME	-C .git/strat merge-recursive-ours base -- HEAD clash	
+L043	SAME	-C .git/strat merge-recursive-theirs base -- HEAD clash	
+L044	SAME	-C .git/strat merge-recursive-ours base -- HEAD lineone	
+L045	SAME	-C .git/strat merge-recursive-theirs	
+L046	SAME	-C .git/strat merge-subtree -- HEAD proj	
+L047	SAME	-C .git/strat merge-subtree base -- HEAD lineone	
+L048	SAME	-C .git/strat merge-recursive --subtree=lib -- HEAD proj	
+L049	SAME	-C .git/strat merge-recursive -- HEAD proj	
+L050	SAME	-C .git/strat merge-subtree	
+L051	SAME	-C .git/strat merge topic lineone	
+L052	SAME	-C .git/strat merge topic other lineone	
+L053	SAME	-C .git/strat merge topic clash	
+L054	SAME	-C .git/strat merge -s octopus topic lineone	
+L055	SAME	-C .git/strat merge -s octopus topic clash	
+L056	SAME	-C .git/strat merge -s ours topic other	
+L057	SAME	-C .git/strat merge -s resolve topic other	
+L058	SAME	-C .git/strat merge -s recursive topic other	
+L059	SAME	-C .git/strat merge -s subtree topic other	
+L060	SAME	-C .git/strat merge topic base	
+L061	SAME	-C .git/strat merge base main	
+L062	SAME	-C .git/strat merge --no-commit topic other	
+L063	SAME	-C .git/strat merge --squash topic other	
+L064	SAME	-C .git/strat merge -m custom topic other	
+L065	SAME	-C .git/strat merge --ff-only topic other	
+L066	SAME	-C .git/strat merge -q topic other	
+L067	SAME	-C .git/strat merge --no-stat topic other	
+L068	SAME	-C .git/strat merge -s resolve lineone	
+L069	SAME	-C .git/strat merge -s resolve clash	
+L070	SAME	-C .git/strat merge -s resolve topic	
+L071	SAME	-C .git/strat merge -s subtree --allow-unrelated-histories proj	
+L072	SAME	-C .git/strat merge -Xsubtree=lib --allow-unrelated-histories proj	
+L073	SAME	-C .git/strat merge -s octopus lineone	
+L074	SAME	-C .git/stratc merge-index echo -a	
+L075	SAME	-C .git/stratc merge-index -q false -a	
+L076	SAME	-C .git/stratc merge-index false -a	
+L077	SAME	-C .git/stratc merge-index -o false -a	
+L078	SAME	-C .git/stratc merge-index echo b.txt	
+L079	SAME	-C .git/stratc merge-index echo nosuch	
+L080	SAME	-C .git/stratc merge-index echo	
+L081	SAME	-C .git/stratc merge-index	
+L082	SAME	-C .git/stratc merge-index -- echo -a	
+L083	SAME	-C .git/stratc merge-index echo -a -x	
+L084	SAME	-C .git/stratc merge-index echo a.txt a.txt	
+L085	SAME	-C .git/stratc merge-index echo -- a.txt	
+L086	SAME	-C .git/stratc merge-index git-merge-one-file -a	
+L087	SAME	-C .git/stratc merge-index -o git-merge-one-file -a	
+L088	SAME	-C .git/stratc merge-index git-merge-one-file a.txt	
+L089	SAME	-C .git/strat merge-index echo -a	
+L090	SAME	-C .git/stratc merge-one-file 4cb29ea38f70d7c61b2a3a25b02e3bdf44905402 2f43848a5937429a3caefe5f1f61e7e02d2b62ac a0c2ac00015a2ab50885e8d770bd0ee435a81488 a.txt 100644 100644 100644	
+L091	SAME	-C .git/strat merge-one-file '' '' df967b96a579e45a18b8251732d16804b2e56a55 new.txt '' '' 100644	
+L092	SAME	-C .git/strat merge-one-file '' df967b96a579e45a18b8251732d16804b2e56a55 '' new2.txt '' 100644 ''	
+L093	SAME	-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 df967b96a579e45a18b8251732d16804b2e56a55 '' b.txt 100644 100644 ''	
+L094	SAME	-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 '' df967b96a579e45a18b8251732d16804b2e56a55 b.txt 100644 '' 100644	
+L095	SAME	-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 '' '' b.txt 100644 '' ''	
+L096	SAME	-C .git/strat merge-one-file df967b96a579e45a18b8251732d16804b2e56a55 4cb29ea38f70d7c61b2a3a25b02e3bdf44905402 '' b.txt 100644 100644 ''	
+L097	SAME	-C .git/strat merge-one-file '' df967b96a579e45a18b8251732d16804b2e56a55 df967b96a579e45a18b8251732d16804b2e56a55 both.txt '' 100644 100644	
+L098	SAME	-C .git/strat merge-one-file a b	
+L099	SAME	-C .git/strat merge-one-file	
+L100	SAME	-C .git/strat merge-one-file -h	
+L101	SAME	pickaxe README.md	
+L102	SAME	pickaxe -s src/b.txt	
+L103	SAME	pickaxe -L 1,2 src/a.txt	
+L104	SAME	pickaxe --porcelain src/b.txt	
+L105	SAME	update	
+L106	SAME	update -h	
+L107	SAME	checkout--worker	
+L108	SAME	checkout--worker --prefix=x	
+L109	SAME	checkout--worker --no-prefix	
+L110	SAME	checkout--worker extra	
+L111	SAME	checkout--worker --bogus	
+L112	SAME	sh-i18n--envsubst --variables 'x $FOO ${BAR} $FOO $1 ${X_Y}z ${OPEN'	
+L113	SAME	sh-i18n--envsubst --variables	
+L114	SAME	sh-i18n--envsubst	
+L115	SAME	sh-i18n--envsubst a b	
+L116	SAME	sh-i18n--envsubst --variables a b	
+L117	SAME	sh-i18n--envsubst '$HOME'	
+L118	SAME	fsmonitor--daemon status	
+L119	SAME	fsmonitor--daemon start	
+L120	SAME	fsmonitor--daemon run	
+L121	SAME	fsmonitor--daemon stop	
+L122	SAME	fsmonitor--daemon	
+L123	SAME	submodule--helper	
+L124	SAME	submodule--helper bogus	
+L125	SAME	submodule--helper -h	
+L126	SAME	submodule--helper status	
+L127	SAME	-C .git/sm/super submodule--helper status	
+L128	SAME	-C .git/sm/super submodule--helper summary	
+L129	SAME	-C .git/sm/clone submodule--helper init	
+L130	SAME	upload-archive--writer	
+L131	SAME	upload-archive--writer .	
+L132	SAME	upload-archive--writer /nonexistent	
+L133	SAME	upload-archive--writer a b	
+L134	SAME	credential-cache exit	
+L135	SAME	credential-cache --socket /nonexistent/a3-cache/socket exit	
+L136	SAME	credential-cache --socket=/nonexistent/a3-cache/socket get	
+L137	SAME	credential-cache --socket /nonexistent/a3-cache/socket erase	
+L138	SAME	credential-cache --timeout 5 --socket /nonexistent/a3-cache/socket get	
+L139	SAME	credential-cache --no-timeout --no-socket bogus	
+L140	SAME	credential-cache --timeout=x get	
+L141	SAME	credential-cache	
+L142	SAME	credential-cache -h	
+L143	SAME	credential-cache --bogus get	
+L144	SAME	credential-cache--daemon	
+L145	SAME	credential-cache--daemon -h	
+L146	SAME	credential-cache--daemon relative/socket	
+L147	SAME	credential-cache--daemon --bogus /tmp/x	
+L148	SAME	remote-ext	
+L149	SAME	remote-ext origin	
+L150	SAME	remote-ext a b c	
+L151	SAME	remote-ext origin cat	
+L152	SAME	remote-fd	
+L153	SAME	remote-fd origin 0,1	
+L154	SAME	remote-fd origin 7/foo	
+L155	SAME	remote-fd origin x	
+L156	SAME	remote-fd origin 0,x	
+L157	SAME	remote-http	
+L158	SAME	remote-http origin http://127.0.0.1:9/x	
+L159	SAME	remote-https origin https://127.0.0.1:9/x	
+L160	SAME	remote-ftp origin ftp://127.0.0.1:9/x	
+L161	SAME	remote-ftps origin ftps://127.0.0.1:9/x	

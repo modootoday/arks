@@ -1,0 +1,13 @@
+{
+  "gate": "argv-inventory + cli-flag-corpus",
+  "rung": "after autonomous-operation queue Q1-Q22 (re-run on main)",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "4814ae2",
+  "inventory": {"commands": 185, "commands_full": 110, "commands_no_inventory": 75, "options": 1852, "accepted": 1852},
+  "corpora": "corpora/summary.json (4,502 lines over 12 corpora, 4,396 SAME)",
+  "diff_classes": {"post-pin": 77, "design": 26, "timing": 3, "open": 0, "unreasoned": 0},
+  "previous": "20261125023636-argv-corpus-receipt-q-final (tip 61358f4: 4,398 SAME; the same 77 post-pin and 26 design lines, 1 timing line)",
+  "note": "The only change from the previous receipt is family-a3-tools: 3 filter-branch progress lines differ where stock git crossed a wall-clock second boundary during the run (the timing class); every other corpus is identical line for line. Corpora ran in parallel except family-a3-tools, which ran alone.",
+  "timestamp": "2026-11-25T06:26:39Z"
+}
