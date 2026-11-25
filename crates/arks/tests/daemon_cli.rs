@@ -83,13 +83,113 @@ fn err_pkt(text: &str) -> String {
     format!("{:04x}{text}", text.len() + 4)
 }
 
+/// A port that is free now, for a daemon that binds it later.
+///
+/// Ports the OS hands out on its own (a bind to port 0, the source port of
+/// every outgoing connect) come from its ephemeral range (Linux 32768-60999,
+/// macOS and Windows 49152-65535). A port probed there and released can be
+/// handed to any other process on the host before the daemon binds it, and
+/// the test then talks to that process. Probe below those ranges instead,
+/// from an offset that differs per test process.
 fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
+    use std::sync::atomic::{AtomicU32, Ordering};
+    const LOW: u32 = 20_000;
+    const SPAN: u32 = 12_000;
+    static NEXT: AtomicU32 = AtomicU32::new(0);
+    let seed = std::process::id().wrapping_mul(7_919);
+    for _ in 0..SPAN {
+        let n = NEXT.fetch_add(1, Ordering::Relaxed);
+        let port = (LOW + seed.wrapping_add(n) % SPAN) as u16;
+        if TcpListener::bind(("127.0.0.1", port)).is_ok() {
+            return port;
+        }
+    }
+    panic!("no free port in {LOW}..{}", LOW + SPAN);
 }
+
+/// Whether process `pid` holds a listening TCP socket on `port`, from
+/// `/proc`. `None` where that can not be read.
+#[cfg(target_os = "linux")]
+fn owns_listener(pid: u32, port: u16) -> Option<bool> {
+    let mut sockets = Vec::new();
+    for table in ["/proc/net/tcp", "/proc/net/tcp6"] {
+        let Ok(text) = std::fs::read_to_string(table) else {
+            continue;
+        };
+        for line in text.lines().skip(1) {
+            // sl local_address rem_address st ... inode (field 9); st 0A = LISTEN.
+            let f: Vec<&str> = line.split_whitespace().collect();
+            let local = f
+                .get(1)
+                .and_then(|a| a.rsplit_once(':'))
+                .and_then(|(_, p)| u16::from_str_radix(p, 16).ok());
+            if local == Some(port) && f.get(3) == Some(&"0A") {
+                if let Some(inode) = f.get(9) {
+                    sockets.push(format!("socket:[{inode}]"));
+                }
+            }
+        }
+    }
+    let fds = std::fs::read_dir(format!("/proc/{pid}/fd")).ok()?;
+    Some(
+        fds.filter_map(Result::ok)
+            .filter_map(|e| std::fs::read_link(e.path()).ok())
+            .any(|link| sockets.iter().any(|s| link.as_os_str() == s.as_str())),
+    )
+}
+
+#[cfg(not(target_os = "linux"))]
+fn owns_listener(_pid: u32, _port: u16) -> Option<bool> {
+    None
+}
+
+/// Whether `pid` still runs. A process that exited without being reaped (no
+/// reaping init in a container) is a zombie and counts as gone.
+#[cfg(target_os = "linux")]
+fn alive(pid: u32) -> bool {
+    std::fs::read_to_string(format!("/proc/{pid}/stat"))
+        .ok()
+        .and_then(|s| {
+            s.rsplit_once(") ")
+                .map(|(_, rest)| !rest.starts_with(['Z', 'X']))
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(all(unix, not(target_os = "linux")))]
+fn alive(pid: u32) -> bool {
+    // SAFETY: signal 0 only checks that the process exists.
+    unsafe { libc::kill(pid as libc::pid_t, 0) == 0 }
+}
+
+/// Wait until daemon process `pid` itself listens on `port`. A connect alone
+/// is not enough: it succeeds against whatever process holds the port.
+/// `false` when the daemon went away first, which is how it reports that it
+/// lost the port to another process (`unable to allocate any listen sockets`).
+fn serving(pid: u32, port: u16, mut running: impl FnMut() -> bool) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        if !running() {
+            return false;
+        }
+        let ready = match owns_listener(pid, port) {
+            Some(owned) => owned,
+            // No view of socket owners here: any listener counts.
+            None => TcpStream::connect(("127.0.0.1", port)).is_ok(),
+        };
+        if ready {
+            return true;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "daemon {pid} did not listen on {port}"
+        );
+        thread::sleep(Duration::from_millis(30));
+    }
+}
+
+/// Attempts at starting a daemon whose probed port was taken before it bound.
+const START_ATTEMPTS: usize = 5;
 
 struct Running(Child);
 impl Drop for Running {
@@ -99,25 +199,26 @@ impl Drop for Running {
     }
 }
 
-fn start(args: &[String], port: u16, stderr: &Path) -> Running {
-    let child = arks()
-        .arg("daemon")
-        .args(args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(std::fs::File::create(stderr).unwrap())
-        .spawn()
-        .unwrap();
-    wait_port(port);
-    Running(child)
-}
-
-fn wait_port(port: u16) {
-    let deadline = Instant::now() + Duration::from_secs(10);
-    while TcpStream::connect(("127.0.0.1", port)).is_err() {
-        assert!(Instant::now() < deadline, "daemon did not listen on {port}");
-        thread::sleep(Duration::from_millis(30));
+/// `arks daemon <args> --port=<free port>`, returned once that very process
+/// listens; started again on another port when it lost the probed one.
+fn start(args: &[String], stderr: &Path) -> (Running, u16) {
+    for _ in 0..START_ATTEMPTS {
+        let port = free_port();
+        let mut child = arks()
+            .arg("daemon")
+            .args(args)
+            .arg(format!("--port={port}"))
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(std::fs::File::create(stderr).unwrap())
+            .spawn()
+            .unwrap();
+        let pid = child.id();
+        if serving(pid, port, || matches!(child.try_wait(), Ok(None))) {
+            return (Running(child), port);
+        }
     }
+    panic!("daemon {args:?} lost its port {START_ATTEMPTS} times");
 }
 
 fn ask(port: u16, payload: &[u8]) -> String {
@@ -247,16 +348,14 @@ fn tcp_errors_hook_and_log_destinations() {
     let root = tempfile::TempDir::new().unwrap();
     bare_repo(root.path(), "pub.git", true);
     bare_repo(root.path(), "hidden.git", false);
-    let port = free_port();
     let args: Vec<String> = vec![
         "--listen=127.0.0.1".into(),
-        format!("--port={port}"),
         format!("--base-path={}", root.path().display()),
         "--log-destination=none".into(),
         "--verbose".into(),
     ];
     let quiet = root.path().join("quiet.err");
-    let d = start(&args, port, &quiet);
+    let (d, port) = start(&args, &quiet);
     assert_eq!(
         ask(port, b"git-upload-pack /hidden.git\0"),
         err_pkt("ERR access denied or repository not exported: /hidden.git")
@@ -269,10 +368,8 @@ fn tcp_errors_hook_and_log_destinations() {
         "none destination must be silent: {logged}"
     );
 
-    let port = free_port();
     let mut args: Vec<String> = vec![
         "--listen=127.0.0.1".into(),
-        format!("--port={port}"),
         format!("--base-path={}", root.path().display()),
         "--informative-errors".into(),
     ];
@@ -290,7 +387,7 @@ fn tcp_errors_hook_and_log_destinations() {
     }
     args.push("--verbose".into());
     let loud = root.path().join("loud.err");
-    let d = start(&args, port, &loud);
+    let (d, port) = start(&args, &loud);
     assert_eq!(
         ask(port, b"git-upload-pack /nope.git\0"),
         err_pkt("ERR no such repository: /nope.git")
@@ -314,34 +411,77 @@ fn tcp_errors_hook_and_log_destinations() {
     );
 }
 
+/// A detached daemon, named by its pid file; terminated on drop.
+#[cfg(unix)]
+struct Detached(u32);
+
+#[cfg(unix)]
+impl Drop for Detached {
+    fn drop(&mut self) {
+        // SAFETY: plain signal to a process this test started.
+        unsafe {
+            libc::kill(self.0 as libc::pid_t, libc::SIGTERM);
+        }
+    }
+}
+
+/// `arks daemon --detach --pid-file=<pid_file> <args> --port=<free port>`.
+///
+/// As with git, the command forks and its parent exits 0 before the child
+/// binds; the child writes the pid file and then binds. Exit status and a
+/// connect therefore say nothing about whether that child got the port, so
+/// readiness is the process named by the pid file listening on it. A child
+/// that lost the probed port exits, and the daemon is started again.
+#[cfg(unix)]
+fn start_detached(args: &[String], pid_file: &Path) -> (Detached, u16) {
+    for _ in 0..START_ATTEMPTS {
+        let _ = std::fs::remove_file(pid_file);
+        let port = free_port();
+        let out = arks()
+            .arg("daemon")
+            .arg("--detach")
+            .arg(format!("--pid-file={}", pid_file.display()))
+            .args(args)
+            .arg(format!("--port={port}"))
+            .stdin(Stdio::null())
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "{out:?}");
+        assert!(out.stderr.is_empty(), "{out:?}");
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let pid: u32 = loop {
+            let text = std::fs::read_to_string(pid_file).unwrap_or_default();
+            // Complete once the line is terminated.
+            if let Some(pid) = text.strip_suffix('\n').and_then(|t| t.parse().ok()) {
+                break pid;
+            }
+            assert!(Instant::now() < deadline, "no pid in {pid_file:?}");
+            thread::sleep(Duration::from_millis(20));
+        };
+        let daemon = Detached(pid);
+        if serving(pid, port, || alive(pid)) {
+            return (daemon, port);
+        }
+    }
+    panic!("detached daemon lost its port {START_ATTEMPTS} times");
+}
+
 #[cfg(unix)]
 #[test]
 fn detach_writes_pid_of_serving_process() {
     let root = tempfile::TempDir::new().unwrap();
     bare_repo(root.path(), "pub.git", true);
-    let port = free_port();
     let pid_file = root.path().join("daemon.pid");
-    let out = arks()
-        .arg("daemon")
-        .arg("--detach")
-        .arg(format!("--pid-file={}", pid_file.display()))
-        .arg("--listen=127.0.0.1")
-        .arg(format!("--port={port}"))
-        .arg(format!("--base-path={}", root.path().display()))
-        .stdin(Stdio::null())
-        .output()
-        .unwrap();
-    assert!(out.status.success(), "{out:?}");
-    assert!(out.stderr.is_empty());
-    wait_port(port);
-    let pid: u32 = std::fs::read_to_string(&pid_file)
-        .unwrap()
-        .trim()
-        .parse()
-        .unwrap();
+    let args: Vec<String> = vec![
+        "--listen=127.0.0.1".into(),
+        format!("--base-path={}", root.path().display()),
+    ];
+    let (daemon, port) = start_detached(&args, &pid_file);
+    let pid = daemon.0;
     let stat = std::fs::read_to_string(format!("/proc/{pid}/stat")).unwrap_or_default();
-    assert!(ask(port, b"git-upload-pack /pub.git\0").contains("refs/heads/main"));
-    let _ = Command::new("kill").arg(pid.to_string()).status();
+    let reply = ask(port, b"git-upload-pack /pub.git\0");
+    assert!(reply.contains("refs/heads/main"), "{reply:?}");
+    drop(daemon);
     if !stat.is_empty() {
         // Field 6 (session id) equals the pid after setsid.
         let after_comm = stat.rsplit_once(") ").unwrap().1;
@@ -373,19 +513,18 @@ fn user_drops_privileges_after_binding_when_root() {
         "fatal: user not found - no-such-user-arks"
     );
     let root = tempfile::TempDir::new().unwrap();
-    let port = free_port();
-    let args: Vec<String> = vec![
-        "--listen=127.0.0.1".into(),
-        format!("--port={port}"),
-        "--user=nobody".into(),
-    ];
-    let d = start(&args, port, &root.path().join("user.err"));
+    let args: Vec<String> = vec!["--listen=127.0.0.1".into(), "--user=nobody".into()];
+    let (d, _port) = start(&args, &root.path().join("user.err"));
     let pid = d.0.id().to_string();
     let deadline = Instant::now() + Duration::from_secs(5);
     while proc_uid(&pid).as_deref() == Some("0") && Instant::now() < deadline {
         thread::sleep(Duration::from_millis(20));
     }
-    assert_ne!(proc_uid(&pid).as_deref(), Some("0"), "still root");
+    let uid = proc_uid(&pid);
+    assert!(
+        uid.as_deref().is_some_and(|u| u != "0"),
+        "still root or gone: {uid:?}"
+    );
 }
 
 // Windows (matrix SoT §Windows): `--inetd` works with stderr as the implied log
