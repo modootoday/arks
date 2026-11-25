@@ -1121,6 +1121,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut listen = "127.0.0.1:8080".to_string();
     let mut dir: Option<PathBuf> = None;
     let mut dumb_only = false;
+    let mut gitweb = false;
     let mut basic_auth_cli: Option<String> = None;
     let mut basic_auth_file: Option<PathBuf> = None;
     let mut tls_cert: Option<PathBuf> = None;
@@ -1139,6 +1140,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
                 listen = args[i][9..].to_string();
             }
             "--dumb-only" => dumb_only = true,
+            "--gitweb" => gitweb = true,
             "--basic-auth" => {
                 i += 1;
                 basic_auth_cli = Some(
@@ -1228,11 +1230,17 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
             ));
         }
     };
+    let pages = if gitweb {
+        Some(crate::cmd::bridge::instaweb::gitweb::page_handler(&git_dir))
+    } else {
+        None
+    };
     let mut http_opts = ServeHttpOptions {
         dumb_only,
         basic_auth,
         rebind_desired: None,
         tls,
+        pages,
     };
     let scheme = serve_http_scheme(&http_opts);
     eprintln!("{label} listening on {scheme}://{addr}/ (dumb_only={dumb_only}; {auth_label})");
@@ -1922,6 +1930,9 @@ arks serve-http — transitional HTTP-only alias (≡ `arks serve --no-ssh --no-
 
 Prefer:  arks serve --no-ssh --no-forge [flags…] <directory>
 See:     arks serve --help
+
+  --gitweb   also serve the repository browser pages `git instaweb` shows
+             (gitweb actions at `/`); git HTTP paths are unchanged
 "
     );
 }
