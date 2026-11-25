@@ -3,7 +3,7 @@ id: sot:root/verify-cleanroom-symmetry-matrix
 title: Clean-room symmetry matrix (three DoD pillars)
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-14T10:30:00Z
+updated: 2026-11-25T03:40:00Z
 tags: [verify, clean-room, docker, symmetry, dod, git, daemon, hub, gh, self-host, hosting, claimed-residual, single-release, no-invent-pass, behavioral-dod]
 verify: manual
 rel:
@@ -55,7 +55,7 @@ Version **0.1.7**. Umbrella **canon** for the public-story clean-room **Definiti
 
 | Pillar | Inventory honesty now | DoD vs non-DoD |
 |--------|----------------------|----------------|
-| **1. CLI** (`git`↔`arks`) | pin list-cmds **Missing = 0** (judge **2.39.5**); living CSV Partial **117** / Refuse **47** | **DoD met:** BP-PORCELAIN §C + BP-DROPIN + floor OD-*. **Non-DoD:** Partial outside BP set / Refuse |
+| **1. CLI** (`git`↔`arks`) | pin list-cmds **Missing = 0** (judge **2.39.5**); living CSV Partial **117** / Refuse **47** (Q20 currency 2026-11-25: Verified **128** / Partial **36** / Refuse **0**, [[evidence:root/20261125033117-cli-survey-currency-q20]]) | **DoD met:** BP-PORCELAIN §C + BP-DROPIN + floor OD-*. **Non-DoD:** Partial outside BP set / Refuse |
 | **2. Daemon** | living CSV **Missing = 0**; **Parity = 20**; Refuse/N/A **16**; Partial **0** ([[sot:root/arks-daemon-git-command-matrix]]) | **DoD met:** BP-DAEMON Parity-carrying. **Non-DoD:** SysV / privilege-drop Refuse |
 | **3. Hub/forge client** | v1 **Missing = 0**; Claimed **94**; terminal×6 → **Refuse/N/A**; later Deferred **119** OUT; Refuse/N/A **34** | **DoD met:** BP-HUB Claimed+Refuse. **Non-DoD:** later×119; OUT Refuse |
 | **Related: Self-host** | [[sot:root/arks-self-host-server]] + IW-FORGE-SERVE; **OD-SERVE-CFG** floor | WAN “secure by default” forbidden; not a fourth pillar |

@@ -3,7 +3,7 @@ id: sot:root/cli-git-help-matrix
 title: CLI git-help matrix (canonical)
 status: active
 created: 2026-11-10T19:05:00Z
-updated: 2026-11-25T03:31:00Z
+updated: 2026-11-25T03:40:00Z
 tags: [cli, matrix, git-help, parity, m16, pin-2.39.5, sot]
 verify: manual
 rel:
@@ -57,6 +57,18 @@ Living CSV includes pin rows + host **2.54/2.56** skew inventory (`format-rev`, 
 | Refuse/N/A | **47** |
 | Synonym-wired | 4 |
 | arks-only | 6 |
+
+**Currency (Q20, 2026-11-25; supersedes the table above):** derived by rule 7 from `.spec/evidence/20261125023636-argv-corpus-receipt-q-final/` ([[evidence:root/20261125033117-cli-survey-currency-q20]]).
+
+| survey_status | Count (living CSV) |
+|---------------|------:|
+| Verified | **128** |
+| Partial | **36** (30 with no corpus line, 27 of them also without an option inventory; 6 with a design DIFF, no pin oracle) |
+| Parity-candidate | 21 |
+| Synonym-wired | 4 |
+| arks-only | 6 |
+| Missing | 0 |
+| Refuse/N/A | 0 |
 
 | arks_target | Count |
 |-------------|------:|

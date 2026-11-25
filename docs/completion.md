@@ -27,7 +27,7 @@ This site’s **completion milestone** is **design-complete + CLI-shell coherent
 | Honesty | **Partial** / **Refuse** / **Missing** / fail-closed surfaces are **named in public docs** — stubs are not marketed as Claimed |
 | Claimed bodies | Only where clean-room receipts exist (porcelain inventory, HTTP git wire, residual B-gates below, leases, timing bars, …) |
 
-**One-word operator summary:** **PARTIAL** — live G8 / **L9** remain Not Claimed; crypto immunity Impossible. Separately, the **behavioral** clean-room DoD is **met** ([arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md)): everyday porcelain peer actions + daemon Parity + hub Claimed-or-Refuse — **not** “Missing=0 alone.” Residual Claimed gates **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9** carry receipts; IW-FORGE-SERVE hosting e2e Claimed; hub flat+expand+mutate Claimed; personality sample+expand+named exit tables Claimed (CLI survey Partial×117 remain outside the behavioral bar).
+**One-word operator summary:** **PARTIAL** — live G8 / **L9** remain Not Claimed; crypto immunity Impossible. Separately, the **behavioral** clean-room DoD is **met** ([arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md)): everyday porcelain peer actions + daemon Parity + hub Claimed-or-Refuse — **not** “Missing=0 alone.” Residual Claimed gates **B1/B2/B3/B4/B5/B5+/B7(HTTP+SSH+forge)/B9** carry receipts; IW-FORGE-SERVE hosting e2e Claimed; hub flat+expand+mutate Claimed; personality sample+expand+named exit tables Claimed; the CLI survey is derived from the argv receipt: 128 commands Verified, 36 Partial with a cited reason each ([cli-survey-currency](https://github.com/modootoday/arks/blob/main/.spec/evidence/20261125033117-cli-survey-currency-q20/receipt.json)), outside the behavioral bar.
 
 > [!IMPORTANT]
 > Do **not** read this page as “all Claimed.” Design intent ≠ Claimed. Smoke/SKIP ≠ PASS. Inventory **Missing=0** is a **floor**, not product-complete. Behavioral SoT: [arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md). Residual gate SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
@@ -50,7 +50,7 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 
 | Surface | Class | Notes |
 |---------|-------|-------|
-| Personality / Registry / OverlapFacade | **Claimed sample+expand+named exit tables** | Drop-in + expand + named exit rows Claimed ([[evidence:root/20261111020515-personality-expand]], [[evidence:root/20261111025151-personality-exit-tables]]); CLI survey Partial×117 remain |
+| Personality / Registry / OverlapFacade | **Claimed sample+expand+named exit tables** | Drop-in + expand + named exit rows Claimed ([[evidence:root/20261111020515-personality-expand]], [[evidence:root/20261111025151-personality-exit-tables]]); `git` per-command exit table Verified for the 128 Verified CLI survey commands, 36 survey rows Partial with reasons; `gh` table host-advisory, `arks` unified table Partial ([cli-survey-currency](https://github.com/modootoday/arks/blob/main/.spec/evidence/20261125033117-cli-survey-currency-q20/receipt.json)) |
 | `arks serve --no-ssh --no-forge` | HTTP wire **Claimed** where evidenced | Narrow Claimed hosting path |
 | In-process SSH under `arks serve` | **B1/B2 Claimed** | OpenSSH-exact ChaCha wire + stock `git clone ssh://` e2e; durable §17(c) listen is the product path and carries no Partial label (B1/B2 + B7 re-run [[evidence:root/20261125031426-claimed-ssh]], [[evidence:root/20261125031427-claimed-rebind-q21]]); ops SSHD + pack still valid |
 | Product in-process TLS | **B9 Claimed** | rustls PEM terminate + stock curl; ops reverse-proxy remains valid |
@@ -79,7 +79,7 @@ Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES
 - crates.io / docs.rs publish timing (**L9** — owner policy)
 - Treating `arks hub serve` as the **primary** host story (superseded by `arks serve`)
 - Spawning `git` or `gh` on product paths (forbidden — peers are clean-room oracles only)
-- Full CLI survey Partial×117 as personality drop-in Claimed (named exit-table rows only)
+- The 36 CLI survey rows that stay Partial, as Verified (no pin-compared corpus line, or no pin oracle for the GUI and Windows-only helpers)
 
 ## Tip remasure notes (PF5)
 
