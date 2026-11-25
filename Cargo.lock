@@ -22,6 +22,7 @@ dependencies = [
  "arks-store",
  "base64",
  "libc",
+ "rcgen",
  "rustls",
  "serde_json",
  "tempfile",
@@ -32,6 +33,10 @@ dependencies = [
 [[package]]
 name = "arks-agent"
 version = "0.0.0"
+dependencies = [
+ "arks-net",
+ "ureq",
+]
 
 [[package]]
 name = "arks-config"

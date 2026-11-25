@@ -12,3 +12,6 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies]
+# https:// providers reuse the remote/hub HTTPS stack (CA + proxy policy); no second TLS stack.
+arks-net = { workspace = true }
+ureq = { workspace = true }
