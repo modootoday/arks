@@ -25,6 +25,7 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub use serve::{
     ForgeListenRebindSlot, ForgeServeOptions, default_forge_data_dir, forge_serve_scheme,
@@ -139,6 +140,24 @@ Never spawns git/gh. Design ≠ Claimed.
 }
 
 /// Run hub / flat-forge argv (everything after `arks hub`, or a flat leaf + args).
+/// Set when the CLI runs under personality `gh`: forge usage failures then exit
+/// 1 like gh (flag and argument errors), instead of the arks usage class 2.
+static GH_FAITHFUL_EXIT: AtomicBool = AtomicBool::new(false);
+
+/// Select gh-faithful usage exits (`.spec/sot/arks-cli-output-exit-contract.sot.md`).
+pub fn set_gh_faithful_exit(on: bool) {
+    GH_FAITHFUL_EXIT.store(on, Ordering::Relaxed);
+}
+
+/// Exit code for a forge usage failure under the current personality.
+pub(crate) fn usage_exit() -> ExitCode {
+    if GH_FAITHFUL_EXIT.load(Ordering::Relaxed) {
+        ExitCode::from(1)
+    } else {
+        ExitCode::from(2)
+    }
+}
+
 pub fn run_from_args(args: &[String]) -> ExitCode {
     let Some(first) = args.first() else {
         print_help();

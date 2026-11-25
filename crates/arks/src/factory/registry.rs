@@ -49,6 +49,7 @@ pub fn dispatch_argv() -> ExitCode {
             return ExitCodePolicy::from_class(ExitClass::StubOrUsage);
         }
     };
+    arks_hub::set_gh_faithful_exit(personality == Personality::Gh);
 
     let mut args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty()
