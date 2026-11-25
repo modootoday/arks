@@ -153,7 +153,7 @@ Queue unit Q21 ([[plan:root/20261124000000]]) closes the last Partial labels on 
 | **`arks serve ssh-smoke`** | In Docker: `--listen` against a durable `arks serve` SSH listener prints `ssh_banner=ok` and exits 0; against a closed port exits non-zero; `--git-pack` prints `git_over_ssh_smoke=ok` and exits 0. Output names the B1/B2 receipt instead of `claimed_ssh_git_e2e=Missing`. Claims the diagnostic only, never B1/B2 | Docker |
 | **`arks agent provider smoke`** | In Docker: against the openai-compat fixture over `http://` it prints `chat_http=200` and exits 0, and the fixture logs the request; `--mock` exits 0; an unreachable provider exits 1. Claims the diagnostic over plain-HTTP openai-compat endpoints only | Docker |
 | **`arks agent review --smoke`** | In Docker: `--base-url` fixture and `--mock` print `review_smoke=ok` and exit 0; an unreachable provider without `--mock` exits 1 (a smoke that cannot reach its provider failed). Claims the diagnostic only, never B4 | Docker |
-| **Agent smokes against HTTPS vendor endpoints** | Transport: `https://` bases use the shared `arks-net` CA + proxy stack ([[sot:root/arks-agent-llm-providers]] 3c; queue Q22); host tests against a loopback test CA prove success with the CA, success through a `CONNECT` proxy, and a TLS-class failure with exit 1 without it. Still **Partial** for a live vendor: that run needs an owner-held API key (owner queue, A2; Q23) | Host tests (advisory); live vendor: owner key |
+| **Agent smokes against HTTPS vendor endpoints** | Transport: `https://` bases use the shared `arks-net` CA + proxy stack ([[sot:root/arks-agent-llm-providers]] 3c; queue Q22); host tests against a loopback test CA prove success with the CA, success through a `CONNECT` proxy, and a TLS-class failure with exit 1 without it. Live vendor run **passed** on 2026-11-25 with the owner's key (Q23): `provider smoke` and `review --smoke` against `https://api.openai.com/v1` returned 2xx, exit 0 ([[evidence:root/20261125063733-agent-live-https-smoke]]); host-advisory, since a live third-party endpoint cannot run in the offline clean-room image | Host tests + live vendor run (advisory) |
 
 **Status (Q21 close):**
 
@@ -164,7 +164,7 @@ Queue unit Q21 ([[plan:root/20261124000000]]) closes the last Partial labels on 
 | `arks serve ssh-smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
 | `arks agent provider smoke` | **Claimed (diagnostic, plain-HTTP openai-compat)** | [[evidence:root/20261125031425-claimed-smoke]] |
 | `arks agent review --smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
-| Agent smokes against HTTPS vendors | **Partial** — HTTPS transport landed (Q22; host tests `crates/arks/tests/agent_https_smoke.rs`, advisory, no Docker receipt); a live vendor run still needs an owner API key (A2; Q23) | — |
+| Agent smokes against HTTPS vendors | **Live vendor run passed (host-advisory)** — HTTPS transport (Q22; `crates/arks/tests/agent_https_smoke.rs`) and the live OpenAI-compatible run with the owner's key (Q23; [[evidence:root/20261125063733-agent-live-https-smoke]]); no clean-room receipt is possible for a live third-party endpoint | — |
 
 ### Docker verify slots (normative names)
 

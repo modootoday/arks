@@ -1,0 +1,9 @@
+provider_smoke=chat
+provider=openai-compat
+base_url=https://api.openai.com/v1
+model=gpt-4o-mini
+tcp_target=proxy
+tcp=ok
+models_http=200
+chat_http=200
+smoke_result=ok

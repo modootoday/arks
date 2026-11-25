@@ -1,0 +1,13 @@
+{
+  "gate": "agent live https vendor smoke (queue Q23)",
+  "venue": "host (hosted cloud session) through the session egress proxy",
+  "tip": "7c8d45c",
+  "vendor": "OpenAI-compatible endpoint https://api.openai.com/v1, model gpt-4o-mini",
+  "credential": "owner-supplied API key stored as an environment network secret; the proxy injects it, so no key appears in the process, the command line or these files",
+  "results": {
+    "provider_smoke": {"tcp_target": "proxy", "models_http": 200, "chat_http": 200, "smoke_result": "ok", "exit": 0},
+    "review_smoke": {"provider": "openai-compat", "chat_http": 200, "review_smoke": "ok", "exit": 0}
+  },
+  "note": "Live vendor run, host-advisory under rule 60 (a live third-party endpoint cannot run inside the offline clean-room image). The transport itself is proven by the loopback TLS tests of Q22 (crates/arks/tests/agent_https_smoke.rs). Response previews are omitted; only status lines are kept.",
+  "timestamp": "2026-11-25T06:37:33Z"
+}

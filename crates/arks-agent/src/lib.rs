@@ -1147,8 +1147,10 @@ fn cmd_review(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     }
     let map = load_config_map().unwrap_or_default();
-    let id = env::var("ARKS_AGENT_PROVIDER")
-        .ok()
+    // `--provider` wins over the environment and the config, as `--model` does.
+    let id = flag_value(args, &["--provider"])
+        .map(str::to_string)
+        .or_else(|| env::var("ARKS_AGENT_PROVIDER").ok())
         .or_else(|| map.get("provider").cloned())
         .unwrap_or_else(|| "ollama".into());
     let model = flag_value(args, &["--model"])
