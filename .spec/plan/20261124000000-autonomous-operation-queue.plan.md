@@ -46,7 +46,7 @@ zero open or unreasoned lines.
 |-----------|-------|
 | 1. No active plan except maintenance | **Met (2026-11-25):** the only plan with `status: active` is this queue, which §11 exempts as the maintenance queue; Q14 archived 39 plans with cited evidence and Q15/Q16 archived the hub multi-agent plan |
 | 2. Residual rows Claimed, refused or Impossible | **Not met; owner-blocked only.** Every agent-workable row is Claimed or carries a cited refusal (Q17–Q21, Q15/Q16). Open: Q9 (test mail account), Q10 (forge secrets and publish policy) and Q23 (live LLM API key); Q22 is the agent-side TLS work that Q23 needs |
-| 3. Zero unreasoned DIFFs in the latest receipts | **Met** (this receipt) |
+| 3. Zero unreasoned DIFFs in the latest receipts | **Met** ([[evidence:root/20261125062639-argv-corpus-receipt-after-queue]] on `main` `4814ae2` after Q1–Q22: 1,852 / 1,852 options; 4,396 / 4,502 lines SAME; 77 post-pin, 26 design, 3 timing; zero open or unreasoned) |
 | 4. Required checks green on the `main` tip | **Met** (PR #56 merged with all seven required checks green) |
 | 5. `docs/completion.md` matches the receipts | **Met:** the flat-forge row cites the Q17/Q18 hub receipts and the multi-agent receipt; the daemon, serve and agent rows cite the Q19 and Q21 receipts |
 
