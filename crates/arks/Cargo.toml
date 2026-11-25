@@ -38,3 +38,6 @@ libc = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+# Test CA + leaf for the `arks agent` HTTPS smoke tests (same pin as arks-server;
+# no PEM fixtures in tracked paths).
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
