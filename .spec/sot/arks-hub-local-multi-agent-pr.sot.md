@@ -96,6 +96,15 @@ Version **0.2.0**. Normative **scenario framework** for large-scale agent collab
 3. **One winner per name.** Concurrent `label create` of one name succeeds once; the others fail (exit 1).
 4. **Merges see the moved base.** Concurrent `pr merge` calls apply one at a time; a pull whose change
    conflicts with what landed first is refused as not mergeable until its author resolves it.
+5. **Per-account data stays with its account.** `@me` and `/user/…` resolve to the account of the
+   request's token, not to the forge's default user: `/user/keys`, `/user/ssh_signing_keys` and
+   `/user/gpg_keys` list, show and delete only that account's keys (a key is still unique across the
+   forge: adding one another account holds fails as "already in use"), as in GitHub REST
+   ([user SSH keys](https://docs.github.com/en/rest/users/keys), [user GPG keys](https://docs.github.com/en/rest/users/gpg-keys));
+   `/gists` lists the account's own gists, a new gist belongs to its creator, and only the owner
+   edits or deletes it ([REST gists](https://docs.github.com/en/rest/gists/gists)); `/users/@me/projectsV2`
+   is the account's own projects. Data written before accounts were recorded belongs to the forge's
+   default user.
 
 ### Entrypoint plan (scaffold)
 
