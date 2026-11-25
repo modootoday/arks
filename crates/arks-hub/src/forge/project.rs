@@ -349,7 +349,7 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
         _ => return Ok(None),
     };
     let owner = if seg[0] == "@me" {
-        st.db.user_login.clone()
+        st.actor.clone()
     } else {
         seg[0].to_string()
     };
@@ -404,7 +404,7 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                 return Ok(Some(invalid("title can't be blank")));
             };
             let target = match str_field(&v, "owner") {
-                Some("@me") | None => st.db.user_login.clone(),
+                Some("@me") | None => st.actor.clone(),
                 Some(o) => o.to_string(),
             };
             let drafts = v

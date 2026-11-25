@@ -29,6 +29,9 @@ pub struct SshKey {
     pub fingerprint: String,
     #[serde(default)]
     pub created_at: u64,
+    /// Account holding the key (empty in older db files = the forge's default user).
+    #[serde(default)]
+    pub owner: String,
 }
 
 impl SshKey {
@@ -55,6 +58,19 @@ pub struct GpgKey {
     pub raw_key: String,
     #[serde(default)]
     pub created_at: u64,
+    /// Account holding the key (empty in older db files = the forge's default user).
+    #[serde(default)]
+    pub owner: String,
+}
+
+/// Whether a user key stored for `owner` belongs to the request's account.
+fn mine(st: &HubStore, owner: &str) -> bool {
+    let owner = if owner.is_empty() {
+        st.db.user_login.as_str()
+    } else {
+        owner
+    };
+    owner == st.actor
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,7 +162,7 @@ fn ssh_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str], kind: &str) -> Rout
                 .db
                 .ssh_keys
                 .iter()
-                .filter(|k| k.kind() == kind)
+                .filter(|k| k.kind() == kind && mine(st, &k.owner))
                 .map(ssh_json)
                 .collect();
             Ok(Some((200, Value::Array(arr))))
@@ -177,6 +193,7 @@ fn ssh_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str], kind: &str) -> Rout
                 key_type: kind.to_string(),
                 fingerprint: parsed.fingerprint,
                 created_at: now_secs(),
+                owner: st.actor.clone(),
             };
             st.db.ssh_keys.push(k.clone());
             st.save()?;
@@ -186,18 +203,19 @@ fn ssh_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str], kind: &str) -> Rout
             st.db
                 .ssh_keys
                 .iter()
-                .find(|k| k.kind() == kind && Some(k.id) == parse_id(id))
+                .find(|k| k.kind() == kind && Some(k.id) == parse_id(id) && mine(st, &k.owner))
                 .map(|k| (200, ssh_json(k)))
                 .unwrap_or_else(not_found),
         )),
         ("DELETE", [id]) => {
-            let before = st.db.ssh_keys.len();
-            st.db
-                .ssh_keys
-                .retain(|k| !(k.kind() == kind && Some(k.id) == parse_id(id)));
-            if st.db.ssh_keys.len() == before {
+            let Some(pos) =
+                st.db.ssh_keys.iter().position(|k| {
+                    k.kind() == kind && Some(k.id) == parse_id(id) && mine(st, &k.owner)
+                })
+            else {
                 return Ok(Some(not_found()));
-            }
+            };
+            st.db.ssh_keys.remove(pos);
             st.save()?;
             Ok(Some(no_content()))
         }
@@ -208,7 +226,13 @@ fn ssh_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str], kind: &str) -> Rout
 fn gpg_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str]) -> RouteResult {
     match (req.method, seg) {
         ("GET", []) => {
-            let arr = st.db.gpg_keys.iter().map(gpg_json).collect();
+            let arr = st
+                .db
+                .gpg_keys
+                .iter()
+                .filter(|k| mine(st, &k.owner))
+                .map(gpg_json)
+                .collect();
             Ok(Some((200, Value::Array(arr))))
         }
         ("POST", []) => {
@@ -232,6 +256,7 @@ fn gpg_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str]) -> RouteResult {
                 emails: parsed.emails,
                 raw_key: parsed.armored,
                 created_at: now_secs(),
+                owner: st.actor.clone(),
             };
             st.db.gpg_keys.push(k.clone());
             st.save()?;
@@ -241,16 +266,20 @@ fn gpg_route(st: &mut HubStore, req: &Req<'_>, seg: &[&str]) -> RouteResult {
             st.db
                 .gpg_keys
                 .iter()
-                .find(|k| Some(k.id) == parse_id(id))
+                .find(|k| Some(k.id) == parse_id(id) && mine(st, &k.owner))
                 .map(|k| (200, gpg_json(k)))
                 .unwrap_or_else(not_found),
         )),
         ("DELETE", [id]) => {
-            let before = st.db.gpg_keys.len();
-            st.db.gpg_keys.retain(|k| Some(k.id) != parse_id(id));
-            if st.db.gpg_keys.len() == before {
+            let Some(pos) = st
+                .db
+                .gpg_keys
+                .iter()
+                .position(|k| Some(k.id) == parse_id(id) && mine(st, &k.owner))
+            else {
                 return Ok(Some(not_found()));
-            }
+            };
+            st.db.gpg_keys.remove(pos);
             st.save()?;
             Ok(Some(no_content()))
         }
