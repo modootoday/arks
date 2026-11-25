@@ -237,17 +237,32 @@ pub(crate) fn fetch_specs_for(config_file: &Path, remote_name: &str) -> Vec<Stri
         .unwrap_or_else(|| vec![default_fetch_spec(remote_name)])
 }
 
-/// Map `refs/heads/main` through `+refs/heads/*:refs/remotes/origin/*`.
+/// Map `src` through one fetch refspec (gitrevisions / git-fetch
+/// `<refspec>`): a glob such as `+refs/heads/*:refs/remotes/origin/*`, or an
+/// exact pair such as `+refs/heads/main:refs/remotes/origin/main`. Negative
+/// (`^…`) and destination-less refspecs map nothing.
 pub(crate) fn map_refspec(spec: &str, src: &str) -> Option<String> {
     let spec = spec.strip_prefix('+').unwrap_or(spec);
-    let (from, to) = spec.split_once(':')?;
-    let from_prefix = from.strip_suffix('*')?;
-    let to_prefix = to.strip_suffix('*')?;
-    let rest = src.strip_prefix(from_prefix)?;
-    if rest.contains('*') {
+    if spec.starts_with('^') {
         return None;
     }
-    Some(format!("{to_prefix}{rest}"))
+    let (from, to) = spec.split_once(':')?;
+    if to.is_empty() {
+        return None;
+    }
+    match (from.strip_suffix('*'), to.strip_suffix('*')) {
+        (Some(from_prefix), Some(to_prefix)) => {
+            let rest = src.strip_prefix(from_prefix)?;
+            if rest.contains('*') {
+                return None;
+            }
+            Some(format!("{to_prefix}{rest}"))
+        }
+        (None, None) if !from.contains('*') && !to.contains('*') => {
+            (from == src).then(|| to.to_string())
+        }
+        _ => None,
+    }
 }
 
 fn parse_remotes(text: &str) -> Vec<RemoteConfig> {
@@ -353,6 +368,32 @@ mod tests {
         let text = fs::read_to_string(&cfg).unwrap();
         assert!(text.contains("[core]"));
         assert!(!text.contains("example.com"));
+    }
+
+    #[test]
+    fn map_refspec_glob_exact_and_negative() {
+        let glob = "+refs/heads/*:refs/remotes/origin/*";
+        assert_eq!(
+            map_refspec(glob, "refs/heads/main").as_deref(),
+            Some("refs/remotes/origin/main")
+        );
+        assert_eq!(map_refspec(glob, "refs/tags/v1"), None);
+        let exact = "+refs/heads/main:refs/remotes/origin/main";
+        assert_eq!(
+            map_refspec(exact, "refs/heads/main").as_deref(),
+            Some("refs/remotes/origin/main")
+        );
+        assert_eq!(map_refspec(exact, "refs/heads/side"), None);
+        assert_eq!(
+            map_refspec("refs/tags/*:refs/tags/*", "refs/tags/v1").as_deref(),
+            Some("refs/tags/v1")
+        );
+        assert_eq!(map_refspec("^refs/heads/side", "refs/heads/side"), None);
+        assert_eq!(map_refspec("refs/heads/main:", "refs/heads/main"), None);
+        assert_eq!(
+            map_refspec("refs/heads/*:refs/remotes/origin/main", "refs/heads/x"),
+            None
+        );
     }
 
     #[test]

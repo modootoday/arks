@@ -19,6 +19,7 @@ fn upload_caps(repo: &Repository) -> Result<RefsAndCaps, ServerError> {
         "ofs-delta".into(),
         "side-band-64k".into(),
         "no-progress".into(),
+        "include-tag".into(),
         "agent=arks/0.0.0".into(),
     ];
     if let Some(h) = &head {
@@ -50,8 +51,11 @@ pub fn upload_pack_result_with_nak(
     body: &[u8],
     include_nak: bool,
 ) -> Result<Vec<u8>, ServerError> {
-    let wants = parse_wants(body)?;
+    let mut wants = parse_wants(body)?;
     let want_sideband = request_wants_sideband(body);
+    if request_has_cap(body, "include-tag") {
+        include_tags_for(repo, &mut wants)?;
+    }
     if wants.is_empty() {
         return if want_sideband {
             sideband_pack(&[], include_nak)
@@ -186,6 +190,112 @@ fn parse_wants(body: &[u8]) -> Result<Vec<Oid>, ServerError> {
 }
 
 /// True when the first `want` line lists `side-band` / `side-band-64k`.
+/// gitprotocol-capabilities `include-tag`: send every annotated tag (and the
+/// tags it points to) whose peeled object is a commit the pack already holds,
+/// so a client that auto-follows tags gets the tag objects in the same pack.
+fn include_tags_for(repo: &Repository, wants: &mut Vec<Oid>) -> Result<(), ServerError> {
+    let tags = repo
+        .refs()
+        .list_refs("refs/tags/")
+        .map_err(|e| ServerError::Msg(e.to_string()))?;
+    let mut annotated: Vec<(Oid, Oid)> = Vec::new();
+    for (_, oid) in &tags {
+        if let Some(peeled) = peel_annotated(repo, oid)? {
+            annotated.push((*oid, peeled));
+        }
+    }
+    if annotated.is_empty() {
+        return Ok(());
+    }
+    let reachable = reachable_commits(repo, wants)?;
+    for (tag, peeled) in annotated {
+        if reachable.contains(&peeled) && !wants.contains(&tag) {
+            wants.push(tag);
+        }
+    }
+    Ok(())
+}
+
+/// The non-tag object an annotated tag (chain) points to; `None` when `oid`
+/// is not a tag object (a lightweight tag needs no extra object).
+fn peel_annotated(repo: &Repository, oid: &Oid) -> Result<Option<Oid>, ServerError> {
+    let mut cur = *oid;
+    let mut seen_tag = false;
+    for _ in 0..32 {
+        let obj = match repo.store().get(&cur) {
+            Ok(o) => o,
+            Err(arks_store::StoreError::NotFound(_)) => return Ok(None),
+            Err(e) => return Err(ServerError::Msg(e.to_string())),
+        };
+        if obj.kind != arks_object::ObjectKind::Tag {
+            return Ok(seen_tag.then_some(cur));
+        }
+        seen_tag = true;
+        let target = std::str::from_utf8(&obj.payload)
+            .ok()
+            .and_then(|t| t.lines().find_map(|l| l.strip_prefix("object ")))
+            .and_then(|h| Oid::from_hex(h.trim()).ok());
+        match target {
+            Some(t) => cur = t,
+            None => return Ok(None),
+        }
+    }
+    Ok(None)
+}
+
+/// Commits reachable from `tips` (tag tips peeled), walking parents only.
+fn reachable_commits(
+    repo: &Repository,
+    tips: &[Oid],
+) -> Result<std::collections::HashSet<Oid>, ServerError> {
+    let mut seen = std::collections::HashSet::new();
+    let mut stack: Vec<Oid> = Vec::new();
+    for tip in tips {
+        stack.push(peel_annotated(repo, tip)?.unwrap_or(*tip));
+    }
+    while let Some(oid) = stack.pop() {
+        if !seen.insert(oid) {
+            continue;
+        }
+        let obj = match repo.store().get(&oid) {
+            Ok(o) => o,
+            Err(arks_store::StoreError::NotFound(_)) => continue,
+            Err(e) => return Err(ServerError::Msg(e.to_string())),
+        };
+        if obj.kind != arks_object::ObjectKind::Commit {
+            continue;
+        }
+        let commit = arks_object::Commit::decode(&obj.payload)
+            .map_err(|e| ServerError::Protocol(e.to_string()))?;
+        stack.extend(commit.parents);
+    }
+    Ok(seen)
+}
+
+/// Whether the first `want` line of the request lists capability `cap`.
+fn request_has_cap(body: &[u8], cap: &str) -> bool {
+    let mut offset = 0;
+    while offset < body.len() {
+        let Ok((packet, n)) = decode_packet(&body[offset..]) else {
+            break;
+        };
+        offset += n;
+        match packet {
+            Packet::Flush => break,
+            Packet::Data(payload) => {
+                let Ok(text) = decode_text_line(&payload) else {
+                    continue;
+                };
+                if let Some(rest) = text.strip_prefix("want ") {
+                    return rest.split_whitespace().any(|c| c == cap);
+                }
+            }
+            _ => {}
+        }
+    }
+    false
+}
+
 fn request_wants_sideband(body: &[u8]) -> bool {
     let mut offset = 0;
     while offset < body.len() {

@@ -214,9 +214,11 @@ fn clone_network(p: &Parsed, url: &str, dest: &Path) -> CliResult<()> {
         .value("filter")
         .map(|f| crate::cmd::remote::parse_filter(&f))
         .transpose()?;
+    let no_tags = p.flag("tags") == Some(false);
     let opts = arks_remote::FetchOptions {
         depth,
         filter,
+        tags: no_tags.then_some(false),
         ..Default::default()
     };
     if arks_remote::HttpRemoteUrl::parse(url).is_ok() {
@@ -230,7 +232,11 @@ fn clone_network(p: &Parsed, url: &str, dest: &Path) -> CliResult<()> {
             "repository '{url}' does not exist"
         )));
     }
-    let extra: Vec<String> = p.values("config");
+    let mut extra: Vec<String> = p.values("config");
+    if no_tags {
+        // git clone --no-tags also records remote.origin.tagOpt for later fetches.
+        extra.push("remote.origin.tagOpt=--no-tags".into());
+    }
     if !extra.is_empty() {
         let cfg = dest.join(".git/config");
         let mut text = fs::read_to_string(&cfg).unwrap_or_default();

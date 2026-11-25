@@ -58,6 +58,10 @@ pub struct FetchOptions {
     pub want_oids: Option<Vec<Oid>>,
     /// Force `.promisor` marking even without `filter` (demand-fetch packs).
     pub mark_promisor: bool,
+    /// Tag mode (git-fetch TAG AUTO-FOLLOWING): `None` follows the tags that
+    /// point into the fetched history, `Some(true)` fetches every advertised
+    /// tag (`--tags`, and `git clone`), `Some(false)` fetches none (`--no-tags`).
+    pub tags: Option<bool>,
 }
 
 /// Refs updated by one fetch, plus the peer HEAD branch when advertised.
@@ -281,9 +285,19 @@ where
     let wants: Vec<Oid> = if let Some(extra) = &opts.want_oids {
         extra.clone()
     } else {
+        // Want what the configured fetch refspecs map (git fetches only the
+        // refs they name), plus every tag under `--tags`.
         let mut tips = Vec::new();
         for r in &ad.refs {
-            if r.name.starts_with("refs/heads/") && !tips.contains(&r.oid) {
+            let by_spec = if specs.is_empty() {
+                r.name.starts_with("refs/heads/")
+            } else {
+                specs
+                    .iter()
+                    .any(|spec| map_refspec(spec, &r.name).is_some())
+            };
+            let tag_wanted = opts.tags == Some(true) && r.name.starts_with("refs/tags/");
+            if (by_spec || tag_wanted) && !tips.contains(&r.oid) {
                 tips.push(r.oid);
             }
         }
@@ -313,8 +327,18 @@ where
         ));
     }
 
-    let (cap_list, sideband) =
+    let (mut cap_list, sideband) =
         negotiate_fetch_caps(&ad.capabilities, need_shallow_cap, need_filter_cap);
+    // Auto-follow: ask the peer to add annotated tags that point into the pack.
+    if opts.tags.is_none()
+        && opts.want_oids.is_none()
+        && cap_advertised(&ad.capabilities, "include-tag")
+    {
+        if !cap_list.is_empty() {
+            cap_list.push(' ');
+        }
+        cap_list.push_str("include-tag");
+    }
     let haves = if opts.want_oids.is_some() {
         Vec::new()
     } else {
@@ -416,6 +440,7 @@ where
             }
         }
     }
+    store_fetched_tags(repo, ad, opts.tags, &mut updated)?;
     if let Some(branch) = &head_branch {
         if let Some(rest) = branch.strip_prefix("refs/heads/") {
             let tracking = format!("refs/remotes/{remote_name}/{rest}");
@@ -430,6 +455,42 @@ where
         head_branch,
         head_oid,
     })
+}
+
+/// Store advertised `refs/tags/*` per git-fetch TAG AUTO-FOLLOWING: with
+/// `--tags` every tag, by default every tag whose object is now local (the
+/// peer sent it, or it already was), never with `--no-tags`. A tag that
+/// already exists locally is left alone, as git does without `--force`; a
+/// configured refspec that already wrote the ref is not repeated.
+fn store_fetched_tags(
+    repo: &mut Repository,
+    ad: &Advertisement,
+    mode: Option<bool>,
+    updated: &mut Vec<(String, Oid)>,
+) -> Result<(), RemoteError> {
+    if mode == Some(false) {
+        return Ok(());
+    }
+    for r in &ad.refs {
+        if !r.name.starts_with("refs/tags/") || updated.iter().any(|(n, _)| n == &r.name) {
+            continue;
+        }
+        if repo.refs().resolve(&r.name).is_ok() {
+            continue;
+        }
+        let present = repo
+            .store()
+            .exists(&r.oid)
+            .map_err(|e| RemoteError::Msg(e.to_string()))?;
+        if !present {
+            continue;
+        }
+        repo.refs_mut()
+            .update(&r.name, &r.oid, None)
+            .map_err(|e| RemoteError::Msg(e.to_string()))?;
+        updated.push((r.name.clone(), r.oid));
+    }
+    Ok(())
 }
 
 /// Claimed filter-spec gate (S1/O2 + FS4 + G6 + sparse:oid).

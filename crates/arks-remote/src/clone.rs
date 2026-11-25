@@ -37,6 +37,8 @@ pub fn clone_http_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<()
     // Uses deferred_owned (no pack.to_vec). Never spawn a persist thread —
     // Docker multi-CPU ads made overlap thrash J-CLONE-LOCAL (~0.74).
     opts.defer_pack_disk = true;
+    // git clone copies every tag unless --no-tags.
+    opts.tags = opts.tags.or(Some(true));
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_http_with(repo, url, "origin", &opts)
     })
@@ -51,6 +53,8 @@ pub fn clone_ssh_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(),
     SshRemoteUrl::parse(url)?;
     let mut opts = opts.clone();
     opts.defer_pack_disk = true;
+    // git clone copies every tag unless --no-tags.
+    opts.tags = opts.tags.or(Some(true));
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_ssh_with(repo, url, "origin", &opts)
     })
@@ -65,6 +69,8 @@ pub fn clone_git_with(url: &str, dest: &Path, opts: &FetchOptions) -> Result<(),
     GitDaemonUrl::parse(url)?;
     let mut opts = opts.clone();
     opts.defer_pack_disk = true;
+    // git clone copies every tag unless --no-tags.
+    opts.tags = opts.tags.or(Some(true));
     clone_via_fetch(url, dest, move |repo, url| {
         fetch_git_with(repo, url, "origin", &opts)
     })
