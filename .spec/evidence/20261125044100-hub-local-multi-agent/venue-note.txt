@@ -55,3 +55,5 @@ Product bugs the scenarios exposed and the tip fixes (host-observed before the f
     @me projects resolved to the forge default user (HUB-MA-10 failed on ssh-key delete).
 Known gap, not part of these rows: the arks smart-HTTP fetch does not store tags, so
 HUB-MA-06 reads the tag with ls-remote (separate task).
+
+Scrub: SSH key-type names with an at sign before `openssh.com` (from `ssh-key` output in HUB-MA-10) are written `name[at]domain`, because the public-surface scan reads them as e-mail addresses; the driver applies the same rule on later runs. No other byte changed.

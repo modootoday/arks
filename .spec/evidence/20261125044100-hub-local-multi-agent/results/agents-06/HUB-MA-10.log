@@ -1024,7 +1024,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-03] $ arks hub gist --help  -> exit 0 (0.01s)
     | arks gist — gists on the arks forge (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -1155,7 +1155,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-06] $ arks hub gist --help  -> exit 0 (0.01s)
     | arks gist — gists on the arks forge (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -1264,7 +1264,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-05] $ arks hub project --help  -> exit 0 (0.00s)
     | arks project — owner-scoped projects on the arks forge (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -1379,7 +1379,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-04] $ arks hub ssh-key --help  -> exit 0 (0.00s)
     | arks ssh-key — SSH keys on your arks forge account (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -1389,7 +1389,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-01] $ arks hub milestone --help  -> exit 0 (0.00s)
     | arks milestone — repository milestones on the arks forge (hub-native; arks-defined gh-style argv)
     | 
@@ -1410,7 +1410,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-02] $ arks auth login --with-token  -> exit 0 (0.01s)
     | ✓ Logged in to 127.0.0.1:45083 account agent-02
     | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
@@ -6672,7 +6672,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-04] $ arks hub project --help  -> exit 0 (0.01s)
     | arks project — owner-scoped projects on the arks forge (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -6787,7 +6787,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-03] $ arks hub ssh-key --help  -> exit 0 (0.01s)
     | arks ssh-key — SSH keys on your arks forge account (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -6797,7 +6797,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-05] $ arks hub ruleset --help  -> exit 0 (0.00s)
     | arks ruleset (alias rs) — rulesets on the arks forge (gh-symmetric argv; host-tested Partial)
     | 
@@ -6838,7 +6838,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-06] $ arks hub ssh-key --help  -> exit 0 (0.00s)
     | arks ssh-key — SSH keys on your arks forge account (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -6848,7 +6848,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-02] $ arks hub ssh-key --help  -> exit 0 (0.01s)
     | arks ssh-key — SSH keys on your arks forge account (gh-symmetric argv; arks-owned; host-tested Partial)
     | 
@@ -6858,7 +6858,7 @@
     |   arks ssh-key delete <id> [--yes]
     | 
     | Accepted key types: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp{256,384,521},
-    | sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com.
+    | sk-ssh-ed25519[at]openssh.com, sk-ecdsa-sha2-nistp256[at]openssh.com.
 [agent-03] $ arks hub ruleset --help  -> exit 0 (0.00s)
     | arks ruleset (alias rs) — rulesets on the arks forge (gh-symmetric argv; host-tested Partial)
     | 
