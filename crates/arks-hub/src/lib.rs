@@ -27,6 +27,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+pub use forge::push_rules::{PushRefUpdate, push_verdicts};
 pub use serve::{
     ForgeListenRebindSlot, ForgeServeOptions, default_forge_data_dir, forge_serve_scheme,
     serve_forge_api, spawn_forge_api,

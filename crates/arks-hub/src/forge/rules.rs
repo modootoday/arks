@@ -9,8 +9,8 @@
 //!
 //! Enforcement: active rulesets gate `pr merge` on the forge (required approving
 //! reviews, required status contexts, linear history) unless the merge asks for
-//! the admin bypass; `evaluate` rulesets are reported but never block. Push-time
-//! enforcement in the Git server is not wired (reported by `ruleset check`).
+//! the admin bypass; `evaluate` rulesets are reported but never block. Pushes to
+//! the Git server of the same `arks serve` are checked by [`super::push_rules`].
 
 use super::{
     Req, RouteResult, invalid, iso8601, next_id, no_content, not_found, segments, str_field,
@@ -74,13 +74,17 @@ pub(crate) fn glob(pat: &str, s: &str) -> bool {
     go(pat.as_bytes(), s.as_bytes())
 }
 
-fn ref_matches(pat: &str, branch: &str, default_branch: &str) -> bool {
-    let full = format!("refs/heads/{branch}");
+/// Does a ref condition pattern match the full ref name `full`?
+fn ref_matches(pat: &str, full: &str, default_branch: &str) -> bool {
+    let short = full
+        .strip_prefix("refs/heads/")
+        .or_else(|| full.strip_prefix("refs/tags/"))
+        .unwrap_or(full);
     match pat {
         "~ALL" => true,
-        "~DEFAULT_BRANCH" => branch == default_branch,
-        p if p.starts_with("refs/") => glob(p, &full),
-        p => glob(p, branch),
+        "~DEFAULT_BRANCH" => full.strip_prefix("refs/heads/") == Some(default_branch),
+        p if p.starts_with("refs/") => glob(p, full),
+        p => glob(p, short),
     }
 }
 
@@ -92,6 +96,20 @@ fn repo_matches(rs: &Ruleset, name: &str) -> bool {
 
 /// Rulesets that apply to `branch` of `owner/repo` (repository first, then owner level).
 pub(crate) fn applicable(st: &HubStore, owner: &str, repo: &str, branch: &str) -> Vec<Ruleset> {
+    applicable_ref(st, owner, repo, &format!("refs/heads/{branch}"))
+}
+
+/// Rulesets (any enforcement but `disabled`) that apply to the full ref name
+/// `full`: `refs/heads/*` takes `branch` rulesets, `refs/tags/*` takes `tag`
+/// rulesets, other refs have none.
+pub(crate) fn applicable_ref(st: &HubStore, owner: &str, repo: &str, full: &str) -> Vec<Ruleset> {
+    let target = if full.starts_with("refs/heads/") {
+        "branch"
+    } else if full.starts_with("refs/tags/") {
+        "tag"
+    } else {
+        return Vec::new();
+    };
     let default = st
         .find_repo(owner, repo)
         .map(|r| r.default_branch.clone())
@@ -99,14 +117,14 @@ pub(crate) fn applicable(st: &HubStore, owner: &str, repo: &str, branch: &str) -
     st.db
         .rulesets
         .iter()
-        .filter(|rs| rs.owner == owner && rs.target == "branch" && rs.enforcement != "disabled")
+        .filter(|rs| rs.owner == owner && rs.target == target && rs.enforcement != "disabled")
         .filter(|rs| match &rs.repo {
             Some(r) => r == repo,
             None => repo_matches(rs, repo),
         })
         .filter(|rs| {
-            let inc = rs.include.iter().any(|p| ref_matches(p, branch, &default));
-            inc && !rs.exclude.iter().any(|p| ref_matches(p, branch, &default))
+            let inc = rs.include.iter().any(|p| ref_matches(p, full, &default));
+            inc && !rs.exclude.iter().any(|p| ref_matches(p, full, &default))
         })
         .cloned()
         .collect()
