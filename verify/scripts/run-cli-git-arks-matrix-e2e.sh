@@ -1291,13 +1291,13 @@ partial=$(awk -F, 'NR>1 && $3=="Partial" {c++} END{print c+0}' "$CSV")
 refuse=$(awk -F, 'NR>1 && $3=="Refuse/N/A" {c++} END{print c+0}' "$CSV")
 echo "cli-git-arks-matrix-e2e: Missing=$missing Partial=$partial Refuse/N/A=$refuse"
 
-# Spot-check: every Partial/Parity-candidate command must not print "command not implemented".
+# Spot-check: every Verified/Partial/Parity-candidate command must not print "command not implemented".
 fail=0
 checked=0
 while IFS=, read -r cmd category status target notes; do
   [[ "$cmd" == "git_command" ]] && continue
   case "$status" in
-    Partial|Parity-candidate|Synonym-wired) ;;
+    Verified|Partial|Parity-candidate|Synonym-wired) ;;
     *) continue ;;
   esac
   # Skip arks-only / non-dispatch noise.

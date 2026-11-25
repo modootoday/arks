@@ -3,7 +3,7 @@ id: sot:root/arks-in-scope-leftovers-wave
 title: In-scope leftovers wave — Phase 0 scope audit + Phase 1+ Claimed bars
 status: active
 created: 2026-11-11T03:35:56Z
-updated: 2026-11-19T23:30:00Z
+updated: 2026-11-25T03:40:00Z
 tags: [design, residual, scope-audit, hub, daemon, personality, no-invent-claimed, docker, spec-first]
 verify: manual
 rel:
@@ -64,7 +64,7 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | Hub v1 | Partial **67**; Missing **0**; Claimed **33** |
 | Hub later | Deferred **119** |
 | Hub OUT groups | Refuse/N/A **28** |
-| CLI survey | Partial **117**; Missing **0** |
+| CLI survey | Partial **117**; Missing **0** (**Q20 currency 2026-11-25:** Verified **128**, Partial **36**, Parity-candidate **21**, Synonym-wired **4**, arks-only **6**, Refuse/N/A **0** — [[evidence:root/20261125033117-cli-survey-currency-q20]]) |
 | Daemon | Partial **15**; Refuse/N/A **16**; Parity **5** |
 
 #### Scope table — EVERY remaining Partial / Missing / Refuse
@@ -82,7 +82,7 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 | **H-STUB-MISC** `label clone`, `auth refresh`, `status`, `api`, `search`/`org`/`label`/`release`/`run`/`workflow`/`pr`/`issue`/`repo`/`auth` group-help | gh | **YES** | Inventory in pillar; group-help Claimed bar = discoverable help exit 0; `auth refresh` may stay Partial (OAuth) with cite |
 | **H-LATER** Deferred×119 (`phase=later`) | OUT | **NO** | Not v1 DoD; phase demotion ([[sot:root/arks-hub-gh-command-matrix]]); do not invent Claimed |
 | **H-OUT** `extension*` / `copilot` / `skill*` / `agent-task*` / `auth setup-git` / `licenses` / `preview*` | OUT | **NO** | CSV `out-of-scope` Refuse; [[sot:root/arks-claimed-residual-gates]] non-goals |
-| **C-SURVEY** CLI survey Partial×117 | git | **YES** | Pillar tracks Partial after Missing=0 ([[sot:root/verify-cleanroom-symmetry-matrix]]; [[sot:root/arks-cli-personality-factory]]). Named expand Claimed; remainder honest Partial |
+| **C-SURVEY** CLI survey Partial×117 | git | **YES** | Pillar tracks Partial after Missing=0 ([[sot:root/verify-cleanroom-symmetry-matrix]]; [[sot:root/arks-cli-personality-factory]]). Named expand Claimed; remainder honest Partial. **Q20:** 128 rows Verified from the argv receipt, 36 Partial with the derived reason in each note ([[evidence:root/20261125033117-cli-survey-currency-q20]]) |
 | **C-REFUSE** CLI Refuse/N/A×47 | OUT | **NO** | Explicit refuse-with-reason inventory |
 | **D-FLAGS** Daemon Partial×15 peer-mapped (`--verbose`, timeouts, listen/port, max-connections, strict-paths, base-path, reuseaddr, enable/disable, dirs, upload-archive/receive-pack services, git:// client pointer) | daemon | **YES** | Daemon pillar deepen Partial→Parity ([[sot:root/arks-daemon-product-intent]]; [[sot:root/arks-daemon-git-command-matrix]]) |
 | **D-REFUSE** Daemon Refuse (inetd, privilege drop, templates, user-path, base-path-relaxed, access-hook, informative-errors toggle, pid-file, daemon.* override, …) | OUT | **NO** | Documented non-goals; keep Refuse |
@@ -95,7 +95,7 @@ Tip inventory @ `484756a` ([[research:root/20261111123556]]):
 
 | Bucket | Count (approx) |
 |--------|----------------|
-| In-scope open (hub v1 Partial + CLI Partial + daemon Partial) | **67 + 117 + 15 = 199** surface rows |
+| In-scope open (hub v1 Partial + CLI Partial + daemon Partial) | **67 + 117 + 15 = 199** surface rows (**2026-11-25 currency:** hub v1 Partial 0 (Q17), CLI Partial 36 (Q20), daemon Partial 0 (Q19) = **36**) |
 | Out-of-scope / terminal Refuse / later / closed | Hub later 119 + hub OUT 28 + CLI Refuse 47 + daemon Refuse 16 + SysV/L9/G8/Impossible + serve already Claimed |
 
 ### Ordered backlog (Phase 1+)

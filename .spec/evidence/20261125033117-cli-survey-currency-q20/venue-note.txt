@@ -1,0 +1,11 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5, cargo 1.99.1), run
+2026-11-25 inside a hosted cloud session with a local dockerd, following the venue note of
+20261125023636-argv-corpus-receipt-q-final: Cargo offline against the host registry cache mounted
+read-only (session-local override, not tracked), dependencies pinned by Cargo.lock. The product
+tree was main bc58f1c (the Q20 commits change only Specfold, verify scripts and this matrix).
+Inside the image: cargo build -p arks --release; the three family-a3-* corpora one after the other
+with verify/scripts/run-cli-flag-corpus-compare.sh against /cargo-target/release/arks; then
+cargo test -p arks for the seven A3 crate-test targets. a3-rerun/ holds the scrubbed results
+(results.tsv per corpus, summary.json per corpus, test names and results).
+derived-status.tsv is the output of verify/scripts/derive-cli-survey-status.py on the source
+receipt (survey_before = the CSV before Q20); it reads no host state.

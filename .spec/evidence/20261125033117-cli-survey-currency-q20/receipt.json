@@ -1,0 +1,22 @@
+{
+  "gate": "cli-survey-currency (queue Q20)",
+  "rule": "sot:root/cli-git-help-matrix rule 7",
+  "source_receipt": ".spec/evidence/20261125023636-argv-corpus-receipt-q-final/",
+  "derivation": "python3 verify/scripts/derive-cli-survey-status.py --receipt .spec/evidence/20261125023636-argv-corpus-receipt-q-final --supplement .spec/evidence/20261125033117-cli-survey-currency-q20/supplement.tsv --out .spec/evidence/20261125033117-cli-survey-currency-q20/derived-status.tsv --apply",
+  "derived": {"rows": 195, "partial_before": 164, "verified": 128, "partial_after": 36, "unchanged_other": 31},
+  "a3_rows": {"total": 48, "verified": 33, "partial": 15},
+  "git_personality_exit": {"verified_commands": 128, "corpus_lines": 4030, "exit_code_same": 3962, "reasoned_exit_diff": 68},
+  "a3_rerun": {
+    "venue": "docker arks-verify-m1:0.1.0",
+    "git": "git version 2.39.5",
+    "product_tree": "bc58f1c",
+    "corpora": {
+      "family-a3-helpers": {"lines": 161, "same": 161},
+      "family-a3-tools": {"lines": 165, "same": 165},
+      "family-a3-gui": {"lines": 35, "same": 9, "diff": 26, "diff_class": "design (same 26 lines as the source receipt)"}
+    },
+    "line_verdicts_vs_source_receipt": "identical except family-a3-tools L113 (the timing-class line), SAME in this run",
+    "crate_tests": {"a3_helpers_cli": "11/11", "gui_cli": "10/10", "credential_os_cli": "6/6", "send_email_smtp": "16/16", "update_check_cli": "4/4", "tool_bridges": "8/8", "instaweb_pages": "5/5", "total": "60/60"}
+  },
+  "timestamp": "2026-11-25T03:31:17Z"
+}
