@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261111042400
 title: Hub local multi-agent PR/issue scenario scaffolding
-status: active
+status: archived
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-25T02:45:00Z
+updated: 2026-11-25T05:15:00Z
 tags: [arks-hub, multi-agent, clean-room, scenario, scaffold, phased, no-invent-claimed]
 verify: manual
 rel:
@@ -15,6 +15,8 @@ rel:
   implements:
     - sot:root/arks-hub-local-multi-agent-pr
 ---
+
+**Status (2026-11-25, queue Q15 + Q16):** active → `archived` (**done**) — P1–P3 closed by the Docker receipt [[evidence:root/20261125044100-hub-local-multi-agent]] (tip `ec4bf43`, 6 and 12 agents, exit 0): SMOKE and HUB-MA-01…08 and 10 Claimed, HUB-MA-09 Refuse/N/A ([[adr:root/20261119230000]] item 3); `verify/scripts/run-hub-local-multi-agent.sh` runs every row and fails closed.
 
 **Status (2026-11-25, queue Q14 audit):** stays **active**: P0 is done (scenario SoT, umbrella link, SKIP runner), but every HUB-MA-* row in [[sot:root/arks-hub-local-multi-agent-pr]] is still Scaffold and `verify/scripts/run-hub-local-multi-agent.sh` only prints SKIP; P1–P2 are queue unit Q15 and P3 is Q16 of [[plan:root/20261124000000]].
 
@@ -37,9 +39,9 @@ Land the **scenario framework** for N agents collaborating via **local** `arks h
 | Phase | Deliverable | Disposition |
 |-------|-------------|-------------|
 | **P0** | Scenario SoT + umbrella link + SKIP runner | **Done when this plan + SoT land** |
-| **P1** | Local `arks hub serve` loopback smoke (1 agent) | Scaffold → Claimed with evidence |
-| **P2** | HUB-MA-01…05 concurrent N-agent load | Scaffold → Claimed per ID |
-| **P3** | HUB-MA-06…10 + soak (HUB-MA-10) | later / framework |
+| **P1** | Local `arks hub serve` loopback smoke (1 agent) | **Done**: SMOKE against `arks serve` [[evidence:root/20261125044100-hub-local-multi-agent]] |
+| **P2** | HUB-MA-01…05 concurrent N-agent load | **Done**: HUB-MA-01…05 and 07 Claimed [[evidence:root/20261125044100-hub-local-multi-agent]] |
+| **P3** | HUB-MA-06…10 + soak (HUB-MA-10) | **Done**: 06, 08, 10 Claimed; 09 Refuse/N/A [[evidence:root/20261125044100-hub-local-multi-agent]] |
 
 ## Acceptance (P0)
 

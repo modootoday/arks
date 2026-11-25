@@ -1,0 +1,28 @@
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-01] $ arks repo view local/playground --json nameWithOwner,isEmpty  -> exit 0 (0.01s)
+    | {
+    |   "isEmpty": true,
+    |   "nameWithOwner": "local/playground"
+    | }
+[agent-01] $ arks issue list --json number  -> exit 0 (0.01s)
+    | []
+[agent-01] $ arks repo clone local/playground  -> exit 0 (0.01s)
+    | clone_url=http://127.0.0.1:34753/local/playground.git
+    | recipe=arks clone http://127.0.0.1:34753/local/playground.git playground
+    | note: repo clone prints the arks commands to run; it never spawns git or gh
+[agent-01] $ arks clone -q http://127.0.0.1:34753/local/playground.git /tmp/arks-hub-ma.eDLoIc/agents/agent-01/work  -> exit 0 (0.00s)
+[agent-01] $ arks add README.md shared.txt  -> exit 0 (0.00s)
+[agent-01] $ arks commit -q -m Seed playground  -> exit 0 (0.00s)
+[agent-01] $ arks push -q origin main  -> exit 0 (0.01s)
+[agent-01] $ arks repo view local/playground --json isEmpty,defaultBranchRef  -> exit 0 (0.01s)
+    | {
+    |   "defaultBranchRef": {
+    |     "name": "main"
+    |   },
+    |   "isEmpty": false
+    | }
+== SMOKE PASS (0.09s)

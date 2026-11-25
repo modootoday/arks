@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-type Leaf = fn(&Ctx, &[String], &mut dyn Write) -> Res;
+pub(super) type Leaf = fn(&Ctx, &[String], &mut dyn Write) -> Res;
 
 pub(super) struct Forge {
     stop: Arc<AtomicBool>,
@@ -65,6 +65,18 @@ impl Forge {
             handle: Some(handle),
             dir,
             ctx,
+        }
+    }
+
+    /// Register `token` as account `login` on this forge and return its client context.
+    pub(super) fn account(&self, login: &str, token: &str) -> Ctx {
+        let body = json!({"token": token, "login": login}).to_string();
+        crate::http_min::http_exchange(&self.ctx.base, "POST", "/login", None, Some(&body))
+            .unwrap();
+        Ctx {
+            base: self.ctx.base.clone(),
+            token: Some(token.into()),
+            default_repo: self.ctx.default_repo.clone(),
         }
     }
 
@@ -564,4 +576,39 @@ fn leaves_without_token_map_to_auth_failure() {
     let mut out = Vec::new();
     let r = gist::run(&ctx, &["list".to_string()], &mut out);
     assert!(matches!(r, Err(Fail::Auth(_))));
+}
+
+/// User keys, gists and `@me` projects belong to the token's account (multi-agent
+/// SoT concurrency contract item 5); a key stays unique across the forge.
+#[test]
+fn per_account_keys_gists_and_projects() {
+    let f = Forge::start();
+    let bob = f.account("bob", "tok-bob");
+    let as_bob = |leaf: Leaf, argv: &[&str]| -> Result<String, Fail> {
+        let args: Vec<String> = argv.iter().map(|s| s.to_string()).collect();
+        let mut out = Vec::new();
+        leaf(&bob, &args, &mut out)?;
+        Ok(String::from_utf8(out).unwrap())
+    };
+    let key = f.file("id.pub", &ssh_ed25519(7, "local@example.com"));
+    f.ok(keys::run_ssh, &["add", &key, "-t", "mine"]);
+    let api = |c: &Ctx, path: &str| c.api("GET", path, None).unwrap();
+    assert_eq!(api(&f.ctx, "/user/keys").as_array().unwrap().len(), 1);
+    assert_eq!(api(&bob, "/user/keys"), json!([]));
+    assert!(bob.api("DELETE", "/user/keys/1", None).is_err());
+    assert!(
+        as_bob(keys::run_ssh, &["add", &key, "-t", "dup"]).is_err(),
+        "key in use"
+    );
+    let bkey = f.file("bob.pub", &ssh_ed25519(8, "bob@example.com"));
+    as_bob(keys::run_ssh, &["add", &bkey, "-t", "bobs"]).unwrap();
+    assert_eq!(api(&f.ctx, "/user/keys").as_array().unwrap().len(), 1);
+    let a = f.file("a.txt", "alpha\n");
+    let url = f.ok(gist::run, &["create", &a, "-d", "secret"]);
+    let id = url.trim().rsplit('/').next().unwrap().to_string();
+    assert!(as_bob(gist::run, &["list"]).unwrap().trim().is_empty());
+    assert!(as_bob(gist::run, &["delete", &id, "--yes"]).is_err());
+    assert!(f.ok(gist::run, &["list"]).contains("secret"));
+    f.ok(project::run, &["create", "--title", "Mine"]);
+    assert!(!as_bob(project::run, &["list"]).unwrap().contains("Mine"));
 }

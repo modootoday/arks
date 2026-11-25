@@ -1,0 +1,59 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip ec4bf43,
+run 2026-11-25 inside a hosted cloud session with a local dockerd (queue units Q15 and Q16).
+Command: compose service dod-hub-matrix with the entrypoint replaced by
+`cargo build -p arks --release` and verify/scripts/run-hub-local-multi-agent.sh
+(ARKS_BIN=/cargo-target/release/arks). Same method as the Q17 / Q18 receipts: Cargo ran
+offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted read-only,
+dependencies pinned and checksummed by Cargo.lock.
+Session-local overrides (not tracked): a private Cargo target volume, the checkout's Git
+directory mounted read-only with safe.directory set so the runner resolves the tip, and
+ARKS_HUB_MA_OUT pointed at a scratch directory that was then moved here.
+Two runs, both exit 0 (results/*/exit.txt, results/*/RUN.log):
+  results/agents-06  6 agents, soak rounds 2 (default settings), every transcript kept.
+  results/agents-12  12 agents, soak rounds 3; the HUB-MA-10 transcript (about 1.5 MB)
+                     was dropped, its summary and receipt are kept.
+Topology: one `arks serve --no-ssh` process on loopback serves the forge API and smart
+HTTP for the forge's local/playground Git directory. Each agent is its own forge account:
+own HOME, token file and hosts file, logged in with its own token through
+`arks auth login --with-token`. Agents act at once (threads released by a barrier, each
+spawning the arks binary); the runner never spawns gh or git.
+What each scenario asserts (6-agent numbers; the 12-agent run doubles them):
+  SMOKE      health, /user is the agent, empty forge; main seeded over smart HTTP.
+  HUB-MA-01  18 concurrent issue creates get numbers 1..18, each with its author; every
+             agent views another agent's issue.
+  HUB-MA-02  24 concurrent comments on one issue all land, ids unique, each author's own
+             order kept.
+  HUB-MA-03  6 agents clone, branch, commit and push at once, then open 6 PRs: numbers
+             1..6, head/base/author right, one commit and only the agent's files each,
+             all mergeable; two agents edit shared.txt (a conflict pair).
+  HUB-MA-04  every agent comments on and reviews every other PR (one approval each), posts
+             a commit status, `pr checks` shows it; all authors merge at once: exactly one
+             of the conflict pair is refused "not mergeable" (CONFLICTING), its author merges
+             main locally, resolves the conflict, pushes and merges; main holds every file
+             and the resolved shared.txt.
+  HUB-MA-05  concurrent `label create` of one name succeeds once; concurrent issue edit /
+             pr edit --add-label and --remove-label keep every agent's change.
+  HUB-MA-06  two agents race `release create v1.0.0` (one wins) while four keep commenting
+             and reading; all 24 + 24 comments land; every agent sees the one release,
+             downloads the identical asset; the tag is main's tip (via ls-remote).
+  HUB-MA-07  each agent's /user, `auth token` and `auth status` show only its own account
+             over 5 rounds; a second account switch authors as that account; a missing
+             or unregistered token is refused; one agent's logout leaves the others alone.
+  HUB-MA-08  readers fan out `search issues|prs|code|commits`, `pr status` and
+             `hub status` for 4 rounds while a writer adds noise; every result matches the
+             seeded set (own PR, review requests, assigned issues included).
+  HUB-MA-09  N/A (adr:root/20261119230000 item 3): every agent's run / workflow call exits 2
+             with the platform-only refusal and reaches no forge (closed API port).
+  HUB-MA-10  every agent walks all 171 v1 hub targets of verify/matrices/
+             hub-gh-arks-e2e-matrix.csv in its own repositories, all at once, per round;
+             the ledger shows 171/171 touched (2141 calls; 6415 in the 12-agent run).
+Product bugs the scenarios exposed and the tip fixes (host-observed before the fixes):
+  - issue edit / pr edit label and assignee changes were read-modify-write of the whole
+    set, so concurrent agents dropped each other's labels (HUB-MA-05 failed);
+  - pr view --json files / commits were always empty, comment rows had no id;
+  - /user/keys, /user/gpg_keys and /gists showed and deleted every account's data, and
+    @me projects resolved to the forge default user (HUB-MA-10 failed on ssh-key delete).
+Known gap, not part of these rows: the arks smart-HTTP fetch does not store tags, so
+HUB-MA-06 reads the tag with ls-remote (separate task).
+
+Scrub: SSH key-type names with an at sign before `openssh.com` (from `ssh-key` output in HUB-MA-10) are written `name[at]domain`, because the public-surface scan reads them as e-mail addresses; the driver applies the same rule on later runs. No other byte changed.

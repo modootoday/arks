@@ -1,0 +1,13 @@
+hub-local-multi-agent: tip=ec4bf43
+hub-local-multi-agent: SMOKE PASS (0.09s)
+hub-local-multi-agent: HUB-MA-01 PASS (0.09s)
+hub-local-multi-agent: HUB-MA-02 PASS (0.17s)
+hub-local-multi-agent: HUB-MA-03 PASS (0.17s)
+hub-local-multi-agent: HUB-MA-04 PASS (0.67s)
+hub-local-multi-agent: HUB-MA-05 PASS (0.32s)
+hub-local-multi-agent: HUB-MA-06 PASS (0.72s)
+hub-local-multi-agent: HUB-MA-07 PASS (0.27s)
+hub-local-multi-agent: HUB-MA-08 PASS (1.05s)
+hub-local-multi-agent: HUB-MA-09 N/A (0.03s)
+hub-local-multi-agent: HUB-MA-10 PASS (5.46s)
+hub-local-multi-agent: all selected scenarios PASS (docker-dod-hub-matrix; receipt /workspace/verify/.hub-local-multi-agent-out/receipt.json)

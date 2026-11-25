@@ -1,0 +1,31 @@
+{
+  "schema": "arks-hub-local-multi-agent/v1",
+  "gate": "HUB-MA",
+  "sot": "sot:root/arks-hub-local-multi-agent-pr",
+  "disposition": "product-path-run",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "ec4bf43",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "git_version": "2.39.5",
+  "runner": "verify/scripts/run-hub-local-multi-agent.sh",
+  "runs": [
+    {"agents": 6, "soak_rounds": 2, "exit": 0, "results": "results/agents-06"},
+    {"agents": 12, "soak_rounds": 3, "exit": 0, "results": "results/agents-12"}
+  ],
+  "scenarios": {
+    "SMOKE": "PASS",
+    "HUB-MA-01": "PASS",
+    "HUB-MA-02": "PASS",
+    "HUB-MA-03": "PASS",
+    "HUB-MA-04": "PASS",
+    "HUB-MA-05": "PASS",
+    "HUB-MA-06": "PASS",
+    "HUB-MA-07": "PASS",
+    "HUB-MA-08": "PASS",
+    "HUB-MA-09": "N/A",
+    "HUB-MA-10": "PASS"
+  },
+  "hub_ma_09": "Actions are GitHub-platform-only (adr:root/20261119230000 item 3); the run checks that every agent's run/workflow call refuses with exit 2 and reaches no forge",
+  "hub_ma_10_v1_targets_touched": "171/171",
+  "timestamp": "2026-11-25T04:41:26Z"
+}

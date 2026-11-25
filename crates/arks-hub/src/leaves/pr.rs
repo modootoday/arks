@@ -7,8 +7,8 @@
 //! in-process or printed as the `arks …` commands to run; arks never spawns git.
 
 use super::common::{
-    Local, body_of, edit_text, load_recover, names, parse_number, save_recover, title_body, upper,
-    url_repo,
+    ListEdits, Local, body_of, edit_text, load_recover, names, parse_number, save_recover,
+    title_body, upper, url_repo,
 };
 use super::{Args, Ctx, EXPORT, Fail, Res, arr, json_out, n, row, s, usage, web};
 use serde_json::{Map, Value, json};
@@ -293,6 +293,25 @@ fn resolve(ctx: &Ctx, a: &Args<'_>, arg: Option<&str>) -> Result<((String, Strin
         .cloned()
         .ok_or_else(|| Fail::Api(format!("no pull requests found for branch {branch:?}")))?;
     Ok(((o, r), p))
+}
+
+/// gh-named commit row (`pr view --json commits`) from a forge commit.
+fn gh_commit(c: &Value) -> Value {
+    let msg = c["commit"]["message"].as_str().unwrap_or("");
+    let (head, body) = msg.split_once("\n\n").unwrap_or((msg, ""));
+    json!({
+        "oid": c["sha"],
+        "messageHeadline": head.lines().next().unwrap_or(""),
+        "messageBody": body,
+        "authoredDate": c["commit"]["author"]["date"],
+        "committedDate": c["commit"]["committer"]["date"],
+        "authors": [{
+            "name": c["commit"]["author"]["name"],
+            "email": c["commit"]["author"]["email"],
+            "login": c["author"]["login"],
+            "id": "",
+        }],
+    })
 }
 
 fn pr_path(o: &str, r: &str, p: &Value) -> String {
@@ -789,7 +808,25 @@ fn view(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         let mut m = m.clone();
         if a.get(&["--json"]).is_some_and(|j| j.contains("comments")) {
             let c = comments()?;
-            m.insert("comments".into(), Value::Array(arr(&c).iter().map(|c| json!({"author": {"login": c["user"]["login"]}, "body": c["body"], "createdAt": c["created_at"]})).collect()));
+            m.insert(
+                "comments".into(),
+                Value::Array(arr(&c).iter().map(super::common::gh_comment).collect()),
+            );
+        }
+        let wants = |f: &str| {
+            a.get(&["--json"])
+                .is_some_and(|j| j.split(',').any(|x| x.trim() == f))
+        };
+        if wants("files") {
+            let f = ctx.get(&format!("{}/files", pr_path(&o, &r, &p)))?;
+            m.insert("files".into(), Value::Array(arr(&f).iter().map(|f| json!({"path": f["filename"], "additions": f["additions"], "deletions": f["deletions"]})).collect()));
+        }
+        if wants("commits") {
+            let c = ctx.get(&format!("{}/commits", pr_path(&o, &r, &p)))?;
+            m.insert(
+                "commits".into(),
+                Value::Array(arr(&c).iter().map(gh_commit).collect()),
+            );
         }
         json_out(out, &a, std::slice::from_ref(&m), JSON_FIELDS, true)?;
         return Ok(());
@@ -977,66 +1014,41 @@ fn edit(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
     if let Some(b) = a.get(&["-B", "--base"]) {
         patch.insert("base".into(), json!(b));
     }
-    let edit_list = |key: &str,
-                     cur: Vec<String>,
-                     add: Vec<String>,
-                     rm: Vec<String>,
-                     patch: &mut Map<String, Value>| {
-        if add.is_empty() && rm.is_empty() {
-            return;
-        }
-        let mut v: Vec<String> = cur.into_iter().filter(|x| !rm.contains(x)).collect();
+    let edits = ListEdits {
+        labels: (a.list(&["--add-label"]), a.list(&["--remove-label"])),
+        assignees: (
+            ctx.whos(&a.list(&["--add-assignee"]))?,
+            ctx.whos(&a.list(&["--remove-assignee"]))?,
+        ),
+        reviewers: (a.list(&["--add-reviewer"]), a.list(&["--remove-reviewer"])),
+    };
+    let (add, rm) = (a.list(&["--add-project"]), a.list(&["--remove-project"]));
+    if !add.is_empty() || !rm.is_empty() {
+        let mut v: Vec<String> = arr(&p["projects"])
+            .iter()
+            .filter_map(|x| x.as_str().map(str::to_string))
+            .filter(|x| !rm.contains(x))
+            .collect();
         for x in add {
             if !v.contains(&x) {
                 v.push(x);
             }
         }
-        patch.insert(key.into(), json!(v));
-    };
-    let cur = |key: &str, field: &str| -> Vec<String> {
-        arr(&p[key])
-            .iter()
-            .filter_map(|x| x[field].as_str().or(x.as_str()).map(str::to_string))
-            .collect()
-    };
-    edit_list(
-        "labels",
-        cur("labels", "name"),
-        a.list(&["--add-label"]),
-        a.list(&["--remove-label"]),
-        &mut patch,
-    );
-    edit_list(
-        "assignees",
-        cur("assignees", "login"),
-        ctx.whos(&a.list(&["--add-assignee"]))?,
-        ctx.whos(&a.list(&["--remove-assignee"]))?,
-        &mut patch,
-    );
-    edit_list(
-        "reviewers",
-        cur("requested_reviewers", "login"),
-        a.list(&["--add-reviewer"]),
-        a.list(&["--remove-reviewer"]),
-        &mut patch,
-    );
-    edit_list(
-        "projects",
-        cur("projects", ""),
-        a.list(&["--add-project"]),
-        a.list(&["--remove-project"]),
-        &mut patch,
-    );
+        patch.insert("projects".into(), json!(v));
+    }
     if let Some(m) = a.get(&["-m", "--milestone"]) {
         patch.insert("milestone".into(), json!(m));
     }
     if a.has(&["--remove-milestone"]) {
         patch.insert("milestone".into(), Value::Null);
     }
-    if patch.is_empty() {
+    if patch.is_empty() && edits.is_empty() {
         return usage("specify at least one field to edit (see --help)");
     }
-    ctx.api("PATCH", &pr_path(&o, &r, &p), Some(&Value::Object(patch)))?;
+    if !patch.is_empty() {
+        ctx.api("PATCH", &pr_path(&o, &r, &p), Some(&Value::Object(patch)))?;
+    }
+    edits.apply(ctx, &pr_path(&o, &r, &p))?;
     writeln!(
         out,
         "{}",

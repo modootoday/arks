@@ -1,0 +1,278 @@
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-04/.config/arks/hub-token
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-03/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-06/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-05/.config/arks/hub-token
+[agent-01] $ arks issue create -t label storm -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-01] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-01] $ arks checkout -q -B label-storm origin/main  -> exit 0 (0.00s)
+[agent-01] $ arks add storm.txt  -> exit 0 (0.00s)
+[agent-01] $ arks commit -q -m Label storm target  -> exit 0 (0.00s)
+[agent-01] $ arks push -q origin label-storm  -> exit 0 (0.03s)
+[agent-01] $ arks pr create -H label-storm -B main -t label storm -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-01] $ arks label create ma-agent-01 -c 00ff00 -d agent-01  -> exit 0 (0.01s)
+    | ✓ Label "ma-agent-01" created in local/playground
+[agent-06] $ arks label create ma-agent-06 -c 00ff00 -d agent-06  -> exit 0 (0.01s)
+    | ✓ Label "ma-agent-06" created in local/playground
+[agent-03] $ arks label create ma-agent-03 -c 00ff00 -d agent-03  -> exit 0 (0.01s)
+    | ✓ Label "ma-agent-03" created in local/playground
+[agent-02] $ arks label create ma-agent-02 -c 00ff00 -d agent-02  -> exit 0 (0.01s)
+    | ✓ Label "ma-agent-02" created in local/playground
+[agent-05] $ arks label create ma-agent-05 -c 00ff00 -d agent-05  -> exit 0 (0.02s)
+    | ✓ Label "ma-agent-05" created in local/playground
+[agent-04] $ arks label create ma-agent-04 -c 00ff00 -d agent-04  -> exit 0 (0.02s)
+    | ✓ Label "ma-agent-04" created in local/playground
+[agent-06] $ arks label create ma-shared -c ff0000  -> exit 0 (0.01s)
+    | ✓ Label "ma-shared" created in local/playground
+[agent-01] $ arks label create ma-shared -c ff0000  -> exit 1 (0.01s)
+    | arks label create: label with name "ma-shared" already exists; use `--force` to update its color and description
+[agent-02] $ arks label create ma-shared -c ff0000  -> exit 1 (0.01s)
+    | arks label create: label with name "ma-shared" already exists; use `--force` to update its color and description
+[agent-03] $ arks label create ma-shared -c ff0000  -> exit 1 (0.01s)
+    | arks label create: label with name "ma-shared" already exists; use `--force` to update its color and description
+[agent-04] $ arks label create ma-shared -c ff0000  -> exit 1 (0.01s)
+    | arks label create: label with name "ma-shared" already exists; use `--force` to update its color and description
+[agent-05] $ arks label create ma-shared -c ff0000  -> exit 1 (0.01s)
+    | arks label create: label with name "ma-shared" already exists; use `--force` to update its color and description
+[agent-01] $ arks label list -L 500 --json name  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "name": "ma-agent-01"
+    |   },
+    |   {
+    |     "name": "ma-agent-06"
+    |   },
+    |   {
+    |     "name": "ma-agent-03"
+    |   },
+    |   {
+    |     "name": "ma-agent-02"
+    |   },
+    |   {
+    |     "name": "ma-agent-05"
+    |   },
+    |   {
+    |     "name": "ma-agent-04"
+    |   },
+    |   {
+    |     "name": "ma-shared"
+    |   }
+    | ]
+[agent-02] $ arks issue edit 20 --add-label ma-agent-02 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-05] $ arks issue edit 20 --add-label ma-agent-05 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-04] $ arks issue edit 20 --add-label ma-agent-04 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-03] $ arks issue edit 20 --add-label ma-agent-03 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-01] $ arks issue edit 20 --add-label ma-agent-01 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-06] $ arks issue edit 20 --add-label ma-agent-06 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-02] $ arks pr edit 7 --add-label ma-agent-02 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-05] $ arks pr edit 7 --add-label ma-agent-05 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-03] $ arks pr edit 7 --add-label ma-agent-03 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-06] $ arks pr edit 7 --add-label ma-agent-06 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-04] $ arks pr edit 7 --add-label ma-agent-04 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-01] $ arks pr edit 7 --add-label ma-agent-01 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-05] $ arks issue edit 20 --add-label ma-agent-05 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-02] $ arks issue edit 20 --add-label ma-agent-02 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-06] $ arks issue edit 20 --add-label ma-agent-06 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-01] $ arks issue edit 20 --add-label ma-agent-01 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-03] $ arks issue edit 20 --add-label ma-agent-03 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-04] $ arks issue edit 20 --add-label ma-agent-04 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-05] $ arks pr edit 7 --add-label ma-agent-05 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-02] $ arks pr edit 7 --add-label ma-agent-02 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-04] $ arks pr edit 7 --add-label ma-agent-04 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-06] $ arks pr edit 7 --add-label ma-agent-06 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-03] $ arks pr edit 7 --add-label ma-agent-03 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-01] $ arks pr edit 7 --add-label ma-agent-01 --add-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-01] $ arks issue view 20 --json labels  -> exit 0 (0.01s)
+    | {
+    |   "labels": [
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-02",
+    |       "id": "LA_4",
+    |       "name": "ma-agent-02"
+    |     },
+    |     {
+    |       "color": "ff0000",
+    |       "description": "",
+    |       "id": "LA_7",
+    |       "name": "ma-shared"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-05",
+    |       "id": "LA_5",
+    |       "name": "ma-agent-05"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-06",
+    |       "id": "LA_2",
+    |       "name": "ma-agent-06"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-03",
+    |       "id": "LA_3",
+    |       "name": "ma-agent-03"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-01",
+    |       "id": "LA_1",
+    |       "name": "ma-agent-01"
+    |     },
+    |     {
+    |       "color": "00ff00",
+[agent-01] $ arks pr view 7 --json labels  -> exit 0 (0.01s)
+    | {
+    |   "labels": [
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-02",
+    |       "name": "ma-agent-02"
+    |     },
+    |     {
+    |       "color": "ff0000",
+    |       "description": "",
+    |       "name": "ma-shared"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-05",
+    |       "name": "ma-agent-05"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-03",
+    |       "name": "ma-agent-03"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-06",
+    |       "name": "ma-agent-06"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-04",
+    |       "name": "ma-agent-04"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-01",
+    |       "name": "ma-agent-01"
+    |     }
+    |   ]
+    | }
+[agent-01] $ arks issue edit 20 --remove-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-03] $ arks issue edit 20 --remove-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-05] $ arks issue edit 20 --remove-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-02] $ arks issue edit 20 --remove-label ma-shared --remove-label ma-agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-06] $ arks issue edit 20 --remove-label ma-shared --remove-label ma-agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-04] $ arks issue edit 20 --remove-label ma-shared --remove-label ma-agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/20
+[agent-03] $ arks pr edit 7 --remove-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-01] $ arks pr edit 7 --remove-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-05] $ arks pr edit 7 --remove-label ma-shared  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-02] $ arks pr edit 7 --remove-label ma-shared --remove-label ma-agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-06] $ arks pr edit 7 --remove-label ma-shared --remove-label ma-agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-04] $ arks pr edit 7 --remove-label ma-shared --remove-label ma-agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/7
+[agent-01] $ arks issue view 20 --json labels  -> exit 0 (0.01s)
+    | {
+    |   "labels": [
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-05",
+    |       "id": "LA_5",
+    |       "name": "ma-agent-05"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-03",
+    |       "id": "LA_3",
+    |       "name": "ma-agent-03"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-01",
+    |       "id": "LA_1",
+    |       "name": "ma-agent-01"
+    |     }
+    |   ]
+    | }
+[agent-01] $ arks pr view 7 --json labels  -> exit 0 (0.01s)
+    | {
+    |   "labels": [
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-05",
+    |       "name": "ma-agent-05"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-03",
+    |       "name": "ma-agent-03"
+    |     },
+    |     {
+    |       "color": "00ff00",
+    |       "description": "agent-01",
+    |       "name": "ma-agent-01"
+    |     }
+    |   ]
+    | }
+[agent-01] $ arks issue list -l ma-agent-01 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 20
+    |   }
+    | ]
+== HUB-MA-05 PASS (0.32s)

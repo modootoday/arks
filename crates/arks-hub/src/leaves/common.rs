@@ -252,6 +252,59 @@ pub(crate) fn iso_secs(s: &str) -> Option<u64> {
     u64::try_from(days * 86_400 + hh * 3_600 + mm * 60 + ss).ok()
 }
 
+/// gh-named comment row (`issue view` / `pr view --json comments`) from a forge comment.
+pub(crate) fn gh_comment(c: &Value) -> Value {
+    serde_json::json!({
+        "id": c["node_id"],
+        "author": {"login": c["user"]["login"]},
+        "authorAssociation": c["author_association"],
+        "body": c["body"],
+        "createdAt": c["created_at"],
+        "url": c["html_url"],
+    })
+}
+
+/// Add / remove lists of one `issue edit` or `pr edit` (labels, assignees, reviewers).
+#[derive(Default)]
+pub(crate) struct ListEdits {
+    pub labels: (Vec<String>, Vec<String>),
+    pub assignees: (Vec<String>, Vec<String>),
+    pub reviewers: (Vec<String>, Vec<String>),
+}
+
+impl ListEdits {
+    pub(crate) fn is_empty(&self) -> bool {
+        [&self.labels, &self.assignees, &self.reviewers]
+            .iter()
+            .all(|(a, r)| a.is_empty() && r.is_empty())
+    }
+
+    /// Apply as server-side deltas under `base` (`/repos/o/r/issues/n` or
+    /// `/repos/o/r/pulls/n`), removals first, so concurrent editors never drop each
+    /// other's changes ([[sot:root/arks-hub-local-multi-agent-pr]] concurrency contract).
+    pub(crate) fn apply(&self, ctx: &Ctx, base: &str) -> Result<(), Fail> {
+        for name in &self.labels.1 {
+            ctx.api("DELETE", &format!("{base}/labels/{}", seg(name)), None)?;
+        }
+        if !self.labels.0.is_empty() {
+            let body = serde_json::json!({"labels": self.labels.0});
+            ctx.api("POST", &format!("{base}/labels"), Some(&body))?;
+        }
+        for (path, key, (add, rm)) in [
+            ("assignees", "assignees", &self.assignees),
+            ("requested_reviewers", "reviewers", &self.reviewers),
+        ] {
+            for (method, who) in [("DELETE", rm), ("POST", add)] {
+                if !who.is_empty() {
+                    let body = serde_json::json!({ key: who });
+                    ctx.api(method, &format!("{base}/{path}"), Some(&body))?;
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 /// Percent-encode a query value.
 pub(crate) fn enc(s: &str) -> String {
     let mut out = String::new();

@@ -1,0 +1,176 @@
+[agent-11] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-11
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-11/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-01/.config/arks/hub-token
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-02/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-04/.config/arks/hub-token
+[agent-10] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-10
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-10/.config/arks/hub-token
+[agent-09] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-09
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-09/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-05/.config/arks/hub-token
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-03/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-06/.config/arks/hub-token
+[agent-08] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-08
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-08/.config/arks/hub-token
+[agent-07] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-07
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-07/.config/arks/hub-token
+[agent-12] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-12
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-12/.config/arks/hub-token
+[agent-01] $ arks issue create -t contended thread -b talk  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/37
+[agent-04] $ arks issue comment 37 -b agent-04 comment 0  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-1
+[agent-05] $ arks issue comment 37 -b agent-05 comment 0  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-2
+[agent-09] $ arks issue comment 37 -b agent-09 comment 0  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-3
+[agent-07] $ arks issue comment 37 -b agent-07 comment 0  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-5
+[agent-01] $ arks issue comment 37 -b agent-01 comment 0  -> exit 0 (0.05s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-4
+[agent-08] $ arks issue comment 37 -b agent-08 comment 0  -> exit 0 (0.05s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-6
+[agent-06] $ arks issue comment 37 -b agent-06 comment 0  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-8
+[agent-12] $ arks issue comment 37 -b agent-12 comment 0  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-7
+[agent-02] $ arks issue comment 37 -b agent-02 comment 0  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-11
+[agent-03] $ arks issue comment 37 -b agent-03 comment 0  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-10
+[agent-10] $ arks issue comment 37 -b agent-10 comment 0  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-9
+[agent-11] $ arks issue comment 37 -b agent-11 comment 0  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-12
+[agent-05] $ arks issue comment 37 -b agent-05 comment 1  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-13
+[agent-09] $ arks issue comment 37 -b agent-09 comment 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-14
+[agent-04] $ arks issue comment 37 -b agent-04 comment 1  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-15
+[agent-07] $ arks issue comment 37 -b agent-07 comment 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-16
+[agent-06] $ arks issue comment 37 -b agent-06 comment 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-17
+[agent-02] $ arks issue comment 37 -b agent-02 comment 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-18
+[agent-08] $ arks issue comment 37 -b agent-08 comment 1  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-19
+[agent-03] $ arks issue comment 37 -b agent-03 comment 1  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-20
+[agent-12] $ arks issue comment 37 -b agent-12 comment 1  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-22
+[agent-10] $ arks issue comment 37 -b agent-10 comment 1  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-23
+[agent-01] $ arks issue comment 37 -b agent-01 comment 1  -> exit 0 (0.05s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-21
+[agent-11] $ arks issue comment 37 -b agent-11 comment 1  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-24
+[agent-05] $ arks issue comment 37 -b agent-05 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-25
+[agent-09] $ arks issue comment 37 -b agent-09 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-26
+[agent-04] $ arks issue comment 37 -b agent-04 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-28
+[agent-06] $ arks issue comment 37 -b agent-06 comment 2  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-27
+[agent-07] $ arks issue comment 37 -b agent-07 comment 2  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-30
+[agent-02] $ arks issue comment 37 -b agent-02 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-29
+[agent-03] $ arks issue comment 37 -b agent-03 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-31
+[agent-10] $ arks issue comment 37 -b agent-10 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-32
+[agent-08] $ arks issue comment 37 -b agent-08 comment 2  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-33
+[agent-12] $ arks issue comment 37 -b agent-12 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-34
+[agent-01] $ arks issue comment 37 -b agent-01 comment 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-35
+[agent-11] $ arks issue comment 37 -b agent-11 comment 2  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-36
+[agent-04] $ arks issue comment 37 -b agent-04 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-37
+[agent-06] $ arks issue comment 37 -b agent-06 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-38
+[agent-05] $ arks issue comment 37 -b agent-05 comment 3  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-39
+[agent-09] $ arks issue comment 37 -b agent-09 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-40
+[agent-07] $ arks issue comment 37 -b agent-07 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-42
+[agent-02] $ arks issue comment 37 -b agent-02 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-41
+[agent-03] $ arks issue comment 37 -b agent-03 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-43
+[agent-08] $ arks issue comment 37 -b agent-08 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-44
+[agent-12] $ arks issue comment 37 -b agent-12 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-45
+[agent-10] $ arks issue comment 37 -b agent-10 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-46
+[agent-11] $ arks issue comment 37 -b agent-11 comment 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-47
+[agent-01] $ arks issue comment 37 -b agent-01 comment 3  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/37#issuecomment-48
+[agent-12] $ arks issue view 37 --json comments  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-04"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-04 comment 0",
+    |       "createdAt": "2026-11-25T04:56:56Z",
+    |       "id": "IC_1",
+    |       "url": "http://127.0.0.1:55297/local/playground/issues/37#issuecomment-1"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 comment 0",
+    |       "createdAt": "2026-11-25T04:56:56Z",
+    |       "id": "IC_2",
+    |       "url": "http://127.0.0.1:55297/local/playground/issues/37#issuecomment-2"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-09"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-09 comment 0",
+    |       "createdAt": "2026-11-25T04:56:56Z",
+    |       "id": "IC_3",
+    |       "url": "http://127.0.0.1:55297/local/playground/issues/37#issuecomment-3"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-01"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-01 comment 0",
+    |       "createdAt": "2026-11-25T04:56:56Z",
+    |       "id": "IC_4",
+== HUB-MA-02 PASS (0.3s)

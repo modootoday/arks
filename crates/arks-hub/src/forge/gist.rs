@@ -104,7 +104,7 @@ impl HubStore {
             description: description.into(),
             public,
             files,
-            owner: self.db.user_login.clone(),
+            owner: self.actor.clone(),
             created_at: now,
             updated_at: now,
         };
@@ -179,9 +179,18 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
         return Ok(None);
     };
     let login = st.db.user_login.clone();
+    // Owner of a stored gist (empty in older db files = the forge's default user).
+    let owned = |g: &Gist, who: &str| {
+        (if g.owner.is_empty() {
+            login.as_str()
+        } else {
+            g.owner.as_str()
+        }) == who
+    };
+    let me = st.actor.clone();
     match (req.method, seg.as_slice()) {
         ("GET", []) => {
-            let mut items: Vec<&Gist> = st.db.gists.iter().collect();
+            let mut items: Vec<&Gist> = st.db.gists.iter().filter(|g| owned(g, &me)).collect();
             items.sort_by(|a, b| b.updated_at.cmp(&a.updated_at).then(b.id.cmp(&a.id)));
             let arr = items.into_iter().map(|g| gist_json(g, &login)).collect();
             Ok(Some((200, Value::Array(arr))))
@@ -225,13 +234,18 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
             st.db
                 .gists
                 .iter()
-                .find(|g| g.id == *id)
+                .find(|g| g.id == *id && (g.public || owned(g, &me)))
                 .map(|g| (200, gist_json(g, &login)))
                 .unwrap_or_else(not_found),
         )),
         ("PATCH", [id]) => {
             let v = req.json();
-            let Some(g) = st.db.gists.iter_mut().find(|g| g.id == *id) else {
+            let Some(g) = st
+                .db
+                .gists
+                .iter_mut()
+                .find(|g| g.id == *id && owned(g, &me))
+            else {
                 return Ok(Some(not_found()));
             };
             let mut files = g.files.clone();
@@ -250,11 +264,15 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
             Ok(Some((200, out)))
         }
         ("DELETE", [id]) => {
-            let before = st.db.gists.len();
-            st.db.gists.retain(|g| g.id != *id);
-            if st.db.gists.len() == before {
+            let Some(pos) = st
+                .db
+                .gists
+                .iter()
+                .position(|g| g.id == *id && owned(g, &me))
+            else {
                 return Ok(Some(not_found()));
-            }
+            };
+            st.db.gists.remove(pos);
             st.save()?;
             Ok(Some(no_content()))
         }

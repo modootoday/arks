@@ -861,6 +861,55 @@ pub(crate) fn route(st: &mut HubStore, req: &Req<'_>) -> RouteResult {
                         pull_json(st, &out),
                     )))
                 }
+                // Delta edits (arks forge equivalents of the issue endpoints; pulls are
+                // numbered apart from issues): concurrent editors never overwrite each other.
+                ("POST", ["labels"]) => {
+                    let add = ensure_labels(
+                        st,
+                        &owner,
+                        &repo,
+                        &strings(&v, "labels").unwrap_or_default(),
+                    );
+                    let pm = &mut st.db.pulls[idx];
+                    for l in add {
+                        if !pm.labels.contains(&l) {
+                            pm.labels.push(l);
+                        }
+                    }
+                    pm.updated_at = now_secs();
+                    let names = pm.labels.clone();
+                    st.save()?;
+                    Ok(Some((200, labels_json(st, &owner, &repo, &names))))
+                }
+                ("DELETE", ["labels", name @ ..]) => {
+                    let name = super::search::decode(&name.join("/"));
+                    let pm = &mut st.db.pulls[idx];
+                    pm.labels.retain(|l| *l != name);
+                    pm.updated_at = now_secs();
+                    let names = pm.labels.clone();
+                    st.save()?;
+                    Ok(Some((200, labels_json(st, &owner, &repo, &names))))
+                }
+                (m @ ("POST" | "DELETE"), ["assignees"]) => {
+                    let who = strings(&v, "assignees").unwrap_or_default();
+                    let pm = &mut st.db.pulls[idx];
+                    if m == "POST" {
+                        for w in who {
+                            if !pm.assignees.contains(&w) {
+                                pm.assignees.push(w);
+                            }
+                        }
+                    } else {
+                        pm.assignees.retain(|a| !who.contains(a));
+                    }
+                    pm.updated_at = now_secs();
+                    let out = pm.clone();
+                    st.save()?;
+                    Ok(Some((
+                        if m == "POST" { 201 } else { 200 },
+                        pull_json(st, &out),
+                    )))
+                }
                 ("PUT", ["merge"]) => {
                     let method = str_field(&v, "merge_method").unwrap_or("merge").to_string();
                     let admin = v.get("admin").and_then(Value::as_bool).unwrap_or(false);
