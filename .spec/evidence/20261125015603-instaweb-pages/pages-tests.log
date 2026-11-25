@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized] target(s) in 6m 30s
+     Running tests/instaweb_pages.rs (/cargo-target/release/deps/instaweb_pages-9c3c630555668cdf)
+
+running 5 tests
+test instaweb_start_serves_the_pages ... ok
+test errors_and_git_http_keep_their_answers ... ok
+test project_pages_list_the_history ... ok
+test commit_pages_show_ids_and_changes ... ok
+test tree_and_blob_pages_serve_files ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+exit=0
