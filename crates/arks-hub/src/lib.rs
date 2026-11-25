@@ -29,8 +29,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 pub use forge::push_rules::{PushRefUpdate, push_verdicts};
 pub use serve::{
-    ForgeListenRebindSlot, ForgeServeOptions, default_forge_data_dir, forge_serve_scheme,
-    serve_forge_api, spawn_forge_api,
+    DEFAULT_FORGE_LISTEN, ForgeListenRebindSlot, ForgeServeOptions, ServeError,
+    default_forge_data_dir, forge_serve_scheme, serve_forge_api, spawn_forge_api,
 };
 
 /// Flat / hub groups shown in stub help (gh-shaped + hub-native markers).
@@ -178,7 +178,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 eprintln!("arks hub serve: {e}");
-                ExitCode::from(2)
+                ExitCode::from(e.exit_code())
             }
         },
         "auth" => leaves::dispatch(
@@ -930,6 +930,22 @@ mod tests {
                 "{g} list"
             );
         }
+    }
+
+    /// Q18 rule 12b: transitional serve exits 2 on bad argv before binding.
+    #[test]
+    fn hub_serve_bad_argv_exit_2() {
+        for leaf in [
+            "serve --listen",
+            "serve --listen nonsense",
+            "serve --listen 127.0.0.1",
+            "serve --tls-cert x",
+            "serve extra",
+            "serve --data",
+        ] {
+            assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
+        }
+        assert_eq!(run_from_args(&argv("serve --help")), ExitCode::SUCCESS);
     }
 
     #[test]
