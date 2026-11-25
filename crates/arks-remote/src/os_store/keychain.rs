@@ -271,15 +271,28 @@ pub(super) fn store(
     }
 }
 
-/// `erase`: delete the items for `service` (and `account`); without a
-/// match limit `SecItemDelete` removes every match.
+/// Upper bound on delete rounds in [`erase`]; far above the accounts one
+/// `service` holds in practice.
+const ERASE_ROUNDS: usize = 256;
+
+/// `erase`: delete every item for `service` (and `account`). With the macOS
+/// file-based keychain one `SecItemDelete` call removes a single match (CI
+/// on macOS 15 left a second account behind), so the delete repeats until no
+/// item matches.
 pub(super) fn erase(service: &str, account: Option<&str>) -> Result<(), Failure> {
     let svc = cf_string(service);
     let acct = account.map(cf_string);
     let query = dict(&base(&svc, acct.as_ref()));
-    // SAFETY: valid query dictionary.
-    match unsafe { SecItemDelete(query.0) } {
-        ERR_SEC_SUCCESS | ERR_SEC_ITEM_NOT_FOUND => Ok(()),
-        s => Err(status("delete", s)),
+    for _ in 0..ERASE_ROUNDS {
+        // SAFETY: valid query dictionary.
+        match unsafe { SecItemDelete(query.0) } {
+            ERR_SEC_SUCCESS => continue,
+            ERR_SEC_ITEM_NOT_FOUND => return Ok(()),
+            s => return Err(status("delete", s)),
+        }
     }
+    Err(status(
+        "delete (items still match after repeated deletes)",
+        ERR_SEC_SUCCESS,
+    ))
 }
