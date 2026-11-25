@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090652
 title: M7 Lease multi-agent differentiator (superseded)
-status: active
+status: archived
 created: 2026-11-08T09:06:52Z
-updated: 2026-11-08T18:38:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m7, lease, superseded]
 rel:
   depends_on:
@@ -11,6 +11,8 @@ rel:
     - plan:root/20261108183813
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**superseded**) — superseded by roadmap v0.3 (this file says so); successor is the M10 plan [[plan:root/20261108183813]], itself done.
 
 # SUPERSEDED — former M7 lease plan (roadmap v0.2)
 

@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090647
 title: M2 Git-first storage facade
-status: active
+status: archived
 created: 2026-11-08T09:06:47Z
-updated: 2026-11-08T10:00:33Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m2, phase-s, store, restart]
 rel:
   depends_on:
@@ -17,6 +17,8 @@ rel:
   implements: [sot:root/program-roadmap]
   evidence: [evidence:root/20261108190033]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — exit carried by [[evidence:root/20261108190033]] (G10 objects subset + G1); re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL).
 
 # M2 — Git-first storage facade (Phase S)
 

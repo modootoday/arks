@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261110085731
 title: GitHub Actions Cross-OS CI and OIDC release (pointer)
-status: active
+status: archived
 created: 2026-11-10T08:57:31Z
-updated: 2026-11-10T19:15:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [github-actions, ci, cross-os, oidc, release, perf-ci, plan, pointer]
 rel:
   depends_on:
@@ -12,6 +12,8 @@ rel:
     - sot:root/clean-room-journey-compare
     - sot:root/public-surface
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — phases 0–2 landed (`.github/workflows/ci.yml`, `release.yml`, `release-symmetry.yml`); phase 3+ reopens only by owner decision; the first real publish is L9, owner-blocked as queue unit Q10 of [[plan:root/20261124000000]].
 
 # GitHub Actions Cross-OS CI and OIDC release (pointer)
 

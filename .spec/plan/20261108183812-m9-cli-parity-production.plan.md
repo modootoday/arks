@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108183812
 title: M9 CLI-parity production exit
-status: active
+status: archived
 created: 2026-11-08T18:38:12Z
-updated: 2026-11-08T15:30:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m9, phase-pc, cli, porcelain, parity, production, alias, dot-git]
 rel:
   depends_on:
@@ -21,6 +21,8 @@ rel:
     - sot:root/clean-room-git-pin-advance
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — M9 CLI-parity exit [[evidence:root/20261108150000]] (G14); re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL); its refuse rows were later closed by M15/M16 and the argv receipt `.spec/evidence/20261125023636-argv-corpus-receipt-q-final/`.
 
 # M9 — Porcelain parity C + inventory closure (Phase Pc) — CLI-parity production
 

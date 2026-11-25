@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109202815
 title: CELIR index dual-path sidecar rebuild query
-status: active
+status: archived
 created: 2026-11-09T20:28:15Z
-updated: 2026-11-09T20:45:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, m24-precursor]
 rel:
   depends_on:
@@ -17,6 +17,8 @@ rel:
   implements: [sot:root/celir-index-dual-path, sot:root/storage-celir-boundary]
   evidence: [evidence:root/20261109203236]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**withdrawn**) — withdrawn by [[adr:root/20261119200000]] (owner decision: CELIR not adopted; M24 and G22–G25 Withdrawn; receipts kept as history).
 
 # CELIR index dual-path sidecar rebuild query
 

@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109204933
 title: M24 successor G23 CELIR dual-path Git verified
-status: active
+status: archived
 created: 2026-11-09T20:49:33Z
-updated: 2026-11-10T05:49:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [m24, g023-celir-dual-path, celir, dual-path, clean-room, porcelain, verified]
 rel:
   depends_on:
@@ -17,6 +17,8 @@ rel:
   implements: [sot:root/celir-dual-path-git-verified, adr:root/20261109204916]
   evidence: [evidence:root/20261109205534]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**withdrawn**) — withdrawn by [[adr:root/20261119200000]] (owner decision: CELIR not adopted; M24 and G22–G25 Withdrawn; receipts kept as history).
 
 # M24 successor — G23 CELIR dual-path Git verified
 

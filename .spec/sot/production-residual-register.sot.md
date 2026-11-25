@@ -3,7 +3,7 @@ id: sot:root/production-residual-register
 title: Production residual register
 status: active
 created: 2026-11-08T14:27:58Z
-updated: 2026-11-14T10:30:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [residual, production, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, g028-live-private-arks, g029-server-dumb-http, g030-server-ssh-command, g031-server-protocol-v2, g032-git-daemon-wire, g033-cred-askpass, g034-shared-index-contention, g035-shallow-depth, g036-http-basic-auth, g037-gpgsig-ssh, honesty, refuse-close, worktree, submodule, concurrency, full-symmetric, complete-symmetry, pf4, cx, dz, deferred-zero, residual-terminal, l3, credential, s0-s-final, claimed-residual, implement-wave, in-scope-leftovers, optimized-dod, behavioral-dod]
 verify: manual
 rel:
@@ -277,6 +277,29 @@ After PF5 **Claimed 8/8** ([[evidence:root/20261110142500]] primary at `79fc9bf`
 | — | In-scope leftovers wave | **Closed exhaust** [[sot:root/arks-in-scope-leftovers-wave]] + [[research:root/20261111135200]] — **IW-HUB-STUBS** exhaust Claimed ([[evidence:root/20261111050502-hub-stubs-exhaust]]) + terminal Partial OAuth/CI/git-spawn; **IW-PERSONALITY-SURVEY** survey2/3/4 Claimed ([[evidence:root/20261111050617-personality-survey]]); upload-archive Parity ([[evidence:root/20261111045108-daemon-flags-parity]]); `related:git:// client` Parity pointer; CLI Partial remainder honest; SysV/L9/G8/Impossible/later/OUT untouched | Keep Partial honesty cites; no invent PASS |
 | — | Cloud agent drop-in ladder (C0–C_final) | **Done — Claimed (Docker receipts)** [[sot:root/cloud-agent-dropin]] + [[plan:root/20261119180000]] + [[plan:root/20261119210000]] — C0–C6, C1 (CELIR removed), C9 (installed from `main` in hosted sessions) done; **V / G42** Docker clean-room 15/15 must PASS ([[evidence:root/20261119222000-g042-cloud-dropin]]); corpora vs pin git 2.39.5 in Docker: tier A 147/147, tier B 166/168 SAME ([[evidence:root/20261119225600-cli-flag-corpus-cleanroom]]); **C8** Docker receipts for arks-owned forge groups, `pr checkout`, release assets, hub UX and daemon flags ([[evidence:root/20261119222040-hub-forge-groups]], [[evidence:root/20261119222041-hub-pr-checkout]], [[evidence:root/20261119222041-hub-release-assets]], [[evidence:root/20261119222042-hub-ux-config-alias]], [[evidence:root/20261119222045-daemon-flags-parity]]); C_final done; reasoned residual DIFF: `format-patch` signature version, `init --bare` template dir | Docker receipt simulating agent sandbox per SoT §V; no invent Claimed from host or live cloud probes |
 | — | Verify directory conventions | **Design** [[sot:root/verify-directory-conventions]] + [[research:root/20261111082440]] — tree contract, `gN` vs `dod-*` naming, `verify/out/` vs `gates/*/out/`, SKIP vs `ARKS_DOD_STRICT=1`, pin Git **2.39.5** normative, residual registration checklist | Ops/harness only; does not invent product Claimed; coordinate harness edits with in-flight B-gate owners |
+
+### G — Queue Q14 audit (2026-11-25)
+
+Audit for criterion 2 of [[sot:root/autonomous-operation]] §11, at the tip of the Q1–Q8 receipt
+`.spec/evidence/20261125023636-argv-corpus-receipt-q-final/`. No row above changes state here; each row
+that is still Partial, Design-only or waiting on a receipt is mapped to a unit of
+[[plan:root/20261124000000]] or to the reason it already carries. Counts are read from the living CSVs
+(`verify/matrices/hub-gh-arks-e2e-matrix.csv`, `daemon-git-arks-e2e-matrix.csv`,
+`cli-git-help-matrix.csv`) on that tip.
+
+| Row(s) above | What is still open | Ends as |
+|--------------|--------------------|---------|
+| Tip currency (operator one-word **PARTIAL**); R5; FW-G8-DEFAULT and FW-GH-LIVE-SCALE live samples | Live G8 latency and L9 publish timing | **Q10** (owner-blocked: forge secrets and publish policy). SHA-1 collision immunity stays **Impossible** (FW-CAT-OBJ-004, [[adr:root/20261110223000]]); host-env, cloud-sync and in-process LFS stay **Trimmed** ([[research:root/20261111035700]]) |
+| FW-FORGE-B (Design under `arks hub`, not Claimed) | Forge Checks / PR / merge-queue product UX | **Owner non-goal with reason**: Hold-forever table of [[plan:root/20261111024441]] and the `docs/completion.md` non-goals; the forge is an independent compatible subset ([[adr:root/20261119230000]]). The hub CLI rows themselves are Q17 |
+| Hub pillar: clean-room symmetry DoD, in-scope leftovers, remaining incompletes, honesty leftovers, release-symmetry precheck ("hub v1 Partial") | 33 v1 rows `Partial` (A4 gh-argv rework, host-tested only) and 95 `Claimed` rows whose receipt predates that rework ("re-receipt pending"); the `docs/completion.md` flat-forge row still says assets / checkout Partial | **Q17** (Docker re-receipt; includes the five ruleset rows Q4 left Partial) |
+| Hub `later` arks-only rows | 7 `Deferred` and 1 `Partial` (`arks hub serve` listen/bind) — a bare Deferred is not a terminal state (§F rule) | **Q18** |
+| Hub local multi-agent scenarios ([[sot:root/arks-hub-local-multi-agent-pr]]; no row above yet) | HUB-MA-01…10 all Scaffold; runner prints SKIP | **Q15** (P1–P2) and **Q16** (P3) |
+| Daemon pillar: remaining implement wave IW-DAEMON-FLAGS, partial residual wave, in-scope leftovers D-FLAGS ("Daemon Partial 15") | The CSV now shows 37 `Parity` + 2 arks-only and no Partial, but 17 `Parity` rows and 1 arks-only row are host-tested only (A5; no Docker pin receipt per [[sot:root/arks-daemon-git-command-matrix]]); B5+ is Claimed (`.spec/evidence/20261111025206-daemon-b5-plus-syslog/`) | **Q19** |
+| CLI personality / output+exit contract ("per-cmd peer tables Partial"); remaining incompletes and in-scope leftovers ("CLI survey Partial×117") | `survey_status` still reads `Partial` on 164 rows (48 of them A3 host-tested) although the argv receipt accepts all 1,852 options and reasons every corpus DIFF; per-command exit tables were never reconciled with it | **Q20** |
+| Claimed residual gates B6 / B8; serve and agent rows in `docs/completion.md` | B6 durable SSH listen label Partial (its drop condition, B1/B2 + IW-B7-SSH Claimed, now holds); B7 Windows file-mtime reload Partial (SIGHUP N/A on Windows); `arks serve ssh-smoke` Partial; `arks agent provider smoke` / `review --smoke` Partial | **Q21** |
+| arks-only self-host server (Design + hosting e2e) | Hosting pieces are Claimed (B1/B2/B7/B9, IW-FORGE-SERVE); its only Partial labels are the Q21 rows | **Q21** |
+| Verify directory conventions (Design) | Harness contract only; no product surface or Partial claim | No unit: it is process, like the pin row. Whether §11 needs an owner note for Design-only process rows is an owner question (queue Q14 note) |
+| Preamble and §F footer sentences that call M24 Claimed / "CELIR index dual-path is M24" | Historical wording | Read through [[adr:root/20261119200000]]: M24 and G22–G25 are **Withdrawn**, as the carrying-exits table already says |
 
 ## Why
 

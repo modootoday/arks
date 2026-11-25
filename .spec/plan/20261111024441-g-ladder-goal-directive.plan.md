@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261111024441
 title: G-ladder goal directive (acceptance, Claimed vs Hold)
-status: active
+status: archived
 created: 2026-11-10T17:44:41Z
-updated: 2026-11-10T17:44:41Z
+updated: 2026-11-25T02:45:00Z
 tags:
   [
     goal-directive,
@@ -26,6 +26,8 @@ rel:
     - sot:root/product-verification-clean-room
     - sot:root/pf5-journey-seed-amortization
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**historical, superseded**) — directive of the G-ladder [[plan:root/20261111024440]] (already archived): G3/G6/G7 Claimed, G2 done as honesty, G4/G5 trimmed per the roadmap G-ladder table; G1 and L9 are owner-blocked queue unit Q10; tip currency (G_final) is now owned by [[sot:root/autonomous-operation]] §11 and [[plan:root/20261124000000]].
 
 # G-ladder goal directive
 

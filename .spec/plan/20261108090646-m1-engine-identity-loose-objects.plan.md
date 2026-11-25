@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090646
 title: M1 Engine identity and loose objects
-status: active
+status: archived
 created: 2026-11-08T09:06:46Z
-updated: 2026-11-08T18:53:19Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m1, phase-c, engine, wave-1, restart]
 rel:
   depends_on:
@@ -19,6 +19,8 @@ rel:
   implements: [sot:root/program-roadmap]
   evidence: [evidence:root/20261108185319]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — exit re-proved under v0.3.1 by [[evidence:root/20261108185319]] (G0/G1); re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL).
 
 # M1 — Engine identity + loose objects (Phase C)
 

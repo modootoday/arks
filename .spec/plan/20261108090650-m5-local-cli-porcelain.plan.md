@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090650
 title: M5 Local CLI foundation
-status: active
+status: archived
 created: 2026-11-08T09:06:50Z
-updated: 2026-11-08T10:48:37Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m5, phase-l, cli, foundation]
 rel:
   depends_on:
@@ -18,6 +18,8 @@ rel:
   evidence: [evidence:root/20261108104837]
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G6/G3 receipt [[evidence:root/20261108104837]]; re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL).
 
 # M5 — Local CLI foundation (Phase L)
 

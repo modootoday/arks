@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109212020
 title: G28 live private arks journeys
-status: active
+status: archived
 created: 2026-11-09T21:20:20Z
-updated: 2026-11-09T21:34:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [g028-live-private-arks, clean-room, journey, live, github, private, opt-in, offline-clone]
 rel:
   depends_on:
@@ -16,6 +16,8 @@ rel:
   implements: [sot:root/g028-live-private-arks-live-private-arks-journeys]
   evidence: [evidence:root/20261109212500, evidence:root/20261109213400]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G28 Claimed by [[evidence:root/20261109212500]] (live PASS=21) and [[evidence:root/20261109213400]] (offline clones; checklist N/A=0).
 
 # G28 — live private arks journeys
 

@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261111042300
 title: arks-agent internal crate + arks agent dispatch
-status: active
+status: archived
 created: 2026-11-10T19:23:00Z
-updated: 2026-11-10T19:23:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [arks-agent, crate, skeleton, workspace, llm, openai-compat, review, cev, single-release]
 verify: manual
 rel:
@@ -19,6 +19,8 @@ rel:
   implements:
     - sot:root/arks-agent-product-intent
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — acceptance met: `crates/arks-agent` library dispatched from `arks`; B4 fixture LLM e2e Claimed by `.spec/evidence/20261110231959-claimed-agent-llm/`; the remaining agent smoke labels are queue unit Q21.
 
 # arks-agent internal crate + `arks agent` dispatch
 

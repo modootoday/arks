@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109220230
 title: M25 server transport expansion
-status: active
+status: archived
 created: 2026-11-09T22:02:30Z
-updated: 2026-11-09T22:02:30Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m25, phase-sv2, server, ssh, git-daemon, dumb-http, protocol-v2]
 rel:
   depends_on:
@@ -21,6 +21,8 @@ rel:
     - evidence:root/20261108231300
   implements: [sot:root/program-roadmap, adr:root/20261109220230]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — M25 G29–G32 Claimed by [[evidence:root/20261109221500]], [[evidence:root/20261109222000]], [[evidence:root/20261109222500]], [[evidence:root/20261109223000]].
 
 # M25 — Server transport expansion (Phase Sv2)
 

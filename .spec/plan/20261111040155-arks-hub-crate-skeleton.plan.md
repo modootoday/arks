@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261111040155
 title: arks-hub internal crate + arks hub dispatch
-status: active
+status: archived
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-10T19:16:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [arks-hub, crate, skeleton, workspace, octocrab, native-api, cli, gh-symmetry, matrix, single-release]
 verify: manual
 rel:
@@ -17,6 +17,8 @@ rel:
   implements:
     - sot:root/arks-hub-product-intent
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — acceptance met: `crates/arks-hub` library dispatched from `arks`, gh command matrix SoT + CSV; follow-on superseded by hub receipts `.spec/evidence/20261111011539-hub-flat-subset/`, `.spec/evidence/20261111020350-hub-full-expand/`, `.spec/evidence/20261111025142-hub-mutate-subset/`; the remaining host-tested hub rows are queue unit Q17.
 
 # arks-hub internal crate + `arks hub` dispatch
 

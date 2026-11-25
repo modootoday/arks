@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261119210000
 title: Cloud drop-in remaining rungs (C7–C_final + V) execution plan
-status: active
+status: archived
 created: 2026-11-19T21:00:00Z
-updated: 2026-11-19T23:00:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [cloud, dropin, plan, c7, c8, c9, verify, flag-corpus, no-invent-pass]
 verify: manual
 rel:
@@ -15,6 +15,8 @@ rel:
     - adr:root/20261119180100
     - adr:root/20261119200000
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — every rung in the Status table below is Claimed / Applied / Done with its receipt; the command-level `status_now` follow-up named under C_final is queue unit Q20.
 
 # Cloud drop-in remaining rungs — execution plan
 

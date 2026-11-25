@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108182457
 title: Clean-room journey compare harness
-status: active
+status: archived
 created: 2026-11-08T18:24:57Z
-updated: 2026-11-09T06:45:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [verification, docker, clean-room, journey, g016-journey-compare, harness, bottom-up]
 rel:
   depends_on:
@@ -14,6 +14,8 @@ rel:
     - sot:root/arks-remote
     - adr:root/20261108083507
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G16 harness receipts [[evidence:root/20261108183045]], [[evidence:root/20261108200811]], [[evidence:root/20261108233610]]; re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL).
 
 # Clean-room journey compare harness
 

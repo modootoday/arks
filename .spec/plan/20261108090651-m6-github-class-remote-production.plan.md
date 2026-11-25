@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090651
 title: M6 GitHub-class remote client
-status: active
+status: archived
 created: 2026-11-08T09:06:51Z
-updated: 2026-11-08T11:20:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m6, phase-h, remotes, client]
 
 rel:
@@ -18,6 +18,8 @@ rel:
     - adr:root/20261108083507
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G7 receipt [[evidence:root/20261108112000]]; re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL); live G8 latency stays owner-blocked as queue unit Q10 of [[plan:root/20261124000000]].
 
 # M6 — Remote client (Phase H)
 

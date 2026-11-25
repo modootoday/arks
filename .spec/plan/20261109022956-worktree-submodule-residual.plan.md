@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109022956
 title: Post-M9 worktree and submodule residual implement
-status: active
+status: archived
 created: 2026-11-09T02:29:56Z
-updated: 2026-11-09T02:29:56Z
+updated: 2026-11-25T02:45:00Z
 tags: [residual, worktree, submodule, cli, post-m9, clean-room, g016-journey-compare]
 rel:
   depends_on:
@@ -21,6 +21,8 @@ rel:
     - sot:root/production-residual-register
     - sot:root/cli-surface
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — residual receipt [[evidence:root/20261109114207]]; recorded Done in the [[sot:root/program-roadmap]] post-M9 residual ledger.
 
 # Post-M9 residual — `worktree` + `submodule` implement
 

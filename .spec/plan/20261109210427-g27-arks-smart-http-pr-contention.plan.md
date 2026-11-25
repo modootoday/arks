@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109210427
 title: G27 arks smart HTTP PR contention clean-room
-status: active
+status: archived
 created: 2026-11-09T21:04:27Z
-updated: 2026-11-09T21:15:01Z
+updated: 2026-11-25T02:45:00Z
 tags: [g027-smart-http-pr-contention, clean-room, smart-http, server, branch, pr-sim, contention]
 rel:
   depends_on:
@@ -16,6 +16,8 @@ rel:
   implements: [sot:root/arks-smart-http-pr-contention-clean-room]
   evidence: [evidence:root/20261109210427]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G27 Claimed by [[evidence:root/20261109210427]]; live forge throughput stays out of scope (owner-blocked, queue unit Q10).
 
 # G27 — arks smart HTTP + synthetic PR contention clean-room
 

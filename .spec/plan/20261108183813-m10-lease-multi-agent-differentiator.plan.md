@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108183813
 title: M10 Lease capability and optional high-concurrency
-status: active
+status: archived
 created: 2026-11-08T18:38:13Z
-updated: 2026-11-08T23:28:00+09:00
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m10, phase-e, lease, high-concurrency, opt-in]
 rel:
   depends_on:
@@ -19,6 +19,8 @@ rel:
     - evidence:root/20261108231249
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — M10 / G11 receipt [[evidence:root/20261108231249]]; open questions closed by [[adr:root/20261109122126]] (allocator ring-internal) and M23 [[evidence:root/20261109194858]] (L3 shape).
 
 # M10 — Default lease capability + optional high-concurrency (Phase E)
 

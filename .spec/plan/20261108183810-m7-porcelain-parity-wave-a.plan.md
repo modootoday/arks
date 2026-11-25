@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108183810
 title: M7 Porcelain parity wave A
-status: active
+status: archived
 created: 2026-11-08T18:38:10Z
-updated: 2026-11-08T13:15:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m7, phase-pa, cli, porcelain, parity]
 rel:
   depends_on:
@@ -19,6 +19,8 @@ rel:
     - evidence:root/20261108112000
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — M7 / G12 receipt [[evidence:root/20261108133000]]; re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL); its Pc deferrals closed by M9.
 
 # M7 — Porcelain parity wave A (Phase Pa)
 
