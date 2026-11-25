@@ -3,7 +3,7 @@ id: sot:root/arks-agent-llm-providers
 title: arks agent LLM providers
 status: active
 created: 2026-11-10T19:23:00Z
-updated: 2026-11-25T18:00:00Z
+updated: 2026-11-25T05:45:00Z
 tags: [arks-agent, llm, providers, openai-compat, ollama, cloudflare, anthropic, xai, gemini, auth, config]
 verify: manual
 rel:

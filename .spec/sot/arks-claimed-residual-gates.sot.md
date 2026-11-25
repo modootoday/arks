@@ -3,7 +3,7 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-25T18:00:00Z
+updated: 2026-11-25T05:45:00Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
