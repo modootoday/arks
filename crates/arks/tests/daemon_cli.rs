@@ -164,7 +164,7 @@ fn argv_errors_match_git_daemon() {
     }
 }
 
-// --inetd implies --syslog; arks has no Windows Event Log sink yet (A5 gap).
+// --inetd implies --syslog on unix; the windows_* tests cover the stderr default there.
 #[cfg(unix)]
 #[test]
 fn inetd_conflicts_log_to_the_chosen_destination() {
@@ -185,7 +185,7 @@ fn inetd_conflicts_log_to_the_chosen_destination() {
     );
 }
 
-// --inetd implies --syslog; arks has no Windows Event Log sink yet (A5 gap).
+// --inetd implies --syslog on unix; the windows_* tests cover the stderr default there.
 #[cfg(unix)]
 #[test]
 fn inetd_serves_one_connection_on_stdio() {
@@ -386,4 +386,181 @@ fn user_drops_privileges_after_binding_when_root() {
         thread::sleep(Duration::from_millis(20));
     }
     assert_ne!(proc_uid(&pid).as_deref(), Some("0"), "still root");
+}
+
+// Windows (matrix SoT §Windows): `--inetd` works with stderr as the implied log
+// destination; syslog, `--detach` and `--user` are refused with exit 128.
+#[cfg(windows)]
+#[test]
+fn windows_refuses_syslog_detach_and_user() {
+    let cases: [(&[&str], &str); 7] = [
+        (&["--syslog"], "fatal: syslog is not supported on Windows"),
+        (
+            &["--inetd", "--log-destination=syslog"],
+            "fatal: syslog is not supported on Windows",
+        ),
+        (
+            &["--detach"],
+            "fatal: --detach not supported on this platform",
+        ),
+        (
+            &["--user=nobody"],
+            "fatal: --user not supported on this platform",
+        ),
+        (
+            &["--user=nobody", "--group=nogroup"],
+            "fatal: --user not supported on this platform",
+        ),
+        (
+            &["--inetd", "--detach"],
+            "fatal: --detach, --user and --group are incompatible with --inetd",
+        ),
+        (
+            &["--inetd", "--port=1"],
+            "fatal: --listen= and --port= are incompatible with --inetd",
+        ),
+    ];
+    for (args, want) in cases {
+        let out = daemon(args, b"");
+        assert_eq!(out.status.code(), Some(128), "{args:?}: {out:?}");
+        assert_eq!(
+            String::from_utf8_lossy(&out.stderr).trim_end(),
+            want,
+            "{args:?}"
+        );
+    }
+}
+
+/// One upload-pack request for `path` (plus `host=` when given), then a flush.
+#[cfg(windows)]
+fn upload_request(path: &str, host: Option<&str>) -> Vec<u8> {
+    let mut payload = format!("git-upload-pack {path}\0");
+    if let Some(h) = host {
+        payload.push_str(&format!("host={h}\0"));
+    }
+    let mut req = pkt(payload.as_bytes());
+    req.extend_from_slice(b"0000");
+    req
+}
+
+/// `C:\x` → `c:/x` (or `c:\x` → `C:/x`): same directory, other spelling.
+#[cfg(windows)]
+fn flip_drive_spelling(path: &str) -> String {
+    let mut rest = path.replace('\\', "/");
+    let first = rest.remove(0);
+    let first = if first.is_ascii_uppercase() {
+        first.to_ascii_lowercase()
+    } else {
+        first.to_ascii_uppercase()
+    };
+    format!("{first}{rest}")
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_inetd_serves_one_connection_on_stdio() {
+    let root = tempfile::TempDir::new().unwrap();
+    bare_repo(root.path(), "pub.git", true);
+    bare_repo(root.path(), "hidden.git", false);
+    let base_dir = root.path().display().to_string();
+    assert_eq!(base_dir.as_bytes().get(1), Some(&b':'), "{base_dir}");
+    let base = format!("--base-path={base_dir}");
+    let out = daemon(
+        &["--inetd", &base],
+        &upload_request("/pub.git", Some("localhost")),
+    );
+    assert_eq!(out.status.code(), Some(0), "{out:?}");
+    assert!(String::from_utf8_lossy(&out.stdout).contains("refs/heads/main"));
+    // Refusal: exit 255, ERR line on stdout, log lines on stderr (implied destination).
+    let req = pkt(b"git-upload-pack /hidden.git\0");
+    let out = daemon(
+        &["--inetd", "--informative-errors", "--verbose", &base],
+        &req,
+    );
+    assert_eq!(out.status.code(), Some(255), "{out:?}");
+    assert_eq!(
+        String::from_utf8_lossy(&out.stdout),
+        err_pkt("ERR repository not exported: /hidden.git")
+    );
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        err.contains("] Request upload-pack for '/hidden.git'"),
+        "{err}"
+    );
+    assert!(
+        err.contains("hidden.git': repository not exported."),
+        "{err}"
+    );
+    // --export-all serves the unmarked repository.
+    let out = daemon(
+        &["--inetd", "--export-all", &base],
+        &upload_request("/hidden.git", None),
+    );
+    assert_eq!(out.status.code(), Some(0), "{out:?}");
+    assert!(String::from_utf8_lossy(&out.stdout).contains("refs/heads/main"));
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_inetd_drive_letter_paths_stay_under_the_base() {
+    let root = tempfile::TempDir::new().unwrap();
+    let base_dir = root.path().join("base");
+    std::fs::create_dir_all(&base_dir).unwrap();
+    bare_repo(&base_dir, "pub.git", true);
+    bare_repo(root.path(), "outside.git", true);
+    let shown = base_dir.display().to_string();
+    let base = format!("--base-path={shown}");
+    // `..` with either separator, and dot-and-space components, are aliased.
+    for path in [
+        "/..\\outside.git",
+        "/../outside.git",
+        "/pub.git\\..\\..\\outside.git",
+        "/.. \\outside.git",
+    ] {
+        let out = daemon(
+            &["--inetd", "--log-destination=stderr", &base],
+            &upload_request(path, None),
+        );
+        assert_eq!(out.status.code(), Some(255), "{path}: {out:?}");
+        assert_eq!(
+            String::from_utf8_lossy(&out.stdout),
+            err_pkt(&format!(
+                "ERR access denied or repository not exported: {path}"
+            ))
+        );
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert!(err.contains(&format!("'{path}': aliased")), "{err}");
+    }
+    // Whitelist entry with the other drive-letter case and forward slashes.
+    let flipped = flip_drive_spelling(&shown);
+    let out = daemon(
+        &["--inetd", &base, &flipped],
+        &upload_request("/pub.git", None),
+    );
+    assert_eq!(out.status.code(), Some(0), "{out:?}");
+    let other = format!("{shown}\\elsewhere");
+    let out = daemon(
+        &["--inetd", &base, &other],
+        &upload_request("/pub.git", None),
+    );
+    assert_eq!(out.status.code(), Some(255), "{out:?}");
+    // --interpolated-path with %H%D under a drive letter (host is lower-cased).
+    let vhost = root.path().join("vhost").join("example.com");
+    std::fs::create_dir_all(&vhost).unwrap();
+    bare_repo(&vhost, "v.git", true);
+    let template = format!("--interpolated-path={}\\vhost\\%H%D", root.path().display());
+    let out = daemon(
+        &["--inetd", &template],
+        &upload_request("/v.git", Some("Example.COM")),
+    );
+    assert_eq!(out.status.code(), Some(0), "{out:?}");
+    assert!(String::from_utf8_lossy(&out.stdout).contains("refs/heads/main"));
+    // A client host can not name a drive through %H: `[c:]` expands to `c`.
+    let out = daemon(
+        &["--inetd", "--verbose", "--interpolated-path=%H%D"],
+        &upload_request("/v.git", Some("[c:]")),
+    );
+    assert_eq!(out.status.code(), Some(255), "{out:?}");
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("Interpolated dir 'c/v.git'"), "{err}");
 }

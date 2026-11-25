@@ -5,6 +5,8 @@
 //! process control (`--inetd`, `--detach`, `--pid-file`, `--user`/`--group`).
 //! arks-only: without `--listen`, bind `127.0.0.1` (git binds every
 //! interface; use `--listen=0.0.0.0` for that). Never spawns `git` or `gh`.
+//! Windows (matrix SoT §Windows): `--inetd` works with `stderr` as its implied
+//! log destination; syslog, `--detach` and `--user` are refused.
 
 mod argv;
 mod os;
@@ -21,6 +23,14 @@ use std::sync::atomic::AtomicBool;
 
 /// Default listen address when no `--listen` is given (arks-only; see module docs).
 const DEFAULT_LISTEN: &str = "127.0.0.1";
+
+/// Log destination implied by `--inetd` / `--detach`: syslog like git, except
+/// on Windows, which has no syslog (matrix SoT §Windows rule 2).
+const IMPLIED_BACKGROUND_LOG: LogDestination = if cfg!(windows) {
+    LogDestination::Stderr
+} else {
+    LogDestination::Syslog
+};
 
 const HELP: &str = "\
 arks daemon — serve repositories over git:// (peer of git daemon)
@@ -66,7 +76,7 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
         return Ok(());
     }
     let destination = a.log_destination.unwrap_or(if a.inetd || a.detach {
-        LogDestination::Syslog
+        IMPLIED_BACKGROUND_LOG
     } else {
         LogDestination::Stderr
     });
@@ -79,7 +89,11 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
             CliError::fatal(msg)
         }
     };
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    if destination == LogDestination::Syslog {
+        return Err(CliError::fatal("syslog is not supported on Windows"));
+    }
+    #[cfg(not(any(unix, windows)))]
     if destination == LogDestination::Syslog {
         return Err(CliError::fatal("syslog is not supported on this platform"));
     }

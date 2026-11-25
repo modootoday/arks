@@ -33,6 +33,10 @@ pub struct StdPlatform;
 
 impl DaemonPlatform for StdPlatform {
     fn home_dir(&self, user: &str) -> Option<PathBuf> {
+        if cfg!(windows) {
+            // No passwd database (matrix SoT §Windows rule 7).
+            return None;
+        }
         let text = std::fs::read_to_string("/etc/passwd").ok()?;
         passwd_home(&text, user)
     }
