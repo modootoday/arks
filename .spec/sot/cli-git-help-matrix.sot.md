@@ -3,7 +3,7 @@ id: sot:root/cli-git-help-matrix
 title: CLI git-help matrix (canonical)
 status: active
 created: 2026-11-10T19:05:00Z
-updated: 2026-11-20T00:00:00Z
+updated: 2026-11-25T03:31:00Z
 tags: [cli, matrix, git-help, parity, m16, pin-2.39.5, sot]
 verify: manual
 rel:
@@ -22,7 +22,7 @@ rel:
 
 # CLI git-help matrix (canonical)
 
-Version **0.2.0**. **Canon (source of truth)** for pin Git **2.39.5** command inventory vs `arks` product CLI. Machine table: `verify/matrices/cli-git-help-matrix.csv`. Survey method/evidence: [[research:root/20261111034805]], [[evidence:root/20261111034600]]. Daemon flag depth: [[research:root/20261111035226]]. Over-design trim: [[research:root/20261111035700]].
+Version **0.2.1**. **Canon (source of truth)** for pin Git **2.39.5** command inventory vs `arks` product CLI. Machine table: `verify/matrices/cli-git-help-matrix.csv`. Survey method/evidence: [[research:root/20261111034805]], [[evidence:root/20261111034600]]. Daemon flag depth: [[research:root/20261111035226]]. Over-design trim: [[research:root/20261111035700]].
 
 **Pin oracle:** Docker `arks-verify-m1:0.1.0` stock `git version 2.39.5` — `git --list-cmds=main,others,alias` (n=**166**). Host Git is skew-only, not the judge (observed host **`git version 2.56.0.windows.4`** — inventory signal only; pin DoD stays 2.39.5).
 
@@ -30,7 +30,7 @@ Version **0.2.0**. **Canon (source of truth)** for pin Git **2.39.5** command in
 
 1. Every pin `list-cmds` name MUST appear in the machine CSV with:
    - `category` — porcelain | plumbing | server | ancillary | synonym | merge-backend | remote-helper | gui-or-internal
-   - `status_now` — live HELP/dispatch honesty at last survey tip (Parity-candidate | Partial | Missing | Refuse/N/A)
+   - `status_now` — live HELP/dispatch honesty at last survey tip (Verified | Parity-candidate | Partial | Missing | Refuse/N/A); the CSV header names this column `survey_status`
    - `arks_target` — **must-implement** | **synonym→\<cmd\>** (`refuse-with-reason` retired 2026-11-20)
    - `priority` — implementation backlog order (1=synonym/wire, 2=high-traffic Missing, …)
    - `notes` — short honesty
@@ -39,6 +39,7 @@ Version **0.2.0**. **Canon (source of truth)** for pin Git **2.39.5** command in
 4. **Server KEEP:** `daemon`, `upload-pack`, `receive-pack`, `http-backend`, `update-server-info`, and plain-git `serve-http` remain in-scope (git paths only).
 5. **Out-of-matrix (trimmed):** `forge`, `host-env`, in-process `lfs`, CELIR product Claimed path, `arks-hostfs` product surface — not pin git builtins; see [[research:root/20261111035700]].
 6. Promoting `status_now` requires evidence on the carrying tip — **no invent Claimed** from HELP alone.
+7. **`Verified` (queue Q20, 2026-11-25).** A `Partial` row becomes `Verified` only when the latest clean-room argv receipt covers its command: (a) the argv inventory accepts every listed option, or the command has no inventory; (b) at least one corpus line runs the command and at least one is SAME; (c) every corpus DIFF of the command is reasoned with class `post-pin` (the pin rejects a later git feature that arks follows) or `timing` (wall-clock output). A `design` DIFF means the pin image has no oracle for the command, so the row stays `Partial`; so does a row with no corpus line, even when its inventory is complete. A row that stays `Partial` carries the derived reason at the head of `notes` (`[Q20 Partial per receipt <id>: …]`), plus any other Docker receipt that exercises it. The status is derived, never hand-set: `verify/scripts/derive-cli-survey-status.py --receipt <evidence-dir> --out <tsv> --apply` (re-run on each new argv receipt).
 
 ## Counts (pin n=166)
 
