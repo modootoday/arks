@@ -187,8 +187,9 @@ mod tests {
             Some(("127.0.0.1".into(), 3128))
         );
         assert_eq!(
-            proxy_endpoint("http://u:p@proxy.example.com/"),
-            Some(("proxy.example.com".into(), 80))
+            // Userinfo is dropped; `example.com` keeps the public-surface scan quiet.
+            proxy_endpoint("http://u:p@example.com/"),
+            Some(("example.com".into(), 80))
         );
         assert_eq!(
             proxy_endpoint("http://[::1]:8080"),
