@@ -1,196 +1,196 @@
 git_command,category,survey_status,arks_status_target,notes
-add,main,Partial,must-implement,SoT N/A: mergetool GUI identity
-add--interactive,internal,Partial,must-implement,A3 host-tested; crate tests (absent from host 2.43); routes to add -i/-p and -p modes
-am,main,Partial,must-implement,SoT N/A: interactive
-annotate,main,Partial,must-implement,synonym for blame; same edges
-apply,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-archive,main,Partial,must-implement,HELP claims --format=tar; other formats not stamped here
-askpass,gui-or-internal,Partial,must-implement,A3 host-tested; GIT_ASKPASS / core.askPass / SSH_ASKPASS then terminal prompt
-askyesno,gui-or-internal,Partial,must-implement,A3 host-tested; GIT_ASK_YESNO helper then terminal y/n prompt
-backfill,ancillary,Partial,must-implement,A3 host-tested; crate tests (git 2.49 contract); promisor blob backfill
-bisect,main,Partial,must-implement,SoT N/A: visualize GUI
-bisect--helper,internal,Partial,must-implement,A3 host-tested; crate tests (absent from host 2.43); --bisect-<sub> routes to bisect
-blame,main,Partial,must-implement,SoT edge: -L range exotic
-branch,main,Partial,must-implement,SoT N/A: --sort exotic; --format full
-bugreport,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-bundle,main,Partial,must-implement,HTTP bundle-uri FS5; full man-page not stamped here
-cat-file,main,Partial,must-implement,SoT N/A: textconv filters
-check-attr,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+add,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 27/27 ACCEPTED; corpus 46/46 SAME] SoT N/A: mergetool GUI identity
+add--interactive,internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)] A3; crate tests (absent from host 2.43); routes to add -i/-p and -p modes
+am,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 45/45 ACCEPTED; corpus 56/59 SAME + 3 reasoned] SoT N/A: interactive
+annotate,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 31/31 ACCEPTED; corpus 10/10 SAME] synonym for blame; same edges
+apply,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 35/35 ACCEPTED; corpus 55/55 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+archive,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 14/14 ACCEPTED; corpus 22/23 SAME + 1 reasoned] HELP claims --format=tar; other formats not stamped here
+askpass,gui-or-internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test tool_bridges (8/8 pass; evidence 20261125033117 a3-rerun)] A3; GIT_ASKPASS / core.askPass / SSH_ASKPASS then terminal prompt
+askyesno,gui-or-internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test tool_bridges (8/8 pass; evidence 20261125033117 a3-rerun)] A3; GIT_ASK_YESNO helper then terminal y/n prompt
+backfill,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)] A3; crate tests (git 2.49 contract); promisor blob backfill
+bisect,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 13/13 SAME] SoT N/A: visualize GUI
+bisect--helper,internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)] A3; crate tests (absent from host 2.43); --bisect-<sub> routes to bisect
+blame,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 31/31 ACCEPTED; corpus 180/180 SAME] SoT edge: -L range exotic
+branch,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 42/42 ACCEPTED; corpus 67/69 SAME + 2 reasoned] SoT N/A: --sort exotic; --format full
+bugreport,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 5/5 ACCEPTED; corpus 4/4 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+bundle,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 18/18 SAME] HTTP bundle-uri FS5; full man-page not stamped here
+cat-file,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 18/18 ACCEPTED; corpus 24/25 SAME + 1 reasoned] SoT N/A: textconv filters
+check-attr,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 5/5 ACCEPTED; corpus 11/13 SAME + 2 reasoned] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 check-ignore,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-check-mailmap,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-check-ref-format,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+check-mailmap,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 5/5 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+check-ref-format,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 20/20 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 checkout,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-checkout--worker,internal,Partial,must-implement,A3 host-tested; empty request stream only (arks checks out in-process)
-checkout-index,main,Partial,must-implement,dispatch present but omitted from arks --help (help honesty gap)
-cherry,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-cherry-pick,main,Partial,must-implement,conflicted sequencer edges documented; clean ranges claimed
-citool,gui-or-internal,Partial,must-implement,A3 host-tested; terminal commit tool (--amend/--nocommit)
-clean,main,Partial,must-implement,SoT N/A: -e exclude pathspec extras beyond pin subset
-clone,main,Partial,must-implement,SoT: not --shared; bundle-uri/filter subsets Claimed elsewhere
-column,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+checkout--worker,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 5/5 SAME] A3; empty request stream only (arks checks out in-process)
+checkout-index,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 16/16 ACCEPTED; corpus 23/23 SAME] dispatch present but omitted from arks --help (help honesty gap)
+cherry,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 3/3 ACCEPTED; corpus 7/7 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+cherry-pick,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 24/24 ACCEPTED; corpus 50/50 SAME] conflicted sequencer edges documented; clean ranges claimed
+citool,gui-or-internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; corpus 4/6 SAME; 2 design DIFF (pin image has no oracle); Docker crate test gui_cli (10/10 pass; evidence 20261125033117 a3-rerun)] A3; terminal commit tool (--amend/--nocommit)
+clean,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 13/13 ACCEPTED; corpus 18/18 SAME] SoT N/A: -e exclude pathspec extras beyond pin subset
+clone,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 48/48 ACCEPTED; corpus 51/51 SAME] SoT: not --shared; bundle-uri/filter subsets Claimed elsewhere
+column,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 7/7 ACCEPTED; corpus 5/5 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 commit,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-commit-graph,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+commit-graph,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 28/28 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 commit-tree,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-config,main,Partial,must-implement,SoT N/A: --worktree multi-wt edge beyond claimed
+config,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 39/39 ACCEPTED; corpus 103/103 SAME] SoT N/A: --worktree multi-wt edge beyond claimed
 count-objects,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-credential,credential,Partial,must-implement,SoT N/A: forge OAuth / bundled GCM
-credential-cache,credential,Partial,must-implement,A3 host-tested; native unix-socket cache client
-credential-cache--daemon,internal,Partial,must-implement,A3 host-tested; native unix-socket cache daemon
-credential-helper-selector,ancillary,Partial,must-implement,A3 host-tested; crate tests (Git for Windows helper); terminal choice then forward
-credential-manager,ancillary,Partial,must-implement,A3 host-tested; helper protocol on the OS store (fake backend in CI)
-credential-store,credential,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-credential-wincred,ancillary,Partial,must-implement,A3 host-tested; helper protocol on the OS store (fake backend in CI)
-daemon,server,Partial,must-implement,G32 Claimed server; full git-daemon option set not stamped here
-describe,main,Partial,must-implement,SoT N/A: --match globs beyond claimed
-diagnose,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-diff,main,Partial,must-implement,SoT N/A: --word-diff / external difftool GUI
-diff-files,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-diff-index,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-diff-pairs,plumbing,Partial,must-implement,host 2.54+ skew; Partial help/refuse (not pin 2.39.5)
-diff-tree,main,Partial,must-implement,SoT N/A: recursive combine
-difftool,main,Partial,must-implement,A3 host-tested; diff.tool / difftool.<tool>.cmd / --extcmd / --dir-diff (family-a3-tools corpus)
-difftool--helper,internal,Partial,must-implement,A3 host-tested; external-diff entry point with difftool environment
-env--helper,internal,Partial,must-implement,A3 host-tested; crate tests (absent from host 2.43); --type=bool|ulong
-fast-export,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-fast-import,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-fetch,main,Partial,must-implement,filter/shallow Claimed subsets; not every man-page option stamped here
-fetch-pack,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-filter-branch,main,Partial,must-implement,A3 host-tested; documented filters in one sh with refs/original backup (family-a3-tools corpus)
-fmt-merge-msg,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-for-each-ref,main,Partial,must-implement,SoT N/A: color/atom full set
-for-each-repo,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+credential,credential,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] SoT N/A: forge OAuth / bundled GCM
+credential-cache,credential,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 2/2 ACCEPTED; corpus 10/10 SAME] A3; native unix-socket cache client
+credential-cache--daemon,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 4/4 SAME] A3; native unix-socket cache daemon
+credential-helper-selector,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)] A3; crate tests (Git for Windows helper); terminal choice then forward
+credential-manager,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; corpus 0/3 SAME; 3 design DIFF (pin image has no oracle); Docker crate test credential_os_cli on the fake store (6/6 pass; evidence 20261125033117 a3-rerun)] A3; helper protocol on the OS store (fake backend in CI)
+credential-store,credential,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 5/5 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+credential-wincred,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; corpus 0/2 SAME; 2 design DIFF (pin image has no oracle); Docker crate test credential_os_cli on the fake store (6/6 pass; evidence 20261125033117 a3-rerun)] A3; helper protocol on the OS store (fake backend in CI)
+daemon,server,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; daemon flag parity has its own Docker pin receipt 20261125031214-daemon-flags-parity-a5 (verify/matrices/daemon-git-arks-e2e-matrix.csv)] G32 Claimed server; full git-daemon option set not stamped here
+describe,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 14/14 ACCEPTED; corpus 26/26 SAME] SoT N/A: --match globs beyond claimed
+diagnose,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 5/5 ACCEPTED; corpus 1/1 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+diff,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 22/22 ACCEPTED; corpus 181/182 SAME + 1 reasoned] SoT N/A: --word-diff / external difftool GUI
+diff-files,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 22/22 ACCEPTED; corpus 10/10 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+diff-index,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 22/22 ACCEPTED; corpus 14/14 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+diff-pairs,plumbing,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54+ skew; Partial help/refuse (not pin 2.39.5)
+diff-tree,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 27/27 ACCEPTED; corpus 43/43 SAME] SoT N/A: recursive combine
+difftool,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 14/14 ACCEPTED; corpus 61/61 SAME] A3; diff.tool / difftool.<tool>.cmd / --extcmd / --dir-diff (family-a3-tools corpus)
+difftool--helper,internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate test tool_bridges (8/8 pass; evidence 20261125033117 a3-rerun)] A3; external-diff entry point with difftool environment
+env--helper,internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: inventory 3/3 ACCEPTED; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)] A3; crate tests (absent from host 2.43); --type=bool|ulong
+fast-export,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 17/17 ACCEPTED; corpus 88/88 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+fast-import,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+fetch,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 54/54 ACCEPTED; corpus 61/62 SAME + 1 reasoned] filter/shallow Claimed subsets; not every man-page option stamped here
+fetch-pack,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 11/11 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+filter-branch,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 35/36 SAME + 1 reasoned] A3; documented filters in one sh with refs/original backup (family-a3-tools corpus)
+fmt-merge-msg,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 6/6 ACCEPTED; corpus 9/9 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+for-each-ref,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 16/16 ACCEPTED; corpus 124/140 SAME + 16 reasoned] SoT N/A: color/atom full set
+for-each-repo,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 3/3 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 forge,arks-only,arks-only,out-of-matrix-trimmed,TRIMMED over-design
-format-patch,main,Partial,must-implement,SoT N/A: binary patch exotic
-format-rev,plumbing,Partial,must-implement,host 2.56 experimental skew; Partial help/refuse (not pin 2.39.5)
-fsck,main,Partial,must-implement,SoT N/A: full unreachable progress UI
+format-patch,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 44/44 ACCEPTED; corpus 77/78 SAME + 1 reasoned] SoT N/A: binary patch exotic
+format-rev,plumbing,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.56 experimental skew; Partial help/refuse (not pin 2.39.5)
+fsck,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 14/14 ACCEPTED; corpus 19/19 SAME] SoT N/A: full unreachable progress UI
 fsck-objects,main,Synonym-wired,synonym->fsck,pin list-cmds; arks no HELP / generic not-implemented
-fsmonitor--daemon,internal,Partial,must-implement,A3 host-tested; mirrors Linux builds: not supported on this platform
-gc,main,Partial,must-implement,SoT refuse/N/A: --prune=now (CORR-001); --auto/detach
-get-tar-commit-id,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-grep,main,Partial,must-implement,SoT N/A: -P PCRE
-gui,gui-or-internal,Partial,must-implement,A3 host-tested; terminal UI with git-gui argv (blame/browser/citool/version)
-gui--askpass,gui-or-internal,Partial,must-implement,A3 host-tested; terminal askpass prompt
-gui--askyesno,gui-or-internal,Partial,must-implement,A3 host-tested; terminal yes/no prompt
-gui.tcl,gui-or-internal,Partial,must-implement,A3 host-tested; same entry as gui
-hash-object,main,Partial,must-implement,SoT N/A/edge: --stdin-paths batch extras
-help,main,Partial,must-implement,dispatch present but omitted from arks --help (help honesty gap)
-history,porcelain,Partial,must-implement,host 2.54+ skew; Partial help/refuse (not pin 2.39.5)
-hook,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+fsmonitor--daemon,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 5/5 SAME] A3; mirrors Linux builds: not supported on this platform
+gc,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 8/8 ACCEPTED; corpus 9/10 SAME + 1 reasoned] SoT refuse/N/A: --prune=now (CORR-001); --auto/detach
+get-tar-commit-id,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+grep,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 70/70 ACCEPTED; corpus 90/90 SAME] SoT N/A: -P PCRE
+gui,gui-or-internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; corpus 2/17 SAME; 15 design DIFF (pin image has no oracle); Docker crate test gui_cli (10/10 pass; evidence 20261125033117 a3-rerun)] A3; terminal UI with git-gui argv (blame/browser/citool/version)
+gui--askpass,gui-or-internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] A3; terminal askpass prompt
+gui--askyesno,gui-or-internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 1/1 SAME] A3; terminal yes/no prompt
+gui.tcl,gui-or-internal,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; corpus 0/1 SAME; 1 design DIFF (pin image has no oracle); Docker crate test gui_cli (10/10 pass; evidence 20261125033117 a3-rerun)] A3; same entry as gui
+hash-object,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 7/7 ACCEPTED; corpus 17/17 SAME] SoT N/A/edge: --stdin-paths batch extras
+help,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: inventory 18/18 ACCEPTED; no corpus line compares its behaviour with the pin] dispatch present but omitted from arks --help (help honesty gap)
+history,porcelain,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54+ skew; Partial help/refuse (not pin 2.39.5)
+hook,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 5/6 SAME + 1 reasoned] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 host-env,arks-only,arks-only,out-of-matrix-trimmed,TRIMMED over-design
-http-backend,server,Partial,must-implement,Wave Sv Claimed; CGI edge depth not stamped here
-http-fetch,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-http-push,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-imap-send,main,Partial,must-implement,A3 host-tested; IMAP APPEND over imap:// / imaps:// / imap.tunnel (local test server)
-index-pack,main,Partial,must-implement,SoT N/A: thin-pack exotic
-init,main,Partial,must-implement,SoT N/A: template/shared exotic
+http-backend,server,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] Wave Sv Claimed; CGI edge depth not stamped here
+http-fetch,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+http-push,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+imap-send,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 5/5 ACCEPTED; corpus 7/7 SAME] A3; IMAP APPEND over imap:// / imaps:// / imap.tunnel (local test server)
+index-pack,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] SoT N/A: thin-pack exotic
+init,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 9/9 ACCEPTED; corpus 31/31 SAME] SoT N/A: template/shared exotic
 init-db,main,Synonym-wired,synonym->init,pin list-cmds; arks no HELP / generic not-implemented
-instaweb,main,Partial,must-implement,A3 host-tested; --start/--stop/--restart run arks serve-http (git HTTP; no gitweb pages)
-interpret-trailers,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-last-modified,porcelain,Partial,must-implement,host 2.54+ skew; Partial HEAD-path stub (not pin 2.39.5)
+instaweb,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 13/13 ACCEPTED; corpus 5/5 SAME] A3; --start/--stop/--restart run arks serve-http (git HTTP; no gitweb pages)
+interpret-trailers,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 11/11 ACCEPTED; corpus 12/12 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+last-modified,porcelain,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54+ skew; Partial HEAD-path stub (not pin 2.39.5)
 lease,arks-only,arks-only,out-of-matrix-keep,intentional asymmetry B
 lfs,arks-only,arks-only,out-of-matrix-trimmed,TRIMMED over-design
 lock,arks-only,arks-only,out-of-matrix-keep,intentional asymmetry B
-log,main,Partial,must-implement,SoT N/A: --pretty=format: full custom; pager identity
-ls-files,main,Partial,must-implement,SoT N/A: --debug
-ls-remote,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+log,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 10/10 ACCEPTED; corpus 232/233 SAME + 1 reasoned] SoT N/A: --pretty=format: full custom; pager identity
+ls-files,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 39/39 ACCEPTED; corpus 57/58 SAME + 1 reasoned] SoT N/A: --debug
+ls-remote,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 13/13 ACCEPTED; corpus 30/30 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 ls-tree,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-mailinfo,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-mailsplit,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-maintenance,main,Partial,must-implement,SoT N/A: task scheduling start/stop
-merge,main,Partial,must-implement,SoT N/A: octopus; non-ort strategies
-merge-base,main,Partial,must-implement,SoT N/A: octopus >2 beyond claimed
-merge-file,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-merge-index,main,Partial,must-implement,A3 host-tested; runs <merge-program> per unmerged path (git-merge-one-file in-process)
-merge-octopus,merge-strategy,Partial,must-implement,A3 host-tested; strategy program + git merge with several heads
-merge-one-file,main,Partial,must-implement,A3 host-tested; seven-argument one-path resolver
-merge-ours,merge-strategy,Partial,must-implement,A3 host-tested; exit 0 when the index matches HEAD else 2
-merge-recursive,merge-strategy,Partial,must-implement,A3 host-tested; three-way strategy program (--ours/--theirs/--subtree)
-merge-recursive-ours,merge-strategy,Partial,must-implement,A3 host-tested; same as merge-recursive (as stock git)
-merge-recursive-theirs,merge-strategy,Partial,must-implement,A3 host-tested; same as merge-recursive (as stock git)
-merge-resolve,merge-strategy,Partial,must-implement,A3 host-tested; trivial in-index merge + merge-one-file
-merge-subtree,merge-strategy,Partial,must-implement,A3 host-tested; merge-recursive with subtree shift (also -s subtree / -X subtree)
-merge-tree,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-mergetool,main,Partial,must-implement,A3 host-tested; merge.tool / mergetool.<tool>.cmd / trustExitCode / .orig backups (family-a3-tools corpus)
-mktag,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-mktree,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-multi-pack-index,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+mailinfo,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 9/9 ACCEPTED; corpus 15/15 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+mailsplit,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 17/17 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+maintenance,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] SoT N/A: task scheduling start/stop
+merge,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 37/37 ACCEPTED; corpus 115/115 SAME] SoT N/A: octopus; non-ort strategies
+merge-base,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 6/6 ACCEPTED; corpus 15/15 SAME] SoT N/A: octopus >2 beyond claimed
+merge-file,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 11/11 ACCEPTED; corpus 17/20 SAME + 3 reasoned] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+merge-index,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 16/16 SAME] A3; runs <merge-program> per unmerged path (git-merge-one-file in-process)
+merge-octopus,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 13/13 SAME] A3; strategy program + git merge with several heads
+merge-one-file,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 11/11 SAME] A3; seven-argument one-path resolver
+merge-ours,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 3/3 SAME] A3; exit 0 when the index matches HEAD else 2
+merge-recursive,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 19/19 SAME] A3; three-way strategy program (--ours/--theirs/--subtree)
+merge-recursive-ours,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] A3; same as merge-recursive (as stock git)
+merge-recursive-theirs,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] A3; same as merge-recursive (as stock git)
+merge-resolve,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 8/8 SAME] A3; trivial in-index merge + merge-one-file
+merge-subtree,merge-strategy,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 3/3 SAME] A3; merge-recursive with subtree shift (also -s subtree / -X subtree)
+merge-tree,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 7/7 ACCEPTED; corpus 40/51 SAME + 11 reasoned] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+mergetool,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 34/34 SAME] A3; merge.tool / mergetool.<tool>.cmd / trustExitCode / .orig backups (family-a3-tools corpus)
+mktag,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 4/4 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+mktree,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 3/3 ACCEPTED; corpus 7/7 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+multi-pack-index,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 24/24 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 mv,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
 name-rev,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-notes,main,Partial,must-implement,SoT N/A: merge/edit interactive
-pack-objects,main,Partial,must-implement,SoT N/A: thin-pack delta reuse exotic
-pack-redundant,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+notes,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 53/59 SAME + 6 reasoned] SoT N/A: merge/edit interactive
+pack-objects,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 44/44 ACCEPTED; corpus 60/62 SAME + 2 reasoned] SoT N/A: thin-pack delta reuse exotic
+pack-redundant,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 pack-refs,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-patch-id,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-pickaxe,main,Partial,must-implement,A3 host-tested; blame alias (option acceptance follows blame)
-prune,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-prune-packed,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-pull,main,Partial,must-implement,cred/forge OAuth browser UX N/A; rebase/FF/3way claimed subset
-push,main,Partial,must-implement,tip claims delete/lease/options subsets; exotic refspecs historically refuse
-quiltimport,main,Partial,must-implement,A3 host-tested; series walk with mailinfo + apply --index + commit (family-a3-tools corpus)
-range-diff,main,Partial,must-implement,SoT N/A: merge-commit dual diff full emit
-read-tree,main,Partial,must-implement,SoT N/A: 3-tree full merge-index
-rebase,main,Partial,must-implement,TTY -i Claimed FS1; exotic sequencer edges remain
-receive-pack,server,Partial,must-implement,Wave Sv + proc-receive FS2/FS8; option depth not stamped here
+patch-id,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 3/3 ACCEPTED; corpus 4/4 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+pickaxe,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 31/31 ACCEPTED; corpus 5/5 SAME] A3; blame alias (option acceptance follows blame)
+prune,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 7/7 ACCEPTED; corpus 13/13 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+prune-packed,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 4/4 ACCEPTED; corpus 7/7 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+pull,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 59/59 ACCEPTED; corpus 47/47 SAME] cred/forge OAuth browser UX N/A; rebase/FF/3way claimed subset
+push,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 35/35 ACCEPTED; corpus 48/49 SAME + 1 reasoned] tip claims delete/lease/options subsets; exotic refspecs historically refuse
+quiltimport,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 6/6 ACCEPTED; corpus 11/11 SAME] A3; series walk with mailinfo + apply --index + commit (family-a3-tools corpus)
+range-diff,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 102/102 ACCEPTED; corpus 165/166 SAME + 1 reasoned] SoT N/A: merge-commit dual diff full emit
+read-tree,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 19/19 ACCEPTED; corpus 27/27 SAME] SoT N/A: 3-tree full merge-index
+rebase,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 48/48 ACCEPTED; corpus 86/86 SAME] TTY -i Claimed FS1; exotic sequencer edges remain
+receive-pack,server,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 2/2 ACCEPTED; corpus 3/3 SAME] Wave Sv + proc-receive FS2/FS8; option depth not stamped here
 reflog,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-refs,porcelain,Partial,must-implement,host 2.54+ skew; Partial list/verify (not pin 2.39.5)
+refs,porcelain,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54+ skew; Partial list/verify (not pin 2.39.5)
 remote,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-remote-ext,remote-helper,Partial,must-implement,"A3 host-tested; connect capability, %S/%s/%G/%V placeholders"
-remote-fd,remote-helper,Partial,must-implement,A3 host-tested; connect capability over given fds
-remote-ftp,remote-helper,Partial,must-implement,A3 host-tested; helper protocol; transfers refuse (no FTP client)
-remote-ftps,remote-helper,Partial,must-implement,A3 host-tested; helper protocol; transfers refuse (no FTP client)
-remote-http,remote-helper,Partial,must-implement,A3 host-tested; helper protocol over arks smart HTTP client
-remote-https,remote-helper,Partial,must-implement,A3 host-tested; helper protocol over arks smart HTTP client
-repack,main,Partial,must-implement,SoT edge: --window/geometric/cruft beyond -ad
-replace,main,Partial,must-implement,FS5 claimed forms; full man-page not stamped here
-replay,porcelain,Partial,must-implement,host 2.54 experimental skew; Partial help/refuse (not pin 2.39.5)
-repo,porcelain,Partial,must-implement,host 2.54+ skew; Partial info (not pin 2.39.5)
-request-pull,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-rerere,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-reset,main,Partial,must-implement,SoT may still N/A --merge conflicted restore edge
+remote-ext,remote-helper,Verified,must-implement,"[Q20 Verified per receipt 20261125023636: no option inventory; corpus 4/4 SAME] A3; connect capability, %S/%s/%G/%V placeholders"
+remote-fd,remote-helper,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 5/5 SAME] A3; connect capability over given fds
+remote-ftp,remote-helper,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 1/1 SAME] A3; helper protocol; transfers refuse (no FTP client)
+remote-ftps,remote-helper,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 1/1 SAME] A3; helper protocol; transfers refuse (no FTP client)
+remote-http,remote-helper,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] A3; helper protocol over arks smart HTTP client
+remote-https,remote-helper,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 1/1 SAME] A3; helper protocol over arks smart HTTP client
+repack,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 31/31 ACCEPTED; corpus 11/12 SAME + 1 reasoned] SoT edge: --window/geometric/cruft beyond -ad
+replace,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 13/13 ACCEPTED; corpus 63/63 SAME] FS5 claimed forms; full man-page not stamped here
+replay,porcelain,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54 experimental skew; Partial help/refuse (not pin 2.39.5)
+repo,porcelain,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54+ skew; Partial info (not pin 2.39.5)
+request-pull,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 4/4 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+rerere,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 24/24 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+reset,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 15/15 ACCEPTED; corpus 33/33 SAME] SoT may still N/A --merge conflicted restore edge
 restore,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-rev-list,main,Partial,must-implement,SoT N/A: --objects full graph extras beyond claimed
-rev-parse,main,Partial,must-implement,SoT N/A: --parseopt shell helper
-revert,main,Partial,must-implement,same sequencer class as cherry-pick
+rev-list,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 35/35 ACCEPTED; corpus 61/62 SAME + 1 reasoned] SoT N/A: --objects full graph extras beyond claimed
+rev-parse,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 18/18 SAME] SoT N/A: --parseopt shell helper
+revert,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 20/20 ACCEPTED; corpus 25/25 SAME] same sequencer class as cherry-pick
 rm,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-send-email,ancillary,Partial,must-implement,A3 host-tested; SMTP / sendmail transports against a local SMTP sink (no peer oracle on host)
-send-pack,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+send-email,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin; Docker crate tests send_email_smtp 16/16 and tool_bridges 8/8 against a fixture SMTP server (no git-email oracle in the image; evidence 20261125033117 a3-rerun and 20261125005021-send-email-smtp-fixture)] A3; SMTP / sendmail transports against a local SMTP sink (no peer oracle on host)
+send-pack,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 23/23 ACCEPTED; corpus 18/18 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 serve-http,arks-only,arks-only,out-of-matrix-keep,KEEP git HTTP listener
-sh-i18n--envsubst,internal,Partial,must-implement,A3 host-tested; --variables and named substitution
-shell,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+sh-i18n--envsubst,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 6/6 SAME] A3; --variables and named substitution
+shell,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
 shortlog,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-show,main,Partial,must-implement,SoT N/A: pretty/pager identity (with log)
-show-branch,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-show-index,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+show,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 10/10 ACCEPTED; corpus 48/48 SAME] SoT N/A: pretty/pager identity (with log)
+show-branch,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 18/18 ACCEPTED; corpus 121/121 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+show-index,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 1/1 ACCEPTED; corpus 3/3 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
 show-ref,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-sparse-checkout,main,Partial,must-implement,SoT N/A: non-cone full
+sparse-checkout,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 25/30 SAME + 5 reasoned] SoT N/A: non-cone full
 stage,main,Synonym-wired,synonym->add,pin list-cmds; arks no HELP / generic not-implemented
-stash,main,Partial,must-implement,FS3 -p claimed; remaining man-page depth not stamped here
-status,main,Partial,must-implement,SoT N/A: porcelain v2 full schema extras
-stripspace,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
-submodule,main,Partial,must-implement,SoT N/A: custom !command update; absorbgitdirs exotic
-submodule--helper,internal,Partial,must-implement,A3 host-tested; routes subcommands to submodule
-subtree,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-survey,ancillary,Partial,must-implement,host 2.54 experimental skew; Partial counts (not pin 2.39.5)
+stash,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 81/81 SAME] FS3 -p claimed; remaining man-page depth not stamped here
+status,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 20/20 ACCEPTED; corpus 34/34 SAME] SoT N/A: porcelain v2 full schema extras
+stripspace,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 4/4 ACCEPTED; corpus 6/6 SAME] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+submodule,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 141/141 SAME] SoT N/A: custom !command update; absorbgitdirs exotic
+submodule--helper,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 7/7 SAME] A3; routes subcommands to submodule
+subtree,main,Partial,must-implement,[Q20 Partial per receipt 20261125023636: inventory 13/13 ACCEPTED; no corpus line compares its behaviour with the pin] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+survey,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.54 experimental skew; Partial counts (not pin 2.39.5)
 switch,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
 symbolic-ref,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-tag,main,Partial,must-implement,command present; signing depth owned by R4/G38 — not full man-page stamp here
-unpack-file,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-unpack-objects,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-update,ancillary,Partial,must-implement,A3 host-tested; mirrors stock git: not a git command (suggests update-ref)
-update-git-for-windows,ancillary,Partial,must-implement,A3 host-tested; reports a newer arks release only; never installs
-update-index,main,Partial,must-implement,SoT N/A: --stdin full + chmod skip-worktree edges
+tag,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 34/34 ACCEPTED; corpus 57/58 SAME + 1 reasoned] command present; signing depth owned by R4/G38 — not full man-page stamp here
+unpack-file,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 3/3 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+unpack-objects,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 4/4 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+update,ancillary,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] A3; mirrors stock git: not a git command (suggests update-ref)
+update-git-for-windows,ancillary,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; corpus 0/3 SAME; 3 design DIFF (pin image has no oracle); Docker crate test update_check_cli (4/4 pass; evidence 20261125033117 a3-rerun)] A3; reports a newer arks release only; never installs
+update-index,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 35/35 ACCEPTED; corpus 47/48 SAME + 1 reasoned] SoT N/A: --stdin full + chmod skip-worktree edges
 update-ref,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-update-server-info,server,Partial,must-implement,G29 Claimed; option depth not stamped here
-upload-archive,server,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
-upload-archive--writer,internal,Partial,must-implement,A3 host-tested; argument pkt-lines to raw archive
-upload-pack,server,Partial,must-implement,Wave Sv Claimed; option depth not stamped here
-url-parse,plumbing,Partial,must-implement,host 2.56 skew; Partial scheme/host/path (not pin 2.39.5)
-var,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
+update-server-info,server,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 2/2 ACCEPTED; corpus 3/3 SAME] G29 Claimed; option depth not stamped here
+upload-archive,server,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 2/2 SAME] pin list-cmds; arks no HELP / generic not-implemented Partial subset landed (native; no git/gh spawn)
+upload-archive--writer,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 4/4 SAME] A3; argument pkt-lines to raw archive
+upload-pack,server,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 3/3 ACCEPTED; corpus 6/6 SAME] Wave Sv Claimed; option depth not stamped here
+url-parse,plumbing,Partial,must-implement,[Q20 Partial per receipt 20261125023636: no option inventory; no corpus line compares its behaviour with the pin] host 2.56 skew; Partial scheme/host/path (not pin 2.39.5)
+var,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 9/11 SAME + 2 reasoned] pin list-cmds; arks no HELP / generic not-implemented; wired this tip (subset flags)
 verify-commit,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-verify-pack,main,Partial,must-implement,pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
-verify-tag,main,Partial,must-implement,dispatch present but omitted from arks --help (help honesty gap)
+verify-pack,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 5/5 ACCEPTED; corpus 7/7 SAME] pin list-cmds; arks no HELP / generic not-implemented; Partial subset landed (native; no git/gh spawn)
+verify-tag,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: inventory 4/4 ACCEPTED; corpus 7/7 SAME] dispatch present but omitted from arks --help (help honesty gap)
 version,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
-web--browse,internal,Partial,must-implement,A3 host-tested; -b/-t/-c, web.browser, browser.<tool>.path|cmd
+web--browse,internal,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 11/11 SAME] A3; -b/-t/-c, web.browser, browser.<tool>.path|cmd
 whatchanged,main,Synonym-wired,synonym->log,pin list-cmds; arks no HELP / generic not-implemented
-worktree,main,Partial,must-implement,SoT N/A: main-worktree remove
+worktree,main,Verified,must-implement,[Q20 Verified per receipt 20261125023636: no option inventory; corpus 53/55 SAME + 2 reasoned] SoT N/A: main-worktree remove
 write-tree,main,Parity-candidate,must-implement,arks --help + dispatch; SoT M16 implement-or-N/A bar — survey does not invent Claimed
