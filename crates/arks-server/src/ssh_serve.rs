@@ -17,9 +17,10 @@
 //! `arks upload-pack`/`receive-pack` remains valid. Cite: [[sot:root/arks-self-host-server]]
 
 use crate::error::ServerError;
+use crate::push_policy::Pusher;
 use crate::serve::ListenRebindSlot;
 use crate::ssh_openssh_chacha::OpenSshChaCha;
-use crate::stdio::{receive_pack_stream, upload_pack_stream};
+use crate::stdio::{receive_pack_stream_as, upload_pack_stream};
 use arks_repo::Repository;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
@@ -605,7 +606,7 @@ fn dispatch_git_exec_to_pack(repo_path: &Path, exec_cmd: &str) -> Result<String,
                  (Partial; empty peer expected; not Claimed)"
             )),
         },
-        "git-receive-pack" => match receive_pack_stream(&mut repo, &mut buf) {
+        "git-receive-pack" => match receive_pack_stream_as(&mut repo, &mut buf, &Pusher::ssh()) {
             Ok(()) => Ok(
                 "channel_exec=git-receive-pack dispatched receive_pack_stream ok \
                  (Partial empty-peer; Claimed SSH channel e2e Missing)"
@@ -1101,7 +1102,7 @@ fn dispatch_git_exec_live(
             ),
             Err(e) => Err(format!("channel_exec=git-upload-pack live err={e}")),
         },
-        "git-receive-pack" => match receive_pack_stream(&mut repo, pipe) {
+        "git-receive-pack" => match receive_pack_stream_as(&mut repo, pipe, &Pusher::ssh()) {
             Ok(()) => Ok(
                 "channel_exec=git-receive-pack live receive_pack_stream ok (OpenSSH channel)"
                     .into(),

@@ -14,6 +14,7 @@ pub(crate) mod issues;
 pub(crate) mod keys;
 pub(crate) mod project;
 pub(crate) mod pulls;
+pub(crate) mod push_rules;
 pub(crate) mod releases;
 pub(crate) mod repos;
 pub(crate) mod rules;

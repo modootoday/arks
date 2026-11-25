@@ -5,7 +5,8 @@
 //! the side-band pack (avoids `bad band #78`). Cite: gitprotocol-pack.
 
 use crate::error::ServerError;
-use crate::receive::{receive_pack, receive_pack_advertisement};
+use crate::push_policy::Pusher;
+use crate::receive::{receive_pack, receive_pack_advertisement, receive_pack_as};
 use crate::upload::{upload_pack_advertisement, upload_pack_result_with_nak};
 use arks_protocol::{Packet, decode_packet, decode_text_line, encode_text_line};
 use arks_repo::Repository;
@@ -62,12 +63,21 @@ pub fn receive_pack_stream<S: Read + Write>(
     repo: &mut Repository,
     stream: &mut S,
 ) -> Result<(), ServerError> {
+    receive_pack_stream_as(repo, stream, &Pusher::local())
+}
+
+/// [`receive_pack_stream`] for a known transport pusher (push policy input).
+pub fn receive_pack_stream_as<S: Read + Write>(
+    repo: &mut Repository,
+    stream: &mut S,
+    pusher: &Pusher,
+) -> Result<(), ServerError> {
     let ad = receive_pack_advertisement(repo)?;
     stream.write_all(&ad)?;
     stream.flush()?;
     let mut body = Vec::new();
     stream.read_to_end(&mut body)?;
-    let out = receive_pack(repo, &body)?;
+    let out = receive_pack_as(repo, &body, pusher)?;
     stream.write_all(&out)?;
     stream.flush()?;
     Ok(())

@@ -3,7 +3,7 @@ id: sot:root/arks-hub-product-intent
 title: arks hub product intent
 status: active
 created: 2026-11-10T19:01:55Z
-updated: 2026-11-19T23:00:00Z
+updated: 2026-11-25T00:00:00Z
 tags: [arks-hub, arks-forge-client, forge, collaboration, gh-symmetry, flat-cli, pr, issue, review, release, auth, internal-crate, single-release, native-api, client-only, overlap]
 verify: manual
 rel:
@@ -26,7 +26,7 @@ rel:
 
 # arks forge client product intent (flat CLI)
 
-Version **0.5.0**. Normative **product intent** (document revision — **not** a product release; workspace crate remains `0.0.0`) for forge / host collaboration as **top-level** commands on the **single** published CLI **`arks`** — **merged git + gh client surface**.
+Version **0.6.0**. Normative **product intent** (document revision — **not** a product release; workspace crate remains `0.0.0`) for forge / host collaboration as **top-level** commands on the **single** published CLI **`arks`** — **merged git + gh client surface**.
 
 **Role:** forge **client** leaves (`arks pr`, `arks issue`, `arks auth`, …) talk to the **arks forge** hosted by **`arks serve`** (first verify peer). arks is an independent service modelled on `git`, `gh` and `git daemon` — not a port of GitHub. For arks-owned primitives the forge API uses GitHub-shaped REST paths, so `--host` MAY also point at a GitHub-class host for that compatible subset ([[adr:root/20261119230000]]). This is **not** the way to start the host — that is `arks serve`.
 
@@ -97,6 +97,57 @@ Matrix rows are **surface** targets for humans. Implementing a row by shelling t
 8. **`arks hub …` as the primary forge client noun** or **`hub serve` as primary host UX** (both superseded).
 9. Treating hard-renames (`inbox` / `forge-config`) as the **primary** overlap story under personality `arks` (superseded by unified overlap in [[sot:root/arks-cli-personality-factory]]).
 10. Silently replacing Git `status` / `config` semantics under personality `git`, or omitting Git sections from default unified `arks` overlap output without opt-in single-peer flags.
+
+### Ruleset enforcement on push (Q4, normative)
+
+Rulesets stored by the arks forge (`/repos/{o}/{r}/rulesets`, `/orgs/{org}/rulesets`) gate
+**pushes** received by the Git server of the same `arks serve` process, not only `pr merge`.
+Semantics follow GitHub's documented ruleset rules for the subset arks stores
+(<https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets>,
+<https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets>,
+<https://docs.github.com/en/rest/repos/rules>); the wire report follows
+<https://git-scm.com/docs/gitprotocol-pack> (report-status) and <https://git-scm.com/docs/git-push> (OUTPUT, `remote rejected`).
+
+17. **Where.** `arks serve` with the forge module on installs the check on its smart-HTTP and
+    built-in SSH receive-pack paths. The pushed Git directory is matched to a forge repository
+    by path under the forge git root; a Git directory that is no forge repository has no
+    rulesets. Standalone `arks receive-pack` (operator sshd), `arks daemon` and `--no-forge`
+    serving are not checked. Forge-side writes (`pr merge`, contents API) keep the merge gate.
+18. **Which rulesets.** Enforcement `active` only (`evaluate` reports, `disabled` is ignored).
+    `refs/heads/*` updates take `target: branch` rulesets, `refs/tags/*` take `target: tag`;
+    ref conditions use `refs/heads/<glob>` / `refs/tags/<glob>`, `~ALL`, `~DEFAULT_BRANCH`
+    (branches only), with `exclude` winning; owner-level rulesets apply by repository name
+    conditions. Other refs (`refs/notes/*`, `refs/pull/*`, …) have no rulesets.
+19. **Rules evaluated per ref update.**
+
+    | Rule type | Refuses |
+    |-----------|---------|
+    | `creation` | creating a matching ref |
+    | `update` | updating an existing matching ref |
+    | `deletion` | deleting a matching ref |
+    | `non_fast_forward` | an update whose old tip is not an ancestor of the new tip (force push) |
+    | `required_linear_history` | a create or update that introduces a merge commit (a commit with more than one parent not already reachable from the old tip, or from any ref on create) |
+    | `pull_request` | a direct update of an existing matching ref (changes go through a pull request) |
+    | `required_status_checks` | a create or update whose new tip lacks a `success` commit status for every required context (`do_not_enforce_on_create` skips creates) |
+
+    Deletion is checked by `deletion` only. Other stored rule types (signatures, patterns,
+    deployments, merge queue, code scanning, …) are **not** evaluated on push.
+20. **Bypass.** A ruleset is skipped for a pusher matched by one of its `bypass_actors` with
+    `bypass_mode` `always` or `exempt` (absent = `always`); `pull_request` mode never bypasses
+    a push. The pusher is the forge account of the token sent as the HTTP Basic password or
+    `Bearer` value, else the user verified by the server's own Basic gate; SSH and anonymous
+    pushes have no account and never bypass. Actor resolution: `OrganizationAdmin` and
+    `RepositoryRole` match the repository owner (the arks forge has no collaborators, so the
+    owner holds every role); `Team`, `Integration` and `DeployKey` never match (no such
+    principals on push yet).
+21. **Report.** Checks run after the pack is unpacked and before any ref moves, per ref: a
+    refused ref gets `ng <ref> push declined due to repository rule violations (<details>)`
+    with one `ruleset "<name>": <rule>` item per violation (single line), so stock git prints
+    `! [remote rejected] <ref> (…)` and exits non-zero; other refs in the same push are
+    updated as usual (no atomic push). A forge store that cannot be read refuses every ref of
+    that push (fail closed).
+22. **Honesty.** Host crate and loopback e2e tests are advisory; Claimed needs the hub e2e
+    journey in the Docker clean-room ([[sot:root/product-verification-clean-room]]).
 
 ### Relationship
 

@@ -299,3 +299,72 @@ fn v2_advertises_and_serves_bundle_uri() {
         "{text}"
     );
 }
+
+struct RefuseNamed(&'static str);
+
+impl PushPolicy for RefuseNamed {
+    fn check(&self, _: &Repository, pusher: &Pusher, updates: &[RefUpdate]) -> Vec<Option<String>> {
+        assert_eq!(pusher.transport, "local");
+        updates
+            .iter()
+            .map(|u| (u.name == self.0).then(|| format!("rule says no\nfor {}", u.name)))
+            .collect()
+    }
+}
+
+#[test]
+fn receive_push_policy_refuses_one_ref_and_keeps_the_other() {
+    use arks_protocol::{Packet, encode_packet};
+    let dir = TempDir::new().unwrap();
+    let (git, oid) = seed_bare(dir.path());
+    let mut repo = Repository::open(&git).unwrap();
+    let mut body = Vec::new();
+    for name in ["refs/heads/a", "refs/heads/b"] {
+        let line = format!("{} {} {name}\n", zero_oid(), oid.to_hex());
+        body.extend(encode_packet(&Packet::Data(line.into_bytes())).unwrap());
+    }
+    body.extend(encode_packet(&Packet::Flush).unwrap());
+    let policy = RefuseNamed("refs/heads/b");
+    let out = receive_pack_with(&mut repo, &body, &Pusher::local(), Some(&policy)).unwrap();
+    let text = String::from_utf8_lossy(&out);
+    assert!(text.contains("ok refs/heads/a"), "{text}");
+    // Reasons are single-line in report-status.
+    assert!(
+        text.contains("ng refs/heads/b rule says no for refs/heads/b\n"),
+        "{text}"
+    );
+    assert_eq!(repo.refs().resolve("refs/heads/a").unwrap(), oid);
+    assert!(repo.refs().resolve("refs/heads/b").is_err());
+}
+
+struct WrongArity;
+
+impl PushPolicy for WrongArity {
+    fn check(&self, _: &Repository, _: &Pusher, _: &[RefUpdate]) -> Vec<Option<String>> {
+        Vec::new()
+    }
+}
+
+#[test]
+fn receive_push_policy_wrong_arity_fails_closed() {
+    let dir = TempDir::new().unwrap();
+    let (git, oid) = seed_bare(dir.path());
+    let mut repo = Repository::open(&git).unwrap();
+    let body = receive_create_branch_body(&oid, "refs/heads/topic");
+    let out = receive_pack_with(&mut repo, &body, &Pusher::local(), Some(&WrongArity)).unwrap();
+    let text = String::from_utf8_lossy(&out);
+    assert!(
+        text.contains("ng refs/heads/topic push policy error"),
+        "{text}"
+    );
+    assert!(repo.refs().resolve("refs/heads/topic").is_err());
+}
+
+#[test]
+fn basic_auth_reports_the_authorized_user() {
+    let cfg = BasicAuthConfig::single("alice", "s3cret");
+    let ok = basic_authorization_header("alice", "s3cret");
+    assert_eq!(cfg.authorized_user(Some(&ok)).as_deref(), Some("alice"));
+    let bad = basic_authorization_header("alice", "nope");
+    assert_eq!(cfg.authorized_user(Some(&bad)), None);
+}

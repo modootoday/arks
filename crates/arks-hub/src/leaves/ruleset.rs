@@ -1,7 +1,8 @@
 //! `arks ruleset …` / `arks rs …` — rulesets (branch protection rules stored by
 //! the arks forge): `list`, `view`, `check`. Rulesets are created with the
 //! forge API (`arks api -X POST repos/{owner}/{repo}/rulesets --input ruleset.json`),
-//! as with gh. Active rulesets gate `pr merge` on the forge.
+//! as with gh. Active rulesets gate `pr merge` on the forge and pushes to the Git
+//! server of the same `arks serve`.
 
 use super::common::{Local, seg};
 use super::{Args, Ctx, Fail, Res, arr, n, row, s, usage, web};
@@ -19,7 +20,8 @@ USAGE:
 Create or change rulesets through the forge API, e.g.
   arks api -X POST repos/OWNER/REPO/rulesets --input ruleset.json
 Active rulesets gate `pr merge` (approvals, required status checks, linear
-history); push-time enforcement in the Git server is not wired.";
+history) and pushes to the Git server of the same `arks serve` (creation,
+update, deletion, force push, linear history, pull request, status checks).";
 
 const R: &[&str] = &["-R", "--repo"];
 
@@ -212,7 +214,7 @@ pub(crate) fn run(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res {
             }
             if !list.is_empty() {
                 eprintln!(
-                    "note: the arks forge enforces these rules when merging pull requests; pushes are not checked"
+                    "note: the arks forge enforces these rules when merging pull requests and on push to `arks serve`"
                 );
             }
             Ok(())

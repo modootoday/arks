@@ -69,7 +69,7 @@ Surveyed against `gh` help; phases live in Specfold. **v1-shaped** flat groups i
 |---------|----------|
 | Repository content (each forge repository has a Git directory under `--forge-git-root`, default `<forge-data>/git`) | `repo create --add-readme/--gitignore/--license`, `repo read-dir` / `read-file`, `pr diff`, real `pr merge` (merge / squash / rebase), `pr update-branch`, `pr revert`, `repo fork`, `repo sync`, `release download --archive` |
 | Commit statuses | `pr checks` (post a status with `arks api -X POST repos/OWNER/REPO/statuses/SHA -f state=success -f context=ci`; exit 8 while pending, 1 on failure) |
-| Rulesets | `ruleset list` / `view` / `check`; create one with `arks api -X POST repos/OWNER/REPO/rulesets --input ruleset.json`. Active rulesets block `pr merge` until required reviews and status checks pass (pushes are not checked) |
+| Rulesets | `ruleset list` / `view` / `check`; create one with `arks api -X POST repos/OWNER/REPO/rulesets --input ruleset.json`. Active rulesets block `pr merge` until required reviews and status checks pass, and refuse pushes to `arks serve` that break them (deletion, force push, creation, update, merge commits, direct pushes under a pull-request rule, missing status checks); refused refs show as `! [remote rejected]` |
 | Template catalogs | `repo gitignore list|view`, `repo license list|view` (arks's own short templates; licenses point to the SPDX text) |
 | Search | `search issues|prs|repos|code|commits` with `gh`'s qualifiers |
 | Issue extras | `issue develop` (linked branches), `issue artifact create|list|view|edit|download|delete` |

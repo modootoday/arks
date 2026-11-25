@@ -481,6 +481,26 @@ impl HubStore {
         Ok(store)
     }
 
+    /// Read an existing forge store without creating, seeding or saving it
+    /// (`Ok(None)` when `dir` holds no `db.json`; a parse error is an error).
+    pub fn load_existing(dir: &Path) -> Result<Option<Self>, String> {
+        let path = dir.join("db.json");
+        if !path.is_file() {
+            return Ok(None);
+        }
+        let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let db: HubDb = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+        let actor = db.user_login.clone();
+        Ok(Some(Self {
+            path,
+            db,
+            git_root: dir.join("git"),
+            git_url: None,
+            actor,
+            public_base: "http://127.0.0.1:3920".into(),
+        }))
+    }
+
     pub fn save(&self) -> Result<(), String> {
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;

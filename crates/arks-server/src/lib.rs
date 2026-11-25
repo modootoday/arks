@@ -12,6 +12,7 @@ mod dumb;
 mod error;
 mod hooks;
 mod http;
+mod push_policy;
 mod receive;
 mod serve;
 mod ssh_openssh_chacha;
@@ -33,7 +34,11 @@ pub use daemon::{
 pub use dumb::{dumb_info_refs_body, serve_dumb_path, update_server_info};
 pub use error::ServerError;
 pub use http::{HttpRequest, HttpResponse, handle_smart_http, handle_smart_http_auth};
-pub use receive::{receive_advertisement, receive_pack, receive_pack_advertisement};
+pub use push_policy::{PushPolicy, Pusher, RefUpdate, install_push_policy, installed_push_policy};
+pub use receive::{
+    receive_advertisement, receive_pack, receive_pack_advertisement, receive_pack_as,
+    receive_pack_with,
+};
 pub use serve::{
     ListenRebindSlot, ServeHttpOptions, serve_http, serve_http_scheme, serve_http_with_opts,
     spawn_loopback, spawn_loopback_with_opts,
@@ -43,7 +48,8 @@ pub use ssh_serve::{
     spawn_loopback_ssh, spawn_ssh_listener,
 };
 pub use stdio::{
-    receive_pack_session, receive_pack_stream, upload_pack_session, upload_pack_stream,
+    receive_pack_session, receive_pack_stream, receive_pack_stream_as, upload_pack_session,
+    upload_pack_stream,
 };
 pub use tls::load_server_config;
 /// Operator-supplied in-process TLS server config (B9); avoids naming `rustls` in CLI crates.

@@ -437,6 +437,8 @@ pub fn cmd_serve(args: &[String]) -> CliResult<()> {
     };
     if let Some(ref mut opts) = forge_opts {
         opts.tls = product_tls.clone();
+        // Forge rulesets gate pushes to the HTTP and SSH listeners of this process.
+        crate::cmd::serve_rulesets::install(opts);
     }
 
     sync_serve_runtime_to_file(
