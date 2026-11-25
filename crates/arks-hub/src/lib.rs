@@ -29,8 +29,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 pub use forge::push_rules::{PushRefUpdate, push_verdicts};
 pub use serve::{
-    ForgeListenRebindSlot, ForgeServeOptions, default_forge_data_dir, forge_serve_scheme,
-    serve_forge_api, spawn_forge_api,
+    DEFAULT_FORGE_LISTEN, ForgeListenRebindSlot, ForgeServeOptions, ServeError,
+    default_forge_data_dir, forge_serve_scheme, serve_forge_api, spawn_forge_api,
 };
 
 /// Flat / hub groups shown in stub help (gh-shaped + hub-native markers).
@@ -121,8 +121,9 @@ COMMANDS (gh-symmetric argv; host-tested Partial, not Claimed):
     completion    Shell completion script
     gist, project, discussion, ssh-key, gpg-key
                   arks-owned forge groups
-    milestone     Milestones list|create (hub-native)
+    milestone     list|create|edit|close|delete (hub-native; arks-defined argv)
     serve         Local forge API listen (transitional — prefer arks serve)
+    review        Refused: use `arks pr review` (exit 2)
     licenses, skill, preview, agent-task, inbox, forge-config, smoke
                   hub-native helpers (local Partial)
     extension, copilot and the GitHub-platform-only groups (Actions, attestations,
@@ -178,7 +179,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 eprintln!("arks hub serve: {e}");
-                ExitCode::from(2)
+                ExitCode::from(e.exit_code())
             }
         },
         "auth" => leaves::dispatch(
@@ -211,7 +212,13 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             &args[1..],
             leaves::release::run,
         ),
-        "milestone" => cmd_milestone(&args[1..]),
+        "milestone" => leaves::dispatch(
+            "milestone",
+            leaves::milestone::HELP,
+            &args[1..],
+            leaves::milestone::run,
+        ),
+        "review" => cmd_review_refuse(&args[1..]),
         "gist" => leaves::dispatch("gist", leaves::gist::HELP, &args[1..], leaves::gist::run),
         "project" => leaves::dispatch(
             "project",
@@ -425,11 +432,6 @@ fn require_api() -> Result<(String, String), String> {
     Ok((base, tok))
 }
 
-/// Backward-compatible alias — local http:// still preferred for Partial forge.
-fn require_local_api() -> Result<(String, String), String> {
-    require_api()
-}
-
 /// Remote HTTPS forge e2e harness Partial: smoke against `https://` ARKS_HUB_API
 /// (or `--url`), else document Missing and optionally probe local `http://`.
 /// Never spawns `gh`. Design ≠ Claimed forge remote e2e.
@@ -530,106 +532,6 @@ fn cmd_https_smoke(args: &[String]) -> ExitCode {
         eprintln!("arks hub smoke: expected http:// or https:// base (got {base})");
         ExitCode::from(2)
     }
-}
-
-fn local_list_create(
-    noun: &str,
-    args: &[String],
-    list_path: &str,
-    create_path: &str,
-    create_payload: Option<String>,
-) -> ExitCode {
-    let sub = args.first().map(String::as_str).unwrap_or("");
-    match sub {
-        "" | "-h" | "--help" => {
-            eprintln!("arks hub {noun} — list|create (local hub REST Partial)");
-            ExitCode::SUCCESS
-        }
-        "list" => {
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub {noun} list: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            match http_exchange(&base, "GET", list_path, Some(&tok), None) {
-                Ok((code, body)) => {
-                    println!("{body}");
-                    if code >= 400 {
-                        ExitCode::from(1)
-                    } else {
-                        ExitCode::SUCCESS
-                    }
-                }
-                Err(e) => {
-                    eprintln!("arks hub {noun} list: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        "create" => {
-            let Some(payload) = create_payload else {
-                eprintln!("arks hub {noun} create: missing payload builder");
-                return ExitCode::from(2);
-            };
-            let (base, tok) = match require_local_api() {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("arks hub {noun} create: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            match http_exchange(&base, "POST", create_path, Some(&tok), Some(&payload)) {
-                Ok((code, body)) => {
-                    println!("{body}");
-                    if code >= 400 {
-                        ExitCode::from(1)
-                    } else {
-                        ExitCode::SUCCESS
-                    }
-                }
-                Err(e) => {
-                    eprintln!("arks hub {noun} create: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        other => {
-            eprintln!("arks hub {noun} {other}: not claimed beyond list/create Partial");
-            ExitCode::from(2)
-        }
-    }
-}
-
-fn cmd_milestone(args: &[String]) -> ExitCode {
-    let (owner, repo) = match repo_slug(args) {
-        Ok(v) => v,
-        Err(e) => {
-            if matches!(
-                args.first().map(String::as_str),
-                Some("" | "-h" | "--help") | None
-            ) {
-                eprintln!("arks hub milestone — list|create (local Partial); needs --repo");
-                return ExitCode::SUCCESS;
-            }
-            eprintln!("arks hub milestone: {e}");
-            return ExitCode::from(2);
-        }
-    };
-    let path = format!("/repos/{owner}/{repo}/milestones");
-    let payload = if args.first().map(String::as_str) == Some("create") {
-        let title = flag_value(args, &["--title", "-t"]).unwrap_or("milestone");
-        let desc = flag_value(args, &["--description", "-d"]).unwrap_or("");
-        Some(format!(
-            r#"{{"title":{},"description":{}}}"#,
-            serde_json::to_string(title).unwrap(),
-            serde_json::to_string(desc).unwrap()
-        ))
-    } else {
-        None
-    };
-    local_list_create("milestone", args, &path, &path, payload)
 }
 
 /// Local self-signed HTTPS + remote-client path smoke Partial (not Claimed TLS / forge e2e).
@@ -738,6 +640,25 @@ fn cmd_out_explicit_refuse(name: &str, args: &[String]) -> ExitCode {
          ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed"
     );
     ExitCode::from(2)
+}
+
+/// `arks hub review`: refused duplicate of `pr review`
+/// ([[sot:root/arks-hub-gh-command-matrix]] rule 12c). No forge call.
+fn cmd_review_refuse(args: &[String]) -> ExitCode {
+    let why = "a top-level review group would duplicate `arks pr review` (gh-identical argv); \
+               refused, out of scope ([[sot:root/arks-hub-gh-command-matrix]] rule 12c, \
+               [[adr:root/20261119230000]])";
+    if matches!(
+        args.first().map(String::as_str),
+        Some("-h" | "--help" | "help")
+    ) {
+        eprintln!(
+            "arks review: {why}\nUse: arks pr review [<number>] --approve|--comment|--request-changes -b <body>"
+        );
+        return ExitCode::SUCCESS;
+    }
+    eprintln!("arks review: refused — {why}; use `arks pr review`");
+    usage_exit()
 }
 
 /// Cheap OUT→local graduation: list against local forge path or empty JSON array.
@@ -930,6 +851,32 @@ mod tests {
                 "{g} list"
             );
         }
+    }
+
+    /// Q18 rule 12c: `review` refuses without a forge call.
+    #[test]
+    fn review_group_refuses_exit_2() {
+        for leaf in ["review", "review list", "review 1 --approve"] {
+            assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
+        }
+        assert_eq!(run_from_args(&argv("review --help")), ExitCode::SUCCESS);
+        assert!(!GROUPS.contains(&"review"), "review is not a hub group");
+    }
+
+    /// Q18 rule 12b: transitional serve exits 2 on bad argv before binding.
+    #[test]
+    fn hub_serve_bad_argv_exit_2() {
+        for leaf in [
+            "serve --listen",
+            "serve --listen nonsense",
+            "serve --listen 127.0.0.1",
+            "serve --tls-cert x",
+            "serve extra",
+            "serve --data",
+        ] {
+            assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
+        }
+        assert_eq!(run_from_args(&argv("serve --help")), ExitCode::SUCCESS);
     }
 
     #[test]

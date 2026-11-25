@@ -1,0 +1,2 @@
+arks hub serve: transitional alias of the arks serve forge module; primary host command: arks serve --no-http --no-ssh --forge-listen 127.0.0.1:3920
+arks hub serve: cannot bind forge API on 127.0.0.1:3920: Address already in use (os error 98)

@@ -529,8 +529,25 @@ fn milestones_route(
     repo: &str,
     rest: &[&str],
 ) -> Result<Option<Resp>, String> {
-    let mj = |m: &Milestone| json!({"number": m.number, "title": m.title, "description": m.description, "state": m.state});
+    let base = st.public_base.clone();
+    let mj = |m: &Milestone| {
+        json!({
+            "number": m.number,
+            "title": m.title,
+            "description": m.description,
+            "state": m.state,
+            "html_url": format!("{base}/{owner}/{repo}/milestone/{}", m.number),
+        })
+    };
     let v = req.json();
+    // Milestone state is `open` or `closed` ([[sot:root/arks-hub-gh-command-matrix]] rule 12a).
+    if let Some(s) = str_field(&v, "state") {
+        if !matches!(s, "open" | "closed") {
+            return Ok(Some(invalid(format!(
+                "invalid milestone state {s:?}: expected open or closed"
+            ))));
+        }
+    }
     match (req.method, rest) {
         ("GET", []) => {
             let state = req.query_param("state").unwrap_or_else(|| "open".into());
@@ -599,6 +616,13 @@ fn milestones_route(
                         })
                     {
                         i.milestone = None;
+                    }
+                    for p in
+                        st.db.pulls.iter_mut().filter(|p| {
+                            p.owner == owner && p.repo == repo && p.milestone == Some(num)
+                        })
+                    {
+                        p.milestone = None;
                     }
                     st.save()?;
                     Ok(Some(no_content()))

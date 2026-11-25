@@ -16,6 +16,7 @@ pub(crate) mod issue;
 pub(crate) mod jq;
 pub(crate) mod keys;
 pub(crate) mod label;
+pub(crate) mod milestone;
 pub(crate) mod misc;
 pub(crate) mod pr;
 pub(crate) mod project;
@@ -28,6 +29,8 @@ pub(crate) mod search;
 mod tests;
 #[cfg(test)]
 mod tests_gh;
+#[cfg(test)]
+mod tests_hub_native;
 
 use crate::http_min::http_exchange;
 use serde_json::{Map, Value};

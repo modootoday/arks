@@ -75,48 +75,109 @@ pub fn default_forge_data_dir() -> PathBuf {
     HubStore::data_dir()
 }
 
-/// CLI entry for transitional `arks hub serve`.
-pub fn run_serve(args: &[String]) -> Result<(), String> {
-    let mut listen = "127.0.0.1:3920".to_string();
-    let mut data = HubStore::data_dir();
+/// Default forge API listen address (forge port convention 3920; loopback).
+pub const DEFAULT_FORGE_LISTEN: &str = "127.0.0.1:3920";
+
+/// Failure of transitional `arks hub serve`, split by exit class
+/// ([[sot:root/arks-hub-gh-command-matrix]] rule 12b).
+#[derive(Debug, PartialEq, Eq)]
+pub enum ServeError {
+    /// Bad argv, caught before binding → exit 2.
+    Usage(String),
+    /// Bind or listener failure → exit 1.
+    Runtime(String),
+}
+
+impl std::fmt::Display for ServeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ServeError::Usage(m) | ServeError::Runtime(m) => f.write_str(m),
+        }
+    }
+}
+
+impl ServeError {
+    /// Exit code of this failure class.
+    pub fn exit_code(&self) -> u8 {
+        match self {
+            ServeError::Usage(_) => 2,
+            ServeError::Runtime(_) => 1,
+        }
+    }
+}
+
+/// Parsed `arks hub serve` argv: help, or the listener to start.
+#[derive(Debug)]
+pub(crate) enum ServeCli {
+    Help,
+    Run { listen: SocketAddr, data: PathBuf },
+}
+
+/// Parse `arks hub serve [--listen HOST:PORT] [--data DIR]` without binding.
+pub(crate) fn parse_serve_args(args: &[String]) -> Result<ServeCli, ServeError> {
+    let usage = ServeError::Usage;
+    let mut listen = DEFAULT_FORGE_LISTEN.to_string();
+    let mut data = None;
     let mut i = 0;
     while i < args.len() {
         let a = args[i].as_str();
         match a {
-            "-h" | "--help" => {
-                print_help();
-                return Ok(());
-            }
+            "-h" | "--help" => return Ok(ServeCli::Help),
             "--listen" => {
                 i += 1;
                 listen = args
                     .get(i)
-                    .ok_or_else(|| "serve --listen needs HOST:PORT".to_string())?
+                    .ok_or_else(|| usage("serve --listen needs HOST:PORT".into()))?
                     .clone();
             }
-            _ if a.starts_with("--listen=") => listen = a[9..].to_string(),
+            _ if a.starts_with("--listen=") => listen = a["--listen=".len()..].to_string(),
             "--data" => {
                 i += 1;
-                data = PathBuf::from(
+                data = Some(PathBuf::from(
                     args.get(i)
-                        .ok_or_else(|| "serve --data needs DIR".to_string())?,
-                );
+                        .ok_or_else(|| usage("serve --data needs DIR".into()))?,
+                ));
             }
-            _ if a.starts_with("--data=") => data = PathBuf::from(&a[7..]),
+            _ if a.starts_with("--data=") => data = Some(PathBuf::from(&a["--data=".len()..])),
             other if other.starts_with('-') => {
-                return Err(format!("serve option not claimed: {other}"));
+                return Err(usage(format!(
+                    "unknown option {other} (the transitional alias takes --listen and --data; \
+                     TLS and Git-root flags live on `arks serve`)"
+                )));
             }
-            other => return Err(format!("serve unexpected arg: {other}")),
+            other => return Err(usage(format!("unexpected argument: {other}"))),
         }
         i += 1;
     }
-    let addr: SocketAddr = listen
-        .parse()
-        .map_err(|e| format!("bad --listen address: {e}"))?;
+    let listen: SocketAddr = listen.parse().map_err(|e| {
+        usage(format!(
+            "bad --listen address {listen:?}: {e} (want HOST:PORT)"
+        ))
+    })?;
+    Ok(ServeCli::Run {
+        listen,
+        data: data.unwrap_or_else(HubStore::data_dir),
+    })
+}
+
+/// CLI entry for transitional `arks hub serve`: the forge module of `arks serve`
+/// under its old name ([[sot:root/arks-hub-gh-command-matrix]] rule 12b).
+pub fn run_serve(args: &[String]) -> Result<(), ServeError> {
+    let (listen, data) = match parse_serve_args(args)? {
+        ServeCli::Help => {
+            print_help();
+            return Ok(());
+        }
+        ServeCli::Run { listen, data } => (listen, data),
+    };
+    eprintln!(
+        "arks hub serve: transitional alias of the arks serve forge module; \
+         primary host command: arks serve --no-http --no-ssh --forge-listen {listen}"
+    );
     let stop = Arc::new(AtomicBool::new(false));
     serve_forge_api(
         ForgeServeOptions {
-            listen: addr,
+            listen,
             data_dir: data,
             rebind_desired: None,
             tls: None,
@@ -125,22 +186,27 @@ pub fn run_serve(args: &[String]) -> Result<(), String> {
         },
         stop,
     )
+    .map_err(ServeError::Runtime)
 }
 
 /// Bind and serve the local forge API until `stop` is set (Partial; not Claimed).
 pub fn serve_forge_api(opts: ForgeServeOptions, stop: Arc<AtomicBool>) -> Result<(), String> {
-    if !opts.listen.ip().is_loopback() {
-        eprintln!(
-            "arks forge API: LAN/non-loopback bind is Partial (no TLS Claimed; \
-             [[sot:root/arks-self-host-server]])"
-        );
-    }
     let mut hub = HubStore::open(&opts.data_dir)?;
     if let Some(root) = &opts.git_root {
         hub.git_root = root.clone();
     }
     hub.git_url = opts.git_url.clone();
-    let mut listener = TcpListener::bind(opts.listen).map_err(|e| e.to_string())?;
+    let mut listener = TcpListener::bind(opts.listen)
+        .map_err(|e| format!("cannot bind forge API on {}: {e}", opts.listen))?;
+    if !opts.listen.ip().is_loopback() && opts.tls.is_none() {
+        // Explicit LAN / WAN reach is an operator choice ([[sot:root/arks-self-host-server]]
+        // items 5 and 21); say plainly what the transport is.
+        eprintln!(
+            "arks forge API: non-loopback bind {} serves plain HTTP (no TLS); for TLS use \
+             `arks serve` in-process TLS or a reverse proxy, and firewall the port",
+            opts.listen
+        );
+    }
     hub.public_base = format!(
         "{}://{}",
         forge_serve_scheme(&opts),
@@ -258,20 +324,23 @@ pub fn spawn_forge_api(
 fn print_help() {
     eprintln!(
         "\
-arks hub serve — transitional local forge API (Partial; prefer `arks serve` forge module)
+arks hub serve — transitional alias of the arks serve forge module
 
 Usage:
   arks hub serve [--listen HOST:PORT] [--data DIR]
 
 Defaults:
-  --listen 127.0.0.1:3920
+  --listen 127.0.0.1:3920   (loopback; pass 0.0.0.0:PORT or a LAN address to expose it)
   --data   $ARKS_HUB_DATA or ~/.config/arks/hub-data
+
+Non-loopback binds serve plain HTTP (no TLS). Primary host command:
+  arks serve --no-http --no-ssh --forge-listen HOST:PORT   (in-process TLS, Git transports)
 
 Point clients with:
   ARKS_HUB_API=http://127.0.0.1:3920
   ARKS_HUB_TOKEN=local-dev-token
 
-Never spawns git/gh. No TLS Claimed. Design ≠ Claimed.
+Exit: 2 bad argv (before binding), 1 bind failure. Never spawns git/gh.
 "
     );
 }
@@ -462,4 +531,123 @@ fn respond<S: Write>(stream: &mut S, status: u16, body: &serde_json::Value) -> R
     };
     let bytes = serde_json::to_vec(body).map_err(|e| e.to_string())?;
     write_http_response(stream, status, reason, "application/json", &bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn argv(s: &str) -> Vec<String> {
+        s.split_whitespace().map(String::from).collect()
+    }
+
+    fn listen_of(s: &str) -> SocketAddr {
+        match parse_serve_args(&argv(s)) {
+            Ok(ServeCli::Run { listen, .. }) => listen,
+            other => panic!("{s}: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn listen_defaults_and_spellings() {
+        assert_eq!(listen_of(""), DEFAULT_FORGE_LISTEN.parse().unwrap());
+        assert!(listen_of("").ip().is_loopback());
+        assert_eq!(
+            listen_of("--listen 0.0.0.0:3921").to_string(),
+            "0.0.0.0:3921"
+        );
+        assert_eq!(listen_of("--listen=[::1]:3922").to_string(), "[::1]:3922");
+        match parse_serve_args(&argv("--data=/x --listen 127.0.0.1:1")) {
+            Ok(ServeCli::Run { data, .. }) => assert_eq!(data, PathBuf::from("/x")),
+            other => panic!("{other:?}"),
+        }
+        assert!(matches!(parse_serve_args(&argv("-h")), Ok(ServeCli::Help)));
+    }
+
+    #[test]
+    fn bad_argv_is_usage_class() {
+        for bad in [
+            "--listen",
+            "--listen host-only",
+            "--listen 127.0.0.1",
+            "--data",
+            "--forge-listen 127.0.0.1:1",
+            "stray",
+        ] {
+            match parse_serve_args(&argv(bad)) {
+                Err(e @ ServeError::Usage(_)) => assert_eq!(e.exit_code(), 2, "{bad}"),
+                other => panic!("{bad}: {other:?}"),
+            }
+        }
+    }
+
+    fn free_port() -> u16 {
+        TcpListener::bind("127.0.0.1:0")
+            .and_then(|l| l.local_addr())
+            .map(|a| a.port())
+            .unwrap()
+    }
+
+    fn data_dir(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!(
+            "arks-hub-serve-{tag}-{}-{}",
+            std::process::id(),
+            free_port()
+        ));
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    /// An explicit all-interfaces bind is honoured and reachable over loopback.
+    #[test]
+    fn lan_bind_serves_over_loopback() {
+        let port = free_port();
+        let dir = data_dir("lan");
+        let opts = ForgeServeOptions {
+            listen: format!("0.0.0.0:{port}").parse().unwrap(),
+            data_dir: dir.clone(),
+            ..ForgeServeOptions::default()
+        };
+        let (stop, handle) = spawn_forge_api(opts).unwrap();
+        let mut ok = false;
+        for _ in 0..200 {
+            if let Ok((code, body)) = crate::http_min::http_exchange(
+                &format!("http://127.0.0.1:{port}"),
+                "GET",
+                "/user",
+                Some("local-dev-token"),
+                None,
+            ) {
+                assert_eq!(code, 200, "{body}");
+                ok = true;
+                break;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        stop.store(true, Ordering::SeqCst);
+        handle.join().unwrap().unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(ok, "0.0.0.0 listener not reachable on 127.0.0.1:{port}");
+    }
+
+    /// A taken address is a runtime failure (exit 1), not a usage error.
+    #[test]
+    fn bind_failure_is_runtime_class() {
+        let held = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = held.local_addr().unwrap();
+        let dir = data_dir("busy");
+        let e = run_serve(&[
+            "--listen".into(),
+            addr.to_string(),
+            "--data".into(),
+            dir.to_string_lossy().into_owned(),
+        ])
+        .unwrap_err();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(
+            matches!(&e, ServeError::Runtime(m) if m.contains("cannot bind")),
+            "{e:?}"
+        );
+        assert_eq!(e.exit_code(), 1);
+    }
 }

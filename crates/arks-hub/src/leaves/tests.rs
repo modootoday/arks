@@ -91,6 +91,15 @@ impl Forge {
     pub(super) fn api(&self, method: &str, path: &str, body: Option<Value>) -> Value {
         self.ctx.api(method, path, body.as_ref()).unwrap()
     }
+
+    pub(super) fn try_api(
+        &self,
+        method: &str,
+        path: &str,
+        body: Option<Value>,
+    ) -> Result<Value, Fail> {
+        self.ctx.api(method, path, body.as_ref())
+    }
 }
 
 impl Drop for Forge {

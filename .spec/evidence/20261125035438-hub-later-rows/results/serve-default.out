@@ -1,0 +1,3 @@
+arks hub serve: transitional alias of the arks serve forge module; primary host command: arks serve --no-http --no-ssh --forge-listen 127.0.0.1:3920
+arks forge API listening on http://127.0.0.1:3920/ (data=/tmp/arks-hub-scope.z8JC0q/hs-default; Partial local API — IW-B7-FORGE drain)
+arks forge API: incomplete HTTP request

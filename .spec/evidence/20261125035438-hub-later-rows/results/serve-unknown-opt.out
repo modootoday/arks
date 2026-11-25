@@ -1,0 +1,1 @@
+arks hub serve: unknown option --tls-cert (the transitional alias takes --listen and --data; TLS and Git-root flags live on `arks serve`)

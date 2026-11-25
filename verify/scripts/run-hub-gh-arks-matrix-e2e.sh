@@ -10,6 +10,8 @@
 # ARKS_HUB_IW_GH_ARGV=1: every in-scope gh leaf with gh argv against `arks serve` (+ argv inventory; plan A4).
 # ARKS_HUB_IW_FORGE_GROUPS=1: arks-owned gist/discussion/project/ssh-key/gpg-key/
 #   repo autolink/repo deploy-key leaves against `arks serve` (host run = Partial; adr:root/20261119230000).
+# ARKS_HUB_IW_LATER=1: hub-native milestone leaves, hub serve listen/bind and the
+#   review refusal (Q18; matrix SoT rules 12a-12c).
 # B3 client remote ≠ flat-leaf Claimed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -421,6 +423,220 @@ receipt = {
     "image_tag": image,
     "groups": ["gist", "discussion", "project", "ssh-key", "gpg-key",
                "repo autolink", "repo deploy-key"],
+    "note": "Receipt only; row promotion needs an owning SoT update.",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+}
+with open(out, "w", encoding="utf-8") as f:
+    json.dump(receipt, f, indent=2)
+    f.write("\n")
+PY
+    echo "hub-gh-arks-matrix-e2e: receipt=$OUT/receipt.json"
+  fi
+  exit 0
+fi
+
+# --- hub-native `later` rows decided by Q18 (ARKS_HUB_IW_LATER=1) ---
+# [[sot:root/arks-hub-gh-command-matrix]] rules 12a-12c: `milestone` leaves against a
+# local `arks serve` forge, the transitional `arks hub serve` listen/bind contract
+# (loopback default 3920, explicit 0.0.0.0 bind with a plain-HTTP notice, exit 2 on
+# bad argv, exit 1 on a taken address) and the `review` refusal (exit 2, no forge
+# call). Host run = Partial (host-advisory); a Docker run only writes a receipt.
+if [[ "${ARKS_HUB_IW_LATER:-0}" == "1" ]]; then
+  echo "hub-gh-arks-matrix-e2e: hub-native later rows path (Q18; matrix rules 12a-12c)"
+  command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
+  SERVER_PID=""
+  HS_PIDS=()
+  cleanup_scope() {
+    for p in "${HS_PIDS[@]:-}" "${SERVER_PID:-}"; do
+      if [[ -n "$p" ]] && kill -0 "$p" 2>/dev/null; then
+        kill "$p" 2>/dev/null || true
+        wait "$p" 2>/dev/null || true
+      fi
+    done
+    rm -rf "${WORK:-}"
+  }
+  trap cleanup_scope EXIT
+  hub_scope_boot WORK
+  SCOPE_OK=1
+  export ARKS_HUB_REPO="local/hubscope"
+  later_expect() {
+    # later_expect <name> <want-exit> <cmd...>: record output, check the exit code.
+    local name="$1" want="$2" out ec
+    shift 2
+    set +e
+    out="$("$@" 2>&1)"
+    ec=$?
+    set -e
+    printf '%s\n' "$out" >"$WORK/${name}.out"
+    if [[ "$ec" -ne "$want" ]]; then
+      echo "FAIL HF-LATER $name exit=$ec (want $want)" >&2
+      echo "$out" >&2
+      SCOPE_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: HF-LATER $name exit=$ec ok"
+    fi
+  }
+  later_grep() {
+    # later_grep <name> <fixed-string>: the recorded output must contain it.
+    if ! grep -Fq -- "$2" "$WORK/$1.out"; then
+      echo "FAIL HF-LATER $1 missing: $2" >&2
+      cat "$WORK/$1.out" >&2 || true
+      SCOPE_OK=0
+    fi
+  }
+  wait_port() {
+    python3 - "$1" "$2" <<'PY'
+import socket, sys, time
+host, port = sys.argv[1], int(sys.argv[2])
+for _ in range(200):
+    try:
+        with socket.create_connection((host, port), timeout=.2):
+            raise SystemExit(0)
+    except OSError:
+        time.sleep(.05)
+raise SystemExit(1)
+PY
+  }
+  free_port() {
+    python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+print(s.getsockname()[1])
+s.close()
+PY
+  }
+
+  # 12a milestone leaves.
+  hub_scope_run auth-login "$ARKS_BIN" hub auth login
+  hub_scope_run repo-create "$ARKS_BIN" hub repo create hubscope --public --description "Q18"
+  later_expect ms-create 0 "$ARKS_BIN" hub milestone create v1.0 -d "first cut"
+  later_grep ms-create "/local/hubscope/milestone/1"
+  later_expect ms-create-title 0 "$ARKS_BIN" hub milestone create --title v2.0
+  later_expect ms-list 0 "$ARKS_BIN" hub milestone list
+  later_grep ms-list "$(printf '1\tv1.0\topen\tfirst cut')"
+  later_grep ms-list "$(printf '2\tv2.0\topen')"
+  later_expect ms-list-json 0 "$ARKS_BIN" hub milestone list --json number,title --jq '.[1].title'
+  later_grep ms-list-json "v2.0"
+  later_expect ms-flat-list 0 "$ARKS_BIN" milestone ls -L 1
+  later_expect ms-edit 0 "$ARKS_BIN" hub milestone edit v2.0 --title v2 -d later
+  later_expect ms-close 0 "$ARKS_BIN" hub milestone close 1
+  later_expect ms-close-again 0 "$ARKS_BIN" hub milestone close v1.0
+  later_grep ms-close-again "already closed"
+  later_expect ms-list-closed 0 "$ARKS_BIN" hub milestone list --state closed
+  later_grep ms-list-closed "$(printf '1\tv1.0\tclosed')"
+  later_expect ms-issue 0 "$ARKS_BIN" hub issue create --title ms-issue --body b --milestone v2
+  later_expect ms-issue-view 0 "$ARKS_BIN" hub issue view 1 --json milestone --jq .milestone.title
+  later_grep ms-issue-view "v2"
+  later_expect ms-delete 0 "$ARKS_BIN" hub milestone delete v2 --yes
+  later_expect ms-issue-cleared 0 "$ARKS_BIN" hub issue view 1 --json milestone --jq .milestone
+  later_grep ms-issue-cleared "null"
+  later_expect ms-list-all 0 "$ARKS_BIN" hub milestone list --state all
+  later_expect ms-edit-noflags 2 "$ARKS_BIN" hub milestone edit 1
+  later_expect ms-bad-state 2 "$ARKS_BIN" hub milestone list --state merged
+  later_expect ms-missing 1 "$ARKS_BIN" hub milestone close 99
+  later_expect ms-help 0 "$ARKS_BIN" hub milestone --help
+  later_grep ms-help "arks milestone list"
+  if [[ "$(wc -l <"$WORK/ms-list-all.out")" -ne 1 ]]; then
+    echo "FAIL HF-LATER ms-list-all: want one milestone left" >&2
+    SCOPE_OK=0
+  fi
+
+  # 12c review refusal: no forge call (closed port), exit 2, names pr review.
+  later_expect review-refuse 2 env ARKS_HUB_API=http://127.0.0.1:9 "$ARKS_BIN" hub review 1 --approve
+  later_grep review-refuse "arks pr review"
+  later_expect review-help 0 "$ARKS_BIN" hub review --help
+
+  # 12b transitional hub serve listen/bind.
+  LAN_IP="$(python3 - <<'PY'
+import socket
+try:
+    ip = socket.gethostbyname(socket.gethostname())
+except OSError:
+    ip = ""
+print("" if ip.startswith("127.") else ip)
+PY
+)"
+  echo "hub-gh-arks-matrix-e2e: HF-LATER container address=${LAN_IP:-none}"
+  # Default bind: loopback 127.0.0.1:3920.
+  "$ARKS_BIN" hub serve --data "$WORK/hs-default" >"$WORK/serve-default.log" 2>&1 &
+  HS_PIDS+=($!)
+  if wait_port 127.0.0.1 3920; then
+    later_expect serve-default-api 0 env ARKS_HUB_API=http://127.0.0.1:3920 "$ARKS_BIN" hub api /user
+    if [[ -n "$LAN_IP" ]] && wait_port "$LAN_IP" 3920; then
+      echo "FAIL HF-LATER serve-default reachable on $LAN_IP (want loopback only)" >&2
+      SCOPE_OK=0
+    fi
+  else
+    echo "FAIL HF-LATER serve-default not listening on 127.0.0.1:3920" >&2
+    SCOPE_OK=0
+  fi
+  # Busy address: a second listener on 3920 is a runtime failure, exit 1.
+  later_expect serve-busy 1 "$ARKS_BIN" hub serve --data "$WORK/hs-busy"
+  later_grep serve-busy "cannot bind forge API"
+  kill "${HS_PIDS[0]}" 2>/dev/null || true
+  wait "${HS_PIDS[0]}" 2>/dev/null || true
+  cp "$WORK/serve-default.log" "$WORK/serve-default.out"
+  later_grep serve-default "transitional alias of the arks serve forge module"
+  later_grep serve-default "listening on http://127.0.0.1:3920/"
+  if grep -Fq "plain HTTP" "$WORK/serve-default.out"; then
+    echo "FAIL HF-LATER serve-default printed the non-loopback notice" >&2
+    SCOPE_OK=0
+  fi
+  # Explicit all-interfaces bind: reachable over loopback and the container address.
+  LAN_PORT="$(free_port)"
+  "$ARKS_BIN" hub serve --listen "0.0.0.0:${LAN_PORT}" --data "$WORK/hs-lan" \
+    >"$WORK/serve-lan.log" 2>&1 &
+  HS_PIDS+=($!)
+  if wait_port 127.0.0.1 "$LAN_PORT"; then
+    later_expect serve-lan-loopback 0 env ARKS_HUB_API="http://127.0.0.1:${LAN_PORT}" "$ARKS_BIN" hub api /user
+    if [[ -n "$LAN_IP" ]]; then
+      later_expect serve-lan-address 0 env ARKS_HUB_API="http://${LAN_IP}:${LAN_PORT}" "$ARKS_BIN" hub api /user
+    fi
+  else
+    echo "FAIL HF-LATER serve-lan not listening on 0.0.0.0:${LAN_PORT}" >&2
+    SCOPE_OK=0
+  fi
+  kill "${HS_PIDS[1]}" 2>/dev/null || true
+  wait "${HS_PIDS[1]}" 2>/dev/null || true
+  cp "$WORK/serve-lan.log" "$WORK/serve-lan.out"
+  later_grep serve-lan "non-loopback bind 0.0.0.0:${LAN_PORT} serves plain HTTP (no TLS)"
+  later_grep serve-lan "arks serve --no-http --no-ssh --forge-listen 0.0.0.0:${LAN_PORT}"
+  # Bad argv exits 2 before binding.
+  later_expect serve-bad-listen 2 "$ARKS_BIN" hub serve --listen nonsense
+  later_expect serve-no-port 2 "$ARKS_BIN" hub serve --listen 127.0.0.1
+  later_expect serve-unknown-opt 2 "$ARKS_BIN" hub serve --tls-cert x.pem
+  later_expect serve-stray 2 "$ARKS_BIN" hub serve extra
+  later_expect serve-help 0 "$ARKS_BIN" hub serve --help
+  later_grep serve-help "transitional alias of the arks serve forge module"
+
+  if [[ "$SCOPE_OK" -ne 1 ]]; then
+    if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
+      echo "hub-gh-arks-matrix-e2e: FAIL STRICT hub-native later rows" >&2
+      exit 1
+    fi
+    echo "hub-gh-arks-matrix-e2e: hub-native later rows Partial/failed"
+    exit 0
+  fi
+  echo "hub-gh-arks-matrix-e2e: hub-native later rows greens (host run = Partial unless Docker receipt)"
+  if [[ -f /.dockerenv ]]; then
+    TS="$(date -u +%Y%m%d%H%M%S)"
+    OUT="${ARKS_HUB_LATER_OUT:-.spec/evidence/${TS}-hub-later-rows}"
+    mkdir -p "$OUT"
+    cp "$WORK"/*.out "$OUT/" 2>/dev/null || true
+    python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" "${LAN_IP:-}" <<'PY'
+import json, sys, time
+out, tip, image, lan = sys.argv[1:]
+receipt = {
+    "schema": "arks-hub-later-rows/v1",
+    "gate": "IW-HUB-LATER",
+    "disposition": "product-path-run",
+    "venue": "docker-dod-hub-matrix",
+    "tip": tip,
+    "image_tag": image,
+    "rows": ["milestone", "milestone list", "milestone create", "milestone edit",
+             "milestone close", "milestone delete", "serve", "review"],
+    "serve_lan_address_probed": bool(lan),
     "note": "Receipt only; row promotion needs an owning SoT update.",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
