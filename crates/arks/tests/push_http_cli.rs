@@ -173,7 +173,7 @@ fn mixed_report_status_prints_per_ref_table() {
     assert_eq!(
         stderr(&out),
         format!(
-            "To {url}\n * [new branch]      refs/heads/topic -> topic\n ! [remote rejected] refs/heads/main -> main (hook declined)\nerror: failed to push some refs to '{url}'\n",
+            "To {url}\n * [new branch]      topic -> topic\n ! [remote rejected] main -> main (hook declined)\nerror: failed to push some refs to '{url}'\n",
             url = f.url
         )
     );
@@ -209,8 +209,35 @@ fn mixed_report_status_prints_per_ref_table() {
     let out = run(&f.work, &["push", "-v", "origin", "topic"]);
     assert!(out.status.success(), "{out:?}");
     assert!(
-        stderr(&out).contains(" = [up to date]      refs/heads/topic -> topic\n"),
+        stderr(&out).contains(" = [up to date]      topic -> topic\n"),
         "{}",
         stderr(&out)
+    );
+}
+
+/// The table prettifies the source side like the destination, on the local
+/// path too (observed stock git: `refs/heads/t:refs/heads/w` prints `t -> w`).
+#[test]
+fn status_table_shortens_full_source_names() {
+    let tmp = tempfile::tempdir().unwrap();
+    let a = tmp.path().join("a");
+    std::fs::create_dir_all(&a).unwrap();
+    ok(&a, &["init", "-q", "-b", "main"]);
+    ok(&a, &["commit", "-q", "--allow-empty", "-m", "one"]);
+    ok(tmp.path(), &["init", "-q", "--bare", "b.git"]);
+    let out = run(
+        &a,
+        &[
+            "push",
+            "../b.git",
+            "main",
+            "refs/heads/main:refs/heads/w",
+            "HEAD:hh",
+        ],
+    );
+    assert!(out.status.success(), "{out:?}");
+    assert_eq!(
+        stderr(&out),
+        "To ../b.git\n * [new branch]      main -> main\n * [new branch]      main -> w\n * [new branch]      HEAD -> hh\n"
     );
 }

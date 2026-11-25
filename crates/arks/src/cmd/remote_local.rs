@@ -1006,33 +1006,35 @@ pub(crate) fn report_push(
         }
         for (u, s) in shown {
             let d = short_ref(&u.dst);
+            // Both sides are prettified (`refs/heads/t:refs/heads/w` shows `t -> w`).
+            let src = short_ref(&u.src_label);
             let line = match s {
-                PushStatus::UpToDate => format!(" = {:<17} {} -> {d}", "[up to date]", u.src_label),
+                PushStatus::UpToDate => format!(" = {:<17} {} -> {d}", "[up to date]", src),
                 PushStatus::New => format!(
                     " * {:<17} {} -> {d}",
                     new_label(&u.dst, &full_src(&u.src_label, &u.dst)),
-                    u.src_label
+                    src
                 ),
                 PushStatus::FastForward(old) => format!(
                     "   {:<17} {} -> {d}",
                     format!("{}..{}", hex(old), hex(&u.new.unwrap_or(*old))),
-                    u.src_label
+                    src
                 ),
                 PushStatus::Forced(old) => format!(
                     " + {:<17} {} -> {d} (forced update)",
                     format!("{}...{}", hex(old), hex(&u.new.unwrap_or(*old))),
-                    u.src_label
+                    src
                 ),
                 PushStatus::Deleted => format!(" - {:<17} {d}", "[deleted]"),
                 PushStatus::Rejected(why) => {
-                    format!(" ! {:<17} {} -> {d} ({why})", "[rejected]", u.src_label)
+                    format!(" ! {:<17} {} -> {d} ({why})", "[rejected]", src)
                 }
                 // A refused deletion names only the remote ref.
                 PushStatus::RemoteRejected(why) if u.new.is_none() => {
                     format!(" ! [remote rejected] {d} ({why})")
                 }
                 PushStatus::RemoteRejected(why) => {
-                    format!(" ! [remote rejected] {} -> {d} ({why})", u.src_label)
+                    format!(" ! [remote rejected] {} -> {d} ({why})", src)
                 }
             };
             eprintln!("{line}");
