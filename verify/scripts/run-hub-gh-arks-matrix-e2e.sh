@@ -447,11 +447,15 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   echo "hub-gh-arks-matrix-e2e: gh argv symmetry path (plan:root/20261120000000 A4)"
   command -v python3 >/dev/null || { echo "FAIL: python3 missing" >&2; exit 1; }
   SERVER_PID=""
+  RS_PID=""
   cleanup_scope() {
-    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
-      kill "$SERVER_PID" 2>/dev/null || true
-      wait "$SERVER_PID" 2>/dev/null || true
-    fi
+    local pid
+    for pid in "${SERVER_PID:-}" "${RS_PID:-}"; do
+      if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+      fi
+    done
     rm -rf "${WORK:-}"
   }
   trap cleanup_scope EXIT
@@ -486,6 +490,7 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   ARKS_HUB_LOGIN=octo hub_scope_run auth-login2 sh -c "\"$ARKS_BIN\" auth login --with-token <\"$WORK/tok2\""
   hub_scope_run auth-status "$ARKS_BIN" auth status --json hosts --jq '.hosts[][] | select(.active) | .login'
   hub_scope_run auth-switch "$ARKS_BIN" auth switch -u local
+  hub_scope_run auth-refresh "$ARKS_BIN" auth refresh
   hub_scope_run auth-token "$ARKS_BIN" auth token
   # repository with bootstrap files from the template catalogs
   hub_scope_run gitignore-list "$ARKS_BIN" repo gitignore list
@@ -526,6 +531,7 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   hub_scope_run ruleset-create "$ARKS_BIN" api -X POST repos/local/argv/rulesets --input "$WORK/ruleset.json"
   hub_scope_run ruleset-list "$ARKS_BIN" ruleset list
   hub_scope_run rs-view "$ARKS_BIN" rs view 1
+  hub_scope_run ruleset-view "$ARKS_BIN" ruleset view 1
   hub_scope_run ruleset-check "$ARKS_BIN" ruleset check --default
   hub_argv_expect pr-checks-required 8 "$ARKS_BIN" pr checks 1 --required
   hub_argv_expect pr-merge-blocked 1 "$ARKS_BIN" pr merge 1 --squash
@@ -535,6 +541,19 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   hub_scope_run pr-merged "$ARKS_BIN" pr view 1 --json state,mergeCommit --jq '.state'
   hub_scope_run read-dir-after "$ARKS_BIN" repo read-dir
   hub_scope_run pr-revert "$ARKS_BIN" pr revert 1
+  # update-branch: a PR cut from the old main, after main moved on (merge + revert)
+  (
+    cd "$WORK/argv"
+    ARKS_GIT checkout -q -b topic2 main
+    printf 'notes\n' >NOTES.md
+    ARKS_GIT add NOTES.md
+    ARKS_GIT -c user.name=Dev -c user.email=dev@example.invalid commit -q -m "Add notes"
+    ARKS_GIT push -q origin topic2
+  ) >"$WORK/local-push2.out" 2>&1 || { echo "FAIL HF-ARGV local push topic2" >&2; cat "$WORK/local-push2.out" >&2; SCOPE_OK=0; }
+  hub_scope_run pr-create-topic2 "$ARKS_BIN" pr create -H topic2 -B main -t "Add notes" -b ""
+  UB_NUM="$(sed -n 's#.*/pull/\([0-9][0-9]*\)$#\1#p' "$WORK/pr-create-topic2.out" | tail -n1)"
+  hub_scope_run pr-update-branch "$ARKS_BIN" pr update-branch "${UB_NUM:-0}"
+  hub_scope_run read-dir-topic2 "$ARKS_BIN" repo read-dir --ref topic2
   # issues: develop (linked branch on the forge) and artifacts
   hub_scope_run issue-create "$ARKS_BIN" issue create -t "Login fails" -b "see @local" -l bug -a @me
   hub_scope_run issue-develop "$ARKS_BIN" issue develop 1 --name fix-login
@@ -565,7 +584,104 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   hub_scope_run release-archive "$ARKS_BIN" release download v1.0.0 --archive tar.gz -O "$WORK/src.tar.gz"
   hub_scope_run label-list "$ARKS_BIN" label list --json name --jq '.[].name'
   # unknown flags are refused like gh; argv inventory accepts every oracle flag
-  hub_argv_expect pr-bogus 2 "$ARKS_BIN" pr list --no-such-flag
+  # gh exits 1 on a flag error (`gh help exit-codes`; hub fix 9bf6256).
+  hub_argv_expect pr-bogus 1 "$ARKS_BIN" pr list --no-such-flag
+  # Ruleset enforcement on push (queue unit Q4): a second `arks serve` with smart
+  # HTTP serves the forge seed repository local/playground; a ruleset created through
+  # `arks api` forbids deleting or force-pushing main. The arks client's
+  # refused pushes leave main unchanged; a fast-forward lands.
+  RS_DATA="$WORK/rs-forge"
+  RS_BARE="$RS_DATA/git/local/playground.git"
+  mkdir -p "$(dirname "$RS_BARE")" "$WORK/guard"
+  ARKS_GIT init -q --bare -b main "$RS_BARE" >"$WORK/rs-init.out" 2>&1 || SCOPE_OK=0
+  read -r RS_HTTP RS_API < <(python3 - <<'PY'
+import socket
+a, b = socket.socket(), socket.socket()
+a.bind(("127.0.0.1", 0))
+b.bind(("127.0.0.1", 0))
+print(a.getsockname()[1], b.getsockname()[1])
+a.close()
+b.close()
+PY
+)
+  # Own serve config: the first serve synced its bind keys into ~/.config/arks.
+  ARKS_PERSONALITY=git ARKS_SERVE_CONFIG="$WORK/rs-serve.conf" "$ARKS_BIN" serve --no-ssh \
+    --listen "127.0.0.1:${RS_HTTP}" \
+    --forge-listen "127.0.0.1:${RS_API}" \
+    --forge-data "$RS_DATA" \
+    "$RS_BARE" >"$WORK/rs-server.out" 2>"$WORK/rs-server.err" &
+  RS_PID=$!
+  python3 - "$RS_HTTP" "$RS_API" <<'PY'
+import socket, sys, time
+for port in map(int, sys.argv[1:]):
+    for _ in range(400):
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=.2):
+                break
+        except OSError:
+            time.sleep(.05)
+    else:
+        raise SystemExit(f"push-guard listener {port} not ready")
+PY
+  printf '%s\n' '{"name":"protect main","target":"branch","enforcement":"active",' \
+    '"conditions":{"ref_name":{"include":["~DEFAULT_BRANCH"],"exclude":[]}},' \
+    '"rules":[{"type":"deletion"},{"type":"non_fast_forward"}]}' >"$WORK/rs-push.json"
+  RS_ENV=(env "ARKS_HUB_API=http://127.0.0.1:${RS_API}" ARKS_HUB_REPO=local/playground)
+  hub_scope_run rs-push-create "${RS_ENV[@]}" "$ARKS_BIN" api -X POST repos/local/playground/rulesets --input "$WORK/rs-push.json"
+  hub_scope_run rs-push-list "${RS_ENV[@]}" "$ARKS_BIN" ruleset list
+  RS_URL="http://127.0.0.1:${RS_HTTP}/local/playground.git"
+  rs_git() { (cd "$WORK/guard" && ARKS_GIT -c user.name=Dev -c user.email=dev@example.invalid "$@"); }
+  rs_tip() { (cd "$RS_BARE" && ARKS_GIT rev-parse --verify -q "$1" 2>/dev/null) || true; }
+  rs_commit() { printf '%s\n' "$2" >"$WORK/guard/$1" && rs_git add "$1" && rs_git commit -q -m "$2" && rs_git rev-parse HEAD; }
+  # A refused push: non-zero exit and the rule named in the client's report.
+  rs_refused() {
+    local name="$1" rule="$2" ec
+    shift 2
+    set +e
+    rs_git "$@" >"$WORK/${name}.out" 2>&1
+    ec=$?
+    set -e
+    if [[ "$ec" -eq 0 ]] || ! grep -Fq "push rejected: refs/heads/main push declined due to repository rule violations (ruleset \"protect main\": ${rule})" "$WORK/${name}.out"; then
+      echo "FAIL HF-ARGV $name exit=$ec (want refused: $rule)" >&2
+      cat "$WORK/${name}.out" >&2
+      SCOPE_OK=0
+    else
+      echo "hub-gh-arks-matrix-e2e: HF-ARGV $name refused ok (exit=$ec)"
+    fi
+  }
+  RS_C1="" RS_C2="" RS_C3=""
+  {
+    rs_git init -q -b main
+    rs_git remote add origin "$RS_URL"
+    RS_C1="$(rs_commit a one)"
+    rs_git push -q origin main
+  } >"$WORK/rs-push-seed.out" 2>&1 || { echo "FAIL HF-ARGV rs-push-seed" >&2; cat "$WORK/rs-push-seed.out" >&2; SCOPE_OK=0; }
+  rs_refused rs-push-delete "cannot delete this ref" push origin :refs/heads/main
+  RS_AFTER_DELETE="$(rs_tip refs/heads/main)"
+  {
+    RS_C2="$(rs_commit a two)"
+    rs_git push -q origin main
+    rs_git reset -q --hard "$RS_C1"
+    rs_commit b side >/dev/null
+  } >"$WORK/rs-push-diverge.out" 2>&1 || { echo "FAIL HF-ARGV rs-push-diverge" >&2; cat "$WORK/rs-push-diverge.out" >&2; SCOPE_OK=0; }
+  rs_refused rs-push-force "cannot force-push to this ref" push -f origin main
+  RS_AFTER_FORCE="$(rs_tip refs/heads/main)"
+  {
+    rs_git reset -q --hard "$RS_C2"
+    RS_C3="$(rs_commit a three)"
+    rs_git push -q origin main
+  } >"$WORK/rs-push-ff.out" 2>&1 || { echo "FAIL HF-ARGV rs-push-ff" >&2; cat "$WORK/rs-push-ff.out" >&2; SCOPE_OK=0; }
+  RS_AFTER_FF="$(rs_tip refs/heads/main)"
+  printf 'c1=%s\nafter_delete=%s\nc2=%s\nafter_force=%s\nc3=%s\nafter_ff=%s\n' \
+    "$RS_C1" "$RS_AFTER_DELETE" "$RS_C2" "$RS_AFTER_FORCE" "$RS_C3" "$RS_AFTER_FF" >"$WORK/rs-push-tips.out"
+  if [[ -z "$RS_C1" || "$RS_AFTER_DELETE" != "$RS_C1" || -z "$RS_C2" \
+    || "$RS_AFTER_FORCE" != "$RS_C2" || -z "$RS_C3" || "$RS_AFTER_FF" != "$RS_C3" ]]; then
+    echo "FAIL HF-ARGV rs-push tips" >&2
+    cat "$WORK/rs-push-tips.out" >&2
+    SCOPE_OK=0
+  else
+    echo "hub-gh-arks-matrix-e2e: HF-ARGV rs-push tips ok (refused pushes left main; fast-forward landed)"
+  fi
   if command -v gh >/dev/null 2>&1; then
     hub_scope_run argv-inventory python3 verify/scripts/run-gh-argv-inventory.py "$ARKS_BIN" "$WORK/inventory"
     if ! python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d["flags"] == d["accepted"] and d["refused"] == 0 and d["unvalidated"] == 0 else 1)' "$WORK/inventory/summary.json"; then
@@ -593,6 +709,12 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
       || ! grep -Fq $'ci\tpass' "$WORK/pr-checks.out" \
       || ! grep -Fq 'protect-main' "$WORK/ruleset-list.out" \
       || ! grep -Fq 'required_status_checks' "$WORK/rs-view.out" \
+      || ! grep -Fq 'protect-main' "$WORK/ruleset-view.out" \
+      || ! grep -Fq 'is valid' "$WORK/auth-refresh.out" \
+      || ! grep -Fq 'PR branch updated' "$WORK/pr-update-branch.out" \
+      || ! grep -Fxq 'NOTES.md' "$WORK/read-dir-topic2.out" \
+      || ! grep -Fxq 'main.rs' "$WORK/read-dir-topic2.out" \
+      || ! grep -Fq 'protect main' "$WORK/rs-push-list.out" \
       || ! grep -Fq 'rules apply to branch main' "$WORK/ruleset-check.out" \
       || ! grep -Fq 'required status check "lint"' "$WORK/pr-merge-blocked.out" \
       || ! grep -Fxq 'MERGED' "$WORK/pr-merged.out" \
@@ -622,6 +744,7 @@ if [[ "${ARKS_HUB_IW_GH_ARGV:-0}" == "1" ]]; then
   fi
   if [[ "$SCOPE_OK" -ne 1 ]]; then
     cat "$WORK/server.err" >&2 || true
+    cat "$WORK/rs-server.err" >&2 || true
     if [[ "${ARKS_DOD_STRICT:-0}" == "1" ]]; then
       echo "hub-gh-arks-matrix-e2e: FAIL STRICT gh argv symmetry" >&2
       exit 1
