@@ -1,0 +1,13 @@
+{
+  "gate": "argv-inventory + cli-flag-corpus",
+  "rung": "autonomous-operation queue Q1-Q8 complete (re-run of A_final)",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "61358f4",
+  "inventory": {"commands": 185, "commands_full": 110, "commands_no_inventory": 75, "options": 1852, "accepted": 1852},
+  "corpora": "corpora/summary.json (4,502 lines over 12 corpora, 4,398 SAME)",
+  "diff_classes": {"post-pin": 77, "design": 26, "timing": 1, "open": 0, "unreasoned": 0},
+  "previous": "20261120175548-argv-inventory-final (4,381/4,486; one open fsck ordering line, closed by Q2)",
+  "note": "The measured tree is byte-identical to main 61358f4 (git diff empty). family-history grew by 16 lines (Q1), all SAME. Corpora ran in parallel except family-a3-tools, which ran alone.",
+  "timestamp": "2026-11-25T02:36:36Z"
+}

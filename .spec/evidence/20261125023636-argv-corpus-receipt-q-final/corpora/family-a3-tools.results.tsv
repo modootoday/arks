@@ -1,0 +1,165 @@
+L001	SAME	difftool -y -x 'cat'	
+L002	SAME	difftool -y -x 'echo "$MERGED" "$BASE"; cat'	
+L003	SAME	difftool -y -x 'cat' --cached	
+L004	SAME	difftool -y -x 'cat' HEAD~1 HEAD	
+L005	SAME	difftool -y -x 'cat' HEAD~3 HEAD -- src	
+L006	SAME	difftool --no-prompt --extcmd='echo $MERGED; true' HEAD~3 HEAD	
+L007	SAME	difftool -y -x 'echo $MERGED; true' --name-only HEAD~3 HEAD	
+L008	SAME	difftool -y -x 'echo $MERGED; true' --rotate-to=src/b.txt HEAD~3 HEAD	
+L009	SAME	difftool -y -x 'echo $MERGED; true' --skip-to=src/b.txt HEAD~3 HEAD	
+L010	SAME	difftool -y -x 'echo $MERGED; true' -R HEAD~3 HEAD	
+L011	SAME	difftool -y -x 'test "$LOCAL" = /dev/null && echo new $MERGED; true' HEAD~3 HEAD	
+L012	SAME	difftool -y -x 'test "$REMOTE" = /dev/null && echo gone $MERGED; true' -R HEAD~3 HEAD	
+L013	SAME	difftool -y -x 'test "$REMOTE" = "$MERGED" && echo worktree $MERGED; true'	
+L014	SAME	-C src difftool -y -x 'echo $MERGED; pwd; true' HEAD~3 HEAD	
+L015	SAME	difftool -y -x 'cat' --no-index src/a.txt src/b.txt	
+L016	SAME	difftool -x echo	
+L017	SAME	difftool -x 'echo $MERGED; true' HEAD~3 HEAD	
+L018	SAME	difftool --prompt -x 'echo $MERGED; true' HEAD~1 HEAD	
+L019	SAME	-c difftool.prompt=false difftool -x 'echo $MERGED; true' HEAD~1 HEAD	
+L020	SAME	-c difftool.prompt=false difftool --prompt -x 'echo $MERGED; true' HEAD~1 HEAD	
+L021	SAME	-c mergetool.prompt=false difftool -x 'echo $MERGED; true' HEAD~1 HEAD	
+L022	SAME	difftool -y -x false	
+L023	SAME	difftool -y -x false --trust-exit-code	
+L024	SAME	difftool -y -x false --trust-exit-code --no-trust-exit-code	
+L025	SAME	-c difftool.trustExitCode=true difftool -y -x false	
+L026	SAME	-c difftool.trustExitCode=true difftool -y -x false --no-trust-exit-code	
+L027	SAME	difftool -y -x true --trust-exit-code	
+L028	SAME	difftool --tool-help	
+L029	SAME	-c difftool.x.cmd=foo -c mergetool.y.cmd=bar difftool --tool-help	
+L030	SAME	-c diff.tool=x -c difftool.x.cmd='echo X $MERGED; cat "$LOCAL" "$REMOTE"' difftool -y	
+L031	SAME	-c diff.tool=x -c difftool.x.cmd='echo X $MERGED' difftool	
+L032	SAME	-c diff.tool=x -c difftool.x.cmd='echo X $MERGED' difftool -y HEAD~3 HEAD	
+L033	SAME	-c merge.tool=x -c mergetool.x.cmd='echo M $MERGED' difftool -y HEAD~3 HEAD	
+L034	SAME	-c diff.tool=nope -c difftool.x.cmd='echo X $MERGED' difftool -y -t x HEAD~3 HEAD	
+L035	SAME	-c diff.guitool=x -c difftool.x.cmd='echo GUI $MERGED' -c diff.tool=y -c difftool.y.cmd='echo Y $MERGED' difftool -y -g HEAD~1 HEAD	
+L036	SAME	-c diff.guitool=x -c difftool.x.cmd='echo GUI $MERGED' -c diff.tool=y -c difftool.y.cmd='echo Y $MERGED' difftool -y --gui --no-gui HEAD~1 HEAD	
+L037	SAME	-c merge.guitool=x -c mergetool.x.cmd='echo MGUI $MERGED' difftool -y -g HEAD~1 HEAD	
+L038	SAME	-c diff.tool=x -c difftool.x.cmd=false difftool -y --trust-exit-code	
+L039	SAME	difftool -y -t nosuch	
+L040	SAME	difftool -y -t nosuch HEAD~1 HEAD	
+L041	SAME	difftool -y -x 'cat' HEAD	
+L042	SAME	difftool -y -x 'cat' src/a.txt	
+L043	SAME	difftool -y -x 'cat' nosuch-rev	
+L044	SAME	difftool --bogus	
+L045	SAME	-C .git/side difftool -y -x 'test "$REMOTE" = "$MERGED" && echo wt $MERGED; true' base	
+L046	SAME	-C .git/side difftool -y -x 'test "$REMOTE" = "$MERGED" && echo wt $MERGED; true' base main	
+L047	SAME	-C .git/side difftool -y -x 'test "$LOCAL" = "$MERGED" && echo wt $MERGED; true' -R base	
+L048	SAME	difftool -d -x 'echo dir; true'	
+L049	SAME	difftool -d -x true HEAD~1 HEAD	
+L050	SAME	difftool -d -x false HEAD~1 HEAD	
+L051	SAME	difftool -d -x false --trust-exit-code HEAD~1 HEAD	
+L052	SAME	-C .git/side -c difftool.x.cmd='cd "$LOCAL" && find . | sort; cd "$REMOTE" && find . | sort; echo M=$MERGED' difftool -d -t x base main	
+L053	SAME	-C .git/side -c difftool.x.cmd='cd "$REMOTE" && find . -type l | sort' difftool -d -t x base	
+L054	SAME	-C .git/side -c difftool.x.cmd='cd "$REMOTE" && find . -type l | sort' difftool -d --no-symlinks -t x base	
+L055	SAME	-c difftool.x.cmd='cd "$REMOTE" && find . -type f | sort; cat src/new.txt' difftool -d -t x --cached	
+L056	SAME	-c difftool.x.cmd='cd "$REMOTE" && find . -type l | sort' difftool --dir-diff -t x HEAD~1 HEAD	
+L057	SAME	-c difftool.x.cmd='cd "$LOCAL" && find . | sort' difftool -d -t x HEAD~3 HEAD	
+L058	SAME	-c difftool.x.cmd='pwd' difftool -d -t x HEAD~3 HEAD	
+L059	SAME	-c difftool.x.cmd='cd "$REMOTE" && echo edited > src/a.txt' difftool -d --no-symlinks -t x	
+L060	SAME	-c difftool.x.cmd='cd "$REMOTE" && echo edited > src/a.txt' difftool -d -t x	
+L061	SAME	difftool -d -x true HEAD HEAD	
+L062	SAME	mergetool	
+L063	SAME	mergetool --tool-help	
+L064	SAME	-c mergetool.y.cmd=bar mergetool --tool-help	
+L065	SAME	mergetool -y -t x	
+L066	SAME	-C .git/conflict mergetool -y -t x	
+L067	SAME	-C .git/conflict mergetool -t x m.txt	
+L068	SAME	-C .git/conflict mergetool -y -t nosuch m.txt	
+L069	SAME	-C .git/conflict mergetool --tool=vimdiff --bogus	
+L070	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$LOCAL" > "$MERGED"' mergetool	
+L071	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$LOCAL" > "$MERGED"' -c mergetool.x.trustExitCode=true mergetool m.txt	
+L072	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='echo M=$MERGED; for f in "$BASE" "$LOCAL" "$REMOTE"; do basename "$f" | sed "s/_[0-9]*\././"; done; false' mergetool m.txt	
+L073	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='echo M=$MERGED; false' -c mergetool.x.trustExitCode=true mergetool m.txt	
+L074	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"' -c mergetool.keepBackup=false mergetool --no-prompt	
+L075	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"' mergetool --prompt m.txt	
+L076	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='true' mergetool gone.txt	
+L077	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='true' mergetool ok.txt	
+L078	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='true' mergetool nosuch.txt	
+L079	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='true' mergetool .	
+L080	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='true' -c mergetool.prompt=true mergetool m.txt	
+L081	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$BASE"; cat "$LOCAL"; cat "$REMOTE"; cat "$MERGED"' -c mergetool.x.trustExitCode=true mergetool n.txt	
+L082	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"' -c mergetool.x.trustExitCode=true -c mergetool.writeToTemp=true mergetool -O/dev/null	
+L083	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"' -c mergetool.x.trustExitCode=true -c mergetool.hideResolved=true mergetool	
+L084	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"' -c mergetool.x.trustExitCode=true mergetool m.txt n.txt	
+L085	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"' mergetool n.txt m.txt	
+L086	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"; ls | sed "s/_[0-9]*\././"' -c mergetool.keepBackup=false mergetool m.txt	
+L087	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"; ls | sed "s/_[0-9]*\././"' -c mergetool.writeToTemp=true mergetool m.txt	
+L088	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$REMOTE" > "$MERGED"; ls | sed "s/_[0-9]*\././"' mergetool m.txt	
+L089	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='false' -c mergetool.keepTemporaries=true -c mergetool.x.trustExitCode=true mergetool m.txt	
+L090	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$LOCAL"; cat "$REMOTE"' -c mergetool.x.trustExitCode=true -c mergetool.hideResolved=true mergetool n.txt	
+L091	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='cat "$LOCAL"; echo; cat "$MERGED"' -c mergetool.x.trustExitCode=true mergetool -- m.txt	
+L092	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='echo $MERGED' -c mergetool.x.trustExitCode=true mergetool -O/dev/null n.txt m.txt	
+L093	SAME	-C .git/conflict -c merge.tool=x -c mergetool.x.cmd='test -f "$BASE" && echo base-present; true' -c mergetool.x.trustExitCode=true mergetool m.txt	
+L094	SAME	-C .git/conflict -c merge.guitool=g -c mergetool.g.cmd='echo GUI' -c merge.tool=x -c mergetool.x.cmd='echo X' -c mergetool.x.trustExitCode=true -c mergetool.g.trustExitCode=true mergetool -g m.txt	
+L095	SAME	-C .git/conflict -c merge.guitool=g -c mergetool.g.cmd='echo GUI' -c merge.tool=x -c mergetool.x.cmd='echo X' -c mergetool.x.trustExitCode=true mergetool --gui --no-gui m.txt	
+L096	SAME	filter-branch --msg-filter cat	
+L097	SAME	filter-branch --bogus	
+L098	SAME	-C .git/side filter-branch --bogus	
+L099	SAME	-C .git/side filter-branch --msg-filter 'tr a-z A-Z'	
+L100	SAME	-C .git/side filter-branch --env-filter 'GIT_AUTHOR_NAME=New' -- --all	
+L101	SAME	-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --msg-filter 'sed s/side/SIDE/' -- --all	
+L102	SAME	-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --tree-filter 'echo x > new.txt' topic	
+L103	SAME	-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --index-filter 'git rm -q --cached --ignore-unmatch b.txt' -- --all	
+L104	SAME	-C .git/side filter-branch --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --prune-empty --index-filter 'git rm -q --cached --ignore-unmatch c.txt' -- --all	
+L105	SAME	-C .git/side filter-branch --subdirectory-filter nosuch	
+L106	SAME	-C .git/side filter-branch --subdirectory-filter .git -- --all	
+L107	SAME	-C .git/side filter-branch --tag-name-filter 'sed s/^/new-/' --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --msg-filter 'sed s/side/SIDE/' main	
+L108	SAME	-C .git/side filter-branch --tag-name-filter cat --msg-filter 'sed s/side/SIDE/' -- --all	
+L109	SAME	-C .git/side filter-branch --parent-filter 'cat' main	
+L110	SAME	-C .git/side filter-branch --parent-filter 'sed "s/-p [0-9a-f]*//"' --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' lineone	
+L111	SAME	-C .git/side filter-branch --commit-filter 'git commit-tree "$@"' main	
+L112	SAME	-C .git/side filter-branch --commit-filter 'skip_commit "$@"' topic	
+L113	DIFF	-C .git/side filter-branch --commit-filter 'git_commit_non_empty_tree "$@"' --env-filter 'for p in $(git rev-parse $GIT_COMMIT^@); do echo "$p -> $(map $p)"; done' --index-filter 'git rm -q --cached --ignore-unmatch c.txt' topic	stdout
+L114	SAME	-C .git/side filter-branch --msg-filter 'cat; echo map=$(map $GIT_COMMIT)' main	
+L115	SAME	-C .git/side filter-branch main	
+L116	SAME	-C .git/side filter-branch --msg-filter cat base..main	
+L117	SAME	-C .git/side filter-branch -d /nonexistent/x --msg-filter cat main	
+L118	SAME	-C .git/side filter-branch --setup 'n=0' --env-filter 'n=$((n+1)); echo commit $n' --msg-filter 'cat; echo X=$n' -- --all	
+L119	SAME	-C .git/side filter-branch --state-branch fb-state --msg-filter cat main	
+L120	SAME	-C .git/side filter-branch -f --env-filter 'false' main	
+L121	SAME	-C .git/side filter-branch --tree-filter 'false' main	
+L122	SAME	-C .git/side filter-branch --index-filter 'exit 3' main	
+L123	SAME	-C .git/side filter-branch --msg-filter 'false' main	
+L124	SAME	-C .git/side filter-branch --parent-filter 'false' main	
+L125	SAME	-C .git/side filter-branch --commit-filter 'false' main	
+L126	SAME	-C .git/side filter-branch --prune-empty --commit-filter 'git commit-tree "$@"' main	
+L127	SAME	-C .git/side filter-branch --tree-filter 'rm b.txt' --prune-empty main	
+L128	SAME	-C .git/side filter-branch --msg-filter cat nosuch	
+L129	SAME	-C .git/side filter-branch --msg-filter cat -- --all -- a.txt	
+L130	SAME	-C .git/side filter-branch --original refs/saved --msg-filter 'sed s/main/MAIN/' main	
+L131	SAME	-C .git/side filter-branch --setup 'echo SETUP; pwd' --tree-filter 'pwd; ls' --index-filter 'pwd; git ls-files' main	
+L132	SAME	-C .git/side -c core.checkStat=minimal quiltimport --patches .git/quilt --author 'A U Thor <author@example.com>'	
+L133	SAME	-C .git/side -c core.checkStat=minimal quiltimport --patches=.git/quilt --author='A U Thor <author@example.com>' --keep-non-patch	
+L134	SAME	-C .git/side quiltimport -n --patches .git/quilt --author 'A U Thor <author@example.com>'	
+L135	SAME	-C .git/side quiltimport --dry-run --patches .git/quilt	
+L136	SAME	-C .git/side -c core.checkStat=minimal quiltimport --patches .git/quilt --series .git/quilt/series-missing --author 'A U Thor <author@example.com>'	
+L137	SAME	-C .git/side quiltimport --patches .git/nosuch	
+L138	SAME	-C .git/side quiltimport --patches .git/quilt --author 'bad'	
+L139	SAME	-C .git/side quiltimport --bogus	
+L140	SAME	-C .git/side quiltimport --patches .git/quilt --series .git/quilt/nosuch-series	
+L141	SAME	quiltimport	
+L142	SAME	-C .git/side -c core.checkStat=minimal quiltimport --patches .git/quilt -n	
+L143	SAME	-c browser.x.cmd=echo web--browse --browser=x http://example.com/a b	
+L144	SAME	-c browser.x.cmd=echo web--browse -t x http://example.com/	
+L145	SAME	-c browser.x.path=/bin/echo web--browse --browser=x http://example.com/	
+L146	SAME	-c web.browser=x -c browser.x.cmd='echo X' web--browse http://example.com/	
+L147	SAME	-c browser.x.cmd='echo C' -c my.browser=x web--browse -c my.browser http://example.com/	
+L148	SAME	-c browser.x.cmd='echo C' -c my.browser=x web--browse --config=my.browser http://example.com/	
+L149	SAME	web--browse --browser=nosuch http://example.com/	
+L150	SAME	web--browse http://example.com/	
+L151	SAME	web--browse	
+L152	SAME	-c browser.x.cmd=echo web--browse -c browser.x.cmd http://example.com/	
+L153	SAME	-c browser.x.cmd=false web--browse -b x http://example.com/	
+L154	SAME	instaweb --stop	
+L155	SAME	instaweb stop	
+L156	SAME	instaweb --bogus	
+L157	SAME	instaweb -h	
+L158	SAME	instaweb --httpd=nosuchd --start	
+L159	SAME	imap-send	
+L160	SAME	imap-send --list	
+L161	SAME	imap-send -h	
+L162	SAME	imap-send -v -q --no-curl	
+L163	SAME	-c imap.folder=Drafts imap-send	
+L164	SAME	-c imap.folder=Drafts -c imap.host=imap://127.0.0.1 imap-send	
+L165	SAME	-c imap.folder=Drafts -c imap.tunnel=false imap-send	
