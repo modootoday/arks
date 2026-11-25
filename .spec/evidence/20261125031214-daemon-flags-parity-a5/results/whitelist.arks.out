@@ -1,0 +1,4 @@
+git-upload-pack /tmp/arks-daemon-flags.YaUKQs/a5/srv/pub.git\0 => ADVERT
+git-upload-pack /tmp/arks-daemon-flags.YaUKQs/a5/srv/pub\0 => ADVERT
+git-upload-pack /tmp/arks-daemon-flags.YaUKQs/a5/srv/work\0 => ADVERT
+git-upload-pack /tmp/arks-daemon-flags.YaUKQs/a5/srv/arch.git\0 => 0049ERR no such repository: /tmp/arks-daemon-flags.YaUKQs/a5/srv/arch.git

@@ -35,14 +35,25 @@ pub(super) fn read_service_request<R: Read>(
     log: &DaemonLog,
 ) -> Result<ServiceRequest, ServerError> {
     let mut lenbuf = [0u8; 4];
-    stream.read_exact(&mut lenbuf)?;
+    stream.read_exact(&mut lenbuf).map_err(hung_up)?;
     let pkt_len = parse_pkt_len(&lenbuf)?;
     if !(5..=65_520).contains(&pkt_len) {
         return Err(ServerError::Protocol("bad service request length".into()));
     }
     let mut payload = vec![0u8; pkt_len - 4];
-    stream.read_exact(&mut payload)?;
+    stream.read_exact(&mut payload).map_err(hung_up)?;
     parse_service_payload(&payload, log)
+}
+
+/// git's fatal for a peer that closed before its request packet was complete.
+pub(super) const HUNG_UP: &str = "the remote end hung up unexpectedly";
+
+fn hung_up(e: std::io::Error) -> ServerError {
+    if e.kind() == std::io::ErrorKind::UnexpectedEof {
+        ServerError::Msg(HUNG_UP.into())
+    } else {
+        e.into()
+    }
 }
 
 pub(super) fn parse_pkt_len(lenbuf: &[u8; 4]) -> Result<usize, ServerError> {

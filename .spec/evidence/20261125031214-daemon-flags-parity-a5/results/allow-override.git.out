@@ -1,0 +1,4 @@
+git-upload-pack /yesup.git\0 => ADVERT
+git-upload-pack /pub.git\0 => 0025ERR service not enabled: /pub.git
+git-upload-pack /noup.git\0 => 0026ERR service not enabled: /noup.git
+git-upload-pack /nope.git\0 => 0025ERR no such repository: /nope.git

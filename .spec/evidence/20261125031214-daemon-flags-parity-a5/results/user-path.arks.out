@@ -1,0 +1,2 @@
+git-upload-pack ~root/x.git\0 => 0027ERR no such repository: ~root/x.git
+git-upload-pack ~a5nouser/x.git\0 => 002bERR no such repository: ~a5nouser/x.git

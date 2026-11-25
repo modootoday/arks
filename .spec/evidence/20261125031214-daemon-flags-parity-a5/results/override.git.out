@@ -1,0 +1,3 @@
+git-upload-pack /noup.git\0 => ADVERT
+git-receive-pack /pub.git\0 => 0025ERR service not enabled: /pub.git
+git-upload-archive /pub.git\0 => 0025ERR service not enabled: /pub.git

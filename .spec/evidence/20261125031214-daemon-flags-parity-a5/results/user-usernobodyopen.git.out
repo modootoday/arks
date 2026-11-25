@@ -1,0 +1,6 @@
+Uid: 65534 65534 65534 65534
+Gid: 65534 65534 65534 65534
+Groups: 65534 
+git-upload-pack /nope.git\0 => 0025ERR no such repository: /nope.git
+[N] 'BASE/nope.git' does not appear to be a git repository
+fatal: the remote end hung up unexpectedly

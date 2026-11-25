@@ -1,0 +1,11 @@
+[52] Ready to rumble
+[52] Connection from 127.0.0.1:39810
+[52] Extended attribute "host": 127.0.0.1:54941
+[52] Extended attribute "protocol": version=1
+[52] Request upload-pack for '/repo/.git'
+[52] [1] Disconnected
+[52] Connection from 127.0.0.1:39826
+[52] Extended attribute "host": 127.0.0.1:54941
+[52] Request receive-pack for '/repo/.git'
+[52] 'receive-pack': service not enabled for '/tmp/arks-daemon-flags.YaUKQs/repo/.git'
+[52] [2] Disconnected (with error)

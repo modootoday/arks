@@ -81,12 +81,15 @@ pub fn cmd_daemon(args: &[String]) -> CliResult<()> {
         LogDestination::Stderr
     });
     let log = DaemonLog::new(destination, a.verbose);
+    // git's die routine by destination: syslog err + exit 1, `none` silent exit 128.
     let die = |msg: String| -> CliError {
-        if destination == LogDestination::Syslog {
-            log.error(&msg);
-            CliError::Exit(1, String::new())
-        } else {
-            CliError::fatal(msg)
+        match destination {
+            LogDestination::Syslog => {
+                log.error(&msg);
+                CliError::Exit(1, String::new())
+            }
+            LogDestination::None => CliError::Exit(128, String::new()),
+            LogDestination::Stderr => CliError::fatal(msg),
         }
     };
     #[cfg(windows)]

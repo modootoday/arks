@@ -5,7 +5,7 @@
 //! follows observed stock `git daemon`.
 
 use super::options::DaemonOptions;
-use super::request::read_service_request;
+use super::request::{HUNG_UP, read_service_request};
 use super::session::{Outcome, handle_request};
 use crate::error::ServerError;
 use std::io::{Read, Write};
@@ -98,13 +98,15 @@ pub fn serve_daemon(
     opts.log.info("Ready to rumble");
     let opts = Arc::new(opts);
     let active = Arc::new(AtomicUsize::new(0));
+    let mut serial = 0u64;
     while !stop.load(Ordering::SeqCst) {
         let mut accepted = false;
         for l in &listeners.listeners {
             match l.accept() {
                 Ok((stream, peer)) => {
                     accepted = true;
-                    dispatch(stream, peer, &opts, &active);
+                    serial += 1;
+                    dispatch(stream, peer, serial, &opts, &active);
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {}
                 Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
@@ -121,6 +123,7 @@ pub fn serve_daemon(
 fn dispatch(
     stream: TcpStream,
     peer: SocketAddr,
+    serial: u64,
     opts: &Arc<DaemonOptions>,
     active: &Arc<AtomicUsize>,
 ) {
@@ -138,7 +141,8 @@ fn dispatch(
             Ok(Outcome::Served) => "",
             _ => " (with error)",
         };
-        opts.log.info(&format!("[{peer}] Disconnected{suffix}"));
+        // git names the connection by its child pid; connections here are threads.
+        opts.log.info(&format!("[{serial}] Disconnected{suffix}"));
         active.fetch_sub(1, Ordering::SeqCst);
     });
 }
@@ -152,11 +156,30 @@ fn handle_tcp(
     peer: SocketAddr,
     opts: &DaemonOptions,
 ) -> Result<Outcome, ServerError> {
+    // git re-executes the server per connection (after any privilege drop), and
+    // that process re-checks the base path before it logs or answers anything.
+    if let Some(base) = opts.base_path.as_deref() {
+        if !base.is_dir() {
+            let msg = format!(
+                "base-path '{}' does not exist or is not a directory",
+                base.display()
+            );
+            opts.log.fatal(&msg);
+            return Err(ServerError::Msg(msg));
+        }
+    }
     // Accepted sockets may inherit non-blocking mode from the listener.
     stream.set_nonblocking(false)?;
     opts.log.info(&format!("Connection from {peer}"));
     stream.set_read_timeout(timeout(opts.init_timeout_secs))?;
-    let req = read_service_request(&mut stream, &opts.log)?;
+    let req = match read_service_request(&mut stream, &opts.log) {
+        Ok(req) => req,
+        Err(ServerError::Msg(m)) if m == HUNG_UP => {
+            opts.log.fatal(&m);
+            return Err(ServerError::Msg(m));
+        }
+        Err(e) => return Err(e),
+    };
     stream.set_read_timeout(timeout(opts.timeout_secs))?;
     stream.set_write_timeout(timeout(opts.timeout_secs))?;
     handle_request(&mut stream, &req, opts, Some(peer))
@@ -270,5 +293,68 @@ mod tests {
         let r = serve_daemon_inetd(&req[..], &mut out, &opts, None).unwrap();
         assert_eq!(r, Outcome::Refused);
         assert!(String::from_utf8_lossy(&out).contains("ERR access denied"));
+    }
+
+    #[test]
+    fn short_request_is_the_hung_up_fatal() {
+        let opts = DaemonOptions {
+            log: DaemonLog::memory(false),
+            ..DaemonOptions::default()
+        };
+        for input in [&b""[..], &b"0030git-upl"[..]] {
+            let err = serve_daemon_inetd(input, Vec::new(), &opts, None).unwrap_err();
+            assert_eq!(err.to_string(), HUNG_UP);
+        }
+    }
+
+    fn connect_and_close(opts: DaemonOptions) -> Vec<String> {
+        let log = opts.log.clone();
+        let (addr, stop, handle) = spawn_loopback_daemon(opts).unwrap();
+        drop(TcpStream::connect(addr).unwrap());
+        for _ in 0..100 {
+            if log.lines().iter().any(|l| l.contains("Disconnected")) {
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        stop.store(true, Ordering::SeqCst);
+        handle.join().unwrap().unwrap();
+        log.lines()
+    }
+
+    #[test]
+    fn closed_connection_logs_fatal_and_numbered_disconnect() {
+        let lines = connect_and_close(DaemonOptions {
+            log: DaemonLog::memory(true),
+            ..DaemonOptions::default()
+        });
+        assert!(
+            lines.iter().any(|l| l.starts_with("Connection from ")),
+            "{lines:?}"
+        );
+        assert!(lines.contains(&format!("fatal: {HUNG_UP}")), "{lines:?}");
+        assert!(
+            lines.contains(&"[1] Disconnected (with error)".to_string()),
+            "{lines:?}"
+        );
+    }
+
+    #[test]
+    fn connection_rechecks_base_path() {
+        let gone = tempfile::tempdir().unwrap().path().join("gone");
+        let lines = connect_and_close(DaemonOptions {
+            log: DaemonLog::memory(true),
+            base_path: Some(gone.clone()),
+            ..DaemonOptions::default()
+        });
+        let fatal = format!(
+            "fatal: base-path '{}' does not exist or is not a directory",
+            gone.display()
+        );
+        assert!(lines.contains(&fatal), "{lines:?}");
+        assert!(
+            !lines.iter().any(|l| l.starts_with("Connection from ")),
+            "{lines:?}"
+        );
     }
 }

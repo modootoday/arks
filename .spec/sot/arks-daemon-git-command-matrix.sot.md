@@ -3,7 +3,7 @@ id: sot:root/arks-daemon-git-command-matrix
 title: arks daemon ↔ git-daemon command matrix
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-25T00:00:00Z
+updated: 2026-11-25T03:30:00Z
 tags: [arks-daemon, git-daemon, matrix, symmetry, clean-room, pin-2.39.5, single-release]
 verify: manual
 rel:
@@ -23,7 +23,7 @@ rel:
 
 # arks daemon ↔ git-daemon command matrix
 
-Version **0.3.0**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior inventory vs **`arks daemon`** on the single published binary. Umbrella: [[sot:root/verify-cleanroom-symmetry-matrix]]. Product shape: [[sot:root/arks-daemon-product-intent]]. Survey: [[research:root/20261111035226]], [[evidence:root/20261111035226]].
+Version **0.3.1**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior inventory vs **`arks daemon`** on the single published binary. Umbrella: [[sot:root/verify-cleanroom-symmetry-matrix]]. Product shape: [[sot:root/arks-daemon-product-intent]]. Survey: [[research:root/20261111035226]], [[evidence:root/20261111035226]].
 
 **Machine e2e table:** `verify/matrices/daemon-git-arks-e2e-matrix.csv` (living `status_now`). Survey extract: `.spec/evidence/20261111035226-git-daemon-arks-daemon-symmetry/matrix.csv`.
 
@@ -52,7 +52,7 @@ Version **0.3.0**. **Canon** for pin **git-daemon 2.39.5** flag/service/behavior
 | Refuse/N/A | **0** |
 | arks-only | 2 |
 
-**A5 (host-tested):** the 16 former Refuse/N/A rows and the retired `--listen host:port` row are `Parity` with CSV note `host-tested` — unit tests in `arks-server` (`daemon::*`), CLI tests `crates/arks/tests/daemon_cli.rs`, and the `ARKS_DAEMON_FLAGS_PARITY=1` A5 block of `verify/scripts/run-daemon-git-arks-matrix-e2e.sh`, which sends identical raw `git://` requests to stock `git daemon` and `arks daemon` and requires identical replies, hook arguments, `--inetd` exit status and argv exit codes. These are host runs (advisory, rule 28); no Docker pin receipt yet, so no Claimed/Verified wording. The paragraphs below describe the pre-A5 state.
+**A5 (host-tested):** the 16 former Refuse/N/A rows and the retired `--listen host:port` row are `Parity` with CSV note `host-tested` — unit tests in `arks-server` (`daemon::*`), CLI tests `crates/arks/tests/daemon_cli.rs`, and the `ARKS_DAEMON_FLAGS_PARITY=1` A5 block of `verify/scripts/run-daemon-git-arks-matrix-e2e.sh`, which sends identical raw `git://` requests to stock `git daemon` and `arks daemon` and requires identical replies, hook arguments, `--inetd` exit status and argv exit codes. These were host runs (advisory, rule 28) until queue unit Q19. **Q19 Docker pin receipt:** [[evidence:root/20261125031214-daemon-flags-parity-a5]] (`dod-daemon-matrix`, tip `231e884`, git 2.39.5) compares all 17 rows and the arks-only default bind against stock `git daemon` — replies, hook arguments and `REMOTE_ADDR`, log lines per destination, syslog `<PRI>`, `--detach`/`--pid-file` process state, dropped uid/gid/groups, `--inetd` fatals and argv exit codes — so their CSV notes read `docker-a5` and the Linux behaviour is **Claimed**. The Windows clauses (`windows-ci`) stay host-tested (no Windows pin oracle), and the default-bind check covers IPv4 only (no IPv6 in the image). The paragraphs below describe the pre-A5 state.
 
 **Parity:** inventoriable peer-mapped flags + services (including IW-DAEMON-FLAGS-PARITY deepen — timeouts, listen/port, max-connections, strict-paths, base-path, reuseaddr, enable/disable, dirs, upload-archive/receive-pack, `related:git:// client` **Parity pointer**) per living CSV + [[evidence:root/20261111045108-daemon-flags-parity]] / reconfirm receipts.  
 **Partial:** none remaining on living inventoriable daemon rows (flag-depth / platform SO_REUSEADDR notes stay in CSV `notes` where applicable — not a Missing reopen).  
@@ -98,6 +98,17 @@ no git code copied, no `git` spawned on product paths).
    (`[pid] message`); syslog writes `<PRI>arks-daemon[pid]: message` datagrams to `/dev/log`
    (facility daemon; info for `--verbose` lines, err for errors). Defaults follow git:
    `--max-connections` 32, `--timeout`/`--init-timeout` 0 (none).
+   **Fatal errors** (observed stock `git daemon` 2.39.5, queue unit Q19) follow the log
+   destination: `stderr` prints `fatal: <msg>` without the `[pid]` prefix and exits 128;
+   `syslog` sends `<msg>` at err and exits 1; `none` is silent and exits 128. A connection
+   that closes before its request packet is complete is the fatal
+   `the remote end hung up unexpectedly` (for `--inetd`, the process exit above). git serves
+   each connection in a process re-executed after privileges are dropped, so every
+   connection re-checks `--base-path`: when the serving user cannot see it, the connection
+   ends with the fatal `base-path '<path>' does not exist or is not a directory` before any
+   log line or reply. The parent's `[<n>] Disconnected[ (with error)]` line names the
+   connection by a number (git: the child pid; arks, which serves connections on threads:
+   a per-process connection serial).
 6. **Default bind (arks-only, unchanged).** git binds every interface when `--listen` is absent;
    `arks daemon` keeps the loopback default `127.0.0.1` (rule 3 and
    [[sot:root/arks-self-host-server]] §Bind). git's behaviour is available explicitly with

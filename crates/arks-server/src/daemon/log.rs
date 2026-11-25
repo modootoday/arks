@@ -139,6 +139,24 @@ impl DaemonLog {
         self.write(Level::Error, msg);
     }
 
+    /// Fatal error of one connection, as git's die routine reports it: `fatal: <msg>`
+    /// on stderr without the `[pid]` prefix, an err datagram under syslog, nothing
+    /// under `none`.
+    pub fn fatal(&self, msg: &str) {
+        let Ok(mut sink) = self.sink.lock() else {
+            return;
+        };
+        match &mut *sink {
+            Sink::None => {}
+            Sink::Stderr => {
+                let _ = std::io::stderr().write_all(format!("fatal: {msg}\n").as_bytes());
+            }
+            Sink::Syslog(s) => s.send(Level::Error, msg),
+            #[cfg(test)]
+            Sink::Memory(v) => v.push(format!("fatal: {msg}")),
+        }
+    }
+
     fn write(&self, level: Level, msg: &str) {
         let Ok(mut sink) = self.sink.lock() else {
             return;

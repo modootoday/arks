@@ -1,0 +1,53 @@
+{
+  "schema": "arks-daemon-flags-parity/v1",
+  "gate": "IW-DAEMON-FLAGS-PARITY",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-daemon-matrix",
+  "tip": "231e884",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "parity_flags": [
+    "--verbose",
+    "--timeout",
+    "--init-timeout",
+    "--max-connections",
+    "--strict-paths",
+    "--listen",
+    "--port",
+    "--base-path",
+    "--reuseaddr",
+    "--enable",
+    "--disable",
+    "<directory>...",
+    "service:upload-pack",
+    "service:receive-pack",
+    "service:upload-archive"
+  ],
+  "parity_pointers": [
+    "related:git:// client"
+  ],
+  "a5_oracle_compared": [
+    "--syslog",
+    "--base-path-relaxed",
+    "--user-path|--user-path=<path>",
+    "--interpolated-path=<pathtemplate>",
+    "--detach",
+    "--pid-file=<file>",
+    "--allow-override=<service>",
+    "--forbid-override=<service>",
+    "--access-hook=<path>",
+    "--[no-]informative-errors",
+    "--inetd",
+    "--user=<user>",
+    "--group=<group>",
+    "--log-destination=(stderr|syslog|none)",
+    "daemon.* config override",
+    "REMOTE_ADDR env for hooks",
+    "--listen host:port form"
+  ],
+  "arks_only_checked": [
+    "default bind 127.0.0.1"
+  ],
+  "results_dir": "results/",
+  "note": "A5 rows: identical raw git:// requests, log lines, syslog <PRI>, detach/pid-file process state, dropped uid/gid/groups and argv exit codes vs stock git daemon 2.39.5. Default bind is arks-only (loopback); --listen=0.0.0.0 matches git's IPv4 default listener. Windows rows stay host-tested (no Windows pin oracle).",
+  "timestamp": "2026-11-25T03:12:14Z"
+}

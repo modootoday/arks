@@ -1,0 +1,6 @@
+Uid: 65534 65534 65534 65534
+Gid: 65534 65534 65534 65534
+Groups: 65534 
+git-upload-pack /nope.git\0 => EMPTY
+fatal: base-path 'BASE' does not exist or is not a directory
+fatal: base-path 'BASE' does not exist or is not a directory

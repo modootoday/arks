@@ -1,0 +1,9 @@
+git-upload-pack /nope.git\0 => 003bERR access denied or repository not exported: /nope.git
+git-upload-pack /hidden.git\0 => 003dERR access denied or repository not exported: /hidden.git
+git-upload-pack pub.git\0 => 0039ERR access denied or repository not exported: pub.git
+git-receive-pack /pub.git\0 => 003aERR access denied or repository not exported: /pub.git
+git-upload-pack /noup.git\0 => 003bERR access denied or repository not exported: /noup.git
+git-upload-pack /pub\0 => ADVERT
+git-upload-pack /work\0 => ADVERT
+git-upload-pack //pub.git\0 => 003bERR access denied or repository not exported: //pub.git
+git-upload-pack /../srv/pub.git\0 => 0041ERR access denied or repository not exported: /../srv/pub.git

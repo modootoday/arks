@@ -1,0 +1,6 @@
+stderr '' ec=128 stderr=fatal: the remote end hung up unexpectedly
+stderr '0030git-upl' ec=128 stderr=fatal: the remote end hung up unexpectedly
+syslog '' ec=1 stderr=
+syslog '0030git-upl' ec=1 stderr=
+none '' ec=128 stderr=
+none '0030git-upl' ec=128 stderr=
