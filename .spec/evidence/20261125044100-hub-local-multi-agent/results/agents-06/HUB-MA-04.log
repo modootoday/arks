@@ -1,0 +1,600 @@
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-03/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-04/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-05/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-06/.config/arks/hub-token
+[agent-01] $ arks pr comment 5 -b agent-01 looked at agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/5#issuecomment-25
+[agent-04] $ arks pr comment 1 -b agent-04 looked at agent-01  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/1#issuecomment-26
+[agent-06] $ arks pr comment 1 -b agent-06 looked at agent-01  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/1#issuecomment-27
+[agent-02] $ arks pr comment 1 -b agent-02 looked at agent-01  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/1#issuecomment-28
+[agent-05] $ arks pr comment 1 -b agent-05 looked at agent-01  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/1#issuecomment-30
+[agent-03] $ arks pr comment 1 -b agent-03 looked at agent-01  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/1#issuecomment-29
+[agent-01] $ arks pr review 5 --approve -b agent-01 approves  -> exit 0 (0.02s)
+    | id=1
+    | state=APPROVED
+    | event=APPROVE
+    | ✓ Approved pull request local/playground#5
+[agent-06] $ arks pr review 1 --approve -b agent-06 approves  -> exit 0 (0.02s)
+    | id=2
+    | state=APPROVED
+    | event=APPROVE
+    | ✓ Approved pull request local/playground#1
+[agent-02] $ arks pr review 1 --comment -b agent-02 notes  -> exit 0 (0.02s)
+    | id=3
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#1
+[agent-05] $ arks pr review 1 --comment -b agent-05 notes  -> exit 0 (0.02s)
+    | id=4
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#1
+[agent-04] $ arks pr review 1 --comment -b agent-04 notes  -> exit 0 (0.02s)
+    | id=5
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#1
+[agent-03] $ arks pr review 1 --comment -b agent-03 notes  -> exit 0 (0.02s)
+    | id=6
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#1
+[agent-01] $ arks pr comment 2 -b agent-01 looked at agent-03  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/2#issuecomment-31
+[agent-06] $ arks pr comment 5 -b agent-06 looked at agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/5#issuecomment-32
+[agent-05] $ arks pr comment 5 -b agent-05 looked at agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/5#issuecomment-33
+[agent-04] $ arks pr comment 5 -b agent-04 looked at agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/5#issuecomment-35
+[agent-03] $ arks pr comment 5 -b agent-03 looked at agent-02  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/5#issuecomment-34
+[agent-02] $ arks pr comment 2 -b agent-02 looked at agent-03  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/2#issuecomment-36
+[agent-06] $ arks pr review 5 --comment -b agent-06 notes  -> exit 0 (0.02s)
+    | id=7
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#5
+[agent-02] $ arks pr review 2 --approve -b agent-02 approves  -> exit 0 (0.02s)
+    | id=8
+    | state=APPROVED
+    | event=APPROVE
+    | ✓ Approved pull request local/playground#2
+[agent-05] $ arks pr review 5 --comment -b agent-05 notes  -> exit 0 (0.02s)
+    | id=9
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#5
+[agent-04] $ arks pr review 5 --comment -b agent-04 notes  -> exit 0 (0.02s)
+    | id=10
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#5
+[agent-01] $ arks pr review 2 --comment -b agent-01 notes  -> exit 0 (0.02s)
+    | id=11
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#2
+[agent-03] $ arks pr review 5 --comment -b agent-03 notes  -> exit 0 (0.02s)
+    | id=12
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#5
+[agent-02] $ arks pr comment 6 -b agent-02 looked at agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/6#issuecomment-37
+[agent-04] $ arks pr comment 2 -b agent-04 looked at agent-03  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/2#issuecomment-38
+[agent-05] $ arks pr comment 2 -b agent-05 looked at agent-03  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/2#issuecomment-39
+[agent-01] $ arks pr comment 6 -b agent-01 looked at agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/6#issuecomment-40
+[agent-06] $ arks pr comment 2 -b agent-06 looked at agent-03  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/2#issuecomment-41
+[agent-03] $ arks pr comment 6 -b agent-03 looked at agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/6#issuecomment-42
+[agent-02] $ arks pr review 6 --comment -b agent-02 notes  -> exit 0 (0.02s)
+    | id=13
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#6
+[agent-04] $ arks pr review 2 --comment -b agent-04 notes  -> exit 0 (0.02s)
+    | id=14
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#2
+[agent-05] $ arks pr review 2 --comment -b agent-05 notes  -> exit 0 (0.02s)
+    | id=15
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#2
+[agent-01] $ arks pr review 6 --comment -b agent-01 notes  -> exit 0 (0.02s)
+    | id=16
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#6
+[agent-06] $ arks pr review 2 --comment -b agent-06 notes  -> exit 0 (0.02s)
+    | id=17
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#2
+[agent-03] $ arks pr review 6 --approve -b agent-03 approves  -> exit 0 (0.02s)
+    | id=18
+    | state=APPROVED
+    | event=APPROVE
+    | ✓ Approved pull request local/playground#6
+[agent-01] $ arks pr comment 3 -b agent-01 looked at agent-05  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/3#issuecomment-43
+[agent-02] $ arks pr comment 3 -b agent-02 looked at agent-05  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/3#issuecomment-44
+[agent-03] $ arks pr comment 3 -b agent-03 looked at agent-05  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/3#issuecomment-45
+[agent-06] $ arks pr comment 6 -b agent-06 looked at agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/6#issuecomment-47
+[agent-05] $ arks pr comment 6 -b agent-05 looked at agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/6#issuecomment-46
+[agent-04] $ arks pr comment 3 -b agent-04 looked at agent-05  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/3#issuecomment-48
+[agent-02] $ arks pr review 3 --comment -b agent-02 notes  -> exit 0 (0.02s)
+    | id=19
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#3
+[agent-06] $ arks pr review 6 --comment -b agent-06 notes  -> exit 0 (0.02s)
+    | id=20
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#6
+[agent-01] $ arks pr review 3 --comment -b agent-01 notes  -> exit 0 (0.02s)
+    | id=21
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#3
+[agent-03] $ arks pr review 3 --comment -b agent-03 notes  -> exit 0 (0.02s)
+    | id=22
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#3
+[agent-05] $ arks pr review 6 --comment -b agent-05 notes  -> exit 0 (0.02s)
+    | id=24
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#6
+[agent-04] $ arks pr review 3 --approve -b agent-04 approves  -> exit 0 (0.02s)
+    | id=23
+    | state=APPROVED
+    | event=APPROVE
+    | ✓ Approved pull request local/playground#3
+[agent-03] $ arks pr comment 4 -b agent-03 looked at agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/4#issuecomment-49
+[agent-01] $ arks pr comment 4 -b agent-01 looked at agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/4#issuecomment-50
+[agent-02] $ arks pr comment 4 -b agent-02 looked at agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/4#issuecomment-51
+[agent-06] $ arks pr comment 3 -b agent-06 looked at agent-05  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/3#issuecomment-52
+[agent-05] $ arks pr comment 4 -b agent-05 looked at agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/4#issuecomment-53
+[agent-04] $ arks pr comment 4 -b agent-04 looked at agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/4#issuecomment-54
+[agent-03] $ arks pr review 4 --comment -b agent-03 notes  -> exit 0 (0.02s)
+    | id=25
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#4
+[agent-04] $ arks pr review 4 --comment -b agent-04 notes  -> exit 0 (0.02s)
+    | id=26
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#4
+[agent-01] $ arks pr review 4 --comment -b agent-01 notes  -> exit 0 (0.02s)
+    | id=27
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#4
+[agent-06] $ arks pr review 3 --comment -b agent-06 notes  -> exit 0 (0.02s)
+    | id=28
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#3
+[agent-02] $ arks pr review 4 --comment -b agent-02 notes  -> exit 0 (0.02s)
+    | id=29
+    | state=COMMENTED
+    | event=COMMENT
+    | - Reviewed pull request local/playground#4
+[agent-05] $ arks pr review 4 --approve -b agent-05 approves  -> exit 0 (0.02s)
+    | id=30
+    | state=APPROVED
+    | event=APPROVE
+    | ✓ Approved pull request local/playground#4
+[agent-06] $ arks pr view 4 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | 9fa0b1553aad00b7ca16b0cfff918f7bec68c96c
+[agent-02] $ arks pr view 5 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | 6b22b9813939ce72ef1a1f7018c3d90c6a849a4d
+[agent-01] $ arks pr view 1 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | b35c6c8728ace95789ee5f49e49d8a7c98b568b8
+[agent-03] $ arks pr view 2 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | 2fcc84a2c28667a1963bb1703e13e7296a3d6f1b
+[agent-05] $ arks pr view 3 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | 32ab064d08e24130bf42cb297c7fca52bfd785f6
+[agent-04] $ arks pr view 6 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | c62226a24a00f3d2733ed8343fd9982104393228
+[agent-01] $ arks api -X POST repos/local/playground/statuses/b35c6c8728ace95789ee5f49e49d8a7c98b568b8 -f state=success -f context=ci/agent-01  -> exit 0 (0.01s)
+    | {"context":"ci/agent-01","created_at":"2026-11-25T04:41:17Z","creator":{"login":"agent-01"},"description":"","id":1,"sha":"b35c6c8728ace95789ee5f49e49d8a7c98b568b8","state":"success","target_url":"","updated_at":"2026-11-25T04:41:17Z"}
+[agent-02] $ arks api -X POST repos/local/playground/statuses/6b22b9813939ce72ef1a1f7018c3d90c6a849a4d -f state=success -f context=ci/agent-02  -> exit 0 (0.01s)
+    | {"context":"ci/agent-02","created_at":"2026-11-25T04:41:17Z","creator":{"login":"agent-02"},"description":"","id":2,"sha":"6b22b9813939ce72ef1a1f7018c3d90c6a849a4d","state":"success","target_url":"","updated_at":"2026-11-25T04:41:17Z"}
+[agent-04] $ arks api -X POST repos/local/playground/statuses/c62226a24a00f3d2733ed8343fd9982104393228 -f state=success -f context=ci/agent-04  -> exit 0 (0.00s)
+    | {"context":"ci/agent-04","created_at":"2026-11-25T04:41:17Z","creator":{"login":"agent-04"},"description":"","id":3,"sha":"c62226a24a00f3d2733ed8343fd9982104393228","state":"success","target_url":"","updated_at":"2026-11-25T04:41:17Z"}
+[agent-06] $ arks api -X POST repos/local/playground/statuses/9fa0b1553aad00b7ca16b0cfff918f7bec68c96c -f state=success -f context=ci/agent-06  -> exit 0 (0.01s)
+    | {"context":"ci/agent-06","created_at":"2026-11-25T04:41:17Z","creator":{"login":"agent-06"},"description":"","id":4,"sha":"9fa0b1553aad00b7ca16b0cfff918f7bec68c96c","state":"success","target_url":"","updated_at":"2026-11-25T04:41:17Z"}
+[agent-03] $ arks api -X POST repos/local/playground/statuses/2fcc84a2c28667a1963bb1703e13e7296a3d6f1b -f state=success -f context=ci/agent-03  -> exit 0 (0.01s)
+    | {"context":"ci/agent-03","created_at":"2026-11-25T04:41:17Z","creator":{"login":"agent-03"},"description":"","id":5,"sha":"2fcc84a2c28667a1963bb1703e13e7296a3d6f1b","state":"success","target_url":"","updated_at":"2026-11-25T04:41:17Z"}
+[agent-05] $ arks api -X POST repos/local/playground/statuses/32ab064d08e24130bf42cb297c7fca52bfd785f6 -f state=success -f context=ci/agent-05  -> exit 0 (0.01s)
+    | {"context":"ci/agent-05","created_at":"2026-11-25T04:41:17Z","creator":{"login":"agent-05"},"description":"","id":6,"sha":"32ab064d08e24130bf42cb297c7fca52bfd785f6","state":"success","target_url":"","updated_at":"2026-11-25T04:41:17Z"}
+[agent-01] $ arks pr view 1 --json comments,reviews  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-04"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-04 looked at agent-01",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_26",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/1#issuecomment-26"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-06"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-06 looked at agent-01",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_27",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/1#issuecomment-27"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-02"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-02 looked at agent-01",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_28",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/1#issuecomment-28"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 looked at agent-01",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_29",
+[agent-03] $ arks pr checks 1  -> exit 0 (0.02s)
+    | ci/agent-01	pass	0s		
+[agent-02] $ arks pr view 5 --json comments,reviews  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-01"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-01 looked at agent-02",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_25",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/5#issuecomment-25"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-06"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-06 looked at agent-02",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_32",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/5#issuecomment-32"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 looked at agent-02",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_33",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/5#issuecomment-33"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 looked at agent-02",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_34",
+[agent-04] $ arks pr checks 5  -> exit 0 (0.02s)
+    | ci/agent-02	pass	0s		
+[agent-03] $ arks pr view 2 --json comments,reviews  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-01"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-01 looked at agent-03",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_31",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/2#issuecomment-31"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-02"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-02 looked at agent-03",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_36",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/2#issuecomment-36"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-04"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-04 looked at agent-03",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_38",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/2#issuecomment-38"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 looked at agent-03",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_39",
+[agent-05] $ arks pr checks 2  -> exit 0 (0.02s)
+    | ci/agent-03	pass	0s		
+[agent-04] $ arks pr view 6 --json comments,reviews  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-02"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-02 looked at agent-04",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_37",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/6#issuecomment-37"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-01"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-01 looked at agent-04",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_40",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/6#issuecomment-40"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 looked at agent-04",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_42",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/6#issuecomment-42"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 looked at agent-04",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_46",
+[agent-06] $ arks pr checks 6  -> exit 0 (0.02s)
+    | ci/agent-04	pass	0s		
+[agent-05] $ arks pr view 3 --json comments,reviews  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-01"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-01 looked at agent-05",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_43",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/3#issuecomment-43"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-02"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-02 looked at agent-05",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_44",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/3#issuecomment-44"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 looked at agent-05",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_45",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/3#issuecomment-45"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-04"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-04 looked at agent-05",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_48",
+[agent-01] $ arks pr checks 3  -> exit 0 (0.02s)
+    | ci/agent-05	pass	0s		
+[agent-06] $ arks pr view 4 --json comments,reviews  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 looked at agent-06",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_49",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/4#issuecomment-49"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-01"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-01 looked at agent-06",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_50",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/4#issuecomment-50"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-02"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-02 looked at agent-06",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_51",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/4#issuecomment-51"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 looked at agent-06",
+    |       "createdAt": "2026-11-25T04:41:17Z",
+    |       "id": "IC_53",
+[agent-02] $ arks pr checks 4  -> exit 0 (0.02s)
+    | ci/agent-06	pass	0s		
+[agent-04] $ arks pr merge 6 --merge  -> exit 0 (0.02s)
+    | sha=913f8aec03b6ee3c9ee0904236100bbf6cdd7a29
+    | ✓ Merged pull request local/playground#6 (Work of agent-04)
+[agent-02] $ arks pr merge 5 --merge  -> exit 0 (0.02s)
+    | sha=11b18f9e3433f0bf25220a134ccb5fc22cc5cf48
+    | ✓ Merged pull request local/playground#5 (Work of agent-02)
+[agent-05] $ arks pr merge 3 --merge  -> exit 0 (0.02s)
+    | sha=8f1e38dd85f775b46bbbffbd6ba29c2f5ba3b8ba
+    | ✓ Merged pull request local/playground#3 (Work of agent-05)
+[agent-01] $ arks pr merge 1 --merge  -> exit 1 (0.02s)
+    | arks pr merge: Pull Request is not mergeable (HTTP 405)
+[agent-03] $ arks pr merge 2 --merge  -> exit 0 (0.03s)
+    | sha=a3717a5da7c373044282ed2115b366c0772dba27
+    | ✓ Merged pull request local/playground#2 (Work of agent-03)
+[agent-06] $ arks pr merge 4 --merge  -> exit 0 (0.03s)
+    | sha=fefc9ba0d3d8a6bdaf71c5453784d13df965ab0b
+    | ✓ Merged pull request local/playground#4 (Work of agent-06)
+[agent-01] $ arks pr view 1 --json mergeable,state  -> exit 0 (0.01s)
+    | {
+    |   "mergeable": "CONFLICTING",
+    |   "state": "OPEN"
+    | }
+[agent-01] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-01] $ arks merge --no-edit origin/main  -> exit 1 (0.00s)
+    | Auto-merging shared.txt
+    | CONFLICT (content): Merge conflict in shared.txt
+    | Automatic merge failed; fix conflicts and then commit the result.
+[agent-01] $ arks add shared.txt  -> exit 0 (0.00s)
+[agent-01] $ arks commit -q --no-edit  -> exit 0 (0.00s)
+[agent-01] $ arks push -q origin agent-01/feature  -> exit 0 (0.02s)
+[agent-01] $ arks pr view 1 --json mergeable  -> exit 0 (0.01s)
+    | {
+    |   "mergeable": "MERGEABLE"
+    | }
+[agent-01] $ arks pr merge 1 --merge  -> exit 0 (0.02s)
+    | sha=d87fd8f343b46fe0adf73ea1dc4ee24631dc0a86
+    | ✓ Merged pull request local/playground#1 (Work of agent-01)
+[agent-06] $ arks pr list --state merged --json number,mergedBy  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "mergedBy": {
+    |       "login": "agent-04"
+    |     },
+    |     "number": 6
+    |   },
+    |   {
+    |     "mergedBy": {
+    |       "login": "agent-02"
+    |     },
+    |     "number": 5
+    |   },
+    |   {
+    |     "mergedBy": {
+    |       "login": "agent-06"
+    |     },
+    |     "number": 4
+    |   },
+    |   {
+    |     "mergedBy": {
+    |       "login": "agent-05"
+    |     },
+    |     "number": 3
+    |   },
+    |   {
+    |     "mergedBy": {
+    |       "login": "agent-03"
+    |     },
+    |     "number": 2
+    |   },
+    |   {
+    |     "mergedBy": {
+    |       "login": "agent-01"
+    |     },
+    |     "number": 1
+    |   }
+    | ]
+[agent-06] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-06] $ arks ls-tree -r --name-only origin/main  -> exit 0 (0.00s)
+    | README.md
+    | agents/agent-01.txt
+    | agents/agent-02.txt
+    | agents/agent-03.txt
+    | agents/agent-04.txt
+    | agents/agent-05.txt
+    | agents/agent-06.txt
+    | shared.txt
+[agent-06] $ arks show origin/main:shared.txt  -> exit 0 (0.00s)
+    | agent-02 line
+    | agent-01 line
+== HUB-MA-04 PASS (0.67s)

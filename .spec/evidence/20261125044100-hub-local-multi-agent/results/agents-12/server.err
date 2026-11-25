@@ -1,0 +1,6 @@
+arks serve: synced runtime_* bind keys → /tmp/arks-hub-ma.iHeAoP/serve.conf (Partial live bind sync; clap still wins)
+arks forge API listening on http://127.0.0.1:55297/ (data=/tmp/arks-hub-ma.iHeAoP/forge; Partial local API — IW-B7-FORGE drain)
+arks serve --no-ssh (HTTP + forge): SIGHUP serve-config reload + live HTTP/forge/SSH rebind armed (unix)
+arks serve --no-ssh (HTTP + forge) listening on http://127.0.0.1:56283/ (dumb_only=false; unauthenticated)
+arks serve --no-ssh (HTTP + forge): SIGHUP serve-config reload already armed
+arks forge API: incomplete HTTP request

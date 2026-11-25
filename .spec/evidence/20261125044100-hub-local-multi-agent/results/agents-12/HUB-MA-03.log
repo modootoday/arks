@@ -1,0 +1,617 @@
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-06/.config/arks/hub-token
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-03/.config/arks/hub-token
+[agent-11] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-11
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-11/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-01/.config/arks/hub-token
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-02/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-04/.config/arks/hub-token
+[agent-12] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-12
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-12/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-05/.config/arks/hub-token
+[agent-10] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-10
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-10/.config/arks/hub-token
+[agent-08] $ arks auth login --with-token  -> exit 0 (0.05s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-08
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-08/.config/arks/hub-token
+[agent-09] $ arks auth login --with-token  -> exit 0 (0.05s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-09
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-09/.config/arks/hub-token
+[agent-07] $ arks auth login --with-token  -> exit 0 (0.05s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-07
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-07/.config/arks/hub-token
+[agent-04] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-04/work  -> exit 0 (0.02s)
+[agent-05] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-05/work  -> exit 0 (0.03s)
+[agent-01] $ arks fetch -q origin  -> exit 0 (0.03s)
+[agent-08] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-08/work  -> exit 0 (0.03s)
+[agent-10] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-10/work  -> exit 0 (0.03s)
+[agent-07] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-07/work  -> exit 0 (0.03s)
+[agent-12] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-12/work  -> exit 0 (0.04s)
+[agent-09] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-09/work  -> exit 0 (0.04s)
+[agent-04] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-01] $ arks checkout -q -B agent-01/feature origin/main  -> exit 0 (0.01s)
+[agent-10] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-08] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-12] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-07] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-04] $ arks checkout -q -B agent-04/feature origin/main  -> exit 0 (0.01s)
+[agent-01] $ arks add agents/agent-01.txt shared.txt  -> exit 0 (0.02s)
+[agent-11] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-11/work  -> exit 0 (0.06s)
+[agent-02] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-02/work  -> exit 0 (0.06s)
+[agent-10] $ arks checkout -q -B agent-10/feature origin/main  -> exit 0 (0.02s)
+[agent-06] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-06/work  -> exit 0 (0.07s)
+[agent-05] $ arks fetch -q origin  -> exit 0 (0.04s)
+[agent-07] $ arks checkout -q -B agent-07/feature origin/main  -> exit 0 (0.02s)
+[agent-03] $ arks clone -q http://127.0.0.1:56283/local/playground.git /tmp/arks-hub-ma.iHeAoP/agents/agent-03/work  -> exit 0 (0.07s)
+[agent-09] $ arks fetch -q origin  -> exit 0 (0.04s)
+[agent-10] $ arks add agents/agent-10.txt  -> exit 0 (0.01s)
+[agent-05] $ arks checkout -q -B agent-05/feature origin/main  -> exit 0 (0.01s)
+[agent-08] $ arks checkout -q -B agent-08/feature origin/main  -> exit 0 (0.03s)
+[agent-02] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-06] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-10] $ arks commit -q -m Add work of agent-10  -> exit 0 (0.00s)
+[agent-01] $ arks commit -q -m Add work of agent-01  -> exit 0 (0.02s)
+[agent-09] $ arks checkout -q -B agent-09/feature origin/main  -> exit 0 (0.01s)
+[agent-12] $ arks checkout -q -B agent-12/feature origin/main  -> exit 0 (0.03s)
+[agent-04] $ arks add agents/agent-04.txt  -> exit 0 (0.03s)
+[agent-11] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-05] $ arks add agents/agent-05.txt  -> exit 0 (0.01s)
+[agent-02] $ arks checkout -q -B agent-02/feature origin/main  -> exit 0 (0.01s)
+[agent-03] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-07] $ arks add agents/agent-07.txt  -> exit 0 (0.01s)
+[agent-08] $ arks add agents/agent-08.txt  -> exit 0 (0.02s)
+[agent-06] $ arks checkout -q -B agent-06/feature origin/main  -> exit 0 (0.01s)
+[agent-09] $ arks add agents/agent-09.txt  -> exit 0 (0.01s)
+[agent-04] $ arks commit -q -m Add work of agent-04  -> exit 0 (0.01s)
+[agent-01] $ arks push -q origin agent-01/feature  -> exit 0 (0.02s)
+[agent-03] $ arks checkout -q -B agent-03/feature origin/main  -> exit 0 (0.01s)
+[agent-02] $ arks add agents/agent-02.txt shared.txt  -> exit 0 (0.01s)
+[agent-10] $ arks push -q origin agent-10/feature  -> exit 0 (0.02s)
+[agent-12] $ arks add agents/agent-12.txt  -> exit 0 (0.02s)
+[agent-11] $ arks checkout -q -B agent-11/feature origin/main  -> exit 0 (0.01s)
+[agent-05] $ arks commit -q -m Add work of agent-05  -> exit 0 (0.01s)
+[agent-07] $ arks commit -q -m Add work of agent-07  -> exit 0 (0.01s)
+[agent-08] $ arks commit -q -m Add work of agent-08  -> exit 0 (0.02s)
+[agent-01] $ arks pr create -H agent-01/feature -B main -t Work of agent-01 -b from agent-01  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/pull/1
+[agent-02] $ arks commit -q -m Add work of agent-02  -> exit 0 (0.01s)
+[agent-04] $ arks push -q origin agent-04/feature  -> exit 0 (0.02s)
+[agent-06] $ arks add agents/agent-06.txt  -> exit 0 (0.01s)
+[agent-09] $ arks commit -q -m Add work of agent-09  -> exit 0 (0.02s)
+[agent-03] $ arks add agents/agent-03.txt  -> exit 0 (0.01s)
+[agent-12] $ arks commit -q -m Add work of agent-12  -> exit 0 (0.01s)
+[agent-10] $ arks pr create -H agent-10/feature -B main -t Work of agent-10 -b from agent-10  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/2
+[agent-11] $ arks add agents/agent-11.txt  -> exit 0 (0.02s)
+[agent-05] $ arks push -q origin agent-05/feature  -> exit 0 (0.02s)
+[agent-07] $ arks push -q origin agent-07/feature  -> exit 0 (0.02s)
+[agent-08] $ arks push -q origin agent-08/feature  -> exit 0 (0.02s)
+[agent-04] $ arks pr create -H agent-04/feature -B main -t Work of agent-04 -b from agent-04  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/3
+[agent-06] $ arks commit -q -m Add work of agent-06  -> exit 0 (0.02s)
+[agent-03] $ arks commit -q -m Add work of agent-03  -> exit 0 (0.02s)
+[agent-11] $ arks commit -q -m Add work of agent-11  -> exit 0 (0.01s)
+[agent-02] $ arks push -q origin agent-02/feature  -> exit 0 (0.03s)
+[agent-12] $ arks push -q origin agent-12/feature  -> exit 0 (0.02s)
+[agent-09] $ arks push -q origin agent-09/feature  -> exit 0 (0.03s)
+[agent-07] $ arks pr create -H agent-07/feature -B main -t Work of agent-07 -b from agent-07  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/5
+[agent-05] $ arks pr create -H agent-05/feature -B main -t Work of agent-05 -b from agent-05  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/4
+[agent-02] $ arks pr create -H agent-02/feature -B main -t Work of agent-02 -b from agent-02  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/pull/6
+[agent-08] $ arks pr create -H agent-08/feature -B main -t Work of agent-08 -b from agent-08  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/7
+[agent-06] $ arks push -q origin agent-06/feature  -> exit 0 (0.02s)
+[agent-11] $ arks push -q origin agent-11/feature  -> exit 0 (0.02s)
+[agent-03] $ arks push -q origin agent-03/feature  -> exit 0 (0.02s)
+[agent-09] $ arks pr create -H agent-09/feature -B main -t Work of agent-09 -b from agent-09  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/8
+[agent-12] $ arks pr create -H agent-12/feature -B main -t Work of agent-12 -b from agent-12  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/pull/9
+[agent-03] $ arks pr create -H agent-03/feature -B main -t Work of agent-03 -b from agent-03  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/pull/10
+[agent-06] $ arks pr create -H agent-06/feature -B main -t Work of agent-06 -b from agent-06  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/pull/11
+[agent-11] $ arks pr create -H agent-11/feature -B main -t Work of agent-11 -b from agent-11  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/pull/12
+[agent-01] $ arks pr list --json number,headRefName,baseRefName,author,state  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-11"
+    |     },
+    |     "baseRefName": "main",
+    |     "headRefName": "agent-11/feature",
+    |     "number": 12,
+    |     "state": "OPEN"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-06"
+    |     },
+    |     "baseRefName": "main",
+    |     "headRefName": "agent-06/feature",
+    |     "number": 11,
+    |     "state": "OPEN"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-03"
+    |     },
+    |     "baseRefName": "main",
+    |     "headRefName": "agent-03/feature",
+    |     "number": 10,
+    |     "state": "OPEN"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-12"
+    |     },
+    |     "baseRefName": "main",
+    |     "headRefName": "agent-12/feature",
+    |     "number": 9,
+    |     "state": "OPEN"
+[agent-01] $ arks pr view 6 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.04s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-02"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-02",
+    |           "name": "agent-02"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-02",
+    |       "oid": "32c215e0ece2164135da4c380bb26cb2de226ec4"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-02.txt"
+    |     },
+    |     {
+    |       "additions": 1,
+    |       "deletions": 1,
+    |       "path": "shared.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "32c215e0ece2164135da4c380bb26cb2de226ec4",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 6
+    | }
+[agent-02] $ arks pr view 10 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.04s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-03"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-03",
+    |           "name": "agent-03"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-03",
+    |       "oid": "382e5ea9b1db362fd2d748bf536e8adb016d8d6f"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-03.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "382e5ea9b1db362fd2d748bf536e8adb016d8d6f",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 10
+    | }
+[agent-10] $ arks pr view 12 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.04s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-11"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-11",
+    |           "name": "agent-11"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-11",
+    |       "oid": "70afde2010499693ae797b2537d13f1010b0a5f1"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-11.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "70afde2010499693ae797b2537d13f1010b0a5f1",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 12
+    | }
+[agent-12] $ arks pr view 1 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.04s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-01"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-01",
+    |           "name": "agent-01"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-01",
+    |       "oid": "f6ea35118df654e7e5e60c441ab171ec9792ce7a"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-01.txt"
+    |     },
+    |     {
+    |       "additions": 1,
+    |       "deletions": 1,
+    |       "path": "shared.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "f6ea35118df654e7e5e60c441ab171ec9792ce7a",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 1
+    | }
+[agent-09] $ arks pr view 2 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.05s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-10"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-10",
+    |           "name": "agent-10"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-10",
+    |       "oid": "143d9f176205eb6e34d263a7f89609f3b6363699"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-10.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "143d9f176205eb6e34d263a7f89609f3b6363699",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 2
+    | }
+[agent-11] $ arks pr view 9 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.05s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-12"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-12",
+    |           "name": "agent-12"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-12",
+    |       "oid": "0a121e928765497c9d62dad5e853dd6e23133d92"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-12.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "0a121e928765497c9d62dad5e853dd6e23133d92",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 9
+    | }
+[agent-01] $ arks pr diff 6 --name-only  -> exit 0 (0.02s)
+    | agents/agent-02.txt
+    | shared.txt
+[agent-10] $ arks pr diff 12 --name-only  -> exit 0 (0.02s)
+    | agents/agent-11.txt
+[agent-02] $ arks pr diff 10 --name-only  -> exit 0 (0.02s)
+    | agents/agent-03.txt
+[agent-08] $ arks pr view 8 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.03s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-09"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-09",
+    |           "name": "agent-09"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-09",
+    |       "oid": "6a013843c2018e69e4b2698568cbde46293b2317"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-09.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "6a013843c2018e69e4b2698568cbde46293b2317",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 8
+    | }
+[agent-03] $ arks pr view 3 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.06s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-04"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-04",
+    |           "name": "agent-04"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-04",
+    |       "oid": "723277ff14a53b0f9152a868f174d0f2c81163bc"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-04.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "723277ff14a53b0f9152a868f174d0f2c81163bc",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 3
+    | }
+[agent-04] $ arks pr view 4 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.06s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-05"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-05",
+    |           "name": "agent-05"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-05",
+    |       "oid": "b2b87caf0fcdaaedfe5a330fb9c40be21075720c"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-05.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "b2b87caf0fcdaaedfe5a330fb9c40be21075720c",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 4
+    | }
+[agent-05] $ arks pr view 11 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.07s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-06"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-06",
+    |           "name": "agent-06"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-06",
+    |       "oid": "46cd0501ba9e30b56ab1b932abfd4b2407b383ac"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-06.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "46cd0501ba9e30b56ab1b932abfd4b2407b383ac",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 11
+    | }
+[agent-06] $ arks pr view 5 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.07s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-07"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-07",
+    |           "name": "agent-07"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-07",
+    |       "oid": "075abcccd6de8b19abe87e21f63abb5f705bf737"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-07.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "075abcccd6de8b19abe87e21f63abb5f705bf737",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 5
+    | }
+[agent-07] $ arks pr view 7 --json number,headRefOid,mergeable,files,commits,author  -> exit 0 (0.07s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-08"
+    |   },
+    |   "commits": [
+    |     {
+    |       "authoredDate": "2026-11-25T04:56:56Z",
+    |       "authors": [
+    |         {
+    |           "email": "agent@example.com",
+    |           "id": "",
+    |           "login": "agent-08",
+    |           "name": "agent-08"
+    |         }
+    |       ],
+    |       "committedDate": "2026-11-25T04:56:56Z",
+    |       "messageBody": "",
+    |       "messageHeadline": "Add work of agent-08",
+    |       "oid": "1bdbf117211ae32dde4a8d22b9e7da65dc377747"
+    |     }
+    |   ],
+    |   "files": [
+    |     {
+    |       "additions": 1,
+    |       "deletions": 0,
+    |       "path": "agents/agent-08.txt"
+    |     }
+    |   ],
+    |   "headRefOid": "1bdbf117211ae32dde4a8d22b9e7da65dc377747",
+    |   "mergeable": "MERGEABLE",
+    |   "number": 7
+    | }
+[agent-09] $ arks pr diff 2 --name-only  -> exit 0 (0.02s)
+    | agents/agent-10.txt
+[agent-12] $ arks pr diff 1 --name-only  -> exit 0 (0.03s)
+    | agents/agent-01.txt
+    | shared.txt
+[agent-08] $ arks pr diff 8 --name-only  -> exit 0 (0.02s)
+    | agents/agent-09.txt
+[agent-03] $ arks pr diff 3 --name-only  -> exit 0 (0.02s)
+    | agents/agent-04.txt
+[agent-11] $ arks pr diff 9 --name-only  -> exit 0 (0.03s)
+    | agents/agent-12.txt
+[agent-06] $ arks pr diff 5 --name-only  -> exit 0 (0.02s)
+    | agents/agent-07.txt
+[agent-05] $ arks pr diff 11 --name-only  -> exit 0 (0.02s)
+    | agents/agent-06.txt
+[agent-07] $ arks pr diff 7 --name-only  -> exit 0 (0.02s)
+    | agents/agent-08.txt
+[agent-04] $ arks pr diff 4 --name-only  -> exit 0 (0.02s)
+    | agents/agent-05.txt
+== HUB-MA-03 PASS (0.39s)

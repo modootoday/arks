@@ -1,0 +1,270 @@
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-03/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-04/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-05/.config/arks/hub-token
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-02/.config/arks/hub-token
+[agent-12] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-12
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-12/.config/arks/hub-token
+[agent-09] $ arks auth login --with-token  -> exit 0 (0.03s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-09
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-09/.config/arks/hub-token
+[agent-11] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-11
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-11/.config/arks/hub-token
+[agent-07] $ arks auth login --with-token  -> exit 0 (0.04s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-07
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-07/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.05s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-01/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.05s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-06/.config/arks/hub-token
+[agent-08] $ arks auth login --with-token  -> exit 0 (0.05s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-08
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-08/.config/arks/hub-token
+[agent-10] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:55297 account agent-10
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.iHeAoP/agents/agent-10/.config/arks/hub-token
+[agent-03] $ arks issue create -t agent-03 issue 0 -b opened by agent-03  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/2
+[agent-09] $ arks issue create -t agent-09 issue 0 -b opened by agent-09  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/3
+[agent-07] $ arks issue create -t agent-07 issue 0 -b opened by agent-07  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/1
+[agent-04] $ arks issue create -t agent-04 issue 0 -b opened by agent-04  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/9
+[agent-09] $ arks issue create -t agent-09 issue 1 -b opened by agent-09  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/7
+[agent-03] $ arks issue create -t agent-03 issue 1 -b opened by agent-03  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/8
+[agent-06] $ arks issue create -t agent-06 issue 0 -b opened by agent-06  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/5
+[agent-08] $ arks issue create -t agent-08 issue 0 -b opened by agent-08  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/6
+[agent-11] $ arks issue create -t agent-11 issue 0 -b opened by agent-11  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/11
+[agent-10] $ arks issue create -t agent-10 issue 0 -b opened by agent-10  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/10
+[agent-09] $ arks issue create -t agent-09 issue 2 -b opened by agent-09  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/15
+[agent-05] $ arks issue create -t agent-05 issue 0 -b opened by agent-05  -> exit 0 (0.04s)
+    | http://127.0.0.1:55297/local/playground/issues/16
+[agent-07] $ arks issue create -t agent-07 issue 1 -b opened by agent-07  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/13
+[agent-01] $ arks issue create -t agent-01 issue 0 -b opened by agent-01  -> exit 0 (0.05s)
+    | http://127.0.0.1:55297/local/playground/issues/4
+[agent-12] $ arks issue create -t agent-12 issue 0 -b opened by agent-12  -> exit 0 (0.05s)
+    | http://127.0.0.1:55297/local/playground/issues/12
+[agent-03] $ arks issue create -t agent-03 issue 2 -b opened by agent-03  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/17
+[agent-04] $ arks issue create -t agent-04 issue 1 -b opened by agent-04  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/14
+[agent-11] $ arks issue create -t agent-11 issue 1 -b opened by agent-11  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/20
+[agent-10] $ arks issue create -t agent-10 issue 1 -b opened by agent-10  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/21
+[agent-08] $ arks issue create -t agent-08 issue 1 -b opened by agent-08  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/18
+[agent-02] $ arks issue create -t agent-02 issue 0 -b opened by agent-02  -> exit 0 (0.06s)
+    | http://127.0.0.1:55297/local/playground/issues/23
+[agent-01] $ arks issue create -t agent-01 issue 1 -b opened by agent-01  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/24
+[agent-06] $ arks issue create -t agent-06 issue 1 -b opened by agent-06  -> exit 0 (0.03s)
+    | http://127.0.0.1:55297/local/playground/issues/19
+[agent-07] $ arks issue create -t agent-07 issue 2 -b opened by agent-07  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/22
+[agent-12] $ arks issue create -t agent-12 issue 1 -b opened by agent-12  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/25
+[agent-05] $ arks issue create -t agent-05 issue 1 -b opened by agent-05  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/26
+[agent-10] $ arks issue create -t agent-10 issue 2 -b opened by agent-10  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/27
+[agent-08] $ arks issue create -t agent-08 issue 2 -b opened by agent-08  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/28
+[agent-04] $ arks issue create -t agent-04 issue 2 -b opened by agent-04  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/29
+[agent-11] $ arks issue create -t agent-11 issue 2 -b opened by agent-11  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/30
+[agent-01] $ arks issue create -t agent-01 issue 2 -b opened by agent-01  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/31
+[agent-05] $ arks issue create -t agent-05 issue 2 -b opened by agent-05  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/33
+[agent-12] $ arks issue create -t agent-12 issue 2 -b opened by agent-12  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/32
+[agent-06] $ arks issue create -t agent-06 issue 2 -b opened by agent-06  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/34
+[agent-02] $ arks issue create -t agent-02 issue 1 -b opened by agent-02  -> exit 0 (0.02s)
+    | http://127.0.0.1:55297/local/playground/issues/35
+[agent-02] $ arks issue create -t agent-02 issue 2 -b opened by agent-02  -> exit 0 (0.01s)
+    | http://127.0.0.1:55297/local/playground/issues/36
+[agent-12] $ arks issue list --state all -L 500 --json number,title,author  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-02"
+    |     },
+    |     "number": 36,
+    |     "title": "agent-02 issue 2"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-02"
+    |     },
+    |     "number": 35,
+    |     "title": "agent-02 issue 1"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-06"
+    |     },
+    |     "number": 34,
+    |     "title": "agent-06 issue 2"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-05"
+    |     },
+    |     "number": 33,
+    |     "title": "agent-05 issue 2"
+    |   },
+    |   {
+    |     "author": {
+    |       "is_bot": false,
+    |       "login": "agent-12"
+    |     },
+    |     "number": 32,
+    |     "title": "agent-12 issue 2"
+[agent-11] $ arks issue view 12 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-12"
+    |   },
+    |   "number": 12,
+    |   "state": "OPEN",
+    |   "title": "agent-12 issue 0"
+    | }
+[agent-06] $ arks issue view 1 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-07"
+    |   },
+    |   "number": 1,
+    |   "state": "OPEN",
+    |   "title": "agent-07 issue 0"
+    | }
+[agent-01] $ arks issue view 23 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-02"
+    |   },
+    |   "number": 23,
+    |   "state": "OPEN",
+    |   "title": "agent-02 issue 0"
+    | }
+[agent-03] $ arks issue view 9 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-04"
+    |   },
+    |   "number": 9,
+    |   "state": "OPEN",
+    |   "title": "agent-04 issue 0"
+    | }
+[agent-10] $ arks issue view 11 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-11"
+    |   },
+    |   "number": 11,
+    |   "state": "OPEN",
+    |   "title": "agent-11 issue 0"
+    | }
+[agent-04] $ arks issue view 16 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-05"
+    |   },
+    |   "number": 16,
+    |   "state": "OPEN",
+    |   "title": "agent-05 issue 0"
+    | }
+[agent-12] $ arks issue view 4 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-01"
+    |   },
+    |   "number": 4,
+    |   "state": "OPEN",
+    |   "title": "agent-01 issue 0"
+    | }
+[agent-02] $ arks issue view 2 --json number,title,author,state  -> exit 0 (0.02s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-03"
+    |   },
+    |   "number": 2,
+    |   "state": "OPEN",
+    |   "title": "agent-03 issue 0"
+    | }
+[agent-07] $ arks issue view 6 --json number,title,author,state  -> exit 0 (0.03s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-08"
+    |   },
+    |   "number": 6,
+    |   "state": "OPEN",
+    |   "title": "agent-08 issue 0"
+    | }
+[agent-09] $ arks issue view 10 --json number,title,author,state  -> exit 0 (0.03s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-10"
+    |   },
+    |   "number": 10,
+    |   "state": "OPEN",
+    |   "title": "agent-10 issue 0"
+    | }
+[agent-08] $ arks issue view 3 --json number,title,author,state  -> exit 0 (0.03s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-09"
+    |   },
+    |   "number": 3,
+    |   "state": "OPEN",
+    |   "title": "agent-09 issue 0"
+    | }
+[agent-05] $ arks issue view 5 --json number,title,author,state  -> exit 0 (0.03s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-06"
+    |   },
+    |   "number": 5,
+    |   "state": "OPEN",
+    |   "title": "agent-06 issue 0"
+    | }
+== HUB-MA-01 PASS (0.26s)

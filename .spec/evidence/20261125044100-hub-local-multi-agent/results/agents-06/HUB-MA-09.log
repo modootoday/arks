@@ -1,0 +1,49 @@
+[agent-06] $ arks run list  -> exit 2 (0.00s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-03] $ arks run list  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-02] $ arks run list  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-06] $ arks workflow list  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-04] $ arks run list  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-05] $ arks run list  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-01] $ arks run list  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-02] $ arks workflow list  -> exit 2 (0.01s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-06] $ arks hub run view 1  -> exit 2 (0.00s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-03] $ arks workflow list  -> exit 2 (0.01s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-04] $ arks workflow list  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-05] $ arks workflow list  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-02] $ arks hub run view 1  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-05] $ arks hub run view 1  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-06] $ arks hub workflow run ci.yml  -> exit 2 (0.01s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-03] $ arks hub run view 1  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-01] $ arks workflow list  -> exit 2 (0.01s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-04] $ arks hub run view 1  -> exit 2 (0.01s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-05] $ arks hub workflow run ci.yml  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-03] $ arks hub workflow run ci.yml  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-02] $ arks hub workflow run ci.yml  -> exit 2 (0.01s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-01] $ arks hub run view 1  -> exit 2 (0.00s)
+    | arks hub: `run` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-04] $ arks hub workflow run ci.yml  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+[agent-01] $ arks hub workflow run ci.yml  -> exit 2 (0.00s)
+    | arks hub: `workflow` OUT explicit refuse exit 2 — GitHub-platform-only (Actions/attestations/Codespaces) — out of scope for the arks forge ([[adr:root/20261119230000]]) ([[sot:root/arks-hub-cli-surface]]); never spawns gh; design ≠ Claimed
+== HUB-MA-09 N/A (0.03s)

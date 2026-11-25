@@ -1,0 +1,179 @@
+{
+  "agents": 12,
+  "scenarios": {
+    "SMOKE": {
+      "status": "PASS",
+      "seconds": 0.13,
+      "facts": {
+        "agent": "agent-01",
+        "health": {
+          "ok": true,
+          "partial": true,
+          "service": "arks-hub"
+        },
+        "clone_url": "http://127.0.0.1:56283/local/playground.git",
+        "seeded": true
+      }
+    },
+    "HUB-MA-01": {
+      "status": "PASS",
+      "seconds": 0.26,
+      "facts": {
+        "agents": 12,
+        "issues": 36,
+        "numbers": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36
+        ]
+      }
+    },
+    "HUB-MA-02": {
+      "status": "PASS",
+      "seconds": 0.3,
+      "facts": {
+        "issue": 37,
+        "comments": 48
+      }
+    },
+    "HUB-MA-03": {
+      "status": "PASS",
+      "seconds": 0.39,
+      "facts": {
+        "prs": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "conflict_pair": [
+          "agent-01",
+          "agent-02"
+        ]
+      }
+    },
+    "HUB-MA-04": {
+      "status": "PASS",
+      "seconds": 1.6,
+      "facts": {
+        "merged": 12,
+        "conflict_loser": "agent-01",
+        "conflict_winner": "agent-02",
+        "reviews_per_pr": 11,
+        "comments_per_pr": 11
+      }
+    },
+    "HUB-MA-05": {
+      "status": "PASS",
+      "seconds": 0.66,
+      "facts": {
+        "issue": 38,
+        "pr": 13,
+        "final_labels": [
+          "ma-agent-01",
+          "ma-agent-03",
+          "ma-agent-05",
+          "ma-agent-07",
+          "ma-agent-09",
+          "ma-agent-11"
+        ],
+        "shared_create_successes": 1
+      }
+    },
+    "HUB-MA-06": {
+      "status": "PASS",
+      "seconds": 1.17,
+      "facts": {
+        "release_winner": "agent-02",
+        "talkers": 10,
+        "rounds": 6,
+        "issue": 39,
+        "pr": 14,
+        "tag": "c57d25c19c6e055589f937deb89e0e4a427e43af"
+      }
+    },
+    "HUB-MA-07": {
+      "status": "PASS",
+      "seconds": 0.46,
+      "facts": {
+        "agents": 12,
+        "rounds": 5,
+        "switched_account": "agent-01-alt",
+        "logout_isolated": "agent-02"
+      }
+    },
+    "HUB-MA-08": {
+      "status": "PASS",
+      "seconds": 2.37,
+      "facts": {
+        "readers": 11,
+        "rounds": 4,
+        "issues": 24,
+        "prs": 12,
+        "noise_issues": 15,
+        "status_bytes": 407
+      }
+    },
+    "HUB-MA-09": {
+      "status": "N/A",
+      "seconds": 0.18,
+      "facts": {
+        "disposition": "N/A",
+        "reason": "adr:root/20261119230000 item 3",
+        "refusals": 48
+      }
+    },
+    "HUB-MA-10": {
+      "status": "PASS",
+      "seconds": 16.5,
+      "facts": {
+        "rounds": 3,
+        "agents": 12,
+        "v1_targets": 171,
+        "touched": 171,
+        "calls": 6415
+      }
+    }
+  }
+}

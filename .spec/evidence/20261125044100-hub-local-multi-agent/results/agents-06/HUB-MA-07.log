@@ -1,0 +1,282 @@
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-03/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-04/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-05/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-06/.config/arks/hub-token
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-06] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-06","name":"agent-06","type":"User"}
+[agent-04] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-04","name":"agent-04","type":"User"}
+[agent-05] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-05","name":"agent-05","type":"User"}
+[agent-04] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-04-2156
+[agent-01] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-01-2156
+[agent-05] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-05-2156
+[agent-06] $ arks auth token  -> exit 0 (0.01s)
+    | tok-agent-06-2156
+[agent-02] $ arks api /user  -> exit 0 (0.02s)
+    | {"id":1,"login":"agent-02","name":"agent-02","type":"User"}
+[agent-01] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-01
+[agent-05] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-05
+[agent-04] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-04
+[agent-03] $ arks api /user  -> exit 0 (0.02s)
+    | {"id":1,"login":"agent-03","name":"agent-03","type":"User"}
+[agent-03] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-03-2156
+[agent-02] $ arks auth token  -> exit 0 (0.01s)
+    | tok-agent-02-2156
+[agent-05] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-05","name":"agent-05","type":"User"}
+[agent-06] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-06
+[agent-04] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-04","name":"agent-04","type":"User"}
+[agent-03] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-03
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-02] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-02
+[agent-05] $ arks auth token  -> exit 0 (0.01s)
+    | tok-agent-05-2156
+[agent-04] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-04-2156
+[agent-01] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-01-2156
+[agent-02] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-02","name":"agent-02","type":"User"}
+[agent-03] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-03","name":"agent-03","type":"User"}
+[agent-05] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-05
+[agent-04] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-04
+[agent-06] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-06","name":"agent-06","type":"User"}
+[agent-06] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-06-2156
+[agent-03] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-03-2156
+[agent-02] $ arks auth token  -> exit 0 (0.01s)
+    | tok-agent-02-2156
+[agent-01] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-01
+[agent-02] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-02
+[agent-05] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-05","name":"agent-05","type":"User"}
+[agent-06] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-06
+[agent-03] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-03
+[agent-04] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-04","name":"agent-04","type":"User"}
+[agent-05] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-05-2156
+[agent-04] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-04-2156
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-02] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-02","name":"agent-02","type":"User"}
+[agent-04] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-04
+[agent-06] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-06","name":"agent-06","type":"User"}
+[agent-03] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-03","name":"agent-03","type":"User"}
+[agent-01] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-01-2156
+[agent-05] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-05
+[agent-02] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-02-2156
+[agent-06] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-06-2156
+[agent-03] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-03-2156
+[agent-04] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-04","name":"agent-04","type":"User"}
+[agent-01] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-01
+[agent-02] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-02
+[agent-06] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-06
+[agent-05] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-05","name":"agent-05","type":"User"}
+[agent-04] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-04-2156
+[agent-05] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-05-2156
+[agent-03] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-03
+[agent-06] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-06","name":"agent-06","type":"User"}
+[agent-02] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-02","name":"agent-02","type":"User"}
+[agent-05] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-05
+[agent-04] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-04
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-06] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-06-2156
+[agent-01] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-01-2156
+[agent-02] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-02-2156
+[agent-06] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-06
+[agent-04] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-04","name":"agent-04","type":"User"}
+[agent-01] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-01
+[agent-05] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-05","name":"agent-05","type":"User"}
+[agent-03] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-03","name":"agent-03","type":"User"}
+[agent-02] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-02
+[agent-04] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-04-2156
+[agent-05] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-05-2156
+[agent-03] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-03-2156
+[agent-05] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-05
+[agent-06] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-06","name":"agent-06","type":"User"}
+[agent-03] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.00s)
+    | agent-03
+[agent-02] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-02","name":"agent-02","type":"User"}
+[agent-04] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-04
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-01] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-01-2156
+[agent-02] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-02-2156
+[agent-06] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-06-2156
+[agent-03] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-03","name":"agent-03","type":"User"}
+[agent-06] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-06
+[agent-02] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-02
+[agent-01] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-01
+[agent-03] $ arks auth token  -> exit 0 (0.00s)
+    | tok-agent-03-2156
+[agent-03] $ arks auth status --json hosts --jq .hosts[][] | select(.active) | .login  -> exit 0 (0.01s)
+    | agent-03
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01-alt
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-03] $ arks issue create -t auth probe agent-03 -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/22
+[agent-02] $ arks issue create -t auth probe agent-02 -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/23
+[agent-06] $ arks issue create -t auth probe agent-06 -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/24
+[agent-01] $ arks issue create -t auth probe agent-01 -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/25
+[agent-05] $ arks issue create -t auth probe agent-05 -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/26
+[agent-04] $ arks issue create -t auth probe agent-04 -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/27
+[agent-02] $ arks issue view 25 --json author  -> exit 0 (0.01s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-01-alt"
+    |   }
+    | }
+[agent-01] $ arks issue view 23 --json author  -> exit 0 (0.01s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-02"
+    |   }
+    | }
+[agent-01] $ arks issue view 22 --json author  -> exit 0 (0.01s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-03"
+    |   }
+    | }
+[agent-01] $ arks issue view 27 --json author  -> exit 0 (0.01s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-04"
+    |   }
+    | }
+[agent-01] $ arks issue view 26 --json author  -> exit 0 (0.01s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-05"
+    |   }
+    | }
+[agent-01] $ arks issue view 24 --json author  -> exit 0 (0.01s)
+    | {
+    |   "author": {
+    |     "is_bot": false,
+    |     "login": "agent-06"
+    |   }
+    | }
+[agent-01] $ arks auth switch -u agent-01  -> exit 0 (0.00s)
+    | ✓ Switched active account for 127.0.0.1:45083 to agent-01
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-02] $ arks api /user  -> exit 4 (0.00s)
+    | arks api: not logged in — arks auth login
+[agent-02] $ arks api /user  -> exit 1 (0.01s)
+    | {"documentation_url":"arks hub auth login","message":"Requires authentication"}
+    | arks: Requires authentication (HTTP 401)
+[agent-02] $ arks auth logout -u agent-02  -> exit 0 (0.00s)
+    | ✓ Logged out of 127.0.0.1:45083 account agent-02
+[agent-02] $ arks api /user  -> exit 4 (0.00s)
+    | arks api: not logged in — arks auth login
+[agent-04] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-04","name":"agent-04","type":"User"}
+[agent-03] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-03","name":"agent-03","type":"User"}
+[agent-01] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-01","name":"agent-01","type":"User"}
+[agent-05] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-05","name":"agent-05","type":"User"}
+[agent-06] $ arks api /user  -> exit 0 (0.01s)
+    | {"id":1,"login":"agent-06","name":"agent-06","type":"User"}
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
+== HUB-MA-07 PASS (0.27s)

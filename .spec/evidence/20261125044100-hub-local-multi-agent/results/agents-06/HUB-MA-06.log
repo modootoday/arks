@@ -1,0 +1,1525 @@
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-03/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-06/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-05/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-04/.config/arks/hub-token
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
+[agent-01] $ arks issue create -t release train -b x  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/21
+[agent-01] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-01] $ arks checkout -q -B release-train origin/main  -> exit 0 (0.00s)
+[agent-01] $ arks add train/notes.md  -> exit 0 (0.00s)
+[agent-01] $ arks commit -q -m Release train  -> exit 0 (0.00s)
+[agent-01] $ arks push -q origin release-train  -> exit 0 (0.02s)
+[agent-01] $ arks pr create -H release-train -B main -t Release train -b train
+  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/8
+[agent-01] $ arks release create v1.0.0 /tmp/arks-hub-ma.eDLoIc/tool.bin#Tool --target main -t v1.0.0 by agent-01 --generate-notes  -> exit 1 (0.02s)
+    | arks release create: Validation Failed (HTTP 422)
+[agent-05] $ arks issue comment 21 -b agent-05 release talk 0  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-55
+[agent-03] $ arks issue comment 21 -b agent-03 release talk 0  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-56
+[agent-02] $ arks release create v1.0.0 /tmp/arks-hub-ma.eDLoIc/tool.bin#Tool --target main -t v1.0.0 by agent-02 --generate-notes  -> exit 0 (0.04s)
+    | http://127.0.0.1:45083/local/playground/releases/tag/v1.0.0
+[agent-06] $ arks issue comment 21 -b agent-06 release talk 0  -> exit 0 (0.04s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-57
+[agent-04] $ arks issue comment 21 -b agent-04 release talk 0  -> exit 0 (0.04s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-58
+[agent-03] $ arks pr comment 8 -b agent-03 pr talk 0  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-59
+[agent-05] $ arks pr comment 8 -b agent-05 pr talk 0  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-60
+[agent-06] $ arks pr comment 8 -b agent-06 pr talk 0  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-61
+[agent-05] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-04] $ arks pr comment 8 -b agent-04 pr talk 0  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-62
+[agent-03] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-05] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-03] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-06] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks issue comment 21 -b agent-05 release talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-63
+[agent-03] $ arks issue comment 21 -b agent-03 release talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-64
+[agent-06] $ arks issue comment 21 -b agent-06 release talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-65
+[agent-04] $ arks issue comment 21 -b agent-04 release talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-66
+[agent-03] $ arks pr comment 8 -b agent-03 pr talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-67
+[agent-05] $ arks pr comment 8 -b agent-05 pr talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-68
+[agent-06] $ arks pr comment 8 -b agent-06 pr talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-69
+[agent-04] $ arks pr comment 8 -b agent-04 pr talk 1  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-70
+[agent-05] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-03] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-04] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-05] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-06] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-03] $ arks issue comment 21 -b agent-03 release talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-71
+[agent-05] $ arks issue comment 21 -b agent-05 release talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-72
+[agent-06] $ arks issue comment 21 -b agent-06 release talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-73
+[agent-04] $ arks issue comment 21 -b agent-04 release talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-74
+[agent-03] $ arks pr comment 8 -b agent-03 pr talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-75
+[agent-05] $ arks pr comment 8 -b agent-05 pr talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-76
+[agent-05] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks pr comment 8 -b agent-06 pr talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-77
+[agent-04] $ arks pr comment 8 -b agent-04 pr talk 2  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-78
+[agent-03] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-03] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-05] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks issue comment 21 -b agent-05 release talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-79
+[agent-03] $ arks issue comment 21 -b agent-03 release talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-80
+[agent-06] $ arks issue comment 21 -b agent-06 release talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-81
+[agent-04] $ arks issue comment 21 -b agent-04 release talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-82
+[agent-03] $ arks pr comment 8 -b agent-03 pr talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-83
+[agent-05] $ arks pr comment 8 -b agent-05 pr talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-84
+[agent-04] $ arks pr comment 8 -b agent-04 pr talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-85
+[agent-05] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks pr comment 8 -b agent-06 pr talk 3  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-86
+[agent-03] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-04] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-03] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-05] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-06] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks issue comment 21 -b agent-05 release talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-87
+[agent-03] $ arks issue comment 21 -b agent-03 release talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-88
+[agent-06] $ arks issue comment 21 -b agent-06 release talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-89
+[agent-04] $ arks issue comment 21 -b agent-04 release talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-90
+[agent-03] $ arks pr comment 8 -b agent-03 pr talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-91
+[agent-05] $ arks pr comment 8 -b agent-05 pr talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-92
+[agent-04] $ arks pr comment 8 -b agent-04 pr talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-93
+[agent-03] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-05] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks pr comment 8 -b agent-06 pr talk 4  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-94
+[agent-04] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-03] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-06] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-05] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-06] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks issue comment 21 -b agent-05 release talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-95
+[agent-03] $ arks issue comment 21 -b agent-03 release talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-96
+[agent-04] $ arks issue comment 21 -b agent-04 release talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-97
+[agent-06] $ arks issue comment 21 -b agent-06 release talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/21#issuecomment-98
+[agent-05] $ arks pr comment 8 -b agent-05 pr talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-99
+[agent-03] $ arks pr comment 8 -b agent-03 pr talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-100
+[agent-05] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-03] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-04] $ arks pr comment 8 -b agent-04 pr talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-101
+[agent-06] $ arks pr comment 8 -b agent-06 pr talk 5  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/pull/8#issuecomment-102
+[agent-05] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-03] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-06] $ arks issue list --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 21
+    |   },
+    |   {
+    |     "number": 20
+    |   },
+    |   {
+    |     "number": 19
+    |   },
+    |   {
+    |     "number": 18
+    |   },
+    |   {
+    |     "number": 17
+    |   },
+    |   {
+    |     "number": 16
+    |   },
+    |   {
+    |     "number": 15
+    |   },
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   },
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks pr view 8 --json number,state  -> exit 0 (0.01s)
+    | {
+    |   "number": 8,
+    |   "state": "OPEN"
+    | }
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-01] $ arks issue view 21 --json comments  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 release talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_55",
+    |       "url": "http://127.0.0.1:45083/local/playground/issues/21#issuecomment-55"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 release talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_56",
+    |       "url": "http://127.0.0.1:45083/local/playground/issues/21#issuecomment-56"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-06"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-06 release talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_57",
+    |       "url": "http://127.0.0.1:45083/local/playground/issues/21#issuecomment-57"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-04"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-04 release talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_58",
+[agent-01] $ arks pr view 8 --json comments  -> exit 0 (0.02s)
+    | {
+    |   "comments": [
+    |     {
+    |       "author": {
+    |         "login": "agent-03"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-03 pr talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_59",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/8#issuecomment-59"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-05"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-05 pr talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_60",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/8#issuecomment-60"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-06"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-06 pr talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_61",
+    |       "url": "http://127.0.0.1:45083/local/playground/pull/8#issuecomment-61"
+    |     },
+    |     {
+    |       "author": {
+    |         "login": "agent-04"
+    |       },
+    |       "authorAssociation": "OWNER",
+    |       "body": "agent-04 pr talk 0",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "id": "IC_62",
+[agent-02] $ arks release view v1.0.0 --json tagName,name,assets,isDraft,author  -> exit 0 (0.01s)
+    | {
+    |   "assets": [
+    |     {
+    |       "apiUrl": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1",
+    |       "contentType": "application/octet-stream",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "downloadCount": 0,
+    |       "label": "Tool",
+    |       "name": "tool.bin",
+    |       "size": 4096,
+    |       "state": "uploaded",
+    |       "url": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1"
+    |     }
+    |   ],
+    |   "author": {
+    |     "login": "agent-02"
+    |   },
+    |   "isDraft": false,
+    |   "name": "v1.0.0 by agent-02",
+    |   "tagName": "v1.0.0"
+    | }
+[agent-04] $ arks release view v1.0.0 --json tagName,name,assets,isDraft,author  -> exit 0 (0.01s)
+    | {
+    |   "assets": [
+    |     {
+    |       "apiUrl": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1",
+    |       "contentType": "application/octet-stream",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "downloadCount": 0,
+    |       "label": "Tool",
+    |       "name": "tool.bin",
+    |       "size": 4096,
+    |       "state": "uploaded",
+    |       "url": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1"
+    |     }
+    |   ],
+    |   "author": {
+    |     "login": "agent-02"
+    |   },
+    |   "isDraft": false,
+    |   "name": "v1.0.0 by agent-02",
+    |   "tagName": "v1.0.0"
+    | }
+[agent-01] $ arks release view v1.0.0 --json tagName,name,assets,isDraft,author  -> exit 0 (0.01s)
+    | {
+    |   "assets": [
+    |     {
+    |       "apiUrl": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1",
+    |       "contentType": "application/octet-stream",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "downloadCount": 0,
+    |       "label": "Tool",
+    |       "name": "tool.bin",
+    |       "size": 4096,
+    |       "state": "uploaded",
+    |       "url": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1"
+    |     }
+    |   ],
+    |   "author": {
+    |     "login": "agent-02"
+    |   },
+    |   "isDraft": false,
+    |   "name": "v1.0.0 by agent-02",
+    |   "tagName": "v1.0.0"
+    | }
+[agent-06] $ arks release view v1.0.0 --json tagName,name,assets,isDraft,author  -> exit 0 (0.01s)
+    | {
+    |   "assets": [
+    |     {
+    |       "apiUrl": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1",
+    |       "contentType": "application/octet-stream",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "downloadCount": 0,
+    |       "label": "Tool",
+    |       "name": "tool.bin",
+    |       "size": 4096,
+    |       "state": "uploaded",
+    |       "url": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1"
+    |     }
+    |   ],
+    |   "author": {
+    |     "login": "agent-02"
+    |   },
+    |   "isDraft": false,
+    |   "name": "v1.0.0 by agent-02",
+    |   "tagName": "v1.0.0"
+    | }
+[agent-03] $ arks release view v1.0.0 --json tagName,name,assets,isDraft,author  -> exit 0 (0.01s)
+    | {
+    |   "assets": [
+    |     {
+    |       "apiUrl": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1",
+    |       "contentType": "application/octet-stream",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "downloadCount": 0,
+    |       "label": "Tool",
+    |       "name": "tool.bin",
+    |       "size": 4096,
+    |       "state": "uploaded",
+    |       "url": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1"
+    |     }
+    |   ],
+    |   "author": {
+    |     "login": "agent-02"
+    |   },
+    |   "isDraft": false,
+    |   "name": "v1.0.0 by agent-02",
+    |   "tagName": "v1.0.0"
+    | }
+[agent-05] $ arks release view v1.0.0 --json tagName,name,assets,isDraft,author  -> exit 0 (0.01s)
+    | {
+    |   "assets": [
+    |     {
+    |       "apiUrl": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1",
+    |       "contentType": "application/octet-stream",
+    |       "createdAt": "2026-11-25T04:41:18Z",
+    |       "downloadCount": 0,
+    |       "label": "Tool",
+    |       "name": "tool.bin",
+    |       "size": 4096,
+    |       "state": "uploaded",
+    |       "url": "http://127.0.0.1:45083/repos/local/playground/releases/assets/1"
+    |     }
+    |   ],
+    |   "author": {
+    |     "login": "agent-02"
+    |   },
+    |   "isDraft": false,
+    |   "name": "v1.0.0 by agent-02",
+    |   "tagName": "v1.0.0"
+    | }
+[agent-02] $ arks release download v1.0.0 -p tool* -D /tmp/arks-hub-ma.eDLoIc/agents/agent-02/dl --clobber  -> exit 0 (0.02s)
+[agent-04] $ arks release download v1.0.0 -p tool* -D /tmp/arks-hub-ma.eDLoIc/agents/agent-04/dl --clobber  -> exit 0 (0.02s)
+[agent-05] $ arks release download v1.0.0 -p tool* -D /tmp/arks-hub-ma.eDLoIc/agents/agent-05/dl --clobber  -> exit 0 (0.01s)
+[agent-06] $ arks release download v1.0.0 -p tool* -D /tmp/arks-hub-ma.eDLoIc/agents/agent-06/dl --clobber  -> exit 0 (0.02s)
+[agent-01] $ arks release download v1.0.0 -p tool* -D /tmp/arks-hub-ma.eDLoIc/agents/agent-01/dl --clobber  -> exit 0 (0.02s)
+[agent-03] $ arks release download v1.0.0 -p tool* -D /tmp/arks-hub-ma.eDLoIc/agents/agent-03/dl --clobber  -> exit 0 (0.02s)
+[agent-02] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-04] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-03] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-05] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-01] $ arks release list  -> exit 0 (0.01s)
+    | v1.0.0 by agent-02	Latest	v1.0.0	2026-11-25T04:41:18Z
+[agent-06] $ arks ls-remote origin  -> exit 0 (0.00s)
+    | d87fd8f343b46fe0adf73ea1dc4ee24631dc0a86	HEAD
+    | d1c20f2b35b8f8bb89ea383ea09cff3d83448616	refs/heads/agent-01/feature
+    | 6b22b9813939ce72ef1a1f7018c3d90c6a849a4d	refs/heads/agent-02/feature
+    | 2fcc84a2c28667a1963bb1703e13e7296a3d6f1b	refs/heads/agent-03/feature
+    | c62226a24a00f3d2733ed8343fd9982104393228	refs/heads/agent-04/feature
+    | 32ab064d08e24130bf42cb297c7fca52bfd785f6	refs/heads/agent-05/feature
+    | 9fa0b1553aad00b7ca16b0cfff918f7bec68c96c	refs/heads/agent-06/feature
+    | c2047f6c49c7a7ba7e4f4af5b6e12e83ac8dd6f7	refs/heads/label-storm
+    | d87fd8f343b46fe0adf73ea1dc4ee24631dc0a86	refs/heads/main
+    | 031fd1a7a465e07aaaaa19aaaa928155bf424ce6	refs/heads/release-train
+    | d87fd8f343b46fe0adf73ea1dc4ee24631dc0a86	refs/tags/v1.0.0
+== HUB-MA-06 PASS (0.72s)

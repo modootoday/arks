@@ -1,0 +1,2311 @@
+[agent-02] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-02
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-02/.config/arks/hub-token
+[agent-05] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-05
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-05/.config/arks/hub-token
+[agent-01] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-01
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-01/.config/arks/hub-token
+[agent-03] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-03
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-03/.config/arks/hub-token
+[agent-04] $ arks auth login --with-token  -> exit 0 (0.01s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-04
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-04/.config/arks/hub-token
+[agent-06] $ arks auth login --with-token  -> exit 0 (0.02s)
+    | ✓ Logged in to 127.0.0.1:45083 account agent-06
+    | arks hub auth login: token stored at /tmp/arks-hub-ma.eDLoIc/agents/agent-06/.config/arks/hub-token
+[agent-06] $ arks issue create -t needle2156 agent-06 0 -b q -a agent-01  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/28
+[agent-04] $ arks issue create -t needle2156 agent-04 0 -b q -a agent-05  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/29
+[agent-02] $ arks issue create -t needle2156 agent-02 0 -b q -a agent-03  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/30
+[agent-01] $ arks issue create -t needle2156 agent-01 0 -b q -a agent-02  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/31
+[agent-05] $ arks issue create -t needle2156 agent-05 0 -b q -a agent-06  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/32
+[agent-03] $ arks issue create -t needle2156 agent-03 0 -b q -a agent-04  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/33
+[agent-04] $ arks issue create -t needle2156 agent-04 1 -b q  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/34
+[agent-06] $ arks issue create -t needle2156 agent-06 1 -b q  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/35
+[agent-01] $ arks issue create -t needle2156 agent-01 1 -b q  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/36
+[agent-05] $ arks issue create -t needle2156 agent-05 1 -b q  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/37
+[agent-02] $ arks issue create -t needle2156 agent-02 1 -b q  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/39
+[agent-03] $ arks issue create -t needle2156 agent-03 1 -b q  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/38
+[agent-06] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-04] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-01] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-05] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-03] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-02] $ arks fetch -q origin  -> exit 0 (0.02s)
+[agent-04] $ arks checkout -q -B agent-04/fanout origin/main  -> exit 0 (0.01s)
+[agent-05] $ arks checkout -q -B agent-05/fanout origin/main  -> exit 0 (0.00s)
+[agent-06] $ arks checkout -q -B agent-06/fanout origin/main  -> exit 0 (0.01s)
+[agent-01] $ arks checkout -q -B agent-01/fanout origin/main  -> exit 0 (0.01s)
+[agent-05] $ arks add fanout/agent-05.txt  -> exit 0 (0.00s)
+[agent-02] $ arks checkout -q -B agent-02/fanout origin/main  -> exit 0 (0.01s)
+[agent-03] $ arks checkout -q -B agent-03/fanout origin/main  -> exit 0 (0.01s)
+[agent-04] $ arks add fanout/agent-04.txt  -> exit 0 (0.01s)
+[agent-05] $ arks commit -q -m needle2156 change by agent-05  -> exit 0 (0.01s)
+[agent-06] $ arks add fanout/agent-06.txt  -> exit 0 (0.01s)
+[agent-03] $ arks add fanout/agent-03.txt  -> exit 0 (0.01s)
+[agent-01] $ arks add fanout/agent-01.txt  -> exit 0 (0.01s)
+[agent-02] $ arks add fanout/agent-02.txt  -> exit 0 (0.01s)
+[agent-03] $ arks commit -q -m needle2156 change by agent-03  -> exit 0 (0.01s)
+[agent-04] $ arks commit -q -m needle2156 change by agent-04  -> exit 0 (0.01s)
+[agent-06] $ arks commit -q -m needle2156 change by agent-06  -> exit 0 (0.01s)
+[agent-01] $ arks commit -q -m needle2156 change by agent-01  -> exit 0 (0.01s)
+[agent-02] $ arks commit -q -m needle2156 change by agent-02  -> exit 0 (0.01s)
+[agent-05] $ arks push -q origin agent-05/fanout  -> exit 0 (0.12s)
+[agent-04] $ arks push -q origin agent-04/fanout  -> exit 0 (0.11s)
+[agent-03] $ arks push -q origin agent-03/fanout  -> exit 0 (0.12s)
+[agent-06] $ arks push -q origin agent-06/fanout  -> exit 0 (0.11s)
+[agent-02] $ arks push -q origin agent-02/fanout  -> exit 0 (0.12s)
+[agent-01] $ arks push -q origin agent-01/fanout  -> exit 0 (0.12s)
+[agent-05] $ arks pr create -H agent-05/fanout -B main -t needle2156 change by agent-05 -b needle2156 code of agent-05
+ -r agent-06  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/9
+[agent-04] $ arks pr create -H agent-04/fanout -B main -t needle2156 change by agent-04 -b needle2156 code of agent-04
+ -r agent-05  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/10
+[agent-03] $ arks pr create -H agent-03/fanout -B main -t needle2156 change by agent-03 -b needle2156 code of agent-03
+ -r agent-04  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/11
+[agent-06] $ arks pr create -H agent-06/fanout -B main -t needle2156 change by agent-06 -b needle2156 code of agent-06
+ -r agent-01  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/12
+[agent-02] $ arks pr create -H agent-02/fanout -B main -t needle2156 change by agent-02 -b needle2156 code of agent-02
+ -r agent-03  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/13
+[agent-01] $ arks pr create -H agent-01/fanout -B main -t needle2156 change by agent-01 -b needle2156 code of agent-01
+ -r agent-02  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/pull/14
+[agent-01] $ arks fetch -q origin  -> exit 0 (0.01s)
+[agent-01] $ arks checkout -q -B main origin/main  -> exit 0 (0.00s)
+[agent-01] $ arks add fanout/index.txt  -> exit 0 (0.00s)
+[agent-01] $ arks commit -q -m needle2156 index  -> exit 0 (0.00s)
+[agent-01] $ arks push -q origin main  -> exit 0 (0.01s)
+[agent-01] $ arks rev-parse HEAD  -> exit 0 (0.00s)
+    | c1d1b6f755b51badb4ac308535ddcbacf6faba35
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/40
+[agent-05] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-03] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-06] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-02] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-04] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 agent-05 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 32
+    |   }
+    | ]
+[agent-03] $ arks search issues needle2156 agent-03 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 33
+    |   }
+    | ]
+[agent-02] $ arks search issues needle2156 agent-02 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 30
+    |   }
+    | ]
+[agent-06] $ arks search issues needle2156 agent-06 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-05] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-04] $ arks search issues needle2156 agent-04 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 29
+    |   }
+    | ]
+[agent-03] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-06] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-02] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.04s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-103
+[agent-05] $ arks search code code of agent-05 --repo local/playground  -> exit 0 (0.02s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-02] $ arks search code code of agent-02 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-06] $ arks search code code of agent-06 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-03] $ arks search code code of agent-03 --repo local/playground  -> exit 0 (0.02s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/41
+[agent-04] $ arks search code code of agent-04 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-02] $ arks pr status  -> exit 0 (0.02s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+    | Requesting a code review from you
+    |   #14  needle2156 change by agent-01 [agent-01/fanout]
+    | 
+[agent-05] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+    | Requesting a code review from you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+[agent-06] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #12  needle2156 change by agent-06 [agent-06/fanout]
+    | 
+    | Requesting a code review from you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+[agent-03] $ arks pr status  -> exit 0 (0.04s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+    | Requesting a code review from you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+[agent-04] $ arks pr status  -> exit 0 (0.04s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+    | Requesting a code review from you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.05s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-104
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/42
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-105
+[agent-02] $ arks hub status  -> exit 0 (0.08s)
+    | Assigned Issues
+    | local/playground#31  needle2156 agent-01 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#14  needle2156 change by agent-01
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#42  noise (new issue)
+    | local/playground#41  noise (new issue)
+    | local/playground#40  noise (new issue)
+    | local/playground#38  needle2156 agent-03 1 (new issue)
+[agent-06] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#32  needle2156 agent-05 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#9  needle2156 change by agent-05
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#42  noise (new issue)
+    | local/playground#41  noise (new issue)
+    | local/playground#40  noise (new issue)
+    | local/playground#39  needle2156 agent-02 1 (new issue)
+    | local/playground#38  needle2156 agent-03 1 (new issue)
+[agent-03] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#30  needle2156 agent-02 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#13  needle2156 change by agent-02
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#42  noise (new issue)
+    | local/playground#41  noise (new issue)
+    | local/playground#40  noise (new issue)
+    | local/playground#39  needle2156 agent-02 1 (new issue)
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/43
+[agent-05] $ arks hub status  -> exit 0 (0.08s)
+    | Assigned Issues
+    | local/playground#29  needle2156 agent-04 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#10  needle2156 change by agent-04
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+    | local/playground#41  noise (new issue)
+    | local/playground#40  noise (new issue)
+    | local/playground#39  needle2156 agent-02 1 (new issue)
+[agent-06] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-02] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-04] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#33  needle2156 agent-03 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#11  needle2156 change by agent-03
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+    | local/playground#41  noise (new issue)
+    | local/playground#40  noise (new issue)
+    | local/playground#39  needle2156 agent-02 1 (new issue)
+[agent-06] $ arks search issues needle2156 agent-06 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-02] $ arks search issues needle2156 agent-02 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 30
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-03] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-03] $ arks search issues needle2156 agent-03 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 33
+    |   }
+    | ]
+[agent-06] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-02] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 agent-05 --repo local/playground --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 32
+    |   }
+    | ]
+[agent-03] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-106
+[agent-06] $ arks search code code of agent-06 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.03s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-02] $ arks search code code of agent-02 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-05] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-03] $ arks search code code of agent-03 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/44
+[agent-04] $ arks search issues needle2156 agent-04 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 29
+    |   }
+    | ]
+[agent-06] $ arks pr status  -> exit 0 (0.02s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #12  needle2156 change by agent-06 [agent-06/fanout]
+    | 
+    | Requesting a code review from you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+[agent-05] $ arks search code code of agent-05 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-02] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+    | Requesting a code review from you
+    |   #14  needle2156 change by agent-01 [agent-01/fanout]
+    | 
+[agent-03] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+    | Requesting a code review from you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+[agent-04] $ arks search code code of agent-04 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-107
+[agent-05] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+    | Requesting a code review from you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+[agent-04] $ arks pr status  -> exit 0 (0.02s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+    | Requesting a code review from you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/45
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.02s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-108
+[agent-06] $ arks hub status  -> exit 0 (0.08s)
+    | Assigned Issues
+    | local/playground#32  needle2156 agent-05 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#9  needle2156 change by agent-05
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#45  noise (new issue)
+    | local/playground#44  noise (new issue)
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+    | local/playground#41  noise (new issue)
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/46
+[agent-02] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#31  needle2156 agent-01 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#14  needle2156 change by agent-01
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+    | local/playground#44  noise (new issue)
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+[agent-03] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#30  needle2156 agent-02 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#13  needle2156 change by agent-02
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+    | local/playground#44  noise (new issue)
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+[agent-06] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-05] $ arks hub status  -> exit 0 (0.06s)
+    | Assigned Issues
+    | local/playground#29  needle2156 agent-04 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#10  needle2156 change by agent-04
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+    | local/playground#44  noise (new issue)
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+[agent-02] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-06] $ arks search issues needle2156 agent-06 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-03] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-04] $ arks hub status  -> exit 0 (0.06s)
+    | Assigned Issues
+    | local/playground#33  needle2156 agent-03 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#11  needle2156 change by agent-03
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+    | local/playground#44  noise (new issue)
+    | local/playground#43  noise (new issue)
+    | local/playground#42  noise (new issue)
+[agent-06] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-02] $ arks search issues needle2156 agent-02 --repo local/playground --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 30
+    |   }
+    | ]
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-109
+[agent-03] $ arks search issues needle2156 agent-03 --repo local/playground --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 33
+    |   }
+    | ]
+[agent-04] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 agent-05 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 32
+    |   }
+    | ]
+[agent-06] $ arks search code code of agent-06 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/47
+[agent-02] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-03] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-02] $ arks search code code of agent-02 --repo local/playground  -> exit 0 (0.00s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search issues needle2156 agent-04 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 29
+    |   }
+    | ]
+[agent-05] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-03] $ arks search code code of agent-03 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-06] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #12  needle2156 change by agent-06 [agent-06/fanout]
+    | 
+    | Requesting a code review from you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+[agent-05] $ arks search code code of agent-05 --repo local/playground  -> exit 0 (0.02s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-110
+[agent-02] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+    | Requesting a code review from you
+    |   #14  needle2156 change by agent-01 [agent-01/fanout]
+    | 
+[agent-04] $ arks search code code of agent-04 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-03] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+    | Requesting a code review from you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/48
+[agent-05] $ arks pr status  -> exit 0 (0.02s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+    | Requesting a code review from you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+[agent-04] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+    | Requesting a code review from you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-111
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/49
+[agent-02] $ arks hub status  -> exit 0 (0.06s)
+    | Assigned Issues
+    | local/playground#31  needle2156 agent-01 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#14  needle2156 change by agent-01
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+    | local/playground#47  noise (new issue)
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+[agent-06] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#32  needle2156 agent-05 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#9  needle2156 change by agent-05
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+    | local/playground#47  noise (new issue)
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+[agent-03] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#30  needle2156 agent-02 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#13  needle2156 change by agent-02
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+    | local/playground#47  noise (new issue)
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-112
+[agent-02] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-06] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-05] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#29  needle2156 agent-04 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#10  needle2156 change by agent-04
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+    | local/playground#47  noise (new issue)
+    | local/playground#46  noise (new issue)
+    | local/playground#45  noise (new issue)
+[agent-06] $ arks search issues needle2156 agent-06 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-02] $ arks search issues needle2156 agent-02 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 30
+    |   }
+    | ]
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/50
+[agent-03] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-04] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#33  needle2156 agent-03 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#11  needle2156 change by agent-03
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#50  noise (new issue)
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+    | local/playground#47  noise (new issue)
+    | local/playground#46  noise (new issue)
+[agent-02] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-03] $ arks search issues needle2156 agent-03 --repo local/playground --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 33
+    |   }
+    | ]
+[agent-06] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-05] $ arks search issues needle2156 agent-05 --repo local/playground --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 32
+    |   }
+    | ]
+[agent-02] $ arks search code code of agent-02 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search issues needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 39
+    |   },
+    |   {
+    |     "number": 38
+    |   },
+    |   {
+    |     "number": 37
+    |   },
+    |   {
+    |     "number": 36
+    |   },
+    |   {
+    |     "number": 35
+    |   },
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 33
+    |   },
+    |   {
+    |     "number": 32
+    |   },
+    |   {
+    |     "number": 31
+    |   },
+    |   {
+    |     "number": 30
+    |   },
+    |   {
+    |     "number": 29
+    |   },
+    |   {
+    |     "number": 28
+    |   }
+    | ]
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-113
+[agent-06] $ arks search code code of agent-06 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-05] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-03] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-04] $ arks search issues needle2156 agent-04 --repo local/playground --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 34
+    |   },
+    |   {
+    |     "number": 29
+    |   }
+    | ]
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/51
+[agent-05] $ arks search code code of agent-05 --repo local/playground  -> exit 0 (0.01s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-02] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+    | Requesting a code review from you
+    |   #14  needle2156 change by agent-01 [agent-01/fanout]
+    | 
+[agent-06] $ arks pr status  -> exit 0 (0.02s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #12  needle2156 change by agent-06 [agent-06/fanout]
+    | 
+    | Requesting a code review from you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+[agent-03] $ arks search code code of agent-03 --repo local/playground  -> exit 0 (0.02s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-04] $ arks search prs needle2156 --repo local/playground -L 200 --json number  -> exit 0 (0.02s)
+    | [
+    |   {
+    |     "number": 14
+    |   },
+    |   {
+    |     "number": 13
+    |   },
+    |   {
+    |     "number": 12
+    |   },
+    |   {
+    |     "number": 11
+    |   },
+    |   {
+    |     "number": 10
+    |   },
+    |   {
+    |     "number": 9
+    |   }
+    | ]
+[agent-05] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #9  needle2156 change by agent-05 [agent-05/fanout]
+    | 
+    | Requesting a code review from you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+[agent-03] $ arks pr status  -> exit 0 (0.03s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+    | Requesting a code review from you
+    |   #13  needle2156 change by agent-02 [agent-02/fanout]
+    | 
+[agent-04] $ arks search code code of agent-04 --repo local/playground  -> exit 0 (0.02s)
+    | local/playground:fanout/index.txt:needle2156 code of agent-01
+    | local/playground:fanout/index.txt:needle2156 code of agent-02
+    | local/playground:fanout/index.txt:needle2156 code of agent-03
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.04s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-114
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/52
+[agent-04] $ arks pr status  -> exit 0 (0.02s)
+    | 
+    | Relevant pull requests in local/playground
+    | 
+    | Current branch
+    |   There is no current branch
+    | 
+    | Created by you
+    |   #10  needle2156 change by agent-04 [agent-04/fanout]
+    | 
+    | Requesting a code review from you
+    |   #11  needle2156 change by agent-03 [agent-03/fanout]
+    | 
+[agent-02] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#31  needle2156 agent-01 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#14  needle2156 change by agent-01
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#52  noise (new issue)
+    | local/playground#51  noise (new issue)
+    | local/playground#50  noise (new issue)
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+[agent-06] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#32  needle2156 agent-05 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#9  needle2156 change by agent-05
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#52  noise (new issue)
+    | local/playground#51  noise (new issue)
+    | local/playground#50  noise (new issue)
+    | local/playground#49  noise (new issue)
+    | local/playground#48  noise (new issue)
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-115
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/53
+[agent-05] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#29  needle2156 agent-04 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#10  needle2156 change by agent-04
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#53  noise (new issue)
+    | local/playground#52  noise (new issue)
+    | local/playground#51  noise (new issue)
+    | local/playground#50  noise (new issue)
+    | local/playground#49  noise (new issue)
+[agent-03] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#30  needle2156 agent-02 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#13  needle2156 change by agent-02
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#53  noise (new issue)
+    | local/playground#52  noise (new issue)
+    | local/playground#51  noise (new issue)
+    | local/playground#50  noise (new issue)
+    | local/playground#49  noise (new issue)
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-116
+[agent-04] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#33  needle2156 agent-03 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#11  needle2156 change by agent-03
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#53  noise (new issue)
+    | local/playground#52  noise (new issue)
+    | local/playground#51  noise (new issue)
+    | local/playground#50  noise (new issue)
+    | local/playground#49  noise (new issue)
+[agent-01] $ arks issue create -t noise -b n  -> exit 0 (0.01s)
+    | http://127.0.0.1:45083/local/playground/issues/54
+[agent-01] $ arks issue comment 28 -b noise  -> exit 0 (0.03s)
+    | http://127.0.0.1:45083/local/playground/issues/28#issuecomment-117
+[agent-02] $ arks search commits needle2156 --repo local/playground --json sha  -> exit 0 (0.01s)
+    | [
+    |   {
+    |     "sha": "c1d1b6f755b51badb4ac308535ddcbacf6faba35"
+    |   },
+    |   {
+    |     "sha": "594edff702b7f2418ce6678521a746549bf16e19"
+    |   },
+    |   {
+    |     "sha": "e7ebfc199f12d19a96b4b0ba40deb6349d772e18"
+    |   },
+    |   {
+    |     "sha": "eec9513c7a9fca9a6c357b9123e2f4b3708171dd"
+    |   },
+    |   {
+    |     "sha": "546d33198dea6a0bc4728e5cf715a60800d1e539"
+    |   },
+    |   {
+    |     "sha": "fdf24eccc07bd76ffeabc74a4d63fa7769cbaf7d"
+    |   },
+    |   {
+    |     "sha": "f7be85503b566b882c57ae8ee70f559eb5731a7f"
+    |   }
+    | ]
+[agent-02] $ arks pr view 14 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | f7be85503b566b882c57ae8ee70f559eb5731a7f
+[agent-02] $ arks pr view 13 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | fdf24eccc07bd76ffeabc74a4d63fa7769cbaf7d
+[agent-02] $ arks pr view 11 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | 546d33198dea6a0bc4728e5cf715a60800d1e539
+[agent-02] $ arks pr view 10 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | eec9513c7a9fca9a6c357b9123e2f4b3708171dd
+[agent-02] $ arks pr view 9 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | e7ebfc199f12d19a96b4b0ba40deb6349d772e18
+[agent-02] $ arks pr view 12 --json headRefOid --jq .headRefOid  -> exit 0 (0.01s)
+    | 594edff702b7f2418ce6678521a746549bf16e19
+[agent-02] $ arks hub status  -> exit 0 (0.07s)
+    | Assigned Issues
+    | local/playground#31  needle2156 agent-01 0
+    | 
+    | Assigned Pull Requests
+    | Nothing here ^_^
+    | 
+    | Review Requests
+    | local/playground#14  needle2156 change by agent-01
+    | 
+    | Mentions
+    | Nothing here ^_^
+    | 
+    | Repository Activity
+    | local/playground#54  noise (new issue)
+    | local/playground#53  noise (new issue)
+    | local/playground#52  noise (new issue)
+    | local/playground#51  noise (new issue)
+    | local/playground#50  noise (new issue)
+== HUB-MA-08 PASS (1.05s)

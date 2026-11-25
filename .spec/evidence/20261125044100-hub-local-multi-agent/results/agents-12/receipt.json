@@ -1,0 +1,24 @@
+{
+  "schema": "arks-hub-local-multi-agent/v1",
+  "sot": "sot:root/arks-hub-local-multi-agent-pr",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "ec4bf43",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "exit": 0,
+  "agents": 12,
+  "scenarios": {
+    "SMOKE": "PASS",
+    "HUB-MA-01": "PASS",
+    "HUB-MA-02": "PASS",
+    "HUB-MA-03": "PASS",
+    "HUB-MA-04": "PASS",
+    "HUB-MA-05": "PASS",
+    "HUB-MA-06": "PASS",
+    "HUB-MA-07": "PASS",
+    "HUB-MA-08": "PASS",
+    "HUB-MA-09": "N/A",
+    "HUB-MA-10": "PASS"
+  },
+  "note": "Docker receipt carries Claimed; a host run is advisory.",
+  "timestamp": "2026-11-25T04:57:19Z"
+}
