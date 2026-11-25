@@ -1690,9 +1690,9 @@ fn handle_ssh_session(
         .take(255)
         .collect::<String>();
     let id_part = if peer_id.is_empty() {
-        format!("id_exchange=partial peer={peer} peer_id=(empty/timeout)")
+        format!("id_exchange=no_peer_id peer={peer} peer_id=(empty/timeout)")
     } else {
-        format!("id_exchange=partial peer={peer} peer_id={peer_id}")
+        format!("id_exchange=ok peer={peer} peer_id={peer_id}")
     };
     let (stage, kex_part) = if peer_id.is_empty() {
         match curve25519_ecdh_selfcheck() {
