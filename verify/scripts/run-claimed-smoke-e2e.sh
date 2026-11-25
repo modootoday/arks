@@ -132,7 +132,9 @@ fi
 TS="$(date -u +%Y%m%d%H%M%S)"
 OUT="${ARKS_EVIDENCE_ROOT:-.spec/evidence}/${TS}-claimed-smoke"
 mkdir -p "$OUT/logs"
-for f in "$WORK"/*.out "$WORK"/*.err; do cp "$f" "$OUT/logs/"; done
+# Public evidence: temp roots end in a home directory and read as local user paths to the
+# public-surface scan, so tracked copies write them <tmp-home>.
+for f in "$WORK"/*.out "$WORK"/*.err; do sed -E 's#/tmp/[^ /]+/home#<tmp-home>#g' "$f" >"$OUT/logs/${f##*/}"; done
 python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
 import json, sys, time
 out, tip, image = sys.argv[1:]

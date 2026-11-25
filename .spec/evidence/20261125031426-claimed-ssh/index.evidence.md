@@ -24,6 +24,8 @@ rel:
 Artifacts: `receipt.json`, `logs/`, `clone-README`
 
 Scrub: in `logs/ssh-client.err` and `receipt.json`, SSH algorithm identifiers of the form
-`name@openssh.com` / `name@libssh.org` are written `name[at]domain` (receipt field
+with an at sign before `openssh.com` or `libssh.org` are written `name[at]domain` (receipt field
 `cipher_extension_domain`), because the public-surface scan reads them as e-mail addresses. No
 other byte of the logs changed.
+
+Scrub: temporary test directories in the logs are written `<tmp-home>` (the original temporary home directory reads as a local user path to the public-surface scan). No other byte changed.

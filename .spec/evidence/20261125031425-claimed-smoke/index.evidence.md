@@ -18,3 +18,5 @@ rel:
 - **Observed:** banner ok against a running `arks serve` SSH listener (rc 0); `--git-pack` reads the listener's KEXINIT (rc 0); closed port rc 1. `provider smoke` against the openai-compat fixture over `http://` answers `chat_http=200` (rc 0); `--mock` rc 0; closed port rc 1. `review --smoke` against the fixture and `--mock` print `review_smoke=ok` (rc 0); closed port rc 1. The fixture logged exactly 2 chat requests.
 - **Not covered:** `https://` vendor endpoints (unsupported: `arks-agent` has no TLS client) and any live vendor or model quality. Does not prove B1/B2 or B4.
 - **Artifacts:** `receipt.json`, `logs/`
+
+Scrub: temporary test directories in the logs are written `<tmp-home>` (the original temporary home directory reads as a local user path to the public-surface scan). No other byte changed.
