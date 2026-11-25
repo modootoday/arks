@@ -123,6 +123,7 @@ COMMANDS (gh-symmetric argv; host-tested Partial, not Claimed):
                   arks-owned forge groups
     milestone     list|create|edit|close|delete (hub-native; arks-defined argv)
     serve         Local forge API listen (transitional — prefer arks serve)
+    review        Refused: use `arks pr review` (exit 2)
     licenses, skill, preview, agent-task, inbox, forge-config, smoke
                   hub-native helpers (local Partial)
     extension, copilot and the GitHub-platform-only groups (Actions, attestations,
@@ -217,6 +218,7 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             &args[1..],
             leaves::milestone::run,
         ),
+        "review" => cmd_review_refuse(&args[1..]),
         "gist" => leaves::dispatch("gist", leaves::gist::HELP, &args[1..], leaves::gist::run),
         "project" => leaves::dispatch(
             "project",
@@ -640,6 +642,25 @@ fn cmd_out_explicit_refuse(name: &str, args: &[String]) -> ExitCode {
     ExitCode::from(2)
 }
 
+/// `arks hub review`: refused duplicate of `pr review`
+/// ([[sot:root/arks-hub-gh-command-matrix]] rule 12c). No forge call.
+fn cmd_review_refuse(args: &[String]) -> ExitCode {
+    let why = "a top-level review group would duplicate `arks pr review` (gh-identical argv); \
+               refused, out of scope ([[sot:root/arks-hub-gh-command-matrix]] rule 12c, \
+               [[adr:root/20261119230000]])";
+    if matches!(
+        args.first().map(String::as_str),
+        Some("-h" | "--help" | "help")
+    ) {
+        eprintln!(
+            "arks review: {why}\nUse: arks pr review [<number>] --approve|--comment|--request-changes -b <body>"
+        );
+        return ExitCode::SUCCESS;
+    }
+    eprintln!("arks review: refused — {why}; use `arks pr review`");
+    usage_exit()
+}
+
 /// Cheap OUT→local graduation: list against local forge path or empty JSON array.
 /// `needs_repo` selects whether `--repo` / ARKS_HUB_REPO is required for path fill.
 fn cmd_out_local_list(name: &str, args: &[String], path_tmpl: &str, needs_repo: bool) -> ExitCode {
@@ -830,6 +851,16 @@ mod tests {
                 "{g} list"
             );
         }
+    }
+
+    /// Q18 rule 12c: `review` refuses without a forge call.
+    #[test]
+    fn review_group_refuses_exit_2() {
+        for leaf in ["review", "review list", "review 1 --approve"] {
+            assert_eq!(run_from_args(&argv(leaf)), ExitCode::from(2), "{leaf}");
+        }
+        assert_eq!(run_from_args(&argv("review --help")), ExitCode::SUCCESS);
+        assert!(!GROUPS.contains(&"review"), "review is not a hub group");
     }
 
     /// Q18 rule 12b: transitional serve exits 2 on bad argv before binding.
