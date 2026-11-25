@@ -68,7 +68,14 @@
       "Edit(.spec/**)",
       "Edit(.agents/skills/**)",
       "Edit(README.md)",
-      "Edit(Cargo.lock)"
+      "Edit(Cargo.lock)",
+      "Bash(gh pr create *)",
+      "Bash(gh issue create *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh issue comment *)",
+      "Bash(gh pr merge --auto *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr checks *)"
     ],
     "deny": [
       "Bash(git push origin main*)",
@@ -122,7 +129,23 @@
       "Edit(.cursor/hooks/**)",
       "Write(.cursor/hooks/**)",
       "Edit(.spec.local/**)",
-      "Write(.spec.local/**)"
+      "Write(.spec.local/**)",
+      "Bash(gh secret *)",
+      "Bash(gh release *)",
+      "Bash(gh pr review *)",
+      "Bash(gh pr merge --admin*)",
+      "Bash(gh pr merge * --admin*)",
+      "Bash(gh repo edit *)",
+      "Bash(gh repo delete *)",
+      "Bash(gh ruleset *)",
+      "Bash(gh api * rulesets*)",
+      "Bash(gh api *rulesets*)",
+      "Bash(npm publish*)",
+      "Bash(git add .)",
+      "Bash(git add -A*)",
+      "Bash(git add --all*)",
+      "Read(~/.netrc)",
+      "Read(~/.docker/config.json)"
     ],
     "disableBypassPermissionsMode": "disable"
   },
