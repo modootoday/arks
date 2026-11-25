@@ -2,7 +2,8 @@
 //! `issue develop` (linked branches) and `issue artifact *` (issue artifacts).
 
 use super::common::{
-    body_of, edit_text, enc, load_recover, names, parse_number, save_recover, title_body, url_repo,
+    ListEdits, body_of, edit_text, enc, load_recover, names, parse_number, save_recover,
+    title_body, url_repo,
 };
 use super::{Args, Ctx, EXPORT, Fail, Res, arr, json_out, n, read_input, row, s, usage, web};
 use base64::Engine as _;
@@ -647,37 +648,19 @@ fn edit(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         if let Some(b) = body_of(&a, &["-b", "--body"], &["-F", "--body-file"])? {
             patch.insert("body".into(), json!(b));
         }
-        let cur = |key: &str, field: &str| -> Vec<String> {
-            arr(&i[key])
-                .iter()
-                .filter_map(|x| x[field].as_str().or(x.as_str()).map(str::to_string))
-                .collect()
-        };
-        for (key, field, add, rm) in [
-            (
-                "labels",
-                "name",
-                a.list(&["--add-label"]),
-                a.list(&["--remove-label"]),
-            ),
-            (
-                "assignees",
-                "login",
+        let edits = ListEdits {
+            labels: (a.list(&["--add-label"]), a.list(&["--remove-label"])),
+            assignees: (
                 ctx.whos(&a.list(&["--add-assignee"]))?,
                 ctx.whos(&a.list(&["--remove-assignee"]))?,
             ),
-            (
-                "projects",
-                "",
-                a.list(&["--add-project"]),
-                a.list(&["--remove-project"]),
-            ),
-        ] {
-            if add.is_empty() && rm.is_empty() {
-                continue;
-            }
-            let mut v: Vec<String> = cur(key, field)
-                .into_iter()
+            reviewers: Default::default(),
+        };
+        let (add, rm) = (a.list(&["--add-project"]), a.list(&["--remove-project"]));
+        if !add.is_empty() || !rm.is_empty() {
+            let mut v: Vec<String> = arr(&i["projects"])
+                .iter()
+                .filter_map(|x| x.as_str().map(str::to_string))
                 .filter(|x| !rm.contains(x))
                 .collect();
             for x in add {
@@ -685,7 +668,7 @@ fn edit(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
                     v.push(x);
                 }
             }
-            patch.insert(key.into(), json!(v));
+            patch.insert("projects".into(), json!(v));
         }
         if let Some(m) = a.get(&["-m", "--milestone"]) {
             patch.insert("milestone".into(), json!(m));
@@ -693,10 +676,13 @@ fn edit(ctx: &Ctx, raw: &[String], out: &mut dyn Write) -> Res {
         if a.has(&["--remove-milestone"]) {
             patch.insert("milestone".into(), Value::Null);
         }
-        if patch.is_empty() {
+        if patch.is_empty() && edits.is_empty() {
             return usage("specify at least one field to edit (see --help)");
         }
-        ctx.api("PATCH", &ipath(&o, &r, &i), Some(&Value::Object(patch)))?;
+        if !patch.is_empty() {
+            ctx.api("PATCH", &ipath(&o, &r, &i), Some(&Value::Object(patch)))?;
+        }
+        edits.apply(ctx, &ipath(&o, &r, &i))?;
         writeln!(out, "{}", iurl(ctx, &o, &r, &i))?;
     }
     Ok(())

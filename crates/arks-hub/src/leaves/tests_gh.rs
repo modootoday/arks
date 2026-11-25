@@ -478,3 +478,89 @@ fn releases_labels_and_templates() {
         "{clone}"
     );
 }
+
+/// Concurrent `issue edit` / `pr edit` label and assignee changes are deltas: no
+/// editor drops another's change (concurrency contract of the multi-agent SoT).
+#[test]
+fn concurrent_list_edits_are_deltas() {
+    let f = Forge::start();
+    let _g = repo_with_feature(&f, "storm");
+    let r = ["-R", "local/storm"];
+    f.ok(
+        issue::run,
+        &["create", "-t", "storm", "-b", "x", r[0], r[1]],
+    );
+    f.ok(
+        pr::run,
+        &[
+            "create", "-H", "feature", "-B", "main", "-t", "t", "-b", "b", r[0], r[1],
+        ],
+    );
+    let names: Vec<String> = (0..8).map(|k| format!("l{k}")).collect();
+    std::thread::scope(|s| {
+        for name in &names {
+            let f = &f;
+            s.spawn(move || {
+                f.ok(issue::run, &["edit", "1", "--add-label", name, r[0], r[1]]);
+                f.ok(
+                    pr::run,
+                    &[
+                        "edit",
+                        "1",
+                        "--add-label",
+                        name,
+                        "--add-assignee",
+                        name,
+                        r[0],
+                        r[1],
+                    ],
+                );
+            });
+        }
+    });
+    let list = |leaf: super::tests::Leaf, field: &str| -> Vec<String> {
+        let v = json_of(&f.ok(leaf, &["view", "1", "--json", field, r[0], r[1]]));
+        let mut out: Vec<String> = v[field]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| {
+                x["login"]
+                    .as_str()
+                    .or(x["name"].as_str())
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+        out.sort();
+        out
+    };
+    assert_eq!(list(issue::run, "labels"), names);
+    assert_eq!(list(pr::run, "labels"), names);
+    assert_eq!(list(pr::run, "assignees"), names);
+    std::thread::scope(|s| {
+        for name in names.iter().step_by(2) {
+            let f = &f;
+            s.spawn(move || {
+                f.ok(
+                    issue::run,
+                    &[
+                        "edit",
+                        "1",
+                        "--remove-label",
+                        name,
+                        "--remove-label",
+                        "absent",
+                        r[0],
+                        r[1],
+                    ],
+                );
+                f.ok(pr::run, &["edit", "1", "--remove-label", name, r[0], r[1]]);
+            });
+        }
+    });
+    let odd: Vec<String> = names.iter().skip(1).step_by(2).cloned().collect();
+    assert_eq!(list(issue::run, "labels"), odd);
+    assert_eq!(list(pr::run, "labels"), odd);
+    assert!(is_usage(f.run(issue::run, &["edit", "1", r[0], r[1]])));
+}

@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-type Leaf = fn(&Ctx, &[String], &mut dyn Write) -> Res;
+pub(super) type Leaf = fn(&Ctx, &[String], &mut dyn Write) -> Res;
 
 pub(super) struct Forge {
     stop: Arc<AtomicBool>,
