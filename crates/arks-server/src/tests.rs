@@ -368,3 +368,82 @@ fn basic_auth_reports_the_authorized_user() {
     let bad = basic_authorization_header("alice", "nope");
     assert_eq!(cfg.authorized_user(Some(&bad)), None);
 }
+
+/// Annotated tag object pointing at `target`, stored and referenced as `refs/tags/<name>`.
+fn put_tag(repo: &mut Repository, name: &str, target: arks_oid::Oid) -> arks_oid::Oid {
+    let body = format!(
+        "object {}\ntype commit\ntag {name}\ntagger arks <arks@example.com> 1700000000 +0000\n\n{name}\n",
+        target.to_hex()
+    );
+    let oid = repo
+        .store_mut()
+        .put(
+            ObjectFormat::Sha1,
+            &RawObject::new(ObjectKind::Tag, body.into_bytes()),
+        )
+        .unwrap();
+    repo.refs_mut()
+        .update(&format!("refs/tags/{name}"), &oid, None)
+        .unwrap();
+    oid
+}
+
+/// Object count from the PACK header of a raw (no side-band) upload-pack reply.
+fn pack_object_count(reply: &[u8]) -> u32 {
+    let at = reply
+        .windows(4)
+        .position(|w| w == b"PACK")
+        .expect("PACK header in reply");
+    u32::from_be_bytes(reply[at + 8..at + 12].try_into().unwrap())
+}
+
+fn want_request(oid: &arks_oid::Oid, caps: &str) -> Vec<u8> {
+    use arks_protocol::{Packet, encode_packet};
+    let mut body = encode_packet(&Packet::Data(
+        format!("want {} {caps}\n", oid.to_hex()).into_bytes(),
+    ))
+    .unwrap();
+    body.extend(encode_packet(&Packet::Flush).unwrap());
+    body.extend(encode_packet(&Packet::Data(b"done\n".to_vec())).unwrap());
+    body
+}
+
+#[test]
+fn upload_pack_include_tag_adds_tags_pointing_into_the_pack() {
+    let dir = TempDir::new().unwrap();
+    let (git, commit) = seed_bare(dir.path());
+    let mut repo = Repository::open(&git).unwrap();
+    put_tag(&mut repo, "v1", commit);
+    // A tag on an unrelated root commit must not ride along.
+    let sig = Signature {
+        name: "arks".into(),
+        email: "arks@example.com".into(),
+        timestamp: 1_700_000_001,
+        timezone: "+0000".into(),
+    };
+    let tree = repo.get_object(&commit).unwrap();
+    let tree_oid = Commit::decode(&tree.payload).unwrap().tree;
+    let other = Commit {
+        tree: tree_oid,
+        parents: Vec::new(),
+        author: sig.clone(),
+        committer: sig,
+        gpgsig: None,
+        message: "unrelated\n".into(),
+    };
+    let other_oid = repo
+        .store_mut()
+        .put(
+            ObjectFormat::Sha1,
+            &RawObject::new(ObjectKind::Commit, other.encode().unwrap()),
+        )
+        .unwrap();
+    put_tag(&mut repo, "elsewhere", other_oid);
+
+    let advert = String::from_utf8_lossy(&upload_advertisement(&repo).unwrap()).to_string();
+    assert!(advert.contains("include-tag"), "{advert}");
+    let without = upload_pack_result(&repo, &want_request(&commit, "ofs-delta")).unwrap();
+    assert_eq!(pack_object_count(&without), 3, "blob, tree, commit");
+    let with = upload_pack_result(&repo, &want_request(&commit, "ofs-delta include-tag")).unwrap();
+    assert_eq!(pack_object_count(&with), 4, "plus the v1 tag object only");
+}
