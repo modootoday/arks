@@ -4,8 +4,9 @@
 //! attributes on standard input and, for `get`, prints `username=` /
 //! `password=` lines. Other operations are ignored as gitcredentials asks of
 //! helpers. The store is the OS one (Windows Credential Manager, macOS
-//! keychain, Secret Service); without one the helper fails with a clear
-//! error and stores nothing. See `arks_remote::os_store` for the backends and
+//! keychain, Secret Service), reached in-process; without one `store` fails
+//! with a clear error and stores nothing, `get` prints nothing and exits 0,
+//! and `erase` exits 0. See `arks_remote::os_store` for the backends and
 //! the `ARKS_CREDENTIAL_BACKEND` test switch; the older
 //! `ARKS_CREDENTIAL_WALLET_DIR` file override (G33 gate) still applies when
 //! no backend is named.
