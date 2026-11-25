@@ -129,7 +129,8 @@ PY
     DF_OK=0
   else
     set +e
-    git archive --remote="git://127.0.0.1:${PORT_A}/repo.git" --format=tar HEAD \
+    # Run outside the checkout: a linked worktree's .git file is dangling in the container.
+    (cd "$WORK" && git archive --remote="git://127.0.0.1:${PORT_A}/repo.git" --format=tar HEAD) \
       >"$WORK/remote.tar" 2>"$WORK/archive.err"
     arch_ec=$?
     set -e
@@ -158,7 +159,7 @@ PY
   touch "$A5/srv/vhost/localhost/v.git/git-daemon-export-ok"
   cat >"$A5/hook.sh" <<'HOOK'
 #!/bin/sh
-echo "$*|$REMOTE_ADDR" >>"$(dirname "$0")/hook-$DAEMON_KIND.log"
+echo "$*|$REMOTE_ADDR|${REMOTE_PORT:+port-set}" >>"$(dirname "$0")/hook-$DAEMON_KIND.log"
 case "$2" in *priv*) echo "declined by hook"; exit 1;; esac
 exit 0
 HOOK
@@ -167,9 +168,11 @@ HOOK
 import socket, sys
 port, reqs = int(sys.argv[1]), sys.argv[2:]
 for r in reqs:
-    payload = r.encode().decode("unicode_escape").encode("latin1")
+    # A trailing "<flush>" sends an empty argument list (flush-pkt) after the request.
+    body, flush = (r[:-7], True) if r.endswith("<flush>") else (r, False)
+    payload = body.encode().decode("unicode_escape").encode("latin1")
     s = socket.create_connection(("127.0.0.1", port))
-    s.sendall(b"%04x" % (len(payload) + 4) + payload)
+    s.sendall(b"%04x" % (len(payload) + 4) + payload + (b"0000" if flush else b""))
     s.settimeout(3)
     data = b""
     try:
@@ -245,12 +248,316 @@ PY
     'git-upload-pack /pub.git\0'
   a5_case user-path "--informative-errors --user-path=a5-no-such-dir" \
     'git-upload-pack ~root/x.git\0' 'git-upload-pack ~a5nouser/x.git\0'
-  if ! diff <(cut -d'|' -f1 "$A5/hook-git.log") <(cut -d'|' -f1 "$A5/hook-arks.log") >"$A5/hook.diff"; then
-    echo "FAIL A5 access-hook arguments differ" >&2
+  # Whole lines: hook arguments, REMOTE_ADDR and whether REMOTE_PORT is set.
+  if ! diff "$A5/hook-git.log" "$A5/hook-arks.log" >"$A5/hook.diff"; then
+    echo "FAIL A5 access-hook arguments / REMOTE_ADDR differ" >&2
     cat "$A5/hook.diff" >&2
     DF_OK=0
+  elif ! grep -q '|127\.0\.0\.1|port-set$' "$A5/hook-arks.log"; then
+    echo "FAIL A5 access-hook REMOTE_ADDR/REMOTE_PORT not set" >&2
+    DF_OK=0
   else
-    echo "daemon-git-arks-matrix-e2e: A5 access-hook arguments SAME"
+    echo "daemon-git-arks-matrix-e2e: A5 access-hook arguments + REMOTE_ADDR SAME"
+  fi
+  # --- Q19: Docker pin coverage of the remaining A5 rows (plan:root/20261124000000) ---
+  free_port() { python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1])'; }
+  wait_port() {
+    for _ in $(seq 1 50); do
+      python3 -c "import socket;socket.create_connection(('127.0.0.1',$1)).close()" 2>/dev/null && return 0
+      sleep 0.1
+    done
+    return 1
+  }
+  port_closed() {
+    for _ in $(seq 1 30); do
+      python3 -c "import socket;socket.create_connection(('127.0.0.1',$1)).close()" 2>/dev/null || return 0
+      sleep 0.1
+    done
+    return 1
+  }
+  run_daemon() {
+    local kind="$1"; shift
+    if [[ "$kind" == git ]]; then git daemon "$@"; else "$ARKS_BIN" daemon "$@"; fi
+  }
+  a5_same() {
+    if diff -u "$A5/$1.git.out" "$A5/$1.arks.out" >"$A5/$1.diff"; then
+      echo "daemon-git-arks-matrix-e2e: A5 $1 SAME"
+    else
+      echo "FAIL A5 $1: differs from stock git daemon" >&2
+      cat "$A5/$1.diff" >&2
+      DF_OK=0
+    fi
+  }
+  # --allow-override / daemon.* config: site-disabled services re-enabled per repository.
+  for r in yesup recv; do
+    git init -q --bare "$S/$r.git"
+    touch "$S/$r.git/git-daemon-export-ok"
+  done
+  git -C "$S/yesup.git" config daemon.uploadpack true
+  git -C "$S/recv.git" config daemon.receivepack true
+  a5_case allow-override "--informative-errors --base-path=$S --disable=upload-pack --allow-override=upload-pack" \
+    'git-upload-pack /yesup.git\0' 'git-upload-pack /pub.git\0' 'git-upload-pack /noup.git\0' \
+    'git-upload-pack /nope.git\0'
+  a5_case forbid-disabled "--informative-errors --base-path=$S --disable=upload-pack --forbid-override=upload-pack" \
+    'git-upload-pack /yesup.git\0' 'git-upload-pack /nope.git\0'
+  # upload-archive is asked with an empty argument list: stock git ACKs as soon as its
+  # writer starts, arks after reading the arguments (archive ordering is outside A5).
+  a5_case config-services "--informative-errors --base-path=$S" \
+    'git-receive-pack /recv.git\0' 'git-receive-pack /pub.git\0' 'git-upload-archive /arch.git\0<flush>' \
+    'git-upload-archive /pub.git\0'
+  # --user-path: ~root resolves through the passwd home (/root in the image).
+  mkdir -p /root/a5up
+  git init -q --bare /root/a5up/u.git
+  touch /root/a5up/u.git/git-daemon-export-ok
+  git init -q --bare /root/a5home.git
+  touch /root/a5home.git/git-daemon-export-ok
+  a5_case user-path-dir "--informative-errors --user-path=a5up" \
+    'git-upload-pack ~root/u.git\0' 'git-upload-pack ~root/u\0' 'git-upload-pack ~root/zz.git\0'
+  a5_case user-path-home "--informative-errors --user-path" \
+    'git-upload-pack ~root/a5home.git\0' 'git-upload-pack ~root/a5up/u.git\0'
+  # --log-destination=stderr / none: same log lines (pids and ports masked), sorted.
+  for dest in stderr none; do
+    for kind in git arks; do
+      p="$(free_port)"
+      run_daemon "$kind" --verbose --log-destination="$dest" --informative-errors \
+        --listen=127.0.0.1 --port="$p" --base-path="$S" >/dev/null 2>"$A5/logdest-$dest.$kind.raw" &
+      pid=$!
+      wait_port "$p" || true
+      python3 "$A5/ask.py" "$p" 'git-upload-pack /nope.git\0' 'git-upload-pack /hidden.git\0' >/dev/null
+      sleep 0.5
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      sed -E 's/[0-9]+/N/g' "$A5/logdest-$dest.$kind.raw" | sort >"$A5/logdest-$dest.$kind.out"
+    done
+    a5_same "logdest-$dest"
+  done
+  if [[ -s "$A5/logdest-none.arks.out" || ! -s "$A5/logdest-stderr.arks.out" ]]; then
+    echo "FAIL A5 log-destination: stderr must log, none must stay silent" >&2
+    DF_OK=0
+  fi
+  # --syslog / --log-destination=syslog / implied syslog under --inetd: datagrams on
+  # /dev/log (root in the image), compared as <PRI> + message text (digits masked).
+  cat >"$A5/collect.py" <<'PY'
+import os, signal, socket, sys
+out = sys.argv[1]
+try:
+    os.unlink("/dev/log")
+except OSError:
+    pass
+s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+s.bind("/dev/log")
+open(out + ".ready", "w").close()
+signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+with open(out, "ab") as f:
+    while True:
+        f.write(s.recv(65535).rstrip(b"\n") + b"\n")
+        f.flush()
+PY
+  cat >"$A5/syslog-norm.py" <<'PY'
+import re, sys
+lines = []
+for raw in open(sys.argv[1], "rb").read().decode("latin1").splitlines():
+    m = re.match(r"<(\d+)>.*?\[\d+\]: (.*)$", raw)
+    lines.append("<%s> %s" % (m.group(1), re.sub(r"\d+", "N", m.group(2))) if m else "UNPARSED " + raw)
+print("\n".join(sorted(lines)))
+PY
+  for kind in git arks; do
+    rm -f "$A5/syslog.$kind.raw" "$A5/syslog.$kind.raw.ready"
+    python3 "$A5/collect.py" "$A5/syslog.$kind.raw" &
+    cpid=$!
+    for _ in $(seq 1 50); do [[ -f "$A5/syslog.$kind.raw.ready" ]] && break; sleep 0.1; done
+    : >"$A5/syslog.$kind.stderr"
+    for sflag in --syslog --log-destination=syslog; do
+      p="$(free_port)"
+      run_daemon "$kind" --verbose "$sflag" --informative-errors \
+        --listen=127.0.0.1 --port="$p" --base-path="$S" >/dev/null 2>>"$A5/syslog.$kind.stderr" &
+      pid=$!
+      wait_port "$p" || true
+      python3 "$A5/ask.py" "$p" 'git-upload-pack /nope.git\0' >/dev/null
+      sleep 0.5
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    done
+    set +e
+    printf '0020git-upload-pack /hidden.git\0' | run_daemon "$kind" --inetd --verbose \
+      --informative-errors --base-path="$S" >/dev/null 2>>"$A5/syslog.$kind.stderr"
+    set -e
+    sleep 0.3
+    kill "$cpid" 2>/dev/null || true
+    wait "$cpid" 2>/dev/null || true
+    python3 "$A5/syslog-norm.py" "$A5/syslog.$kind.raw" >"$A5/syslog.$kind.out"
+    echo "stderr_bytes=$(wc -c <"$A5/syslog.$kind.stderr")" >>"$A5/syslog.$kind.out"
+  done
+  rm -f /dev/log
+  a5_same syslog
+  if ! grep -q '^<30> Ready to rumble$' "$A5/syslog.arks.out" || ! grep -q '^<27> ' "$A5/syslog.arks.out"; then
+    echo "FAIL A5 syslog: expected daemon.info and daemon.err datagrams" >&2
+    DF_OK=0
+  fi
+  # --detach + --pid-file: parent exits 0, the recorded pid serves, leads its own
+  # session, has stdio on /dev/null and no terminal; killing it closes the port.
+  # --pid-file without --detach records the serving process; ignored under --inetd.
+  for kind in git arks; do
+    out="$A5/detach.$kind.out"
+    p="$(free_port)"
+    pf="$A5/detach.$kind.pid"
+    set +e
+    run_daemon "$kind" --detach --pid-file="$pf" --informative-errors \
+      --listen=127.0.0.1 --port="$p" --base-path="$S" </dev/null >"$A5/detach.$kind.stdout" 2>"$A5/detach.$kind.stderr"
+    echo "parent_exit=$?" >"$out"
+    set -e
+    wait_port "$p" || true
+    dp="$(cat "$pf" 2>/dev/null || echo 0)"
+    {
+      echo "parent_stdout_bytes=$(wc -c <"$A5/detach.$kind.stdout") parent_stderr_bytes=$(wc -c <"$A5/detach.$kind.stderr")"
+      kill -0 "$dp" 2>/dev/null && echo "pidfile_alive=yes" || echo "pidfile_alive=no"
+      [[ "$(ps -o sid= -p "$dp" | tr -d ' ')" == "$dp" ]] && echo "session_leader=yes" || echo "session_leader=no"
+      echo "tty=$(ps -o tty= -p "$dp" | tr -d ' ')"
+      for fd in 0 1 2; do echo "fd$fd=$(readlink "/proc/$dp/fd/$fd" 2>/dev/null)"; done
+      python3 "$A5/ask.py" "$p" 'git-upload-pack /nope.git\0'
+      kill "$dp" 2>/dev/null || true
+      port_closed "$p" && echo "kill_closes_port=yes" || echo "kill_closes_port=no"
+    } >>"$out"
+    p="$(free_port)"
+    pf="$A5/pidfile.$kind.pid"
+    run_daemon "$kind" --pid-file="$pf" --listen=127.0.0.1 --port="$p" --base-path="$S" \
+      >/dev/null 2>/dev/null &
+    pid=$!
+    wait_port "$p" || true
+    dp="$(cat "$pf" 2>/dev/null || echo 0)"
+    kill "$dp" 2>/dev/null || true
+    port_closed "$p" && echo "foreground_pidfile_kill_closes_port=yes" >>"$out" || echo "foreground_pidfile_kill_closes_port=no" >>"$out"
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    pf="$A5/inetd-pidfile.$kind.pid"
+    set +e
+    printf '0020git-upload-pack /hidden.git\0' | run_daemon "$kind" --inetd --pid-file="$pf" \
+      --base-path="$S" >/dev/null 2>/dev/null
+    set -e
+    [[ -e "$pf" ]] && echo "inetd_pidfile_written=yes" >>"$out" || echo "inetd_pidfile_written=no" >>"$out"
+  done
+  a5_same detach
+  if ! grep -qx 'session_leader=yes' "$A5/detach.arks.out" || ! grep -qx 'fd0=/dev/null' "$A5/detach.arks.out"; then
+    echo "FAIL A5 detach: arks detached process is not a session leader on /dev/null" >&2
+    DF_OK=0
+  fi
+  # --user / --group: privileges dropped after bind (uid, gid, supplementary groups).
+  # The base under the 0700 work dir is invisible to nobody: git's per-connection
+  # server dies on the base-path check; the open base answers normally.
+  OPEN="$(mktemp -d /tmp/arks-a5-open.XXXXXX)"
+  chmod 755 "$OPEN"
+  for ug in "--user=nobody" "--user=nobody --group=daemon" "--user=nobody open"; do
+    tag="user-${ug//[^a-z]/}"
+    base="$S"
+    [[ "$ug" == *open ]] && { base="$OPEN"; ug="${ug% open}"; }
+    for kind in git arks; do
+      p="$(free_port)"
+      pf="$A5/$tag.$kind.pid"
+      run_daemon "$kind" $ug --pid-file="$pf" --informative-errors \
+        --listen=127.0.0.1 --port="$p" --base-path="$base" >/dev/null 2>"$A5/$tag.$kind.err" &
+      pid=$!
+      wait_port "$p" || true
+      sleep 0.2
+      dp="$(cat "$pf" 2>/dev/null || echo 0)"
+      {
+        grep -E '^(Uid|Gid|Groups):' "/proc/$dp/status" 2>/dev/null | tr -s ' \t' ' '
+        python3 "$A5/ask.py" "$p" 'git-upload-pack /nope.git\0'
+      } >"$A5/$tag.$kind.out"
+      kill "$dp" "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      sed -E "s#$base#BASE#g; s/[0-9]+/N/g" "$A5/$tag.$kind.err" | sort >>"$A5/$tag.$kind.out"
+    done
+    a5_same "$tag"
+  done
+  if ! grep -q '^Uid: 65534' "$A5/user-usernobody.arks.out" || ! grep -q '^Gid: 1 ' "$A5/user-usernobodygroupdaemon.arks.out"; then
+    echo "FAIL A5 user/group: arks did not drop to nobody / daemon" >&2
+    DF_OK=0
+  fi
+  # More argv exit codes for the process rows.
+  for args in "--user=a5-no-such-user" "--user=0" "--user=nobody --group=a5-no-such-group" \
+    "--inetd --detach" "--inetd --user=nobody" "--inetd --group=daemon" "--log-destination=" \
+    "--syslog --log-destination=bogus"; do
+    set +e
+    timeout 10 git daemon $args </dev/null >/dev/null 2>&1; g=$?
+    timeout 10 "$ARKS_BIN" daemon $args </dev/null >/dev/null 2>&1; a=$?
+    set -e
+    echo "$args git=$g arks=$a" >>"$A5/argv-process.out"
+    if [[ "$g" -ne "$a" ]]; then
+      echo "FAIL A5 argv '$args': git exit $g, arks exit $a" >&2
+      DF_OK=0
+    fi
+  done
+  echo "daemon-git-arks-matrix-e2e: A5 process argv exit codes checked"
+  # --inetd fatals: a request cut short, per log destination (exit status + stderr).
+  for kind in git arks; do
+    : >"$A5/inetd-fatal.$kind.out"
+    for dest in stderr syslog none; do
+      for input in '' '0030git-upl'; do
+        set +e
+        printf '%s' "$input" | run_daemon "$kind" --inetd --log-destination="$dest" --base-path="$S" \
+          >/dev/null 2>"$A5/inetd-fatal.err"
+        ec=$?
+        set -e
+        echo "$dest '$input' ec=$ec stderr=$(cat "$A5/inetd-fatal.err")" >>"$A5/inetd-fatal.$kind.out"
+      done
+    done
+  done
+  a5_same inetd-fatal
+  # Default bind (arks-only, SoT A5 rule 6): arks listens on 127.0.0.1 only; with
+  # --listen=0.0.0.0 its IPv4 listener matches stock git's default bind.
+  cat >"$A5/listeners.py" <<'PY'
+import sys
+port = int(sys.argv[1])
+seen = []
+for fam, path in (("tcp4", "/proc/net/tcp"), ("tcp6", "/proc/net/tcp6")):
+    try:
+        rows = open(path).read().splitlines()[1:]
+    except OSError:
+        continue
+    for row in rows:
+        f = row.split()
+        addr, p = f[1].split(":")
+        if f[3] == "0A" and int(p, 16) == port:
+            seen.append("%s %s" % (fam, addr))
+print(" ".join(sorted(seen)) or "none")
+PY
+  bind_of() {
+    local kind="$1" p; shift
+    p="$(free_port)"
+    run_daemon "$kind" --port="$p" "$@" --base-path="$S" >/dev/null 2>&1 &
+    local pid=$!
+    for _ in $(seq 1 50); do
+      [[ "$(python3 "$A5/listeners.py" "$p")" != none ]] && break
+      sleep 0.1
+    done
+    sleep 0.2
+    python3 "$A5/listeners.py" "$p"
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  }
+  {
+    echo "arks_default=$(bind_of arks)"
+    echo "arks_listen_any=$(bind_of arks --listen=0.0.0.0)"
+    echo "git_default=$(bind_of git)"
+    echo "arks_listen_any_v6=$(bind_of arks --listen=0.0.0.0 --listen=::)"
+  } >"$A5/default-bind.out"
+  cat "$A5/default-bind.out"
+  db_arks="$(sed -n 's/^arks_default=//p' "$A5/default-bind.out")"
+  db_any="$(sed -n 's/^arks_listen_any=//p' "$A5/default-bind.out")"
+  db_git="$(sed -n 's/^git_default=//p' "$A5/default-bind.out")"
+  db_any6="$(sed -n 's/^arks_listen_any_v6=//p' "$A5/default-bind.out")"
+  db_git4="$(tr ' ' '\n' <<<"$db_git" | paste - - -d' ' | grep '^tcp4' | tr '\n' ' ' | sed 's/ $//')"
+  if [[ "$db_arks" != "tcp4 0100007F" ]]; then
+    echo "FAIL A5 default bind: arks listens on '$db_arks', expected loopback only" >&2
+    DF_OK=0
+  elif [[ "$db_any" != "$db_git4" ]]; then
+    echo "FAIL A5 default bind: arks --listen=0.0.0.0 '$db_any' vs git IPv4 '$db_git4'" >&2
+    DF_OK=0
+  elif [[ "$db_git" == *tcp6* && "$db_any6" != "$db_git" ]]; then
+    echo "FAIL A5 default bind: arks --listen=0.0.0.0 --listen=:: '$db_any6' vs git '$db_git'" >&2
+    DF_OK=0
+  else
+    echo "daemon-git-arks-matrix-e2e: A5 default bind loopback; --listen=0.0.0.0 matches git"
   fi
   # --inetd: one request on stdin/stdout; exit status and reply must match.
   for kind in git arks; do
@@ -294,11 +601,13 @@ PY
   echo "daemon-git-arks-matrix-e2e: IW-DAEMON-FLAGS-PARITY greens"
   if [[ -f /.dockerenv ]]; then
     TS="$(date -u +%Y%m%d%H%M%S)"
-    OUT=".spec/evidence/${TS}-daemon-flags-parity"
-    mkdir -p "$OUT"
+    OUT=".spec/evidence/${TS}-daemon-flags-parity-a5"
+    mkdir -p "$OUT/results"
     cp "$WORK"/daemon.* "$WORK"/clone.err "$WORK"/push.err \
       "$WORK"/daemon-archive.* "$WORK"/archive.err "$WORK"/remote.tar \
       "$OUT/" 2>/dev/null || true
+    # A5 oracle comparisons: git vs arks outputs, diffs (empty = same), hook logs.
+    cp "$A5"/*.out "$A5"/*.diff "$A5"/*.log "$OUT/results/" 2>/dev/null || true
     python3 - "$OUT/receipt.json" "$TIP" "${ARKS_JOURNEY_IMAGE_TAG:-arks-verify-m1:0.1.0}" <<'PY'
 import json, sys, time
 out, tip, image = sys.argv[1:]
@@ -317,11 +626,16 @@ receipt = {
     ],
     "parity_pointers": ["related:git:// client"],
     "a5_oracle_compared": [
-        "--base-path-relaxed", "--user-path", "--interpolated-path", "--allow-override",
-        "--forbid-override", "--access-hook", "--[no-]informative-errors", "--inetd",
-        "daemon.* config override", "REMOTE_ADDR env for hooks", "--listen host:port form",
+        "--syslog", "--base-path-relaxed", "--user-path|--user-path=<path>",
+        "--interpolated-path=<pathtemplate>", "--detach", "--pid-file=<file>",
+        "--allow-override=<service>", "--forbid-override=<service>", "--access-hook=<path>",
+        "--[no-]informative-errors", "--inetd", "--user=<user>", "--group=<group>",
+        "--log-destination=(stderr|syslog|none)", "daemon.* config override",
+        "REMOTE_ADDR env for hooks", "--listen host:port form",
     ],
-    "note": "upload-archive enable+ustar Parity; path-filter/non-ustar Stay Partial; SysV double-fork Refuse; git:// client Parity pointer (not daemon DoD).",
+    "arks_only_checked": ["default bind 127.0.0.1"],
+    "results_dir": "results/",
+    "note": "A5 rows: identical raw git:// requests, log lines, syslog <PRI>, detach/pid-file process state, dropped uid/gid/groups and argv exit codes vs stock git daemon 2.39.5. Default bind is arks-only (loopback); --listen=0.0.0.0 matches git's IPv4 default listener. Windows rows stay host-tested (no Windows pin oracle).",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
 }
 with open(out, "w", encoding="utf-8") as f:
