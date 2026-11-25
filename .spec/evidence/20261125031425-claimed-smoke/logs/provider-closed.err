@@ -1,0 +1,4 @@
+note: provider tcp fail attempt=1/3: connect 127.0.0.1:48141: Connection refused (os error 111) (err_class=conn_refused)
+note: provider tcp fail attempt=2/3: connect 127.0.0.1:48141: Connection refused (os error 111) (err_class=conn_refused)
+note: provider tcp fail attempt=3/3: connect 127.0.0.1:48141: Connection refused (os error 111) (err_class=conn_refused)
+note: provider unreachable; start it or use --mock

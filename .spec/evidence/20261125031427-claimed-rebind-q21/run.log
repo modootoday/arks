@@ -1,0 +1,7 @@
+claimed-rebind-e2e: B7 HTTP checks green (held connection + old/new overlap)
+claimed-rebind-e2e: receipt=.spec/evidence/20261111092000-claimed-rebind-http/receipt.json
+claimed-rebind-e2e: B7 SSH checks green (held session + old/new overlap)
+claimed-rebind-e2e: receipt=.spec/evidence/20261111092000-claimed-rebind-ssh/receipt.json
+claimed-rebind-e2e: B7 forge checks green (held connection + old/new overlap)
+claimed-rebind-e2e: receipt=.spec/evidence/20261111092000-claimed-rebind-forge/receipt.json
+claimed-rebind-e2e: PASS — B7 http+ssh+forge dual-bind drain scenarios green

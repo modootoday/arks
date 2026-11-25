@@ -1,0 +1,3 @@
+arks serve SSH durable listen on 127.0.0.1:42887; host_key=/tmp/arks-q21.ustXLO/home/.config/arks/ssh/host_key (missing; format=absent; load=unloadable_or_absent); authorized_keys=/tmp/arks-q21.ustXLO/home/.config/arks/ssh/authorized_keys (missing; absent); path=. (present)
+arks serve SSH session#1 reached_stage=kexinit (id_exchange=ok peer=127.0.0.1:46742 peer_id=SSH-2.0-arks_ssh_smoke; kexinit=sent peer_err (failed to fill whole buffer))
+arks serve SSH durable listen stopped on 127.0.0.1:42887 (sessions=1; ops SSHD + upload-pack/receive-pack still valid)

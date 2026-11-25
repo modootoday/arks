@@ -1,0 +1,7 @@
+ssh_smoke=banner
+listen=127.0.0.1:48141
+spawns_ssh_cli=never
+ssh_git_e2e=not_checked_by_smoke (B1/B2 Docker receipt)
+tcp_connect=fail
+ssh_banner=none
+error=Connection refused (os error 111)

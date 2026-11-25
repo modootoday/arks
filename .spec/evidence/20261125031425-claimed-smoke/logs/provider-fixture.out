@@ -1,0 +1,12 @@
+provider_smoke=chat
+provider=openai-compat
+base_url=http://127.0.0.1:44339/v1
+model=arks-fixture
+spawns_ollama_cli=never
+llm_chat_e2e=not_checked_by_smoke (B4 Docker receipt)
+tcp=ok
+models_http=200
+models_preview={"object":"list","data":[{"id":"arks-fixture"}]}
+chat_http=200
+chat_preview={"id":"chatcmpl-b4-fixture","object":"chat.completion","choices":[{"index":0,"message":{"role":"assistant","content":"fixture-turn-1"},"finish_reason":"stop"}]}
+smoke_result=ok
