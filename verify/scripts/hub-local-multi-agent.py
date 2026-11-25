@@ -10,9 +10,14 @@ forge, each with its own HOME, token file and hosts file, logged in with its own
 token through `arks auth login --with-token`. Agents run concurrently (threads,
 each spawning the arks binary) and only ever invoke `arks`: never `gh` or `git`.
 
+The shared repository local/playground moves over smart HTTP. The HUB-MA-10 soak
+gives every agent its own repositories and reaches their Git directories by path,
+because one smart-HTTP listener serves one repository.
+
 Each scenario asserts the expected end state on the forge and writes its
 transcript to <out>/<scenario>.log; the summary goes to <out>/summary.json.
-Exit 0 only when every selected scenario passed.
+HUB-MA-09 reports N/A: it checks the Actions refusal, not a feature.
+Exit 0 only when every selected scenario passed (or, for 09, refused as required).
 """
 
 from __future__ import annotations
@@ -730,6 +735,369 @@ class Run:
         return {"readers": len(readers), "rounds": rounds, "issues": len(want_issues),
                 "prs": len(want_prs), "noise_issues": len(noise), "status_bytes": len(agg)}
 
+    # HUB-MA-09: Actions are GitHub-platform-only (adr:root/20261119230000 item 3), so the
+    # scenario is N/A. What the runner checks is the refusal: every agent's `run` / `workflow`
+    # call exits 2 without reaching a forge (the API points at a closed port).
+    def ma09(self, log: Log) -> dict:
+        closed = {"ARKS_HUB_API": f"http://127.0.0.1:{free_port()}"}
+
+        def refuse(a: Agent):
+            for argv in (["run", "list"], ["workflow", "list"], ["hub", "run", "view", "1"],
+                         ["hub", "workflow", "run", "ci.yml"]):
+                p = a.run(argv, expect=2, env=closed)
+                check("out of scope" in (p.stdout + p.stderr).lower()
+                      or "platform" in (p.stdout + p.stderr).lower(),
+                      f"{a.name} {argv} refusal text {p.stderr}")
+
+        concurrently(self.agents, refuse)
+        return {"disposition": "N/A", "reason": "adr:root/20261119230000 item 3",
+                "refusals": 4 * self.n}
+
+    # HUB-MA-10: full v1 matrix soak, all agents at once, over several rounds.
+    def ma10(self, log: Log) -> dict:
+        rounds = int(os.environ.get("ARKS_HUB_MA_SOAK_ROUNDS", "2"))
+        soak = Soak(self)
+        for r in range(1, rounds + 1):
+            concurrently(self.agents, lambda a: soak.journey(a, r))
+        want = v1_targets()
+        missing = sorted(want - set(soak.touched))
+        check(not missing, f"v1 leaves not touched by the soak: {missing}")
+        # Repositories, releases and accounts of different agents stayed apart.
+        reader = self.agents[-1]
+        for a in self.agents:
+            for r in range(1, rounds + 1):
+                v = reader.json(["hub", "repo", "view", f"{a.name}/soak{r}", "--json",
+                                 "description"])
+                check(v["description"] == f"soak by {a.name}", f"{a.name}/soak{r} {v}")
+        return {"rounds": rounds, "agents": self.n, "v1_targets": len(want),
+                "touched": len(set(soak.touched) & want),
+                "calls": sum(soak.touched.values())}
+
+
+def ssh_pub(comment: str) -> str:
+    """A fresh, well-formed ssh-ed25519 public key line (random point bytes)."""
+    import base64
+    import struct
+    blob = b"".join(struct.pack(">I", len(x)) + x for x in (b"ssh-ed25519", os.urandom(32)))
+    return f"ssh-ed25519 {base64.b64encode(blob).decode()} {comment}\n"
+
+
+GPG_FIXTURE = """-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEav9wixYJKwYBBAHaRw8BAQdAQjLeQBeoT4aDP0hMcp8V0S5KliR4Wo7OTC0l
+qsx/yCK0JUZpeHR1cmUgS2V5IDxmaXh0dXJlQGV4YW1wbGUuaW52YWxpZD6IkwQT
+FgoAOxYhBI7bByOhOpVqZC07Mi8wt6QweLGoBQJq/3CLAhsDBQsJCAcCAiICBhUK
+CQgLAgQWAgMBAh4HAheAAAoJEC8wt6QweLGoQmcA/j1iFqpGmluCZTSL06ANxSXg
+tb3A038eqruIHmAhLWu5AQDLo/2RiEm7W4TOdcPttVtdoGWKtQK53SBDHVsTh/EZ
+AA==
+=SSXi
+-----END PGP PUBLIC KEY BLOCK-----
+"""
+GPG_FIXTURE_ID = "2F30B7A43078B1A8"
+
+# Group rows of the v1 matrix are touched through their help.
+SOAK_GROUPS = [
+    "auth", "pr", "issue", "issue artifact", "release", "repo", "repo gitignore",
+    "repo license", "repo autolink", "repo deploy-key", "label", "search", "org", "config",
+    "alias", "gist", "discussion", "project", "ssh-key", "gpg-key", "ruleset", "milestone",
+]
+
+
+def v1_targets() -> set[str]:
+    import csv
+    path = Path(__file__).resolve().parents[1] / "matrices" / "hub-gh-arks-e2e-matrix.csv"
+    with open(path, encoding="utf-8-sig") as f:
+        return {r["arks_hub_target"] for r in csv.DictReader(f) if r["phase"] == "v1"}
+
+
+class Soak:
+    """HUB-MA-10: every agent walks the whole v1 leaf set in its own repositories,
+    all agents at once, for several rounds; a ledger records each leaf touched."""
+
+    def __init__(self, run: "Run"):
+        self.run = run
+        self.lock = threading.Lock()
+        self.touched: dict[str, int] = {}
+
+    def s(self, a: Agent, key: str, argv, *, expect=0, repo=None, **kw) -> str:
+        env = dict(kw.pop("env", {}))
+        if repo:
+            env["ARKS_HUB_REPO"] = repo
+        p = a.run(["hub", *argv], expect=expect, env=env, **kw)
+        with self.lock:
+            self.touched[key] = self.touched.get(key, 0) + 1
+        return p.stdout
+
+    def journey(self, a: Agent, r: int) -> None:
+        s, me, forge = self.s, a.name, self.run.forge
+        R, D = f"{me}/soak{r}", f"{me}/dest{r}"
+        k = self.run.agents.index(a)
+        for g in SOAK_GROUPS:
+            s(a, g, [*g.split(), "--help"])
+        # accounts: a second account, switch to it and back, log it out
+        a.login()
+        with self.lock:
+            self.touched["auth login"] = self.touched.get("auth login", 0) + 1
+        alt = f"{me}-alt{r}"
+        a.login(login=alt, token=f"{a.token}-alt{r}")
+        s(a, "auth switch", ["auth", "switch", "-u", me])
+        st = s(a, "auth status", ["auth", "status", "--json", "hosts", "--jq",
+                                  ".hosts[][] | select(.active) | .login"])
+        check(st.split() == [me], f"{me} active account {st}")
+        check(s(a, "auth token", ["auth", "token"]).strip() == a.token, f"{me} token")
+        s(a, "auth refresh", ["auth", "refresh"])
+        s(a, "auth logout", ["auth", "logout", "-u", alt])
+        # repositories with Git content
+        s(a, "repo gitignore list", ["repo", "gitignore", "list"])
+        s(a, "repo gitignore view", ["repo", "gitignore", "view", "Rust"])
+        s(a, "repo license list", ["repo", "license", "list"])
+        s(a, "repo license view", ["repo", "license", "view", "mit"])
+        s(a, "repo create", ["repo", "create", f"soak{r}", "--public", "--add-readme",
+                             "--gitignore", "Rust", "--license", "mit", "-d", "soak"])
+        s(a, "repo create", ["repo", "create", f"dest{r}", "--public", "-d", "dest"])
+        lst = s(a, "repo list", ["repo", "list", me, "--json", "nameWithOwner", "--jq",
+                                 ".[].nameWithOwner"])
+        check(R in lst.split() and D in lst.split(), f"{me} repo list {lst}")
+        s(a, "repo view", ["repo", "view", R, "--json", "nameWithOwner"])
+        s(a, "repo edit", ["repo", "edit", R, "--description", f"soak by {me}"])
+        s(a, "repo set-default", ["repo", "set-default", R])
+        s(a, "repo read-dir", ["repo", "read-dir"], repo=R)
+        s(a, "repo read-file", ["repo", "read-file", "LICENSE"], repo=R)
+        s(a, "repo clone", ["repo", "clone", R])
+        bare = forge.data / "git" / me / f"soak{r}.git"
+        wd = a.home / f"soak{r}"
+        a.run(["clone", "-q", str(bare), str(wd)], personality="git")
+        for br, path in (("feature", "f.txt"), ("topic", "t.txt")):
+            a.git(["checkout", "-q", "-B", br, "origin/main"], cwd=wd)
+            (wd / path).write_text(f"{br} by {me}\n")
+            a.git(["add", path], cwd=wd)
+            a.git(["commit", "-q", "-m", f"Add {path}"], cwd=wd)
+            a.git(["push", "-q", "origin", br], cwd=wd)
+        # labels and milestones
+        s(a, "label create", ["label", "create", "soak", "-c", "00ff00", "-d", "soak"], repo=R)
+        s(a, "label edit", ["label", "edit", "soak", "-d", "soak label"], repo=R)
+        s(a, "label create", ["label", "create", "tmp", "-c", "ff0000"], repo=R)
+        s(a, "label delete", ["label", "delete", "tmp", "--yes"], repo=R)
+        s(a, "label list", ["label", "list"], repo=R)
+        s(a, "label clone", ["label", "clone", R], repo=D)
+        s(a, "milestone create", ["milestone", "create", "m1", "-d", "first"], repo=R)
+        s(a, "milestone create", ["milestone", "create", "m2"], repo=R)
+        s(a, "milestone list", ["milestone", "list"], repo=R)
+        s(a, "milestone edit", ["milestone", "edit", "m2", "--title", "m2b"], repo=R)
+        s(a, "milestone close", ["milestone", "close", "m1"], repo=R)
+        # issues
+        i1 = tail_number(s(a, "issue create", ["issue", "create", "-t", f"soak {me}", "-b", "b",
+                                               "-l", "soak", "-m", "m2b", "-a", "@me"], repo=R))
+        i2 = tail_number(s(a, "issue create", ["issue", "create", "-t", "move me", "-b", "b"], repo=R))
+        i3 = tail_number(s(a, "issue create", ["issue", "create", "-t", "drop me", "-b", "b"], repo=R))
+        s(a, "issue list", ["issue", "list"], repo=R)
+        s(a, "issue view", ["issue", "view", str(i1)], repo=R)
+        s(a, "issue status", ["issue", "status"], repo=R)
+        s(a, "issue comment", ["issue", "comment", str(i1), "-b", "c1"], repo=R)
+        s(a, "issue edit", ["issue", "edit", str(i1), "-t", f"soak {me} ed", "--add-label", "x"], repo=R)
+        s(a, "issue close", ["issue", "close", str(i1)], repo=R)
+        s(a, "issue reopen", ["issue", "reopen", str(i1)], repo=R)
+        s(a, "issue lock", ["issue", "lock", str(i1)], repo=R)
+        s(a, "issue unlock", ["issue", "unlock", str(i1)], repo=R)
+        s(a, "issue pin", ["issue", "pin", str(i1)], repo=R)
+        s(a, "issue unpin", ["issue", "unpin", str(i1)], repo=R)
+        s(a, "issue develop", ["issue", "develop", str(i1), "--name", f"fix-{r}"], repo=R)
+        plan = a.home / f"plan{r}.md"
+        plan.write_text("# Plan\nsteps\n")
+        s(a, "issue artifact create", ["issue", "artifact", "create", str(i1), f"{plan}#Plan",
+                                       "https://runbooks.example.com/soak"], repo=R)
+        arts = json.loads(s(a, "issue artifact list", ["issue", "artifact", "list", str(i1),
+                                                       "--json", "number,name"], repo=R))
+        check(len(arts) == 2, f"{me} artifacts {arts}")
+        first, second = sorted(x["number"] for x in arts)
+        s(a, "issue artifact edit", ["issue", "artifact", "edit", str(i1), str(first),
+                                     "--body", "steps v2"], repo=R)
+        s(a, "issue artifact view", ["issue", "artifact", "view", str(i1), str(first)], repo=R)
+        s(a, "issue artifact download", ["issue", "artifact", "download", str(i1), "--dir",
+                                         str(a.home / f"art{r}")], repo=R)
+        s(a, "issue artifact delete", ["issue", "artifact", "delete", str(i1), str(second),
+                                       "--yes"], repo=R)
+        s(a, "issue transfer", ["issue", "transfer", str(i2), D], repo=R)
+        s(a, "issue delete", ["issue", "delete", str(i3), "--yes"], repo=R)
+        s(a, "milestone delete", ["milestone", "delete", "m2b", "--yes"], repo=R)
+        # pull requests
+        p1 = tail_number(s(a, "pr create", ["pr", "create", "-H", "feature", "-B", "main",
+                                            "-t", "Add f", "-b", "soak", "-l", "soak", "--draft"],
+                           repo=R))
+        s(a, "pr ready", ["pr", "ready", str(p1)], repo=R)
+        s(a, "pr list", ["pr", "list"], repo=R)
+        s(a, "pr view", ["pr", "view", str(p1)], repo=R)
+        s(a, "pr diff", ["pr", "diff", str(p1)], repo=R)
+        s(a, "pr status", ["pr", "status"], repo=R, cwd=wd)
+        s(a, "pr edit", ["pr", "edit", str(p1), "--add-label", "x", "-t", "Add f ed"], repo=R)
+        s(a, "pr comment", ["pr", "comment", str(p1), "-b", "pc1"], repo=R)
+        s(a, "pr review", ["pr", "review", str(p1), "--comment", "-b", "looks fine"], repo=R)
+        s(a, "pr lock", ["pr", "lock", str(p1)], repo=R)
+        s(a, "pr unlock", ["pr", "unlock", str(p1)], repo=R)
+        s(a, "pr close", ["pr", "close", str(p1)], repo=R)
+        s(a, "pr reopen", ["pr", "reopen", str(p1)], repo=R)
+        sha = s(a, "pr view", ["pr", "view", str(p1), "--json", "headRefOid", "--jq",
+                               ".headRefOid"], repo=R).strip()
+        s(a, "api", ["api", "-X", "POST", f"repos/{R}/statuses/{sha}", "-f", "state=success",
+                     "-f", "context=soak"])
+        s(a, "pr checks", ["pr", "checks", str(p1)], repo=R)
+        s(a, "pr checkout", ["pr", "checkout", str(p1)], repo=R, cwd=wd)
+        s(a, "co", ["co", str(p1)], repo=R, cwd=wd)
+        # rulesets: required check "soak" is green, so the merge passes
+        rs = a.home / f"rs{r}.json"
+        rs.write_text(json.dumps({
+            "name": f"soak-{me}", "enforcement": "active",
+            "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+            "rules": [{"type": "required_status_checks", "parameters": {
+                "required_status_checks": [{"context": "soak"}]}}]}))
+        made = json.loads(s(a, "api", ["api", "-X", "POST", f"repos/{R}/rulesets", "--input",
+                                       str(rs)]))
+        s(a, "ruleset list", ["ruleset", "list"], repo=R)
+        s(a, "ruleset view", ["ruleset", "view", str(made["id"])], repo=R)
+        s(a, "rs", ["rs", "view", str(made["id"])], repo=R)
+        s(a, "ruleset check", ["ruleset", "check", "--default"], repo=R)
+        s(a, "pr merge", ["pr", "merge", str(p1), "--merge"], repo=R)
+        s(a, "pr revert", ["pr", "revert", str(p1)], repo=R)
+        p3 = tail_number(s(a, "pr create", ["pr", "create", "-H", "topic", "-B", "main",
+                                            "-t", "Add t", "-b", "soak"], repo=R))
+        s(a, "pr update-branch", ["pr", "update-branch", str(p3)], repo=R)
+        # releases
+        asset = a.home / f"tool{r}.bin"
+        asset.write_bytes(os.urandom(512))
+        extra = a.home / f"extra{r}.bin"
+        extra.write_bytes(b"extra\n")
+        s(a, "release create", ["release", "create", f"v{r}.0.0", f"{asset}#Tool", "-t",
+                                f"soak {r}", "--generate-notes"], repo=R)
+        s(a, "release upload", ["release", "upload", f"v{r}.0.0", str(extra)], repo=R)
+        s(a, "release list", ["release", "list"], repo=R)
+        s(a, "release view", ["release", "view", f"v{r}.0.0"], repo=R)
+        s(a, "release download", ["release", "download", f"v{r}.0.0", "-p", "tool*", "-D",
+                                  str(a.home / f"dl{r}"), "--clobber"], repo=R)
+        check((a.home / f"dl{r}" / asset.name).read_bytes() == asset.read_bytes(), f"{me} asset")
+        s(a, "release edit", ["release", "edit", f"v{r}.0.0", "--notes", "edited"], repo=R)
+        s(a, "release delete-asset", ["release", "delete-asset", f"v{r}.0.0", extra.name, "-y"],
+          repo=R)
+        s(a, "release create", ["release", "create", f"v{r}.0.1", "-t", "tmp", "--notes", "n"],
+          repo=R)
+        s(a, "release delete", ["release", "delete", f"v{r}.0.1", "-y"], repo=R)
+        # search, status, api, org, browse
+        s(a, "search issues", ["search", "issues", f"soak {me}", "--repo", R])
+        s(a, "search prs", ["search", "prs", "Add", "--repo", R])
+        s(a, "search repos", ["search", "repos", f"soak{r}", "--owner", me])
+        s(a, "search code", ["search", "code", "feature", "--repo", R])
+        s(a, "search commits", ["search", "commits", "Add", "--repo", R])
+        s(a, "status", ["status"])
+        s(a, "api", ["api", "/user"])
+        s(a, "org list", ["org", "list"])
+        s(a, "browse", ["browse", str(i1), "--no-browser"], repo=R)
+        # config, aliases, completion (per-agent client state)
+        s(a, "config set", ["config", "set", "editor", f"ed-{me}"])
+        got = s(a, "config get", ["config", "get", "editor"]).strip()
+        check(got == f"ed-{me}", f"{me} config get {got}")
+        s(a, "config list", ["config", "list"])
+        s(a, "config clear-cache", ["config", "clear-cache"])
+        s(a, "alias set", ["alias", "set", f"st{r}", "status"])
+        aliases = a.home / f"aliases{r}.yml"
+        aliases.write_text(f"im{r}: issue list\n")
+        s(a, "alias import", ["alias", "import", str(aliases)])
+        s(a, "alias list", ["alias", "list"])
+        s(a, "alias delete", ["alias", "delete", f"st{r}"])
+        s(a, "completion", ["completion", "-s", "bash"])
+        # gists and discussions
+        g1 = a.home / f"g{r}.txt"
+        g1.write_text("alpha\n")
+        g2 = a.home / f"g{r}-v2.txt"
+        g2.write_text("alpha v2\n")
+        gid = s(a, "gist create", ["gist", "create", str(g1), "-d", f"gist {me}"]).strip()
+        gid = gid.rstrip("/").rsplit("/", 1)[-1]
+        s(a, "gist list", ["gist", "list"])
+        s(a, "gist view", ["gist", "view", gid])
+        s(a, "gist edit", ["gist", "edit", gid, str(g2), "-f", g1.name])
+        s(a, "gist rename", ["gist", "rename", gid, g1.name, f"renamed{r}.txt"])
+        s(a, "gist clone", ["gist", "clone", gid, str(a.home / f"gist{r}")])
+        s(a, "gist delete", ["gist", "delete", gid, "--yes"])
+        dn = tail_number(s(a, "discussion create", ["discussion", "create", "-t", "plan", "-b",
+                                                    "body", "-c", "Ideas"], repo=R))
+        s(a, "discussion list", ["discussion", "list"], repo=R)
+        s(a, "discussion edit", ["discussion", "edit", str(dn), "-t", "plan v2"], repo=R)
+        s(a, "discussion comment", ["discussion", "comment", str(dn), "-b", "hello"], repo=R)
+        s(a, "discussion view", ["discussion", "view", str(dn), "--comments"], repo=R)
+        # projects (per-owner numbering)
+        pn = tail_number(s(a, "project create", ["project", "create", "--title", f"Road {me}"]))
+        s(a, "project edit", ["project", "edit", str(pn), "-d", "short"])
+        s(a, "project field-create", ["project", "field-create", str(pn), "--name", "Note",
+                                      "--data-type", "TEXT"])
+        fields = json.loads(s(a, "project field-list", ["project", "field-list", str(pn),
+                                                        "--format", "json"]))
+        fid = next(f["id"] for f in fields["fields"] if f["name"] == "Note")
+        s(a, "project item-add", ["project", "item-add", str(pn), "--url", f"{R}#{i1}"])
+        item = json.loads(s(a, "project item-create", ["project", "item-create", str(pn),
+                                                       "--title", "draft", "--format", "json"]))
+        s(a, "project item-edit", ["project", "item-edit", "--id", str(item["id"]),
+                                   "--project-id", str(pn), "--field-id", str(fid), "--text", "hi"])
+        s(a, "project item-list", ["project", "item-list", str(pn)])
+        s(a, "project item-archive", ["project", "item-archive", str(pn), "--id", str(item["id"])])
+        cp = tail_number(s(a, "project copy", ["project", "copy", str(pn), "--title", "Copy"]))
+        s(a, "project item-delete", ["project", "item-delete", str(pn), "--id", str(item["id"])])
+        s(a, "project field-delete", ["project", "field-delete", "--id", str(fid)])
+        s(a, "project link", ["project", "link", str(pn), "-R", R])
+        s(a, "project unlink", ["project", "unlink", str(pn), "-R", R])
+        s(a, "project mark-template", ["project", "mark-template", str(pn)])
+        s(a, "project close", ["project", "close", str(pn)])
+        s(a, "project list", ["project", "list", "--closed"])
+        s(a, "project view", ["project", "view", str(pn)])
+        s(a, "project delete", ["project", "delete", str(cp)])
+        # keys: a fresh SSH key per agent and round; the one GPG fixture rotates
+        key = a.home / f"id{r}.pub"
+        key.write_text(ssh_pub(f"{me}@example.com"))
+        s(a, "ssh-key add", ["ssh-key", "add", str(key), "-t", f"key{r}"])
+        keys = json.loads(a.out(["hub", "api", "/user/keys"]))
+        kid = next(x["id"] for x in keys if x["title"] == f"key{r}")
+        s(a, "ssh-key list", ["ssh-key", "list"])
+        s(a, "ssh-key delete", ["ssh-key", "delete", str(kid), "--yes"])
+        s(a, "gpg-key list", ["gpg-key", "list"])
+        if k == (r - 1) % self.run.n:
+            pub = a.home / "pub.asc"
+            pub.write_text(GPG_FIXTURE)
+            s(a, "gpg-key add", ["gpg-key", "add", str(pub)])
+            s(a, "gpg-key delete", ["gpg-key", "delete", GPG_FIXTURE_ID, "--yes"])
+        dk = a.home / f"dk{r}.pub"
+        dk.write_text(ssh_pub(f"deploy-{me}@example.com"))
+        s(a, "repo deploy-key add", ["repo", "deploy-key", "add", str(dk), "-t", "ci"], repo=R)
+        dks = json.loads(s(a, "repo deploy-key list", ["repo", "deploy-key", "list", "--json",
+                                                       "id"], repo=R))
+        s(a, "repo deploy-key delete", ["repo", "deploy-key", "delete", str(dks[0]["id"])], repo=R)
+        s(a, "repo autolink create", ["repo", "autolink", "create", "TICKET-",
+                                      "https://tracker.example.com/t/<num>"], repo=R)
+        als = json.loads(s(a, "repo autolink list", ["repo", "autolink", "list", "--json", "id"],
+                           repo=R))
+        s(a, "repo autolink view", ["repo", "autolink", "view", str(als[0]["id"])], repo=R)
+        s(a, "repo autolink delete", ["repo", "autolink", "delete", str(als[0]["id"]), "--yes"],
+          repo=R)
+        # forks, sync, rename, archive, delete
+        s(a, "repo fork", ["repo", "fork", R, "--org", f"forks-{me}"])
+        s(a, "repo sync", ["repo", "sync", f"forks-{me}/soak{r}"])
+        s(a, "repo archive", ["repo", "archive", "--yes"], repo=D)
+        s(a, "repo unarchive", ["repo", "unarchive", "--yes"], repo=D)
+        s(a, "repo rename", ["repo", "rename", f"dest{r}x", "--yes"], repo=D)
+        s(a, "repo delete", ["repo", "delete", f"{me}/dest{r}x", "--yes"])
+        # the transitional hub serve alias on its own port (one agent per run)
+        if k == 0 and r == 1:
+            port = free_port()
+            e = dict(a.env, ARKS_PERSONALITY="")
+            proc = subprocess.Popen([forge.arks, "hub", "serve", "--listen", f"127.0.0.1:{port}",
+                                     "--data", str(a.home / "hs-data")], env=e,
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            try:
+                wait_port(port, "hub serve")
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as resp:
+                    check(json.loads(resp.read()).get("ok") is True, "hub serve health")
+                with self.lock:
+                    self.touched["serve"] = self.touched.get("serve", 0) + 1
+            finally:
+                proc.terminate()
+                proc.wait(10)
+
 
 SCENARIOS = {
     "SMOKE": "smoke",
@@ -741,6 +1109,8 @@ SCENARIOS = {
     "HUB-MA-06": "ma06",
     "HUB-MA-07": "ma07",
     "HUB-MA-08": "ma08",
+    "HUB-MA-09": "ma09",
+    "HUB-MA-10": "ma10",
 }
 
 
@@ -765,7 +1135,8 @@ def main() -> int:
             t0 = time.monotonic()
             try:
                 facts = meth(log)
-                status = "PASS"
+                # An N/A scenario passes its refusal check; it is not a Claimed feature.
+                status = "N/A" if facts.get("disposition") == "N/A" else "PASS"
             except Exception as e:  # noqa: BLE001 - recorded per scenario
                 facts = {"error": str(e)[:4000]}
                 log.write(traceback.format_exc())
