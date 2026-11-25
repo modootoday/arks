@@ -26,7 +26,7 @@ Each unit is one PR. Status values: `open`, `in-progress`, `done` (with the PR),
 | Q3 | gh personality: unknown flag exits 1 like gh (arks exits 2) | A | done | gh argv inventory exit-code column matches |
 | Q4 | Rulesets enforced on push to an `arks serve` forge (today stored, not enforced) | A | open | hub e2e journey refuses a push that a ruleset forbids |
 | Q5 | `instaweb` serves gitweb-equivalent pages | A | open | corpus lines for page fetches SAME or reasoned |
-| Q6 | `send-email` output against a captured SMTP session (no git-email oracle in the image) | A | open | receipt from a fixture SMTP server |
+| Q6 | `send-email` output against a captured SMTP session (no git-email oracle in the image) | A | done | receipt from a fixture SMTP server (`.spec/evidence/20261125005021-send-email-smtp-fixture`, 16/16 in Docker) |
 | Q7 | Daemon on Windows: syslog, inetd, detach, user and drive paths | A | open | Windows CI test plus honest refuse rows |
 | Q8 | Real OS credential stores for `credential-manager` / `credential-wincred` on each OS | A | open | per-OS CI test where a store exists, honest refuse elsewhere |
 | Q9 | TLS / CRAM-MD5 for `send-email` / `imap-send` against real servers | O | owner-blocked | owner supplies a test mail account (secret) |

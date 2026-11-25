@@ -1,0 +1,6 @@
+git version 2.39.5
+git send-email --help exit=1
+git: 'send-email' is not a git command. See 'git --help'.
+git-send-email absent (/usr/lib/git-core/git-send-email)
+unknown ok not-installed
+rustc 1.99.1 (58cf8f9c3 2026-10-13)

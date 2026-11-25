@@ -1,0 +1,39 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 20s
+     Running tests/send_email_smtp.rs (/cargo-target/debug/deps/send_email_smtp-54f5ee2b9c6602df)
+
+running 16 tests
+test annotate_off_runs_no_editor ... ok
+test auth_plain_and_login_without_tls ... ok
+test batch_size_reconnects ... ok
+test data_lines_are_dot_stuffed ... ok
+test deep_threading_with_chain_reply_to ... ok
+test dry_run_opens_no_connection ... ok
+test envelope_session_and_headers_of_one_patch ... ok
+test format_patch_non_ascii_output_gets_one_mime_block ... ok
+test helo_fallback_when_ehlo_is_refused ... ok
+test no_thread_adds_no_threading_headers ... ok
+test no_thread_with_in_reply_to_replies_every_mail_to_it ... ok
+test non_ascii_content_is_declared_as_mime ... ok
+test shallow_threading_is_the_default_without_in_reply_to ... ok
+test shallow_threading_with_in_reply_to ... ok
+test suppress_cc_categories_shape_the_envelope ... ok
+test transfer_encodings ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.41s
+
+     Running tests/tool_bridges.rs (/cargo-target/debug/deps/tool_bridges-f8a09cf6978a4c91)
+
+running 8 tests
+test askpass_helpers_and_browser_commands ... fatal: could not read from terminal: terminal prompts disabled
+ok
+test filter_branch_rewrites_and_backs_up ... ok
+test imap_send_appends_to_the_folder ... ok
+test instaweb_starts_and_stops_the_server ... ok
+test mergetool_stages_the_result_and_keeps_a_backup ... ok
+test quiltimport_commits_each_patch ... ok
+test send_email_dry_run_and_sendmail_command ... ok
+test send_email_talks_smtp_to_a_local_sink ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+
+fixture-tests exit=0

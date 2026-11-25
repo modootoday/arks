@@ -234,6 +234,84 @@ pub fn rfc2822(t: i64, tz_minutes: i32) -> String {
     )
 }
 
+/// RFC 2047 `Q` encoded words for a non-ASCII header value in `charset`,
+/// each word at most 75 characters, folded onto continuation lines.
+pub fn encode_header(value: &str, charset: &str) -> String {
+    let open = format!("=?{charset}?q?");
+    let room = 75usize.saturating_sub(open.len() + 2).max(4);
+    let mut words: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    for ch in value.chars() {
+        let mut tok = String::new();
+        if ch == ' ' {
+            tok.push('_');
+        } else if ch.is_ascii_alphanumeric() || "!*+-/".contains(ch) {
+            tok.push(ch);
+        } else {
+            let mut buf = [0u8; 4];
+            for b in ch.encode_utf8(&mut buf).bytes() {
+                tok.push_str(&format!("={b:02X}"));
+            }
+        }
+        if !cur.is_empty() && cur.len() + tok.len() > room {
+            words.push(std::mem::take(&mut cur));
+        }
+        cur.push_str(&tok);
+    }
+    words.push(cur);
+    words
+        .iter()
+        .map(|w| format!("{open}{w}?="))
+        .collect::<Vec<_>>()
+        .join("\n ")
+}
+
+/// RFC 2045 §6.7 quoted-printable body (lines end in `\n`; the SMTP layer
+/// writes CRLF). Encoded lines stay within 76 characters.
+pub fn quoted_printable(body: &str) -> String {
+    let mut out = String::new();
+    let mut segs: Vec<&str> = body.split('\n').collect();
+    let trailing_nl = body.ends_with('\n');
+    if trailing_nl {
+        segs.pop();
+    }
+    for (n, seg) in segs.iter().enumerate() {
+        let bytes = seg.as_bytes();
+        let mut line = String::new();
+        for (i, &b) in bytes.iter().enumerate() {
+            let last = i + 1 == bytes.len();
+            let tok = match b {
+                b' ' | b'\t' if !last => (b as char).to_string(),
+                33..=60 | 62..=126 => (b as char).to_string(),
+                _ => format!("={b:02X}"),
+            };
+            if line.len() + tok.len() > 75 {
+                out.push_str(&line);
+                out.push_str("=\n");
+                line.clear();
+            }
+            line.push_str(&tok);
+        }
+        out.push_str(&line);
+        if n + 1 < segs.len() || trailing_nl {
+            out.push('\n');
+        }
+    }
+    out
+}
+
+/// RFC 2045 §6.8 base64 body in 76-character lines.
+pub fn base64_body(body: &[u8]) -> String {
+    use base64::Engine;
+    let enc = base64::engine::general_purpose::STANDARD.encode(body);
+    let mut out = String::new();
+    for chunk in enc.as_bytes().chunks(76) {
+        out.push_str(&String::from_utf8_lossy(chunk));
+        out.push('\n');
+    }
+    out
+}
+
 fn civil(z: i64) -> (i64, i64, i64) {
     let z = z + 719_468;
     let era = z.div_euclid(146_097);
@@ -264,6 +342,22 @@ mod tests {
     fn dates() {
         assert_eq!(rfc2822(1_700_000_000, 0), "Tue, 14 Nov 2023 22:13:20 +0000");
         assert_eq!(rfc2822(0, -300), "Wed, 31 Dec 1969 19:00:00 -0500");
+    }
+
+    #[test]
+    fn encodings() {
+        assert_eq!(
+            encode_header("caf\u{e9} au lait", "UTF-8"),
+            "=?UTF-8?q?caf=C3=A9_au_lait?="
+        );
+        let long = encode_header(&"\u{e9}".repeat(30), "UTF-8");
+        assert!(long.lines().all(|l| l.trim_start().len() <= 75), "{long}");
+        assert_eq!(long.matches("=C3=A9").count(), 30);
+        assert_eq!(quoted_printable("a=b \nc\u{e9}\n"), "a=3Db=20\nc=C3=A9\n");
+        let qp = quoted_printable(&"x".repeat(200));
+        assert!(qp.lines().all(|l| l.len() <= 76), "{qp}");
+        assert_eq!(qp.replace("=\n", ""), "x".repeat(200));
+        assert_eq!(base64_body(b"hi\n"), "aGkK\n");
     }
 
     #[test]

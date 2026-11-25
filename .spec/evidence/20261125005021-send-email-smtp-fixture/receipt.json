@@ -1,0 +1,22 @@
+{
+  "gate": "Q6 send-email SMTP fixture",
+  "unit": "plan:root/20261124000000 Q6",
+  "venue": "docker arks-verify-m1:0.1.0",
+  "git": "git version 2.39.5",
+  "tip": "adef2f1",
+  "oracle": "none: git-email is not installed in the image (git send-email --help exits 1, 'not a git command'; dpkg git-email not-installed). No stock comparison was possible; nothing here is a stock-vs-arks SAME claim.",
+  "method": "crates/arks/tests/send_email_smtp.rs runs the arks binary against a loopback SMTP fixture server implemented in the test harness (EHLO/HELO, AUTH PLAIN/LOGIN without TLS, MAIL FROM, RCPT TO, DATA with dot-unstuffing, RSET, NOOP, QUIT) that records the session transcript and message bytes. Assertions derive from https://git-scm.com/docs/git-send-email option descriptions and RFC 5321 / 5322 / 2045 / 2047.",
+  "results": {
+    "send_email_smtp": {"passed": 16, "failed": 0},
+    "tool_bridges": {"passed": 8, "failed": 0},
+    "send_email_unit": {"passed": 4, "failed": 0}
+  },
+  "gaps_fixed": [
+    "--no-thread with --in-reply-to now makes every mail a reply to the given Message-ID (In-Reply-To and References), per the --in-reply-to and --[no-]thread descriptions",
+    "--transfer-encoding is applied to the body (quoted-printable, base64; auto = 8bit unless a line exceeds 998 octets, then quoted-printable; 7bit refuses a non-ASCII message before any mail is sent)",
+    "--8bit-encoding / sendemail.assume8bitEncoding sets the declared charset; a non-ASCII Subject is sent as RFC 2047 encoded words"
+  ],
+  "before_fix": "the same fixture suite on origin/main product code: 12 passed, 4 failed (no_thread_with_in_reply_to, transfer_encodings, non_ascii_content_is_declared_as_mime, format_patch_non_ascii_output_gets_one_mime_block); host run, advisory",
+  "not_covered": "STARTTLS / SMTPS / CRAM-MD5 against a real server (Q9, owner-blocked); exact stock wording of stdout and error lines and the stock Message-ID left-hand side, which need a git-email oracle",
+  "timestamp": "2026-11-25T00:50:21Z"
+}

@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 16.09s
+     Running unittests src/main.rs (/cargo-target/debug/deps/arks-dc9dff049f75c906)
+
+running 4 tests
+test cmd::bridge::send_email::message::tests::addresses ... ok
+test cmd::bridge::send_email::message::tests::dates ... ok
+test cmd::bridge::send_email::message::tests::body_cc ... ok
+test cmd::bridge::send_email::message::tests::encodings ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 115 filtered out; finished in 0.00s
+
+unit-tests exit=0
