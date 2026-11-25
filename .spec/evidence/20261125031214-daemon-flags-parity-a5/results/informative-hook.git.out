@@ -1,0 +1,7 @@
+git-upload-pack /nope.git\0 => 0025ERR no such repository: /nope.git
+git-upload-pack /hidden.git\0 => 002cERR repository not exported: /hidden.git
+git-receive-pack /pub.git\0 => 0025ERR service not enabled: /pub.git
+git-upload-pack /noup.git\0 => 0026ERR service not enabled: /noup.git
+git-upload-pack /priv.git\0host=localhost\0 => 0023ERR declined by hook: /priv.git
+git-upload-pack /pub.git\0host=localhost:9999\0 => ADVERT
+git-upload-pack ~root/x\0 => 0023ERR no such repository: ~root/x

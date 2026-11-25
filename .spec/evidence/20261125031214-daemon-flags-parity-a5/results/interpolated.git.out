@@ -1,0 +1,3 @@
+git-upload-pack /v.git\0host=LocalHost:77\0 => ADVERT
+git-upload-pack /v.git\0host=other\0 => 0022ERR no such repository: /v.git
+git-upload-pack /pub.git\0 => ADVERT

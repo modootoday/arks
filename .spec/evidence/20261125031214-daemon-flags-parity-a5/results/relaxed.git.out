@@ -1,0 +1,3 @@
+git-upload-pack /tmp/arks-daemon-flags.YaUKQs/a5/srv/pub.git\0 => ADVERT
+git-upload-pack /pub.git\0 => ADVERT
+git-upload-pack /zzz.git\0 => 0024ERR no such repository: /zzz.git

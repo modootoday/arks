@@ -1,0 +1,27 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip 231e884,
+run 2026-11-25 inside a hosted cloud session with a local dockerd (queue unit Q19).
+Command: compose service dod-daemon-matrix with ARKS_DAEMON_FLAGS_PARITY=1,
+ARKS_DOD_STRICT=1 and ARKS_TIP=231e884 (the mounted checkout is a linked worktree, so
+git rev-parse cannot name the tip inside the container); CARGO_TARGET_DIR=/cargo-target/q19
+kept this build apart from a concurrent hub run sharing the cargo-target volume.
+Cargo ran offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted
+read-only at /usr/local/cargo/registry, because the container could not use the
+session egress proxy. Dependencies are pinned and checksummed by Cargo.lock; the
+build and every gate step ran inside the image. Override file (session-local, not
+tracked) adds that volume and env only.
+
+The container runs as root, so /dev/log (syslog collector), --user=nobody and
+--group=daemon were exercised for real. The container has no IPv6 listener, so the
+default-bind comparison covers IPv4 only (git's default bind showed tcp4 0.0.0.0).
+
+results/ holds each comparison: <case>.git.out and <case>.arks.out with the same
+inputs to stock git daemon and arks daemon, and <case>.diff (empty = same). Log and
+syslog lines are sorted with digits masked (pids, ports). The run ended
+"IW-DAEMON-FLAGS-PARITY greens" with no FAIL line.
+
+Earlier runs in this unit found and fixed (spec 305a2a3, code 4b8d305): the fatal for
+a connection that hangs up before its request, the per-connection base-path check
+after a privilege drop, numbered Disconnected lines, and a silent exit 128 under
+--log-destination=none. Not compared: upload-archive ACK ordering before argument
+parsing (git ACKs as soon as its writer starts; arks after reading the arguments),
+which belongs to the upload-archive rows, not to A5.

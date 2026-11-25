@@ -1,0 +1,4 @@
+git-receive-pack /recv.git\0 => ADVERT
+git-receive-pack /pub.git\0 => 0025ERR service not enabled: /pub.git
+git-upload-archive /arch.git\0<flush> => ADVERT
+git-upload-archive /pub.git\0 => 0025ERR service not enabled: /pub.git

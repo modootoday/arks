@@ -1,0 +1,12 @@
+[N] '/tmp/arks-daemon-flags.YaUKQs/aN/srv/hidden.git': repository not exported.
+[N] '/tmp/arks-daemon-flags.YaUKQs/aN/srv/nope.git' does not appear to be a git repository
+[N] Connection from N.N.N.N:N
+[N] Connection from N.N.N.N:N
+[N] Connection from N.N.N.N:N
+[N] Ready to rumble
+[N] Request upload-pack for '/hidden.git'
+[N] Request upload-pack for '/nope.git'
+[N] [N] Disconnected (with error)
+[N] [N] Disconnected (with error)
+[N] [N] Disconnected (with error)
+fatal: the remote end hung up unexpectedly

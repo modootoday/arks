@@ -1,0 +1,12 @@
+parent_exit=0
+parent_stdout_bytes=0 parent_stderr_bytes=0
+pidfile_alive=yes
+session_leader=yes
+tty=?
+fd0=/dev/null
+fd1=/dev/null
+fd2=/dev/null
+git-upload-pack /nope.git\0 => 0025ERR no such repository: /nope.git
+kill_closes_port=yes
+foreground_pidfile_kill_closes_port=yes
+inetd_pidfile_written=no

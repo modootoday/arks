@@ -1,0 +1,8 @@
+--user=a5-no-such-user git=128 arks=128
+--user=0 git=128 arks=128
+--user=nobody --group=a5-no-such-group git=128 arks=128
+--inetd --detach git=1 arks=1
+--inetd --user=nobody git=1 arks=1
+--inetd --group=daemon git=1 arks=1
+--log-destination= git=128 arks=128
+--syslog --log-destination=bogus git=128 arks=128

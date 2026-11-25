@@ -1,0 +1,2 @@
+git-upload-pack /yesup.git\0 => 0027ERR service not enabled: /yesup.git
+git-upload-pack /nope.git\0 => 0026ERR service not enabled: /nope.git
