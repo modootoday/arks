@@ -452,9 +452,17 @@ fn fetch_network(
             "fetch --dry-run is claimed for local-path remotes only".into(),
         ));
     }
+    // `--tags` / `--no-tags` win over `remote.<name>.tagOpt`; neither means
+    // auto-follow (git-fetch TAG AUTO-FOLLOWING).
+    let tags = o.tags.or(match source.tag_opt.as_deref() {
+        Some("--tags") => Some(true),
+        Some("--no-tags") => Some(false),
+        _ => None,
+    });
     let opts = arks_remote::FetchOptions {
         depth,
         filter,
+        tags,
         ..Default::default()
     };
     let result = arks_remote::fetch_remote_with(&mut repo, &source.url, &name, &opts)?;
