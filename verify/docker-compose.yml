@@ -587,6 +587,18 @@ services:
       ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
     command: ["/bin/bash", "verify/scripts/run-claimed-agent-llm-e2e.sh"]
 
+  # Q21: serve ssh-smoke + agent provider smoke / review --smoke diagnostics.
+  dod-claimed-smoke:
+    <<: *cleanroom
+    depends_on:
+      - toolchain
+    environment:
+      CARGO_BUILD_JOBS: "1"
+      CARGO_TARGET_DIR: /cargo-target
+      RUSTUP_TOOLCHAIN: "1.99.1"
+      ARKS_DOD_STRICT: "${ARKS_DOD_STRICT:-0}"
+    command: ["/bin/bash", "verify/scripts/run-claimed-smoke-e2e.sh"]
+
   dod-claimed-daemon-archive:
     <<: *cleanroom
     depends_on:
