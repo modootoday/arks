@@ -52,6 +52,56 @@ pub struct PushOptions {
     pub push_options: Vec<String>,
 }
 
+/// Outcome of one ref of a push ([[sot:root/arks-remote]] 7d).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PushRefStatus {
+    /// The peer reported `ok <ref>`.
+    Ok,
+    /// The advertised tip already equals the new value; no command was sent.
+    UpToDate,
+    /// The peer reported `ng <ref> <reason>` (reason verbatim), or did not
+    /// report the ref at all.
+    Rejected(String),
+}
+
+/// One entry of a per-ref push report, in the order of the input updates.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PushRefResult {
+    pub refname: String,
+    pub status: PushRefStatus,
+}
+
+/// Legacy all-or-nothing view: fail when the peer rejected any ref.
+fn all_or_nothing(report: Vec<PushRefResult>) -> Result<(), RemoteError> {
+    let problems: Vec<String> = report
+        .iter()
+        .filter_map(|r| match &r.status {
+            PushRefStatus::Rejected(why) => Some(format!("{} {why}", r.refname)),
+            _ => None,
+        })
+        .collect();
+    if problems.is_empty() {
+        Ok(())
+    } else {
+        Err(RemoteError::Rejected(problems.join("; ")))
+    }
+}
+
+/// Every update reported as accepted (dumb push and empty dialogs).
+fn all_ok(updates: &[PushUpdate], skipped: &HashSet<String>) -> Vec<PushRefResult> {
+    updates
+        .iter()
+        .map(|u| PushRefResult {
+            refname: u.refname.clone(),
+            status: if skipped.contains(&u.refname) {
+                PushRefStatus::UpToDate
+            } else {
+                PushRefStatus::Ok
+            },
+        })
+        .collect()
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RefStatus {
     pub name: String,
@@ -75,8 +125,18 @@ pub fn push_http_with(
     updates: &[PushUpdate],
     opts: &PushOptions,
 ) -> Result<(), RemoteError> {
+    all_or_nothing(push_http_report(repo, url, updates, opts)?)
+}
+
+/// Smart/dumb HTTP push returning the per-ref report (rule 7d).
+pub fn push_http_report(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<Vec<PushRefResult>, RemoteError> {
     let mut transport = UreqTransport::new();
-    push_with(&mut transport, repo, url, updates, opts)
+    push_report_with(&mut transport, repo, url, updates, opts)
 }
 
 /// Push over OpenSSH speaking receive-pack pkt-line.
@@ -90,23 +150,33 @@ pub fn push_ssh_with(
     updates: &[PushUpdate],
     opts: &PushOptions,
 ) -> Result<(), RemoteError> {
+    all_or_nothing(push_ssh_report(repo, url, updates, opts)?)
+}
+
+/// SSH push returning the per-ref report (rule 7d).
+pub fn push_ssh_report(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<Vec<PushRefResult>, RemoteError> {
     validate_push_updates(updates)?;
     let ssh_url = SshRemoteUrl::parse(url)?;
     let mut session = SshSession::connect(&ssh_url, SshService::ReceivePack)?;
     let ad = session.read_advertisement()?;
-    let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
-    if skip {
+    let (body, skipped) = build_push_body(repo, &ad, updates, opts)?;
+    if skipped.len() == updates.len() {
         // Nothing to send; drop the session (peer may exit non-zero on empty dialog).
         drop(session);
-        return Ok(());
+        return Ok(all_ok(updates, &skipped));
     }
     session.write_all(&body)?;
     session.close_stdin();
     // receive-pack sends report-status then exits.
     let report_bytes = session.read_until_flush()?;
-    apply_report_status(&report_bytes)?;
+    let report = report_per_ref(&report_bytes, updates, &skipped)?;
     session.finish()?;
-    Ok(())
+    Ok(report)
 }
 
 /// Push over `git://` speaking receive-pack (peer must enable receive-pack).
@@ -120,20 +190,29 @@ pub fn push_git_with(
     updates: &[PushUpdate],
     opts: &PushOptions,
 ) -> Result<(), RemoteError> {
+    all_or_nothing(push_git_report(repo, url, updates, opts)?)
+}
+
+/// `git://` push returning the per-ref report (rule 7d).
+pub fn push_git_report(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<Vec<PushRefResult>, RemoteError> {
     validate_push_updates(updates)?;
     let git_url = GitDaemonUrl::parse(url)?;
     let mut session = GitDaemonSession::connect(&git_url, GitDaemonService::ReceivePack)?;
     let ad = session.read_advertisement()?;
-    let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
-    if skip {
+    let (body, skipped) = build_push_body(repo, &ad, updates, opts)?;
+    if skipped.len() == updates.len() {
         drop(session);
-        return Ok(());
+        return Ok(all_ok(updates, &skipped));
     }
     session.write_all(&body)?;
     session.close_write();
     let report_bytes = session.read_until_flush()?;
-    apply_report_status(&report_bytes)?;
-    Ok(())
+    report_per_ref(&report_bytes, updates, &skipped)
 }
 
 /// Dispatch HTTP / SSH / `git://` from the remote URL scheme.
@@ -151,15 +230,27 @@ pub fn push_remote_with(
     updates: &[PushUpdate],
     opts: &PushOptions,
 ) -> Result<(), RemoteError> {
+    all_or_nothing(push_remote_report(repo, url, updates, opts)?)
+}
+
+/// Dispatch HTTP / SSH / `git://` and return the per-ref report (rule 7d):
+/// `Err` only when the whole push failed (transport, protocol, unpack).
+pub fn push_remote_report(
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<Vec<PushRefResult>, RemoteError> {
     if SshRemoteUrl::parse(url).is_ok() {
-        push_ssh_with(repo, url, updates, opts)
+        push_ssh_report(repo, url, updates, opts)
     } else if GitDaemonUrl::parse(url).is_ok() {
-        push_git_with(repo, url, updates, opts)
+        push_git_report(repo, url, updates, opts)
     } else {
-        push_http_with(repo, url, updates, opts)
+        push_http_report(repo, url, updates, opts)
     }
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn push_with<T: Transport>(
     transport: &mut T,
     repo: &Repository,
@@ -167,6 +258,16 @@ pub(crate) fn push_with<T: Transport>(
     updates: &[PushUpdate],
     opts: &PushOptions,
 ) -> Result<(), RemoteError> {
+    all_or_nothing(push_report_with(transport, repo, url, updates, opts)?)
+}
+
+pub(crate) fn push_report_with<T: Transport>(
+    transport: &mut T,
+    repo: &Repository,
+    url: &str,
+    updates: &[PushUpdate],
+    opts: &PushOptions,
+) -> Result<Vec<PushRefResult>, RemoteError> {
     validate_push_updates(updates)?;
 
     let info_url = join_url(url, "info/refs?service=git-receive-pack");
@@ -187,7 +288,8 @@ pub(crate) fn push_with<T: Transport>(
         }
         // Dumb force-with-lease: CAS under exclusive WebDAV LOCK (re-GET tip
         // before PUT). Smart-pack lease remains the primary Claimed path.
-        return crate::dumb::push_dumb_with(transport, repo, url, updates, &info.body);
+        crate::dumb::push_dumb_with(transport, repo, url, updates, &info.body)?;
+        return Ok(all_ok(updates, &HashSet::new()));
     }
     if !content_type_is(
         header(&info.headers, "content-type"),
@@ -199,9 +301,9 @@ pub(crate) fn push_with<T: Transport>(
     }
     let ad = parse_advertisement(&info.body, "git-receive-pack")?;
     ensure_remote_object_format(repo, &ad)?;
-    let (body, skip) = build_push_body(repo, &ad, updates, opts)?;
-    if skip {
-        return Ok(());
+    let (body, skipped) = build_push_body(repo, &ad, updates, opts)?;
+    if skipped.len() == updates.len() {
+        return Ok(all_ok(updates, &skipped));
     }
 
     let post_url = join_url(url, "git-receive-pack");
@@ -223,7 +325,7 @@ pub(crate) fn push_with<T: Transport>(
             "git-receive-pack result had an unexpected content type".into(),
         ));
     }
-    apply_report_status(&posted.body)
+    report_per_ref(&posted.body, updates, &skipped)
 }
 
 fn validate_push_updates(updates: &[PushUpdate]) -> Result<(), RemoteError> {
@@ -241,13 +343,14 @@ fn validate_push_updates(updates: &[PushUpdate]) -> Result<(), RemoteError> {
     Ok(())
 }
 
-/// Build receive-pack command+pack body. `skip == true` means nothing to push.
+/// Build receive-pack command+pack body plus the refs that need no command
+/// (advertised tip already equals the new value). All skipped = nothing to push.
 fn build_push_body(
     repo: &Repository,
     ad: &Advertisement,
     updates: &[PushUpdate],
     opts: &PushOptions,
-) -> Result<(Vec<u8>, bool), RemoteError> {
+) -> Result<(Vec<u8>, HashSet<String>), RemoteError> {
     let want_push_options = !opts.push_options.is_empty();
     if want_push_options && !cap_advertised(&ad.capabilities, "push-options") {
         return Err(RemoteError::NotImplemented(
@@ -258,6 +361,7 @@ fn build_push_body(
     let caps = push_capability_list(&ad.capabilities, want_push_options)?;
 
     let mut commands: Vec<(Oid, Oid, String)> = Vec::new();
+    let mut skipped = HashSet::new();
     let mut any_delete = false;
     for update in updates {
         let advertised = ad
@@ -281,6 +385,7 @@ fn build_push_body(
             advertised
         };
         if old == update.new_oid {
+            skipped.insert(update.refname.clone());
             continue;
         }
         if update.new_oid.as_bytes().iter().all(|b| *b == 0) {
@@ -289,7 +394,7 @@ fn build_push_body(
         commands.push((old, update.new_oid, update.refname.clone()));
     }
     if commands.is_empty() {
-        return Ok((Vec::new(), true));
+        return Ok((Vec::new(), skipped));
     }
     if any_delete && !cap_advertised(&ad.capabilities, "delete-refs") {
         return Err(RemoteError::NotImplemented(
@@ -335,33 +440,46 @@ fn build_push_body(
         );
     }
     body.extend_from_slice(&pack);
-    Ok((body, false))
+    Ok((body, skipped))
 }
 
-fn apply_report_status(body: &[u8]) -> Result<(), RemoteError> {
+/// Map `report-status` onto the input updates (rule 7d). Only a failed
+/// `unpack` or a report without ref lines fails the whole push.
+fn report_per_ref(
+    body: &[u8],
+    updates: &[PushUpdate],
+    skipped: &HashSet<String>,
+) -> Result<Vec<PushRefResult>, RemoteError> {
     let report = parse_report_status(body)?;
     if report.unpack != "ok" {
         return Err(RemoteError::Rejected(format!("unpack {}", report.unpack)));
-    }
-    let mut problems = Vec::new();
-    for r in &report.refs {
-        if !r.ok {
-            problems.push(format!(
-                "{} {}",
-                r.name,
-                r.error.as_deref().unwrap_or("rejected")
-            ));
-        }
     }
     if report.refs.is_empty() {
         return Err(RemoteError::Protocol(
             "report-status contained no ref lines".into(),
         ));
     }
-    if !problems.is_empty() {
-        return Err(RemoteError::Rejected(problems.join("; ")));
-    }
-    Ok(())
+    Ok(updates
+        .iter()
+        .map(|u| {
+            let status = if skipped.contains(&u.refname) {
+                PushRefStatus::UpToDate
+            } else {
+                match report.refs.iter().find(|r| r.name == u.refname) {
+                    Some(r) if r.ok => PushRefStatus::Ok,
+                    Some(r) => PushRefStatus::Rejected(
+                        r.error.clone().unwrap_or_else(|| "rejected".into()),
+                    ),
+                    // A ref the peer left out of report-status is not accepted.
+                    None => PushRefStatus::Rejected("no report-status line for this ref".into()),
+                }
+            };
+            PushRefResult {
+                refname: u.refname.clone(),
+                status,
+            }
+        })
+        .collect())
 }
 
 fn push_capability_list(

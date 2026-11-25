@@ -1517,6 +1517,95 @@ fn seed_bare_for_daemon(git: &Path) -> (std::path::PathBuf, Oid) {
     (git.to_path_buf(), commit_oid)
 }
 
+/// [[sot:root/arks-remote]] 7d: an `ng` for one ref leaves the accepted refs
+/// accepted and reports each ref separately (git-push OUTPUT per-ref table).
+#[test]
+fn push_report_keeps_ok_refs_when_peer_rejects_another() {
+    use crate::push::{PushRefResult, PushRefStatus, push_report_with};
+    let mut peer = MemoryPeer::new();
+    let first = peer
+        .seed_file("refs/heads/main", "README", b"one\n", "one")
+        .unwrap();
+    let tmp = tempfile::TempDir::new().unwrap();
+    let mut repo = empty_repo(tmp.path());
+    let url = "http://memory.test/repo.git";
+    fetch_with(
+        &mut peer,
+        &mut repo,
+        url,
+        "origin",
+        &FetchOptions::default(),
+    )
+    .unwrap();
+    repo.refs_mut()
+        .update("refs/heads/main", &first, None)
+        .unwrap();
+    let second = commit_file(&mut repo, "README", b"two\n", "two").unwrap();
+
+    peer.reject_refs = vec!["refs/heads/main".into()];
+    let update = |name: &str, oid: Oid| PushUpdate {
+        refname: name.into(),
+        new_oid: oid,
+        expected_old: None,
+    };
+    let report = push_report_with(
+        &mut peer,
+        &repo,
+        url,
+        &[
+            update("refs/heads/main", second),
+            update("refs/heads/topic", second),
+            update("refs/heads/same", first),
+        ],
+        &PushOptions::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        report,
+        vec![
+            PushRefResult {
+                refname: "refs/heads/main".into(),
+                status: PushRefStatus::Rejected("hook declined".into()),
+            },
+            PushRefResult {
+                refname: "refs/heads/topic".into(),
+                status: PushRefStatus::Ok,
+            },
+            PushRefResult {
+                refname: "refs/heads/same".into(),
+                status: PushRefStatus::Ok,
+            },
+        ]
+    );
+    assert_eq!(peer.ref_oid("refs/heads/main"), Some(first));
+    assert_eq!(peer.ref_oid("refs/heads/topic"), Some(second));
+
+    // A ref whose advertised tip already matches is up to date, not sent.
+    let report = push_report_with(
+        &mut peer,
+        &repo,
+        url,
+        &[update("refs/heads/topic", second)],
+        &PushOptions::default(),
+    )
+    .unwrap();
+    assert_eq!(report[0].status, PushRefStatus::UpToDate);
+
+    // The all-or-nothing wrapper still fails on any ng.
+    let err = push_with(
+        &mut peer,
+        &repo,
+        url,
+        &[update("refs/heads/main", second)],
+        &PushOptions::default(),
+    )
+    .unwrap_err();
+    assert!(
+        matches!(&err, RemoteError::Rejected(m) if m == "refs/heads/main hook declined"),
+        "{err}"
+    );
+}
+
 /// [[sot:root/arks-remote]] 7e: push-side listing reads the receive-pack
 /// advertisement.
 #[test]

@@ -34,6 +34,9 @@ pub(crate) struct MemoryPeer {
     head: Option<String>,
     /// When set, the next receive-pack reports `ng` and does not move refs.
     pub reject_push: bool,
+    /// Refs the next receive-pack reports `ng <ref> hook declined` for while
+    /// accepting the rest (mixed report-status).
+    pub reject_refs: Vec<String>,
     /// When set, upload-pack `info/refs` returns a dumb body + loose object GETs
     /// (client must fall back; no smart pack POST).
     pub prefer_dumb: bool,
@@ -46,6 +49,7 @@ impl MemoryPeer {
             objects: HashMap::new(),
             head: None,
             reject_push: false,
+            reject_refs: Vec::new(),
             prefer_dumb: false,
         }
     }
@@ -278,6 +282,10 @@ impl MemoryPeer {
         }
         let mut refs = Vec::new();
         for cmd in &commands {
+            if self.reject_refs.contains(&cmd.name) {
+                refs.push((cmd.name.as_str(), Err("hook declined")));
+                continue;
+            }
             if cmd.new.as_bytes().iter().all(|b| *b == 0) {
                 self.refs.remove(&cmd.name);
                 refs.push((cmd.name.as_str(), Ok(())));
