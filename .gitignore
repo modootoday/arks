@@ -71,3 +71,7 @@ verify/gates/*/target/
 
 # Agent harness worktrees (local only)
 .claude/worktrees/
+
+# Python bytecode from verify/ helper scripts
+__pycache__/
+*.pyc
