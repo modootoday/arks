@@ -477,6 +477,10 @@ fn run(
                 h.push(("In-Reply-To".into(), t));
                 h.push(("References".into(), references.join("\n\t")));
             }
+        } else if let (false, None, Some(t)) = (thread, &existing_irt, &in_reply_to) {
+            // `--no-thread` with `--in-reply-to`: every mail replies to it.
+            h.push(("In-Reply-To".into(), t.clone()));
+            h.push(("References".into(), t.clone()));
         }
         if let Some(r) = &reply_to {
             h.push(("Reply-To".into(), r.clone()));
