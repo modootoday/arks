@@ -24,7 +24,7 @@ Build **arks** (`arks for Git`; working expansion **Agent Revision Kinetic Syste
 10. **CLI surface** — single bin `arks`; personalities `git|gh|arks`; never spawn stock `git`/`gh` on product paths; **`arks serve` ≠ `arks hub`**; ports normative≠demo — rules `30`, `32`, `33`, `34`; skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve`.
 11. **Honesty wording** — stubs/Partial ≠ Claimed/Verified/PASS — rules `28`, `29`; hooks scan commit messages.
 12. **Hooks** — `.cursor/hooks.json` denies force-push to main/master and staging `.spec.local`/secrets; asks on push / blind add / destructive git / `gh`; Hangul guards on edit + commit (rule `05`).
-13. **Unattended operation** — loop, work order, decision classes **A** (auto-merge) / **H** (`needs-human`) / **O** (owner only), stop signals (fleet kill switches), final-completion condition and the tracked `.claude/settings.json` permission baseline — SoT `.spec/sot/autonomous-operation.sot.md`; rule `95`.
+13. **Unattended operation** — loop, work order, autonomy levels **A0** (auto-merge) / **A1** (`needs-human`, measured) / **A2** (owner queue) per the playpilot governance canon, stop signals (fleet kill switches), final-completion condition and the tracked `.claude/settings.json` permission baseline — SoT `.spec/sot/autonomous-operation.sot.md`; rule `95`.
 
 ## Progressive disclosure (read more only when needed)
 
@@ -66,7 +66,7 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Lease / concurrency intent (incl. L3 Claimed shape; shared-index = M26) | `.spec/sot/lease-concurrency-intent.sot.md` + skill `review-lease` |
 | Multi-agent Git concurrency scenarios (catalog; Deferred=0) | `.spec/sot/multi-agent-git-concurrency-scenarios.sot.md` + `.spec/research/*-multi-agent-git-concurrency*.research.md` |
 | Agent governance / AGENTS role | `.spec/sot/agent-governance.sot.md` |
-| Unattended operation (loop, work order, decision classes A/H/O, stop signals, final completion, permission baseline) | `.spec/sot/autonomous-operation.sot.md` + rule `95-autonomous-operation` |
+| Unattended operation (loop, work order, autonomy levels A0/A1/A2, stop signals, final completion, permission baseline) | `.spec/sot/autonomous-operation.sot.md` + rule `95-autonomous-operation` |
 | Agent / Specfold readiness | `.spec/sot/agent-dev-readiness.sot.md` |
 | Inherited conventions map | `.spec/sot/conventions-inherit.sot.md` |
 | English-only / Hangul ban | `.spec/sot/language-english-only.sot.md` + rule `05-english-only` |
