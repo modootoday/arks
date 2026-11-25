@@ -10,6 +10,8 @@
 
 #![forbid(unsafe_code)]
 
+mod https;
+
 use std::env;
 use std::fs;
 use std::io::{Read, Write};
@@ -121,8 +123,9 @@ NOTES:
     Entry is `arks agent` (single arks release binary). Not a separate arks-agent product.
     Not required for git alias DoD.
     Local Ollama default: http://127.0.0.1:11434/v1
-    `provider smoke [ollama|openai-compat|--mock]` — one chat against an http:// endpoint
-      (or the in-process mock); exit 0 only on a 2xx answer; https:// endpoints unsupported
+    `provider smoke [ollama|openai-compat|--mock]` — one chat against an http:// or https://
+      endpoint (or the in-process mock); exit 0 only on a 2xx answer; https:// trusts the
+      built-in roots plus GIT_SSL_CAINFO / http.sslCAInfo / SSL_CERT_FILE and honors HTTPS_PROXY
     `review --smoke [--mock]` — fixed review fixture through the same chat path; exit 1
       when the provider cannot be reached
     Smokes are diagnostics; the chat/review e2e proof is the B4 Docker receipt.
@@ -379,13 +382,44 @@ fn parse_host_port(base_url: &str) -> Result<(String, u16), String> {
     }
 }
 
+/// Base URL without its `http://` / `https://` scheme.
+fn strip_scheme(base_url: &str) -> &str {
+    base_url
+        .strip_prefix("http://")
+        .or_else(|| base_url.strip_prefix("https://"))
+        .unwrap_or(base_url)
+}
+
+/// `scheme://authority` of a base URL (no path).
+fn url_origin(base_url: &str) -> String {
+    let scheme = if base_url.starts_with("https://") {
+        "https"
+    } else {
+        "http"
+    };
+    let rest = strip_scheme(base_url);
+    let authority = rest.split('/').next().unwrap_or(rest);
+    format!("{scheme}://{authority}")
+}
+
 fn tcp_probe(base_url: &str) -> Result<(), String> {
     tcp_probe_retries(base_url, 3)
 }
 
 /// Provider reachability with short backoff.
 fn tcp_probe_retries(base_url: &str, attempts: u32) -> Result<(), String> {
-    let (host, port) = parse_host_port(base_url)?;
+    let proxy = if base_url.starts_with("https://") {
+        https::probe_proxy(base_url)
+    } else {
+        None
+    };
+    let (host, port) = match proxy {
+        Some(target) => {
+            println!("tcp_target=proxy");
+            target
+        }
+        None => parse_host_port(base_url)?,
+    };
     let attempts = attempts.max(1);
     let mut last = String::new();
     for i in 1..=attempts {
@@ -428,8 +462,8 @@ fn classify_provider_err(err: &str) -> &'static str {
         || e.contains("no such host")
     {
         "err_class=dns"
-    } else if e.contains("https") {
-        "err_class=https_partial"
+    } else if https::is_tls_message(&e) {
+        "err_class=tls"
     } else if e.contains("connection reset") || e.contains("broken pipe") {
         "err_class=reset"
     } else {
@@ -437,26 +471,21 @@ fn classify_provider_err(err: &str) -> &'static str {
     }
 }
 
-/// Best-effort HTTP GET for openai-compat `/models` (Partial; no TLS Claimed beyond std).
-fn http_get_models(base_url: &str) -> Result<(u16, String), String> {
-    if base_url.starts_with("https://") {
-        return Err(
-            "HTTPS provider probe Partial — TCP-only today; use http:// loopback or ops TLS front"
-                .into(),
-        );
-    }
-    let (host, port) = parse_host_port(base_url)?;
-    let root = base_url.trim_end_matches('/');
-    let path = if root.ends_with("/v1") {
-        "/v1/models"
+/// One-line smoke failure reason; TLS failures name the trust-anchor knobs.
+fn failure_reason(err: &str) -> String {
+    if classify_provider_err(err) == "err_class=tls" {
+        format!("TLS failure: {}", https::TLS_HINT)
     } else {
-        "/models"
-    };
+        "provider unreachable".into()
+    }
+}
+
+/// Best-effort GET for openai-compat `/models` (plain HTTP, or the shared
+/// HTTPS stack for `https://` bases).
+fn http_get_models(base_url: &str) -> Result<(u16, String), String> {
     // Prefer path relative to host: use full path from URL.
     let url_path = {
-        let rest = base_url
-            .strip_prefix("http://")
-            .unwrap_or(base_url)
+        let rest = strip_scheme(base_url)
             .split_once('/')
             .map(|(_, p)| format!("/{p}"))
             .unwrap_or_else(|| "/".into());
@@ -467,7 +496,11 @@ fn http_get_models(base_url: &str) -> Result<(u16, String), String> {
             format!("{rest}/models")
         }
     };
-    let _ = path;
+    if base_url.starts_with("https://") {
+        let url = format!("{}{url_path}", url_origin(base_url));
+        return https::get_json(&url, resolve_api_key().as_deref(), 512);
+    }
+    let (host, port) = parse_host_port(base_url)?;
     let mut stream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
     stream.set_read_timeout(Some(Duration::from_secs(5))).ok();
@@ -504,8 +537,9 @@ fn cmd_provider(args: &[String]) -> ExitCode {
             eprintln!(
                 "arks agent provider — list|show <id>|test <id>|set <id>|smoke [ollama|--mock] \
                  [--base-url …] [--api-key-env VAR] [--model NAME]\n  \
-                 smoke: one chat against an http:// openai-compat endpoint or --mock \
-                 (no CLI spawn; https:// unsupported; diagnostic, not the B4 e2e proof)"
+                 smoke: one chat against an http:// or https:// openai-compat endpoint or \
+                 --mock (no CLI spawn; https:// uses the git remote CA + proxy policy; \
+                 diagnostic, not the B4 e2e proof)"
             );
             ExitCode::SUCCESS
         }
@@ -631,8 +665,8 @@ fn cmd_provider(args: &[String]) -> ExitCode {
     }
 }
 
-/// `provider smoke`: TCP + `/models` + one chat request against a plain-HTTP
-/// openai-compat endpoint (local Ollama, a fixture, or the in-process `--mock`).
+/// `provider smoke`: TCP + `/models` + one chat request against an `http://` or
+/// `https://` openai-compat endpoint (local Ollama, a fixture, or the in-process `--mock`).
 /// Exit 0 only when the chat answers 2xx. Diagnostic only: the B4 chat/review proof
 /// is the Docker receipt. Never spawns the `ollama` CLI.
 fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
@@ -680,14 +714,6 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
     println!("model={model}");
     println!("spawns_ollama_cli=never");
     println!("llm_chat_e2e=not_checked_by_smoke (B4 Docker receipt)");
-    if !want_mock && base.starts_with("https://") {
-        println!("smoke_result=unsupported");
-        println!(
-            "reason=https endpoints are not supported (arks agent has no TLS client); \
-             use an http:// endpoint such as http://127.0.0.1:11434/v1, or --mock"
-        );
-        return ExitCode::from(2);
-    }
     match tcp_probe(&base) {
         Ok(()) => println!("tcp=ok"),
         Err(e) => {
@@ -738,6 +764,7 @@ fn cmd_provider_ollama_smoke(args: &[String]) -> ExitCode {
         Err(e) => {
             println!("chat_http=fail");
             println!("smoke_result=fail");
+            println!("reason={}", failure_reason(&e));
             println!("error={}", e);
             println!("error_class={}", classify_provider_err(&e));
             ExitCode::from(1)
@@ -860,36 +887,25 @@ fn read_review_input(args: &[String]) -> Result<String, String> {
     Ok(buf)
 }
 
-/// Best-effort openai-compat chat completions POST (HTTP loopback Partial).
+/// Best-effort openai-compat chat completions POST (plain HTTP, or the shared
+/// HTTPS stack for `https://` bases).
 fn http_post_chat(base_url: &str, model: &str, prompt: &str) -> Result<(u16, String), String> {
-    if base_url.starts_with("https://") {
-        return Err(
-            "HTTPS chat Partial — TCP/HTTP loopback only today; use http:// provider or ops TLS front"
-                .into(),
-        );
-    }
-    let (host, port) = parse_host_port(base_url)?;
-    let root = base_url.trim_end_matches('/');
-    let path = if root.ends_with("/v1") {
-        "/v1/chat/completions".to_string()
-    } else if let Some(rest) = base_url
-        .strip_prefix("http://")
-        .and_then(|r| r.split_once('/').map(|(_, p)| p))
-    {
-        let rest = rest.trim_end_matches('/');
-        if rest.is_empty() {
-            "/v1/chat/completions".into()
-        } else {
-            format!("/{rest}/chat/completions")
-        }
-    } else {
-        "/v1/chat/completions".into()
-    };
+    let path = chat_completions_path(base_url);
     let body = format!(
         r#"{{"model":{},"messages":[{{"role":"user","content":{}}}],"stream":false}}"#,
         json_escape(model),
         json_escape(&truncate_chars(prompt, 12_000))
     );
+    if base_url.starts_with("https://") {
+        let url = format!("{}{path}", url_origin(base_url));
+        let (status, resp_body) =
+            https::post_json(&url, &body, resolve_api_key().as_deref(), 8_192)?;
+        if status >= 500 {
+            eprintln!("note: chat upstream status={status} — no blind POST retry");
+        }
+        return Ok((status, resp_body));
+    }
+    let (host, port) = parse_host_port(base_url)?;
     // Connect with Partial retry; HTTP exchange itself is single-shot (POST not blindly retried).
     let mut last_conn = String::new();
     let mut stream = None;
@@ -1226,7 +1242,8 @@ fn cmd_review(args: &[String]) -> ExitCode {
             if smoke {
                 // A smoke that cannot reach its provider failed (exit 1), mock or not.
                 println!("review_smoke=fail");
-                println!("reason=provider unreachable");
+                println!("reason={}", failure_reason(&e));
+                println!("error_class={}", classify_provider_err(&e));
                 if !want_mock {
                     eprintln!("note: provider unreachable; start it or use --mock");
                 }
@@ -1578,15 +1595,19 @@ fn proxy_chat_completion_stream(
     default_model: &str,
     req_body: &str,
 ) -> Result<(), String> {
-    if base_url.starts_with("https://") {
-        return Err(
-            "HTTPS stream Partial — TCP/HTTP loopback only today; use http:// provider or ops TLS front"
-                .into(),
-        );
-    }
     let body = ensure_chat_body(req_body, default_model, true);
-    let (host, port) = parse_host_port(base_url)?;
     let path = chat_completions_path(base_url);
+    if base_url.starts_with("https://") {
+        let url = format!("{}{path}", url_origin(base_url));
+        let (status, mut upstream) = https::post_stream(&url, &body, resolve_api_key().as_deref())?;
+        if status >= 400 {
+            let mut preview = String::new();
+            let _ = upstream.by_ref().take(400).read_to_string(&mut preview);
+            return Err(format!("upstream HTTP {status}: {preview}"));
+        }
+        return relay_stream(client, &[], &mut upstream);
+    }
+    let (host, port) = parse_host_port(base_url)?;
     let mut upstream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
     upstream
@@ -1645,6 +1666,15 @@ fn proxy_chat_completion_stream(
             preview.chars().take(400).collect::<String>()
         ));
     }
+    relay_stream(client, rest, &mut upstream)
+}
+
+/// Write the SSE response head, then copy `rest` and the remaining upstream body.
+fn relay_stream(
+    client: &mut impl Write,
+    rest: &[u8],
+    upstream: &mut impl Read,
+) -> Result<(), String> {
     let out_head = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\nX-Arks-Partial: stream\r\nX-Arks-Claimed-E2E: Missing\r\n\r\n";
     client
         .write_all(out_head.as_bytes())
@@ -1717,10 +1747,7 @@ fn chat_completions_path(base_url: &str) -> String {
     if root.ends_with("/v1") {
         return "/v1/chat/completions".to_string();
     }
-    if let Some(rest) = base_url
-        .strip_prefix("http://")
-        .and_then(|r| r.split_once('/').map(|(_, p)| p))
-    {
+    if let Some((_, rest)) = strip_scheme(base_url).split_once('/') {
         let rest = rest.trim_end_matches('/');
         if rest.is_empty() {
             return "/v1/chat/completions".into();
@@ -1731,14 +1758,12 @@ fn chat_completions_path(base_url: &str) -> String {
 }
 
 fn http_post_chat_raw(base_url: &str, body: &str) -> Result<(u16, String), String> {
+    let path = chat_completions_path(base_url);
     if base_url.starts_with("https://") {
-        return Err(
-            "HTTPS chat Partial — TCP/HTTP loopback only today; use http:// provider or ops TLS front"
-                .into(),
-        );
+        let url = format!("{}{path}", url_origin(base_url));
+        return https::post_json(&url, body, resolve_api_key().as_deref(), 32_768);
     }
     let (host, port) = parse_host_port(base_url)?;
-    let path = chat_completions_path(base_url);
     let mut stream = TcpStream::connect((host.as_str(), port))
         .map_err(|e| format!("connect {host}:{port}: {e}"))?;
     stream.set_read_timeout(Some(Duration::from_secs(60))).ok();

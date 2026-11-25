@@ -51,19 +51,6 @@ fn provider_smoke_unreachable_exits_1() {
 }
 
 #[test]
-fn provider_smoke_https_is_unsupported() {
-    let out = agent(&[
-        "provider",
-        "smoke",
-        "openai-compat",
-        "--base-url",
-        "https://127.0.0.1:1/v1",
-    ]);
-    assert_eq!(out.status.code(), Some(2), "{out:?}");
-    assert!(stdout(&out).contains("smoke_result=unsupported"), "{out:?}");
-}
-
-#[test]
 fn review_smoke_mock_answers() {
     let out = agent(&["review", "--smoke", "--mock"]);
     let text = stdout(&out);

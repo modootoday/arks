@@ -3,7 +3,7 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-25T12:00:00Z
+updated: 2026-11-25T05:45:00Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
@@ -153,7 +153,7 @@ Queue unit Q21 ([[plan:root/20261124000000]]) closes the last Partial labels on 
 | **`arks serve ssh-smoke`** | In Docker: `--listen` against a durable `arks serve` SSH listener prints `ssh_banner=ok` and exits 0; against a closed port exits non-zero; `--git-pack` prints `git_over_ssh_smoke=ok` and exits 0. Output names the B1/B2 receipt instead of `claimed_ssh_git_e2e=Missing`. Claims the diagnostic only, never B1/B2 | Docker |
 | **`arks agent provider smoke`** | In Docker: against the openai-compat fixture over `http://` it prints `chat_http=200` and exits 0, and the fixture logs the request; `--mock` exits 0; an unreachable provider exits 1. Claims the diagnostic over plain-HTTP openai-compat endpoints only | Docker |
 | **`arks agent review --smoke`** | In Docker: `--base-url` fixture and `--mock` print `review_smoke=ok` and exit 0; an unreachable provider without `--mock` exits 1 (a smoke that cannot reach its provider failed). Claims the diagnostic only, never B4 | Docker |
-| **Agent smokes against HTTPS vendor endpoints** | Stay **Partial**: `arks-agent` has no TLS client (the smoke refuses `https://`), and a live vendor run needs an owner-held API key. Reopen needs an HTTPS client in `arks-agent` plus the key (owner queue, A2) | — |
+| **Agent smokes against HTTPS vendor endpoints** | Transport: `https://` bases use the shared `arks-net` CA + proxy stack ([[sot:root/arks-agent-llm-providers]] 3c; queue Q22); host tests against a loopback test CA prove success with the CA, success through a `CONNECT` proxy, and a TLS-class failure with exit 1 without it. Still **Partial** for a live vendor: that run needs an owner-held API key (owner queue, A2; Q23) | Host tests (advisory); live vendor: owner key |
 
 **Status (Q21 close):**
 
@@ -164,7 +164,7 @@ Queue unit Q21 ([[plan:root/20261124000000]]) closes the last Partial labels on 
 | `arks serve ssh-smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
 | `arks agent provider smoke` | **Claimed (diagnostic, plain-HTTP openai-compat)** | [[evidence:root/20261125031425-claimed-smoke]] |
 | `arks agent review --smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
-| Agent smokes against HTTPS vendors | **Partial** — no TLS client in `arks-agent`; live run needs an owner API key (A2) | — |
+| Agent smokes against HTTPS vendors | **Partial** — HTTPS transport landed (Q22; host tests `crates/arks/tests/agent_https_smoke.rs`, advisory, no Docker receipt); a live vendor run still needs an owner API key (A2; Q23) | — |
 
 ### Docker verify slots (normative names)
 

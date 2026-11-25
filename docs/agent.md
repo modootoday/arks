@@ -34,7 +34,7 @@ arks agent review --smoke --mock   # review fixture through the mock; ≠ B4 pro
 | Leaf / area | Class |
 |-------------|-------|
 | provider / config / doctor | **Partial** (TCP/connect retry + error class) |
-| `provider smoke [ollama\|openai-compat\|--mock]` | **Claimed (diagnostic)** over plain-HTTP openai-compat endpoints: exit 0 only on a 2xx chat answer, 1 when unreachable ([[evidence:root/20261125031425-claimed-smoke]]); never spawns `ollama` CLI. `https://` vendor endpoints **Partial** (no TLS client yet; a live run needs an owner API key) |
+| `provider smoke [ollama\|openai-compat\|--mock]` | **Claimed (diagnostic)** over plain-HTTP openai-compat endpoints: exit 0 only on a 2xx chat answer, 1 when unreachable ([[evidence:root/20261125031425-claimed-smoke]]); never spawns `ollama` CLI. `https://` endpoints use the same TLS stack as the git remote client: built-in web roots plus `GIT_SSL_CAINFO` / `http.sslCAInfo` / `SSL_CERT_FILE`, and `HTTPS_PROXY` / `NO_PROXY`; an untrusted certificate fails with `error_class=err_class=tls` and exit 1. Host-tested against a test CA (no Docker receipt yet); a live vendor run needs an owner API key, so vendor endpoints stay **Partial** |
 | `review --smoke [--mock]` | **Claimed (diagnostic)** built-in fixture (+ optional mock server); exit 1 when the provider cannot be reached ([[evidence:root/20261125031425-claimed-smoke]]) |
 | review / cev-check / run / serve / bot | **Partial** (health + openai-compat chat proxy; JSON + stream SSE; connect retry Partial; `--once` OK) |
 | Claimed LLM chatbot / review e2e (**B4**) | **Claimed** — Docker openai-compat fixture e2e ([[evidence:root/20261110231959-claimed-agent-llm]]); smoke ≠ Claimed |
