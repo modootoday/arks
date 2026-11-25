@@ -252,10 +252,46 @@ fn run(
         .or_else(|| conf.get("transferEncoding"))
         .unwrap_or_else(|| "auto".into())
         .to_ascii_lowercase();
+    if !matches!(
+        encoding.as_str(),
+        "7bit" | "8bit" | "quoted-printable" | "base64" | "auto"
+    ) {
+        return Err(die(format!("Unknown --transfer-encoding: '{encoding}'")));
+    }
     if flag("validate", "validate").unwrap_or(true) {
         validate(repo, &files, &encoding)?;
     }
+    if encoding == "7bit" {
+        if let Some(m) = msgs.iter().find(|m| !message::parse(m).body.is_ascii()) {
+            let subject = message::parse(m).get("Subject").unwrap_or("").to_string();
+            return Err(die(format!(
+                "fatal: '{subject}': cannot send a non-ASCII message as 7bit\nwarning: no patches were sent"
+            )));
+        }
+    }
     let tty = std::io::stdin().is_terminal();
+    // The charset declared for non-ASCII content that declares none.
+    let charset = match p
+        .value("8bit-encoding")
+        .or_else(|| conf.get("assume8bitEncoding"))
+    {
+        Some(c) => c,
+        None => {
+            let undeclared = msgs.iter().any(|m| {
+                let ps = message::parse(m);
+                ps.get("Content-Type").is_none() && !ps.body.is_ascii()
+                    || !ps.get("Subject").unwrap_or("").is_ascii()
+            });
+            let asked = if undeclared && tty {
+                proc::ask("Which 8bit encoding should I declare [UTF-8]? ")
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+            } else {
+                None
+            };
+            asked.unwrap_or_else(|| "UTF-8".into())
+        }
+    };
     let from = match p.last("from").flatten().or_else(|| conf.get("from")) {
         Some(f) => f,
         None => {
@@ -455,7 +491,14 @@ fn run(
         if !mcc.is_empty() {
             h.push(("Cc".into(), mcc.join(",\n\t")));
         }
-        h.push(("Subject".into(), subject.clone()));
+        h.push((
+            "Subject".into(),
+            if subject.is_ascii() {
+                subject.clone()
+            } else {
+                message::encode_header(&subject, &charset)
+            },
+        ));
         h.push(("Date".into(), date));
         h.push(("Message-ID".into(), id.clone()));
         if xmailer {
@@ -515,11 +558,13 @@ fn run(
                 body = format!("From: {author}\n\n{body}");
             }
         }
-        if !body.is_ascii() && parsed.get("Content-Type").is_none() {
-            h.push(("MIME-Version".into(), "1.0".into()));
-            h.push(("Content-Type".into(), "text/plain; charset=UTF-8".into()));
-            h.push(("Content-Transfer-Encoding".into(), "8bit".into()));
-        }
+        body = transfer_encode(
+            &mut h,
+            body,
+            &encoding,
+            &charset,
+            parsed.get("Content-Type").is_some(),
+        );
         let header_text: String = h.iter().map(|(k, v)| format!("{k}: {v}\n")).collect();
         let data = format!("{header_text}\n{body}");
         let mut rcpts: Vec<String> = mto
@@ -627,6 +672,59 @@ fn run(
         s.quit();
     }
     Ok(())
+}
+
+/// Apply `--transfer-encoding` to one body and declare undeclared 8-bit
+/// content in `charset` (`--8bit-encoding`). `auto` keeps 8bit unless a
+/// line exceeds the 998-octet SMTP limit, then uses quoted-printable. A body
+/// that already declares quoted-printable or base64 is left as it is.
+fn transfer_encode(
+    h: &mut Vec<(String, String)>,
+    body: String,
+    encoding: &str,
+    charset: &str,
+    has_content_type: bool,
+) -> String {
+    let has = |h: &[(String, String)], k: &str| h.iter().any(|(n, _)| n.eq_ignore_ascii_case(k));
+    let declared = h
+        .iter()
+        .find(|(n, _)| n.eq_ignore_ascii_case("Content-Transfer-Encoding"))
+        .map(|(_, v)| v.trim().to_ascii_lowercase());
+    let non_ascii = !body.is_ascii();
+    let target = match encoding {
+        "auto" if body.lines().any(|l| l.len() > 998) => "quoted-printable",
+        "auto" => "8bit",
+        e => e,
+    };
+    let recode = matches!(target, "quoted-printable" | "base64")
+        && declared
+            .as_deref()
+            .is_none_or(|c| c == "7bit" || c == "8bit");
+    if !recode {
+        if non_ascii && !has_content_type {
+            h.push(("MIME-Version".into(), "1.0".into()));
+            h.push((
+                "Content-Type".into(),
+                format!("text/plain; charset={charset}"),
+            ));
+            h.push(("Content-Transfer-Encoding".into(), "8bit".into()));
+        }
+        return body;
+    }
+    h.retain(|(n, _)| !n.eq_ignore_ascii_case("Content-Transfer-Encoding"));
+    if !has(h, "MIME-Version") {
+        h.push(("MIME-Version".into(), "1.0".into()));
+    }
+    if !has(h, "Content-Type") {
+        let cs = if non_ascii { charset } else { "US-ASCII" };
+        h.push(("Content-Type".into(), format!("text/plain; charset={cs}")));
+    }
+    h.push(("Content-Transfer-Encoding".into(), target.into()));
+    if target == "base64" {
+        message::base64_body(body.as_bytes())
+    } else {
+        message::quoted_printable(&body)
+    }
 }
 
 fn dedupe(v: &mut Vec<String>, exclude: &[String]) {
