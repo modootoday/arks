@@ -1,0 +1,16 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-UX path (sot:root/arks-in-scope-leftovers-wave)
+    Finished `release` profile [optimized] target(s) in 0.06s
+hub-gh-arks-matrix-e2e: HF-SCOPE config-set ok
+hub-gh-arks-matrix-e2e: HF-SCOPE config-get ok
+hub-gh-arks-matrix-e2e: HF-SCOPE config-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE alias-set ok
+hub-gh-arks-matrix-e2e: HF-SCOPE alias-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE alias-import ok
+hub-gh-arks-matrix-e2e: HF-SCOPE alias-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE completion-bash ok
+hub-gh-arks-matrix-e2e: HF-SCOPE config-clear ok
+hub-gh-arks-matrix-e2e: IW-HUB-UX greens
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030057-hub-ux-config-alias/receipt.json

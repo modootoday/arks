@@ -1,0 +1,1 @@
+error: push rejected: refs/heads/main push declined due to repository rule violations (ruleset "protect main": cannot force-push to this ref)

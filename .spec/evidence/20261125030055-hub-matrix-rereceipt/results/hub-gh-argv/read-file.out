@@ -1,0 +1,3 @@
+# Rust build output (keep Cargo.lock for binaries)
+/target/
+**/*.rs.bk

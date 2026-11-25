@@ -1,0 +1,15 @@
+
+protect-main
+ID: 1
+Source: local/argv (Repository)
+Enforcement: active
+
+Bypass List
+This ruleset cannot be bypassed
+
+Conditions
+- ref_name: [exclude: ]
+- ref_name: [include: ~DEFAULT_BRANCH]
+
+Rules
+- required_status_checks: [required_status_checks: [{"context":"lint"}]]

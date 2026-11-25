@@ -1,0 +1,59 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: arks-owned forge groups path (adr:root/20261119230000)
+    Finished `release` profile [optimized] target(s) in 0.07s
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-rename ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-clone ok
+hub-gh-arks-matrix-e2e: HF-SCOPE disc-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE disc-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE disc-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE disc-comment ok
+hub-gh-arks-matrix-e2e: HF-SCOPE disc-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-field ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-field2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-fields ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-item-add ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-item-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-item-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-items ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-item-archive ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-copy ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-item-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-field-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-link ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-unlink ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-template ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-close ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE proj-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ssh-add ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ssh-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ssh-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gpg-add ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gpg-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gpg-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE dk-add ok
+hub-gh-arks-matrix-e2e: HF-SCOPE dk-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE dk-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE al-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE al-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE al-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE al-delete ok
+hub-gh-arks-matrix-e2e: forge-groups refuse ok (ssh-key add /tmp/arks-hub-scope.PsGpa5/a.txt exit=2)
+hub-gh-arks-matrix-e2e: forge-groups refuse ok (gpg-key add /tmp/arks-hub-scope.PsGpa5/a.txt exit=2)
+hub-gh-arks-matrix-e2e: forge-groups refuse ok (hub repo autolink create X- https://no-placeholder exit=2)
+hub-gh-arks-matrix-e2e: forge-groups refuse ok (gist edit gist1 exit=2)
+hub-gh-arks-matrix-e2e: HF-SCOPE gist-delete ok
+hub-gh-arks-matrix-e2e: forge groups greens (host run = Partial unless Docker receipt)
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030058-hub-forge-groups/receipt.json

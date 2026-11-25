@@ -1,0 +1,13 @@
+Short permissive license: keep the copyright and license notice; no warranty.
+
+To implement: Add the LICENSE file to the root of the repository and replace [year] and [fullname].
+
+For more information, see: https://spdx.org/licenses/MIT.html
+
+SPDX-License-Identifier: MIT
+
+Copyright (c) [year] [fullname]
+
+This work is licensed under the MIT License (MIT).
+The full license text is published at https://spdx.org/licenses/MIT.html
+and must accompany copies of this work where the license requires it.

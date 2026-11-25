@@ -1,0 +1,12 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-CHECKOUT path (sot:root/arks-in-scope-leftovers-wave)
+    Finished `release` profile [optimized] target(s) in 0.06s
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-checkout ok
+hub-gh-arks-matrix-e2e: HF-SCOPE co-alias ok
+hub-gh-arks-matrix-e2e: IW-HUB-CHECKOUT greens
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030057-hub-pr-checkout/receipt.json

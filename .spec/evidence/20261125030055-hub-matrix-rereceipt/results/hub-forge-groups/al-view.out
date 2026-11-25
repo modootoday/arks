@@ -1,0 +1,4 @@
+{
+  "keyPrefix": "TICKET-",
+  "urlTemplate": "https://tracker.example/t/<num>"
+}

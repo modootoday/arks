@@ -1,0 +1,10 @@
+{
+  "schema": "arks-hub-gh-argv/v1",
+  "gate": "IW-HUB-GH-ARGV",
+  "disposition": "product-path-run",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "e0a9d11",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "note": "Receipt only; row promotion needs an owning SoT update.",
+  "timestamp": "2026-11-25T03:00:55Z"
+}

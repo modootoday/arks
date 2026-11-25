@@ -1,0 +1,79 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: gh argv symmetry path (plan:root/20261120000000 A4)
+    Finished `release` profile [optimized] target(s) in 0.07s
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login ok
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-status ok
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-switch ok
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-refresh ok
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-token ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gitignore-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE gitignore-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE license-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE license-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-view-json ok
+hub-gh-arks-matrix-e2e: HF-SCOPE read-dir ok
+hub-gh-arks-matrix-e2e: HF-SCOPE read-file ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-clone ok
+hub-gh-arks-matrix-e2e: HF-SCOPE local-clone ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-diff ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-diff-names ok
+hub-gh-arks-matrix-e2e: HF-ARGV pr-checks-none exit=1 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE status-pending ok
+hub-gh-arks-matrix-e2e: HF-ARGV pr-checks-pending exit=8 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE status-ok ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-checks ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ruleset-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ruleset-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE rs-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ruleset-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE ruleset-check ok
+hub-gh-arks-matrix-e2e: HF-ARGV pr-checks-required exit=8 ok
+hub-gh-arks-matrix-e2e: HF-ARGV pr-merge-blocked exit=1 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE status-lint ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-review ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-merge ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-merged ok
+hub-gh-arks-matrix-e2e: HF-SCOPE read-dir-after ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-revert ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-create-topic2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-update-branch ok
+hub-gh-arks-matrix-e2e: HF-SCOPE read-dir-topic2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-develop ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-develop-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE art-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE art-list ok
+hub-gh-arks-matrix-e2e: HF-SCOPE art-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE art-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE art-download ok
+hub-gh-arks-matrix-e2e: HF-SCOPE art-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE search-code ok
+hub-gh-arks-matrix-e2e: HF-SCOPE search-commits ok
+hub-gh-arks-matrix-e2e: HF-SCOPE search-issues ok
+hub-gh-arks-matrix-e2e: HF-SCOPE search-prs ok
+hub-gh-arks-matrix-e2e: HF-SCOPE browse ok
+hub-gh-arks-matrix-e2e: HF-SCOPE browse-file ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-fork ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-sync ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-sync-local ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-download ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-archive ok
+hub-gh-arks-matrix-e2e: HF-SCOPE label-list ok
+hub-gh-arks-matrix-e2e: HF-ARGV pr-bogus exit=1 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE rs-push-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE rs-push-list ok
+hub-gh-arks-matrix-e2e: HF-ARGV rs-push-delete refused ok (exit=1)
+hub-gh-arks-matrix-e2e: HF-ARGV rs-push-force refused ok (exit=1)
+hub-gh-arks-matrix-e2e: HF-ARGV rs-push tips ok (refused pushes left main; fast-forward landed)
+hub-gh-arks-matrix-e2e: note: stock gh (oracle) missing — argv inventory skipped
+hub-gh-arks-matrix-e2e: gh argv symmetry greens (host run = Partial unless Docker receipt)
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030055-hub-gh-argv/receipt.json

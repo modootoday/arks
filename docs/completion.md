@@ -40,7 +40,7 @@ Public clean-room Definition of Done is **three peer pillars** under the behavio
 |--------|------------|---------------|----------------------|
 | **1. CLI** | `git` | `arks <cmd>` / personality `git` | Inventory Claimed where matrices + receipts say so; unfinished flags fail closed |
 | **2. Daemon** | `git-daemon` | `arks daemon` | Every option **Parity, host-tested** (Docker receipt pending); archive byte-identical **B5 Claimed**; syslog facility **B5+ Claimed** |
-| **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | Flat+expand **Claimed** where evidenced; other v1 **Partial** (Missing=0); **B3** HTTPS remote **Claimed**; nested `arks hub …` transitional |
+| **3. Forge client** | `gh` | flat `arks pr` / `issue` / `auth` / … | All v1 rows **Claimed** (Docker re-receipt); `later` rows Deferred / Partial; **B3** HTTPS remote **Claimed**; nested `arks hub …` transitional |
 
 **Related hosting:** `arks serve` (HTTP + SSH + forge API umbrella). HTTP git wire Claimed where G15 / G29–G32 / G36 evidence; in-process SSH **B1/B2 Claimed**; product in-process TLS **B9 Claimed**; HTTP+SSH+forge zero-downtime rebind **B7 Claimed**; forge-in-serve hosting e2e **Claimed** ([[evidence:root/20261111011425-self-host-forge-e2e]]). See [Self-host](../self-host/) and [Ports](../ports/).
 
@@ -57,7 +57,7 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | Forge API under `arks serve` | **IW-FORGE-SERVE Claimed** | Hosting e2e PR/issue journeys ([[evidence:root/20261111011425-self-host-forge-e2e]]); **B3** is client↔HTTPS remote (separate) |
 | `arks serve config` rebind | **B7 Claimed (HTTP+SSH+forge)** | Held-connection + dual-bind overlap; Windows file-mtime reload **Partial** (SIGHUP N/A) |
 | `arks serve ssh-smoke` | **Partial** | Banner + `--git-pack` durable self smoke Partial — smoke alone ≠ **B1/B2** Claimed |
-| Flat forge leaves (`pr`, `issue`, …) | **Claimed subset+expand+mutate** + Partial | Flat+expand+mutate Claimed ([[evidence:root/20261111011539-hub-flat-subset]], [[evidence:root/20261111020350-hub-full-expand]], [[evidence:root/20261111025142-hub-mutate-subset]]); assets/checkout Partial (Missing=0); **B3** Claimed; OUT refuse (incl. GitHub-platform-only groups such as Actions) |
+| Flat forge leaves (`pr`, `issue`, …) | **Claimed** (all 164 v1 rows) | Docker re-receipt after the gh argv rework: nine hub paths pass in the clean-room image, covering every v1 row including assets, checkout, gh-argv leaves (diff, checks, update-branch, revert, fork, sync, search code / commits, issue develop / artifacts) and rulesets, whose push journey refuses a forbidden push ([hub-matrix-rereceipt](https://github.com/modootoday/arks/blob/main/.spec/evidence/20261125030055-hub-matrix-rereceipt/receipt.json)); **B3** Claimed; OUT refuse (incl. GitHub-platform-only groups such as Actions); 7 `later` rows Deferred and 1 Partial, still open |
 | `arks daemon` deepen | **B5 / B5+ Claimed** | Archive byte-identical Claimed; syslog facility/priority Claimed ([[evidence:root/20261111025206-daemon-b5-plus-syslog]]); classic double-fork **Refuse**; Windows honest Missing refuse |
 | Honesty leftovers backlog | **Closed this wave** | [[sot:root/arks-honesty-leftovers-wave]] — hub mutate + named exit tables + B5+ collector Claimed |
 | `arks agent` | **B4 Claimed** + smoke **Partial** | Docker fixture LLM chatbot/review e2e Claimed ([[evidence:root/20261110231959-claimed-agent-llm]]); `provider smoke` / `review --smoke` remain Partial |

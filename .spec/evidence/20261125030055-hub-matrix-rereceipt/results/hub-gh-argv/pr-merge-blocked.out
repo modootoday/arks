@@ -1,0 +1,2 @@
+arks pr merge: Repository rule violations found
+ruleset "protect-main": required status check "lint" has not passed (HTTP 405)

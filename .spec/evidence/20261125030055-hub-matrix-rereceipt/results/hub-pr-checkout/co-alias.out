@@ -1,0 +1,4 @@
+pr=1
+head_ref=feature
+recipe=arks fetch origin pull/1/head:feature && arks checkout feature
+note: pr checkout resolves the head and prints the arks commands to run; it never spawns git or gh (local/hubscope)

@@ -1,0 +1,43 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-STUBS(+exhaust) path (sot:root/arks-in-scope-leftovers-wave)
+    Finished `release` profile [optimized] target(s) in 0.06s
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-set-default ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-status ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-lock ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-unlock ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-pin ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-unpin ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-transfer ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-create2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE issue-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-create-draft ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-status-draft ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-ready ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-status-ready ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-lock ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-unlock ok
+hub-gh-arks-matrix-e2e: HF-SCOPE pr-review ok
+hub-gh-arks-matrix-e2e: HF-SCOPE label-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE label-clone ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-archive ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-unarchive ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-rename ok
+hub-gh-arks-matrix-e2e: HF-SCOPE api-get ok
+hub-gh-arks-matrix-e2e: HF-SCOPE status-agg ok
+hub-gh-arks-matrix-e2e: HF-SCOPE group-help-pr ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-view-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-delete ok
+hub-gh-arks-matrix-e2e: HF-SCOPE terminal Partial ok (pr diff 1 exit=1)
+hub-gh-arks-matrix-e2e: HF-SCOPE terminal Partial ok (pr checks 1 exit=1)
+hub-gh-arks-matrix-e2e: HF-SCOPE terminal Partial ok (pr update-branch 1 exit=1)
+hub-gh-arks-matrix-e2e: HF-SCOPE terminal Partial ok (pr revert 1 exit=1)
+hub-gh-arks-matrix-e2e: HF-SCOPE terminal Partial ok (repo fork exit=1)
+hub-gh-arks-matrix-e2e: IW-HUB-STUBS greens
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030058-hub-stubs-exhaust/receipt.json
