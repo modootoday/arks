@@ -175,7 +175,7 @@ receipt = {
     "venue": "docker-dod-claimed-ssh",
     "tip": tip,
     "image_tag": image,
-    "cipher": "chacha20-poly1305@openssh.com",
+    "cipher": "chacha20-poly1305", "cipher_extension_domain": "openssh.com",
     "kex": "curve25519-sha256",
     "clone_rc": int(clone_rc),
     "checks": checks,
