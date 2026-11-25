@@ -803,9 +803,6 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
     }
     let path = serve_config_path();
     let start = std::time::Instant::now();
-    let mut last_mtime = std::fs::metadata(&path)
-        .ok()
-        .and_then(|m| m.modified().ok());
     eprintln!(
         "arks serve config watch: Partial file-watch path={} duration={duration_secs}s \
          interval={interval_ms}ms (no running-server signal; Claimed sync e2e Missing)",
@@ -813,6 +810,10 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
     );
     // Initial apply so watch always leaves runtime_* stamped.
     serve_config_apply_reload("watch-initial", /*seed_defaults=*/ false)?;
+    // Baseline after the initial apply so its own write is not seen as a change.
+    let mut last_mtime = std::fs::metadata(&path)
+        .ok()
+        .and_then(|m| m.modified().ok());
     while start.elapsed() < std::time::Duration::from_secs(duration_secs.max(1)) {
         std::thread::sleep(std::time::Duration::from_millis(interval_ms.max(50)));
         let mtime = std::fs::metadata(&path)
@@ -820,7 +821,6 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
             .and_then(|m| m.modified().ok());
         if mtime != last_mtime {
             eprintln!("arks serve config watch: mtime change detected → apply/reload Partial");
-            last_mtime = mtime;
             let mut map = load_serve_config_map()?;
             map.insert("runtime_watch_mtime".into(), format!("{:?}", mtime));
             map.insert(
@@ -829,6 +829,10 @@ fn serve_config_watch(args: &[String]) -> CliResult<()> {
             );
             save_serve_config_map(&map)?;
             serve_config_apply_reload("watch-reload", /*seed_defaults=*/ false)?;
+            // The reload rewrote the file; do not treat that write as a new change.
+            last_mtime = std::fs::metadata(&path)
+                .ok()
+                .and_then(|m| m.modified().ok());
         }
     }
     eprintln!(
@@ -1388,9 +1392,11 @@ fn request_live_rebind_partial(map: &mut std::collections::BTreeMap<String, Stri
     eprintln!("arks serve config: live rebind Partial request → {joined}");
 }
 
-/// Unix: SIGHUP → `serve config` apply/reload Partial (runtime_* probes + live
-/// HTTP/forge rebind when same-process listeners registered).
-/// Windows: SIGHUP N/A; in-process file-mtime reload Partial (plus apply|reload|watch).
+/// Arm the serve-config reload trigger for a running `arks serve`.
+///
+/// Unix: SIGHUP → `serve config` apply/reload (runtime_* probes + live HTTP/forge/SSH
+/// rebind with dual-bind drain, B7). Windows has no SIGHUP (B8 N/A): an in-process
+/// watcher polls the serve-config file mtime and runs the same apply/reload.
 fn install_serve_config_sighup_partial(label: &str) {
     #[cfg(unix)]
     {
@@ -1398,7 +1404,7 @@ fn install_serve_config_sighup_partial(label: &str) {
         static INSTALLED: Flag = Flag::new(false);
         static RELOAD: Flag = Flag::new(false);
         if INSTALLED.swap(true, Ordering::SeqCst) {
-            eprintln!("{label}: SIGHUP serve-config reload Partial already armed");
+            eprintln!("{label}: SIGHUP serve-config reload already armed");
             return;
         }
         // SAFETY: installs a minimal async-signal-safe handler that only stores a flag.
@@ -1409,7 +1415,7 @@ fn install_serve_config_sighup_partial(label: &str) {
             libc::sigemptyset(&mut sa.sa_mask);
             if libc::sigaction(libc::SIGHUP, &sa, std::ptr::null_mut()) != 0 {
                 eprintln!(
-                    "{label}: SIGHUP install failed — serve config signal reload Partial unavailable"
+                    "{label}: SIGHUP install failed — serve config signal reload unavailable"
                 );
                 return;
             }
@@ -1421,85 +1427,63 @@ fn install_serve_config_sighup_partial(label: &str) {
             loop {
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if RELOAD.swap(false, Ordering::SeqCst) {
-                    eprintln!(
-                        "arks serve: SIGHUP → serve config apply/reload Partial \
-                         (runtime_* probes + live HTTP/forge/SSH rebind Partial when armed; \
-                         Claimed zero-downtime Missing)"
-                    );
-                    let mut map = match load_serve_config_map() {
-                        Ok(m) => m,
-                        Err(e) => {
-                            eprintln!("arks serve: SIGHUP reload load err: {e}");
-                            continue;
-                        }
-                    };
-                    map.insert(
-                        "runtime_watch_signal".into(),
-                        "SIGHUP Partial (unix; live HTTP/forge/SSH rebind Partial)".into(),
-                    );
-                    let _ = save_serve_config_map(&map);
-                    if let Err(e) =
-                        serve_config_apply_reload("sighup", /*seed_defaults=*/ false)
-                    {
-                        eprintln!("arks serve: SIGHUP apply/reload Partial err: {e}");
-                    }
+                    eprintln!("arks serve: SIGHUP → serve config apply/reload");
+                    serve_config_triggered_reload("sighup", "SIGHUP (unix)");
                 }
             }
         });
-        eprintln!(
-            "{label}: SIGHUP serve-config reload + live rebind Partial armed (unix; \
-             HTTP/forge/SSH same-process; Claimed zero-downtime Missing)"
-        );
+        eprintln!("{label}: SIGHUP serve-config reload + live HTTP/forge/SSH rebind armed (unix)");
     }
     #[cfg(not(unix))]
     {
         use std::sync::atomic::AtomicBool as Flag;
         static INSTALLED: Flag = Flag::new(false);
         if INSTALLED.swap(true, Ordering::SeqCst) {
-            eprintln!("{label}: Windows serve-config file-mtime reload Partial already armed");
+            eprintln!("{label}: serve-config file-mtime reload already armed");
             return;
         }
         eprintln!(
-            "{label}: SIGHUP Missing on Windows (OS N/A); arming in-process serve-config \
-             file-mtime reload Partial (poll → apply/reload + HTTP/forge/SSH rebind when armed; \
-             Claimed zero-downtime Missing)"
+            "{label}: serve-config file-mtime reload + live HTTP/forge/SSH rebind armed \
+             (Windows; SIGHUP N/A)"
         );
-        std::thread::spawn(|| {
-            let path = serve_config_path();
-            let mut last_mtime = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
+        // Baseline before the thread starts, so a write right after arming is seen.
+        let path = serve_config_path();
+        let mut last_mtime = serve_config_mtime(&path);
+        std::thread::spawn(move || {
             loop {
                 std::thread::sleep(Duration::from_millis(500));
-                let cur = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
+                let cur = serve_config_mtime(&path);
                 if cur != last_mtime && cur.is_some() {
-                    last_mtime = cur;
-                    eprintln!(
-                        "arks serve: Windows file-mtime → serve config apply/reload Partial \
-                         (runtime_* probes + live HTTP/forge/SSH rebind Partial when armed; \
-                         Claimed zero-downtime Missing; ≠ SIGHUP)"
-                    );
-                    let mut map = match load_serve_config_map() {
-                        Ok(m) => m,
-                        Err(e) => {
-                            eprintln!("arks serve: Windows mtime reload load err: {e}");
-                            continue;
-                        }
-                    };
-                    map.insert(
-                        "runtime_watch_signal".into(),
-                        "Windows file-mtime Partial (in-process; live HTTP/forge/SSH rebind Partial; \
-                         SIGHUP N/A)"
-                            .into(),
-                    );
-                    let _ = save_serve_config_map(&map);
-                    if let Err(e) =
-                        serve_config_apply_reload("win-mtime", /*seed_defaults=*/ false)
-                    {
-                        eprintln!("arks serve: Windows mtime apply/reload Partial err: {e}");
-                    }
+                    eprintln!("arks serve: serve-config file-mtime change → apply/reload");
+                    serve_config_triggered_reload("win-mtime", "file-mtime (Windows; SIGHUP N/A)");
+                    // The reload rewrites the config; take that write as the new
+                    // baseline so the watcher does not re-trigger on it.
+                    last_mtime = serve_config_mtime(&path);
                 }
             }
         });
-        let _ = label;
+    }
+}
+
+/// Modification time of the serve-config file, if it exists.
+#[cfg(not(unix))]
+fn serve_config_mtime(path: &std::path::Path) -> Option<std::time::SystemTime> {
+    std::fs::metadata(path).and_then(|m| m.modified()).ok()
+}
+
+/// Shared body of a signal- or mtime-triggered reload inside a running serve.
+fn serve_config_triggered_reload(label: &str, signal: &str) {
+    let mut map = match load_serve_config_map() {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("arks serve: {label} reload load err: {e}");
+            return;
+        }
+    };
+    map.insert("runtime_watch_signal".into(), signal.into());
+    let _ = save_serve_config_map(&map);
+    if let Err(e) = serve_config_apply_reload(label, /*seed_defaults=*/ false) {
+        eprintln!("arks serve: {label} apply/reload err: {e}");
     }
 }
 
