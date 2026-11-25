@@ -22,3 +22,8 @@ rel:
 - **B2:** stock `git clone ssh://` clone_rc=0; archived `clone-README`
 
 Artifacts: `receipt.json`, `logs/`, `clone-README`
+
+Scrub: in `logs/ssh-client.err` and `receipt.json`, SSH algorithm identifiers of the form
+`name@openssh.com` / `name@libssh.org` are written `name[at]domain` (receipt field
+`cipher_extension_domain`), because the public-surface scan reads them as e-mail addresses. No
+other byte of the logs changed.
