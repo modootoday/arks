@@ -1,0 +1,13 @@
+openai_compat_mock=in_process
+provider_smoke=chat
+provider=openai-compat
+base_url=http://127.0.0.1:39641/v1
+model=llama3.2
+spawns_ollama_cli=never
+llm_chat_e2e=not_checked_by_smoke (B4 Docker receipt)
+tcp=ok
+models_http=200
+models_preview={"object":"list","data":[{"id":"arks-mock","object":"model"}]}
+chat_http=200
+chat_preview={"id":"chatcmpl-arks-mock","object":"chat.completion","choices":[{"index":0,"message":{"role":"assistant","content":"arks agent openai-compat mock: LGTM"},"finish_reason":"stop"}]}
+smoke_result=ok

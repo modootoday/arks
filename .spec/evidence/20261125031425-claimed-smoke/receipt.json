@@ -1,0 +1,22 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "Q21-smokes",
+  "disposition": "verified-smoke-diagnostics",
+  "venue": "docker-dod-claimed-smoke",
+  "tip": "unknown",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "checks": [
+    "serve ssh-smoke --listen: ssh_banner=ok rc=0 against arks serve SSH",
+    "serve ssh-smoke --git-pack: server_kexinit=ok rc=0",
+    "serve ssh-smoke closed port: rc=1",
+    "agent provider smoke fixture over http: chat_http=200 rc=0",
+    "agent provider smoke --mock: rc=0",
+    "agent provider smoke closed port: rc=1",
+    "agent review --smoke fixture: review_smoke=ok rc=0",
+    "agent review --smoke --mock: rc=0",
+    "agent review --smoke closed port: rc=1",
+    "fixture logged exactly 2 chat requests"
+  ],
+  "timestamp": "2026-11-25T03:14:25Z",
+  "note": "Diagnostics only; does not prove B1/B2 or B4. HTTPS vendor endpoints not exercised."
+}

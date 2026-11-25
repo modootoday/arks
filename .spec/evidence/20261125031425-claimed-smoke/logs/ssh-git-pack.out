@@ -1,0 +1,12 @@
+ssh_smoke=git-pack
+spawns_ssh_cli=never
+ssh_git_e2e=not_checked_by_smoke (B1/B2 Docker receipt)
+durable_listen=127.0.0.1:42887
+tcp_connect=ok
+banner_preview=SSH-2.0-arks
+ssh_banner=ok
+client_id_exchange=sent
+server_followup_bytes=272
+server_kexinit=ok
+git_over_ssh_smoke=ok
+durable_stop=ok

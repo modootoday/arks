@@ -30,6 +30,7 @@ run_one "agent-llm(B4)" "$SCRIPTS/run-claimed-agent-llm-e2e.sh"
 run_one "daemon-archive(B5/B5+)" "$SCRIPTS/run-claimed-daemon-archive-e2e.sh"
 run_one "rebind(B7)" "$SCRIPTS/run-claimed-rebind-e2e.sh"
 run_one "tls(B9)" "$SCRIPTS/run-claimed-tls-e2e.sh"
+run_one "smoke(Q21)" "$SCRIPTS/run-claimed-smoke-e2e.sh"
 
 if [[ "$fail" -ne 0 ]]; then
   echo "claimed-residual-dod: FAIL (one or more slots)"

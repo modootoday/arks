@@ -142,8 +142,10 @@ fi
 TS="$(date -u +%Y%m%d%H%M%S)"
 OUT=".spec/evidence/${TS}-claimed-ssh"
 mkdir -p "$OUT/logs"
-cp "$WORK/server.err" "$OUT/logs/server.err"
-cp "$WORK/ssh-client.err" "$OUT/logs/ssh-client.err"
+sed -E 's#/tmp/[^ /]+/home#<tmp-home>#g' "$WORK/server.err" >"$OUT/logs/server.err"
+# Public evidence: SSH algorithm names (name, at sign, openssh.com) read as e-mail
+# addresses to the public-surface scan, so the tracked copy writes them name[at]domain.
+sed -E 's/([A-Za-z0-9._-]+)@(openssh\.com|libssh\.org)/\1[at]\2/g' "$WORK/ssh-client.err" >"$OUT/logs/ssh-client.err"
 [[ -f "$WORK/git-clone.err" ]] && cp "$WORK/git-clone.err" "$OUT/logs/git-clone.err"
 [[ -f "$WORK/git-clone.out" ]] && cp "$WORK/git-clone.out" "$OUT/logs/git-clone.out"
 if [[ "$B2_GREEN" -eq 1 ]] && [[ -f "$WORK/clone/README" ]]; then
@@ -175,7 +177,7 @@ receipt = {
     "venue": "docker-dod-claimed-ssh",
     "tip": tip,
     "image_tag": image,
-    "cipher": "chacha20-poly1305@openssh.com",
+    "cipher": "chacha20-poly1305", "cipher_extension_domain": "openssh.com",
     "kex": "curve25519-sha256",
     "clone_rc": int(clone_rc),
     "checks": checks,

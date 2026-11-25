@@ -1,0 +1,21 @@
+{
+  "schema": "arks-claimed-residual/v1",
+  "gate": "B1+B2",
+  "b2": "Claimed",
+  "disposition": "verified-openssh-chacha-and-git-clone",
+  "venue": "docker-dod-claimed-ssh",
+  "tip": "unknown",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "cipher": "chacha20-poly1305", "cipher_extension_domain": "openssh.com",
+  "kex": "curve25519-sha256",
+  "clone_rc": 0,
+  "checks": [
+    "stock ssh -vvv negotiates ChaCha",
+    "NEWKEYS observed",
+    "server SERVICE_ACCEPT after AEAD",
+    "stock git clone ssh:// exit 0",
+    "cloned README present"
+  ],
+  "timestamp": "2026-11-25T03:14:26Z",
+  "note": "Host PowerShell OpenSSH is not normative DoD. B2 Claimed only when git clone greens with archived README."
+}

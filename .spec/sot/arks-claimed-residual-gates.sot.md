@@ -3,7 +3,7 @@ id: sot:root/arks-claimed-residual-gates
 title: Claimed residual gates (post-Partial wiring)
 status: active
 created: 2026-11-10T22:46:00Z
-updated: 2026-11-11T00:08:27Z
+updated: 2026-11-25T12:00:00Z
 tags: [claimed, residual, design, docker, clean-room, ssh, openssh, tls, hub, agent, daemon, archive, syslog, rebind, no-invent-claimed, partial]
 verify: manual
 rel:
@@ -34,6 +34,9 @@ rel:
     - evidence:root/20261110233659-claimed-rebind
     - evidence:root/20261110235116-claimed-ssh
     - evidence:root/20261110233921-claimed-ssh
+    - evidence:root/20261125031425-claimed-smoke
+    - evidence:root/20261125031426-claimed-ssh
+    - evidence:root/20261125031427-claimed-rebind-q21
   governs:
     - verify/scripts/run-claimed-residual-dod.sh
     - verify/scripts/run-claimed-ssh-e2e.sh
@@ -42,11 +45,12 @@ rel:
     - verify/scripts/run-claimed-daemon-archive-e2e.sh
     - verify/scripts/run-claimed-rebind-e2e.sh
     - verify/scripts/run-claimed-tls-e2e.sh
+    - verify/scripts/run-claimed-smoke-e2e.sh
 ---
 
 # Claimed residual gates (post-Partial wiring)
 
-Document revision **0.1.4** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `bb782db` demoted invented B2; **B2 Claimed** restored only with [[evidence:root/20261110235116-claimed-ssh]] (tip ≥ `f6c5780` + WIP). **Future implement order** (B5 reopen, B7 SSH/forge, CLI Partial stubs) is gated by [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] — **do not implement until those are cited**.
+Document revision **0.1.5** (SoT edit counter only — **not** a product/crate release). Normative **design** for the remaining **Claimed** acceptance rows after tip Partial wiring ([[research:root/20261111072342]], tip ≥ `4f87ad8`). Audit tip ≥ `bb782db` demoted invented B2; **B2 Claimed** restored only with [[evidence:root/20261110235116-claimed-ssh]] (tip ≥ `f6c5780` + WIP). **Future implement order** (B5 reopen, B7 SSH/forge, CLI Partial stubs) is gated by [[sot:root/arks-remaining-implement-wave]] + [[research:root/20261111090827]] — **do not implement until those are cited**.
 
 **Honesty:** **Design intent ≠ Claimed.** Scaffold Docker harness greens **MUST NOT** invent PASS/Claimed. Product paths **MUST NOT** spawn `git` / `gh` / `ssh` / `ollama`. Windows host PowerShell is **not** normative DoD — Linux Docker `arks-verify-m1:0.1.0` is the judge ([[sot:root/product-verification-clean-room]]).
 
@@ -70,12 +74,12 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 | ID | Disposition |
 |----|-------------|
 | **B5+** | **Claimed** with collector PRI receipt — see scope row; Windows Event Log still N/A |
-| **B6** | Durable SSH listen + Partial live rebind — **Partial landed**; not reopened as Missing |
-| **B8** | Windows SIGHUP — **N/A** (OS); file-mtime reload is Partial substitute |
+| **B6** | Durable SSH listen + live rebind — **Partial label removed** (Q21): drop condition B1/B2 + IW-B7-SSH Claimed holds; re-run receipts [[evidence:root/20261125031426-claimed-ssh]], [[evidence:root/20261125031427-claimed-rebind-q21]] |
+| **B8** | Windows SIGHUP — **N/A** (OS); the Windows substitute, the in-process file-mtime reload, is **Claimed by the Windows CI test** under §Q21 below |
 
 ### Partial vs Claimed gates (ABSOLUTE)
 
-1. **Partial smokes stay Partial.** Examples: `arks serve ssh-smoke`, durable SSH accept labeled Partial, hub `smoke --local-tls`, agent `review --smoke [--mock]`, daemon archive path-filter tests, Partial serve-config rebind.
+1. **A smoke never Claims a gate.** A green from `arks serve ssh-smoke`, hub `smoke --local-tls`, agent `provider smoke` / `review --smoke [--mock]` or daemon archive path-filter tests never stands in for B1/B2/B3/B4/B5/B7. A smoke command MAY itself be Claimed **as a diagnostic** only under §Q21 (Docker receipt that it reports correctly, including its failure exit), and its output must not call a Claimed gate Missing.
 2. **Claimed** requires: (a) this SoT row acceptance criteria met, (b) clean-room receipt under `.spec/evidence/`, (c) owning product SoT honesty amend, (d) residual register next-queue update — **all four**.
 3. **`ARKS_DOD_STRICT=0` (default):** compose services MAY exit 0 with explicit `SKIP/scaffold`.
 4. **`ARKS_DOD_STRICT=1`:** unfinished Claimed rows **MUST** fail closed (exit non-zero) — **no invent PASS**.
@@ -138,6 +142,30 @@ Document revision **0.1.4** (SoT edit counter only — **not** a product/crate r
 - Ops reverse-proxy remains a **valid** deploy pattern and does **not** by itself satisfy B9.
 - **Refuse:** hub client `--local-tls` smoke; docs that only describe ops TLS front.
 
+### Q21 — serve and agent label dispositions
+
+Queue unit Q21 ([[plan:root/20261124000000]]) closes the last Partial labels on the serve and agent surfaces. Each row ends Claimed with a receipt or test, removed with a cite, or Partial with a reason.
+
+| Row | Bar | Venue |
+|-----|-----|-------|
+| **B6 label** (durable SSH listen + rebind) | Drop condition of IW-SSH-LABEL ([[sot:root/arks-remaining-implement-wave]]): B1/B2 Claimed ([[evidence:root/20261110235116-claimed-ssh]]) **and** IW-B7-SSH Claimed ([[evidence:root/20261111092000-claimed-rebind-ssh]]). When it holds, the listener's operator surfaces (startup / rebind / session stderr lines, SSH identification string, `arks serve --help`) state what runs without a Partial readiness label. Bind failure stays fail-closed. The label change is re-run through `dod-claimed-ssh` and `dod-claimed-rebind` (SSH) so no receipt rests on the old tip | Docker |
+| **B8 substitute** (Windows file-mtime serve-config reload) | SIGHUP stays N/A. A `cfg(windows)` integration test, run by the `windows-2025` job of the CI `test` matrix, starts `arks serve-http`, holds a connection on the old listen address, rewrites `bind=` in the serve config **without a signal**, and observes the new address answering while the held and a fresh old connection complete. The reload must not re-trigger on its own config write. A unix twin of the test drives the same scenario through SIGHUP. Docker is Linux-only, so this OS-specific row takes the Windows CI job as its venue (queue exit) | Windows CI |
+| **`arks serve ssh-smoke`** | In Docker: `--listen` against a durable `arks serve` SSH listener prints `ssh_banner=ok` and exits 0; against a closed port exits non-zero; `--git-pack` prints `git_over_ssh_smoke=ok` and exits 0. Output names the B1/B2 receipt instead of `claimed_ssh_git_e2e=Missing`. Claims the diagnostic only, never B1/B2 | Docker |
+| **`arks agent provider smoke`** | In Docker: against the openai-compat fixture over `http://` it prints `chat_http=200` and exits 0, and the fixture logs the request; `--mock` exits 0; an unreachable provider exits 1. Claims the diagnostic over plain-HTTP openai-compat endpoints only | Docker |
+| **`arks agent review --smoke`** | In Docker: `--base-url` fixture and `--mock` print `review_smoke=ok` and exit 0; an unreachable provider without `--mock` exits 1 (a smoke that cannot reach its provider failed). Claims the diagnostic only, never B4 | Docker |
+| **Agent smokes against HTTPS vendor endpoints** | Stay **Partial**: `arks-agent` has no TLS client (the smoke refuses `https://`), and a live vendor run needs an owner-held API key. Reopen needs an HTTPS client in `arks-agent` plus the key (owner queue, A2) | — |
+
+**Status (Q21 close):**
+
+| Row | Status | Carrying evidence |
+|-----|--------|-------------------|
+| B6 label | **Removed** — drop condition holds ([[evidence:root/20261110235116-claimed-ssh]], [[evidence:root/20261111092000-claimed-rebind-ssh]]); B1/B2 and B7 re-run green after the label change | [[evidence:root/20261125031426-claimed-ssh]], [[evidence:root/20261125031427-claimed-rebind-q21]] |
+| B8 substitute (Windows file-mtime reload) | **Claimed by CI** — `windows_serve_config_mtime_reload_rebinds_without_signal` (`crates/arks/tests/serve_config_reload.rs`) runs on the `windows-2025` job; auto-merge needs that job green, so the merged tip carries the receipt. The unix twin `unix_serve_config_sighup_reload_rebinds` keeps the SIGHUP path; the fix that stops the reload re-triggering on its own config write shipped with it | `windows-2025` CI job |
+| `arks serve ssh-smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
+| `arks agent provider smoke` | **Claimed (diagnostic, plain-HTTP openai-compat)** | [[evidence:root/20261125031425-claimed-smoke]] |
+| `arks agent review --smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
+| Agent smokes against HTTPS vendors | **Partial** — no TLS client in `arks-agent`; live run needs an owner API key (A2) | — |
+
 ### Docker verify slots (normative names)
 
 New residual slots register per [[sot:root/verify-directory-conventions]] §7 (`dod-claimed-<concern>` → `run-claimed-<concern>-e2e.sh` → umbrella `dod-claimed-residual`; default SKIP / `ARKS_DOD_STRICT=1` fail-closed; **no invent Claimed**).
@@ -150,6 +178,7 @@ New residual slots register per [[sot:root/verify-directory-conventions]] §7 (`
 | `dod-claimed-daemon-archive` | `verify/scripts/run-claimed-daemon-archive-e2e.sh` | B5, B5+ |
 | `dod-claimed-rebind` | `verify/scripts/run-claimed-rebind-e2e.sh` | B7 |
 | `dod-claimed-tls` | `verify/scripts/run-claimed-tls-e2e.sh` | B9 |
+| `dod-claimed-smoke` | `verify/scripts/run-claimed-smoke-e2e.sh` | Q21 smoke diagnostics |
 | `dod-claimed-residual` | `verify/scripts/run-claimed-residual-dod.sh` | all of the above |
 
 ```bash
