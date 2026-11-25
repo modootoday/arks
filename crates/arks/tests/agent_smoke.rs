@@ -65,3 +65,21 @@ fn review_smoke_unreachable_exits_1() {
     assert_eq!(out.status.code(), Some(1), "{out:?}");
     assert!(stdout(&out).contains("review_smoke=fail"), "{out:?}");
 }
+
+#[test]
+fn review_smoke_honours_the_provider_flag() {
+    // Real (non-mock) path against a closed port: the smoke fails, but the
+    // provider it reports must be the one the flag named.
+    let url = closed_url();
+    let out = agent(&[
+        "review",
+        "--smoke",
+        "--provider",
+        "openai-compat",
+        "--base-url",
+        &url,
+    ]);
+    let text = stdout(&out);
+    assert!(text.contains("provider=openai-compat"), "{text}");
+    assert!(!text.contains("provider=ollama"), "{text}");
+}
