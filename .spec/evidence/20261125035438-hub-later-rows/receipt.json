@@ -1,0 +1,21 @@
+{
+  "schema": "arks-hub-later-rows/v1",
+  "gate": "IW-HUB-LATER",
+  "disposition": "product-path-run",
+  "venue": "docker-dod-hub-matrix",
+  "tip": "8d2353f",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "rows": [
+    "milestone",
+    "milestone list",
+    "milestone create",
+    "milestone edit",
+    "milestone close",
+    "milestone delete",
+    "serve",
+    "review"
+  ],
+  "serve_lan_address_probed": true,
+  "note": "Receipt only; row promotion needs an owning SoT update.",
+  "timestamp": "2026-11-25T03:54:38Z"
+}

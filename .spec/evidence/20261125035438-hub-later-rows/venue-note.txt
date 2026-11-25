@@ -1,0 +1,23 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip 8d2353f,
+run 2026-11-25 inside a hosted cloud session with a local dockerd (queue unit Q18).
+Command: compose service dod-hub-matrix running verify/scripts/run-hub-gh-arks-matrix-e2e.sh
+with ARKS_HUB_IW_LATER=1 and ARKS_DOD_STRICT=1; release build of arks inside the image.
+Same method as the Q17 re-receipt (20261125030055-hub-matrix-rereceipt): Cargo ran
+offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted read-only at
+/usr/local/cargo/registry, because the container could not use the session egress
+proxy; dependencies are pinned and checksummed by Cargo.lock.
+Session-local overrides (not tracked): a separate Cargo target volume, so no sibling
+run shared /cargo-target; the checkout's Git directory mounted read-only with
+safe.directory set, so the runner resolves the tip; ARKS_HUB_LATER_OUT pointed the
+receipt at a scratch directory that was then moved here.
+The run exited 0 (logs/status.txt) and ended "hub-native later rows greens" with no
+FAIL line (logs/LATER.log). results/ holds each step's output (<step>.out).
+Coverage: milestone create / list (table, --json/--jq, --state closed|all, flat
+`arks milestone ls`) / edit by title / close by number and title (already-closed
+no-op) / delete (clears the issue's milestone); usage exits 2, unknown milestone 1.
+review: exit 2 against a closed API port, naming `arks pr review`.
+hub serve: default bind answered on 127.0.0.1:3920 and was not reachable on the
+container address; a second start on 3920 exited 1 ("cannot bind forge API");
+--listen 0.0.0.0:<port> answered on loopback and on the container address
+(serve_lan_address_probed=true) and printed the plain-HTTP notice; bad --listen,
+a missing port, an unknown option and a stray argument exited 2.

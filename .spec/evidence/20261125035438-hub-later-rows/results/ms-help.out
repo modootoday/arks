@@ -1,0 +1,10 @@
+arks milestone — repository milestones on the arks forge (hub-native; arks-defined gh-style argv)
+
+USAGE:
+  arks milestone list   [-R repo] [--state open|closed|all] [-L n] [--json fields] [-w]
+  arks milestone create <title> [-d description] [-R repo]
+  arks milestone edit   <milestone> [--title t] [-d description] [--state open|closed] [-R repo]
+  arks milestone close  <milestone> [-R repo]
+  arks milestone delete <milestone> [--yes] [-R repo]
+
+<milestone> is a milestone number or its exact title.

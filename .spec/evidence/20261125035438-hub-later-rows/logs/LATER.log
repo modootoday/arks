@@ -1,0 +1,146 @@
+hub-gh-arks-matrix-e2e: tip=8d2353f
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: hub-native later rows path (Q18; matrix rules 12a-12c)
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.5
+   Compiling stable_deref_trait v1.2.1
+   Compiling cpufeatures v0.2.17
+   Compiling generic-array v0.14.7
+   Compiling thiserror v2.0.21
+   Compiling zeroize v1.9.1
+   Compiling libc v0.2.191
+   Compiling sha1collisiondetection v0.3.4
+   Compiling find-msvc-tools v0.1.15
+   Compiling shlex v2.0.1
+   Compiling syn v3.0.9
+   Compiling cc v1.11.1
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling litemap v0.8.3
+   Compiling subtle v2.6.1
+   Compiling writeable v0.6.4
+   Compiling utf_types v1.0.0
+   Compiling utf8_iter v1.1.0
+   Compiling ring v0.17.14
+   Compiling getrandom v0.2.17
+   Compiling rustls-pki-types v1.15.1
+   Compiling icu_properties_data v2.4.0
+   Compiling icu_normalizer_data v2.4.0
+   Compiling synstructure v0.14.0
+   Compiling zlib-rs v0.6.8
+   Compiling crc32fast v1.5.4
+   Compiling smallvec v1.16.5
+   Compiling untrusted v0.9.0
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+   Compiling zerofrom v0.1.8
+   Compiling yoke v0.8.4
+   Compiling zerovec-derive v0.11.7
+   Compiling displaydoc v0.2.7
+   Compiling thiserror-impl v2.0.21
+   Compiling zerovec v0.11.9
+   Compiling tinystr v0.8.5
+   Compiling icu_locale_core v2.4.0
+   Compiling arks-oid v0.0.0 (/workspace/crates/arks-oid)
+   Compiling potential_utf v0.1.6
+   Compiling zerotrie v0.2.5
+   Compiling icu_collections v2.4.0
+   Compiling arks-hash v0.0.0 (/workspace/crates/arks-hash)
+   Compiling flate2 v1.1.11
+   Compiling icu_provider v2.4.0
+   Compiling arks-object v0.0.0 (/workspace/crates/arks-object)
+   Compiling icu_normalizer v2.4.0
+   Compiling icu_properties v2.4.0
+   Compiling semver v1.0.28
+   Compiling rustls v0.23.46
+   Compiling rustc_version v0.4.1
+   Compiling arks-pack v0.0.0 (/workspace/crates/arks-pack)
+   Compiling idna_adapter v1.2.2
+   Compiling serde_core v1.0.229
+   Compiling log v0.4.35
+   Compiling percent-encoding v2.3.2
+   Compiling once_cell v1.21.4
+   Compiling form_urlencoded v1.2.2
+   Compiling arks-store v0.0.0 (/workspace/crates/arks-store)
+   Compiling idna v1.1.0
+   Compiling curve25519-dalek v4.1.3
+   Compiling arks-refs v0.0.0 (/workspace/crates/arks-refs)
+   Compiling webpki-roots v1.0.11
+   Compiling syn v2.0.119
+   Compiling base64 v0.22.1
+   Compiling zmij v1.0.23
+   Compiling webpki-roots v0.26.11
+   Compiling url v2.5.8
+   Compiling rustls-webpki v0.103.16
+   Compiling rustls-pemfile v2.2.0
+   Compiling arks-config v0.0.0 (/workspace/crates/arks-config)
+   Compiling serde v1.0.229
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling serde_json v1.0.154
+   Compiling arks-repo v0.0.0 (/workspace/crates/arks-repo)
+   Compiling serde_derive v1.0.229
+   Compiling inout v0.1.4
+   Compiling signature v2.2.0
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling ed25519 v2.2.3
+   Compiling cipher v0.4.4
+   Compiling arks-index v0.0.0 (/workspace/crates/arks-index)
+   Compiling arks-protocol v0.0.0 (/workspace/crates/arks-protocol)
+   Compiling rand_core v0.6.4
+   Compiling universal-hash v0.5.1
+   Compiling opaque-debug v0.3.1
+   Compiling poly1305 v0.8.0
+   Compiling ureq v2.12.1
+   Compiling x25519-dalek v2.0.1
+   Compiling chacha20 v0.9.1
+   Compiling ed25519-dalek v2.2.0
+   Compiling arks-server v0.0.0 (/workspace/crates/arks-server)
+   Compiling arks-lease v0.0.0 (/workspace/crates/arks-lease)
+   Compiling arks-net v0.0.0 (/workspace/crates/arks-net)
+   Compiling arks-hub v0.0.0 (/workspace/crates/arks-hub)
+   Compiling arks-remote v0.0.0 (/workspace/crates/arks-remote)
+   Compiling arks-agent v0.0.0 (/workspace/crates/arks-agent)
+   Compiling arks v0.0.0 (/workspace/crates/arks)
+    Finished `release` profile [optimized] target(s) in 1m 41s
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-create exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-create-title exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-list exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-list-json exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-flat-list exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-edit exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-close exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-close-again exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-list-closed exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-issue exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-issue-view exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-delete exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-issue-cleared exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-list-all exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-edit-noflags exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-bad-state exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-missing exit=1 ok
+hub-gh-arks-matrix-e2e: HF-LATER ms-help exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER review-refuse exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER review-help exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER container address=172.18.0.2
+hub-gh-arks-matrix-e2e: HF-LATER serve-default-api exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-busy exit=1 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-lan-loopback exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-lan-address exit=0 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-bad-listen exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-no-port exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-unknown-opt exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-stray exit=2 ok
+hub-gh-arks-matrix-e2e: HF-LATER serve-help exit=0 ok
+hub-gh-arks-matrix-e2e: hub-native later rows greens (host run = Partial unless Docker receipt)
+hub-gh-arks-matrix-e2e: receipt=verify/.q18-later-out/results/receipt.json

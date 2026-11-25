@@ -1,0 +1,2 @@
+arks review: a top-level review group would duplicate `arks pr review` (gh-identical argv); refused, out of scope ([[sot:root/arks-hub-gh-command-matrix]] rule 12c, [[adr:root/20261119230000]])
+Use: arks pr review [<number>] --approve|--comment|--request-changes -b <body>

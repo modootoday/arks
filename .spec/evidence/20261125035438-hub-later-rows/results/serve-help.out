@@ -1,0 +1,17 @@
+arks hub serve — transitional alias of the arks serve forge module
+
+Usage:
+  arks hub serve [--listen HOST:PORT] [--data DIR]
+
+Defaults:
+  --listen 127.0.0.1:3920   (loopback; pass 0.0.0.0:PORT or a LAN address to expose it)
+  --data   $ARKS_HUB_DATA or ~/.config/arks/hub-data
+
+Non-loopback binds serve plain HTTP (no TLS). Primary host command:
+  arks serve --no-http --no-ssh --forge-listen HOST:PORT   (in-process TLS, Git transports)
+
+Point clients with:
+  ARKS_HUB_API=http://127.0.0.1:3920
+  ARKS_HUB_TOKEN=local-dev-token
+
+Exit: 2 bad argv (before binding), 1 bind failure. Never spawns git/gh.
