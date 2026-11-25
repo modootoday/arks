@@ -1,0 +1,3 @@
+clone_url=/tmp/arks-hub-scope.dlm1gR/hub-data/git/local/argv.git
+recipe=arks clone /tmp/arks-hub-scope.dlm1gR/hub-data/git/local/argv.git argv
+note: repo clone prints the arks commands to run; it never spawns git or gh

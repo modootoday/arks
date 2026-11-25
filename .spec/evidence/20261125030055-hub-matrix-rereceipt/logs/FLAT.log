@@ -1,0 +1,18 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-FLAT subset path (sot:root/arks-verify-docker-e2e-claim-wave)
+hub-gh-arks-matrix-e2e: HF-DISC ok — flat pr/issue discoverable
+hub-gh-arks-matrix-e2e: HF-SUBSET auth-login ok
+hub-gh-arks-matrix-e2e: HF-SUBSET auth-status ok
+hub-gh-arks-matrix-e2e: HF-SUBSET repo-create ok
+hub-gh-arks-matrix-e2e: HF-SUBSET repo-list ok
+hub-gh-arks-matrix-e2e: HF-SUBSET issue-create-hub ok
+hub-gh-arks-matrix-e2e: HF-SUBSET issue-list-flat ok
+hub-gh-arks-matrix-e2e: HF-SUBSET issue-view-flat ok
+hub-gh-arks-matrix-e2e: HF-SUBSET pr-create-flat ok
+hub-gh-arks-matrix-e2e: HF-SUBSET pr-list-hub ok
+hub-gh-arks-matrix-e2e: HF-SUBSET pr-view-flat ok
+hub-gh-arks-matrix-e2e: HF-SUBSET peer-faithful shapes ok
+hub-gh-arks-matrix-e2e: HF-STRICT subset greens (full CSV Missing=0 may remain — not invent PASS)
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030055-hub-flat-subset/receipt.json

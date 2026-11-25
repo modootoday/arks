@@ -1,0 +1,17 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-ASSETS path (sot:root/arks-in-scope-leftovers-wave)
+    Finished `release` profile [optimized] target(s) in 0.06s
+hub-gh-arks-matrix-e2e: HF-SCOPE auth-login ok
+hub-gh-arks-matrix-e2e: HF-SCOPE repo-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-create ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-upload ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-download ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-edit ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-view ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-delete-asset ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-create2 ok
+hub-gh-arks-matrix-e2e: HF-SCOPE release-delete ok
+hub-gh-arks-matrix-e2e: IW-HUB-ASSETS greens
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030056-hub-release-assets/receipt.json

@@ -1,0 +1,3 @@
+note: deleting without a prompt (non-interactive); gh asks for --yes
+✓ Deleted issue local/hubscope#3 (del-me)
+deleted=3

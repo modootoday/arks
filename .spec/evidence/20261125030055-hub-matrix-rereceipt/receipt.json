@@ -1,0 +1,30 @@
+{
+  "schema": "arks-hub-matrix-rereceipt/v1",
+  "gate": "IW-HUB-RERECEIPT",
+  "unit": "Q17 (plan:root/20261124000000)",
+  "disposition": "verified-product-path",
+  "venue": "docker-dod-hub-matrix",
+  "image_tag": "arks-verify-m1:0.1.0",
+  "stock_git": "2.39.5",
+  "tip": "e0a9d11",
+  "runner": "verify/scripts/run-hub-gh-arks-matrix-e2e.sh, once per path with ARKS_DOD_STRICT=1",
+  "paths": {
+    "ARKS_HUB_IW_GH_ARGV=1": {"exit": 0, "results": "results/hub-gh-argv"},
+    "ARKS_HUB_IW_FLAT=1": {"exit": 0, "results": "results/hub-flat-subset"},
+    "ARKS_HUB_IW_FULL=1": {"exit": 0, "results": "results/hub-full-expand"},
+    "ARKS_HUB_IW_MUTATE=1": {"exit": 0, "results": "results/hub-mutate-subset"},
+    "ARKS_HUB_IW_ASSETS=1": {"exit": 0, "results": "results/hub-release-assets"},
+    "ARKS_HUB_IW_CHECKOUT=1": {"exit": 0, "results": "results/hub-pr-checkout"},
+    "ARKS_HUB_IW_UX=1": {"exit": 0, "results": "results/hub-ux-config-alias"},
+    "ARKS_HUB_IW_STUBS2=1": {"exit": 0, "results": "results/hub-stubs-exhaust"},
+    "ARKS_HUB_IW_FORGE_GROUPS=1": {"exit": 0, "results": "results/hub-forge-groups"}
+  },
+  "csv": "verify/matrices/hub-gh-arks-e2e-matrix.csv",
+  "rows_partial_to_claimed": 33,
+  "rows_claimed_rereceipted": 95,
+  "rows_left_unchanged_by_this_receipt": "out-of-scope Refuse/N/A (76) and later rows (7 Deferred, 1 Partial: queue unit Q18)",
+  "csv_after": {"v1_claimed": 164, "v1_partial": 0, "refuse_na": 76, "later_deferred": 7, "later_partial": 1},
+  "ruleset_push_journey": "results/hub-gh-argv/rs-push-*.out: a ruleset created through arks api on a second arks serve (smart HTTP + forge) refuses deleting and force-pushing main (exit 1, report-status ng named in the client output), main unchanged; a fast-forward lands",
+  "not_covered": "gh argv inventory (parse level, 1268/1268) needs stock gh as oracle; the image has none, so it stays the host-advisory evidence 20261120040000-gh-argv-inventory-a4",
+  "timestamp": "2026-11-25T03:00:55Z"
+}

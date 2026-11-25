@@ -1,0 +1,13 @@
+arks pr — pull requests on the arks forge (gh-symmetric argv; host-tested Partial)
+
+USAGE:
+  arks pr <command> [flags]
+
+COMMANDS:
+  create, list, status, view, diff, edit, close, reopen, comment, merge, ready,
+  review, checks, lock, unlock, update-branch, revert, checkout (alias: arks co)
+
+Flags are gh's (`arks pr <command> --help` lists them; `-R/--repo [HOST/]OWNER/REPO`
+selects the repository). `checkout` resolves the head and prints the `arks` commands
+to run; arks never spawns git or gh. `--web` prints the URL instead of opening a
+browser. `checks` reads arks commit statuses (exit 8 = pending, 1 = failed).

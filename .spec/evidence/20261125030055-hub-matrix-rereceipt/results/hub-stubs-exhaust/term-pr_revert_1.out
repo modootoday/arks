@@ -1,0 +1,1 @@
+arks pr revert: only a merged pull request can be reverted (HTTP 422)

@@ -1,0 +1,5 @@
+1 rules apply to branch main in repo local/argv
+
+- required_status_checks: [required_status_checks: [{"context":"lint"}]]
+  (configured in ruleset 1 from repository local/argv)
+note: the arks forge enforces these rules when merging pull requests and on push to `arks serve`

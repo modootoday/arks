@@ -1,0 +1,14 @@
+name:	Login plan
+type:	generic
+number:	1
+version:	1
+creator:	local
+updated-by:	local
+url:	http://127.0.0.1:57539/local/argv/issues/1/artifacts/1
+--
+# Plan
+steps
+--
+history:
+  2	Login plan	local	2026-11-25T03:00:54Z
+  1	Login plan	local	2026-11-25T03:00:54Z

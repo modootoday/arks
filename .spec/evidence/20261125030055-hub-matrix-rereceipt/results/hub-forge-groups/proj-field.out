@@ -1,0 +1,16 @@
+{
+  "dataType": "SINGLE_SELECT",
+  "id": "1",
+  "name": "Status",
+  "options": [
+    {
+      "id": "1_1",
+      "name": "Todo"
+    },
+    {
+      "id": "1_2",
+      "name": "Done"
+    }
+  ],
+  "type": "ProjectV2SingleSelectField"
+}

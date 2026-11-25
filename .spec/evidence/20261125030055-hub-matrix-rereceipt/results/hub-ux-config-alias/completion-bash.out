@@ -1,0 +1,2 @@
+# arks forge completion (emit only; no shell profile is changed)
+complete -W "auth pr issue release repo label search status api org config alias completion co browse gist discussion project milestone skill agent-task preview licenses ssh-key gpg-key ruleset rs extension copilot inbox forge-config serve smoke" arks

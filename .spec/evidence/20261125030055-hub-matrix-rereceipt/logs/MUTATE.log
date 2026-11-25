@@ -1,0 +1,31 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-MUTATE path (sot:root/arks-honesty-leftovers-wave)
+    Finished `release` profile [optimized] target(s) in 0.06s
+hub-gh-arks-matrix-e2e: HF-MUT auth-login ok
+hub-gh-arks-matrix-e2e: HF-MUT repo-create ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-create ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-edit ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-comment ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-close ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-view-closed ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-comments ok
+hub-gh-arks-matrix-e2e: HF-MUT issue-reopen ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-create ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-edit ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-comment ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-comments ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-close ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-reopen ok
+hub-gh-arks-matrix-e2e: HF-MUT pr-merge ok
+hub-gh-arks-matrix-e2e: HF-MUT release-create ok
+hub-gh-arks-matrix-e2e: HF-MUT release-view ok
+hub-gh-arks-matrix-e2e: HF-MUT label-create ok
+hub-gh-arks-matrix-e2e: HF-MUT label-edit ok
+hub-gh-arks-matrix-e2e: HF-MUT label-list-before-del ok
+hub-gh-arks-matrix-e2e: HF-MUT label-delete ok
+hub-gh-arks-matrix-e2e: HF-MUT label-list-after-del ok
+hub-gh-arks-matrix-e2e: HF-MUT peer-faithful shapes ok
+hub-gh-arks-matrix-e2e: IW-HUB-MUTATE greens
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030056-hub-mutate-subset/receipt.json

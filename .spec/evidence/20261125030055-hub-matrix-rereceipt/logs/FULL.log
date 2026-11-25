@@ -1,0 +1,30 @@
+hub-gh-arks-matrix-e2e: tip=e0a9d11
+hub-gh-arks-matrix-e2e: arks hub --help ok (no gh spawn language)
+hub-gh-arks-matrix-e2e: csv=verify/matrices/hub-gh-arks-e2e-matrix.csv v1=164 Missing(v1)=0 Refuse=76
+hub-gh-arks-matrix-e2e: IW-HUB-FULL path (sot:root/arks-remaining-incompletes-wave)
+hub-gh-arks-matrix-e2e: HF-FULL inventory Missing=0 ok
+hub-gh-arks-matrix-e2e: HF-FULL auth-login ok
+hub-gh-arks-matrix-e2e: HF-FULL auth-status ok
+hub-gh-arks-matrix-e2e: HF-FULL auth-token ok
+hub-gh-arks-matrix-e2e: HF-FULL repo-create ok
+hub-gh-arks-matrix-e2e: HF-FULL repo-list ok
+hub-gh-arks-matrix-e2e: HF-FULL repo-view ok
+hub-gh-arks-matrix-e2e: HF-FULL issue-create ok
+hub-gh-arks-matrix-e2e: HF-FULL issue-list ok
+hub-gh-arks-matrix-e2e: HF-FULL issue-view ok
+hub-gh-arks-matrix-e2e: HF-FULL pr-create ok
+hub-gh-arks-matrix-e2e: HF-FULL pr-list ok
+hub-gh-arks-matrix-e2e: HF-FULL pr-view ok
+hub-gh-arks-matrix-e2e: HF-FULL label-create ok
+hub-gh-arks-matrix-e2e: HF-FULL label-list ok
+hub-gh-arks-matrix-e2e: HF-FULL release-create ok
+hub-gh-arks-matrix-e2e: HF-FULL release-list ok
+hub-gh-arks-matrix-e2e: HF-FULL repo-create-org ok
+hub-gh-arks-matrix-e2e: HF-FULL org-list ok
+hub-gh-arks-matrix-e2e: HF-FULL search-repos ok
+hub-gh-arks-matrix-e2e: HF-FULL search-issues ok
+hub-gh-arks-matrix-e2e: HF-FULL search-prs ok
+hub-gh-arks-matrix-e2e: HF-FULL auth-logout ok
+hub-gh-arks-matrix-e2e: HF-FULL peer-faithful expand shapes ok
+hub-gh-arks-matrix-e2e: HF-FULL expand greens (v1 Missing=0)
+hub-gh-arks-matrix-e2e: receipt=.spec/evidence/20261125030055-hub-full-expand/receipt.json

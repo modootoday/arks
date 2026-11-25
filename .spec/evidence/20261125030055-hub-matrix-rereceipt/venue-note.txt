@@ -1,0 +1,16 @@
+Venue: Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5), tip e0a9d11,
+run 2026-11-25 inside a hosted cloud session with a local dockerd, service dod-hub-matrix
+of verify/docker-compose.yml, release build of arks inside the image.
+Same method as the earlier hub receipts (20261119222040-hub-forge-groups): Cargo ran
+offline (CARGO_NET_OFFLINE=true) against the host registry cache mounted read-only at
+/usr/local/cargo/registry, because the container could not use the session egress
+proxy; dependencies are pinned and checksummed by Cargo.lock.
+Session-local overrides (not tracked): a separate Cargo target volume, because a
+sibling run used the shared /cargo-target at the same time; the checkout's Git
+directory mounted read-only with safe.directory set, so the runner resolves the tip.
+One container run executed verify/scripts/run-hub-gh-arks-matrix-e2e.sh nine times,
+once per path (GH_ARGV, FLAT, FULL, MUTATE, ASSETS, CHECKOUT, UX, STUBS2,
+FORGE_GROUPS), each with ARKS_DOD_STRICT=1; every run exited 0 (logs/status.tsv).
+Each path wrote its own receipt and step outputs; they are kept under results/.
+The image has no stock gh, so the gh argv inventory step was skipped (logged); the
+parse-level inventory stays host-advisory (evidence 20261120040000-gh-argv-inventory-a4).

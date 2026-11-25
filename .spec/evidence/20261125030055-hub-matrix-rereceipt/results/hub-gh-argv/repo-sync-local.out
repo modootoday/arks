@@ -1,0 +1,2 @@
+recipe=arks fetch origin topic2 && arks checkout topic2 && arks merge --ff-only origin/topic2
+note: local sync prints the arks commands to run; arks never spawns git
