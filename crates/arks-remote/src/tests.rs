@@ -1516,3 +1516,26 @@ fn seed_bare_for_daemon(git: &Path) -> (std::path::PathBuf, Oid) {
         .unwrap();
     (git.to_path_buf(), commit_oid)
 }
+
+/// [[sot:root/arks-remote]] 7e: push-side listing reads the receive-pack
+/// advertisement.
+#[test]
+fn receive_pack_listing_reports_advertised_refs() {
+    let mut peer = MemoryPeer::new();
+    let tip = peer
+        .seed_file("refs/heads/main", "README", b"one\n", "one")
+        .unwrap();
+    let refs = crate::ls_remote::advertised_http(
+        &mut peer,
+        "http://memory.test/repo.git",
+        "git-receive-pack",
+    )
+    .unwrap();
+    assert_eq!(
+        refs,
+        vec![crate::RemoteRef {
+            name: "refs/heads/main".into(),
+            oid: tip,
+        }]
+    );
+}

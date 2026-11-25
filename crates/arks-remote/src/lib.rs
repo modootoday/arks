@@ -76,7 +76,7 @@ pub use fetch::{
 };
 pub use http::{UreqTransport, http_get};
 pub use local::{copy_objects, is_local_remote, local_refs, open_local_remote};
-pub use ls_remote::{RemoteRef, ls_remote, ls_remote_with_head};
+pub use ls_remote::{RemoteRef, ls_remote, ls_remote_for_push, ls_remote_with_head};
 pub use os_store::{OsStore, run_os_store_helper, select_os_store};
 pub use push::{
     PushOptions, PushUpdate, push_git, push_git_with, push_http, push_http_with, push_remote,

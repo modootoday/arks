@@ -1,6 +1,7 @@
 //! `ls-remote` — list refs from a remote advertisement without fetching objects.
 //!
-//! Cite: <https://git-scm.com/docs/git-ls-remote>
+//! Cite: <https://git-scm.com/docs/git-ls-remote>; push-side listing from the
+//! receive-pack advertisement: <https://git-scm.com/docs/gitprotocol-pack>.
 
 use crate::advertise::{Advertisement, content_type_is, parse_advertisement};
 use crate::dumb::{looks_like_dumb_info_refs, parse_dumb_info_refs};
@@ -13,6 +14,7 @@ use crate::url::{GitDaemonUrl, SshRemoteUrl, join_url};
 use arks_oid::Oid;
 
 const UPLOAD_AD: &str = "application/x-git-upload-pack-advertisement";
+const RECEIVE_AD: &str = "application/x-git-receive-pack-advertisement";
 
 /// One advertised ref (`name`, `oid`).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,12 +51,42 @@ fn from_ad(ad: Advertisement) -> Vec<RemoteRef> {
 }
 
 fn ls_remote_http(url: &str) -> Result<Vec<RemoteRef>, RemoteError> {
-    let mut transport = UreqTransport::new();
-    let info_url = join_url(url, "info/refs?service=git-upload-pack");
+    advertised_http(&mut UreqTransport::new(), url, "git-upload-pack")
+}
+
+/// Refs the **receive-pack** service of `url` advertises: what a push sees
+/// (local path, HTTP smart/dumb, SSH, `git://`) — [[sot:root/arks-remote]] 7e.
+pub fn ls_remote_for_push(url: &str) -> Result<Vec<RemoteRef>, RemoteError> {
+    if crate::local::is_local_remote(url) {
+        let repo = crate::local::open_local_remote(url)?;
+        return crate::local::local_refs(&repo);
+    }
+    if let Ok(ssh) = SshRemoteUrl::parse(url) {
+        let mut sess = SshSession::connect(&ssh, SshService::ReceivePack)?;
+        return Ok(from_ad(sess.read_advertisement()?));
+    }
+    if let Ok(git) = GitDaemonUrl::parse(url) {
+        let mut sess = GitDaemonSession::connect(&git, GitDaemonService::ReceivePack)?;
+        return Ok(from_ad(sess.read_advertisement()?));
+    }
+    advertised_http(&mut UreqTransport::new(), url, "git-receive-pack")
+}
+
+/// `GET info/refs?service=<service>`; smart or dumb body.
+pub(crate) fn advertised_http<T: Transport>(
+    transport: &mut T,
+    url: &str,
+    service: &str,
+) -> Result<Vec<RemoteRef>, RemoteError> {
+    let accept = if service == "git-receive-pack" {
+        RECEIVE_AD
+    } else {
+        UPLOAD_AD
+    };
     let info = transport.exchange(&HttpRequest {
         method: "GET".into(),
-        url: info_url,
-        headers: vec![("Accept".into(), UPLOAD_AD.into())],
+        url: join_url(url, &format!("info/refs?service={service}")),
+        headers: vec![("Accept".into(), accept.into())],
         body: Vec::new(),
     })?;
     require_success(&info, "info/refs")?;
@@ -62,12 +94,12 @@ fn ls_remote_http(url: &str) -> Result<Vec<RemoteRef>, RemoteError> {
     if looks_like_dumb_info_refs(ct, &info.body) {
         return Ok(from_ad(parse_dumb_info_refs(&info.body)?));
     }
-    if !content_type_is(ct, "git-upload-pack-advertisement") {
-        return Err(RemoteError::Protocol(
-            "info/refs was not a git-upload-pack advertisement".into(),
-        ));
+    if !content_type_is(ct, &format!("{service}-advertisement")) {
+        return Err(RemoteError::Protocol(format!(
+            "info/refs was not a {service} advertisement"
+        )));
     }
-    Ok(from_ad(parse_advertisement(&info.body, "git-upload-pack")?))
+    Ok(from_ad(parse_advertisement(&info.body, service)?))
 }
 
 /// Refs advertised by `url` plus the `HEAD` symref target when the peer
