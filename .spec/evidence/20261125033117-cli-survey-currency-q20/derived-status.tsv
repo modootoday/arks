@@ -1,0 +1,196 @@
+command	survey_before	survey_derived	inventory	options	accepted	corpus_lines	same	diff_post_pin	diff_timing	diff_design	diff_unreasoned	exit_code_same	corpora	reason
+add	Partial	Verified	FULL	27	27	46	46	0	0	0	0	46	agent-tier-a,family-commit,family-gap-pack	inventory 27/27 ACCEPTED; corpus 46/46 SAME
+add--interactive	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)
+am	Partial	Verified	FULL	45	45	59	56	3	0	0	0	56	agent-tier-b,family-commit	inventory 45/45 ACCEPTED; corpus 56/59 SAME + 3 reasoned
+annotate	Partial	Verified	FULL	31	31	10	10	0	0	0	0	10	family-gap-blame	inventory 31/31 ACCEPTED; corpus 10/10 SAME
+apply	Partial	Verified	FULL	35	35	55	55	0	0	0	0	55	agent-tier-b,family-commit	inventory 35/35 ACCEPTED; corpus 55/55 SAME
+archive	Partial	Verified	FULL	14	14	23	22	1	0	0	0	22	family-remote	inventory 14/14 ACCEPTED; corpus 22/23 SAME + 1 reasoned
+askpass	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test tool_bridges (8/8 pass; evidence 20261125033117 a3-rerun)
+askyesno	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test tool_bridges (8/8 pass; evidence 20261125033117 a3-rerun)
+backfill	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)
+bisect	Partial	Verified	NO_INVENTORY	0	0	13	13	0	0	0	0	13	family-commit	no option inventory; corpus 13/13 SAME
+bisect--helper	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)
+blame	Partial	Verified	FULL	31	31	180	180	0	0	0	0	180	agent-tier-a,agent-tier-b,family-gap-blame	inventory 31/31 ACCEPTED; corpus 180/180 SAME
+branch	Partial	Verified	FULL	42	42	69	67	2	0	0	0	67	agent-tier-a,agent-tier-b,family-commit	inventory 42/42 ACCEPTED; corpus 67/69 SAME + 2 reasoned
+bugreport	Partial	Verified	FULL	5	5	4	4	0	0	0	0	4	family-plumbing	inventory 5/5 ACCEPTED; corpus 4/4 SAME
+bundle	Partial	Verified	NO_INVENTORY	0	0	18	18	0	0	0	0	18	family-remote	no option inventory; corpus 18/18 SAME
+cat-file	Partial	Verified	FULL	18	18	25	24	1	0	0	0	24	agent-tier-a,agent-tier-b,family-history	inventory 18/18 ACCEPTED; corpus 24/25 SAME + 1 reasoned
+check-attr	Partial	Verified	FULL	5	5	13	11	2	0	0	0	11	agent-tier-b,family-plumbing	inventory 5/5 ACCEPTED; corpus 11/13 SAME + 2 reasoned
+check-ignore	Parity-candidate	Parity-candidate	FULL	9	9	14	14	0	0	0	0	14	agent-tier-b,family-plumbing	not a Partial row; unchanged
+check-mailmap	Partial	Verified	FULL	1	1	5	5	0	0	0	0	5	family-plumbing	inventory 1/1 ACCEPTED; corpus 5/5 SAME
+check-ref-format	Partial	Verified	NO_INVENTORY	0	0	20	20	0	0	0	0	20	agent-tier-b,family-plumbing	no option inventory; corpus 20/20 SAME
+checkout	Parity-candidate	Parity-candidate	FULL	30	30	57	57	0	0	0	0	57	agent-tier-a,agent-tier-b,family-commit,family-gap-pack	not a Partial row; unchanged
+checkout--worker	Partial	Verified	FULL	1	1	5	5	0	0	0	0	5	family-a3-helpers	inventory 1/1 ACCEPTED; corpus 5/5 SAME
+checkout-index	Partial	Verified	FULL	16	16	23	23	0	0	0	0	23	family-plumbing	inventory 16/16 ACCEPTED; corpus 23/23 SAME
+cherry	Partial	Verified	FULL	3	3	7	7	0	0	0	0	7	agent-tier-b,family-history	inventory 3/3 ACCEPTED; corpus 7/7 SAME
+cherry-pick	Partial	Verified	FULL	24	24	50	50	0	0	0	0	50	agent-tier-a,family-commit	inventory 24/24 ACCEPTED; corpus 50/50 SAME
+citool	Partial	Partial	NO_INVENTORY	0	0	6	4	0	0	2	0	4	family-a3-gui	no option inventory; corpus 4/6 SAME; 2 design DIFF (pin image has no oracle); Docker crate test gui_cli (10/10 pass; evidence 20261125033117 a3-rerun)
+clean	Partial	Verified	FULL	13	13	18	18	0	0	0	0	18	agent-tier-a,agent-tier-b,family-commit	inventory 13/13 ACCEPTED; corpus 18/18 SAME
+clone	Partial	Verified	FULL	48	48	51	51	0	0	0	0	51	family-remote	inventory 48/48 ACCEPTED; corpus 51/51 SAME
+column	Partial	Verified	FULL	7	7	5	5	0	0	0	0	5	family-plumbing	inventory 7/7 ACCEPTED; corpus 5/5 SAME
+commit	Parity-candidate	Parity-candidate	FULL	53	53	58	58	0	0	0	0	58	agent-tier-a,agent-tier-b,family-commit,family-gap-pack	not a Partial row; unchanged
+commit-graph	Partial	Verified	FULL	1	1	28	28	0	0	0	0	28	family-gap-pack	inventory 1/1 ACCEPTED; corpus 28/28 SAME
+commit-tree	Parity-candidate	Parity-candidate	FULL	5	5	10	10	0	0	0	0	10	agent-tier-b,family-plumbing	not a Partial row; unchanged
+config	Partial	Verified	FULL	39	39	103	103	0	0	0	0	103	agent-tier-a,agent-tier-b,family-plumbing	inventory 39/39 ACCEPTED; corpus 103/103 SAME
+count-objects	Parity-candidate	Parity-candidate	FULL	4	4	8	8	0	0	0	0	8	agent-tier-b,family-plumbing	not a Partial row; unchanged
+credential	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+credential-cache	Partial	Verified	FULL	2	2	10	10	0	0	0	0	10	family-a3-helpers	inventory 2/2 ACCEPTED; corpus 10/10 SAME
+credential-cache--daemon	Partial	Verified	FULL	1	1	4	4	0	0	0	0	4	family-a3-helpers	inventory 1/1 ACCEPTED; corpus 4/4 SAME
+credential-helper-selector	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)
+credential-manager	Partial	Partial	NO_INVENTORY	0	0	3	0	0	0	3	0	0	family-a3-gui	no option inventory; corpus 0/3 SAME; 3 design DIFF (pin image has no oracle); Docker crate test credential_os_cli on the fake store (6/6 pass; evidence 20261125033117 a3-rerun)
+credential-store	Partial	Verified	FULL	1	1	5	5	0	0	0	0	5	family-plumbing	inventory 1/1 ACCEPTED; corpus 5/5 SAME
+credential-wincred	Partial	Partial	NO_INVENTORY	0	0	2	0	0	0	2	0	0	family-a3-gui	no option inventory; corpus 0/2 SAME; 2 design DIFF (pin image has no oracle); Docker crate test credential_os_cli on the fake store (6/6 pass; evidence 20261125033117 a3-rerun)
+daemon	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; daemon flag parity has its own Docker pin receipt 20261125031214-daemon-flags-parity-a5 (verify/matrices/daemon-git-arks-e2e-matrix.csv)
+describe	Partial	Verified	FULL	14	14	26	26	0	0	0	0	26	agent-tier-a,agent-tier-b,family-history	inventory 14/14 ACCEPTED; corpus 26/26 SAME
+diagnose	Partial	Verified	FULL	5	5	1	1	0	0	0	0	1	family-plumbing	inventory 5/5 ACCEPTED; corpus 1/1 SAME
+diff	Partial	Verified	FULL	22	22	182	181	1	0	0	0	181	agent-tier-a,agent-tier-b,family-history	inventory 22/22 ACCEPTED; corpus 181/182 SAME + 1 reasoned
+diff-files	Partial	Verified	FULL	22	22	10	10	0	0	0	0	10	agent-tier-b,family-history	inventory 22/22 ACCEPTED; corpus 10/10 SAME
+diff-index	Partial	Verified	FULL	22	22	14	14	0	0	0	0	14	agent-tier-b,family-history	inventory 22/22 ACCEPTED; corpus 14/14 SAME
+diff-pairs	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+diff-tree	Partial	Verified	FULL	27	27	43	43	0	0	0	0	43	agent-tier-b,family-history	inventory 27/27 ACCEPTED; corpus 43/43 SAME
+difftool	Partial	Verified	FULL	14	14	61	61	0	0	0	0	61	family-a3-tools	inventory 14/14 ACCEPTED; corpus 61/61 SAME
+difftool--helper	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate test tool_bridges (8/8 pass; evidence 20261125033117 a3-rerun)
+env--helper	Partial	Partial	FULL	3	3	0	0	0	0	0	0	0		inventory 3/3 ACCEPTED; no corpus line compares its behaviour with the pin; Docker crate test a3_helpers_cli (11/11 pass; evidence 20261125033117 a3-rerun)
+fast-export	Partial	Verified	FULL	17	17	88	88	0	0	0	0	88	family-gap-pack	inventory 17/17 ACCEPTED; corpus 88/88 SAME
+fast-import	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+fetch	Partial	Verified	FULL	54	54	62	61	1	0	0	0	61	agent-tier-b,family-remote	inventory 54/54 ACCEPTED; corpus 61/62 SAME + 1 reasoned
+fetch-pack	Partial	Verified	NO_INVENTORY	0	0	11	11	0	0	0	0	11	family-remote	no option inventory; corpus 11/11 SAME
+filter-branch	Partial	Verified	NO_INVENTORY	0	0	36	35	0	1	0	0	36	family-a3-tools	no option inventory; corpus 35/36 SAME + 1 reasoned
+fmt-merge-msg	Partial	Verified	FULL	6	6	9	9	0	0	0	0	9	family-plumbing	inventory 6/6 ACCEPTED; corpus 9/9 SAME
+for-each-ref	Partial	Verified	FULL	16	16	140	124	16	0	0	0	124	agent-tier-a,agent-tier-b,family-gap-blame	inventory 16/16 ACCEPTED; corpus 124/140 SAME + 16 reasoned
+for-each-repo	Partial	Verified	FULL	1	1	3	3	0	0	0	0	3	family-plumbing	inventory 1/1 ACCEPTED; corpus 3/3 SAME
+forge	arks-only	arks-only	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+format-patch	Partial	Verified	FULL	44	44	78	77	1	0	0	0	77	agent-tier-b,family-commit,family-gap-range-diff	inventory 44/44 ACCEPTED; corpus 77/78 SAME + 1 reasoned
+format-rev	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+fsck	Partial	Verified	FULL	14	14	19	19	0	0	0	0	19	agent-tier-b,family-plumbing	inventory 14/14 ACCEPTED; corpus 19/19 SAME
+fsck-objects	Synonym-wired	Synonym-wired	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+fsmonitor--daemon	Partial	Verified	NO_INVENTORY	0	0	5	5	0	0	0	0	5	family-a3-helpers	no option inventory; corpus 5/5 SAME
+gc	Partial	Verified	FULL	8	8	10	9	1	0	0	0	9	family-plumbing	inventory 8/8 ACCEPTED; corpus 9/10 SAME + 1 reasoned
+get-tar-commit-id	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-plumbing	no option inventory; corpus 2/2 SAME
+grep	Partial	Verified	FULL	70	70	90	90	0	0	0	0	90	agent-tier-a,agent-tier-b,family-history	inventory 70/70 ACCEPTED; corpus 90/90 SAME
+gui	Partial	Partial	NO_INVENTORY	0	0	17	2	0	0	15	0	2	family-a3-gui	no option inventory; corpus 2/17 SAME; 15 design DIFF (pin image has no oracle); Docker crate test gui_cli (10/10 pass; evidence 20261125033117 a3-rerun)
+gui--askpass	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-a3-gui	no option inventory; corpus 2/2 SAME
+gui--askyesno	Partial	Verified	NO_INVENTORY	0	0	1	1	0	0	0	0	1	family-a3-gui	no option inventory; corpus 1/1 SAME
+gui.tcl	Partial	Partial	NO_INVENTORY	0	0	1	0	0	0	1	0	0	family-a3-gui	no option inventory; corpus 0/1 SAME; 1 design DIFF (pin image has no oracle); Docker crate test gui_cli (10/10 pass; evidence 20261125033117 a3-rerun)
+hash-object	Partial	Verified	FULL	7	7	17	17	0	0	0	0	17	agent-tier-b,family-plumbing	inventory 7/7 ACCEPTED; corpus 17/17 SAME
+help	Partial	Partial	FULL	18	18	0	0	0	0	0	0	0		inventory 18/18 ACCEPTED; no corpus line compares its behaviour with the pin
+history	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+hook	Partial	Verified	NO_INVENTORY	0	0	6	5	1	0	0	0	5	family-plumbing	no option inventory; corpus 5/6 SAME + 1 reasoned
+host-env	arks-only	arks-only	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+http-backend	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+http-fetch	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+http-push	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+imap-send	Partial	Verified	FULL	5	5	7	7	0	0	0	0	7	family-a3-tools	inventory 5/5 ACCEPTED; corpus 7/7 SAME
+index-pack	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+init	Partial	Verified	FULL	9	9	31	31	0	0	0	0	31	agent-tier-b,family-commit	inventory 9/9 ACCEPTED; corpus 31/31 SAME
+init-db	Synonym-wired	Synonym-wired	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+instaweb	Partial	Verified	FULL	13	13	5	5	0	0	0	0	5	family-a3-tools	inventory 13/13 ACCEPTED; corpus 5/5 SAME
+interpret-trailers	Partial	Verified	FULL	11	11	12	12	0	0	0	0	12	family-commit	inventory 11/11 ACCEPTED; corpus 12/12 SAME
+last-modified	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+lease	arks-only	arks-only	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+lfs	arks-only	arks-only	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+lock	arks-only	arks-only	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+log	Partial	Verified	FULL	10	10	233	232	1	0	0	0	232	agent-tier-a,agent-tier-b,family-gap-blame,family-history	inventory 10/10 ACCEPTED; corpus 232/233 SAME + 1 reasoned
+ls-files	Partial	Verified	FULL	39	39	58	57	1	0	0	0	57	agent-tier-a,agent-tier-b,family-history	inventory 39/39 ACCEPTED; corpus 57/58 SAME + 1 reasoned
+ls-remote	Partial	Verified	FULL	13	13	30	30	0	0	0	0	30	agent-tier-b,family-remote	inventory 13/13 ACCEPTED; corpus 30/30 SAME
+ls-tree	Parity-candidate	Parity-candidate	FULL	13	13	22	22	0	0	0	0	22	agent-tier-b,family-history	not a Partial row; unchanged
+mailinfo	Partial	Verified	FULL	9	9	15	15	0	0	0	0	15	family-commit	inventory 9/9 ACCEPTED; corpus 15/15 SAME
+mailsplit	Partial	Verified	NO_INVENTORY	0	0	17	17	0	0	0	0	17	family-commit	no option inventory; corpus 17/17 SAME
+maintenance	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+merge	Partial	Verified	FULL	37	37	115	115	0	0	0	0	115	agent-tier-a,agent-tier-b,family-a3-helpers,family-commit,family-gap-pack	inventory 37/37 ACCEPTED; corpus 115/115 SAME
+merge-base	Partial	Verified	FULL	6	6	15	15	0	0	0	0	15	agent-tier-a,agent-tier-b,family-history	inventory 6/6 ACCEPTED; corpus 15/15 SAME
+merge-file	Partial	Verified	FULL	11	11	20	17	3	0	0	0	17	family-plumbing	inventory 11/11 ACCEPTED; corpus 17/20 SAME + 3 reasoned
+merge-index	Partial	Verified	NO_INVENTORY	0	0	16	16	0	0	0	0	16	family-a3-helpers	no option inventory; corpus 16/16 SAME
+merge-octopus	Partial	Verified	NO_INVENTORY	0	0	13	13	0	0	0	0	13	family-a3-helpers	no option inventory; corpus 13/13 SAME
+merge-one-file	Partial	Verified	NO_INVENTORY	0	0	11	11	0	0	0	0	11	family-a3-helpers	no option inventory; corpus 11/11 SAME
+merge-ours	Partial	Verified	NO_INVENTORY	0	0	3	3	0	0	0	0	3	family-a3-helpers	no option inventory; corpus 3/3 SAME
+merge-recursive	Partial	Verified	NO_INVENTORY	0	0	19	19	0	0	0	0	19	family-a3-helpers	no option inventory; corpus 19/19 SAME
+merge-recursive-ours	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-a3-helpers	no option inventory; corpus 2/2 SAME
+merge-recursive-theirs	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-a3-helpers	no option inventory; corpus 2/2 SAME
+merge-resolve	Partial	Verified	NO_INVENTORY	0	0	8	8	0	0	0	0	8	family-a3-helpers	no option inventory; corpus 8/8 SAME
+merge-subtree	Partial	Verified	NO_INVENTORY	0	0	3	3	0	0	0	0	3	family-a3-helpers	no option inventory; corpus 3/3 SAME
+merge-tree	Partial	Verified	FULL	7	7	51	40	11	0	0	0	40	agent-tier-b,family-gap-pack	inventory 7/7 ACCEPTED; corpus 40/51 SAME + 11 reasoned
+mergetool	Partial	Verified	NO_INVENTORY	0	0	34	34	0	0	0	0	34	family-a3-tools	no option inventory; corpus 34/34 SAME
+mktag	Partial	Verified	FULL	1	1	4	4	0	0	0	0	4	family-plumbing	inventory 1/1 ACCEPTED; corpus 4/4 SAME
+mktree	Partial	Verified	FULL	3	3	7	7	0	0	0	0	7	family-plumbing	inventory 3/3 ACCEPTED; corpus 7/7 SAME
+multi-pack-index	Partial	Verified	FULL	1	1	24	24	0	0	0	0	24	family-gap-pack	inventory 1/1 ACCEPTED; corpus 24/24 SAME
+mv	Parity-candidate	Parity-candidate	FULL	8	8	15	15	0	0	0	0	15	agent-tier-a,agent-tier-b,family-commit	not a Partial row; unchanged
+name-rev	Parity-candidate	Parity-candidate	FULL	9	9	16	16	0	0	0	0	16	agent-tier-b,family-history	not a Partial row; unchanged
+notes	Partial	Verified	FULL	1	1	59	53	6	0	0	0	53	family-commit	inventory 1/1 ACCEPTED; corpus 53/59 SAME + 6 reasoned
+pack-objects	Partial	Verified	FULL	44	44	62	60	2	0	0	0	60	family-gap-pack	inventory 44/44 ACCEPTED; corpus 60/62 SAME + 2 reasoned
+pack-redundant	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+pack-refs	Parity-candidate	Parity-candidate	FULL	2	2	12	6	6	0	0	0	6	family-plumbing	not a Partial row; unchanged
+patch-id	Partial	Verified	FULL	3	3	4	4	0	0	0	0	4	family-history	inventory 3/3 ACCEPTED; corpus 4/4 SAME
+pickaxe	Partial	Verified	FULL	31	31	5	5	0	0	0	0	5	family-a3-helpers,family-gap-blame	inventory 31/31 ACCEPTED; corpus 5/5 SAME
+prune	Partial	Verified	FULL	7	7	13	13	0	0	0	0	13	family-plumbing	inventory 7/7 ACCEPTED; corpus 13/13 SAME
+prune-packed	Partial	Verified	FULL	4	4	7	7	0	0	0	0	7	family-plumbing	inventory 4/4 ACCEPTED; corpus 7/7 SAME
+pull	Partial	Verified	FULL	59	59	47	47	0	0	0	0	47	family-remote	inventory 59/59 ACCEPTED; corpus 47/47 SAME
+push	Partial	Verified	FULL	35	35	49	48	1	0	0	0	48	agent-tier-b,family-remote	inventory 35/35 ACCEPTED; corpus 48/49 SAME + 1 reasoned
+quiltimport	Partial	Verified	FULL	6	6	11	11	0	0	0	0	11	family-a3-tools	inventory 6/6 ACCEPTED; corpus 11/11 SAME
+range-diff	Partial	Verified	FULL	102	102	166	165	1	0	0	0	166	agent-tier-b,family-gap-range-diff	inventory 102/102 ACCEPTED; corpus 165/166 SAME + 1 reasoned
+read-tree	Partial	Verified	FULL	19	19	27	27	0	0	0	0	27	family-plumbing	inventory 19/19 ACCEPTED; corpus 27/27 SAME
+rebase	Partial	Verified	FULL	48	48	86	86	0	0	0	0	86	agent-tier-a,family-commit	inventory 48/48 ACCEPTED; corpus 86/86 SAME
+receive-pack	Partial	Verified	FULL	2	2	3	3	0	0	0	0	3	family-remote	inventory 2/2 ACCEPTED; corpus 3/3 SAME
+reflog	Parity-candidate	Parity-candidate	NO_INVENTORY	0	0	2	2	0	0	0	0	2	agent-tier-b	not a Partial row; unchanged
+refs	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+remote	Parity-candidate	Parity-candidate	FULL	2	2	47	47	0	0	0	0	47	agent-tier-a,agent-tier-b,family-remote	not a Partial row; unchanged
+remote-ext	Partial	Verified	NO_INVENTORY	0	0	4	4	0	0	0	0	4	family-a3-helpers	no option inventory; corpus 4/4 SAME
+remote-fd	Partial	Verified	NO_INVENTORY	0	0	5	5	0	0	0	0	5	family-a3-helpers	no option inventory; corpus 5/5 SAME
+remote-ftp	Partial	Verified	NO_INVENTORY	0	0	1	1	0	0	0	0	1	family-a3-helpers	no option inventory; corpus 1/1 SAME
+remote-ftps	Partial	Verified	NO_INVENTORY	0	0	1	1	0	0	0	0	1	family-a3-helpers	no option inventory; corpus 1/1 SAME
+remote-http	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-a3-helpers	no option inventory; corpus 2/2 SAME
+remote-https	Partial	Verified	NO_INVENTORY	0	0	1	1	0	0	0	0	1	family-a3-helpers	no option inventory; corpus 1/1 SAME
+repack	Partial	Verified	FULL	31	31	12	11	1	0	0	0	11	family-plumbing	inventory 31/31 ACCEPTED; corpus 11/12 SAME + 1 reasoned
+replace	Partial	Verified	FULL	13	13	63	63	0	0	0	0	63	family-gap-pack	inventory 13/13 ACCEPTED; corpus 63/63 SAME
+replay	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+repo	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+request-pull	Partial	Verified	FULL	1	1	4	4	0	0	0	0	4	family-remote	inventory 1/1 ACCEPTED; corpus 4/4 SAME
+rerere	Partial	Verified	FULL	1	1	24	24	0	0	0	0	24	family-gap-pack	inventory 1/1 ACCEPTED; corpus 24/24 SAME
+reset	Partial	Verified	FULL	15	15	33	33	0	0	0	0	33	agent-tier-a,agent-tier-b,family-commit,family-gap-pack	inventory 15/15 ACCEPTED; corpus 33/33 SAME
+restore	Parity-candidate	Parity-candidate	FULL	24	24	31	31	0	0	0	0	31	agent-tier-a,family-commit,family-gap-pack	not a Partial row; unchanged
+rev-list	Partial	Verified	FULL	35	35	62	61	1	0	0	0	61	agent-tier-a,agent-tier-b,family-history	inventory 35/35 ACCEPTED; corpus 61/62 SAME + 1 reasoned
+rev-parse	Partial	Verified	NO_INVENTORY	0	0	18	18	0	0	0	0	18	agent-tier-a,agent-tier-b	no option inventory; corpus 18/18 SAME
+revert	Partial	Verified	FULL	20	20	25	25	0	0	0	0	25	agent-tier-a,agent-tier-b,family-commit	inventory 20/20 ACCEPTED; corpus 25/25 SAME
+rm	Parity-candidate	Parity-candidate	FULL	12	12	18	18	0	0	0	0	18	agent-tier-a,agent-tier-b,family-commit	not a Partial row; unchanged
+send-email	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin; Docker crate tests send_email_smtp 16/16 and tool_bridges 8/8 against a fixture SMTP server (no git-email oracle in the image; evidence 20261125033117 a3-rerun and 20261125005021-send-email-smtp-fixture)
+send-pack	Partial	Verified	FULL	23	23	18	18	0	0	0	0	18	family-remote	inventory 23/23 ACCEPTED; corpus 18/18 SAME
+serve-http	arks-only	arks-only	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+sh-i18n--envsubst	Partial	Verified	NO_INVENTORY	0	0	6	6	0	0	0	0	6	family-a3-helpers	no option inventory; corpus 6/6 SAME
+shell	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+shortlog	Parity-candidate	Parity-candidate	FULL	10	10	20	20	0	0	0	0	20	agent-tier-b,family-history	not a Partial row; unchanged
+show	Partial	Verified	FULL	10	10	48	48	0	0	0	0	48	agent-tier-a,agent-tier-b,family-gap-blame,family-history	inventory 10/10 ACCEPTED; corpus 48/48 SAME
+show-branch	Partial	Verified	FULL	18	18	121	121	0	0	0	0	121	family-gap-blame	inventory 18/18 ACCEPTED; corpus 121/121 SAME
+show-index	Partial	Verified	FULL	1	1	3	3	0	0	0	0	3	family-plumbing	inventory 1/1 ACCEPTED; corpus 3/3 SAME
+show-ref	Parity-candidate	Parity-candidate	FULL	12	12	26	24	2	0	0	0	24	agent-tier-a,agent-tier-b,family-plumbing	not a Partial row; unchanged
+sparse-checkout	Partial	Verified	NO_INVENTORY	0	0	30	25	5	0	0	0	25	agent-tier-b,family-commit	no option inventory; corpus 25/30 SAME + 5 reasoned
+stage	Synonym-wired	Synonym-wired	ABSENT	0	0	0	0	0	0	0	0	0		not a Partial row; unchanged
+stash	Partial	Verified	NO_INVENTORY	0	0	81	81	0	0	0	0	81	agent-tier-a,agent-tier-b,family-commit,family-gap-pack	no option inventory; corpus 81/81 SAME
+status	Partial	Verified	FULL	20	20	34	34	0	0	0	0	34	agent-tier-a,agent-tier-b,family-commit	inventory 20/20 ACCEPTED; corpus 34/34 SAME
+stripspace	Partial	Verified	FULL	4	4	6	6	0	0	0	0	6	family-plumbing	inventory 4/4 ACCEPTED; corpus 6/6 SAME
+submodule	Partial	Verified	NO_INVENTORY	0	0	141	141	0	0	0	0	141	agent-tier-b,family-remote	no option inventory; corpus 141/141 SAME
+submodule--helper	Partial	Verified	NO_INVENTORY	0	0	7	7	0	0	0	0	7	family-a3-helpers	no option inventory; corpus 7/7 SAME
+subtree	Partial	Partial	FULL	13	13	0	0	0	0	0	0	0		inventory 13/13 ACCEPTED; no corpus line compares its behaviour with the pin
+survey	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+switch	Parity-candidate	Parity-candidate	FULL	22	22	25	25	0	0	0	0	25	agent-tier-a,family-commit	not a Partial row; unchanged
+symbolic-ref	Parity-candidate	Parity-candidate	FULL	7	7	18	18	0	0	0	0	18	agent-tier-b,family-plumbing	not a Partial row; unchanged
+tag	Partial	Verified	FULL	34	34	58	57	1	0	0	0	57	agent-tier-a,agent-tier-b,family-commit	inventory 34/34 ACCEPTED; corpus 57/58 SAME + 1 reasoned
+unpack-file	Partial	Verified	NO_INVENTORY	0	0	3	3	0	0	0	0	3	family-plumbing	no option inventory; corpus 3/3 SAME
+unpack-objects	Partial	Verified	NO_INVENTORY	0	0	4	4	0	0	0	0	4	family-plumbing	no option inventory; corpus 4/4 SAME
+update	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-a3-helpers	no option inventory; corpus 2/2 SAME
+update-git-for-windows	Partial	Partial	NO_INVENTORY	0	0	3	0	0	0	3	0	0	family-a3-gui	no option inventory; corpus 0/3 SAME; 3 design DIFF (pin image has no oracle); Docker crate test update_check_cli (4/4 pass; evidence 20261125033117 a3-rerun)
+update-index	Partial	Verified	FULL	35	35	48	47	1	0	0	0	47	agent-tier-b,family-plumbing	inventory 35/35 ACCEPTED; corpus 47/48 SAME + 1 reasoned
+update-ref	Parity-candidate	Parity-candidate	FULL	6	6	24	24	0	0	0	0	24	agent-tier-b,family-plumbing	not a Partial row; unchanged
+update-server-info	Partial	Verified	FULL	2	2	3	3	0	0	0	0	3	family-remote	inventory 2/2 ACCEPTED; corpus 3/3 SAME
+upload-archive	Partial	Verified	NO_INVENTORY	0	0	2	2	0	0	0	0	2	family-remote	no option inventory; corpus 2/2 SAME
+upload-archive--writer	Partial	Verified	NO_INVENTORY	0	0	4	4	0	0	0	0	4	family-a3-helpers	no option inventory; corpus 4/4 SAME
+upload-pack	Partial	Verified	FULL	3	3	6	6	0	0	0	0	6	family-remote	inventory 3/3 ACCEPTED; corpus 6/6 SAME
+url-parse	Partial	Partial	NO_INVENTORY	0	0	0	0	0	0	0	0	0		no option inventory; no corpus line compares its behaviour with the pin
+var	Partial	Verified	NO_INVENTORY	0	0	11	9	2	0	0	0	9	agent-tier-b,family-plumbing	no option inventory; corpus 9/11 SAME + 2 reasoned
+verify-commit	Parity-candidate	Parity-candidate	FULL	3	3	6	6	0	0	0	0	6	family-plumbing	not a Partial row; unchanged
+verify-pack	Partial	Verified	FULL	5	5	7	7	0	0	0	0	7	family-plumbing	inventory 5/5 ACCEPTED; corpus 7/7 SAME
+verify-tag	Partial	Verified	FULL	4	4	7	7	0	0	0	0	7	family-plumbing	inventory 4/4 ACCEPTED; corpus 7/7 SAME
+version	Parity-candidate	Parity-candidate	FULL	1	1	0	0	0	0	0	0	0		not a Partial row; unchanged
+web--browse	Partial	Verified	NO_INVENTORY	0	0	11	11	0	0	0	0	11	family-a3-tools	no option inventory; corpus 11/11 SAME
+whatchanged	Synonym-wired	Synonym-wired	ABSENT	0	0	4	4	0	0	0	0	4	family-history	not a Partial row; unchanged
+worktree	Partial	Verified	NO_INVENTORY	0	0	55	53	2	0	0	0	53	agent-tier-a,agent-tier-b,family-commit	no option inventory; corpus 53/55 SAME + 2 reasoned
+write-tree	Parity-candidate	Parity-candidate	FULL	2	2	7	7	0	0	0	0	7	agent-tier-b,family-plumbing	not a Partial row; unchanged

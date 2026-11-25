@@ -1,0 +1,74 @@
+     Running tests/a3_helpers_cli.rs 
+test credential_helper_selector_forwards_to_the_selected_helper ... ok
+test env_helper_bool_ulong_and_exit_code ... ok
+test backfill_without_promisor_has_nothing_to_fetch ... ok
+test bisect_and_add_interactive_helpers_route_to_their_porcelain ... ok
+test remote_ext_and_fd_sessions ... ok
+test credential_cache_daemon_round_trip ... ok
+test merge_ours_and_resolve_exit_codes ... ok
+test sh_i18n_envsubst_substitutes_named_variables_only ... ok
+test octopus_merge_through_git_merge_and_strategy_program ... ok
+test upload_archive_writer_and_checkout_worker_streams ... ok
+test remote_http_lists_and_fetches_from_a_local_server ... ok
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+     Running tests/credential_os_cli.rs 
+test argv_shapes ... ok
+test secret_service_round_trip_on_private_bus ... ok
+test both_helpers_share_the_store ... ok
+test no_store_refuses_honestly ... ok
+test used_as_credential_helper ... ok
+test get_store_erase_roundtrip ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+     Running tests/gui_cli.rs 
+test askpass_and_askyesno ... ok
+test argv_errors_are_usage ... ok
+test blame_and_browser_print_without_terminal ... ok
+test citool_nocommit_and_amend ... ok
+test citool_script_commits_once ... ok
+test citool_without_commit_exits_nonzero ... ok
+test version_line ... ok
+test gui_window_keeps_going_after_commit ... ok
+test screen_view_driven_by_keys ... ok
+test citool_on_a_pseudo_terminal ... ok
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.56s
+     Running tests/instaweb_pages.rs 
+test instaweb_start_serves_the_pages ... ok
+test commit_pages_show_ids_and_changes ... ok
+test project_pages_list_the_history ... ok
+test errors_and_git_http_keep_their_answers ... ok
+test tree_and_blob_pages_serve_files ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+     Running tests/send_email_smtp.rs 
+test data_lines_are_dot_stuffed ... ok
+test annotate_off_runs_no_editor ... ok
+test batch_size_reconnects ... ok
+test dry_run_opens_no_connection ... ok
+test deep_threading_with_chain_reply_to ... ok
+test auth_plain_and_login_without_tls ... ok
+test helo_fallback_when_ehlo_is_refused ... ok
+test envelope_session_and_headers_of_one_patch ... ok
+test format_patch_non_ascii_output_gets_one_mime_block ... ok
+test no_thread_adds_no_threading_headers ... ok
+test no_thread_with_in_reply_to_replies_every_mail_to_it ... ok
+test non_ascii_content_is_declared_as_mime ... ok
+test shallow_threading_is_the_default_without_in_reply_to ... ok
+test shallow_threading_with_in_reply_to ... ok
+test transfer_encodings ... ok
+test suppress_cc_categories_shape_the_envelope ... ok
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+     Running tests/tool_bridges.rs 
+test askpass_helpers_and_browser_commands ... ok
+test instaweb_starts_and_stops_the_server ... ok
+test filter_branch_rewrites_and_backs_up ... ok
+test quiltimport_commits_each_patch ... ok
+test send_email_dry_run_and_sendmail_command ... ok
+test mergetool_stages_the_result_and_keeps_a_backup ... ok
+test imap_send_appends_to_the_folder ... ok
+test send_email_talks_smtp_to_a_local_sink ... ok
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+     Running tests/update_check_cli.rs 
+test local_http_feed ... ok
+test testing_counts_prereleases ... ok
+test errors ... ok
+test file_feed_newer_and_current ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
