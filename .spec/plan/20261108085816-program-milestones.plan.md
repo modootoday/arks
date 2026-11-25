@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108085816
 title: Program milestones Wave-1
-status: active
+status: archived
 created: 2026-11-08T08:58:16Z
-updated: 2026-11-10T15:18:16Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestones, roadmap, wave-1, bottom-up, confirmation, gix-exit, m1, m12, m13, m14]
 rel:
   depends_on:
@@ -24,6 +24,8 @@ rel:
     - plan:root/20261108090646
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — Wave-1 W1.9 clean-room G0/G1 re-proved by [[evidence:root/20261108185319]]; M1 exit recorded Done in the [[sot:root/program-roadmap]] tip table, which records the M0–M26 exits Done.
 
 # Program milestones — Wave-1 (M1 first wave)
 

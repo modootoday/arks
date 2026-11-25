@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090649
 title: M4 Pack protocol and gix-exit
-status: active
+status: archived
 created: 2026-11-08T09:06:49Z
-updated: 2026-11-08T10:15:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m4, phase-p, pack, protocol, gix-exit]
 rel:
   depends_on:
@@ -19,6 +19,8 @@ rel:
     - evidence:root/20261108191033
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G4/G5 + gix-exit receipt [[evidence:root/20261108103610]]; re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL); `Cargo.lock` has zero `gix` packages.
 
 # M4 — Pack + protocol client libs (Phase P) + gix-exit
 

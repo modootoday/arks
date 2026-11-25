@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261120000000
 title: argv symmetry ladder (A0–A_final) — every command and argv symmetric with git, gh and git daemon
-status: done
+status: archived
 created: 2026-11-20T00:00:00Z
-updated: 2026-11-20T18:00:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [cli, argv, symmetry, flags, git, gh, daemon, inventory, plan, no-invent-pass]
 verify: manual
 rel:
@@ -15,6 +15,8 @@ rel:
     - adr:root/20261119230000
     - plan:root/20261119210000
 ---
+
+**Status (2026-11-25, queue Q14 audit):** done → `archived` (**done**) — `done` is not a plan status Specfold accepts (draft, active, superseded, archived); the ladder closed with the A_final receipt `.spec/evidence/20261120175548-argv-inventory-final/`, re-run after queue Q1–Q8 as `.spec/evidence/20261125023636-argv-corpus-receipt-q-final/`.
 
 # argv symmetry ladder — execution plan
 

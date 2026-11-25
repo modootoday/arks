@@ -3,7 +3,7 @@ id: plan:root/20261111042400
 title: Hub local multi-agent PR/issue scenario scaffolding
 status: active
 created: 2026-11-10T19:24:00Z
-updated: 2026-11-10T19:26:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [arks-hub, multi-agent, clean-room, scenario, scaffold, phased, no-invent-claimed]
 verify: manual
 rel:
@@ -15,6 +15,8 @@ rel:
   implements:
     - sot:root/arks-hub-local-multi-agent-pr
 ---
+
+**Status (2026-11-25, queue Q14 audit):** stays **active**: P0 is done (scenario SoT, umbrella link, SKIP runner), but every HUB-MA-* row in [[sot:root/arks-hub-local-multi-agent-pr]] is still Scaffold and `verify/scripts/run-hub-local-multi-agent.sh` only prints SKIP; P1–P2 are queue unit Q15 and P3 is Q16 of [[plan:root/20261124000000]].
 
 # Hub local multi-agent PR/issue scenario scaffolding
 

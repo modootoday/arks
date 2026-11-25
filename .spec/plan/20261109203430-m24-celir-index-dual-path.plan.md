@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109203430
 title: M24 CELIR index dual-path migration
-status: active
+status: archived
 created: 2026-11-09T20:34:30Z
-updated: 2026-11-09T20:50:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [m24, celir, indexing-service, dual-path, sidecar, rebuild, query, celir-index, migration, g022-celir-index-contention]
 rel:
   depends_on:
@@ -20,6 +20,8 @@ rel:
   implements: [sot:root/celir-index-dual-path, sot:root/program-roadmap]
   evidence: [evidence:root/20261109203236, evidence:root/20261109204428]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**withdrawn**) — withdrawn by [[adr:root/20261119200000]] (owner decision: CELIR not adopted; M24 and G22–G25 Withdrawn; receipts kept as history).
 
 # M24 — CELIR index dual-path / migration
 

@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109024634
 title: M12 Concurrency compat mitigation
-status: active
+status: archived
 created: 2026-11-09T02:46:34Z
-updated: 2026-11-09T14:00:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m12, phase-cm, concurrency, mitigate-with-compat, multi-agent, locks, worktree, submodule, g017-concurrency-issue-compare, issue-resolution]
 rel:
   depends_on:
@@ -23,6 +23,8 @@ rel:
     - evidence:root/20261108150000
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — Cm-1..Cm-3 G17 receipts [[evidence:root/20261109030456]], [[evidence:root/20261109123000]], [[evidence:root/20261109140000]]; the IDs left Open here became terminal under M19–M21 (catalog Deferred=0, [[sot:root/production-residual-register]] §B).
 
 # M12 — Concurrency issue-resolution — compat mitigation (Phase Cm)
 

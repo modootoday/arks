@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261110010000
 title: M19 Concurrency catalog claim expansion
-status: active
+status: archived
 created: 2026-11-10T01:00:00Z
-updated: 2026-11-10T02:10:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m19, phase-cx, concurrency, mitigate-with-compat, g017-concurrency-issue-compare, claim-expansion, issue-resolution, done]
 rel:
   depends_on:
@@ -23,6 +23,8 @@ rel:
     - evidence:root/20261110020000
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — Cx-1 / Cx-2 G17 receipts [[evidence:root/20261110010000]] and [[evidence:root/20261110020000]]; catalog closed by M21 (Deferred=0).
 
 # M19 — Concurrency catalog claim expansion (Phase Cx)
 

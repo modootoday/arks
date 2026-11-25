@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108082148
 title: Development build order
-status: active
+status: archived
 created: 2026-11-08T08:21:48Z
-updated: 2026-11-09T02:52:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [build-order, bottom-up, phases, arks, cli-parity, server, concurrency, issue-resolution, perf]
 rel:
   depends_on:
@@ -24,6 +24,8 @@ rel:
     - research:root/20261108073650
     - research:root/20261108183800
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — every phase C→Pf closed as M1–M14, recorded Done in the [[sot:root/program-roadmap]] tip table, which records the M0–M26 exits Done; later phases Fs→Si are recorded in the same roadmap ladder.
 
 # Development build order
 

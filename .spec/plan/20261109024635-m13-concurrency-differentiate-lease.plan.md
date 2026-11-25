@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109024635
 title: M13 Concurrency differentiate lease uplift
-status: active
+status: archived
 created: 2026-11-09T02:46:35Z
-updated: 2026-11-09T04:05:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m13, phase-cd, concurrency, differentiate-beyond-git, lease, multi-agent, hooks, locks, g018-concurrency-issue-compare, issue-resolution]
 rel:
   depends_on:
@@ -23,6 +23,8 @@ rel:
     - evidence:root/20261109140000
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — Cd-1..Cd-3 G18 receipts [[evidence:root/20261109153000]], [[evidence:root/20261109160000]], [[evidence:root/20261109163000]]; the IDs left Open here became terminal under M20–M21 (catalog Deferred=0, [[sot:root/production-residual-register]] §B).
 
 # M13 — Concurrency issue-resolution — differentiate / lease uplift (Phase Cd)
 

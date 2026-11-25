@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108090645
 title: M0 Specfold program canon
-status: active
+status: archived
 created: 2026-11-08T09:06:45Z
-updated: 2026-11-08T18:38:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m0, specfold, design]
 rel:
   depends_on:
@@ -13,6 +13,8 @@ rel:
     - research:root/20261108090644
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — M0 exit recorded Done in the [[sot:root/program-roadmap]] tip table, which records the M0–M26 exits Done; its successor milestone plans M1–M26 all ran on this canon.
 
 # M0 — Specfold program canon
 

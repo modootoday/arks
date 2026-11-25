@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261110030000
 title: M20 Concurrency Cx-3 claim expansion
-status: active
+status: archived
 created: 2026-11-10T03:00:00Z
-updated: 2026-11-10T03:15:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m20, phase-cx, concurrency, mitigate-with-compat, g017-concurrency-issue-compare, claim-expansion, issue-resolution, done]
 rel:
   depends_on:
@@ -20,6 +20,8 @@ rel:
     - evidence:root/20261110020000
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — Cx-3 G17 receipt [[evidence:root/20261110030000]]; recorded Done in the [[sot:root/program-roadmap]] tip table, which records the M0–M26 exits Done.
 
 # M20 — Concurrency Cx-3 claim expansion (Phase Cx)
 

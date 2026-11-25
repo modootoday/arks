@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109203949
 title: M24 G22 CELIR index contention clean-room
-status: active
+status: archived
 created: 2026-11-09T20:39:49Z
-updated: 2026-11-09T20:45:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [m24, g022-celir-index-contention, celir, indexing-service, clean-room, contention, dual-path]
 rel:
   depends_on:
@@ -20,6 +20,8 @@ rel:
   implements: [sot:root/celir-index-contention-clean-room, sot:root/celir-index-dual-path]
   evidence: [evidence:root/20261109204428]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**withdrawn**) — withdrawn by [[adr:root/20261119200000]] (owner decision: CELIR not adopted; M24 and G22–G25 Withdrawn; receipts kept as history).
 
 # M24 — G22 CELIR index contention clean-room
 

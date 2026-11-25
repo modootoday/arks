@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261108183811
 title: M8 Porcelain parity wave B
-status: active
+status: archived
 created: 2026-11-08T18:38:11Z
-updated: 2026-11-08T13:40:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [milestone, m8, phase-pb, cli, porcelain, parity]
 rel:
   depends_on:
@@ -19,6 +19,8 @@ rel:
     - evidence:root/20261108133000
   implements: [sot:root/program-roadmap]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — M8 / G13 receipt [[evidence:root/20261108143000]]; re-PASS in the full Docker clean-room matrix [[evidence:root/20261110224814]] (45 PASS, 3 secrets SKIP, 0 FAIL); its Pc deferrals closed by M9.
 
 # M8 — Porcelain parity wave B (Phase Pb)
 

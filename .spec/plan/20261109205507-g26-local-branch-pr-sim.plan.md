@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261109205507
 title: G26 local branch PR sim clean-room
-status: active
+status: archived
 created: 2026-11-09T20:55:07Z
-updated: 2026-11-09T21:00:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [g026-local-branch-pr-sim, clean-room, branch, pr-sim, lease, merge]
 rel:
   depends_on:
@@ -15,6 +15,8 @@ rel:
     - sot:root/program-roadmap
   implements: [sot:root/local-branch-pr-sim-clean-room]
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — G26 Claimed by [[evidence:root/20261109205847]]; live GitHub latency stays out of scope (owner-blocked, queue unit Q10).
 
 # G26 — Local branch + synthetic PR clean-room
 

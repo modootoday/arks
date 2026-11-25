@@ -1,9 +1,9 @@
 ---
 id: plan:root/20261119180000
 title: Cloud drop-in implement ladder goal directive (C0–C_final)
-status: active
+status: archived
 created: 2026-11-19T18:00:00Z
-updated: 2026-11-19T18:00:00Z
+updated: 2026-11-25T02:45:00Z
 tags: [goal-directive, cloud, dropin, ladder, implement-first, no-invent-pass]
 verify: manual
 rel:
@@ -14,6 +14,8 @@ rel:
     - sot:root/production-residual-register
     - sot:root/product-verification-clean-room
 ---
+
+**Status (2026-11-25, queue Q14 audit):** active → `archived` (**done**) — C0–C_final closed per the status table of [[plan:root/20261119210000]]; G42 15/15 `.spec/evidence/20261119222000-g042-cloud-dropin/`; corpora `.spec/evidence/20261119225600-cli-flag-corpus-cleanroom/`.
 
 # Cloud drop-in implement ladder goal directive
 
