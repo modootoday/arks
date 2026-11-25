@@ -3,7 +3,7 @@ id: sot:root/remote-host-compatibility-surface
 title: Remote host compatibility surface
 status: active
 created: 2026-11-08T07:32:28Z
-updated: 2026-11-19T23:00:00Z
+updated: 2026-11-25T04:40:00Z
 tags: [git, github, remote, compatibility, hosting, server, smart-http, ssh]
 verify: [manual]
 rel:
@@ -13,7 +13,7 @@ rel:
 
 # Remote host compatibility surface
 
-Version **0.2.1**. Normative intent for arks interoperability as a Git **remote client** and as a Git **server**, plus the (A)/(B) host-product split. Wire bytes remain owned by [[sot:root/git-compat-surface]] and [[research:root/20261108071916]]; this SoT owns **remote/host roles**, verify-peer policy, and server-role lock. Host citation catalog: [[research:root/20261108073228]]. Program bars: [[sot:root/program-roadmap]] (**M9** CLI-parity client production; **M11** production-server).
+Version **0.2.2**. Normative intent for arks interoperability as a Git **remote client** and as a Git **server**, plus the (A)/(B) host-product split. Wire bytes remain owned by [[sot:root/git-compat-surface]] and [[research:root/20261108071916]]; this SoT owns **remote/host roles**, verify-peer policy, and server-role lock. Host citation catalog: [[research:root/20261108073228]]. Program bars: [[sot:root/program-roadmap]] (**M9** CLI-parity client production; **M11** production-server).
 
 ## Rule
 
@@ -44,6 +44,7 @@ When arks implements remote client operations, it MUST:
 | Shallow / partial | May request shallow/partial only per negotiated capabilities; against GitHub verify peer, documented host filters include `blob:none` and `tree:0` — do not claim other host filters without citation | partial-clone; GitHub partial/shallow blog |
 | bundle-uri | MAY consume bundle-uri if advertised; MUST NOT require github.com to advertise it for client pass | bundle-uri; research gap note |
 | LFS | Git LFS is phased companion interop, not a substitute for pack/v2 correctness | GitHub Git LFS docs (when claimed) |
+| Refspecs and tags | A network fetch wants and stores only the refs its fetch refspecs name (glob or exact pair). Tags follow git-fetch TAG AUTO-FOLLOWING on every transport: by default a tag is stored when it is new locally and its object is present after the fetch (the client requests `include-tag` when the peer advertises it); `--tags` wants and stores every advertised tag; `--no-tags` stores none; the flags win over `remote.<name>.tagOpt`. `git clone` copies every tag unless `--no-tags`, which also writes `remote.origin.tagOpt = --no-tags`. An existing local tag is not overwritten. As a server, upload-pack advertises `include-tag` and, when asked, adds each annotated tag whose peeled commit the pack holds | git-fetch (TAG AUTO-FOLLOWING, `--tags`, `--no-tags`); git-clone `--no-tags`; gitprotocol-capabilities `include-tag`; gitrevisions refspec |
 
 ### Server role — **LOCKED** (in-scope product goal; **M11** production-server)
 
