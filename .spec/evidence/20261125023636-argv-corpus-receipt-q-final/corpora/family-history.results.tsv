@@ -1,0 +1,659 @@
+L001	SAME	diff	
+L002	SAME	diff --cached	
+L003	SAME	diff HEAD	
+L004	SAME	diff HEAD~2 HEAD	
+L005	SAME	diff --stat HEAD~3 HEAD	
+L006	SAME	diff --numstat t0 HEAD	
+L007	SAME	diff --shortstat t0 HEAD	
+L008	SAME	diff --raw t0 HEAD	
+L009	SAME	diff --raw --abbrev=10 t0 HEAD	
+L010	SAME	diff --raw --no-abbrev t0 HEAD	
+L011	SAME	diff --name-status -z t0 HEAD	
+L012	SAME	diff --name-only -z t0 HEAD	
+L013	SAME	diff --numstat -z t0 HEAD	
+L014	SAME	diff --raw -z t0 HEAD	
+L015	SAME	diff --patch-with-raw t0 HEAD	
+L016	SAME	diff --patch-with-stat t0 HEAD	
+L017	SAME	diff --summary t0 HEAD	
+L018	SAME	diff --stat --summary t0 HEAD	
+L019	SAME	diff --compact-summary t0 HEAD	
+L020	SAME	diff --stat=40 t0 HEAD	
+L021	SAME	diff --stat=40,10 t0 HEAD	
+L022	SAME	diff --stat-width=30 t0 HEAD	
+L023	SAME	diff --stat-name-width=5 t0 HEAD	
+L024	SAME	diff --stat-graph-width=2 t0 HEAD	
+L025	SAME	diff --stat-count=1 t0 HEAD	
+L026	SAME	diff --dirstat t0 HEAD	
+L027	SAME	diff --dirstat=files t0 HEAD	
+L028	SAME	diff --dirstat=lines,cumulative t0 HEAD	
+L029	SAME	diff -X5 t0 HEAD	
+L030	SAME	diff --cumulative t0 HEAD	
+L031	SAME	diff --dirstat-by-file t0 HEAD	
+L032	SAME	diff -U1 t0 HEAD	
+L033	SAME	diff --unified=0 t0 HEAD	
+L034	SAME	diff -U t0 HEAD	
+L035	SAME	diff -W t0 HEAD	
+L036	SAME	diff --function-context HEAD	
+L037	SAME	diff --inter-hunk-context=5 -U0 HEAD	
+L038	SAME	diff --full-index t0 HEAD	
+L039	SAME	diff --binary t0 HEAD	
+L040	SAME	diff --abbrev=12 t0 HEAD	
+L041	SAME	diff --src-prefix=L/ --dst-prefix=R/ t0 HEAD	
+L042	SAME	diff --no-prefix t0 HEAD	
+L043	DIFF	diff --no-prefix --default-prefix t0 HEAD	exit 0!=129; stdout
+L044	SAME	diff --line-prefix='> ' --stat -p t0 HEAD	
+L045	SAME	diff --output-indicator-new=P --output-indicator-old=M --output-indicator-context=C HEAD	
+L046	SAME	diff --color HEAD	
+L047	SAME	diff --color=always --stat t0 HEAD	
+L048	SAME	diff --color=never HEAD	
+L049	SAME	diff --no-color HEAD	
+L050	SAME	diff --color-moved HEAD	
+L051	SAME	diff --ws-error-highlight=all HEAD	
+L052	SAME	diff -R HEAD	
+L053	SAME	diff -R --stat t0 HEAD	
+L054	SAME	diff -a t0 HEAD	
+L055	SAME	diff --text --stat t0 HEAD	
+L056	SAME	diff --check HEAD	
+L057	SAME	diff --exit-code HEAD	
+L058	SAME	diff --quiet HEAD	
+L059	SAME	diff --exit-code HEAD HEAD	
+L060	SAME	diff --no-exit-code HEAD	
+L061	SAME	diff -S GAMMA t0 HEAD	
+L062	SAME	diff -G gam t0 HEAD	
+L063	SAME	diff -S readme --pickaxe-all t0 HEAD	
+L064	SAME	diff --pickaxe-regex -S 'GAM+A' t0 HEAD	
+L065	SAME	diff --diff-filter=A --name-status t0 HEAD	
+L066	SAME	diff --diff-filter=m --name-status t0 HEAD	
+L067	SAME	diff --diff-filter='A*' --name-status t0 HEAD	
+L068	SAME	diff --rotate-to=src/a.txt --name-only t0 HEAD	
+L069	SAME	diff --skip-to=src/a.txt --name-only t0 HEAD	
+L070	SAME	diff --relative=src t0 HEAD	
+L071	SAME	diff --relative=src --name-only t0 HEAD	
+L072	SAME	diff --no-relative --name-only t0 HEAD	
+L073	SAME	diff -M t0 HEAD	
+L074	SAME	diff -C --name-status t0 HEAD	
+L075	SAME	diff --find-copies-harder --name-status t0 HEAD	
+L076	SAME	diff -B --stat t0 HEAD	
+L077	SAME	diff -D t0 HEAD	
+L078	SAME	diff --no-renames t0 HEAD	
+L079	SAME	diff -l 5 --stat t0 HEAD	
+L080	SAME	diff --minimal HEAD	
+L081	SAME	diff --patience HEAD	
+L082	SAME	diff --histogram HEAD	
+L083	SAME	diff --diff-algorithm=patience HEAD	
+L084	SAME	diff --anchored=delta HEAD	
+L085	SAME	diff -w HEAD	
+L086	SAME	diff -b HEAD	
+L087	SAME	diff --ignore-space-at-eol HEAD	
+L088	SAME	diff --ignore-cr-at-eol HEAD	
+L089	SAME	diff --ignore-blank-lines HEAD	
+L090	SAME	diff -I delta HEAD	
+L091	SAME	diff --indent-heuristic HEAD	
+L092	SAME	diff --no-indent-heuristic HEAD	
+L093	SAME	diff --word-diff HEAD	
+L094	SAME	diff --word-diff=porcelain HEAD	
+L095	SAME	diff --word-diff=color HEAD	
+L096	SAME	diff --color-words HEAD	
+L097	SAME	diff --word-diff-regex=. HEAD	
+L098	SAME	diff --ext-diff HEAD	
+L099	SAME	diff --no-ext-diff HEAD	
+L100	SAME	diff --textconv HEAD	
+L101	SAME	diff --no-textconv HEAD	
+L102	SAME	diff --ignore-submodules HEAD	
+L103	SAME	diff --submodule=log HEAD	
+L104	SAME	diff --ita-invisible-in-index HEAD	
+L105	SAME	diff --find-object=HEAD:README.md --name-only t0 HEAD	
+L106	SAME	diff -O /dev/null --name-only t0 HEAD	
+L107	SAME	diff --no-patch HEAD	
+L108	SAME	diff -s HEAD	
+L109	SAME	diff --staged --stat	
+L110	SAME	diff --merge-base main feature --stat	
+L111	SAME	diff main...feature --name-status	
+L112	SAME	diff t0 HEAD -- src	
+L113	SAME	diff --stat t0 HEAD -- src/a.txt README.md	
+L114	SAME	diff --stat --summary afc18e2~2 afc18e2~1	
+L115	SAME	diff afc18e2~2 afc18e2~1	
+L116	SAME	diff --raw afc18e2~2 afc18e2~1	
+L117	SAME	diff --name-status afc18e2~2 afc18e2~1	
+L118	SAME	diff -M --raw -z afc18e2~2 afc18e2~1	
+L119	SAME	diff --numstat afc18e2~2 afc18e2~1	
+L120	SAME	diff --numstat -z afc18e2~2 afc18e2~1	
+L121	SAME	diff -C --name-status afc18e2~2 afc18e2~1	
+L122	SAME	diff -C -C --name-status afc18e2~2 afc18e2~1	
+L123	SAME	diff --find-copies-harder --name-status afc18e2~2 afc18e2~1	
+L124	SAME	diff -C --find-copies-harder afc18e2~2 afc18e2~1	
+L125	SAME	diff -M50% --name-status afc18e2~2 afc18e2~1	
+L126	SAME	diff -M100% --name-status afc18e2~2 afc18e2~1	
+L127	SAME	diff --find-renames=99 --name-status afc18e2~2 afc18e2~1	
+L128	SAME	diff --no-renames --name-status afc18e2~2 afc18e2~1	
+L129	SAME	diff --no-renames -D afc18e2~2 afc18e2~1	
+L130	SAME	diff -l1 --stat afc18e2~2 afc18e2~1	
+L131	SAME	diff --compact-summary afc18e2~2 afc18e2~1	
+L132	SAME	diff --stat=50,20 afc18e2~2 afc18e2~1	
+L133	SAME	diff --color afc18e2~2 afc18e2~1	
+L134	SAME	diff --color --stat afc18e2~2 afc18e2~1	
+L135	SAME	diff -B --raw afc18e2~1 afc18e2	
+L136	SAME	diff -B afc18e2~1 afc18e2	
+L137	SAME	diff -B --summary --stat afc18e2~1 afc18e2	
+L138	SAME	diff -B/90% --name-status afc18e2~1 afc18e2	
+L139	SAME	diff -w afc18e2~2 afc18e2~1 -- ws.txt	
+L140	SAME	diff -b afc18e2~2 afc18e2~1 -- ws.txt	
+L141	SAME	diff --ignore-space-at-eol afc18e2~2 afc18e2~1 -- ws.txt	
+L142	SAME	diff --ignore-blank-lines afc18e2~2 afc18e2~1 -- blank.txt	
+L143	SAME	diff -W afc18e2~2 afc18e2~1 -- code.c	
+L144	SAME	diff --function-context -U1 afc18e2~2 afc18e2~1 -- code.c	
+L145	SAME	diff --check afc18e2~2 afc18e2~1	
+L146	SAME	diff --word-diff afc18e2~2 afc18e2~1 -- code.c ws.txt	
+L147	SAME	diff --word-diff=porcelain afc18e2~2 afc18e2~1 -- ws.txt	
+L148	SAME	diff --color-words afc18e2~2 afc18e2~1 -- ws.txt	
+L149	SAME	diff --patience afc18e2~2 afc18e2~1 -- code.c	
+L150	SAME	diff --histogram afc18e2~2 afc18e2~1 -- code.c	
+L151	SAME	diff --relative=nonexistent afc18e2~2 afc18e2~1	
+L152	SAME	diff -R --name-status afc18e2~2 afc18e2~1	
+L153	SAME	diff --summary -R afc18e2~2 afc18e2~1	
+L154	SAME	diff --diff-filter=R --name-status afc18e2~2 afc18e2~1	
+L155	SAME	diff --diff-filter=T --name-status afc18e2~2 afc18e2~1	
+L156	SAME	diff --diff-filter=r --name-status afc18e2~2 afc18e2~1	
+L157	SAME	diff -S same --name-status afc18e2~2 afc18e2~1	
+L158	SAME	diff -G 'x = 2' afc18e2~2 afc18e2~1	
+L159	SAME	diff --dirstat=files,0 afc18e2~2 afc18e2~1	
+L160	SAME	diff --full-index --raw afc18e2~2 afc18e2~1	
+L161	SAME	diff --abbrev=4 --raw afc18e2~2 afc18e2~1	
+L162	SAME	diff-tree HEAD~2	
+L163	SAME	diff-tree -r t0 HEAD	
+L164	SAME	diff-tree t0 HEAD	
+L165	SAME	diff-tree -t t0 HEAD	
+L166	SAME	diff-tree --root t0	
+L167	SAME	diff-tree --root -p t0	
+L168	SAME	diff-tree -p HEAD~2	
+L169	SAME	diff-tree --stat t0 HEAD	
+L170	SAME	diff-tree --name-only t0 HEAD	
+L171	SAME	diff-tree -r --name-status -z t0 HEAD	
+L172	SAME	diff-tree --abbrev HEAD~2	
+L173	SAME	diff-tree --no-commit-id --name-only HEAD~2	
+L174	SAME	diff-tree -s HEAD~1	
+L175	SAME	diff-tree HEAD~1	
+L176	SAME	diff-tree --always HEAD~1	
+L177	SAME	diff-tree -m HEAD~1	
+L178	SAME	diff-tree -m --name-only HEAD~1	
+L179	SAME	diff-tree -c 3298026	
+L180	SAME	diff-tree -c --name-status 3298026	
+L181	SAME	diff-tree -c -p 3298026	
+L182	SAME	diff-tree --cc -p 3298026	
+L183	SAME	diff-tree -c --combined-all-paths 3298026	
+L184	SAME	diff-tree -c --stat 3298026	
+L185	SAME	diff-tree -v HEAD~2	
+L186	SAME	diff-tree --pretty=oneline HEAD~2	
+L187	SAME	diff-tree --format=%s HEAD~2	
+L188	SAME	diff-tree --merge-base main feature	
+L189	SAME	diff-tree -M -r afc18e2~2 afc18e2~1	
+L190	SAME	diff-tree -C --find-copies-harder -r afc18e2~2 afc18e2~1	
+L191	SAME	diff-tree -B -r afc18e2~1 afc18e2	
+L192	SAME	diff-tree -R -r t0 HEAD	
+L193	SAME	diff-tree -S beta -r t0 HEAD	
+L194	SAME	diff-tree --pickaxe-all -S GAMMA -r t0 HEAD	
+L195	SAME	diff-tree -O /dev/null -r t0 HEAD	
+L196	SAME	diff-tree -l1 -M -r afc18e2~2 afc18e2~1	
+L197	SAME	diff-tree -a -p -r t0 HEAD	
+L198	SAME	diff-tree --patch-with-raw -r t0 HEAD	
+L199	SAME	diff-tree --exit-code -r t0 HEAD	
+L200	SAME	diff-index HEAD	
+L201	SAME	diff-index --cached HEAD	
+L202	SAME	diff-index -m HEAD	
+L203	SAME	diff-index -p HEAD	
+L204	SAME	diff-index --cached -p HEAD	
+L205	SAME	diff-index --abbrev --cached HEAD	
+L206	SAME	diff-index -z --cached HEAD	
+L207	SAME	diff-index --name-status HEAD	
+L208	SAME	diff-index --merge-base feature	
+L209	SAME	diff-index -R HEAD	
+L210	SAME	diff-index --stat HEAD	
+L211	SAME	diff-files	
+L212	SAME	diff-files -p	
+L213	SAME	diff-files -q	
+L214	SAME	diff-files --name-only	
+L215	SAME	diff-files -z	
+L216	SAME	diff-files --abbrev	
+L217	SAME	diff-files -R -p	
+L218	SAME	diff-files --stat	
+L219	SAME	log --stat -2	
+L220	SAME	log -p -1	
+L221	SAME	log -p --stat -1	
+L222	SAME	log --raw -2	
+L223	SAME	log --name-status --oneline	
+L224	SAME	log --numstat -3 --format=%h	
+L225	SAME	log -q -p -1	
+L226	SAME	log --quiet -p -1	
+L227	SAME	log --no-quiet -1 --stat	
+L228	SAME	log --source --oneline --all	
+L229	SAME	log --source -1 --all	
+L230	SAME	log --use-mailmap -1	
+L231	SAME	log --mailmap --format=%aN -1	
+L232	SAME	log --no-use-mailmap -1	
+L233	SAME	log --decorate --oneline -3	
+L234	SAME	log --decorate=full --oneline -3	
+L235	SAME	log --decorate=short --oneline -2	
+L236	SAME	log --no-decorate --oneline -2	
+L237	SAME	log --decorate-refs=tags --decorate --oneline -4	
+L238	SAME	log --decorate-refs-exclude=main --decorate --oneline -2	
+L239	SAME	log --clear-decorations --decorate --oneline -2	
+L240	SAME	log --abbrev-commit -1	
+L241	SAME	log --abbrev-commit --abbrev=10 -1	
+L242	SAME	log --no-abbrev-commit --oneline -1	
+L243	SAME	log --parents --oneline -3	
+L244	SAME	log --children --oneline -3	
+L245	SAME	log --log-size -1	
+L246	SAME	log --boundary --oneline main~2..main	
+L247	SAME	log --cherry-mark --oneline main...feature	
+L248	SAME	log --cherry-pick --left-right --oneline main...feature	
+L249	SAME	log --left-only --oneline main...feature	
+L250	SAME	log --right-only --oneline main...feature	
+L251	SAME	log --cherry --oneline main...feature	
+L252	SAME	log --skip=2 --oneline	
+L253	SAME	log --max-count=2 --oneline	
+L254	SAME	log -n 2 --oneline	
+L255	SAME	log -2 --reverse --oneline	
+L256	SAME	log --author=Thor --oneline -2	
+L257	SAME	log --committer=Mitter --oneline -2	
+L258	SAME	log --grep=readme --oneline	
+L259	SAME	log --grep=readme --invert-grep --oneline	
+L260	SAME	log --grep=main --grep=tail --all-match --oneline	
+L261	SAME	log -i --grep=MAIN --oneline	
+L262	SAME	log -E --grep='ext(end)?' --oneline	
+L263	SAME	log -F --grep='a.d' --oneline	
+L264	SAME	log --merges --oneline	
+L265	SAME	log --no-merges --oneline	
+L266	SAME	log --min-parents=2 --oneline	
+L267	SAME	log --max-parents=1 --oneline -3	
+L268	SAME	log --first-parent --oneline	
+L269	SAME	log --branches --oneline	
+L270	SAME	log --tags --oneline	
+L271	SAME	log --remotes --oneline	
+L272	SAME	log --glob='heads/*' --oneline	
+L273	SAME	log --exclude='feat*' --branches --oneline	
+L274	SAME	log --not main --not feature --oneline	
+L275	SAME	log --all --not main --oneline	
+L276	SAME	log --ancestry-path t0..main --oneline	
+L277	SAME	log --simplify-by-decoration --oneline --all	
+L278	SAME	log --full-history --oneline -- src/b.txt	
+L279	SAME	log --sparse --full-history --oneline -- src/b.txt	
+L280	SAME	log --topo-order --oneline	
+L281	SAME	log --date-order --oneline	
+L282	SAME	log --author-date-order --oneline	
+L283	SAME	log --no-walk --oneline main feature	
+L284	SAME	log --no-walk=unsorted --oneline feature main	
+L285	SAME	log --do-walk --oneline -2	
+L286	SAME	log --since=2023-11-15 --oneline	
+L287	SAME	log --after='2023-11-15 01:00:00 +0000' --oneline	
+L288	SAME	log --until='2023-11-15 02:00:00 +0000' --oneline	
+L289	SAME	log --before='2023-11-15 02:00:00 +0000' --oneline	
+L290	SAME	log --ignore-missing --oneline main nonexistent	
+L291	SAME	log -m --oneline --name-status -1 HEAD~1	
+L292	SAME	log -c --oneline -1 3298026	
+L293	SAME	log --cc --oneline -1 3298026	
+L294	SAME	log --cc -p -1 3298026	
+L295	SAME	log --diff-merges=first-parent --oneline --name-only -1 HEAD~1	
+L296	SAME	log --diff-merges=separate --oneline --name-only -1 HEAD~1	
+L297	SAME	log --diff-merges=combined -p -1 3298026	
+L298	SAME	log --diff-merges=off --oneline -1 HEAD~1 -p	
+L299	SAME	log --no-diff-merges -p --oneline -1 HEAD~1	
+L300	DIFF	log --dd --oneline -1 HEAD~1	exit 0!=128; stdout
+L301	SAME	log --combined-all-paths -c --raw -1 3298026	
+L302	SAME	log -M --stat --oneline -1 afc18e2~1	
+L303	SAME	log --follow --oneline -- src/a.txt	
+L304	SAME	log -S same --oneline afc18e2	
+L305	SAME	log -G 'x = 2' --oneline afc18e2	
+L306	SAME	log --diff-filter=R --oneline afc18e2	
+L307	SAME	log --find-object=HEAD:README.md --oneline	
+L308	SAME	log --pickaxe-all -S beta --name-only --oneline	
+L309	SAME	log --line-prefix='> ' -1 --stat	
+L310	SAME	log --graph --oneline --all	
+L311	SAME	log --notes -1	
+L312	SAME	log --no-notes -1	
+L313	SAME	log --show-signature -1	
+L314	SAME	log --encoding=UTF-8 -1	
+L315	SAME	log --expand-tabs -1	
+L316	SAME	log --no-expand-tabs -1	
+L317	SAME	log --relative=src --oneline --stat -2	
+L318	SAME	log --stdin --oneline	
+L319	SAME	whatchanged -2	
+L320	SAME	whatchanged --oneline	
+L321	SAME	whatchanged -p -1	
+L322	SAME	whatchanged --stat -2	
+L323	SAME	show	
+L324	SAME	show --stat	
+L325	SAME	show HEAD~1	
+L326	SAME	show --stat HEAD~1	
+L327	SAME	show -m --name-only HEAD~1	
+L328	SAME	show --first-parent --stat HEAD~1	
+L329	SAME	show 3298026	
+L330	SAME	show -c 3298026	
+L331	SAME	show --cc 3298026	
+L332	SAME	show --name-status 3298026	
+L333	SAME	show -s --format=%s HEAD~2	
+L334	SAME	show --oneline -s HEAD~2 HEAD~3	
+L335	SAME	show --pretty=raw -s HEAD	
+L336	SAME	show v1	
+L337	SAME	show t0:src	
+L338	SAME	show HEAD:README.md	
+L339	SAME	show HEAD~2..HEAD --oneline -s	
+L340	SAME	show --decorate -s	
+L341	SAME	show -q	
+L342	SAME	show --no-patch --format=%H	
+L343	SAME	show -M --stat afc18e2~1	
+L344	SAME	show --diff-merges=off 3298026	
+L345	SAME	rev-list HEAD	
+L346	SAME	rev-list --max-count=2 HEAD	
+L347	SAME	rev-list --max-age=1700010000 HEAD	
+L348	SAME	rev-list --min-age=1700010000 HEAD	
+L349	SAME	rev-list --sparse --full-history HEAD -- src	
+L350	SAME	rev-list --no-merges HEAD	
+L351	SAME	rev-list --min-parents=2 HEAD	
+L352	SAME	rev-list --no-min-parents HEAD	
+L353	SAME	rev-list --max-parents=1 HEAD	
+L354	SAME	rev-list --no-max-parents HEAD	
+L355	SAME	rev-list --remove-empty HEAD -- docs	
+L356	SAME	rev-list --all	
+L357	SAME	rev-list --branches	
+L358	SAME	rev-list --tags	
+L359	SAME	rev-list --remotes	
+L360	DIFF	rev-list --exclude-hidden=fetch --all	exit 0!=128; stdout
+L361	SAME	rev-list --quiet HEAD	
+L362	SAME	rev-list --topo-order HEAD	
+L363	SAME	rev-list --date-order HEAD	
+L364	SAME	rev-list --reverse HEAD	
+L365	SAME	rev-list --parents HEAD	
+L366	SAME	rev-list --children HEAD	
+L367	SAME	rev-list --objects -2 HEAD	
+L368	SAME	rev-list --objects --no-object-names t0	
+L369	SAME	rev-list --objects --object-names t0	
+L370	SAME	rev-list --objects-edge HEAD~1..HEAD	
+L371	SAME	rev-list --disk-usage HEAD	
+L372	SAME	rev-list --disk-usage --objects HEAD	
+L373	SAME	rev-list --disk-usage=human HEAD	
+L374	SAME	rev-list --unpacked -2 HEAD	
+L375	SAME	rev-list --header -1 HEAD	
+L376	SAME	rev-list --pretty -1 HEAD	
+L377	SAME	rev-list --pretty=oneline -2 HEAD	
+L378	SAME	rev-list --format=%s -2 HEAD	
+L379	SAME	rev-list --no-commit-header --format=%s -2 HEAD	
+L380	SAME	rev-list --abbrev=10 --abbrev-commit -2 HEAD	
+L381	SAME	rev-list --no-abbrev --parents -1 HEAD	
+L382	SAME	rev-list --abbrev-commit --parents -1 HEAD	
+L383	SAME	rev-list --left-right main...feature	
+L384	SAME	rev-list --left-right --count main...feature	
+L385	SAME	rev-list --count --left-right --cherry-mark main...feature	
+L386	SAME	rev-list --cherry-pick main...feature	
+L387	SAME	rev-list --boundary main~2..main	
+L388	SAME	rev-list --count HEAD	
+L389	SAME	rev-list --timestamp -1 HEAD	
+L390	SAME	rev-list --bisect HEAD ^t0	
+L391	SAME	rev-list --bisect-vars HEAD ^t0	
+L392	SAME	rev-list --skip=1 -2 HEAD	
+L393	SAME	rev-list --ancestry-path t0..main	
+L394	SAME	rev-list --first-parent HEAD	
+L395	SAME	rev-list --author=Thor -1 HEAD	
+L396	SAME	rev-list -g -2 HEAD	
+L397	SAME	rev-list --no-walk main feature	
+L398	SAME	rev-list --stdin	
+L399	SAME	rev-list HEAD -- src/b.txt	
+L400	SAME	rev-list --objects --filter=blob:none -1 HEAD	
+L401	SAME	patch-id	
+L402	SAME	patch-id --stable	
+L403	SAME	patch-id --unstable	
+L404	SAME	patch-id --verbatim	
+L405	SAME	cat-file -p HEAD	
+L406	SAME	cat-file -t v1	
+L407	SAME	cat-file -s HEAD:README.md	
+L408	SAME	cat-file --allow-unknown-type -t HEAD	
+L409	SAME	cat-file -e HEAD~1	
+L410	SAME	cat-file commit v1	
+L411	SAME	cat-file --use-mailmap -p HEAD	
+L412	SAME	cat-file --textconv HEAD:README.md	
+L413	SAME	cat-file --filters HEAD:README.md	
+L414	SAME	cat-file --filters --path=README.md HEAD:README.md	
+L415	SAME	cat-file --batch-all-objects --batch-check	
+L416	SAME	cat-file --batch-all-objects --batch-check='%(objectname) %(objecttype) %(objectsize:disk)'	
+L417	SAME	cat-file --batch-all-objects --batch --buffer	
+L418	DIFF	cat-file -Z --batch-all-objects --batch-check	exit 0!=129; stdout
+L419	SAME	cat-file --batch-all-objects --batch-check --follow-symlinks	
+L420	SAME	cat-file --batch-all-objects --batch-check='%(deltabase)'	
+L421	SAME	cat-file --batch-check	
+L422	SAME	cat-file --batch-command	
+L423	SAME	grep -n --column readme	
+L424	SAME	grep --no-line-number -n -i README	
+L425	SAME	grep -z -n readme	
+L426	SAME	grep -l -z e	
+L427	SAME	grep --name-only e	
+L428	SAME	grep --no-files-with-matches -l -c e	
+L429	SAME	grep -L --no-files-without-match -c e	
+L430	SAME	grep -C1 more	
+L431	SAME	grep --context=1 more	
+L432	SAME	grep -A1 --after-context 2 readme	
+L433	SAME	grep -B1 last	
+L434	SAME	grep --before-context=1 last	
+L435	SAME	grep -2 more	
+L436	SAME	grep --no-context -C3 more	
+L437	SAME	grep --heading -n e	
+L438	SAME	grep --break -C1 e	
+L439	SAME	grep --heading --break e	
+L440	SAME	grep -e readme --and -e more	
+L441	SAME	grep -e readme --and --not -e more	
+L442	SAME	grep --not -e readme	
+L443	SAME	grep -e alpha -e readme --all-match	
+L444	SAME	grep --no-all-match -e alpha -e readme	
+L445	SAME	grep '(' -e alpha --or -e beta ')' --and -e a	
+L446	SAME	grep -m1 e	
+L447	SAME	grep --max-count=1 --no-max-count e	
+L448	SAME	grep --max-depth 0 e	
+L449	SAME	grep --max-depth=1 e -- src	
+L450	SAME	grep -r e	
+L451	SAME	grep --recursive e	
+L452	SAME	grep --no-recursive e	
+L453	SAME	grep --color=always -n readme	
+L454	SAME	grep --color e	
+L455	SAME	grep --no-color e	
+L456	SAME	grep -o e	
+L457	SAME	grep --no-only-matching -o e	
+L458	SAME	grep -h e	
+L459	SAME	grep -H -h e	
+L460	SAME	grep --full-name e	
+L461	SAME	grep --no-full-name e	
+L462	SAME	grep --untracked e	
+L463	SAME	grep --no-untracked e	
+L464	SAME	grep --untracked --no-exclude-standard e	
+L465	SAME	grep --untracked --exclude-standard e	
+L466	SAME	grep --no-index e	
+L467	SAME	grep --no-index --exclude-standard e	
+L468	SAME	grep --index e	
+L469	SAME	grep --cached --no-cached e	
+L470	SAME	grep -p e	
+L471	SAME	grep --show-function -C1 e	
+L472	SAME	grep --no-show-function -p e	
+L473	SAME	grep -W e	
+L474	SAME	grep --function-context -n beta	
+L475	SAME	grep --no-function-context -W e	
+L476	SAME	grep -P 're\w+'	
+L477	SAME	grep --perl-regexp '\d'	
+L478	SAME	grep --no-perl-regexp -E 'r(ea)+d'	
+L479	SAME	grep --no-extended-regexp -E 'r(ea)+d'	
+L480	SAME	grep --no-basic-regexp e	
+L481	SAME	grep --no-fixed-strings -F e	
+L482	SAME	grep -f /dev/null	
+L483	SAME	grep -O e	
+L484	SAME	grep --open-files-in-pager=cat e	
+L485	SAME	grep --threads 2 e	
+L486	SAME	grep --no-threads e	
+L487	SAME	grep --ext-grep e	
+L488	SAME	grep --no-ext-grep e	
+L489	SAME	grep --textconv e	
+L490	SAME	grep --no-textconv e	
+L491	SAME	grep --recurse-submodules e	
+L492	SAME	grep --no-recurse-submodules e	
+L493	SAME	grep --no-invert-match -v e	
+L494	SAME	grep --no-ignore-case -i README	
+L495	SAME	grep --no-word-regexp -w read	
+L496	SAME	grep --no-text -a e	
+L497	SAME	grep --no-count -c e	
+L498	SAME	grep --no-null -z -l e	
+L499	SAME	grep --no-heading --heading e	
+L500	SAME	grep --no-break --break e	
+L501	SAME	grep --no-quiet e	
+L502	SAME	grep --no-column --column e	
+L503	SAME	grep e HEAD:src	
+L504	SAME	grep -c e HEAD HEAD~3	
+L505	SAME	ls-files -t	
+L506	SAME	ls-files -v	
+L507	SAME	ls-files -f	
+L508	SAME	ls-files -c -m -d -t	
+L509	SAME	ls-files --no-cached -m	
+L510	SAME	ls-files --no-deleted -d -c	
+L511	SAME	ls-files --no-modified -m	
+L512	SAME	ls-files --no-others -o	
+L513	SAME	ls-files --no-stage -s	
+L514	SAME	ls-files --no-unmerged -u	
+L515	SAME	ls-files -s --abbrev	
+L516	SAME	ls-files -s --abbrev=10	
+L517	SAME	ls-files -s --no-abbrev	
+L518	SAME	ls-files --deduplicate -c -m	
+L519	SAME	ls-files --no-deduplicate -c -m	
+L520	SAME	ls-files -o --directory	
+L521	SAME	ls-files -o --no-directory --directory	
+L522	SAME	ls-files -o --directory --no-empty-directory	
+L523	SAME	ls-files -o --directory --empty-directory	
+L524	SAME	ls-files -o -x '*.txt'	
+L525	SAME	ls-files -o --exclude='*.log'	
+L526	SAME	ls-files -o --no-exclude-standard	
+L527	SAME	ls-files -i -o -x '*.log'	
+L528	SAME	ls-files -c -i -x '*.md'	
+L529	SAME	ls-files -o -X .git/info/exclude	
+L530	SAME	ls-files -o --exclude-from=.git/info/exclude	
+L531	SAME	ls-files -o --exclude-per-directory=.gitignore	
+L532	SAME	ls-files -o --no-exclude-per-directory	
+L533	SAME	ls-files --eol	
+L534	SAME	ls-files --no-eol	
+L535	DIFF	ls-files --format='%(objectmode) %(objecttype) %(objectsize) %(objectsize:padded)|%(stage) %(eolinfo:index) %(eolinfo:worktree) %(eolattr) %(path)'	exit 0!=128; stdout
+L536	SAME	ls-files --format='%(path)%x09%(objectname)'	
+L537	SAME	ls-files --debug	
+L538	SAME	ls-files --no-debug	
+L539	SAME	ls-files --with-tree=HEAD~3	
+L540	SAME	ls-files --no-with-tree	
+L541	SAME	ls-files -k	
+L542	SAME	ls-files --killed	
+L543	SAME	ls-files --no-killed	
+L544	SAME	ls-files --resolve-undo	
+L545	SAME	ls-files --no-resolve-undo	
+L546	SAME	ls-files -z -t	
+L547	SAME	ls-files --error-unmatch nope	
+L548	SAME	ls-files --no-error-unmatch nope	
+L549	SAME	ls-files --sparse	
+L550	SAME	ls-files --no-sparse	
+L551	SAME	ls-files --recurse-submodules	
+L552	SAME	ls-files --no-recurse-submodules	
+L553	SAME	ls-files --full-name src	
+L554	SAME	ls-files --no-full-name src	
+L555	SAME	ls-files --no-ignored -o	
+L556	SAME	ls-tree -z HEAD	
+L557	SAME	ls-tree --object-only -r HEAD	
+L558	SAME	ls-tree --no-object-only HEAD	
+L559	SAME	ls-tree --long HEAD	
+L560	SAME	ls-tree --no-long -l HEAD	
+L561	SAME	ls-tree --name-status HEAD	
+L562	SAME	ls-tree --no-name-only --name-only HEAD	
+L563	SAME	ls-tree --abbrev HEAD	
+L564	SAME	ls-tree --abbrev=10 -r HEAD	
+L565	SAME	ls-tree --no-abbrev HEAD	
+L566	SAME	ls-tree --format='%(objectmode) %(objecttype) %(objectname) %(objectsize) %(objectsize:padded) %(path)' -r HEAD	
+L567	SAME	ls-tree --full-name HEAD src	
+L568	SAME	ls-tree --no-full-name HEAD	
+L569	SAME	ls-tree --full-tree HEAD	
+L570	SAME	ls-tree --no-full-tree HEAD	
+L571	SAME	ls-tree --name-only --object-only HEAD	
+L572	SAME	ls-tree --format '%(path)' HEAD	
+L573	SAME	merge-base -a main feature	
+L574	SAME	merge-base --all 3298026^1 3298026^2	
+L575	SAME	merge-base --no-all -a main feature	
+L576	SAME	merge-base --octopus main feature t0	
+L577	SAME	merge-base --octopus -a main feature	
+L578	SAME	merge-base --independent v1 feature	
+L579	SAME	merge-base --independent feature v1 t0	
+L580	SAME	merge-base --is-ancestor t0 main	
+L581	SAME	merge-base --fork-point main	
+L582	SAME	merge-base --fork-point main feature	
+L583	SAME	merge-base --fork-point feature main	
+L584	SAME	merge-base v1 feature main	
+L585	SAME	cherry --verbose t0	
+L586	SAME	cherry --no-verbose -v t0	
+L587	SAME	cherry --abbrev t0	
+L588	SAME	cherry --abbrev=10 -v t0	
+L589	SAME	cherry --no-abbrev t0	
+L590	SAME	name-rev --no-tags --tags HEAD~2	
+L591	SAME	name-rev --refs feature 9bd4826	
+L592	SAME	name-rev --no-refs --refs=x HEAD	
+L593	SAME	name-rev --exclude=main HEAD	
+L594	SAME	name-rev --exclude main --tags HEAD	
+L595	SAME	name-rev --no-exclude --exclude=main HEAD	
+L596	SAME	name-rev --no-name-only HEAD	
+L597	SAME	name-rev --no-all HEAD	
+L598	SAME	name-rev --refs=nope --always HEAD	
+L599	SAME	name-rev --refs=nope --no-always HEAD	
+L600	SAME	name-rev --refs=nope --no-undefined --name-only HEAD	
+L601	SAME	name-rev --refs=nope --undefined HEAD	
+L602	SAME	name-rev --annotate-stdin	
+L603	SAME	name-rev --no-annotate-stdin HEAD	
+L604	SAME	name-rev 504170b	
+L605	SAME	shortlog HEAD	
+L606	SAME	shortlog -se HEAD	
+L607	SAME	shortlog -c -s HEAD	
+L608	SAME	shortlog --no-committer -c -s HEAD	
+L609	SAME	shortlog --no-numbered -n -s HEAD	
+L610	SAME	shortlog --no-summary -s HEAD	
+L611	SAME	shortlog --no-email -e -s HEAD	
+L612	SAME	shortlog -w HEAD	
+L613	SAME	shortlog -w20,2,4 HEAD	
+L614	SAME	shortlog --group=committer --group=author -s HEAD	
+L615	SAME	shortlog --no-group --group=committer -s HEAD	
+L616	SAME	shortlog --format='%h %s' HEAD	
+L617	SAME	shortlog --group='format:%an <%ae>' -s HEAD	
+L618	SAME	shortlog --group=trailer:signed-off-by -s HEAD	
+L619	SAME	shortlog -s --all	
+L620	SAME	shortlog -s main..feature	
+L621	SAME	shortlog -s HEAD -- src	
+L622	SAME	shortlog -s --no-merges HEAD	
+L623	SAME	shortlog	
+L624	SAME	describe --no-tags --tags	
+L625	SAME	describe --no-all --all	
+L626	SAME	describe --no-long --long	
+L627	SAME	describe --abbrev	
+L628	SAME	describe --no-abbrev	
+L629	SAME	describe --candidates=0	
+L630	SAME	describe --candidates 5 --tags	
+L631	SAME	describe --debug	
+L632	SAME	describe --no-debug	
+L633	SAME	describe --broken	
+L634	SAME	describe --broken=-B	
+L635	SAME	describe --no-dirty --dirty	
+L636	SAME	describe --no-broken	
+L637	SAME	describe --no-match --match='t*' --tags	
+L638	SAME	describe --no-exclude --tags	
+L639	SAME	describe --no-always	
+L640	SAME	describe --no-exact-match	
+L641	SAME	describe --no-first-parent	
+L642	SAME	describe --no-contains --contains HEAD~3	
+L643	SAME	log --graph --first-parent --oneline --all	
+L644	SAME	log -1 -s --raw	
+L645	SAME	log -1 --raw -s	
+L646	SAME	log -1 -s --stat	
+L647	SAME	log -1 -s --numstat	
+L648	SAME	log -1 --patch -s --raw	
+L649	SAME	log -1 -s -p	
+L650	SAME	log -1 -p -s	
+L651	SAME	log -1 -s --patch-with-stat	
+L652	SAME	log -1 --raw --no-patch	
+L653	SAME	log -1 --name-only -s	
+L654	SAME	log -1 -s --name-status	
+L655	SAME	log -1 -s --check	
+L656	SAME	log -1 --name-only --name-status	
+L657	SAME	show -s --raw HEAD	
+L658	SAME	diff-tree -s --raw HEAD	
+L659	SAME	diff -s --name-only HEAD~1	

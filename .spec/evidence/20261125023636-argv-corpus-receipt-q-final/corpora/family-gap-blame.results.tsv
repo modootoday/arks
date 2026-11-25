@@ -1,0 +1,528 @@
+L001	SAME	for-each-ref --format='[%(objectsize:disk)]' refs/heads/main	
+L002	SAME	for-each-ref --format='[%(deltabase)]' refs/heads/main	
+L003	SAME	for-each-ref --format='[%(upstream:remotename)|%(upstream:remoteref)|%(push)|%(push:short)]' refs/heads	
+L004	SAME	for-each-ref --format='[%(worktreepath)]' refs/heads	
+L005	SAME	for-each-ref --format='[%(contents:signature)|%(contents:lines=1)|%(contents:size)]' refs/heads/main refs/tags/v1	
+L006	SAME	for-each-ref --format='[%(trailers)|%(trailers:only)]' refs/heads/main	
+L007	SAME	for-each-ref --format='[%(raw)]' refs/tags/v1	
+L008	SAME	for-each-ref --format='[%(raw:size)]' refs/tags/v1	
+L009	SAME	for-each-ref --format='[%(tree:short)|%(numparent)|%(parent:short)|%(object:short)]' refs/heads/main refs/tags/v1	
+L010	SAME	for-each-ref --format='[%(subject:sanitize)]' refs/heads/main refs/tags/v1	
+L011	DIFF	for-each-ref --format='[%(describe)]' refs/heads/main	exit 0!=128; stdout
+L012	DIFF	for-each-ref --format='[%(ahead-behind:main)]' refs/heads	exit 0!=128; stdout
+L013	SAME	for-each-ref --format='[%(color:red)x%(color:reset)]' refs/heads	
+L014	SAME	for-each-ref --color=always --format='[%(color:red)x%(color:reset)]' refs/heads	
+L015	SAME	for-each-ref --format='[%(align:10)%(refname:short)%(end)]' refs/heads	
+L016	SAME	for-each-ref --format='[%(align:10,right)%(refname:short)%(end)]' refs/heads	
+L017	SAME	for-each-ref --format='[%(align:width=12,position=middle)%(refname:short)%(end)]' refs/heads	
+L018	SAME	for-each-ref --format='%(if)%(upstream)%(then)up%(else)noup%(end)' refs/heads	
+L019	SAME	for-each-ref --format='%(if:equals=main)%(refname:short)%(then)M%(else)O%(end)' refs/heads	
+L020	SAME	for-each-ref --format='%(if:notequals=main)%(refname:short)%(then)M%(else)O%(end)' refs/heads	
+L021	DIFF	for-each-ref --format='[%(authoremail:mailmap)]' refs/heads/main	exit 0!=128; stdout
+L022	SAME	for-each-ref --format='[%(refname:lstrip=-1)|%(refname:rstrip=-1)]' refs/heads/main	
+L023	SAME	for-each-ref --format='[%(contents:subject:sanitize)]' refs/heads/main	
+L024	SAME	for-each-ref --format='[%(body:x)]' refs/heads/main	
+L025	SAME	for-each-ref --format='[%(rest)]' refs/heads/main	
+L026	DIFF	for-each-ref --format='[%(signature)]' refs/heads/main	exit 0!=128; stdout
+L027	SAME	for-each-ref --format='[%(*objectname)|%(*subject)|%(*authorname)]' refs/tags	
+L028	DIFF	for-each-ref --format='[%(authorname:mailmap)|%(authoremail:trim,localpart)]' refs/heads/main	exit 0!=128; stdout
+L029	SAME	for-each-ref --format='[%(upstream:lstrip=1)|%(upstream:track,nobracket)]' refs/heads	
+L030	SAME	for-each-ref -s refs/tags	
+L031	SAME	for-each-ref -p refs/tags	
+L032	SAME	for-each-ref --python refs/tags	
+L033	SAME	for-each-ref --tcl refs/tags	
+L034	SAME	for-each-ref --shell --perl refs/tags	
+L035	SAME	for-each-ref --no-shell refs/tags	
+L036	SAME	for-each-ref --shell --format="%(subject) it's" refs/tags	
+L037	SAME	for-each-ref --perl --format="%(subject) it's" refs/tags	
+L038	SAME	for-each-ref --python --format="%(contents)" refs/tags	
+L039	SAME	for-each-ref --tcl --format='%(contents)' refs/tags	
+L040	SAME	for-each-ref --ignore-case refs/HEADS	
+L041	SAME	for-each-ref --ignore-case --sort=refname	
+L042	DIFF	for-each-ref --omit-empty --format='%(if)%(upstream)%(then)%(refname)%(end)'	exit 0!=129
+L043	DIFF	for-each-ref --exclude=refs/heads/f* refs/heads	exit 0!=129; stdout
+L044	DIFF	for-each-ref --exclude=refs/tags	exit 0!=129; stdout
+L045	DIFF	for-each-ref --stdin	exit 0!=129; stdout
+L046	SAME	for-each-ref --count=1 --no-count	
+L047	SAME	for-each-ref --color --format='%(color:green)%(refname)' refs/heads	
+L048	SAME	for-each-ref --color=never --format='%(color:green)%(refname)' refs/heads	
+L049	SAME	for-each-ref --no-color refs/heads	
+L050	SAME	for-each-ref --merged main	
+L051	SAME	for-each-ref --no-merged main	
+L052	SAME	for-each-ref --contains t0	
+L053	SAME	for-each-ref --no-contains feature	
+L054	SAME	for-each-ref --points-at v1	
+L055	SAME	for-each-ref --points-at=HEAD --no-points-at	
+L056	SAME	for-each-ref --sort=-refname --sort=objecttype	
+L057	SAME	for-each-ref --sort=version:refname refs/tags	
+L058	SAME	for-each-ref --sort=v:refname refs/tags	
+L059	SAME	for-each-ref --no-sort	
+L060	SAME	for-each-ref --sort=objectsize refs/heads	
+L061	SAME	for-each-ref --sort=authordate --format='%(refname) %(authordate:short)'	
+L062	SAME	for-each-ref --sort=bogus	
+L063	SAME	for-each-ref --format='%(bogus)'	
+L064	SAME	for-each-ref --format='%(if)x'	
+L065	SAME	for-each-ref --format='%(end)'	
+L066	SAME	for-each-ref --merged	
+L067	SAME	for-each-ref --contains	
+L068	SAME	for-each-ref --count=x	
+L069	SAME	for-each-ref --bogus	
+L070	SAME	for-each-ref --format='%(bogus)'	
+L071	SAME	for-each-ref --format='%(if)x'	
+L072	SAME	for-each-ref --format='%(end)'	
+L073	SAME	for-each-ref --format='%(then)'	
+L074	SAME	for-each-ref --format='%(if)%(then)%(then)%(end)'	
+L075	SAME	for-each-ref --format='%(if)%(else)%(end)'	
+L076	SAME	for-each-ref --format='%(align)x%(end)'	
+L077	SAME	for-each-ref --format='%(align:x)x%(end)'	
+L078	SAME	for-each-ref --format='%(refname:bogus)'	
+L079	SAME	for-each-ref --format='%(objectname:bogus)'	
+L080	SAME	for-each-ref --format='%(color:bogus)'	
+L081	SAME	for-each-ref --format='%(contents:bogus)'	
+L082	SAME	for-each-ref --format='%(subject:bogus)'	
+L083	SAME	for-each-ref --format='%(body:x)'	
+L084	SAME	for-each-ref --format='%(rest)'	
+L085	SAME	for-each-ref --format='%(refname'	
+L086	SAME	for-each-ref --format='%(authordate:bogus)'	
+L087	SAME	for-each-ref --sort=bogus	
+L088	SAME	for-each-ref --count=x	
+L089	SAME	for-each-ref --count=-1	
+L090	SAME	for-each-ref --shell --perl	
+L091	SAME	for-each-ref --merged	
+L092	SAME	for-each-ref --merged nonexist	
+L093	SAME	for-each-ref --points-at nonexist	
+L094	SAME	for-each-ref --bogus	
+L095	SAME	for-each-ref --shell --format='%(align:12)%(refname:short)%(end)|' refs/heads	
+L096	SAME	for-each-ref --shell --format='%(if)%(refname)%(then)a %(refname:short)%(else)b%(end)|' refs/heads	
+L097	SAME	for-each-ref --shell --format='%(color:red)%(refname:short)' refs/heads	
+L098	SAME	for-each-ref --format='%(align:8)%(if)%(HEAD)%(then)*%(end)%(refname:short)%(end)|' refs/heads	
+L099	SAME	for-each-ref --format='%(if)%(HEAD)%(then)%(align:4,right)x%(end)%(end)|' refs/heads	
+L100	SAME	for-each-ref --format='%(align:3)toolongtext%(end)|' refs/heads	
+L101	SAME	for-each-ref --format='%(align:position=right,8)%(refname:short)%(end)|' refs/heads	
+L102	SAME	for-each-ref --format='%(align:width=3,width=9)x%(end)|' refs/heads	
+L103	SAME	for-each-ref --format='%(if:equals=)%(upstream)%(then)E%(end)' refs/heads	
+L104	SAME	for-each-ref --format='%(if) %(then)S%(else)N%(end)' refs/heads	
+L105	SAME	for-each-ref --format='%(contents:lines=2)' refs/heads/main refs/tags/v1	
+L106	SAME	for-each-ref --format='%(objectname:short=1)|%(objectname:short=50)' refs/heads/main	
+L107	SAME	for-each-ref --format='%(refname:lstrip=10)|%(refname:rstrip=10)|%(refname:lstrip=-10)' refs/heads/main	
+L108	SAME	for-each-ref --format='%(authordate:short)|%(authordate:iso)|%(authordate:raw)|%(authordate:unix)|%(authordate:rfc)|%(authordate:iso-strict)|%(authordate:format:%Y-%m %H)|%(authordate:local)|%(authordate:default)' refs/heads/main	
+L109	SAME	for-each-ref --format='%(tagger)|%(taggerdate)|%(author)|%(committer)' refs/tags/v1 refs/heads/main	
+L110	SAME	for-each-ref --format='%(creator)' refs/tags/v1 refs/heads/main	
+L111	SAME	for-each-ref --format='%(objectname)' --sort=objectsize --sort=-objecttype	
+L112	SAME	for-each-ref --format='%(refname)' --sort=-taggerdate	
+L113	SAME	for-each-ref --format='%(refname)' --sort=creatordate	
+L114	SAME	for-each-ref --format='%(refname)' --sort=subject	
+L115	SAME	for-each-ref --format='%(refname)' --sort=*subject	
+L116	SAME	for-each-ref --format='%(refname)' --sort=HEAD	
+L117	SAME	for-each-ref --format='%(refname)' --sort=upstream	
+L118	SAME	for-each-ref --format='%(refname)' --sort=objectname	
+L119	SAME	for-each-ref --format='%(push:remotename)|%(push:remoteref)' refs/heads	
+L120	SAME	for-each-ref --format='%(symref)|%(symref:short)' refs/stash	
+L121	SAME	for-each-ref --format='%(trailers:key=Signed-off-by)' refs/heads/main	
+L122	SAME	for-each-ref --format='%(*objecttype)|%(*objectsize)|%(*tree)|%(*parent)' refs/tags/v1	
+L123	SAME	for-each-ref --format='%(*refname)' refs/tags/v1	
+L124	SAME	for-each-ref --format='%(*contents)' refs/tags/v1	
+L125	DIFF	for-each-ref --format='%(*describe)' refs/tags/v1	exit 0!=128; stdout
+L126	DIFF	for-each-ref --format='%(describe:tags)|%(describe:abbrev=4)|%(describe:match=v*)|%(describe:exclude=v*)' refs/heads	exit 0!=128; stdout
+L127	SAME	for-each-ref --format='%(contents:body)|%(contents:subject)|%(body)' refs/heads/main	
+L128	SAME	for-each-ref --format='x' --count 2	
+L129	DIFF	for-each-ref --exclude refs/heads/main --exclude refs/tags/v1	exit 0!=129; stdout
+L130	DIFF	for-each-ref --exclude='refs/heads/*' --no-exclude refs/heads	exit 0!=129; stdout
+L131	DIFF	for-each-ref --ignore-case --exclude='REFS/HEADS/*'	exit 0!=129; stdout
+L132	SAME	for-each-ref --ignore-case --sort=subject --format='%(subject)'	
+L133	DIFF	for-each-ref --stdin refs/heads	exit 128!=129
+L134	DIFF	for-each-ref --format='%(ahead-behind:feature)' refs/heads	exit 0!=128; stdout
+L135	SAME	for-each-ref --format='%(ahead-behind)' refs/heads	
+L136	SAME	for-each-ref --format='%(ahead-behind:nope)' refs/heads	
+L137	SAME	show-branch	
+L138	SAME	show-branch main	
+L139	SAME	show-branch feature	
+L140	SAME	show-branch main feature	
+L141	SAME	show-branch feature main	
+L142	SAME	show-branch main t0	
+L143	SAME	show-branch t0 main	
+L144	SAME	show-branch main feature t0	
+L145	SAME	show-branch -a	
+L146	SAME	show-branch --all	
+L147	SAME	show-branch -r	
+L148	SAME	show-branch --remotes	
+L149	SAME	show-branch --current	
+L150	SAME	show-branch --current feature	
+L151	SAME	show-branch --color main feature	
+L152	SAME	show-branch --color=always main feature	
+L153	SAME	show-branch --no-color main feature	
+L154	SAME	show-branch --topo-order main feature	
+L155	SAME	show-branch --date-order main feature	
+L156	SAME	show-branch --sparse main feature	
+L157	SAME	show-branch --more=2 main feature	
+L158	SAME	show-branch --more main feature	
+L159	SAME	show-branch --more=1 main	
+L160	SAME	show-branch --more=10 main	
+L161	SAME	show-branch --list	
+L162	SAME	show-branch --list main feature	
+L163	SAME	show-branch --list --more=3 main	
+L164	SAME	show-branch --merge-base main feature	
+L165	SAME	show-branch --merge-base main feature t0	
+L166	SAME	show-branch --merge-base main	
+L167	SAME	show-branch --independent main feature t0	
+L168	SAME	show-branch --independent feature t0	
+L169	SAME	show-branch --independent main	
+L170	SAME	show-branch --no-name main feature	
+L171	SAME	show-branch --sha1-name main feature	
+L172	SAME	show-branch --sha1-name --more=3 main feature	
+L173	SAME	show-branch --topics main feature	
+L174	SAME	show-branch --topics feature main	
+L175	SAME	show-branch --topics t0 main feature	
+L176	SAME	show-branch -g	
+L177	SAME	show-branch -g=2	
+L178	SAME	show-branch --reflog	
+L179	SAME	show-branch --reflog=3 main	
+L180	SAME	show-branch --reflog=2,1 main	
+L181	SAME	show-branch -g main feature	
+L182	SAME	show-branch stash	
+L183	SAME	show-branch main stash	
+L184	SAME	show-branch 'refs/heads/*'	
+L185	SAME	show-branch 'f*'	
+L186	SAME	show-branch HEAD	
+L187	SAME	show-branch HEAD~2 main	
+L188	SAME	show-branch main~1 main^2	
+L189	SAME	show-branch v1 main	
+L190	SAME	-C .git/side show-branch	
+L191	SAME	-C .git/side show-branch --all	
+L192	SAME	-C .git/side show-branch main topic clash lineone	
+L193	SAME	-C .git/side show-branch --topo-order main topic clash lineone	
+L194	SAME	-C .git/side show-branch --sparse main topic clash lineone	
+L195	SAME	-C .git/side show-branch --more=2 topic clash	
+L196	SAME	-C .git/side show-branch --sha1-name --all	
+L197	SAME	-C .git/side show-branch --independent main topic clash lineone base	
+L198	SAME	-C .git/side show-branch --merge-base main topic clash lineone	
+L199	SAME	-C .git/side show-branch --topics main topic clash	
+L200	SAME	-C .git/strat show-branch --all	
+L201	SAME	-C .git/strat show-branch --topo-order --all	
+L202	SAME	-C .git/strat show-branch --date-order --all	
+L203	SAME	-C .git/strat show-branch --sparse --all	
+L204	SAME	-C .git/strat show-branch main proj	
+L205	SAME	-C .git/conflict show-branch --all	
+L206	SAME	show-branch nonexist	
+L207	SAME	show-branch --bogus	
+L208	SAME	show-branch --merge-base	
+L209	SAME	show-branch --independent	
+L210	SAME	show-branch --list --independent main	
+L211	SAME	show-branch --reflog --all	
+L212	SAME	-C .git/strat show-branch --more=3 --all	
+L213	SAME	-C .git/strat show-branch --reflog main	
+L214	SAME	show-branch HEAD feature	
+L215	SAME	show-branch feature HEAD	
+L216	SAME	show-branch refs/heads/main feature	
+L217	SAME	show-branch heads/main feature	
+L218	SAME	show-branch --more=1 --merge-base main	
+L219	SAME	show-branch --list main feature t0	
+L220	SAME	show-branch --list main	
+L221	SAME	show-branch --list --current feature	
+L222	SAME	show-branch -g2	
+L223	SAME	show-branch -g main	
+L224	SAME	show-branch --reflog=10 main	
+L225	SAME	show-branch --reflog=1,10 main	
+L226	SAME	show-branch -g --list main	
+L227	SAME	show-branch -g --more=1 main	
+L228	SAME	show-branch -g --sha1-name main	
+L229	SAME	show-branch -g --color=always main	
+L230	SAME	show-branch --color=always --list main feature	
+L231	SAME	show-branch --color=always --more=1 main	
+L232	SAME	show-branch --color=always main feature t0 stash	
+L233	SAME	show-branch --color=always --sparse main feature	
+L234	SAME	show-branch -r -a	
+L235	SAME	show-branch --no-all	
+L236	SAME	show-branch --name main feature	
+L237	SAME	show-branch --sha1-name --no-name main feature	
+L238	SAME	show-branch --no-name --sha1-name main feature	
+L239	SAME	show-branch --independent --merge-base main feature	
+L240	SAME	show-branch --more=-1 main feature	
+L241	SAME	show-branch --more=x main	
+L242	SAME	show-branch main main	
+L243	SAME	show-branch t0 t0	
+L244	SAME	show-branch main v1	
+L245	SAME	show-branch 'v*'	
+L246	SAME	show-branch 't*'	
+L247	SAME	show-branch 'heads/*'	
+L248	SAME	show-branch 'nomatch*'	
+L249	SAME	show-branch 'refs/tags/*'	
+L250	SAME	show-branch -a 'refs/tags/*'	
+L251	SAME	show-branch --topics main	
+L252	SAME	show-branch --topics --sparse main feature	
+L253	SAME	show-branch --date-order --sparse main feature t0	
+L254	SAME	show-branch --date-order main t0	
+L255	SAME	show-branch --sparse main t0	
+L256	SAME	show-branch --sparse --more=1 main t0	
+L257	SAME	show-branch --sha1-name main t0	
+L258	SAME	blame HEAD src/a.txt	
+L259	SAME	blame -c HEAD src/a.txt	
+L260	SAME	blame -t HEAD src/a.txt	
+L261	SAME	blame -l HEAD src/a.txt	
+L262	SAME	blame -s HEAD src/a.txt	
+L263	SAME	blame -e HEAD src/a.txt	
+L264	SAME	blame -f HEAD src/a.txt	
+L265	SAME	blame -n HEAD src/a.txt	
+L266	SAME	blame -fn HEAD src/a.txt	
+L267	SAME	blame -w HEAD src/a.txt	
+L268	SAME	blame --abbrev=4 HEAD src/a.txt	
+L269	SAME	blame --abbrev=12 HEAD src/a.txt	
+L270	SAME	blame --abbrev HEAD src/a.txt	
+L271	SAME	blame --no-abbrev HEAD src/a.txt	
+L272	SAME	blame --date=short HEAD src/a.txt	
+L273	SAME	blame --date=iso HEAD src/a.txt	
+L274	SAME	blame --date=raw HEAD src/a.txt	
+L275	SAME	blame --date=unix HEAD src/a.txt	
+L276	SAME	blame --date=format:%Y HEAD src/a.txt	
+L277	SAME	blame --incremental HEAD src/a.txt	
+L278	SAME	blame --show-stats HEAD src/a.txt	
+L279	SAME	blame --score-debug HEAD src/a.txt	
+L280	SAME	blame --progress HEAD src/a.txt	
+L281	SAME	blame --minimal HEAD src/a.txt	
+L282	SAME	blame --color-lines HEAD src/a.txt	
+L283	SAME	blame --color-by-age HEAD src/a.txt	
+L284	SAME	blame --reverse t0 src/a.txt	
+L285	SAME	blame --reverse t0..HEAD src/a.txt	
+L286	SAME	blame --first-parent HEAD README.md	
+L287	SAME	blame --encoding=UTF-8 HEAD src/a.txt	
+L288	SAME	blame --ignore-rev HEAD~1 HEAD README.md	
+L289	SAME	blame --ignore-rev t0 HEAD src/a.txt	
+L290	SAME	blame -L 2,3 HEAD src/a.txt	
+L291	SAME	blame -L 2,+2 HEAD src/a.txt	
+L292	SAME	blame -L 5,-2 HEAD src/a.txt	
+L293	SAME	blame -L /beta/,+2 HEAD src/a.txt	
+L294	SAME	blame -L /beta/,/delta/ HEAD src/a.txt	
+L295	SAME	blame -L '^/eta/' HEAD src/a.txt	
+L296	SAME	blame -L 1,2 -L 7,8 HEAD src/a.txt	
+L297	SAME	blame -L 1,3 -L 2,4 HEAD src/a.txt	
+L298	SAME	blame -L 3 HEAD src/a.txt	
+L299	SAME	blame -L 2, HEAD src/a.txt	
+L300	SAME	blame -L ,2 HEAD src/a.txt	
+L301	SAME	blame -L 20,30 HEAD src/a.txt	
+L302	SAME	blame -L 0,1 HEAD src/a.txt	
+L303	SAME	blame -L x HEAD src/a.txt	
+L304	SAME	blame --porcelain HEAD src/a.txt	
+L305	SAME	blame --line-porcelain -L 1,2 HEAD src/a.txt	
+L306	SAME	blame --incremental -L 1,2 HEAD src/a.txt	
+L307	SAME	blame -M HEAD src/a.txt	
+L308	SAME	blame -C HEAD src/a.txt	
+L309	SAME	blame -C -C HEAD src/a.txt	
+L310	SAME	blame -C -C -C HEAD src/a.txt	
+L311	SAME	blame -M20 -C30 HEAD src/a.txt	
+L312	SAME	blame --show-name HEAD src/a.txt	
+L313	SAME	blame --show-number HEAD src/a.txt	
+L314	SAME	blame --show-email HEAD src/a.txt	
+L315	SAME	blame -p HEAD README.md	
+L316	SAME	blame HEAD -- README.md	
+L317	SAME	blame README.md HEAD	
+L318	SAME	blame nonexist.txt	
+L319	SAME	blame HEAD nonexist.txt	
+L320	SAME	blame --bogus README.md	
+L321	SAME	blame -s src/new.txt	
+L322	SAME	blame feature src/b.txt	
+L323	SAME	blame main src/data.bin	
+L324	SAME	blame v1 README.md	
+L325	SAME	blame t0..HEAD src/a.txt	
+L326	SAME	blame t0..HEAD README.md	
+L327	SAME	blame --root t0..HEAD README.md	
+L328	SAME	blame -b t0..HEAD README.md	
+L329	SAME	blame -S .git/revs src/a.txt	
+L330	SAME	annotate HEAD src/a.txt	
+L331	SAME	annotate -s HEAD src/a.txt	
+L332	SAME	annotate -l HEAD src/a.txt	
+L333	SAME	annotate -L 1,2 HEAD src/a.txt	
+L334	SAME	annotate --porcelain -L 1,2 HEAD src/a.txt	
+L335	SAME	annotate -c HEAD src/a.txt	
+L336	SAME	annotate -t HEAD src/a.txt	
+L337	SAME	annotate -e HEAD src/a.txt	
+L338	SAME	annotate -n HEAD src/a.txt	
+L339	SAME	annotate -f HEAD src/a.txt	
+L340	SAME	pickaxe -c HEAD src/a.txt	
+L341	SAME	blame --color-lines --color-by-age HEAD README.md	
+L342	SAME	blame -c -t HEAD README.md	
+L343	SAME	blame -c -e HEAD README.md	
+L344	SAME	blame -c -s HEAD README.md	
+L345	SAME	blame -c -n HEAD README.md	
+L346	SAME	blame -c --date=short HEAD README.md	
+L347	SAME	blame -t -e HEAD README.md	
+L348	SAME	blame --date=format:%Y-%m -L 1,1 HEAD README.md	
+L349	SAME	blame --date=format:%Y-%m-%d_%H -L 1,1 HEAD README.md	
+L350	SAME	blame '--date=format:%Y %Y %Y %Y %Y' -L 1,1 HEAD README.md	
+L351	SAME	blame --date=format:x -L 1,1 HEAD README.md	
+L352	SAME	blame --date=rfc -L 1,1 HEAD README.md	
+L353	SAME	blame --date=default -L 1,1 HEAD README.md	
+L354	SAME	blame --date=local -L 1,1 HEAD README.md	
+L355	SAME	blame --date=iso-strict -L 1,1 HEAD README.md	
+L356	SAME	blame --date=human -L 1,1 HEAD README.md	
+L357	SAME	blame --date=relative -L 1,1 HEAD README.md	
+L358	SAME	blame --date=short -c -L 1,1 HEAD README.md	
+L359	SAME	blame --date=format:%Y -c -L 1,1 HEAD README.md	
+L360	SAME	blame -c --date=unix -L 1,1 HEAD README.md	
+L361	SAME	blame -L 1,1 -c -l HEAD README.md	
+L362	SAME	blame -L 1,1 -c -b HEAD README.md	
+L363	SAME	blame -L 1,1 -c --root HEAD README.md	
+L364	SAME	blame -L 1,1 -c -f HEAD README.md	
+L365	SAME	blame -L 1,1 -c --abbrev=4 HEAD README.md	
+L366	SAME	blame -L 1,1 -s -n -f -e HEAD README.md	
+L367	SAME	blame -L 1,1 -s -e HEAD README.md	
+L368	SAME	blame -L 1,1 -s -t HEAD README.md	
+L369	SAME	blame -L 1,1 --score-debug -s HEAD README.md	
+L370	SAME	blame -L 1,1 --score-debug -f -n HEAD README.md	
+L371	SAME	blame --show-stats -s HEAD src/b.txt	
+L372	SAME	blame --show-stats --porcelain HEAD src/b.txt	
+L373	SAME	blame --show-stats --incremental HEAD src/b.txt	
+L374	SAME	blame --incremental HEAD src/b.txt	
+L375	SAME	blame --porcelain HEAD src/b.txt	
+L376	SAME	blame --line-porcelain HEAD src/b.txt	
+L377	SAME	blame -p HEAD src/data.bin	
+L378	SAME	blame -L 1,1 --porcelain -t HEAD README.md	
+L379	SAME	blame -L 1,1 --porcelain -c HEAD README.md	
+L380	SAME	blame -L 1,1 --incremental -c HEAD README.md	
+L381	SAME	blame --color-lines HEAD src/b.txt	
+L382	SAME	blame --color-lines -s HEAD src/b.txt	
+L383	SAME	blame --color-lines -c HEAD src/b.txt	
+L384	SAME	blame --color-by-age -c HEAD src/b.txt	
+L385	SAME	blame --color-by-age --porcelain -L 1,1 HEAD src/b.txt	
+L386	SAME	blame -M HEAD docs/x.md	
+L387	SAME	blame --reverse t0..feature src/b.txt	
+L388	SAME	blame --reverse t0.. src/b.txt	
+L389	SAME	blame --reverse HEAD src/b.txt	
+L390	SAME	blame --reverse t0..HEAD README.md	
+L391	SAME	blame --reverse --porcelain t0..HEAD README.md	
+L392	SAME	blame --first-parent t0..HEAD src/b.txt	
+L393	SAME	blame --first-parent HEAD src/b.txt	
+L394	SAME	blame HEAD^2 src/b.txt	
+L395	SAME	blame -L 2,2 --reverse t0..HEAD src/b.txt	
+L396	SAME	blame HEAD~3..HEAD src/b.txt	
+L397	SAME	blame --root HEAD~3..HEAD src/b.txt	
+L398	SAME	blame --porcelain HEAD~3..HEAD src/b.txt	
+L399	SAME	blame -L 1,1 --porcelain --root HEAD README.md	
+L400	SAME	blame -w HEAD src/b.txt	
+L401	SAME	blame --ignore-rev 7d4185b HEAD src/b.txt	
+L402	SAME	blame --ignore-rev 7d4185b -s HEAD src/b.txt	
+L403	SAME	blame --ignore-rev 7d4185b --porcelain HEAD src/b.txt	
+L404	SAME	blame --ignore-rev 7d4185b --ignore-rev 9bd4826 HEAD src/b.txt	
+L405	SAME	blame --ignore-rev nonexist HEAD src/b.txt	
+L406	SAME	blame --ignore-revs-file nonexist HEAD src/b.txt	
+L407	SAME	blame --ignore-rev 7d4185b --no-ignore-rev HEAD src/b.txt	
+L408	SAME	blame -C -C -C HEAD src/b.txt	
+L409	SAME	blame -s afc18e2~2 same-renamed.txt	
+L410	SAME	blame -s afc18e2 same-renamed.txt	
+L411	SAME	blame --porcelain -L 1,1 afc18e2 same-renamed.txt	
+L412	SAME	blame -s afc18e2 code-copy.c	
+L413	SAME	blame -s -C afc18e2 code-copy.c	
+L414	SAME	blame -s -C -C afc18e2 code-copy.c	
+L415	SAME	blame -s -C -C -C afc18e2 code-copy.c	
+L416	SAME	blame -s afc18e2 moved.txt	
+L417	SAME	blame -s -M afc18e2 moved.txt	
+L418	SAME	blame -s -C afc18e2 moved.txt	
+L419	SAME	blame -s -C -C afc18e2 moved.txt	
+L420	SAME	blame -s afc18e2 code.c	
+L421	SAME	blame -s -L :two afc18e2 code.c	
+L422	SAME	blame -s -L :three afc18e2 code.c	
+L423	SAME	blame -s -L :one afc18e2 code.c	
+L424	SAME	blame -s -L :nomatch afc18e2 code.c	
+L425	SAME	blame -s -L :two -L :one afc18e2 code.c	
+L426	SAME	blame -s -L '/return/,+1' -L '/return/,+1' afc18e2 code.c	
+L427	SAME	blame -s afc18e2 ws.txt	
+L428	SAME	blame -s -w afc18e2 ws.txt	
+L429	SAME	blame -s afc18e2 blank.txt	
+L430	SAME	blame -s afc18e2 rewrite.txt	
+L431	SAME	blame -s -L 1,3 afc18e2 big.txt	
+L432	SAME	blame -s afc18e2 side.txt	
+L433	SAME	blame -s --first-parent afc18e2 code.c	
+L434	SAME	blame -s --since=1700040000 afc18e2 code.c	
+L435	SAME	blame -s --reverse afc18e2~3..afc18e2 code.c	
+L436	SAME	blame -s --reverse afc18e2~3..afc18e2 same.txt	
+L437	SAME	blame -f afc18e2 same-renamed.txt	
+L438	SAME	blame -s -n afc18e2 same-renamed.txt	
+L439	SAME	blame -c -f afc18e2 same-renamed.txt	
+L440	SAME	blame --incremental afc18e2 same-renamed.txt	
+L441	SAME	blame -s --ignore-rev afc18e2 afc18e2 code.c	
+L442	SAME	blame -s --ignore-rev afc18e2~1 afc18e2 rewrite.txt	
+L443	SAME	blame -s --ignore-rev afc18e2~2 afc18e2 ws.txt	
+L444	SAME	blame -s -L 3,3 --reverse afc18e2~3..afc18e2 code.c	
+L445	SAME	log -L 1,2:src/a.txt	
+L446	SAME	log -L 3,3:src/a.txt --oneline	
+L447	SAME	log -L1,3:README.md	
+L448	SAME	log -L :two:code.c afc18e2	
+L449	SAME	log -L 2,3:src/b.txt	
+L450	SAME	log -L 2,3:src/b.txt --oneline	
+L451	SAME	log -L 2,3:src/b.txt -s	
+L452	SAME	log -L 2,3:src/b.txt --no-patch --oneline	
+L453	SAME	log -L 2,3:src/b.txt --stat	
+L454	SAME	log -L 1,1:README.md -L 1,2:src/b.txt --oneline	
+L455	SAME	log -L 1,3:moved.txt --oneline afc18e2	
+L456	SAME	log -L '/beta/,+2:src/a.txt' --oneline	
+L457	SAME	log -L 2,3:src/b.txt --format=%s	
+L458	SAME	log -L 2,3:src/b.txt -n 1	
+L459	SAME	log -L 2,3:src/b.txt --reverse --oneline	
+L460	SAME	log -L 1,2:nonexist.txt	
+L461	SAME	log -L 1,2	
+L462	SAME	log -L 20,30:src/a.txt	
+L463	SAME	log -L 2,3:src/b.txt -- src/b.txt	
+L464	SAME	log -L 1,2:src/b.txt feature --oneline	
+L465	SAME	log -L 1,1:README.md --graph --oneline	
+L466	SAME	show -L 1,2:src/a.txt	
+L467	SAME	show -L 2,3:src/b.txt feature	
+L468	SAME	show -L 2,2:src/b.txt HEAD	
+L469	SAME	log -L 2,3:src/b.txt --first-parent --oneline	
+L470	SAME	log -L 1,3:same-renamed.txt --oneline afc18e2	
+L471	SAME	log -L 3,3:README.md --oneline	
+L472	SAME	log -L 2,3:README.md --oneline	
+L473	SAME	log -L 1,9:src/a.txt --oneline	
+L474	SAME	log -L 8,9:src/a.txt --oneline	
+L475	SAME	log -L 1,2:src/a.txt -L 8,9:src/a.txt --oneline	
+L476	SAME	log -L /GAMMA/,+1:src/a.txt --oneline	
+L477	SAME	log -L :two:code.c --oneline afc18e2	
+L478	SAME	log -L :one:code.c --oneline afc18e2	
+L479	SAME	log -L 1,15:code.c --oneline afc18e2	
+L480	SAME	log -L 1,4:ws.txt --oneline afc18e2	
+L481	SAME	log -L 1,4:blank.txt --oneline afc18e2	
+L482	SAME	log -L 1,30:rewrite.txt --format=%h afc18e2	
+L483	SAME	log -L 5,10:moved.txt --oneline afc18e2	
+L484	SAME	log -L 1,3:code-copy.c --oneline afc18e2	
+L485	SAME	log -L 1,1:run.sh --oneline afc18e2	
+L486	SAME	log -L 1,2:src/a.txt -p --oneline	
+L487	SAME	log -L 1,2:src/a.txt -s --oneline	
+L488	SAME	log -L 1,2:src/a.txt --raw	
+L489	SAME	log -L 1,2:src/a.txt --name-only	
+L490	SAME	log -L 1,2:src/b.txt --oneline main	
+L491	SAME	log -L 1,2:src/b.txt --oneline t0..main	
+L492	SAME	log -L 1,2:src/b.txt --oneline --skip=1	
+L493	SAME	log -L 1,2:src/b.txt --oneline -n 1 --reverse	
+L494	SAME	log -L1,2:src/b.txt --oneline	
+L495	SAME	log --oneline -L 1,1:README.md -L 2,2:README.md	
+L496	SAME	log -L 1,1:README.md --format='%s%n%b'	
+L497	SAME	log -L 1,1:README.md --pretty=fuller	
+L498	SAME	log -L 1,1:README.md --stat	
+L499	SAME	log -L x:README.md	
+L500	SAME	log -L 1,2:src/data.bin --oneline main	
+L501	SAME	show -L 1,1:README.md --oneline	
+L502	SAME	show -L 1,2:src/a.txt -s	
+L503	SAME	show -L 1,1:README.md HEAD~1	
+L504	SAME	show -L 1,1:README.md v1	
+L505	SAME	show -L 1,1:nonexist.txt	
+L506	SAME	show -L :two:code.c afc18e2	
+L507	SAME	show -L 1,1:src/a.txt -L 3,4:src/a.txt --oneline	
+L508	SAME	log -L 1,1:src/a.txt -L 3,4:src/a.txt --oneline	
+L509	SAME	log -L 2,2:src/a.txt -L 4,4:src/a.txt --oneline t0	
+L510	SAME	log -L 7,9:src/a.txt --oneline	
+L511	SAME	log --remerge-diff -1 3298026	
+L512	SAME	show --remerge-diff 3298026 --oneline	
+L513	SAME	log --diff-merges=remerge -1 --oneline --stat 3298026	
+L514	SAME	log --remerge-diff -1 --oneline --name-status 3298026	
+L515	SAME	log --remerge-diff --oneline -3 3298026	
+L516	SAME	log --remerge-diff --oneline -1 --raw 3298026	
+L517	SAME	log --remerge-diff -1 HEAD~1	
+L518	SAME	log --diff-merges=remerge -1 HEAD~1 --oneline	
+L519	SAME	log --remerge-diff -1 --oneline	
+L520	SAME	log --diff-merges=r -1 --oneline	
+L521	SAME	log --diff-merges=remerge -1 --oneline	
+L522	SAME	show --remerge-diff HEAD~1	
+L523	SAME	log --remerge-diff --oneline -3	
+L524	SAME	log --remerge-diff -1 3298026 -- code.c	
+L525	SAME	show --diff-merges=remerge 3298026 --stat	
+L526	SAME	log --remerge-diff --format=%s -2 3298026	
+L527	SAME	log -1 --oneline --remerge-diff -p 3298026	
+L528	SAME	log -1 --oneline --remerge-diff -U1 3298026	
