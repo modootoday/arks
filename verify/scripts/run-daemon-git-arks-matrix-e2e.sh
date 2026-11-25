@@ -16,12 +16,15 @@ HONESTY_SOT="${ARKS_HONESTY_LEFTOVERS_SOT:-.spec/sot/arks-honesty-leftovers-wave
 SCOPE_SOT="${ARKS_IN_SCOPE_LEFTOVERS_SOT:-.spec/sot/arks-in-scope-leftovers-wave.sot.md}"
 # Prefer landed sibling daemon matrix SoT when present.
 
-TIP="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+# ARKS_TIP: tip named by the caller when the mounted checkout is a linked worktree
+# whose git dir is not visible inside the container.
+TIP="${ARKS_TIP:-$(git rev-parse --short HEAD 2>/dev/null || echo unknown)}"
 echo "daemon-git-arks-matrix-e2e: tip=${TIP}"
 echo "daemon-git-arks-matrix-e2e: pin git=$(git --version)"
 
+# The flags-parity and B5+ paths build their own release binary below.
 ARKS_BIN="${ARKS_BIN:-}"
-if [[ -z "$ARKS_BIN" ]]; then
+if [[ -z "$ARKS_BIN" && "${ARKS_DAEMON_FLAGS_PARITY:-0}" != "1" && "${ARKS_DAEMON_B5_PLUS:-0}" != "1" ]]; then
   if [[ -x ./.cargo-target/debug/arks ]]; then
     ARKS_BIN=./.cargo-target/debug/arks
   elif [[ -x ./target/debug/arks ]]; then
@@ -29,7 +32,7 @@ if [[ -z "$ARKS_BIN" ]]; then
   elif [[ -n "${CARGO_TARGET_DIR:-}" && -x "${CARGO_TARGET_DIR}/debug/arks" ]]; then
     ARKS_BIN="${CARGO_TARGET_DIR}/debug/arks"
   else
-    cargo build -p arks -p arks-daemon
+    cargo build -p arks
     ARKS_BIN=./.cargo-target/debug/arks
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN=./target/debug/arks
     [[ -x "$ARKS_BIN" ]] || ARKS_BIN="${CARGO_TARGET_DIR:-target}/debug/arks"
