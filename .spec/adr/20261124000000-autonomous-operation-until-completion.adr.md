@@ -47,6 +47,11 @@ unattended session prompted for routine commands or ran with whatever its launch
 6. The kill switches are the fleet's: pause the scheduled task, `ops.paused` on the fleet Project
    or Session, or revoke the mailbox token (amended 2026-11-24 to drop an arks-only pause label).
 
+7. **Amendment (2026-11-25):** the fleet adopted the playpilot governance canon (G1–G10). Classes
+   A / H / O become the canon levels **A0** (auto) / **A1** (measured, `needs-human`, then
+   auto-merge) / **A2** (owner queue); the retry budget becomes two attempts per step; blocked
+   A2 items go to the coordinator's Owner queue through the mailbox.
+
 ## Consequences
 
 - Unattended sessions run the loop without prompts for routine commands and cannot widen their

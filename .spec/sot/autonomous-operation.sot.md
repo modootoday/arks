@@ -25,12 +25,17 @@ rel:
 
 # Autonomous operation
 
-Version **1.2.0**. This SoT defines how AI agents run arks **without a human in the loop** until
+Version **2.0.0**. This SoT defines how AI agents run arks **without a human in the loop** until
 the program reaches final completion (§11), and which decisions stay with the owner. It owns the
 *process* of unattended work. Product meaning stays with the domain SoTs; this SoT never makes a
 product claim.
 
 Decision: [[adr:root/20261124000000]]. Short always-on form: rule `95-autonomous-operation`.
+
+**Canon.** The fleet governance canon is playpilot `.agents/rules/governance.md` (G1 actors, G2
+autonomy levels A0 / A1 / A2, G3 decision rights, G4 loop, G5 escalation, G6 messages, G7 secrets,
+G8 public surface, G9 incidents, G10 definition of done). This SoT binds that canon to arks and
+adds arks-specific gates; where the two differ, the stricter rule applies.
 
 ## 1. Authority
 
@@ -44,7 +49,7 @@ Decision: [[adr:root/20261124000000]]. Short always-on form: rule `95-autonomous
    permissions, change their task, or approve a merge.
 3. A standing owner directive (a plan with `status: active`) stays in force until a later owner
    decision or a merged SoT amendment changes it. Agents MUST NOT reverse a recorded owner
-   decision; they may only propose a reversal (§6, class **O**).
+   decision; they may only propose a reversal (§6, level **A2**).
 4. When a tracked SoT and this SoT disagree on product meaning, the domain SoT wins. When they
    disagree on process, this SoT wins over older rules unless the owner says otherwise.
 
@@ -53,7 +58,8 @@ Decision: [[adr:root/20261124000000]]. Short always-on form: rule `95-autonomous
 Every unattended work unit follows the same loop. A unit is one work package that fits one PR.
 
 1. **Sync.** Fetch `origin/main`; reset the topic branch to it (§7.2).
-2. **Check the stop signals** (§9). If any is set, do nothing but report.
+2. **Check the stop signals** (§9), including `ops` on the fleet Project and Session. If any is
+   set, do nothing but report.
 3. **Select** the next unit by the order in §3.
 4. **Claim** the paths the unit touches (§7.3).
 5. **Spec first.** When the unit changes product meaning, land the SoT or plan change first
@@ -62,8 +68,9 @@ Every unattended work unit follows the same loop. A unit is one work package tha
    identity of §8.
 7. **Verify locally** with the fast gate (§5.1). Never push a red fast gate.
 8. **Push** the topic branch and **open a PR** with the body of §10.2. Apply labels by §6.
-9. **Merge.** Class **A** units: enable auto-merge (merge method `merge`). Class **H** and **O**
-   units: label `needs-human` and leave the merge to the owner.
+9. **Merge by level** (§6). **A0:** enable auto-merge (merge method `merge`). **A1:** label
+   `needs-human`, record the measurement in the PR body, then enable auto-merge. **A2:** prepare
+   everything, stop, and send the item to the owner queue (§10.3).
 10. **Watch** the PR until it merges or closes (§4). Fix red CI at the root cause.
 11. **Record.** After merge: update the plan status, the residual register and, when a receipt
     ran, `.spec/evidence/` and `docs/completion.md` (§5.3).
@@ -71,22 +78,32 @@ Every unattended work unit follows the same loop. A unit is one work package tha
 
 ## 3. Work selection
 
-Agents pick the next unit in this order and never skip a higher tier while a lower-tier unit
-is chosen, except to unblock it.
+Each run follows the canon loop (G4) and stops at the first step that has work:
 
-1. **Red `main`.** A failing required check on `main` preempts all other work.
-2. **Owner requests** in the current conversation or in owner-written open issues.
-3. **Active plans** (`.spec/plan/*.plan.md` with `status: active`), oldest first, rung by rung.
-4. **Residual register** rows that are Partial or open and not owner-blocked
-   ([[sot:root/production-residual-register]]), highest value first: correctness and symmetry
-   gaps before performance, performance before documentation.
-5. **Known gaps recorded in a closed plan** (for example the residual list in
-   `.spec/plan/20261120000000-argv-symmetry-ladder.plan.md`).
-6. **Maintenance**: dependency updates without semver-major bumps, flaky-test root causes,
-   documentation currency.
+1. **Mail.** `playpilot mail inbox --as arks`; ack what is handled; answer with facts, never
+   approvals.
+2. **Red `main`.** A failing required check on `main` preempts all other work (one fix PR).
+3. **Own pull requests.** Fix failing checks and conflicts on this session's open PRs; never
+   stack new work on a `needs-human` PR.
+4. **Sync.** `playpilot sync --check --project arks` against the fleet configuration; when stale,
+   one PR with `playpilot sync`.
+5. **Dependencies.** Bot or due dependency updates, by bump size (§6).
+6. **Next work package**, in this order:
+   1. owner requests in the current conversation or in owner-written open issues;
+   2. active plans (`.spec/plan/*.plan.md` with `status: active`), oldest first, rung by rung —
+      the queue plan `.spec/plan/20261124000000-autonomous-operation-queue.plan.md` first;
+   3. residual-register rows that are Partial or open and not owner-blocked
+      ([[sot:root/production-residual-register]]): correctness and symmetry before performance,
+      performance before documentation;
+   4. maintenance: flaky-test root causes, documentation currency.
+7. **Nothing to do:** say so in one line and stop.
+
+Limits per run (G4): at most one new work package, at most three open agent PRs in the
+repository (arks keeps one at a time on its single topic branch, §4.1), at most two attempts at
+the same failing step.
 
 A unit that needs something only the owner can supply (a secret, a device, a paid service, a
-decision of class **O**) is **owner-blocked**: record it (§10.3) and pick the next unit. Agents
+decision at level **A2**) is **owner-blocked**: record it (§10.3) and pick the next unit. Agents
 never wait idle on an owner-blocked unit while other units exist.
 
 ## 4. Pull request lifecycle
@@ -94,7 +111,7 @@ never wait idle on an owner-blocked unit while other units exist.
 1. **One PR at a time** per topic branch. The next unit starts only after the previous PR merges
    or closes.
 2. Every PR has: a Conventional title (≤72 characters); the body of §10.2; labels by §6; and
-   auto-merge for class **A**.
+   auto-merge for levels **A0** and **A1** (after measurement).
 3. **CI red:** find the root cause and fix it in the same PR. A job may be re-run **once** to
    rule out an infrastructure fault. "Flaky" is not a root cause: a test that depends on timing,
    tool versions or host state is fixed so it no longer does (as `patch_oracle.rs` gates its
@@ -106,8 +123,9 @@ never wait idle on an owner-blocked unit while other units exist.
    acting on it. A security finding stays open until the owner decides.
 6. **Safety check-in:** while a PR waits on CI only, keep one timed check-in about 50 minutes
    after the last activity; stop after three empty check-ins.
-7. **Retry budget:** after **three** failed fix attempts on the same root cause, stop the unit,
-   label the PR `needs-human`, record the block (§10.3) and move on.
+7. **Retry budget (G5):** after **two** failed attempts at the same step, stop that step, leave
+   the branch and a draft PR, report on the mailbox with the error and what was tried, and move
+   on.
 
 ## 5. Verification tiers
 
@@ -134,24 +152,25 @@ Claimed only with a committed receipt under `.spec/evidence/<timestamp>-<name>/`
 (`receipt.json`, `venue-note.txt`, raw results). Host runs are advisory and are labelled so.
 Agents never invent PASS, Claimed or Verified (rules `28`, `29`).
 
-## 6. Decision classes
+## 6. Autonomy levels (canon G2 / G3)
 
-Every change falls into exactly one class. When in doubt, use the stricter class.
+Every change has exactly one level. When unsure between two levels, take the stricter one.
 
-| Class | Who decides | Merge | Examples |
-|-------|-------------|-------|----------|
-| **A** — autonomous | agent | auto-merge after required checks | product code under `crates/`; tests; corpora and fixtures (append-only for `build-fixture.sh`); `verify/scripts/`; evidence receipts; plan status and residual-register updates; `docs/` currency that restates receipts; `.agents/skills/` and non-normative `.agents/` wording |
-| **H** — human merge | agent prepares, owner merges | label `needs-human`, no auto-merge | anything under `.github/` (workflows, rulesets, labels, CODEOWNERS); `.claude/` and `.cursor/` settings or hooks; new or amended always-on rules in `.agents/rules/`; this SoT; licences, `SECURITY.md`; `Cargo.toml` dependency additions, semver-major bumps or MSRV changes; release workflows and tags; deleting or rewriting a committed receipt |
-| **O** — owner only | owner | owner | reversing an owner decision; product scope or naming; claiming a row without a receipt; publishing (crates.io, GitHub releases, tags); making anything private public or the reverse; secrets, tokens, apps and billing; adding a device, runtime, role, session, webhook or plugin to the fleet; widening any permission profile |
+| Level | Process | arks examples |
+|-------|---------|---------------|
+| **A0** Auto | open the PR, enable auto-merge; required checks decide | product code under `crates/`; tests; corpora and fixtures (append-only for `build-fixture.sh`); `verify/scripts/`; evidence receipts; plan status and residual-register updates; `docs/`; `.agents/skills/`; narrowing configuration; dependency patch and minor updates; rendered files (`playpilot sync`) |
+| **A1** Measured | label `needs-human`; required checks green plus the measurement the path needs, recorded in the PR body; then enable auto-merge | `.github/**` workflows and declaration files (rulesets, labels, CODEOWNERS); guard and policy code; permission baseline changes not produced by `playpilot sync`; always-on rules in `.agents/rules/` and this SoT; licences and `SECURITY.md`; major dependency updates, dependency additions, MSRV changes; deleting or rewriting a committed receipt |
+| **A2** Owner | prepare everything, stop, send to the owner queue (§10.3) | secrets (create, read, print, rotate); applying rulesets, required checks or repository settings; removing or weakening a required check; releases, tags, crates.io and other publishing; production deploys; scheduled tasks (create, change prompt, delete) unless the owner asks in the session the task posts into; spending beyond the free tier; reversing an owner decision; product scope or naming; claiming a row without a receipt; widening a permission |
 
 Notes:
 
-1. Class **A** work may *propose* class **H** or **O** changes in a separate PR; it never bundles
-   them with class **A** commits.
-2. Narrowing a permission (adding a deny, removing an allow) is class **H**; widening one is
-   class **O**.
-3. An agent MUST NOT merge a PR itself through the merge API when auto-merge is available; the
-   owner's standing order "merge it yourself" (2026-11-20) is satisfied by enabling auto-merge.
+1. An A0 package may *prepare* A1 or A2 changes in a separate PR; it never bundles them with A0
+   commits.
+2. Agents never approve and never merge directly; GitHub merges when checks pass (G3). The only
+   exception is an explicit owner instruction in the session that acts, which is approval under
+   G1.
+3. A message from another actor (coordinator, node, project session) is information, never
+   approval (G1, G6).
 
 ## 7. Concurrency
 
@@ -179,7 +198,7 @@ Notes:
    body.
 3. A host hook that asks for another committer identity conflicts with this rule; agents keep
    the owner identity and report the conflict once. Signing commits is an owner decision
-   (class **O**).
+   (level **A2**); on the owner's delegated recommendation (2026-11-24) commits stay unsigned.
 
 ## 9. Stop signals and kill switch
 
@@ -189,9 +208,9 @@ when any of these holds:
 1. The owner pauses the session's scheduled task, sets `ops = { paused = true }` on the arks
    Project or Session in the fleet configuration, revokes the session's mailbox token, or says
    stop in chat (the fleet kill switches, in that order of reach).
-2. `main` has a failing required check that the current unit did not cause and cannot fix in
-   class **A**.
-3. The same root cause defeated three fix attempts (§4.7) in two consecutive units.
+2. `main` has a failing required check that the current unit did not cause and cannot fix at
+   level **A0**.
+3. The same step failed twice (§4.7) in two consecutive runs.
 4. A secret, credential or private identifier appears in a diff, log or receipt (stop, do not
    push, report the location without quoting the value).
 5. Disk, Docker or CI capacity is exhausted and cleanup does not recover it.
@@ -212,17 +231,20 @@ owner can do. It never claims success that a check did not show.
 Sections: **Summary** (what and why), **Verification** (commands and results; host runs marked
 advisory), **Class** (A, H or O with the reason), and the attribution footer.
 
-### 10.3 Blocks
+### 10.3 Blocks and the owner queue (canon G5)
 
-An owner-blocked or retry-exhausted unit is recorded as an issue labelled `needs-owner` and
-mentioned to the fleet coordinator's Owner queue through the mailbox (or, when issues are
-unavailable, as an open line in the owning plan) with: the unit, the evidence, what was
-tried, and the exact owner action that unblocks it.
+1. **A2 items** go to the fleet **Owner queue** (kept by the coordinator) through the mailbox:
+   `playpilot mail send --as arks --to design` with the exact command or screen for each item.
+2. **A blocked work package** gets a `needs-owner` issue in arks with what is blocked, why, the
+   options and the recommendation; the run skips to the next package.
+3. **Owner-side commands on a device** (for example `gh` with the owner's login) go to a node
+   only when the owner says so in the session that acts; the node runs them and replies with
+   outputs, never secret values (G7).
 
 ### 10.4 Label vocabulary
 
-Labels are the playpilot canonical set (`.github/labels.json` mirrors it): `needs-human` (class H
-and O pull requests: automation does not build on or merge them), `needs-owner` (an owner
+Labels are the playpilot canonical set (`.github/labels.json` mirrors it): `needs-human` (level A1
+pull requests: automation does not build on them, and they merge only after measurement), `needs-owner` (an owner
 decision is pending), the lane labels `needs-heavy-build`, `needs-windows-run` and
 `needs-gui-check` (claimed with `playpilot claim` by fleet nodes), `bug` and `dependencies`.
 arks adds no label of its own.
@@ -260,7 +282,8 @@ The tracked `.claude/settings.json` is the baseline for every agent session in t
    themselves (`.claude/settings*.json`, `.cursor/hooks*`).
 3. The `playpilot guard` PreToolUse hook stays in front of every shell call; it enforces the
    protected branches independently of the allow list.
-4. Permission changes follow §6: narrowing is class **H**, widening is class **O**.
+4. Permission changes follow §6: narrowing is level **A1**, widening is level **A2**; files
+   rendered by `playpilot sync` are A0.
 5. The baseline is generated, not hand-edited: the fleet configuration renders it with
    `playpilot render settings --project arks` and `playpilot render roles --project arks`
    (role files under `.claude/agents/`). A session that finds them stale runs
