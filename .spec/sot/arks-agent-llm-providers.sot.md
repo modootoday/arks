@@ -3,7 +3,7 @@ id: sot:root/arks-agent-llm-providers
 title: arks agent LLM providers
 status: active
 created: 2026-11-10T19:23:00Z
-updated: 2026-11-10T23:19:59Z
+updated: 2026-11-25T12:00:00Z
 tags: [arks-agent, llm, providers, openai-compat, ollama, cloudflare, anthropic, xai, gemini, auth, config]
 verify: manual
 rel:
@@ -19,7 +19,7 @@ rel:
 
 # arks agent LLM providers
 
-Version **0.1.0**. Normative **provider abstraction and auth/config** for **`arks agent`**. Product intent: [[sot:root/arks-agent-product-intent]]. CLI: [[sot:root/arks-agent-cli-surface]].
+Version **0.1.1**. Normative **provider abstraction and auth/config** for **`arks agent`**. Product intent: [[sot:root/arks-agent-product-intent]]. CLI: [[sot:root/arks-agent-cli-surface]].
 
 Design ≠ Claimed. No secrets in tracked trees ([[sot:root/agent-governance]], [[sot:root/public-surface]]).
 
@@ -45,6 +45,7 @@ Design ≠ Claimed. No secrets in tracked trees ([[sot:root/agent-governance]], 
 2. **Vendor-specific clients** only where the wire is not OpenAI-compat enough: Anthropic, Gemini, Cloudflare Workers AI, xAI if diverged — keep behind the same `Provider` trait / enum in `arks-agent`.
 3. Product paths use **native HTTP** (e.g. `ureq` / `reqwest` as chosen in crate plan) — **MUST NOT** spawn `ollama`, `openai`, `gh`, or `git` CLIs.
 3a. The OpenAI-compatible path carries complete prior user/assistant history for multi-turn requests. B4 Docker evidence covers two turns and a separate review request; it does not claim provider or model quality ([[evidence:root/20261110231959-claimed-agent-llm]]).
+3b. `arks agent provider smoke` and `arks agent review --smoke` are **diagnostics** over plain-HTTP openai-compat endpoints (local Ollama, a fixture, or the in-process `--mock`): exit 0 only on a 2xx chat answer, exit 1 when the provider cannot be reached. Claimed as diagnostics by [[evidence:root/20261125031425-claimed-smoke]] (queue Q21); they never stand in for B4. `https://` endpoints stay **Partial**: the agent has no TLS client yet, and a live vendor run needs an owner-held API key (owner queue).
 
 ### Auth and config (no secrets in git)
 

@@ -34,6 +34,9 @@ rel:
     - evidence:root/20261110233659-claimed-rebind
     - evidence:root/20261110235116-claimed-ssh
     - evidence:root/20261110233921-claimed-ssh
+    - evidence:root/20261125031425-claimed-smoke
+    - evidence:root/20261125031426-claimed-ssh
+    - evidence:root/20261125031427-claimed-rebind-q21
   governs:
     - verify/scripts/run-claimed-residual-dod.sh
     - verify/scripts/run-claimed-ssh-e2e.sh
@@ -42,6 +45,7 @@ rel:
     - verify/scripts/run-claimed-daemon-archive-e2e.sh
     - verify/scripts/run-claimed-rebind-e2e.sh
     - verify/scripts/run-claimed-tls-e2e.sh
+    - verify/scripts/run-claimed-smoke-e2e.sh
 ---
 
 # Claimed residual gates (post-Partial wiring)
@@ -70,8 +74,8 @@ Document revision **0.1.5** (SoT edit counter only — **not** a product/crate r
 | ID | Disposition |
 |----|-------------|
 | **B5+** | **Claimed** with collector PRI receipt — see scope row; Windows Event Log still N/A |
-| **B6** | Durable SSH listen + live rebind — label disposition under §Q21 below (drop condition B1/B2 + IW-B7-SSH Claimed holds) |
-| **B8** | Windows SIGHUP — **N/A** (OS); the Windows substitute is the in-process file-mtime reload, dispositioned under §Q21 below |
+| **B6** | Durable SSH listen + live rebind — **Partial label removed** (Q21): drop condition B1/B2 + IW-B7-SSH Claimed holds; re-run receipts [[evidence:root/20261125031426-claimed-ssh]], [[evidence:root/20261125031427-claimed-rebind-q21]] |
+| **B8** | Windows SIGHUP — **N/A** (OS); the Windows substitute, the in-process file-mtime reload, is **Claimed by the Windows CI test** under §Q21 below |
 
 ### Partial vs Claimed gates (ABSOLUTE)
 
@@ -151,6 +155,17 @@ Queue unit Q21 ([[plan:root/20261124000000]]) closes the last Partial labels on 
 | **`arks agent review --smoke`** | In Docker: `--base-url` fixture and `--mock` print `review_smoke=ok` and exit 0; an unreachable provider without `--mock` exits 1 (a smoke that cannot reach its provider failed). Claims the diagnostic only, never B4 | Docker |
 | **Agent smokes against HTTPS vendor endpoints** | Stay **Partial**: `arks-agent` has no TLS client (the smoke refuses `https://`), and a live vendor run needs an owner-held API key. Reopen needs an HTTPS client in `arks-agent` plus the key (owner queue, A2) | — |
 
+**Status (Q21 close):**
+
+| Row | Status | Carrying evidence |
+|-----|--------|-------------------|
+| B6 label | **Removed** — drop condition holds ([[evidence:root/20261110235116-claimed-ssh]], [[evidence:root/20261111092000-claimed-rebind-ssh]]); B1/B2 and B7 re-run green after the label change | [[evidence:root/20261125031426-claimed-ssh]], [[evidence:root/20261125031427-claimed-rebind-q21]] |
+| B8 substitute (Windows file-mtime reload) | **Claimed by CI** — `windows_serve_config_mtime_reload_rebinds_without_signal` (`crates/arks/tests/serve_config_reload.rs`) runs on the `windows-2025` job; auto-merge needs that job green, so the merged tip carries the receipt. The unix twin `unix_serve_config_sighup_reload_rebinds` keeps the SIGHUP path; the fix that stops the reload re-triggering on its own config write shipped with it | `windows-2025` CI job |
+| `arks serve ssh-smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
+| `arks agent provider smoke` | **Claimed (diagnostic, plain-HTTP openai-compat)** | [[evidence:root/20261125031425-claimed-smoke]] |
+| `arks agent review --smoke` | **Claimed (diagnostic)** | [[evidence:root/20261125031425-claimed-smoke]] |
+| Agent smokes against HTTPS vendors | **Partial** — no TLS client in `arks-agent`; live run needs an owner API key (A2) | — |
+
 ### Docker verify slots (normative names)
 
 New residual slots register per [[sot:root/verify-directory-conventions]] §7 (`dod-claimed-<concern>` → `run-claimed-<concern>-e2e.sh` → umbrella `dod-claimed-residual`; default SKIP / `ARKS_DOD_STRICT=1` fail-closed; **no invent Claimed**).
@@ -163,6 +178,7 @@ New residual slots register per [[sot:root/verify-directory-conventions]] §7 (`
 | `dod-claimed-daemon-archive` | `verify/scripts/run-claimed-daemon-archive-e2e.sh` | B5, B5+ |
 | `dod-claimed-rebind` | `verify/scripts/run-claimed-rebind-e2e.sh` | B7 |
 | `dod-claimed-tls` | `verify/scripts/run-claimed-tls-e2e.sh` | B9 |
+| `dod-claimed-smoke` | `verify/scripts/run-claimed-smoke-e2e.sh` | Q21 smoke diagnostics |
 | `dod-claimed-residual` | `verify/scripts/run-claimed-residual-dod.sh` | all of the above |
 
 ```bash
