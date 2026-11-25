@@ -35,8 +35,24 @@ Each unit is one PR. Status values: `open`, `in-progress`, `done` (with the PR),
 | Q12 | Fleet `Project` and `Session` for arks in the private fleet repository | O | done | resources already on the fleet `main`; scheduled task created on the owner's instruction and recorded by fleet PR #46 |
 | Q13 | Commit signing or hook change for the Unverified badge | O | done | decided on the owner's delegated recommendation (2026-11-24): keep unsigned commits under the owner noreply identity; the History check is the integrity gate, and a signing key in unattended sessions would be a secret to protect for a cosmetic badge |
 
-After Q1–Q8 merge, the next session re-runs the Docker A_final receipt and checks §11 of the
-autonomous-operation SoT.
+After Q1–Q8 merged, the Docker receipt was re-run on `main` `61358f4`
+([[evidence:root/20261125023636-argv-corpus-receipt-q-final]]): 1,852 / 1,852 options accepted;
+4,398 / 4,502 corpus lines SAME; the other 104 all reasoned (77 post-pin, 26 design, 1 timing);
+zero open or unreasoned lines.
+
+§11 check of the autonomous-operation SoT at that tip:
+
+| Criterion | State |
+|-----------|-------|
+| 1. No active plan except maintenance | **Not met:** 41 plans still carry `status: active`, most of them historical ladders whose rungs the roadmap records as Done or Withdrawn — unit Q14 |
+| 2. Residual rows Claimed, refused or Impossible | **Not met:** Partial rows remain in the residual register — unit Q14 |
+| 3. Zero unreasoned DIFFs in the latest receipts | **Met** (this receipt) |
+| 4. Required checks green on the `main` tip | **Met** (PR #56 merged with all seven required checks green) |
+| 5. `docs/completion.md` matches the receipts | **Met** (updated with this receipt) |
+
+| # | Unit | Class | Status | Exit |
+|---|------|-------|--------|------|
+| Q14 | Plan and residual audit: set each `active` plan to `done` / `archival` / `withdrawn` from the roadmap and receipts, and list every remaining Partial residual as a queue unit or an owner-refused / Impossible row with its reason | A | open | §11 criteria 1 and 2 met, or every remaining item is a queue unit |
 
 ## Q5 design: instaweb pages
 
