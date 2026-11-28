@@ -118,10 +118,15 @@ Executable ladder: [[plan:root/20261128092500]].
 - Supersedes the C15/C16 LFS trim in [[research:root/20261111035700]] once E6/E7 land.
 
 ### 2.8 E8 — `arks serve` Embedded SSR Web UI
-- MUST be embedded directly in the `arks` binary (`include_str!` / compile-time templates), with
-  `--no-web-ui` opt-out, strict HTML escaping, and `CSP: default-src 'self'; script-src 'none'`.
-- v1 scope is read/review ergonomics (repo browser, commit/diff view, PR/issue views) backed by
-  existing `arks-repo` + `arks-server` forge stores.
+- MUST be embedded directly in the `arks` binary (`include_str!` / compile-time templates +
+  self-hosted HTMX v2 asset at `/assets/htmx.min.js`, zero external CDN, zero Node.js build step),
+  with `--no-web-ui` opt-out, strict HTML escaping, and
+  `CSP: default-src 'self'; script-src 'self'` (blocking all inline scripts and external origins).
+- Follows the **GitHub/GitLab common interface** (top repository header + clone URL, horizontal
+  `Code` / `Commits` / `Branches` / `Tags` tabs, `<details>` branch/tag switcher, breadcrumb bar,
+  directories-first file tree, safe server-side README Markdown preview, About sidebar, line-numbered
+  blob viewer + `/raw/` download, and colorized unified commit diff) with `hx-boost="true"`
+  progressive enhancement backed directly by `arks-repo`.
 
 ---
 
