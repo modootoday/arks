@@ -6,9 +6,13 @@
 //! the patch and the `-- ` signature); `--cover-letter` adds message 0 with
 //! the shortlog and diffstat of the series; `--attach` / `--inline` wrap the
 //! patch in MIME parts; `--base` records the base commit and the patch ids
-//! of prerequisite commits.
+//! of prerequisite commits. A non-ASCII subject or author name is Q-encoded
+//! unless `--no-encode-email-headers` / `format.encodeEmailHeaders=false`,
+//! and an 8-bit message declares its charset (`mail_header`).
 //! Cite: <https://git-scm.com/docs/git-format-patch>,
 //! <https://git-scm.com/docs/git-patch-id> (behaviour, not code).
+
+mod mail_header;
 
 use crate::cmd::opt_parse::{Item, Mode, Parsed, parse};
 use crate::cmd::shared::{committer_signature, resolve_rev};
@@ -54,6 +58,7 @@ struct Opts {
     base: Option<String>,
     quiet: bool,
     force_in_body_from: bool,
+    encode_headers: bool,
     cover_from_description: String,
     description: Option<String>,
     out_dir: Option<PathBuf>,
@@ -100,6 +105,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
         base: p.value("base"),
         quiet: p.on("quiet"),
         force_in_body_from: p.on("force-in-body-from"),
+        encode_headers: cfg.get_bool("format.encodeEmailHeaders").unwrap_or(true),
         cover_from_description: p
             .value("cover-from-description")
             .unwrap_or_else(|| "message".into()),
@@ -134,6 +140,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
             ("thread", false) => o.thread = Some(val.clone().unwrap_or_else(|| "shallow".into())),
             ("thread", true) => o.thread = None,
             ("rfc", false) => o.subject_prefix = format!("RFC {}", o.subject_prefix),
+            ("encode-email-headers", neg) => o.encode_headers = !neg,
             _ => {}
         }
     }
@@ -742,15 +749,20 @@ fn render_patch(
     };
     out.push_str(&format!("From {from_oid} Mon Sep 17 00:00:00 2001\n"));
     out.push_str(&header_block(o, ids));
-    out.push_str(&format!("From: {sender}\n"));
+    out.push_str(&mail_header::address("From", &sender, o.encode_headers));
     out.push_str(&format!("Date: {}\n", rfc2822(&commit.author)));
-    out.push_str(&format!("Subject: {prefix}{subject}\n"));
-    out.push_str(&extra_headers(o));
+    out.push_str(&mail_header::subject(prefix, &subject, o.encode_headers));
     let mut text = String::new();
     if in_body_from {
         text.push_str(&format!("From: {author}\n\n"));
     }
     text.push_str(&body);
+    // An 8-bit message (subject, in-body From, body; not the diff) declares
+    // its charset; a MIME multipart (`--attach`) declares it per part.
+    if o.attach.is_none() && !(subject.is_ascii() && text.is_ascii()) {
+        out.push_str(mail_header::MIME_8BIT);
+    }
+    out.push_str(&extra_headers(o));
     if o.no_stat && reroll.is_empty() {
         text.push('\n');
     } else if o.no_stat {
@@ -822,11 +834,13 @@ fn render_cover(
     let total = commits.len() + o.start_number - 1;
     let mut out = format!("From {} Mon Sep 17 00:00:00 2001\n", tip.to_hex());
     out.push_str(&header_block(o, ids));
-    out.push_str(&format!(
-        "From: {}\n",
-        o.from
+    // The cover letter's sender is quoted as a phrase but never Q-encoded.
+    out.push_str(&mail_header::address(
+        "From",
+        &o.from
             .clone()
-            .unwrap_or_else(|| format!("{} <{}>", me.name, me.email))
+            .unwrap_or_else(|| format!("{} <{}>", me.name, me.email)),
+        false,
     ));
     out.push_str(&format!("Date: {}\n", rfc2822(&me)));
     let (mut subject, mut blurb) = (
@@ -858,6 +872,19 @@ fn render_cover(
         format!("[{}{version}]", o.subject_prefix)
     };
     out.push_str(&format!("Subject: {prefix} {subject}\n"));
+    // The cover declares 8-bit text when a commit of the series (identities
+    // or message) is not ASCII; its own subject and blurb do not count.
+    let mut eight_bit = false;
+    for c in commits {
+        let c = read_commit(repo, c)?;
+        eight_bit |= [&c.author, &c.committer]
+            .iter()
+            .any(|s| !(s.name.is_ascii() && s.email.is_ascii()))
+            || !c.message.is_ascii();
+    }
+    if eight_bit {
+        out.push_str(mail_header::MIME_8BIT);
+    }
     out.push_str(&extra_headers(o));
     out.push('\n');
     if blurb.is_empty() {

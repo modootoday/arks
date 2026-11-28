@@ -269,6 +269,8 @@ pub const FORMAT_PATCH: &[OptDef] = &[
     o("range-diff", ' ', Req, true),
     o("creation-factor", ' ', Req, true),
     o("force-in-body-from", ' ', No, true),
+    // Hidden from `-h` (a revision option) but accepted (git-format-patch manual).
+    o("encode-email-headers", ' ', No, true),
 ];
 
 pub const INIT: &[OptDef] = &[
