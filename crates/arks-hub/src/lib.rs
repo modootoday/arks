@@ -73,8 +73,9 @@ pub const GROUPS: &[&str] = &[
 /// Matrix groups kept as explicit OUT refuse (exit 2, no network call).
 ///
 /// `extension` / `copilot` are marketplace / vendor depth. The rest are
-/// GitHub-platform-only services (Actions, attestations, Codespaces) that are
-/// out of scope for the independent arks forge ([[adr:root/20261119230000]]).
+/// GitHub-platform-only services (Actions, attestations, Codespaces, Event
+/// Streams preview) that are out of scope for the independent arks forge
+/// ([[adr:root/20261119230000]]).
 pub const HUB_OUT_GROUPS: &[&str] = &[
     "extension",
     "copilot",
@@ -85,10 +86,11 @@ pub const HUB_OUT_GROUPS: &[&str] = &[
     "variable",
     "attestation",
     "codespace",
+    "event",
 ];
 
 /// Refuse reason for GitHub-platform-only groups and leaves.
-const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (Actions/attestations/Codespaces) — \
+const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (Actions/attestations/Codespaces/Event Streams) — \
      out of scope for the arks forge ([[adr:root/20261119230000]])";
 
 pub fn print_help() {
@@ -839,6 +841,7 @@ mod tests {
             "variable",
             "attestation",
             "codespace",
+            "event",
         ] {
             assert!(
                 HUB_OUT_GROUPS.contains(&g),
