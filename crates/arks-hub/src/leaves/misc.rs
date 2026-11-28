@@ -15,19 +15,19 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 
 pub(crate) const AUTH_HELP: &str = "\
-arks auth — accounts on arks forge hosts (gh-symmetric argv; host-tested Partial)
+arks auth — accounts on arks forge hosts (gh-symmetric argv)
 
 USAGE:
-  arks auth login [--with-token] [-h <host>] [-p <protocol>] [-s <scopes>]
+  arks auth login [--with-token | --web] [--client-id <id>] [-h <host>] [-p <protocol>] [-s <scopes>]
   arks auth logout [-h <host>] [-u <user>]
   arks auth status [-a] [-h <host>] [-t] [--json hosts]
   arks auth switch [-h <host>] [-u <user>]
   arks auth token [-h <host>] [-u <user>]
   arks auth refresh [-h <host>] [-s <scopes>] [-r <scopes>] [--reset-scopes]
 
-The token comes from standard input (--with-token) or ARKS_HUB_TOKEN; on a
-local forge a fresh token is registered (ARKS_HUB_LOGIN names the account).
-arks forge tokens carry no OAuth scopes and there is no browser login.";
+Token sources: standard input (--with-token), ARKS_HUB_TOKEN, or RFC 8628
+OAuth 2.0 Device Authorization Grant (--web with ARKS_OAUTH_CLIENT_ID / --client-id).
+arks never spawns a browser, git, or gh.";
 
 /// One account on one host.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -120,7 +120,15 @@ pub(crate) fn auth(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res {
         "login" => {
             let a = Args::parse(
                 raw,
-                &["-p", "--git-protocol", "-h", "--hostname", "-s", "--scopes"],
+                &[
+                    "-p",
+                    "--git-protocol",
+                    "-h",
+                    "--hostname",
+                    "-s",
+                    "--scopes",
+                    "--client-id",
+                ],
                 &[
                     "-c",
                     "--clipboard",
@@ -131,10 +139,8 @@ pub(crate) fn auth(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res {
                     "--with-token",
                 ],
             )?;
-            if a.has(&["-w", "--web"]) || a.has(&["-c", "--clipboard"]) {
-                return usage(
-                    "browser (device) login is not available on the arks forge; pipe a token to `arks auth login --with-token`",
-                );
+            if a.has(&["-w", "--web"]) && a.has(&["--with-token"]) {
+                return usage("cannot combine --web and --with-token");
             }
             if let Some(p) = a.get(&["-p", "--git-protocol"]) {
                 if !matches!(p, "ssh" | "https") {
@@ -143,16 +149,39 @@ pub(crate) fn auth(ctx: &Ctx, args: &[String], out: &mut dyn Write) -> Res {
                     ));
                 }
             }
-            if a.get(&["-s", "--scopes"]).is_some() {
-                eprintln!(
-                    "note: arks forge tokens carry no OAuth scopes; --scopes changes nothing"
-                );
-            }
             let host = a
                 .get(&["-h", "--hostname"])
                 .map(str::to_string)
                 .unwrap_or(cur_host.clone());
-            let token = if a.has(&["--with-token"]) {
+            let token = if a.has(&["-w", "--web"]) {
+                let client_id = a
+                    .get(&["--client-id"])
+                    .map(str::to_string)
+                    .or_else(|| {
+                        std::env::var("ARKS_OAUTH_CLIENT_ID")
+                            .ok()
+                            .filter(|v| !v.trim().is_empty())
+                    })
+                    .ok_or_else(|| {
+                        Fail::Usage(
+                            "OAuth device login (--web) requires --client-id <id> or ARKS_OAUTH_CLIENT_ID (RFC 8628)".into(),
+                        )
+                    })?;
+                let scope = a
+                    .get(&["-s", "--scopes"])
+                    .unwrap_or("repo read:org")
+                    .to_string();
+                let cfg = crate::device_flow::DeviceAuthConfig::for_host(&host, client_id, scope);
+                let mut err_stream = std::io::stderr();
+                let issued = crate::device_flow::run_device_flow(&cfg, &mut err_stream)
+                    .map_err(Fail::Api)?;
+                issued.access_token
+            } else if a.has(&["--with-token"]) {
+                if a.get(&["-s", "--scopes"]).is_some() {
+                    eprintln!(
+                        "note: arks forge tokens carry no OAuth scopes; --scopes changes nothing"
+                    );
+                }
                 let mut buf = String::new();
                 std::io::stdin().read_to_string(&mut buf)?;
                 let t = buf.trim().to_string();
