@@ -13,6 +13,7 @@
 //! <https://git-scm.com/docs/git-patch-id> (behaviour, not code).
 
 mod mail_header;
+mod wrap;
 
 use crate::cmd::opt_parse::{Item, Mode, Parsed, parse};
 use crate::cmd::shared::{committer_signature, resolve_rev};
@@ -911,7 +912,9 @@ fn render_cover(
     for (name, subjects) in &by_author {
         out.push_str(&format!("{name} ({}):\n", subjects.len()));
         for s in subjects {
-            out.push_str(&format!("  {s}\n"));
+            // `git shortlog` layout: width 72, indents 2 and 4.
+            out.push_str(&wrap::wrap(s, wrap::Lead::Indent(2), 4, 72));
+            out.push('\n');
         }
         out.push('\n');
     }

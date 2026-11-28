@@ -12,6 +12,8 @@
 //! clean-room image (the `.git/i18n` lines of the CLI flag corpus).
 
 /// Longest line an encoded `Subject:` / `From:` header reaches (RFC 2047 §2).
+use super::wrap::{Lead, wrap};
+
 const ENCODED_LINE_MAX: usize = 76;
 /// Column a plain `Subject:` is folded at.
 const FOLD_WIDTH: usize = 78;
@@ -74,56 +76,6 @@ fn encoded_words(col: usize, text: &str, place: Place) -> String {
     out
 }
 
-/// A plain header value folded at whitespace so lines stay within 78
-/// columns, starting at column `col`; continuation lines start with one
-/// space. A run of whitespace keeps all but the character the fold replaces;
-/// a tab advances to the next multiple of eight; a word longer than a line
-/// stands alone on its line.
-fn fold(col: usize, text: &str) -> String {
-    let chars: Vec<char> = text.chars().collect();
-    let mut out = String::new();
-    let mut w = col;
-    // Start of the text not yet written: `Some(i)` continues the current
-    // line from `i`; `None` is a fresh continuation line starting at `bol`.
-    let mut pending: Option<usize> = Some(0);
-    let mut bol = 0;
-    let mut i = 0;
-    loop {
-        let c = chars.get(i).copied();
-        if c.is_some_and(|c| !c.is_whitespace()) {
-            w += 1;
-            i += 1;
-            continue;
-        }
-        if w <= FOLD_WIDTH || pending.is_none() {
-            let start = match pending {
-                Some(s) => s,
-                None if c.is_none() && i == bol => return out,
-                None => {
-                    out.push(' ');
-                    bol
-                }
-            };
-            out.extend(&chars[start..i]);
-            let Some(c) = c else {
-                return out;
-            };
-            pending = Some(i);
-            if c == '\t' {
-                w |= 7;
-            }
-            w += 1;
-            i += 1;
-        } else {
-            out.push('\n');
-            let s = pending.take().unwrap_or(bol);
-            bol = s + usize::from(chars[s].is_whitespace());
-            i = bol;
-            w = 1;
-        }
-    }
-}
-
 /// `Subject: <prefix><subject>`: Q-encoded when `encode` is on and the
 /// subject needs it, otherwise folded. The prefix (`[PATCH n/m] `) is
 /// written as given.
@@ -132,7 +84,7 @@ pub fn subject(prefix: &str, subject: &str, encode: bool) -> String {
     let value = if encode && needs_encoding(subject) {
         encoded_words(head.len(), subject, Place::Subject)
     } else {
-        fold(head.chars().count(), subject)
+        wrap(subject, Lead::At(head.chars().count()), 1, FOLD_WIDTH)
     };
     format!("{head}{value}\n")
 }
