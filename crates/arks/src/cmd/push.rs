@@ -7,7 +7,8 @@
 use crate::cmd::fetch::{configured_source, default_remote};
 use crate::cmd::opt_parse::{Mode, OptDef, Takes::*, o, parse};
 use crate::cmd::remote_local::{
-    LocalPush, LocalPushOpts, PushStatus, dwim, parse_refspec, push_local, short_ref,
+    LocalPush, LocalPushOpts, PushStatus, classify_push, dwim, parse_refspec, push_local,
+    report_push, short_ref,
 };
 use crate::cmd::shared::resolve_rev;
 use crate::error::{CliError, CliResult};
@@ -146,12 +147,17 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
         eprintln!("Pushing to {url}");
     }
 
-    // Remote refs (for DWIM, prune, mirror and statuses).
+    // Remote refs (for DWIM, prune, mirror and statuses): the local repository's
+    // refs, or the receive-pack advertisement of a network remote.
     let remote_refs: Vec<(String, Oid)> = if local {
         let r = arks_remote::open_local_remote(&url).map_err(|e| CliError::fatal(e.to_string()))?;
         r.refs().list_refs("refs/")?
     } else {
-        Vec::new()
+        arks_remote::ls_remote_for_push(&url)?
+            .into_iter()
+            .filter(|r| r.name.starts_with("refs/"))
+            .map(|r| (r.name, r.oid))
+            .collect()
     };
     let local_refs = repo.refs().list_refs("refs/")?;
 
@@ -364,8 +370,9 @@ pub fn cmd_push(args: &[String]) -> CliResult<()> {
             &repo,
             &url,
             &updates,
+            &remote_refs,
             &p.values("push-option"),
-            opts.dry_run,
+            &opts,
         )?
     };
     let ok = |s: &PushStatus| {
@@ -624,47 +631,78 @@ fn run_pre_push(
     Ok(())
 }
 
-/// Network push through `arks_remote` (claimed client).
+/// Network push through `arks_remote` (claimed client): classify each update
+/// against the receive-pack advertisement, send the ones that need a command,
+/// then map report-status per ref ([[sot:root/arks-remote]] 7d) and print
+/// git-push's status table (<https://git-scm.com/docs/git-push#_output>).
 fn push_network(
     repo: &Repository,
     url: &str,
     updates: &[LocalPush],
+    remote_refs: &[(String, Oid)],
     push_options: &[String],
-    dry_run: bool,
+    opts: &LocalPushOpts,
 ) -> CliResult<Vec<PushStatus>> {
-    let statuses: Vec<PushStatus> = updates
-        .iter()
-        .map(|u| {
-            if u.new.is_some() {
-                PushStatus::New
-            } else {
-                PushStatus::Deleted
-            }
-        })
-        .collect();
-    if dry_run {
-        eprintln!("To {url}");
-        for u in updates {
-            eprintln!(" * {} -> {} (dry run)", u.src_label, u.dst);
-        }
-        return Ok(statuses);
+    let mut statuses = Vec::with_capacity(updates.len());
+    for u in updates {
+        let old = remote_refs
+            .iter()
+            .find(|(n, _)| *n == u.dst)
+            .map(|(_, o)| *o);
+        statuses.push(match &u.expect {
+            Some(expect) if old != *expect => PushStatus::Rejected("stale info"),
+            _ => classify_push(repo, u, old)?,
+        });
     }
-    let zero = Oid::from_hex(&"0".repeat(40)).map_err(|e| CliError::Msg(e.to_string()))?;
-    let list: Vec<arks_remote::PushUpdate> = updates
-        .iter()
-        .map(|u| arks_remote::PushUpdate {
-            refname: u.dst.clone(),
-            new_oid: u.new.unwrap_or(zero),
-            expected_old: u.expect.flatten(),
-        })
+    let sendable = |s: &PushStatus| {
+        matches!(
+            s,
+            PushStatus::New
+                | PushStatus::FastForward(_)
+                | PushStatus::Forced(_)
+                | PushStatus::Deleted
+        )
+    };
+    if opts.atomic
+        && statuses
+            .iter()
+            .any(|s| matches!(s, PushStatus::Rejected(_)))
+    {
+        for s in statuses.iter_mut().filter(|s| sendable(s)) {
+            *s = PushStatus::Rejected("atomic push failed");
+        }
+    }
+    let send: Vec<usize> = (0..updates.len())
+        .filter(|&i| sendable(&statuses[i]))
         .collect();
-    arks_remote::push_remote_with(
-        repo,
-        url,
-        &list,
-        &arks_remote::PushOptions {
-            push_options: push_options.to_vec(),
-        },
-    )?;
+    if !opts.dry_run && !send.is_empty() {
+        let zero = Oid::from_hex(&"0".repeat(40)).map_err(|e| CliError::Msg(e.to_string()))?;
+        let list: Vec<arks_remote::PushUpdate> = send
+            .iter()
+            .map(|&i| arks_remote::PushUpdate {
+                refname: updates[i].dst.clone(),
+                new_oid: updates[i].new.unwrap_or(zero),
+                expected_old: updates[i].expect.flatten(),
+            })
+            .collect();
+        let report = arks_remote::push_remote_report(
+            repo,
+            url,
+            &list,
+            &arks_remote::PushOptions {
+                push_options: push_options.to_vec(),
+            },
+        )?;
+        for (&i, r) in send.iter().zip(report) {
+            match r.status {
+                arks_remote::PushRefStatus::Ok => {}
+                arks_remote::PushRefStatus::UpToDate => statuses[i] = PushStatus::UpToDate,
+                arks_remote::PushRefStatus::Rejected(why) => {
+                    statuses[i] = PushStatus::RemoteRejected(why)
+                }
+            }
+        }
+    }
+    report_push(repo, url, updates, &statuses, remote_refs, opts)?;
     Ok(statuses)
 }

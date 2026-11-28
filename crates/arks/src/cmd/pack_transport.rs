@@ -389,9 +389,8 @@ pub fn cmd_send_pack(args: &[String]) -> CliResult<()> {
 fn helper_line(name: &str, s: &PushStatus) -> String {
     match s {
         PushStatus::Rejected("non-fast-forward") => format!("error {name} non-fast forward"),
-        PushStatus::Rejected(why) | PushStatus::RemoteRejected(why) => {
-            format!("error {name} {why}")
-        }
+        PushStatus::Rejected(why) => format!("error {name} {why}"),
+        PushStatus::RemoteRejected(why) => format!("error {name} {why}"),
         PushStatus::UpToDate => format!("ok {name} up to date"),
         _ => format!("ok {name}"),
     }

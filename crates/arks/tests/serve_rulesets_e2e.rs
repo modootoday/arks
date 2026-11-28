@@ -196,19 +196,14 @@ fn stderr(o: &Output) -> String {
     String::from_utf8_lossy(&o.stderr).into_owned()
 }
 
-/// The client's report of the refused `main`: stock git prints the
-/// report-status `ng` as `! [remote rejected] <src -> dst> (<reason>)` (`main`
-/// alone for a deletion); the arks network push client reports it as
-/// `push rejected: refs/heads/main <reason>`.
+/// The client's report of the refused `main`: both stock git and the arks
+/// network push client print report-status `ng` as
+/// `! [remote rejected] <src -> dst> (<reason>)` (`main` alone for a deletion).
 fn assert_rejected(label: &str, e: &str, git_ref: &str, rule: &str) {
     let reason = format!(
         "push declined due to repository rule violations (ruleset \"protect main\": {rule})"
     );
-    let shown = if label == "git" {
-        format!("! [remote rejected] {git_ref} ({reason})")
-    } else {
-        format!("push rejected: refs/heads/main {reason}")
-    };
+    let shown = format!("! [remote rejected] {git_ref} ({reason})");
     assert!(e.contains(&shown), "{label}: want {shown:?} in:\n{e}");
 }
 
@@ -227,9 +222,7 @@ fn journey(bin: &str, f: &Forge, label: &str) {
         Some(c1.as_str())
     );
 
-    // Deletion of the protected default branch is refused. (Full refnames:
-    // the arks client does not yet resolve a short deletion name against a
-    // network remote's advertisement.)
+    // Deletion of the protected default branch is refused.
     let del = run(bin, &work, &["push", "origin", ":refs/heads/main"]);
     assert!(!del.status.success(), "{label}: deletion must fail");
     assert_rejected(label, &stderr(&del), "main", "cannot delete this ref");
@@ -248,9 +241,10 @@ fn journey(bin: &str, f: &Forge, label: &str) {
     assert!(!force.status.success(), "{label}: force push must fail");
     let e = stderr(&force);
     assert_rejected(label, &e, "main -> main", "cannot force-push to this ref");
-    if label == "git" {
-        assert!(e.contains("* [new branch]      topic -> topic"), "{e}");
-    }
+    assert!(
+        e.contains("* [new branch]      topic -> topic"),
+        "{label}: {e}"
+    );
     assert_eq!(
         tip(&f.bare, "refs/heads/main").as_deref(),
         Some(c2.as_str())
