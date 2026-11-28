@@ -23,6 +23,7 @@ mod tls;
 mod upload;
 mod v2;
 mod walk;
+pub mod web_ui;
 pub use auth::{
     BASIC_REALM, BasicAuthConfig, BasicCredential, base64_encode, basic_authorization_header,
 };
@@ -57,5 +58,6 @@ pub use tls::load_server_config;
 pub type ProductTlsServerConfig = std::sync::Arc<rustls::ServerConfig>;
 pub use upload::{upload_advertisement, upload_pack_advertisement, upload_pack_result};
 pub use v2::{handle_v2_request, v2_capability_advertisement, v2_capability_lines};
+pub use web_ui::{WEB_UI_CSP, handle_web_ui, html_escape, web_ui_page_handler};
 #[cfg(test)]
 mod tests;
