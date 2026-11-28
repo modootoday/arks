@@ -233,10 +233,39 @@ fn migrate_to_files(dry_run: bool) -> CliResult<()> {
     Ok(())
 }
 
-/// Update `core.repositoryformatversion = 1` and `extensions.refStorage = <fmt>` in `<git_dir>/config`.
+/// Update `core.repositoryformatversion` and `extensions.refStorage` in `<git_dir>/config`.
+///
+/// When migrating to `"files"`, `extensions.refStorage` is removed (rather than left as
+/// `refStorage = files`) so pre-2.45 Git clients can still read the repository cleanly.
 fn set_repo_ref_storage_config(common_dir: &Path, ref_storage: &str) -> CliResult<()> {
     let cfg_path = common_dir.join("config");
     let text = fs::read_to_string(&cfg_path).unwrap_or_default();
+    let is_files = ref_storage.eq_ignore_ascii_case("files");
+
+    // Check if any non-refStorage extensions exist (e.g. objectFormat = sha256).
+    let mut has_other_extensions = false;
+    {
+        let mut sec = String::new();
+        for line in text.lines() {
+            let t = line.trim();
+            if t.starts_with('[') && t.ends_with(']') {
+                sec = t[1..t.len() - 1].trim().to_string();
+            } else if sec.eq_ignore_ascii_case("extensions") {
+                if let Some((k, _)) = t.split_once('=') {
+                    if !k.trim().eq_ignore_ascii_case("refstorage") {
+                        has_other_extensions = true;
+                    }
+                }
+            }
+        }
+    }
+
+    let target_fmt_ver = if is_files && !has_other_extensions {
+        "0"
+    } else {
+        "1"
+    };
+
     let mut out = String::new();
     let mut section = String::new();
     let mut wrote_fmt_ver = false;
@@ -247,15 +276,19 @@ fn set_repo_ref_storage_config(common_dir: &Path, ref_storage: &str) -> CliResul
         let trimmed = line.trim();
         if trimmed.starts_with('[') && trimmed.ends_with(']') {
             if section.eq_ignore_ascii_case("core") && !wrote_fmt_ver {
-                out.push_str("\trepositoryformatversion = 1\n");
+                out.push_str(&format!("\trepositoryformatversion = {target_fmt_ver}\n"));
                 wrote_fmt_ver = true;
             }
-            if section.eq_ignore_ascii_case("extensions") && !wrote_ref_storage {
+            if !is_files && section.eq_ignore_ascii_case("extensions") && !wrote_ref_storage {
                 out.push_str(&format!("\trefStorage = {ref_storage}\n"));
                 wrote_ref_storage = true;
             }
             section = trimmed[1..trimmed.len() - 1].trim().to_string();
             if section.eq_ignore_ascii_case("extensions") {
+                if is_files && !has_other_extensions {
+                    // Drop empty [extensions] header when migrating back to files with no other extensions.
+                    continue;
+                }
                 has_extensions = true;
             }
             out.push_str(line);
@@ -267,14 +300,16 @@ fn set_repo_ref_storage_config(common_dir: &Path, ref_storage: &str) -> CliResul
             if section.eq_ignore_ascii_case("core")
                 && key.eq_ignore_ascii_case("repositoryformatversion")
             {
-                out.push_str("\trepositoryformatversion = 1\n");
+                out.push_str(&format!("\trepositoryformatversion = {target_fmt_ver}\n"));
                 wrote_fmt_ver = true;
                 continue;
             }
             if section.eq_ignore_ascii_case("extensions") && key.eq_ignore_ascii_case("refstorage")
             {
-                out.push_str(&format!("\trefStorage = {ref_storage}\n"));
-                wrote_ref_storage = true;
+                if !is_files {
+                    out.push_str(&format!("\trefStorage = {ref_storage}\n"));
+                    wrote_ref_storage = true;
+                }
                 continue;
             }
         }
@@ -283,17 +318,19 @@ fn set_repo_ref_storage_config(common_dir: &Path, ref_storage: &str) -> CliResul
     }
 
     if section.eq_ignore_ascii_case("core") && !wrote_fmt_ver {
-        out.push_str("\trepositoryformatversion = 1\n");
+        out.push_str(&format!("\trepositoryformatversion = {target_fmt_ver}\n"));
         wrote_fmt_ver = true;
     }
-    if section.eq_ignore_ascii_case("extensions") && !wrote_ref_storage {
+    if !is_files && section.eq_ignore_ascii_case("extensions") && !wrote_ref_storage {
         out.push_str(&format!("\trefStorage = {ref_storage}\n"));
         wrote_ref_storage = true;
     }
     if !wrote_fmt_ver {
-        out.push_str("[core]\n\trepositoryformatversion = 1\n");
+        out.push_str(&format!(
+            "[core]\n\trepositoryformatversion = {target_fmt_ver}\n"
+        ));
     }
-    if !has_extensions || !wrote_ref_storage {
+    if !is_files && (!has_extensions || !wrote_ref_storage) {
         out.push_str(&format!("[extensions]\n\trefStorage = {ref_storage}\n"));
     }
     fs::write(&cfg_path, out)?;

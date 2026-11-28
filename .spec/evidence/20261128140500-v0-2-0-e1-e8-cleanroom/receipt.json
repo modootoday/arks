@@ -1,0 +1,25 @@
+{
+  "gate": "e1-e8-v0-2-0-cleanroom",
+  "spec": "sot:root/v0-2-0-scope-expansion",
+  "venue": "docker arks-verify-m1:0.1.0 (in_docker=true)",
+  "git": "git version 2.39.5",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "tip": "c78ac8e",
+  "invariants": {
+    "zero_gix": true,
+    "zero_celir": true,
+    "single_binary": true
+  },
+  "epics": {
+    "E1_oauth_device_flow": "PASS",
+    "E2_github_actions_cli_and_sealed_box": "PASS",
+    "E3_worktree_free_replay_stock_git_interop": "PASS",
+    "E4_maintenance_subtree_stock_git_fsck": "PASS",
+    "E5_reftable_migrate_verify_roundtrip": "PASS",
+    "E6_native_lfs_client": "PASS",
+    "E7_serve_lfs_endpoint": "PASS",
+    "E8_serve_web_ui_forge_and_stock_git_clone": "PASS"
+  },
+  "result": "PASS",
+  "timestamp": "2026-11-28T14:03:43Z"
+}

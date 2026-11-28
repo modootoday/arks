@@ -64,16 +64,16 @@ Authoritative matrix: [verify-cleanroom-symmetry-matrix](https://github.com/modo
 | Live G8 latency / **L9** publish timing | **Not Claimed** | Secrets-absent SKIP ≠ PASS; L9 owner policy |
 | `arks` as `git` in hosted agent sessions (proxy/CA, config identity, SSH signing, agent flag set) | **Claimed (Docker G42)** | Works end to end in hosted sandboxes (clone, signed commit, push through the egress proxy); Docker clean-room gate G42 passes all 15 required rows against stock git 2.39.5; in the same clean-room image, 147 of 147 agent-tier and 166 of 168 tier-B commands match stock git 2.39.5 on output, exit code and resulting repository state; installed in hosted sessions from `main` ([cloud-agent-dropin](https://github.com/modootoday/arks/blob/main/.spec/sot/cloud-agent-dropin.sot.md)) |
 | argv symmetry with git (every command and option, pin 2.39.5) | **Claimed (Docker)** | In the clean-room image (`5d2dc88`), arks accepts all 1,852 options that stock git 2.39.5 lists in `-h` across 185 commands; 4,446 of 4,549 flag-corpus lines match on output, exit code and repository state (including the PR `#76` `format-patch` additions), and each of the other 103 is reasoned (77 post-pin options kept, 26 GUI / Windows-only rows the oracle image lacks, 0 timing, 0 open/unreasoned); `dod-symmetry-prerelease` passes with `ARKS_RELEASE_BLOCK_HUB_MISSING=1` (`Missing=0`, `untracked=0` across all three pillars) ([final-pre-release-receipt](https://github.com/modootoday/arks/blob/main/.spec/evidence/20261128052500-final-pre-release-receipt/receipt.json)) |
+| v0.2.0 scope expansion (E1–E8: OAuth Device Flow, Actions CLI + NaCl sealed-box, `arks replay`, `maintenance`/`subtree`, Reftable backend, native LFS client/server, `arks serve` embedded SSR Forge Web UI) | **Claimed (Docker)** | All 8 epics pass in the clean-room `arks-verify-m1:0.1.0` image (`git 2.39.5`, Rust `1.99.1`, zero `gix`, zero `celir`), including live `arks replay` → stock `git update-ref --stdin`, `files ↔ reftable` round-trip verified by stock `git fsck`, LFS Batch/object round-trip, and live `arks serve` SSR/CSP/interactive Forge merge coexisting with stock `git clone` ([v0-2-0-e1-e8-cleanroom](https://github.com/modootoday/arks/blob/main/.spec/evidence/20261128140500-v0-2-0-e1-e8-cleanroom/receipt.json)); live vendor OAuth/Actions API calls remain secrets-gated |
 
 Git feature-symmetry DoD (**FS_final**) for claimed porcelain rows remains **YES** where receipts carry — residuals are Impossible / advisory / owner-policy, not casual N/A. Residual **B** rows above are Claimed / Partial / Refuse **only** as Spec + receipts name — do not invent beyond [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
 
 ## Documented non-goals / trimmed
 
 - Absolute SHA-1 collision **immunity** (detect+refuse is Claimed)
-- Forge Checks / merge-queue / Issues **web product** UX (API client is flat on `arks`; UI not required for v1)
-- Embedded forge OAuth browser UX (external credential.helper honored)
+- Desktop GUI embeds (`gitk`, `git-gui`, `citool`, `gui.tcl`)
+- GitHub-proprietary ecosystem groups (`codespace`, `copilot`, `extension`, `agent-task`, `event*`, `skill`)
 - Cloud-sync / hostfs product CLI (`arks host-env` trimmed)
-- In-process LFS client/server (use external `git-lfs`)
 - CELIR (experimental indexing package) — not adopted; former index-only option withdrawn
 - Live G8 / scale latency PASS without secrets (honest SKIP)
 - crates.io / docs.rs publish timing (**L9** — owner policy)
