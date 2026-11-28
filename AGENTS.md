@@ -68,6 +68,7 @@ Current program honesty (pointers only — owning SoTs win): **M0–M26**; gates
 | Agent governance / AGENTS role | `.spec/sot/agent-governance.sot.md` |
 | Unattended operation (loop, work order, autonomy levels A0/A1/A2, stop signals, final completion, permission baseline) | `.spec/sot/autonomous-operation.sot.md` + rule `95-autonomous-operation` |
 | `agy` automated & parallel development (task-scoped `agy/<lane>/<slug>`, Step 0 sweep, Two-Tier parallelism, hot-file lock, GitHub-native control plane) | `.spec/sot/agy-automated-development.sot.md` + ADR `20261128035000` + research `20261128034500` + rule `96-agy-parallel-governance` + skill `agy-parallel-orchestration` |
+| Product finalization & release readiness (F1–F5 ladder: test/manifest hygiene, Docker re-receipt, public-docs cleanse, release dry-run, A2 release cut) | `.spec/sot/product-finalization-and-release-readiness.sot.md` + plan `20261128043000` + research `20261128043000` |
 | Agent / Specfold readiness | `.spec/sot/agent-dev-readiness.sot.md` |
 | Inherited conventions map | `.spec/sot/conventions-inherit.sot.md` |
 | English-only / Hangul ban | `.spec/sot/language-english-only.sot.md` + rule `05-english-only` |
