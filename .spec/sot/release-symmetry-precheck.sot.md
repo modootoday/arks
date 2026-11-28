@@ -3,7 +3,7 @@ id: sot:root/release-symmetry-precheck
 title: Release symmetry precheck (git / daemon / gh)
 status: active
 created: 2026-11-10T19:45:00Z
-updated: 2026-11-14T10:30:00Z
+updated: 2026-11-28T05:37:00Z
 tags: [release, verify, symmetry, dod, git, daemon, hub, gh, gha, precheck, pin, latest-inventory, no-invent-pass]
 verify: manual
 rel:
@@ -26,11 +26,11 @@ rel:
 
 # Release symmetry precheck (git / daemon / gh)
 
-Version **0.1.0**. Normative **ops/CI** gate that blocks a tagged release when clean-room CLI symmetry tracking breaks. Extends [[sot:root/verify-cleanroom-symmetry-matrix]]; does **not** invent product Claimed/PASS from green CI alone. Entrypoint / out-path naming under `verify/` follows [[sot:root/verify-directory-conventions]].
+Version **0.1.1**. Normative **ops/CI** gate that blocks a tagged release when clean-room CLI symmetry tracking breaks. Extends [[sot:root/verify-cleanroom-symmetry-matrix]]; does **not** invent product Claimed/PASS from green CI alone. Entrypoint / out-path naming under `verify/` follows [[sot:root/verify-directory-conventions]].
 
 **Published binary:** **`arks` only.** Product paths MUST NOT spawn `git` or `gh`. Stock `git` / `git-daemon` / surveyed `gh` are **oracles** for inventory + matrices only.
 
-**Remote:** GitHub `https://github.com/modootoday/arks.git`. Push only when the owner authorizes.
+**Remote:** GitHub `https://github.com/modootoday/arks.git`. Push scope follows [[sot:root/autonomous-operation]] and [[sot:root/agy-automated-development]].
 
 ## When the gate runs
 
@@ -47,7 +47,7 @@ Host Windows operators MAY run the same entrypoints locally (`docker compose …
 | Oracle | Where | Purpose | Release effect |
 |--------|-------|---------|----------------|
 | **Pin Git / git-daemon `2.39.5`** | Clean-room image `arks-verify-m1:0.1.0` (`verify/images.lock.json`) | Normative three-pillar DoD judge | **Release-blocking** per table below |
-| **Surveyed `gh` pin** (currently **2.103.3**) | Hub design / living CSVs ([[sot:root/arks-hub-gh-command-matrix]]) | Hub leaf inventory currency | Untracked leaves **block**; inventoried v1 Missing policy below |
+| **Surveyed `gh` pin** (currently **2.103.3**) | Hub design / living CSVs ([[sot:root/arks-hub-gh-command-matrix]]) | Hub leaf inventory currency | Untracked leaves and hub v1 `Missing > 0` **block** (`block_hub_missing: true` in `release.yml`) |
 | **Host / runner “latest” Git + `gh`** | GHA ubuntu job or operator host | Continuously track newer upstream surface **without** pretending the clean-room pin advanced | Untracked cmds **block**; inventoried latest-only Partial/Missing = **advisory** |
 
 Advancing the **normative** Git pin remains [[sot:root/clean-room-git-pin-advance]] (gap audit + lock + evidence). Latest-inventory green **MUST NOT** be labeled pin-DoD Claimed.
@@ -59,17 +59,18 @@ Advancing the **normative** Git pin remains [[sot:root/clean-room-git-pin-advanc
 | Pillar script **hard FAIL** (help/CSV honesty mismatch, missing required SoT, broken `arks daemon` / `arks hub` entry) | **FAIL** |
 | Pin CLI living CSV **`Missing` count > 0** (`verify/matrices/cli-git-help-matrix.csv` / `survey_status`) | **FAIL** |
 | Daemon living CSV **`Missing` count > 0** (`verify/matrices/daemon-git-arks-e2e-matrix.csv`) | **FAIL** |
+| Hub v1 living CSV **`Missing` count > 0** when `block_hub_missing: true` (default in `release.yml` after Q17/Q18 + F2 proved 171/171 v1 Claimed, Missing=0) | **FAIL** |
 | **Untracked** pin `git --list-cmds` name (present in pin oracle, absent from CLI CSV) | **FAIL** |
 | **Untracked** pin `git daemon -h` long-option (absent from daemon CSV) | **FAIL** |
 | **Untracked** `gh` top-level / reference leaf vs hub living/design CSV | **FAIL** |
-| **Untracked** runner/latest `git --list-cmds` or `gh` leaf vs living CSVs | **FAIL** (tracking lost — must inventory as Partial / Refuse/N/A / Missing before release) |
+| **Untracked** runner/latest `git --list-cmds=main` or `gh` leaf vs living CSVs | **FAIL** (tracking lost — must inventory as Partial / Refuse/N/A / Missing before release) |
 
 ## What does **not** fail by default (advisory)
 
 | Condition | Effect |
 |-----------|--------|
 | **Partial** rows (flag-depth / subset honesty) | Summary only — tracked debt, not a silent PASS |
-| Hub **v1 `Missing`** counts while rows remain inventoried | **Advisory** by default (`ARKS_RELEASE_BLOCK_HUB_MISSING=0`). Flip to **1** when hub v1 Missing=0 becomes the release bar — **do not invent PASS** while Missing > 0 |
+| Manual `release-symmetry.yml` dispatch with `block_hub_missing=false` | Advisory hub Missing reporting only (for exploratory runs) |
 | Latest-only commands already inventoried as Partial / Refuse / Missing | Advisory delta in the job summary (follow-upstream backlog) |
 | Host cargo / non-compose greens | Advisory only |
 
