@@ -1,4 +1,4 @@
-//! Integration tests for `arks serve` embedded single-binary SSR Web UI (E8).
+//! Integration tests for `arks serve` embedded GitHub/GitLab SSR + HTMX v2 Web UI (E8).
 
 use arks_server::{ServeHttpOptions, WEB_UI_CSP, spawn_loopback_with_opts, web_ui_page_handler};
 use std::fs;
@@ -56,10 +56,23 @@ fn serve_embedded_web_ui_renders_escapes_xss_sets_csp_and_coexists_with_git() {
     fs::create_dir_all(&repo).unwrap();
 
     ok(&repo, &["init", "-b", "main"]);
+    fs::write(
+        repo.join("README.md"),
+        "# Demo Repo\n\n- Safe `arks` item\n",
+    )
+    .unwrap();
     fs::write(repo.join("xss.txt"), "<script>alert('xss')</script>\n").unwrap();
-    ok(&repo, &["add", "xss.txt"]);
+    ok(&repo, &["add", "README.md", "xss.txt"]);
     ok(&repo, &["commit", "-m", "initial <b>commit</b>"]);
+    fs::write(
+        repo.join("xss.txt"),
+        "<script>alert('xss')</script>\nsecond line\n",
+    )
+    .unwrap();
+    ok(&repo, &["add", "xss.txt"]);
+    ok(&repo, &["commit", "-m", "update xss.txt"]);
     let head = ok(&repo, &["rev-parse", "HEAD"]);
+    ok(&repo, &["tag", "v0.1.0"]);
 
     let git_dir = repo.join(".git");
     let (addr, stop, handle) = spawn_loopback_with_opts(
@@ -71,40 +84,77 @@ fn serve_embedded_web_ui_renders_escapes_xss_sets_csp_and_coexists_with_git() {
     )
     .unwrap();
 
-    // 1. Overview `/` has strict CSP and escapes HTML in commit subject & author.
+    // 1. Overview `/` has GitHub/GitLab tabs, HTMX hx-boost, strict CSP, README preview, and escapes HTML.
     let (st, hdr, body) = http_get(addr, "/");
     assert_eq!(st, 200);
     assert!(
         hdr.contains(&format!("Content-Security-Policy: {WEB_UI_CSP}")),
         "missing strict CSP header:\n{hdr}"
     );
+    assert!(body.contains("hx-boost=\"true\""), "missing hx-boost");
+    assert!(body.contains("/assets/htmx.min.js"), "missing htmx script");
+    assert!(body.contains("/favicon.svg"), "missing favicon link");
+    assert!(
+        body.contains("<h1>Demo Repo</h1>"),
+        "missing README preview"
+    );
     assert!(body.contains("xss.txt"), "body={body}");
-    assert!(body.contains("&lt;b&gt;commit&lt;/b&gt;"), "body={body}");
-    assert!(!body.contains("<b>commit</b>"), "unescaped HTML in body");
 
-    // 2. Embedded stylesheet `/style.css` is served from binary.
+    // 2. Embedded CSS, HTMX v2 JS, and SVG favicon are served directly from binary.
     let (st_css, hdr_css, body_css) = http_get(addr, "/style.css");
     assert_eq!(st_css, 200);
     assert!(hdr_css.contains("text/css"), "hdr={hdr_css}");
     assert!(body_css.contains("--bg:"), "css={body_css}");
 
-    // 3. Blob viewer escapes `<script>` payload completely.
+    let (st_js, hdr_js, body_js) = http_get(addr, "/assets/htmx.min.js");
+    assert_eq!(st_js, 200);
+    assert!(hdr_js.contains("application/javascript"), "hdr_js={hdr_js}");
+    assert!(body_js.contains("htmx"), "htmx js missing");
+
+    let (st_ico, hdr_ico, body_ico) = http_get(addr, "/favicon.svg");
+    assert_eq!(st_ico, 200);
+    assert!(hdr_ico.contains("image/svg+xml"), "hdr_ico={hdr_ico}");
+    assert!(body_ico.contains("<svg"), "svg missing");
+
+    // 3. Blob viewer escapes `<script>` payload and provides `#L1` anchors + `/raw/` download.
     let (st_blob, _, body_blob) = http_get(addr, "/blob/main/xss.txt");
     assert_eq!(st_blob, 200);
     assert!(
         body_blob.contains("&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"),
         "body_blob={body_blob}"
     );
-    assert!(!body_blob.contains("<script>"), "raw <script> tag leaked!");
+    assert!(
+        !body_blob.contains("<script>alert"),
+        "raw <script> tag leaked!"
+    );
+    assert!(body_blob.contains("id=\"L1\""), "missing line anchor");
 
-    // 4. Commits, commit detail, and refs pages all render 200 OK.
+    let (st_raw, _, body_raw) = http_get(addr, "/raw/main/xss.txt");
+    assert_eq!(st_raw, 200);
+    assert!(body_raw.contains("second line"));
+
+    // 4. Commits, Commit Detail (with unified diff + escaping), Branches, Tags, Refs.
     let (st_c, _, body_c) = http_get(addr, "/commits/main");
     assert_eq!(st_c, 200);
     assert!(body_c.contains(&head[..7]));
+    assert!(body_c.contains("&lt;b&gt;commit&lt;/b&gt;"));
+    assert!(!body_c.contains("<b>commit</b>"));
 
     let (st_d, _, body_d) = http_get(addr, &format!("/commit/{head}"));
     assert_eq!(st_d, 200);
-    assert!(body_d.contains("xss.txt"));
+    assert!(
+        body_d.contains("diff-add"),
+        "missing colorized unified diff"
+    );
+    assert!(body_d.contains("second line"));
+
+    let (st_b, _, body_b) = http_get(addr, "/branches");
+    assert_eq!(st_b, 200);
+    assert!(body_b.contains("main"));
+
+    let (st_t, _, body_t) = http_get(addr, "/tags");
+    assert_eq!(st_t, 200);
+    assert!(body_t.contains("v0.1.0"));
 
     let (st_r, _, body_r) = http_get(addr, "/refs");
     assert_eq!(st_r, 200);
