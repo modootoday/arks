@@ -1,0 +1,37 @@
+F4 Release Pipeline Dry-Run Venue Note (2026-11-28T06:10:00Z)
+=============================================================
+
+Main tip: 4d4f810072ac978eca6472f3949c1f8b5e4d0c13
+
+1. Pre-flight catch and resolution:
+   - First workflow_dispatch attempt at tip d9a429c (runs 46113259081 and
+     46113261321) passed pin DoD symmetry (clean-room Git 2.39.5, 5m09s) and
+     failed closed in `latest git/gh inventory continuity` because the
+     ubuntu-24.04 runner upgraded to gh 2.105.0 (2026-11-17), which added the
+     top-level `event` command group (GitHub Event Streams waitlist preview).
+   - PR #84 classified `event` and its 6 subcommands as OUT / Refuse/N/A /
+     out-of-scope per ADR 20261119230000 decision 3 (GitHub-platform-only) and
+     wired explicit exit-2 refusal in `arks-hub` and flat dispatch.
+
+2. Authoritative dry-run verification at tip 4d4f810:
+   - `release-symmetry.yml` (`block_hub_missing=true`), run 46114404035:
+     ALL 3 jobs succeeded:
+       * pin DoD symmetry (clean-room 2.39.5): success (5m17s)
+       * latest git/gh inventory continuity (git 2.56.1, gh 2.105.0): success
+         (cli untracked=0, daemon untracked=0, hub untracked=0, v1_Missing=0)
+       * release symmetry gate: success
+   - `release.yml` (`dry_run=true`), run 46114405826:
+     ALL 7 active jobs succeeded; all 5 live-publish jobs skipped:
+       * symmetry-precheck (block_hub_missing: true): all 3 legs success
+       * dist (x86_64-unknown-linux-gnu, ubuntu-24.04): success (6,779,970 B)
+       * dist (aarch64-apple-darwin, macos-15): success (5,864,583 B)
+       * dist (x86_64-pc-windows-msvc, windows-2025): success (6,234,925 B)
+       * release-channel dry-run report: success (`release-channel-readiness: OK`)
+       * GitHub Release (draft) and crates/npm/PyPI/RubyGems OIDC jobs: skipped
+   - Verified `gh release list` remains empty (0 GitHub Releases created).
+
+3. Honesty boundary:
+   - This receipt proves pre-release symmetry gating, 3-OS release packaging,
+     checksum generation, and structural readiness only.
+   - It does NOT claim a live GitHub Release publication or crates.io / npm /
+     PyPI / RubyGems OIDC publish PASS. Those remain Level A2 owner actions (F5).
