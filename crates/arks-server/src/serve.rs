@@ -6,7 +6,7 @@
 
 use crate::auth::BasicAuthConfig;
 use crate::error::ServerError;
-use crate::http::{HttpRequest, HttpResponse, handle_smart_http_auth};
+use crate::http::{HttpRequest, HttpResponse, handle_smart_http_auth_opts};
 use arks_repo::Repository;
 use rustls::ServerConfig;
 use std::io::{Read, Write};
@@ -46,6 +46,8 @@ pub struct ServeHttpOptions {
     pub tls: Option<Arc<ServerConfig>>,
     /// Optional browser pages served beside git HTTP.
     pub pages: Option<PageHandler>,
+    /// When true, disable the built-in `/info/lfs` Batch + Basic Transfer server (`--no-lfs`).
+    pub disable_lfs: bool,
 }
 
 impl std::fmt::Debug for ServeHttpOptions {
@@ -56,6 +58,7 @@ impl std::fmt::Debug for ServeHttpOptions {
             .field("rebind_desired", &self.rebind_desired.is_some())
             .field("tls", &self.tls.is_some())
             .field("pages", &self.pages.is_some())
+            .field("disable_lfs", &self.disable_lfs)
             .finish()
     }
 }
@@ -342,8 +345,9 @@ fn handle_connection_io<S: Read + Write>(
     body.truncate(content_length);
     // Stock git/curl may gzip the upload-pack / receive-pack POST once the prior
     // advertisement is large (observed ~32+ refs). Accept Content-Encoding: gzip
-    // and gzip magic even if the header is omitted.
-    let gzip_magic = body.len() >= 2 && body[0] == 0x1f && body[1] == 0x8b;
+    // and gzip magic even if the header is omitted — except for raw binary LFS PUTs!
+    let is_lfs = crate::lfs::is_lfs_path(&path);
+    let gzip_magic = !is_lfs && body.len() >= 2 && body[0] == 0x1f && body[1] == 0x8b;
     if content_encoding.contains("gzip") || gzip_magic {
         use flate2::read::GzDecoder;
         use std::io::Read as _;
@@ -372,13 +376,19 @@ fn handle_connection_io<S: Read + Write>(
         req.query = String::new();
     }
     let page = match &opts.pages {
-        Some(pages) if req.method == "GET" => pages(&req),
+        Some(pages) if req.method == "GET" && !is_lfs => pages(&req),
         _ => None,
     };
-    let resp = match page
-        .map(Ok)
-        .unwrap_or_else(|| handle_smart_http_auth(&mut repo, &req, opts.basic_auth.as_ref()))
-    {
+    let scheme = serve_http_scheme(opts);
+    let resp = match page.map(Ok).unwrap_or_else(|| {
+        handle_smart_http_auth_opts(
+            &mut repo,
+            &req,
+            opts.basic_auth.as_ref(),
+            !opts.disable_lfs,
+            scheme,
+        )
+    }) {
         Ok(r) => r,
         Err(e) => {
             // Fail closed with an HTTP error body (never silent empty close).

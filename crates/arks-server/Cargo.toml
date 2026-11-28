@@ -32,6 +32,7 @@ base64 = { workspace = true }
 # Product in-process TLS terminate (B9); operator-supplied PEM — not ops reverse-proxy alone.
 rustls = { workspace = true }
 rustls-pemfile = { workspace = true }
+serde_json = "1"
 
 [dev-dependencies]
 tempfile = { workspace = true }

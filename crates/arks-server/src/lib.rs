@@ -1,8 +1,8 @@
 //! arks-server — Git server role (M11 / M25 / Phase Sv + Sv2).
 //! Claimed: smart HTTP (G15), dumb/SSH/v2/git:// (G29–G32), additive WebDAV
 //! write for dumb HTTP push (R2), optional HTTP Basic (G36),
-//! receive-pack githooks honor list (pre-receive/update/post-receive).
-//! Trimmed: in-process `info/lfs` batch/locks server (not stock git-http-backend).
+//! receive-pack githooks honor list (pre-receive/update/post-receive),
+//! and native `info/lfs` Batch + Basic Transfer server (E7).
 #![forbid(unsafe_code)]
 mod advertise;
 mod auth;
@@ -12,6 +12,7 @@ mod dumb;
 mod error;
 mod hooks;
 mod http;
+pub mod lfs;
 mod push_policy;
 mod receive;
 mod serve;
