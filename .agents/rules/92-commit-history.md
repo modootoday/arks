@@ -17,6 +17,6 @@ Decision: `.spec/adr/20261119220000-commit-history-playpilot-h1-h7.adr.md`. Cano
 ## Must not
 
 - Rewrite `main`, tags, merged or shared history; force-push except `--force-with-lease=<branch>:<sha>`
-  to your own unmerged `claude/*` branch.
+  to your own unmerged `agy/*` (or legacy `claude/*`) branch.
 - Merge a PR directly (auto-merge or the owner merges).
 - Push `main` or tags with `arks push` (the `playpilot guard` hook checks `arks` like `git` since rev `3991885`).

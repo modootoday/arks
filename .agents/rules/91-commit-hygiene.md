@@ -8,13 +8,13 @@ Keep history stepwise and avoid clobbering sibling agents.
 2. **Stage only owned paths** — leave unrelated dirty trees unstaged (especially sibling CLI/crate WIP).
 3. **Spec-first** when public SoT meaning changes (rule `27`).
 4. **English commit subjects/bodies** (rule `05`) in Conventional Commits form (rule `92`).
-5. **Push scope:** push only the session's own `claude/*` topic branch, then open a PR; never `main`, tags or other branches (rule `95`).
-6. Before multi-file edits, check sibling ownership (rule `90-session-overlap`).
+5. **Push scope:** `agy` sessions push only their own task-scoped `agy/<lane>/<slug>` branch and open a PR in the same turn (rule `96`); legacy Claude sessions push only their own `claude/*` topic branch (rule `95`). Never push `main`, tags, or foreign branches.
+6. Before multi-file edits, check sibling ownership and run the Step 0 sweep (rules `90`, `96`).
 
 ## Must not
 
 - `git add -A` / `git add .` when the working tree has sibling-owned dirty crates.
-- Force-push to `main`/`master` (hooks **deny**); any other force-push / mass-rebase / amend of foreign commits unless the user explicitly orders it — sole exception: `--force-with-lease=<branch>:<sha>` on your own unmerged `claude/*` branch to meet rule `92` (H4).
+- Force-push to `main`/`master` (hooks **deny**); any other force-push / mass-rebase / amend of foreign commits unless the user explicitly orders it — sole exception: `--force-with-lease=<branch>:<sha>` on your own unmerged `agy/*` (or legacy `claude/*`) branch to meet rule `92` (H4).
 - Invent Claimed/PASS/Verified in commit messages (rules `28`, `29`) — hooks **ask**/warn on obvious patterns.
 - Commit Hangul in subjects/bodies or staged Spec/docs (rule `05`) — hooks scan `git commit`.
 - Stage or commit `.spec.local/**`, `.env*`, or secrets (hooks **deny** staging those paths).
