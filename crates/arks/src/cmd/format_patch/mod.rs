@@ -837,12 +837,11 @@ fn render_cover(
     let total = commits.len() + o.start_number - 1;
     let mut out = format!("From {} Mon Sep 17 00:00:00 2001\n", tip.to_hex());
     out.push_str(&header_block(o, ids));
-    // The cover letter's sender is quoted as a phrase but never Q-encoded.
+    // The cover letter is from the committer even with `--from`; the name
+    // is quoted as a phrase but never Q-encoded.
     out.push_str(&mail_header::address(
         "From",
-        &o.from
-            .clone()
-            .unwrap_or_else(|| format!("{} <{}>", me.name, me.email)),
+        &format!("{} <{}>", me.name, me.email),
         false,
     ));
     out.push_str(&format!("Date: {}\n", rfc2822(&me)));
