@@ -1,0 +1,101 @@
+{
+  "gate": "release-pipeline-dry-run (release-symmetry + release workflow_dispatch dry_run=true)",
+  "rung": "F4 finalization release pipeline dry-run on main after PR #83 (block_hub_missing=true) and PR #84 (gh 2.105.0 event out-of-scope)",
+  "venue": "GitHub Actions hosted runners (ubuntu-24.04 + clean-room Docker 2.39.5, windows-2025, macos-15)",
+  "tip": "4d4f810072ac978eca6472f3949c1f8b5e4d0c13",
+  "honesty_boundary": "release-pipeline dry-run verified — NOT a live GitHub Release or crates.io/npm/PyPI/RubyGems registry publish PASS",
+  "github_releases_after_run": 0,
+  "runs": {
+    "release_symmetry": {
+      "database_id": 46114404035,
+      "url": "https://github.com/modootoday/arks/actions/runs/46114404035",
+      "event": "workflow_dispatch",
+      "inputs": {
+        "block_hub_missing": true
+      },
+      "conclusion": "success",
+      "jobs": {
+        "pin_DoD_symmetry_2_39_5": {
+          "job_id": 140884863358,
+          "conclusion": "success",
+          "duration_s": 317
+        },
+        "latest_git_gh_inventory_continuity": {
+          "job_id": 140884863583,
+          "conclusion": "success",
+          "duration_s": 13,
+          "git_oracle": "git version 2.56.1",
+          "gh_oracle": "gh version 2.105.0 (2026-11-17)",
+          "cli_untracked": 0,
+          "daemon_untracked": 0,
+          "hub_untracked": 0,
+          "hub_v1_missing": 0,
+          "advisory_signals": 0
+        },
+        "release_symmetry_gate": {
+          "job_id": 140886093718,
+          "conclusion": "success",
+          "duration_s": 4
+        }
+      }
+    },
+    "release_dry_run": {
+      "database_id": 46114405826,
+      "url": "https://github.com/modootoday/arks/actions/runs/46114405826",
+      "event": "workflow_dispatch",
+      "inputs": {
+        "dry_run": true
+      },
+      "conclusion": "success",
+      "jobs": {
+        "symmetry_precheck_pin_DoD_2_39_5": {
+          "job_id": 140884869607,
+          "conclusion": "success"
+        },
+        "symmetry_precheck_latest_inventory": {
+          "job_id": 140884869460,
+          "conclusion": "success"
+        },
+        "symmetry_precheck_gate": {
+          "job_id": 140886107199,
+          "conclusion": "success"
+        },
+        "dist_x86_64_unknown_linux_gnu": {
+          "job_id": 140886135192,
+          "conclusion": "success",
+          "runner": "ubuntu-24.04",
+          "archive": "arks-x86_64-unknown-linux-gnu.tar.gz",
+          "bytes": 6779970,
+          "sha256": "8bb815a03c4640ffec095685cc500e850227d1c82f4fef05fe41b4bfad8a476a"
+        },
+        "dist_aarch64_apple_darwin": {
+          "job_id": 140886135172,
+          "conclusion": "success",
+          "runner": "macos-15",
+          "archive": "arks-aarch64-apple-darwin.tar.gz",
+          "bytes": 5864583,
+          "sha256": "2732cea3d16cedaf86dc950dd38152619496b34eba65b5f6d4204e932968731a"
+        },
+        "dist_x86_64_pc_windows_msvc": {
+          "job_id": 140886135157,
+          "conclusion": "success",
+          "runner": "windows-2025",
+          "archive": "arks-x86_64-pc-windows-msvc.zip",
+          "bytes": 6234925,
+          "sha256": "1e3d5e730d91031f77722a7b12455e27293f3cf64c15aca8b4fe5c7337149622"
+        },
+        "dry_run_report": {
+          "job_id": 140887269299,
+          "conclusion": "success",
+          "readiness_script": "release-channel-readiness: OK (structural)"
+        },
+        "github_release_draft": "skipped",
+        "publish_crates_oidc": "skipped",
+        "publish_npm_oidc": "skipped",
+        "publish_pypi_oidc": "skipped",
+        "publish_rubygems_oidc": "skipped"
+      }
+    }
+  },
+  "timestamp": "2026-11-28T06:10:00Z"
+}
