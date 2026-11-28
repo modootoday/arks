@@ -11,6 +11,7 @@ mod lock;
 mod loose;
 mod packed;
 mod refname;
+pub mod reftable;
 mod store;
 mod target;
 

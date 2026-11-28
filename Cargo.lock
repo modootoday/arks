@@ -173,6 +173,8 @@ name = "arks-refs"
 version = "0.1.2"
 dependencies = [
  "arks-oid",
+ "crc32fast",
+ "flate2",
  "tempfile",
  "thiserror",
 ]
