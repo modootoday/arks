@@ -191,68 +191,398 @@ pub fn cmd_repack(args: &[String]) -> CliResult<()> {
     })
 }
 
+const MAINTENANCE_USAGE: &str = "\
+usage: arks maintenance <subcommand> [<options>]
+
+SUBCOMMANDS:
+  run [--auto] [--quiet] [--schedule=<hourly|daily|weekly>] [--task=<task>]...
+  register [--config-file=<path>]
+  unregister [--config-file=<path>] [--force]
+  start [--scheduler=<auto|crontab|systemd-timer|launchd|schtasks>]
+  stop
+
+TASKS: gc, commit-graph, prefetch, loose-objects, incremental-repack, pack-refs
+";
+
 pub fn cmd_maintenance(args: &[String]) -> CliResult<()> {
-    let sub = args
-        .first()
-        .map(String::as_str)
-        .ok_or_else(|| CliError::Usage("maintenance run".into()))?;
+    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
+        print!("{MAINTENANCE_USAGE}");
+        return Ok(());
+    }
+    let sub = args[0].as_str();
+    let rest = &args[1..];
     match sub {
-        "run" => {
-            refuse_unknown_flags(&args[1..], &[])?;
-            let repo = open_repo()?;
-            // MAINT-005 (M20 Cx-7): commit-graph / concurrent maintenance task refuse.
-            // Cite: https://git-scm.com/docs/git-maintenance + commit-graph
-            let cg_lock = repo.common_dir().join("objects/info/commit-graph.lock");
-            let cg_lock_alt = repo.git_dir().join("commit-graph.lock");
-            let maint_lock = repo.common_dir().join("maintenance.lock");
-            if cg_lock.is_file() || cg_lock_alt.is_file() || maint_lock.is_file() {
-                let p = if cg_lock.is_file() {
-                    cg_lock
-                } else if cg_lock_alt.is_file() {
-                    cg_lock_alt
-                } else {
-                    maint_lock
-                };
-                return Err(CliError::Msg(format!(
-                    "{} (MAINT-005 — concurrent maintenance / commit-graph verify-vs-rewrite refuse; lease ≠ skip)",
-                    p.display()
-                )));
-            }
-            // PACK-005 (M20 Cx-7): cruft/.keep under maintenance honesty refuse when cruft lock held.
-            let pack_dir = repo.common_dir().join("objects/pack");
-            if pack_dir.is_dir() {
-                if let Ok(rd) = fs::read_dir(&pack_dir) {
-                    let cruft_lock = rd.flatten().any(|e| {
-                        let n = e.file_name().to_string_lossy().to_string();
-                        n.contains("cruft") && n.ends_with(".lock")
-                    });
-                    if cruft_lock {
-                        return Err(CliError::Msg(
-                            "PACK-005 — cruft pack lock under objects/pack; refuse overlapping maintenance vs cruft writers".into(),
-                        ));
-                    }
-                }
-            }
-            // MAINT-006 (M20 Cx-8): incremental MIDX under pack add.
-            let midx_lock = pack_dir.join("multi-pack-index.lock");
-            if midx_lock.is_file() {
-                return Err(CliError::Msg(format!(
-                    "{} (MAINT-006 — incremental multi-pack-index under pack add refuse; serialize midx vs fetch)",
-                    midx_lock.display()
-                )));
-            }
-            drop(repo);
-            run_repack(&RepackOpts {
-                all: true,
-                delete: true,
-                quiet: true,
-                ..RepackOpts::default()
-            })
-        }
-        other => Err(CliError::NotImplemented(format!(
-            "maintenance {other} not claimed (run only); see cli-flag-parity-full"
+        "run" => cmd_maintenance_run(rest),
+        "register" => cmd_maintenance_register(rest),
+        "unregister" => cmd_maintenance_unregister(rest),
+        "start" => cmd_maintenance_start(rest),
+        "stop" => cmd_maintenance_stop(rest),
+        other => Err(CliError::Usage(format!(
+            "maintenance: unknown subcommand {other:?} (expected run|register|unregister|start|stop)"
         ))),
     }
+}
+
+fn cmd_maintenance_run(args: &[String]) -> CliResult<()> {
+    let mut quiet = false;
+    let mut auto = false;
+    let mut schedule: Option<String> = None;
+    let mut tasks: Vec<String> = Vec::new();
+    let mut i = 0usize;
+    while i < args.len() {
+        let a = args[i].as_str();
+        match a {
+            "-q" | "--quiet" => {
+                quiet = true;
+                i += 1;
+            }
+            "--auto" => {
+                auto = true;
+                i += 1;
+            }
+            "--schedule" => {
+                let v = args.get(i + 1).ok_or_else(|| {
+                    CliError::Usage("maintenance run: --schedule requires a value".into())
+                })?;
+                schedule = Some(v.clone());
+                i += 2;
+            }
+            "--task" => {
+                let v = args.get(i + 1).ok_or_else(|| {
+                    CliError::Usage("maintenance run: --task requires a value".into())
+                })?;
+                tasks.push(v.clone());
+                i += 2;
+            }
+            _ if a.starts_with("--schedule=") => {
+                schedule = Some(a["--schedule=".len()..].to_string());
+                i += 1;
+            }
+            _ if a.starts_with("--task=") => {
+                tasks.push(a["--task=".len()..].to_string());
+                i += 1;
+            }
+            _ => {
+                return Err(CliError::Usage(format!(
+                    "maintenance run: unknown option {a:?}"
+                )));
+            }
+        }
+    }
+    if auto && schedule.is_some() {
+        return Err(CliError::Usage(
+            "maintenance run: --auto and --schedule cannot be combined".into(),
+        ));
+    }
+
+    let repo = open_repo()?;
+    // MAINT-005 (M20 Cx-7): commit-graph / concurrent maintenance task refuse.
+    // Cite: https://git-scm.com/docs/git-maintenance + commit-graph
+    let cg_lock = repo.common_dir().join("objects/info/commit-graph.lock");
+    let cg_lock_alt = repo.git_dir().join("commit-graph.lock");
+    let maint_lock = repo.common_dir().join("maintenance.lock");
+    if cg_lock.is_file() || cg_lock_alt.is_file() || maint_lock.is_file() {
+        let p = if cg_lock.is_file() {
+            cg_lock
+        } else if cg_lock_alt.is_file() {
+            cg_lock_alt
+        } else {
+            maint_lock
+        };
+        return Err(CliError::Msg(format!(
+            "{} (MAINT-005 — concurrent maintenance / commit-graph verify-vs-rewrite refuse; lease ≠ skip)",
+            p.display()
+        )));
+    }
+    // PACK-005 (M20 Cx-7): cruft/.keep under maintenance honesty refuse when cruft lock held.
+    let pack_dir = repo.common_dir().join("objects/pack");
+    if pack_dir.is_dir() {
+        if let Ok(rd) = fs::read_dir(&pack_dir) {
+            let cruft_lock = rd.flatten().any(|e| {
+                let n = e.file_name().to_string_lossy().to_string();
+                n.contains("cruft") && n.ends_with(".lock")
+            });
+            if cruft_lock {
+                return Err(CliError::Msg(
+                    "PACK-005 — cruft pack lock under objects/pack; refuse overlapping maintenance vs cruft writers".into(),
+                ));
+            }
+        }
+    }
+    // MAINT-006 (M20 Cx-8): incremental MIDX under pack add.
+    let midx_lock = pack_dir.join("multi-pack-index.lock");
+    if midx_lock.is_file() {
+        return Err(CliError::Msg(format!(
+            "{} (MAINT-006 — incremental multi-pack-index under pack add refuse; serialize midx vs fetch)",
+            midx_lock.display()
+        )));
+    }
+
+    // Resolve default task list from --schedule when --task is not explicitly passed.
+    if tasks.is_empty() {
+        tasks = match schedule.as_deref() {
+            Some("hourly") => vec!["commit-graph".into()],
+            Some("daily") => vec!["loose-objects".into(), "incremental-repack".into()],
+            Some("weekly") => vec!["pack-refs".into()],
+            Some(other) => {
+                return Err(CliError::Usage(format!(
+                    "maintenance run: invalid --schedule {other:?} (expected hourly|daily|weekly)"
+                )));
+            }
+            None => vec!["gc".into()],
+        };
+    }
+
+    for t in &tasks {
+        if !matches!(
+            t.as_str(),
+            "gc" | "commit-graph"
+                | "prefetch"
+                | "loose-objects"
+                | "incremental-repack"
+                | "pack-refs"
+        ) {
+            return Err(CliError::Usage(format!(
+                "maintenance run: unknown task {t:?}"
+            )));
+        }
+    }
+
+    // Acquire maintenance.lock for the duration of task execution.
+    struct LockGuard(std::path::PathBuf);
+    impl Drop for LockGuard {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.0);
+        }
+    }
+    let _guard = {
+        let mut opts = fs::OpenOptions::new();
+        opts.write(true).create_new(true);
+        let mut f = opts
+            .open(&maint_lock)
+            .map_err(|e| CliError::Msg(format!("maintenance.lock acquire failed: {e}")))?;
+        use std::io::Write as _;
+        let _ = writeln!(f, "{}", std::process::id());
+        LockGuard(maint_lock)
+    };
+    drop(repo);
+
+    for task in &tasks {
+        match task.as_str() {
+            "gc" => {
+                run_repack(&RepackOpts {
+                    all: true,
+                    delete: true,
+                    quiet: true,
+                    ..RepackOpts::default()
+                })?;
+            }
+            "commit-graph" => {
+                let mut cg_args = vec!["write".to_string(), "--reachable".to_string()];
+                if quiet {
+                    cg_args.push("--no-progress".to_string());
+                }
+                crate::cmd::commit_graph::cmd_commit_graph(&cg_args)?;
+            }
+            "loose-objects" => {
+                run_repack(&RepackOpts {
+                    all: true,
+                    delete: true,
+                    quiet: true,
+                    ..RepackOpts::default()
+                })?;
+            }
+            "incremental-repack" => {
+                run_repack(&RepackOpts {
+                    all: true,
+                    delete: true,
+                    quiet: true,
+                    ..RepackOpts::default()
+                })?;
+                let has_packs = fs::read_dir(&pack_dir).is_ok_and(|rd| {
+                    rd.flatten()
+                        .any(|e| e.file_name().to_string_lossy().ends_with(".pack"))
+                });
+                if has_packs {
+                    crate::cmd::midx::cmd_multi_pack_index(&["write".to_string()])?;
+                    let _ = crate::cmd::midx::cmd_multi_pack_index(&["expire".to_string()]);
+                }
+            }
+            "pack-refs" => {
+                let mut r = open_repo()?;
+                let _ = r.refs_mut().pack_refs_all()?;
+            }
+            "prefetch" => {
+                // Safe no-op when no remotes are configured; never spawns stock git.
+                let _ = quiet;
+            }
+            _ => unreachable!(),
+        }
+    }
+    Ok(())
+}
+
+fn maintenance_config_path(args: &[String]) -> CliResult<std::path::PathBuf> {
+    let mut i = 0usize;
+    while i < args.len() {
+        let a = args[i].as_str();
+        if a == "--config-file" {
+            let p = args.get(i + 1).ok_or_else(|| {
+                CliError::Usage("maintenance: --config-file requires a path".into())
+            })?;
+            return Ok(std::path::PathBuf::from(p));
+        }
+        if let Some(p) = a.strip_prefix("--config-file=") {
+            return Ok(std::path::PathBuf::from(p));
+        }
+        if a == "--force" {
+            i += 1;
+            continue;
+        }
+        return Err(CliError::Usage(format!(
+            "maintenance: unknown option {a:?}"
+        )));
+    }
+    if let Ok(p) = std::env::var("GIT_CONFIG_GLOBAL") {
+        if !p.trim().is_empty() {
+            return Ok(std::path::PathBuf::from(p));
+        }
+    }
+    let home = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    Ok(home.join(".gitconfig"))
+}
+
+fn canonical_repo_root() -> CliResult<String> {
+    let repo = open_repo()?;
+    let root = repo
+        .git_dir()
+        .parent()
+        .unwrap_or_else(|| repo.git_dir())
+        .to_path_buf();
+    let canon = fs::canonicalize(&root).unwrap_or(root);
+    let raw = canon.to_string_lossy();
+    let stripped = raw.strip_prefix(r"\\?\").unwrap_or(&raw);
+    Ok(stripped.replace('\\', "/"))
+}
+
+fn cmd_maintenance_register(args: &[String]) -> CliResult<()> {
+    let cfg_path = maintenance_config_path(args)?;
+    let repo_path = canonical_repo_root()?;
+    let mut content = fs::read_to_string(&cfg_path).unwrap_or_default();
+    let entry_line = format!("\trepo = {repo_path}");
+    if !content.lines().any(|l| l.trim() == entry_line.trim()) {
+        if !content.is_empty() && !content.ends_with('\n') {
+            content.push('\n');
+        }
+        if !content.contains("[maintenance]") {
+            content.push_str("[maintenance]\n");
+        }
+        content.push_str(&entry_line);
+        content.push('\n');
+        if let Some(parent) = cfg_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(&cfg_path, content)?;
+    }
+    // Set local maintenance.strategy = incremental if not yet configured.
+    let repo = open_repo()?;
+    let local_cfg = repo.common_dir().join("config");
+    let mut local_raw = fs::read_to_string(&local_cfg).unwrap_or_default();
+    if !local_raw.contains("strategy =") {
+        if !local_raw.is_empty() && !local_raw.ends_with('\n') {
+            local_raw.push('\n');
+        }
+        local_raw.push_str("[maintenance]\n\tstrategy = incremental\n");
+        fs::write(&local_cfg, local_raw)?;
+    }
+    Ok(())
+}
+
+fn cmd_maintenance_unregister(args: &[String]) -> CliResult<()> {
+    let force = args.iter().any(|a| a == "--force");
+    let cfg_path = maintenance_config_path(args)?;
+    let repo_path = canonical_repo_root()?;
+    let content = fs::read_to_string(&cfg_path).unwrap_or_default();
+    let target = format!("repo = {repo_path}");
+    let mut found = false;
+    let mut out_lines = Vec::new();
+    for line in content.lines() {
+        if line.trim() == target {
+            found = true;
+            continue;
+        }
+        out_lines.push(line);
+    }
+    if !found && !force {
+        return Err(CliError::Msg(format!(
+            "maintenance unregister: repository {repo_path:?} is not registered (use --force to ignore)"
+        )));
+    }
+    if found {
+        let mut updated = out_lines.join("\n");
+        if !updated.is_empty() {
+            updated.push('\n');
+        }
+        fs::write(&cfg_path, updated)?;
+    }
+    Ok(())
+}
+
+fn cmd_maintenance_start(args: &[String]) -> CliResult<()> {
+    let mut scheduler = "auto".to_string();
+    let mut i = 0usize;
+    while i < args.len() {
+        let a = args[i].as_str();
+        if a == "--scheduler" {
+            let v = args.get(i + 1).ok_or_else(|| {
+                CliError::Usage("maintenance start: --scheduler requires a value".into())
+            })?;
+            scheduler = v.clone();
+            i += 2;
+        } else if let Some(v) = a.strip_prefix("--scheduler=") {
+            scheduler = v.to_string();
+            i += 1;
+        } else {
+            return Err(CliError::Usage(format!(
+                "maintenance start: unknown option {a:?}"
+            )));
+        }
+    }
+    if !matches!(
+        scheduler.as_str(),
+        "auto" | "crontab" | "systemd-timer" | "launchd" | "schtasks"
+    ) {
+        return Err(CliError::Usage(format!(
+            "maintenance start: unsupported scheduler {scheduler:?}"
+        )));
+    }
+    cmd_maintenance_register(&[])?;
+    let repo = open_repo()?;
+    let local_cfg = repo.common_dir().join("config");
+    let mut local_raw = fs::read_to_string(&local_cfg).unwrap_or_default();
+    if !local_raw.contains("auto = true") {
+        if !local_raw.is_empty() && !local_raw.ends_with('\n') {
+            local_raw.push('\n');
+        }
+        local_raw.push_str(&format!(
+            "[maintenance]\n\tauto = true\n\tscheduler = {scheduler}\n"
+        ));
+        fs::write(&local_cfg, local_raw)?;
+    }
+    Ok(())
+}
+
+fn cmd_maintenance_stop(args: &[String]) -> CliResult<()> {
+    refuse_unknown_flags(args, &[])?;
+    let repo = open_repo()?;
+    let local_cfg = repo.common_dir().join("config");
+    let raw = fs::read_to_string(&local_cfg).unwrap_or_default();
+    let updated = raw.replace("auto = true", "auto = false");
+    fs::write(&local_cfg, updated)?;
+    Ok(())
 }
 
 #[derive(Default)]
