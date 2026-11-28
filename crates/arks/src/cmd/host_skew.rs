@@ -185,23 +185,6 @@ Full history rewrite not claimed (use rebase/filter carefully outside arks).
     )))
 }
 
-/// `arks replay` — experimental (host 2.54+); help + refuse.
-pub fn cmd_replay_exp(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks replay — experimental revision replay (host-skew; not claimed)
-
-Use arks cherry-pick / rebase for claimed workflows.
-"
-        );
-        return Ok(());
-    }
-    Err(CliError::NotImplemented(
-        "replay: experimental host cmd not claimed (Partial help only)".into(),
-    ))
-}
-
 /// `arks diff-pairs` — host 2.54+ plumbing (help + refuse).
 pub fn cmd_diff_pairs(args: &[String]) -> CliResult<()> {
     let _ = args;

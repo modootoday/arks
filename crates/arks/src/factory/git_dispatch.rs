@@ -160,7 +160,7 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "survey" => cmd::cmd_survey(args),
         "last-modified" => cmd::cmd_last_modified(args),
         "history" => cmd::cmd_history(args),
-        "replay-exp" => cmd::cmd_replay_exp(args),
+        "replay" | "replay-exp" => cmd::cmd_git_replay(args),
         "diff-pairs" => cmd::cmd_diff_pairs(args),
         "format-rev" => cmd::cmd_format_rev(args),
         "url-parse" => cmd::cmd_url_parse(args),
