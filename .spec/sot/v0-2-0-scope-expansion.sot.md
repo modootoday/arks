@@ -119,14 +119,22 @@ Executable ladder: [[plan:root/20261128092500]].
 
 ### 2.8 E8 — `arks serve` Embedded SSR Web UI
 - MUST be embedded directly in the `arks` binary (`include_str!` / compile-time templates +
-  self-hosted HTMX v2 asset at `/assets/htmx.min.js`, zero external CDN, zero Node.js build step),
-  with `--no-web-ui` opt-out, strict HTML escaping, and
+  self-hosted assets at `/assets/htmx.min.js`, `/assets/diff2html.min.js`,
+  `/assets/diff2html.min.css`, `/assets/app.js`, `/favicon.svg`; zero external CDN, zero Node.js
+  build step), with `--no-web-ui` opt-out, strict HTML escaping, and
   `CSP: default-src 'self'; script-src 'self'` (blocking all inline scripts and external origins).
-- Follows the **GitHub/GitLab common interface** (top repository header + clone URL, horizontal
-  `Code` / `Commits` / `Branches` / `Tags` tabs, `<details>` branch/tag switcher, breadcrumb bar,
-  directories-first file tree, safe server-side README Markdown preview, About sidebar, line-numbered
-  blob viewer + `/raw/` download, and colorized unified commit diff) with `hx-boost="true"`
-  progressive enhancement backed directly by `arks-repo`.
+- Follows the **GitHub/GitLab common forge interface** backed directly by `arks-repo`:
+  - Full 9-tab navigation (`Code`, `Issues`, `Pull Requests`, `Actions`, `Projects`, `Wiki`,
+    `Security`, `Insights`, `Settings`), global `Cmd+K` / `/` command palette, and Dark/Light theme.
+  - 3-pane `Code` view (left file tree sidebar, directories-first explorer, `<details>` branch/tag
+    switcher, `arks`/`git` clone copy, safe server-side GFM README preview, About + Language bar
+    sidebar), HTMX live file search (`/search`), HTMX commit pagination (`/commits/<rev>?after=…`),
+    pure-Rust server-side syntax-highlighted `/blob/` + LFS pointer card + `/raw/` download,
+    `/blame/<rev>/<path>`, and dual-line-number Unified/Split `/commit/<oid>` +
+    `/compare/<base>..<head>` diffs enhanced with vendored `diff2html`.
+  - Self-hosted forge tabs (`Issues`, `Pull Requests`, `Actions`, `Projects`, `Wiki`, `Security`,
+    `Insights`, `Settings`) surface live repository/forge data where implemented and honestly label
+    not-yet-wired workflow/board backends without fabricating Claimed status.
 
 ---
 

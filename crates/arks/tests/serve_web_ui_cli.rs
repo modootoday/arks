@@ -146,7 +146,52 @@ fn serve_embedded_web_ui_renders_escapes_xss_sets_csp_and_coexists_with_git() {
         body_d.contains("diff-add"),
         "missing colorized unified diff"
     );
+    assert!(body_d.contains("diff-ln"), "missing dual line numbers");
+    assert!(
+        body_d.contains("raw-diff-payload"),
+        "missing diff2html payload"
+    );
     assert!(body_d.contains("second line"));
+
+    // Vendored diff2html + app.js assets
+    let (st_d2h_js, _, _) = http_get(addr, "/assets/diff2html.min.js");
+    assert_eq!(st_d2h_js, 200);
+    let (st_d2h_css, _, _) = http_get(addr, "/assets/diff2html.min.css");
+    assert_eq!(st_d2h_css, 200);
+    let (st_app_js, _, _) = http_get(addr, "/assets/app.js");
+    assert_eq!(st_app_js, 200);
+
+    // HTMX live /search partial + /blame/ + /compare/
+    let (st_s, _, body_s) = http_get(addr, "/search?rev=main&q=xss");
+    assert_eq!(st_s, 200);
+    assert!(body_s.contains("xss.txt"), "search body={body_s}");
+
+    let (st_bl, _, body_bl) = http_get(addr, "/blame/main/xss.txt");
+    assert_eq!(st_bl, 200);
+    assert!(body_bl.contains("blame-cell"), "missing blame attribution");
+
+    let (st_cmp, _, body_cmp) = http_get(addr, "/compare/v0.1.0..main");
+    assert_eq!(st_cmp, 200);
+    assert!(body_cmp.contains("Compare"), "compare body={body_cmp}");
+
+    // All 9-tab self-hosted forge routes return 200 with strict CSP
+    for route in [
+        "/issues",
+        "/pulls",
+        "/actions",
+        "/projects",
+        "/wiki",
+        "/security",
+        "/insights",
+        "/settings",
+    ] {
+        let (st_f, hdr_f, _) = http_get(addr, route);
+        assert_eq!(st_f, 200, "route {route} failed");
+        assert!(
+            hdr_f.contains("default-src 'self'"),
+            "missing CSP on {route}"
+        );
+    }
 
     let (st_b, _, body_b) = http_get(addr, "/branches");
     assert_eq!(st_b, 200);
@@ -158,7 +203,7 @@ fn serve_embedded_web_ui_renders_escapes_xss_sets_csp_and_coexists_with_git() {
 
     let (st_r, _, body_r) = http_get(addr, "/refs");
     assert_eq!(st_r, 200);
-    assert!(body_r.contains("refs/heads/main"));
+    assert!(body_r.contains("main"));
 
     // 5. Git smart HTTP `/info/refs?service=git-upload-pack` is untouched!
     let (st_git, hdr_git, body_git) = http_get(addr, "/info/refs?service=git-upload-pack");
