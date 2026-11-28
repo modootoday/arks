@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "arks"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-agent",
  "arks-config",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "arks-agent"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-net",
  "ureq",
@@ -40,14 +40,14 @@ dependencies = [
 
 [[package]]
 name = "arks-config"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "tempfile",
 ]
 
 [[package]]
 name = "arks-hash"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "sha1collisiondetection",
  "sha2",
@@ -56,7 +56,7 @@ dependencies = [
 
 [[package]]
 name = "arks-hostfs"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "thiserror",
  "windows",
@@ -64,7 +64,7 @@ dependencies = [
 
 [[package]]
 name = "arks-hub"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-net",
  "arks-object",
@@ -86,7 +86,7 @@ dependencies = [
 
 [[package]]
 name = "arks-index"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-hash",
  "arks-oid",
@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "arks-lease"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-hash",
  "arks-index",
@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "arks-net"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-config",
  "rustls",
@@ -123,7 +123,7 @@ dependencies = [
 
 [[package]]
 name = "arks-object"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-hash",
  "arks-oid",
@@ -133,14 +133,14 @@ dependencies = [
 
 [[package]]
 name = "arks-oid"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "arks-pack"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-hash",
  "arks-object",
@@ -152,14 +152,14 @@ dependencies = [
 
 [[package]]
 name = "arks-protocol"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "arks-refs"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-oid",
  "tempfile",
@@ -168,7 +168,7 @@ dependencies = [
 
 [[package]]
 name = "arks-remote"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-index",
  "arks-net",
@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "arks-repo"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-object",
  "arks-oid",
@@ -200,7 +200,7 @@ dependencies = [
 
 [[package]]
 name = "arks-server"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-config",
  "arks-object",
@@ -227,7 +227,7 @@ dependencies = [
 
 [[package]]
 name = "arks-store"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arks-hash",
  "arks-object",

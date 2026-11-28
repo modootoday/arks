@@ -18,7 +18,7 @@ Maintainer notes for shipping **arks** binaries and (later) language-registry pa
 
 | Layer | Rule |
 |-------|------|
-| Workspace / crate `version` | Stays **`0.0.0`** with `publish = false` on `arks` until an intentional product release decision |
+| Workspace / crate `version` | **`0.1.0`** (cut via owner A2 release approval; `publish = false` stays on `arks` for GitHub Release binaries until crates.io OIDC publishing is opted in) |
 | Spec SoT `Version **0.x.y**` | Document revision only — **not** a crates.io / git-tag release (see `.agents/rules/26-sot-version-vs-release.md`) |
 | Git tag | Push an annotated or lightweight tag matching `v*` (for example `v0.1.0`) when cutting a public binary release |
 | Published artifact | **Single binary `arks` only** (no separate `arks-daemon` / `arks-hub` / `arks-agent` release binaries) |
@@ -27,7 +27,7 @@ Do **not** bump crate version or cut a `v*` tag from Spec document revisions alo
 
 ## Pre-release symmetry gate
 
-`.github/workflows/release.yml` job `dist` **needs** `symmetry-precheck` (reusable `.github/workflows/release-symmetry.yml`). Pin Missing=0 + untracked leaves **block** packaging; Partial and hub v1 Missing stay **advisory** by default. Green gate ≠ product Claimed/PASS.
+`.github/workflows/release.yml` job `dist` **needs** `symmetry-precheck` (reusable `.github/workflows/release-symmetry.yml` with `block_hub_missing: true`). Pin Missing=0 across CLI, daemon, and hub v1 plus untracked leaves **block** packaging; Partial rows stay **advisory**. Green gate ≠ product Claimed/PASS.
 
 ## Release artifacts checklist
 
