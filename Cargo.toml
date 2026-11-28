@@ -45,7 +45,7 @@ default-members = [
 edition = "2024"
 license = "Apache-2.0 OR MIT"
 rust-version = "1.85"
-version = "0.1.2"
+version = "0.2.0"
 repository = "https://github.com/modootoday/arks"
 homepage = "https://modootoday.github.io/arks/"
 readme = "README.md"
@@ -53,24 +53,24 @@ keywords = ["git", "vcs", "cli", "concurrency"]
 categories = ["command-line-utilities", "development-tools"]
 
 [workspace.dependencies]
-arks-config = { version = "0.1.2", path = "crates/arks-config" }
-arks-net = { version = "0.1.2", path = "crates/arks-net" }
-arks-hash = { version = "0.1.2", path = "crates/arks-hash" }
-arks-oid = { version = "0.1.2", path = "crates/arks-oid" }
-arks-object = { version = "0.1.2", path = "crates/arks-object" }
-arks-store = { version = "0.1.2", path = "crates/arks-store" }
-arks-refs = { version = "0.1.2", path = "crates/arks-refs" }
-arks-index = { version = "0.1.2", path = "crates/arks-index" }
-arks-repo = { version = "0.1.2", path = "crates/arks-repo" }
-arks-protocol = { version = "0.1.2", path = "crates/arks-protocol" }
-arks-pack = { version = "0.1.2", path = "crates/arks-pack" }
-arks-remote = { version = "0.1.2", path = "crates/arks-remote" }
-arks-lease = { version = "0.1.2", path = "crates/arks-lease" }
-arks-server = { version = "0.1.2", path = "crates/arks-server" }
-arks-hub = { version = "0.1.2", path = "crates/arks-hub" }
-arks-agent = { version = "0.1.2", path = "crates/arks-agent" }
-arks-hostfs = { version = "0.1.2", path = "crates/arks-hostfs" }
-arks = { version = "0.1.2", path = "crates/arks" }
+arks-config = { version = "0.2.0", path = "crates/arks-config" }
+arks-net = { version = "0.2.0", path = "crates/arks-net" }
+arks-hash = { version = "0.2.0", path = "crates/arks-hash" }
+arks-oid = { version = "0.2.0", path = "crates/arks-oid" }
+arks-object = { version = "0.2.0", path = "crates/arks-object" }
+arks-store = { version = "0.2.0", path = "crates/arks-store" }
+arks-refs = { version = "0.2.0", path = "crates/arks-refs" }
+arks-index = { version = "0.2.0", path = "crates/arks-index" }
+arks-repo = { version = "0.2.0", path = "crates/arks-repo" }
+arks-protocol = { version = "0.2.0", path = "crates/arks-protocol" }
+arks-pack = { version = "0.2.0", path = "crates/arks-pack" }
+arks-remote = { version = "0.2.0", path = "crates/arks-remote" }
+arks-lease = { version = "0.2.0", path = "crates/arks-lease" }
+arks-server = { version = "0.2.0", path = "crates/arks-server" }
+arks-hub = { version = "0.2.0", path = "crates/arks-hub" }
+arks-agent = { version = "0.2.0", path = "crates/arks-agent" }
+arks-hostfs = { version = "0.2.0", path = "crates/arks-hostfs" }
+arks = { version = "0.2.0", path = "crates/arks" }
 crc32fast = "1.4"
 libc = "0.2"
 # zlib-rs: faster pack inflate than miniz on the smart-HTTP clone hot path
