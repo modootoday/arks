@@ -355,7 +355,6 @@ fn truncate_err(body: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::sync::{Arc, Mutex};
 
@@ -486,10 +485,10 @@ mod tests {
         let srv = std::thread::spawn(move || {
             for _ in 0..3 {
                 let (mut stream, _) = listener.accept().unwrap();
-                let mut buf = [0u8; 4096];
-                let n = stream.read(&mut buf).unwrap();
-                let req = String::from_utf8_lossy(&buf[..n]);
-                let (status, reason, body) = if req.starts_with("POST /login/device/code ") {
+                let req = crate::http_min::read_http_request(&mut stream).unwrap();
+                let (status, reason, body) = if req.method == "POST"
+                    && req.path == "/login/device/code"
+                {
                     (
                         200,
                         "OK",
@@ -508,11 +507,14 @@ mod tests {
                         )
                     }
                 };
-                let resp = format!(
-                    "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                    body.len()
-                );
-                stream.write_all(resp.as_bytes()).unwrap();
+                crate::http_min::write_http_response(
+                    &mut stream,
+                    status,
+                    reason,
+                    "application/json",
+                    body.as_bytes(),
+                )
+                .unwrap();
             }
         });
 
