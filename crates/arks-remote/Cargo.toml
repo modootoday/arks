@@ -1,6 +1,6 @@
 [package]
 name = "arks-remote"
-description = "Generic Git smart HTTP client (Wave H subset; not production)"
+description = "Git remote transport client (smart/dumb HTTP, SSH, git://, credentials and partial-clone)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
