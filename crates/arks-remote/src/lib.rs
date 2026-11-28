@@ -24,7 +24,7 @@
 //! `.spec/sot/cli-flag-parity-complete.sot.md` (Sy-4)
 //!
 //! No `gix`. No CELIR. No lease runtime. No product server. No forge APIs.
-//! No in-process Git LFS client (use external `git-lfs` filters via attributes).
+//! Native Git LFS v1 client (pointer/store/filter-process/Batch+Basic, E6).
 //! No product-path `git`/`gh` subprocess (OpenSSH `ssh` helper is claimed).
 
 #![deny(unsafe_code)]
@@ -40,6 +40,7 @@ mod error;
 mod fetch;
 mod git;
 mod http;
+pub mod lfs;
 mod local;
 mod ls_remote;
 mod os_store;

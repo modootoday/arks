@@ -1866,6 +1866,13 @@ pub(crate) fn apply_clean_filter(
         return Ok(None);
     };
     let repo = open_repo()?;
+    if name == "lfs" {
+        let store = arks_remote::lfs::LfsStore::open(repo.common_dir());
+        let mut out = Vec::new();
+        arks_remote::lfs::clean(&store, std::io::Cursor::new(payload), &mut out)
+            .map_err(|e| CliError::Msg(format!("filter.lfs.clean: {e}")))?;
+        return Ok(Some(out));
+    }
     let cfg = fs::read_to_string(repo.git_dir().join("config")).unwrap_or_default();
     let key = format!("filter.{name}.clean");
     let Some(cmd) = config_value(&cfg, &key) else {
