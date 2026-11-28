@@ -253,49 +253,49 @@ mod tests {
     #[test]
     fn address_names() {
         assert_eq!(
-            address("From", "Jöhn Dœ <a@x.org>", true),
-            "From: =?UTF-8?q?J=C3=B6hn=20D=C5=93?= <a@x.org>\n"
+            address("From", "Jöhn Dœ <a@example.org>", true),
+            "From: =?UTF-8?q?J=C3=B6hn=20D=C5=93?= <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "Jöhn Dœ <a@x.org>", false),
-            "From: Jöhn Dœ <a@x.org>\n"
+            address("From", "Jöhn Dœ <a@example.org>", false),
+            "From: Jöhn Dœ <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "J. Dœ <a@x.org>", true),
-            "From: =?UTF-8?q?J=2E=20D=C5=93?= <a@x.org>\n"
+            address("From", "J. Dœ <a@example.org>", true),
+            "From: =?UTF-8?q?J=2E=20D=C5=93?= <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "J. Dœ <a@x.org>", false),
-            "From: \"J. Dœ\" <a@x.org>\n"
+            address("From", "J. Dœ <a@example.org>", false),
+            "From: \"J. Dœ\" <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "J. Doe <a@x.org>", true),
-            "From: \"J. Doe\" <a@x.org>\n"
+            address("From", "J. Doe <a@example.org>", true),
+            "From: \"J. Doe\" <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "Doe, John <a@x.org>", true),
-            "From: \"Doe, John\" <a@x.org>\n"
+            address("From", "Doe, John <a@example.org>", true),
+            "From: \"Doe, John\" <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "Jo \"x\" Doe <a@x.org>", true),
-            "From: \"Jo \\\"x\\\" Doe\" <a@x.org>\n"
+            address("From", "Jo \"x\" Doe <a@example.org>", true),
+            "From: \"Jo \\\"x\\\" Doe\" <a@example.org>\n"
         );
         assert_eq!(
-            address("From", "A\\B <a@x.org>", true),
-            "From: \"A\\\\B\" <a@x.org>\n"
+            address("From", "A\\B <a@example.org>", true),
+            "From: \"A\\\\B\" <a@example.org>\n"
         );
         for plain in [
             "A'B", "A!B", "A#B", "A$B", "A=B", "A?B", "A_B", "A~B", "tab\tx",
         ] {
             assert_eq!(
-                address("From", &format!("{plain} <a@x.org>"), true),
-                format!("From: {plain} <a@x.org>\n")
+                address("From", &format!("{plain} <a@example.org>"), true),
+                format!("From: {plain} <a@example.org>\n")
             );
         }
         assert_eq!(
             address(
                 "From",
-                "é \"q\" _u_ =e ?q !*+-/ ,.;:()<>@[]\\ ~#$%& end <a@x.org>",
+                "é \"q\" _u_ =e ?q !*+-/ ,.;:()<>@[]\\ ~#$%& end <a@example.org>",
                 true
             )
             .lines()
@@ -305,17 +305,23 @@ mod tests {
         assert_eq!(
             address(
                 "From",
-                &format!("{} long name <a@x.org>", "é".repeat(51)),
+                &format!("{} long name <a@example.org>", "é".repeat(51)),
                 true
             ),
             format!(
-                "From: =?UTF-8?q?{}?=\n{} =?UTF-8?q?{}=20long=20name?= <a@x.org>\n",
+                "From: =?UTF-8?q?{}?=\n{} =?UTF-8?q?{}=20long=20name?= <a@example.org>\n",
                 "=C3=A9".repeat(9),
                 format!(" =?UTF-8?q?{}?=\n", "=C3=A9".repeat(10)).repeat(4),
                 "=C3=A9".repeat(2)
             )
         );
-        assert_eq!(address("From", "<a@x.org>", true), "From: <a@x.org>\n");
-        assert_eq!(address("From", "a@x.org", true), "From: a@x.org\n");
+        assert_eq!(
+            address("From", "<a@example.org>", true),
+            "From: <a@example.org>\n"
+        );
+        assert_eq!(
+            address("From", "a@example.org", true),
+            "From: a@example.org\n"
+        );
     }
 }
