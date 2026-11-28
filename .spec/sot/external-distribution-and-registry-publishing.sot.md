@@ -20,6 +20,7 @@ rel:
     - .spec/plan/20261128070000-external-distribution-d1-d6.plan.md
     - .github/workflows/pages.yml
     - .github/workflows/release.yml
+    - packaging/
     - scripts/release-channel-readiness.sh
 ---
 
