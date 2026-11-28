@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-28
+
+First multi-registry OIDC Trusted Publishing release across GitHub Releases, GitHub Pages,
+`crates.io` (18 workspace crates), `PyPI` (`arks-cli`), `npm` (`@modootoday/arks` + 3 scoped
+platform binary packages), and `RubyGems` (`arks`), plus Wave 1 expansion features E1 and E2.
+
+### Added
+
+- **Multi-registry OIDC distribution (D1–D6):** automated GitHub Pages docs
+  (`https://modootoday.github.io/arks/`), `crates.io` 18-crate workspace publishing, `PyPI`
+  `arks-cli` 3-OS PEP 427/600 wheels, scoped `npm` `@modootoday/arks` + `@modootoday/arks-{linux-x64,darwin-arm64,win32-x64}`
+  with provenance, and `RubyGems` `arks` 3-OS platform gems.
+- **OAuth 2.0 Device Flow (`arks auth login --web`, E1):** pure-Rust RFC 8628 Device Authorization
+  Grant with HTTPS enforcement, `slow_down` backoff, and zero browser/subprocess spawning.
+- **GitHub Actions CLI (`workflow`, `run`, `cache`, `variable`, `secret`, E2):** REST API v3
+  leaves with pure-Rust NaCl/libsodium `crypto_box_seal` client-side secret encryption and
+  zip-slip-safe artifact extraction.
+
 ## [0.1.0] - 2026-11-28
 
 First tagged public binary release of `arks` (Option A: unsigned 3-OS GitHub Release archives +
