@@ -6,8 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-Pre-release development baseline preparing for the first tagged release (`v0.1.0`; `Cargo.toml`
-remains at `0.0.0` until the owner executes the A2 release cut).
+## [0.1.0] - 2026-11-28
+
+First tagged public binary release of `arks` (Option A: unsigned 3-OS GitHub Release archives +
+`SHA256SUMS`; `publish = false` retained on workspace crates until crates.io OIDC publishing is
+separately enabled by the owner).
 
 ### Added
 
@@ -50,3 +53,5 @@ remains at `0.0.0` until the owner executes the A2 release cut).
 - `verify/scripts/run-symmetry-latest-inventory.sh`: restrict Git command inventory to built-in
   `git --list-cmds=main` with isolated config so third-party `git-*` binaries on `PATH` and user
   aliases do not cause false release-gate failures.
+- `arks-hub` / `release.yml`: classify `gh 2.105.0` GitHub Event Streams preview (`event*`) as
+  out-of-scope with explicit exit-2 refusal and enforce `block_hub_missing: true` on release tags.
