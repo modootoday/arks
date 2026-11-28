@@ -1,4 +1,4 @@
-﻿gh_pin,gh_command,arks_hub_target,phase,notes
+gh_pin,gh_command,arks_hub_target,phase,notes
 2.103.3,"auth","auth",v1,"Group; gh→arks-hub alias muscle memory"
 2.103.3,"auth login","auth login",v1,"Native device-flow/token; never spawn gh"
 2.103.3,"auth logout","auth logout",v1,""
@@ -248,3 +248,10 @@
 2.103.3,"(none)","serve",v1,"Transitional thin alias of the arks serve forge module; loopback default 127.0.0.1:3920, explicit LAN bind with plain-HTTP notice (SoT rule 12b)"
 2.103.3,"(none)","review",out-of-scope,"Refused: duplicate dialect of pr review (gh-identical, v1); exit 2 (SoT rule 12c)"
 2.103.3,"skills","OUT",out-of-scope,"Alias of skill (gh 2.103.3 help); remain OUT"
+2.105.0,"event","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only; refuse exit 2 (ADR 20261119230000)"
+2.105.0,"event listen","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only"
+2.105.0,"event subscription","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only"
+2.105.0,"event subscription create","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only"
+2.105.0,"event subscription list","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only"
+2.105.0,"event subscription view","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only"
+2.105.0,"event subscription delete","OUT",out-of-scope,"GitHub Event Streams preview (gh 2.105.0); GitHub-platform-only"

@@ -3,7 +3,7 @@ id: sot:root/arks-hub-gh-command-matrix
 title: arks hub gh command matrix
 status: active
 created: 2026-11-10T19:06:00Z
-updated: 2026-11-25T04:00:00Z
+updated: 2026-11-28T05:50:00Z
 tags: [arks-hub, gh, matrix, arks-hub-cmd, cli-parity, native-api, survey, single-release]
 verify: manual
 rel:
@@ -21,9 +21,9 @@ rel:
 
 # arks hub gh command matrix
 
-Version **0.4.0**. Canonical **`gh` → `arks` (flat forge client) command matrix** so humans who already use GitHub CLI can keep muscle memory under the **single** published binary **`arks`**. Logical pillar name may still say “hub”; **taught argv is flat** (`arks pr …`) per [[sot:root/arks-hub-product-intent]] v0.4. CSV column `arks_hub_target` means **leaf path under `arks`** (historical name; `hub` prefix not required). **Surface parity ≠ subprocess.** Implementation MUST use a **native host API client** (host via `arks serve`); MUST **never** spawn `gh` or `git`.
+Version **0.4.1**. Canonical **`gh` → `arks` (flat forge client) command matrix** so humans who already use GitHub CLI can keep muscle memory under the **single** published binary **`arks`**. Logical pillar name may still say “hub”; **taught argv is flat** (`arks pr …`) per [[sot:root/arks-hub-product-intent]] v0.4. CSV column `arks_hub_target` means **leaf path under `arks`** (historical name; `hub` prefix not required). **Surface parity ≠ subprocess.** Implementation MUST use a **native host API client** (host via `arks serve`); MUST **never** spawn `gh` or `git`.
 
-**Survey pin:** host `gh` **2.103.3** (2026-10-26). Captured via `gh help` + `gh help reference` on Windows. Cross-OS: help text is the same CLI contract; re-run survey when advancing the pin. Prior pin **2.103.0** superseded for inventory currency — CSV `gh_pin` column MUST match this survey pin (sibling refresh).
+**Survey pin:** host `gh` **2.103.3** (2026-10-26). Captured via `gh help` + `gh help reference` on Windows. Cross-OS: help text is the same CLI contract; re-run survey when advancing the pin. Prior pin **2.103.0** superseded for inventory currency — CSV `gh_pin` column MUST match this survey pin (sibling refresh). Post-pin latest-runner additions inventoried explicitly with their introducing `gh` release (e.g. `2.105.0` `event*` preview).
 
 **Host vs clean-room:** hub muscle-memory inventory is **gh-surveyed** (not Docker git pin). Clean-room Git/daemon judge remains stock **2.39.5**; host Git **2.56.0.windows.4** is skew-only for git/daemon pillars ([[sot:root/verify-cleanroom-symmetry-matrix]]).
 
@@ -47,7 +47,7 @@ Version **0.4.0**. Canonical **`gh` → `arks` (flat forge client) command matri
 |-------|-------------------|
 | **v1** | Required for a useful **gh-symmetric** collaboration slice (auth + PR/issue/release/repo/label + search/status/api/config/alias/completion). Still **not Claimed** until implemented + evidence |
 | **later** | Keep gh-shaped names; defer after v1 |
-| **out-of-scope** | gh / GitHub platform surface we will not mirror (extensions, Copilot, agent-task/skills, gh self-licenses, internal preview, **`auth setup-git`**, Actions `run`/`workflow`/`cache`/`secret`/`variable`, Codespaces, attestations) per [[adr:root/20261119230000]]; plus the hub-native `review` group (rule 12c) |
+| **out-of-scope** | gh / GitHub platform surface we will not mirror (extensions, Copilot, agent-task/skills, gh self-licenses, internal preview, **`auth setup-git`**, Actions `run`/`workflow`/`cache`/`secret`/`variable`, Codespaces, attestations, GitHub Event Streams preview `event*` from `gh` 2.105.0) per [[adr:root/20261119230000]]; plus the hub-native `review` group (rule 12c) |
 
 ### Alias law (normative)
 
@@ -61,7 +61,7 @@ Version **0.4.0**. Canonical **`gh` → `arks` (flat forge client) command matri
 
 6. CLI **shape** tracks `gh` for muscle memory.
 7. Wire protocol is the **arks forge API** served by `arks serve` (first verify peer). For arks-owned primitives it uses GitHub-shaped REST paths and field names, so the same argv MAY target a GitHub-class host via `--host` for that compatible subset only. GraphQL is not required ([[adr:root/20261119230000]]).
-8. Scope test: a row is in scope when its function can run on an independent host (not a GitHub-exclusive service). GitHub-platform-only rows (Actions, Codespaces, Copilot, attestations, gh extensions, agent-task) are `out-of-scope`; in-scope rows not yet implemented are `later`. Do not bring either back without a SoT amendment that defines an arks-owned primitive.
+8. Scope test: a row is in scope when its function can run on an independent host (not a GitHub-exclusive service). GitHub-platform-only rows (Actions, Codespaces, Copilot, attestations, gh extensions, agent-task, GitHub Event Streams preview `event*`) are `out-of-scope`; in-scope rows not yet implemented are `later`. Do not bring either back without a SoT amendment that defines an arks-owned primitive.
 
 ### Dangerous gh overlaps with core git
 
