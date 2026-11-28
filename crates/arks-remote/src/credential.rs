@@ -1377,24 +1377,24 @@ mod tests {
         use std::ffi::OsString;
         let replaced = global_config_paths(
             Some(OsString::from("/dev/null")),
-            Some(OsString::from("/xdg")),
-            Some(OsString::from("/home/u")),
+            Some(OsString::from("/tmp/test-xdg")),
+            Some(OsString::from("/tmp/test-home")),
         );
         assert_eq!(replaced, vec![PathBuf::from("/dev/null")]);
 
         let empty = global_config_paths(
             Some(OsString::from("")),
             None,
-            Some(OsString::from("/home/u")),
+            Some(OsString::from("/tmp/test-home")),
         );
         assert!(empty.is_empty());
 
-        let default_order = global_config_paths(None, None, Some(OsString::from("/home/u")));
+        let default_order = global_config_paths(None, None, Some(OsString::from("/tmp/test-home")));
         assert_eq!(
             default_order,
             vec![
-                PathBuf::from("/home/u/.config/git/config"),
-                PathBuf::from("/home/u/.gitconfig"),
+                PathBuf::from("/tmp/test-home/.config/git/config"),
+                PathBuf::from("/tmp/test-home/.gitconfig"),
             ]
         );
     }
