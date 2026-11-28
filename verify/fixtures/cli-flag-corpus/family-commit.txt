@@ -1116,3 +1116,43 @@ mailsplit -o.git/nope .git/fixture.mbox
 add -A -- src
 add -u -- src
 add -A -- README.md
+# --- format-patch header encoding (nested .git/i18n repository; tags name the commits) ---
+-C .git/i18n format-patch --stdout --signature=S -1 subj
+-C .git/i18n format-patch --stdout --signature=S -1 --no-encode-email-headers subj
+-C .git/i18n format-patch --stdout --signature=S -1 --no-encode-email-headers --encode-email-headers subj
+-C .git/i18n -c format.encodeEmailHeaders=false format-patch --stdout --signature=S -1 subj
+-C .git/i18n -c format.encodeEmailHeaders=false format-patch --stdout --signature=S -1 --encode-email-headers subj
+-C .git/i18n -c format.encodeEmailHeaders=true format-patch --stdout --signature=S -1 subj
+-C .git/i18n format-patch --stdout --signature=S -1 body
+-C .git/i18n format-patch --stdout --signature=S -1 author
+-C .git/i18n format-patch --stdout --signature=S -1 --no-encode-email-headers author
+-C .git/i18n -c format.encodeEmailHeaders=false format-patch --stdout --signature=S -1 author
+-C .git/i18n format-patch --stdout --signature=S -1 diff
+-C .git/i18n format-patch --stdout --signature=S -1 long
+-C .git/i18n format-patch --stdout --signature=S -1 --no-encode-email-headers long
+-C .git/i18n format-patch --stdout --signature=S -1 --subject-prefix=PÄTCH long
+-C .git/i18n format-patch --stdout --signature=S -1 special
+-C .git/i18n format-patch --stdout --signature=S -1 plainlong
+-C .git/i18n format-patch --stdout --signature=S -1 -k plainlong
+-C .git/i18n format-patch --stdout --signature=S -1 -n plainlong
+-C .git/i18n format-patch --stdout --signature=S -1 dotted
+-C .git/i18n format-patch --stdout --signature=S -1 quoted
+-C .git/i18n format-patch --stdout --signature=S -1 longname
+-C .git/i18n format-patch --stdout --signature=S -1 eqq
+-C .git/i18n format-patch --stdout --signature=S -1 --from='Zoë Z <z@example.com>' diff
+-C .git/i18n format-patch --stdout --signature=S -1 --from='J. Q. Public <z@example.com>' diff
+-C .git/i18n format-patch --stdout --signature=S -1 --from='A =?x B <z@example.com>' diff
+-C .git/i18n format-patch --stdout --signature=S -1 --from='Zoë Z <z@example.com>' --no-encode-email-headers diff
+-C .git/i18n format-patch --stdout --signature=S -1 --from='Zoë Z <z@example.com>' author
+-C .git/i18n format-patch --stdout --signature=S -1 --to='Zoë <z@example.com>' --cc='Åsa <a@example.com>' --add-header='X-Foo: bår' subj
+-C .git/i18n format-patch --stdout --signature=S -1 --add-header='X-Foo: bår' diff
+-C .git/i18n format-patch --stdout --signature=S -1 --attach=BND subj
+-C .git/i18n format-patch --stdout --signature=S -1 --inline=BND author
+-C .git/i18n format-patch --stdout --signature=S -1 -s subj
+-C .git/i18n format-patch --stdout --signature=S -3 author
+-C .git/i18n format-patch --stdout --signature=S base..eqq
+-C .git/i18n format-patch --stdout --signature=S --cover-letter -1 body
+-C .git/i18n format-patch --stdout --signature=S --cover-letter -1 author
+-C .git/i18n format-patch --stdout --signature=S --cover-letter -1 diff
+-C .git/i18n format-patch --stdout --signature=S --cover-letter -1 --no-encode-email-headers subj
+-C .git/i18n format-patch --stdout --signature=S --cover-letter -1 dotted

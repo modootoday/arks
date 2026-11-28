@@ -190,6 +190,33 @@ mkdir -p .git/side && (
   git checkout -q main
   printf 'one\ntwo\nTHREE\n' > a.txt; git add a.txt && c -m "main: shout three"
 )
+# format-patch header encoding extras: a separate repository nested inside
+# .git whose commits carry non-ASCII subjects, bodies, author names and diff
+# lines, long subjects and RFC 822 specials; each is tagged for corpus lines
+# that reach it with `-C .git/i18n`.
+mkdir -p .git/i18n && (
+  cd .git/i18n
+  git init -q -b main .
+  git config user.name "C O Mitter"; git config user.email committer@example.com
+  git config commit.gpgsign false
+  printf 'one\n' > a.txt; git add a.txt && c -m "i18n: base"
+  git tag base
+  i() { # <tag> <line> <commit args...>
+    local tag="$1" line="$2"; shift 2
+    printf '%s\n' "$line" >> a.txt; git add a.txt && c "$@" && git tag "$tag"
+  }
+  i subj 1 -m 'café naïve'
+  i body 2 -m 'ascii subject' -m 'body with café'
+  GIT_AUTHOR_NAME='Jöhn Dœ' i author 3 -m 'ascii author'
+  i diff 'é' -m 'ascii message, 8-bit diff'
+  i long 5 -m 'a very long subject line that is quite long indeed with café and naïve words in it to force folding of the encoded header'
+  i special 6 -m "é \"q\" _u_ =e ?q !*+-/ ,.;:()[]\\ ~#\$%&' end"
+  i plainlong 7 -m 'a very long subject line that has many words and goes beyond the seventy eight limit and then keeps on going'
+  GIT_AUTHOR_NAME='J. Doe' i dotted 8 -m 'dotted author'
+  GIT_AUTHOR_NAME='Jo "x" Doe, Jr' i quoted 9 -m 'quoted author'
+  GIT_AUTHOR_NAME="$(printf 'é%.0s' $(seq 51)) long name" i longname 10 -m 'long author name'
+  i eqq 11 -m 'ascii with =?utf-8?q?x?= inside'
+)
 # A commit message with a trailer block for interpret-trailers lines.
 printf 'subject\n\nbody text\n\nSigned-off-by: A U Thor <author@example.com>\nFixes: 1\n' > .git/trailer-msg.txt
 # Patches for apply lines: one that applies to src/a.txt (index and work
