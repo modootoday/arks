@@ -46,10 +46,10 @@ Near-term KEEP channels use **GitHub Actions OIDC** (no long-lived registry toke
 |-----------------------|----------------|------------------|----------------------|
 | **GitHub Releases** | `github-release` in `release.yml` | Ready (`3-OS` archives + `SHA256SUMS`) | **Live (`v0.1.0`+)** |
 | **GitHub Pages** | `.github/workflows/pages.yml` (`github-pages`) | Ready (`docs/` Jekyll build) | **Live** ([modootoday.github.io/arks](https://modootoday.github.io/arks/)) |
-| `crates` (**crates.io**) | `publish-crates` (`scripts/bootstrap-crates-publish.sh`) | Verified (`18/18` crates via `cargo package --locked`) | `18/18` bootstrapped at `0.1.0`; Trusted Publishers bound; OIDC live on `v0.1.1` |
-| `pypi` (**PyPI**, `arks-cli`) | `publish-pypi` (`packaging/pypi/build_wheels.py`) | Verified (`3` PEP 427/600 wheels + venv pip smoke) | Pending Trusted Publisher bound; OIDC live on `v0.1.1` |
-| `npm` (**npm**, `@modootoday/arks`) | `publish-npm` (`packaging/npm/build_packages.mjs`) | Verified (`@modootoday/arks` + 3 scoped platform pkgs + offline smoke) | Trusted Publishers bound on all 4 `@modootoday/*` pkgs; OIDC live on `v0.1.1` |
-| `rubygems` (**RubyGems**, `arks`) | `publish-rubygems` (`packaging/rubygems/build_gems.rb`) | Verified (`3` platform gems + isolated gem smoke) | Pending Trusted Publisher bound; OIDC live on `v0.1.1` |
+| `crates` (**crates.io**) | `publish-crates` (`scripts/bootstrap-crates-publish.sh`) | Verified (`18/18` crates via `cargo package --locked`) | `18/18` bootstrapped at `0.1.0`; Trusted Publishers bound; OIDC live (`v0.1.1`+) |
+| `pypi` (**PyPI**, `arks-cli`) | `publish-pypi` (`packaging/pypi/build_wheels.py`) | Verified (`3` PEP 427/600 wheels + venv pip smoke) | Trusted Publisher bound; OIDC live (`v0.1.1`+) |
+| `npm` (**npm**, `@modootoday/arks`) | `publish-npm` (`packaging/npm/build_packages.mjs`) | Verified (`@modootoday/arks` + 3 scoped platform pkgs + offline smoke) | Trusted Publishers bound on all 4 `@modootoday/*` pkgs; OIDC live (`v0.1.1`+) |
+| `rubygems` (**RubyGems**, `arks`) | `publish-rubygems` (`packaging/rubygems/build_gems.rb`) | Verified (`3` platform gems + isolated gem smoke) | Pending Trusted Publisher bound; OIDC live (`v0.1.2`+) |
 
 Ungated on every `v*` tag: Cross-OS **dist** binaries and a **draft** GitHub Release with checksum / unsigned assets (`SHA256SUMS`). Signing-constrained catalogs (winget, apt signed repos, Authenticode, Apple notarization, Chocolatey) stay out of scope.
 

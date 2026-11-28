@@ -6,11 +6,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-28
+
+Completes Wave 1 (`E1`–`E4`) of the `v0.2.0` scope expansion and activates `RubyGems` (`arks`)
+zero-token OIDC Trusted Publishing alongside `crates.io`, `PyPI`, `npm`, and GitHub Releases.
+
+### Added
+
+- **Worktree-free history replay (`arks replay`, E3):** pure-Rust in-memory commit replay supporting
+  `--onto`, `--advance`, `--contained`, `--ref-action=update|print`, and fail-closed conflict exit
+  `1` without mutating the working tree or `.git/index`.
+- **Repository maintenance lifecycle (`arks maintenance`, E4):** `run`, `register`, `unregister`,
+  `start`, and `stop` honoring `maintenance.lock`, `MAINT-005`/`PACK-005`/`MAINT-006` concurrency
+  guards, and race-safe `incremental-repack`.
+- **Native subtree management (`arks subtree`, E4):** pure-Rust `add`, `merge`, `split`, `pull`,
+  and `push` with standard `git-subtree-dir`/`git-subtree-mainline`/`git-subtree-split` trailers
+  and topological DAG projection.
+
+### Fixed
+
+- **RubyGems OIDC release workflow:** pinned `rubygems/configure-rubygems-credentials@v2.2.0` in
+  `.github/workflows/release.yml` so `arks` platform gems publish cleanly via zero-token OIDC.
+
 ## [0.1.1] - 2026-11-28
 
-First multi-registry OIDC Trusted Publishing release across GitHub Releases, GitHub Pages,
-`crates.io` (18 workspace crates), `PyPI` (`arks-cli`), `npm` (`@modootoday/arks` + 3 scoped
-platform binary packages), and `RubyGems` (`arks`), plus Wave 1 expansion features E1 and E2.
+Multi-registry OIDC Trusted Publishing release across GitHub Releases, GitHub Pages, `crates.io`
+(18 workspace crates), `PyPI` (`arks-cli`), and `npm` (`@modootoday/arks` + 3 scoped platform
+binary packages), plus Wave 1 expansion features E1 and E2.
 
 ### Added
 
