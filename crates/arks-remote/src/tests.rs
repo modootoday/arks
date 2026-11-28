@@ -1158,10 +1158,7 @@ fn dumb_http_push_roundtrip_via_serve_http() {
         bare.clone(),
         ServeHttpOptions {
             dumb_only: true,
-            basic_auth: None,
-            rebind_desired: None,
-            tls: None,
-            pages: None,
+            ..ServeHttpOptions::default()
         },
     )
     .unwrap();
@@ -1371,10 +1368,7 @@ fn dumb_http_force_with_lease_cas_under_lock() {
         bare.clone(),
         ServeHttpOptions {
             dumb_only: true,
-            basic_auth: None,
-            rebind_desired: None,
-            tls: None,
-            pages: None,
+            ..ServeHttpOptions::default()
         },
     )
     .unwrap();

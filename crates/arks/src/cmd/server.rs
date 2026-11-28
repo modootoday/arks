@@ -1125,6 +1125,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut listen = "127.0.0.1:8080".to_string();
     let mut dir: Option<PathBuf> = None;
     let mut dumb_only = false;
+    let mut disable_lfs = false;
     let mut gitweb = false;
     let mut basic_auth_cli: Option<String> = None;
     let mut basic_auth_file: Option<PathBuf> = None;
@@ -1144,6 +1145,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
                 listen = args[i][9..].to_string();
             }
             "--dumb-only" => dumb_only = true,
+            "--no-lfs" => disable_lfs = true,
             "--gitweb" => gitweb = true,
             "--basic-auth" => {
                 i += 1;
@@ -1245,6 +1247,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
         rebind_desired: None,
         tls,
         pages,
+        disable_lfs,
     };
     let scheme = serve_http_scheme(&http_opts);
     eprintln!("{label} listening on {scheme}://{addr}/ (dumb_only={dumb_only}; {auth_label})");

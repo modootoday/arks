@@ -81,11 +81,22 @@ pub fn handle_smart_http(
     handle_smart_http_auth(repo, req, None)
 }
 
-/// Like [`handle_smart_http`], with optional Basic auth gate.
+/// Like [`handle_smart_http`], with optional Basic auth gate (LFS enabled by default).
 pub fn handle_smart_http_auth(
     repo: &mut Repository,
     req: &HttpRequest,
     basic: Option<&BasicAuthConfig>,
+) -> Result<HttpResponse, ServerError> {
+    handle_smart_http_auth_opts(repo, req, basic, true, "http")
+}
+
+/// Like [`handle_smart_http_auth`], with explicit LFS toggle and scheme (`http`/`https`).
+pub fn handle_smart_http_auth_opts(
+    repo: &mut Repository,
+    req: &HttpRequest,
+    basic: Option<&BasicAuthConfig>,
+    enable_lfs: bool,
+    scheme: &str,
 ) -> Result<HttpResponse, ServerError> {
     if let Some(cfg) = basic {
         if !cfg.check_authorization(req.authorization.as_deref()) {
@@ -98,7 +109,12 @@ pub fn handle_smart_http_auth(
             });
         }
     }
-    // LFS server productization (`info/lfs`) trimmed — keep plain git HTTP only.
+    if crate::lfs::is_lfs_path(&req.path) {
+        if enable_lfs {
+            return crate::lfs::handle_lfs(repo, req, scheme);
+        }
+        return Ok(text(404, b"LFS disabled\n"));
+    }
     if is_dav_method(&req.method) {
         return handle_dav(repo, req);
     }
