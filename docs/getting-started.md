@@ -16,15 +16,18 @@ Install **arks** as a normal local CLI. You do not need Docker to use the produc
 
 If you landed here from multi-agent orchestration pain: start with a single-session smoke test below, then read [Concurrent sessions](../concurrent-sessions/) and [Alias `git` → `arks`](../alias-git-arks/) for the adopt path.
 
-## Build the native CLI
+## Install or build the native CLI
 
-1. Install a recent Rust toolchain (**1.85+**).
-2. Clone and build the release binary.
-3. Put `target/release/arks` on your `PATH`, or invoke via `cargo run`.
+1. **Prebuilt binary (recommended):** download the archive for Linux (`x86_64`), macOS (`arm64`), or Windows (`x86_64`) plus `SHA256SUMS` from [GitHub Releases (`v0.1.0`)](https://github.com/modootoday/arks/releases/tag/v0.1.0) and place `arks` on your `PATH`.
+2. **From source (Rust 1.85+):** install directly from the release tag or build locally:
 
 `file:build.sh`
 
 ```bash
+# Direct install from release tag:
+cargo install --git https://github.com/modootoday/arks --tag v0.1.0 arks
+
+# Or build from a local checkout:
 git clone https://github.com/modootoday/arks.git
 cd arks
 cargo build -p arks --release
@@ -37,6 +40,8 @@ Without installing:
 ```bash
 cargo run -p arks -- --help
 ```
+
+Registry packages (`crates.io`, `PyPI`, `npm`, `RubyGems`) are packaged and dry-run verified; see [Release channels](../release/) for live registry activation status.
 
 ## First repository
 

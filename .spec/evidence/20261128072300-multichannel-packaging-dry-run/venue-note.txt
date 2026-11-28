@@ -1,0 +1,31 @@
+D6 Multi-Channel Distribution Dry-Run Venue Note (2026-11-28T07:23:00Z)
+=======================================================================
+
+Main tip: 13026e4aac6ae0070436cca9d84dda0a7efae3dd
+
+1. Live surfaces confirmed operational:
+   - GitHub Release v0.1.0: https://github.com/modootoday/arks/releases/tag/v0.1.0
+     (3-OS unsigned archives + SHA256SUMS, published via run 46116832935).
+   - GitHub Pages docs site: https://modootoday.github.io/arks/
+     (deployed via run 46118731570; HTTP 200 verified).
+   - GitHub Environments `crates`, `npm`, `pypi`, `rubygems`:
+     all 4 hardened with required reviewer `myso-kr` and tag policy `v*`.
+
+2. Authoritative dry-run verification (GHA run 46120085371):
+   - `symmetry-precheck` (clean-room Git 2.39.5 + latest git 2.56.1 / gh 2.105.0):
+     3/3 jobs succeeded.
+   - `dist` (ubuntu-24.04, macos-15, windows-2025): 3/3 jobs succeeded.
+   - `release-channel dry-run report` (job 140904821157):
+       * `scripts/release-channel-readiness.sh`: OK (structural), `Skip gates today: none`
+       * PyPI wheels (3 platforms): built & isolated venv `pip install --no-index` -> `arks version 0.1.0`
+       * npm packages (3 platforms + root): built, packed & offline `npm install` -> `arks version 0.1.0`
+       * RubyGems gems (3 platforms): built & isolated `gem install --local` -> `arks version 0.1.0`
+   - `crates.io` 18-crate packaging verified via `cargo package --workspace --locked` in D2 (PR #90).
+   - All live release / OIDC publish jobs skipped (`dry_run=true`).
+
+3. Honesty boundary:
+   - This receipt proves multi-channel packaging, isolated install execution, and
+     OIDC workflow wiring only.
+   - Live registry publication to crates.io, PyPI, npm, and RubyGems is NOT yet
+     claimed and awaits owner external-registry Trusted Publisher binding + tag
+     publication (see owner handoff issue).

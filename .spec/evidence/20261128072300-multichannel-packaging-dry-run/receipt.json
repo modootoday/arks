@@ -1,0 +1,61 @@
+{
+  "gate": "multichannel-packaging-dry-run (release.yml dry_run=true + crates.io cargo package + GitHub Pages live)",
+  "rung": "D6 external distribution verification on main tip 13026e4 after D1 (#89), D2 (#90), and D3-D5 (#91)",
+  "venue": "GitHub Actions hosted runners (ubuntu-24.04 + clean-room Docker 2.39.5, windows-2025, macos-15)",
+  "tip": "13026e4aac6ae0070436cca9d84dda0a7efae3dd",
+  "honesty_boundary": "Multi-channel packaging and ops readiness verified — NOT a live crates.io / PyPI / npm / RubyGems publish PASS. External registry Trusted Publisher binding and next-tag Environment approval remain owner actions.",
+  "live_surfaces": {
+    "github_release": "https://github.com/modootoday/arks/releases/tag/v0.1.0",
+    "github_pages": {
+      "url": "https://modootoday.github.io/arks/",
+      "run_id": 46118731570,
+      "http_status": 200
+    },
+    "github_environments_hardened": ["crates", "npm", "pypi", "rubygems"],
+    "environment_policy": "required_reviewer=myso-kr, deployment_tag_pattern=v*"
+  },
+  "dry_run": {
+    "database_id": 46120085371,
+    "url": "https://github.com/modootoday/arks/actions/runs/46120085371",
+    "conclusion": "success",
+    "readiness_script": "release-channel-readiness: OK (structural); Skip gates today: none",
+    "channels_verified": {
+      "crates_io": {
+        "crates_count": 18,
+        "single_binary_only": "crates/arks",
+        "cargo_package_workspace_locked": "PASS (verified in D2 PR #90; arks-0.1.0.crate 831K)",
+        "live_bootstrap_required": "manual first publish once (scripts/bootstrap-crates-publish.sh), then bind Trusted Publisher per crate"
+      },
+      "pypi": {
+        "wheels_built": [
+          "arks-0.1.0-py3-none-manylinux_2_39_x86_64.whl",
+          "arks-0.1.0-py3-none-macosx_11_0_arm64.whl",
+          "arks-0.1.0-py3-none-win_amd64.whl"
+        ],
+        "isolated_pip_install_smoke": "arks version 0.1.0",
+        "live_bootstrap_required": "Pending Trusted Publisher on pypi.org (zero tokens)"
+      },
+      "npm": {
+        "packages_built": [
+          "arks-linux-x64@0.1.0",
+          "arks-darwin-arm64@0.1.0",
+          "arks-win32-x64@0.1.0",
+          "arks@0.1.0"
+        ],
+        "offline_install_smoke": "arks version 0.1.0",
+        "live_bootstrap_required": "manual first publish once (scripts/bootstrap-npm-publish.sh), then bind Trusted Publisher on npmjs.com for all 4 packages"
+      },
+      "rubygems": {
+        "gems_built": [
+          "arks-0.1.0-x86_64-linux.gem",
+          "arks-0.1.0-arm64-darwin.gem",
+          "arks-0.1.0-x64-mingw-ucrt.gem"
+        ],
+        "isolated_gem_install_smoke": "arks version 0.1.0",
+        "live_bootstrap_required": "Pending Trusted Publisher on rubygems.org (zero tokens)"
+      }
+    },
+    "live_publish_jobs": "skipped (workflow_dispatch dry_run=true)"
+  },
+  "timestamp": "2026-11-28T07:23:00Z"
+}

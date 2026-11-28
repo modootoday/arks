@@ -18,12 +18,12 @@ Maintainer notes for shipping **arks** binaries and (later) language-registry pa
 
 | Layer | Rule |
 |-------|------|
-| Workspace / crate `version` | **`0.1.0`** (cut via owner A2 release approval; `publish = false` stays on `arks` for GitHub Release binaries until crates.io OIDC publishing is opted in) |
+| Workspace / crate `version` | **`0.1.0`** (first public binary release [`v0.1.0`](https://github.com/modootoday/arks/releases/tag/v0.1.0); all 18 workspace crates packaged and verified for crates.io, with only `crates/arks` declaring `[[bin]]`) |
 | Spec SoT `Version **0.x.y**` | Document revision only — **not** a crates.io / git-tag release (see `.agents/rules/26-sot-version-vs-release.md`) |
-| Git tag | Push an annotated or lightweight tag matching `v*` (for example `v0.1.0`) when cutting a public binary release |
+| Git tag | Push an annotated tag matching `v*` (for example `v0.1.0`) when cutting a public release |
 | Published artifact | **Single binary `arks` only** (no separate `arks-daemon` / `arks-hub` / `arks-agent` release binaries) |
 
-Do **not** bump crate version or cut a `v*` tag from Spec document revisions alone. Behavioral DoD met ≠ automatic tag — see [arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md). Release inventory gate: [release-symmetry-precheck](https://github.com/modootoday/arks/blob/main/.spec/sot/release-symmetry-precheck.sot.md).
+Do **not** bump crate version or cut a `v*` tag from Spec document revisions alone. Behavioral DoD met ≠ automatic tag — see [arks-dod-behavioral](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-dod-behavioral.sot.md). Release inventory gate: [release-symmetry-precheck](https://github.com/modootoday/arks/blob/main/.spec/sot/release-symmetry-precheck.sot.md). External distribution specification: [external-distribution-and-registry-publishing](https://github.com/modootoday/arks/blob/main/.spec/sot/external-distribution-and-registry-publishing.sot.md).
 
 ## Pre-release symmetry gate
 
@@ -36,22 +36,24 @@ On a live `v*` tag (after symmetry-precheck):
 1. Cross-OS **dist** builds of **`arks`** only (`linux-gnu`, `windows-msvc`, `aarch64-apple-darwin`).
 2. Archives + `SHA256SUMS` (checksum / unsigned).
 3. **Draft** GitHub Release with those assets.
-4. Optional Environment-gated OIDC registry jobs (`crates` / `npm` / `pypi` / `rubygems`) — skip while packaging/`publish = false`.
+4. Approve-gated OIDC registry jobs (`crates` / `npm` / `pypi` / `rubygems`) — each Environment enforces tag policy `v*` and required reviewer `myso-kr`.
 
 ## Channel model
 
 Near-term KEEP channels use **GitHub Actions OIDC** (no long-lived registry tokens) plus per-registry **Environments**:
 
-| Environment | Job | Notes |
-|-------------|-----|-------|
-| `crates` | `publish-crates` | Skip while `publish = false` on the CLI crate |
-| `npm` | `publish-npm` | Skip until an `npm/` package tree exists |
-| `pypi` | `publish-pypi` | Skip until PyPI packaging exists |
-| `rubygems` | `publish-rubygems` | Skip until a gemspec exists |
+| Channel / Environment | Job / Workflow | Packaging status | Live registry status |
+|-----------------------|----------------|------------------|----------------------|
+| **GitHub Releases** | `github-release` in `release.yml` | Ready (`3-OS` archives + `SHA256SUMS`) | **Live (`v0.1.0`)** |
+| **GitHub Pages** | `.github/workflows/pages.yml` (`github-pages`) | Ready (`docs/` Jekyll build) | **Live** ([modootoday.github.io/arks](https://modootoday.github.io/arks/)) |
+| `crates` (**crates.io**) | `publish-crates` (`scripts/bootstrap-crates-publish.sh`) | Verified (`18/18` crates via `cargo package --locked`) | Pending owner one-time manual bootstrap + Trusted Publisher binding |
+| `pypi` (**PyPI**) | `publish-pypi` (`packaging/pypi/build_wheels.py`) | Verified (`3` PEP 427/600 wheels + venv pip smoke) | Pending owner Pending Trusted Publisher registration on `pypi.org` |
+| `npm` (**npm**) | `publish-npm` (`packaging/npm/build_packages.mjs`) | Verified (`3` platform pkgs + root `arks` + offline smoke) | Pending owner one-time manual bootstrap + Trusted Publisher binding |
+| `rubygems` (**RubyGems**) | `publish-rubygems` (`packaging/rubygems/build_gems.rb`) | Verified (`3` platform gems + isolated gem smoke) | Pending owner Pending Trusted Publisher registration on `rubygems.org` |
 
 Ungated on every `v*` tag: Cross-OS **dist** binaries and a **draft** GitHub Release with checksum / unsigned assets (`SHA256SUMS`). Signing-constrained catalogs (winget, apt signed repos, Authenticode, Apple notarization, Chocolatey) stay out of scope.
 
-Configure Environments and trusted publishers in the GitHub / registry UIs — YAML cannot invent reviewers. Design detail lives under `.spec/research/` (OIDC release research) and `.github/workflows/release.yml`.
+Configure trusted publishers in the registry UIs — YAML cannot register external accounts. Design detail lives in [external-distribution-and-registry-publishing](https://github.com/modootoday/arks/blob/main/.spec/sot/external-distribution-and-registry-publishing.sot.md) and `.github/workflows/release.yml`.
 
 ## Dry-run (no publish PASS)
 
