@@ -149,9 +149,9 @@ def cmd_sweep(args: argparse.Namespace) -> int:
             "--branch",
             "main",
             "--limit",
-            "5",
+            "15",
             "--json",
-            "workflowName,status,conclusion,createdAt",
+            "workflowName,headSha,status,conclusion,createdAt",
         ]
     )
 
@@ -179,9 +179,20 @@ def cmd_sweep(args: argparse.Namespace) -> int:
             if path in HOT_FILES:
                 hot_files_in_use.setdefault(path, []).append(num)
 
+    # Check only the latest non-cancelled run per workflow on main so a
+    # superseded run cancelled by back-to-back merges does not trigger a false red.
+    latest_by_workflow: dict[str, dict[str, Any]] = {}
+    for r in main_runs:
+        wf = r.get("workflowName", "")
+        if wf in latest_by_workflow:
+            continue
+        if r.get("conclusion") == "cancelled":
+            continue
+        latest_by_workflow[wf] = r
+
     red_main = [
         r
-        for r in main_runs
+        for r in latest_by_workflow.values()
         if r.get("conclusion") not in (None, "", "success", "skipped", "neutral")
     ]
 
