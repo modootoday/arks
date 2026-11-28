@@ -1,0 +1,184 @@
+L001	SAME	-C .git/rd range-diff base..old base..new	
+L002	SAME	-C .git/rd range-diff base old new	
+L003	SAME	-C .git/rd range-diff old...new	
+L004	SAME	-C .git/rd range-diff new...old	
+L005	SAME	-C .git/rd range-diff old~2...new~1	
+L006	SAME	-C .git/rd range-diff base..old base..old	
+L007	SAME	-C .git/rd range-diff base..old~1 base..new~1	
+L008	SAME	-C .git/rd range-diff -s main...main	
+L009	SAME	-C .git/rd range-diff base..old	
+L010	SAME	-C .git/rd range-diff old new	
+L011	SAME	-C .git/rd range-diff ..old base..	
+L012	SAME	-C .git/rd range-diff base..main base..new	
+L013	SAME	-C .git/rd range-diff base old^@ new	
+L014	SAME	-C .git/rd range-diff base ^old new	
+L015	SAME	-C .git/rd range-diff nonexist old new	
+L016	SAME	-C .git/rd range-diff base..old nonexist..new	
+L017	SAME	-C .git/rd range-diff old...nonexist	
+L018	SAME	-C .git/rd range-diff -s base..old base..new extra	
+L019	SAME	-C .git/rd range-diff -s base..old base..new HEAD	
+L020	SAME	-C .git/rd range-diff base old new -- n.txt a.c	
+L021	SAME	-C .git/rd range-diff -s old...new -- x.txt	
+L022	SAME	-C .git/rd range-diff	
+L023	SAME	-C .git/rd range-diff -s base old solo	
+L024	SAME	-C .git/rd range-diff -s base..old~2 base..solo	
+L025	SAME	-C .git/rd range-diff -s --creation-factor=0 base old new	
+L026	SAME	-C .git/rd range-diff -s --creation-factor=30 base old new	
+L027	SAME	-C .git/rd range-diff -s --creation-factor=60 base old new	
+L028	SAME	-C .git/rd range-diff -s --creation-factor=100 base old new	
+L029	SAME	-C .git/rd range-diff -s --creation-factor=200 base old new	
+L030	SAME	-C .git/rd range-diff -s --creation-factor=999 base old new	
+L031	SAME	-C .git/rd range-diff -s --creation-factor 150 base old new	
+L032	SAME	-C .git/rd range-diff --creation-factor=200 base old solo	
+L033	SAME	-C .git/rd range-diff -s --creation-factor=abc base old new	
+L034	SAME	-C .git/rd range-diff --creation-factor base old new	
+L035	SAME	-C .git/rd range-diff -s --creation-factor=200 --no-creation-factor base old new	
+L036	SAME	-C .git/rd range-diff -s --creation base old new	
+L037	SAME	-C .git/rd range-diff --color=always base old new	
+L038	SAME	-C .git/rd range-diff --color=always --no-dual-color base old new	
+L039	SAME	-C .git/rd range-diff --color=always --no-dual-color --dual-color base old new	
+L040	SAME	-C .git/rd range-diff --color=always -U1 base old new	
+L041	SAME	-C .git/rd range-diff --color=never base old new	
+L042	SAME	-C .git/rd range-diff --no-color base old new	
+L043	SAME	-C .git/rd range-diff --left-only base old new	
+L044	SAME	-C .git/rd range-diff --right-only base old new	
+L045	SAME	-C .git/rd range-diff --left-only --right-only base old new	
+L046	SAME	-C .git/rd range-diff --left-only --no-left-only base old new	
+L047	SAME	-C .git/rd range-diff --no-right-only base old new	
+L048	SAME	-C .git/rd range-diff --notes base old new	
+L049	SAME	-C .git/rd range-diff --no-notes base old new	
+L050	SAME	-C .git/rd range-diff --notes=foo base old new	
+L051	SAME	-C .git/rd range-diff --notes=refs/notes/foo base old new	
+L052	SAME	-C .git/rd range-diff --notes=foo --notes base old new	
+L053	SAME	-C .git/rd range-diff --no-notes --notes=foo base old new	
+L054	SAME	-C .git/rd range-diff --notes=foo --no-notes base old new	
+L055	SAME	-C .git/rd range-diff --notes=refs/notes/commits base old new	
+L056	SAME	-C .git/rd range-diff --bogus base old new	
+L057	SAME	-C .git/rd range-diff -s base old new	
+L058	SAME	-C .git/rd range-diff --no-patch base old new	
+L059	SAME	-C .git/rd range-diff -p base old new	
+L060	SAME	-C .git/rd range-diff --patch base old new	
+L061	SAME	-C .git/rd range-diff -u base old new	
+L062	SAME	-C .git/rd range-diff -U0 base old new	
+L063	SAME	-C .git/rd range-diff -U1 base old new	
+L064	SAME	-C .git/rd range-diff --unified=8 base old new	
+L065	SAME	-C .git/rd range-diff -W base old new	
+L066	SAME	-C .git/rd range-diff --function-context base old new	
+L067	SAME	-C .git/rd range-diff --no-function-context base old new	
+L068	SAME	-C .git/rd range-diff -U0 --inter-hunk-context=3 base old new	
+L069	SAME	-C .git/rd range-diff --raw base old new	
+L070	SAME	-C .git/rd range-diff --patch-with-raw base old new	
+L071	SAME	-C .git/rd range-diff --patch-with-stat base old new	
+L072	SAME	-C .git/rd range-diff --numstat base old new	
+L073	SAME	-C .git/rd range-diff --shortstat base old new	
+L074	SAME	-C .git/rd range-diff -X base old new	
+L075	SAME	-C .git/rd range-diff --dirstat base old new	
+L076	SAME	-C .git/rd range-diff --cumulative base old new	
+L077	SAME	-C .git/rd range-diff --dirstat-by-file base old new	
+L078	SAME	-C .git/rd range-diff --check base old new	
+L079	SAME	-C .git/rd range-diff --summary base old new	
+L080	SAME	-C .git/rd range-diff --name-only base old new	
+L081	SAME	-C .git/rd range-diff --name-status base old new	
+L082	SAME	-C .git/rd range-diff --stat base old new	
+L083	SAME	-C .git/rd range-diff --stat=40 base old new	
+L084	SAME	-C .git/rd range-diff --stat-width=30 base old new	
+L085	SAME	-C .git/rd range-diff --stat-name-width=5 base old new	
+L086	SAME	-C .git/rd range-diff --stat-graph-width=2 base old new	
+L087	SAME	-C .git/rd range-diff --stat-count=1 base old new	
+L088	SAME	-C .git/rd range-diff --compact-summary base old new	
+L089	SAME	-C .git/rd range-diff -s --stat base old new	
+L090	SAME	-C .git/rd range-diff --stat --color=always base old new	
+L091	SAME	-C .git/rd range-diff --binary base old new	
+L092	SAME	-C .git/rd range-diff --full-index base old new	
+L093	SAME	-C .git/rd range-diff --no-full-index base old new	
+L094	SAME	-C .git/rd range-diff --ws-error-highlight=all --color=always base old new	
+L095	SAME	-C .git/rd range-diff -z --raw base old new	
+L096	DIFF	-C .git/rd range-diff --abbrev=10 base old new	stdout
+L097	SAME	-C .git/rd range-diff --abbrev base old new	
+L098	SAME	-C .git/rd range-diff --src-prefix=X/ base old new	
+L099	SAME	-C .git/rd range-diff --dst-prefix=Y/ base old new	
+L100	SAME	-C .git/rd range-diff --line-prefix=LP base old new	
+L101	SAME	-C .git/rd range-diff --no-prefix base old new	
+L102	SAME	-C .git/rd range-diff --output-indicator-new=X base old new	
+L103	SAME	-C .git/rd range-diff --output-indicator-old=Y --output-indicator-context=Z base old new	
+L104	SAME	-C .git/rd range-diff -B base old new	
+L105	SAME	-C .git/rd range-diff --break-rewrites base old new	
+L106	SAME	-C .git/rd range-diff -M base old new	
+L107	SAME	-C .git/rd range-diff --find-renames base old new	
+L108	SAME	-C .git/rd range-diff -D base old new	
+L109	SAME	-C .git/rd range-diff --irreversible-delete base old new	
+L110	SAME	-C .git/rd range-diff -C base old new	
+L111	SAME	-C .git/rd range-diff --find-copies base old new	
+L112	SAME	-C .git/rd range-diff --find-copies-harder base old new	
+L113	SAME	-C .git/rd range-diff --no-renames base old new	
+L114	SAME	-C .git/rd range-diff --rename-empty base old new	
+L115	SAME	-C .git/rd range-diff --no-rename-empty base old new	
+L116	SAME	-C .git/rd range-diff --follow base old new	
+L117	SAME	-C .git/rd range-diff -l 5 base old new	
+L118	SAME	-C .git/rd range-diff --minimal base old new	
+L119	SAME	-C .git/rd range-diff -w base old new	
+L120	SAME	-C .git/rd range-diff --ignore-all-space base old new	
+L121	SAME	-C .git/rd range-diff -b base old new	
+L122	SAME	-C .git/rd range-diff --ignore-space-change base old new	
+L123	SAME	-C .git/rd range-diff --ignore-space-at-eol base old new	
+L124	SAME	-C .git/rd range-diff --ignore-cr-at-eol base old new	
+L125	SAME	-C .git/rd range-diff --ignore-blank-lines base old new	
+L126	SAME	-C .git/rd range-diff -I Body base old new	
+L127	SAME	-C .git/rd range-diff --ignore-matching-lines=Body base old new	
+L128	SAME	-C .git/rd range-diff --indent-heuristic base old new	
+L129	SAME	-C .git/rd range-diff --no-indent-heuristic base old new	
+L130	SAME	-C .git/rd range-diff --patience base old new	
+L131	SAME	-C .git/rd range-diff --histogram base old new	
+L132	SAME	-C .git/rd range-diff --diff-algorithm=minimal base old new	
+L133	SAME	-C .git/rd range-diff --anchored=five base old new	
+L134	SAME	-C .git/rd range-diff --word-diff base old new	
+L135	SAME	-C .git/rd range-diff --word-diff=porcelain base old new	
+L136	SAME	-C .git/rd range-diff --word-diff=color base old new	
+L137	SAME	-C .git/rd range-diff --word-diff-regex=. base old new	
+L138	SAME	-C .git/rd range-diff --color-words base old new	
+L139	SAME	-C .git/rd range-diff --color-moved base old new	
+L140	SAME	-C .git/rd range-diff --color-moved-ws=ignore-all-space base old new	
+L141	SAME	-C .git/rd range-diff --relative base old new	
+L142	SAME	-C .git/rd range-diff -a base old new	
+L143	SAME	-C .git/rd range-diff --text base old new	
+L144	SAME	-C .git/rd range-diff -R base old new	
+L145	SAME	-C .git/rd range-diff --exit-code base old new	
+L146	SAME	-C .git/rd range-diff --quiet base old new	
+L147	SAME	-C .git/rd range-diff --ext-diff base old new	
+L148	SAME	-C .git/rd range-diff --no-ext-diff base old new	
+L149	SAME	-C .git/rd range-diff --textconv base old new	
+L150	SAME	-C .git/rd range-diff --no-textconv base old new	
+L151	SAME	-C .git/rd range-diff --ignore-submodules base old new	
+L152	SAME	-C .git/rd range-diff --submodule base old new	
+L153	SAME	-C .git/rd range-diff --ita-invisible-in-index base old new	
+L154	SAME	-C .git/rd range-diff --ita-visible-in-index base old new	
+L155	SAME	-C .git/rd range-diff -S TWO base old new	
+L156	SAME	-C .git/rd range-diff -G Body base old new	
+L157	SAME	-C .git/rd range-diff --pickaxe-all -S FIVE base old new	
+L158	SAME	-C .git/rd range-diff --pickaxe-regex -S 'F.VE' base old new	
+L159	SAME	-C .git/rd range-diff -O /dev/null base old new	
+L160	SAME	-C .git/rd range-diff --rotate-to=b base old new	
+L161	SAME	-C .git/rd range-diff --skip-to=b base old new	
+L162	SAME	-C .git/rd range-diff --find-object=HEAD base old new	
+L163	SAME	-C .git/rd range-diff --diff-filter=M base old new	
+L164	SAME	-C .git/rd range-diff --diff-filter=A base old new	
+L165	SAME	-C .git/rd range-diff --output=rd-out.txt base old new	
+L166	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=old base..new~2	
+L167	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=base..old base..new~2	
+L168	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --interdiff=old~2 base..new~2	
+L169	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter -v3 --interdiff=old~2 --range-diff=old~2 base..new~2	
+L170	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter -v1 --range-diff=old base..new~2	
+L171	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter -v2.5 --range-diff=old base..new~2	
+L172	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=old --creation-factor=0 base..new~2	
+L173	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=old --creation-factor=999 base..new~2	
+L174	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --base=base --range-diff=old base..new~2	
+L175	SAME	-C .git/rd format-patch --stdout --signature=S --range-diff=old~3 -1 new~3	
+L176	SAME	-C .git/rd format-patch --stdout --signature=S --interdiff=old~3 -1 new~3	
+L177	SAME	-C .git/rd format-patch --stdout --signature=S --interdiff=old~2 -1 new~2	
+L178	SAME	-C .git/rd format-patch --stdout --signature=S -v4 --interdiff=old~2 --range-diff=old~2 -1 new~2	
+L179	SAME	-C .git/rd format-patch --stdout --signature=S -p --interdiff=old~2 -1 new~2	
+L180	SAME	-C .git/rd format-patch --stdout --signature=S --range-diff=old base..new~2	
+L181	SAME	-C .git/rd format-patch --stdout --signature=S --interdiff=old base..new~2	
+L182	SAME	-C .git/rd format-patch --stdout --signature=S --creation-factor=10 base..new~2	
+L183	SAME	-C .git/rd format-patch --stdout --signature=S --cover-letter --range-diff=nonexist base..new~2	
+L184	SAME	-C .git/rd format-patch -o out --signature=S --cover-letter --range-diff=old base..new~2	

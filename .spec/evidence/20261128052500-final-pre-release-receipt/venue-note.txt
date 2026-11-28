@@ -1,0 +1,12 @@
+Venue: Sole-runner Docker clean-room (image arks-verify-m1:0.1.0, stock git 2.39.5, rustc 1.99.1)
+on main 5d2dc88, run 2026-11-28 inside an isolated Linux VM with local dockerd.
+Cargo built offline (CARGO_NET_OFFLINE=true) against the host Cargo registry cache mounted
+read-only; dependencies are pinned by Cargo.lock.
+
+Execution sequence (strictly one Docker run at a time):
+1. dod-symmetry-prerelease with ARKS_RELEASE_BLOCK_HUB_MISSING=1 -> OK (Missing=0 across CLI,
+   daemon, and hub v1; untracked pin leaves=0).
+2. Release build of arks inside arks-verify-m1:0.1.0 -> run-argv-inventory.py (1,852/1,852
+   options accepted) -> 11 non-timing flag corpora -> family-a3-tools run alone (165/165 SAME).
+3. Latest-inventory continuity (host git 2.56.1 + gh 2.103.3, advisory) with
+   ARKS_RELEASE_BLOCK_HUB_MISSING=1 -> OK (untracked=0 across git, git-daemon, and gh).

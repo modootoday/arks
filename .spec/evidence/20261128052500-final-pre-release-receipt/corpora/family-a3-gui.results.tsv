@@ -1,0 +1,35 @@
+L001	DIFF	gui version	exit 0!=1; stdout
+L002	DIFF	gui.tcl version	exit 0!=1; stdout
+L003	DIFF	gui version extra	exit 129!=1
+L004	DIFF	gui nosuch	exit 129!=1
+L005	DIFF	gui -h	exit 129!=1
+L006	DIFF	gui browser	exit 0!=1; stdout
+L007	DIFF	gui browser HEAD	exit 0!=1; stdout
+L008	DIFF	gui browser HEAD~1	exit 0!=1; stdout
+L009	DIFF	gui browser nosuch-rev	exit 128!=1
+L010	DIFF	gui blame README.md	exit 0!=1; stdout
+L011	DIFF	gui blame HEAD README.md	exit 0!=1; stdout
+L012	DIFF	gui blame --line=2 HEAD README.md	exit 0!=1; stdout
+L013	DIFF	gui blame --line 2 src/b.txt	exit 0!=1; stdout
+L014	DIFF	gui blame	exit 129!=1
+L015	DIFF	gui blame a b c	exit 129!=1
+L016	SAME	citool	
+L017	SAME	citool --amend	
+L018	SAME	citool --nocommit	
+L019	SAME	citool --amend --nocommit	
+L020	SAME	gui citool	
+L021	SAME	gui citool --nocommit	
+L022	DIFF	citool --bogus	exit 129!=1
+L023	DIFF	citool extra	exit 129!=1
+L024	DIFF	gui	exit 0!=1
+L025	SAME	gui--askpass	
+L026	SAME	gui--askpass 'Password for x:'	
+L027	SAME	gui--askyesno 'Retry?'	
+L028	DIFF	credential-wincred	exit 129!=1
+L029	DIFF	credential-wincred frobnicate	exit 0!=1
+L030	DIFF	credential-manager	exit 129!=1
+L031	DIFF	credential-manager --version	exit 0!=1; stdout
+L032	DIFF	credential-manager frobnicate	exit 0!=1
+L033	DIFF	update-git-for-windows --bogus	exit 129!=1
+L034	DIFF	update-git-for-windows extra	exit 129!=1
+L035	DIFF	update-git-for-windows -y extra	exit 129!=1

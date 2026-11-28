@@ -1,0 +1,16 @@
+=== symmetry latest/pin inventory ===
+mode=latest tip=5d2dc88
+cli_csv=verify/matrices/cli-git-help-matrix.csv
+daemon_csv=verify/matrices/daemon-git-arks-e2e-matrix.csv
+hub_csv=verify/matrices/hub-gh-arks-e2e-matrix.csv
+git_oracle=git version 2.56.1
+cli: untracked=0 (all list-cmds inventoried)
+cli_csv: Missing=0 Partial=36
+cli: list-cmds=172 csv_rows_cmds=195
+daemon: untracked long-options=0
+daemon_csv: Missing=0
+gh_oracle=gh version 2.103.3 (2026-10-26)
+hub: untracked gh top-level/reference=0
+hub_csv: v1_Missing=0 (inventoried Missing is advisory unless ARKS_RELEASE_BLOCK_HUB_MISSING=1)
+advisory_signals=0
+=== RESULT: inventory continuity OK (untracked=0; Partial/hub Missing may remain advisory) ===

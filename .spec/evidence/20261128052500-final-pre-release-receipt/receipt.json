@@ -1,0 +1,30 @@
+{
+  "gate": "final-pre-release (dod-symmetry-prerelease + argv-inventory + cli-flag-corpus + latest-inventory)",
+  "rung": "F2 finalization pre-release re-receipt on main after F1 (#80) and salvaged PRs #76/#77",
+  "venue": "docker arks-verify-m1:0.1.0 (pin) + host runner (latest-inventory continuity, advisory)",
+  "git": "git version 2.39.5",
+  "latest_oracles": {"git": "git version 2.56.1", "gh": "gh version 2.103.3 (2026-10-26)"},
+  "tip": "5d2dc88",
+  "prerelease_symmetry": {
+    "ARKS_RELEASE_BLOCK_HUB_MISSING": 1,
+    "cli_missing": 0,
+    "cli_partial": 36,
+    "daemon_missing": 0,
+    "hub_v1_missing": 0,
+    "untracked_pin_cli": 0,
+    "untracked_pin_daemon": 0,
+    "result": "OK"
+  },
+  "latest_inventory_continuity": {
+    "untracked_latest_cli": 0,
+    "untracked_latest_daemon": 0,
+    "untracked_latest_gh": 0,
+    "result": "OK (advisory continuity; not pin-DoD Claimed)"
+  },
+  "inventory": {"commands": 185, "commands_full": 110, "commands_no_inventory": 75, "options": 1852, "accepted": 1852},
+  "corpora": "corpora/summary.json (4,549 lines over 12 corpora, 4,446 SAME)",
+  "diff_classes": {"post-pin": 77, "design": 26, "timing": 0, "open": 0, "unreasoned": 0},
+  "previous": "20261125062639-argv-corpus-receipt-after-queue (tip 4814ae2: 4,502 lines, 4,396 SAME, 77 post-pin, 26 design, 3 timing)",
+  "note": "Adds 47 net new format-patch corpus lines from PR #76 (family-commit: 1,106 lines, 1,086 SAME, same 20 post-pin diffs) and clears all 3 timing diffs in family-a3-tools (165/165 SAME when run alone). Zero open or unreasoned DIFF lines remain.",
+  "timestamp": "2026-11-28T05:25:00Z"
+}
