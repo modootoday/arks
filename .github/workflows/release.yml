@@ -329,7 +329,6 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "24"
-          registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
       - name: Skip if npm packaging tree is absent
@@ -347,16 +346,17 @@ jobs:
       # Trusted Publishing + provenance on public repos.
       # Requires npm ≥ 11.5.1, Node ≥ 22.14, GitHub-hosted runner.
       # Human must complete one-time manual first publish (scripts/bootstrap-npm-publish.sh)
-      # and bind trusted publisher on npmjs.com for all 4 packages (`arks`,
-      # `arks-linux-x64`, `arks-darwin-arm64`, `arks-win32-x64`):
+      # and bind trusted publisher on npmjs.com for all 4 packages (`@modootoday/arks`,
+      # `@modootoday/arks-linux-x64`, `@modootoday/arks-darwin-arm64`, `@modootoday/arks-win32-x64`):
       # repo "modootoday/arks", workflow "release.yml", environment "npm".
       # https://docs.npmjs.com/trusted-publishers/
-      # No NODE_AUTH_TOKEN / NPM_TOKEN secret fallback.
+      # No NODE_AUTH_TOKEN / NPM_TOKEN secret fallback, and no setup-node registry-url
+      # (which writes an empty _authToken .npmrc line that can interfere with OIDC).
       - name: npm publish (4 packages, OIDC + provenance)
         if: steps.gate.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          npm install --global npm@11.5.1
+          npm --version
           bash scripts/bootstrap-npm-publish.sh --artifacts-dir artifacts --provenance
 
   # --- Approve-gated OIDC: PyPI ---
