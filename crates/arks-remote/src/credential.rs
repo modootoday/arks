@@ -192,14 +192,11 @@ impl CredentialSource {
         let mut username = None;
         let mut askpass_cfg: Option<PathBuf> = None;
 
-        let mut paths: Vec<PathBuf> = Vec::new();
-        if let Ok(home) = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
-            paths.push(PathBuf::from(&home).join(".gitconfig"));
-            paths.push(PathBuf::from(&home).join(".config/git/config"));
-        }
-        if let Ok(g) = std::env::var("GIT_CONFIG_GLOBAL") {
-            paths.push(PathBuf::from(g));
-        }
+        let mut paths: Vec<PathBuf> = global_config_paths(
+            std::env::var_os("GIT_CONFIG_GLOBAL"),
+            std::env::var_os("XDG_CONFIG_HOME"),
+            std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")),
+        );
         if let Ok(extra) = std::env::var("ARKS_CREDENTIAL_CONFIG") {
             paths.push(PathBuf::from(extra));
         }
@@ -234,6 +231,32 @@ impl CredentialSource {
             filled_cache: RefCell::new(None),
         }
     }
+}
+
+/// Global config files in read order: XDG then `~/.gitconfig`; `GIT_CONFIG_GLOBAL` replaces both
+/// (per git-config(1), <https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGGLOBAL>).
+fn global_config_paths(
+    global_override: Option<std::ffi::OsString>,
+    xdg_home: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Vec<PathBuf> {
+    if let Some(g) = global_override {
+        return if g.is_empty() {
+            Vec::new()
+        } else {
+            vec![PathBuf::from(g)]
+        };
+    }
+    let mut paths = Vec::new();
+    if let Some(xdg) = xdg_home.filter(|v| !v.is_empty()) {
+        paths.push(PathBuf::from(xdg).join("git").join("config"));
+    } else if let Some(ref h) = home {
+        paths.push(PathBuf::from(h).join(".config").join("git").join("config"));
+    }
+    if let Some(h) = home {
+        paths.push(PathBuf::from(h).join(".gitconfig"));
+    }
+    paths
 }
 
 fn find_git_config(start: &Path) -> Option<PathBuf> {
@@ -1346,6 +1369,33 @@ mod tests {
         assert_eq!(
             prepared.authorization.as_deref(),
             Some("Basic dXNlcjpzZWNyZXQ=")
+        );
+    }
+
+    #[test]
+    fn global_config_paths_override_replaces_home_files() {
+        use std::ffi::OsString;
+        let replaced = global_config_paths(
+            Some(OsString::from("/dev/null")),
+            Some(OsString::from("/xdg")),
+            Some(OsString::from("/home/u")),
+        );
+        assert_eq!(replaced, vec![PathBuf::from("/dev/null")]);
+
+        let empty = global_config_paths(
+            Some(OsString::from("")),
+            None,
+            Some(OsString::from("/home/u")),
+        );
+        assert!(empty.is_empty());
+
+        let default_order = global_config_paths(None, None, Some(OsString::from("/home/u")));
+        assert_eq!(
+            default_order,
+            vec![
+                PathBuf::from("/home/u/.config/git/config"),
+                PathBuf::from("/home/u/.gitconfig"),
+            ]
         );
     }
 }
