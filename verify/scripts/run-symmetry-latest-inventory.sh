@@ -57,7 +57,10 @@ if [[ ! -f "$CLI_CSV" ]]; then
   exit 1
 fi
 
-git --list-cmds=main,others,alias 2>/dev/null | awk 'NF && $0 !~ / / {print}' | sort -u >"$OUT_DIR/git-list-cmds.txt"
+# Query Git's own built-in command list with isolated config; exclude `others`
+# (unrelated third-party git-* tools on PATH such as git-clang-format) and user `alias`.
+GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null \
+  git --list-cmds=main 2>/dev/null | awk 'NF && $0 !~ / / {print}' | sort -u >"$OUT_DIR/git-list-cmds.txt"
 awk -F, 'NR>1 {print $1}' "$CLI_CSV" | sed '/^$/d' | sort -u >"$OUT_DIR/cli-csv-cmds.txt"
 
 untracked_cli="$(comm -23 "$OUT_DIR/git-list-cmds.txt" "$OUT_DIR/cli-csv-cmds.txt" || true)"
