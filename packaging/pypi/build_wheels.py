@@ -75,7 +75,7 @@ def record_digest(data: bytes) -> tuple[str, str]:
 def build_metadata(version: str, readme_text: str) -> bytes:
     headers = [
         "Metadata-Version: 2.1",
-        "Name: arks",
+        "Name: arks-cli",
         f"Version: {version}",
         "Summary: arks for Git - native Rust Git-compatible CLI, daemon, forge client, and self-hosted server",
         "Home-page: https://modootoday.github.io/arks/",
@@ -115,9 +115,10 @@ def build_wheel(
     spec = TARGET_SPECS[target]
     wheel_tag = spec["wheel_tag"]
     bin_name = spec["bin_name"]
-    dist_info = f"arks-{version}.dist-info"
-    data_scripts = f"arks-{version}.data/scripts"
-    wheel_name = f"arks-{version}-py3-none-{wheel_tag}.whl"
+    dist_name = "arks_cli"
+    dist_info = f"{dist_name}-{version}.dist-info"
+    data_scripts = f"{dist_name}-{version}.data/scripts"
+    wheel_name = f"{dist_name}-{version}-py3-none-{wheel_tag}.whl"
     wheel_path = out_dir / wheel_name
 
     wheel_meta = (

@@ -1,5 +1,5 @@
 [project]
-name = "arks"
+name = "arks-cli"
 version = "0.1.0"
 description = "arks for Git — native Rust Git-compatible CLI, daemon, forge client, and self-hosted server"
 readme = "../../README.md"
