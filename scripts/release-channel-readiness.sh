@@ -40,25 +40,25 @@ else
   echo "- crates.io: crate looks publishable — still needs crates.io trusted publisher bound to \`release.yml\` + environment \`crates\`"
 fi
 
-if [[ ! -f npm/package.json ]]; then
-  echo "- npm: **skip expected** — no \`npm/package.json\` yet"
+if [[ ! -f packaging/npm/build_packages.mjs ]]; then
+  echo "- npm: **skip expected** — no \`packaging/npm/build_packages.mjs\` yet"
   skip_notes+=("npm")
 else
-  echo "- npm: packaging tree present — needs npm trusted publisher + environment \`npm\`"
+  echo "- npm: packaging tree present (\`packaging/npm/\`) — needs npm trusted publisher + environment \`npm\`"
 fi
 
-if [[ ! -f pyproject.toml && ! -f python/pyproject.toml ]]; then
-  echo "- PyPI: **skip expected** — no \`pyproject.toml\` / \`python/pyproject.toml\` yet"
+if [[ ! -f packaging/pypi/build_wheels.py ]]; then
+  echo "- PyPI: **skip expected** — no \`packaging/pypi/build_wheels.py\` yet"
   skip_notes+=("pypi")
 else
-  echo "- PyPI: packaging tree present — needs PyPI trusted publisher + environment \`pypi\`"
+  echo "- PyPI: packaging tree present (\`packaging/pypi/\`) — needs PyPI Pending/Trusted Publisher + environment \`pypi\`"
 fi
 
-if ! compgen -G "*.gemspec" >/dev/null 2>&1; then
-  echo "- RubyGems: **skip expected** — no \`*.gemspec\` yet"
+if [[ ! -f packaging/rubygems/build_gems.rb ]]; then
+  echo "- RubyGems: **skip expected** — no \`packaging/rubygems/build_gems.rb\` yet"
   skip_notes+=("rubygems")
 else
-  echo "- RubyGems: gemspec present — needs RubyGems trusted publisher + environment \`rubygems\`"
+  echo "- RubyGems: packaging tree present (\`packaging/rubygems/\`) — needs RubyGems Pending/Trusted Publisher + environment \`rubygems\`"
 fi
 
 echo

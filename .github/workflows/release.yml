@@ -159,6 +159,59 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           bash scripts/release-channel-readiness.sh | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+
+      - name: Smoke-test PyPI, npm, and RubyGems packaging (dry-run only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SMOKE="$(mktemp -d)"
+          trap 'rm -rf "$SMOKE"' EXIT
+
+          echo "### Multi-registry packaging dry-run smoke" >> "$GITHUB_STEP_SUMMARY"
+
+          # 1. PyPI binary wheels
+          python3 packaging/pypi/build_wheels.py \
+            --artifacts-dir artifacts \
+            --out-dir "$SMOKE/wheels"
+          python3 -m venv "$SMOKE/venv"
+          "$SMOKE/venv/bin/pip" install --quiet --no-index --find-links "$SMOKE/wheels" arks
+          PY_VER="$("$SMOKE/venv/bin/arks" --version)"
+          echo "- PyPI wheels (3 platforms): OK (\`${PY_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # 2. npm platform packages + root shim
+          node packaging/npm/build_packages.mjs \
+            --artifacts-dir artifacts \
+            --out-dir "$SMOKE/npm"
+          mkdir -p "$SMOKE/npm-tgz" "$SMOKE/npm-app"
+          for p in arks-linux-x64 arks-darwin-arm64 arks-win32-x64 arks; do
+            (cd "$SMOKE/npm/$p" && npm pack --quiet --pack-destination "$SMOKE/npm-tgz")
+          done
+          (cd "$SMOKE/npm-app" && npm init -y >/dev/null && \
+            npm install --no-audit --no-fund --offline \
+              "$SMOKE/npm-tgz"/arks-linux-x64-*.tgz \
+              "$SMOKE/npm-tgz"/arks-[0-9]*.tgz >/dev/null)
+          NPM_VER="$("$SMOKE/npm-app/node_modules/.bin/arks" --version)"
+          echo "- npm packages (3 platforms + root): OK (\`${NPM_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # 3. RubyGems platform gems
+          ruby packaging/rubygems/build_gems.rb \
+            --artifacts-dir artifacts \
+            --out-dir "$SMOKE/gems"
+          GEM_HOME="$SMOKE/gem-home" GEM_PATH="$SMOKE/gem-home" \
+            gem install --local --no-document "$SMOKE/gems"/arks-*-x86_64-linux.gem
+          GEM_VER="$(GEM_HOME="$SMOKE/gem-home" GEM_PATH="$SMOKE/gem-home" \
+            "$SMOKE/gem-home/bin/arks" --version)"
+          echo "- RubyGems gems (3 platforms): OK (\`${GEM_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
+
   # --- Ungated: draft GitHub Release + attach assets (checksum / unsigned) ---
   github-release:
     name: GitHub Release (draft)
@@ -266,6 +319,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: artifacts
+          merge-multiple: true
+
       - uses: actions/setup-node@v5
         with:
           node-version: "24"
@@ -277,26 +337,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ ! -f npm/package.json ]; then
+          if [ ! -f packaging/npm/build_packages.mjs ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "No npm/ package tree yet; OIDC job + environment npm are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
+            echo "No packaging/npm tree yet; OIDC job + environment npm are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       # Trusted Publishing + provenance on public repos.
       # Requires npm ≥ 11.5.1, Node ≥ 22.14, GitHub-hosted runner.
-      # Human must configure trusted publisher on npmjs.com for this repo,
-      # workflow "release.yml", environment "npm".
+      # Human must complete one-time manual first publish (scripts/bootstrap-npm-publish.sh)
+      # and bind trusted publisher on npmjs.com for all 4 packages (`arks`,
+      # `arks-linux-x64`, `arks-darwin-arm64`, `arks-win32-x64`):
+      # repo "modootoday/arks", workflow "release.yml", environment "npm".
       # https://docs.npmjs.com/trusted-publishers/
       # No NODE_AUTH_TOKEN / NPM_TOKEN secret fallback.
-      - name: npm publish (OIDC)
+      - name: npm publish (4 packages, OIDC + provenance)
         if: steps.gate.outputs.skip != 'true'
         run: |
           set -euo pipefail
           npm install --global npm@11.5.1
-          npm publish --access public --provenance
-        working-directory: npm
+          bash scripts/bootstrap-npm-publish.sh --artifacts-dir artifacts --provenance
 
   # --- Approve-gated OIDC: PyPI ---
   publish-pypi:
@@ -311,29 +372,44 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: artifacts
+          merge-multiple: true
+
       - name: Skip if Python packaging tree is absent
         id: gate
         shell: bash
         run: |
           set -euo pipefail
-          if [ ! -f pyproject.toml ] && [ ! -f python/pyproject.toml ]; then
+          if [ ! -f packaging/pypi/build_wheels.py ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "No PyPI packaging yet; OIDC job + environment pypi are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
+            echo "No packaging/pypi tree yet; OIDC job + environment pypi are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Build 3-OS PEP 427/600 binary wheels
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          python3 packaging/pypi/build_wheels.py \
+            --artifacts-dir artifacts \
+            --out-dir dist-wheels
+
       # Trusted Publishers: no PYPI_API_TOKEN secret fallback.
-      # Human must configure trusted publisher on PyPI for this repo,
-      # workflow "release.yml", environment "pypi".
+      # Human configures Pending/Trusted Publisher on pypi.org for project "arks",
+      # repo "modootoday/arks", workflow "release.yml", environment "pypi".
       # https://docs.pypi.org/trusted-publishers/
       - name: Publish to PyPI (OIDC)
         if: steps.gate.outputs.skip != 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: dist/
+          packages-dir: dist-wheels/
 
-  # --- Approve-gated OIDC: RubyGems (Phase 2 shape; skip until gemspec exists) ---
+  # --- Approve-gated OIDC: RubyGems ---
   publish-rubygems:
     name: publish RubyGems (OIDC)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -346,28 +422,51 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Skip if gemspec is absent
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Skip if RubyGems packaging tree is absent
         id: gate
         shell: bash
         run: |
           set -euo pipefail
-          if ! ls *.gemspec >/dev/null 2>&1; then
+          if [ ! -f packaging/rubygems/build_gems.rb ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "No gemspec yet; OIDC job + environment rubygems are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
+            echo "No packaging/rubygems tree yet; OIDC job + environment rubygems are wired; skip publish." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       # Trusted Publishing — no RUBYGEMS_API_KEY secret fallback.
-      # Human must configure trusted publisher on rubygems.org for this repo,
-      # workflow "release.yml", environment "rubygems".
+      # Human configures Pending/Trusted Publisher on rubygems.org for gem "arks",
+      # repo "modootoday/arks", workflow "release.yml", environment "rubygems".
       # https://guides.rubygems.org/trusted-publishing/
       - uses: ruby/setup-ruby@v1
         if: steps.gate.outputs.skip != 'true'
         with:
           ruby-version: "3.3"
-          bundler-cache: true
+          bundler-cache: false
 
-      - name: Release gem (OIDC)
+      - name: Build 3-OS platform gems
         if: steps.gate.outputs.skip != 'true'
-        uses: rubygems/release-gem@v1
+        run: |
+          set -euo pipefail
+          ruby packaging/rubygems/build_gems.rb \
+            --artifacts-dir artifacts \
+            --out-dir dist-gems
+
+      - name: Configure RubyGems OIDC credentials
+        if: steps.gate.outputs.skip != 'true'
+        uses: rubygems/configure-rubygems-credentials@v1
+
+      - name: Push platform gems (OIDC)
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          for g in dist-gems/*.gem; do
+            gem push "$g"
+          done

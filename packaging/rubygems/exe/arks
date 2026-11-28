@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+bin_name = Gem.win_platform? ? "arks.exe" : "arks"
+bin_path = File.expand_path("../libexec/#{bin_name}", __dir__)
+
+unless File.exist?(bin_path)
+  warn "arks: bundled binary not found at #{bin_path}"
+  exit 1
+end
+
+if Gem.win_platform?
+  system(bin_path, *ARGV)
+  exit($?.exitstatus || 1)
+else
+  exec(bin_path, *ARGV)
+end
