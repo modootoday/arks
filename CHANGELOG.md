@@ -6,6 +6,35 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-28
+
+Completes the full **`v0.2.0` scope expansion (`E1`–`E8`)** and ships all 4 external package
+registries (`crates.io` 18/18 crates, `PyPI` `arks-cli`, `npm` `@modootoday/arks` + 3 platform
+packages, and `RubyGems` `arks`) via zero-token GitHub Actions OIDC Trusted Publishing.
+
+### Added
+
+- **Git Reftable v1/v2 backend (`arks-refs`, `arks refs migrate` / `verify`, E5):** pure-Rust
+  `REFT` v1 (SHA-1) & v2 (SHA-256) reader/writer with prefix compression, 3-byte `restart_offset`
+  binary search, zlib-compressed log blocks, IEEE CRC-32 footer verification, `tables.list` +
+  `tables.list.lock` atomic transactions, geometric factor-2 compaction, transparent
+  `FilesystemRefStore` dispatch, and `arks refs migrate --ref-format=reftable|files`.
+- **Native Git LFS v1 client (`arks-remote::lfs`, `arks lfs`, E6):** canonical LFS v1 pointers,
+  content-addressed `.git/lfs/objects/{aa}/{bb}/{oid}` streaming SHA-256 store, in-process
+  `filter=lfs` clean/smudge + long-running `filter-process` (pkt-line v2), and Batch API + Basic
+  Transfer client with zero external `git-lfs` subprocesses.
+- **`arks serve` native Git LFS server endpoint (`arks-server::lfs`, E7):** `/info/lfs/objects/batch`,
+  SHA-256-verified `PUT`/`GET /info/lfs/objects/<oid>`, and `/info/lfs/verify` behind existing
+  `BasicAuthConfig` auth with `--no-lfs` opt-out.
+- **`arks serve` embedded single-binary SSR Web UI (`arks-server::web_ui`, E8):** compile-time
+  `include_str!` stylesheet, strict HTML escaping, `CSP: default-src 'self'; script-src 'none'`,
+  repository/tree/blob/commits/commit/refs views, smart-HTTP coexistence, and `--no-web-ui` opt-out.
+
+### Fixed
+
+- **RubyGems Pending Trusted Publisher OIDC:** passes immutable account `owner: "255203"` to
+  `rubygems/configure-rubygems-credentials@v2.2.0` in `.github/workflows/release.yml`.
+
 ## [0.1.2] - 2026-11-28
 
 Completes Wave 1 (`E1`–`E4`) of the `v0.2.0` scope expansion and activates `RubyGems` (`arks`)
