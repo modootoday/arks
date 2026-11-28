@@ -6,9 +6,14 @@
 //! the patch and the `-- ` signature); `--cover-letter` adds message 0 with
 //! the shortlog and diffstat of the series; `--attach` / `--inline` wrap the
 //! patch in MIME parts; `--base` records the base commit and the patch ids
-//! of prerequisite commits.
+//! of prerequisite commits. A non-ASCII subject or author name is Q-encoded
+//! unless `--no-encode-email-headers` / `format.encodeEmailHeaders=false`,
+//! and an 8-bit message declares its charset (`mail_header`).
 //! Cite: <https://git-scm.com/docs/git-format-patch>,
 //! <https://git-scm.com/docs/git-patch-id> (behaviour, not code).
+
+mod mail_header;
+mod wrap;
 
 use crate::cmd::opt_parse::{Item, Mode, Parsed, parse};
 use crate::cmd::shared::{committer_signature, resolve_rev};
@@ -54,6 +59,7 @@ struct Opts {
     base: Option<String>,
     quiet: bool,
     force_in_body_from: bool,
+    encode_headers: bool,
     cover_from_description: String,
     description: Option<String>,
     out_dir: Option<PathBuf>,
@@ -92,7 +98,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
         to: p.values("to"),
         cc: p.values("cc"),
         from: None,
-        in_reply_to: p.value("in-reply-to"),
+        in_reply_to: p.value("in-reply-to").map(|v| message_id(&v)),
         attach: None,
         inline: false,
         thread: None,
@@ -100,6 +106,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
         base: p.value("base"),
         quiet: p.on("quiet"),
         force_in_body_from: p.on("force-in-body-from"),
+        encode_headers: cfg.get_bool("format.encodeEmailHeaders").unwrap_or(true),
         cover_from_description: p
             .value("cover-from-description")
             .unwrap_or_else(|| "message".into()),
@@ -134,6 +141,7 @@ fn options(p: &Parsed) -> CliResult<Opts> {
             ("thread", false) => o.thread = Some(val.clone().unwrap_or_else(|| "shallow".into())),
             ("thread", true) => o.thread = None,
             ("rfc", false) => o.subject_prefix = format!("RFC {}", o.subject_prefix),
+            ("encode-email-headers", neg) => o.encode_headers = !neg,
             _ => {}
         }
     }
@@ -326,7 +334,7 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         .as_ref()
         .map(|v| format!("v{v}-"))
         .unwrap_or_default();
-    // Threading: Message-ID per message from the current time, like git.
+    // Threading: a Message-Id per message from the current time, like git.
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs())
@@ -347,40 +355,24 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         }
     };
     let mut rendered: Vec<(String, String)> = Vec::new();
-    let mut first_id: Option<String> = None;
-    let mut prev_id: Option<String> = None;
-    let mut thread_ids: Vec<(Option<String>, Option<String>, Option<String>)> = Vec::new();
     let messages = total + usize::from(o.cover_letter);
-    for k in 0..messages {
-        let what = if o.cover_letter && k == 0 {
-            "cover".to_string()
-        } else {
-            commits[k - usize::from(o.cover_letter)].to_hex()
-        };
-        if o.thread.is_some() {
-            let id = msg_id(&what);
-            let (irt, refs) = match (&o.in_reply_to, &first_id, &prev_id) {
-                (_, None, _) => (o.in_reply_to.clone(), o.in_reply_to.clone()),
-                (_, Some(first), Some(prev)) => {
-                    let deep = o.thread.as_deref() == Some("deep");
-                    let parent = if deep { prev.clone() } else { first.clone() };
-                    let refs = match &o.in_reply_to {
-                        Some(r) => format!("{r}\n {first}"),
-                        None => first.clone(),
-                    };
-                    (Some(parent), Some(refs))
-                }
-                _ => (None, None),
-            };
-            if first_id.is_none() {
-                first_id = Some(id.clone());
-            }
-            prev_id = Some(id.clone());
-            thread_ids.push((Some(id), irt, refs));
-        } else {
-            thread_ids.push((None, o.in_reply_to.clone(), o.in_reply_to.clone()));
-        }
-    }
+    let own_ids: Vec<Option<String>> = (0..messages)
+        .map(|k| {
+            o.thread.as_ref().map(|_| {
+                msg_id(&if o.cover_letter && k == 0 {
+                    "cover".to_string()
+                } else {
+                    commits[k - usize::from(o.cover_letter)].to_hex()
+                })
+            })
+        })
+        .collect();
+    let thread_ids = thread_headers(
+        own_ids,
+        o.in_reply_to.as_deref(),
+        o.thread.as_deref() == Some("deep"),
+        o.cover_letter,
+    );
     if o.cover_letter {
         let body = render_cover(
             &repo,
@@ -405,7 +397,9 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         let prefix = if o.keep_subject {
             String::new()
         } else if numbered {
-            format!("[{}{version} {num}/{shown_total}] ", o.subject_prefix)
+            // The number is zero-padded to the width of the total.
+            let w = shown_total.to_string().len();
+            format!("[{}{version} {num:0w$}/{shown_total}] ", o.subject_prefix)
         } else {
             format!("[{}{version}] ", o.subject_prefix)
         };
@@ -475,6 +469,42 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         }
     }
     Ok(())
+}
+
+/// `(Message-Id, In-Reply-To, References)` per message, cover letter first.
+/// Each message replies to the newest entry of the reference chain, which
+/// starts with `--in-reply-to`. Deep threading adds every message to the
+/// chain; shallow threading adds only the cover letter, or the first message
+/// when the chain is still empty, so the rest reply to it.
+type ThreadIds = (Option<String>, Option<String>, Option<String>);
+
+fn thread_headers(
+    own: Vec<Option<String>>,
+    in_reply_to: Option<&str>,
+    deep: bool,
+    cover: bool,
+) -> Vec<ThreadIds> {
+    let mut chain: Vec<String> = in_reply_to.map(str::to_string).into_iter().collect();
+    let mut out = Vec::new();
+    for (k, id) in own.into_iter().enumerate() {
+        let irt = chain.last().cloned();
+        let refs = (!chain.is_empty()).then(|| chain.join("\n\t"));
+        if let Some(id) = &id {
+            if deep || (cover && k == 0) || chain.is_empty() {
+                chain.push(id.clone());
+            }
+        }
+        out.push((id, irt, refs));
+    }
+    out
+}
+
+/// An `--in-reply-to` value as a message id: trimmed and in angle brackets.
+fn message_id(v: &str) -> String {
+    let v = v.trim();
+    let open = if v.starts_with('<') { "" } else { "<" };
+    let close = if v.ends_with('>') { "" } else { ">" };
+    format!("{open}{v}{close}")
 }
 
 fn read_commit(repo: &Repository, oid: &Oid) -> CliResult<Commit> {
@@ -670,7 +700,7 @@ fn rfc2822(sig: &arks_object::Signature) -> String {
 fn header_block(o: &Opts, ids: &(Option<String>, Option<String>, Option<String>)) -> String {
     let mut s = String::new();
     if let Some(id) = &ids.0 {
-        s.push_str(&format!("Message-ID: {id}\n"));
+        s.push_str(&format!("Message-Id: {id}\n"));
     }
     if let Some(irt) = &ids.1 {
         s.push_str(&format!("In-Reply-To: {irt}\n"));
@@ -742,15 +772,20 @@ fn render_patch(
     };
     out.push_str(&format!("From {from_oid} Mon Sep 17 00:00:00 2001\n"));
     out.push_str(&header_block(o, ids));
-    out.push_str(&format!("From: {sender}\n"));
+    out.push_str(&mail_header::address("From", &sender, o.encode_headers));
     out.push_str(&format!("Date: {}\n", rfc2822(&commit.author)));
-    out.push_str(&format!("Subject: {prefix}{subject}\n"));
-    out.push_str(&extra_headers(o));
+    out.push_str(&mail_header::subject(prefix, &subject, o.encode_headers));
     let mut text = String::new();
     if in_body_from {
         text.push_str(&format!("From: {author}\n\n"));
     }
     text.push_str(&body);
+    // An 8-bit message (subject, in-body From, body; not the diff) declares
+    // its charset; a MIME multipart (`--attach`) declares it per part.
+    if o.attach.is_none() && !(subject.is_ascii() && text.is_ascii()) {
+        out.push_str(mail_header::MIME_8BIT);
+    }
+    out.push_str(&extra_headers(o));
     if o.no_stat && reroll.is_empty() {
         text.push('\n');
     } else if o.no_stat {
@@ -822,11 +857,12 @@ fn render_cover(
     let total = commits.len() + o.start_number - 1;
     let mut out = format!("From {} Mon Sep 17 00:00:00 2001\n", tip.to_hex());
     out.push_str(&header_block(o, ids));
-    out.push_str(&format!(
-        "From: {}\n",
-        o.from
-            .clone()
-            .unwrap_or_else(|| format!("{} <{}>", me.name, me.email))
+    // The cover letter is from the committer even with `--from`; the name
+    // is quoted as a phrase but never Q-encoded.
+    out.push_str(&mail_header::address(
+        "From",
+        &format!("{} <{}>", me.name, me.email),
+        false,
     ));
     out.push_str(&format!("Date: {}\n", rfc2822(&me)));
     let (mut subject, mut blurb) = (
@@ -853,11 +889,25 @@ fn render_cover(
         }
     }
     let prefix = if numbered {
-        format!("[{}{version} 0/{total}]", o.subject_prefix)
+        let w = total.to_string().len();
+        format!("[{}{version} {:0w$}/{total}]", o.subject_prefix, 0)
     } else {
         format!("[{}{version}]", o.subject_prefix)
     };
     out.push_str(&format!("Subject: {prefix} {subject}\n"));
+    // The cover declares 8-bit text when a commit of the series (identities
+    // or message) is not ASCII; its own subject and blurb do not count.
+    let mut eight_bit = false;
+    for c in commits {
+        let c = read_commit(repo, c)?;
+        eight_bit |= [&c.author, &c.committer]
+            .iter()
+            .any(|s| !(s.name.is_ascii() && s.email.is_ascii()))
+            || !c.message.is_ascii();
+    }
+    if eight_bit {
+        out.push_str(mail_header::MIME_8BIT);
+    }
     out.push_str(&extra_headers(o));
     out.push('\n');
     if blurb.is_empty() {
@@ -881,7 +931,9 @@ fn render_cover(
     for (name, subjects) in &by_author {
         out.push_str(&format!("{name} ({}):\n", subjects.len()));
         for s in subjects {
-            out.push_str(&format!("  {s}\n"));
+            // `git shortlog` layout: width 72, indents 2 and 4.
+            out.push_str(&wrap::wrap(s, wrap::Lead::Indent(2), 4, 72));
+            out.push('\n');
         }
         out.push('\n');
     }
@@ -938,5 +990,51 @@ fn patch_slug(subject: &str) -> String {
         "patch".to_owned()
     } else {
         slug
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Header layouts of stock Git 2.39.5 from the clean-room image.
+
+    fn ids(n: usize) -> Vec<Option<String>> {
+        (1..=n).map(|k| Some(format!("<{k}>"))).collect()
+    }
+
+    fn some(s: &str) -> Option<String> {
+        Some(s.to_string())
+    }
+
+    #[test]
+    fn shallow_threads_reply_to_the_root() {
+        let t = thread_headers(ids(3), None, false, false);
+        assert_eq!(t[0], (some("<1>"), None, None));
+        assert_eq!(t[2], (some("<3>"), some("<1>"), some("<1>")));
+        let t = thread_headers(ids(3), Some("<x@y>"), false, false);
+        assert_eq!(t[2], (some("<3>"), some("<x@y>"), some("<x@y>")));
+        let t = thread_headers(ids(3), Some("<x@y>"), false, true);
+        assert_eq!(t[0], (some("<1>"), some("<x@y>"), some("<x@y>")));
+        assert_eq!(t[2], (some("<3>"), some("<1>"), some("<x@y>\n\t<1>")));
+    }
+
+    #[test]
+    fn deep_threads_chain_every_message() {
+        let t = thread_headers(ids(4), Some("<x@y>"), true, true);
+        assert_eq!(
+            t[3],
+            (some("<4>"), some("<3>"), some("<x@y>\n\t<1>\n\t<2>\n\t<3>"))
+        );
+        let t = thread_headers(ids(3), None, true, false);
+        assert_eq!(t[2], (some("<3>"), some("<2>"), some("<1>\n\t<2>")));
+    }
+
+    #[test]
+    fn unthreaded_messages_reply_to_in_reply_to() {
+        let t = thread_headers(vec![None, None], Some("<x@y>"), false, true);
+        assert_eq!(t[1], (None, some("<x@y>"), some("<x@y>")));
+        assert_eq!(message_id("x@y"), "<x@y>");
+        assert_eq!(message_id("  <x@y>  "), "<x@y>");
     }
 }
