@@ -90,6 +90,8 @@ chacha20 = { version = "0.9", default-features = false }
 poly1305 = { version = "0.8", default-features = false }
 subtle = { version = "2.6", default-features = false }
 base64 = "0.22"
+# Pure-Rust NaCl/libsodium crypto_box_seal (X25519 + BLAKE2b-192 + XSalsa20Poly1305) for Actions secrets (E2).
+crypto_box = { version = "0.9", features = ["seal"] }
 thiserror = "2.0"
 windows = { version = "0.58", default-features = false, features = [
     "Win32_Foundation",
