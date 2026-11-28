@@ -32,6 +32,7 @@ pub mod fast_export;
 pub mod fetch;
 pub mod for_each_ref;
 pub mod format_patch;
+pub mod git_replay;
 pub mod grep;
 pub mod gui;
 pub mod history;
@@ -140,12 +141,13 @@ pub use diff_cmd::cmd_diff;
 pub use fetch::cmd_fetch;
 pub use for_each_ref::cmd_for_each_ref;
 pub use format_patch::cmd_format_patch;
+pub use git_replay::cmd_git_replay;
 pub use grep::cmd_grep;
 pub use gui::{cmd_citool, cmd_gui, cmd_gui_askpass, cmd_gui_askyesno};
 pub use history::{cmd_reflog, cmd_shortlog};
 pub use host_skew::{
-    cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_replay_exp,
-    cmd_repo, cmd_survey, cmd_url_parse,
+    cmd_diff_pairs, cmd_format_rev, cmd_history, cmd_last_modified, cmd_refs, cmd_repo, cmd_survey,
+    cmd_url_parse,
 };
 pub use inspect::{cmd_count_objects, cmd_fsck, cmd_pack_refs};
 pub use internal_helpers::{
