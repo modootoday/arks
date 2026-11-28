@@ -17,15 +17,12 @@ Rules: `95-autonomous-operation`, `96-agy-parallel-governance`, `91-commit-hygie
 Run read-only before creating any branch or editing files:
 
 ```bash
-git fetch origin main
-git ls-remote --heads origin
-gh pr list --state open --json number,headRefName,isDraft,mergeable,mergeStateStatus,labels,files
-gh run list --branch main --limit 5
+python3 -I verify/scripts/agy-governance-check.py sweep
 ```
 
 Check and triage in order:
 1. **Red `main`?** Fix `main` first (single A0 PR).
-2. **Orphan remote branches** (in `git ls-remote --heads origin`, not `main`, no open PR)? Record in Korean report; open Draft/Ready PR for own active `agy/*` branch; never delete foreign/legacy `claude/*` branches without owner authorization (A2).
+2. **Orphan remote branches** (any non-`main` remote branch with no open PR)? Record in Korean report; open Draft/Ready PR for own active `agy/*` branch; never delete foreign/legacy `claude/*` branches without owner authorization (A2).
 3. **Open agent PRs ≥ 3?** Do not open a 4th PR; help fix/rebase/close existing PRs first.
 4. **Hot-file overlap?** Check `files` on all open PRs against the Hot-File Lock List (`Cargo.toml`, `Cargo.lock`, `crates/arks/src/cmd/mod.rs`, `git_dispatch.rs`, `porcelain_opts.rs`, `build-fixture.sh`, roadmap, residual register, queue plan, `docs/completion.md`, `AGENTS.md`, `.spec/README.md`). Never edit a hot file concurrently with another open PR.
 
@@ -50,24 +47,18 @@ One branch = one work package (or one Tier A Integrator wave) = one PR.
 
 ## Step 3 — Portable local pre-push gate
 
-Run before every `git push`:
+Run before every `git push` (automatically runs `cargo fmt`/`clippy`/`test` when `crates/**` or `Cargo.*` changed):
 
-1. **Rust (if `crates/**` or `Cargo.*` changed):**
-   ```bash
-   cargo fmt --all -- --check
-   cargo clippy --workspace --all-targets -- -D warnings
-   cargo test --workspace
-   ```
-2. **History H1–H7 + English-only + Public-surface check:**
-   - Zero merge commits: `[ -z "$(git rev-list --merges origin/main..HEAD)" ]`
-   - Subjects Conventional Commits, imperative, ≤72 chars; zero `WIP`/`fixup!`/`squash!`/`amend!`.
-   - Author & committer = `Choi Won <1237913+myso-kr@users.noreply.github.com>`; zero trailers.
-   - Zero Hangul in tracked changed files and commit messages.
-   - Zero secrets, `.env*`, `.spec.local/` paths, or local home paths in diff.
-3. **Specfold (if `.spec/**` or `.agents/**` changed):**
-   - Run `spec check` if installed; otherwise verify frontmatter and `[[...]]` links.
-4. **Docker clean-room (claims only):**
-   - Run once on the integrated branch under sole-runner lock; never concurrently across subagents.
+```bash
+python3 -I verify/scripts/agy-governance-check.py gate
+```
+
+The gate checks:
+1. **Branch & clean tree:** `agy/<lane>/<slug>` branch name and zero uncommitted changes.
+2. **History H1–H7:** zero merge commits, Conventional Commits ≤72 chars, zero WIP/fixup/squash/amend/empty commits, owner noreply author/committer, zero forbidden trailers.
+3. **English-only & Public-surface:** zero Hangul, zero local user home paths, zero edits to `.claude/settings*`, `.cursor/hooks*`, `.spec.local/`, or `.env*`.
+4. **Specfold:** valid `[[...]]` links, `rel` IDs, and `governs:` paths (also run `spec check` when installed).
+5. **Rust & Docker:** Rust `fmt`/`clippy`/`test` when crate files changed; Docker clean-room sole-runner lock for Claimed receipts.
 
 ## Step 4 — Push and open PR in the same turn (Zero-Orphan Invariant)
 

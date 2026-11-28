@@ -20,6 +20,9 @@ rel:
   governs:
     - .agents/rules/96-agy-parallel-governance.md
     - .agents/skills/agy-parallel-orchestration/SKILL.md
+    - verify/scripts/agy-governance-check.py
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/agy-hygiene.yml
 ---
 
 # `agy` automated development governance
