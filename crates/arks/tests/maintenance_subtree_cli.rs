@@ -120,14 +120,35 @@ fn maintenance_register_run_start_stop_and_lock_refuse() {
         "repo entry should be removed:\n{cfg_after}"
     );
 
-    // start / stop write and clear maintenance.auto in local repo config.
-    ok(&dir, &["maintenance", "start", "--scheduler=crontab"]);
+    // start / stop write and clear maintenance.auto in local repo config
+    // (use GIT_CONFIG_GLOBAL so the test never mutates the host ~/.gitconfig).
+    let start_out = Command::new(arks_bin())
+        .current_dir(&dir)
+        .env("GIT_CONFIG_GLOBAL", &cfg_file)
+        .args(["maintenance", "start", "--scheduler=crontab"])
+        .output()
+        .expect("spawn arks maintenance start");
+    assert!(
+        start_out.status.success(),
+        "maintenance start failed: {}",
+        String::from_utf8_lossy(&start_out.stderr)
+    );
     let local_cfg = fs::read_to_string(dir.join(".git/config")).unwrap();
     assert!(
         local_cfg.contains("auto = false") || local_cfg.contains("strategy = incremental"),
         "local config after start:\n{local_cfg}"
     );
-    ok(&dir, &["maintenance", "stop"]);
+    let stop_out = Command::new(arks_bin())
+        .current_dir(&dir)
+        .env("GIT_CONFIG_GLOBAL", &cfg_file)
+        .args(["maintenance", "stop"])
+        .output()
+        .expect("spawn arks maintenance stop");
+    assert!(
+        stop_out.status.success(),
+        "maintenance stop failed: {}",
+        String::from_utf8_lossy(&stop_out.stderr)
+    );
 }
 
 #[test]

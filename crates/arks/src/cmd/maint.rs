@@ -463,7 +463,9 @@ fn canonical_repo_root() -> CliResult<String> {
         .unwrap_or_else(|| repo.git_dir())
         .to_path_buf();
     let canon = fs::canonicalize(&root).unwrap_or(root);
-    Ok(canon.to_string_lossy().into_owned())
+    let raw = canon.to_string_lossy();
+    let stripped = raw.strip_prefix(r"\\?\").unwrap_or(&raw);
+    Ok(stripped.replace('\\', "/"))
 }
 
 fn cmd_maintenance_register(args: &[String]) -> CliResult<()> {
