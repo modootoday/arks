@@ -183,7 +183,7 @@ jobs:
             --artifacts-dir artifacts \
             --out-dir "$SMOKE/wheels"
           python3 -m venv "$SMOKE/venv"
-          "$SMOKE/venv/bin/pip" install --quiet --no-index --find-links "$SMOKE/wheels" arks
+          "$SMOKE/venv/bin/pip" install --quiet --no-index --find-links "$SMOKE/wheels" arks-cli
           PY_VER="$("$SMOKE/venv/bin/arks" --version)"
           echo "- PyPI wheels (3 platforms): OK (\`${PY_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -400,7 +400,7 @@ jobs:
             --out-dir dist-wheels
 
       # Trusted Publishers: no PYPI_API_TOKEN secret fallback.
-      # Human configures Pending/Trusted Publisher on pypi.org for project "arks",
+      # Human configures Pending/Trusted Publisher on pypi.org for project "arks-cli",
       # repo "modootoday/arks", workflow "release.yml", environment "pypi".
       # https://docs.pypi.org/trusted-publishers/
       - name: Publish to PyPI (OIDC)

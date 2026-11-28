@@ -3,7 +3,7 @@ id: sot:root/external-distribution-and-registry-publishing
 title: External distribution and multi-registry OIDC publishing (D1–D6)
 status: active
 created: 2026-11-28T07:00:00Z
-updated: 2026-11-28T07:00:00Z
+updated: 2026-11-28T07:36:00Z
 tags: [release, distribution, oidc, trusted-publishing, github-pages, crates-io, pypi, npm, rubygems]
 verify: manual
 rel:
@@ -26,7 +26,7 @@ rel:
 
 # External distribution and multi-registry OIDC publishing (D1–D6)
 
-Version **0.1.0**. Normative specification for shipping **`arks`** across every KEEP external
+Version **0.1.1**. Normative specification for shipping **`arks`** across every KEEP external
 distribution surface beyond GitHub Releases (`v0.1.0` live): **GitHub Pages**, **`crates.io`**,
 **`PyPI`**, **`npm`**, and **`RubyGems`** — using **GitHub Actions OIDC Trusted Publishing**
 (zero long-lived registry tokens in repo secrets) while preserving the single-binary product
@@ -37,15 +37,16 @@ Executable queue: [[plan:root/20261128070000]].
 
 ## 1. Channel scope and verified package names (2026-11-28)
 
-Live HTTP availability probes on 2026-11-28 confirmed every planned package name is unclaimed (HTTP
-404 on each registry API):
+Live HTTP availability probes on 2026-11-28 confirmed package-name availability (`pypi.org/simple/arks/`
+returned HTTP 200 due to an existing zero-release project, so PyPI uses `arks-cli` while installing
+the `arks` binary, respecting [[sot:root/product-naming]]'s no-`git`-substring rule):
 
 | Channel | Distribution unit(s) | Scope | Auth model | First-publish bootstrap rule (primary source) |
 |---------|----------------------|-------|------------|-----------------------------------------------|
 | **GitHub Releases** | `arks-<target>.tar.gz` / `.zip` + `SHA256SUMS` (3 OS, unsigned) | **LIVE (`v0.1.0`)** | `GITHUB_TOKEN` (`contents: write`) | Automated on `v*` tag push |
 | **GitHub Pages** | `https://modootoday.github.io/arks/` from `docs/` (`jekyll-theme-modootoday`) | **KEEP (D1)** | `GITHUB_TOKEN` (`pages: write`, `id-token: write`) | Automated via `.github/workflows/pages.yml` (`build_type: workflow`) |
 | **crates.io** | `arks` (single `[[bin]]`) + 17 library-only `arks-*` workspace crates | **KEEP (D2)** | OIDC `rust-lang/crates-io-auth-action@v1` (`environment: crates`) | **Manual first publish once** with temporary API token, then configure Trusted Publisher per crate and revoke token ([crates.io Trusted Publishing](https://crates.io/docs/trusted-publishing), [RFC 3691](https://rust-lang.github.io/rfcs/3691-trusted-publishing-cratesio.html)) |
-| **PyPI** | `arks` platform wheels (`manylinux_2_39_x86_64`, `macosx_11_0_arm64`, `win_amd64`) | **KEEP (D3)** | OIDC `pypa/gh-action-pypi-publish@release/v1` (`environment: pypi`) | **Zero-token Pending Trusted Publisher** on `pypi.org` before first tag ([PyPI Trusted Publishers](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)) |
+| **PyPI** | `arks-cli` platform wheels (`manylinux_2_39_x86_64`, `macosx_11_0_arm64`, `win_amd64`; installs `arks` binary) | **KEEP (D3)** | OIDC `pypa/gh-action-pypi-publish@release/v1` (`environment: pypi`) | **Zero-token Pending Trusted Publisher** on `pypi.org` before first tag ([PyPI Trusted Publishers](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)) |
 | **npm** | Root `arks` + 3 platform packages (`arks-linux-x64`, `arks-darwin-arm64`, `arks-win32-x64`) | **KEEP (D4)** | OIDC `npm publish --access public --provenance` (Node 24, `npm >= 11.5.1`, `environment: npm`) | **Manual first publish once** (`npm login` + `npm publish --access public`), then bind Trusted Publisher on `npmjs.com` for each of the 4 packages and allow `npm publish` ([npm Trusted Publishers](https://docs.npmjs.com/trusted-publishers/)) |
 | **RubyGems** | `arks` platform gems (`x86_64-linux`, `arm64-darwin`, `x64-mingw-ucrt`) | **KEEP (D5)** | OIDC `rubygems/configure-rubygems-credentials@v1` + `gem push` (`environment: rubygems`) | **Zero-token Pending Trusted Publisher** on `rubygems.org` before first tag ([RubyGems Trusted Publishing](https://guides.rubygems.org/trusted-publishing/)) |
 | **OS signing channels** (`winget`, `apt` GPG, `Chocolatey`, Authenticode, Apple notarization, Homebrew tap) | — | **OUT / Deferred** | — | Excluded per [[research:root/20261110085731]] § Current release-channel scope |
@@ -104,11 +105,13 @@ Live HTTP availability probes on 2026-11-28 confirmed every planned package name
 ### 3.2 PyPI binary wheels (D3)
 
 - Tree: `packaging/pypi/` (`pyproject.toml`, `build_wheels.py`).
+- PyPI project name: `arks-cli` (normalized PEP 427 wheel prefix `arks_cli`; installs the `arks`
+  binary onto `PATH`).
 - `build_wheels.py` uses Python 3 standard library (`zipfile`, `hashlib`, `base64`) to pack the
   exact `dist` archives into PEP 427 / PEP 600 binary wheels:
-  - `arks-<ver>-py3-none-manylinux_2_39_x86_64.whl` (`arks-<ver>.data/scripts/arks`, mode `0755`)
-  - `arks-<ver>-py3-none-macosx_11_0_arm64.whl` (`arks-<ver>.data/scripts/arks`, mode `0755`)
-  - `arks-<ver>-py3-none-win_amd64.whl` (`arks-<ver>.data/scripts/arks.exe`, mode `0755`)
+  - `arks_cli-<ver>-py3-none-manylinux_2_39_x86_64.whl` (`arks_cli-<ver>.data/scripts/arks`, mode `0755`)
+  - `arks_cli-<ver>-py3-none-macosx_11_0_arm64.whl` (`arks_cli-<ver>.data/scripts/arks`, mode `0755`)
+  - `arks_cli-<ver>-py3-none-win_amd64.whl` (`arks_cli-<ver>.data/scripts/arks.exe`, mode `0755`)
 - Placing the native binary in `<dist>.data/scripts/` exposes `arks` directly on `PATH` inside
   virtualenvs, `pipx`, and `uvx` with zero Python wrapper startup overhead.
 
