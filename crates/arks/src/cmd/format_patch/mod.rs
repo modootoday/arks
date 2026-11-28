@@ -412,7 +412,9 @@ pub fn cmd_format_patch(args: &[String]) -> CliResult<()> {
         let prefix = if o.keep_subject {
             String::new()
         } else if numbered {
-            format!("[{}{version} {num}/{shown_total}] ", o.subject_prefix)
+            // The number is zero-padded to the width of the total.
+            let w = shown_total.to_string().len();
+            format!("[{}{version} {num:0w$}/{shown_total}] ", o.subject_prefix)
         } else {
             format!("[{}{version}] ", o.subject_prefix)
         };
@@ -867,7 +869,8 @@ fn render_cover(
         }
     }
     let prefix = if numbered {
-        format!("[{}{version} 0/{total}]", o.subject_prefix)
+        let w = total.to_string().len();
+        format!("[{}{version} {:0w$}/{total}]", o.subject_prefix, 0)
     } else {
         format!("[{}{version}]", o.subject_prefix)
     };
