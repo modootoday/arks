@@ -1,0 +1,8 @@
+[PASS] E1: arks-hub device_flow RFC 8628 state machine & loopback fixture PASS
+[PASS] E2: arks-hub sealed_box KAT & Actions CLI (run/workflow/cache/secret/variable) PASS
+[PASS] E3: git_replay_cli + live arks replay -> stock git update-ref --stdin & fsck PASS
+[PASS] E4: maintenance_subtree_cli + live arks maintenance run --task=gc & stock git fsck PASS
+[PASS] E5: arks-refs + reftable_cli + live files->reftable->verify->files stock git parity PASS
+[PASS] E6: lfs_cli (pointer v1, clean/smudge, filter-process, content-addressed store) PASS
+[PASS] E7: serve_lfs_cli (Batch API, upload/download, SHA-256 verify, --no-lfs opt-out) PASS
+[PASS] E8: serve_web_ui_cli + live arks serve SSR/CSP/Forge merge + stock git clone coexistence PASS

@@ -1,0 +1,12 @@
+Venue: Docker clean-room image `arks-verify-m1:0.1.0` (Debian bookworm, Rust 1.99.1, stock git 2.39.5, in_docker=true)
+Gate script: verify/scripts/run-e1-e8-cleanroom.sh
+Timestamp: 2026-11-28T14:03:43Z
+Invariants verified: zero gix in Cargo graph, zero celir in Cargo graph, single `arks` binary.
+Scope & Honesty:
+- E1 (OAuth Device Flow): verified against in-process RFC 8628 loopback fixture; live github.com OAuth requires interactive owner browser approval.
+- E2 (GitHub Actions CLI + pure-Rust NaCl sealed-box): verified via libsodium/NaCl sealed-box KAT + loopback REST fixture; live github.com Actions API requires owner token.
+- E3 (arks replay): verified via `git_replay_cli` + live `arks replay --ref-action=print` piped directly into stock `git 2.39.5 update-ref --stdin` and `git fsck --full --strict`.
+- E4 (arks maintenance + subtree): verified via `maintenance_subtree_cli` + live `arks maintenance run --task=gc` and stock `git 2.39.5 fsck --full --strict`.
+- E5 (Reftable backend): verified via `arks-refs` + `reftable_cli` + live `files -> reftable -> verify --strict -> files` round-trip verified by stock `git 2.39.5 show-ref` and `git fsck --full --strict` (also caught and fixed `extensions.refStorage` cleanup on migrate-to-files).
+- E6/E7 (Native LFS client + `arks serve` LFS endpoint): verified via `lfs_cli` + `serve_lfs_cli` clean-room loopback round-trips.
+- E8 (`arks serve` Embedded SSR Web UI + Interactive Forge): verified via `serve_web_ui_cli` + live `arks serve` HTTP checks (CSP, HTMX v2, diff2html, POST /issues, POST /pulls/<branch>/merge fast-forward) + stock `git 2.39.5 clone` coexistence on the same listener.
