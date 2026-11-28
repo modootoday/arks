@@ -35,3 +35,5 @@ arks-store = { workspace = true }
 # Source archives for `release download --archive` (tar.gz / zip).
 flate2 = { workspace = true }
 crc32fast = { workspace = true }
+# Pure-Rust libsodium sealed box for `secret set` (E2).
+crypto_box = { workspace = true }

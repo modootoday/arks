@@ -7,6 +7,7 @@
 //! has it). Leaves take an explicit [`Ctx`] and writer so tests can drive them
 //! against an in-process forge. Never spawns git/gh.
 
+pub(crate) mod actions;
 pub(crate) mod autolink;
 pub(crate) mod common;
 pub(crate) mod discussion;

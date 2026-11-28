@@ -17,6 +17,7 @@ mod http_min;
 mod key_formats;
 mod leaves;
 mod local_tls_smoke;
+pub mod sealed_box;
 pub mod serve;
 mod store;
 
@@ -62,6 +63,11 @@ pub const GROUPS: &[&str] = &[
     "gpg-key",
     "ruleset",
     "rs",
+    "workflow",
+    "run",
+    "cache",
+    "secret",
+    "variable",
     "extension",
     "copilot",
     "inbox",
@@ -72,25 +78,13 @@ pub const GROUPS: &[&str] = &[
 
 /// Matrix groups kept as explicit OUT refuse (exit 2, no network call).
 ///
-/// `extension` / `copilot` are marketplace / vendor depth. The rest are
-/// GitHub-platform-only services (Actions, attestations, Codespaces, Event
-/// Streams preview) that are out of scope for the independent arks forge
-/// ([[adr:root/20261119230000]]).
-pub const HUB_OUT_GROUPS: &[&str] = &[
-    "extension",
-    "copilot",
-    "run",
-    "workflow",
-    "cache",
-    "secret",
-    "variable",
-    "attestation",
-    "codespace",
-    "event",
-];
+/// `extension` / `copilot` are marketplace / vendor depth. `attestation`,
+/// `codespace`, and `event` remain GitHub-proprietary OUT groups
+/// ([[adr:root/20261119230000]], [[sot:root/v0-2-0-scope-expansion]] §3).
+pub const HUB_OUT_GROUPS: &[&str] = &["extension", "copilot", "attestation", "codespace", "event"];
 
 /// Refuse reason for GitHub-platform-only groups and leaves.
-const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (Actions/attestations/Codespaces/Event Streams) — \
+const PLATFORM_ONLY_WHY: &str = "GitHub-platform-only (attestations/Codespaces/Event Streams) — \
      out of scope for the arks forge ([[adr:root/20261119230000]])";
 
 pub fn print_help() {
@@ -251,6 +245,36 @@ pub fn run_from_args(args: &[String]) -> ExitCode {
             leaves::ruleset::HELP,
             &args[1..],
             leaves::ruleset::run,
+        ),
+        "workflow" => leaves::dispatch(
+            "workflow",
+            leaves::actions::WORKFLOW_HELP,
+            &args[1..],
+            leaves::actions::workflow,
+        ),
+        "run" => leaves::dispatch(
+            "run",
+            leaves::actions::RUN_HELP,
+            &args[1..],
+            leaves::actions::run,
+        ),
+        "cache" => leaves::dispatch(
+            "cache",
+            leaves::actions::CACHE_HELP,
+            &args[1..],
+            leaves::actions::cache,
+        ),
+        "variable" => leaves::dispatch(
+            "variable",
+            leaves::actions::VARIABLE_HELP,
+            &args[1..],
+            leaves::actions::variable,
+        ),
+        "secret" => leaves::dispatch(
+            "secret",
+            leaves::actions::SECRET_HELP,
+            &args[1..],
+            leaves::actions::secret,
         ),
         "licenses" => cmd_licenses(&args[1..]),
         "skill" => cmd_out_local_list("skill", &args[1..], "/user/skills", false),
@@ -833,16 +857,7 @@ mod tests {
 
     #[test]
     fn platform_only_groups_refuse_exit_2() {
-        for g in [
-            "run",
-            "workflow",
-            "cache",
-            "secret",
-            "variable",
-            "attestation",
-            "codespace",
-            "event",
-        ] {
+        for g in ["attestation", "codespace", "event"] {
             assert!(
                 HUB_OUT_GROUPS.contains(&g),
                 "{g} missing from HUB_OUT_GROUPS"
@@ -852,6 +867,16 @@ mod tests {
                 run_from_args(&argv(&format!("{g} list --repo local/x"))),
                 ExitCode::from(2),
                 "{g} list"
+            );
+        }
+        // E2: Actions groups are promoted into GROUPS and respond to --help with exit 0.
+        for g in ["run", "workflow", "cache", "secret", "variable"] {
+            assert!(!HUB_OUT_GROUPS.contains(&g), "{g} still in HUB_OUT_GROUPS");
+            assert!(GROUPS.contains(&g), "{g} missing from GROUPS");
+            assert_eq!(
+                run_from_args(&argv(&format!("{g} --help"))),
+                ExitCode::SUCCESS,
+                "{g} --help"
             );
         }
     }
