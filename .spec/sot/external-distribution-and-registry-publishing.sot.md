@@ -18,6 +18,7 @@ rel:
     - research:root/20261110085731
   governs:
     - .spec/plan/20261128070000-external-distribution-d1-d6.plan.md
+    - .github/workflows/pages.yml
     - .github/workflows/release.yml
     - scripts/release-channel-readiness.sh
 ---
