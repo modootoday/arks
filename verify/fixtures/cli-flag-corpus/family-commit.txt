@@ -1156,5 +1156,5 @@ add -A -- README.md
 -C .git/i18n format-patch --stdout --signature=S --cover-letter -1 diff
 -C .git/i18n format-patch --stdout --signature=S --cover-letter -1 --no-encode-email-headers subj
 -C .git/i18n format-patch --stdout --signature=S --cover-letter -1 dotted
--C .git/i18n format-patch --stdout --signature=S --cover-letter base..eqq
+-C .git/i18n format-patch --stdout --signature=S --cover-letter --start-number=10 -2 eqq
 -C .git/i18n format-patch --stdout --signature=S --start-number=99 -2 eqq
