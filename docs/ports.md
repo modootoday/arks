@@ -34,7 +34,7 @@ Full self-host bind/auth story: [Self-host](../self-host/). Research: [ports sur
 
 ## Honesty
 
-Binding a port does not invent Claimed module readiness. In-process SSH **B1/B2 Claimed** ([[evidence:root/20261110235116-claimed-ssh]]) and product in-process TLS **B9 Claimed** ([[evidence:root/20261110233652-claimed-tls]]) cite residual receipts — durable §17(c) listen remains the product path. If SSH or forge modules are enabled, bind failure and silent Claimed degrade still **fail closed**. Hub **`hub smoke` / `--local-tls`** harnesses stay **Partial**; **B3** HTTPS forge remote e2e is Claimed ([[evidence:root/20261110233655-claimed-hub-https]]). Residual SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
+Binding a port does not invent Claimed module readiness. In-process SSH **B1/B2 Claimed** ([20261110235116-claimed-ssh](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110235116-claimed-ssh)) and product in-process TLS **B9 Claimed** ([20261110233652-claimed-tls](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110233652-claimed-tls)) cite residual receipts — durable §17(c) listen remains the product path. If SSH or forge modules are enabled, bind failure and silent Claimed degrade still **fail closed**. Hub **`hub smoke` / `--local-tls`** harnesses stay **Partial**; **B3** HTTPS forge remote e2e is Claimed ([20261110233655-claimed-hub-https](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110233655-claimed-hub-https)). Residual SoT: [arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md).
 
 ## Next
 
