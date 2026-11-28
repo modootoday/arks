@@ -11,6 +11,7 @@ mod code;
 mod diff;
 mod forge;
 mod highlight;
+mod store;
 
 use crate::http::{HttpRequest, HttpResponse};
 use crate::serve::PageHandler;
@@ -253,6 +254,20 @@ pub(crate) fn render_page(
     }
 }
 
+pub(crate) fn redirect_see_other(location: &str) -> HttpResponse {
+    HttpResponse {
+        status: 303,
+        content_type: "text/plain; charset=utf-8".into(),
+        body: Vec::new(),
+        www_authenticate: None,
+        extra_headers: vec![
+            ("Location".into(), location.into()),
+            ("Content-Security-Policy".into(), WEB_UI_CSP.into()),
+            ("X-Content-Type-Options".into(), "nosniff".into()),
+        ],
+    }
+}
+
 fn static_asset(content_type: &str, body: &[u8], immutable: bool) -> HttpResponse {
     HttpResponse {
         status: 200,
@@ -280,54 +295,13 @@ pub fn web_ui_page_handler(git_dir: impl Into<PathBuf>) -> PageHandler {
     Arc::new(move |req: &HttpRequest| handle_web_ui(&dir, req))
 }
 
-/// Route browser `GET` requests to the embedded SSR Web UI; returns `None` for
+/// Route browser `GET`/`POST` requests to the embedded SSR Web UI; returns `None` for
 /// Git smart/dumb HTTP and LFS paths so protocol traffic passes through untouched.
 pub fn handle_web_ui(git_dir: &std::path::Path, req: &HttpRequest) -> Option<HttpResponse> {
-    if req.method != "GET" {
+    if req.method != "GET" && req.method != "POST" {
         return None;
     }
     let path = req.path.as_str();
-    match path {
-        "/style.css" => {
-            return Some(static_asset(
-                "text/css; charset=utf-8",
-                STYLESHEET.as_bytes(),
-                false,
-            ));
-        }
-        "/assets/htmx.min.js" => {
-            return Some(static_asset(
-                "application/javascript; charset=utf-8",
-                HTMX_JS.as_bytes(),
-                true,
-            ));
-        }
-        "/assets/diff2html.min.js" => {
-            return Some(static_asset(
-                "application/javascript; charset=utf-8",
-                DIFF2HTML_JS.as_bytes(),
-                true,
-            ));
-        }
-        "/assets/diff2html.min.css" => {
-            return Some(static_asset(
-                "text/css; charset=utf-8",
-                DIFF2HTML_CSS.as_bytes(),
-                true,
-            ));
-        }
-        "/assets/app.js" => {
-            return Some(static_asset(
-                "application/javascript; charset=utf-8",
-                APP_JS.as_bytes(),
-                false,
-            ));
-        }
-        "/favicon.svg" => {
-            return Some(static_asset("image/svg+xml", FAVICON_SVG.as_bytes(), false));
-        }
-        _ => {}
-    }
     // Never intercept Git smart/dumb HTTP or LFS routes.
     if path.contains("/info/refs")
         || path.contains("/info/lfs/")
@@ -338,12 +312,84 @@ pub fn handle_web_ui(git_dir: &std::path::Path, req: &HttpRequest) -> Option<Htt
     {
         return None;
     }
+    if req.method == "GET" {
+        match path {
+            "/style.css" => {
+                return Some(static_asset(
+                    "text/css; charset=utf-8",
+                    STYLESHEET.as_bytes(),
+                    false,
+                ));
+            }
+            "/assets/htmx.min.js" => {
+                return Some(static_asset(
+                    "application/javascript; charset=utf-8",
+                    HTMX_JS.as_bytes(),
+                    true,
+                ));
+            }
+            "/assets/diff2html.min.js" => {
+                return Some(static_asset(
+                    "application/javascript; charset=utf-8",
+                    DIFF2HTML_JS.as_bytes(),
+                    true,
+                ));
+            }
+            "/assets/diff2html.min.css" => {
+                return Some(static_asset(
+                    "text/css; charset=utf-8",
+                    DIFF2HTML_CSS.as_bytes(),
+                    true,
+                ));
+            }
+            "/assets/app.js" => {
+                return Some(static_asset(
+                    "application/javascript; charset=utf-8",
+                    APP_JS.as_bytes(),
+                    false,
+                ));
+            }
+            "/favicon.svg" => {
+                return Some(static_asset("image/svg+xml", FAVICON_SVG.as_bytes(), false));
+            }
+            _ => {}
+        }
+    }
 
-    let Ok(repo) = Repository::open(git_dir) else {
+    let Ok(mut repo) = Repository::open(git_dir) else {
         return Some(render_partial(500, "Repository unavailable\n"));
     };
     let ctx = RepoContext::from_repo(&repo, req.host.as_deref());
     let query = req.query.as_str();
+
+    if req.method == "POST" {
+        if path == "/issues" {
+            return Some(forge::handle_create_issue(&repo, &ctx, req));
+        }
+        if let Some(rest) = path.strip_prefix("/issues/") {
+            if let Some(id_str) = rest.strip_suffix("/comment") {
+                return Some(forge::handle_issue_comment(&repo, &ctx, id_str, req));
+            }
+            if let Some(id_str) = rest.strip_suffix("/state") {
+                return Some(forge::handle_issue_state(&repo, &ctx, id_str));
+            }
+        }
+        if let Some(rest) = path.strip_prefix("/pulls/") {
+            if let Some(branch) = rest.strip_suffix("/comment") {
+                return Some(forge::handle_pr_comment(&repo, branch, req));
+            }
+            if let Some(branch) = rest.strip_suffix("/merge") {
+                return Some(forge::handle_pr_merge(&mut repo, &ctx, branch));
+            }
+        }
+        return Some(render_page(
+            405,
+            &ctx,
+            ActiveTab::Code,
+            "405 Method Not Allowed",
+            "<div class=\"card\"><div class=\"card-body\">Method not allowed for this route.</div></div>",
+        ));
+    }
 
     if path == "/" || path.is_empty() {
         return Some(code::render_tree(&repo, &ctx, &ctx.default_branch, ""));
@@ -396,8 +442,18 @@ pub fn handle_web_ui(git_dir: &std::path::Path, req: &HttpRequest) -> Option<Htt
     if path == "/issues" {
         return Some(forge::render_issues(&repo, &ctx));
     }
+    if let Some(id_str) = path.strip_prefix("/issues/") {
+        if id_str.chars().all(|c| c.is_ascii_digit()) && !id_str.is_empty() {
+            return Some(forge::render_issue_detail(&repo, &ctx, id_str));
+        }
+    }
     if path == "/pulls" {
         return Some(forge::render_pulls(&repo, &ctx));
+    }
+    if let Some(branch) = path.strip_prefix("/pulls/") {
+        if !branch.is_empty() {
+            return Some(forge::render_pr_detail(&repo, &ctx, branch));
+        }
     }
     if path == "/actions" {
         return Some(forge::render_actions(&repo, &ctx));

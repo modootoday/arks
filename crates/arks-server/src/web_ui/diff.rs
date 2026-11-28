@@ -424,3 +424,20 @@ pub fn render_compare(repo: &Repository, ctx: &RepoContext, spec: &str) -> HttpR
         &header,
     )
 }
+
+/// Render dual-line Unified/Split diff HTML between two commit OIDs for embedding in PR views.
+pub(crate) fn render_diff_between_commits(
+    repo: &Repository,
+    base_oid: Oid,
+    head_oid: Oid,
+) -> String {
+    let b_tree = super::load_commit(repo, &base_oid).map(|c| c.tree);
+    let Some(h_tree) = super::load_commit(repo, &head_oid).map(|c| c.tree) else {
+        return "<div class=\"card\"><div class=\"card-body muted\">Head commit unavailable.</div></div>".into();
+    };
+    let diffs = diff_two_trees(repo, b_tree, h_tree);
+    if diffs.is_empty() {
+        return "<div class=\"card\"><div class=\"card-body muted\">No file differences.</div></div>".into();
+    }
+    render_diff_section(&diffs)
+}

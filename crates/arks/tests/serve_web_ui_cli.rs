@@ -225,3 +225,133 @@ fn serve_embedded_web_ui_renders_escapes_xss_sets_csp_and_coexists_with_git() {
     stop2.store(true, Ordering::SeqCst);
     let _ = handle2.join();
 }
+
+fn http_post(addr: SocketAddr, path: &str, form_body: &str) -> (u16, String, String) {
+    let mut stream = TcpStream::connect(addr).unwrap();
+    let req = format!(
+        "POST {path} HTTP/1.1\r\nHost: {addr}\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{form_body}",
+        form_body.len()
+    );
+    stream.write_all(req.as_bytes()).unwrap();
+    let mut raw = Vec::new();
+    stream.read_to_end(&mut raw).unwrap();
+    let text = String::from_utf8_lossy(&raw).into_owned();
+    let (hdr, body) = text.split_once("\r\n\r\n").unwrap_or((&text, ""));
+    let status: u16 = hdr
+        .lines()
+        .next()
+        .and_then(|l| l.split_whitespace().nth(1))
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    (status, hdr.to_string(), body.to_string())
+}
+
+#[test]
+fn serve_interactive_forge_issues_comments_and_pr_fast_forward_merge() {
+    let tmp = tempfile::tempdir().unwrap();
+    let repo = tmp.path().join("repo");
+    fs::create_dir_all(&repo).unwrap();
+
+    ok(&repo, &["init", "-b", "main"]);
+    fs::write(repo.join("README.md"), "# Interactive Forge\n").unwrap();
+    ok(&repo, &["add", "README.md"]);
+    ok(&repo, &["commit", "-m", "base commit"]);
+    let base_oid = ok(&repo, &["rev-parse", "HEAD"]);
+
+    // Create a feature branch `feat/demo` with one commit ahead of main.
+    ok(&repo, &["checkout", "-b", "feat/demo"]);
+    fs::write(
+        repo.join("feature.rs"),
+        "pub fn greet() -> &'static str { \"hi\" }\n",
+    )
+    .unwrap();
+    ok(&repo, &["add", "feature.rs"]);
+    ok(&repo, &["commit", "-m", "add feature.rs"]);
+    let feat_oid = ok(&repo, &["rev-parse", "HEAD"]);
+    assert_ne!(base_oid, feat_oid);
+    ok(&repo, &["checkout", "main"]);
+
+    let git_dir = repo.join(".git");
+    let (addr, stop, handle) = spawn_loopback_with_opts(
+        git_dir.clone(),
+        ServeHttpOptions {
+            pages: Some(web_ui_page_handler(&git_dir)),
+            ..ServeHttpOptions::default()
+        },
+    )
+    .unwrap();
+
+    // 1. Create an issue with XSS payload -> 303 redirect to /issues/1.
+    let (st_create, hdr_create, _) = http_post(
+        addr,
+        "/issues",
+        "title=Fix+%3Cscript%3Ealert(1)%3C%2Fscript%3E&author=alice&labels=bug%2Cweb&body=Details+here",
+    );
+    assert_eq!(st_create, 303, "hdr={hdr_create}");
+    assert!(
+        hdr_create.contains("Location: /issues/1"),
+        "hdr={hdr_create}"
+    );
+
+    // 2. View issue #1 -> escaped title, open badge, labels.
+    let (st_i1, _, body_i1) = http_get(addr, "/issues/1");
+    assert_eq!(st_i1, 200);
+    assert!(body_i1.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
+    assert!(!body_i1.contains("<script>alert(1)</script>"));
+    assert!(body_i1.contains("open"));
+    assert!(body_i1.contains("alice"));
+    assert!(body_i1.contains("Details here"));
+
+    // 3. Post a comment on issue #1.
+    let (st_cmt, hdr_cmt, _) = http_post(
+        addr,
+        "/issues/1/comment",
+        "author=bob&body=LGTM+%3Cb%3Enow%3C%2Fb%3E",
+    );
+    assert_eq!(st_cmt, 303, "hdr={hdr_cmt}");
+    let (_, _, body_i1_after) = http_get(addr, "/issues/1");
+    assert!(body_i1_after.contains("bob"));
+    assert!(body_i1_after.contains("LGTM &lt;b&gt;now&lt;/b&gt;"));
+
+    // 4. Toggle issue #1 state open -> closed.
+    let (st_tgl, hdr_tgl, _) = http_post(addr, "/issues/1/state", "");
+    assert_eq!(st_tgl, 303, "hdr={hdr_tgl}");
+    let (_, _, body_i1_closed) = http_get(addr, "/issues/1");
+    assert!(body_i1_closed.contains("closed"));
+
+    // 5. Inspect Pull Request detail for `feat/demo` (branch with `/`).
+    let (st_pr, _, body_pr) = http_get(addr, "/pulls/feat/demo");
+    assert_eq!(st_pr, 200);
+    assert!(body_pr.contains("feat/demo"));
+    assert!(body_pr.contains("feature.rs"));
+    assert!(body_pr.contains("/pulls/feat/demo/merge"));
+
+    // 6. Leave a PR review comment.
+    let (st_pr_cmt, _, _) = http_post(
+        addr,
+        "/pulls/feat/demo/comment",
+        "author=reviewer&body=Clean+fast-forward+change",
+    );
+    assert_eq!(st_pr_cmt, 303);
+    let (_, _, body_pr2) = http_get(addr, "/pulls/feat/demo");
+    assert!(body_pr2.contains("Clean fast-forward change"));
+
+    // 7. Native fast-forward merge via POST /pulls/feat/demo/merge.
+    let (st_merge, hdr_merge, _) = http_post(addr, "/pulls/feat/demo/merge", "");
+    assert_eq!(st_merge, 303, "hdr={hdr_merge}");
+    let main_after = ok(&repo, &["rev-parse", "refs/heads/main"]);
+    assert_eq!(
+        main_after, feat_oid,
+        "refs/heads/main should have fast-forwarded to feat/demo"
+    );
+
+    // 8. Verify ForgeStore persisted atomically under `<git_dir>/arks-forge/store.json`.
+    assert!(git_dir.join("arks-forge").join("store.json").is_file());
+
+    // 9. Verify POST /git-upload-pack is NOT swallowed by the Web UI (returns protocol status, not 405).
+    let (st_rpc, _, _) = http_post(addr, "/git-upload-pack", "");
+    assert_ne!(st_rpc, 405, "Web UI must never intercept /git-upload-pack");
+
+    stop.store(true, Ordering::SeqCst);
+    let _ = handle.join();
+}
