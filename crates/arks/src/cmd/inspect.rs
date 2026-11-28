@@ -604,7 +604,11 @@ pub fn cmd_pack_refs(args: &[String]) -> CliResult<()> {
     if includes.is_empty() {
         includes.push("refs/tags/*".into());
     }
-    let repo = open_repo()?;
+    let mut repo = open_repo()?;
+    if repo.refs().is_reftable() {
+        let _ = repo.refs_mut().pack_refs_all()?;
+        return Ok(());
+    }
     // REF-012 (M20 Cx-3): pack-refs rewrites packed-refs under one exclusive lock.
     let packed_path = repo.common_dir().join("packed-refs");
     let lock = repo.common_dir().join("packed-refs.lock");

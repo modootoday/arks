@@ -117,9 +117,23 @@ impl FilesystemRefStore {
         }
     }
 
+    /// Returns `true` when this repository uses the Git Reftable backend.
+    pub fn is_reftable(&self) -> bool {
+        crate::reftable::is_reftable_dir(self.shared_root())
+    }
+
+    /// Open the underlying `ReftableStack` for this repository's common dir.
+    pub fn reftable_stack(&self) -> crate::reftable::ReftableStack {
+        let oid_kind = crate::reftable::detect_oid_kind(self.shared_root());
+        crate::reftable::ReftableStack::open(self.shared_root().join("reftable"), oid_kind)
+    }
+
     /// Read one hop (does not follow symbolic refs).
     pub fn read(&self, name: &str) -> Result<RefTarget, RefsError> {
         Self::require_valid(name)?;
+        if self.is_reftable() {
+            return self.reftable_stack().read_ref(name);
+        }
         let path = self.ref_path(name);
         if let Some(t) = read_loose_at(&path)? {
             return Ok(t);
@@ -181,6 +195,14 @@ impl FilesystemRefStore {
             }
             Err(e) => return Err(e),
         }
+        if self.is_reftable() {
+            let stack = self.reftable_stack();
+            stack.append_transaction(
+                vec![(name.to_string(), crate::reftable::RefValue::Direct(*new))],
+                vec![],
+            )?;
+            return Ok(());
+        }
         // Write loose ref (overrides packed for the same name). No packed-refs rewrite in M3.
         let payload = format_direct(new);
         write_ref_locked(&path, payload.as_bytes())
@@ -188,6 +210,27 @@ impl FilesystemRefStore {
 
     pub fn delete(&mut self, name: &str, old: Option<&Oid>) -> Result<(), RefsError> {
         Self::require_valid(name)?;
+        if self.is_reftable() {
+            match self.read(name) {
+                Ok(current) => {
+                    Self::check_old(&current, old)?;
+                    let stack = self.reftable_stack();
+                    stack.append_transaction(
+                        vec![(name.to_string(), crate::reftable::RefValue::Deletion)],
+                        vec![],
+                    )?;
+                    return Ok(());
+                }
+                Err(RefsError::NotFound(_)) => {
+                    return if old.is_some() {
+                        Err(RefsError::NotFound(name.to_string()))
+                    } else {
+                        Ok(())
+                    };
+                }
+                Err(e) => return Err(e),
+            }
+        }
         let path = self.ref_path(name);
         match self.read(name) {
             Ok(current) => {
@@ -217,6 +260,17 @@ impl FilesystemRefStore {
         Self::require_valid(name)?;
         if !is_valid_refname(target) && target != "HEAD" {
             return Err(RefsError::InvalidRefname(target.to_string()));
+        }
+        if self.is_reftable() {
+            let stack = self.reftable_stack();
+            stack.append_transaction(
+                vec![(
+                    name.to_string(),
+                    crate::reftable::RefValue::Symbolic(target.to_string()),
+                )],
+                vec![],
+            )?;
+            return Ok(());
         }
         let path = self.ref_path(name);
         let payload = format_symbolic(target);
@@ -268,6 +322,9 @@ impl FilesystemRefStore {
 
     /// List resolved direct OIDs for refs matching `prefix` (loose overrides packed).
     pub fn list_refs(&self, prefix: &str) -> Result<Vec<(String, Oid)>, RefsError> {
+        if self.is_reftable() {
+            return self.reftable_stack().list_refs(prefix);
+        }
         let mut map: HashMap<String, Oid> = self.read_packed_map()?;
         let shared_refs = self.shared_root().join("refs");
         if shared_refs.is_dir() {
@@ -312,6 +369,11 @@ impl FilesystemRefStore {
     ///
     /// Cite: <https://git-scm.com/docs/git-pack-refs> (`--all`). HEAD is not packed.
     pub fn pack_refs_all(&mut self) -> Result<usize, RefsError> {
+        if self.is_reftable() {
+            let stack = self.reftable_stack();
+            stack.compact_all()?;
+            return Ok(stack.merged_refs()?.len());
+        }
         let mut refs = self.list_refs("refs/")?;
         refs.retain(|(name, _)| name.starts_with("refs/"));
         refs.sort_by(|a, b| a.0.cmp(&b.0));

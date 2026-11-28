@@ -6,44 +6,9 @@ use crate::error::{CliError, CliResult};
 use crate::util::{open_repo, refuse_unknown_flags};
 use std::fs;
 
-/// `arks refs` — subset: `list` → for-each-ref style names (host 2.54+).
+/// `arks refs` — `list`, `verify`, `migrate` (see [`crate::cmd::refs_cmd`]).
 pub fn cmd_refs(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks refs — refs helpers (host-skew Partial; pin 2.39.5 lacked this cmd)
-
-Usage:
-  arks refs list
-  arks refs verify   # presence check only
-  arks refs migrate  # not claimed
-"
-        );
-        return Ok(());
-    }
-    refuse_unknown_flags(args, &["list", "verify", "migrate"])?;
-    let sub = args[0].as_str();
-    let repo = open_repo()?;
-    match sub {
-        "list" => {
-            // Thin: print loose + packed ref names via show-ref plumbing path.
-            crate::cmd::cmd_show_ref(&[])
-        }
-        "verify" => {
-            let packed = repo.git_dir().join("packed-refs");
-            let heads = repo.git_dir().join("refs/heads");
-            println!(
-                "ok\tpacked-refs={}\trefs/heads={}",
-                packed.is_file(),
-                heads.is_dir()
-            );
-            Ok(())
-        }
-        "migrate" => Err(CliError::NotImplemented(
-            "refs migrate: ref-format migration not claimed".into(),
-        )),
-        other => Err(CliError::Usage(format!("refs: unknown subcommand {other}"))),
-    }
+    crate::cmd::refs_cmd::cmd_refs(args)
 }
 
 /// Host-skew `git repo` body (2.54+): the git rank-0 grammar of the `repo`
