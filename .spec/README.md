@@ -102,7 +102,8 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 | Process | [[sot:root/agent-governance]] (v0.4.1) |
 | Unattended / `agy` parallel governance | [[sot:root/autonomous-operation]] (v2.1.0) · [[sot:root/agy-automated-development]] (v0.1.0) · [[adr:root/20261128035000]] · rules `95`, `96` · skill `agy-parallel-orchestration` |
 | Product finalization & release readiness (F1–F5) | [[sot:root/product-finalization-and-release-readiness]] (v0.1.0) · [[plan:root/20261128043000]] · gap audit [[research:root/20261128043000]] |
-| External distribution & OIDC registries (D1–D6) | [[sot:root/external-distribution-and-registry-publishing]] (v0.1.0) · [[plan:root/20261128070000]] · OIDC design [[research:root/20261110085731]] |
+| External distribution & OIDC registries (D1–D6) | [[sot:root/external-distribution-and-registry-publishing]] (v0.1.2) · [[plan:root/20261128070000]] · OIDC design [[research:root/20261110085731]] |
+| v0.2.0 scope expansion (E1–E8, Design) | [[sot:root/v0-2-0-scope-expansion]] (v0.1.0) · [[plan:root/20261128092500]] · references & algorithms [[research:root/20261128092500]] |
 | Governance gap matrix | [[research:root/20261111061037]] · PR/branch audit [[research:root/20261128034500]] |
 | Hangul / English-only | rule `05-english-only` + [[sot:root/language-english-only]] + `.cursor/hooks/*` |
 | Spec-first / Version≠release / evidence / stub wording | rules `26`–`29`, `35` + skill `commit-governance` |
