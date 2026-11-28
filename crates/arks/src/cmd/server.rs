@@ -1126,6 +1126,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     let mut dir: Option<PathBuf> = None;
     let mut dumb_only = false;
     let mut disable_lfs = false;
+    let mut disable_web_ui = false;
     let mut gitweb = false;
     let mut basic_auth_cli: Option<String> = None;
     let mut basic_auth_file: Option<PathBuf> = None;
@@ -1146,6 +1147,7 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
             }
             "--dumb-only" => dumb_only = true,
             "--no-lfs" => disable_lfs = true,
+            "--no-web-ui" => disable_web_ui = true,
             "--gitweb" => gitweb = true,
             "--basic-auth" => {
                 i += 1;
@@ -1238,6 +1240,8 @@ fn run_serve_http_listener(args: &[String], label: &str) -> CliResult<()> {
     };
     let pages = if gitweb {
         Some(crate::cmd::bridge::instaweb::gitweb::page_handler(&git_dir))
+    } else if !disable_web_ui {
+        Some(arks_server::web_ui_page_handler(&git_dir))
     } else {
         None
     };
