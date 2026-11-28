@@ -375,8 +375,13 @@ fn handle_connection_io<S: Read + Write>(
     if opts.dumb_only && (req.path.ends_with("info/refs") || req.path.ends_with("/info/refs")) {
         req.query = String::new();
     }
+    let is_git_rpc = req.path.contains("/git-upload-pack")
+        || req.path.contains("/git-receive-pack")
+        || req.path.contains("/info/refs");
     let page = match &opts.pages {
-        Some(pages) if req.method == "GET" && !is_lfs => pages(&req),
+        Some(pages) if (req.method == "GET" || req.method == "POST") && !is_lfs && !is_git_rpc => {
+            pages(&req)
+        }
         _ => None,
     };
     let scheme = serve_http_scheme(opts);

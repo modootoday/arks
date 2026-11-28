@@ -1,53 +1,66 @@
 //! Self-hosted forge tabs (`Issues`, `Pull Requests`, `Actions`, `Projects`, `Wiki`,
 //! `Security`, `Insights`, `Settings`) surfacing live repository state cleanly.
 
+use super::diff::render_diff_between_commits;
+use super::store::{ForgeStore, parse_form_urlencoded};
 use super::{
-    ActiveTab, RepoContext, collect_recent_commits, format_timestamp, html_escape, render_page,
-    resolve_rev_oid,
+    ActiveTab, RepoContext, collect_recent_commits, format_timestamp, html_escape, load_commit,
+    redirect_see_other, render_page, resolve_rev_oid,
 };
-use crate::http::HttpResponse;
+use crate::http::{HttpRequest, HttpResponse};
 use arks_object::TreeMode;
+use arks_oid::Oid;
 use arks_repo::Repository;
-use std::collections::BTreeMap;
-use std::fs;
+use std::collections::{BTreeMap, HashSet, VecDeque};
 
-/// Render `/issues` backed by local forge metadata when present.
+/// Render `/issues` backed by persistent `<git_dir>/arks-forge/store.json` with inline New Issue form.
 pub fn render_issues(repo: &Repository, ctx: &RepoContext) -> HttpResponse {
-    let forge_dir = repo.common_dir().join("arks-forge").join("issues");
+    let store = ForgeStore::load(repo.common_dir());
+    let open_count = store.issues.iter().filter(|i| i.state == "open").count();
+    let closed_count = store.issues.len().saturating_sub(open_count);
+
     let mut rows = String::new();
-    let mut count = 0usize;
-    if let Ok(entries) = fs::read_dir(&forge_dir) {
-        let mut files: Vec<_> = entries.flatten().map(|e| e.path()).collect();
-        files.sort();
-        for path in files.into_iter().take(50) {
-            if let Ok(raw) = fs::read_to_string(&path) {
-                count += 1;
-                let title = raw.lines().next().unwrap_or("Untitled issue");
-                let id = path.file_stem().and_then(|s| s.to_str()).unwrap_or("?");
-                rows.push_str(&format!(
-                    "<tr><td><span class=\"badge badge-green\">open</span> \
-                     <strong>#{} {}</strong></td><td class=\"muted\">local forge</td></tr>",
-                    html_escape(id),
-                    html_escape(title)
-                ));
-            }
-        }
+    for issue in store.issues.iter().rev() {
+        let badge = if issue.state == "open" {
+            "<span class=\"badge badge-green\">open</span>"
+        } else {
+            "<span class=\"badge badge-purple\">closed</span>"
+        };
+        rows.push_str(&format!(
+            "<tr><td>{badge} <a href=\"/issues/{}\"><strong>#{} {}</strong></a>\
+             <div class=\"muted\">opened by {} · {} · {} comment(s)</div></td>\
+             <td style=\"text-align:right\"><a class=\"btn\" href=\"/issues/{}\">Open</a></td></tr>",
+            issue.id,
+            issue.id,
+            html_escape(&issue.title),
+            html_escape(&issue.author),
+            html_escape(&format_timestamp(issue.created_at)),
+            issue.comments.len(),
+            issue.id
+        ));
     }
     if rows.is_empty() {
         rows.push_str(
-            "<tr><td colspan=\"2\" class=\"muted\">No local issues recorded yet. \
-             Create one via <code>arks issue create --host ...</code> or inspect GitHub via <code>arks issue list</code>.</td></tr>",
+            "<tr><td colspan=\"2\" class=\"muted\">No issues yet. Use the form below to open the first issue.</td></tr>",
         );
     }
+
     let body = format!(
         "<div class=\"toolbar\"><div class=\"toolbar-group\">\
-         <span class=\"badge badge-green\">{} Open</span>\
-         <span class=\"muted mono\">In-process Forge API surface</span></div>\
-         <a class=\"btn\" href=\"/compare\">Compare branches</a></div>\
-         <div class=\"card\"><div class=\"card-header\"><strong>Issues</strong>\
-         <span class=\"muted\">Synced with <code>arks issue</code></span></div>\
-         <table class=\"tree-table\">{rows}</table></div>",
-        count
+         <span class=\"badge badge-green\">{open_count} Open</span>\
+         <span class=\"badge badge-purple\">{closed_count} Closed</span></div>\
+         <span class=\"muted mono\">Persistent local forge store</span></div>\
+         <div class=\"card\"><div class=\"card-header\"><strong>Issues</strong></div>\
+         <table class=\"tree-table\">{rows}</table></div>\
+         <div class=\"card\"><div class=\"card-header\"><strong>New Issue</strong></div>\
+         <form class=\"card-body\" method=\"post\" action=\"/issues\" style=\"display:flex;flex-direction:column;gap:10px\">\
+           <input class=\"input\" type=\"text\" name=\"title\" placeholder=\"Issue title\" required />\
+           <textarea class=\"input\" name=\"body\" rows=\"4\" placeholder=\"Describe the issue...\"></textarea>\
+           <div style=\"display:flex;gap:8px;align-items:center\">\
+             <input class=\"input\" type=\"text\" name=\"author\" placeholder=\"Author (default: operator)\" />\
+             <button class=\"btn btn-primary\" type=\"submit\">Create Issue</button>\
+           </div>\
+         </form></div>"
     );
     render_page(
         200,
@@ -58,7 +71,177 @@ pub fn render_issues(repo: &Repository, ctx: &RepoContext) -> HttpResponse {
     )
 }
 
-/// Render `/pulls` listing active non-default branches ready to compare/review as PRs.
+/// Handle `POST /issues` creating a persistent issue and redirecting `303` to `/issues/<id>`.
+pub fn handle_create_issue(
+    repo: &Repository,
+    ctx: &RepoContext,
+    req: &HttpRequest,
+) -> HttpResponse {
+    let form = parse_form_urlencoded(&req.body);
+    let title = form.get("title").map(|s| s.trim()).unwrap_or("");
+    if title.is_empty() {
+        return render_page(
+            400,
+            ctx,
+            ActiveTab::Issues,
+            "Invalid issue",
+            "<div class=\"card\"><div class=\"card-body\">Issue title is required.</div></div>",
+        );
+    }
+    let body = form.get("body").cloned().unwrap_or_default();
+    let author = form
+        .get("author")
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .unwrap_or("operator")
+        .to_string();
+
+    let mut store = ForgeStore::load(repo.common_dir());
+    let id = store.create_issue(title.to_string(), body, author);
+    if let Err(e) = store.save(repo.common_dir()) {
+        return render_page(
+            500,
+            ctx,
+            ActiveTab::Issues,
+            "Store error",
+            &format!(
+                "<div class=\"card\"><div class=\"card-body\">Failed to save issue: {}</div></div>",
+                html_escape(&e.to_string())
+            ),
+        );
+    }
+    redirect_see_other(&format!("/issues/{id}"))
+}
+
+/// Render `/issues/<id>` detail view with comments, close/reopen button, and add-comment form.
+pub fn render_issue_detail(repo: &Repository, ctx: &RepoContext, id_str: &str) -> HttpResponse {
+    let Ok(id) = id_str.parse::<u64>() else {
+        return render_page(
+            404,
+            ctx,
+            ActiveTab::Issues,
+            "Not found",
+            "Invalid issue ID.",
+        );
+    };
+    let store = ForgeStore::load(repo.common_dir());
+    let Some(issue) = store.issues.iter().find(|i| i.id == id) else {
+        return render_page(404, ctx, ActiveTab::Issues, "Not found", "Issue not found.");
+    };
+    let badge = if issue.state == "open" {
+        "<span class=\"badge badge-green\">open</span>"
+    } else {
+        "<span class=\"badge badge-purple\">closed</span>"
+    };
+    let toggle_label = if issue.state == "open" {
+        "Close issue"
+    } else {
+        "Reopen issue"
+    };
+
+    let mut comments_html = String::new();
+    for c in &issue.comments {
+        comments_html.push_str(&format!(
+            "<div class=\"card\"><div class=\"card-header\">\
+             <span><strong>{}</strong> <span class=\"muted\">commented · {}</span></span></div>\
+             <div class=\"card-body\"><pre style=\"margin:0;white-space:pre-wrap\">{}</pre></div></div>",
+            html_escape(&c.author),
+            html_escape(&format_timestamp(c.created_at)),
+            html_escape(&c.body)
+        ));
+    }
+
+    let body = format!(
+        "<div class=\"toolbar\">\
+           <div class=\"toolbar-group\"><a href=\"/issues\">← Issues</a> {badge} \
+           <strong>#{} {}</strong></div>\
+           <form method=\"post\" action=\"/issues/{}/state\">\
+             <button class=\"btn\" type=\"submit\">{toggle_label}</button>\
+           </form></div>\
+         <div class=\"card\"><div class=\"card-header\">\
+           <span><strong>{}</strong> <span class=\"muted\">opened · {}</span></span></div>\
+           <div class=\"card-body\"><pre style=\"margin:0;white-space:pre-wrap\">{}</pre></div></div>\
+         {comments_html}\
+         <div class=\"card\"><div class=\"card-header\"><strong>Add Comment</strong></div>\
+         <form class=\"card-body\" method=\"post\" action=\"/issues/{}/comment\" style=\"display:flex;flex-direction:column;gap:10px\">\
+           <textarea class=\"input\" name=\"body\" rows=\"3\" placeholder=\"Write a comment...\" required></textarea>\
+           <div style=\"display:flex;gap:8px\">\
+             <input class=\"input\" type=\"text\" name=\"author\" placeholder=\"Author (default: operator)\" />\
+             <button class=\"btn btn-primary\" type=\"submit\">Comment</button>\
+           </div>\
+         </form></div>",
+        issue.id,
+        html_escape(&issue.title),
+        issue.id,
+        html_escape(&issue.author),
+        html_escape(&format_timestamp(issue.created_at)),
+        html_escape(&issue.body),
+        issue.id
+    );
+    render_page(
+        200,
+        ctx,
+        ActiveTab::Issues,
+        &format!("#{} {} — {}", issue.id, issue.title, ctx.name),
+        &body,
+    )
+}
+
+/// Handle `POST /issues/<id>/comment`.
+pub fn handle_issue_comment(
+    repo: &Repository,
+    ctx: &RepoContext,
+    id_str: &str,
+    req: &HttpRequest,
+) -> HttpResponse {
+    let Ok(id) = id_str.parse::<u64>() else {
+        return render_page(
+            404,
+            ctx,
+            ActiveTab::Issues,
+            "Not found",
+            "Invalid issue ID.",
+        );
+    };
+    let form = parse_form_urlencoded(&req.body);
+    let body = form.get("body").map(|s| s.trim()).unwrap_or("");
+    if body.is_empty() {
+        return redirect_see_other(&format!("/issues/{id}"));
+    }
+    let author = form
+        .get("author")
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .unwrap_or("operator")
+        .to_string();
+    let mut store = ForgeStore::load(repo.common_dir());
+    if !store.add_issue_comment(id, author, body.to_string()) {
+        return render_page(404, ctx, ActiveTab::Issues, "Not found", "Issue not found.");
+    }
+    let _ = store.save(repo.common_dir());
+    redirect_see_other(&format!("/issues/{id}"))
+}
+
+/// Handle `POST /issues/<id>/state` toggling open <-> closed.
+pub fn handle_issue_state(repo: &Repository, ctx: &RepoContext, id_str: &str) -> HttpResponse {
+    let Ok(id) = id_str.parse::<u64>() else {
+        return render_page(
+            404,
+            ctx,
+            ActiveTab::Issues,
+            "Not found",
+            "Invalid issue ID.",
+        );
+    };
+    let mut store = ForgeStore::load(repo.common_dir());
+    if store.toggle_issue_state(id).is_none() {
+        return render_page(404, ctx, ActiveTab::Issues, "Not found", "Issue not found.");
+    }
+    let _ = store.save(repo.common_dir());
+    redirect_see_other(&format!("/issues/{id}"))
+}
+
+/// Render `/pulls` listing active non-default branches linking to the PR Review Workbench.
 pub fn render_pulls(_repo: &Repository, ctx: &RepoContext) -> HttpResponse {
     let mut rows = String::new();
     let mut open_prs = 0usize;
@@ -67,16 +250,12 @@ pub fn render_pulls(_repo: &Repository, ctx: &RepoContext) -> HttpResponse {
             continue;
         }
         open_prs += 1;
-        let cmp_href = format!(
-            "/compare/{}..{}",
-            html_escape(&ctx.default_branch),
-            html_escape(branch)
-        );
+        let pr_href = format!("/pulls/{}", html_escape(branch));
         rows.push_str(&format!(
             "<tr><td><span class=\"badge badge-green\">open</span> \
-             <a href=\"{cmp_href}\"><strong>{} ← {}</strong></a>\
+             <a href=\"{pr_href}\"><strong>{} ← {}</strong></a>\
              <div class=\"muted mono\">tip {}</div></td>\
-             <td style=\"text-align:right\"><a class=\"btn\" href=\"{cmp_href}\">Review Diff</a></td></tr>",
+             <td style=\"text-align:right\"><a class=\"btn btn-primary\" href=\"{pr_href}\">Review &amp; Merge</a></td></tr>",
             html_escape(&ctx.default_branch),
             html_escape(branch),
             html_escape(&oid.to_hex()[..7])
@@ -90,13 +269,12 @@ pub fn render_pulls(_repo: &Repository, ctx: &RepoContext) -> HttpResponse {
     }
     let body = format!(
         "<div class=\"toolbar\"><div class=\"toolbar-group\">\
-         <span class=\"badge badge-green\">{} Active Branches</span>\
-         <span class=\"muted\">Click any branch to open the Dual-Line Unified/Split Diff workbench</span></div>\
-         <a class=\"btn btn-primary\" href=\"/compare\">New Compare</a></div>\
+         <span class=\"badge badge-green\">{open_prs} Active Branches</span>\
+         <span class=\"muted\">Click any branch to open the PR Review &amp; Merge Workbench</span></div>\
+         <a class=\"btn\" href=\"/compare\">Compare Refs</a></div>\
          <div class=\"card\"><div class=\"card-header\"><strong>Pull Requests</strong>\
          <span class=\"muted\">Synced with <code>arks pr</code></span></div>\
-         <table class=\"tree-table\">{rows}</table></div>",
-        open_prs
+         <table class=\"tree-table\">{rows}</table></div>"
     );
     render_page(
         200,
@@ -105,6 +283,161 @@ pub fn render_pulls(_repo: &Repository, ctx: &RepoContext) -> HttpResponse {
         &format!("Pull Requests — {}", ctx.name),
         &body,
     )
+}
+
+/// Render `/pulls/<branch>` PR Review Workbench (Mergeability, Fast-Forward Merge, Review Comments, Dual-Line Diff).
+pub fn render_pr_detail(repo: &Repository, ctx: &RepoContext, branch: &str) -> HttpResponse {
+    let Some(base_oid) = resolve_rev_oid(repo, &ctx.default_branch) else {
+        return render_page(
+            404,
+            ctx,
+            ActiveTab::Pulls,
+            "Not found",
+            "Default branch not found.",
+        );
+    };
+    let Some(head_oid) = resolve_rev_oid(repo, branch) else {
+        return render_page(404, ctx, ActiveTab::Pulls, "Not found", "Branch not found.");
+    };
+
+    let already_merged = base_oid == head_oid;
+    let ff_ok = !already_merged && is_ancestor(repo, base_oid, head_oid);
+
+    let merge_widget = if already_merged {
+        "<span class=\"badge badge-purple\">Merged · Up to date with default branch</span>".into()
+    } else if ff_ok {
+        format!(
+            "<form method=\"post\" action=\"/pulls/{}/merge\">\
+             <button class=\"btn btn-primary\" type=\"submit\">Merge pull request (fast-forward)</button></form>",
+            html_escape(branch)
+        )
+    } else {
+        "<span class=\"badge\" style=\"color:var(--red)\">Diverged · Rebase or replay before fast-forward merge</span>".into()
+    };
+
+    let store = ForgeStore::load(repo.common_dir());
+    let mut comments_html = String::new();
+    for c in store.pr_comments.iter().filter(|c| c.branch == branch) {
+        comments_html.push_str(&format!(
+            "<div class=\"card\"><div class=\"card-header\">\
+             <span><strong>{}</strong> <span class=\"muted\">reviewed · {}</span></span></div>\
+             <div class=\"card-body\"><pre style=\"margin:0;white-space:pre-wrap\">{}</pre></div></div>",
+            html_escape(&c.author),
+            html_escape(&format_timestamp(c.created_at)),
+            html_escape(&c.body)
+        ));
+    }
+
+    let diff_html = render_diff_between_commits(repo, base_oid, head_oid);
+    let body = format!(
+        "<div class=\"toolbar\">\
+           <div class=\"toolbar-group\"><a href=\"/pulls\">← Pull Requests</a> \
+           <strong>{} ← {}</strong></div>\
+           {merge_widget}</div>\
+         {diff_html}\
+         {comments_html}\
+         <div class=\"card\"><div class=\"card-header\"><strong>Add Review Comment</strong></div>\
+         <form class=\"card-body\" method=\"post\" action=\"/pulls/{}/comment\" style=\"display:flex;flex-direction:column;gap:10px\">\
+           <textarea class=\"input\" name=\"body\" rows=\"3\" placeholder=\"Leave a review comment...\" required></textarea>\
+           <div style=\"display:flex;gap:8px\">\
+             <input class=\"input\" type=\"text\" name=\"author\" placeholder=\"Reviewer (default: operator)\" />\
+             <button class=\"btn btn-primary\" type=\"submit\">Submit Comment</button>\
+           </div>\
+         </form></div>",
+        html_escape(&ctx.default_branch),
+        html_escape(branch),
+        html_escape(branch)
+    );
+    render_page(
+        200,
+        ctx,
+        ActiveTab::Pulls,
+        &format!("PR {branch} — {}", ctx.name),
+        &body,
+    )
+}
+
+/// Handle `POST /pulls/<branch>/comment`.
+pub fn handle_pr_comment(repo: &Repository, branch: &str, req: &HttpRequest) -> HttpResponse {
+    let form = parse_form_urlencoded(&req.body);
+    let body = form.get("body").map(|s| s.trim()).unwrap_or("");
+    if !body.is_empty() {
+        let author = form
+            .get("author")
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .unwrap_or("operator")
+            .to_string();
+        let mut store = ForgeStore::load(repo.common_dir());
+        store.add_pr_comment(branch.to_string(), author, body.to_string());
+        let _ = store.save(repo.common_dir());
+    }
+    redirect_see_other(&format!("/pulls/{branch}"))
+}
+
+/// Handle `POST /pulls/<branch>/merge` performing a safe native fast-forward merge into default branch.
+pub fn handle_pr_merge(repo: &mut Repository, ctx: &RepoContext, branch: &str) -> HttpResponse {
+    let Some(base_oid) = resolve_rev_oid(repo, &ctx.default_branch) else {
+        return render_page(
+            404,
+            ctx,
+            ActiveTab::Pulls,
+            "Not found",
+            "Default branch not found.",
+        );
+    };
+    let Some(head_oid) = resolve_rev_oid(repo, branch) else {
+        return render_page(404, ctx, ActiveTab::Pulls, "Not found", "Branch not found.");
+    };
+    if base_oid == head_oid {
+        return redirect_see_other(&format!("/pulls/{branch}"));
+    }
+    if !is_ancestor(repo, base_oid, head_oid) {
+        return render_page(
+            409,
+            ctx,
+            ActiveTab::Pulls,
+            "Merge conflict",
+            "<div class=\"card\"><div class=\"card-body\">Fast-forward merge refused: branches have diverged.</div></div>",
+        );
+    }
+    let target_ref = format!("refs/heads/{}", ctx.default_branch);
+    if let Err(e) = repo
+        .refs_mut()
+        .update(&target_ref, &head_oid, Some(&base_oid))
+    {
+        return render_page(
+            409,
+            ctx,
+            ActiveTab::Pulls,
+            "Ref update conflict",
+            &format!(
+                "<div class=\"card\"><div class=\"card-body\">Ref update failed: {}</div></div>",
+                html_escape(&e.to_string())
+            ),
+        );
+    }
+    redirect_see_other(&format!("/pulls/{branch}"))
+}
+
+fn is_ancestor(repo: &Repository, ancestor: Oid, descendant: Oid) -> bool {
+    let mut visited = HashSet::new();
+    let mut queue = VecDeque::new();
+    queue.push_back(descendant);
+    while let Some(oid) = queue.pop_front() {
+        if oid == ancestor {
+            return true;
+        }
+        if visited.len() > 2048 || !visited.insert(oid) {
+            continue;
+        }
+        if let Some(c) = load_commit(repo, &oid) {
+            for p in c.parents {
+                queue.push_back(p);
+            }
+        }
+    }
+    false
 }
 
 /// Render `/actions` inspecting real `.github/workflows/` and `.arks/workflows/` files in HEAD.
