@@ -363,6 +363,12 @@ def cmd_gate(args: argparse.Namespace) -> int:
             errors.append(f"Hangul found in tracked file: {fpath}")
         if HOME_PATH_RE.search(text):
             errors.append(f"local user home path found in tracked file: {fpath}")
+        if fpath == "README.md" or (fpath.startswith("docs/") and fpath.endswith(".md")):
+            raw_wiki = re.findall(r"\[\[(?:sot|plan|adr|research|evidence):[^\]]+\]\]", text)
+            if raw_wiki:
+                errors.append(
+                    f"raw Specfold wiki link(s) in public doc {fpath}: {raw_wiki[:3]}"
+                )
 
     check_specfold_links(changed, errors)
 

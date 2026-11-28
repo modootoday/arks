@@ -47,11 +47,11 @@ non-option word starts the directory list). One deliberate difference: without
 
 Daemon flag inventory: every `git daemon` option is implemented with git semantics — `--inetd`, `--detach`, `--pid-file`, `--user`/`--group`, `--syslog` / `--log-destination`, `--base-path-relaxed`, `--user-path`, `--interpolated-path`, `--allow-override`/`--forbid-override` with per-repository `daemon.<service>`, `--access-hook`, `--[no-]informative-errors` (**Parity, host-tested** against stock `git daemon`; a Docker pin receipt is still pending, so not Claimed). `service:upload-archive` enable+ustar **Parity** via `git archive --remote` (path-filter / non-ustar Stay Partial) + **B5 Claimed** byte-identical ustar. Windows: `--syslog` / `--detach` / `--user` / `--group` are refused (no `/dev/log`, `fork` or `setuid`).
 
-Residual honesty ([[sot:root/arks-claimed-residual-gates]] / [[sot:root/arks-remaining-incompletes-wave]]):
+Residual honesty ([arks-claimed-residual-gates](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-claimed-residual-gates.sot.md) / [arks-remaining-incompletes-wave](https://github.com/modootoday/arks/blob/main/.spec/sot/arks-remaining-incompletes-wave.sot.md)):
 
 | Gate | Class | Notes |
 |------|-------|-------|
-| **B5** archive format parity | **Claimed** | Docker `cmp -s` vs stock git-daemon **2.39.5** ([[evidence:root/20261111091600-claimed-daemon-archive]]) |
+| **B5** archive format parity | **Claimed** | Docker `cmp -s` vs stock git-daemon **2.39.5** ([20261111091600-claimed-daemon-archive](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111091600-claimed-daemon-archive)) |
 | **B5+** syslog facility/priority | **Claimed** | Docker collector PRI=30 (`LOG_DAEMON`+`LOG_INFO`); Windows Event Log ≠ POSIX syslog (N/A) |
 | Classic double-fork | **Refuse (terminal)** | Peer detach is single-fork+`setsid`; `arks daemon --detach` does the same |
 

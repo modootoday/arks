@@ -27,7 +27,7 @@ You run the **native** `arks` CLI on your machine. Docker is the verification ve
 - **Venue:** pinned clean-room image; in-image stock Git **2.39.5** vs release-profile `arks`.
 - **Aggregation:** median wall-clock over 3 iterations (`median_p95`).
 - **Ratio:** `arks_median / git_median`. Values below `1.0` mean arks used less wall-clock on that fixture.
-- **Bars:** ≤ **0.8×** on every allow-list journey remains the broad measured bar. ≤ **0.5×** is the aggressive bar — historical **Claimed 8/8** on tip `79fc9bf`; tip after G7 PATH/`exec` [[evidence:root/20261111025200]] is **Claimed(partial)** (18 ≤0.5× incl. REVERT **0.4943** + `aggressive_na` ALIAS **0.5489**; M17 still 19/19 ≤0.8×). Prior unblock [[evidence:root/20261111015154]] (ALIAS **0.5546** / REVERT **0.5000**) remains archival.
+- **Bars:** ≤ **0.8×** on every allow-list journey remains the broad measured bar. ≤ **0.5×** is the aggressive bar — historical **Claimed 8/8** on tip `79fc9bf`; tip after G7 PATH/`exec` [20261111025200-g-ladder-g7-g19-alias-path-exec](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111025200-g-ladder-g7-g19-alias-path-exec) is **Claimed(partial)** (18 ≤0.5× incl. REVERT **0.4943** + `aggressive_na` ALIAS **0.5489**; M17 still 19/19 ≤0.8×). Prior unblock [20261111015154-pf5-revert-first-g19-unblock](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261111015154-pf5-revert-first-g19-unblock) (ALIAS **0.5546** / REVERT **0.5000**) remains archival.
 
 Carrying receipts:
 
@@ -53,7 +53,7 @@ Carrying receipts:
 
 ## Ratio (arks / Git)
 
-*Lower ratio = less wall-clock for arks on that clean-room fixture. Charts track tip `79fc9bf`; carrying Clone HTTP ratio is **0.1579** ([[evidence:root/20261110142500]]).*
+*Lower ratio = less wall-clock for arks on that clean-room fixture. Charts track tip `79fc9bf`; carrying Clone HTTP ratio is **0.1579** ([20261110142500-g19-remeasure-pf5-8of8](https://github.com/modootoday/arks/tree/main/.spec/evidence/20261110142500-g19-remeasure-pf5-8of8)).*
 
 ## Summary
 
