@@ -1,8 +1,8 @@
 # `.spec/` — public Specfold brain (arks)
 
-This tree is **tracked** and will ship with the **public** repository. Treat every file as world-readable.
+This tree is **tracked** and ships with the **public** repository. Treat every file as world-readable.
 
-Remote is currently empty / push-deferred — **do not push** until the owner explicitly authorizes a clean history push.
+Push scope follows [[sot:root/autonomous-operation]] and [[sot:root/agy-automated-development]]: agents push only their own task-scoped `agy/<lane>/<slug>` branch (or legacy `claude/*` branch) and open a PR; `main`, tags, and foreign branches are never pushed by agents.
 
 ## Product shape (owner Won — active canon)
 
@@ -91,7 +91,7 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 
 - No secrets in `.spec/`. Evidence receipts OK when non-secret.
 - Agent transcripts / local pin dumps → `.spec.local/` (or delete).
-- **Push deferred** until owner authorizes ([[research:root/20261111041000]]). **No push / no force-push** unless the owner explicitly authorizes.
+- **Push scope:** agents push only their own `agy/<lane>/<slug>` branch (or legacy `claude/*` topic branch) and open a PR per [[sot:root/autonomous-operation]] and [[sot:root/agy-automated-development]]. Never push `main`, tags, or foreign branches.
 
 ## Agent entry points
 
@@ -99,8 +99,9 @@ Body line `Version **0.x.y**` on a SoT is a **document revision** (design-iterat
 |------|------|
 | Router | `/AGENTS.md` |
 | Classification | this file + rule `25-spec-classification` |
-| Process | [[sot:root/agent-governance]] (v0.3.2+ gap fill) |
-| Governance gap matrix | [[research:root/20261111061037]] |
+| Process | [[sot:root/agent-governance]] (v0.4.1) |
+| Unattended / `agy` parallel governance | [[sot:root/autonomous-operation]] (v2.1.0) · [[sot:root/agy-automated-development]] (v0.1.0) · [[adr:root/20261128035000]] · rules `95`, `96` · skill `agy-parallel-orchestration` |
+| Governance gap matrix | [[research:root/20261111061037]] · PR/branch audit [[research:root/20261128034500]] |
 | Hangul / English-only | rule `05-english-only` + [[sot:root/language-english-only]] + `.cursor/hooks/*` |
 | Spec-first / Version≠release / evidence / stub wording | rules `26`–`29`, `35` + skill `commit-governance` |
 | Personality / serve≠hub / ports / no git-gh | rules `30`, `32`–`34` + skills `guard-cli-surface`, `review-product-subprocess`, `self-host-serve` |

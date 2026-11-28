@@ -3,8 +3,8 @@ id: sot:root/autonomous-operation
 title: Autonomous operation — unattended agent governance until final completion
 status: active
 created: 2026-11-24T00:00:00Z
-updated: 2026-11-24T00:00:00Z
-tags: [agents, governance, autonomy, unattended, permissions, merge, escalation, honesty, completion]
+updated: 2026-11-28T03:50:00Z
+tags: [agents, governance, autonomy, unattended, permissions, merge, escalation, honesty, completion, agy, parallelism]
 verify: manual
 rel:
   depends_on:
@@ -14,28 +14,38 @@ rel:
     - sot:root/product-verification-clean-room
     - sot:root/public-surface
     - sot:root/language-english-only
+    - sot:root/agy-automated-development
     - adr:root/20261119220000
     - adr:root/20261124000000
+    - adr:root/20261128035000
   governs:
     - .claude/settings.json
     - .github/labels.json
     - .github/rulesets/main-protected.json
     - .agents/rules/95-autonomous-operation.md
+    - .agents/rules/96-agy-parallel-governance.md
 ---
 
 # Autonomous operation
 
-Version **2.0.0**. This SoT defines how AI agents run arks **without a human in the loop** until
+Version **2.1.0**. This SoT defines how AI agents run arks **without a human in the loop** until
 the program reaches final completion (§11), and which decisions stay with the owner. It owns the
 *process* of unattended work. Product meaning stays with the domain SoTs; this SoT never makes a
 product claim.
 
-Decision: [[adr:root/20261124000000]]. Short always-on form: rule `95-autonomous-operation`.
+Decisions: [[adr:root/20261124000000]] (unattended operation) and [[adr:root/20261128035000]]
+(`agy` parallel-development governance). Short always-on forms: rules `95-autonomous-operation` and
+`96-agy-parallel-governance`. Runtime specialization for **Antigravity (`agy`)** sessions (task-scoped
+`agy/<lane>/<slug>` branches, Two-Tier parallelism, Step 0 orphan sweep, GitHub-native control
+plane, portable pre-push gate): [[sot:root/agy-automated-development]].
 
 **Canon.** The fleet governance canon is playpilot `.agents/rules/governance.md` (G1 actors, G2
 autonomy levels A0 / A1 / A2, G3 decision rights, G4 loop, G5 escalation, G6 messages, G7 secrets,
 G8 public surface, G9 incidents, G10 definition of done). This SoT binds that canon to arks and
-adds arks-specific gates; where the two differ, the stricter rule applies.
+adds arks-specific gates; where the two differ, the stricter rule applies. Runtime-specific
+fleet CLI steps (`playpilot mail`, `playpilot sync`, `playpilot claim`) apply to fleet-connected
+Claude sessions; `agy` sessions execute the equivalent GitHub-native control plane in
+[[sot:root/agy-automated-development]].
 
 ## 1. Authority
 
@@ -99,8 +109,8 @@ Each run follows the canon loop (G4) and stops at the first step that has work:
 7. **Nothing to do:** say so in one line and stop.
 
 Limits per run (G4): at most one new work package, at most three open agent PRs in the
-repository (arks keeps one at a time on its single topic branch, §4.1), at most two attempts at
-the same failing step.
+repository (preferring a single Tier A Integrator PR, or up to three disjoint Tier B lane PRs per
+[[sot:root/agy-automated-development]] §3), at most two attempts at the same failing step.
 
 A unit that needs something only the owner can supply (a secret, a device, a paid service, a
 decision at level **A2**) is **owner-blocked**: record it (§10.3) and pick the next unit. Agents
@@ -108,8 +118,9 @@ never wait idle on an owner-blocked unit while other units exist.
 
 ## 4. Pull request lifecycle
 
-1. **One PR at a time** per topic branch. The next unit starts only after the previous PR merges
-   or closes.
+1. **One PR per topic branch** (1:1). In `agy`, each work package or wave gets its own
+   `agy/<lane>/<slug>` branch and opens a PR in the same turn (zero-orphan invariant). Legacy
+   Claude sessions keep one PR at a time on their single `claude/<name>` branch.
 2. Every PR has: a Conventional title (≤72 characters); the body of §10.2; labels by §6; and
    auto-merge for levels **A0** and **A1** (after measurement).
 3. **CI red:** find the root cause and fix it in the same PR. A job may be re-run **once** to
@@ -174,17 +185,25 @@ Notes:
 
 ## 7. Concurrency
 
-1. **Topic branch.** Each session works on the single branch the session environment assigns
-   (`claude/<name>`). It never pushes another branch without the owner's permission.
-2. **Reset after merge.** After a PR merges, the session resets the topic branch to `origin/main`
-   and pushes it, so the branch never carries already-merged history.
-3. **Path claims.** Parallel sub-agents work in separate worktrees on disjoint paths. Shared files
-   (`crates/arks/src/cmd/mod.rs`, `git_dispatch.rs`, `build-fixture.sh`, matrix CSVs) take
-   additive lines only. The coordinating session integrates sub-agent work by cherry-picking
-   under its own identity, then runs the full fast gate on the result.
-4. **Sub-agent scope.** A sub-agent gets a written brief with: the goal, the files, what is
-   ruled out, the verification it must run and the report it must return. Sub-agents never
-   push, open PRs or merge.
+1. **Topic branch.** `agy` sessions create one task-scoped branch `agy/<lane>/<slug>` per work
+   package or Integrator wave (1:1 branch-to-PR, zero-orphan invariant, deleted on merge —
+   [[sot:root/agy-automated-development]] §2). Legacy Claude sessions continue to use their
+   session-assigned `claude/<name>` branch and reset it to `origin/main` after merge. No session
+   ever pushes `main`, tags, or a foreign branch without owner permission.
+2. **Parallel execution (Two-Tier model).** Prefer **Tier A (Hub-and-Spoke Integrator)**: one
+   session coordinates subagents on disjoint path claims and lands one cohesive PR. Cross-session
+   **Tier B** concurrency is capped at **3 open agent PRs** repository-wide across disjoint
+   Ownership Lanes with zero concurrent edits to shared hot files
+   ([[sot:root/agy-automated-development]] §3).
+3. **Path claims and sub-agent scope.** Parallel sub-agents work on strictly disjoint paths (or in
+   separate worktrees outside tracked dirs when independent builds are needed). Shared hot files
+   (`crates/arks/src/cmd/mod.rs`, `git_dispatch.rs`, `build-fixture.sh`, matrix CSVs, plans,
+   `docs/completion.md`) are Integrator-serialized and take additive lines only. The coordinating
+   session integrates sub-agent work under the owner noreply identity, then runs the full fast gate
+   once on the result.
+4. **Sub-agent brief.** A sub-agent gets a written brief with: the goal, the owned files, what is
+   ruled out, the verification it must run, and the report it must return. Sub-agents never push,
+   open PRs, or merge.
 5. **Shared resources.** One Docker clean-room run at a time per host; corpus outputs go outside
    the repository (scratch space) and are moved out before any commit.
 
@@ -228,13 +247,17 @@ owner can do. It never claims success that a check did not show.
 
 ### 10.2 PR body
 
-Sections: **Summary** (what and why), **Verification** (commands and results; host runs marked
-advisory), **Class** (A, H or O with the reason), and the attribution footer.
+Sections: **Summary** (what and why), **Parallel Lease** (required for `agy` PRs per
+[[sot:root/agy-automated-development]] §7.2: runtime, tier, lane, hot files, base tip),
+**Verification** (commands and results; host runs marked advisory), **Class** (`A0`, `A1` or `A2`
+with the reason), and the attribution footer.
 
 ### 10.3 Blocks and the owner queue (canon G5)
 
-1. **A2 items** go to the fleet **Owner queue** (kept by the coordinator) through the mailbox:
-   `playpilot mail send --as arks --to design` with the exact command or screen for each item.
+1. **A2 items:** fleet-connected sessions send them to the **Owner queue** through the mailbox
+   (`playpilot mail send --as arks --to design`); `agy` sessions file a `needs-owner` GitHub issue
+   (and report in Korean chat when interactive) with the exact command, screen, options, and
+   recommendation for each item.
 2. **A blocked work package** gets a `needs-owner` issue in arks with what is blocked, why, the
    options and the recommendation; the run skips to the next package.
 3. **Owner-side commands on a device** (for example `gh` with the owner's login) go to a node

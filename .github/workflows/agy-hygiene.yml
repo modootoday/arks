@@ -1,0 +1,48 @@
+# Advisory agy parallel-governance hygiene check (.spec/sot/agy-automated-development.sot.md).
+# Non-required check: verifies Parallel Lease headers, lane/hot-file isolation, open PR cap,
+# and surfaces orphaned remote branches without altering main-protected required checks.
+name: agy-hygiene
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: agy-hygiene-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  hygiene:
+    name: agy hygiene (advisory)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Check agy PR Parallel Lease and lane/hot-file isolation
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: >-
+          python3 -I verify/scripts/agy-governance-check.py pr-check
+          --pr-number "$PR_NUMBER"
+          --head-ref "$HEAD_REF"
+          --check-open-prs
+
+      - name: Run Step 0 orphan-branch and open-PR sweep
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          python3 -I verify/scripts/agy-governance-check.py sweep --no-fetch

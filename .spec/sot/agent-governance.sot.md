@@ -3,8 +3,8 @@ id: sot:root/agent-governance
 title: Agent governance
 status: active
 created: 2026-11-08T08:20:00Z
-updated: 2026-11-24T00:00:00Z
-tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, ports, symmetry, hooks, m24, g028-live-private-arks, deferred-zero, l3]
+updated: 2026-11-28T03:50:00Z
+tags: [agents, governance, specfold, conventions, language, hangul-ban, public, triad, classification, spec-local, commit-order, evidence-honesty, personality, serve-vs-hub, ports, symmetry, hooks, m24, g028-live-private-arks, deferred-zero, l3, agy]
 verify: manual
 rel:
   depends_on:
@@ -33,6 +33,8 @@ rel:
     - research:root/20261111055609
     - research:root/20261111061037
     - sot:root/autonomous-operation
+    - sot:root/agy-automated-development
+    - adr:root/20261128035000
   governs:
     - AGENTS.md
     - .agents/
@@ -42,13 +44,15 @@ rel:
 
 # Agent governance
 
-Version **0.4.0**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
+Version **0.4.1**. Normative intent for how AI agents use **AGENTS.md**, `.agents/**`, `.spec/**`, and Specfold in this **public** repository. Product semantics remain owned by domain SoTs; this SoT owns **process routing** and **spec classification**.
 
 Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classification.md`.
 
 **0.3.1 addendum (process rules — not product Claimed):** always-on rules now also cover Hangul ban (`05`), SoT Version≠release (`26`), Spec-first commit order (`27`), evidence honesty (`28`), no git/gh subprocess (`30`), CLI personality (`32`), serve≠hub (`33`), and commit hygiene (`91`), plus skills `guard-cli-surface` / `commit-governance` and optional Cursor hooks under `.cursor/`.
 
 **0.3.2 addendum (gap fill — not product Claimed):** deep audit [[research:root/20261111061037]] closed process gaps G1–G14 with rules `29` (stub vs Claimed), `34` (ports normative vs demo), `35` (`.spec.local` journey), `61` (Cross-OS / pin honesty); skills `review-product-subprocess`, `run-symmetry-matrix`, `release-symmetry-gate`, `self-host-serve`, `research-to-sot`; and hardened Cursor hooks (force-push deny to main/master, `.spec.local`/secrets stage deny, destructive git ask, Hangul + Claimed invent scans on `git commit`, broader Hangul after-edit paths).
+
+**0.4.1 addendum (`agy` parallel governance — not product Claimed):** [[adr:root/20261128035000]] and [[sot:root/agy-automated-development]] canonize `agy` automated parallel development (task-scoped `agy/<lane>/<slug>` branches, zero-orphan PR binding, Step 0 sweep, Two-Tier parallelism, hot-file lock list, GitHub-native control plane, rule `96`, skill `agy-parallel-orchestration`).
 
 ## Rule
 
@@ -86,7 +90,7 @@ Human-facing index: `.spec/README.md`. Rule: `.agents/rules/25-spec-classificati
 | Trash | `.specfold/trash/` | Never |
 
 11. **No secrets** in tracked `.spec/` or `.agents/`. Evidence receipts MAY be public when non-secret. Agent dumps → `.spec.local/` or delete.
-12. **Push scope** (amended 2026-11-24 by [[adr:root/20261124000000]]; the earlier push-deferred policy of [[research:root/20261111041000]] ended when the public remote opened): agents push only the session's own `claude/*` topic branch and open a PR; `main`, tags and other branches are never pushed by agents. Merge rights follow the decision classes of [[sot:root/autonomous-operation]].
+12. **Push scope** (amended 2026-11-24 by [[adr:root/20261124000000]] and 2026-11-28 by [[adr:root/20261128035000]]): `agy` agents push only their own task-scoped `agy/<lane>/<slug>` branch and open a PR in the same turn (legacy Claude sessions push only their own `claude/*` topic branch); `main`, tags and foreign branches are never pushed by agents. Merge rights follow the autonomy levels (A0 / A1 / A2) of [[sot:root/autonomous-operation]] and [[sot:root/agy-automated-development]].
 
 ### Product shape (process honesty)
 
