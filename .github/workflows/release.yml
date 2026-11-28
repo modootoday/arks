@@ -461,7 +461,7 @@ jobs:
 
       - name: Configure RubyGems OIDC credentials
         if: steps.gate.outputs.skip != 'true'
-        uses: rubygems/configure-rubygems-credentials@v1
+        uses: rubygems/configure-rubygems-credentials@v2.2.0
 
       - name: Push platform gems (OIDC)
         if: steps.gate.outputs.skip != 'true'
