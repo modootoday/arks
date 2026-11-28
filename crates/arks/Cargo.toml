@@ -1,6 +1,6 @@
 [package]
 name = "arks"
-description = "arks for Git — Wave L+H+Pa+Pb CLI (not production; production = M9)"
+description = "arks for Git — native Rust Git-compatible CLI, daemon, forge client and self-host server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
