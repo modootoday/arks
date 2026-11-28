@@ -187,7 +187,7 @@ jobs:
           PY_VER="$("$SMOKE/venv/bin/arks" --version)"
           echo "- PyPI wheels (3 platforms): OK (\`${PY_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
 
-          # 2. npm platform packages + root shim
+          # 2. npm platform packages + root shim (@modootoday/*)
           node packaging/npm/build_packages.mjs \
             --artifacts-dir artifacts \
             --out-dir "$SMOKE/npm"
@@ -197,10 +197,10 @@ jobs:
           done
           (cd "$SMOKE/npm-app" && npm init -y >/dev/null && \
             npm install --no-audit --no-fund --offline \
-              "$SMOKE/npm-tgz"/arks-linux-x64-*.tgz \
-              "$SMOKE/npm-tgz"/arks-[0-9]*.tgz >/dev/null)
+              "$SMOKE/npm-tgz"/modootoday-arks-linux-x64-*.tgz \
+              "$SMOKE/npm-tgz"/modootoday-arks-[0-9]*.tgz >/dev/null)
           NPM_VER="$("$SMOKE/npm-app/node_modules/.bin/arks" --version)"
-          echo "- npm packages (3 platforms + root): OK (\`${NPM_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "- npm packages (@modootoday/*, 3 platforms + root): OK (\`${NPM_VER}\`)" | tee -a "$GITHUB_STEP_SUMMARY"
 
           # 3. RubyGems platform gems
           ruby packaging/rubygems/build_gems.rb \

@@ -4,9 +4,9 @@
 const { spawnSync } = require("node:child_process");
 
 const PLATFORM_MAP = {
-  "linux:x64": { pkg: "arks-linux-x64", bin: "bin/arks" },
-  "darwin:arm64": { pkg: "arks-darwin-arm64", bin: "bin/arks" },
-  "win32:x64": { pkg: "arks-win32-x64", bin: "bin/arks.exe" },
+  "linux:x64": { pkg: "@modootoday/arks-linux-x64", bin: "bin/arks" },
+  "darwin:arm64": { pkg: "@modootoday/arks-darwin-arm64", bin: "bin/arks" },
+  "win32:x64": { pkg: "@modootoday/arks-win32-x64", bin: "bin/arks.exe" },
 };
 
 const key = `${process.platform}:${process.arch}`;

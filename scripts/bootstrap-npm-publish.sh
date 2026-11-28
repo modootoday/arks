@@ -52,19 +52,27 @@ node packaging/npm/build_packages.mjs \
   --artifacts-dir "$ARTIFACTS_DIR" \
   --out-dir "$OUT_DIR"
 
-PACKAGES=(arks-linux-x64 arks-darwin-arm64 arks-win32-x64 arks)
+PACKAGES=(
+  "arks-linux-x64:@modootoday/arks-linux-x64"
+  "arks-darwin-arm64:@modootoday/arks-darwin-arm64"
+  "arks-win32-x64:@modootoday/arks-win32-x64"
+  "arks:@modootoday/arks"
+)
 
 already_published() {
   local pkg="$1"
   local ver="$2"
+  local enc="${pkg//\//%2F}"
   local code
   code="$(curl -sS -o /dev/null -w '%{http_code}' \
-    "https://registry.npmjs.org/${pkg}/${ver}" || echo 000)"
+    "https://registry.npmjs.org/${enc}/${ver}" || echo 000)"
   [[ "$code" == "200" ]]
 }
 
-for pkg in "${PACKAGES[@]}"; do
-  pkg_dir="$OUT_DIR/$pkg"
+for entry in "${PACKAGES[@]}"; do
+  dir_name="${entry%%:*}"
+  pkg="${entry#*:}"
+  pkg_dir="$OUT_DIR/$dir_name"
   if [[ ! -d "$pkg_dir" ]]; then
     echo "FAIL: missing built package dir $pkg_dir" >&2
     exit 1
