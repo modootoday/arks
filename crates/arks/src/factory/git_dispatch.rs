@@ -262,6 +262,7 @@ pub fn is_exclusive_forge_leaf(cmd: &str) -> bool {
             | "gpg-key"
             | "extension"
             | "copilot"
+            | "event"
             | "inbox"
             | "forge-config"
     )
