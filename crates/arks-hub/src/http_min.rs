@@ -131,6 +131,53 @@ pub fn http_exchange(
     Ok((status, String::from_utf8_lossy(&bytes).into_owned()))
 }
 
+/// POST `application/x-www-form-urlencoded` expecting JSON, preserving the response
+/// body on HTTP 4xx/5xx (required by RFC 8628 token polling where `authorization_pending`
+/// and `slow_down` arrive with HTTP 400).
+pub fn http_post_form_json(url: &str, form_body: &str) -> Result<(u16, String), String> {
+    if url.starts_with("https://") {
+        let mut agent_builder = ureq::AgentBuilder::new()
+            .timeout_connect(Duration::from_secs(10))
+            .timeout_read(Duration::from_secs(30))
+            .timeout_write(Duration::from_secs(30))
+            .redirects(4)
+            .user_agent("arks-hub/0.1 (+RFC8628 Device Flow)");
+        agent_builder = hub_https_policy().apply(agent_builder, arks_net::url_host(url))?;
+        let agent = agent_builder.build();
+        let req = agent
+            .request("POST", url)
+            .set("Accept", "application/json")
+            .set("Accept-Encoding", "identity")
+            .set("Content-Type", "application/x-www-form-urlencoded");
+        return match req.send_string(form_body) {
+            Ok(resp) => {
+                let status = resp.status();
+                let text = resp
+                    .into_string()
+                    .map_err(|e| format!("oauth response read: {e}"))?;
+                Ok((status, text))
+            }
+            Err(ureq::Error::Status(code, resp)) => {
+                let text = resp.into_string().unwrap_or_default();
+                Ok((code, text))
+            }
+            Err(ureq::Error::Transport(t)) => Err(format!("oauth transport error: {t}")),
+        };
+    }
+    let (host, port, req_path) = parse_http_url(url)?;
+    let base = format!("http://{host}:{port}");
+    let (status, bytes) = http_exchange_bytes(
+        &base,
+        "POST",
+        &req_path,
+        None,
+        Some(form_body.as_bytes()),
+        "application/x-www-form-urlencoded",
+        "application/json",
+    )?;
+    Ok((status, String::from_utf8_lossy(&bytes).into_owned()))
+}
+
 /// Raw body exchange (release assets / run download). Loopback http only for binary Claimed.
 pub fn http_exchange_bytes(
     base: &str,

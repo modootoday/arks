@@ -12,6 +12,7 @@
 #![forbid(unsafe_code)]
 #![recursion_limit = "256"]
 
+pub mod device_flow;
 mod forge;
 mod http_min;
 mod key_formats;
