@@ -16,21 +16,24 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 
 const TARGETS = {
   "x86_64-unknown-linux-gnu": {
-    pkgName: "arks-linux-x64",
+    dirName: "arks-linux-x64",
+    pkgName: "@modootoday/arks-linux-x64",
     archive: "arks-x86_64-unknown-linux-gnu.tar.gz",
     binName: "arks",
     os: ["linux"],
     cpu: ["x64"],
   },
   "aarch64-apple-darwin": {
-    pkgName: "arks-darwin-arm64",
+    dirName: "arks-darwin-arm64",
+    pkgName: "@modootoday/arks-darwin-arm64",
     archive: "arks-aarch64-apple-darwin.tar.gz",
     binName: "arks",
     os: ["darwin"],
     cpu: ["arm64"],
   },
   "x86_64-pc-windows-msvc": {
-    pkgName: "arks-win32-x64",
+    dirName: "arks-win32-x64",
+    pkgName: "@modootoday/arks-win32-x64",
     archive: "arks-x86_64-pc-windows-msvc.zip",
     binName: "arks.exe",
     os: ["win32"],
@@ -128,7 +131,7 @@ function main() {
     }
     if (!binSrc) continue;
 
-    const pkgDir = path.join(opts.outDir, spec.pkgName);
+    const pkgDir = path.join(opts.outDir, spec.dirName);
     fs.rmSync(pkgDir, { recursive: true, force: true });
     fs.mkdirSync(path.join(pkgDir, "bin"), { recursive: true });
 
@@ -145,7 +148,7 @@ function main() {
       homepage: "https://modootoday.github.io/arks/",
       repository: {
         type: "git",
-        url: "https://github.com/modootoday/arks.git",
+        url: "git+https://github.com/modootoday/arks.git",
       },
       bugs: {
         url: "https://github.com/modootoday/arks/issues",
@@ -167,7 +170,7 @@ function main() {
   // Clean temporary extraction dir
   fs.rmSync(path.join(opts.outDir, ".tmp-extract"), { recursive: true, force: true });
 
-  // Root `arks` package with optionalDependencies pointing to all 3 platform packages
+  // Root `@modootoday/arks` package with optionalDependencies pointing to all 3 scoped platform packages
   const rootDir = path.join(opts.outDir, "arks");
   fs.rmSync(rootDir, { recursive: true, force: true });
   fs.mkdirSync(path.join(rootDir, "bin"), { recursive: true });
@@ -182,7 +185,7 @@ function main() {
   }
 
   const rootPkgJson = {
-    name: "arks",
+    name: "@modootoday/arks",
     version,
     description:
       "arks for Git — native Rust Git-compatible CLI, daemon, forge client, and self-hosted server",
@@ -190,7 +193,7 @@ function main() {
     homepage: "https://modootoday.github.io/arks/",
     repository: {
       type: "git",
-      url: "https://github.com/modootoday/arks.git",
+      url: "git+https://github.com/modootoday/arks.git",
     },
     bugs: {
       url: "https://github.com/modootoday/arks/issues",
@@ -206,7 +209,7 @@ function main() {
     optionalDependencies,
   };
   fs.writeFileSync(path.join(rootDir, "package.json"), JSON.stringify(rootPkgJson, null, 2) + "\n");
-  console.log(`built npm root package arks@${version}`);
+  console.log(`built npm root package @modootoday/arks@${version}`);
 }
 
 main();
