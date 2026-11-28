@@ -27,26 +27,9 @@ pub fn cmd_rerere(args: &[String]) -> CliResult<()> {
     crate::cmd::rerere::cmd_rerere(args)
 }
 
-/// `arks subtree` — discoverability + honest refuse (full subtree not claimed).
+/// `subtree`: see [`crate::cmd::subtree`].
 pub fn cmd_subtree(args: &[String]) -> CliResult<()> {
-    if args.is_empty() || args.iter().any(|a| a == "-h" || a == "--help") {
-        print!(
-            "\
-arks subtree — git-subtree peer (not claimed beyond help)
-
-Usage:
-  arks subtree add|split|pull|push|merge …
-
-Full prefix-history rewrite is not claimed. Prefer fetch + read-tree / merge
-workflows, or external git-subtree until a native subset is evidenced.
-"
-        );
-        return Ok(());
-    }
-    let sub = args[0].as_str();
-    Err(CliError::NotImplemented(format!(
-        "subtree {sub}: not claimed (Partial help only; no git/gh spawn fallback)"
-    )))
+    crate::cmd::subtree::cmd_subtree(args)
 }
 
 /// `fast-export`: see [`crate::cmd::fast_export`].
