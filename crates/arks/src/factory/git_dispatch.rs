@@ -215,7 +215,8 @@ pub fn dispatch_git_leaf(cmd: &str, args: &[String]) -> CliResult<()> {
         "scalar" => Err(CliError::NotImplemented(
             "scalar: separate large-repo helper (FS6); not claimed as arks porcelain".into(),
         )),
-        "forge" | "host-env" | "lfs" => Err(CliError::NotImplemented(format!(
+        "lfs" => cmd::cmd_lfs(args),
+        "forge" | "host-env" => Err(CliError::NotImplemented(format!(
             "{cmd}: trimmed from product CLI (not git/git-daemon); arks never invokes git/gh — use external tools outside arks if needed"
         ))),
         other => Err(CliError::NotImplemented(format!(

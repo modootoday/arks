@@ -17,6 +17,7 @@ path = "src/main.rs"
 
 [dependencies]
 arks-config = { workspace = true }
+arks-net = { workspace = true }
 arks-hash = { workspace = true }
 arks-oid = { workspace = true }
 arks-object = { workspace = true }

@@ -44,6 +44,7 @@ pub mod inspect;
 pub mod interactive_patch;
 pub mod internal_helpers;
 pub mod lease;
+pub mod lfs;
 pub mod line_log;
 pub mod line_range;
 pub mod lock;
@@ -158,6 +159,7 @@ pub use internal_helpers::{
     cmd_upload_archive_writer,
 };
 pub use lease::cmd_lease;
+pub use lfs::cmd_lfs;
 pub use lock::cmd_lock;
 pub use log_cmd::{cmd_log, cmd_show, cmd_whatchanged};
 pub use ls_files::cmd_ls_files;
