@@ -1,0 +1,104 @@
+corpus	line	class	why	command	reason
+family-a3-gui	L001	design	exit 0!=1; stdout	gui version	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L002	design	exit 0!=1; stdout	gui.tcl version	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L003	design	exit 129!=1	gui version extra	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L004	design	exit 129!=1	gui nosuch	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L005	design	exit 129!=1	gui -h	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L006	design	exit 0!=1; stdout	gui browser	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L007	design	exit 0!=1; stdout	gui browser HEAD	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L008	design	exit 0!=1; stdout	gui browser HEAD~1	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L009	design	exit 128!=1	gui browser nosuch-rev	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L010	design	exit 0!=1; stdout	gui blame README.md	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L011	design	exit 0!=1; stdout	gui blame HEAD README.md	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L012	design	exit 0!=1; stdout	gui blame --line=2 HEAD README.md	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L013	design	exit 0!=1; stdout	gui blame --line 2 src/b.txt	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L014	design	exit 129!=1	gui blame	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L015	design	exit 129!=1	gui blame a b c	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L022	design	exit 129!=1	citool --bogus	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L023	design	exit 129!=1	citool extra	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L024	design	exit 0!=1	gui	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L028	design	exit 129!=1	credential-wincred	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L029	design	exit 0!=1	credential-wincred frobnicate	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L030	design	exit 129!=1	credential-manager	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L031	design	exit 0!=1; stdout	credential-manager --version	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L032	design	exit 0!=1	credential-manager frobnicate	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L033	design	exit 129!=1	update-git-for-windows --bogus	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L034	design	exit 129!=1	update-git-for-windows extra	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-a3-gui	L035	design	exit 129!=1	update-git-for-windows -y extra	owner A3 decisions 1-2: the oracle image ships no git-gui and no Windows-only helpers, so stock git answers 'not a git command'; arks implements them
+family-commit	L318	post-pin	exit 0!=129	branch --omit-empty --format=''	branch --omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L319	post-pin	exit 0!=129; stdout	branch --no-omit-empty	branch --[no-]omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L364	post-pin	exit 0!=129	tag --omit-empty --format=''	tag --omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L605	post-pin	exit 0!=129; state	worktree add --orphan -b orph wt1	worktree add --orphan: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L606	post-pin	exit 0!=129; state	worktree add --orphan wt1	worktree add --orphan: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L847	post-pin	exit 0!=128; stdout	-C .git/side format-patch --stdout --signature=S -1 --cover-letter --cover-from-description=subject --description-file=b.txt topic	format-patch --description-file: added in git 2.43.0 (pin 2.39.5: unrecognized argument, exit 128)
+family-commit	L900	post-pin	exit 0!=129; stdout	-C .git/side am -n .git/topic.mbox	am -n/--no-verify: added in git 2.40.0 (pin 2.39.5: unknown switch, exit 129)
+family-commit	L901	post-pin	exit 0!=129; stdout	-C .git/side am --no-verify .git/topic.mbox	am --no-verify: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L902	post-pin	exit 0!=129; stdout	-C .git/side am --verify .git/topic.mbox	am --verify: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L930	post-pin	exit 0!=129; state	notes add --no-separator -m a -m b	notes add --[no-]separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L931	post-pin	exit 0!=129; state	notes add --separator=-- -m a -m b	notes add --separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L932	post-pin	exit 0!=129; state	notes add --no-stripspace -m '  a  '	notes add --[no-]stripspace: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L933	post-pin	exit 0!=129; state	notes add --stripspace -m '  a  '	notes add --stripspace: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L956	post-pin	exit 0!=129; state	notes append --separator=-- -m sep	notes append --separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L957	post-pin	exit 0!=129; state	notes append --no-separator -m sep	notes append --[no-]separator: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-commit	L1007	post-pin	exit 128!=129	-C .git/side sparse-checkout check-rules	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1008	post-pin	exit 128!=129	-C .git/side sparse-checkout check-rules --cone	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1009	post-pin	exit 0!=129	-C .git/side sparse-checkout check-rules -z --rules-file=a.txt	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1010	post-pin	exit 0!=129	-C .git/side sparse-checkout check-rules --rules-file=a.txt	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-commit	L1011	post-pin	exit 0!=129	-C .git/side sparse-checkout check-rules --no-cone --rules-file=a.txt	sparse-checkout check-rules: added in git 2.41.0 (pin 2.39.5: unknown subcommand, exit 129)
+family-gap-blame	L011	post-pin	exit 0!=128; stdout	for-each-ref --format='[%(describe)]' refs/heads/main	for-each-ref %(describe[:<options>]) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L012	post-pin	exit 0!=128; stdout	for-each-ref --format='[%(ahead-behind:main)]' refs/heads	for-each-ref %(ahead-behind:<ref>) atom: added in git 2.41.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L021	post-pin	exit 0!=128; stdout	for-each-ref --format='[%(authoremail:mailmap)]' refs/heads/main	for-each-ref %(authoremail:mailmap): added in git 2.43.0 (pin 2.39.5: unrecognized email option, exit 128)
+family-gap-blame	L026	post-pin	exit 0!=128; stdout	for-each-ref --format='[%(signature)]' refs/heads/main	for-each-ref %(signature) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L028	post-pin	exit 0!=128; stdout	for-each-ref --format='[%(authorname:mailmap)|%(authoremail:trim,localpart)]' refs/heads/main	for-each-ref mailmap option and combined email options (trim,localpart): added in git 2.43.0 (pin 2.39.5: unrecognized email option, exit 128)
+family-gap-blame	L042	post-pin	exit 0!=129	for-each-ref --omit-empty --format='%(if)%(upstream)%(then)%(refname)%(end)'	for-each-ref --omit-empty: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L043	post-pin	exit 0!=129; stdout	for-each-ref --exclude=refs/heads/f* refs/heads	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L044	post-pin	exit 0!=129; stdout	for-each-ref --exclude=refs/tags	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L045	post-pin	exit 0!=129; stdout	for-each-ref --stdin	for-each-ref --stdin: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L125	post-pin	exit 0!=128; stdout	for-each-ref --format='%(*describe)' refs/tags/v1	for-each-ref %(describe[:<options>]) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L126	post-pin	exit 0!=128; stdout	for-each-ref --format='%(describe:tags)|%(describe:abbrev=4)|%(describe:match=v*)|%(describe:exclude=v*)' refs/heads	for-each-ref %(describe[:<options>]) atom: added in git 2.42.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-blame	L129	post-pin	exit 0!=129; stdout	for-each-ref --exclude refs/heads/main --exclude refs/tags/v1	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L130	post-pin	exit 0!=129; stdout	for-each-ref --exclude='refs/heads/*' --no-exclude refs/heads	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L131	post-pin	exit 0!=129; stdout	for-each-ref --ignore-case --exclude='REFS/HEADS/*'	for-each-ref --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L133	post-pin	exit 128!=129	for-each-ref --stdin refs/heads	for-each-ref --stdin: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-blame	L134	post-pin	exit 0!=128; stdout	for-each-ref --format='%(ahead-behind:feature)' refs/heads	for-each-ref %(ahead-behind:<ref>) atom: added in git 2.41.0 (pin 2.39.5: unknown field name, exit 128)
+family-gap-pack	L077	post-pin	exit 0!=129; stdout	-C .git/side merge-tree -X ours main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L078	post-pin	exit 0!=129; stdout	-C .git/side merge-tree -X theirs main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L079	post-pin	exit 0!=129; stdout	-C .git/side merge-tree --strategy-option=ours main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L080	post-pin	exit 1!=129; stdout	-C .git/side merge-tree -Xignore-space-change main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L081	post-pin	exit 1!=129; stdout	-C .git/side merge-tree --no-strategy-option main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L082	post-pin	exit 128!=129	-C .git/side merge-tree -Xbogus main clash	merge-tree -X/--[no-]strategy-option: added in git 2.43.0 (pin 2.39.5: unknown switch, exit 129)
+family-gap-pack	L083	post-pin	exit 1!=129; stdout	-C .git/side merge-tree --merge-base=base main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L084	post-pin	exit 0!=129; stdout	-C .git/side merge-tree --merge-base base main topic	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L085	post-pin	exit 128!=129	-C .git/side merge-tree --merge-base=nosuch main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L086	post-pin	exit 128!=129	-C .git/side merge-tree '--merge-base=base^{tree}' main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L087	post-pin	exit 1!=129; stdout	-C .git/side merge-tree --no-merge-base main clash	merge-tree --[no-]merge-base: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-gap-pack	L268	post-pin	exit 0!=128	pack-objects --non-empty --revs --filter=blob:none .git/x	pack-objects --filter without --stdout: allowed since git 2.43.0 (pin 2.39.5: fatal, exit 128)
+family-gap-pack	L270	post-pin	exit 0!=128	pack-objects --non-empty --revs --filter=tree:0 .git/x	pack-objects --filter without --stdout: allowed since git 2.43.0 (pin 2.39.5: fatal, exit 128)
+family-gap-range-diff	L096	post-pin	stdout	-C .git/rd range-diff --abbrev=10 base old new	range-diff --abbrev=<n>: added in git 2.40.0 (pin 2.39.5 accepts it but keeps 7-digit headers)
+family-history	L043	post-pin	exit 0!=129; stdout	diff --no-prefix --default-prefix t0 HEAD	diff --default-prefix: added in git 2.41.0 (pin 2.39.5: usage, exit 129)
+family-history	L300	post-pin	exit 0!=128; stdout	log --dd --oneline -1 HEAD~1	log --dd: added in git 2.43.0 (pin 2.39.5: unrecognized argument, exit 128)
+family-history	L360	post-pin	exit 0!=128; stdout	rev-list --exclude-hidden=fetch --all	rev-list --exclude-hidden=fetch: the fetch section was added in git 2.41.0 (pin 2.39.5: unsupported section, exit 128)
+family-history	L418	post-pin	exit 0!=129; stdout	cat-file -Z --batch-all-objects --batch-check	cat-file -Z: added in git 2.42.0 (pin 2.39.5: unknown switch, exit 129)
+family-history	L535	post-pin	exit 0!=128; stdout	ls-files --format='%(objectmode) %(objecttype) %(objectsize) %(objectsize:padded)|%(stage) %(eolinfo:index) %(eolinfo:worktree) %(eolattr) %(path)'	ls-files --format %(objecttype)/%(objectsize): added in git 2.42.0 (pin 2.39.5: bad format, exit 128)
+family-plumbing	L138	post-pin	exit 0!=129	show-ref --exists refs/heads/main	show-ref --exists: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L139	post-pin	exit 2!=129	show-ref --exists refs/heads/nope	show-ref --exists: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L204	post-pin	exit 0!=129; stdout	update-index --show-index-version	update-index --show-index-version: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L354	post-pin	exit 0!=129; stdout	var GIT_SEQUENCE_EDITOR	var GIT_SEQUENCE_EDITOR: added in git 2.40.0 (pin 2.39.5: usage, exit 129)
+family-plumbing	L357	post-pin	exit 0!=129; stdout	var GIT_SHELL_PATH	var GIT_SHELL_PATH: added in git 2.42.0 (pin 2.39.5: usage, exit 129)
+family-plumbing	L365	post-pin	exit 0!=129; stdout	check-attr --source HEAD -a src/a.txt	check-attr --source: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L366	post-pin	exit 0!=129; stdout	check-attr --source=HEAD~1 label src/b.txt	check-attr --source: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L399	post-pin	exit 0!=129	hook run --to-stdin=README.md --ignore-missing x -- a b	hook run --to-stdin: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L449	post-pin	exit 0!=129	pack-refs --include 'refs/heads/*'	pack-refs --include: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L450	post-pin	exit 0!=129	pack-refs --include='refs/heads/*' --exclude 'refs/heads/f*'	pack-refs --include/--exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L451	post-pin	exit 0!=129	pack-refs --exclude='refs/tags/t*'	pack-refs --exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L452	post-pin	exit 0!=129	pack-refs --all --exclude 'refs/heads/*'	pack-refs --exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L453	post-pin	exit 0!=129	pack-refs --include 'refs/heads/*' --no-include	pack-refs --[no-]include: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L455	post-pin	exit 0!=129	pack-refs --no-exclude --all	pack-refs --[no-]exclude: added in git 2.42.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L470	post-pin	exit 0!=129; stdout	merge-file -p --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt	merge-file --object-id: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L471	post-pin	exit 0!=129; stdout	merge-file --object-id HEAD:src/a.txt HEAD~1:src/a.txt HEAD:src/b.txt	merge-file --object-id: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L472	post-pin	exit 1!=129; stdout	merge-file --object-id --no-object-id -p src/a.txt README.md src/b.txt	merge-file --[no-]object-id: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L485	post-pin	exit 0!=129	repack -d --cruft --cruft-expiration=2.weeks.ago --max-cruft-size=1m	repack --max-cruft-size: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-plumbing	L496	post-pin	exit 0!=129	gc --cruft --max-cruft-size=1m --no-quiet	gc --max-cruft-size: added in git 2.43.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L088	post-pin	exit 0!=129; stdout; state	fetch --porcelain origin	fetch --porcelain: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L149	post-pin	exit 1!=129; state	push --branches origin	push --branches: added in git 2.41.0 (pin 2.39.5: unknown option, exit 129)
+family-remote	L293	post-pin	exit 0!=129	archive --format=tar --mtime=2020-01-01 -o out.tar HEAD	archive --mtime: added in git 2.40.0 (pin 2.39.5: unknown option, exit 129)

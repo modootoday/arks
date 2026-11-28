@@ -1,0 +1,10 @@
+=== release symmetry precheck (pin) ===
+tip=unknown
+git_oracle=git version 2.39.5
+ARKS_DOD_STRICT=0 ARKS_RELEASE_BLOCK_HUB_MISSING=1
+--- pillar 1: git ↔ arks ---
+--- pillar 2: git-daemon ↔ arks daemon ---
+--- pillar 3: gh ↔ arks hub (smoke; Missing policy separate) ---
+counts: cli_Missing=0 daemon_Missing=0 hub_v1_Missing=0
+--- pin inventory continuity (git / git-daemon; gh if present) ---
+=== prerelease RESULT: OK (pin Missing=0; untracked=0; Partial/hub Missing may remain advisory) ===

@@ -1,0 +1,507 @@
+L001	SAME	ls-remote origin	
+L002	SAME	ls-remote .git/upstream.git	
+L003	SAME	ls-remote --heads origin	
+L004	SAME	ls-remote --branches origin	
+L005	SAME	ls-remote -h origin	
+L006	SAME	ls-remote --tags origin	
+L007	SAME	ls-remote -t origin	
+L008	SAME	ls-remote --refs origin	
+L009	SAME	ls-remote --heads --tags origin	
+L010	SAME	ls-remote --symref origin	
+L011	SAME	ls-remote --symref origin HEAD	
+L012	SAME	ls-remote --get-url origin	
+L013	SAME	ls-remote --get-url	
+L014	SAME	ls-remote --get-url nosuch	
+L015	SAME	ls-remote --exit-code origin refs/heads/nosuch	
+L016	SAME	ls-remote --exit-code origin main	
+L017	SAME	ls-remote -q origin	
+L018	SAME	ls-remote --quiet origin	
+L019	SAME	ls-remote --sort=refname origin	
+L020	SAME	ls-remote --sort=-refname origin	
+L021	SAME	ls-remote --sort=version:refname --tags origin	
+L022	SAME	ls-remote --upload-pack=git-upload-pack origin	
+L023	SAME	ls-remote -o x origin	
+L024	SAME	ls-remote --server-option=x origin	
+L025	SAME	ls-remote origin 'refs/tags/*'	
+L026	SAME	ls-remote origin main topic	
+L027	SAME	ls-remote .	
+L028	SAME	ls-remote --heads .	
+L029	SAME	fetch origin	
+L030	SAME	fetch	
+L031	SAME	fetch -q origin	
+L032	SAME	fetch --quiet origin	
+L033	SAME	fetch -v origin	
+L034	SAME	fetch --verbose origin	
+L035	SAME	fetch --all	
+L036	SAME	fetch --multiple origin origin	
+L037	SAME	fetch -m origin	
+L038	SAME	fetch --dry-run origin	
+L039	SAME	fetch -n origin	
+L040	SAME	fetch --no-tags origin	
+L041	SAME	fetch -t origin	
+L042	SAME	fetch --tags origin	
+L043	SAME	fetch origin topic	
+L044	SAME	fetch origin topic:refs/heads/topic	
+L045	SAME	fetch origin +topic:refs/heads/topic	
+L046	SAME	fetch origin 'refs/heads/*:refs/remotes/up/*'	
+L047	SAME	fetch -f origin main:refs/heads/main2	
+L048	SAME	fetch --force origin topic:feature	
+L049	SAME	fetch origin topic:feature	
+L050	SAME	fetch -a origin	
+L051	SAME	fetch --append origin	
+L052	SAME	fetch --no-write-fetch-head origin	
+L053	SAME	fetch --write-fetch-head origin	
+L054	SAME	fetch -p origin	
+L055	SAME	fetch --prune origin	
+L056	SAME	fetch -P origin	
+L057	SAME	fetch --prune-tags origin	
+L058	SAME	fetch --atomic origin	
+L059	SAME	fetch --set-upstream origin main	
+L060	SAME	fetch -k origin	
+L061	SAME	fetch --keep origin	
+L062	SAME	fetch -u origin main:main	
+L063	SAME	fetch --update-head-ok origin main:main	
+L064	SAME	fetch --refmap= origin main	
+L065	SAME	fetch --refmap='refs/heads/*:refs/remotes/r/*' origin main	
+L066	SAME	fetch -j2 origin	
+L067	SAME	fetch --jobs=2 origin	
+L068	SAME	fetch --no-recurse-submodules origin	
+L069	SAME	fetch --recurse-submodules=no origin	
+L070	SAME	fetch --progress origin	
+L071	SAME	fetch --no-progress origin	
+L072	SAME	fetch --show-forced-updates origin	
+L073	SAME	fetch --no-show-forced-updates origin	
+L074	SAME	fetch --no-auto-maintenance origin	
+L075	SAME	fetch --no-auto-gc origin	
+L076	SAME	fetch --no-write-commit-graph origin	
+L077	SAME	fetch -4 origin	
+L078	SAME	fetch --ipv6 origin	
+L079	SAME	fetch -o x origin	
+L080	SAME	fetch --server-option=x origin	
+L081	SAME	fetch --negotiation-tip=main origin	
+L082	SAME	fetch --prefetch origin	
+L083	SAME	fetch --refetch origin	
+L084	SAME	fetch --upload-pack=git-upload-pack origin	
+L085	SAME	fetch .git/upstream.git	
+L086	SAME	fetch .git/upstream.git topic	
+L087	SAME	fetch .git/upstream.git topic:refs/heads/up-topic	
+L088	DIFF	fetch --porcelain origin	exit 0!=129; stdout; state
+L089	SAME	fetch --stdin origin	
+L090	SAME	pull	
+L091	SAME	pull origin	
+L092	SAME	pull origin main	
+L093	SAME	pull -q origin main	
+L094	SAME	pull -v origin main	
+L095	SAME	pull --ff-only origin main	
+L096	SAME	pull --ff origin main	
+L097	SAME	pull --no-ff origin main	
+L098	SAME	pull --no-commit origin main	
+L099	SAME	pull --squash origin main	
+L100	SAME	pull -n origin main	
+L101	SAME	pull --stat origin main	
+L102	SAME	pull --no-stat origin main	
+L103	SAME	pull --log origin main	
+L104	SAME	pull --no-log origin main	
+L105	SAME	pull --no-edit origin main	
+L106	SAME	pull --no-verify origin main	
+L107	SAME	pull --verify origin main	
+L108	SAME	pull -r origin topic	
+L109	SAME	pull --rebase origin topic	
+L110	SAME	pull --rebase=false origin main	
+L111	SAME	pull --no-rebase origin main	
+L112	SAME	pull --no-autostash origin main	
+L113	SAME	pull -s ort origin main	
+L114	SAME	pull --strategy=ort origin main	
+L115	SAME	pull -X ours origin main	
+L116	SAME	pull --strategy-option=theirs origin main	
+L117	SAME	pull --allow-unrelated-histories origin main	
+L118	SAME	pull --dry-run origin main	
+L119	SAME	pull -t origin main	
+L120	SAME	pull --tags origin main	
+L121	SAME	pull --no-tags origin main	
+L122	SAME	pull -p origin main	
+L123	SAME	pull -a origin main	
+L124	SAME	pull -k origin main	
+L125	SAME	pull -f origin main	
+L126	SAME	pull --set-upstream origin main	
+L127	SAME	pull --signoff origin main	
+L128	SAME	pull --no-signoff origin main	
+L129	SAME	pull --cleanup=strip origin main	
+L130	SAME	pull --no-gpg-sign origin main	
+L131	SAME	pull --no-verify-signatures origin main	
+L132	SAME	pull --progress origin main	
+L133	SAME	pull -j2 origin main	
+L134	SAME	pull --no-recurse-submodules origin main	
+L135	SAME	pull --ff-only origin topic	
+L136	SAME	pull .git/upstream.git main	
+L137	SAME	push origin main	
+L138	SAME	push origin feature	
+L139	SAME	push -q origin feature	
+L140	SAME	push -v origin feature	
+L141	SAME	push --porcelain origin feature	
+L142	SAME	push -n origin feature	
+L143	SAME	push --dry-run origin feature	
+L144	SAME	push --porcelain --dry-run origin feature	
+L145	SAME	push origin feature:refs/heads/f2	
+L146	SAME	push origin t0	
+L147	SAME	push --tags origin	
+L148	SAME	push --all origin	
+L149	DIFF	push --branches origin	exit 1!=129; state
+L150	SAME	push --mirror origin	
+L151	SAME	push -d origin topic	
+L152	SAME	push --delete origin topic	
+L153	SAME	push origin :topic	
+L154	SAME	push -f origin main	
+L155	SAME	push --force origin main	
+L156	SAME	push origin +main	
+L157	SAME	push --force-with-lease origin main	
+L158	SAME	push --force-with-lease=main origin main	
+L159	SAME	push --force-with-lease=main:847f0a6e69171e56e7bd3fbbbd2007be9daea1ae origin main	
+L160	SAME	push --force-if-includes --force-with-lease origin main	
+L161	SAME	push --atomic origin feature main	
+L162	SAME	push --atomic origin feature	
+L163	SAME	push -u origin feature	
+L164	SAME	push --set-upstream origin feature	
+L165	SAME	push --prune origin 'refs/heads/*:refs/heads/*'	
+L166	SAME	push --follow-tags origin feature	
+L167	SAME	push --no-verify origin feature	
+L168	SAME	push --thin origin feature	
+L169	SAME	push --no-thin origin feature	
+L170	SAME	push --repo=origin feature	
+L171	SAME	push --receive-pack=git-receive-pack origin feature	
+L172	SAME	push --exec=git-receive-pack origin feature	
+L173	SAME	push --progress origin feature	
+L174	SAME	push --signed=no origin feature	
+L175	SAME	push --no-signed origin feature	
+L176	SAME	push -o x origin feature	
+L177	SAME	push --push-option=x origin feature	
+L178	SAME	push --recurse-submodules=no origin feature	
+L179	SAME	push --no-recurse-submodules origin feature	
+L180	SAME	push -4 origin feature	
+L181	SAME	push --ipv6 origin feature	
+L182	SAME	push .git/upstream.git feature	
+L183	SAME	push origin HEAD	
+L184	SAME	push origin HEAD:refs/heads/h	
+L185	SAME	remote	
+L186	SAME	remote -v	
+L187	SAME	remote --verbose	
+L188	SAME	remote show	
+L189	SAME	remote show origin	
+L190	SAME	remote show -n origin	
+L191	SAME	remote get-url origin	
+L192	SAME	remote get-url --push origin	
+L193	SAME	remote get-url --all origin	
+L194	SAME	remote add up .git/upstream.git	
+L195	SAME	remote add -f up .git/upstream.git	
+L196	SAME	remote add --fetch up .git/upstream.git	
+L197	SAME	remote add -t topic up .git/upstream.git	
+L198	SAME	remote add -t topic -t main up .git/upstream.git	
+L199	SAME	remote add -m main up .git/upstream.git	
+L200	SAME	remote add --master=main -f up .git/upstream.git	
+L201	SAME	remote add --mirror=fetch up .git/upstream.git	
+L202	SAME	remote add --mirror=push up .git/upstream.git	
+L203	SAME	remote add --tags -f up .git/upstream.git	
+L204	SAME	remote add --no-tags -f up .git/upstream.git	
+L205	SAME	remote rename origin up	
+L206	SAME	remote rename --no-progress origin up	
+L207	SAME	remote remove origin	
+L208	SAME	remote rm origin	
+L209	SAME	remote set-head origin main	
+L210	SAME	remote set-head origin -a	
+L211	SAME	remote set-head origin --auto	
+L212	SAME	remote set-head origin -d	
+L213	SAME	remote set-head origin --delete	
+L214	SAME	remote set-branches origin topic	
+L215	SAME	remote set-branches --add origin topic	
+L216	SAME	remote set-url origin .git/other.git	
+L217	SAME	remote set-url --push origin .git/other.git	
+L218	SAME	remote set-url --add origin .git/other.git	
+L219	SAME	remote set-url --add --push origin .git/other.git	
+L220	SAME	remote set-url --delete origin upstream	
+L221	SAME	remote prune origin	
+L222	SAME	remote prune -n origin	
+L223	SAME	remote prune --dry-run origin	
+L224	SAME	remote update	
+L225	SAME	remote update origin	
+L226	SAME	remote update -p	
+L227	SAME	remote update --prune origin	
+L228	SAME	remote -v update	
+L229	SAME	clone .git/upstream.git cl	
+L230	SAME	clone -q .git/upstream.git cl	
+L231	SAME	clone --quiet .git/upstream.git cl	
+L232	SAME	clone -v .git/upstream.git cl	
+L233	SAME	clone --progress .git/upstream.git cl	
+L234	SAME	clone -n .git/upstream.git cl	
+L235	SAME	clone --no-checkout .git/upstream.git cl	
+L236	SAME	clone -b topic .git/upstream.git cl	
+L237	SAME	clone --branch=topic .git/upstream.git cl	
+L238	SAME	clone --branch v2 .git/upstream.git cl	
+L239	SAME	clone -o up .git/upstream.git cl	
+L240	SAME	clone --origin=up .git/upstream.git cl	
+L241	SAME	clone --single-branch .git/upstream.git cl	
+L242	SAME	clone --no-single-branch .git/upstream.git cl	
+L243	SAME	clone --no-tags .git/upstream.git cl	
+L244	SAME	clone -l .git/upstream.git cl	
+L245	SAME	clone --local .git/upstream.git cl	
+L246	SAME	clone --no-local .git/upstream.git cl	
+L247	SAME	clone --no-hardlinks .git/upstream.git cl	
+L248	SAME	clone -s .git/upstream.git cl	
+L249	SAME	clone --shared .git/upstream.git cl	
+L250	SAME	clone --reference .git/upstream.git .git/upstream.git cl	
+L251	SAME	clone --reference-if-able .git/nosuch .git/upstream.git cl	
+L252	SAME	clone --dissociate --reference .git/upstream.git .git/upstream.git cl	
+L253	SAME	clone --depth=1 .git/upstream.git cl	
+L254	SAME	clone --depth 1 --no-single-branch .git/upstream.git cl	
+L255	SAME	clone --shallow-since=2000-01-01 .git/upstream.git cl	
+L256	SAME	clone --shallow-exclude=v1 .git/upstream.git cl	
+L257	SAME	clone --bare .git/upstream.git .git/cl.git	
+L258	SAME	clone --mirror .git/upstream.git .git/cl.git	
+L259	SAME	clone -c foo.bar=baz .git/upstream.git cl	
+L260	SAME	clone --config=foo.bar=baz .git/upstream.git cl	
+L261	SAME	clone --template= .git/upstream.git cl	
+L262	SAME	clone -j2 .git/upstream.git cl	
+L263	SAME	clone --jobs=2 .git/upstream.git cl	
+L264	SAME	clone --no-recurse-submodules .git/upstream.git cl	
+L265	SAME	clone --recurse-submodules .git/upstream.git cl	
+L266	SAME	clone --no-shallow-submodules .git/upstream.git cl	
+L267	SAME	clone --no-remote-submodules .git/upstream.git cl	
+L268	SAME	clone --separate-git-dir=.git/sep.git .git/upstream.git cl	
+L269	SAME	clone --sparse .git/upstream.git cl	
+L270	SAME	clone --filter=blob:none .git/upstream.git cl	
+L271	SAME	clone --no-reject-shallow .git/upstream.git cl	
+L272	SAME	clone -u git-upload-pack .git/upstream.git cl	
+L273	SAME	clone --upload-pack=git-upload-pack .git/upstream.git cl	
+L274	SAME	clone -4 .git/upstream.git cl	
+L275	SAME	clone --ipv6 .git/upstream.git cl	
+L276	SAME	clone --server-option=x .git/upstream.git cl	
+L277	SAME	clone .git/upstream.git	
+L278	SAME	clone .git/nosuch.git cl	
+L279	SAME	clone .git/upstream.git src	
+L280	SAME	archive --list	
+L281	SAME	archive -l	
+L282	SAME	archive --format=tar HEAD -o out.tar	
+L283	SAME	archive --format=tar --output=out.tar HEAD	
+L284	SAME	archive --format=zip -o out.zip HEAD	
+L285	SAME	archive -o out.tgz HEAD	
+L286	SAME	archive -o out.tar.gz HEAD	
+L287	SAME	archive --format=tar --prefix=p/ -o out.tar HEAD	
+L288	SAME	archive --format=tar -o out.tar HEAD src	
+L289	SAME	archive --format=tar -o out.tar HEAD:src	
+L290	SAME	archive --format=tar --add-file=untracked.txt -o out.tar HEAD	
+L291	SAME	archive --format=tar --add-virtual-file=v.txt:hello -o out.tar HEAD	
+L292	SAME	archive --format=tar --worktree-attributes -o out.tar HEAD	
+L293	DIFF	archive --format=tar --mtime=2020-01-01 -o out.tar HEAD	exit 0!=129
+L294	SAME	archive --format=tar -v -o out.tar HEAD	
+L295	SAME	archive --format=tar --verbose -o out.tar HEAD	
+L296	SAME	archive --format=tar.gz -9 -o out.tgz HEAD	
+L297	SAME	archive --format=zip -0 -o out.zip HEAD	
+L298	SAME	archive --format=tar --no-prefix -o out.tar HEAD	
+L299	SAME	archive --format=tar --remote=.git/upstream.git -o out.tar main	
+L300	SAME	archive --remote=.git/upstream.git --list	
+L301	SAME	archive --format=tar v1 -o out.tar	
+L302	SAME	archive --format=tar nosuch -o out.tar	
+L303	SAME	bundle verify .git/range.bundle	
+L304	SAME	bundle verify -q .git/range.bundle	
+L305	SAME	bundle verify --quiet .git/full.bundle	
+L306	SAME	bundle list-heads .git/range.bundle	
+L307	SAME	bundle list-heads .git/full.bundle	
+L308	SAME	bundle list-heads .git/full.bundle refs/heads/feature	
+L309	SAME	bundle unbundle .git/full.bundle	
+L310	SAME	bundle unbundle --progress .git/full.bundle	
+L311	SAME	bundle create out.bundle main	
+L312	SAME	bundle create -q out.bundle main	
+L313	SAME	bundle create --quiet out.bundle --all	
+L314	SAME	bundle create --version=2 out.bundle main	
+L315	SAME	bundle create --version=3 out.bundle main	
+L316	SAME	bundle create --progress out.bundle main	
+L317	SAME	bundle create --no-progress out.bundle t0..main	
+L318	SAME	bundle create out.bundle --branches --tags	
+L319	SAME	bundle create out.bundle main ^t0	
+L320	SAME	bundle create out.bundle nosuch	
+L321	SAME	request-pull t0 .git/upstream.git main	
+L322	SAME	request-pull -p t0 .git/upstream.git main	
+L323	SAME	request-pull t0 origin main	
+L324	SAME	request-pull t0 .git/upstream.git	
+L325	SAME	fetch-pack .git/upstream.git refs/heads/main	
+L326	SAME	fetch-pack --all .git/upstream.git	
+L327	SAME	fetch-pack -q --all .git/upstream.git	
+L328	SAME	fetch-pack --quiet --all .git/upstream.git	
+L329	SAME	fetch-pack --thin --all .git/upstream.git	
+L330	SAME	fetch-pack --include-tag --all .git/upstream.git	
+L331	SAME	fetch-pack --no-progress --all .git/upstream.git	
+L332	SAME	fetch-pack -v --all .git/upstream.git	
+L333	SAME	fetch-pack --check-self-contained-and-connected --all .git/upstream.git	
+L334	SAME	fetch-pack --upload-pack=git-upload-pack --all .git/upstream.git	
+L335	SAME	fetch-pack --exec=git-upload-pack .git/upstream.git main	
+L336	SAME	send-pack .git/upstream.git feature	
+L337	SAME	send-pack --all .git/upstream.git	
+L338	SAME	send-pack --dry-run .git/upstream.git feature	
+L339	SAME	send-pack -n .git/upstream.git feature	
+L340	SAME	send-pack --force .git/upstream.git main	
+L341	SAME	send-pack -f .git/upstream.git main	
+L342	SAME	send-pack --mirror .git/upstream.git	
+L343	SAME	send-pack --atomic .git/upstream.git feature	
+L344	SAME	send-pack -q .git/upstream.git feature	
+L345	SAME	send-pack -v .git/upstream.git feature	
+L346	SAME	send-pack --thin .git/upstream.git feature	
+L347	SAME	send-pack --receive-pack=git-receive-pack .git/upstream.git feature	
+L348	SAME	send-pack --exec=git-receive-pack .git/upstream.git feature	
+L349	SAME	send-pack --remote=origin .git/upstream.git feature	
+L350	SAME	send-pack --signed=no .git/upstream.git feature	
+L351	SAME	send-pack --push-option=x .git/upstream.git feature	
+L352	SAME	send-pack --progress .git/upstream.git feature	
+L353	SAME	send-pack .git/upstream.git main	
+L354	SAME	-C .git/sm/super submodule	
+L355	SAME	-C .git/sm/super submodule status	
+L356	SAME	-C .git/sm/super submodule --quiet status	
+L357	SAME	-C .git/sm/super submodule status --cached	
+L358	SAME	-C .git/sm/super submodule --cached	
+L359	SAME	-C .git/sm/super submodule status --recursive	
+L360	SAME	-C .git/sm/super submodule status lib	
+L361	SAME	-C .git/sm/super submodule status -- lib	
+L362	SAME	-C .git/sm/super submodule status nosuch	
+L363	SAME	-C .git/sm/clone submodule status	
+L364	SAME	-C .git/sm/clone submodule init	
+L365	SAME	-C .git/sm/clone submodule -q init	
+L366	SAME	-C .git/sm/clone submodule init lib	
+L367	SAME	-C .git/sm/clone submodule init -- lib	
+L368	SAME	-C .git/sm/super submodule init	
+L369	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init	
+L370	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --recursive	
+L371	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init -- lib	
+L372	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule -q update --init	
+L373	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --depth=1	
+L374	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --no-recommend-shallow	
+L375	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --recommend-shallow	
+L376	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --single-branch	
+L377	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --no-single-branch	
+L378	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --jobs=2	
+L379	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init -j 2	
+L380	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --progress	
+L381	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --no-progress	
+L382	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --remote	
+L383	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --dissociate	
+L384	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --filter=blob:none	
+L385	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --checkout	
+L386	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --merge	
+L387	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init --rebase	
+L388	SAME	-c protocol.file.allow=always -C .git/sm/clone submodule update --init -N	
+L389	SAME	-C .git/sm/clone submodule update	
+L390	SAME	-C .git/sm/super submodule update	
+L391	SAME	-C .git/sm/super submodule update --checkout	
+L392	SAME	-C .git/sm/super submodule update -f	
+L393	SAME	-C .git/sm/super submodule update --force	
+L394	SAME	-C .git/sm/super submodule update --no-fetch	
+L395	SAME	-C .git/sm/super submodule update -N	
+L396	SAME	-c protocol.file.allow=always -C .git/sm/super submodule update --remote	
+L397	SAME	-C .git/sm/super submodule update --remote --no-fetch	
+L398	SAME	-C .git/sm/super submodule update --merge	
+L399	SAME	-C .git/sm/super submodule update --rebase	
+L400	SAME	-C .git/sm/super submodule update --recursive	
+L401	SAME	-C .git/sm/super submodule update --require-init	
+L402	SAME	-C .git/sm/super submodule summary	
+L403	SAME	-C .git/sm/super submodule summary --cached	
+L404	SAME	-C .git/sm/super submodule summary --files	
+L405	SAME	-C .git/sm/super submodule summary -n 1	
+L406	SAME	-C .git/sm/super submodule summary --summary-limit=1	
+L407	SAME	-C .git/sm/super submodule summary --summary-limit 1	
+L408	SAME	-C .git/sm/super submodule summary HEAD	
+L409	SAME	-C .git/sm/super submodule summary HEAD~1	
+L410	SAME	-C .git/sm/super submodule summary -- lib	
+L411	SAME	-C .git/sm/super submodule summary HEAD -- lib	
+L412	SAME	-C .git/sm/super submodule foreach 'echo $name $sm_path $displaypath $sha1 $toplevel'	
+L413	SAME	-C .git/sm/super submodule foreach --recursive 'echo $name'	
+L414	SAME	-C .git/sm/super submodule --quiet foreach 'echo $path'	
+L415	SAME	-C .git/sm/super submodule foreach false	
+L416	SAME	-C .git/sm/clone submodule foreach 'echo $name'	
+L417	SAME	-C .git/sm/super submodule sync	
+L418	SAME	-C .git/sm/super submodule sync --recursive	
+L419	SAME	-C .git/sm/super submodule sync lib	
+L420	SAME	-C .git/sm/super submodule --quiet sync	
+L421	SAME	-C .git/sm/clone submodule sync	
+L422	SAME	-C .git/sm/super submodule set-branch -b dev lib	
+L423	SAME	-C .git/sm/super submodule set-branch --branch=dev lib	
+L424	SAME	-C .git/sm/super submodule set-branch --branch dev -- lib	
+L425	SAME	-C .git/sm/super submodule set-branch -d lib	
+L426	SAME	-C .git/sm/super submodule set-branch --default lib	
+L427	SAME	-C .git/sm/super submodule set-branch -q -b dev lib	
+L428	SAME	-C .git/sm/super submodule set-branch lib	
+L429	SAME	-C .git/sm/super submodule set-url lib ../other	
+L430	SAME	-C .git/sm/super submodule set-url -- lib ../other	
+L431	SAME	-C .git/sm/super submodule set-url -q lib ../other	
+L432	SAME	-C .git/sm/super submodule set-url nosuch ../other	
+L433	SAME	-C .git/sm/super submodule absorbgitdirs	
+L434	SAME	-C .git/sm/super submodule absorbgitdirs lib	
+L435	SAME	-C .git/sm/super submodule absorbgitdirs -q	
+L436	SAME	-C .git/sm/super submodule deinit lib	
+L437	SAME	-C .git/sm/super submodule deinit -f lib	
+L438	SAME	-C .git/sm/super submodule deinit --force lib	
+L439	SAME	-C .git/sm/super submodule deinit --all	
+L440	SAME	-C .git/sm/super submodule deinit -f --all	
+L441	SAME	-C .git/sm/super submodule deinit -q -f lib	
+L442	SAME	-C .git/sm/super submodule deinit	
+L443	SAME	-C .git/sm/clone submodule deinit lib	
+L444	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add ../lib sub2	
+L445	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add -b dev ../lib sub2	
+L446	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --branch=dev ../lib sub2	
+L447	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --name=n2 ../lib sub2	
+L448	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add -q ../lib sub2	
+L449	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --depth=1 ../lib sub2	
+L450	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --dissociate ../lib sub2	
+L451	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add -f ../lib sub2	
+L452	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --force ../lib sub2	
+L453	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add ../lib	
+L454	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add ../lib lib	
+L455	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add -- ../lib x/lib	
+L456	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add ../nosuch sub2	
+L457	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --progress ../lib sub2	
+L458	SAME	-C .git/sm/super submodule nosuch	
+L459	SAME	-C .git/sm/super submodule update --depth 1	
+L460	SAME	-C .git/sm/super submodule update -j2	
+L461	SAME	-C .git/sm/super submodule update --jobs 2	
+L462	SAME	-C .git/sm/super submodule update --filter blob:none	
+L463	SAME	-C .git/sm/super submodule update -i	
+L464	SAME	-C .git/sm/super submodule update -r	
+L465	SAME	-C .git/sm/super submodule update -m	
+L466	SAME	-C .git/sm/super submodule update -qf	
+L467	SAME	-C .git/sm/super submodule update --reference .git	
+L468	SAME	-C .git/sm/super submodule --quiet --cached	
+L469	SAME	-C .git/sm/super submodule --cached status	
+L470	SAME	-C .git/sm/super submodule --cached summary	
+L471	SAME	-C .git/sm/super submodule --cached init	
+L472	SAME	-C .git/sm/super submodule summary --for-status	
+L473	SAME	-C .git/sm/super submodule summary -n1	
+L474	SAME	-C .git/sm/super submodule foreach -q 'echo x'	
+L475	SAME	-C .git/sm/super submodule foreach	
+L476	SAME	-C .git/sm/super submodule status -q	
+L477	SAME	-C .git/sm/super submodule sync -q	
+L478	SAME	-C .git/sm/super submodule init -q	
+L479	SAME	-C .git/sm/super submodule set-url lib	
+L480	SAME	-C .git/sm/super submodule set-branch -b dev	
+L481	SAME	-C .git/sm/super submodule add	
+L482	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --name n2 ../lib sub2	
+L483	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --depth 1 ../lib sub2	
+L484	SAME	-c protocol.file.allow=always -C .git/sm/super submodule add --reference .git ../lib sub2	
+L485	SAME	-C .git/sm/super submodule status --nosuch	
+L486	SAME	-C .git/sm/super submodule summary --nosuch	
+L487	SAME	-C .git/sm/super submodule foreach --nosuch	
+L488	SAME	-C .git/sm/super submodule absorbgitdirs --nosuch	
+L489	SAME	-C .git/sm/super submodule absorbgitdirs --quiet	
+L490	SAME	-C .git/sm/super submodule absorbgitdirs nosuch	
+L491	SAME	-C .git/sm/super submodule set-url --nosuch lib x	
+L492	SAME	-C .git/sm/super submodule deinit --nosuch lib	
+L493	SAME	-C .git/sm/super submodule deinit --cached lib	
+L494	SAME	update-server-info	
+L495	SAME	update-server-info -f	
+L496	SAME	update-server-info --force	
+L497	SAME	upload-pack --stateless-rpc .git/upstream.git	
+L498	SAME	upload-pack --strict --stateless-rpc .git/upstream.git	
+L499	SAME	upload-pack --no-strict --stateless-rpc .git/upstream.git	
+L500	SAME	upload-pack --timeout=5 --stateless-rpc .git/upstream.git	
+L501	SAME	upload-pack --strict --stateless-rpc .git	
+L502	SAME	upload-pack --stateless-rpc .git/nosuch	
+L503	SAME	receive-pack --stateless-rpc .git/upstream.git	
+L504	SAME	receive-pack -q --stateless-rpc .git/upstream.git	
+L505	SAME	receive-pack --quiet --stateless-rpc .git/upstream.git	
+L506	SAME	upload-archive .git/upstream.git	
+L507	SAME	upload-archive .	
