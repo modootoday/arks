@@ -52,13 +52,13 @@ env:
 jobs:
   # --- Hard gate: pin DoD + latest git/gh inventory continuity ---
   # Cite: .spec/sot/release-symmetry-precheck.sot.md
-  # Fails closed on Missing (CLI/daemon) / untracked leaves; Partial + hub v1
-  # Missing are advisory by default (no invent Claimed).
+  # Fails closed on Missing (CLI/daemon/hub v1) and untracked leaves; Partial
+  # rows remain advisory (no invent Claimed).
   symmetry-precheck:
     name: release symmetry precheck
     uses: ./.github/workflows/release-symmetry.yml
     with:
-      block_hub_missing: false
+      block_hub_missing: true
 
   # --- Ungated only after symmetry-precheck: build release binaries + checksums ---
   dist:
