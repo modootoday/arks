@@ -228,7 +228,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # crates/arks currently has publish = false — fail-closed skip until flipped.
           if grep -qE '^publish\s*=\s*false' crates/arks/Cargo.toml; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "arks has publish=false; skipping crates.io until the crate is publish-ready." >> "$GITHUB_STEP_SUMMARY"
@@ -238,19 +237,21 @@ jobs:
 
       # Trusted Publishing: exchange OIDC for short-lived token.
       # No CARGO_REGISTRY_TOKEN secret fallback (fail-closed).
-      # Human must configure trusted publisher on crates.io for this repo,
-      # workflow "release.yml", environment "crates".
+      # Human must complete one-time initial manual publish (scripts/bootstrap-crates-publish.sh)
+      # and configure trusted publisher on crates.io for each of the 18 workspace crates:
+      # repo "modootoday/arks", workflow "release.yml", environment "crates".
       # https://crates.io/docs/trusted-publishing/
       - name: crates.io OIDC auth
         if: steps.gate.outputs.skip != 'true'
         id: auth
         uses: rust-lang/crates-io-auth-action@v1
 
-      - name: cargo publish
+      - name: cargo publish (18 workspace crates, topological order)
         if: steps.gate.outputs.skip != 'true'
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p arks --locked
+          ARKS_CRATES_WAIT_SECS: "20"
+        run: bash scripts/bootstrap-crates-publish.sh
 
   # --- Approve-gated OIDC: npm ---
   publish-npm:

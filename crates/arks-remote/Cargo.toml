@@ -6,7 +6,10 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 repository.workspace = true
-publish = false
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 arks-protocol = { workspace = true }
@@ -26,4 +29,4 @@ libc = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
-arks-server = { path = "../arks-server" }
+arks-server = { workspace = true }
